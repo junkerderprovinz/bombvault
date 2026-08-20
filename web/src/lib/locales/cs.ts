@@ -157,6 +157,7 @@ const cs: Partial<Translations> = {
   "settings.encryptionWarning":
     "Šifrování je fixně nastaveno při inicializaci repozitáře. Změna vyžaduje novou prázdnou cestu.",
   "settings.paths": "Zálohovací cesty",
+  "settings.pathsHint": "Relativní podcesty pod kořenem připojení hostitele ({root}). Klikněte na Procházet pro procházení adresářů, nebo zadejte cestu přímo.",
   "settings.containersPath": "Cesta ke kontejnerům",
   "settings.vmsPath": "Cesta k VM",
   "settings.flashPath": "Cesta k Flash",
@@ -173,6 +174,7 @@ const cs: Partial<Translations> = {
   "offsite.replicating": "Replikace…",
   "offsite.replicateFailed": "Replikace selhala",
   "settings.domains": "Domény",
+  "settings.domainsHint": "Každou doménu zálohování lze zapnout nebo vypnout zvlášť. Zapnutí VM nebo Flash odhalí jejich kartu v postranním panelu.",
   "settings.containersEnabled": "Kontejnery",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

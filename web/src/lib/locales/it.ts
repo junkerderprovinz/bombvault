@@ -157,6 +157,7 @@ const it: Partial<Translations> = {
   "settings.encryptionWarning":
     "La crittografia è fissa per repository al momento dell'inizializzazione. Modificarla richiede un nuovo percorso vuoto.",
   "settings.paths": "Percorsi di backup",
+  "settings.pathsHint": "Sottopercorsi relativi sotto la radice del mount dell'host ({root}). Fai clic su Sfoglia per navigare tra le cartelle, oppure digita un percorso direttamente.",
   "settings.containersPath": "Percorso container",
   "settings.vmsPath": "Percorso VM",
   "settings.flashPath": "Percorso Flash",
@@ -173,6 +174,7 @@ const it: Partial<Translations> = {
   "offsite.replicating": "Replica in corso…",
   "offsite.replicateFailed": "Replica non riuscita",
   "settings.domains": "Domini",
+  "settings.domainsHint": "Attiva o disattiva ogni dominio di backup. Attivare VM o Flash mostra la relativa scheda nella barra laterale.",
   "settings.containersEnabled": "Container",
   "settings.vmsEnabled": "VM",
   "settings.flashEnabled": "Flash",

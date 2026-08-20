@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { InfoBubble } from "./InfoBubble";
 
 // ---------------------------------------------------------------------------
 // Folder browser (shared)
@@ -18,9 +19,18 @@ export interface FolderBrowserProps {
   // The old hardcoded "user/bombvault/container" example named a path that does
   // not exist and read as a real chosen default (#125).
   placeholder?: string;
+  /** Optional one-line explanation of what THIS field is for, rendered as a
+   *  neutral (i) beside the label (design-language.md rule 8) instead of a
+   *  separate permanent grey <p> under the whole field — same additive,
+   *  every-other-call-site-unchanged shape as Card's own `hint` prop
+   *  (GlimStone form-engine Phase 2 Task 4). Optional: omitted call sites
+   *  (Recovery.tsx, Files.tsx, Containers.tsx, RestorePanel.tsx,
+   *  PathModeSwitch's own internal Local-mode use) render byte-for-byte the
+   *  same as before. */
+  hint?: string;
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder }: FolderBrowserProps) {
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint }: FolderBrowserProps) {
   const { t } = useT();
   // browsePath tracks the *current directory being listed* (not the selected value).
   // We initialise it to the current value so opening the browser starts in the right folder.
@@ -107,7 +117,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs text-carbon-textSub">{label}</label>
+      <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+        {label}
+        {hint && <InfoBubble tip={hint} />}
+      </label>
 
       {/* Current value + browser trigger */}
       <div className="flex items-center gap-2">

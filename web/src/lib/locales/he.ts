@@ -157,6 +157,7 @@ const he: Partial<Translations> = {
   "settings.encryptionWarning":
     "ההצפנה קבועה לכל מאגר בעת האתחול. שינוי מחייב נתיב ריק חדש.",
   "settings.paths": "נתיבי גיבוי",
+  "settings.pathsHint": "נתיבי משנה יחסיים תחת שורש נקודת העיגון של המארח ({root}). לחץ על עיון כדי לנווט בין תיקיות, או הקלד נתיב ישירות.",
   "settings.containersPath": "נתיב Containers",
   "settings.vmsPath": "נתיב VMs",
   "settings.flashPath": "נתיב Flash",
@@ -173,6 +174,7 @@ const he: Partial<Translations> = {
   "offsite.replicating": "משכפל…",
   "offsite.replicateFailed": "השכפול נכשל",
   "settings.domains": "דומיינים",
+  "settings.domainsHint": "הפעל או כבה כל תחום גיבוי בנפרד. הפעלת VM-ים או Flash חושפת את הלשונית שלו בסרגל הצד.",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

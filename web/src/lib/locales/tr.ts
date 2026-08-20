@@ -157,6 +157,7 @@ const tr: Partial<Translations> = {
   "settings.encryptionWarning":
     "Şifreleme, depo başlatıldığında sabit olarak belirlenir. Değiştirmek için yeni boş bir yol gerekir.",
   "settings.paths": "Yedekleme Yolları",
+  "settings.pathsHint": "Host bağlama kökü ({root}) altındaki göreli alt yollar. Dizinlerde gezinmek için Gözat'a tıklayın veya bir yolu doğrudan yazın.",
   "settings.containersPath": "Konteyner yolu",
   "settings.vmsPath": "VM yolu",
   "settings.flashPath": "Flash yolu",
@@ -173,6 +174,7 @@ const tr: Partial<Translations> = {
   "offsite.replicating": "Çoğaltılıyor…",
   "offsite.replicateFailed": "Çoğaltma başarısız",
   "settings.domains": "Etki Alanları",
+  "settings.domainsHint": "Her yedekleme alanını ayrı ayrı açıp kapatın. VM'leri veya Flash'ı etkinleştirmek, kenar çubuğunda ilgili sekmeyi ortaya çıkarır.",
   "settings.containersEnabled": "Konteynerler",
   "settings.vmsEnabled": "VM'ler",
   "settings.flashEnabled": "Flash",

@@ -157,6 +157,7 @@ const zh: Partial<Translations> = {
   "settings.encryptionWarning":
     "加密在初始化时固定绑定到仓库。更改此项需要新的空路径。",
   "settings.paths": "备份路径",
+  "settings.pathsHint": "主机挂载根目录（{root}）下的相对子路径。点击浏览以浏览目录，或直接输入路径。",
   "settings.containersPath": "容器路径",
   "settings.vmsPath": "虚拟机路径",
   "settings.flashPath": "闪存路径",
@@ -173,6 +174,7 @@ const zh: Partial<Translations> = {
   "offsite.replicating": "复制中…",
   "offsite.replicateFailed": "复制失败",
   "settings.domains": "域",
+  "settings.domainsHint": "分别开启或关闭每个备份域。启用虚拟机或 Flash 会在侧边栏显示对应的标签页。",
   "settings.containersEnabled": "容器",
   "settings.vmsEnabled": "虚拟机",
   "settings.flashEnabled": "闪存",

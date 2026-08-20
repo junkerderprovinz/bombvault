@@ -157,6 +157,7 @@ const es: Partial<Translations> = {
   "settings.encryptionWarning":
     "El cifrado se fija por repositorio al inicializar. Cambiarlo requiere una nueva ruta vacía.",
   "settings.paths": "Rutas de copia",
+  "settings.pathsHint": "Subrutas relativas bajo la raíz del montaje del host ({root}). Haz clic en Examinar para navegar por directorios o escribe una ruta directamente.",
   "settings.containersPath": "Ruta de contenedores",
   "settings.vmsPath": "Ruta de VMs",
   "settings.flashPath": "Ruta Flash",
@@ -173,6 +174,7 @@ const es: Partial<Translations> = {
   "offsite.replicating": "Replicando…",
   "offsite.replicateFailed": "Error de replicación",
   "settings.domains": "Dominios",
+  "settings.domainsHint": "Activa o desactiva cada dominio de copia de seguridad. Activar VMs o Flash muestra su pestaña en la barra lateral.",
   "settings.containersEnabled": "Contenedores",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

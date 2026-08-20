@@ -157,6 +157,7 @@ const el: Partial<Translations> = {
   "settings.encryptionWarning":
     "Η κρυπτογράφηση καθορίζεται κατά την αρχικοποίηση του αποθετηρίου. Η αλλαγή απαιτεί νέα κενή διαδρομή.",
   "settings.paths": "Διαδρομές αντιγράφων",
+  "settings.pathsHint": "Σχετικές υποδιαδρομές κάτω από τη ρίζα προσάρτησης του host ({root}). Κάντε κλικ στο Περιήγηση για να πλοηγηθείτε στους καταλόγους, ή πληκτρολογήστε μια διαδρομή απευθείας.",
   "settings.containersPath": "Διαδρομή containers",
   "settings.vmsPath": "Διαδρομή VMs",
   "settings.flashPath": "Διαδρομή Flash",
@@ -173,6 +174,7 @@ const el: Partial<Translations> = {
   "offsite.replicating": "Αναπαραγωγή…",
   "offsite.replicateFailed": "Η αναπαραγωγή απέτυχε",
   "settings.domains": "Τομείς",
+  "settings.domainsHint": "Ενεργοποιήστε ή απενεργοποιήστε κάθε τομέα αντιγράφων ασφαλείας ξεχωριστά. Η ενεργοποίηση VM ή Flash εμφανίζει την καρτέλα του στην πλαϊνή γραμμή.",
   "settings.containersEnabled": "Containers",
   "settings.vmsEnabled": "VMs",
   "settings.flashEnabled": "Flash",

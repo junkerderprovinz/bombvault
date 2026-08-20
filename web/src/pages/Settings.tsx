@@ -370,9 +370,8 @@ chmod 600 /root/.ssh/authorized_keys`
   }
 
   return (
-    <Card title={t("vm.ssh.title")}>
+    <Card title={t("vm.ssh.title")} hint={t("vm.ssh.desc")}>
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-carbon-textSub">{t("vm.ssh.desc")}</p>
         <div className="text-sm text-carbon-text">
           {t("vm.ssh.host")}: <span dir="ltr" className="font-mono text-start">{host || "—"}</span>
         </div>
@@ -552,11 +551,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const busy = importBusy !== "idle" || exporting;
 
   return (
-    <Card title={t("settingsIO.title")}>
-      <p className="text-sm text-carbon-textSub leading-relaxed -mt-1">
-        {t("settingsIO.desc")}
-      </p>
-
+    <Card title={t("settingsIO.title")} hint={t("settingsIO.desc")}>
       {/* EXPORT ---------------------------------------------------------- */}
       <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
         <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
@@ -592,12 +587,10 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
       {/* IMPORT ---------------------------------------------------------- */}
       <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-        <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+        <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("settingsIO.importHeading")}
+          <InfoBubble tip={t("settingsIO.importHint")} />
         </h3>
-        <p className="text-xs text-carbon-textMuted leading-relaxed">
-          {t("settingsIO.importHint")}
-        </p>
 
         <input
           ref={fileInputRef}
@@ -770,10 +763,10 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   return (
     <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-      <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+      <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
         {t("settings.dashTile")}
+        <InfoBubble tip={t("settings.dashTileHint")} />
       </h3>
-      <p className="text-xs text-carbon-textMuted">{t("settings.dashTileHint")}</p>
 
       {status.kind === "loading" && (
         <span className="text-xs text-carbon-textMuted">{t("settings.dashTileChecking")}</span>
@@ -943,8 +936,7 @@ function DashboardWidgetCard({
   }
 
   return (
-    <Card title={t("settings.widget")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.widgetHint")}</p>
+    <Card title={t("settings.widget")} hint={t("settings.widgetHint")}>
 
       <ul className="list-disc ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
         <li>{t("settings.widgetHow")}</li>
@@ -1113,8 +1105,7 @@ function FleetSettingsCard({
   }
 
   return (
-    <Card title={t("settings.fleet")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.fleetHint")}</p>
+    <Card title={t("settings.fleet")} hint={t("settings.fleetHint")}>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs text-carbon-textSub">{t("settings.instanceName")}</label>
@@ -1254,8 +1245,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   return (
-    <Card title={t("rclone.title")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("rclone.hint")}</p>
+    <Card title={t("rclone.title")} hint={t("rclone.hint")}>
       <div className="text-sm text-carbon-text">
         {t("rclone.configured")}:{" "}
         <span dir="ltr" className="font-mono text-start">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
@@ -1269,6 +1259,15 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         dir="ltr"
         className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus text-start"
       />
+      {/* GlimStone follow-up pass (Phase 2 Task 4's remainder): stays permanent
+          text, NOT bubbled — it names the exact "rclone:<remote>:<bucket>/path"
+          Backup Path syntax, which is the ONLY place that convention is
+          documented (PathModeSwitch's own remote-mode placeholder shows only
+          s3:/rest: examples, never rclone:). Someone back on the Storage tab
+          filling in a Backup Path for a domain they just wired up here needs
+          this findable without already knowing to hover an icon on a
+          different tab — the same "exact syntax to copy correctly" carve-out
+          the task spec calls out by name. */}
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
         <button
@@ -1340,6 +1339,14 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   return (
     <Card title={t("cloud.title")}>
+      {/* GlimStone follow-up pass (Phase 2 Task 4's remainder): stays permanent
+          text, NOT bubbled — it is the only complete reference for all four
+          remote-URL prefixes this card's credentials unlock (s3:/rest:/b2:/
+          sftp:), used on a DIFFERENT tab's Backup Path fields. Those fields'
+          own placeholder only ever shows two of the four (s3:/rest:), so this
+          paragraph is the sole place b2: and sftp: are documented at all —
+          exactly the "exact path syntax they need to copy correctly" carve-out
+          the task spec names, same reasoning as RcloneCard's own pathHint. */}
       <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.hint")}</p>
 
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
@@ -1351,7 +1358,11 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             placeholder={secretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
         <label className={fieldCls}>AWS_DEFAULT_REGION
           <input value={c.s3Region} onChange={(e) => set("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
-        <label className={fieldCls}>{t("cloud.storageClass.label")}
+        <label className={fieldCls}>
+          <span className="flex items-center gap-1">
+            {t("cloud.storageClass.label")}
+            <InfoBubble tip={t("cloud.storageClass.hint")} />
+          </span>
           <select value={c.s3StorageClass} onChange={(e) => set("s3StorageClass", e.target.value)} className={inputCls}>
             <option value="">{t("cloud.storageClass.default")}</option>
             <option value="STANDARD">STANDARD</option>
@@ -1360,7 +1371,6 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <option value="INTELLIGENT_TIERING">INTELLIGENT_TIERING</option>
             <option value="GLACIER_IR">GLACIER_IR</option>
           </select></label>
-        <p className="text-xs text-carbon-textMuted normal-case font-sans">{t("cloud.storageClass.hint")}</p>
       </div>
 
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
@@ -1489,8 +1499,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
-    <Card title={t("cloud.credSets.title")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.credSets.hint")}</p>
+    <Card title={t("cloud.credSets.title")} hint={t("cloud.credSets.hint")}>
 
       {sets.length === 0 && !editing && (
         <span className="text-xs text-carbon-textMuted">{t("cloud.credSets.none")}</span>
@@ -1625,9 +1634,11 @@ const emptyNotify: NotifyConfig = {
 // NotifyCard's own hint→bubble pass (GlimStone form-engine Phase 2, Task 4):
 // this Card, plus the Weekly-digest and Overdue-watchdog Cards further down
 // (the whole "notifications" tab — the only complete, self-contained tab
-// migrated by this task; every OTHER Settings tab's permanent hint <p>s are
-// untouched, deliberately, same scope discipline as Phase 1 Task 9's toast
-// adoption), moved these 7 disposable-after-first-read hints into
+// migrated by that task; every OTHER Settings tab's permanent hint <p>s were
+// left untouched, deliberately, same scope discipline as Phase 1 Task 9's
+// toast adoption — Task 4 documented its own remainder rather than force a
+// same-sitting judgment call on ~80 more sites it hadn't yet triaged), moved
+// these 7 disposable-after-first-read hints into
 // InfoBubble: three card-level intros — NotifyCard's own, the Weekly-digest
 // Card's, and the Overdue-watchdog Card's (all three now Card's own `hint`
 // prop) — plus four inline ones: the "scheduled summary" and "notify on
@@ -1645,6 +1656,21 @@ const emptyNotify: NotifyConfig = {
 // regardless of the "notify on" policy above it) that's exactly the kind of
 // "why is this behaving unexpectedly" answer someone comes back to, not
 // something read once and never needed again. Both stay as-is below.
+//
+// GlimStone follow-up pass (v8.0.0): closed out the rest of the file's
+// remainder Task 4 flagged above — every other tab's Card-level and
+// field-level permanent hint <p>s are now bubbled too, on the exact same
+// mechanism (Card's `hint` prop; FolderBrowser gained the identical optional
+// `hint` prop for its two Settings.tsx call sites that had one). A small
+// family of sites earned the SAME "reference, not a one-time explainer"
+// carve-out as this card's own two: RcloneCard's pathHint and CloudCard's
+// own hint (both name exact Backup Path URL-prefix syntax used on a
+// different tab), settings.metricsHint (names the exact /metrics path +
+// Authorization header — see its own call site's comment), and
+// jobs.flashNotImplemented (a behavioural caveat, not an explainer). One
+// site — settings.offsiteHint — was a genuine toss-up between "syntax
+// reference" and "already covered by the field's own placeholder + caption"
+// and was left as-is with its own comment rather than force that call here.
 function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
   // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
@@ -2302,8 +2328,7 @@ function IntegrityCard({
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
 
   return (
-    <Card title={t("integrity.title")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("integrity.hint")}</p>
+    <Card title={t("integrity.title")} hint={t("integrity.hint")}>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
         <SourceToggle
@@ -2354,9 +2379,11 @@ function IntegrityCard({
           snapshot is restored). */}
       {kind === "dr" && (
         <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-          <p className="text-xs text-carbon-textMuted">{t("drill.drNote")}</p>
           <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
-            {t("drill.target")}
+            <span className="flex items-center gap-1">
+              {t("drill.target")}
+              <InfoBubble tip={t("drill.drNote")} />
+            </span>
             <select
               value={settings.drDrillTarget}
               onChange={(e) => {
@@ -2607,7 +2634,7 @@ function ContainersSection({
   const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
 
   return (
-    <Card title={t("jobs.containersSection")}>
+    <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")}>
       {/* Cadence row */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
@@ -2628,7 +2655,6 @@ function ContainersSection({
           value={schedule}
           onChange={onChange}
         />
-        <p className="text-xs text-carbon-textMuted mt-2">{t("containers.scheduleHint")}</p>
       </div>
 
       {/* Member list */}
@@ -2693,7 +2719,7 @@ function VMsSection({
   const included = vms.filter((v) => v.includeInSchedule);
 
   return (
-    <Card title={t("jobs.vmsSection")}>
+    <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -2712,9 +2738,6 @@ function VMsSection({
           disabled={syncSchedules}
           onChange={onChange}
         />
-        {!syncSchedules && (
-          <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.vmIncludeHint")}</p>
-        )}
       </div>
 
       {/* Per-item overrides (#121): an included-VM list with a per-VM cadence,
@@ -2786,6 +2809,12 @@ function FlashSection({
           disabled={syncSchedules}
           onChange={onChange}
         />
+        {/* GlimStone follow-up pass: stays permanent text, NOT bubbled — a
+            behavioural caveat ("this control looks live but silently does
+            nothing yet") someone hits while confused about why a saved
+            Flash schedule never runs, not a one-time "what does this do"
+            explainer. Same carve-out category as notify.healthchecksLifecycle
+            above (NotifyCard's own header comment). */}
         {!syncSchedules && (
           <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.flashNotImplemented")}</p>
         )}
@@ -2838,7 +2867,7 @@ function FilesSection({
   }
 
   return (
-    <Card title={t("jobs.filesSection")}>
+    <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -2856,7 +2885,6 @@ function FilesSection({
           value={schedule}
           onChange={onChange}
         />
-        <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.filesIncludeHint")}</p>
       </div>
 
       {/* Member list — every file set with its live include-in-schedule toggle. */}
@@ -2905,8 +2933,7 @@ function RestoreChecksSection({
   t: ReturnType<typeof useT>["t"];
 }) {
   return (
-    <Card title={t("verify.auto")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("verify.hint")}</p>
+    <Card title={t("verify.auto")} hint={t("verify.hint")}>
       <ToggleRow
         hideLabel
         label={t("verify.auto")}
@@ -3572,9 +3599,9 @@ export function SettingsPage() {
               }
               className="mt-0.5 h-4 w-4 rounded-control border-carbon-border bg-carbon-surface2 accent-(--accent)"
             />
-            <span className="flex flex-col">
-              <span className="text-sm text-carbon-text">{t("settings.perItemSchedules")}</span>
-              <span className="text-xs text-carbon-textMuted">{t("settings.perItemSchedulesHint")}</span>
+            <span className="flex items-center gap-1 text-sm text-carbon-text">
+              {t("settings.perItemSchedules")}
+              <InfoBubble tip={t("settings.perItemSchedulesHint")} />
             </span>
           </label>
           <ContainersSection
@@ -3652,7 +3679,7 @@ export function SettingsPage() {
           </Card>
 
           {/* Self-backup schedule (schedulesSelfBackup): BombVault's own config. */}
-          <Card title={t("settings.schedulesSelfBackup")}>
+          <Card title={t("settings.schedulesSelfBackup")} hint={t("config.scheduleHint")}>
             <div className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("nav.config")}</span>
               <input
@@ -3665,7 +3692,6 @@ export function SettingsPage() {
                 dir="ltr"
                 className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
               />
-              <p className="text-xs text-carbon-textMuted">{t("config.scheduleHint")}</p>
             </div>
           </Card>
 
@@ -3785,11 +3811,7 @@ export function SettingsPage() {
       {/* GENERAL — Domains                                                   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "general" && (
-      <Card title={t("settings.domains")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
-          Turn each backup domain on or off. Enabling VMs or Flash reveals its
-          tab in the sidebar.
-        </p>
+      <Card title={t("settings.domains")} hint={t("settings.domainsHint")}>
         <ToggleRow
           label={t("settings.containersEnabled")}
           description="Container backup + restore (always enabled)"
@@ -3873,12 +3895,7 @@ export function SettingsPage() {
       {/* STORAGE — Backup paths                                             */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.paths")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
-          Relative subpaths under the host mount root (
-          <span dir="ltr" className="font-mono text-start">{hostMountRoot}</span>). Click Browse to
-          navigate directories or type a path directly.
-        </p>
+      <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)}>
         <PathModeSwitch
           label={t("settings.containersPath")}
           domain="containers"
@@ -3939,17 +3956,15 @@ export function SettingsPage() {
           setSettings={setSettings}
           save={save}
         />
-        <div className="flex flex-col gap-1">
-          <FolderBrowser
-            label={t("settings.restoreFolder")}
-            value={settings.restoreFolder}
-            hostMountRoot={hostMountRoot}
-            onChange={(v) =>
-              setSettings((prev) => prev ? { ...prev, restoreFolder: v } : prev)
-            }
-          />
-          <p className="text-xs text-carbon-textMuted">{t("settings.restoreFolderHint")}</p>
-        </div>
+        <FolderBrowser
+          label={t("settings.restoreFolder")}
+          value={settings.restoreFolder}
+          hostMountRoot={hostMountRoot}
+          hint={t("settings.restoreFolderHint")}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, restoreFolder: v } : prev)
+          }
+        />
         <SaveBar
           state={pathSaveState}
           error={pathSaveError}
@@ -4032,8 +4047,7 @@ export function SettingsPage() {
       {/* update (#56). Opt-in; keeping the old image makes rollback cheap.    */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.imageCleanupTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.imageCleanupHint")}</p>
+      <Card title={t("settings.imageCleanupTitle")} hint={t("settings.imageCleanupHint")}>
         <ToggleRow
           label={t("settings.pruneImageAfterUpdate")}
           description={t("settings.pruneImageAfterUpdateHint")}
@@ -4098,10 +4112,7 @@ export function SettingsPage() {
       {/* stored one, and removing a row deletes that registry's credential.   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.registriesTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
-          {t("settings.registriesHint")}
-        </p>
+      <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")}>
         {settings.registryAuths.length === 0 && (
           <p className="text-sm text-carbon-textMuted">
             {t("settings.registriesEmpty")}
@@ -4299,10 +4310,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
       <Advanced>
-      <Card title={t("settings.cacheTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
-          {t("settings.cacheHint")}
-        </p>
+      <Card title={t("settings.cacheTitle")} hint={t("settings.cacheHint")}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
           <input
@@ -4340,8 +4348,7 @@ export function SettingsPage() {
       {/* flash backup, for off-server sync. Only relevant when Flash is on.   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && settings.flashEnabled && (
-      <Card title={t("flash.zipExport.title")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.zipExport.hint")}</p>
+      <Card title={t("flash.zipExport.title")} hint={t("flash.zipExport.hint")}>
         <ToggleRow
           label={t("flash.zipExport.enable")}
           description={t("flash.zipExport.enableHint")}
@@ -4359,11 +4366,11 @@ export function SettingsPage() {
               label={t("flash.zipExport.path")}
               value={settings.flashZipExportPath}
               hostMountRoot={hostMountRoot}
+              hint={t("flash.zipExport.pathHint")}
               onChange={(v) =>
                 setSettings((prev) => prev ? { ...prev, flashZipExportPath: v } : prev)
               }
             />
-            <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.zipExport.pathHint")}</p>
             {!settings.flashZipExportPath.trim() && (
               <p className="text-xs text-statusFail -mt-1">{t("flash.zipExport.pathRequired")}</p>
             )}
@@ -4429,8 +4436,7 @@ export function SettingsPage() {
       {/* Applies across domains, so it is not gated on any single domain.      */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("export.encrypt.title")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("export.encrypt.hint")}</p>
+      <Card title={t("export.encrypt.title")} hint={t("export.encrypt.hint")}>
         <ToggleRow
           label={t("export.encrypt.enable")}
           description={t("export.encrypt.enableHint")}
@@ -4490,6 +4496,18 @@ export function SettingsPage() {
         <Badge tone="heading" size="heading" wrap>{t("offsite.sectionTitle")}</Badge>
       </h2>
       <Card title={t("settings.offsiteTitle")}>
+        {/* GlimStone follow-up pass: the one genuine toss-up in this pass —
+            left as permanent text rather than force a call. It names three
+            backend URL prefixes (rest:/s3:/b2:), but that's only PARTIALLY
+            unique reference: the field's own placeholder already shows a
+            rest: example, and offsite.repoLocalHint right below each field
+            already documents the relative-path option. What it adds beyond
+            those is s3: and b2: as valid prefixes here specifically — real
+            but thinner value than RcloneCard's/CloudCard's own hints above
+            (the sole documentation of their syntax anywhere). Whether that
+            remainder is enough to justify a permanent paragraph, or should
+            fold into the placeholder/caption instead, is a real design call,
+            not a mechanical one — flagged rather than decided here. */}
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
         {([
           ["containersOffsite", "nav.containers", "containers"],
@@ -4636,10 +4654,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
       <Advanced>
-      <Card title={t("settings.offsiteLimits")}>
-        <p className="text-xs text-carbon-textMuted -mt-1">
-          {t("settings.limitHint")}
-        </p>
+      <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")}>
         <div className="grid grid-cols-2 gap-3">
           {([
             ["offsiteLimitUpload", "settings.limitUpload"],
@@ -4685,6 +4700,15 @@ export function SettingsPage() {
       {tab === "system" && (
       <Advanced>
       <Card title={t("settings.metrics")}>
+        {/* GlimStone follow-up pass: stays permanent text, NOT bubbled — it
+            names the exact /metrics path AND the exact
+            "Authorization: Bearer <token>" scrape syntax someone pastes into
+            Grafana/Uptime Kuma config verbatim, the same "exact syntax to
+            copy correctly" carve-out as RcloneCard's/CloudCard's own hints.
+            The comment below also documents that the ToggleRow beneath
+            deliberately has NO description of its own because THIS paragraph
+            already covers it — hiding it behind a hover target would silently
+            break that reasoning too. */}
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
         {/* No description here: the Card's own hint paragraph above already
             states the /metrics path — a hardcoded "GET /metrics" description
@@ -4789,12 +4813,18 @@ export function SettingsPage() {
         </div>
         {settings.encryptionEnabled && (
           <div className="flex flex-col gap-2 border-t border-carbon-border pt-4">
-            <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+            {/* recovery.why is bubbled, not kept as permanent text, even though
+                it explains a real data-loss risk: the RECURRING "you still
+                haven't saved this" job is already owned by Dashboard.tsx's own
+                separate, more prominent recovery.nagTitle/nagBody banner
+                (dismissed only by recovery.stored) — this paragraph is purely
+                the one-time "here's why, if you're curious" context for the
+                button below it, not the app's only safeguard against
+                forgetting. */}
+            <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
               {t("recovery.title")}
+              <InfoBubble tip={t("recovery.why")} />
             </h3>
-            <p className="text-xs text-carbon-textMuted leading-relaxed">
-              {t("recovery.why")}
-            </p>
             <button
               type="button"
               onClick={() => {
@@ -4947,7 +4977,7 @@ export function SettingsPage() {
       {/* SYSTEM — Security                                                  */}
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && (
-      <Card title={t("auth.security")}>
+      <Card title={t("auth.security")} hint={t("auth.passwordHint")}>
         {/* Status badge */}
         <div className="flex items-center gap-2">
           <span
@@ -4957,11 +4987,6 @@ export function SettingsPage() {
             {authEnabled ? t("auth.authOn") : t("auth.authOff")}
           </span>
         </div>
-
-        {/* Password hint */}
-        <p className="text-xs text-carbon-textMuted leading-relaxed">
-          {t("auth.passwordHint")}
-        </p>
 
         {/* Set / Change password form */}
         <div className="flex flex-col gap-3">
