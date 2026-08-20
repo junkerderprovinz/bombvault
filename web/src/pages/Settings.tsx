@@ -182,26 +182,32 @@ export function ToggleRow({
 // and SettingsPage's own handleSetPassword), as a deliberate proof of
 // adoption, not a full migration. This SaveBar component itself, and the
 // ~30 call sites across this file that render it (all sharing the single
-// generic `save()` helper further down), are DELIBERATELY left on the
-// original "saved"/"error" inline-flash behaviour below — migrating a
-// helper this widely shared would silently convert every one of those
-// call sites in one pass, which is explicitly out of this task's scope
-// (per the audit: per-site triage for the remaining ~35 inline-status
-// sites is separate, deliberate follow-up work, not something to fold into
-// a single generic-helper edit). See lib/toast.tsx's own header comment.
+// generic `save()` helper further down), were DELIBERATELY left on the
+// original "saved"/"error" inline-flash behaviour — migrating a helper
+// this widely shared would silently convert every one of those call sites
+// in one pass, which was explicitly out of Task 9's scope.
+//
+// GlimStone follow-up pass (v8.0.0): that follow-up work. `save()` (below)
+// now pushes a toast on both outcomes and resets straight back to "idle" —
+// same shape as handleSetPassword's own migration — so the "saved"/"error"
+// states this component used to render are never produced by any caller
+// anymore. The two branches that rendered them are gone; `error` stays in
+// the prop signature (still passed by all ~30 call sites, always null now)
+// rather than forcing a signature change across every one of them for a
+// prop that would otherwise go unused — `_error` names that deliberately.
 // ---------------------------------------------------------------------------
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 function SaveBar({
   state,
-  error,
   onSave,
   t,
   disabled = false,
 }: {
   state: SaveState;
-  error: string | null;
+  /** Always null post-migration — see this component's header comment. */
+  error?: string | null;
   onSave: () => void;
   t: ReturnType<typeof useT>["t"];
   disabled?: boolean;
@@ -225,12 +231,6 @@ function SaveBar({
           t("settings.save")
         )}
       </button>
-      {state === "saved" && (
-        <span className="text-sm text-statusOk">{t("settings.saved")}</span>
-      )}
-      {state === "error" && error && (
-        <span className="text-sm text-statusFail">{error}</span>
-      )}
     </div>
   );
 }
@@ -701,10 +701,16 @@ type DashPluginStatus =
 // over the existing host SSH connection. Without SSH it degrades to manual
 // instructions (the copyable .plg URL + a CA hint).
 function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { push } = useToast();
+  // `status` stays exactly as it was — GlimStone follow-up pass (v8.0.0)
+  // audit note: this is a PERSISTENT "is the tile currently installed" fact
+  // (plus, on failure, a possibly multi-line command `output` block), not a
+  // one-shot completion notice — a poor fit for a 4s, w-80 toast, so it's
+  // deliberately left as inline status rather than forced into one. Only the
+  // two genuinely ephemeral notices below (the URL copy-feedback swap and the
+  // ok-alongside-persistent-status install flash) moved to toasts.
   const [status, setStatus] = useState<DashPluginStatus>({ kind: "loading" });
   const [busy, setBusy] = useState<"idle" | "install" | "remove">("idle");
-  const [installOk, setInstallOk] = useState(false);
-  const [urlCopied, setUrlCopied] = useState(false);
 
   function refresh() {
     getDashboardPlugin()
@@ -731,11 +737,10 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   async function run(op: "install" | "remove") {
     setBusy(op);
-    setInstallOk(false);
     try {
       const r = await (op === "install" ? installDashboardPlugin() : removeDashboardPlugin());
       if (r.ok) {
-        if (op === "install") setInstallOk(true);
+        if (op === "install") push(t("settings.dashTileInstallOk"), "success");
         refresh();
       } else {
         setStatus({
@@ -756,8 +761,9 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   async function handleCopyUrl() {
     if (await copyText(DASH_PLUGIN_PLG_URL)) {
-      setUrlCopied(true);
-      setTimeout(() => setUrlCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
+    } else {
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
 
@@ -784,7 +790,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
               onClick={() => void handleCopyUrl()}
               className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
             >
-              {urlCopied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+              {t("vm.ssh.copy")}
             </button>
           </div>
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileCa")}</p>
@@ -829,9 +835,6 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
               ? t("settings.dashTileInstalled").replace("{version}", status.version)
               : t("settings.dashTileInstalledNoV")}
           </span>
-          {installOk && (
-            <span className="text-xs text-statusOk">{t("settings.dashTileInstallOk")}</span>
-          )}
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileInstalledHint")}</p>
           <button
             type="button"
@@ -883,27 +886,27 @@ function DashboardWidgetCard({
   tokenSet: boolean;
   onTokenSet: (set: boolean) => void;
 }) {
+  const { push } = useToast();
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const reveal = useReveal();
 
   const widgetUrl = token ? `${window.location.origin}/widget?token=${token}` : null;
 
+  // GlimStone follow-up pass (v8.0.0): same migration as FleetSettingsCard's
+  // own generate/disable/copy handlers further down — see that card's comment.
   async function handleGenerate() {
     setBusy(true);
-    setError(null);
     try {
       const r = await generateWidgetToken();
       if (r.ok && r.token) {
         setToken(r.token);
         onTokenSet(true);
       } else {
-        setError(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }
@@ -911,17 +914,16 @@ function DashboardWidgetCard({
 
   async function handleDisable() {
     setBusy(true);
-    setError(null);
     try {
       const r = await disableWidgetToken();
       if (r.ok) {
         setToken(null);
         onTokenSet(false);
       } else {
-        setError(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }
@@ -930,8 +932,9 @@ function DashboardWidgetCard({
   async function handleCopy() {
     if (!widgetUrl) return;
     if (await copyText(widgetUrl)) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
+    } else {
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
 
@@ -989,7 +992,6 @@ function DashboardWidgetCard({
           {t("settings.widgetGenerate")}
         </button>
       )}
-      {error && <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>}
 
       {tokenSet && !token && (
         <p className="text-xs text-carbon-textMuted">{t("settings.widgetUrlOnce")}</p>
@@ -1007,7 +1009,7 @@ function DashboardWidgetCard({
                 onClick={() => void handleCopy()}
                 className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
               >
-                {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+                {t("vm.ssh.copy")}
               </button>
             </div>
           </div>
@@ -1052,27 +1054,30 @@ function FleetSettingsCard({
   tokenSet: boolean;
   onTokenSet: (set: boolean) => void;
 }) {
+  const { push } = useToast();
   const [nameSaveState, setNameSaveState] = useState<SaveState>("idle");
   const [nameSaveError, setNameSaveError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const reveal = useReveal();
 
+  // GlimStone follow-up pass (v8.0.0): the persistent "✗ {error}" banner
+  // (never auto-cleared; only reset by the next generate/disable attempt) is
+  // now a toast — a generate/disable outcome is the same one-shot completion
+  // notice handleSetPassword's own migration already established the pattern
+  // for, above.
   async function handleGenerate() {
     setBusy(true);
-    setError(null);
     try {
       const r = await generateFleetToken();
       if (r.ok && r.token) {
         setToken(r.token);
         onTokenSet(true);
       } else {
-        setError(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }
@@ -1080,27 +1085,30 @@ function FleetSettingsCard({
 
   async function handleDisable() {
     setBusy(true);
-    setError(null);
     try {
       const r = await disableFleetToken();
       if (r.ok) {
         setToken(null);
         onTokenSet(false);
       } else {
-        setError(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }
   }
 
+  // copyText falls back to execCommand in non-secure contexts (#112). Mirrors
+  // VMSSHCard's own handleCopy migration: the local button-label swap is now
+  // a routine (quiet-mode-suppressible) toast — see lib/toast.tsx.
   async function handleCopy() {
     if (!token) return;
     if (await copyText(token)) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
+    } else {
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
 
@@ -1175,7 +1183,6 @@ function FleetSettingsCard({
           {t("settings.fleetGenerate")}
         </button>
       )}
-      {error && <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>}
 
       {tokenSet && !token && (
         <p className="text-xs text-carbon-textMuted">{t("settings.fleetTokenOnce")}</p>
@@ -1192,7 +1199,7 @@ function FleetSettingsCard({
               onClick={() => void handleCopy()}
               className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
             >
-              {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+              {t("vm.ssh.copy")}
             </button>
           </div>
           <p className="text-caption text-carbon-textMuted">
@@ -1208,10 +1215,10 @@ function FleetSettingsCard({
 // stored encrypted; only the remote NAMES are read back for display. Backup
 // paths can then be set to "rclone:<remote>:<bucket>" in Backup Paths.
 export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { push } = useToast();
   const [remotes, setRemotes] = useState<string[]>([]);
   const [conf, setConf] = useState("");
   const [state, setState] = useState<SaveState>("idle");
-  const [msg, setMsg] = useState<string | null>(null);
 
   function refresh() {
     getRclone()
@@ -1224,23 +1231,24 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     refresh();
   }, []);
 
+  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 3000ms inline flash
+  // is now a toast, same shape as the shared save() helper further down.
   async function handleSave() {
     setState("saving");
-    setMsg(null);
     try {
       const r = await setRclone(conf);
       if (r.ok) {
-        setState("saved");
+        setState("idle");
         setConf("");
         refresh();
-        setTimeout(() => setState("idle"), 3000);
+        push(t("settings.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        setState("idle");
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      setState("idle");
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
   }
 
@@ -1277,8 +1285,6 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         >
           {state === "saving" ? t("auth.saving") : t("rclone.save")}
         </button>
-        {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
-        {state === "error" && msg && <span className="text-sm text-statusFail">{msg}</span>}
       </div>
     </Card>
   );
@@ -1288,11 +1294,11 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // kept encrypted. Secrets are write-only: blank on load, blank-on-save keeps the
 // stored value. Field labels are restic's actual env var names (self-documenting).
 export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { push } = useToast();
   const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [secretSet, setSecretSet] = useState(false);
   const [pwSet, setPwSet] = useState(false);
   const [state, setState] = useState<SaveState>("idle");
-  const [msg, setMsg] = useState<string | null>(null);
   const revealS3Secret = useReveal();
   const revealRestPassword = useReveal();
 
@@ -1313,23 +1319,23 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     setC((p) => ({ ...p, [k]: v }));
   }
 
+  // GlimStone follow-up pass (v8.0.0): "saved"/"error" flash -> toast.
   async function handleSave() {
     setState("saving");
-    setMsg(null);
     try {
       const r = await setCloud(c);
       if (r.ok) {
-        setState("saved");
+        setState("idle");
         setC((p) => ({ ...p, s3Secret: "", restPassword: "" }));
         refresh();
-        setTimeout(() => setState("idle"), 3000);
+        push(t("settings.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        setState("idle");
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      setState("idle");
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
   }
 
@@ -1390,8 +1396,6 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         >
           {state === "saving" ? t("auth.saving") : t("settings.save")}
         </button>
-        {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
-        {state === "error" && msg && <span className="text-sm text-statusFail">{msg}</span>}
       </div>
     </Card>
   );
@@ -1415,10 +1419,10 @@ function toDraft(s: CloudCredSetInfo): CloudCredSet {
 // every save resends every set (via toDraft — see its own comment for why
 // that is safe for the sets NOT being edited).
 export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { push } = useToast();
   const [sets, setSets] = useState<CloudCredSetInfo[]>([]);
   const [editing, setEditing] = useState<CloudCredSet | null>(null);
   const [state, setState] = useState<SaveState>("idle");
-  const [msg, setMsg] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const revealS3Secret = useReveal();
@@ -1437,42 +1441,46 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     // and this click would throw instead of opening the editor (see lib/uuid.ts).
     setEditing({ id: randomId(), name: "", s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
     setState("idle");
-    setMsg(null);
   }
   function openEdit(s: CloudCredSetInfo) {
     setEditing(toDraft(s));
     setState("idle");
-    setMsg(null);
   }
   function closeEditor() {
     setEditing(null);
     setState("idle");
-    setMsg(null);
   }
   function setField<K extends keyof CloudCredSet>(k: K, v: CloudCredSet[K]) {
     setEditing((p) => (p ? { ...p, [k]: v } : p));
   }
 
+  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" flash below is now
+  // a toast (save() previously had no success notice at all, since closeEditor()
+  // removed the form before it could show one — push() fixes that too). remove()'s
+  // failure used to set `msg` with nothing left mounted to render it (the editor
+  // closes on remove, and `state` never becomes "error" from remove() alone) — a
+  // latent dead branch this migration also resolves, now that both routes push
+  // the same way.
   async function save() {
     if (!editing) return;
     setState("saving");
-    setMsg(null);
     const isNew = !sets.some((s) => s.id === editing.id);
     const rest = sets.filter((s) => s.id !== editing.id).map(toDraft);
     const next = isNew ? [...rest, editing] : [...rest, editing];
     try {
       const r = await setCloudCredSets(next);
       if (r.ok) {
-        setState("saved");
+        setState("idle");
         closeEditor();
         refresh();
+        push(t("settings.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        setState("idle");
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      setState("idle");
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
   }
 
@@ -1484,10 +1492,10 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       if (r.ok) {
         refresh();
       } else {
-        setMsg(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setRemovingId(null);
       setConfirmRemove(null);
@@ -1588,7 +1596,6 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             >
               {t("common.close")}
             </button>
-            {state === "error" && msg && <span className="text-sm text-statusFail">{msg}</span>}
           </div>
         </div>
       ) : (
@@ -1672,13 +1679,12 @@ const emptyNotify: NotifyConfig = {
 // reference" and "already covered by the field's own placeholder + caption"
 // and was left as-is with its own comment rather than force that call here.
 function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { push } = useToast();
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
   // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
   const { advanced } = useAdvanced();
   const [cfg, setCfg] = useState<NotifyConfig>(emptyNotify);
   const [state, setState] = useState<SaveState>("idle");
-  const [msg, setMsg] = useState<string | null>(null);
-  const [tested, setTested] = useState(false);
   // The SMTP password / Matrix token are never sent to the browser; track whether
   // one is stored so the field shows "configured" and a blank submit keeps it.
   const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false });
@@ -1698,39 +1704,36 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     setCfg((c) => ({ ...c, [k]: v }));
   }
 
+  // GlimStone follow-up pass (v8.0.0): both the save flash and the separate
+  // "tested" flash below are now toasts — same one-shot-completion-notice
+  // reasoning as the shared save() helper further down.
   async function handleSave() {
     setState("saving");
-    setMsg(null);
     try {
       const r = await setNotify(cfg);
       if (r.ok) {
-        setState("saved");
-        setTimeout(() => setState("idle"), 3000);
+        setState("idle");
+        push(t("settings.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        setState("idle");
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      setState("idle");
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
   }
 
   async function handleTest() {
-    setTested(false);
-    setMsg(null);
     try {
       const r = await testNotify(cfg);
       if (r.ok) {
-        setTested(true);
-        setTimeout(() => setTested(false), 3000);
+        push(t("notify.tested"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
   }
 
@@ -1981,9 +1984,6 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
           {t("notify.test")}
         </button>
-        {state === "saved" && <span className="text-sm text-statusOk">{t("settings.saved")}</span>}
-        {tested && <span className="text-sm text-statusOk">{t("notify.tested")}</span>}
-        {state === "error" && msg && <span className="text-sm text-statusFail wrap-break-word">{msg}</span>}
       </div>
     </Card>
   );
@@ -1991,6 +1991,13 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
 // ReplicateNowButton triggers an on-demand off-site replication for one domain
 // (restic copy local→off-site), surfacing the result inline.
+// GlimStone follow-up pass (v8.0.0): both this button's "started"/"failed"
+// flash AND TestConnectionButton's ok/uninit/fail verdict below moved to
+// toasts — same one-shot completion-notice reasoning as the shared save()
+// helper further down, just for the off-site tab's per-domain action buttons
+// instead of a settings PUT. Each is a single shared component instantiated
+// per domain (containers/vms/flash/files), so this migrates every one of
+// those call sites at once, the same leverage as the save() helper.
 function ReplicateNowButton({
   domain,
   t,
@@ -1998,38 +2005,32 @@ function ReplicateNowButton({
   domain: "containers" | "vms" | "flash" | "files";
   t: ReturnType<typeof useT>["t"];
 }) {
-  const [st, setSt] = useState<"idle" | "busy" | "ok" | "fail">("idle");
-  const [err, setErr] = useState<string | null>(null);
+  const { push } = useToast();
+  const [busy, setBusy] = useState(false);
   async function go() {
-    setSt("busy");
-    setErr(null);
+    setBusy(true);
     try {
       const r = await replicateOffsite(domain);
       if (r.ok) {
-        setSt("ok");
-        setTimeout(() => setSt("idle"), 4000);
+        push(t("offsite.replicateStarted"), "success");
       } else {
-        setSt("fail");
-        setErr(r.error ?? t("offsite.replicateFailed"));
+        push(r.error ?? t("offsite.replicateFailed"), "fail");
       }
     } catch (e) {
-      setSt("fail");
-      setErr(e instanceof Error ? e.message : t("offsite.replicateFailed"));
+      push(e instanceof Error ? e.message : t("offsite.replicateFailed"), "fail");
+    } finally {
+      setBusy(false);
     }
   }
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <button
-        type="button"
-        onClick={() => void go()}
-        disabled={st === "busy"}
-        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-      >
-        {st === "busy" ? t("offsite.replicating") : t("offsite.replicateNow")}
-      </button>
-      {st === "ok" && <span className="text-xs text-statusOk">{t("offsite.replicateStarted")}</span>}
-      {st === "fail" && <span className="text-xs text-statusFail wrap-break-word">{err}</span>}
-    </span>
+    <button
+      type="button"
+      onClick={() => void go()}
+      disabled={busy}
+      className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+    >
+      {busy ? t("offsite.replicating") : t("offsite.replicateNow")}
+    </button>
   );
 }
 
@@ -2043,47 +2044,39 @@ function TestConnectionButton({
   domain: "containers" | "vms" | "flash" | "files";
   t: ReturnType<typeof useT>["t"];
 }) {
-  const [st, setSt] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
-  const [err, setErr] = useState<string | null>(null);
+  const { push } = useToast();
+  const [busy, setBusy] = useState(false);
   // This button probes the PRIMARY target only. Once a domain has more than one
   // off-site copy, say so on the label — an unqualified "Test connection" going
   // green while a second destination was broken is exactly what issue #138
   // reported. Each additional target has its own button in OffsiteTargetsSection.
   const multiTarget = useOffsiteTargets(domain).length > 1;
   async function go() {
-    setSt("busy");
-    setErr(null);
+    setBusy(true);
     try {
       const r = await testOffsite(domain);
       if (r.ok && r.reachable && r.initialized) {
-        setSt("ok");
+        push(t("offsite.testOk"), "success");
       } else if (r.ok && r.reachable) {
-        setSt("uninit");
+        push(t("offsite.testUninitialized"), "warn");
       } else {
-        setSt("fail");
-        setErr(r.error ?? null);
+        push(r.error ?? t("offsite.testFailed"), "fail");
       }
     } catch (e) {
-      setSt("fail");
-      setErr(e instanceof Error ? e.message : null);
+      push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
+    } finally {
+      setBusy(false);
     }
   }
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <button
-        type="button"
-        onClick={() => void go()}
-        disabled={st === "busy"}
-        className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-      >
-        {multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
-      </button>
-      {st === "ok" && <span className="text-xs text-statusOk">{t("offsite.testOk")}</span>}
-      {st === "uninit" && <span className="text-xs text-statusWarn">{t("offsite.testUninitialized")}</span>}
-      {st === "fail" && (
-        <span className="text-xs text-statusFail wrap-break-word">{err ?? t("offsite.testFailed")}</span>
-      )}
-    </span>
+    <button
+      type="button"
+      onClick={() => void go()}
+      disabled={busy}
+      className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+    >
+      {multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
+    </button>
   );
 }
 
@@ -2141,11 +2134,16 @@ function IntegrityCard({
   const [containers, setContainers] = useState<Container[]>([]);
   // VM list feeding the DR-drill target dropdown (kind "dr", VMs).
   const [vms, setVMs] = useState<VM[]>([]);
-  // Save state for the drill-target dropdowns (persisted via the parent save()).
-  const [tgtState, setTgtState] = useState<SaveState>("idle");
-  const [tgtError, setTgtError] = useState<string | null>(null);
-  const [tgtVMState, setTgtVMState] = useState<SaveState>("idle");
-  const [tgtVMError, setTgtVMError] = useState<string | null>(null);
+  // Save state for the drill-target dropdowns (persisted via the parent
+  // save()). GlimStone follow-up pass (v8.0.0): save() now pushes a toast on
+  // both outcomes instead of setting a "saved"/"error" render state (see
+  // save()'s own header comment), so only the setters are needed here —
+  // save() still requires them as callback params, but nothing reads the
+  // values back anymore.
+  const [, setTgtState] = useState<SaveState>("idle");
+  const [, setTgtError] = useState<string | null>(null);
+  const [, setTgtVMState] = useState<SaveState>("idle");
+  const [, setTgtVMError] = useState<string | null>(null);
 
   type Domain = "containers" | "vms" | "flash" | "files";
   type Action = "verify" | "unlock" | "prune";
@@ -2399,8 +2397,9 @@ function IntegrityCard({
               ))}
             </select>
           </label>
-          {tgtState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-          {tgtState === "error" && tgtError && <span className="text-xs text-statusFail">{tgtError}</span>}
+          {/* GlimStone follow-up pass (v8.0.0): the "saved"/"error" flash this
+              used to render is gone — the shared save() now pushes a toast
+              on both outcomes (see its own header comment). */}
           <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
             {t("drill.targetVM")}
             <select
@@ -2421,8 +2420,6 @@ function IntegrityCard({
               ))}
             </select>
           </label>
-          {tgtVMState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-          {tgtVMState === "error" && tgtVMError && <span className="text-xs text-statusFail">{tgtVMError}</span>}
         </div>
       )}
 
@@ -2846,21 +2843,23 @@ function FilesSection({
   onSetsChanged: () => void;
   t: ReturnType<typeof useT>["t"];
 }) {
+  const { push } = useToast();
   const schedule = settings.filesSchedule;
   const status = scheduleStatus(schedule);
-  // Per-set toggle busy/error state, keyed by set id.
+  // Per-set toggle busy state, keyed by set id.
   const [busy, setBusy] = useState<Record<string, boolean>>({});
-  const [error, setError] = useState<string | null>(null);
 
+  // GlimStone follow-up pass (v8.0.0): the persistent (never auto-cleared)
+  // error paragraph below is now a toast — a toggle failure is a one-shot
+  // completion notice like every other migrated site here.
   async function toggle(set: FileSetView) {
     setBusy((b) => ({ ...b, [set.id]: true }));
-    setError(null);
     try {
       const res = await patchFileSet(set.id, { enabled: !set.enabled });
       if (res.ok) onSetsChanged();
-      else setError(res.error ?? t("settings.error"));
+      else push(res.error ?? t("settings.error"), "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy((b) => ({ ...b, [set.id]: false }));
     }
@@ -2916,7 +2915,6 @@ function FilesSection({
           ))}
         </div>
       )}
-      {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
     </Card>
   );
 }
@@ -3357,6 +3355,20 @@ export function SettingsPage() {
   // the write. Callers that gate a follow-up action on a confirmed save (e.g. the
   // off-site immutable toggle, which must not run a tamper test on a failed save)
   // await the boolean; fire-and-forget callers can still ignore it via `void`.
+  //
+  // GlimStone follow-up pass (v8.0.0): this is the ~21-site "SaveBar" chokepoint
+  // Task 9 deliberately left alone (see lib/toast.tsx's own header comment) —
+  // every card's Save button funnels through this ONE function (directly, or via
+  // the `save` prop threaded into FleetSettingsCard/IntegrityCard/etc.), so
+  // migrating it here migrates every one of those call sites at once, the same
+  // way handleSetPassword/ConfigSettingsCard already did for their own single
+  // completion notice. The 3000ms "saved"/"error" inline flash is gone — both
+  // outcomes go through push() instead, and the state resets straight back to
+  // "idle" (mirrors handleSetPassword's own pattern above). `setSaveError` is
+  // still threaded through and always cleared to null: removing the parameter
+  // would touch all ~21 call sites' signatures for zero behavioural gain (it was
+  // only ever read by the now-deleted flash), so it stays as a harmless, always-
+  // null vestige rather than a wide, risk-for-no-reason signature change.
   async function save(
     patch: Partial<Settings>,
     setSaveState: (s: SaveState) => void,
@@ -3376,19 +3388,19 @@ export function SettingsPage() {
         // other cards' in-progress edits are left untouched.
         setSavedSettings(updated);
         setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
-        setSaveState("saved");
+        setSaveState("idle");
         // Tell the Layout/Sidebar to refetch so a newly enabled/disabled domain
         // tab appears or vanishes immediately — no page reload needed.
         window.dispatchEvent(new Event("bv:settings-changed"));
-        setTimeout(() => setSaveState("idle"), 3000);
+        push(t("settings.saved"), "success");
         return true;
       }
-      setSaveError(res.error ?? t("settings.error"));
-      setSaveState("error");
+      setSaveState("idle");
+      push(res.error ?? t("settings.error"), "fail");
       return false;
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : t("settings.error"));
-      setSaveState("error");
+      setSaveState("idle");
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
       return false;
     }
   }
