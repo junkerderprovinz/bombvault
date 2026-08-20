@@ -116,7 +116,6 @@ const pt: Partial<Translations> = {
   "restore.confirmTitle": "Confirmar restauro",
   "restore.confirmBody":
     "O container será parado, os seus dados substituídos e recriado a partir do backup. Continuar?",
-  "restore.confirm": "Confirmar",
   "restore.cancel": "Cancelar restauro",
   "restore.cancelConfirmSafe": "Cancelar o restauro? A pasta de saída parcial é mantida como está.",
   "restore.cancelConfirmInPlace": "{name} está a meio de um restauro. Cancelar deixa este restauro incompleto — poderá ser necessário executá-lo novamente. Cancelar mesmo assim?",
@@ -138,6 +137,7 @@ const pt: Partial<Translations> = {
   "run.statusRunning": "Em curso",
   "run.statusSuccess": "Concluído",
   "run.statusFailed": "Falhado",
+  "run.statusSkipped": "Ignorado",
   "run.historyTitle": "Histórico de execuções",
   "run.filterDay": "Dia:",
   "run.allDays": "Todos os dias",

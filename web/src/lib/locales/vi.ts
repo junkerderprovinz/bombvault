@@ -117,7 +117,6 @@ const vi: Partial<Translations> = {
   "restore.confirmTitle": "Xác nhận khôi phục",
   "restore.confirmBody":
     "Thao tác này sẽ dừng container, thay thế dữ liệu và tạo lại từ bản sao lưu. Tiếp tục?",
-  "restore.confirm": "Xác nhận",
   "restore.cancel": "Hủy khôi phục",
   "restore.cancelConfirmSafe": "Hủy khôi phục? Thư mục đầu ra đã ghi một phần sẽ được giữ nguyên.",
   "restore.cancelConfirmInPlace": "{name} đang khôi phục dở dang. Việc hủy sẽ khiến lần khôi phục này không hoàn tất — bạn có thể cần chạy lại. Vẫn hủy chứ?",
@@ -139,6 +138,7 @@ const vi: Partial<Translations> = {
   "run.statusRunning": "Đang chạy",
   "run.statusSuccess": "Thành công",
   "run.statusFailed": "Thất bại",
+  "run.statusSkipped": "Đã bỏ qua",
   "run.historyTitle": "Lịch sử chạy",
   "run.filterDay": "Ngày:",
   "run.allDays": "Tất cả các ngày",

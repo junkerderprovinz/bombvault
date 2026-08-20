@@ -117,7 +117,6 @@ const he: Partial<Translations> = {
   "restore.confirmTitle": "אשר שחזור",
   "restore.confirmBody":
     "פעולה זו תעצור את ה-container, תחליף את הנתונים שלו ותיצור אותו מחדש מהגיבוי. להמשיך?",
-  "restore.confirm": "אשר",
   "restore.cancel": "ביטול השחזור",
   "restore.cancelConfirmSafe": "לבטל את השחזור? תיקיית הפלט החלקית תישאר כפי שהיא.",
   "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר את השחזור הזה חלקי — ייתכן שיהיה צורך להריץ אותו שוב. לבטל בכל זאת?",
@@ -139,6 +138,7 @@ const he: Partial<Translations> = {
   "run.statusRunning": "פועל",
   "run.statusSuccess": "הצלחה",
   "run.statusFailed": "כשל",
+  "run.statusSkipped": "דולג",
   "run.historyTitle": "היסטוריית הרצות",
   "run.filterDay": "יום:",
   "run.allDays": "כל הימים",

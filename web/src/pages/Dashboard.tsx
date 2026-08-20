@@ -273,9 +273,28 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
 
 // ---------------------------------------------------------------------------
 // Status chip — statusTone maps a raw status string to the shared Badge's
-// tone; the raw string itself is still shown verbatim (these are backend-
-// sourced run-status words, not prose to translate here — see StatusChip's
-// former inline comment on the #57 "skipped" case, preserved in the map below).
+// tone; statusLabel (defined right after it) maps that same string to
+// translated, badge-length text. Every call site renders both together —
+// `<Badge tone={statusTone(s)}>{statusLabel(s, t)}</Badge>` — instead of the
+// tone alone.
+//
+// Task 9 fix: until this task, every one of these Badges rendered the raw
+// English status word verbatim (`{overallStatus}` / `{chipFor(c)}` /
+// `{chipForRpo(...)}` / `{protectionChip(...)}` / `{run.status}` /
+// `{newestRun.status}`) — the exact untranslated-badge-text bug class Phase 1
+// Task 5 already fixed for SpikePanel.tsx's OK/FAIL/INFO chips, sitting the
+// whole time right next to an already-translated sibling label
+// (overallLabel/rpoLabel/protLabel/healthLabel) that made the raw word's
+// presence obvious on close reading. A prior version of this exact comment
+// claimed the opposite — that showing the raw word was deliberate because
+// "these are backend-sourced run-status words, not prose to translate" — but
+// that rationale doesn't hold: `run.statusRunning`/`Success`/`Failed` already
+// existed as real, fully-translated keys in all 26 locales (added for this
+// exact fix, then never wired up), and `chipFor`/`chipForRpo`/`protectionChip`
+// below don't return backend text at all — they're this file's own derived
+// vocabulary. Task 7 (fifth hue) only ever touched statusTone's tone mapping,
+// never what the Badge's children rendered, so the bug (and the incorrect
+// comment defending it) survived that task untouched.
 //
 // KNOWN LIMITATION, documented on purpose (spec-compliance review of Task 7,
 // not fixed in that task — see index.css's matching comment on
@@ -336,6 +355,33 @@ function statusTone(status: string): BadgeTone {
       return "neutral";
     default:
       return "neutral";
+  }
+}
+
+// statusLabel is statusTone's translation-side twin (Task 9). It keys off
+// the SAME tone bucket statusTone already computes — not the raw string a
+// second time — so every raw word any helper below can produce (chipFor:
+// ok/info/failed — chipForRpo: success/info/failed/neutral — protectionChip:
+// ok/info/failed/neutral — run.status/newestRun.status: success/failed/
+// running/skipped) resolves to translated, badge-length text without a
+// second switch to keep in sync. Reuses spike.ok/spike.fail/spike.info —
+// SpikePanel.tsx's own OK/FAIL/INFO wording (Phase 1 Task 5) — for the
+// ok/fail/warn buckets, and run.statusRunning for active (added alongside
+// statusSuccess/statusFailed back when this bug was first anticipated, then
+// never wired up until now). neutral/default gets the one genuinely new key
+// this task adds, run.statusSkipped, translated into all 26 locales.
+function statusLabel(status: string, t: ReturnType<typeof useT>["t"]): string {
+  switch (statusTone(status)) {
+    case "ok":
+      return t("spike.ok");
+    case "fail":
+      return t("spike.fail");
+    case "warn":
+      return t("spike.info");
+    case "active":
+      return t("run.statusRunning");
+    default:
+      return t("run.statusSkipped");
   }
 }
 
@@ -418,7 +464,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
       {hasRun && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-carbon-textMuted">{t("spike.overall")}</span>
-          <Badge tone={statusTone(overallStatus)}>{overallStatus}</Badge>
+          <Badge tone={statusTone(overallStatus)}>{statusLabel(overallStatus, t)}</Badge>
           <span className="text-sm text-carbon-text">{overallLabel}</span>
         </div>
       )}
@@ -431,7 +477,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         <div className="divide-y divide-carbon-border">
           {checks.map((c) => (
             <div key={c.Name} className="flex items-center gap-3 py-2 text-sm">
-              <Badge tone={statusTone(chipFor(c))}>{chipFor(c)}</Badge>
+              <Badge tone={statusTone(chipFor(c))}>{statusLabel(chipFor(c), t)}</Badge>
               <span className="font-mono text-carbon-text w-32 shrink-0">{c.Name}</span>
               <span className="text-carbon-textMuted truncate flex-1">{c.Detail}</span>
               {c.BestEffort && (
@@ -619,7 +665,7 @@ function ProtectionCard({
                           pill never drifts from the words it qualifies. */}
                       <div className="col-start-2 flex min-w-0 items-center gap-2">
                         <span className="shrink-0">
-                          <Badge tone={statusTone(chipForRpo(d.status))}>{chipForRpo(d.status)}</Badge>
+                          <Badge tone={statusTone(chipForRpo(d.status))}>{statusLabel(chipForRpo(d.status), t)}</Badge>
                         </span>
                         <span className="min-w-0 truncate text-carbon-text">
                           {rpoLabel(d.status)}
@@ -911,7 +957,7 @@ function RansomwareCard({
                 <span className="font-medium text-carbon-text w-28 shrink-0 truncate">
                   {domainLabel(d.domain)}
                 </span>
-                <Badge tone={statusTone(protectionChip(d.protection))}>{protectionChip(d.protection)}</Badge>
+                <Badge tone={statusTone(protectionChip(d.protection))}>{statusLabel(protectionChip(d.protection), t)}</Badge>
                 <span className="text-sm text-carbon-textSub">{protLabel(d.protection)}</span>
               </div>
               <div className="flex flex-col gap-0.5 ps-1">
@@ -1042,7 +1088,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
               return (
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
-                  <Badge tone={statusTone(run.status)}>{run.status}</Badge>
+                  <Badge tone={statusTone(run.status)}>{statusLabel(run.status, t)}</Badge>
                   <span className="text-carbon-text font-medium w-16 shrink-0 truncate">
                     {runKindLabel(t, run.kind)}
                   </span>
@@ -1826,7 +1872,7 @@ function SummaryTier({
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
           <>
-            {health !== "off" && <Badge tone={statusTone(chipForRpo(health))}>{chipForRpo(health)}</Badge>}
+            {health !== "off" && <Badge tone={statusTone(chipForRpo(health))}>{statusLabel(chipForRpo(health), t)}</Badge>}
             <span className="text-sm text-carbon-text truncate min-w-0">{healthLabel}</span>
           </>
         )}
@@ -1847,7 +1893,7 @@ function SummaryTier({
       <SummaryCell label={t("dashboard.summaryLastResult")}>
         {newestRun ? (
           <>
-            <Badge tone={statusTone(newestRun.status)}>{newestRun.status}</Badge>
+            <Badge tone={statusTone(newestRun.status)}>{statusLabel(newestRun.status, t)}</Badge>
             <span className="text-sm text-carbon-text flex-1 truncate min-w-0">
               {runTargetText(t, newestRun)}
             </span>

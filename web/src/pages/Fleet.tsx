@@ -66,7 +66,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
@@ -323,7 +323,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
                 dir="ltr"
                 className={`${inputCls} font-mono text-start`}
               />
-              <p className="text-[11px] text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
             </div>
             {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
             <div className="flex items-center justify-end gap-2 pt-1">
@@ -634,7 +634,7 @@ function FleetDialog({
             dir="ltr"
             className={`${inputCls} font-mono text-start`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("fleet.urlHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("fleet.urlHint")}</p>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -649,7 +649,7 @@ function FleetDialog({
             wrapperClassName="w-full"
             className={`${inputCls} font-mono`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("fleet.tokenHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
         </div>
 
         <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">

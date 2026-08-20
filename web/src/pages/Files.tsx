@@ -48,6 +48,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
+import { Toggle } from "../components/Toggle";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -93,27 +94,13 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
-        role="switch"
-        aria-label={t("containers.includeInSchedule")}
-        aria-checked={enabled}
+      <Toggle
+        hideLabel
+        label={t("containers.includeInSchedule")}
+        checked={enabled}
+        onChange={(next) => void handleChange(next)}
         disabled={busy}
-        onClick={() => void handleChange(!enabled)}
-        title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-          enabled ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          // Physical `translate-x`, so it needs an explicit `rtl:` sign flip
-          // to land on the mirrored side of the track instead of pushing the
-          // thumb outside it — see Toggle.tsx's header comment for the full
-          // reasoning (RTL sweep, form-engine Phase 2 Task 6 follow-up fix).
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
-          }`}
-        />
-      </button>
+      />
       {error && (
         <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
@@ -283,7 +270,7 @@ function FileSetFileBrowser({
 
   return (
     <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-2">
-      <p className="text-[11px] text-carbon-textMuted">{t("files.selectHint")}</p>
+      <p className="text-caption text-carbon-textMuted">{t("files.selectHint")}</p>
       <SnapshotFileTree
         files={files}
         loading={loading}
@@ -313,7 +300,7 @@ function FileSetFileBrowser({
               {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
             </button>
             {blockedByOther && (
-              <span className="text-[11px] text-carbon-textMuted">{t(busyPhraseKey(otherActive.phase))}</span>
+              <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(otherActive.phase))}</span>
             )}
           </div>
           <RestoreProgress
@@ -454,7 +441,7 @@ function FileSetRestoreControl({
           </button>
         )}
         {blockedByOther && dest !== "select" && (
-          <span className="text-[11px] text-carbon-textMuted shrink-0">
+          <span className="text-caption text-carbon-textMuted shrink-0">
             {t(busyPhraseKey(otherActive.phase))}
           </span>
         )}
@@ -701,7 +688,7 @@ function FileSetRestorePanel({
                 </Badge>
               )}
             </div>
-            <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+            <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
           </div>
           <RecentRunsList name={set.name} domain="files" t={t} />
           {loading && (
@@ -831,7 +818,7 @@ function FileSetDialog({
             hostMountRoot={hostMountRoot}
             onChange={setPath}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("files.pathHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("files.pathHint")}</p>
         </div>
 
         {/* Exclude patterns, one per line */}
@@ -846,7 +833,7 @@ function FileSetDialog({
             dir="ltr"
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("files.excludesHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
 
         {/* Include in schedule */}

@@ -71,7 +71,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
   if (inline) {
     return (
       <div className="flex flex-col gap-0.5">
-        {label && <span className="text-[11px] text-carbon-textMuted">{label}</span>}
+        {label && <span className="text-caption text-carbon-textMuted">{label}</span>}
         {track}
       </div>
     );

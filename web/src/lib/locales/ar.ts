@@ -117,7 +117,6 @@ const ar: Partial<Translations> = {
   "restore.confirmTitle": "تأكيد الاستعادة",
   "restore.confirmBody":
     "سيُوقف هذا الـ container وتُستبدل بياناته ويُعاد إنشاؤه من النسخة الاحتياطية. هل تريد المتابعة؟",
-  "restore.confirm": "تأكيد",
   "restore.cancel": "إلغاء الاستعادة",
   "restore.cancelConfirmSafe": "إلغاء الاستعادة؟ سيبقى مجلد الإخراج الجزئي كما هو.",
   "restore.cancelConfirmInPlace": "{name} قيد الاستعادة حاليًا. الإلغاء يترك هذه الاستعادة غير مكتملة — قد تحتاج إلى تنفيذها مرة أخرى. الإلغاء على أي حال؟",
@@ -139,6 +138,7 @@ const ar: Partial<Translations> = {
   "run.statusRunning": "يعمل",
   "run.statusSuccess": "ناجح",
   "run.statusFailed": "فشل",
+  "run.statusSkipped": "تم التخطي",
   "run.historyTitle": "سجل التشغيلات",
   "run.filterDay": "اليوم:",
   "run.allDays": "كل الأيام",

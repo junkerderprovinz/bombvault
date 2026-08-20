@@ -15,6 +15,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
+import { Toggle } from "../components/Toggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { ProgressBar } from "../components/ProgressBar";
 import { withLtrFragments, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -448,29 +449,16 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
     <div className="mt-1 flex items-start justify-between gap-3">
       <div className="flex flex-col gap-0.5">
         <span className="text-xs text-carbon-textSub">{t("update.afterBackup")}</span>
-        <span className="text-[11px] text-carbon-textMuted">{t("update.afterBackupHint")}</span>
-        {error && <span className="text-[11px] text-statusFail">{error}</span>}
+        <span className="text-caption text-carbon-textMuted">{t("update.afterBackupHint")}</span>
+        {error && <span className="text-caption text-statusFail">{error}</span>}
       </div>
-      <button
-        role="switch"
-        aria-label={t("update.afterBackup")}
-        aria-checked={enabled}
+      <Toggle
+        hideLabel
+        label={t("update.afterBackup")}
+        checked={enabled}
+        onChange={(next) => void handle(next)}
         disabled={busy}
-        onClick={() => void handle(!enabled)}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-          enabled ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          // Physical `translate-x`, so it needs an explicit `rtl:` sign flip
-          // to land on the mirrored side of the track instead of pushing the
-          // thumb outside it — see Toggle.tsx's header comment for the full
-          // reasoning (RTL sweep, form-engine Phase 2 Task 6 follow-up fix).
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
-          }`}
-        />
-      </button>
+      />
     </div>
   );
 }
@@ -1347,7 +1335,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           <span className="ms-2 text-xs text-carbon-textMuted">
             {t("stack.members").replace("{n}", String(group.members.length))}
           </span>
-          <p className="mt-0.5 text-[11px] text-carbon-textMuted truncate">
+          <p className="mt-0.5 text-caption text-carbon-textMuted truncate">
             {group.members.map((m) => m.name).join(", ")}
           </p>
         </div>
@@ -1402,7 +1390,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           {started && !busy && (
             <div className="flex flex-col gap-1">
               <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-              <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("restore.bgHint")}</p>
               {/* Whole-stack in-place restore — hard warning, keyed to the stack. */}
               <RestoreCancelButton cancelKey={`stack:${group.project}`} inPlace name={group.project} t={t} />
             </div>

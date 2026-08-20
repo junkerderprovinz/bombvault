@@ -116,7 +116,6 @@ const ro: Partial<Translations> = {
   "restore.confirmTitle": "Confirmare restaurare",
   "restore.confirmBody":
     "Aceasta va opri containerul, va înlocui appdata și îl va recrea din copie de rezervă. Continuați?",
-  "restore.confirm": "Confirmare",
   "restore.cancel": "Anulează restaurarea",
   "restore.cancelConfirmSafe": "Anulați restaurarea? Folderul de ieșire parțial este lăsat așa cum este.",
   "restore.cancelConfirmInPlace": "{name} este în curs de restaurare. Anularea lasă această restaurare incompletă — s-ar putea să fie nevoie să o executați din nou. Anulați oricum?",
@@ -138,6 +137,7 @@ const ro: Partial<Translations> = {
   "run.statusRunning": "În rulare",
   "run.statusSuccess": "Succes",
   "run.statusFailed": "Eșuat",
+  "run.statusSkipped": "Omis",
   "run.historyTitle": "Istoricul rulărilor",
   "run.filterDay": "Zi:",
   "run.allDays": "Toate zilele",

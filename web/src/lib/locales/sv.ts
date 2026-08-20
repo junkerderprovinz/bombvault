@@ -117,7 +117,6 @@ const sv: Partial<Translations> = {
   "restore.confirmTitle": "Bekräfta återställning",
   "restore.confirmBody":
     "Containern stoppas, dess appdata ersätts och den återskapas från säkerhetskopian. Fortsätta?",
-  "restore.confirm": "Bekräfta",
   "restore.cancel": "Avbryt återställning",
   "restore.cancelConfirmSafe": "Avbryta återställningen? Den delvis skrivna målmappen lämnas som den är.",
   "restore.cancelConfirmInPlace": "{name} håller på att återställas. Att avbryta lämnar den här återställningen ofullständig — du kan behöva köra den igen. Avbryta ändå?",
@@ -139,6 +138,7 @@ const sv: Partial<Translations> = {
   "run.statusRunning": "Körs",
   "run.statusSuccess": "Lyckades",
   "run.statusFailed": "Misslyckades",
+  "run.statusSkipped": "Överhoppad",
   "run.historyTitle": "Körningshistorik",
   "run.filterDay": "Dag:",
   "run.allDays": "Alla dagar",

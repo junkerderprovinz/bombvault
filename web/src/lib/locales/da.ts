@@ -117,7 +117,6 @@ const da: Partial<Translations> = {
   "restore.confirmTitle": "Bekræft gendannelse",
   "restore.confirmBody":
     "Containeren stoppes, dens appdata erstattes og den genoprettes fra sikkerhedskopien. Fortsæt?",
-  "restore.confirm": "Bekræft",
   "restore.cancel": "Annuller gendannelse",
   "restore.cancelConfirmSafe": "Annuller gendannelsen? Den delvist skrevne målmappe bevares som den er.",
   "restore.cancelConfirmInPlace": "{name} er midt i en gendannelse. Annullering efterlader denne gendannelse ufuldstændig — du skal muligvis køre den igen. Annuller alligevel?",
@@ -139,6 +138,7 @@ const da: Partial<Translations> = {
   "run.statusRunning": "Kører",
   "run.statusSuccess": "Gennemført",
   "run.statusFailed": "Mislykkedes",
+  "run.statusSkipped": "Sprunget over",
   "run.historyTitle": "Kørselsoversigt",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dage",

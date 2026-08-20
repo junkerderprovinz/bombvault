@@ -440,7 +440,7 @@ function ReceiverDialog({
             dir="ltr"
             className={`${inputCls} font-mono text-start`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
         </div>
 
         {/* Sending APP_KEY */}
@@ -456,9 +456,9 @@ function ReceiverDialog({
             wrapperClassName="w-full"
             className={`${inputCls} font-mono`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
           {appKey !== "" && !APP_KEY_RE.test(appKey) && (
-            <p className="text-[11px] text-statusFail">{t("receiver.appKeyInvalid")}</p>
+            <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
           )}
         </div>
 
@@ -486,7 +486,7 @@ function ReceiverDialog({
             />
           </div>
         </div>
-        <p className="text-[11px] text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
+        <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
 
         {/* Check cadence */}
         <div className="flex flex-col gap-1.5">
@@ -501,7 +501,7 @@ function ReceiverDialog({
             dir="ltr"
             className={`${inputCls} font-mono text-start`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
         </div>
 
         {/* Monitor toggle */}

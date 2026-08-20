@@ -115,7 +115,6 @@ const ru: Partial<Translations> = {
   // Restore
   "restore.confirmTitle": "Подтвердить восстановление",
   "restore.confirmBody": "Контейнер будет остановлен, appdata заменены и пересозданы из резервной копии. Продолжить?",
-  "restore.confirm": "Подтвердить",
   "restore.cancel": "Отменить восстановление",
   "restore.cancelConfirmSafe": "Отменить восстановление? Частично записанная целевая папка останется без изменений.",
   "restore.cancelConfirmInPlace": "{name} находится в процессе восстановления. Отмена оставит это восстановление незавершённым — возможно, придётся запустить его снова. Всё равно отменить?",
@@ -137,6 +136,7 @@ const ru: Partial<Translations> = {
   "run.statusRunning": "Выполняется",
   "run.statusSuccess": "Успешно",
   "run.statusFailed": "Ошибка",
+  "run.statusSkipped": "Пропущено",
   "run.historyTitle": "История запусков",
   "run.filterDay": "День:",
   "run.allDays": "Все дни",

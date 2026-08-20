@@ -117,7 +117,6 @@ const ja: Partial<Translations> = {
   "restore.confirmTitle": "復元の確認",
   "restore.confirmBody":
     "コンテナを停止し、appdata を置き換え、バックアップから再作成します。続行しますか？",
-  "restore.confirm": "確認",
   "restore.cancel": "復元をキャンセル",
   "restore.cancelConfirmSafe": "復元をキャンセルしますか？途中まで書き込まれた出力フォルダーはそのまま残ります。",
   "restore.cancelConfirmInPlace": "{name} は復元の途中です。キャンセルするとこの復元は不完全なまま残ります — もう一度実行が必要になる場合があります。それでもキャンセルしますか？",
@@ -139,6 +138,7 @@ const ja: Partial<Translations> = {
   "run.statusRunning": "実行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失敗",
+  "run.statusSkipped": "スキップ済み",
   "run.historyTitle": "実行履歴",
   "run.filterDay": "日付：",
   "run.allDays": "すべての日",

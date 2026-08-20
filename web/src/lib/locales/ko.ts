@@ -117,7 +117,6 @@ const ko: Partial<Translations> = {
   "restore.confirmTitle": "복원 확인",
   "restore.confirmBody":
     "컨테이너를 중지하고, appdata를 교체하며, 백업에서 재생성합니다. 계속하시겠습니까?",
-  "restore.confirm": "확인",
   "restore.cancel": "복원 취소",
   "restore.cancelConfirmSafe": "복원을 취소하시겠습니까? 일부만 기록된 출력 폴더는 그대로 유지됩니다.",
   "restore.cancelConfirmInPlace": "{name}이(가) 복원 중입니다. 취소하면 이 복원이 불완전한 상태로 남습니다 — 다시 실행해야 할 수도 있습니다. 그래도 취소하시겠습니까?",
@@ -139,6 +138,7 @@ const ko: Partial<Translations> = {
   "run.statusRunning": "실행 중",
   "run.statusSuccess": "성공",
   "run.statusFailed": "실패",
+  "run.statusSkipped": "건너뜀",
   "run.historyTitle": "실행 기록",
   "run.filterDay": "날짜:",
   "run.allDays": "모든 날짜",

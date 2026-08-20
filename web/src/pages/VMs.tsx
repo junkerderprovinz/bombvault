@@ -13,6 +13,7 @@ import { RecentRunsList } from "../components/RecentRunsList";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM } from "../components/Sidebar";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { Toggle } from "../components/Toggle";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
@@ -257,27 +258,13 @@ function VMIncludeToggle({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
-        role="switch"
-        aria-label={t("containers.includeInSchedule")}
-        aria-checked={enabled}
+      <Toggle
+        hideLabel
+        label={t("containers.includeInSchedule")}
+        checked={enabled}
+        onChange={(next) => void handleChange(next)}
         disabled={busy}
-        onClick={() => void handleChange(!enabled)}
-        title={t("containers.includeInSchedule")}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-          enabled ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          // Physical `translate-x`, so it needs an explicit `rtl:` sign flip
-          // to land on the mirrored side of the track instead of pushing the
-          // thumb outside it — see Toggle.tsx's header comment for the full
-          // reasoning (RTL sweep, form-engine Phase 2 Task 6 follow-up fix).
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
-          }`}
-        />
-      </button>
+      />
       {error && (
         <span className="text-xs text-statusFail max-w-48 text-end leading-tight">
           {error}
@@ -623,7 +610,7 @@ function VMRestorePanel({
                 </Badge>
               )}
             </div>
-            <p className="text-[11px] text-carbon-textMuted">{t("source.hint")}</p>
+            <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
           </div>
           <RecentRunsList name={name} domain="vm" t={t} />
           {loading && (

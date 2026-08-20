@@ -3,6 +3,7 @@ import type { Settings, DeploySnippetData } from "../lib/api";
 import { deploySnippet, tamperTest, testOffsite, getCloud, setCloud } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { RevealInput } from "./RevealInput";
+import { Toggle } from "./Toggle";
 import { useReveal } from "../lib/useReveal";
 import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -78,7 +79,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   }
   return (
     <div className="flex items-start gap-2">
-      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-[11px] leading-snug text-carbon-text whitespace-pre">
+      <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
       <button
@@ -527,31 +528,17 @@ export function OffsiteWizard({
         <span className={stepTitle}>{t("offsite.wizard.step4")}</span>
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
-            <span id={`imm-label-${domain}`} className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
+            <span className="text-sm text-carbon-text">{t("offsite.immutable")}</span>
             <span className="text-xs text-carbon-textMuted">{t("offsite.immutableHint")}</span>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={immutable}
-            aria-labelledby={`imm-label-${domain}`}
+          <Toggle
+            hideLabel
+            label={t("offsite.immutable")}
+            checked={immutable}
+            onChange={(next) => void toggleImmutable(next)}
             disabled={immState === "saving"}
-            onClick={() => void toggleImmutable(!immutable)}
-            className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-              immutable ? "bg-accent" : "bg-carbon-surface3"
-            }`}
-          >
-            <span
-              // Physical `translate-x`, so it needs an explicit `rtl:` sign
-              // flip to land on the mirrored side of the track instead of
-              // pushing the thumb outside it — see Toggle.tsx's header
-              // comment for the full reasoning (RTL sweep, form-engine
-              // Phase 2 Task 6 follow-up fix).
-              className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-                immutable ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
-              }`}
-            />
-          </button>
+            className="mt-0.5"
+          />
         </div>
         {immState === "error" && immErr && <span className="text-xs text-statusFail">{immErr}</span>}
 

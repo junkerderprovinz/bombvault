@@ -117,7 +117,6 @@ const hu: Partial<Translations> = {
   "restore.confirmTitle": "Visszaállítás megerősítése",
   "restore.confirmBody":
     "Ez leállítja a konténert, kicseréli az appdata-t, és visszaállítja a mentésből. Folytatja?",
-  "restore.confirm": "Megerősítés",
   "restore.cancel": "Visszaállítás megszakítása",
   "restore.cancelConfirmSafe": "Megszakítja a visszaállítást? A részlegesen kiírt célmappa változatlanul megmarad.",
   "restore.cancelConfirmInPlace": "A(z) {name} visszaállítása folyamatban van. A megszakítás félbehagyja ezt a visszaállítást — lehet, hogy újra kell futtatni. Mégis megszakítja?",
@@ -139,6 +138,7 @@ const hu: Partial<Translations> = {
   "run.statusRunning": "Fut",
   "run.statusSuccess": "Sikeres",
   "run.statusFailed": "Sikertelen",
+  "run.statusSkipped": "Kihagyva",
   "run.historyTitle": "Futási előzmények",
   "run.filterDay": "Nap:",
   "run.allDays": "Minden nap",

@@ -479,7 +479,7 @@ function ForeignItemRow({
           </div>
           {subsetActive && (
             <>
-              <p className="text-[11px] text-carbon-textMuted">{t("recovery.foreignSubfolderHint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("recovery.foreignSubfolderHint")}</p>
               <SnapshotFileTree
                 files={foreignFiles}
                 loading={filesLoading}

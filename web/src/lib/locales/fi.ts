@@ -117,7 +117,6 @@ const fi: Partial<Translations> = {
   "restore.confirmTitle": "Vahvista palautus",
   "restore.confirmBody":
     "Kontti pysäytetään, sen appdata korvataan ja se luodaan uudelleen varmuuskopiosta. Jatketaanko?",
-  "restore.confirm": "Vahvista",
   "restore.cancel": "Peruuta palautus",
   "restore.cancelConfirmSafe": "Peruutetaanko palautus? Osittain kirjoitettu kohdekansio jätetään ennalleen.",
   "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää tämän palautuksen keskeneräiseksi — se on ehkä suoritettava uudelleen. Peruutetaanko silti?",
@@ -139,6 +138,7 @@ const fi: Partial<Translations> = {
   "run.statusRunning": "Käynnissä",
   "run.statusSuccess": "Onnistui",
   "run.statusFailed": "Epäonnistui",
+  "run.statusSkipped": "Ohitettu",
   "run.historyTitle": "Ajohistoria",
   "run.filterDay": "Päivä:",
   "run.allDays": "Kaikki päivät",

@@ -117,7 +117,6 @@ const el: Partial<Translations> = {
   "restore.confirmTitle": "Επιβεβαίωση επαναφοράς",
   "restore.confirmBody":
     "Αυτό θα διακόψει το container, θα αντικαταστήσει το appdata και θα το επαναφέρει από το αντίγραφο. Συνέχεια;",
-  "restore.confirm": "Επιβεβαίωση",
   "restore.cancel": "Ακύρωση επαναφοράς",
   "restore.cancelConfirmSafe": "Ακύρωση της επαναφοράς; Ο φάκελος με τα μερικά δεδομένα παραμένει ως έχει.",
   "restore.cancelConfirmInPlace": "Το {name} βρίσκεται σε εξέλιξη επαναφοράς. Η ακύρωση αφήνει αυτή την επαναφορά ημιτελή — ίσως χρειαστεί να την εκτελέσετε ξανά. Ακύρωση ούτως ή άλλως;",
@@ -139,6 +138,7 @@ const el: Partial<Translations> = {
   "run.statusRunning": "Σε εξέλιξη",
   "run.statusSuccess": "Επιτυχία",
   "run.statusFailed": "Αποτυχία",
+  "run.statusSkipped": "Παραλείφθηκε",
   "run.historyTitle": "Ιστορικό εκτελέσεων",
   "run.filterDay": "Ημέρα:",
   "run.allDays": "Όλες οι ημέρες",
