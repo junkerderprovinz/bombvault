@@ -183,17 +183,25 @@ func (s *Service) StartBackupEverything(ctx context.Context) (bool, error) {
 func (s *Service) EverythingInProgress() bool { return s.everythingActive.Load() }
 
 // everythingRunCtx builds the context the three MULTI-ITEM domain steps
-// (containers/vms/files) hand to each item's own backup call: group-stamped
+// (containers/vms/files) hand to each ITEM's own backup call: group-stamped
 // (WithRunGroup) so every child run traces back to runID, plus the exact same
-// suppression stack main.go's scheduled multi-item closures apply — inline
-// off-site replication and per-item Healthchecks/message notifications are
-// suppressed in favour of the ONE aggregate ping/batched replication this
-// domain step performs itself after its loop (see
-// ScheduledHealthchecksStart/Result, ScheduledNotifyResult,
-// PruneAfterBulk/ReplicateOffsiteAfterBulk below). The two SINGLETON domains
-// (flash/config) do not use this — they call WithRunGroup(ctx, runID)
-// directly, mirroring SetFlashJob/SetConfigJob's closures, which apply none
-// of this suppression either (design spec, decision 5).
+// suppression stack main.go's scheduled multi-item closures apply to each
+// item — inline off-site replication and per-item Healthchecks/message
+// notifications are suppressed in favour of the ONE aggregate ping/batched
+// replication this domain step performs itself after its loop (see
+// ScheduledHealthchecksStart/Result, ScheduledNotifyResult below). The
+// PruneAfterBulk/ReplicateOffsiteAfterBulk calls below deliberately do NOT
+// use this suppressed ctx — mirroring main.go's own pruneAfterBulkFn/
+// replicateAfterBulkFn closures, which take no per-item ctx at all and
+// construct a fresh, unsuppressed context.Background() — so a failure
+// surfaced by the batched off-site replication itself still pings
+// Healthchecks/sends its failure notification exactly as a real scheduled
+// domain run's batched replication does; using the suppressed ctx here would
+// silently swallow that notification instead. The two SINGLETON domains
+// (flash/config) do not use everythingRunCtx at all — they call
+// WithRunGroup(ctx, runID) directly, mirroring SetFlashJob/SetConfigJob's
+// closures, which apply none of this suppression either (design spec,
+// decision 5).
 func everythingRunCtx(ctx context.Context, runID string) context.Context {
 	return WithRunGroup(
 		WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(ctx))),
@@ -240,9 +248,12 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 	s.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
 	// Retention before replication, same order every scheduled multi-item
-	// domain uses (fewer snapshots left to copy).
-	s.PruneAfterBulk(runCtx, domain)
-	s.ReplicateOffsiteAfterBulk(runCtx, domain)
+	// domain uses (fewer snapshots left to copy). Plain ctx, not runCtx — see
+	// everythingRunCtx's doc comment: main.go's real pruneAfterBulkFn/
+	// replicateAfterBulkFn closures always run under a fresh, unsuppressed
+	// context.Background(), so a batched-replication failure still notifies.
+	s.PruneAfterBulk(ctx, domain)
+	s.ReplicateOffsiteAfterBulk(ctx, domain)
 
 	return EverythingDomainResult{Domain: domain, Attempted: attempted, Failed: failed, Failures: failures}
 }
@@ -282,8 +293,9 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 	}
 	s.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
-	s.PruneAfterBulk(runCtx, domain)
-	s.ReplicateOffsiteAfterBulk(runCtx, domain)
+	// Plain ctx, not runCtx — see everythingRunCtx's doc comment.
+	s.PruneAfterBulk(ctx, domain)
+	s.ReplicateOffsiteAfterBulk(ctx, domain)
 
 	return EverythingDomainResult{Domain: domain, Attempted: attempted, Failed: failed, Failures: failures}
 }
@@ -321,8 +333,9 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string) Everythi
 	}
 	s.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
-	s.PruneAfterBulk(runCtx, domain)
-	s.ReplicateOffsiteAfterBulk(runCtx, domain)
+	// Plain ctx, not runCtx — see everythingRunCtx's doc comment.
+	s.PruneAfterBulk(ctx, domain)
+	s.ReplicateOffsiteAfterBulk(ctx, domain)
 
 	return EverythingDomainResult{Domain: domain, Attempted: attempted, Failed: failed, Failures: failures}
 }
