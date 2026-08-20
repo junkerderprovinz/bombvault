@@ -48,7 +48,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Proof, not hope** — a customizable protection-status (RPO) dashboard, backup-health heatmap, run history with `start → end (duration)` timing, **restore-verification drills** with a "last verified restorable" badge, repository integrity checks, and an **encryption-key recovery kit** for restoring without a running BombVault.
 - **Ransomware protection** — append-only (immutable) off-site repos with a periodic **tamper test** that *proves* deletes are refused, off-site DR drills into a throwaway sandbox, a posture scorecard and a growth-budget alarm.
 - **Notifications** — webhook (Discord/Slack/Gotify/ntfy), Matrix, Healthchecks.io (full start/success/fail lifecycle), email (SMTP) and Unraid-native alerts, with an optional one-summary-per-scheduled-run mode; opt-in **Prometheus `/metrics`**.
-- **Ops niceties** — pre/post-backup hooks, stop-dependent-containers during backup, per-container exclude patterns with live preview, plain `tar.gz` exports (containers *and* VMs), snapshot diff & tags, server-side batch backups, Docker healthcheck, HTTPS out of the box, dark/light UI in **26 languages**.
+- **Ops niceties** — pre/post-backup hooks, stop-dependent-containers during backup, per-container exclude patterns with live preview, plain `tar.gz` exports (containers *and* VMs), snapshot diff & tags, server-side batch backups, Docker healthcheck, HTTPS out of the box, dark/light UI in **26 languages**, quiet toasts (pop-ups only on failure).
 
 ## Install on Unraid
 

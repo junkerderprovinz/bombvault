@@ -1,5 +1,7 @@
 # BombVault v5.0.0 Redesign — Implementation Spec
 
+> **Superseded, historical.** This spec predates the GlimStone form-engine work (Phase 1 + Phase 2): its `rounded-lg` references were replaced by the `rounded-card`/`rounded-control`/`rounded-pill` shape tokens, and its `StatusChip` references no longer match the current `statusTone`/`Badge` implementation. Kept as a historical record of the v5.0.0 redesign's own reasoning, not as a guide to the current codebase.
+
 Synthesized 2026-07-07 from 7 area audits (dead-code, i18n-master, gating, dashboard, settings, restore, renames-routes). This is the single source of truth for the batched v5.0.0 UX redesign. An implementer who has never seen the code should be able to execute every task below without guessing.
 
 ---
