@@ -8,11 +8,15 @@
 //
 // The focus ring is `--focus-ring`, NOT the `outline-statusInfoSolid` blue every
 // one of those three copies carried. Two reasons, both only visible ACROSS tasks:
-//   - Task 1's own plan note about `--status-info-solid` — whose hue is still
-//     deliberately unresolved (audit item 19, deferred to Phase 2) — is "just
-//     don't add MORE dependencies on it." A new shared component is precisely a
-//     new dependency, and the single point through which a later hue change
-//     would reach every switch in the app at once.
+//   - Task 1's own plan note about `--status-info-solid` — whose hue was then
+//     still deliberately unresolved (audit item 19, deferred to Phase 2) — was
+//     "just don't add MORE dependencies on it." A new shared component is
+//     precisely a new dependency, and the single point through which a later
+//     hue change would reach every switch in the app at once. Phase 2 Task 7
+//     has since resolved it: `--status-info-solid` no longer exists at all
+//     (see index.css's TASK 7 comment for what every real call site became) —
+//     this comment stays as the historical reason THIS component never took
+//     the dependency in the first place, not a forward-looking warning anymore.
 //   - `--focus-ring` is already what the other shared controls this branch added
 //     or reworked use: RevealInput's eye, InfoBubble's icon, Toast's dismiss X.
 //     A switch focusing blue while the reveal eye in the same form focuses amber

@@ -235,7 +235,10 @@ export function Flash() {
           <Badge tone="heading" size="heading" wrap>{t("snapshots.title")}</Badge>
         </h2>
         {/* Safe-restore explainer */}
-        <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
+            same reasoning as Config.tsx's snapshotsHint banner: pure
+            informational prose, folds into --status-neutral-*. */}
+        <div className="rounded-card bg-statusNeutralBg px-3 py-2.5 text-xs text-statusNeutral leading-relaxed">
           {t("flash.restoreNote")}
         </div>
 

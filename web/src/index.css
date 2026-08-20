@@ -41,11 +41,11 @@
   --color-statusWarnBorderStrong: var(--status-warn-border-strong);
   --color-statusWarnSolid: var(--status-warn-solid);
 
-  --color-statusInfo: var(--status-info-text);
-  --color-statusInfoBg: var(--status-info-bg);
-  --color-statusInfoBorder: var(--status-info-border);
-  --color-statusInfoBorderSoft: var(--status-info-border-soft);
-  --color-statusInfoSolid: var(--status-info-solid);
+  /* --color-statusInfo* deliberately does NOT exist (GlimStone form-engine
+     Phase 2 Task 7, design-language.md rule 4: "four state hues... never a
+     fifth"). Blue "info" used to sit here as a de-facto fifth hue — see the
+     dark/light token blocks below for the full resolution note (search
+     "TASK 7" in this file for where every former consumer landed). */
 
   --color-statusNeutral: var(--status-neutral-text);
   --color-statusNeutralBg: var(--status-neutral-bg);
@@ -244,12 +244,42 @@
   --status-warn-border-strong:#5a4a2a;
   --status-warn-solid:        #f1c21b;
 
-  --status-info-text:         #78a9ff;  /* blue-40 */
-  --status-info-bg:           #1c2a3a;
-  --status-info-border:       #2a3a5a;
-  --status-info-border-soft:  #2a4055;  /* info banners (Config/Flash) */
-  --status-info-solid:        #78a9ff;  /* also the input focus border/outline */
-
+  /* TASK 7 (GlimStone form-engine Phase 2, design-language.md rule 4) removed
+     --status-info-* entirely — it was a de-facto fifth hue (blue), not one of
+     the four real state hues, and never should have been a persistent CSS
+     custom property at all. Every real call site was re-read for its actual
+     semantics and resolved individually, not find-replaced to one colour:
+       - Genuine activity (a run that IS "running" right now, a spinner while
+         something loads, the config-restart notice) -> --accent, in
+         whatever non-solid form its own siblings already use (plain text,
+         a spinner border, Badge's new "active" tone = --accent-soft wash +
+         --accent text). Deliberately never a SOLID accent fill for these:
+         Dashboard's run-history list and ActivityLog's scrolling log can
+         legitimately show several "running" entries at once (independent
+         domains backing up concurrently), and rule 3 caps solid accent at
+         one thing per page. Soft/text accent has no such cap — it's the
+         same visual register ok/fail/warn chips already use.
+       - Pure informational prose/categorisation with NO activity or
+         pass/fail/warn meaning (the Config/Flash snapshot-restore banners,
+         the exclusion assistant's "known cache" chip) -> folded into
+         --status-neutral-* (rule 4's "neutral = waiting" broadened to this
+         token's own pre-existing "skipped/neutral chip" usage, not a new
+         precedent).
+       - Link/action badges that used tone="info" only because it was the
+         nearest available tone when rule 13 converted them (Settings.tsx's
+         two doc-link badges, OffsiteWizard's "regenerate" badge) ->
+         tone="neutral", matching Recovery.tsx's own pre-existing
+         tone="neutral" reload-link badge — the same kind of element.
+     The 7 pre-existing sites that painted `outline-statusInfoSolid` as a
+     focus ring (Settings.tsx's accent colour-input, Dashboard.tsx's stat
+     card + heatmap cell, Containers.tsx's 4 exclusion-assistant controls —
+     none of them form fields, so Phase 1 Task 8's brightness-step migration
+     never touched them) now point at --focus-ring directly instead — see
+     the .bv-field-focus comment below for the full "where does --focus-ring
+     reach today" note, updated to match. Task 8 (focus system completion)
+     no longer needs to touch those 7 call sites; it still needs to add the
+     universal `:focus-visible` base rule and verify it composes correctly
+     with the [data-rainbow] .glim-hue --focus-ring override above. */
   --status-neutral-text:      #a8a8b0;  /* skipped/neutral chip */
   --status-neutral-bg:        #2a2a2e;
   --status-neutral-border:    #3a3a40;
@@ -382,12 +412,8 @@
   --status-warn-border-strong:#fddc69;
   --status-warn-solid:        #b28600;  /* yellow-50 — #f1c21b is <3:1 on light */
 
-  --status-info-text:         #0043ce;  /* blue-70 */
-  --status-info-bg:           #edf5ff;  /* blue-10 */
-  --status-info-border:       #d0e2ff;  /* blue-20 */
-  --status-info-border-soft:  #d0e2ff;
-  --status-info-solid:        #0f62fe;  /* blue-60 — Carbon focus blue */
-
+  /* --status-info-* removed — see the dark block's TASK 7 comment above for
+     the full resolution (this theme carried the same tokens, same fate). */
   --status-neutral-text:      #525252;  /* gray-70 */
   --status-neutral-bg:        #e8e8e8;
   --status-neutral-border:    #c6c6c6;  /* gray-30 */
@@ -517,22 +543,35 @@ body {
    WHERE --focus-ring ACTUALLY REACHES TODAY (stated precisely, because an
    earlier draft of this comment over-claimed it): every shared control this
    branch added or reworked opts into it by hand — Toggle's switch track,
-   RevealInput's eye, InfoBubble's icon, Toast's dismiss X. It does NOT yet
-   reach ordinary buttons and links: ~215 of them declare no focus utility at
-   all and fall through to the browser's native ring, and 8 pre-existing sites
-   (Containers' bulk-action row, Dashboard's card button + heatmap cell,
-   Settings' colour swatch) still paint the old outline-statusInfoSolid blue.
-   So the app currently has THREE focus appearances, not one.
+   RevealInput's eye, InfoBubble's icon, Toast's dismiss X. TASK 7 (resolve
+   the fifth hue) additionally moved the 7 pre-existing sites that used to
+   paint `outline-statusInfoSolid` directly (Settings.tsx's accent
+   colour-input, Dashboard.tsx's stat card button + heatmap cell,
+   Containers.tsx's 4 exclusion-assistant controls) onto `outline-(--focus-ring)`
+   by hand, the same opt-in pattern as the controls above — that token no
+   longer exists (see the dark block's TASK 7 comment), so there was nowhere
+   else for them to point. --focus-ring still does NOT reach ordinary buttons
+   and links generally: ~215 of them declare no focus utility at all and fall
+   through to the browser's native ring. So the app currently has TWO focus
+   appearances (opted-in amber, and native default), not one — down from
+   three now that no site paints the old blue.
 
-   Closing that gap is deliberately NOT done here. The reference
+   Closing the remaining gap is deliberately NOT done here. The reference
    (glimstone/reference/tokens.css) resolves it with a single base rule —
    `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px }`
-   — and its adoption checklist says to copy it. Adopting it is Phase 2 work,
-   not a Phase 1 tail: in the reference that same rule is what the rainbow/
-   reactive colour mode reaches through, rebinding --focus-ring per item via
-   `[data-rainbow] .glim-hue`, so the base rule and the rainbow axis want to
-   land together. It also unblocks audit item 19 (resolving the fifth hue),
-   which is what those 8 remaining blue sites are waiting on.
+   — and its adoption checklist says to copy it. Adopting it is Phase 2 Task 8
+   work: in the reference that same rule is what the rainbow/reactive colour
+   mode reaches through, rebinding --focus-ring per item via
+   `[data-rainbow] .glim-hue` (see that block further down — already written
+   and already correct, just not reached by anything until the base rule
+   exists). TASK 7 (this comment's own task) is what audit item 19 (resolving
+   the fifth hue) needed to unblock Task 8 — it's now done: --status-info-*
+   is gone, every real call site was re-read and resolved individually (fold
+   into --accent for genuine activity, --status-neutral-* for pure
+   informational prose/categorisation, or Badge tone="neutral" for link/
+   action badges — see the dark block's TASK 7 comment for the full list and
+   reasoning). Task 8 has nothing further to do here beyond adding the base
+   rule and verifying it composes correctly with the hue-subtree override.
 
    Two variants, chosen by what the field already rests on:
    - .bv-field-focus — the common case (most fields in the app): resting

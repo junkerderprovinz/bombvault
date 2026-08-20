@@ -205,7 +205,9 @@ describe("Badge — tone/status-color mapping", () => {
     // local Badge and Files.tsx/Containers.tsx's still-inline warn chips,
     // not the softer tone full-width warning panels use.
     ["warn", "bg-statusWarnBgStrong", "text-statusWarn"],
-    ["info", "bg-statusInfoBg", "text-statusInfo"],
+    // active replaces the old "info" tone (Task 7: resolve the fifth hue) —
+    // a soft accent wash, not one of the four real state hues.
+    ["active", "bg-accentSoft", "text-accent"],
     ["neutral", "bg-carbon-surface2", "text-carbon-textSub"],
     // heading (rule 11): accent-soft WASH, never solid accent (rule 3 is
     // activity-only) and never one of the four state hues (rule 4 — see the

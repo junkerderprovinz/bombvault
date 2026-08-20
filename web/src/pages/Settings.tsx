@@ -411,13 +411,17 @@ chmod 600 /root/.ssh/authorized_keys`
               {t("vm.ssh.copyCmd")}
             </button>
           </div>
-          {/* Task 5 (rule 13): was a plain underline-on-hover text link. */}
+          {/* Task 5 (rule 13): was a plain underline-on-hover text link. Task 7:
+              tone was "info" (the old fifth hue) only because it was the
+              nearest tone available at the time — a plain doc-link badge
+              isn't activity or a state, it's the same kind of element as
+              Recovery.tsx's own tone="neutral" reload-link badge. */}
           <Badge
             as="a"
             href="https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md"
             target="_blank"
             rel="noreferrer"
-            tone="info"
+            tone="neutral"
             size="small"
             className="self-start"
           >
@@ -798,13 +802,15 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <span className="text-sm text-carbon-text">{t("settings.dashTileNotInstalled")}</span>
           {/* Transparency BEFORE the call: what Install does, and where the code lives. */}
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileConfirm")}</p>
-          {/* Task 5 (rule 13): was a plain underline-on-hover text link. */}
+          {/* Task 5 (rule 13): was a plain underline-on-hover text link. Task 7:
+              same reasoning as vm.ssh.guide's badge above — plain doc-link,
+              tone="neutral" not the old fifth hue. */}
           <Badge
             as="a"
             href={DASH_PLUGIN_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            tone="info"
+            tone="neutral"
             size="small"
             className="self-start"
           >
@@ -5039,7 +5045,7 @@ export function SettingsPage() {
                   setAccentHex(e.target.value);
                   setAccent(e.target.value);
                 }}
-                className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-statusInfoSolid"
+                className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)"
                 title={t("settings.accentColor")}
               />
               {/* Preset swatches */}

@@ -48,6 +48,15 @@ function glyphFor(status: LogStatus): string {
 // Reuses the exact hex values Dashboard's Badge uses for success/failed/
 // running so a log line reads as the same colour language as the rest of the
 // app (#66-style shared vocabulary), not a new palette.
+//
+// "running"/"offsite" (Task 7: resolve the fifth hue) — was text-statusInfo,
+// the old fifth hue. Both mean genuine activity happening right now, so
+// --accent — but plain colour on text in a scrolling list, never a solid
+// fill: this log routinely shows several "running"/"offsite" lines at once
+// (independent domains backing up concurrently all merge into one list),
+// and rule 3's "at most one solid accent" cap is specifically about SOLID
+// accent claiming the page's one primary-action weight. Coloured text reads
+// at the same register as the success/failed lines right next to it.
 function colorFor(status: LogStatus): string {
   switch (status) {
     case "success":
@@ -56,7 +65,7 @@ function colorFor(status: LogStatus): string {
       return "text-statusFail";
     case "running":
     case "offsite":
-      return "text-statusInfo";
+      return "text-accent";
     case "info":
       return "text-statusWarn";
   }

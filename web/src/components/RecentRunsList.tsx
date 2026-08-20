@@ -12,7 +12,16 @@ type T = ReturnType<typeof useT>["t"];
 const MAX_RUNS = 8;
 
 // statusDotClass maps a run status to a small coloured dot, matching the
-// dashboard's Badge palette (green success, red fail, blue running).
+// dashboard's Badge palette (green success, red fail, amber running).
+//
+// "running" (Task 7: resolve the fifth hue) — was bg-statusInfoSolid, the
+// old fifth hue. Genuine activity, a solid dot to match its ok/failed/
+// skipped siblings in this same function (all solid dots, so a lone
+// outline/spinner treatment here would look inconsistent). This list is
+// scoped to ONE target's history (filtered by domain+name), so in practice
+// at most one dot is ever "running" at a time — a solid dot doesn't
+// compete with rule 3's "at most one solid accent" the way a repeated
+// solid accent BUTTON would.
 function statusDotClass(status: string): string {
   switch (status.toLowerCase()) {
     case "success":
@@ -20,7 +29,7 @@ function statusDotClass(status: string): string {
     case "failed":
       return "bg-statusFailSolid";
     case "running":
-      return "bg-statusInfoSolid";
+      return "bg-accent";
     case "skipped":
       return "bg-statusNeutralSolid";
     default:

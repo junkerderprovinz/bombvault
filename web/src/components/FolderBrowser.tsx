@@ -160,10 +160,14 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             <p className="text-xs text-statusFail">{browseError}</p>
           )}
 
-          {/* Loading spinner */}
+          {/* Loading spinner — Task 7: was border-statusInfoSolid (the old
+              fifth hue). Genuine activity (the directory listing IS being
+              fetched right now), matching OffsiteIndicator.tsx's own plain
+              border-color: var(--accent) spinner for the identical
+              not-inside-a-button case. */}
           {loading && (
             <div className="flex items-center gap-2 text-xs text-carbon-textMuted">
-              <span className="h-3 w-3 rounded-full border-2 border-statusInfoSolid border-t-transparent animate-spin" />
+              <span className="h-3 w-3 rounded-full border-2 border-accent border-t-transparent animate-spin" />
               {t("folder.loading")}
             </div>
           )}

@@ -403,11 +403,16 @@ export function OffsiteWizard({
               <div className="rounded-card bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
                 {t("offsite.wizard.tlsNote")}
               </div>
-              {/* Task 5 (rule 13): was a plain underline-on-hover text button. */}
+              {/* Task 5 (rule 13): was a plain underline-on-hover text button.
+                  Task 7: tone was "info" (the old fifth hue) only because it
+                  was the nearest tone available at the time — a plain action
+                  badge, not activity or a state, same as Recovery.tsx's own
+                  tone="neutral" reload badge and Settings.tsx's two doc-link
+                  badges. */}
               <Badge
                 as="button"
                 onClick={() => void genSnippet()}
-                tone="info"
+                tone="neutral"
                 size="small"
                 className="self-start"
               >

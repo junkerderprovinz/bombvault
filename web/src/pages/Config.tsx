@@ -385,7 +385,10 @@ export function Config() {
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap>{t("config.snapshotsTitle")}</Badge>
         </h2>
-        <div className="rounded-card bg-statusInfoBg px-3 py-2.5 text-xs text-statusInfo leading-relaxed">
+        {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
+            pure informational prose about how the feature works, no activity
+            or pass/fail/warn meaning, so it folds into --status-neutral-*. */}
+        <div className="rounded-card bg-statusNeutralBg px-3 py-2.5 text-xs text-statusNeutral leading-relaxed">
           {t("config.snapshotsHint")}
         </div>
 
