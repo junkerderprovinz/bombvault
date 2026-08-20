@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -420,6 +421,54 @@ func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T)
 	}
 	if plan.blockDisks[0].SourceDataset != "tank/vms/zvolvm/disk1" {
 		t.Fatalf("SourceDataset = %q, want it resolved from the domain XML unchanged", plan.blockDisks[0].SourceDataset)
+	}
+}
+
+// TestPrepareRestoreVMCrossInstanceZvolRebaseFailureBypassesScrubber pins the
+// OTHER new error path the code-review followup (e30b64b) added: a
+// destZvolPool that gets PAST the "was one even given" refusal above (it's
+// neither empty nor whitespace-only) but is itself rejected by
+// virshcli.RebaseZvolDatasetPool — here, a leading '-', the getopt-trap
+// character a ZFS pool name may never start with — must still produce a
+// clear error naming the source dataset and the bad pool, AND that error
+// MUST survive handlers.go's scrubError untouched: a ZFS dataset name is
+// "<pool>/<rest>" and necessarily contains "/", which absPathRe would
+// otherwise mistake for a filesystem path and mangle into "tank[path]",
+// destroying exactly the information the message exists to convey. See
+// errZvolRebaseFailed's doc comment (service.go) for the sentinel this
+// error must satisfy via errors.Is. Neither TestPrepareRestoreVMCrossInstance
+// ZvolRefusesWithoutDestPool nor its whitespace-only sibling exercises this
+// branch — both stop at the earlier, simpler "no pool at all" refusal.
+func TestPrepareRestoreVMCrossInstanceZvolRebaseFailureBypassesScrubber(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	s := vmRestoreSvc(t, eng)
+	s.ssh = &fakeHostSSH{}
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	writeMountFixture(t, "/", "/host/user", "/host/user/vmrestore")
+
+	disks := []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}
+	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
+
+	_, err := s.prepareRestoreVMForTarget(context.Background(),
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "-badpool")
+	if err == nil {
+		t.Fatal("want a rebase-failure error for a destination pool RebaseZvolDatasetPool itself rejects, got nil")
+	}
+	if !errors.Is(err, errZvolRebaseFailed) {
+		t.Fatalf("error = %v, want it to satisfy errors.Is(err, errZvolRebaseFailed) so scrubError bypasses it", err)
+	}
+	if !strings.Contains(err.Error(), "tank/vms/zvolvm/disk1") {
+		t.Fatalf("error = %v, want it to name the source dataset that failed to rebase", err)
+	}
+	// The whole point of the bypass: scrubError must NOT mangle the "/" in the
+	// dataset name into the generic "[path]" placeholder.
+	got := scrubError(err)
+	if strings.Contains(got, "[path]") {
+		t.Fatalf("scrubError mangled the dataset name: %s (want the literal dataset path preserved)", got)
+	}
+	if !strings.Contains(got, "tank/vms/zvolvm/disk1") {
+		t.Fatalf("scrubError = %q, want the source dataset name still present verbatim", got)
 	}
 }
 
