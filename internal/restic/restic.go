@@ -1104,6 +1104,29 @@ func statusPercent(line []byte) (float64, bool) {
 // surfaced restic error (defense-in-depth: repo/appdata paths must not leak).
 var reasonPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 
+// credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
+// backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
+// — a syntax the generated deploy recipe documents as valid for restic's
+// rest:/s3: remote backends. reasonPathRe alone can't catch this: it stops at
+// the first ":", so it never reaches past "user" into the password. Requiring
+// the closing "@" and excluding "/" from the password body keeps this from
+// matching ordinary "host:port" text (which has no "@") or a "name/tag" split
+// by "/" from something after it (excluded from the password body) — only a
+// real userinfo segment has a ":"-separated pair immediately followed by "@".
+//
+// MUST be applied before reasonPathRe (see scrubSecrets): once that regex
+// turns the scheme's leading "//" into "[path]", the "word:" prefix this
+// regex keys off is gone and the password survives untouched.
+var credentialRe = regexp.MustCompile(`[A-Za-z][\w.+%-]*:[^\s/@"']+@`)
+
+// scrubSecrets strips URL-embedded "user:pass@" credentials and then
+// absolute-path-like tokens from s, in that order — see credentialRe's doc
+// comment for why the order is load-bearing.
+func scrubSecrets(s string) string {
+	s = credentialRe.ReplaceAllString(s, "[redacted]@")
+	return reasonPathRe.ReplaceAllString(s, "[path]")
+}
+
 // lastReason returns the most informative line of stderr, with absolute paths
 // scrubbed and the length capped — a concise failure cause for the UI.
 //
@@ -1163,7 +1186,7 @@ func lastReason(stderr string) string {
 		}
 	}
 
-	reason = reasonPathRe.ReplaceAllString(reason, "[path]")
+	reason = scrubSecrets(reason)
 	if len(reason) > maxReasonLen {
 		reason = reason[:maxReasonLen]
 	}
@@ -1241,7 +1264,7 @@ func itemErrorCauses(lines []string) (causes []string, more int) {
 			continue
 		}
 		cause = strings.Join(strings.Fields(cause), " ") // collapse newlines/runs of space
-		cause = reasonPathRe.ReplaceAllString(cause, "[path]")
+		cause = scrubSecrets(cause)
 		if len(cause) > maxCauseLen {
 			cause = cause[:maxCauseLen]
 		}
