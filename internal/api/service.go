@@ -256,6 +256,19 @@ type Service struct {
 	// they contend on repo locks and container stop/start).
 	batchActive atomic.Bool
 
+	// everythingActive is the single-flight guard for a "Backup Everything" pass
+	// (internal/api/everything.go): only one pass — scheduled or manually
+	// triggered via StartBackupEverything — can be in flight at a time. Separate
+	// from batchActive on purpose: a pass drives the very same per-domain
+	// starters batchActive already guards (s.Backup/s.BackupVM/…), so reusing
+	// batchActive here would make a routine single-container backup refuse to
+	// start merely because an unrelated "Backup Everything" pass is mid-flight,
+	// and vice versa. Each domain step's own existing lock (s.lockDomain) still
+	// governs contention between the two at the repo level — this guard only
+	// stops a SECOND "Backup Everything" pass from overlapping the first
+	// (design spec, decision 7).
+	everythingActive atomic.Bool
+
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
 	// every replication while over budget); the latch clears when growth drops
