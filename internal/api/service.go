@@ -5623,6 +5623,19 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	}
 	mode := s.ModeFor(settings)
 
+	// Serialize against a live backup on this repo: a container Backup holds the
+	// domain lock for its whole run (potentially hours), so without this an
+	// unlocked bulk delete could race a concurrent `restic forget --prune`
+	// against the same repo files. Same guard DeleteBackupsVM/DeleteBackupsFileSet
+	// already use. (No requireExistingRepo here, unlike those two: this must still
+	// let a never-backed-up container's target row be cleaned up below.)
+	unlock, ok := s.tryLockDomainFor("containers", "delete")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
+	s.unlockStale(ctx, repo, mode)
+
 	// Collect this container's snapshot IDs (tag-filtered) and forget them.
 	snaps, err := s.Snapshots(ctx, name, "")
 	if err != nil {
