@@ -80,6 +80,21 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
           // selector specificity, so without it the winner would depend on
           // Tailwind's generated declaration order rather than being
           // guaranteed by the cascade.
+          //
+          // INVARIANT this relies on: the `rtl:` variant resolves against the
+          // PAGE (its compiled selector is an inherited-`:lang()` list OR
+          // `[dir=rtl] *`), while the flex base position it corrects resolves
+          // against the nearest `dir` ANCESTOR. Those agree everywhere today,
+          // but they would diverge if a call site ever nested a Toggle inside
+          // its own `dir="ltr"`/`dir="rtl"` island — the base would mirror one
+          // way and the sign flip the other, putting the thumb outside its
+          // track again. RevealInput hit exactly that (see its header comment)
+          // via OffsiteWizard's `<label dir="ltr">`; there the fix was to make
+          // BOTH halves page-gated. Here there is nothing to make page-gated —
+          // flex direction is not overridable per-property — so the rule is
+          // simply: do not put a Toggle inside a dir-overriding container.
+          // Pin only the technical TEXT with `dir="ltr"` (a `<span>` around
+          // the literal), never a container that also holds layout.
           className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
             checked ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
           }`}

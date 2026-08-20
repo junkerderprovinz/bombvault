@@ -45,11 +45,30 @@ import type { InputHTMLAttributes } from "react";
 //     (Tailwind's generated utility order is not the order classes appear in
 //     the `class` attribute). The `!` important modifier pins the override
 //     without having to fork or string-edit the shared constant.
-//   - The eye button itself uses `end-2` (LOGICAL, writing-mode-aware) —
-//     it sits on the field's TRAILING edge, the right in LTR but the LEFT in
-//     RTL (Arabic, Hebrew — both shipped locales here, see lib/i18n.ts's
-//     isRtl). `end-2` has no `dir` of its own, so it simply inherits the
-//     surrounding page's direction and resolves correctly with no JS.
+//   - The eye button sits on the field's TRAILING edge — the right in LTR but
+//     the LEFT in RTL (Arabic, Hebrew — both shipped locales here, see
+//     lib/i18n.ts's isRtl). It is positioned with `right-2 rtl:right-auto!
+//     rtl:left-2`, the SAME page-gated physical pattern as the input's padding
+//     below, and deliberately NOT the logical `end-2` it used to be. See that
+//     comment for why the padding can't be logical; the point here is that the
+//     two MUST be driven by the same signal. `end-2` resolves against the
+//     nearest `dir` ANCESTOR, while the `rtl:` variant resolves against the
+//     PAGE — identical on most call sites, but they disagree the moment a call
+//     site nests this component inside its own `dir="ltr"` island (real case:
+//     OffsiteWizard's `<label dir="ltr">RESTIC_REST_PASSWORD</label>`, which
+//     pins that literal env-var name LTR). There the eye followed the label to
+//     the physical right while the reserved room followed the page to the
+//     left: dead space on one side, the secret rendering under the icon on the
+//     other — the exact bug the padding fix below was written to kill, just
+//     re-entering through a different door. Physical + `rtl:`-gated on BOTH
+//     halves makes them provably agree in every nesting.
+//     `rtl:right-auto!` needs its `!` (it has to beat the unconditional
+//     `right-2` base for the same property; equal specificity otherwise leaves
+//     the winner to Tailwind's generated order). `rtl:left-2` needs none —
+//     nothing else on this element sets `left`, and the reset above keeps the
+//     box from being over-constrained (an absolutely positioned element with
+//     an explicit width plus BOTH offsets drops one of them according to the
+//     containing block's direction, i.e. exactly the ambiguity being removed).
 //   - `dir="ltr"` + `text-start` on the <input> itself (RTL sweep, form-engine
 //     Phase 2 Task 6): every value this component ever holds — a login
 //     password, a cloud secret, a fleet/receiver token, an APP_KEY-equivalent
@@ -75,8 +94,7 @@ import type { InputHTMLAttributes } from "react";
 //     against the direction of the ELEMENT IT'S APPLIED TO — and this
 //     specific element's direction is permanently pinned to "ltr" one line
 //     above, for the text-content reason above. So `pe-8` on this input
-//     doesn't track the PAGE's direction the way `end-2` on the button
-//     (which carries no `dir` of its own) does — it tracks the INPUT's own,
+//     doesn't track the PAGE's direction — it tracks the INPUT's own,
 //     forced-ltr direction, i.e. it always resolves to padding-right,
 //     full stop. Under an RTL page the eye (following the page) sits on the
 //     left while the reserved padding (following the input's own forced ltr)
@@ -140,7 +158,7 @@ export function RevealInput({
         onClick={onToggleVisible}
         aria-label={visible ? hideLabel : showLabel}
         aria-pressed={visible}
-        className="absolute end-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        className="absolute right-2 rtl:right-auto! rtl:left-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
         {visible ? (
           // Slashed eye: the same open-eye glyph, dimmed, struck through —

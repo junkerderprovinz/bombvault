@@ -80,3 +80,25 @@ export const EXCLUDES_HINT_LTR_FRAGMENTS = ["/config/Library/.../Cache"] as cons
 
 /** recovery.foreignAppdataDestHint's leading-`/` example pool path. */
 export const FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS = ["/mnt/zfs"] as const;
+
+// ---------------------------------------------------------------------------
+// Which translation key each fragment list belongs to. The whole mechanism
+// above matches by LITERAL SUBSTRING against whatever `t()` returned, so its
+// one failure mode is silent: if a translator ever retypes the path in one
+// locale (a full-width slash, a stray space, a "translated" folder name, a
+// different example), nothing throws and nothing looks wrong in code review —
+// that ONE locale just quietly stops being protected and goes back to
+// rendering the leading `/` at the wrong end of the path, which for
+// offsite.repoLocalHint means teaching that locale's readers the wrong path
+// syntax. The parity guard in ltrFragments.test.ts iterates this map against
+// the REAL locale registry so that drift fails the build instead.
+//
+// REGISTER EVERY NEW FRAGMENT LIST HERE — the test also asserts that every
+// `*_LTR_FRAGMENTS` export from this module appears below, so a list added
+// without a key can't slip past unguarded.
+// ---------------------------------------------------------------------------
+export const LTR_FRAGMENTS_BY_KEY = {
+  "offsite.repoLocalHint": REPO_LOCAL_HINT_LTR_FRAGMENTS,
+  "excludes.hint": EXCLUDES_HINT_LTR_FRAGMENTS,
+  "recovery.foreignAppdataDestHint": FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
+} as const satisfies Record<string, readonly string[]>;
