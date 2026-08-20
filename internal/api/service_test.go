@@ -5856,6 +5856,58 @@ func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 	}
 }
 
+// TestStartRestoreConfigSurvivesCancelledContext pins the fix for the finding
+// that StartRestoreConfig ran RestoreConfig synchronously against the raw HTTP
+// request context: a browser tab close or reverse-proxy idle timeout would
+// cancel that context mid-restore, killing the restic subprocess mid-write of
+// the STAGED config restore — which the next boot swap applies BLIND (no
+// re-check), so a truncated write there corrupts the live config. It proves the
+// restic restore actually runs under a context detached from the (already
+// cancelled) caller ctx: StartRestoreConfig still returns the real outcome
+// synchronously (Recovery.tsx needs it to decide whether to poll for the
+// self-restart or show the manual-restart instructions — see
+// StartRestoreConfig's own doc comment for why it does NOT hand off to a
+// fire-and-forget goroutine like its Start* siblings), but the actual
+// RestoreInclude call must see a NON-cancelled ctx.Err(), exactly like
+// RunRestoreDrill's own detach already does (TestRunDRDrillDetachedAndBounded).
+func TestStartRestoreConfigSurvivesCancelledContext(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // force docker.Self resolution, not an ambient override
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ConfigEnabled = true
+	s.ConfigPath = "backups/config"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // simulate the request already gone (tab closed / proxy timed out) before the restore even starts
+
+	started, _, err := svc.StartRestoreConfig(ctx, "", "local")
+	if err != nil {
+		t.Fatalf("a cancelled request ctx must not abort the config restore, got %v", err)
+	}
+	if !started {
+		t.Fatal("expected started=true despite the cancelled ctx")
+	}
+	if len(eng.restored) == 0 {
+		t.Fatal("expected RestoreInclude to have been called")
+	}
+	if len(eng.restoreCtxErrs) == 0 || eng.restoreCtxErrs[0] != nil {
+		t.Fatalf("restore ctx must be detached (not cancelled), got %v", eng.restoreCtxErrs)
+	}
+	// The boot-swap marker must still be written — proof the restore genuinely
+	// ran to completion rather than being silently aborted.
+	if _, statErr := os.Stat(selfrestore.MarkerPath(dir)); statErr != nil {
+		t.Fatalf("restore marker not written despite the detached ctx: %v", statErr)
+	}
+}
+
 func mustSettings(t *testing.T, st *store.Repo) store.Settings {
 	t.Helper()
 	s, err := st.GetSettings()

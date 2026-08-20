@@ -371,3 +371,63 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 	}
 	waitForBackupDone(t, svc) // drain it before the test's t.Cleanup closes the store out from under it
 }
+
+// TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard extends the
+// panic-recovery proof to StartRestoreConfig (the finding this branch's second
+// commit fixes: it ran synchronously against the raw request ctx with NO panic
+// recovery at all, unlike every sibling Start* restore). Unlike those siblings,
+// StartRestoreConfig does not hand off to a background goroutine (see its own
+// doc comment for why — Recovery.tsx needs the real outcome synchronously), so
+// a panic here unwinds on the SAME goroutine as this test: reaching the
+// assertions below at all (instead of the whole `go test` binary crashing) is
+// already half the proof. The other half is that RestoreConfig's own run
+// record — started via store.StartRun(store.ConfigTargetID, "restore") deep
+// inside RestoreConfig, whose local runID never reaches StartRestoreConfig —
+// is still closed out as "failed" via the FailRunningRun/ConfigTargetID
+// fallback, not left stuck "running" forever, and that the single-flight
+// batchActive guard is released too (StartRestoreConfig's own special case:
+// unlike its siblings it sometimes deliberately KEEPS that guard held on
+// success, so the panic path must release it explicitly).
+func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "")
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ConfigEnabled = true
+	s.ConfigPath = "backups/config"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, restorePanic: true}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	started, auto, err := svc.StartRestoreConfig(context.Background(), "", "local")
+	// Reaching this line at all (instead of the test binary crashing) already
+	// proves the panic was recovered.
+	if err == nil || !strings.Contains(err.Error(), "recovered panic") {
+		t.Fatalf("expected a recovered-panic error, got started=%v auto=%v err=%v", started, auto, err)
+	}
+	if started {
+		t.Fatal("a panicked config restore must not report started=true")
+	}
+
+	run := waitForRunTerminal(t, st, store.ConfigTargetID)
+	if run.Status != "failed" {
+		t.Fatalf("a panicked config restore must record a FAILED run, not left stuck, got status=%q run=%+v", run.Status, run)
+	}
+	if run.FinishedAt == nil {
+		t.Fatalf("a panicked config restore's run must be closed (finished_at set), got %+v", run)
+	}
+	if !strings.Contains(run.Error, "recovered panic") {
+		t.Fatalf("the failed run should carry the panic detail, got error=%q", run.Error)
+	}
+
+	if svc.BackupInProgress() {
+		t.Fatal("the shared batchActive guard must be released after a recovered panic, not left stuck")
+	}
+	eng.restorePanic = false // disarm — this call must succeed normally
+	if started, _, err := svc.StartRestoreConfig(context.Background(), "", "local"); err != nil || !started {
+		t.Fatalf("a later config restore must be able to start — the guard must not be stuck from the earlier panic: started=%v err=%v", started, err)
+	}
+}

@@ -8609,6 +8609,24 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 // IS scheduled the guard is held until the container goes down (so nothing new can
 // start in the restart window); if the restart later fails, ScheduleSelfRestart
 // releases the guard so operations can resume.
+//
+// Unlike the other Start* restores in this file, this one does NOT hand the actual
+// restore off to a detached background goroutine and return immediately: the
+// caller (Recovery.tsx's restore-own-config step) needs the real staged/autoRestart
+// outcome synchronously to decide whether to poll for the self-restart or show the
+// manual-restart instructions, and a fire-and-forget response here would make the
+// SPA wait on a restart that may never come if the (now invisible) background
+// restore fails. Instead it borrows RunRestoreDrill's approach: RestoreConfig still
+// runs on THIS goroutine, but against a context detached from ctx
+// (context.WithoutCancel) and capped by restoreTimeout — so a browser tab close or
+// reverse-proxy idle timeout on the HTTP request can no longer reach into restic
+// and kill a still-in-flight restore mid-write (it stages blind into a directory
+// the NEXT boot swaps in for the live config without re-checking it — a truncated
+// restore there corrupts the live config on that swap). A panic anywhere in this
+// call graph is now recovered like every other manual op on this branch: since
+// RestoreConfig's own run-record id is local to it (never returned here), the
+// fallback is FailRunningRun keyed by store.ConfigTargetID — the same fallback
+// StartBackupConfig's sibling goroutine already uses for this domain.
 func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source string) (started bool, autoRestart bool, err error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, false, nil
@@ -8617,7 +8635,18 @@ func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source str
 		s.batchActive.Store(false)
 		return false, false, fmt.Errorf("%s is running on config", op)
 	}
-	if rerr := s.RestoreConfig(ctx, snapshotID, source); rerr != nil {
+	// On a recovered panic the guard must ALSO be released here: unlike the
+	// success path below, nothing else is left running that would release it, and
+	// every future backup/restore would otherwise refuse forever with "already
+	// running".
+	defer s.recoverOperation("restore config: "+store.ConfigTargetID, &err, func(msg string) {
+		s.batchActive.Store(false)
+		s.failStuckRun(store.ConfigTargetID, msg)
+	})
+	bctx := context.WithoutCancel(ctx)
+	rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
+	defer cancel()
+	if rerr := s.RestoreConfig(rctx, snapshotID, source); rerr != nil {
 		s.batchActive.Store(false)
 		return false, false, rerr
 	}
