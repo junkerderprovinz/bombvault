@@ -756,6 +756,12 @@ const zh: Partial<Translations> = {
   "stack.memberStarted": "已启动",
   "settings.restoreFolder": "默认还原文件夹",
   "settings.restoreFolderHint": "“还原到文件夹”默认解压快照的位置。",
+  "settings.configPath": "自我备份路径",
+  "settings.pathMode.local": "本地",
+  "settings.pathMode.remote": "远程",
+  "settings.primaryRemote.title": "远程主仓库安全设置",
+  "settings.primaryRemote.hint": "此备份路径是一个远程 restic 仓库——它就是主副本，而不是复制品。在此处配置带宽限制、仅追加保护和增长预算警报，与异地副本获得的保护相同。",
+  "settings.primaryRemote.budgetHint": "当此仓库超过字节预算时发出警报（0 = 关闭）。",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "测试连接",

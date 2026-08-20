@@ -762,6 +762,12 @@ const cs: Partial<Translations> = {
   "stack.memberStarted": "spuštěno",
   "settings.restoreFolder": "Výchozí složka pro obnovu",
   "settings.restoreFolderHint": "Kam „obnovit do složky“ ve výchozím nastavení rozbaluje snímky.",
+  "settings.configPath": "Cesta k autozáloze",
+  "settings.pathMode.local": "Místní",
+  "settings.pathMode.remote": "Vzdálené",
+  "settings.primaryRemote.title": "Nastavení zabezpečení vzdáleného primárního repozitáře",
+  "settings.primaryRemote.hint": "Tato cesta zálohy je vzdálený repozitář restic — JE primární kopií, ne replikou. Nastavte zde limity šířky pásma, ochranu append-only a alarm rozpočtu růstu, stejnou ochranu, jakou dostává mimolokální kopie.",
+  "settings.primaryRemote.budgetHint": "Upozornit, když tento repozitář překročí rozpočet v bajtech (0 = vypnuto).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "Otestovat připojení",

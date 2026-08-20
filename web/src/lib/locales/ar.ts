@@ -767,6 +767,12 @@ const ar: Partial<Translations> = {
   "stack.memberStarted": "تم التشغيل",
   "settings.restoreFolder": "مجلد الاستعادة الافتراضي",
   "settings.restoreFolderHint": "المكان الذي تستخرج فيه «الاستعادة إلى مجلد» اللقطات افتراضياً.",
+  "settings.configPath": "مسار النسخ الذاتي",
+  "settings.pathMode.local": "محلي",
+  "settings.pathMode.remote": "عن بُعد",
+  "settings.primaryRemote.title": "إعدادات أمان المستودع الأساسي البعيد",
+  "settings.primaryRemote.hint": "مسار النسخ الاحتياطي هذا هو مستودع restic بعيد — إنه النسخة الأساسية، وليس نسخة مكررة. اضبط هنا حدود النطاق الترددي، وحماية الإلحاق فقط، وتنبيه ميزانية النمو، وهي نفس الحمايات التي تحصل عليها نسخة خارج الموقع.",
+  "settings.primaryRemote.budgetHint": "التنبيه عند تجاوز هذا المستودع لميزانية البايت (0 = إيقاف).",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "اختبار الاتصال",

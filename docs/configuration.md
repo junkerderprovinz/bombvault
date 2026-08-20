@@ -25,7 +25,7 @@ This page covers the container's environment variables, the mounts the template 
 
 Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`) as shown in the CA template. Backup *sources* and *destinations* both live under Host Data, and it is mounted **rslave** so a remote share that mounts after the container starts (for example under `/mnt/remotes`) becomes visible without a restart.
 
-Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files}`, created on the first backup. Change the location any time in **Settings, Backup paths**.
+Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files}`, created on the first backup. Change the location any time in **Settings, Backup paths**. Each path field also has an inline **Local / Remote** switch — a path can be a restic remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
 
 !!! note "Host integration check"
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
@@ -73,11 +73,12 @@ Set up an off-site replica on the **Settings, Off-site** tab. See [Off-site & re
 - **Backends:** SMB/CIFS and NFS (mount the share and point a Backup Path at it), native restic backends without rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), or any rclone remote (`rclone:<remote>:<bucket>/path`).
 - **Cloud credentials** are stored encrypted under Settings, Off-site, Cloud credentials.
 - **SSH targets need nothing installed on the far side.** `sftp:` only needs an SSH server. Add the public key from **Settings, System, VM Backup over SSH** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`.
-- **Off-site copy:** BombVault replicates new snapshots with `restic copy` on a best-effort basis. The local repo stays primary. Each domain has its own off-site schedule, plus a **Replicate now** button.
+- **Off-site copy:** BombVault replicates new snapshots with `restic copy` on a best-effort basis, on top of a (usually local) primary. Each domain has its own off-site schedule, plus a **Replicate now** button.
 - **Multiple off-site targets per domain:** each domain can replicate to several off-site destinations at once. Add extra targets on Settings, Off-site, each with its own repository, S3 storage class, append-only flag, retention and growth budget; they all replicate on that domain's off-site schedule. An existing single off-site setup is carried over as the first target.
 - **Retention per source:** the local policy lives on Settings, Paths & Storage; the off-site policy on Settings, Off-site (leave it all-zero to never auto-trim off-site snapshots).
 - **Bandwidth limits:** cap the restic upload/download rate under Settings, Off-site.
 - **Cold and archival storage class (S3):** for a native S3 off-site repo, pick a restore-readable tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes set their class in the rclone config.
+- **Remote primary instead of local:** a domain's Backup Path itself can be one of the backends above, with no local copy and no replication step — see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories) for the inline Local/Remote switch and its bandwidth/append-only/growth-budget safety settings.
 
 ## Portable settings (export and import) {#portable-settings-export-and-import}
 

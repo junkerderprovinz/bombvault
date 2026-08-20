@@ -731,6 +731,12 @@ const ja: Partial<Translations> = {
   "stack.memberStarted": "起動済み",
   "settings.restoreFolder": "既定の復元フォルダー",
   "settings.restoreFolderHint": "「フォルダーに復元」がスナップショットを既定で展開する場所。",
+  "settings.configPath": "セルフバックアップパス",
+  "settings.pathMode.local": "ローカル",
+  "settings.pathMode.remote": "リモート",
+  "settings.primaryRemote.title": "リモートプライマリの安全設定",
+  "settings.primaryRemote.hint": "このバックアップパスはリモートのresticリポジトリです — これはレプリカではなくプライマリコピーそのものです。帯域幅制限、追記専用保護、増加量予算アラームをここで設定できます。オフサイトコピーと同じ保護です。",
+  "settings.primaryRemote.budgetHint": "このリポジトリがバイト予算を超えたときに警告します（0 = オフ）。",
 
   // Off-site connection test + setup wizard (v4 ransomware protection)
   "offsite.test": "接続をテスト",

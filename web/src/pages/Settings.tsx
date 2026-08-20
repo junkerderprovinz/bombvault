@@ -5,6 +5,7 @@ import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/So
 import { useOffsiteTargets } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { PathModeSwitch } from "../components/PathModeSwitch";
 import { InfoBubble } from "../components/InfoBubble";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
@@ -3878,37 +3879,65 @@ export function SettingsPage() {
           <span dir="ltr" className="font-mono text-start">{hostMountRoot}</span>). Click Browse to
           navigate directories or type a path directly.
         </p>
-        <FolderBrowser
+        <PathModeSwitch
           label={t("settings.containersPath")}
+          domain="containers"
           value={settings.containersPath}
           hostMountRoot={hostMountRoot}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, containersPath: v } : prev)
           }
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
         />
-        <FolderBrowser
+        <PathModeSwitch
           label={t("settings.vmsPath")}
+          domain="vms"
           value={settings.vmsPath}
           hostMountRoot={hostMountRoot}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev)
           }
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
         />
-        <FolderBrowser
+        <PathModeSwitch
           label={t("settings.flashPath")}
+          domain="flash"
           value={settings.flashPath}
           hostMountRoot={hostMountRoot}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, flashPath: v } : prev)
           }
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
         />
-        <FolderBrowser
+        <PathModeSwitch
+          label={t("settings.configPath")}
+          domain="config"
+          value={settings.configPath}
+          hostMountRoot={hostMountRoot}
+          onChange={(v) =>
+            setSettings((prev) => prev ? { ...prev, configPath: v } : prev)
+          }
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
+        />
+        <PathModeSwitch
           label={t("settings.filesPath")}
+          domain="files"
           value={settings.filesPath}
           hostMountRoot={hostMountRoot}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, filesPath: v } : prev)
           }
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
         />
         <div className="flex flex-col gap-1">
           <FolderBrowser
@@ -3930,6 +3959,7 @@ export function SettingsPage() {
                 containersPath: settings.containersPath,
                 vmsPath: settings.vmsPath,
                 flashPath: settings.flashPath,
+                configPath: settings.configPath,
                 filesPath: settings.filesPath,
                 restoreFolder: settings.restoreFolder,
               },
