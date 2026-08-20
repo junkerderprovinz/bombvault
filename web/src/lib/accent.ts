@@ -49,9 +49,34 @@ export function applyStoredAccent(): void {
 export function contrastOn(hex: string): string {
   const parsed = parseHex(hex);
   if (!parsed) return DEFAULT_ACCENT_CONTRAST;
-  // Carbon's own ink, not a warm near-black: on a yellow accent a
+  // Carbon's own ink (#161616), not a warm near-black: on a yellow accent a
   // brown-tinted black reads as a smudge.
-  return luminance(parsed.r, parsed.g, parsed.b) > 0.55 ? "#161616" : "#FFFFFF";
+  //
+  // A single hardcoded luminance cutoff (this used to be `> 0.55`) is the
+  // wrong shape for this decision: the real WCAG crossover between "black
+  // ink wins" and "white ink wins" isn't a fixed midpoint once one of the
+  // two candidates is #161616 rather than true #000000, and 5 of the 8
+  // rainbow hues (design-language.md's "The colour engine") landed on the
+  // wrong side of 0.55 as a result — e.g. #FF8389 (rainbow red) got white
+  // ink at ~2.37:1 when #161616 gives it ~7.63:1 (both measured live, see
+  // accent.test.ts). Comparing the two candidates' ACTUAL contrast ratios
+  // against the background and picking the higher one is self-correcting
+  // for any background colour, with no cutoff to mistune.
+  const bg = luminance(parsed.r, parsed.g, parsed.b);
+  const darkInk = luminance(0x16, 0x16, 0x16);
+  const whiteInk = 1; // luminance(255, 255, 255) === 1 exactly
+  return contrastRatio(bg, darkInk) >= contrastRatio(bg, whiteInk) ? "#161616" : "#FFFFFF";
+}
+
+/**
+ * contrastRatio is the standard WCAG contrast ratio between two relative
+ * luminances: (lighter + 0.05) / (darker + 0.05). Order of the two
+ * arguments doesn't matter — the lighter/darker pick happens inside.
+ */
+function contrastRatio(l1: number, l2: number): number {
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 /** softTint is a fixed 14%-alpha rgba of the given colour, used for tinted
