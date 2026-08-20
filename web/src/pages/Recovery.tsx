@@ -45,6 +45,7 @@ import {
 } from "../lib/api";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
+import { useToast } from "../lib/toast";
 
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
 // (they read the mirrored, restic-encrypted definitions), so they are the
@@ -55,7 +56,6 @@ import { useConfirm } from "../lib/useConfirm";
 // See the report notes for why the snapshot-list probe can't be used pre-discover
 // (it needs a container name we don't have on a fresh install).
 type DiscoverResult = Awaited<ReturnType<typeof discover>>;
-type SaveState = "idle" | "saving" | "saved" | "error";
 
 function isKeyMismatch(err: string | undefined): boolean {
   return !!err && /APP_KEY/i.test(err);
@@ -146,22 +146,26 @@ function FileSetRecoveryRow({
   otherActive: boolean;
 }) {
   const [target, setTarget] = useState("");
-  const [state, setState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const { push } = useToast();
 
   const snapLabel = set.lastBackup ? new Date(set.lastBackup * 1000).toLocaleString() : "";
 
+  // GlimStone follow-up pass (v8.0.0): the "done"/"fail" result below is a
+  // genuinely one-shot completion notice — unlike VMBackupButton/BackupButton's
+  // shared useBackupWatch hook (deliberately left elsewhere in this pass), this
+  // row drives fireAndWaitRun directly with its own local state, the same
+  // shape as Settings.tsx's already-migrated ReplicateNowButton/
+  // TestConnectionButton, so it gets the same treatment.
   async function handleRestore() {
-    if (target.trim() === "" || state === "busy") return;
-    setState("busy");
-    setError(null);
+    if (target.trim() === "" || busy) return;
+    setBusy(true);
     try {
       // Resolve the newest snapshot of this set now (tag-filtered server-side).
       const snaps = await fileSetSnapshots(set.id);
       const list = snaps.ok ? snaps.snapshots ?? [] : [];
       if (list.length === 0) {
-        setState("fail");
-        setError(snaps.error ?? t("snapshots.none"));
+        push(snaps.error ?? t("snapshots.none"), "fail");
         return;
       }
       const latest = list.reduce((a, b) => (new Date(a.time) > new Date(b.time) ? a : b));
@@ -171,14 +175,14 @@ function FileSetRecoveryRow({
         start: () => restoreFileSet(set.id, latest.id, true, target.trim()),
       });
       if (res.ok) {
-        setState("ok");
+        push(t("common.done"), "success");
       } else {
-        setState("fail");
-        setError(res.error ?? null);
+        push(res.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("fail");
-      setError(err instanceof Error ? err.message : String(err));
+      push(err instanceof Error ? err.message : String(err), "fail");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -199,21 +203,17 @@ function FileSetRecoveryRow({
       <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={() => void handleRestore()}
-          disabled={state === "busy" || otherActive || target.trim() === ""}
+          disabled={busy || otherActive || target.trim() === ""}
           className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {state === "busy" && (
+          {busy && (
             <span
               className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
               style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
             />
           )}
-          {state === "busy" ? t("common.restoring") : t("snapshots.restore")}
+          {busy ? t("common.restoring") : t("snapshots.restore")}
         </button>
-        {state === "ok" && <span className="text-xs text-statusOk">✓ {t("common.done")}</span>}
-        {state === "fail" && error && (
-          <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>
-        )}
       </div>
     </div>
   );
@@ -284,8 +284,8 @@ function ForeignItemRow({
   // sets start blank (the user must pick a folder).
   const [target, setTarget] = useState(domain === "vms" ? "user/domains" : "");
   const needsTarget = domain === "files" || domain === "vms";
-  const [state, setState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   // Files domain only: restore the WHOLE set (default) or PICK a subfolder/file
@@ -380,8 +380,12 @@ function ForeignItemRow({
     });
   }
 
+  // GlimStone follow-up pass (v8.0.0): same reasoning as FileSetRecoveryRow
+  // above — this row drives fireAndWaitRun directly with its OWN local state
+  // (not the shared, deliberately-sticky useBackupWatch hook), so the "ok"/
+  // "fail" result is a genuinely one-shot completion notice, now a toast.
   async function handleRestore() {
-    if (state === "busy" || blocked) return;
+    if (busy || blocked) return;
     if (needsTarget && target.trim() === "") return;
     // A subset restore needs at least one ticked path (the whole-set restore
     // sends none).
@@ -393,8 +397,7 @@ function ForeignItemRow({
       const key = collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm";
       if (!(await confirm(t(key).replace("{name}", item.name)))) return;
     }
-    setState("busy");
-    setError(null);
+    setBusy(true);
     onBusyChange(true);
     try {
       const res = await fireAndWaitRun({
@@ -418,16 +421,15 @@ function ForeignItemRow({
           }),
       });
       if (res.ok) {
-        setState("ok");
+        push(t("common.done"), "success");
       } else {
-        setState("fail");
-        setError(res.error ?? null);
+        push(res.error ?? t("settings.error"), "fail");
         if (isForeignSessionGone(res.error)) onSessionGone();
       }
     } catch (err) {
-      setState("fail");
-      setError(err instanceof Error ? err.message : String(err));
+      push(err instanceof Error ? err.message : String(err), "fail");
     } finally {
+      setBusy(false);
       onBusyChange(false);
     }
   }
@@ -439,7 +441,7 @@ function ForeignItemRow({
         <select
           value={snapshot}
           onChange={(e) => setSnapshot(e.target.value)}
-          disabled={state === "busy"}
+          disabled={busy}
           className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text bv-field-focus"
         >
           <option value="latest">{t("recovery.foreignLatest")}</option>
@@ -460,7 +462,7 @@ function ForeignItemRow({
                 name={`filesmode-${item.name}`}
                 checked={filesMode === "whole"}
                 onChange={() => setFilesMode("whole")}
-                disabled={state === "busy"}
+                disabled={busy}
                 className="accent-accent"
               />
               <span className="text-carbon-text">{t("recovery.foreignWholeSet")}</span>
@@ -471,7 +473,7 @@ function ForeignItemRow({
                 name={`filesmode-${item.name}`}
                 checked={filesMode === "subset"}
                 onChange={() => setFilesMode("subset")}
-                disabled={state === "busy"}
+                disabled={busy}
                 className="accent-accent"
               />
               <span className="text-carbon-text">{t("recovery.foreignPickSubfolder")}</span>
@@ -531,7 +533,7 @@ function ForeignItemRow({
               type="checkbox"
               checked={overwrite}
               onChange={(e) => setOverwrite(e.target.checked)}
-              disabled={state === "busy"}
+              disabled={busy}
               className="accent-accent"
             />
             <span className="text-carbon-text">{t("recovery.foreignOverwrite")}</span>
@@ -563,25 +565,21 @@ function ForeignItemRow({
         <button
           onClick={() => void handleRestore()}
           disabled={
-            state === "busy" ||
+            busy ||
             blocked ||
             (needsTarget && target.trim() === "") ||
             (subsetActive && selected.size === 0)
           }
           className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {state === "busy" && (
+          {busy && (
             <span
               className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
               style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
             />
           )}
-          {state === "busy" ? t("common.restoring") : t("recovery.foreignRestore")}
+          {busy ? t("common.restoring") : t("recovery.foreignRestore")}
         </button>
-        {state === "ok" && <span className="text-xs text-statusOk">✓ {t("common.done")}</span>}
-        {state === "fail" && error && (
-          <span className="text-xs text-statusFail wrap-break-word">✗ {error}</span>
-        )}
       </div>
       {confirmDialog}
     </div>
@@ -875,6 +873,7 @@ function ForeignRestoreCard({
 export default function Recovery() {
   const { t } = useT();
   const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
 
   // Step 1 — repo-readable / APP_KEY state, shared with later steps.
   const [readableState, setReadableState] = useState<StepState>("idle");
@@ -888,8 +887,7 @@ export default function Recovery() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [savedSettings, setSavedSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
-  const [attachState, setAttachState] = useState<SaveState>("idle");
-  const [attachError, setAttachError] = useState<string | null>(null);
+  const [attachState, setAttachState] = useState<"idle" | "saving">("idle");
   const [previewed, setPreviewed] = useState(false);
 
   // Config-restore step (runs BEFORE attach/discover): restore BombVault's OWN
@@ -920,7 +918,12 @@ export default function Recovery() {
   // probe (probe=true) so merely checking readability never rebuilds the target
   // list — only Step 3's explicit "Discover" does (#44). The count + error
   // classification are identical to a real discover.
-  const checkReadable = useCallback(async () => {
+  //
+  // Returns the classification (not just void) so connectPreview below can
+  // react to the FRESH result synchronously — reading the `readableState`
+  // React state var right after `await checkReadable()` would risk a stale
+  // closure value from before this render's state settled.
+  const checkReadable = useCallback(async (): Promise<StepState> => {
     setChecking(true);
     setLastError(null);
     try {
@@ -930,21 +933,24 @@ export default function Recovery() {
       if (keyErr) {
         setReadableState("bad");
         setLastError(keyErr.error ?? null);
-        return;
+        return "bad";
       }
       const otherErr = results.find((r) => !r.ok);
       if (otherErr) {
         setReadableState("warn");
         setLastError(otherErr.error ?? null);
-        return;
+        return "warn";
       }
       const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0);
       // >0 = repo readable with content; 0 = reachable but empty / not attached yet.
-      setReadableState(total > 0 ? "ok" : "warn");
+      const next: StepState = total > 0 ? "ok" : "warn";
+      setReadableState(next);
+      return next;
     } catch (err) {
       // Network/HTTP failure (unreachable, auth, 5xx) — not a key mismatch.
       setReadableState("warn");
       setLastError(err instanceof Error ? err.message : String(err));
+      return "warn";
     } finally {
       setChecking(false);
     }
@@ -953,11 +959,19 @@ export default function Recovery() {
   // connectPreview saves the paths/off-site/encryption fields (mirroring the
   // Settings save() merge onto the server baseline), then re-runs checkReadable
   // so Step 1's pill reflects the freshly-attached location.
+  //
+  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 3000ms inline flash
+  // is now a toast, same shape as Settings.tsx's shared save() helper — with
+  // one twist: the success flash only ever showed when the FOLLOW-UP
+  // readability check also came back "ok" (attaching a bad repo shouldn't look
+  // like a completed success), so the toast keeps that same condition, driven
+  // by checkReadable's own return value rather than the readableState React
+  // var (which would still read stale here, mid-function, before this
+  // render's state settles).
   const connectPreview = useCallback(async () => {
     const base = savedSettings ?? settings;
     if (!base || !settings) return;
     setAttachState("saving");
-    setAttachError(null);
     const patch: Partial<Settings> = {
       containersPath: settings.containersPath,
       vmsPath: settings.vmsPath,
@@ -975,10 +989,8 @@ export default function Recovery() {
       if (res.ok) {
         setSavedSettings(updated);
         setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
-        setAttachState("saved");
         // Keep the sidebar/Settings in sync (same event the Settings page fires).
         window.dispatchEvent(new Event("bv:settings-changed"));
-        setTimeout(() => setAttachState("idle"), 3000);
         setPreviewed(true);
         // Attaching a (possibly different) repo invalidates any previously
         // discovered targets — clear them so Step 4 can never offer to restore
@@ -988,16 +1000,17 @@ export default function Recovery() {
         setFileSets([]);
         setDiscovered(null);
         setRestoreAllResult(null);
-        await checkReadable();
+        const state = await checkReadable();
+        if (state === "ok") push(t("recovery.readable"), "success");
       } else {
-        setAttachError(res.error ?? t("settings.error"));
-        setAttachState("error");
+        push(res.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setAttachError(err instanceof Error ? err.message : t("settings.error"));
-      setAttachState("error");
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setAttachState("idle");
     }
-  }, [savedSettings, settings, checkReadable, t]);
+  }, [savedSettings, settings, checkReadable, push, t]);
 
   // restoreOwnConfig stages a restore of BombVault's OWN settings and drives the
   // self-restart that applies it. It first persists the chosen config-repo
@@ -1071,6 +1084,15 @@ export default function Recovery() {
 
   // Step 3 — discover everything. Runs discoverAll(), then re-fetches the target
   // lists (kept for the later review/restore step).
+  //
+  // GlimStone follow-up pass (v8.0.0) audit note: `discovered`/`discoverError`
+  // below are DELIBERATELY left as inline status, not migrated to a toast —
+  // unlike Containers.tsx/VMs.tsx's own discoverMsg (which WAS migrated),
+  // this counts+error feed `discoverStepState` (this StepCard's own ok/warn
+  // pill) AND are read by Step 5 below to decide what's about to be restored.
+  // It's reference content the wizard's later steps depend on, not a one-shot
+  // ping — the same "what did the last check say" reasoning as
+  // IntegrityCard's persisted results.
   const [discovering, setDiscovering] = useState(false);
   const [discovered, setDiscovered] = useState<{ containers: number; vms: number; files: number } | null>(null);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
@@ -1119,6 +1141,13 @@ export default function Recovery() {
   const progressMap = useProgress();
   const running = anyActive(progressMap);
   const [restoreAllBusy, setRestoreAllBusy] = useState(false);
+  // GlimStone follow-up pass (v8.0.0) audit note: DELIBERATELY left as inline
+  // status, not migrated to a toast — unlike Containers.tsx/VMs.tsx's own
+  // bulk-action result (which WAS migrated, see runBulk there), this count
+  // ALSO drives `restoreStepState` below (this StepCard's own ok/warn pill),
+  // and a disaster-recovery restore's ok/fail counts are exactly what a user
+  // needs to keep reading and act on (which rows below need a retry), not a
+  // 4s ping to glance at and lose. Same reasoning as IntegrityCard's results.
   const [restoreAllResult, setRestoreAllResult] = useState<{ ok: number; fail: number } | null>(null);
 
   // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
@@ -1452,12 +1481,6 @@ export default function Recovery() {
                 )}
                 {t("recovery.connectPreview")}
               </button>
-              {attachState === "saved" && previewed && readableState === "ok" && (
-                <span className="text-sm text-statusOk">{t("recovery.readable")}</span>
-              )}
-              {attachState === "error" && attachError && (
-                <span className="text-sm text-statusFail">{attachError}</span>
-              )}
             </div>
           </>
         ) : (

@@ -26,6 +26,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Selector } from "../components/Selector";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -255,7 +256,7 @@ function DeleteBackupsButton({
   onDeleted: () => void;
 }) {
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
@@ -267,13 +268,12 @@ function DeleteBackupsButton({
     // VMs.tsx's deleteAllConfirm and Files.tsx's deleteBackupsConfirm.
     if (!(await confirm(t("containers.deleteBackupsConfirm")))) return;
     setPending(true);
-    setError(null);
     try {
       const res = await deleteBackups(name);
       if (res.ok) onDeleted();
-      else setError(res.error ?? "Delete failed");
+      else push(res.error ?? "Delete failed", "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      push(err instanceof Error ? err.message : "Delete failed", "fail");
     } finally {
       setPending(false);
     }
@@ -288,7 +288,6 @@ function DeleteBackupsButton({
       >
         {pending ? t("dashboard.checking") : t("containers.deleteBackups")}
       </button>
-      {error && <p className="text-xs text-statusFail">{error}</p>}
       {confirmDialog}
     </div>
   );
@@ -297,6 +296,14 @@ function DeleteBackupsButton({
 // ExportButton writes a plain, tool-free tar+xml copy of the container (the same
 // folders restic backs up, plus the Unraid template) into a browsable folder next
 // to the repo — restic stays the engine; this is an extra, unencrypted export.
+//
+// GlimStone follow-up pass (v8.0.0) audit note: the "done"/"error" result below
+// is DELIBERATELY left as inline status, not migrated to a toast — it shows the
+// actual destination PATH the export landed at (or, on failure, the raw error),
+// neither of which auto-dismissed even before this pass. Like
+// SettingsPortabilityCard's export/import banners, this is a reference value the
+// user needs to actually copy down or read, not a one-shot "it worked" ping a 4s
+// toast would cut off mid-read.
 function ExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
@@ -355,24 +362,24 @@ function HooksEditor({
   const [open, setOpen] = useState(false);
   const [pre, setPre] = useState(initialPre);
   const [post, setPost] = useState(initialPost);
-  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "saving">("idle");
+  const { push } = useToast();
 
+  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 2500ms inline flash
+  // is now a toast, same shape as Settings.tsx's shared save() helper.
   async function save() {
     setState("saving");
-    setMsg(null);
     try {
       const r = await setContainerHooks(name, pre, post);
       if (r.ok) {
-        setState("saved");
-        setTimeout(() => setState("idle"), 2500);
+        push(t("settings.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setState("idle");
     }
   }
 
@@ -409,8 +416,6 @@ function HooksEditor({
               className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
               {state === "saving" ? "…" : t("settings.save")}
             </button>
-            {state === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-statusFail wrap-break-word">{msg}</span>}
           </div>
         </div>
       )}
@@ -428,18 +433,17 @@ function HooksEditor({
 function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boolean; t: T }) {
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
   useEffect(() => setEnabled(initial), [initial]);
 
   async function handle(next: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const res = await setUpdateAfterBackup(name, next);
       if (res.ok) setEnabled(next);
-      else setError(res.error ?? "Failed to update setting");
+      else push(res.error ?? "Failed to update setting", "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update setting");
+      push(err instanceof Error ? err.message : "Failed to update setting", "fail");
     } finally {
       setBusy(false);
     }
@@ -450,7 +454,6 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
       <div className="flex flex-col gap-0.5">
         <span className="text-xs text-carbon-textSub">{t("update.afterBackup")}</span>
         <span className="text-caption text-carbon-textMuted">{t("update.afterBackupHint")}</span>
-        {error && <span className="text-caption text-statusFail">{error}</span>}
       </div>
       <Toggle
         hideLabel
@@ -475,8 +478,8 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
   const [browseValue, setBrowseValue] = useState("");
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [hostSourceRoot, setHostSourceRoot] = useState("/mnt");
-  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "saving">("idle");
+  const { push } = useToast();
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -491,19 +494,17 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
           if (r.hostMountRoot) setHostMountRoot(r.hostMountRoot);
           if (r.hostSourceRoot) setHostSourceRoot(r.hostSourceRoot);
         } else {
-          setState("error");
-          setMsg(r.error ?? t("settings.error"));
+          push(r.error ?? t("settings.error"), "fail");
         }
       })
       .catch((err) => {
-        setState("error");
-        setMsg(err instanceof Error ? err.message : t("settings.error"));
+        push(err instanceof Error ? err.message : t("settings.error"), "fail");
       })
       .finally(() => {
         setLoading(false);
         setLoaded(true);
       });
-  }, [open, loaded, name, t]);
+  }, [open, loaded, name, t, push]);
 
   function toggle(source: string) {
     setChecked((prev) => {
@@ -525,20 +526,18 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
   }
   async function save() {
     setState("saving");
-    setMsg(null);
     const paths = [...checked, ...custom.map((c) => c.path)];
     try {
       const r = await setBackupPaths(name, paths);
       if (r.ok) {
-        setState("saved");
-        setTimeout(() => setState("idle"), 2500);
+        push(t("folders.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setState("idle");
     }
   }
 
@@ -619,8 +618,6 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
             >
               {state === "saving" ? "…" : t("folders.save")}
             </button>
-            {state === "saved" && <span className="text-xs text-statusOk">{t("folders.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-statusFail wrap-break-word">{msg}</span>}
           </div>
         </div>
       )}
@@ -633,12 +630,11 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
 function StopContainersEditor({ name, initial, t }: { name: string; initial: string[]; t: T }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState(initial.join("\n"));
-  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "saving">("idle");
+  const { push } = useToast();
 
   async function save() {
     setState("saving");
-    setMsg(null);
     const list = text
       .split("\n")
       .map((s) => s.trim())
@@ -646,15 +642,14 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
     try {
       const r = await setStopContainers(name, list);
       if (r.ok) {
-        setState("saved");
-        setTimeout(() => setState("idle"), 2500);
+        push(t("settings.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setState("idle");
     }
   }
 
@@ -693,8 +688,6 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
             >
               {state === "saving" ? "…" : t("settings.save")}
             </button>
-            {state === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-statusFail wrap-break-word">{msg}</span>}
           </div>
         </div>
       )}
@@ -712,8 +705,8 @@ type ExcludePreviewRow = { raw: string; resolved: string; status: string; matche
 function ExcludesEditor({ name, initial, t }: { name: string; initial: string[]; t: T }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState(initial.join("\n"));
-  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "saving">("idle");
+  const { push } = useToast();
   const [preview, setPreview] = useState<ExcludePreviewRow[]>([]);
 
   // Debounced live preview: whenever the editor is open and the textarea holds at
@@ -756,20 +749,18 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   // the parsed textarea; the assistant passes the list ± one line.
   async function saveLines(list: string[]) {
     setState("saving");
-    setMsg(null);
     try {
       const r = await setContainerExcludes(name, list);
       if (r.ok) {
         setText(list.join("\n"));
-        setState("saved");
-        setTimeout(() => setState("idle"), 2500);
+        push(t("excludes.saved"), "success");
       } else {
-        setState("error");
-        setMsg(r.error ?? t("excludes.error"));
+        push(r.error ?? t("excludes.error"), "fail");
       }
     } catch (err) {
-      setState("error");
-      setMsg(err instanceof Error ? err.message : t("excludes.error"));
+      push(err instanceof Error ? err.message : t("excludes.error"), "fail");
+    } finally {
+      setState("idle");
     }
   }
 
@@ -783,11 +774,19 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   const [scanning, setScanning] = useState(false);
   const [suggestions, setSuggestions] = useState<ExcludeSuggestion[] | null>(null); // null = not scanned yet
   const [truncated, setTruncated] = useState(false);
-  const [assistErr, setAssistErr] = useState<string | null>(null);
+  // Distinguishes "scanned, found nothing" from "the scan itself failed" for the
+  // "nothing found" hint below — the failure TEXT itself no longer lives here
+  // (see scan()'s own comment), just the fact of it.
+  const [scanFailed, setScanFailed] = useState(false);
 
+  // GlimStone follow-up pass (v8.0.0): the scan-failed inline error is now a
+  // toast — a Scan/Rescan click is a one-shot action like every other migrated
+  // save/test button here. `truncated` (rendered below) stays inline: it is a
+  // persistent fact ABOUT the current suggestion list ("this list was cut
+  // short"), not a completion notice of the scan action itself.
   async function scan() {
     setScanning(true);
-    setAssistErr(null);
+    setScanFailed(false);
     try {
       const r = await suggestContainerExcludes(name);
       if (r.ok) {
@@ -795,11 +794,13 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         setTruncated(r.truncated);
       } else {
         setSuggestions([]);
-        setAssistErr(r.error ?? t("excludes.assistScanFailed"));
+        setScanFailed(true);
+        push(r.error ?? t("excludes.assistScanFailed"), "fail");
       }
     } catch (err) {
       setSuggestions([]);
-      setAssistErr(err instanceof Error ? err.message : t("excludes.assistScanFailed"));
+      setScanFailed(true);
+      push(err instanceof Error ? err.message : t("excludes.assistScanFailed"), "fail");
     }
     setScanning(false);
   }
@@ -891,8 +892,6 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
             >
               {state === "saving" ? "…" : t("excludes.save")}
             </button>
-            {state === "saved" && <span className="text-xs text-statusOk">{t("excludes.saved")}</span>}
-            {state === "error" && msg && <span className="text-xs text-statusFail wrap-break-word">{msg}</span>}
           </div>
 
           {/* Exclusion assistant */}
@@ -924,9 +923,8 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                   {truncated && !scanning && (
                     <span className="text-xs text-statusWarn">{t("excludes.assistTruncated")}</span>
                   )}
-                  {assistErr && !scanning && <span className="text-xs text-statusFail wrap-break-word">{assistErr}</span>}
                 </div>
-                {!scanning && suggestions !== null && !assistErr && openSuggestions.length === 0 && (
+                {!scanning && suggestions !== null && !scanFailed && openSuggestions.length === 0 && (
                   <p className="text-xs text-carbon-textMuted">{t("excludes.assistNothingFound")}</p>
                 )}
                 {!scanning && openSuggestions.length > 0 && (
@@ -1178,17 +1176,16 @@ function ScheduleIncludeAllControl({
   onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
 
   async function run(include: boolean) {
     setBusy(true);
-    setError(null);
     try {
       const res = await setIncludeAll(include);
       if (res.ok) onChanged();
-      else setError(res.error ?? t("settings.error"));
+      else push(res.error ?? t("settings.error"), "fail");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }
@@ -1210,7 +1207,6 @@ function ScheduleIncludeAllControl({
       >
         {t("schedule.excludeAll")}
       </button>
-      {error && <span className="text-xs text-statusFail">{error}</span>}
     </div>
   );
 }
@@ -1267,7 +1263,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   const [source, setSource] = useState<RepoSource>("local");
   const [startInOrder, setStartInOrder] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { push } = useToast();
   const [started, setStarted] = useState(false);
   // Terminal state for the stack restore: since StackCard drives no fire-and-
   // watch of its own, we derive "finished" from the members' progress below.
@@ -1308,7 +1304,6 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   async function run() {
     if (!(await confirm(t("stack.restoreConfirm")))) return;
     setBusy(true);
-    setError(null);
     setStarted(false);
     setFinished(false);
     sawActive.current = false;
@@ -1318,10 +1313,16 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
         setStarted(true);
         onRestored(); // refresh the main list so run-state/orphan rows update
       } else {
-        setError(res.error ?? t("settings.error"));
+        // GlimStone follow-up pass (v8.0.0): a failure to even START the async
+        // restore is a one-shot action-failed notice, now a toast. `started` /
+        // `finished` above stay inline — once the restore DOES start, its
+        // progress and eventual completion are a durable, ongoing status (a
+        // background job with a Cancel button attached), not a one-shot ping;
+        // see the render below for the same reasoning applied to `finished`.
+        push(res.error ?? t("settings.error"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
       setBusy(false);
     }
@@ -1379,7 +1380,6 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
             >
               {busy ? t("stack.restoring") : t("stack.restore")}
             </button>
-            {error && <span className="text-xs text-statusFail wrap-break-word">{error}</span>}
           </div>
 
           {/* Async ack: the server runs the stack restore detached and the ack
@@ -1441,8 +1441,8 @@ const BACKUP_ORDER_COLLAPSED_KEY = "bombvault.backupOrderCollapsed";
 function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) {
   const [savedOrder, setSavedOrder] = useState<ContainerOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
+  const { push } = useToast();
   const hydrated = useRef(false);
   // #124: collapse the whole card (persisted per browser) and reorder rows by
   // native drag-and-drop (live reorder via the shared useDragReorder hook below).
@@ -1530,20 +1530,18 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
 
   async function persist(order: string[]) {
     setSaveState("saving");
-    setError(null);
     try {
       const res = await setBackupOrder(order);
       if (res.ok) {
         setSavedOrder(order.map((container, i) => ({ container, order: i + 1 })));
-        setSaveState("saved");
-        setTimeout(() => setSaveState("idle"), 3000);
+        push(t("backupOrder.saved"), "success");
       } else {
-        setError(res.error ?? t("backupOrder.saveError"));
-        setSaveState("error");
+        push(res.error ?? t("backupOrder.saveError"), "fail");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("backupOrder.saveError"));
-      setSaveState("error");
+      push(err instanceof Error ? err.message : t("backupOrder.saveError"), "fail");
+    } finally {
+      setSaveState("idle");
     }
   }
 
@@ -1663,12 +1661,6 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
               >
                 {t("backupOrder.reset")}
               </button>
-              {saveState === "saved" && (
-                <span className="text-xs text-statusOk">{t("backupOrder.saved")}</span>
-              )}
-              {saveState === "error" && error && (
-                <span className="text-xs text-statusFail">{error}</span>
-              )}
             </div>
           </>
         ))}
@@ -1687,8 +1679,14 @@ export function Containers() {
   // on/off/reactive/rotate/palette edits repaint the list live, no reload.
   useRainbow();
   const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
+  // Page-level load failure — NOT migrated to a toast (GlimStone follow-up pass,
+  // v8.0.0 audit note): this blocks the whole list from rendering, so it is a
+  // structural "the page failed" condition the user needs to keep seeing (and
+  // act on, e.g. reload), not a one-shot confirmation of a button click. Matches
+  // the page-level `error` in VMs.tsx, left the same way.
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
   const [filterKey, setFilterKey] = useState<FilterKey>(loadFilterKey);
@@ -1697,9 +1695,7 @@ export function Containers() {
   const [backupFilter, setBackupFilter] = useState<BackupFilterKey>(loadBackupFilterKey);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
-  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
   const [discovering, setDiscovering] = useState(false);
-  const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
   // Overall server-side batch-backup progress (independent of this browser).
   const progress = useProgress();
   const batch = progress["batch:containers"];
@@ -1811,9 +1807,13 @@ export function Containers() {
   }, [search, scheduleFilter, backupFilter, filterKey, containers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Run an action over every selected container, then refresh + clear.
+  // GlimStone follow-up pass (v8.0.0): the "{ok} ok, {fail} failed" summary was
+  // a persistent inline note (no auto-dismiss); now a one-shot toast, same as
+  // every other migrated bulk-action result. Severity follows the result: a
+  // clean run is routine (success), any failure needs to actually be noticed
+  // (warn) rather than blend into a quiet-mode-suppressed success.
   async function runBulk(action: (name: string) => Promise<{ ok: boolean }>) {
     setBulkBusy(true);
-    setBulkMsg(null);
     let ok = 0;
     let fail = 0;
     for (const name of selected) {
@@ -1826,7 +1826,10 @@ export function Containers() {
       }
     }
     setBulkBusy(false);
-    setBulkMsg(t("containers.bulkResult").replace("{ok}", String(ok)).replace("{fail}", String(fail)));
+    push(
+      t("containers.bulkResult").replace("{ok}", String(ok)).replace("{fail}", String(fail)),
+      fail > 0 ? "warn" : "success"
+    );
     setSelected(new Set());
     void loadContainers();
   }
@@ -1837,21 +1840,20 @@ export function Containers() {
   async function backupSelected() {
     if (bulkBusy) return; // guard the in-flight window (button also disables)
     setBulkBusy(true);
-    setBulkMsg(null);
     const names = [...selected];
     try {
       const res = await backupAll(names);
       if (!res.ok) {
-        setBulkMsg(res.error ?? "Failed to start backup");
+        push(res.error ?? "Failed to start backup", "fail");
         return;
       }
       setSelected(new Set());
-      setBulkMsg(t("containers.batchStarted"));
+      push(t("containers.batchStarted"), "success");
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
-        setBulkMsg(t("containers.batchAlreadyRunning"));
+        push(t("containers.batchAlreadyRunning"), "warn");
       } else {
-        setBulkMsg(e instanceof Error ? e.message : "Failed to start backup");
+        push(e instanceof Error ? e.message : "Failed to start backup", "fail");
       }
     } finally {
       setBulkBusy(false);
@@ -1873,19 +1875,22 @@ export function Containers() {
     );
   }
 
+  // GlimStone follow-up pass (v8.0.0): the "+N" / error note never auto-cleared
+  // (it stuck around next to the Discover button until the next click); it's a
+  // one-shot completion notice like every other migrated action here, so it's
+  // now a toast.
   async function handleDiscover() {
     setDiscovering(true);
-    setDiscoverMsg(null);
     try {
       const res = await discover();
       if (res.ok) {
-        setDiscoverMsg(`+${res.discovered ?? 0}`);
+        push(`+${res.discovered ?? 0}`, "success");
         await loadContainers();
       } else {
-        setDiscoverMsg(res.error ?? "Discover failed");
+        push(res.error ?? "Discover failed", "fail");
       }
     } catch (err) {
-      setDiscoverMsg(err instanceof Error ? err.message : "Discover failed");
+      push(err instanceof Error ? err.message : "Discover failed", "fail");
     } finally {
       setDiscovering(false);
     }
@@ -1905,9 +1910,6 @@ export function Containers() {
           <div className="mt-2"><OffsiteIndicator domain="containers" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {discoverMsg && (
-            <span className="text-xs text-carbon-textSub">{discoverMsg}</span>
-          )}
           <button
             onClick={() => void handleDiscover()}
             disabled={discovering}
@@ -2047,12 +2049,12 @@ export function Containers() {
         </div>
       )}
 
-      {/* Bulk status — kept OUTSIDE the action bar so it stays visible after a
-          server-side backup clears the selection (the bar unmounts then). */}
-      {(bulkBusy || bulkMsg) && (
-        <p className="text-xs text-carbon-textSub">
-          {bulkBusy ? t("containers.working") : bulkMsg}
-        </p>
+      {/* Bulk busy indicator — kept OUTSIDE the action bar so it stays visible
+          after a server-side backup clears the selection (the bar unmounts
+          then). The completion result itself is a toast now (see runBulk /
+          backupSelected); this is only the LIVE "still working" state. */}
+      {bulkBusy && (
+        <p className="text-xs text-carbon-textSub">{t("containers.working")}</p>
       )}
 
       {/* Backup-order panel (#119) — advanced: arrange the scheduled/batch backup

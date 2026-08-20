@@ -17,6 +17,7 @@ import { Toggle } from "./Toggle";
 import { useReveal } from "../lib/useReveal";
 import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { useToast } from "../lib/toast";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -88,17 +89,23 @@ function inferBackend(url: string): Backend {
 }
 
 // CopyBlock mirrors the VM-SSH card's copy pattern: a monospace <pre> with a copy
-// button that flips to "copied" for a moment. Clipboard may be unavailable on a
-// non-HTTPS origin — the text stays selectable in that case.
+// button. Clipboard may be unavailable on a non-HTTPS origin — the text is
+// selectable in that case.
+//
+// GlimStone follow-up pass (v8.0.0): the "copied" label-flip is now a toast,
+// same shape as every other migrated copy button (UnraidTileSection/
+// DashboardWidgetCard/FleetSettingsCard in Settings.tsx) — including turning
+// the previously-silent clipboard failure into an explicit fail toast,
+// matching those same sites.
 function CopyBlock({ text, t }: { text: string; t: T }) {
-  const [copied, setCopied] = useState(false);
+  const { push } = useToast();
   async function copy() {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      push(t("vm.ssh.copied"), "success");
     } catch {
-      /* clipboard unavailable (non-HTTPS) — the text is selectable in the box */
+      // clipboard unavailable (non-HTTPS) — the text is selectable in the box
+      push(t("vm.ssh.copyFailed"), "fail");
     }
   }
   return (
@@ -111,7 +118,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
         onClick={() => void copy()}
         className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
       >
-        {copied ? t("vm.ssh.copied") : t("vm.ssh.copy")}
+        {t("vm.ssh.copy")}
       </button>
     </div>
   );
@@ -205,45 +212,64 @@ export function OffsiteWizard({
   const immutable = primary ? (primaryConfig?.immutable ?? false) : settings[immKey];
   const [backend, setBackend] = useState<Backend>(() => inferBackend(repoURL));
 
+  const { push } = useToast();
+
   // Step 2 — rest-server deploy snippet (generated on demand, never persisted).
   const [snippet, setSnippet] = useState<DeploySnippetData | null>(null);
-  const [snipState, setSnipState] = useState<"idle" | "busy" | "error">("idle");
-  const [snipErr, setSnipErr] = useState<string | null>(null);
+  // GlimStone follow-up pass (v8.0.0): the "error" resting state below is gone
+  // — a failed generate/regenerate now pushes a toast and resets straight to
+  // idle (see genSnippet), so only the busy/idle distinction is left to track.
+  const [snipBusy, setSnipBusy] = useState(false);
 
   // Step 3 — REST credentials (reuses the cloud-credential endpoints). S3 fields
   // are loaded + preserved on save so this flow never clobbers them.
   const [cloud, setCloudState] = useState({ s3KeyId: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [restPwSet, setRestPwSet] = useState(false);
   const revealRestPassword = useReveal();
-  const [credState, setCredState] = useState<SaveState>("idle");
-  const [credErr, setCredErr] = useState<string | null>(null);
+  // GlimStone follow-up pass (v8.0.0): saveCreds' "saved"/"error" 3000ms flash
+  // is now a toast (see saveCreds below) — only "saving" is left to track.
+  const [credState, setCredState] = useState<"idle" | "saving">("idle");
   // cloudLoaded gates the "Save credentials" button: we must never POST a cloud
   // object that wasn't loaded from the server, or a blank round-trip would WIPE
   // the stored S3/REST non-secret fields (or clear CloudConf entirely).
   const [cloudLoaded, setCloudLoaded] = useState(false);
   const [cloudLoadErr, setCloudLoadErr] = useState<string | null>(null);
 
-  // Step 3 — connection test verdict.
-  const [testState, setTestState] = useState<"idle" | "busy" | "ok" | "uninit" | "fail">("idle");
-  const [testErr, setTestErr] = useState<string | null>(null);
+  // Step 3 — connection test verdict. GlimStone follow-up pass (v8.0.0): the
+  // ok/uninit/fail verdict below is now a toast, the exact same migration
+  // Settings.tsx's TestConnectionButton already got for this exact
+  // ok/uninit/fail shape (see runTest below) — so only busy/idle is left.
+  const [testBusy, setTestBusy] = useState(false);
 
-  // Repo URL/schedule save state.
+  // Repo URL/schedule save state. Kept as the full SaveState (below) because
+  // this setter is threaded into the SHARED `save` prop (Settings.tsx's own
+  // save(), already toast-migrated in the prior pass) — that function's type
+  // signature expects a `(s: SaveState) => void`, even though save() itself
+  // never actually produces "saved"/"error" anymore (see its own comment in
+  // Settings.tsx). The "saved"/"error" render this used to drive is gone
+  // (dead since that prior pass; removed below).
   const [repoState, setRepoState] = useState<SaveState>("idle");
-  const [repoErr, setRepoErr] = useState<string | null>(null);
 
-  // Step 4 — immutable flag + tamper verdict.
+  // Step 4 — immutable flag + tamper verdict. `immState` is SHARED by both
+  // modes below: off-site mode routes through the same already-toast-
+  // migrated shared `save` prop as repoState above (hence the SaveState type,
+  // for the same signature-compatibility reason); primary mode's own
+  // toggleImmutable further down now pushes its own toast too (GlimStone
+  // follow-up pass, v8.0.0), so neither mode's "saved"/"error" render (dead
+  // for one mode already, now dead for both) is needed — removed below.
   const [immState, setImmState] = useState<SaveState>("idle");
-  const [immErr, setImmErr] = useState<string | null>(null);
-  const [tamperState, setTamperState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [tamperState, setTamperState] = useState<"idle" | "busy" | "done">("idle");
   const [verdict, setVerdict] = useState<{ testable: boolean; protected: boolean; detail: string } | null>(null);
-  const [tamperErr, setTamperErr] = useState<string | null>(null);
 
   // Step 6 — retention strategy (UI-only; only the budget number persists).
   const [retention, setRetention] = useState<"farside" | "window" | "grow">(
     settings.offsiteGrowthBudgetGB > 0 ? "grow" : "farside"
   );
+  // `budgetState` is SHARED the same way `immState` is above: off-site mode's
+  // "grow" branch routes through the shared `save` prop (SaveState-typed for
+  // signature compatibility, dead "saved" render removed below); primary
+  // mode's own save button further down now pushes its own toast too.
   const [budgetState, setBudgetState] = useState<SaveState>("idle");
-  const [budgetErr, setBudgetErr] = useState<string | null>(null);
 
   // Load the stored cloud creds once (mirrors the Cloud card) so a save can keep
   // the S3 fields + treat a blank REST password as "keep the stored one".
@@ -283,71 +309,77 @@ export function OffsiteWizard({
   }
 
   async function genSnippet() {
-    setSnipState("busy");
-    setSnipErr(null);
+    setSnipBusy(true);
     try {
       // Never called for domain "config" — deploySnippet's backend route does
       // not accept it (see the Step 2 render gate below), so this cast is safe.
       const r = await deploySnippet(domain as OffsiteDomain);
       if (r.ok && r.snippet) {
         setSnippet(r.snippet);
-        setSnipState("idle");
       } else {
-        setSnipState("error");
-        setSnipErr(r.error ?? t("offsite.wizard.snippetError"));
+        push(r.error ?? t("offsite.wizard.snippetError"), "fail");
       }
     } catch (e) {
-      setSnipState("error");
-      setSnipErr(e instanceof Error ? e.message : t("offsite.wizard.snippetError"));
+      push(e instanceof Error ? e.message : t("offsite.wizard.snippetError"), "fail");
+    } finally {
+      setSnipBusy(false);
     }
   }
 
+  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 3000ms flash is now
+  // a toast, same shape as the shared save() helper's own migration.
   async function saveCreds() {
     // Never POST creds that were not loaded from the server (a blank round-trip
     // would wipe the stored non-secret fields). The button is disabled in this
     // state too; this is the defensive backstop.
     if (!cloudLoaded) return;
     setCredState("saving");
-    setCredErr(null);
     try {
       // Blank secrets = keep the stored value; S3 fields are round-tripped so the
       // wizard never wipes an existing S3 credential.
       const r = await setCloud({ s3KeyId: cloud.s3KeyId, s3Secret: "", s3Region: cloud.s3Region, restUser: cloud.restUser, restPassword: cloud.restPassword, s3StorageClass: cloud.s3StorageClass });
       if (r.ok) {
-        setCredState("saved");
         setCloudState((p) => ({ ...p, restPassword: "" }));
         setRestPwSet(restPwSet || cloud.restPassword !== "");
-        setTimeout(() => setCredState("idle"), 3000);
+        push(t("settings.saved"), "success");
       } else {
-        setCredState("error");
-        setCredErr(r.error ?? t("settings.error"));
+        push(r.error ?? t("settings.error"), "fail");
       }
     } catch (e) {
-      setCredState("error");
-      setCredErr(e instanceof Error ? e.message : t("settings.error"));
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
+    } finally {
+      setCredState("idle");
     }
   }
 
+  // GlimStone follow-up pass (v8.0.0): the ok/uninit/fail verdict below is now
+  // a toast — the exact same ok/uninit/fail shape Settings.tsx's
+  // TestConnectionButton already migrated, reused here verbatim (same i18n
+  // keys, same severities).
   async function runTest() {
-    setTestState("busy");
-    setTestErr(null);
+    setTestBusy(true);
     try {
       const r = primary ? await testPrimaryRemote(domain as PrimaryRemoteDomain) : await testOffsite(domain as OffsiteDomain);
-      if (r.ok && r.reachable && r.initialized) setTestState("ok");
-      else if (r.ok && r.reachable) setTestState("uninit");
-      else {
-        setTestState("fail");
-        setTestErr(r.error ?? null);
+      if (r.ok && r.reachable && r.initialized) {
+        push(t("offsite.testOk"), "success");
+      } else if (r.ok && r.reachable) {
+        push(t("offsite.testUninitialized"), "warn");
+      } else {
+        push(r.error ?? t("offsite.testFailed"), "fail");
       }
     } catch (e) {
-      setTestState("fail");
-      setTestErr(e instanceof Error ? e.message : null);
+      push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
+    } finally {
+      setTestBusy(false);
     }
   }
 
+  // GlimStone follow-up pass (v8.0.0): a FAILURE to even run the test is now a
+  // one-shot toast (same shape as every other migrated test/save action). The
+  // verdict itself, on success, stays exactly as it was — see the render
+  // below (near verdictText) for why.
   async function runTamper() {
     setTamperState("busy");
-    setTamperErr(null);
     try {
       const r = primary
         ? await primaryRemoteTamperTest(domain as PrimaryRemoteDomain)
@@ -356,12 +388,12 @@ export function OffsiteWizard({
         setVerdict({ testable: !!r.testable, protected: !!r.protected, detail: r.detail ?? "" });
         setTamperState("done");
       } else {
-        setTamperState("error");
-        setTamperErr(r.error ?? t("offsite.tamperError"));
+        setTamperState("idle");
+        push(r.error ?? t("offsite.tamperError"), "fail");
       }
     } catch (e) {
-      setTamperState("error");
-      setTamperErr(e instanceof Error ? e.message : t("offsite.tamperError"));
+      setTamperState("idle");
+      push(e instanceof Error ? e.message : t("offsite.tamperError"), "fail");
     }
   }
 
@@ -383,27 +415,30 @@ export function OffsiteWizard({
   // proves it with a tamper test (the verdict is shown verbatim). A failed save
   // rolls the optimistic flip back and surfaces the error, so a green "protected"
   // verdict can never appear while the server flag actually stayed OFF.
+  //
+  // GlimStone follow-up pass (v8.0.0): primary mode's own "saved"/"error" flash
+  // (below) is now a toast — the off-site branch (via the shared `save` prop)
+  // already got this for free from the prior pass; this brings primary mode to
+  // the same behaviour rather than leaving the two modes inconsistent.
   async function toggleImmutable(next: boolean) {
     if (primary) {
       if (!primaryLoaded) return; // never save before the config was actually read (mirrors cloudLoaded)
       setPrimaryConfig((prev) => (prev ? { ...prev, immutable: next } : prev));
       setImmState("saving");
-      setImmErr(null);
       try {
         const r = await savePrimarySafety({ immutable: next });
         if (!r.ok) {
           setPrimaryConfig((prev) => (prev ? { ...prev, immutable: !next } : prev));
-          setImmState("error");
-          setImmErr(r.error ?? t("settings.error"));
+          push(r.error ?? t("settings.error"), "fail");
           return;
         }
-        setImmState("saved");
-        setTimeout(() => setImmState("idle"), 3000);
+        push(t("settings.saved"), "success");
       } catch (e) {
         setPrimaryConfig((prev) => (prev ? { ...prev, immutable: !next } : prev));
-        setImmState("error");
-        setImmErr(e instanceof Error ? e.message : t("settings.error"));
+        push(e instanceof Error ? e.message : t("settings.error"), "fail");
         return;
+      } finally {
+        setImmState("idle");
       }
       if (next) void runTamper();
       else {
@@ -413,9 +448,9 @@ export function OffsiteWizard({
       return;
     }
     setSettings((prev) => (prev ? { ...prev, [immKey]: next } : prev));
-    const ok = await save({ [immKey]: next } as Partial<Settings>, setImmState, setImmErr);
+    const ok = await save({ [immKey]: next } as Partial<Settings>, setImmState, () => undefined);
     if (!ok) {
-      // Roll back the optimistic toggle; immErr / immState==='error' show the reason.
+      // Roll back the optimistic toggle; save() already pushed the reason.
       setSettings((prev) => (prev ? { ...prev, [immKey]: !next } : prev));
       return;
     }
@@ -515,13 +550,12 @@ export function OffsiteWizard({
             <button
               type="button"
               onClick={() => void genSnippet()}
-              disabled={snipState === "busy"}
+              disabled={snipBusy}
               className="self-start rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
             >
-              {snipState === "busy" ? t("common.saving") : t("offsite.wizard.generate")}
+              {snipBusy ? t("common.saving") : t("offsite.wizard.generate")}
             </button>
           )}
-          {snipState === "error" && snipErr && <span className="text-xs text-statusFail">{snipErr}</span>}
           {snippet && (
             <div className="flex flex-col gap-2">
               <div className="rounded-card bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
@@ -603,6 +637,10 @@ export function OffsiteWizard({
             </label>
             {/* The off-site schedule is edited in Settings › Schedules now; the wizard
                 saves only the repo URL so it can never clobber that cadence. */}
+            {/* GlimStone follow-up pass (v8.0.0): the "saved"/"error" render this
+                used to show is gone — save() (the shared prop, already toast-
+                migrated in the prior pass) pushes on both outcomes now; see
+                repoState's own declaration comment above. */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -610,7 +648,7 @@ export function OffsiteWizard({
                   void save(
                     { [repoKey]: settings[repoKey] } as Partial<Settings>,
                     setRepoState,
-                    setRepoErr
+                    () => undefined
                   )
                 }
                 disabled={repoState === "saving"}
@@ -618,8 +656,6 @@ export function OffsiteWizard({
               >
                 {repoState === "saving" ? t("common.saving") : t("offsite.wizard.saveRepo")}
               </button>
-              {repoState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-              {repoState === "error" && repoErr && <span className="text-xs text-statusFail">{repoErr}</span>}
             </div>
           </>
         )}
@@ -661,8 +697,6 @@ export function OffsiteWizard({
               >
                 {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
               </button>
-              {credState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-              {credState === "error" && credErr && <span className="text-xs text-statusFail">{credErr}</span>}
             </div>
           </div>
         )}
@@ -672,16 +706,11 @@ export function OffsiteWizard({
           <button
             type="button"
             onClick={() => void runTest()}
-            disabled={testState === "busy"}
+            disabled={testBusy}
             className="rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
-            {testState === "busy" ? t("offsite.testing") : t("offsite.test")}
+            {testBusy ? t("offsite.testing") : t("offsite.test")}
           </button>
-          {testState === "ok" && <span className="text-xs text-statusOk">{t("offsite.testOk")}</span>}
-          {testState === "uninit" && <span className="text-xs text-statusWarn">{t("offsite.testUninitialized")}</span>}
-          {testState === "fail" && (
-            <span className="text-xs text-statusFail wrap-break-word">{testErr ?? t("offsite.testFailed")}</span>
-          )}
         </div>
       </div>
 
@@ -702,7 +731,6 @@ export function OffsiteWizard({
             className="mt-0.5"
           />
         </div>
-        {immState === "error" && immErr && <span className="text-xs text-statusFail">{immErr}</span>}
 
         {/* Backend-specific caveats (Step 5) — driven by the live repo URL. */}
         {urlBackend === "rclone" && (
@@ -719,7 +747,15 @@ export function OffsiteWizard({
         {/* Verbatim tamper verdict + a manual "test now" — the backend only ever
             verifies REST repos (RunTamperTest reports Testable=false otherwise),
             so a non-REST backend gets the SAME "not verifiable" wording up front
-            instead of an active-looking button that leads nowhere (#131). */}
+            instead of an active-looking button that leads nowhere (#131).
+            GlimStone follow-up pass (v8.0.0) audit note: the verdict below is
+            DELIBERATELY left as inline status, not migrated to a toast — it's
+            the actual security-check RESULT (testable/protected/detail), no
+            auto-dismiss even before this pass, meant to answer "is this repo
+            actually tamper-proof" persistently — the same "what did the last
+            check say" reasoning as IntegrityCard's results. Only a FAILURE to
+            even run the test (couldn't reach the backend at all) moved to a
+            toast — see runTamper's own comment. */}
         {urlBackend === "rest" ? (
           <div className="flex items-center gap-3 flex-wrap">
             <button
@@ -735,9 +771,6 @@ export function OffsiteWizard({
                 {verdictGlyph && <span aria-hidden="true">{verdictGlyph}&nbsp;</span>}
                 {verdictText}
               </span>
-            )}
-            {tamperState === "error" && tamperErr && (
-              <span className="text-sm text-statusFail wrap-break-word">{tamperErr}</span>
             )}
           </div>
         ) : (
@@ -786,6 +819,10 @@ export function OffsiteWizard({
             />
           </label>
           <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.primaryRemote.budgetHint")}</p>
+          {/* GlimStone follow-up pass (v8.0.0): the "saved"/"error" flash this
+              used to show is gone — a toast now, same as toggleImmutable's own
+              migration above (this save button owns the SAME budgetState the
+              off-site "grow" branch below shares; see its declaration comment). */}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -795,15 +832,14 @@ export function OffsiteWizard({
                   try {
                     const r = await savePrimarySafety({ limitUpload: pLimitUpload, limitDownload: pLimitDownload, growthBudgetGb: pBudget });
                     if (r.ok) {
-                      setBudgetState("saved");
-                      setTimeout(() => setBudgetState("idle"), 3000);
+                      push(t("settings.saved"), "success");
                     } else {
-                      setBudgetState("error");
-                      setBudgetErr(r.error ?? t("settings.error"));
+                      push(r.error ?? t("settings.error"), "fail");
                     }
                   } catch (e) {
-                    setBudgetState("error");
-                    setBudgetErr(e instanceof Error ? e.message : t("settings.error"));
+                    push(e instanceof Error ? e.message : t("settings.error"), "fail");
+                  } finally {
+                    setBudgetState("idle");
                   }
                 })()
               }
@@ -812,8 +848,6 @@ export function OffsiteWizard({
             >
               {budgetState === "saving" ? t("common.saving") : t("settings.save")}
             </button>
-            {budgetState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
-            {budgetState === "error" && budgetErr && <span className="text-xs text-statusFail">{budgetErr}</span>}
           </div>
         </div>
       ) : (
@@ -884,7 +918,10 @@ export function OffsiteWizard({
                 >
                   {budgetState === "saving" ? t("common.saving") : t("offsite.retention.saveBudget")}
                 </button>
-                {budgetState === "saved" && <span className="text-xs text-statusOk">{t("settings.saved")}</span>}
+                {/* GlimStone follow-up pass (v8.0.0): the "saved" render this
+                    used to show is gone — save() (the shared prop, already
+                    toast-migrated in the prior pass) pushes on both outcomes
+                    now; see budgetState's own declaration comment above. */}
               </div>
             </div>
           )}
