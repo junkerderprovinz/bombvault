@@ -71,6 +71,52 @@ func ZvolDatasetFromDevPath(devPath string) (string, bool) {
 	return rest, true
 }
 
+// RebaseZvolDatasetPool replaces dataset's leading POOL component with
+// destPool, leaving every dataset segment after it unchanged — e.g.
+// "tank/vms/win10/disk0" rebased onto "flashpool" becomes
+// "flashpool/vms/win10/disk0".
+//
+// This exists for a CROSS-INSTANCE zvol restore: destBase (internal/api/
+// service.go's prepareRestoreVMForTarget) remaps a FILE-backed disk onto a
+// chosen destination FILESYSTEM PATH, but that path carries no ZFS pool
+// information at all — a zvol-backed disk's `zfs receive` target is a
+// DATASET, and the source dataset's pool (the first path segment
+// ZvolDatasetFromDevPath returns) almost certainly does not exist on the
+// destination box under that name. Without this rebase, RestoreZvolDisk
+// would derive its receive target purely from the SOURCE pool's name and
+// fail deep inside `zfs receive` on the destination — see
+// docs/vm-backup-ssh-setup.md's TrueNAS section for the operator-facing
+// explanation of why an explicit destination pool is required.
+//
+// dataset MUST already be in the "<pool>/<rest...>" shape
+// ZvolDatasetFromDevPath returns (the only caller in this codebase). destPool
+// is validated with the SAME defensive rules ZvolDatasetFromDevPath applies
+// to a dataset segment: never empty, never containing a path separator
+// (a pool name is one segment, not a nested dataset path — a caller wanting
+// to also pin a destination PARENT dataset gets that for free from the
+// source's own remaining segments), ".." traversal, or shell-unsafe
+// whitespace/quote characters. ok=false on any violation — a caller MUST
+// treat that as "cannot safely rebase this restore" and refuse, NEVER fall
+// back to the unrebased dataset (which would silently reintroduce the exact
+// wrong-pool bug this function exists to close).
+func RebaseZvolDatasetPool(dataset, destPool string) (string, bool) {
+	destPool = strings.TrimSpace(destPool)
+	if destPool == "" {
+		return "", false
+	}
+	if strings.ContainsAny(destPool, " \t\n\r'\"/") {
+		return "", false // a pool name is a single segment — never a nested path or unsafe shell character
+	}
+	if strings.Contains(destPool, "..") {
+		return "", false // defensive: never let a traversal-looking segment through
+	}
+	_, rest, ok := strings.Cut(dataset, "/")
+	if !ok || rest == "" {
+		return "", false // dataset must already carry at least one segment past its own pool
+	}
+	return destPool + "/" + rest, true
+}
+
 // ZFSSnapshotArgs returns the argv for `zfs snapshot <dataset>@<snapName>` —
 // the ZFS-native, point-in-time consistency step taken before streaming a
 // zvol's content into a restic backup. Pure/unit-testable: calling this

@@ -52,6 +52,69 @@ func TestZvolDatasetFromDevPath(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// RebaseZvolDatasetPool — the cross-instance restore rebase.
+// ---------------------------------------------------------------------------
+
+// TestRebaseZvolDatasetPool pins the ONLY thing this function does: swap the
+// dataset's leading pool segment for destPool, keeping every segment after it
+// — and, just as important, that it NEVER guesses past its own defensive
+// rules (an empty/unsafe destPool, or a dataset with no segment past its own
+// pool, is ok=false, never an invented or partially-rebased name).
+func TestRebaseZvolDatasetPool(t *testing.T) {
+	cases := []struct {
+		name    string
+		dataset string
+		destPool string
+		want    string
+		wantOK  bool
+	}{
+		{"simple rebase", "tank/vm-disk1", "flashpool", "flashpool/vm-disk1", true},
+		{"nested dataset path preserved", "tank/vms/win10/disk0", "flashpool", "flashpool/vms/win10/disk0", true},
+		{"same pool name is a no-op rebase", "tank/vm-disk1", "tank", "tank/vm-disk1", true},
+
+		{"empty destPool", "tank/vm-disk1", "", "", false},
+		{"whitespace-only destPool", "tank/vm-disk1", "   ", "", false},
+		{"destPool with path separator", "tank/vm-disk1", "flash/pool", "", false},
+		{"destPool with embedded whitespace", "tank/vm-disk1", "flash pool", "", false},
+		{"destPool with embedded quote", "tank/vm-disk1", "flash'pool", "", false},
+		{"destPool with traversal", "tank/vm-disk1", "..", "", false},
+		{"dataset with no segment past its own pool", "tank", "flashpool", "", false},
+		{"empty dataset", "", "flashpool", "", false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, ok := RebaseZvolDatasetPool(c.dataset, c.destPool)
+			if ok != c.wantOK {
+				t.Fatalf("RebaseZvolDatasetPool(%q, %q) ok = %v, want %v (got %q)", c.dataset, c.destPool, ok, c.wantOK, got)
+			}
+			if ok && got != c.want {
+				t.Fatalf("RebaseZvolDatasetPool(%q, %q) = %q, want %q", c.dataset, c.destPool, got, c.want)
+			}
+		})
+	}
+}
+
+// TestRebaseZvolDatasetPoolChainsWithZvolDatasetFromDevPath proves the
+// REALISTIC end-to-end shape: a dev path parsed by ZvolDatasetFromDevPath,
+// then rebased by RebaseZvolDatasetPool onto a different pool, produces a
+// dataset that still parses back as a valid /dev/zvol/<pool>/<dataset>-shaped
+// name for the destination pool — the exact chain prepareRestoreVMForTarget
+// drives (internal/api/service.go).
+func TestRebaseZvolDatasetPoolChainsWithZvolDatasetFromDevPath(t *testing.T) {
+	dataset, ok := ZvolDatasetFromDevPath("/dev/zvol/tank/vms/win10/disk0")
+	if !ok {
+		t.Fatalf("ZvolDatasetFromDevPath: want ok=true")
+	}
+	rebased, ok := RebaseZvolDatasetPool(dataset, "flashpool")
+	if !ok {
+		t.Fatalf("RebaseZvolDatasetPool: want ok=true")
+	}
+	if want := "flashpool/vms/win10/disk0"; rebased != want {
+		t.Fatalf("rebased dataset = %q, want %q", rebased, want)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // ZFS argv builders — pure, unit-testable without a real ZFS system.
 // ---------------------------------------------------------------------------
 
