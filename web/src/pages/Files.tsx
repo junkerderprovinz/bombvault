@@ -518,19 +518,18 @@ function FileSetSnapshotRow({
   // any global activity (mirrors the VM panel's rationale).
   const busy = progressMap[`files:${set.name}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
-  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
     setDeleting(true);
-    setDeleteErr(null);
     try {
       const res = await deleteSnapshot("files", snap.id, source);
       if (res.ok) onDeleted();
-      else setDeleteErr(res.error ?? "Delete failed");
+      else push(res.error ?? "Delete failed", "fail");
     } catch (err) {
-      setDeleteErr(err instanceof Error ? err.message : "Delete failed");
+      push(err instanceof Error ? err.message : "Delete failed", "fail");
     } finally {
       setDeleting(false);
     }
@@ -571,7 +570,6 @@ function FileSetSnapshotRow({
           t={t}
         />
       </div>
-      {deleteErr && <p className="text-xs text-statusFail ps-24 wrap-break-word">{deleteErr}</p>}
       {confirmDialog}
     </div>
   );
@@ -928,7 +926,7 @@ function FileSetRow({
   const progress = progressMap[`files:${set.name}`];
   const running = anyActive(progressMap);
   const [removing, setRemoving] = useState(false);
-  const [removeErr, setRemoveErr] = useState<string | null>(null);
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   const noPath = set.path === "";
@@ -937,13 +935,12 @@ function FileSetRow({
   async function handleRemove() {
     if (!(await confirm(t("files.deleteSetConfirm")))) return;
     setRemoving(true);
-    setRemoveErr(null);
     try {
       const res = await deleteFileSet(set.id);
       if (res.ok) onRefresh();
-      else setRemoveErr(res.error ?? "Remove failed");
+      else push(res.error ?? "Remove failed", "fail");
     } catch (err) {
-      setRemoveErr(err instanceof Error ? err.message : "Remove failed");
+      push(err instanceof Error ? err.message : "Remove failed", "fail");
     } finally {
       setRemoving(false);
     }
@@ -1026,7 +1023,6 @@ function FileSetRow({
           >
             {removing ? t("dashboard.checking") : t("files.deleteSet")}
           </button>
-          {removeErr && <span className="text-xs text-statusFail">{removeErr}</span>}
         </div>
         <div className="ms-auto flex flex-col items-end">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />

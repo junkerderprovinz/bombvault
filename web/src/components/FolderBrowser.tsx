@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
+import { useToast } from "../lib/toast";
 
 // ---------------------------------------------------------------------------
 // Folder browser (shared)
@@ -32,18 +33,23 @@ export interface FolderBrowserProps {
 
 export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint }: FolderBrowserProps) {
   const { t } = useT();
+  const { push } = useToast();
   // browsePath tracks the *current directory being listed* (not the selected value).
   // We initialise it to the current value so opening the browser starts in the right folder.
   const [open, setOpen] = useState(false);
   const [browsePath, setBrowsePath] = useState(value);
   const [dirs, setDirs] = useState<{ name: string; path: string }[]>([]);
+  // Directory-listing failure — NOT migrated to a toast (GlimStone follow-up
+  // pass, v8.0.0 audit note): it replaces the whole browser panel content
+  // (falls back to manualFallback below), the same structural "the section
+  // failed to load" condition every other page-level list-load error gets
+  // left inline for, not a one-shot action.
   const [browseError, setBrowseError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [manualFallback, setManualFallback] = useState(false);
   // New-folder creation inside the current browsePath.
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
 
   const doFetch = useCallback((path: string) => {
     setLoading(true);
@@ -92,11 +98,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
     const name = newName.trim();
     if (!name || creating) return;
     setCreating(true);
-    setCreateError(null);
     createFolder(browsePath, name)
       .then((res) => {
         if (!res.ok) {
-          setCreateError(res.error ?? t("folder.createFailed"));
+          push(res.error ?? t("folder.createFailed"), "fail");
           return;
         }
         setNewName("");
@@ -104,7 +109,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         doFetch(res.path ?? browsePath);
       })
       .catch((err: unknown) => {
-        setCreateError(err instanceof Error ? err.message : t("folder.createFailed"));
+        push(err instanceof Error ? err.message : t("folder.createFailed"), "fail");
       })
       .finally(() => setCreating(false));
   }
@@ -251,7 +256,6 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               </button>
             </div>
           )}
-          {createError && <p className="text-xs text-statusFail">{createError}</p>}
 
           {/* Action buttons */}
           {!manualFallback && (
