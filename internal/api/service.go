@@ -19,6 +19,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -2488,6 +2489,9 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 		return errDomainBusy
 	}
 	go func() {
+		defer s.recoverOperation("offsite replicate: "+domain, nil, func(msg string) {
+			s.failStuckRun(domainRunTargetID(domain), msg)
+		})
 		defer unlock()
 		// Detached from the HTTP request on purpose; the ceiling only guards
 		// against a copy that hangs forever on a dead link.
@@ -3571,6 +3575,14 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	// scheduled path instead of re-opening the off-site repo per container.
 	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {
+		// Batch-level safety net: a panic OUTSIDE the per-item loop (ordering,
+		// publishBatch, the post-loop prune/replicate) has no single container to
+		// blame, so there is nothing for onPanic to close out — just contain it.
+		// Each ITEM inside the loop gets its own, more precise recovery below
+		// (backupOneForBatch), so one bad container can't abort the rest of the
+		// batch — matching how a normal per-item error already only counts
+		// against that one item.
+		defer s.recoverOperation("backup-all", nil, nil)
 		defer s.batchActive.Store(false)
 
 		self := s.selfContainerName(bctx)
@@ -3594,7 +3606,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 		s.publishBatch(key, 0, true)
 		ok, fail, skipped := 0, 0, 0
 		for i, n := range queue {
-			if _, err := s.Backup(bctx, n); err != nil {
+			if err := s.backupOneForBatch(bctx, n); err != nil {
 				if errors.Is(err, backup.ErrContainerNotInstalled) {
 					skipped++                                                                   // removed container: a skip (already recorded), not a batch failure (#57)
 					log.Printf("api: backup-all: %q skipped — not installed (backups only)", n) //nolint:gosec // G706: n is %q-quoted
@@ -3621,6 +3633,29 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	return true, nil
 }
 
+// backupOneForBatch backs up a single queued container on behalf of
+// StartBackupAll, containing any panic to just this item (recoverOperation)
+// so one container's crash counts as that one item failing — exactly like a
+// normal error already does — instead of aborting every container still
+// queued behind it. On a recovered panic it also closes out the run
+// StartRun'd deep inside backup.BackupContainer as failed (failStuckRun):
+// that call is a plain sequential call, not deferred, so it would otherwise
+// never be reached and the run would sit "running" forever.
+func (s *Service) backupOneForBatch(ctx context.Context, name string) (err error) {
+	// recoverOperation must be deferred DIRECTLY (not wrapped in a `defer
+	// func(){...}()` closure) — see its doc comment: recover() only works when
+	// called directly by a deferred function, so &err is how it hands the
+	// panic back to this function's named return instead of a normal return
+	// value.
+	defer s.recoverOperation("backup-all: "+name, &err, func(msg string) {
+		if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+			s.failStuckRun(tg.ID, msg)
+		}
+	})
+	_, err = s.Backup(ctx, name)
+	return err
+}
+
 // StartBackup launches a single container backup in a background goroutine and
 // returns immediately. Like StartBackupAll, this is the robust path: the work
 // runs ON THE SERVER, so it survives the browser that started it going away —
@@ -3645,6 +3680,11 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	// the moment the handler returns); Backup applies its own hard timeout.
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup: "+name, nil, func(msg string) {
+			if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+				s.failStuckRun(tg.ID, msg)
+			}
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.Backup(bctx, name); err != nil {
 			if errors.Is(err, backup.ErrContainerNotInstalled) {
@@ -3672,6 +3712,11 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup vm: "+name, nil, func(msg string) {
+			if tg, tErr := s.store.GetVMTargetByName(name); tErr == nil {
+				s.failStuckRun(tg.ID, msg)
+			}
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupVM(bctx, name); err != nil {
 			log.Printf("api: backup vm: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
@@ -3694,6 +3739,9 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup flash: "+store.FlashTargetID, nil, func(msg string) {
+			s.failStuckRun(store.FlashTargetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFlash(bctx); err != nil {
 			log.Printf("api: backup flash failed: %v", err)
@@ -3717,6 +3765,9 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup config: "+store.ConfigTargetID, nil, func(msg string) {
+			s.failStuckRun(store.ConfigTargetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupConfig(bctx); err != nil {
 			log.Printf("api: backup config failed: %v", err)
@@ -3741,6 +3792,9 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup file set: "+id, nil, func(msg string) {
+			s.failStuckRun(id, msg) // id IS the runs.target_id for a file set — no lookup needed
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFileSet(bctx, id); err != nil {
 			log.Printf("api: backup file set: %q failed: %v", id, err) //nolint:gosec // G706: id is %q-quoted
@@ -3773,6 +3827,11 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	// the containers batch instead of re-opening the off-site repo per set.
 	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {
+		// See StartBackupAll's identical pair of defers for why: this one contains
+		// a panic OUTSIDE the per-item loop, while each item inside the loop gets
+		// its own more precise recovery (backupFileSetOneForBatch) so one bad set
+		// can't abort the rest of the batch.
+		defer s.recoverOperation("backup-files-all", nil, nil)
 		defer s.batchActive.Store(false)
 
 		queue := make([]string, 0, len(ids))
@@ -3786,7 +3845,7 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 		s.publishBatch(key, 0, true)
 		ok, fail := 0, 0
 		for i, id := range queue {
-			if _, err := s.BackupFileSet(bctx, id); err != nil {
+			if err := s.backupFileSetOneForBatch(bctx, id); err != nil {
 				fail++
 				log.Printf("api: backup-files-all: %q failed (continuing): %v", id, err) //nolint:gosec // G706: id is %q-quoted
 			} else {
@@ -3808,10 +3867,98 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	return true, nil
 }
 
+// backupFileSetOneForBatch backs up a single queued file set on behalf of
+// StartBackupFilesAll — see backupOneForBatch (the containers-batch
+// counterpart) for why each item gets its own recovery instead of one shared
+// at the batch level. id is already the runs.target_id (no lookup needed).
+func (s *Service) backupFileSetOneForBatch(ctx context.Context, id string) (err error) {
+	// See backupOneForBatch for why this must be a direct defer, not wrapped.
+	defer s.recoverOperation("backup-files-all: "+id, &err, func(msg string) {
+		s.failStuckRun(id, msg)
+	})
+	_, err = s.BackupFileSet(ctx, id)
+	return err
+}
+
 // BackupInProgress reports whether a single backup, a batch, or a restore is
 // currently running (they share the same single-flight guard). It lets callers
 // — and tests — observe when the detached goroutine has fully finished.
 func (s *Service) BackupInProgress() bool { return s.batchActive.Load() }
+
+// recoverOperation is deferred FIRST — i.e. before every other defer — in
+// every backup/restore/replication goroutine below (defers run LIFO, so being
+// registered first means it is the LAST one to run: every other cleanup defer
+// in the same goroutine, like releasing batchActive or unregistering a cancel
+// key, already fired normally before this one ever sees the panic). It
+// contains a panic to the ONE operation that raised it — logged here with a
+// stack trace — instead of letting it reach the top of the goroutine
+// unrecovered, which crashes the ENTIRE process: the HTTP server, the SSE
+// progress stream, and every OTHER domain's concurrently in-flight
+// backup/restore/replication along with it. This mirrors
+// internal/schedule.Scheduler's cron.Recover, which already gives the
+// byte-identical CRON-triggered path (the same svc.Backup/BackupVM/etc, wired
+// in cmd/bombvault/main.go) this exact protection — see Scheduler.New's doc
+// comment for why that exists.
+//
+// onPanic, when non-nil, is called ONLY on a recovered panic, with a short
+// message describing it. Callers use it to close out whatever run record this
+// operation would otherwise leave stuck "running" forever: unlike a full
+// process crash, there is no restart here to trigger
+// store.Repo.ReapInterruptedRuns, so nothing else will ever do it. It is
+// never called on the overwhelmingly common non-panic path, so it is safe for
+// it to do a store lookup that a happy-path caller wouldn't want to pay for.
+//
+// errOut, when non-nil, receives the panic converted to an error — for a
+// caller with its own error result (e.g. a per-item batch helper that must
+// keep the surrounding loop's existing "one bad item doesn't abort the rest"
+// behaviour) to propagate like any other failure. This is an OUT PARAMETER,
+// not a return value, and that is deliberate: recover() only has any effect
+// when called directly by a deferred function (a nested call to it from
+// inside a plain function that a defer merely INVOKES does not count, and
+// silently fails to recover anything — a genuine Go gotcha, not a style
+// preference). recoverOperation must therefore always be the direct target of
+// `defer` — `defer s.recoverOperation(...)`, never wrapped in a `defer
+// func(){ ... s.recoverOperation(...) ... }()` closure — and a plain return
+// value would be unreachable from such a call. A caller with nothing to
+// propagate to (every single-target Start* goroutine below) passes nil.
+func (s *Service) recoverOperation(op string, errOut *error, onPanic func(msg string)) {
+	r := recover()
+	if r == nil {
+		return
+	}
+	const stackSize = 64 << 10 // matches robfig/cron's own Recover chain wrapper
+	buf := make([]byte, stackSize)
+	buf = buf[:runtime.Stack(buf, false)]
+	log.Printf("api: %s: panic recovered (operation aborted, process unaffected): %v\n%s", op, r, buf) //nolint:gosec // G706: op is a fixed literal, sometimes suffixed with a target name/id/domain already boundary-validated (validResourceName, validVMName, or a fixed switch of domain literals) before this goroutine ever started — never raw, unvalidated request input
+	msg := fmt.Sprintf("internal error (recovered panic): %v", r)
+	if onPanic != nil {
+		onPanic(msg)
+	}
+	if errOut != nil {
+		*errOut = errors.New(msg)
+	}
+}
+
+// failStuckRun marks targetID's still-"running" run row as failed after a
+// recovered panic (store.Repo.FailRunningRun), for recoverOperation callers
+// that only know the run's TARGET, not its specific run id — the deep
+// orchestrator that called store.StartRun for it panicked before it could
+// reach the matching store.FinishRun. Scoped to targetID so it can never
+// disturb a different target's genuinely in-flight run (see
+// FailRunningRun's own doc comment). msg is bounded through truncateRunErr —
+// the same cap every other run-error path (finishRestoreRun, FinishRun
+// callers) already applies — before being stored. Best-effort: a store error
+// here is logged, never returned — the panic itself is already logged by the
+// caller either way. A blank targetID (nothing resolved, or no target row
+// exists yet) is a silent no-op — nothing was started, so nothing is stuck.
+func (s *Service) failStuckRun(targetID, msg string) {
+	if targetID == "" {
+		return
+	}
+	if _, err := s.store.FailRunningRun(targetID, truncateRunErr(errors.New(msg))); err != nil {
+		log.Printf("api: mark stuck run failed for target %q: %v", targetID, err) //nolint:gosec // G706: targetID is a store-generated id / fixed literal, %q-quoted
+	}
+}
 
 // publishBatch emits an overall batch-progress event (no-op without a store).
 func (s *Service) publishBatch(key string, percent float64, active bool) {
@@ -4670,6 +4817,9 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 	bctx := context.WithoutCancel(ctx)
 	key := "container:" + name // the exact progBegin key executeRestore publishes under
 	go func() {
+		defer s.recoverOperation("restore: "+name, nil, func(msg string) {
+			s.failStuckRun(plan.targetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -4969,6 +5119,16 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 	bctx := context.WithoutCancel(ctx)
 	rkey := "container:" + name // the exact progBegin key this restore publishes under
 	go func() {
+		// runID is declared here (before recoverOperation is deferred) rather than
+		// with := at its assignment below, so the onPanic closure — which can only
+		// run AFTER that assignment, since a panic before it means beginRestoreRun
+		// never got called and no run needs closing — sees whatever value it holds
+		// at panic time instead of failing to compile (runID would otherwise not
+		// exist yet at this point in the function).
+		var runID string
+		defer s.recoverOperation("restore files: "+name, nil, func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg))
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -4976,7 +5136,7 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRun(name)
+		runID = s.beginRestoreRun(name)
 		pctx := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFiles(pctx, plan)
 		s.progEnd(rkey, "restore", rerr == nil)
@@ -5219,6 +5379,10 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 	bctx := context.WithoutCancel(ctx)
 	rkey := "container:" + name // the exact progBegin key this restore publishes under
 	go func() {
+		var runID string // see StartRestoreFiles's identical goroutine for why this is declared here
+		defer s.recoverOperation("restore to path: "+name, nil, func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg))
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -5226,7 +5390,7 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRun(name)
+		runID = s.beginRestoreRun(name)
 		pctx := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreToPath(pctx, plan)
 		s.progEnd(rkey, "restore", rerr == nil)
@@ -7038,6 +7202,9 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 	bctx := context.WithoutCancel(ctx)
 	key := "vm:" + name // the exact progBegin key executeRestoreVM publishes under
 	go func() {
+		defer s.recoverOperation("restore vm: "+name, nil, func(msg string) {
+			s.failStuckRun(plan.targetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -7711,6 +7878,13 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 	bctx := context.WithoutCancel(ctx)
 	rkey := "files:" + plan.setName // the exact progBegin key this restore publishes under
 	go func() {
+		var runID string // see StartRestoreFiles's identical goroutine for why this is declared here
+		defer s.recoverOperation("restore file set: "+id, nil, func(msg string) {
+			// A panic is a genuine failure, never restic.ErrRestoreMetadataOnly, so
+			// finishRestoreRun directly (bypassing concludeFileSetRestore's
+			// metadata-only downgrade) is the correct, simpler call here.
+			s.finishRestoreRun(runID, "", errors.New(msg))
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -7718,7 +7892,7 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRunForTarget(plan.setID)
+		runID = s.beginRestoreRunForTarget(plan.setID)
 		pctx := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFileSet(pctx, plan)
 		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
@@ -7958,6 +8132,10 @@ func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snap
 	bctx := context.WithoutCancel(ctx)
 	rkey := "files:" + plan.setName // the exact progBegin key this restore publishes under
 	go func() {
+		var runID string // see StartRestoreFiles's identical goroutine for why this is declared here
+		defer s.recoverOperation("restore file set files: "+id, nil, func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -7965,7 +8143,7 @@ func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snap
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRunForTarget(plan.setID)
+		runID = s.beginRestoreRunForTarget(plan.setID)
 		pctx := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFileSetFiles(pctx, plan)
 		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {

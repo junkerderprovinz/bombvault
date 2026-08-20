@@ -100,6 +100,52 @@ func TestListRunsWithRunningRun(t *testing.T) {
 	}
 }
 
+// TestFailRunningRunScopedToTarget verifies FailRunningRun closes out ONLY the
+// named target's running run, as 'failed' with the given error, and never
+// touches a different target's genuinely in-flight run — the property that
+// makes it safe to call from a recovered panic (api.Service.failStuckRun)
+// without accidentally failing an unrelated domain's concurrent backup.
+func TestFailRunningRunScopedToTarget(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	stuck, _ := r.UpsertTarget(store.Target{ContainerName: "stuck", AppdataPaths: []string{"/data"}})
+	other, _ := r.UpsertTarget(store.Target{ContainerName: "other", AppdataPaths: []string{"/data"}})
+	stuckRun, _ := r.StartRun(stuck.ID, "backup")
+	otherRun, _ := r.StartRun(other.ID, "backup") // still genuinely running elsewhere
+
+	n, err := r.FailRunningRun(stuck.ID, "internal error (recovered panic): boom")
+	if err != nil {
+		t.Fatalf("FailRunningRun: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("expected 1 row updated, got %d", n)
+	}
+
+	runs, err := r.ListRuns(10)
+	if err != nil {
+		t.Fatalf("ListRuns: %v", err)
+	}
+	byID := map[string]store.Run{}
+	for _, run := range runs {
+		byID[run.ID] = run
+	}
+	if got := byID[stuckRun]; got.Status != "failed" || got.FinishedAt == nil || got.Error != "internal error (recovered panic): boom" {
+		t.Fatalf("stuck run not correctly failed: %+v", got)
+	}
+	if got := byID[otherRun]; got.Status != "running" {
+		t.Fatalf("a different target's genuinely running run must be left untouched, got %+v", got)
+	}
+
+	// Calling it again (nothing left running for this target) is a harmless no-op.
+	if n, err := r.FailRunningRun(stuck.ID, "second call"); err != nil || n != 0 {
+		t.Fatalf("re-calling FailRunningRun on an already-finished run should no-op, got n=%d err=%v", n, err)
+	}
+}
+
 // TestReapInterruptedRuns verifies a startup reap turns orphaned 'running' runs
 // into 'failed' (with a finished_at) while leaving completed runs untouched.
 func TestReapInterruptedRuns(t *testing.T) {
