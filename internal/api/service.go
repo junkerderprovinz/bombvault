@@ -5621,6 +5621,17 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
+	// Issue #152: refused when this repo IS a remote primary flagged append-only
+	// in its saved safety settings (same gate as pruneDomain/DeleteSnapshot/
+	// DeleteBackupsVM) — this function has no source parameter, so it always
+	// targets the primary/local repo and only the primary half of the gate
+	// applies (there is no separate off-site source to check here). This path
+	// runs Forget with prune=true, so skipping it here would have let a
+	// compromised on-box credential irreversibly reclaim space on an immutable
+	// primary.
+	if s.primaryIsImmutable("containers", repo) {
+		return errOffsiteAppendOnly
+	}
 	mode := s.ModeFor(settings)
 
 	// Serialize against a live backup on this repo: a container Backup holds the
@@ -8188,6 +8199,17 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
 	settings, repo, err := s.domainRepo("files")
 	if err != nil {
 		return err
+	}
+	// Issue #152: refused when this repo IS a remote primary flagged append-only
+	// in its saved safety settings (same gate as pruneDomain/DeleteSnapshot/
+	// DeleteBackupsVM) — this function has no source parameter, so it always
+	// targets the primary/local repo and only the primary half of the gate
+	// applies (there is no separate off-site source to check here). This path
+	// runs Forget with prune=true, so skipping it here would have let a
+	// compromised on-box credential irreversibly reclaim space on an immutable
+	// primary.
+	if s.primaryIsImmutable("files", repo) {
+		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
