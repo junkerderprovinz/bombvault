@@ -61,6 +61,33 @@ func failEnvelope(err error) map[string]any {
 // message that slips through to the API surface.
 var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 
+// credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
+// backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
+// — a syntax the generated deploy recipe documents as valid for restic's
+// rest:/s3: remote backends. absPathRe alone can't catch this: it stops at the
+// first ":", so it never reaches past "user" into the password. Requiring the
+// closing "@" and excluding "/" from the password body keeps this from
+// matching ordinary "host:port" text (which has no "@") or a "name/tag" split
+// by "/" from something after it (excluded from the password body) — only a
+// real userinfo segment has a ":"-separated pair immediately followed by "@".
+// See internal/restic/restic.go's identically-reasoned twin: this is the
+// second, independent application of the same defense-in-depth scrub, so a
+// restic error that reaches this handler without having gone through
+// restic.lastReason first still gets its credentials stripped here.
+//
+// MUST be applied before absPathRe (see scrubSecrets below): once that regex
+// turns the scheme's leading "//" into "[path]", the "word:" prefix this
+// regex keys off is gone and the password survives untouched.
+var credentialRe = regexp.MustCompile(`[A-Za-z][\w.+%-]*:[^\s/@"']+@`)
+
+// scrubSecrets strips URL-embedded "user:pass@" credentials and then
+// absolute-path-like tokens from s, in that order — see credentialRe's doc
+// comment for why the order is load-bearing.
+func scrubSecrets(s string) string {
+	s = credentialRe.ReplaceAllString(s, "[redacted]@")
+	return absPathRe.ReplaceAllString(s, "[path]")
+}
+
 // errRestoreDestination tags a restore-DESTINATION refusal whose message is only
 // actionable WITH the path in it: "this destination already holds data", "this
 // destination is not on a mounted pool", "this destination has no room". The path
@@ -125,7 +152,7 @@ func scrubError(err error) string {
 	if strings.Contains(msg, "wrong password or no key found") {
 		return "backup repository can't be opened — the APP_KEY differs from when this repo was first created (or encryption was toggled). Use the original APP_KEY, or point Settings at a fresh, empty backup path."
 	}
-	msg = absPathRe.ReplaceAllString(msg, "[path]")
+	msg = scrubSecrets(msg)
 	return strings.TrimSpace(msg)
 }
 
