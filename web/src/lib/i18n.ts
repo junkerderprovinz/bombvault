@@ -197,7 +197,6 @@ export const en = {
   "restore.confirmTitle": "Confirm restore",
   "restore.confirmBody":
     "This will stop the container, replace its appdata and recreate it from the backup. Continue?",
-  "restore.confirm": "Confirm",
   "restore.cancel": "Cancel restore",
   "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
   "restore.cancelConfirmInPlace":
@@ -250,6 +249,7 @@ export const en = {
   "run.statusRunning": "Running",
   "run.statusSuccess": "Success",
   "run.statusFailed": "Failed",
+  "run.statusSkipped": "Skipped",
   "run.historyTitle": "Run History",
   "run.filterDay": "Day:",
   "run.allDays": "All days",
@@ -658,6 +658,17 @@ export const en = {
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
+  // Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent, plural:
+  // an eight-colour palette handed out by list position instead of one
+  // accent everywhere. Wording matches the same keys in KnightLoader, the
+  // other shipped app using this exact mechanism, so the family reads as
+  // one product in every language, not just in English.
+  "settings.rainbow": "Rainbow",
+  "settings.rainbowHint": "Instead of one accent, a palette of eight handed out by position, so a long list reads as separate rows.",
+  "settings.rainbowOn": "Use the palette",
+  "settings.rainbowReactive": "Quiet until touched: colour on hover and on what is running",
+  "settings.rainbowRotate": "Shuffle where the palette starts",
+  "settings.rainbowPalette": "Palette colour",
   // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
   // toast system; "success"/routine toasts are suppressed, failures never are.
   "settings.quietToasts": "Quiet toasts",
@@ -1568,7 +1579,6 @@ export const de: Translations = {
   "restore.confirmTitle": "Wiederherstellung bestätigen",
   "restore.confirmBody":
     "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Backup neu erstellt. Fortfahren?",
-  "restore.confirm": "Bestätigen",
   "restore.cancel": "Wiederherstellung abbrechen",
   "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
   "restore.cancelConfirmInPlace":
@@ -1620,6 +1630,7 @@ export const de: Translations = {
   "run.statusRunning": "Läuft",
   "run.statusSuccess": "Erfolgreich",
   "run.statusFailed": "Fehlgeschlagen",
+  "run.statusSkipped": "Übersprungen",
   "run.historyTitle": "Ausführungsverlauf",
   "run.filterDay": "Tag:",
   "run.allDays": "Alle Tage",
@@ -2014,6 +2025,12 @@ export const de: Translations = {
   "settings.appearance": "Erscheinungsbild",
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
+  "settings.rainbow": "Regenbogen",
+  "settings.rainbowHint": "Statt einer Akzentfarbe acht, nach Position vergeben — eine lange Liste liest sich dann als einzelne Zeilen.",
+  "settings.rainbowOn": "Palette verwenden",
+  "settings.rainbowReactive": "Ruhig bis berührt: Farbe beim Überfahren und bei dem, was läuft",
+  "settings.rainbowRotate": "Startfarbe der Palette durchmischen",
+  "settings.rainbowPalette": "Palettenfarbe",
   "settings.quietToasts": "Leise Benachrichtigungen",
   "settings.quietToastsHint": "Zeigt Popup-Hinweise nur bei Fehlern. Routinemäßige Speicher- und Kopierbestätigungen bleiben stumm.",
 

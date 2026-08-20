@@ -117,7 +117,6 @@ const ja: Partial<Translations> = {
   "restore.confirmTitle": "復元の確認",
   "restore.confirmBody":
     "コンテナを停止し、appdata を置き換え、バックアップから再作成します。続行しますか？",
-  "restore.confirm": "確認",
   "restore.cancel": "復元をキャンセル",
   "restore.cancelConfirmSafe": "復元をキャンセルしますか？途中まで書き込まれた出力フォルダーはそのまま残ります。",
   "restore.cancelConfirmInPlace": "{name} は復元の途中です。キャンセルするとこの復元は不完全なまま残ります — もう一度実行が必要になる場合があります。それでもキャンセルしますか？",
@@ -139,6 +138,7 @@ const ja: Partial<Translations> = {
   "run.statusRunning": "実行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失敗",
+  "run.statusSkipped": "スキップ済み",
   "run.historyTitle": "実行履歴",
   "run.filterDay": "日付：",
   "run.allDays": "すべての日",
@@ -188,6 +188,12 @@ const ja: Partial<Translations> = {
   "settings.appearance": "外観",
   "settings.accentColor": "アクセントカラー",
   "settings.accentPresets": "プリセット",
+  "settings.rainbow": "レインボー",
+  "settings.rainbowHint": "アクセント1色ではなく、位置ごとに割り当てる8色のパレット。長い一覧が行ごとに読み分けられます。",
+  "settings.rainbowOn": "パレットを使う",
+  "settings.rainbowReactive": "触れるまでは静か。ポインタを重ねたときと実行中のものだけ色がつきます",
+  "settings.rainbowRotate": "パレットの開始位置をシャッフルする",
+  "settings.rainbowPalette": "パレットの色",
   "settings.quietToasts": "通知を控えめにする",
   "settings.quietToastsHint": "失敗時のみポップアップ通知を表示します。保存やコピーの通常の確認通知は表示されません。",
 

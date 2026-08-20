@@ -117,7 +117,6 @@ const fi: Partial<Translations> = {
   "restore.confirmTitle": "Vahvista palautus",
   "restore.confirmBody":
     "Kontti pysäytetään, sen appdata korvataan ja se luodaan uudelleen varmuuskopiosta. Jatketaanko?",
-  "restore.confirm": "Vahvista",
   "restore.cancel": "Peruuta palautus",
   "restore.cancelConfirmSafe": "Peruutetaanko palautus? Osittain kirjoitettu kohdekansio jätetään ennalleen.",
   "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää tämän palautuksen keskeneräiseksi — se on ehkä suoritettava uudelleen. Peruutetaanko silti?",
@@ -139,6 +138,7 @@ const fi: Partial<Translations> = {
   "run.statusRunning": "Käynnissä",
   "run.statusSuccess": "Onnistui",
   "run.statusFailed": "Epäonnistui",
+  "run.statusSkipped": "Ohitettu",
   "run.historyTitle": "Ajohistoria",
   "run.filterDay": "Päivä:",
   "run.allDays": "Kaikki päivät",
@@ -188,6 +188,12 @@ const fi: Partial<Translations> = {
   "settings.appearance": "Ulkoasu",
   "settings.accentColor": "Korostusväri",
   "settings.accentPresets": "Esiasetukset",
+  "settings.rainbow": "Sateenkaari",
+  "settings.rainbowHint": "Yhden korostuksen sijaan kahdeksan värin paletti sijainnin mukaan, jolloin pitkä lista lukeutuu erillisinä riveinä.",
+  "settings.rainbowOn": "Käytä palettia",
+  "settings.rainbowReactive": "Rauhallinen kunnes kosketat: väri osoittaessa ja käynnissä olevassa",
+  "settings.rainbowRotate": "Sekoita, mistä paletti alkaa",
+  "settings.rainbowPalette": "Paletin väri",
   "settings.quietToasts": "Hiljaiset ilmoitukset",
   "settings.quietToastsHint": "Näytä ponnahdusilmoitukset vain virheistä. Rutiininomaiset tallennus- ja kopiointivahvistukset pysyvät hiljaisina.",
 

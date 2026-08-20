@@ -96,32 +96,32 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
     <div className="mt-2 overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="text-carbon-textMuted text-left">
-            <th className="font-medium py-1.5 pr-3">{t("receiver.colSource")}</th>
-            <th className="font-medium py-1.5 pr-3 text-right">{t("receiver.colSnapshots")}</th>
-            <th className="font-medium py-1.5 pr-3">{t("receiver.colLastReceived")}</th>
-            <th className="font-medium py-1.5 text-right">{t("receiver.colSize")}</th>
+          <tr className="text-carbon-textMuted text-start">
+            <th className="font-medium py-1.5 pe-3">{t("receiver.colSource")}</th>
+            <th className="font-medium py-1.5 pe-3 text-end">{t("receiver.colSnapshots")}</th>
+            <th className="font-medium py-1.5 pe-3">{t("receiver.colLastReceived")}</th>
+            <th className="font-medium py-1.5 text-end">{t("receiver.colSize")}</th>
           </tr>
         </thead>
         <tbody>
           {inv.sources.map((s, i) => (
             <tr key={`${s.host}/${s.item}/${i}`} className="border-t border-carbon-border">
-              <td className="py-1.5 pr-3 text-carbon-text">
+              <td className="py-1.5 pe-3 text-carbon-text">
                 <span className="font-medium">{s.item || "-"}</span>
                 {s.host && <span className="text-carbon-textMuted"> · {s.host}</span>}
               </td>
-              <td className="py-1.5 pr-3 text-right text-carbon-textSub font-mono">{s.snapshotCount}</td>
-              <td className="py-1.5 pr-3 text-carbon-textSub">{fmtReceived(s.lastReceived, t)}</td>
-              <td className="py-1.5 text-right text-carbon-textSub font-mono">{humanBytes(s.totalSize)}</td>
+              <td className="py-1.5 pe-3 text-end text-carbon-textSub font-mono">{s.snapshotCount}</td>
+              <td className="py-1.5 pe-3 text-carbon-textSub">{fmtReceived(s.lastReceived, t)}</td>
+              <td className="py-1.5 text-end text-carbon-textSub font-mono">{humanBytes(s.totalSize)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr className="border-t border-carbon-border text-carbon-text">
-            <td className="py-1.5 pr-3 font-medium">{t("receiver.total")}</td>
-            <td className="py-1.5 pr-3 text-right font-mono">{inv.snapshotCount}</td>
-            <td className="py-1.5 pr-3 text-carbon-textSub">{fmtReceived(inv.lastReceived, t)}</td>
-            <td className="py-1.5 text-right font-mono">{humanBytes(inv.totalSize)}</td>
+            <td className="py-1.5 pe-3 font-medium">{t("receiver.total")}</td>
+            <td className="py-1.5 pe-3 text-end font-mono">{inv.snapshotCount}</td>
+            <td className="py-1.5 pe-3 text-carbon-textSub">{fmtReceived(inv.lastReceived, t)}</td>
+            <td className="py-1.5 text-end font-mono">{humanBytes(inv.totalSize)}</td>
           </tr>
         </tfoot>
       </table>
@@ -216,11 +216,11 @@ function ReceivedRepoCard({
               ))}
             <Badge tone={checkTone}>{checkLabel}</Badge>
           </div>
-          <p className="mt-1 text-xs font-mono text-carbon-textMuted truncate">{repo.repo}</p>
+          <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{repo.repo}</p>
         </div>
 
         {/* Last received + snapshot count */}
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("receiver.lastReceived")}</p>
           <p className="text-xs text-carbon-textSub">{fmtReceived(repo.lastReceived, t)}</p>
           <p className="text-xs text-carbon-textMuted mt-0.5">
@@ -271,7 +271,7 @@ function ReceivedRepoCard({
         </label>
         {checkMsg && <span className="text-xs text-carbon-textSub wrap-break-word">{checkMsg}</span>}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <button
             onClick={() => setOpen((v) => !v)}
             className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
@@ -281,7 +281,7 @@ function ReceivedRepoCard({
               height="12"
               viewBox="0 0 12 12"
               fill="none"
-              className={`transition-transform ${open ? "rotate-90" : ""}`}
+              className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
             >
               <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -437,9 +437,10 @@ function ReceiverDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="rest:http://192.168.x.x:8000/tower-containers"
-            className={`${inputCls} font-mono`}
+            dir="ltr"
+            className={`${inputCls} font-mono text-start`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
         </div>
 
         {/* Sending APP_KEY */}
@@ -455,9 +456,9 @@ function ReceiverDialog({
             wrapperClassName="w-full"
             className={`${inputCls} font-mono`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
           {appKey !== "" && !APP_KEY_RE.test(appKey) && (
-            <p className="text-[11px] text-statusFail">{t("receiver.appKeyInvalid")}</p>
+            <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
           )}
         </div>
 
@@ -485,7 +486,7 @@ function ReceiverDialog({
             />
           </div>
         </div>
-        <p className="text-[11px] text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
+        <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
 
         {/* Check cadence */}
         <div className="flex flex-col gap-1.5">
@@ -497,9 +498,10 @@ function ReceiverDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder={t("receiver.checkCadencePlaceholder")}
-            className={`${inputCls} font-mono`}
+            dir="ltr"
+            className={`${inputCls} font-mono text-start`}
           />
-          <p className="text-[11px] text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
+          <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
         </div>
 
         {/* Monitor toggle */}

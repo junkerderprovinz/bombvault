@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError } from "../lib/api";
 import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder } from "../lib/api";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -15,12 +15,17 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
+import { Toggle } from "../components/Toggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { ProgressBar } from "../components/ProgressBar";
+import { withLtrFragments, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
 import { useConfirm } from "../lib/useConfirm";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
+import { Selector } from "../components/Selector";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -110,6 +115,15 @@ const SORT_KEYS = {
   ip: "sort.ip",
 } as const;
 
+// SortControl/FilterControl/ChipFilter below are thin, page-specific adapters
+// onto the shared Selector component (GlimStone form-engine Phase 2, Task 3):
+// each maps this page's own domain data (a sort key, a filter key, a
+// generic option list) onto Selector's generic items/active/onChange shape.
+// The actual button rendering, keyboard nav (roving tabindex, arrow keys/
+// Home/End, RTL) and rainbow hueing all now live in Selector itself, not
+// copy-pasted here — that duplicated rendering (with zero keyboard support)
+// was exactly what had drifted apart between this file and VMs.tsx's own
+// near-identical copies.
 function SortControl({
   value,
   onChange,
@@ -122,19 +136,13 @@ function SortControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{t("sort.label")}</span>
-      {(["name", "status", "ip"] as SortKey[]).map((k) => (
-        <button
-          key={k}
-          onClick={() => onChange(k)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === k
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {t(SORT_KEYS[k])}
-        </button>
-      ))}
+      <Selector
+        items={(["name", "status", "ip"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
+        label={t("sort.label")}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as SortKey)}
+      />
     </div>
   );
 }
@@ -170,19 +178,13 @@ function FilterControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{t("containers.filter")}</span>
-      {(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => (
-        <button
-          key={k}
-          onClick={() => onChange(k)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === k
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {labels[k]}
-        </button>
-      ))}
+      <Selector
+        items={(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => ({ id: k, label: labels[k] }))}
+        label={t("containers.filter")}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as FilterKey)}
+      />
     </div>
   );
 }
@@ -226,19 +228,13 @@ function ChipFilter<K extends string>({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-carbon-textMuted">{label}</span>
-      {options.map((o) => (
-        <button
-          key={o.key}
-          onClick={() => onChange(o.key)}
-          className={`rounded-control px-3 py-1 text-xs font-medium transition-colors ${
-            value === o.key
-              ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
+      <Selector
+        items={options.map((o) => ({ id: o.key, label: o.label }))}
+        label={label}
+        select="one"
+        active={value}
+        onChange={(id) => onChange(id as K)}
+      />
     </div>
   );
 }
@@ -333,10 +329,12 @@ function ExportButton({ name, t }: { name: string; t: T }) {
         {state === "pending" ? "…" : t("export.button")}
       </button>
       {state === "done" && msg && (
-        <span className="text-xs text-statusOk break-all text-right">{t("export.exportedTo")} {msg}</span>
+        <span className="text-xs text-statusOk break-all text-end">
+          {t("export.exportedTo")} <span dir="ltr" className="text-start">{msg}</span>
+        </span>
       )}
       {state === "error" && msg && (
-        <span className="text-xs text-statusFail wrap-break-word text-right">{msg}</span>
+        <span dir="ltr" className="text-xs text-statusFail wrap-break-word text-start">{msg}</span>
       )}
     </div>
   );
@@ -387,7 +385,7 @@ function HooksEditor({
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("hooks.title")}
@@ -451,25 +449,16 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
     <div className="mt-1 flex items-start justify-between gap-3">
       <div className="flex flex-col gap-0.5">
         <span className="text-xs text-carbon-textSub">{t("update.afterBackup")}</span>
-        <span className="text-[11px] text-carbon-textMuted">{t("update.afterBackupHint")}</span>
-        {error && <span className="text-[11px] text-statusFail">{error}</span>}
+        <span className="text-caption text-carbon-textMuted">{t("update.afterBackupHint")}</span>
+        {error && <span className="text-caption text-statusFail">{error}</span>}
       </div>
-      <button
-        role="switch"
-        aria-label={t("update.afterBackup")}
-        aria-checked={enabled}
+      <Toggle
+        hideLabel
+        label={t("update.afterBackup")}
+        checked={enabled}
+        onChange={(next) => void handle(next)}
         disabled={busy}
-        onClick={() => void handle(!enabled)}
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
-          enabled ? "bg-accent" : "bg-carbon-surface3"
-        }`}
-      >
-        <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
-            enabled ? "translate-x-[18px]" : "translate-x-[3px]"
-          }`}
-        />
-      </button>
+      />
     </div>
   );
 }
@@ -559,7 +548,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("folders.title")}
@@ -584,7 +573,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
                 className="mt-0.5 accent-(--accent)"
               />
               <span className="flex flex-col">
-                <span className="font-mono break-all">{m.dest} ← {m.source}</span>
+                <span dir="ltr" className="font-mono break-all text-start">{m.dest} ← {m.source}</span>
                 {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
                 {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
               </span>
@@ -594,7 +583,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
             <div key={cp.path} className="flex items-start gap-2 text-xs text-carbon-text">
               <input type="checkbox" checked readOnly className="mt-0.5 accent-(--accent)" />
               <span className="flex flex-col flex-1 min-w-0">
-                <span className="font-mono break-all">{cp.path}</span>
+                <span dir="ltr" className="font-mono break-all text-start">{cp.path}</span>
                 {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
               </span>
               <button
@@ -678,7 +667,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("stophook.title")}
@@ -693,7 +682,8 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
             spellCheck={false}
             rows={3}
             placeholder={"mariadb\nredis"}
-            className={inputCls}
+            dir="ltr"
+            className={`${inputCls} text-start`}
           />
           <div className="flex items-center gap-3 pt-0.5">
             <button
@@ -842,7 +832,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         {t("excludes.title")}
@@ -850,14 +840,17 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
       </button>
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-          <p className="text-xs text-carbon-textMuted">{t("excludes.hint")}</p>
+          <p className="text-xs text-carbon-textMuted">
+            {withLtrFragments(t("excludes.hint"), EXCLUDES_HINT_LTR_FRAGMENTS)}
+          </p>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             spellCheck={false}
             rows={3}
             placeholder={t("excludes.placeholder")}
-            className={inputCls}
+            dir="ltr"
+            className={`${inputCls} text-start`}
           />
           {preview.length > 0 && (
             <div className="flex flex-col gap-1">
@@ -881,7 +874,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                     className="text-xs wrap-break-word leading-snug flex items-baseline gap-1.5"
                     title={row.status === "translated" ? row.resolved : undefined}
                   >
-                    <span className="font-mono text-carbon-textSub">{row.raw}</span>
+                    <span dir="ltr" className="font-mono text-carbon-textSub text-start">{row.raw}</span>
                     <span className={good ? "text-statusOk" : "text-statusFail"}>
                       {good ? "✓" : "⚠"} {msg}
                     </span>
@@ -906,9 +899,9 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
           <div className="mt-1 flex flex-col gap-2">
             <button
               onClick={toggleAssistant}
-              className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-statusInfoSolid"
+              className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : ""}`}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
                 <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {t("excludes.assistTitle")}
@@ -920,7 +913,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                   <button
                     onClick={() => void scan()}
                     disabled={scanning}
-                    className="rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                    className="rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
                   >
                     {scanning
                       ? t("excludes.assistScanning")
@@ -944,10 +937,18 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                         title={sg.line}
                         className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5"
                       >
-                        <span className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text">{sg.path}</span>
+                        <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text text-start">{sg.path}</span>
                         <span
+                          // Task 7: "cache" was bg-statusInfoBg/text-statusInfo (the
+                          // old fifth hue). This is a categorisation label — "this
+                          // looks like a cache dir" — not activity and not a
+                          // pass/fail/warn outcome, so it folds into --status-neutral-*
+                          // (already documented in index.css as "skipped/neutral
+                          // chip", the same broad "not a real state" bucket this
+                          // chip belongs in, sitting next to its "large" sibling
+                          // which keeps its own real warn meaning unchanged).
                           className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
-                            sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusInfoBg text-statusInfo"
+                            sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusNeutralBg text-statusNeutral"
                           }`}
                         >
                           {sg.reason === "large" ? t("excludes.assistReasonLarge") : t("excludes.assistReasonCache")}
@@ -956,7 +957,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                         <button
                           onClick={() => void addExclude(sg.line)}
                           disabled={state === "saving"}
-                          className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-statusInfoSolid"
+                          className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
                         >
                           {t("excludes.assistExclude")}
                         </button>
@@ -980,7 +981,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                           disabled={state === "saving"}
                           aria-label={t("excludes.assistRemoveLine").replace("{line}", line)}
                           title={t("excludes.assistRemove")}
-                          className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-statusInfoSolid"
+                          className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
                         >
                           ×
                         </button>
@@ -1018,12 +1019,19 @@ function ContainerRow({
   onDeleted,
   selected,
   onToggleSelect,
+  index,
 }: {
   container: Container;
   t: T;
   onDeleted: () => void;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  form-engine Phase 2, Task 2). A container list is exactly the case the
+   *  mode exists for: a variable, user-configured set a person tracks several
+   *  of at once. Assigned by LIST INDEX, never a hash of `container.name` —
+   *  see the callers below. */
+  index: number;
 }) {
   const installed = container.installed;
   const progressMap = useProgress();
@@ -1032,7 +1040,19 @@ function ContainerRow({
   // own backup button (its OWN in-flight backup is handled by isPending inside).
   const running = anyActive(progressMap);
   return (
-    <div className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-hue owns the position; glim-tint washes the WHOLE card with it
+      // (trap #2, design-language.md's "Rainbow" section) — without the wash
+      // this card shows almost no colour at rest, since nothing else on it
+      // reads --accent except the checkbox and the (usually hidden) backup
+      // button. glim-active while a backup/restore is actively running on
+      // THIS row: reactive mode then shows the hue without needing hover,
+      // same as knightloader's TaskRow keying off task.status === 'running'.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+        progress?.active ? "glim-active" : ""
+      }`}
+    >
       {/* Top row */}
       <div className="flex items-start gap-3 flex-wrap">
         {/* Multi-select checkbox (installed containers only) */}
@@ -1058,16 +1078,16 @@ function ContainerRow({
               <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
             )}
             {container.ip && (
-              <span className="text-xs text-carbon-textMuted font-mono">{container.ip}</span>
+              <span dir="ltr" className="text-xs text-carbon-textMuted font-mono text-start">{container.ip}</span>
             )}
           </div>
           {container.image && (
-            <p className="text-xs text-carbon-textMuted mt-0.5 truncate">{container.image}</p>
+            <p dir="ltr" className="text-xs text-carbon-textMuted mt-0.5 truncate text-start">{container.image}</p>
           )}
         </div>
 
         {/* Last backup */}
-        <div className="text-right shrink-0">
+        <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
           <p className="text-xs text-carbon-textSub">
             {container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}
@@ -1097,9 +1117,9 @@ function ContainerRow({
 
             {/* Backup + plain export (right) — backup refreshes the list so "last backup" updates.
                 BombVault's own container has no backup action: backing it up would stop itself. */}
-            <div className="ml-auto flex flex-col items-end gap-2">
+            <div className="ms-auto flex flex-col items-end gap-2">
               {container.self ? (
-                <span className="text-xs text-carbon-textMuted max-w-[18rem] text-right">
+                <span className="text-xs text-carbon-textMuted max-w-[18rem] text-end">
                   {t("containers.selfNote")}
                 </span>
               ) : (
@@ -1312,10 +1332,10 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <span className="font-semibold text-carbon-text text-sm wrap-break-word">{group.project}</span>
-          <span className="ml-2 text-xs text-carbon-textMuted">
+          <span className="ms-2 text-xs text-carbon-textMuted">
             {t("stack.members").replace("{n}", String(group.members.length))}
           </span>
-          <p className="mt-0.5 text-[11px] text-carbon-textMuted truncate">
+          <p className="mt-0.5 text-caption text-carbon-textMuted truncate">
             {group.members.map((m) => m.name).join(", ")}
           </p>
         </div>
@@ -1328,7 +1348,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           title={t("stack.restore")}
           className="shrink-0 inline-flex items-center rounded-control p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : ""}`}>
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
             <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -1370,7 +1390,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           {started && !busy && (
             <div className="flex flex-col gap-1">
               <p className="text-xs text-carbon-textSub">{t("restore.started")}</p>
-              <p className="text-[11px] text-carbon-textMuted">{t("restore.bgHint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("restore.bgHint")}</p>
               {/* Whole-stack in-place restore — hard warning, keyed to the stack. */}
               <RestoreCancelButton cancelKey={`stack:${group.project}`} inPlace name={group.project} t={t} />
             </div>
@@ -1392,8 +1412,8 @@ function StacksPanel({ containers, onRestored, t }: { containers: Container[]; o
   if (stacks.length === 0) return null;
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("stack.title")}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("stack.title")}</Badge>
       </h2>
       {stacks.map((g) => (
         <StackCard key={g.project} group={g} onRestored={onRestored} t={t} />
@@ -1545,7 +1565,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
         type="button"
         onClick={toggleCollapsed}
         aria-expanded={!collapsed}
-        className="flex w-full items-start gap-2 text-left"
+        className="flex w-full items-start gap-2 text-start"
       >
         <svg
           width="14"
@@ -1553,7 +1573,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
           viewBox="0 0 12 12"
           fill="none"
           aria-hidden="true"
-          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "" : "rotate-90"}`}
+          className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
         >
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -1561,7 +1581,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
           <span className="font-semibold text-carbon-text text-sm">
             {t("backupOrder.title")}
             {names.length > 0 && (
-              <span className="ml-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
+              <span className="ms-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
                 ({names.length})
               </span>
             )}
@@ -1662,6 +1682,10 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
 
 export function Containers() {
   const { t } = useT();
+  // One subscription for the whole list rather than one per row: the palette
+  // changes for every row at once anyway, so this alone is what makes rainbow
+  // on/off/reactive/rotate/palette edits repaint the list live, no reload.
+  useRainbow();
   const { confirm, confirmDialog } = useConfirm();
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1978,7 +2002,7 @@ export function Containers() {
             </label>
           )}
           {live.length > 0 && (
-            <div className="ml-auto">
+            <div className="ms-auto">
               <ScheduleIncludeAllControl t={t} onChanged={() => void loadContainers()} />
             </div>
           )}
@@ -2044,7 +2068,7 @@ export function Containers() {
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3">
-          {live.map((c) => (
+          {live.map((c, i) => (
             <ContainerRow
               key={c.name}
               container={c}
@@ -2052,6 +2076,7 @@ export function Containers() {
               onDeleted={() => void loadContainers()}
               selected={selected.has(c.name)}
               onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
+              index={i}
             />
           ))}
         </div>
@@ -2061,15 +2086,26 @@ export function Containers() {
       {!loading && filterKey !== "installed" && orphans.length > 0 && (
         <div className="flex flex-col gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-              {t("containers.notInstalledTitle")}
+            <h2 className="flex items-center">
+              <Badge tone="heading" size="heading" wrap>{t("containers.notInstalledTitle")}</Badge>
             </h2>
             <p className="mt-1 text-xs text-carbon-textMuted">
               {t("containers.notInstalledHint")}
             </p>
           </div>
-          {orphans.map((c) => (
-            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} />
+          {/* Continues the live list's index sequence (live.length + i)
+              instead of restarting at 0. Both sections render on the same
+              page at once, so a second sequence starting at 0 would hand the
+              first orphan the first live row's colour, the second orphan the
+              second live row's, and so on down the overlap — a colour
+              repeating inside what a reader takes for one list. Offsetting
+              makes the two sections one continuous sequence instead. Past the
+              eighth row the 8-colour palette still cycles, here as in any
+              long list (rainbowColorAt in lib/appearance.ts is
+              i % palette.length); that is intended, because a repeat then
+              lands a full palette apart rather than adjacent. */}
+          {orphans.map((c, i) => (
+            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} index={live.length + i} />
           ))}
         </div>
       )}

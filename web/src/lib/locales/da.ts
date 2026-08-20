@@ -117,7 +117,6 @@ const da: Partial<Translations> = {
   "restore.confirmTitle": "Bekræft gendannelse",
   "restore.confirmBody":
     "Containeren stoppes, dens appdata erstattes og den genoprettes fra sikkerhedskopien. Fortsæt?",
-  "restore.confirm": "Bekræft",
   "restore.cancel": "Annuller gendannelse",
   "restore.cancelConfirmSafe": "Annuller gendannelsen? Den delvist skrevne målmappe bevares som den er.",
   "restore.cancelConfirmInPlace": "{name} er midt i en gendannelse. Annullering efterlader denne gendannelse ufuldstændig — du skal muligvis køre den igen. Annuller alligevel?",
@@ -139,6 +138,7 @@ const da: Partial<Translations> = {
   "run.statusRunning": "Kører",
   "run.statusSuccess": "Gennemført",
   "run.statusFailed": "Mislykkedes",
+  "run.statusSkipped": "Sprunget over",
   "run.historyTitle": "Kørselsoversigt",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dage",
@@ -188,6 +188,12 @@ const da: Partial<Translations> = {
   "settings.appearance": "Udseende",
   "settings.accentColor": "Accentfarve",
   "settings.accentPresets": "Forudindstillinger",
+  "settings.rainbow": "Regnbue",
+  "settings.rainbowHint": "I stedet for én accent en palet med otte farver efter position, så en lang liste læses som enkelte rækker.",
+  "settings.rainbowOn": "Brug paletten",
+  "settings.rainbowReactive": "Roligt indtil du rører det: farve ved hover og på det, der kører",
+  "settings.rainbowRotate": "Bland hvor paletten starter",
+  "settings.rainbowPalette": "Paletfarve",
   "settings.quietToasts": "Stille notifikationer",
   "settings.quietToastsHint": "Vis kun pop op-beskeder ved fejl. Rutinemæssige gem- og kopibekræftelser forbliver stille.",
 

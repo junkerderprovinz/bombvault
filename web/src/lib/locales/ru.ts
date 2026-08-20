@@ -115,7 +115,6 @@ const ru: Partial<Translations> = {
   // Restore
   "restore.confirmTitle": "Подтвердить восстановление",
   "restore.confirmBody": "Контейнер будет остановлен, appdata заменены и пересозданы из резервной копии. Продолжить?",
-  "restore.confirm": "Подтвердить",
   "restore.cancel": "Отменить восстановление",
   "restore.cancelConfirmSafe": "Отменить восстановление? Частично записанная целевая папка останется без изменений.",
   "restore.cancelConfirmInPlace": "{name} находится в процессе восстановления. Отмена оставит это восстановление незавершённым — возможно, придётся запустить его снова. Всё равно отменить?",
@@ -137,6 +136,7 @@ const ru: Partial<Translations> = {
   "run.statusRunning": "Выполняется",
   "run.statusSuccess": "Успешно",
   "run.statusFailed": "Ошибка",
+  "run.statusSkipped": "Пропущено",
   "run.historyTitle": "История запусков",
   "run.filterDay": "День:",
   "run.allDays": "Все дни",
@@ -184,6 +184,12 @@ const ru: Partial<Translations> = {
   "settings.appearance": "Внешний вид",
   "settings.accentColor": "Акцентный цвет",
   "settings.accentPresets": "Предустановки",
+  "settings.rainbow": "Радуга",
+  "settings.rainbowHint": "Вместо одного акцента палитра из восьми цветов по позиции, чтобы длинный список читался как отдельные строки.",
+  "settings.rainbowOn": "Использовать палитру",
+  "settings.rainbowReactive": "Тихо, пока не тронешь: цвет при наведении и у того, что работает",
+  "settings.rainbowRotate": "Перемешать, с какого цвета начинается палитра",
+  "settings.rainbowPalette": "Цвет палитры",
   "settings.quietToasts": "Тихие уведомления",
   "settings.quietToastsHint": "Показывать всплывающие уведомления только при ошибках. Обычные подтверждения сохранения и копирования остаются беззвучными.",
 

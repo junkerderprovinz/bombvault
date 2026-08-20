@@ -117,7 +117,6 @@ const ar: Partial<Translations> = {
   "restore.confirmTitle": "تأكيد الاستعادة",
   "restore.confirmBody":
     "سيُوقف هذا الـ container وتُستبدل بياناته ويُعاد إنشاؤه من النسخة الاحتياطية. هل تريد المتابعة؟",
-  "restore.confirm": "تأكيد",
   "restore.cancel": "إلغاء الاستعادة",
   "restore.cancelConfirmSafe": "إلغاء الاستعادة؟ سيبقى مجلد الإخراج الجزئي كما هو.",
   "restore.cancelConfirmInPlace": "{name} قيد الاستعادة حاليًا. الإلغاء يترك هذه الاستعادة غير مكتملة — قد تحتاج إلى تنفيذها مرة أخرى. الإلغاء على أي حال؟",
@@ -139,6 +138,7 @@ const ar: Partial<Translations> = {
   "run.statusRunning": "يعمل",
   "run.statusSuccess": "ناجح",
   "run.statusFailed": "فشل",
+  "run.statusSkipped": "تم التخطي",
   "run.historyTitle": "سجل التشغيلات",
   "run.filterDay": "اليوم:",
   "run.allDays": "كل الأيام",
@@ -188,6 +188,12 @@ const ar: Partial<Translations> = {
   "settings.appearance": "المظهر",
   "settings.accentColor": "لون التمييز",
   "settings.accentPresets": "إعدادات مسبقة",
+  "settings.rainbow": "قوس قزح",
+  "settings.rainbowHint": "بدل لون تمييز واحد، لوحة من ثمانية ألوان تُوزَّع حسب الموضع، فتُقرأ القائمة الطويلة صفوفًا منفصلة.",
+  "settings.rainbowOn": "استخدام اللوحة",
+  "settings.rainbowReactive": "هادئ حتى تلمسه: يظهر اللون عند التحويم وعلى ما يعمل",
+  "settings.rainbowRotate": "خلط نقطة بداية اللوحة",
+  "settings.rainbowPalette": "لون اللوحة",
   "settings.quietToasts": "إشعارات هادئة",
   "settings.quietToastsHint": "إظهار الإشعارات المنبثقة عند حدوث أخطاء فقط. تبقى تأكيدات الحفظ والنسخ الروتينية صامتة.",
 

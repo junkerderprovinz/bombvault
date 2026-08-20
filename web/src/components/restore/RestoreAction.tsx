@@ -135,7 +135,7 @@ export function RestoreAction({
               className="rounded-control border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
               style={{ accentColor: "var(--accent)" }}
             />
-            {t("restore.confirm")}
+            {t("common.confirm")}
           </label>
         )}
         <button
@@ -156,12 +156,12 @@ export function RestoreAction({
           )}
         </button>
         {showBusyHint && blockedByOther && (
-          <span className="text-[11px] text-carbon-textMuted shrink-0">{t(busyPhraseKey(otherActive.phase))}</span>
+          <span className="text-caption text-carbon-textMuted shrink-0">{t(busyPhraseKey(otherActive.phase))}</span>
         )}
       </div>
       {/* Leave stopped: recreate/restore but don't start (rebuild a stack in order). */}
       {showLeaveStopped && (
-        <label className="flex items-center gap-1.5 text-[11px] text-carbon-textSub cursor-pointer">
+        <label className="flex items-center gap-1.5 text-caption text-carbon-textSub cursor-pointer">
           <input
             type="checkbox"
             checked={leaveStopped}

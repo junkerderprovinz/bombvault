@@ -14,9 +14,16 @@
   --color-carbon-border: var(--carbon-border);
   --color-carbon-hover: var(--carbon-hover);
 
+  /* accent = the raw accent, used as a SOLID fill; accentContrast = the
+     computed black/white ink that goes ON that solid fill; accentSoft = a
+     14%-alpha wash of it; accentText = accent-coloured TEXT/graphics on an
+     ordinary (non-accent) surface, which needs its own light-theme value to
+     clear WCAG. accentContrast and accentText sound alike but are opposites
+     — see --accent-text's own comment in the dark block below. */
   --color-accent: var(--accent);
   --color-accentContrast: var(--accent-contrast);
   --color-accentSoft: var(--accent-soft);
+  --color-accentText: var(--accent-text);
 
   /* Status tokens (#105) — semantic ok/fail/warn/info/neutral colors that flip
      with the theme. text = plain colored text, Bg/Border = tinted chip surfaces,
@@ -41,11 +48,11 @@
   --color-statusWarnBorderStrong: var(--status-warn-border-strong);
   --color-statusWarnSolid: var(--status-warn-solid);
 
-  --color-statusInfo: var(--status-info-text);
-  --color-statusInfoBg: var(--status-info-bg);
-  --color-statusInfoBorder: var(--status-info-border);
-  --color-statusInfoBorderSoft: var(--status-info-border-soft);
-  --color-statusInfoSolid: var(--status-info-solid);
+  /* --color-statusInfo* deliberately does NOT exist (GlimStone form-engine
+     Phase 2 Task 7, design-language.md rule 4: "four state hues... never a
+     fifth"). Blue "info" used to sit here as a de-facto fifth hue — see the
+     dark/light token blocks below for the full resolution note (search
+     "TASK 7" in this file for where every former consumer landed). */
 
   --color-statusNeutral: var(--status-neutral-text);
   --color-statusNeutralBg: var(--status-neutral-bg);
@@ -159,6 +166,34 @@
   --accent-contrast:  #161616;
   --accent-soft:      rgba(252, 196, 25, 0.14);
 
+  /* accent-text (spec-compliance fix, GlimStone form-engine Phase 2 Task 7
+     follow-up) — accent-derived TEXT/graphics (Badge's tone="active",
+     Recovery/ActivityLog's "running" text, the Sparkline stroke,
+     RecentRunsList's running dot, FolderBrowser's loading spinner) all read
+     this instead of --accent directly. Dark theme just aliases --accent
+     verbatim: measured (standard WCAG relative-luminance formula) at
+     7.18–11.24:1 against every real dark surface these sites render on
+     (--carbon-bg #161616 11.24:1, --carbon-surface #262626 9.40:1,
+     --carbon-surface2 #393939 7.18:1) and 5.30–8.37:1 composited under
+     --accent-soft (the Badge case: 8.37 / 6.80 / 5.30 against those same
+     three) — the flat accent already clears 4.5:1 everywhere here with real
+     margin, so this token doesn't need its own dark-theme value. (The light
+     theme override lives in the [data-theme="light"] block below — that one
+     DOES need a separate value, for the exact reason --focus-ring below
+     already does.)
+
+     NOT the same thing as --accent-contrast above, despite the similar
+     name — the two are near-opposites and are easy to reach for wrongly:
+       --accent-contrast = the INK that goes ON TOP OF a solid --accent fill
+         (computed black/white by lib/accent.ts's contrastOn()). Pairs with
+         `bg-accent`.
+       --accent-text     = accent-COLOURED text/graphics sitting on an
+         ordinary neutral or accent-soft surface. Pairs with
+         `bg-carbon-*`/`bg-accentSoft`, never with `bg-accent`.
+     Badge.tsx's file header already spells out the same distinction for its
+     tone="heading" case. */
+  --accent-text:      var(--accent);
+
   /* Shape and type scale live once, on a bare :root above (theme-invariant —
      see the comment there). */
 
@@ -170,6 +205,23 @@
   --elevation: 0 1px 2px rgba(0, 0, 0, .40), 0 18px 40px -24px rgba(0, 0, 0, .85);
   --hairline: inset 0 1px 0 rgba(255, 255, 255, .045);
   --focus-ring: rgba(252, 196, 25, .55);
+
+  /* Self-reference-free fallback target for [data-rainbow] .glim-hue's
+     --item-hue-ring guard (further down this file) — a byte-identical copy
+     of --focus-ring above, restated under its own name. It exists because
+     `--focus-ring: var(--item-hue-ring, var(--focus-ring))` LOOKS like it
+     would fall back to this theme's flat ring when --item-hue-ring is
+     missing, but it doesn't: on a .glim-hue element, --focus-ring's own
+     cascaded value IS that same declaration, so the fallback's inner
+     var(--focus-ring) resolves against itself — a genuine cycle, not a
+     lookup of "the value from before this declaration" (custom properties
+     have no such concept to fall back to). Verified live in Chromium: the
+     self-referencing form computes to the guaranteed-invalid value on the
+     missing-input element, not this theme's amber — exactly the silent
+     failure the guard is meant to prevent, reproduced by the "fix" itself.
+     Referencing this distinctly-named token instead sidesteps the cycle
+     entirely. */
+  --focus-ring-flat: rgba(252, 196, 25, .55);
 
   /* Field-focus outline (GlimStone form-engine #8, spec-compliance fix) —
      see the .bv-field-focus/.bv-field-focus-well comment further down for
@@ -244,12 +296,117 @@
   --status-warn-border-strong:#5a4a2a;
   --status-warn-solid:        #f1c21b;
 
-  --status-info-text:         #78a9ff;  /* blue-40 */
-  --status-info-bg:           #1c2a3a;
-  --status-info-border:       #2a3a5a;
-  --status-info-border-soft:  #2a4055;  /* info banners (Config/Flash) */
-  --status-info-solid:        #78a9ff;  /* also the input focus border/outline */
+  /* KNOWN LIMITATION, documented on purpose (spec-compliance review of TASK
+     7, not fixed in that task): "warn" and "active" read as the same amber
+     in BOTH themes. Dark: this token (#f1c21b) and the DEFAULT --accent
+     (#FCC419 above) are only RGB-distance ~11 apart — 1.05:1 contrast
+     between them. Light: #8e6a00 vs. a static #7a5c00, literally the same
+     hue (44.8° vs. 45.2°). See the per-theme breakdown below — the two
+     themes have DIFFERENT blast radii and only one of them has a mitigation.
+     Real, live collision: Dashboard's SummaryTier can show a "warn" health
+     chip (chipForRpo("warn") -> statusTone -> tone="warn", this token) and a
+     "last result" chip for a run that's literally "running" right now
+     (statusTone -> tone="active", --accent-text above, which is a plain
+     alias for --accent in dark theme) side by side in the same row — two
+     opposite meanings ("something needs attention" vs. "something healthy
+     is in progress") reading as the same amber. Checked before accepting
+     this as a limitation rather than fixing it:
+       - In DARK theme it's the DEFAULT accent specifically, not a
+         fundamental hue clash: 4 of the 5 built-in accent presets
+         (Settings.tsx's ACCENT_PRESETS — Blue/Green/Red/Purple) aren't in
+         the yellow/gold family and don't collide with warn at all
+         (RGB-distance 128–305 vs. Sunflower's 11). A dark-theme user who has
+         moved off "Sunflower" already doesn't see this, because dark's
+         --accent-text is a plain `var(--accent)` alias and therefore follows
+         whatever hex they picked.
+       - LIGHT theme is WORSE, and that preset escape hatch does NOT apply
+         there. Light's --status-warn-text is #8e6a00 and light's
+         --accent-text is a STATIC #7a5c00 (see that token's own comment in
+         the [data-theme="light"] block below for why it doesn't re-derive
+         per accent) — hue 44.8° vs. 45.2°, i.e. the SAME hue, 1.25:1
+         between them, and the two chip backgrounds (--status-warn-bg-strong
+         #fcf4d6 vs. --accent-soft over a card, ~#fff7df) are only
+         RGB-distance ~10 apart, CLOSER than the dark pair's ~18. So in light
+         theme the warn/active collision is unconditional: every user sees
+         it, on every accent preset, not just the default. Do not read the
+         dark-theme "most users are fine" line above as covering light too.
+       - It is NOT a bare SC 1.4.1 "conveys meaning by colour alone"
+         violation: every real call site pairs the colour with distinct text
+         (the badge's own label), so colour is never the ONLY signal — but
+         it's still a real, visible glance-level regression for anyone on
+         the default accent, which is most installs.
+       - A real fix would mean either moving --status-warn-text/-solid off
+         Carbon's actual yellow-30/-60 tokens (breaking the "matches IBM
+         Carbon" precedent every other status colour in this file follows)
+         or changing BombVault's default accent away from gold (a brand
+         decision well outside a contrast-arithmetic bugfix) or adding a
+         real icon/glyph system to Badge (new component surface area, not a
+         one-line fix) — all disproportionate scope increases for this task.
+     Left unresolved on purpose, flagged here (and at Dashboard.tsx's
+     statusTone/chipForRpo) for a future task. Task 8 (complete the focus
+     system) was checked against this on the theory the two might share a
+     fix, since it also touches the hue-vs-accent boundary via
+     [data-rainbow] .glim-hue's --item-hue-ring — they don't: --item-hue-ring
+     and --focus-ring only ever set outline colour on :focus-visible, never
+     badge fill/text colour, so nothing in Task 8's actual scope reaches
+     --status-warn-text or --accent-text. Still open, still needs one of the
+     three fixes above, from whichever task picks it up next. */
 
+  /* TASK 7 (GlimStone form-engine Phase 2, design-language.md rule 4) removed
+     --status-info-* entirely — it was a de-facto fifth hue (blue), not one of
+     the four real state hues, and never should have been a persistent CSS
+     custom property at all. Every real call site was re-read for its actual
+     semantics and resolved individually, not find-replaced to one colour:
+       - Genuine activity (a run that IS "running" right now, a spinner while
+         something loads, the config-restart notice) -> --accent, in
+         whatever non-solid form its own siblings already use (plain text,
+         a spinner border, Badge's new "active" tone = --accent-soft wash +
+         --accent text). Deliberately never a SOLID accent fill for these:
+         Dashboard's run-history list and ActivityLog's scrolling log can
+         legitimately show several "running" entries at once (independent
+         domains backing up concurrently), and rule 3 caps solid accent at
+         one thing per page. Soft/text accent has no such cap — it's the
+         same visual register ok/fail/warn chips already use.
+       - Pure informational prose/categorisation with NO activity or
+         pass/fail/warn meaning (the Config/Flash snapshot-restore banners,
+         the exclusion assistant's "known cache" chip) -> folded into
+         --status-neutral-* (rule 4's "neutral = waiting" broadened to this
+         token's own pre-existing "skipped/neutral chip" usage, not a new
+         precedent).
+       - Link/action badges that used tone="info" only because it was the
+         nearest available tone when rule 13 converted them (Settings.tsx's
+         two doc-link badges, OffsiteWizard's "regenerate" badge) ->
+         tone="neutral", matching Recovery.tsx's own pre-existing
+         tone="neutral" reload-link badge — the same kind of element.
+     The 7 pre-existing sites that painted `outline-statusInfoSolid` as a
+     focus ring (Settings.tsx's accent colour-input, Dashboard.tsx's stat
+     card + heatmap cell, Containers.tsx's 4 exclusion-assistant controls —
+     none of them form fields, so Phase 1 Task 8's brightness-step migration
+     never touched them) now point at --focus-ring directly instead — see
+     the .bv-field-focus comment below for the full "where does --focus-ring
+     reach today" note, updated to match. Task 8 (focus system completion)
+     did not need to touch those 7 call sites again; it added the universal
+     `:focus-visible` base rule (below, right after .bv-field-focus-well) and
+     verified it composes correctly with the [data-rainbow] .glim-hue
+     --focus-ring override further down this file.
+
+     SPEC-COMPLIANCE FOLLOW-UP: a later review found the "genuine activity"
+     bullet above's plain flat --accent text/graphics (Badge's "active" tone,
+     Recovery's/ActivityLog's running text, the Sparkline stroke,
+     RecentRunsList's running dot, FolderBrowser's spinner) measured
+     1.46:1–1.61:1 in LIGHT theme — badly under WCAG's 4.5:1 text / 3:1
+     non-text minimums (dark theme measured fine, 6.80:1+). Nobody had
+     checked, even though this file already solved the identical "flat
+     accent gold has no contrast on a light surface" problem once before, for
+     --focus-ring above. Fixed by routing every one of those sites through
+     the new --accent-text token (declared next to --accent-soft above and
+     in the [data-theme="light"] block below) instead of --accent directly —
+     same value as --accent in dark theme (see --accent-text's own comment
+     above), a separate darker gold in light theme (see that token's comment
+     in the light block for the measured numbers). The semantic resolution
+     above (what became --accent vs. --status-neutral-* vs. tone="neutral")
+     was not wrong and did not change — this was pure colour arithmetic that
+     was never checked against WCAG contrast at the time. */
   --status-neutral-text:      #a8a8b0;  /* skipped/neutral chip */
   --status-neutral-bg:        #2a2a2e;
   --status-neutral-border:    #3a3a40;
@@ -301,6 +458,79 @@
   --accent-contrast:  #161616;
   --accent-soft:      rgba(252, 196, 25, 0.14);
 
+  /* accent-text — spec-compliance fix (spec review of GlimStone form-engine
+     Phase 2 Task 7's Badge tone="active"/Recovery/ActivityLog/Sparkline/
+     RecentRunsList/FolderBrowser call sites): unlike --accent-soft just
+     above, this does NOT inherit the dark block's `var(--accent)` alias.
+     Measured live (standard WCAG relative-luminance formula), the flat
+     --accent (#FCC419) against this theme's real surfaces:
+       1.61:1 on --carbon-surface (#ffffff) / 1.46:1 on --carbon-bg (#f4f4f4)
+       1.50:1 on Badge's own accent-soft-tinted card background (~#fff7df)
+     — all badly under the 4.5:1 text / 3:1 non-text-indicator minimums, the
+     exact same failure --focus-ring above already solved once for this same
+     accent hue (flat gold has no contrast on a light surface, needs a
+     separate darker value here rather than reused verbatim). #7a5c00 — one
+     step darker than --focus-ring's own #8e6a00-family gold, chosen (not
+     reused verbatim) because the sites reading this token include PLAIN
+     TEXT at the stricter 4.5:1 bar, not just --focus-ring's 3:1
+     non-text-indicator bar — measures:
+       6.25:1 on #ffffff, 5.69:1 on #f4f4f4, 5.10:1 on --carbon-surface2
+       (#e8e8e8, the darkest surface any of these sites plausibly renders
+       on), and 5.84:1 / 5.35:1 / 4.88:1 against those same three surfaces
+       composited under --accent-soft (the Badge case)
+     — every real site clears both the 4.5:1 text and 3:1 non-text minimum
+     with real margin, worst case (surface2 under accent-soft) still 4.88:1.
+     Same simplification as --focus-ring below: a STATIC per-theme value, not
+     derived from whatever custom hex the user picked via Settings' native
+     colour input — that token doesn't re-derive for a custom accent either,
+     so this isn't new scope, it's the existing precedent applied
+     consistently.
+
+     KNOWN CONSEQUENCE of that static choice, stated because the --focus-ring
+     precedent does NOT actually cover it: --focus-ring is a standalone
+     outline that never sits against an accent-derived background, whereas
+     this token is PAIRED with --accent-soft inside the same Badge — and
+     lib/accent.ts's applyAccent() DOES re-derive --accent-soft inline for a
+     custom accent while leaving this one alone. So in light theme with a
+     non-default accent, Badge's tone="active" renders a wash in the user's
+     hue behind text in this fixed gold (e.g. Blue accent -> #dff1fd wash +
+     #7a5c00 text, ~160° of hue mismatch). Contrast still passes in every
+     preset (5.40–5.79:1, measured), so this is an aesthetic defect, not an
+     accessibility one — accepted here because the alternative (deriving a
+     WCAG-safe darkened text colour from an arbitrary user hex at runtime) is
+     real new colour-math surface area in accent.ts, well past this
+     contrast-arithmetic fix. If a future task adds that derivation, this
+     token and --focus-ring should both move onto it together.
+
+     Note this also means the dark-theme "4 of 5 accent presets dodge the
+     warn/active collision" mitigation (see --status-warn-text's KNOWN
+     LIMITATION comment above) does NOT hold in light theme: a static
+     #7a5c00 collides with light's #8e6a00 warn on every preset. */
+  --accent-text: #7a5c00;
+
+  /* NOT-YET-MIGRATED INVENTORY (complete as of this fix — the sites that
+     still paint flat --accent as text or as a non-text graphic and so still
+     measure 1.31–1.61:1 in light theme). All four PRE-DATE Task 7 and none
+     were touched by it, which is the only reason they weren't fixed with the
+     five that were; they are listed here rather than left to be rediscovered:
+       - WhatsNewDialog.tsx's `text-accent underline` external link — the
+         worst of the four: real TEXT at the 4.5:1 bar, 1.61:1 on a card.
+       - Containers.tsx's batch-backup banner spinner
+         (borderColor: var(--accent)) on bg-carbon-surface2 — 1.31:1.
+       - OffsiteIndicator.tsx's spinner (borderColor: var(--accent)) — the
+         precedent FolderBrowser's now-fixed spinner was originally copied
+         from, so the two have diverged on purpose; see FolderBrowser.tsx.
+       - FilterPopover.tsx's `bg-accent` active dot — 1.46–1.61:1.
+     Each is a one-word swap to the accentText token (border-accentText /
+     text-accentText / bg-accentText). Deliberately left out of the
+     contrast-arithmetic fix to keep its blast radius equal to Task 7's own;
+     pick them up in whichever task next owns those files.
+
+     Solid `bg-accent` fills are NOT in this list and are fine as they are:
+     they pair with --accent-contrast, whose whole job is to stay readable on
+     them. Native controls' `accentColor: var(--accent)` are likewise out of
+     scope — the browser draws those. */
+
   /* --focus-ring, unlike --accent-soft above, does NOT inherit the dark
      block's value — measured live against this theme's real Card surface
      (--carbon-surface #ffffff) the dark rgba(252,196,25,.55) composites to
@@ -313,6 +543,11 @@
      composites to ~#9f8026 on #ffffff (3.75:1) and ~#9d7f25 on #f4f4f4, the
      page background (3.48:1) — both clear 3:1 with real margin. */
   --focus-ring: rgba(142, 106, 0, .85);
+
+  /* Same reasoning as the dark block's --focus-ring-flat above — a
+     self-reference-free copy of --focus-ring for [data-rainbow] .glim-hue's
+     --item-hue-ring guard to fall back to. */
+  --focus-ring-flat: rgba(142, 106, 0, .85);
 
   /* Field-focus outline (GlimStone form-engine #8, spec-compliance fix) —
      same reasoning as the dark block's --field-focus-ring above. --focus-ring
@@ -382,12 +617,8 @@
   --status-warn-border-strong:#fddc69;
   --status-warn-solid:        #b28600;  /* yellow-50 — #f1c21b is <3:1 on light */
 
-  --status-info-text:         #0043ce;  /* blue-70 */
-  --status-info-bg:           #edf5ff;  /* blue-10 */
-  --status-info-border:       #d0e2ff;  /* blue-20 */
-  --status-info-border-soft:  #d0e2ff;
-  --status-info-solid:        #0f62fe;  /* blue-60 — Carbon focus blue */
-
+  /* --status-info-* removed — see the dark block's TASK 7 comment above for
+     the full resolution (this theme carried the same tokens, same fate). */
   --status-neutral-text:      #525252;  /* gray-70 */
   --status-neutral-bg:        #e8e8e8;
   --status-neutral-border:    #c6c6c6;  /* gray-30 */
@@ -441,10 +672,18 @@
        on a light surface. See the comment on [data-theme="light"]'s
        --focus-ring for the measured numbers. */
     --focus-ring: rgba(142, 106, 0, .85);
+    /* Same reasoning as [data-theme="light"]'s --focus-ring-flat above —
+       needs restating here for the identical no-explicit-attribute reason
+       as --focus-ring above. */
+    --focus-ring-flat: rgba(142, 106, 0, .85);
     /* Same reasoning as [data-theme="light"]'s --field-focus-ring/
        --field-focus-well above. */
     --field-focus-ring: rgba(142, 106, 0, 1);
     --field-focus-well: #cdcdcd;
+    /* Same reasoning as [data-theme="light"]'s --accent-text above — needs
+       restating here for the identical no-explicit-attribute reason as
+       --focus-ring above. */
+    --accent-text: #7a5c00;
   }
 }
 
@@ -514,25 +753,36 @@ body {
    the rest of the field already has. --focus-ring itself is untouched —
    this class is additive, not a replacement for that token.
 
-   WHERE --focus-ring ACTUALLY REACHES TODAY (stated precisely, because an
-   earlier draft of this comment over-claimed it): every shared control this
-   branch added or reworked opts into it by hand — Toggle's switch track,
-   RevealInput's eye, InfoBubble's icon, Toast's dismiss X. It does NOT yet
-   reach ordinary buttons and links: ~215 of them declare no focus utility at
-   all and fall through to the browser's native ring, and 8 pre-existing sites
-   (Containers' bulk-action row, Dashboard's card button + heatmap cell,
-   Settings' colour swatch) still paint the old outline-statusInfoSolid blue.
-   So the app currently has THREE focus appearances, not one.
+   WHERE --focus-ring REACHED BEFORE TASK 8 (kept as history, because an
+   earlier draft of this comment over-claimed it and the correction is worth
+   preserving): every shared control this branch added or reworked opted
+   into it by hand — Toggle's switch track, RevealInput's eye, InfoBubble's
+   icon, Toast's dismiss X. TASK 7 (resolve the fifth hue) additionally moved
+   the 7 pre-existing sites that used to paint `outline-statusInfoSolid`
+   directly (Settings.tsx's accent colour-input, Dashboard.tsx's stat card
+   button + heatmap cell, Containers.tsx's 4 exclusion-assistant controls)
+   onto `outline-(--focus-ring)` by hand, the same opt-in pattern as the
+   controls above — that token no longer exists (see the dark block's TASK 7
+   comment), so there was nowhere else for them to point. Past that point,
+   --focus-ring reached NO ordinary button or link: ~215 of them declared no
+   focus utility at all and fell through to the browser's native ring — TWO
+   focus appearances in the app (opted-in amber, and native default), not
+   one.
 
-   Closing that gap is deliberately NOT done here. The reference
-   (glimstone/reference/tokens.css) resolves it with a single base rule —
-   `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px }`
-   — and its adoption checklist says to copy it. Adopting it is Phase 2 work,
-   not a Phase 1 tail: in the reference that same rule is what the rainbow/
-   reactive colour mode reaches through, rebinding --focus-ring per item via
-   `[data-rainbow] .glim-hue`, so the base rule and the rainbow axis want to
-   land together. It also unblocks audit item 19 (resolving the fifth hue),
-   which is what those 8 remaining blue sites are waiting on.
+   TASK 8 (complete the focus system) closed that gap: see the base
+   `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset:
+   2px }` rule, adopted verbatim from the reference (glimstone/reference/
+   tokens.css) further down this file, right after .bv-field-focus-well
+   below — that rule's own comment covers what it reaches, how it composes
+   with `[data-rainbow] .glim-hue` (below) and with the two field-focus rules
+   immediately below it, and why none of the hand-opted-in controls above
+   needed to change. TASK 7 (this comment's own task) is what audit item 19
+   (resolving the fifth hue) needed to unblock Task 8 — it was done first:
+   --status-info-* is gone, every real call site was re-read and resolved
+   individually (fold into --accent for genuine activity, --status-neutral-*
+   for pure informational prose/categorisation, or Badge tone="neutral" for
+   link/action badges — see the dark block's TASK 7 comment for the full
+   list and reasoning).
 
    Two variants, chosen by what the field already rests on:
    - .bv-field-focus — the common case (most fields in the app): resting
@@ -587,6 +837,75 @@ body {
   outline-offset: -1px;
 }
 
+/* Base focus ring (design-language.md "Focus"; GlimStone form-engine Phase 2
+   Task 8, "complete the focus system") — the reference's own base rule
+   (glimstone/reference/tokens.css), adopted verbatim. Before this rule
+   existed, --focus-ring reached only the handful of shared controls that
+   opted in by hand plus the 7 sites Task 7 moved off the old blue outline
+   (see the .bv-field-focus comment above for that full history); ~215
+   ordinary buttons and links across the app fell through to the browser's
+   own native default focus outline instead of this app's token. This one
+   rule closes that gap for all of them at once — no per-component change
+   needed, and safe to add with nothing to remove first: nothing in the app
+   sets `outline: none`, so there was no earlier suppression to undo (see
+   the .bv-field-focus comment above for why that distinction matters — the
+   field rules DO have to fight a native default this way).
+
+   Composition with rainbow (`[data-rainbow] .glim-hue` further down this
+   file): that block already redefines --focus-ring to var(--item-hue-ring)
+   on any element carrying .glim-hue — written during Task 2/3, ahead of
+   this rule existing, specifically so this rule would compose correctly the
+   moment it landed. Because this rule reads var(--focus-ring) rather than a
+   hardcoded colour, and custom properties cascade normally through the DOM,
+   a focused .glim-hue element (e.g. a Selector segment with hue enabled)
+   automatically resolves its own hue's ring here — no separate
+   `[data-rainbow] .glim-hue:focus-visible` override was needed, the
+   ordinary custom-property cascade already does the composing. Outside any
+   .glim-hue subtree, --focus-ring is whatever the active theme block set
+   (the flat amber default). Verified live, both themes, rainbow
+   on/off/reactive: a plain button/link gets the flat ring, a hue-enabled
+   Selector segment gets its own position's ring instead.
+
+   Composition with form fields (.bv-field-focus/-well immediately above,
+   Phase 1 Task 8): NOT a double ring. Both field rules key off `:focus`
+   (not `:focus-visible`) and declare their own explicit
+   `outline`/`outline-offset` at (0,2,0) specificity — one class plus one
+   pseudo-class beats this rule's bare `:focus-visible` at (0,1,0)
+   regardless of source order, so a field's own inset brightness-step
+   outline always wins outright. (The browser does not layer competing
+   declarations of the same property; the higher-specificity one fully
+   replaces the lower one.) Verified live: no second ring appears on any
+   text input/select/textarea, either theme.
+
+   Deliberately duplicated, not conflicting, at the shared-control sites
+   named above (Toggle's switch, RevealInput's eye, InfoBubble's icon,
+   Toast's dismiss X): each already carries its own explicit
+   `focus-visible:outline-solid outline-2 outline-offset-2
+   outline-(--focus-ring)` utility class, functionally identical to what
+   this rule now also provides.
+
+   CORRECTION: an earlier draft of this comment credited the non-conflict
+   to specificity ("the higher-specificity declaration wins"). That's not
+   the real mechanism, though it happened not to matter — the two forms
+   compute the same value either way. Tailwind compiles utility classes
+   into `@layer utilities` (confirmed in the built dist CSS: the
+   `focus-visible:outline-(--focus-ring)` utility's own declaration lands
+   inside that layer block); this rule was added unlayered, outside any
+   `@layer`. Per the CSS cascade layers spec, layer position is resolved
+   BEFORE specificity is ever compared — an unlayered declaration always
+   beats a layered one for the same property, no matter which side has the
+   higher selector specificity. So at these four sites it is actually THIS
+   rule's declaration that wins, the reverse of what "higher specificity"
+   would predict, not the utility class's. Still inert either way, because
+   both forms resolve to the identical `outline: 2px solid
+   var(--focus-ring); outline-offset: 2px` — whichever the cascade picks,
+   nothing visible changes. Left as-is — pruning the now-redundant utility
+   classes is a separate simplification, not this task's job. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 /* Toast chrome (GlimStone form-engine #9, design-language.md "Toasts") —
    the class NAME and its entrance-animation binding are copied verbatim
    from reference/tokens.css's `.glim-toast`/`glim-toast-in` (see the
@@ -605,15 +924,247 @@ body {
   box-shadow: var(--elevation), var(--hairline);
 }
 
+/* ---------------------------------------------------------------------------
+   Rainbow — the accent, plural (GlimStone form-engine Phase 2, Task 1;
+   design-language.md, "The colour engine" / "Rainbow"). Ported from
+   reference/tokens.css + reference/tailwind-theme.css's matching
+   [data-rainbow] blocks, merged into one section here since this file (unlike
+   the reference, which splits framework-free tokens from the optional
+   Tailwind @theme layer into two files) already keeps both in one place —
+   see lib/appearance.ts for the JS half (hueVars, applyRainbow).
+
+   An element that owns a palette position sets --item-hue on itself (via
+   hueVars()) and carries .glim-hue. The block below redefines BOTH the plain
+   custom properties (--accent etc., read directly by components) AND the
+   Tailwind theme-mapped ones (--color-accent etc., which is what
+   bg-accent/text-accent utility classes actually compile against) for that
+   subtree. Skipping the --color-* half is TRAP #3 from design-language.md's
+   "three traps, all hit in production": the @theme block at the top of this
+   file resolves `--color-accent: var(--accent)` ONCE at :root and freezes it
+   there, so a .glim-hue subtree redefining only --accent would colour
+   anything reading var(--accent) directly and NOTHING that went through a
+   bg-accent/text-accent utility class — this second half is not redundant,
+   it is the fix.
+
+   WHAT MAY OWN A POSITION: anything that is one member of a SET whose
+   members are all equal — a nav item, a list row, a tab, a filter chip, a
+   segment of a segmented control. Anything that is the only one of its kind
+   on the page keeps the single accent. The four state hues (rule 4) are
+   never rainbowed — green still means finished; see .glim-tint below for
+   trap #2, why a rainbowed row needs its own wash rather than relying on
+   that fill.
+
+   Consumers as of Task 3: .glim-hue is carried by every Selector segment
+   (components/Selector.tsx) with hue enabled — the default, opted out of
+   only by Dashboard.tsx's heatmap domain toggle (`hue={false}`) — across
+   twelve call sites in seven files (Settings.tsx's tab strip and drill-type
+   toggle, Containers.tsx, VMs.tsx, Files.tsx, Dashboard.tsx,
+   CadenceBuilder.tsx, SourceToggle.tsx; Settings.tsx no longer sets the class
+   directly, it goes through Selector like everything else now) and by the
+   container/VM/file-set row cards (ContainerRow/VMRow/FileSetRow), which add
+   .glim-tint as well — Selector segments don't, a segment is too small to
+   wash. Each of them sets --item-hue on its own root via
+   lib/appearance.ts's hueVars(rainbowAt(index)).
+   .glim-hue-icon rides along on those same hue-enabled Selector segments but
+   only visibly matters where an item actually carries an icon: today that is
+   just the Settings tab strip (see SelectorItem.icon's own comment). The
+   sidebar remains deliberately not rainbowed (Sidebar.tsx carries that
+   reasoning) and so is still not a consumer. */
+[data-rainbow] .glim-hue {
+  --accent: var(--item-hue);
+  --accent-contrast: var(--item-hue-ink);
+  --accent-soft: var(--item-hue-soft);
+  --color-accent: var(--item-hue);
+  --color-accentContrast: var(--item-hue-ink);
+  --color-accentSoft: var(--item-hue-soft);
+  /* The focus ring is part of the position, not the theme — drawn directly
+     around the element that owns the colour. Reactive mode deliberately does
+     not reset this: the ring only ever paints while the element has focus,
+     and [data-rainbow="reactive"] .glim-hue:focus-within below already
+     brings the hue back for reactive mode regardless. This token was written
+     during Task 2/3, ahead of anything reading it, specifically for the base
+     `:focus-visible { outline: 2px solid var(--focus-ring) }` rule (Task 8,
+     see the .bv-field-focus-well comment above) to reach through once it
+     existed — it now does; verified live.
+
+     FALLBACK GUARD (code-quality follow-up, not part of Task 8's own
+     scope): not reachable today — hueVars() (lib/appearance.ts) always
+     emits --item-hue-ring whenever it emits anything, verified — but every
+     consumer of --item-hue-ring here is a single point of failure with no
+     guard, per this project's own "a guard applied once is a guard missing
+     twice" convention. Without the fallback, a .glim-hue element that ever
+     lost --item-hue-ring would break the whole chain silently:
+     --item-hue-ring invalid -> --focus-ring invalid -> the base rule's
+     `outline: 2px solid var(--focus-ring)` invalid at computed-value time
+     -> the outline disappears outright (outline-style: none) instead of
+     degrading to the flat ring. The fallback target is --focus-ring-flat
+     (declared per-theme next to --focus-ring above), a distinctly-named
+     token, NOT var(--focus-ring) itself — `var(--item-hue-ring,
+     var(--focus-ring))` looks safer but isn't: see --focus-ring-flat's own
+     comment for why that particular shape is a genuine cascade cycle on
+     this exact element, not a working "fall back to the value before this
+     declaration." Verified live in both themes: the normal case (an
+     element with --item-hue-ring set) is unaffected, computes the same hue
+     ring as before; the degraded case (--item-hue-ring stripped via
+     devtools) now resolves to the flat amber/gold ring instead of losing
+     the outline entirely. */
+  --focus-ring: var(--item-hue-ring, var(--focus-ring-flat));
+}
+
+/* LIGHT-THEME OVERRIDE (spec-compliance fix — a Task 1 x Task 8 interaction
+   bug, not something either task alone could have caught: --item-hue-ring
+   above was written in Task 2/3 while still inert, and only started
+   painting anything once Task 8's base `:focus-visible` rule landed).
+   hueVars() (lib/appearance.ts) sets --item-hue-ring as a plain
+   rgba(r,g,b,0.55) inline style, with no idea which theme is active — it
+   can't be, it runs once per hue assignment, not once per theme change.
+   Composited against a hued row's own wash, that fixed 0.55 alpha measured
+   live at only 1.25-1.76:1 in light theme for all 8 rainbow hues, badly
+   under WCAG 1.4.11's 3:1 non-text-UI minimum — the exact failure mode
+   --focus-ring's own light block above (see its comment near this file's
+   [data-theme="light"] block) already solved once for the FLAT ring, by
+   swapping in a separate, darker, theme-specific value instead of reusing
+   the dark rgba verbatim. This is that same fix, extended to the hue ring.
+
+   Because --item-hue-ring is an inline style (hueVars() sets it directly on
+   the element via root.style.setProperty-equivalent React style props),
+   this rule does NOT try to override that custom property's own value —
+   inline beats any selector, --item-hue-ring-light guard further down this
+   file notwithstanding. Instead it redefines --focus-ring (NOT set inline
+   anywhere) to point at a NEW, genuinely theme-scoped mix instead of the
+   raw inline rgba: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text))
+   blends the position's hue toward this theme's own dark ink rather than
+   alpha-blending a lighter tint over a light surface — the same "darker AND
+   more opaque, not just more transparent" move --focus-ring's own light
+   value already made for the flat ring, applied to the hue ring's --item-hue
+   input instead of a fixed amber.
+
+   [data-theme="light"][data-rainbow] .glim-hue — no descendant combinator
+   between the two attribute selectors. data-theme (theme.ts) and
+   data-rainbow (applyRainbow() above) are BOTH set on document.documentElement,
+   the SAME element, never an ancestor/descendant pair, so
+   `[data-theme="light"] [data-rainbow] ...` (with a space) would silently
+   never match anything — this compound form is required to actually reach
+   a real element. Matches this file's [data-theme="dark"] { --egg-logo }
+   / [data-theme="light"] scoping convention (see this file's opening Carbon
+   palette section) applied to an attribute compound instead of a bare
+   selector, since [data-rainbow] .glim-hue is itself already scoped past
+   the theme-selector-only case those blocks handle.
+
+   Guarded the same shape as the base rule above (--item-hue-ring-light, not
+   --focus-ring itself, as the intermediate token) for the identical reason:
+   hueVars() emits --item-hue whenever it emits anything, so this isn't
+   reachable today, but a --item-hue-ring-light that ever went guaranteed-
+   invalid (--item-hue missing) must still resolve to a real ring
+   (--focus-ring-flat) rather than losing the outline outright — see the
+   base rule's own FALLBACK GUARD comment for why the target must be this
+   distinctly-named token, not a self-referencing var(--focus-ring).
+
+   Verified live (Chromium, a real built binary, keyboard-focused so
+   :focus-visible actually engages — not just computed from the formula):
+   on the Settings tab strip (a real .glim-hue Selector segment; no
+   .glim-tint row could be driven live in this pass — the dev instance has
+   no Docker/libvirt host to list real containers/VMs against, so
+   ContainerRow/VMRow never render), light theme's worst offenders (red
+   #FF8389, purple #BE95FF, blue #1D99F3) measured via getComputedStyle's
+   RESOLVED outline-color, standard WCAG relative-luminance contrast:
+     red    5.25:1 vs. the real panel background, 5.45:1 vs. that same
+            hue's own --item-hue-wash composited over --carbon-surface
+     blue   6.27:1 / 6.41:1 (same two comparisons)
+     purple 5.18:1 / 5.40:1
+   All six comfortably clear 3:1 (four of them clear 4.5:1 too) — real
+   margin, not a knife-edge pass. Dark theme is UNTOUCHED by this block on
+   purpose: re-measured the same way on the same red segment after
+   switching themes, --focus-ring still resolves to the original
+   rgba(255,131,137,.55) verbatim (3.13:1 vs. panel, 2.75:1 vs. its own
+   wash — both close to the review's own dark-theme range, "already
+   borderline-acceptable" and not this fix's scope, not regressed by it). */
+[data-theme="light"][data-rainbow] .glim-hue {
+  --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
+  --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
+}
+
+/* Same override, restated for the one case with no explicit data-theme
+   attribute to select on (JS-disabled system-light fallback) — identical
+   reasoning to why [data-theme="light"]'s own --focus-ring/--focus-ring-flat
+   get restated in the matching @media block near this file's Carbon-palette
+   section: :root:not([data-theme]) does not inherit from [data-theme="light"],
+   so without this the system-light/no-JS case would fall through to the
+   base rule's raw inline rgba instead. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme])[data-rainbow] .glim-hue {
+    --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
+    --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
+  }
+}
+
+/* Opt-in: the element's glyph takes the hue too. A list row owns a colour
+   but its action icons must stay quiet, hence the second class. The active
+   item is excluded via :not(.glim-active): it's FILLED with the hue already,
+   so an icon painted the same colour would vanish into its own background. */
+[data-rainbow] .glim-hue-icon:not(.glim-active) svg {
+  color: var(--accent);
+}
+
+/* Opt-in: the row is WASHED with its hue rather than ruled with an edge line.
+   TRAP #2 from design-language.md: without this, a list row only shows
+   colour through its progress fill or status badge, which turns green on
+   completion (rule 4) — on a list of finished items the palette would show
+   nothing at all. The wash is an inset shadow, not a background, so the
+   row's own hover tint still reads through it at 7% alpha. */
+[data-rainbow] .glim-tint {
+  box-shadow: inset 0 0 0 999px var(--item-hue-wash);
+}
+[data-rainbow="reactive"] .glim-tint {
+  box-shadow: none;
+}
+[data-rainbow="reactive"] .glim-tint:hover,
+[data-rainbow="reactive"] .glim-tint.glim-active {
+  box-shadow: inset 0 0 0 999px var(--item-hue-wash);
+}
+
+/* Reactive: the palette rests. Everything stays quiet until hovered or
+   active — the reading that still obeys "colour marks activity" (rule 3)
+   when a whole list would otherwise light up at once. Comes after the base
+   [data-rainbow] .glim-hue block above on purpose: equal (0,2,0) specificity,
+   so source order is what lets this win for reactive mode. */
+[data-rainbow="reactive"] .glim-hue {
+  --accent: var(--carbon-text-muted);
+  --accent-contrast: var(--carbon-bg);
+  --accent-soft: transparent;
+  --color-accent: var(--carbon-text-muted);
+  --color-accentContrast: var(--carbon-bg);
+  --color-accentSoft: transparent;
+}
+[data-rainbow="reactive"] .glim-hue:hover,
+[data-rainbow="reactive"] .glim-hue:focus-within,
+[data-rainbow="reactive"] .glim-hue.glim-active {
+  --accent: var(--item-hue);
+  --accent-contrast: var(--item-hue-ink);
+  --accent-soft: var(--item-hue-soft);
+  --color-accent: var(--item-hue);
+  --color-accentContrast: var(--item-hue-ink);
+  --color-accentSoft: var(--item-hue-soft);
+}
+
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`
    variant (dark mark on the light surface, light mark on the dark surface), so the
    logo always reads on --carbon-sidebar without any frame, glow or tile. */
 
-/* Indeterminate progress bar — a small accent segment sliding left→right on
-   loop, used by ProgressBar.tsx when restic reports no numeric percentage. */
+/* Indeterminate progress bar — a small accent segment sliding start→end on
+   loop, used by ProgressBar.tsx when restic reports no numeric percentage.
+   `left` is a PHYSICAL offset (missed by the class-based RTL sweep since
+   it's set via keyframes, not a Tailwind class — RTL sweep, form-engine
+   Phase 2 Task 6 follow-up fix); `[dir="rtl"]` swaps which extreme is the
+   sweep's start vs end so it still travels start→end under RTL instead of
+   always physically left→right regardless of reading direction. The track's
+   own bounds (ProgressBar.tsx's `start-0 end-0`) already follow direction
+   correctly — only this animation's two endpoints needed the override. */
+:root { --bv-indet-from: -35%; --bv-indet-to: 100%; }
+[dir="rtl"] { --bv-indet-from: 100%; --bv-indet-to: -35%; }
 @keyframes bv-indeterminate {
-  0%   { left: -35%; }
-  100% { left: 100%; }
+  0%   { left: var(--bv-indet-from); }
+  100% { left: var(--bv-indet-to); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -707,11 +1258,25 @@ body {
 }
 
 /* Toast entrance (GlimStone form-engine #9) — reference/tokens.css's
-   glim-toast-in, verbatim. The reduced-motion fallback reuses glim-fade-in
-   above rather than defining a second identical opacity-only keyframe (see
-   the @media (prefers-reduced-motion: reduce) block further down). */
+   glim-toast-in. The reduced-motion fallback reuses glim-fade-in above
+   rather than defining a second identical opacity-only keyframe (see the
+   @media (prefers-reduced-motion: reduce) block further down).
+   The reference's `translateX(12px)` is a PHYSICAL offset (RTL sweep,
+   form-engine Phase 2 Task 6 follow-up fix: this wasn't actually
+   direction-aware before, despite the viewport corner itself — `bottom-0
+   end-0` in Toast.tsx — correctly following writing direction). The
+   viewport sits at the LOGICAL end corner, right in LTR, left in RTL
+   (Toast.tsx's own header comment), so a toast should slide in FROM the
+   trailing/outer edge of whichever corner that is: +12px (from further
+   right, sliding left into place) when that corner is on the right, -12px
+   (from further left, sliding right into place) when it's on the left.
+   Unconditional +12px meant an RTL toast slid in from further LEFT than
+   its LEFT-anchored resting place — i.e. from the page's interior toward
+   the edge, not from off-canvas toward the edge like every other toast. */
+:root { --glim-toast-slide: 12px; }
+[dir="rtl"] { --glim-toast-slide: -12px; }
 @keyframes glim-toast-in {
-  from { opacity: 0; transform: translateX(12px); }
+  from { opacity: 0; transform: translateX(var(--glim-toast-slide)); }
   to   { opacity: 1; transform: none; }
 }
 

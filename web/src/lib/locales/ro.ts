@@ -116,7 +116,6 @@ const ro: Partial<Translations> = {
   "restore.confirmTitle": "Confirmare restaurare",
   "restore.confirmBody":
     "Aceasta va opri containerul, va înlocui appdata și îl va recrea din copie de rezervă. Continuați?",
-  "restore.confirm": "Confirmare",
   "restore.cancel": "Anulează restaurarea",
   "restore.cancelConfirmSafe": "Anulați restaurarea? Folderul de ieșire parțial este lăsat așa cum este.",
   "restore.cancelConfirmInPlace": "{name} este în curs de restaurare. Anularea lasă această restaurare incompletă — s-ar putea să fie nevoie să o executați din nou. Anulați oricum?",
@@ -138,6 +137,7 @@ const ro: Partial<Translations> = {
   "run.statusRunning": "În rulare",
   "run.statusSuccess": "Succes",
   "run.statusFailed": "Eșuat",
+  "run.statusSkipped": "Omis",
   "run.historyTitle": "Istoricul rulărilor",
   "run.filterDay": "Zi:",
   "run.allDays": "Toate zilele",
@@ -186,6 +186,12 @@ const ro: Partial<Translations> = {
   "settings.appearance": "Aspect",
   "settings.accentColor": "Culoare de accent",
   "settings.accentPresets": "Presetări",
+  "settings.rainbow": "Curcubeu",
+  "settings.rainbowHint": "În loc de un singur accent, o paletă de opt culori după poziție, ca o listă lungă să se citească pe rânduri distincte.",
+  "settings.rainbowOn": "Folosește paleta",
+  "settings.rainbowReactive": "Liniștit până îl atingi: culoare la trecerea cu mouse-ul și pe ce rulează",
+  "settings.rainbowRotate": "Amestecă de unde începe paleta",
+  "settings.rainbowPalette": "Culoare din paletă",
   "settings.quietToasts": "Notificări discrete",
   "settings.quietToastsHint": "Afișează notificările pop-up doar pentru erori. Confirmările de rutină de salvare și copiere rămân silențioase.",
 

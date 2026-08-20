@@ -74,7 +74,7 @@ function FileRow({
         className="shrink-0"
         style={{ accentColor: "var(--accent)" }}
       />
-      <span className="font-mono text-carbon-textSub flex-1 min-w-0 truncate" title={file.path}>
+      <span dir="ltr" className="font-mono text-carbon-textSub flex-1 min-w-0 truncate text-start" title={file.path}>
         {file.type === "dir" ? "📁 " : ""}
         {file.path}
       </span>
@@ -104,7 +104,17 @@ function TreeRow({
     <div>
       <div
         className="flex items-center gap-1 py-0.5 text-xs rounded-control hover:bg-carbon-hover"
-        style={{ paddingLeft: depth * 14 }}
+        // `paddingInlineStart`, not `paddingLeft` — a physical inline style
+        // (a plain `style` prop, not a Tailwind class) is exactly what the
+        // class-based `pl-`/`pr-`/etc. grep sweep couldn't see (RTL sweep,
+        // form-engine Phase 2 Task 6 follow-up fix). This row carries no
+        // `dir` override of its own, so the logical property correctly
+        // resolves against the surrounding page's real direction: the
+        // indent piles up on the reading-start edge (left in LTR, right in
+        // RTL) either way, instead of always visually hugging the left
+        // regardless of direction — which made every depth in RTL look the
+        // same distance from the RTL reading edge, hiding the hierarchy.
+        style={{ paddingInlineStart: depth * 14 }}
       >
         {isDir ? (
           <button
@@ -112,7 +122,7 @@ function TreeRow({
             className="w-4 shrink-0 text-carbon-textMuted hover:text-carbon-text"
             aria-label={expanded ? "collapse" : "expand"}
           >
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`transition-transform ${expanded ? "rotate-90" : ""}`}>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`transition-transform ${expanded ? "rotate-90" : "rtl:rotate-180"}`}>
               <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -128,7 +138,7 @@ function TreeRow({
           aria-label={node.path}
         />
         <span className="shrink-0">{isDir ? "📁" : "📄"}</span>
-        <span className="font-mono text-carbon-textSub flex-1 truncate" title={node.path}>
+        <span dir="ltr" className="font-mono text-carbon-textSub flex-1 truncate text-start" title={node.path}>
           {node.name}
         </span>
       </div>

@@ -115,7 +115,6 @@ const nl: Partial<Translations> = {
   // Restore
   "restore.confirmTitle": "Herstel bevestigen",
   "restore.confirmBody": "De container wordt gestopt, de appdata vervangen en opnieuw aangemaakt vanuit de back-up. Doorgaan?",
-  "restore.confirm": "Bevestigen",
   "restore.cancel": "Herstel annuleren",
   "restore.cancelConfirmSafe": "Herstel annuleren? De gedeeltelijk geschreven doelmap blijft ongewijzigd.",
   "restore.cancelConfirmInPlace": "{name} wordt momenteel hersteld. Annuleren laat dit herstel onvolledig achter — je moet het mogelijk opnieuw uitvoeren. Toch annuleren?",
@@ -137,6 +136,7 @@ const nl: Partial<Translations> = {
   "run.statusRunning": "Actief",
   "run.statusSuccess": "Geslaagd",
   "run.statusFailed": "Mislukt",
+  "run.statusSkipped": "Overgeslagen",
   "run.historyTitle": "Uitvoeringsgeschiedenis",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dagen",
@@ -184,6 +184,12 @@ const nl: Partial<Translations> = {
   "settings.appearance": "Uiterlijk",
   "settings.accentColor": "Accentkleur",
   "settings.accentPresets": "Voorinstellingen",
+  "settings.rainbow": "Regenboog",
+  "settings.rainbowHint": "In plaats van één accent een palet van acht, verdeeld op positie, zodat een lange lijst als losse rijen leest.",
+  "settings.rainbowOn": "Palet gebruiken",
+  "settings.rainbowReactive": "Rustig tot je erover gaat: kleur bij hover en bij wat er loopt",
+  "settings.rainbowRotate": "Startpunt van het palet schudden",
+  "settings.rainbowPalette": "Paletkleur",
   "settings.quietToasts": "Stille meldingen",
   "settings.quietToastsHint": "Toon pop-upmeldingen alleen bij fouten. Routinematige opslaan- en kopieerbevestigingen blijven stil.",
 

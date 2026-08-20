@@ -117,7 +117,6 @@ const zh: Partial<Translations> = {
   "restore.confirmTitle": "确认还原",
   "restore.confirmBody":
     "此操作将停止容器、替换其 appdata 并从备份中重新创建。是否继续？",
-  "restore.confirm": "确认",
   "restore.cancel": "取消还原",
   "restore.cancelConfirmSafe": "取消还原？部分已写入的输出文件夹将保持原样。",
   "restore.cancelConfirmInPlace": "{name} 正在还原中。取消会使本次还原处于未完成状态——可能需要再次运行。仍要取消吗？",
@@ -139,6 +138,7 @@ const zh: Partial<Translations> = {
   "run.statusRunning": "运行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失败",
+  "run.statusSkipped": "已跳过",
   "run.historyTitle": "运行历史",
   "run.filterDay": "日期：",
   "run.allDays": "所有日期",
@@ -188,6 +188,12 @@ const zh: Partial<Translations> = {
   "settings.appearance": "外观",
   "settings.accentColor": "强调色",
   "settings.accentPresets": "预设",
+  "settings.rainbow": "彩虹",
+  "settings.rainbowHint": "不用单一强调色，而是按位置分配的八色调色板，长列表因此能逐行区分。",
+  "settings.rainbowOn": "使用调色板",
+  "settings.rainbowReactive": "未触碰时安静：悬停时和正在运行的项目才上色",
+  "settings.rainbowRotate": "打乱调色板的起始颜色",
+  "settings.rainbowPalette": "调色板颜色",
   "settings.quietToasts": "安静通知",
   "settings.quietToastsHint": "仅在失败时显示弹出通知。常规的保存和复制确认将保持静默。",
 

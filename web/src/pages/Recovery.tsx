@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
+import { withLtrFragments, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
+import { Badge } from "../components/Badge";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
@@ -477,7 +479,7 @@ function ForeignItemRow({
           </div>
           {subsetActive && (
             <>
-              <p className="text-[11px] text-carbon-textMuted">{t("recovery.foreignSubfolderHint")}</p>
+              <p className="text-caption text-carbon-textMuted">{t("recovery.foreignSubfolderHint")}</p>
               <SnapshotFileTree
                 files={foreignFiles}
                 loading={filesLoading}
@@ -522,7 +524,7 @@ function ForeignItemRow({
             placeholder="user/appdata"
           />
           <p className="text-xs text-carbon-textMuted max-w-2xl">
-            {t("recovery.foreignAppdataDestHint")}
+            {withLtrFragments(t("recovery.foreignAppdataDestHint"), FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS)}
           </p>
           <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer">
             <input
@@ -548,7 +550,7 @@ function ForeignItemRow({
                     hand-find this file's two "grep-invisible" call sites after the
                     sweep missed them. */}
                 {warnings.map((wn) => (
-                  <li key={wn.host + "\u0000" + wn.container} className="font-mono wrap-break-word" dir="ltr">
+                  <li key={wn.host + "\u0000" + wn.container} className="font-mono wrap-break-word text-start" dir="ltr">
                     {wn.host} → {wn.container}
                   </li>
                 ))}
@@ -732,7 +734,12 @@ function ForeignRestoreCard({
   return (
     <div className="flex flex-col gap-5 border-t border-carbon-border pt-5 mt-2">
       <div>
-        <h2 className="text-lg font-semibold text-carbon-text">{t("recovery.foreignTitle")}</h2>
+        {/* Task 5 (rule 11): page-level group heading, direct analogue of
+            Settings.tsx's schedulesBackup heading (see that call site) —
+            same Badge-in-<h2> treatment. */}
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap>{t("recovery.foreignTitle")}</Badge>
+        </h2>
         <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.foreignIntro")}</p>
       </div>
 
@@ -1224,7 +1231,7 @@ export default function Recovery() {
 
         {/* The raw (scrubbed) backend message for a warn/other error, as a hint. */}
         {readableState === "warn" && lastError && (
-          <p className="text-xs text-carbon-textMuted font-mono break-all">{lastError}</p>
+          <p dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{lastError}</p>
         )}
       </StepCard>
 
@@ -1269,7 +1276,8 @@ export default function Recovery() {
                         setSettings((prev) => (prev ? { ...prev, configOffsite: e.target.value } : prev))
                       }
                       placeholder="rest:http://host:8000/repo"
-                      className={offsiteInput}
+                      dir="ltr"
+                      className={`${offsiteInput} text-start`}
                     />
                   </div>
                 )}
@@ -1304,14 +1312,22 @@ export default function Recovery() {
                     watching the spinner and can reload the moment the app is up. */}
                 {configPhase === "restarting" && (
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm text-statusInfo">{t("recovery.configRestarting")}</p>
-                    <button
-                      type="button"
-                      onClick={() => window.location.reload()}
-                      className="self-start text-xs text-carbon-textSub hover:text-carbon-text transition-colors underline"
-                    >
+                    {/* Task 7: was text-statusInfo (the old fifth hue) — genuine
+                        activity (the app really is restarting right now), a
+                        single occurrence on this page, so plain accent-derived
+                        text is safe (no competing solid-accent elements at
+                        once). text-accentText, not the flat text-accent: a
+                        spec-compliance review measured the flat accent gold
+                        at 1.61:1 in light theme here (7.79:1 as
+                        text-statusInfo #0043ce before this task) — badly under the
+                        4.5:1 text minimum. See index.css's --accent-text
+                        comment for the fix and the measured numbers. */}
+                    <p className="text-sm text-accentText">{t("recovery.configRestarting")}</p>
+                    {/* Task 5 (rule 13): same shape as ItemScheduleOverride's
+                        converted button — a plain underlined text link. */}
+                    <Badge as="button" onClick={() => window.location.reload()} tone="neutral" size="small" className="self-start">
                       {t("recovery.configReload")}
-                    </button>
+                    </Badge>
                   </div>
                 )}
                 {/* Manual restart needed (Docker socket unreachable). */}
@@ -1393,7 +1409,8 @@ export default function Recovery() {
                   spellCheck={false}
                   onChange={(e) => setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))}
                   placeholder="rest:http://host:8000/repo"
-                  className={offsiteInput}
+                  dir="ltr"
+                  className={`${offsiteInput} text-start`}
                 />
               </div>
             ))}

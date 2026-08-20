@@ -237,6 +237,7 @@ Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifre
 - **Restore to an alternate folder** — restore a container snapshot (or individual files) to a different path instead of in place, for cloning or inspection.
 - **Snapshot diff & tags** — compare two snapshots to see what changed (files added / changed / removed and the size delta), and tag snapshots to filter them.
 - **What's new after an update** — the release notes pop up once per new version, served from notes embedded in the binary, so the dialog works offline and without GitHub rate limits.
+- **Quiet toasts** (Settings → Appearance) — mute the browser's own pop-up confirmations so only failures still interrupt you; routine save/copy confirmations stay silent. Purely client-side and per-browser — separate from the **Notifications** system above, which keeps sending webhook/email/etc. alerts on its own policy either way.
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
 - Dark/light UI in **26 languages** with a flag picker.

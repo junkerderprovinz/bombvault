@@ -34,6 +34,49 @@ describe("contrastOn", () => {
   });
 });
 
+// Regression coverage for the fixed-0.55-luminance-threshold bug: these are
+// exactly the 5 of RAINBOW's 8 hues (lib/appearance.ts) a live contrast
+// review measured getting white ink at 2.35-3.04:1 (WCAG 1.4.3 needs 4.5:1)
+// under the old `> 0.55` cutoff, when #161616 gives every one of them
+// 5.95-7.70:1. Each case asserts BOTH the winning ink AND the actual
+// contrast ratio against it, independently recomputed here rather than by
+// reusing accent.ts's own luminance/contrastRatio helpers — a fix that just
+// nudges the threshold to a different-but-still-wrong constant would still
+// return "#161616" (passing a hex-only assertion) while failing contrast,
+// so the ratio check is the one that actually catches that regression.
+describe("contrastOn — rainbow hues previously broken by the fixed 0.55 threshold", () => {
+  // Standard WCAG relative luminance + contrast ratio, computed independently
+  // of accent.ts's own implementation.
+  function relLuminance(hex: string): number {
+    const n = parseInt(hex.slice(1), 16);
+    const channels = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    const [r, g, b] = channels.map((c) => {
+      const v = c / 255;
+      return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  function wcagContrastRatio(hexA: string, hexB: string): number {
+    const l1 = relLuminance(hexA);
+    const l2 = relLuminance(hexB);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+
+  const PREVIOUSLY_BROKEN = [
+    "#FF8389", // red 30
+    "#FF832B", // orange 40
+    "#1D99F3", // blue
+    "#BE95FF", // purple 30
+    "#FF7EB6", // magenta 30
+  ];
+
+  it.each(PREVIOUSLY_BROKEN)("resolves %s to dark ink at >=4.5:1, not white at <4.5:1", (hex) => {
+    const ink = contrastOn(hex);
+    expect(ink).toBe("#161616");
+    expect(wcagContrastRatio(hex, ink)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
 describe("softTint", () => {
   it("derives a 14%-alpha rgba from the given hex", () => {
     expect(softTint("#FCC419")).toBe("rgba(252, 196, 25, 0.14)");

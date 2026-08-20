@@ -117,7 +117,6 @@ const ko: Partial<Translations> = {
   "restore.confirmTitle": "복원 확인",
   "restore.confirmBody":
     "컨테이너를 중지하고, appdata를 교체하며, 백업에서 재생성합니다. 계속하시겠습니까?",
-  "restore.confirm": "확인",
   "restore.cancel": "복원 취소",
   "restore.cancelConfirmSafe": "복원을 취소하시겠습니까? 일부만 기록된 출력 폴더는 그대로 유지됩니다.",
   "restore.cancelConfirmInPlace": "{name}이(가) 복원 중입니다. 취소하면 이 복원이 불완전한 상태로 남습니다 — 다시 실행해야 할 수도 있습니다. 그래도 취소하시겠습니까?",
@@ -139,6 +138,7 @@ const ko: Partial<Translations> = {
   "run.statusRunning": "실행 중",
   "run.statusSuccess": "성공",
   "run.statusFailed": "실패",
+  "run.statusSkipped": "건너뜀",
   "run.historyTitle": "실행 기록",
   "run.filterDay": "날짜:",
   "run.allDays": "모든 날짜",
@@ -188,6 +188,12 @@ const ko: Partial<Translations> = {
   "settings.appearance": "외관",
   "settings.accentColor": "강조 색상",
   "settings.accentPresets": "프리셋",
+  "settings.rainbow": "무지개",
+  "settings.rainbowHint": "강조색 하나 대신 위치별로 배정되는 여덟 색 팔레트. 긴 목록이 행 단위로 구분되어 읽힙니다.",
+  "settings.rainbowOn": "팔레트 사용",
+  "settings.rainbowReactive": "건드리기 전까지는 조용히. 가리킬 때와 실행 중인 것에만 색이 붙습니다",
+  "settings.rainbowRotate": "팔레트가 시작하는 위치를 섞기",
+  "settings.rainbowPalette": "팔레트 색",
   "settings.quietToasts": "알림 최소화",
   "settings.quietToastsHint": "실패 시에만 팝업 알림을 표시합니다. 저장 및 복사에 대한 일반적인 확인 알림은 표시되지 않습니다.",
 

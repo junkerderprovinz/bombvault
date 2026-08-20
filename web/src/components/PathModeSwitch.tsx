@@ -90,12 +90,19 @@ export function PathModeSwitch({
       {remoteMode ? (
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{label}</label>
+          {/* Task 6 (RTL sweep): this input occupies the SAME slot as
+              FolderBrowser's path field below and holds the same kind of
+              technical value (a restic remote URL), so it carries the same
+              `dir="ltr"`/`text-start` pin — without it, switching Local →
+              Remote in ar/he would flip the field's direction and strand a
+              leading `/` or `:` at the wrong edge. */}
           <input
             value={value}
             spellCheck={false}
             onChange={(e) => onChange(e.target.value)}
             placeholder="s3:bucket/path or rest:http://host:8000/repo"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+            dir="ltr"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
           />
           <button
             type="button"

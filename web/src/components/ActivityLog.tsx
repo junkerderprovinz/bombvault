@@ -18,6 +18,7 @@ import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
 import { buildLogLines, filterLogLines, formatLogDate } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
+import { Badge } from "./Badge";
 import { formatClockTime } from "../lib/reltime";
 
 const POLL_RUNS_MS = 10000;
@@ -47,6 +48,20 @@ function glyphFor(status: LogStatus): string {
 // Reuses the exact hex values Dashboard's Badge uses for success/failed/
 // running so a log line reads as the same colour language as the rest of the
 // app (#66-style shared vocabulary), not a new palette.
+//
+// "running"/"offsite" (Task 7: resolve the fifth hue) — was text-statusInfo,
+// the old fifth hue. Both mean genuine activity happening right now, so
+// accent-derived text — but plain colour on text in a scrolling list, never
+// a solid fill: this log routinely shows several "running"/"offsite" lines
+// at once (independent domains backing up concurrently all merge into one
+// list), and rule 3's "at most one solid accent" cap is specifically about
+// SOLID accent claiming the page's one primary-action weight. Coloured text
+// reads at the same register as the success/failed lines right next to it.
+// text-accentText, not the flat text-accent: this same commit's spec-
+// compliance follow-up found the flat accent gold measures ~1.6:1 in light
+// theme against this log's surfaces — badly under the 4.5:1 text minimum
+// (dark theme is fine). Same fix as Recovery.tsx's identical pattern; see
+// index.css's --accent-text comment for the measured numbers.
 function colorFor(status: LogStatus): string {
   switch (status) {
     case "success":
@@ -55,7 +70,7 @@ function colorFor(status: LogStatus): string {
       return "text-statusFail";
     case "running":
     case "offsite":
-      return "text-statusInfo";
+      return "text-accentText";
     case "info":
       return "text-statusWarn";
   }
@@ -204,8 +219,8 @@ export function ActivityLog({
 
   return (
     <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
-      <h2 className="text-sm font-semibold text-carbon-textSub uppercase tracking-widest">
-        {t("activityLog.title")}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("activityLog.title")}</Badge>
       </h2>
 
       {/* Filter bar — narrows the ONE list below; never a second zone. */}
@@ -295,7 +310,7 @@ export function ActivityLog({
           <button
             type="button"
             onClick={jumpToLatest}
-            className="absolute bottom-3 right-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
+            className="absolute bottom-3 end-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
           >
             ↓ {t("activityLog.jumpToLatest")}
           </button>
