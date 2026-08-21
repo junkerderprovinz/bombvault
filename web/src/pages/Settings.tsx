@@ -2997,7 +2997,7 @@ function RestoreChecksSection({
           wrapping container opacity needed here. */}
       <ToggleRow
         label={t("settings.offsiteDrills")}
-        description={t("settings.offsiteDrillsHelp")}
+        hint={t("settings.offsiteDrillsHelp")}
         checked={settings.offsiteDrillsEnabled}
         disabled={!settings.drillsEnabled}
         onChange={(v) => update({ offsiteDrillsEnabled: v })}
@@ -3788,7 +3788,7 @@ export function SettingsPage() {
           <Card title={t("settings.missedSchedulesTitle")}>
             <ToggleRow
               label={t("settings.catchUpMissed")}
-              description={t("settings.catchUpMissedHint")}
+              hint={t("settings.catchUpMissedHint")}
               checked={settings.catchUpMissed}
               onChange={(v) =>
                 setSettings((prev) => (prev ? { ...prev, catchUpMissed: v } : prev))
@@ -3805,7 +3805,7 @@ export function SettingsPage() {
           <Card title={t("settings.restartHealthTitle")}>
             <ToggleRow
               label={t("settings.restartHealthWait")}
-              description={t("settings.restartHealthWaitHint")}
+              hint={t("settings.restartHealthWaitHint")}
               checked={settings.restartHealthWait}
               onChange={(v) =>
                 setSettings((prev) => (prev ? { ...prev, restartHealthWait: v } : prev))
@@ -3813,8 +3813,14 @@ export function SettingsPage() {
             />
             {settings.restartHealthWait && (
               <label className="flex flex-col gap-1 sm:w-1/2">
-                <span className="text-xs text-carbon-textSub">
+                {/* Live-review round 3 sweep: the range explainer used to sit
+                    as a permanent caption below the field. Moved beside the
+                    field's own label as an InfoBubble, the exact pattern the
+                    retention grid further down already uses for a field-
+                    level "what does this number mean" note. */}
+                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                   {t("settings.restartHealthTimeoutLabel")}
+                  <InfoBubble tip={t("settings.restartHealthTimeoutHint")} />
                 </span>
                 <input
                   type="number"
@@ -3832,9 +3838,6 @@ export function SettingsPage() {
                   }}
                   className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
                 />
-                <span className="text-xs text-carbon-textMuted">
-                  {t("settings.restartHealthTimeoutHint")}
-                </span>
               </label>
             )}
             <SaveBar
@@ -3890,9 +3893,18 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "general" && (
       <Card title={t("settings.domains")} hint={t("settings.domainsHint")}>
+        {/* Live-review round 3, point 4: all 7 rows here used to show a
+            permanent visible caption under the label (rule 8 violation — the
+            first 5 were even raw hardcoded English strings, never localized
+            at all). Every row now carries its explanation via ToggleRow's
+            `hint` prop (an InfoBubble beside the label) instead — receiver/
+            fleet already had a real i18n key for their caption and just
+            needed the prop swapped; containers/vms/flash/files/config
+            needed a NEW *Hint key added (and translated into all 26
+            locales) since their old text was never a translation key. */}
         <ToggleRow
           label={t("settings.containersEnabled")}
-          description="Container backup + restore (always enabled)"
+          hint={t("settings.containersEnabledHint")}
           checked={settings.containersEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, containersEnabled: v } : prev)
@@ -3900,7 +3912,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.vmsEnabled")}
-          description="VM backup + restore via libvirt over SSH"
+          hint={t("settings.vmsEnabledHint")}
           checked={settings.vmsEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, vmsEnabled: v } : prev)
@@ -3908,7 +3920,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.flashEnabled")}
-          description="Unraid USB flash backup (/boot → restic)"
+          hint={t("settings.flashEnabledHint")}
           checked={settings.flashEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, flashEnabled: v } : prev)
@@ -3916,7 +3928,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.filesEnabled")}
-          description="Back up arbitrary folders under your mounts (file sets)"
+          hint={t("settings.filesEnabledHint")}
           checked={settings.filesEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, filesEnabled: v } : prev)
@@ -3924,7 +3936,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.configEnabled")}
-          description="BombVault's own settings, targets and credentials (self-backup)"
+          hint={t("settings.configEnabledHint")}
           checked={settings.configEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, configEnabled: v } : prev)
@@ -3932,7 +3944,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.receiverEnabled")}
-          description={t("settings.receiverEnabledHint")}
+          hint={t("settings.receiverEnabledHint")}
           checked={settings.receiverEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, receiverEnabled: v } : prev)
@@ -3940,7 +3952,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.fleetEnabled")}
-          description={t("settings.fleetEnabledHint")}
+          hint={t("settings.fleetEnabledHint")}
           checked={settings.fleetEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, fleetEnabled: v } : prev)
@@ -4070,11 +4082,21 @@ export function SettingsPage() {
       {/* so it sits with the local backup paths it prunes).                   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.retentionTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
-          {t("settings.retentionHint")}
-          <InfoBubble tip={t("settings.retentionCombineInfo")} />
-        </p>
+      <Card
+        title={t("settings.retentionTitle")}
+        // Live-review round 3, point 4 sweep: this Card's own intro used to
+        // sit as a permanent visible <p> below the title instead of going
+        // through the Card `hint` mechanism every OTHER Card-level intro in
+        // this file already uses — a plain miss, not a documented exception
+        // (compare settings.offsiteHint further down, which stayed visible
+        // on purpose with its own comment explaining why). retentionHint
+        // (what this Card does) and retentionCombineInfo (the OR-combination
+        // rule — a "why wasn't this pruned" answer someone re-checks, same
+        // category as notify.healthchecksLifecycle's carve-out) both fold
+        // into the one title-level bubble rather than leaving the second as
+        // an orphaned bare icon once the wrapping <p> it lived in is gone.
+        hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
+      >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
             ["retentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
@@ -4128,7 +4150,7 @@ export function SettingsPage() {
       <Card title={t("settings.imageCleanupTitle")} hint={t("settings.imageCleanupHint")}>
         <ToggleRow
           label={t("settings.pruneImageAfterUpdate")}
-          description={t("settings.pruneImageAfterUpdateHint")}
+          hint={t("settings.pruneImageAfterUpdateHint")}
           checked={settings.pruneImageAfterUpdate}
           onChange={(v) =>
             setSettings((prev) => (prev ? { ...prev, pruneImageAfterUpdate: v } : prev))
@@ -4159,7 +4181,7 @@ export function SettingsPage() {
       <Card title={t("settings.reconcileTitle")}>
         <ToggleRow
           label={t("settings.reconcileUnraidStatus")}
-          description={t("settings.reconcileUnraidStatusHint")}
+          hint={t("settings.reconcileUnraidStatusHint")}
           checked={settings.reconcileUnraidUpdateStatus}
           onChange={(v) =>
             setSettings((prev) =>
@@ -4429,7 +4451,7 @@ export function SettingsPage() {
       <Card title={t("flash.zipExport.title")} hint={t("flash.zipExport.hint")}>
         <ToggleRow
           label={t("flash.zipExport.enable")}
-          description={t("flash.zipExport.enableHint")}
+          hint={t("flash.zipExport.enableHint")}
           checked={settings.flashZipExportEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, flashZipExportEnabled: v } : prev)
@@ -4454,7 +4476,7 @@ export function SettingsPage() {
             )}
             <ToggleRow
               label={t("flash.zipExport.keepHistory")}
-              description={t("flash.zipExport.keepHistoryHint")}
+              hint={t("flash.zipExport.keepHistoryHint")}
               // History is "on" whenever we keep more than a single overwritten zip.
               // Turning it on restores the last count the user picked (rememberedKeep,
               // default 7); off collapses back to 0 = a single flash-latest.zip.
@@ -4469,7 +4491,12 @@ export function SettingsPage() {
             />
             {settings.flashZipExportKeep > 0 ? (
               <label className="flex flex-col gap-1 max-w-40">
-                <span className="text-xs text-carbon-textSub">{t("flash.zipExport.keepN")}</span>
+                {/* Live-review round 3 sweep: same field-caption-to-bubble
+                    fix as settings.restartHealthTimeoutHint above. */}
+                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("flash.zipExport.keepN")}
+                  <InfoBubble tip={t("flash.zipExport.keepNHint")} />
+                </span>
                 <input
                   type="number"
                   min={1}
@@ -4481,7 +4508,6 @@ export function SettingsPage() {
                   }}
                   className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
                 />
-                <span className="text-xs text-carbon-textMuted">{t("flash.zipExport.keepNHint")}</span>
               </label>
             ) : (
               <p className="text-xs text-carbon-textMuted">{t("flash.zipExport.latestNote")}</p>
@@ -4517,7 +4543,7 @@ export function SettingsPage() {
       <Card title={t("export.encrypt.title")} hint={t("export.encrypt.hint")}>
         <ToggleRow
           label={t("export.encrypt.enable")}
-          description={t("export.encrypt.enableHint")}
+          hint={t("export.encrypt.enableHint")}
           checked={settings.exportEncryptEnabled}
           onChange={(v) =>
             setSettings((prev) => prev ? { ...prev, exportEncryptEnabled: v } : prev)
@@ -4526,6 +4552,17 @@ export function SettingsPage() {
         {settings.exportEncryptEnabled && (
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
+            {/* Live-review round 3 sweep: export.encrypt.recipientsHint below
+                (the "one per line, age1.../SSH key format" caption on the
+                textarea) is left as permanent text on purpose, the same
+                "genuine toss-up" carve-out settings.offsiteHint documents
+                further up this file — it names the exact accepted KEY
+                SYNTAX for a multi-line field someone fills in by pasting one
+                key per line, which reads as reference to consult while
+                composing the list rather than a one-time "what does this
+                toggle do" explainer (that half is already covered by
+                export.encrypt.enableHint on the ToggleRow above). Flagged,
+                not force-converted. */}
             <textarea
               value={settings.exportAgeRecipients}
               spellCheck={false}
@@ -4676,12 +4713,13 @@ export function SettingsPage() {
       {/* in the Storage tab, #51).                                            */}
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
-      <Card title={t("settings.retentionOffsiteTitle")}>
-        <p className="text-xs text-carbon-textMuted -mt-1 flex items-center gap-1.5">
-          {t("settings.retentionOffsiteHint")}
-          <InfoBubble tip={t("settings.retentionCombineInfo")} />
-          <InfoBubble tip={t("settings.retentionOffsiteImmutableInfo")} />
-        </p>
+      <Card
+        title={t("settings.retentionOffsiteTitle")}
+        // Same fix as the local-retention Card above, folding all three
+        // sentences (what this Card does, the OR-combination rule, and the
+        // immutable-destination override) into the one title-level bubble.
+        hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionOffsiteImmutableInfo")}`}
+      >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
             ["offsiteRetentionKeepLast", "settings.retentionLast", "settings.retentionLastInfo"],
@@ -5354,11 +5392,15 @@ export function SettingsPage() {
               of the 8 is independently editable; setRainbow()/
               isValidPalette() enforce all-or-nothing validation on the
               resulting palette before it ever reaches
-              document.documentElement.style — see lib/appearance.ts. */}
+              document.documentElement.style — see lib/appearance.ts.
+                Live-review round 3, point 2: the "Palettenfarbe:"/"Palette
+              colour" caption in front of the swatches read as noise once you
+              can already see eight colour swatches sitting there — removed.
+              settings.rainbowPalette itself is NOT orphaned: PaletteSwatch
+              still reads it (see that component's own `label` line above)
+              for each swatch's title/aria-label ("Palette colour 1", "...2",
+              …), so the key stays in every locale unchanged. */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-xs text-carbon-textMuted${rainbow.on ? "" : " opacity-50"}`}>
-              {t("settings.rainbowPalette")}:
-            </span>
             {rainbow.palette.map((hex, i) => (
               <PaletteSwatch
                 key={i}
@@ -5373,14 +5415,46 @@ export function SettingsPage() {
                 }}
               />
             ))}
-            <button
-              type="button"
+            {/* Live-review round 3, point 3: was a plain text "Reset" button.
+                Now a Badge, matching this row's own established "everything
+                clickable is a badge" convention (Task 5 rule 13) — the first
+                live use of shape="circle" (previously type-only; see
+                Badge.tsx's BadgeShape comment), sized via the new `icon`
+                stage to land on the exact same 28px (h-7 w-7) footprint as
+                the PaletteSwatch circles it sits beside, so it reads as part
+                of the same row of controls rather than a mismatched
+                afterthought. `ms-auto` pushes it to the row's own far right
+                — the same idiom this app already uses everywhere else for
+                "trailing item in a flex row" (Containers.tsx, VMs.tsx,
+                Files.tsx, Fleet.tsx, Dashboard.tsx, Receiver.tsx), and since
+                this row shares the Card's own content width with the
+                ToggleRow switches above, that right edge lines up with
+                theirs. Icon-only, so `title`+`ariaLabel` both carry
+                common.reset ("Reset"/"Zurücksetzen"/…) as the accessible
+                name and native hover tooltip — same generic reset wording
+                the Accent Card's own (text) reset button above already uses
+                for the identical action on a sibling swatch row. */}
+            <Badge
+              as="button"
+              shape="circle"
+              size="icon"
+              tone="neutral"
               disabled={!rainbow.on}
               onClick={() => updateRainbow({ palette: RAINBOW })}
-              className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1 disabled:opacity-50 disabled:pointer-events-none"
+              title={t("common.reset")}
+              ariaLabel={t("common.reset")}
+              className="ms-auto"
             >
-              {t("common.reset")}
-            </button>
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+                <path
+                  d="M0.67 2.67 L0.67 6.67 L4.67 6.67 M2.34 10 a6 6 0 1 0 1.42 -6.24 L0.67 6.67"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Badge>
           </div>
         </div>
       </Card>
