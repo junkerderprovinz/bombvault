@@ -19,9 +19,9 @@
 // ---------------------------------------------------------------------------
 
 import type { Run, ScheduleNext } from "./api";
-import type { ProgressMap } from "./progress";
+import type { ProgressMap, ProgressState } from "./progress";
 import { STALE_MS } from "./progress";
-import { formatClockTime, formatDuration } from "./reltime";
+import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -246,7 +246,46 @@ const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | 
   export: "activityLog.lineExportRunning",
 };
 
-function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now: number): LiveResult {
+/**
+ * offsiteLiveLineText picks the honest live-line text for an "offsite:<domain>"
+ * progress state (issue #159), mirroring OffsiteIndicator's offsiteStatusText
+ * tiering exactly (see that function's doc comment for the full reasoning):
+ * a live per-snapshot percentage when available ("… snapshot {index} of
+ * {total} ({percent}%)"), else the plain elapsed-duration text, else the bare
+ * "running" text. Each tier has its own "WithDuration" sibling key so a live
+ * percentage never has to drop the duration.
+ */
+function offsiteLiveLineText(resolveName: ResolveName, domain: LogDomain, state: ProgressState, duration: string): string {
+  const domainText = domainLabel(resolveName, domain);
+  const index = state.snapshotIndex;
+  const percent = state.percent;
+  if (typeof index === "number" && index > 0 && typeof percent === "number") {
+    const total = Math.max(state.snapshotTotal ?? 0, index);
+    const params = { domain: domainText, index: String(index), total: String(total), percent: String(displayPercent(percent)), duration };
+    return duration
+      ? resolveName("activityLog.lineOffsiteRunningSnapshotPercentWithDuration", params)
+      : resolveName("activityLog.lineOffsiteRunningSnapshotPercent", params);
+  }
+  return duration
+    ? resolveName("activityLog.lineOffsiteRunningWithDuration", { domain: domainText, duration })
+    : resolveName("activityLog.lineOffsiteRunning", { domain: domainText });
+}
+
+/**
+ * buildLiveLines renders the live SSE progress keys as tail lines. `now` gates
+ * staleness (STALE_MS) — deliberately coarse-tick-tolerant, since a lagging
+ * `now` only delays noticing a lost terminal frame by a bit. `liveNow`
+ * (defaults to `now` for callers that don't need finer granularity — e.g.
+ * every existing test) is used ONLY for the off-site line's elapsedSince
+ * computation: ActivityLog.tsx ticks `now` at a coarse 60s cadence (its idle
+ * "next up" countdown doesn't need better), which used to ALSO starve the
+ * off-site duration — for the run's first ~60s, `now` could sit BEHIND
+ * `startedAt` (captured before the run began), making elapsedSince go
+ * negative → "" (blank), then jump straight to a large value once `now`
+ * finally ticked. `liveNow` is a separate, faster-ticking clock the caller
+ * only runs while a live line is on screen.
+ */
+function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now: number, liveNow: number = now): LiveResult {
   const lines: LogLine[] = [];
   const signatures = new Set<string>();
 
@@ -290,7 +329,15 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
 
     if (parsed.scope === "offsite") {
       const domain = normalizeDomain(parsed.domain);
-      const text = resolveName("activityLog.lineOffsiteRunning", { domain: domainLabel(resolveName, domain) });
+      // Issue #159: restic copy DOES print a real per-snapshot percentage
+      // (see restic.Copy's doc comment) — offsiteLiveLineText shows it once
+      // available, falling back to the honest elapsed-duration signal (from
+      // the backend-stamped startedAt), computed against `liveNow` (not
+      // `now` — see buildLiveLines' doc comment for why that distinction
+      // matters here) so it never goes negative for this component's first
+      // ~60s.
+      const duration = elapsedSince(state.startedAt, liveNow);
+      const text = offsiteLiveLineText(resolveName, domain, state, duration);
       // Off-site replication now DOES write a Run row (kind="offsite" on the
       // domain target) — register the domain-op signature so the finished-run
       // line can't briefly double up with this live tail line.
@@ -500,15 +547,21 @@ function buildIdleLine(scheduleNext: ScheduleNext[], resolveName: ResolveName, n
  * ordered, deduped `LogLine[]` — oldest first, live lines always last (they
  * are "now"), with a trailing idle line only when nothing is currently
  * active. Pure: given the same inputs it always returns the same output.
+ *
+ * `liveNow` (defaults to `now`) is an optional finer-grained clock used ONLY
+ * for the off-site live line's elapsed-duration computation — see
+ * buildLiveLines' doc comment for why it needs to tick faster than `now`
+ * does in the real component.
  */
 export function buildLogLines(
   runs: Run[],
   progressMap: ProgressMap,
   scheduleNext: ScheduleNext[],
   resolveName: ResolveName,
-  now: number
+  now: number,
+  liveNow: number = now
 ): LogLine[] {
-  const { lines: liveLines, signatures } = buildLiveLines(progressMap, resolveName, now);
+  const { lines: liveLines, signatures } = buildLiveLines(progressMap, resolveName, now, liveNow);
   const historyLines = buildHistoryLines(runs, resolveName, signatures);
 
   const orderedHistory = historyLines.slice().sort((a, b) => a.atMs - b.atMs);

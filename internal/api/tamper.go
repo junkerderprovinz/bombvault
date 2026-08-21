@@ -70,8 +70,8 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	// activity log WHILE it probes the far side (#109). The terminal event is
 	// deferred so an early error/panic can never leave a stuck live line.
 	tkey := "tamper:" + domain
-	s.progBegin(ctx, tkey, "maintenance")
-	defer func() { s.progEnd(tkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, tkey, "maintenance")
+	defer func() { s.progEnd(tkey, "maintenance", err == nil, startedAt) }()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)

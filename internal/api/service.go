@@ -631,15 +631,29 @@ func (e *zvolRebaseErr) Error() string { return e.msg }
 
 func (e *zvolRebaseErr) Is(target error) bool { return target == errZvolRebaseFailed }
 
-// progBegin marks a backup/restore as started for key/phase and returns a
-// context carrying a restic sink that republishes each percentage. Percent
-// updates are throttled to whole-percent steps to avoid flooding subscribers.
-// When no progress store is wired it is a no-op returning ctx unchanged.
-func (s *Service) progBegin(ctx context.Context, key, phase string) context.Context {
+// progBegin marks a backup/restore/replicate as started for key/phase and
+// returns a context carrying a restic sink that republishes each percentage,
+// plus the StartedAt (Unix seconds) it stamped on every event it publishes.
+// Percent updates are throttled to whole-percent steps to avoid flooding
+// subscribers. When no progress store is wired it is still a real timestamp
+// (just unpublished) — the returned ctx is unchanged, but the second return
+// value is always valid so a caller (e.g. copyToOffsite) can rely on it
+// without a nil-store special case.
+//
+// Every published event — including the eventual progEnd terminal one, which
+// the caller must pass this SAME startedAt to — is stamped with it, so a
+// client can render a live elapsed duration for the whole run (issue #159).
+// Returning it (rather than each caller capturing its own time.Now().Unix())
+// is deliberate: two independent captures of "now" for what is meant to be
+// ONE instant can straddle a second boundary, which is exactly what made
+// copyToOffsite's heartbeat briefly disagree with progBegin's own timestamp
+// before this fix.
+func (s *Service) progBegin(ctx context.Context, key, phase string) (context.Context, int64) {
+	startedAt := time.Now().Unix()
 	if s.progress == nil {
-		return ctx
+		return ctx, startedAt
 	}
-	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: 0, Active: true})
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: 0, Active: true, StartedAt: startedAt})
 	last := -1.0
 	return progress.WithSink(ctx, func(pct float64) {
 		// A multi-path restore runs one restic process per path; each restarts at
@@ -652,13 +666,105 @@ func (s *Service) progBegin(ctx context.Context, key, phase string) context.Cont
 			return // throttle: only forward ≥1% steps (always forward the final 100)
 		}
 		last = pct
-		s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: true})
+		s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: true, StartedAt: startedAt})
+	}), startedAt
+}
+
+// offsiteLastCopy holds the most recently PUBLISHED live restic-copy
+// percentage for one "offsite:<domain>" replication (across however many
+// sequential targets a multiTarget loop runs) — the one real signal
+// copyToOffsite's heartbeat goroutine needs so its periodic "still alive"
+// republish reflects the CURRENT state instead of a blank placeholder that
+// stomps whatever progBeginCopySink's sink most recently reported.
+//
+// Two independent goroutines touch this: progBeginCopySink's sink callback
+// runs synchronously on copyToOffsiteTarget's own goroutine (restic.Copy
+// calls it inline as it scans stdout), while the heartbeat reads it from its
+// own ticker goroutine — hence the mutex. A zero value is "no real update
+// yet" (valid=false), which the heartbeat must tell apart from an actual
+// Percent:0 update.
+type offsiteLastCopy struct {
+	mu    sync.Mutex
+	valid bool
+	cp    progress.CopyProgress
+	total int
+}
+
+// set records the latest live update. A nil receiver is a no-op so callers
+// that don't care about heartbeat continuity (direct copyToOffsiteTarget unit
+// tests) can pass a nil *offsiteLastCopy.
+func (l *offsiteLastCopy) set(cp progress.CopyProgress, total int) {
+	if l == nil {
+		return
+	}
+	l.mu.Lock()
+	l.valid, l.cp, l.total = true, cp, total
+	l.mu.Unlock()
+}
+
+// get returns the latest recorded update, or ok=false if none was ever set
+// (including when l is nil).
+func (l *offsiteLastCopy) get() (cp progress.CopyProgress, total int, ok bool) {
+	if l == nil {
+		return progress.CopyProgress{}, 0, false
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.cp, l.total, l.valid
+}
+
+// progBeginCopySink installs a progress.CopySink on ctx for a `restic copy`
+// call, so its live per-snapshot pack-copy progress (see restic.Copy — issue
+// #159's real percentage, not the fabrication the first cut of this feature
+// assumed was unavoidable) reaches the SAME "offsite:<domain>" key and
+// StartedAt every other event for this replication uses. estimatedTotal is
+// the caller's best-effort "N" for a "snapshot k of N" display (see
+// restic.PendingCopyIDs's doc comment for why it is only ever a display
+// estimate); if the live SnapshotIndex ever exceeds it — the estimate
+// undercounted — the published total is widened to match rather than
+// claiming fewer snapshots than are visibly running. Percent updates are
+// throttled like progBegin's plain Sink (whole-percent steps), but a
+// SnapshotIndex change always forwards immediately so "k of N" advances
+// without waiting on the new snapshot's first live percentage. No-op
+// returning ctx unchanged when no progress store is wired.
+//
+// last, when non-nil, is updated with every value actually published here —
+// copyToOffsite's heartbeat goroutine reads it back so a heartbeat tick
+// republishes the real, current percentage instead of overwriting it with a
+// blank one (see offsiteLastCopy's doc comment).
+func (s *Service) progBeginCopySink(ctx context.Context, domain string, startedAt int64, estimatedTotal int, last *offsiteLastCopy) context.Context {
+	if s.progress == nil {
+		return ctx
+	}
+	key := "offsite:" + domain
+	lastIndex := -1
+	lastPct := -1.0
+	return progress.WithCopySink(ctx, func(cp progress.CopyProgress) {
+		if cp.SnapshotIndex == lastIndex && cp.Percent < 100 && cp.Percent-lastPct < 1 {
+			return // throttle: only forward ≥1% steps within the SAME snapshot
+		}
+		lastIndex, lastPct = cp.SnapshotIndex, cp.Percent
+		total := estimatedTotal
+		if cp.SnapshotIndex > total {
+			total = cp.SnapshotIndex
+		}
+		last.set(cp, total)
+		s.progress.Publish(progress.Event{
+			Key: key, Phase: "replicate", Active: true, StartedAt: startedAt,
+			Percent: cp.Percent, SnapshotIndex: cp.SnapshotIndex, SnapshotTotal: total,
+		})
 	})
 }
 
 // progEnd emits the terminal event for key/phase: 100% on success, 0% on
-// failure (the UI hides the bar either way). No-op without a progress store.
-func (s *Service) progEnd(key, phase string, ok bool) {
+// failure (the UI hides the bar either way). startedAt must be the SAME value
+// the matching progBegin returned, so the terminal event carries it too —
+// before this fix it was omitted (zero), which made a client-rendered live
+// elapsed duration visibly vanish during the ~0.8-2.5s the terminal event
+// lingers in the frontend's progress map before the entry is dropped (see
+// web/src/lib/progress.ts's COMPLETE_LINGER_MS / OffsiteIndicator's
+// MIN_VISIBLE_MS). No-op without a progress store.
+func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
 	if s.progress == nil {
 		return
 	}
@@ -666,7 +772,7 @@ func (s *Service) progEnd(key, phase string, ok bool) {
 	if !ok {
 		pct = 0
 	}
-	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false})
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false, StartedAt: startedAt})
 }
 
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
@@ -2182,26 +2288,67 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		}
 	}()
 	// Publish an active "off-site replication running" indicator for this domain so
-	// the UI shows WHICH domain is replicating. restic copy has no machine-readable
-	// progress, so this is active/indeterminate (no percent), not a filling bar. Kept
-	// per-DOMAIN so the OffsiteIndicator + dashboard stay unchanged for N=1.
-	s.progBegin(ctx, "offsite:"+domain, "replicate")
-	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil) }()
-	// #134: restic copy publishes NO incremental progress, so without this the
-	// entry's lastSeen is only ever touched once, at progBegin above. The
-	// frontend's STALE_MS (15s, web/src/lib/progress.ts) then hides the "running"
-	// dashboard line as soon as a replication takes longer than that — which any
-	// real off-site copy does — making the operation look like it silently
-	// vanished, even though it is still actively running (confirmed by the line
-	// reappearing correctly on a manual refresh, since the backend state was fine
-	// all along). Re-publish the SAME indeterminate active event periodically so
-	// lastSeen keeps advancing for the whole replication, not just its two ends.
-	// Stopped via defer BEFORE progEnd (registered after it, so it unwinds
-	// first) so a heartbeat can never race past the terminal event.
+	// the UI shows WHICH domain is replicating, alongside a REAL live percentage
+	// once one becomes available (issue #159 — see restic.Copy's and
+	// progBeginCopySink's doc comments for the whole story: restic copy DOES print
+	// genuine, parseable progress once RESTIC_PROGRESS_FPS is wired up the same way
+	// backup/restore already get it; a first cut of this feature concluded
+	// otherwise and shipped a duration-only readout instead, which is corrected
+	// here). Kept per-DOMAIN so the OffsiteIndicator + dashboard stay unchanged for
+	// N=1; a target's own live percentage is threaded in from
+	// copyToOffsiteTarget's progBeginCopySink call, keyed to this SAME
+	// "offsite:"+domain event so multiple sequential targets (multiTarget) don't
+	// need their own indicator.
+	//
+	// startedAt is progBegin's own single time.Now().Unix() capture, returned so
+	// this function's heartbeat below publishes the EXACT same instant rather than
+	// a second, independent capture that could straddle a second boundary.
+	_, startedAt := s.progBegin(ctx, "offsite:"+domain, "replicate")
+	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil, startedAt) }()
+	// #134: between a snapshot's own live percentage updates (and especially
+	// during the tree-walk restic does before it starts copying packs, which
+	// prints no percentage at all), lastSeen would otherwise only ever be touched
+	// at progBegin. The frontend's STALE_MS (15s, web/src/lib/progress.ts) then
+	// hides the "running" dashboard line as soon as a quiet stretch passes that —
+	// which a real off-site copy easily can — making the operation look like it
+	// silently vanished, even though it is still actively running (confirmed by
+	// the line reappearing correctly on a manual refresh, since the backend state
+	// was fine all along). Re-publish an active event periodically so lastSeen
+	// keeps advancing through any such gap.
+	//
+	// lastCopy carries the most recently PUBLISHED real per-snapshot percentage
+	// (see offsiteLastCopy's doc comment): a heartbeat tick republishes THAT
+	// (percent/snapshotIndex/snapshotTotal all included) rather than a blank
+	// Percent:0 placeholder. Before this, every 5s tick unconditionally
+	// overwrote whatever real percentage progBeginCopySink's sink had just
+	// reported — on a slow transfer (whole-percent steps taking many seconds
+	// each), the heartbeat "won" almost every render, making the new live
+	// percentage feature (issue #159) nearly invisible on exactly the slow
+	// connections it was built for. When no real update has landed yet (before
+	// the first "copy started" line, or a genuinely quiet stretch with no
+	// per-snapshot signal at all) lastCopy stays unset and the heartbeat falls
+	// back to the original bare "still alive" event — the duration-only
+	// keep-alive #134 introduced this heartbeat for is unchanged.
+	//
+	// Shutdown is a real done-channel HANDSHAKE, not a bare close: closing hbDone
+	// only asks the goroutine to stop, but a `select` with both hbDone and the
+	// ticker ready at once can still pick the ticker and Publish one more tick —
+	// waiting on hbStopped blocks until that goroutine has actually returned
+	// (any in-flight Publish included), so it can never land AFTER progEnd's
+	// terminal Publish below and resurrect a stale Active:true (pre-existing
+	// since #134's heartbeat was introduced; tightened as part of this review).
+	// Stopped via defer registered AFTER progEnd's (so it unwinds FIRST) so a
+	// heartbeat can never race past the terminal event.
+	lastCopy := &offsiteLastCopy{}
 	if s.progress != nil {
 		hbDone := make(chan struct{})
-		defer close(hbDone)
+		hbStopped := make(chan struct{})
+		defer func() {
+			close(hbDone)
+			<-hbStopped
+		}()
 		go func() {
+			defer close(hbStopped)
 			t := time.NewTicker(offsiteProgressHeartbeat)
 			defer t.Stop()
 			for {
@@ -2209,7 +2356,11 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 				case <-hbDone:
 					return
 				case <-t.C:
-					s.progress.Publish(progress.Event{Key: "offsite:" + domain, Phase: "replicate", Percent: 0, Active: true})
+					e := progress.Event{Key: "offsite:" + domain, Phase: "replicate", Active: true, StartedAt: startedAt}
+					if cp, total, ok := lastCopy.get(); ok {
+						e.Percent, e.SnapshotIndex, e.SnapshotTotal = cp.Percent, cp.SnapshotIndex, total
+					}
+					s.progress.Publish(e)
 				}
 			}
 		}()
@@ -2226,7 +2377,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	multiTarget := len(targets) > 1
 	var errs []error
 	for _, t := range targets {
-		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepo, multiTarget); cerr != nil {
+		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepo, multiTarget, startedAt, lastCopy); cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
 		}
@@ -2243,14 +2394,26 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 // destination and records that destination's own offsite_runs row (stamped with
 // offsite_target_id). Per-target: destination repo, restic mode (S3 storage
 // class), retention, bandwidth limits and append-only flag. Best-effort
-// bookkeeping like the rest; returns the (scrubbed) copy error.
-func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepo string, multiTarget bool) (err error) {
+// bookkeeping like the rest; returns the (scrubbed) copy error. startedAt is
+// copyToOffsite's single progBegin capture, threaded through so this
+// target's live copy-progress events (see progBeginCopySink) carry the SAME
+// StartedAt as the domain-level begin/heartbeat/terminal events. lastCopy is
+// copyToOffsite's shared heartbeat state (see offsiteLastCopy) that
+// progBeginCopySink updates with every real percentage this target reports;
+// a nil lastCopy (as a direct unit test of this function may pass) simply
+// means no heartbeat is watching, which offsiteLastCopy's nil-safe methods
+// handle without a special case here.
+func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepo string, multiTarget bool, startedAt int64, lastCopy *offsiteLastCopy) (err error) {
 	// Persist this destination's replication attempt to the off-site run history
 	// (begin now, close on the way out via defer with outcome + scrubbed error).
-	// restic copy has no machine-readable progress, so only duration + outcome are
-	// recorded. Bookkeeping is best-effort: a store error is logged, never fatal.
-	// offsite_target_id attributes the run to this destination (empty for a
-	// settings-synthesized N=1 target, exactly as before the backfill).
+	// The offsite_runs row itself stays duration + outcome only (no percentage
+	// column) — the live per-snapshot percentage this function now also feeds
+	// into progBeginCopySink (issue #159) is a real-time SSE signal, not
+	// persisted history; a completed run's own duration is exactly as
+	// informative after the fact. Bookkeeping is best-effort: a store error is
+	// logged, never fatal. offsite_target_id attributes the run to this
+	// destination (empty for a settings-synthesized N=1 target, exactly as
+	// before the backfill).
 	runID, recErr := s.store.RecordOffsiteRunForTarget(domain, target.ID, time.Now().Unix())
 	if recErr != nil {
 		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
@@ -2294,9 +2457,31 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// sole writer, so an existing off-site lock is always stale — this self-heals the
 	// off-site repo on the next run (defence-in-depth for bug #29).
 	s.unlockStale(ctx, dest, mode)
+	// Best-effort upfront candidate count ("N") for the "snapshot k of N" live
+	// progress display (issue #159 — see restic.PendingCopyIDs's doc comment for
+	// the full reasoning). DISPLAY ONLY: the actual Copy call below still passes
+	// nil for snapshotIDs, so restic's own (stricter — it also compares full
+	// snapshot metadata) dedup remains the sole authority on what really gets
+	// copied. A stale/wrong estimate here can only make "of N" briefly off, never
+	// skip a real snapshot. listSnapshots (not a raw engine.Snapshots call) reuses
+	// the existing stale-lock self-heal and "repo not initialized yet = no
+	// snapshots" handling every other snapshot listing in this file already gets.
+	pendingTotal := 0
+	if srcSnaps, sErr := s.listSnapshots(ctx, localRepo, mode); sErr != nil {
+		log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, sErr) //nolint:gosec // G706: domain is a fixed literal
+	} else if dstSnaps, dErr := s.listSnapshots(ctx, dest, mode); dErr != nil {
+		log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, dErr) //nolint:gosec // G706: domain is a fixed literal
+	} else {
+		pendingTotal = len(restic.PendingCopyIDs(srcSnaps, dstSnaps))
+	}
 	// Cap the transfer rate so off-site replication doesn't saturate the WAN
-	// (zero limits = unlimited, the default).
-	if err = s.engine.Copy(ctx, dest, localRepo, nil, targetOffsiteLimits(target), mode); err != nil {
+	// (zero limits = unlimited, the default). progBeginCopySink installs the
+	// live per-snapshot percentage sink restic.Copy now reports through (issue
+	// #159's real percentage — see its doc comment), publishing under the SAME
+	// "offsite:"+domain key/StartedAt copyToOffsite's begin/heartbeat/terminal
+	// events use, so it's one continuous indicator across a multiTarget loop.
+	copyCtx := s.progBeginCopySink(ctx, domain, startedAt, pendingTotal, lastCopy)
+	if err = s.engine.Copy(copyCtx, dest, localRepo, nil, targetOffsiteLimits(target), mode); err != nil {
 		return err
 	}
 	// Apply the off-site retention policy (separate from local) after a successful
@@ -3468,7 +3653,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "container")
-	bctx := s.progBegin(ctx, pkey, "backup")
+	bctx, startedAt := s.progBegin(ctx, pkey, "backup")
 	// BackupContainer now owns run bookkeeping (it records its own failed/success run),
 	// so the pre-flight failure finisher above must stand down to avoid a double record.
 	orchestrated = true
@@ -3494,7 +3679,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		Templates:              templatesAdapter{},
 		Runs:                   runsAdapter{s.store},
 	})
-	s.progEnd(pkey, "backup", err == nil)
+	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -4809,7 +4994,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		}
 	}
 	rkey := "container:" + name
-	rctx := s.progBegin(ctx, rkey, "restore")
+	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
 		Confirmed:         true, // prepareRestore rejected unconfirmed requests
 		RecreateOnly:      plan.recreateOnly,
@@ -4832,7 +5017,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
 	}
-	s.progEnd(rkey, "restore", rerr == nil)
+	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	return rerr
 }
 
@@ -5265,9 +5450,9 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
 		runID = s.beginRestoreRun(name)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFiles(pctx, plan)
-		s.progEnd(rkey, "restore", rerr == nil)
+		s.progEnd(rkey, "restore", rerr == nil, startedAt)
 		s.finishRestoreRun(runID, plan.snapshotID, rerr)
 		if rerr != nil {
 			log.Printf("api: restore files: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
@@ -5351,14 +5536,16 @@ func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
 // success-with-warning instead of a hard failure. Genuine failures (missing
 // snapshot, no space, unreachable repo) and user cancels are recorded as-is. It
 // returns the EFFECTIVE error (nil for the metadata-only case) so the caller can
-// log/propagate only a real failure.
-func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr error) error {
+// log/propagate only a real failure. startedAt must be the value the matching
+// progBegin returned, so the terminal event it emits carries it too (see
+// progEnd's doc comment).
+func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr error, startedAt int64) error {
 	if errors.Is(rerr, restic.ErrRestoreMetadataOnly) {
-		s.progEnd(rkey, "restore", true)
+		s.progEnd(rkey, "restore", true, startedAt)
 		s.finishRestoreRunWarn(runID, snapshotID, restic.RestoreMetadataWarning)
 		return nil
 	}
-	s.progEnd(rkey, "restore", rerr == nil)
+	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	s.finishRestoreRun(runID, snapshotID, rerr)
 	return rerr
 }
@@ -5561,9 +5748,9 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
 		runID = s.beginRestoreRun(name)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreToPath(pctx, plan)
-		s.progEnd(rkey, "restore", rerr == nil)
+		s.progEnd(rkey, "restore", rerr == nil, startedAt)
 		s.finishRestoreRun(runID, plan.snapshotID, rerr)
 		if rerr != nil {
 			log.Printf("api: restore to folder: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
@@ -6698,14 +6885,14 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// (incl. the ErrVMNotInstalled skip), so the paired done/fail notifyBackup below
 	// always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "VM")
-	bctx := s.progBegin(ctx, vkey, "backup")
+	bctx, startedAt := s.progBegin(ctx, vkey, "backup")
 	var sum backup.Summary
 	if live {
 		sum, err = backup.BackupVMLive(bctx, deps)
 	} else {
 		sum, err = backup.BackupVMGraceful(bctx, deps)
 	}
-	s.progEnd(vkey, "backup", err == nil)
+	s.progEnd(vkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -7415,7 +7602,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		}
 	}
 	rkey := "vm:" + name
-	rctx := s.progBegin(ctx, rkey, "restore")
+	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreVM(rctx, backup.VMRestoreDeps{
 		Confirmed:    true, // prepareRestoreVM rejected unconfirmed requests
 		Name:         name,
@@ -7442,7 +7629,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
 	}
-	s.progEnd(rkey, "restore", rerr == nil)
+	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	return rerr
 }
 
@@ -7582,7 +7769,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	// Healthchecks /start ping: deferred to here, past the /boot-mounted + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "flash")
-	fctx := s.progBegin(ctx, "flash", "backup")
+	fctx, startedAt := s.progBegin(ctx, "flash", "backup")
 	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
@@ -7590,7 +7777,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
-	s.progEnd("flash", "backup", err == nil)
+	s.progEnd("flash", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -7636,8 +7823,8 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	// dashboard activity log WHILE it writes, not only after (#109). The terminal
 	// event is deferred so any failure path above clears the live line. A disabled
 	// export publishes nothing (nothing ran) — hence below the guard.
-	s.progBegin(ctx, "export:flash", "maintenance")
-	defer func() { s.progEnd("export:flash", "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, "export:flash", "maintenance")
+	defer func() { s.progEnd("export:flash", "maintenance", err == nil, startedAt) }()
 	runID, rErr := s.store.StartRun(store.FlashTargetID, "export")
 	if rErr != nil {
 		log.Printf("api: flash zip export: could not start run record (continuing): %v", rErr)
@@ -7788,7 +7975,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "files")
 	key := "files:" + set.Name
-	fctx := s.progBegin(ctx, key, "backup")
+	fctx, startedAt := s.progBegin(ctx, key, "backup")
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
 		SourceDir: src,
 		Repo:      repo,
@@ -7798,7 +7985,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
-	s.progEnd(key, "backup", err == nil)
+	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -8157,9 +8344,9 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
 		runID = s.beginRestoreRunForTarget(plan.setID)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFileSet(pctx, plan)
-		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
+		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt); err != nil {
 			log.Printf("api: restore file set: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
@@ -8408,9 +8595,9 @@ func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snap
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
 		runID = s.beginRestoreRunForTarget(plan.setID)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFileSetFiles(pctx, plan)
-		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
+		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt); err != nil {
 			log.Printf("api: restore file set files: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
@@ -8579,7 +8766,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	// Healthchecks /start ping: deferred to here, past staging + EnsureRepo guards,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "config")
-	fctx := s.progBegin(ctx, "config", "backup")
+	fctx, startedAt := s.progBegin(ctx, "config", "backup")
 	sum, err := backup.BackupConfig(fctx, backup.ConfigBackupDeps{
 		SourceDir: stagingDir,
 		Repo:      repo,
@@ -8587,7 +8774,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
-	s.progEnd("config", "backup", err == nil)
+	s.progEnd("config", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -9148,8 +9335,8 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	// verify shows up on the dashboard activity log/run history instead of running
 	// invisibly.
 	vkey := "verify:" + domain
-	s.progBegin(ctx, vkey, "maintenance")
-	defer func() { s.progEnd(vkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
+	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
 	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -9294,8 +9481,8 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	// finished (#109). The terminal event is deferred so an error/panic can never
 	// leave a stuck live line.
 	dkey := "drill:" + domain
-	s.progBegin(ctx, dkey, "maintenance")
-	defer func() { s.progEnd(dkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, dkey, "maintenance")
+	defer func() { s.progEnd(dkey, "maintenance", err == nil, startedAt) }()
 
 	mode := s.ModeFor(settings)
 	// An initialised-but-empty repo (no snapshots) has nothing to verify. Treat it
@@ -9457,8 +9644,8 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// the local read-back check. The terminal event is deferred so an error/panic
 	// can never leave a stuck live line.
 	dkey := "drdrill:" + domain
-	s.progBegin(ctx, dkey, "maintenance")
-	defer func() { s.progEnd(dkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, dkey, "maintenance")
+	defer func() { s.progEnd(dkey, "maintenance", err == nil, startedAt) }()
 
 	// Detach from the request/scheduler ctx for the whole drill: a real DR restore
 	// can take hours over a slow off-site link, and a browser tab close (request
@@ -10131,8 +10318,8 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	mode := s.ModeFor(settings)
 
 	pkey := "prune:" + domain
-	s.progBegin(ctx, pkey, "maintenance")
-	defer func() { s.progEnd(pkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
+	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
 	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -89,7 +90,7 @@ func TestCopyToOffsiteTargetMakesDestinationReadable(t *testing.T) {
 	svc.cfg.HostMountRoot = root
 
 	target := store.OffsiteTarget{ID: "t1", Domain: "containers", Repo: "remotes/nas/bombvault", Enabled: true}
-	if err := svc.copyToOffsiteTarget(context.Background(), "containers", settings, target, filepath.Join(root, "local"), false); err != nil {
+	if err := svc.copyToOffsiteTarget(context.Background(), "containers", settings, target, filepath.Join(root, "local"), false, time.Now().Unix(), nil); err != nil {
 		t.Fatalf("copyToOffsiteTarget: %v", err)
 	}
 
