@@ -104,7 +104,10 @@ func (r *Repo) LatestTamperTestForTarget(domain, targetID string) (TamperTest, b
 
 // OffsiteRun is one off-site replication run (restic copy) for a domain:
 // begin/end timestamps, outcome and the scrubbed error on failure. restic copy
-// has no machine-readable progress, so duration + outcome is all there is.
+// DOES have live per-snapshot progress (issue #159 — see restic.Copy's doc
+// comment), but that is a real-time SSE signal (api.progBeginCopySink), not
+// persisted history: this row deliberately stays duration + outcome only, since
+// a completed run's own duration is exactly as informative after the fact.
 type OffsiteRun struct {
 	Domain     string `json:"domain"`
 	StartedAt  int64  `json:"startedAt"`  // unix seconds the run began

@@ -1199,6 +1199,54 @@ func TestDeleteSnapshotOffsiteImmutableRefused(t *testing.T) {
 	}
 }
 
+// TestDeleteSnapshotPrimaryImmutableRefused pins issue #152's SECOND gate,
+// separate from the off-site check above: pruneDomain/applyRetention already
+// refuse to touch a domain whose PRIMARY repo is itself remote AND flagged
+// append-only in its saved safety settings (store.OffsiteTarget.Immutable on a
+// RolePrimary row) — there is no separate off-site copy in that shape, so this
+// is the only thing standing between an on-box credential and deleting backup
+// history. DeleteSnapshot's doc comment claimed the same "gate as PruneDomain"
+// but only ever checked the offsite half, so a "local"/non-offsite source
+// (which is what a remote PRIMARY with no off-site destination actually uses)
+// sailed straight through to Forget.
+func TestDeleteSnapshotPrimaryImmutableRefused(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/containers"
+	s.ContainersPath = repo // the PRIMARY itself is remote — no separate off-site destination
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678", "")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("deleting from an immutable remote PRIMARY must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused delete, got %v", eng.forgotten)
+	}
+
+	// Control: the SAME remote repo, but the saved safety row is NOT flagged
+	// immutable, stays deletable exactly as it always has (proves the new gate
+	// doesn't over-trigger on every remote primary, only an immutable one).
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678", ""); err != nil {
+		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected exactly one forget to reach the engine, got %v", eng.forgotten)
+	}
+}
+
 // TestPruneDomainOffsiteImmutableRefused pins the prune refusal: pruning an
 // immutable OFF-SITE repo is refused with an append-only error (neither
 // ForgetPolicy nor Prune reaches the engine); the LOCAL repo stays prunable.
@@ -1235,6 +1283,160 @@ func TestDeleteBackupsVMOffsiteImmutableRefused(t *testing.T) {
 	}
 	if len(eng.forgotten) != 0 {
 		t.Fatalf("no forget may reach the engine for a refused bulk delete, got %v", eng.forgotten)
+	}
+}
+
+// TestDeleteBackupsVMPrimaryImmutableRefused pins issue #152's SECOND gate for
+// DeleteBackupsVM, mirroring TestDeleteSnapshotPrimaryImmutableRefused above:
+// a remote PRIMARY flagged immutable must refuse the bulk purge too. This path
+// is especially severe left unguarded — it runs Forget with prune=true
+// (immediate, irreversible space reclaim) — and DeleteBackupsVM's own doc
+// comment already claimed "same gate as DeleteSnapshot/PruneDomain" while only
+// ever checking the offsite half.
+func TestDeleteBackupsVMPrimaryImmutableRefused(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/vms"
+	s.VMsPath = repo // the PRIMARY itself is remote — no separate off-site destination
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("vms", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"vm:win11"}}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err := svc.DeleteBackupsVM(context.Background(), "win11", "")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("bulk VM delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused bulk delete, got %v", eng.forgotten)
+	}
+	if _, err := st.GetVMTargetByName("win11"); err != nil {
+		t.Fatalf("a refused delete must not drop the VM target: %v", err)
+	}
+
+	// Control: the SAME remote repo, but not flagged immutable, stays deletable
+	// (proves the new gate doesn't over-trigger on every remote primary).
+	if _, err := st.UpsertPrimaryRemoteTarget("vms", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteBackupsVM(context.Background(), "win11", ""); err != nil {
+		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected exactly one forget to reach the engine, got %v", eng.forgotten)
+	}
+}
+
+// TestDeleteBackupsPrimaryImmutableRefused pins issue #152's SECOND gate for
+// DeleteBackups (the containers bulk delete), mirroring
+// TestDeleteSnapshotPrimaryImmutableRefused above: a remote PRIMARY flagged
+// immutable must refuse the bulk purge too. Unlike DeleteSnapshot/
+// DeleteBackupsVM, DeleteBackups has no source parameter — it always targets
+// the primary/local repo — so only the primary half of the gate applies here;
+// there is no offsite half to check. This path is especially severe left
+// unguarded: it runs Forget with prune=true (irreversible, immediate space
+// reclaim) against a repo the operator explicitly flagged append-only.
+func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/containers"
+	s.ContainersPath = repo // the PRIMARY itself is remote — no separate off-site destination
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err := svc.DeleteBackups(context.Background(), "plex")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused bulk delete, got %v", eng.forgotten)
+	}
+	if _, err := st.GetTargetByContainer("plex"); err != nil {
+		t.Fatalf("a refused delete must not drop the container target: %v", err)
+	}
+
+	// Control: the SAME remote repo, but the saved safety row is NOT flagged
+	// immutable, stays deletable exactly as it always has (proves the new gate
+	// doesn't over-trigger on every remote primary, only an immutable one).
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected exactly one forget to reach the engine, got %v", eng.forgotten)
+	}
+}
+
+// TestDeleteBackupsFileSetPrimaryImmutableRefused pins issue #152's SECOND
+// gate for DeleteBackupsFileSet, mirroring TestDeleteBackupsPrimaryImmutableRefused
+// above: like DeleteBackups, this function has no source parameter (it always
+// targets the primary/local repo via domainRepo's "local" default), so only the
+// primary half of the gate applies. It runs Forget with prune=true, the same
+// destructive shape as DeleteBackups/DeleteBackupsVM.
+func TestDeleteBackupsFileSetPrimaryImmutableRefused(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/files"
+	s.FilesPath = repo // the PRIMARY itself is remote — no separate off-site destination
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"fileset:docs"}}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err = svc.DeleteBackupsFileSet(context.Background(), set.ID)
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine for a refused bulk delete, got %v", eng.forgotten)
+	}
+	if _, err := st.GetFileSet(set.ID); err != nil {
+		t.Fatalf("a refused delete must not drop the file set: %v", err)
+	}
+
+	// Control: the SAME remote repo, but the saved safety row is NOT flagged
+	// immutable, stays deletable exactly as it always has (proves the new gate
+	// doesn't over-trigger on every remote primary, only an immutable one).
+	if _, err := st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteBackupsFileSet(context.Background(), set.ID); err != nil {
+		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected exactly one forget to reach the engine, got %v", eng.forgotten)
 	}
 }
 
@@ -3008,6 +3210,71 @@ func TestRestoreHoldsDomainLockAgainstScheduledBackup(t *testing.T) {
 	}
 }
 
+// TestDeleteBackupsRefusedWhileDomainLocked pins the fix for the finding that
+// DeleteBackups (the containers bulk-delete) was the sole destructive
+// repo-mutating function in this file that never serialized against the
+// "containers" domain lock — every sibling (DeleteBackupsVM,
+// DeleteBackupsFileSet, DeleteSnapshot, PruneDomain) does. A live container
+// Backup holds that lock for its whole run (potentially hours); without the
+// fix, an unlocked bulk delete could race a concurrent `restic forget --prune`
+// against the same repo files, especially on the FUSE/NFS/SMB shares this app
+// targets where restic's own file lock isn't fully reliable.
+//
+// Mirrors TestRestoreHoldsDomainLockAgainstScheduledBackup's proof style: the
+// lock is held by a REAL in-flight operation reached through the exported
+// StartRestoreToPath (not an internal test-only lock helper), so this proves
+// the lock is genuinely acquired end-to-end, not merely that some internal
+// flag is set. tryLockDomainFor is a non-blocking TryLock, so a genuinely
+// checked lock must refuse DeleteBackups AT ONCE — it must not hang waiting
+// for the restore, and it must not silently proceed either.
+func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
+	eng := &fakeResticEngine{
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	svc, _, _ := restoreTestService(t, eng)
+	ctx := context.Background()
+
+	// Start a detached restore and wait until it is INSIDE the engine — at that
+	// point the restore execute path already holds the "containers" domain lock.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	// DeleteBackups must be refused IMMEDIATELY while the restore holds the
+	// domain lock — proving the lock is genuinely checked (before the fix this
+	// call went straight through to Forget with zero serialization).
+	deleteErr := make(chan error, 1)
+	go func() { deleteErr <- svc.DeleteBackups(ctx, "plex") }()
+	select {
+	case err := <-deleteErr:
+		if err == nil || !strings.Contains(err.Error(), "currently running") {
+			t.Fatalf("expected an immediate domain-busy refusal, got %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("DeleteBackups should refuse at once (TryLock never blocks), not hang")
+	}
+	if len(eng.forgotten) != 0 {
+		t.Fatalf("no forget may reach the engine while the domain is locked, got %v", eng.forgotten)
+	}
+
+	// Once the restore releases the domain lock, DeleteBackups must succeed
+	// normally — the fix serializes, it does not permanently wedge the domain.
+	close(eng.blockRestore)
+	waitForBackupDone(t, svc)
+	if err := svc.DeleteBackups(ctx, "plex"); err != nil {
+		t.Fatalf("DeleteBackups after the lock was released: %v", err)
+	}
+	if len(eng.forgotten) != 1 {
+		t.Fatalf("expected the delete to reach the engine once the lock was free, got %v", eng.forgotten)
+	}
+}
+
 // diffTagTestService builds a service with an initialised containers repo and the
 // given snapshots, so DiffSnapshots/TagSnapshot reach the fake engine.
 func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {
@@ -3625,6 +3892,37 @@ type fakeResticEngine struct {
 	dumpRawCalls []string
 	dumpRawErr   error
 	dumpRawData  []byte
+	// backupPanic, when true, makes Backup panic for every call — the
+	// container-backup counterpart of copyPanic, used to exercise
+	// recoverOperation/failStuckRun on the StartBackup goroutine: unlike
+	// copyToOffsite's own already-deferred finish, backup.BackupContainer's
+	// Runs.Start/Finish are plain sequential calls (not deferred), so a panic
+	// here would otherwise leave the run stuck "running" forever without the
+	// fix. Set synchronously before launching the goroutine under test — NOT
+	// concurrently with it — to avoid a data race on this field.
+	backupPanic bool
+	// backupPanicTag, when non-empty, makes Backup panic ONLY for a call whose
+	// tags include this exact string (e.g. "container:plex") — lets a batch
+	// test make ONE queued item panic deterministically while the others still
+	// run normally, without racing backupPanic against the batch goroutine.
+	backupPanicTag string
+	// restorePanic, when true, makes RestoreInclude AND RestorePath (the two
+	// restic restore entry points a real restore can reach — RestorePath for
+	// an in-place whole-container/stack restore, RestoreInclude for a
+	// foreign/file-set restore) panic for every call — the restore counterpart
+	// of backupPanic, used to exercise recoverOperation on the
+	// StartForeignRestore and StartRestoreStack goroutines (the two sites the
+	// f5b3286 sweep's plain `go func` grep of service.go missed:
+	// internal/api/foreign.go and internal/api/stacks.go both launch their
+	// own). Set synchronously before launching the goroutine under test, like
+	// backupPanic.
+	restorePanic bool
+	// restorePanicSnapshot, when non-empty, makes RestoreInclude/RestorePath
+	// panic ONLY for a call whose snapshotID matches — lets a stack-restore
+	// test make ONE member panic deterministically while the others still
+	// restore normally, without racing restorePanic against the batch
+	// goroutine (mirrors backupPanicTag).
+	restorePanicSnapshot string
 }
 
 func (f *fakeResticEngine) Init(_ context.Context, repo string, _ restic.Mode) error {
@@ -3659,6 +3957,16 @@ func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m rest
 }
 
 func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
+	if f.backupPanic {
+		panic("boom during backup")
+	}
+	if f.backupPanicTag != "" {
+		for _, tg := range tags {
+			if tg == f.backupPanicTag {
+				panic("boom during backup: " + tg)
+			}
+		}
+	}
 	if f.block != nil {
 		<-f.block
 	}
@@ -3711,6 +4019,12 @@ func (f *fakeResticEngine) blockIfArmed() {
 }
 
 func (f *fakeResticEngine) RestorePath(_ context.Context, repo, snapshotID, path string, _ restic.Mode) error {
+	if f.restorePanic {
+		panic("boom during restore")
+	}
+	if f.restorePanicSnapshot != "" && snapshotID == f.restorePanicSnapshot {
+		panic("boom during restore: " + snapshotID)
+	}
 	f.blockIfArmed()
 	if f.restoreErr != nil {
 		return f.restoreErr
@@ -3787,6 +4101,12 @@ func (f *fakeResticEngine) LsPath(_ context.Context, _, _, dirPath string, _ res
 }
 
 func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, _ restic.Mode) error {
+	if f.restorePanic {
+		panic("boom during restore")
+	}
+	if f.restorePanicSnapshot != "" && snapshotID == f.restorePanicSnapshot {
+		panic("boom during restore: " + snapshotID)
+	}
 	f.restoreCtxErrs = append(f.restoreCtxErrs, ctx.Err())
 	f.callLog = append(f.callLog, "RestoreInclude")
 	f.blockIfArmed()
@@ -5637,6 +5957,58 @@ func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 	// The live DB must be left untouched by the staging step.
 	if _, err := os.Stat(filepath.Join(dir, "bombvault.sqlite")); !os.IsNotExist(err) {
 		t.Fatalf("live DB should not be created/touched by staging; stat err=%v", err)
+	}
+}
+
+// TestStartRestoreConfigSurvivesCancelledContext pins the fix for the finding
+// that StartRestoreConfig ran RestoreConfig synchronously against the raw HTTP
+// request context: a browser tab close or reverse-proxy idle timeout would
+// cancel that context mid-restore, killing the restic subprocess mid-write of
+// the STAGED config restore — which the next boot swap applies BLIND (no
+// re-check), so a truncated write there corrupts the live config. It proves the
+// restic restore actually runs under a context detached from the (already
+// cancelled) caller ctx: StartRestoreConfig still returns the real outcome
+// synchronously (Recovery.tsx needs it to decide whether to poll for the
+// self-restart or show the manual-restart instructions — see
+// StartRestoreConfig's own doc comment for why it does NOT hand off to a
+// fire-and-forget goroutine like its Start* siblings), but the actual
+// RestoreInclude call must see a NON-cancelled ctx.Err(), exactly like
+// RunRestoreDrill's own detach already does (TestRunDRDrillDetachedAndBounded).
+func TestStartRestoreConfigSurvivesCancelledContext(t *testing.T) {
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // force docker.Self resolution, not an ambient override
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ConfigEnabled = true
+	s.ConfigPath = "backups/config"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // simulate the request already gone (tab closed / proxy timed out) before the restore even starts
+
+	started, _, err := svc.StartRestoreConfig(ctx, "", "local")
+	if err != nil {
+		t.Fatalf("a cancelled request ctx must not abort the config restore, got %v", err)
+	}
+	if !started {
+		t.Fatal("expected started=true despite the cancelled ctx")
+	}
+	if len(eng.restored) == 0 {
+		t.Fatal("expected RestoreInclude to have been called")
+	}
+	if len(eng.restoreCtxErrs) == 0 || eng.restoreCtxErrs[0] != nil {
+		t.Fatalf("restore ctx must be detached (not cancelled), got %v", eng.restoreCtxErrs)
+	}
+	// The boot-swap marker must still be written — proof the restore genuinely
+	// ran to completion rather than being silently aborted.
+	if _, statErr := os.Stat(selfrestore.MarkerPath(dir)); statErr != nil {
+		t.Fatalf("restore marker not written despite the detached ctx: %v", statErr)
 	}
 }
 

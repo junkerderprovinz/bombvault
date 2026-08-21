@@ -308,6 +308,19 @@ export const en = {
   "offsite.replicateNow": "Replicate now",
   "offsite.replicateStarted": "Replication started - it runs in the background; the running indicator shows progress.",
   "offsite.replicating": "Replicating…",
+  // Issue #159: appended next to offsite.replicating when the live progress
+  // event carries a startedAt (see OffsiteIndicator) but no live per-snapshot
+  // percentage is available YET (e.g. restic is still walking the source tree
+  // before it starts copying packs) — a live elapsed duration is shown in its
+  // place, same as before percentage support existed.
+  "offsite.replicatingWithDuration": "Replicating… ({duration})",
+  // Issue #159: restic copy DOES print a real, parseable per-snapshot
+  // pack-copy percentage (see restic.Copy's doc comment) — this is used once
+  // OffsiteIndicator has a live SnapshotIndex/percent for the CURRENT
+  // snapshot, alongside a best-effort candidate total (SnapshotTotal; restic
+  // itself never reports a whole-run total across snapshots).
+  "offsite.replicatingSnapshotPercent": "Replicating snapshot {index} of {total} ({percent}%)",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replicating snapshot {index} of {total} ({percent}%) · {duration}",
   "offsite.replicateFailed": "Replication failed",
   "offsite.test": "Test connection",
   // Shown instead of offsite.test once the domain has additional targets: that
@@ -532,6 +545,7 @@ export const en = {
   "notify.notifyOnUpdateHint": "When \"update after backup\" upgrades a container to a newer image, send a message so you can verify it still works. Fires per updated container (updates are rare).",
   "notify.unraid": "Unraid notifications",
   "notify.unraidHint": "Send to Unraid's own notification system (which can forward to Pushover, email, Discord, …). It runs over the SSH connection from Settings → VM Backup over SSH, so the key must be authorised there — but libvirt/VMs are NOT required (ignore a \"libvirt not reachable\" result if you don't back up VMs). Use Send test below to check it.",
+  "notify.unraidPlatformMismatch": "BombVault detected this host as \"{platform}\", not Unraid — Unraid notifications stay off even with this switched on. If this IS an Unraid host, check that the host's /boot is bind-mounted to /host/boot inside the container (see the BombVault Unraid template) and restart the container.",
   "notify.smtp": "Email (SMTP)",
   "notify.smtpHost": "SMTP host",
   "notify.smtpPort": "Port",
@@ -1315,6 +1329,16 @@ export const en = {
   "activityLog.lineRestoringItem": "Restoring {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Backing up all {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site upload — {domain} …",
+  // Issue #159: the {duration}-carrying sibling of lineOffsiteRunning, used
+  // once the live progress event's startedAt is known (see activityLog.ts's
+  // buildLiveLines) but no live per-snapshot percentage is available yet.
+  "activityLog.lineOffsiteRunningWithDuration": "Off-site upload — {domain} … ({duration})",
+  // Issue #159: used once a live SnapshotIndex/percent is known for the
+  // CURRENT snapshot restic copy is transferring (see restic.Copy's doc
+  // comment) — {total} is a best-effort candidate count, since restic never
+  // reports a whole-run total across snapshots.
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site upload — {domain} … snapshot {index} of {total} ({percent}%)",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site upload — {domain} … snapshot {index} of {total} ({percent}%) · {duration}",
   "activityLog.linePruneRunning": "Pruning — {domain} …",
   "activityLog.lineVerifyRunning": "Verifying — {domain} …",
   "activityLog.lineDrillRunning": "Restore check running — {domain} …",
@@ -1685,6 +1709,9 @@ export const de: Translations = {
   "offsite.replicateNow": "Jetzt replizieren",
   "offsite.replicateStarted": "Replikation gestartet - sie läuft im Hintergrund; der Laufindikator zeigt den Fortschritt.",
   "offsite.replicating": "Repliziere…",
+  "offsite.replicatingWithDuration": "Repliziere… ({duration})",
+  "offsite.replicatingSnapshotPercent": "Repliziere Snapshot {index} von {total} ({percent} %)",
+  "offsite.replicatingSnapshotPercentWithDuration": "Repliziere Snapshot {index} von {total} ({percent} %) · {duration}",
   "offsite.replicateFailed": "Replikation fehlgeschlagen",
   "offsite.test": "Verbindung testen",
   "offsite.testPrimary": "Primäres Ziel testen",
@@ -1903,6 +1930,7 @@ export const de: Translations = {
   "notify.notifyOnUpdateHint": "Wenn Update nach Backup einen Container auf ein neueres Image hebt, eine Nachricht senden, damit du prüfen kannst, ob er noch läuft. Feuert pro aktualisiertem Container (Updates sind selten).",
   "notify.unraid": "Unraid-Benachrichtigungen",
   "notify.unraidHint": "An Unraids eigenes Benachrichtigungssystem senden (das an Pushover, E-Mail, Discord, … weiterleiten kann). Läuft über die SSH-Verbindung aus Einstellungen → VM Backup over SSH, der Schlüssel muss dort also autorisiert sein — libvirt/VMs sind aber NICHT nötig (ein \"libvirt not reachable\"-Ergebnis ignorieren, wenn du keine VMs sicherst). Zum Prüfen unten \"Test senden\".",
+  "notify.unraidPlatformMismatch": "BombVault hat diesen Host als \"{platform}\" erkannt, nicht als Unraid — Unraid-Benachrichtigungen bleiben deaktiviert, obwohl diese Option aktiviert ist. Falls dies wirklich ein Unraid-Host ist, prüfe, ob das /boot des Hosts nach /host/boot im Container gemountet ist (siehe die BombVault-Unraid-Vorlage), und starte den Container neu.",
   "notify.smtp": "E-Mail (SMTP)",
   "notify.smtpHost": "SMTP-Host",
   "notify.smtpPort": "Port",
@@ -2658,6 +2686,9 @@ export const de: Translations = {
   "activityLog.lineRestoringItem": "Stelle {name} wieder her … {percent}%",
   "activityLog.lineBackingUpBatch": "Sichere alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-Site-Upload — {domain} …",
+  "activityLog.lineOffsiteRunningWithDuration": "Off-Site-Upload — {domain} … ({duration})",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-Site-Upload — {domain} … Snapshot {index} von {total} ({percent} %)",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-Site-Upload — {domain} … Snapshot {index} von {total} ({percent} %) · {duration}",
   "activityLog.linePruneRunning": "Räume auf — {domain} …",
   "activityLog.lineVerifyRunning": "Prüfe — {domain} …",
   "activityLog.lineDrillRunning": "Wiederherstellungs-Prüfung läuft — {domain} …",

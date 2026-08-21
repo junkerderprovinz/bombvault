@@ -1678,7 +1678,19 @@ const emptyNotify: NotifyConfig = {
 // site — settings.offsiteHint — was a genuine toss-up between "syntax
 // reference" and "already covered by the field's own placeholder + caption"
 // and was left as-is with its own comment rather than force that call here.
-function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function NotifyCard({
+  t,
+  platformKind,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  // The detected/overridden platform.Kind ("unraid" | "generic" | "truenas"),
+  // sourced from GET /api/settings' sibling "platform" field. Drives the
+  // mismatch banner below the Unraid toggle (code-review fix: a c.Unraid=true
+  // + Kind()!=KindUnraid mismatch used to silently disable the feature with
+  // no UI trace — see unraidGate's doc comment in internal/api/service.go for
+  // why the backend gate itself stays hard rather than trusting the toggle).
+  platformKind: string;
+}) {
   const { push } = useToast();
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
   // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
@@ -1812,6 +1824,19 @@ function NotifyCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <span className="text-xs text-carbon-textMuted">{t("notify.unraidHint")}</span>
         </span>
       </label>
+
+      {/* Platform-mismatch banner (code-review fix): the toggle above is ON,
+          but BombVault's platform detection did not resolve to Unraid, so the
+          backend gate (unraidGate, internal/api/service.go) is silently
+          keeping every Unraid-only push disabled. Most often a genuinely
+          Unraid host whose container is missing the /boot -> /host/boot bind
+          mount the template wires up — surfaced here so a user relying only
+          on the toggle (never clicking "Send test" below) still finds out. */}
+      {cfg.unraid && platformKind !== "unraid" && (
+        <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+          {t("notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
+        </div>
+      )}
 
       {advanced && (
         <>
@@ -3098,6 +3123,12 @@ export function SettingsPage() {
   // unsaved edits.
   const [savedSettings, setSavedSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
+  // The detected/overridden platform.Kind ("unraid" | "generic" | "truenas",
+  // see internal/platform) — read-only host-environment info from GET
+  // /api/settings' sibling "platform" field. Defaults to "unraid" (matching
+  // the Go side's own nil-Platform default, platformFn()) so NotifyCard's
+  // mismatch banner (below) never flashes on before this loads.
+  const [platformKind, setPlatformKind] = useState<string>("unraid");
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Auth state for the Security card.
@@ -3242,6 +3273,7 @@ export function SettingsPage() {
           // Settings page, not just this card (see lib/uuid.ts).
           setRegistryRowIds(res.settings.registryAuths.map(() => randomId()));
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+          if (res.platform) setPlatformKind(res.platform);
           // Detect whether the domain schedules are already in sync (Containers ==
           // VMs == Flash, and not off), so the Schedules tab's sync checkbox
           // reflects it on load. Reproduced from the retired Plans page.
@@ -4893,7 +4925,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* NOTIFICATIONS — NotifyCard (renders always; not re-gated).          */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "notifications" && <NotifyCard t={t} />}
+      {tab === "notifications" && <NotifyCard t={t} platformKind={platformKind} />}
 
       {/* NOTIFICATIONS — Weekly digest: one summary message per week through
           the channels configured above. Schedule input mirrors the drills/

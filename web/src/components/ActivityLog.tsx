@@ -25,7 +25,13 @@ const POLL_RUNS_MS = 10000;
 const POLL_SCHEDULE_MS = 30000;
 // The idle line's countdown ("in 2h 14m") only needs to visibly tick at
 // minute granularity — no point re-rendering more often just for that.
+// Deliberately UNCHANGED by issue #159's live-duration fix below — this cadence
+// still governs the idle countdown and the staleness check exactly as before.
 const TICK_MS = 60000;
+// How often the live off-site line's elapsed duration re-renders — see
+// liveNow's doc comment below. Matches OffsiteIndicator's own ELAPSED_TICK_MS
+// so the two surfaces tick at the same visible rate.
+const LIVE_TICK_MS = 1000;
 // How close to the bottom (px) still counts as "at the bottom" for
 // auto-follow — a few pixels of rounding slack, not a hard 0.
 const BOTTOM_THRESHOLD_PX = 24;
@@ -163,6 +169,27 @@ export function ActivityLog({
     return () => clearInterval(id);
   }, []);
 
+  // liveNow is a SEPARATE, faster clock feeding ONLY the off-site live line's
+  // elapsed-duration computation (lib/activityLog.ts's buildLiveLines takes it
+  // as an explicit param distinct from `now`) — issue #159 review: `now`'s
+  // 60s TICK_MS above is coarse on purpose for the idle countdown, but reusing
+  // it for a live run's elapsed duration meant that for the run's first ~60s,
+  // `now` could still sit BEHIND the backend-stamped startedAt (captured
+  // before this component's next 60s tick), making the computed elapsed span
+  // go NEGATIVE — reltime.ts's elapsedSince/formatDuration reject a negative
+  // span by returning "", so the duration rendered blank, then jumped straight
+  // to a large value once `now` finally caught up. Only ticks while at least
+  // one progress entry is active, so the log pays zero extra render cost while
+  // idle — TICK_MS above is UNCHANGED for the idle countdown and the
+  // staleness check, which don't need this.
+  const hasActiveProgress = Object.values(progressMap).some((s) => s.active);
+  const [liveNow, setLiveNow] = useState<number>(() => Date.now());
+  useEffect(() => {
+    if (!hasActiveProgress) return;
+    const id = setInterval(() => setLiveNow(Date.now()), LIVE_TICK_MS);
+    return () => clearInterval(id);
+  }, [hasActiveProgress]);
+
   // Resolves a translation key (+ optional {placeholder} params) — the only
   // i18n dependency buildLogLines takes, so its merge/dedupe/order logic
   // stays pure and testable without a live I18nProvider.
@@ -175,8 +202,8 @@ export function ActivityLog({
   };
 
   const lines = useMemo(
-    () => buildLogLines(runs, progressMap, scheduleNext, resolveName, now),
-    [runs, progressMap, scheduleNext, now, t]
+    () => buildLogLines(runs, progressMap, scheduleNext, resolveName, now, liveNow),
+    [runs, progressMap, scheduleNext, now, liveNow, t]
   );
 
   // Date locale is deliberately OMITTED (undefined): formatLogDate and the

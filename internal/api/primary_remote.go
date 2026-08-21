@@ -226,8 +226,8 @@ func (s *Service) RunPrimaryTamperTest(ctx context.Context, domain string) (verd
 	// tests for the same domain racing their run-row/progress bookkeeping.
 	defer s.lockTamper(domain)()
 	tkey := "tamper:primary:" + domain
-	s.progBegin(ctx, tkey, "maintenance")
-	defer func() { s.progEnd(tkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, tkey, "maintenance")
+	defer func() { s.progEnd(tkey, "maintenance", err == nil, startedAt) }()
 
 	settings, err := s.store.GetSettings()
 	if err != nil {

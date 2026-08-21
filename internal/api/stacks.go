@@ -120,6 +120,25 @@ func (s *Service) RestoreStack(ctx context.Context, project, source string, star
 	return s.runRestoreStack(ctx, members, source, startAfter), nil
 }
 
+// restoreStackMember restores ONE stack member on behalf of runRestoreStack's
+// loop, containing any panic to just this member (recoverOperation) so one
+// member's crash counts as that one member failing — exactly like a normal
+// error already does via the switch below — instead of aborting every member
+// still queued behind it (and, when startAfter is set, the dependency-ordered
+// start loop that follows). Mirrors backupOneForBatch: s.Restore's
+// executeRestore->backup.RestoreContainer sequence calls store.StartRun deep
+// inside a plain, non-deferred call, so a panic there would otherwise leave
+// that run stuck "running" forever without this.
+func (s *Service) restoreStackMember(ctx context.Context, name, source string) (err error) {
+	// recoverOperation must be deferred DIRECTLY — see backupOneForBatch for why.
+	defer s.recoverOperation("restore stack: "+name, &err, func(msg string) {
+		if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+			s.failStuckRun(tg.ID, msg)
+		}
+	})
+	return s.Restore(ctx, name, "latest", true, source, true)
+}
+
 // runRestoreStack drives the long-running part of a stack restore over an
 // already-enumerated member list: the per-member restore loop, then (when
 // startAfter) the dependency-ordered start loop. Each member's in-place restore
@@ -132,7 +151,7 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 	restoredOK := make([]bool, len(members))
 	for i, m := range members {
 		res := StackMemberResult{Name: m.name, Service: m.service}
-		rErr := s.Restore(ctx, m.name, "latest", true, source, true)
+		rErr := s.restoreStackMember(ctx, m.name, source)
 		switch {
 		case rErr == nil:
 			res.Restored = true
@@ -223,6 +242,13 @@ func (s *Service) StartRestoreStack(ctx context.Context, project, source string,
 	// aborts the member loop at the current member.
 	key := "stack:" + project
 	go func() {
+		// This only contains a panic OUTSIDE the per-member loop (setup above, or the
+		// dependency-ordered start loop below) — there is no single member to blame
+		// there, so nil onPanic, matching StartBackupAll's identical pair of defers.
+		// Each member INSIDE runRestoreStack's loop gets its own, more precise
+		// recovery (restoreStackMember) so one member's panic can't abort the rest of
+		// the stack — see its own doc comment.
+		defer s.recoverOperation("restore stack", nil, nil)
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()

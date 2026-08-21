@@ -48,6 +48,33 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * elapsedSince renders the whole-second span from a backend-stamped `startedAt`
+ * (Unix SECONDS — see progress.ts's ProgressState) to `nowMs` (epoch ms, e.g.
+ * `Date.now()`), via formatDuration. Returns "" when `startedAt` is missing/
+ * not-a-number/not positive, or when it lands in the future (clock skew, or a
+ * not-yet-confirmed start).
+ *
+ * The `startedAt > 0` guard is required, not just belt-and-suspenders:
+ * progress.go's Event doc comment explicitly documents that a client "must
+ * treat 0 as unknown, never as an actual epoch second" — a plain type/finite
+ * check alone (Number.isFinite(0) is true) would let a genuine 0 through as if
+ * it were a real timestamp, rendering something like "496466h 7m" (the age of
+ * the Unix epoch) instead of hiding the duration. formatDuration's own
+ * negative-rejection only catches a startedAt in the FUTURE, not a zero one in
+ * the deep past, so that alone does not substitute for this check.
+ *
+ * Built for issue #159 (off-site replication's live progress — see
+ * internal/api/service.go's copyToOffsite and restic.Copy's doc comment):
+ * OffsiteIndicator and the dashboard's activity log tick this once a second
+ * from a local `now` state so a live "running for 2m 14s" reads smoothly
+ * between the backend's own periodic publishes.
+ */
+export function elapsedSince(startedAt: number | undefined, nowMs: number): string {
+  if (typeof startedAt !== "number" || !Number.isFinite(startedAt) || startedAt <= 0) return "";
+  return formatDuration((nowMs - startedAt * 1000) / 1000);
+}
+
+/**
  * formatClockTime renders a unix timestamp as a fixed 24-hour local clock face
  * ("HH:MM" or "HH:MM:SS"), independent of the browser's locale. The dashboard
  * activity log (a flat, docker-logs-style line list) wants a stable, always

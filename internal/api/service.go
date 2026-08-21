@@ -19,6 +19,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -196,6 +197,12 @@ type Service struct {
 	// this package's existing tests) gets, reproducing bombvault's original
 	// Unraid-only behavior exactly rather than panicking on a nil interface.
 	platform platform.Platform
+	// platformMismatchOnce guards warnUnraidPlatformMismatch: an operator whose
+	// notify.Config.Unraid is on but whose platform detection did not resolve
+	// to Unraid gets exactly ONE diagnostic log line per process, not one per
+	// notification (a busy day with many failed backups would otherwise drown
+	// the log in copies of the same explanation). Zero value is ready to use.
+	platformMismatchOnce sync.Once
 	// resticCacheDir is the on-disk location of restic's persistent cache — the
 	// same path main.go exports to the engine as RESTIC_CACHE_DIR (set via
 	// SetResticCacheDir). Empty means the cache lives at restic's default
@@ -502,15 +509,151 @@ func (s *Service) platformFn() platform.Platform {
 	return platform.Unraid{}
 }
 
-// progBegin marks a backup/restore as started for key/phase and returns a
-// context carrying a restic sink that republishes each percentage. Percent
-// updates are throttled to whole-percent steps to avoid flooding subscribers.
-// When no progress store is wired it is a no-op returning ctx unchanged.
-func (s *Service) progBegin(ctx context.Context, key, phase string) context.Context {
-	if s.progress == nil {
-		return ctx
+// unraidGate reports whether an Unraid-only, best-effort host-SSH step (the
+// webGUI notification mirror — every sendUnraidNotify call site) should run:
+// the caller wants it (unraidWanted, always notify.Config.Unraid today), SSH
+// is configured, AND the detected/overridden platform genuinely is Unraid.
+//
+// Why the platform check stays a hard requirement rather than trusting
+// unraidWanted on its own (Platform expansion PR #149, Task 6 — see
+// platform_gate_internal_test.go's failIfCalledSSH fakes, which fail the
+// test the instant one of these steps is attempted on a non-Unraid
+// platform): notify.Config.Unraid can be stale — e.g. a settings.json copied
+// from an old Unraid box onto a genuinely different TrueNAS or
+// generic-Docker host — and an Unraid-only command (the webGUI notify
+// script, the #116 PHP-over-SSH reconcile, the `plugin` CLI) attempted
+// against a host where it has no meaning would only fail predictably,
+// adding noisy log spam on every run rather than accomplishing anything.
+// Task 6's whole point was to skip that attempt entirely instead of letting
+// it fail loudly every time; trusting the toggle blindly would reintroduce
+// exactly that noise.
+//
+// Why a platform mismatch is NOT just silently treated as "feature off"
+// either: internal/platform.Detect's only Unraid signal is one filesystem
+// marker (config/plugins/dockerMan) under the container's /host/boot mount —
+// a mount BombVault's own shipped template did not wire until months after
+// this gate shipped. A genuinely Unraid host whose mount is missing (an old
+// template, or a hand-edited container config) resolves to KindGeneric
+// despite being real Unraid with SSH fully configured, and every gate here
+// used to go dark with no way to tell "the user turned this off" apart from
+// "detection is wrong". warnUnraidPlatformMismatch logs the specific,
+// actionable diagnostic instead.
+func (s *Service) unraidGate(unraidWanted bool) bool {
+	if !unraidWanted || s.ssh == nil {
+		return false
 	}
-	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: 0, Active: true})
+	if s.platformFn().Kind() == platform.KindUnraid {
+		return true
+	}
+	s.warnUnraidPlatformMismatch()
+	return false
+}
+
+// warnUnraidPlatformMismatch logs, once per process (platformMismatchOnce),
+// that notify.Config.Unraid is enabled but platform detection did not
+// resolve to Unraid — naming the detected Kind and the most likely fix so an
+// operator can tell "I turned this off" apart from "BombVault misdetected my
+// host" without reading source. See unraidGate's doc comment for why the
+// underlying gate does not just trust the toggle instead.
+func (s *Service) warnUnraidPlatformMismatch() {
+	s.platformMismatchOnce.Do(func() {
+		log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q) — "+
+			"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
+			"plugin) stay disabled. If this IS an Unraid host, verify the host's /boot is bind-mounted to "+
+			"/host/boot inside the container (see the BombVault Unraid template) and restart the container — "+
+			"detection looks for %s.",
+			s.platformFn().Kind(), platform.KindUnraid, filepath.Join(s.cfg.FlashDir, "config/plugins/dockerMan"))
+	})
+}
+
+// unraidPlatformMismatchError builds the user-facing refusal for a
+// request-scoped, Unraid-only action (TestNotify's Unraid channel, the
+// dashboard-tile plugin's install/remove — see runDashPluginCmd) attempted
+// while platform detection did not resolve to Unraid. feature names the
+// specific thing being refused (e.g. "the Unraid notification channel").
+//
+// Unlike unraidGate's best-effort background paths (which log
+// warnUnraidPlatformMismatch instead — nobody is waiting on those), these
+// are explicit, synchronous user actions: the caller must see the reason
+// immediately in the response, including the same actionable /host/boot
+// hint, not go dig through the container log for it.
+//
+// Returns a *platformMismatchErr (not a plain fmt.Errorf) so the message
+// bypasses handlers.go's scrubError: that scrubber strips every absolute
+// path from an error before it reaches the client (defense-in-depth against
+// leaking a repo path or secret), which would otherwise reduce this whole
+// hint to "the ... is only available on Unraid hosts (BombVault detected
+// platform=\"generic\" — if this IS an Unraid host, verify the host's
+// [path] is bind-mounted to [path] inside the container ...)" — useless.
+// /boot and /host/boot are BombVault's own fixed, publicly-documented mount
+// points (see the Unraid template), never a repo path or secret, so this is
+// the same bypass errRestoreDestination/errRepoPathGuidance (handlers.go,
+// repo_path.go) already use for the identical reason.
+func (s *Service) unraidPlatformMismatchError(feature string) error {
+	return &platformMismatchErr{msg: fmt.Sprintf(
+		"%s is only available on Unraid hosts (BombVault detected platform=%q — "+
+			"if this IS an Unraid host, verify the host's /boot is bind-mounted to /host/boot "+
+			"inside the container, see the BombVault Unraid template, and restart the container)",
+		feature, s.platformFn().Kind())}
+}
+
+// errUnraidPlatformMismatch is the scrubber-bypass sentinel unraidPlatformMismatchError's
+// *platformMismatchErr satisfies via Is, matched by handlers.go's scrubError.
+var errUnraidPlatformMismatch = errors.New("unraid platform mismatch")
+
+// platformMismatchErr carries unraidPlatformMismatchError's ready-to-show
+// message (see its doc comment) while still satisfying
+// errors.Is(err, errUnraidPlatformMismatch) for the scrubber bypass.
+type platformMismatchErr struct{ msg string }
+
+func (e *platformMismatchErr) Error() string { return e.msg }
+
+func (e *platformMismatchErr) Is(target error) bool { return target == errUnraidPlatformMismatch }
+
+// errZvolRebaseFailed is the scrubber-bypass sentinel a rebase-failure error
+// from prepareRestoreVMForTarget's cross-instance zvol rebase loop satisfies
+// via Is, matched by handlers.go's scrubError. The dataset/pool names ARE
+// the message — RebaseZvolDatasetPool's own doc comment names them as the
+// whole point of this error path — and a ZFS dataset name is "<pool>/<rest>",
+// so it necessarily contains "/" characters handlers.go's absPathRe would
+// otherwise mistake for a filesystem path and mangle (e.g. turning
+// `dataset "tank/vm-disk1"` into `dataset "tank[path]"`, destroying exactly
+// the information the message exists to convey). Same bypass pattern as
+// errRestoreDestination/errUnraidPlatformMismatch, for the identical reason.
+var errZvolRebaseFailed = errors.New("zvol dataset rebase failed")
+
+// zvolRebaseErr carries a zvol-rebase failure's ready-to-show message (see
+// errZvolRebaseFailed) while still satisfying
+// errors.Is(err, errZvolRebaseFailed) for the scrubber bypass.
+type zvolRebaseErr struct{ msg string }
+
+func (e *zvolRebaseErr) Error() string { return e.msg }
+
+func (e *zvolRebaseErr) Is(target error) bool { return target == errZvolRebaseFailed }
+
+// progBegin marks a backup/restore/replicate as started for key/phase and
+// returns a context carrying a restic sink that republishes each percentage,
+// plus the StartedAt (Unix seconds) it stamped on every event it publishes.
+// Percent updates are throttled to whole-percent steps to avoid flooding
+// subscribers. When no progress store is wired it is still a real timestamp
+// (just unpublished) — the returned ctx is unchanged, but the second return
+// value is always valid so a caller (e.g. copyToOffsite) can rely on it
+// without a nil-store special case.
+//
+// Every published event — including the eventual progEnd terminal one, which
+// the caller must pass this SAME startedAt to — is stamped with it, so a
+// client can render a live elapsed duration for the whole run (issue #159).
+// Returning it (rather than each caller capturing its own time.Now().Unix())
+// is deliberate: two independent captures of "now" for what is meant to be
+// ONE instant can straddle a second boundary, which is exactly what made
+// copyToOffsite's heartbeat briefly disagree with progBegin's own timestamp
+// before this fix.
+func (s *Service) progBegin(ctx context.Context, key, phase string) (context.Context, int64) {
+	startedAt := time.Now().Unix()
+	if s.progress == nil {
+		return ctx, startedAt
+	}
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: 0, Active: true, StartedAt: startedAt})
 	last := -1.0
 	return progress.WithSink(ctx, func(pct float64) {
 		// A multi-path restore runs one restic process per path; each restarts at
@@ -523,13 +666,105 @@ func (s *Service) progBegin(ctx context.Context, key, phase string) context.Cont
 			return // throttle: only forward ≥1% steps (always forward the final 100)
 		}
 		last = pct
-		s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: true})
+		s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: true, StartedAt: startedAt})
+	}), startedAt
+}
+
+// offsiteLastCopy holds the most recently PUBLISHED live restic-copy
+// percentage for one "offsite:<domain>" replication (across however many
+// sequential targets a multiTarget loop runs) — the one real signal
+// copyToOffsite's heartbeat goroutine needs so its periodic "still alive"
+// republish reflects the CURRENT state instead of a blank placeholder that
+// stomps whatever progBeginCopySink's sink most recently reported.
+//
+// Two independent goroutines touch this: progBeginCopySink's sink callback
+// runs synchronously on copyToOffsiteTarget's own goroutine (restic.Copy
+// calls it inline as it scans stdout), while the heartbeat reads it from its
+// own ticker goroutine — hence the mutex. A zero value is "no real update
+// yet" (valid=false), which the heartbeat must tell apart from an actual
+// Percent:0 update.
+type offsiteLastCopy struct {
+	mu    sync.Mutex
+	valid bool
+	cp    progress.CopyProgress
+	total int
+}
+
+// set records the latest live update. A nil receiver is a no-op so callers
+// that don't care about heartbeat continuity (direct copyToOffsiteTarget unit
+// tests) can pass a nil *offsiteLastCopy.
+func (l *offsiteLastCopy) set(cp progress.CopyProgress, total int) {
+	if l == nil {
+		return
+	}
+	l.mu.Lock()
+	l.valid, l.cp, l.total = true, cp, total
+	l.mu.Unlock()
+}
+
+// get returns the latest recorded update, or ok=false if none was ever set
+// (including when l is nil).
+func (l *offsiteLastCopy) get() (cp progress.CopyProgress, total int, ok bool) {
+	if l == nil {
+		return progress.CopyProgress{}, 0, false
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.cp, l.total, l.valid
+}
+
+// progBeginCopySink installs a progress.CopySink on ctx for a `restic copy`
+// call, so its live per-snapshot pack-copy progress (see restic.Copy — issue
+// #159's real percentage, not the fabrication the first cut of this feature
+// assumed was unavoidable) reaches the SAME "offsite:<domain>" key and
+// StartedAt every other event for this replication uses. estimatedTotal is
+// the caller's best-effort "N" for a "snapshot k of N" display (see
+// restic.PendingCopyIDs's doc comment for why it is only ever a display
+// estimate); if the live SnapshotIndex ever exceeds it — the estimate
+// undercounted — the published total is widened to match rather than
+// claiming fewer snapshots than are visibly running. Percent updates are
+// throttled like progBegin's plain Sink (whole-percent steps), but a
+// SnapshotIndex change always forwards immediately so "k of N" advances
+// without waiting on the new snapshot's first live percentage. No-op
+// returning ctx unchanged when no progress store is wired.
+//
+// last, when non-nil, is updated with every value actually published here —
+// copyToOffsite's heartbeat goroutine reads it back so a heartbeat tick
+// republishes the real, current percentage instead of overwriting it with a
+// blank one (see offsiteLastCopy's doc comment).
+func (s *Service) progBeginCopySink(ctx context.Context, domain string, startedAt int64, estimatedTotal int, last *offsiteLastCopy) context.Context {
+	if s.progress == nil {
+		return ctx
+	}
+	key := "offsite:" + domain
+	lastIndex := -1
+	lastPct := -1.0
+	return progress.WithCopySink(ctx, func(cp progress.CopyProgress) {
+		if cp.SnapshotIndex == lastIndex && cp.Percent < 100 && cp.Percent-lastPct < 1 {
+			return // throttle: only forward ≥1% steps within the SAME snapshot
+		}
+		lastIndex, lastPct = cp.SnapshotIndex, cp.Percent
+		total := estimatedTotal
+		if cp.SnapshotIndex > total {
+			total = cp.SnapshotIndex
+		}
+		last.set(cp, total)
+		s.progress.Publish(progress.Event{
+			Key: key, Phase: "replicate", Active: true, StartedAt: startedAt,
+			Percent: cp.Percent, SnapshotIndex: cp.SnapshotIndex, SnapshotTotal: total,
+		})
 	})
 }
 
 // progEnd emits the terminal event for key/phase: 100% on success, 0% on
-// failure (the UI hides the bar either way). No-op without a progress store.
-func (s *Service) progEnd(key, phase string, ok bool) {
+// failure (the UI hides the bar either way). startedAt must be the SAME value
+// the matching progBegin returned, so the terminal event carries it too —
+// before this fix it was omitted (zero), which made a client-rendered live
+// elapsed duration visibly vanish during the ~0.8-2.5s the terminal event
+// lingers in the frontend's progress map before the entry is dropped (see
+// web/src/lib/progress.ts's COMPLETE_LINGER_MS / OffsiteIndicator's
+// MIN_VISIBLE_MS). No-op without a progress store.
+func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
 	if s.progress == nil {
 		return
 	}
@@ -537,7 +772,7 @@ func (s *Service) progEnd(key, phase string, ok bool) {
 	if !ok {
 		pct = 0
 	}
-	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false})
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false, StartedAt: startedAt})
 }
 
 // ModeFor builds the restic Mode from the encryption setting. Encryption ON
@@ -1044,7 +1279,7 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 	subject := "Retention prune FAILED for " + tag
 	msg := fmt.Sprintf("Applying the retention policy for %s failed — old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
 	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2053,26 +2288,67 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		}
 	}()
 	// Publish an active "off-site replication running" indicator for this domain so
-	// the UI shows WHICH domain is replicating. restic copy has no machine-readable
-	// progress, so this is active/indeterminate (no percent), not a filling bar. Kept
-	// per-DOMAIN so the OffsiteIndicator + dashboard stay unchanged for N=1.
-	s.progBegin(ctx, "offsite:"+domain, "replicate")
-	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil) }()
-	// #134: restic copy publishes NO incremental progress, so without this the
-	// entry's lastSeen is only ever touched once, at progBegin above. The
-	// frontend's STALE_MS (15s, web/src/lib/progress.ts) then hides the "running"
-	// dashboard line as soon as a replication takes longer than that — which any
-	// real off-site copy does — making the operation look like it silently
-	// vanished, even though it is still actively running (confirmed by the line
-	// reappearing correctly on a manual refresh, since the backend state was fine
-	// all along). Re-publish the SAME indeterminate active event periodically so
-	// lastSeen keeps advancing for the whole replication, not just its two ends.
-	// Stopped via defer BEFORE progEnd (registered after it, so it unwinds
-	// first) so a heartbeat can never race past the terminal event.
+	// the UI shows WHICH domain is replicating, alongside a REAL live percentage
+	// once one becomes available (issue #159 — see restic.Copy's and
+	// progBeginCopySink's doc comments for the whole story: restic copy DOES print
+	// genuine, parseable progress once RESTIC_PROGRESS_FPS is wired up the same way
+	// backup/restore already get it; a first cut of this feature concluded
+	// otherwise and shipped a duration-only readout instead, which is corrected
+	// here). Kept per-DOMAIN so the OffsiteIndicator + dashboard stay unchanged for
+	// N=1; a target's own live percentage is threaded in from
+	// copyToOffsiteTarget's progBeginCopySink call, keyed to this SAME
+	// "offsite:"+domain event so multiple sequential targets (multiTarget) don't
+	// need their own indicator.
+	//
+	// startedAt is progBegin's own single time.Now().Unix() capture, returned so
+	// this function's heartbeat below publishes the EXACT same instant rather than
+	// a second, independent capture that could straddle a second boundary.
+	_, startedAt := s.progBegin(ctx, "offsite:"+domain, "replicate")
+	defer func() { s.progEnd("offsite:"+domain, "replicate", err == nil, startedAt) }()
+	// #134: between a snapshot's own live percentage updates (and especially
+	// during the tree-walk restic does before it starts copying packs, which
+	// prints no percentage at all), lastSeen would otherwise only ever be touched
+	// at progBegin. The frontend's STALE_MS (15s, web/src/lib/progress.ts) then
+	// hides the "running" dashboard line as soon as a quiet stretch passes that —
+	// which a real off-site copy easily can — making the operation look like it
+	// silently vanished, even though it is still actively running (confirmed by
+	// the line reappearing correctly on a manual refresh, since the backend state
+	// was fine all along). Re-publish an active event periodically so lastSeen
+	// keeps advancing through any such gap.
+	//
+	// lastCopy carries the most recently PUBLISHED real per-snapshot percentage
+	// (see offsiteLastCopy's doc comment): a heartbeat tick republishes THAT
+	// (percent/snapshotIndex/snapshotTotal all included) rather than a blank
+	// Percent:0 placeholder. Before this, every 5s tick unconditionally
+	// overwrote whatever real percentage progBeginCopySink's sink had just
+	// reported — on a slow transfer (whole-percent steps taking many seconds
+	// each), the heartbeat "won" almost every render, making the new live
+	// percentage feature (issue #159) nearly invisible on exactly the slow
+	// connections it was built for. When no real update has landed yet (before
+	// the first "copy started" line, or a genuinely quiet stretch with no
+	// per-snapshot signal at all) lastCopy stays unset and the heartbeat falls
+	// back to the original bare "still alive" event — the duration-only
+	// keep-alive #134 introduced this heartbeat for is unchanged.
+	//
+	// Shutdown is a real done-channel HANDSHAKE, not a bare close: closing hbDone
+	// only asks the goroutine to stop, but a `select` with both hbDone and the
+	// ticker ready at once can still pick the ticker and Publish one more tick —
+	// waiting on hbStopped blocks until that goroutine has actually returned
+	// (any in-flight Publish included), so it can never land AFTER progEnd's
+	// terminal Publish below and resurrect a stale Active:true (pre-existing
+	// since #134's heartbeat was introduced; tightened as part of this review).
+	// Stopped via defer registered AFTER progEnd's (so it unwinds FIRST) so a
+	// heartbeat can never race past the terminal event.
+	lastCopy := &offsiteLastCopy{}
 	if s.progress != nil {
 		hbDone := make(chan struct{})
-		defer close(hbDone)
+		hbStopped := make(chan struct{})
+		defer func() {
+			close(hbDone)
+			<-hbStopped
+		}()
 		go func() {
+			defer close(hbStopped)
 			t := time.NewTicker(offsiteProgressHeartbeat)
 			defer t.Stop()
 			for {
@@ -2080,7 +2356,11 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 				case <-hbDone:
 					return
 				case <-t.C:
-					s.progress.Publish(progress.Event{Key: "offsite:" + domain, Phase: "replicate", Percent: 0, Active: true})
+					e := progress.Event{Key: "offsite:" + domain, Phase: "replicate", Active: true, StartedAt: startedAt}
+					if cp, total, ok := lastCopy.get(); ok {
+						e.Percent, e.SnapshotIndex, e.SnapshotTotal = cp.Percent, cp.SnapshotIndex, total
+					}
+					s.progress.Publish(e)
 				}
 			}
 		}()
@@ -2097,7 +2377,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	multiTarget := len(targets) > 1
 	var errs []error
 	for _, t := range targets {
-		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepo, multiTarget); cerr != nil {
+		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepo, multiTarget, startedAt, lastCopy); cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
 		}
@@ -2114,14 +2394,26 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 // destination and records that destination's own offsite_runs row (stamped with
 // offsite_target_id). Per-target: destination repo, restic mode (S3 storage
 // class), retention, bandwidth limits and append-only flag. Best-effort
-// bookkeeping like the rest; returns the (scrubbed) copy error.
-func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepo string, multiTarget bool) (err error) {
+// bookkeeping like the rest; returns the (scrubbed) copy error. startedAt is
+// copyToOffsite's single progBegin capture, threaded through so this
+// target's live copy-progress events (see progBeginCopySink) carry the SAME
+// StartedAt as the domain-level begin/heartbeat/terminal events. lastCopy is
+// copyToOffsite's shared heartbeat state (see offsiteLastCopy) that
+// progBeginCopySink updates with every real percentage this target reports;
+// a nil lastCopy (as a direct unit test of this function may pass) simply
+// means no heartbeat is watching, which offsiteLastCopy's nil-safe methods
+// handle without a special case here.
+func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepo string, multiTarget bool, startedAt int64, lastCopy *offsiteLastCopy) (err error) {
 	// Persist this destination's replication attempt to the off-site run history
 	// (begin now, close on the way out via defer with outcome + scrubbed error).
-	// restic copy has no machine-readable progress, so only duration + outcome are
-	// recorded. Bookkeeping is best-effort: a store error is logged, never fatal.
-	// offsite_target_id attributes the run to this destination (empty for a
-	// settings-synthesized N=1 target, exactly as before the backfill).
+	// The offsite_runs row itself stays duration + outcome only (no percentage
+	// column) — the live per-snapshot percentage this function now also feeds
+	// into progBeginCopySink (issue #159) is a real-time SSE signal, not
+	// persisted history; a completed run's own duration is exactly as
+	// informative after the fact. Bookkeeping is best-effort: a store error is
+	// logged, never fatal. offsite_target_id attributes the run to this
+	// destination (empty for a settings-synthesized N=1 target, exactly as
+	// before the backfill).
 	runID, recErr := s.store.RecordOffsiteRunForTarget(domain, target.ID, time.Now().Unix())
 	if recErr != nil {
 		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
@@ -2165,9 +2457,31 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// sole writer, so an existing off-site lock is always stale — this self-heals the
 	// off-site repo on the next run (defence-in-depth for bug #29).
 	s.unlockStale(ctx, dest, mode)
+	// Best-effort upfront candidate count ("N") for the "snapshot k of N" live
+	// progress display (issue #159 — see restic.PendingCopyIDs's doc comment for
+	// the full reasoning). DISPLAY ONLY: the actual Copy call below still passes
+	// nil for snapshotIDs, so restic's own (stricter — it also compares full
+	// snapshot metadata) dedup remains the sole authority on what really gets
+	// copied. A stale/wrong estimate here can only make "of N" briefly off, never
+	// skip a real snapshot. listSnapshots (not a raw engine.Snapshots call) reuses
+	// the existing stale-lock self-heal and "repo not initialized yet = no
+	// snapshots" handling every other snapshot listing in this file already gets.
+	pendingTotal := 0
+	if srcSnaps, sErr := s.listSnapshots(ctx, localRepo, mode); sErr != nil {
+		log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, sErr) //nolint:gosec // G706: domain is a fixed literal
+	} else if dstSnaps, dErr := s.listSnapshots(ctx, dest, mode); dErr != nil {
+		log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, dErr) //nolint:gosec // G706: domain is a fixed literal
+	} else {
+		pendingTotal = len(restic.PendingCopyIDs(srcSnaps, dstSnaps))
+	}
 	// Cap the transfer rate so off-site replication doesn't saturate the WAN
-	// (zero limits = unlimited, the default).
-	if err = s.engine.Copy(ctx, dest, localRepo, nil, targetOffsiteLimits(target), mode); err != nil {
+	// (zero limits = unlimited, the default). progBeginCopySink installs the
+	// live per-snapshot percentage sink restic.Copy now reports through (issue
+	// #159's real percentage — see its doc comment), publishing under the SAME
+	// "offsite:"+domain key/StartedAt copyToOffsite's begin/heartbeat/terminal
+	// events use, so it's one continuous indicator across a multiTarget loop.
+	copyCtx := s.progBeginCopySink(ctx, domain, startedAt, pendingTotal, lastCopy)
+	if err = s.engine.Copy(copyCtx, dest, localRepo, nil, targetOffsiteLimits(target), mode); err != nil {
 		return err
 	}
 	// Apply the off-site retention policy (separate from local) after a successful
@@ -2349,7 +2663,7 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 	}
 	msg := fmt.Sprintf("The %s repository for %s has grown to %s, over the configured growth budget of %s. %s", kind, domain, humanBytes(size), humanBytes(budget), action)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -2488,6 +2802,9 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 		return errDomainBusy
 	}
 	go func() {
+		defer s.recoverOperation("offsite replicate: "+domain, nil, func(msg string) {
+			s.failStuckRun(domainRunTargetID(domain), msg)
+		})
 		defer unlock()
 		// Detached from the HTTP request on purpose; the ceiling only guards
 		// against a copy that hangs forever on a dead link.
@@ -2538,7 +2855,7 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 	subject := "Off-site replication FAILED for " + domain
 	msg := fmt.Sprintf("The scheduled off-site replication for %s failed — the off-site copy is not current: %s", domain, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -3336,7 +3653,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// Healthchecks /start ping: deferred to here, past every pre-flight early-return,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "container")
-	bctx := s.progBegin(ctx, pkey, "backup")
+	bctx, startedAt := s.progBegin(ctx, pkey, "backup")
 	// BackupContainer now owns run bookkeeping (it records its own failed/success run),
 	// so the pre-flight failure finisher above must stand down to avoid a double record.
 	orchestrated = true
@@ -3362,7 +3679,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		Templates:              templatesAdapter{},
 		Runs:                   runsAdapter{s.store},
 	})
-	s.progEnd(pkey, "backup", err == nil)
+	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -3466,7 +3783,7 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		msg := fmt.Sprintf("Updated container %q to a newer image. Please verify it still works.", name)
 		notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 			notify.Event{Title: "BombVault", Message: msg, OK: true})
-		if c.Unraid && s.ssh != nil && c.On == "always" && s.platformFn().Kind() == platform.KindUnraid {
+		if s.unraidGate(c.Unraid) && c.On == "always" {
 			if e := s.sendUnraidNotify(ctx, "BombVault: container updated", msg, "normal"); e != nil {
 				log.Printf("notify: unraid: %v", e)
 			}
@@ -3571,6 +3888,14 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	// scheduled path instead of re-opening the off-site repo per container.
 	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {
+		// Batch-level safety net: a panic OUTSIDE the per-item loop (ordering,
+		// publishBatch, the post-loop prune/replicate) has no single container to
+		// blame, so there is nothing for onPanic to close out — just contain it.
+		// Each ITEM inside the loop gets its own, more precise recovery below
+		// (backupOneForBatch), so one bad container can't abort the rest of the
+		// batch — matching how a normal per-item error already only counts
+		// against that one item.
+		defer s.recoverOperation("backup-all", nil, nil)
 		defer s.batchActive.Store(false)
 
 		self := s.selfContainerName(bctx)
@@ -3594,7 +3919,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 		s.publishBatch(key, 0, true)
 		ok, fail, skipped := 0, 0, 0
 		for i, n := range queue {
-			if _, err := s.Backup(bctx, n); err != nil {
+			if err := s.backupOneForBatch(bctx, n); err != nil {
 				if errors.Is(err, backup.ErrContainerNotInstalled) {
 					skipped++                                                                   // removed container: a skip (already recorded), not a batch failure (#57)
 					log.Printf("api: backup-all: %q skipped — not installed (backups only)", n) //nolint:gosec // G706: n is %q-quoted
@@ -3621,6 +3946,29 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	return true, nil
 }
 
+// backupOneForBatch backs up a single queued container on behalf of
+// StartBackupAll, containing any panic to just this item (recoverOperation)
+// so one container's crash counts as that one item failing — exactly like a
+// normal error already does — instead of aborting every container still
+// queued behind it. On a recovered panic it also closes out the run
+// StartRun'd deep inside backup.BackupContainer as failed (failStuckRun):
+// that call is a plain sequential call, not deferred, so it would otherwise
+// never be reached and the run would sit "running" forever.
+func (s *Service) backupOneForBatch(ctx context.Context, name string) (err error) {
+	// recoverOperation must be deferred DIRECTLY (not wrapped in a `defer
+	// func(){...}()` closure) — see its doc comment: recover() only works when
+	// called directly by a deferred function, so &err is how it hands the
+	// panic back to this function's named return instead of a normal return
+	// value.
+	defer s.recoverOperation("backup-all: "+name, &err, func(msg string) {
+		if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+			s.failStuckRun(tg.ID, msg)
+		}
+	})
+	_, err = s.Backup(ctx, name)
+	return err
+}
+
 // StartBackup launches a single container backup in a background goroutine and
 // returns immediately. Like StartBackupAll, this is the robust path: the work
 // runs ON THE SERVER, so it survives the browser that started it going away —
@@ -3645,6 +3993,11 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	// the moment the handler returns); Backup applies its own hard timeout.
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup: "+name, nil, func(msg string) {
+			if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+				s.failStuckRun(tg.ID, msg)
+			}
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.Backup(bctx, name); err != nil {
 			if errors.Is(err, backup.ErrContainerNotInstalled) {
@@ -3672,6 +4025,11 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup vm: "+name, nil, func(msg string) {
+			if tg, tErr := s.store.GetVMTargetByName(name); tErr == nil {
+				s.failStuckRun(tg.ID, msg)
+			}
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupVM(bctx, name); err != nil {
 			log.Printf("api: backup vm: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
@@ -3694,6 +4052,9 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup flash: "+store.FlashTargetID, nil, func(msg string) {
+			s.failStuckRun(store.FlashTargetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFlash(bctx); err != nil {
 			log.Printf("api: backup flash failed: %v", err)
@@ -3717,6 +4078,9 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup config: "+store.ConfigTargetID, nil, func(msg string) {
+			s.failStuckRun(store.ConfigTargetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupConfig(bctx); err != nil {
 			log.Printf("api: backup config failed: %v", err)
@@ -3741,6 +4105,9 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		defer s.recoverOperation("backup file set: "+id, nil, func(msg string) {
+			s.failStuckRun(id, msg) // id IS the runs.target_id for a file set — no lookup needed
+		})
 		defer s.batchActive.Store(false)
 		if _, err := s.BackupFileSet(bctx, id); err != nil {
 			log.Printf("api: backup file set: %q failed: %v", id, err) //nolint:gosec // G706: id is %q-quoted
@@ -3773,6 +4140,11 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	// the containers batch instead of re-opening the off-site repo per set.
 	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {
+		// See StartBackupAll's identical pair of defers for why: this one contains
+		// a panic OUTSIDE the per-item loop, while each item inside the loop gets
+		// its own more precise recovery (backupFileSetOneForBatch) so one bad set
+		// can't abort the rest of the batch.
+		defer s.recoverOperation("backup-files-all", nil, nil)
 		defer s.batchActive.Store(false)
 
 		queue := make([]string, 0, len(ids))
@@ -3786,7 +4158,7 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 		s.publishBatch(key, 0, true)
 		ok, fail := 0, 0
 		for i, id := range queue {
-			if _, err := s.BackupFileSet(bctx, id); err != nil {
+			if err := s.backupFileSetOneForBatch(bctx, id); err != nil {
 				fail++
 				log.Printf("api: backup-files-all: %q failed (continuing): %v", id, err) //nolint:gosec // G706: id is %q-quoted
 			} else {
@@ -3808,10 +4180,98 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	return true, nil
 }
 
+// backupFileSetOneForBatch backs up a single queued file set on behalf of
+// StartBackupFilesAll — see backupOneForBatch (the containers-batch
+// counterpart) for why each item gets its own recovery instead of one shared
+// at the batch level. id is already the runs.target_id (no lookup needed).
+func (s *Service) backupFileSetOneForBatch(ctx context.Context, id string) (err error) {
+	// See backupOneForBatch for why this must be a direct defer, not wrapped.
+	defer s.recoverOperation("backup-files-all: "+id, &err, func(msg string) {
+		s.failStuckRun(id, msg)
+	})
+	_, err = s.BackupFileSet(ctx, id)
+	return err
+}
+
 // BackupInProgress reports whether a single backup, a batch, or a restore is
 // currently running (they share the same single-flight guard). It lets callers
 // — and tests — observe when the detached goroutine has fully finished.
 func (s *Service) BackupInProgress() bool { return s.batchActive.Load() }
+
+// recoverOperation is deferred FIRST — i.e. before every other defer — in
+// every backup/restore/replication goroutine below (defers run LIFO, so being
+// registered first means it is the LAST one to run: every other cleanup defer
+// in the same goroutine, like releasing batchActive or unregistering a cancel
+// key, already fired normally before this one ever sees the panic). It
+// contains a panic to the ONE operation that raised it — logged here with a
+// stack trace — instead of letting it reach the top of the goroutine
+// unrecovered, which crashes the ENTIRE process: the HTTP server, the SSE
+// progress stream, and every OTHER domain's concurrently in-flight
+// backup/restore/replication along with it. This mirrors
+// internal/schedule.Scheduler's cron.Recover, which already gives the
+// byte-identical CRON-triggered path (the same svc.Backup/BackupVM/etc, wired
+// in cmd/bombvault/main.go) this exact protection — see Scheduler.New's doc
+// comment for why that exists.
+//
+// onPanic, when non-nil, is called ONLY on a recovered panic, with a short
+// message describing it. Callers use it to close out whatever run record this
+// operation would otherwise leave stuck "running" forever: unlike a full
+// process crash, there is no restart here to trigger
+// store.Repo.ReapInterruptedRuns, so nothing else will ever do it. It is
+// never called on the overwhelmingly common non-panic path, so it is safe for
+// it to do a store lookup that a happy-path caller wouldn't want to pay for.
+//
+// errOut, when non-nil, receives the panic converted to an error — for a
+// caller with its own error result (e.g. a per-item batch helper that must
+// keep the surrounding loop's existing "one bad item doesn't abort the rest"
+// behaviour) to propagate like any other failure. This is an OUT PARAMETER,
+// not a return value, and that is deliberate: recover() only has any effect
+// when called directly by a deferred function (a nested call to it from
+// inside a plain function that a defer merely INVOKES does not count, and
+// silently fails to recover anything — a genuine Go gotcha, not a style
+// preference). recoverOperation must therefore always be the direct target of
+// `defer` — `defer s.recoverOperation(...)`, never wrapped in a `defer
+// func(){ ... s.recoverOperation(...) ... }()` closure — and a plain return
+// value would be unreachable from such a call. A caller with nothing to
+// propagate to (every single-target Start* goroutine below) passes nil.
+func (s *Service) recoverOperation(op string, errOut *error, onPanic func(msg string)) {
+	r := recover()
+	if r == nil {
+		return
+	}
+	const stackSize = 64 << 10 // matches robfig/cron's own Recover chain wrapper
+	buf := make([]byte, stackSize)
+	buf = buf[:runtime.Stack(buf, false)]
+	log.Printf("api: %s: panic recovered (operation aborted, process unaffected): %v\n%s", op, r, buf) //nolint:gosec // G706: op is a fixed literal, sometimes suffixed with a target name/id/domain already boundary-validated (validResourceName, validVMName, or a fixed switch of domain literals) before this goroutine ever started — never raw, unvalidated request input
+	msg := fmt.Sprintf("internal error (recovered panic): %v", r)
+	if onPanic != nil {
+		onPanic(msg)
+	}
+	if errOut != nil {
+		*errOut = errors.New(msg)
+	}
+}
+
+// failStuckRun marks targetID's still-"running" run row as failed after a
+// recovered panic (store.Repo.FailRunningRun), for recoverOperation callers
+// that only know the run's TARGET, not its specific run id — the deep
+// orchestrator that called store.StartRun for it panicked before it could
+// reach the matching store.FinishRun. Scoped to targetID so it can never
+// disturb a different target's genuinely in-flight run (see
+// FailRunningRun's own doc comment). msg is bounded through truncateRunErr —
+// the same cap every other run-error path (finishRestoreRun, FinishRun
+// callers) already applies — before being stored. Best-effort: a store error
+// here is logged, never returned — the panic itself is already logged by the
+// caller either way. A blank targetID (nothing resolved, or no target row
+// exists yet) is a silent no-op — nothing was started, so nothing is stuck.
+func (s *Service) failStuckRun(targetID, msg string) {
+	if targetID == "" {
+		return
+	}
+	if _, err := s.store.FailRunningRun(targetID, truncateRunErr(errors.New(msg))); err != nil {
+		log.Printf("api: mark stuck run failed for target %q: %v", targetID, err) //nolint:gosec // G706: targetID is a store-generated id / fixed literal, %q-quoted
+	}
+}
 
 // publishBatch emits an overall batch-progress event (no-op without a store).
 func (s *Service) publishBatch(key string, percent float64, active bool) {
@@ -4534,7 +4994,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		}
 	}
 	rkey := "container:" + name
-	rctx := s.progBegin(ctx, rkey, "restore")
+	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
 		Confirmed:         true, // prepareRestore rejected unconfirmed requests
 		RecreateOnly:      plan.recreateOnly,
@@ -4557,7 +5017,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
 	}
-	s.progEnd(rkey, "restore", rerr == nil)
+	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	return rerr
 }
 
@@ -4670,6 +5130,9 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 	bctx := context.WithoutCancel(ctx)
 	key := "container:" + name // the exact progBegin key executeRestore publishes under
 	go func() {
+		defer s.recoverOperation("restore: "+name, nil, func(msg string) {
+			s.failStuckRun(plan.targetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -4969,6 +5432,16 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 	bctx := context.WithoutCancel(ctx)
 	rkey := "container:" + name // the exact progBegin key this restore publishes under
 	go func() {
+		// runID is declared here (before recoverOperation is deferred) rather than
+		// with := at its assignment below, so the onPanic closure — which can only
+		// run AFTER that assignment, since a panic before it means beginRestoreRun
+		// never got called and no run needs closing — sees whatever value it holds
+		// at panic time instead of failing to compile (runID would otherwise not
+		// exist yet at this point in the function).
+		var runID string
+		defer s.recoverOperation("restore files: "+name, nil, func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg))
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -4976,10 +5449,10 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRun(name)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		runID = s.beginRestoreRun(name)
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFiles(pctx, plan)
-		s.progEnd(rkey, "restore", rerr == nil)
+		s.progEnd(rkey, "restore", rerr == nil, startedAt)
 		s.finishRestoreRun(runID, plan.snapshotID, rerr)
 		if rerr != nil {
 			log.Printf("api: restore files: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
@@ -5063,26 +5536,70 @@ func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
 // success-with-warning instead of a hard failure. Genuine failures (missing
 // snapshot, no space, unreachable repo) and user cancels are recorded as-is. It
 // returns the EFFECTIVE error (nil for the metadata-only case) so the caller can
-// log/propagate only a real failure.
-func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr error) error {
+// log/propagate only a real failure. startedAt must be the value the matching
+// progBegin returned, so the terminal event it emits carries it too (see
+// progEnd's doc comment).
+func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr error, startedAt int64) error {
 	if errors.Is(rerr, restic.ErrRestoreMetadataOnly) {
-		s.progEnd(rkey, "restore", true)
+		s.progEnd(rkey, "restore", true, startedAt)
 		s.finishRestoreRunWarn(runID, snapshotID, restic.RestoreMetadataWarning)
 		return nil
 	}
-	s.progEnd(rkey, "restore", rerr == nil)
+	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	s.finishRestoreRun(runID, snapshotID, rerr)
 	return rerr
 }
 
-// truncateRunErr bounds an error message so it fits the runs.error_message
-// column (mirrors the orchestrator's truncateErr; the restic adapter already
-// scrubs secrets/paths from its own errors).
+// truncateRunErr scrubs and bounds an error message so it fits the
+// runs.error column (mirrors the orchestrator's truncateErr).
+//
+// This applies scrubSecrets to every error EXCEPT the sentinel types
+// scrubBypassMessage (handlers.go) already carves out for scrubError — those
+// pass through completely unscrubbed instead, for the identical reason
+// scrubError itself bypasses them: the path-shaped content in their message
+// (a host:port conflict list, a ZFS dataset name, /boot vs /host/boot, …) IS
+// the actionable content, not a leak. Every other error is scrubbed
+// unconditionally, not just restic-originated ones. The restic adapter's own
+// lastReason already scrubs before this ever sees the message, so for those
+// callers scrubSecrets runs a harmless second time on already-clean text
+// (scrubbing an already-scrubbed string is a no-op). But not every caller of
+// this function goes through restic first: tamper.go's tamperProbe can
+// surface a raw url.Parse error — url.Error's Error() embeds the full,
+// UNPARSED input URL verbatim, credentials and all — when a repo's URL fails
+// to parse into an *http.Request, and primary_remote.go's
+// RunPrimaryTamperTest hits the exact same code path for a domain's remote
+// PRIMARY. Truncating without scrubbing FIRST let that raw URL (with any
+// embedded "user:pass@") reach runs.error verbatim, and from there the UI
+// (handleRuns embeds store.Run directly), the weekly digest (digest.go reads
+// run.Error and forwards it to every notification channel), and the widget
+// feed (widget.go's truncateWidgetError only limits length) all displayed or
+// forwarded it unscrubbed. Scrubbing HERE, at the one function that writes
+// runs.error, protects all three downstream readers at once and doesn't rely
+// on finding every current AND FUTURE non-restic call site individually.
+//
+// An earlier version of this function scrubbed EVERYTHING unconditionally,
+// including the sentinel-tagged errors above, on the theory that running the
+// scrub regexes over already-clean text is a harmless no-op. That was false
+// for exactly these sentinels: scrubSecrets' path regex matches ANY
+// slash-containing token, not just a filesystem path, so routing them through
+// unconditionally silently mangled the very content scrubError's bypasses
+// exist to protect — e.g. turning "host port 8080/tcp is already used by
+// container ..." into "host port 8080[path] is already used ..." and eating
+// a zvol rebase failure's ZFS dataset name the same way — even though the
+// SAME underlying error survives intact when it goes through scrubError
+// instead. Checking scrubBypassMessage first closes that gap without
+// reimplementing scrubError's bypass logic a second, independently-drifting
+// time.
 func truncateRunErr(err error) string {
 	if err == nil {
 		return ""
 	}
 	msg := err.Error()
+	if bypass, ok := scrubBypassMessage(err); ok {
+		msg = bypass
+	} else {
+		msg = scrubSecrets(msg)
+	}
 	const max = 500
 	if len(msg) > max {
 		return msg[:max]
@@ -5219,6 +5736,10 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 	bctx := context.WithoutCancel(ctx)
 	rkey := "container:" + name // the exact progBegin key this restore publishes under
 	go func() {
+		var runID string // see StartRestoreFiles's identical goroutine for why this is declared here
+		defer s.recoverOperation("restore to path: "+name, nil, func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg))
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -5226,10 +5747,10 @@ func (s *Service) StartRestoreToPath(ctx context.Context, name, source, snapshot
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRun(name)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		runID = s.beginRestoreRun(name)
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreToPath(pctx, plan)
-		s.progEnd(rkey, "restore", rerr == nil)
+		s.progEnd(rkey, "restore", rerr == nil, startedAt)
 		s.finishRestoreRun(runID, plan.snapshotID, rerr)
 		if rerr != nil {
 			log.Printf("api: restore to folder: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
@@ -5457,7 +5978,31 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
+	// Issue #152: refused when this repo IS a remote primary flagged append-only
+	// in its saved safety settings (same gate as pruneDomain/DeleteSnapshot/
+	// DeleteBackupsVM) — this function has no source parameter, so it always
+	// targets the primary/local repo and only the primary half of the gate
+	// applies (there is no separate off-site source to check here). This path
+	// runs Forget with prune=true, so skipping it here would have let a
+	// compromised on-box credential irreversibly reclaim space on an immutable
+	// primary.
+	if s.primaryIsImmutable("containers", repo) {
+		return errOffsiteAppendOnly
+	}
 	mode := s.ModeFor(settings)
+
+	// Serialize against a live backup on this repo: a container Backup holds the
+	// domain lock for its whole run (potentially hours), so without this an
+	// unlocked bulk delete could race a concurrent `restic forget --prune`
+	// against the same repo files. Same guard DeleteBackupsVM/DeleteBackupsFileSet
+	// already use. (No requireExistingRepo here, unlike those two: this must still
+	// let a never-backed-up container's target row be cleaned up below.)
+	unlock, ok := s.tryLockDomainFor("containers", "delete")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
+	s.unlockStale(ctx, repo, mode)
 
 	// Collect this container's snapshot IDs (tag-filtered) and forget them.
 	snaps, err := s.Snapshots(ctx, name, "")
@@ -5503,6 +6048,17 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	// The gate is per-target: bare "offsite" checks the primary target's flag (==
 	// today), "offsite:<id>" checks that specific target's.
 	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, "vms", source) {
+		return errOffsiteAppendOnly
+	}
+	// Issue #152: the SAME refusal applies when the "local" source IS actually a
+	// remote primary flagged append-only in its saved safety settings (same gate
+	// as pruneDomain) — there is no separate off-site copy in that shape, so
+	// refusing here is the only thing standing between an on-box credential and
+	// deleting the sole backup. This path also runs Forget with prune=true, so
+	// skipping it here (unlike PruneDomain/DeleteSnapshot) would have let a
+	// compromised on-box credential irreversibly reclaim space on an immutable
+	// primary.
+	if !isOffsiteSource(source) && s.primaryIsImmutable("vms", repo) {
 		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
@@ -6329,14 +6885,14 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// (incl. the ErrVMNotInstalled skip), so the paired done/fail notifyBackup below
 	// always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "VM")
-	bctx := s.progBegin(ctx, vkey, "backup")
+	bctx, startedAt := s.progBegin(ctx, vkey, "backup")
 	var sum backup.Summary
 	if live {
 		sum, err = backup.BackupVMLive(bctx, deps)
 	} else {
 		sum, err = backup.BackupVMGraceful(bctx, deps)
 	}
-	s.progEnd(vkey, "backup", err == nil)
+	s.progEnd(vkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "VM", name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -6456,9 +7012,10 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 	if err != nil {
 		return vmRestorePlan{}, errors.New("vm has not been backed up yet")
 	}
-	// Same-instance restore: no destination base, so disks go back to their own
-	// paths and the domain XML is used verbatim (byte-for-byte historical behaviour).
-	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg, "")
+	// Same-instance restore: no destination base and no destination zvol pool,
+	// so disks go back to their own paths and the domain XML is used verbatim
+	// (byte-for-byte historical behaviour).
+	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg, "", "")
 }
 
 // prepareRestoreVMForTarget builds a VM restore plan for an ALREADY-RESOLVED VM
@@ -6469,14 +7026,31 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 // adopts it only once this returns a plan, never on a validation failure). The
 // caller runs the confirm / explicit-snapshot-id-shape guards first.
 //
-// destBase, when non-empty, REMAPS every disk (and the NVRAM) to
+// destBase, when non-empty, REMAPS every FILE-backed disk (and the NVRAM) to
 // <destBase>/<name>/<basename>: the restic restore target, the domain XML
 // <disk><source file> / <nvram> paths, and the SSH NVRAM write all point at the
-// destination pool instead of the source server's paths. A remap ALSO gates the
-// restore behind guardVMRestoreDestination, so it can never write a multi-GB
-// disk onto an unmounted path (the RAM rootfs) and brick the host (#122). An
-// empty destBase leaves the same-instance restore byte-for-byte unchanged.
-func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, destBase string) (vmRestorePlan, error) {
+// destination FOLDER instead of the source server's paths. A remap ALSO gates
+// the restore behind guardVMRestoreDestination, so it can never write a
+// multi-GB disk onto an unmounted path (the RAM rootfs) and brick the host
+// (#122). An empty destBase leaves the same-instance restore byte-for-byte
+// unchanged.
+//
+// destZvolPool is the SEPARATE remap a BLOCK-DEVICE (zvol) disk needs: destBase
+// is a filesystem path under the host mount and carries no ZFS pool
+// information at all, so it cannot rebase a zvol's `zfs receive` target the
+// way it rebases a file-backed disk's path. When destBase is non-empty (a
+// cross-instance restore) and the domain has recognizable zvol disks,
+// destZvolPool MUST be supplied — every such disk's dataset is rebased onto it
+// via virshcli.RebaseZvolDatasetPool, so `zfs receive` lands on the
+// DESTINATION box's pool rather than the source box's. An empty destZvolPool
+// on a cross-instance restore with zvol disks REFUSES here, before any
+// restic/SSH work starts (a destination pool cannot be guessed from destBase),
+// rather than silently attempting `zfs receive` against the source pool's name
+// and failing deep inside that call once the restore is already underway.
+// Ignored (never validated) for a same-instance restore or a VM with no zvol
+// disks — same-instance zvol restore keeps deriving its target from
+// SourceDataset exactly as before this parameter existed.
+func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, destBase, destZvolPool string) (vmRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the VM's newest snapshot. An explicit id
@@ -6593,7 +7167,10 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// call. Neither is affected by the destBase remap above: RewriteDiskSources
 	// only rewrites <source file=...> (file-backed disks); a <tpm> element and
 	// a <source dev=...> (block-device disk) are left untouched either way
-	// (v8.0.0 VM service-layer integration, Task 2).
+	// (v8.0.0 VM service-layer integration, Task 2). A zvol disk's DATASET
+	// (as opposed to the XML's device path, which stays the source box's for
+	// the operator's own reference) is rebased separately, below — see the
+	// "CROSS-INSTANCE zvol rebase" block after the SSH guard.
 	var tpmPath string
 	var vmRestoreBlockDisks []backup.VMRestoreBlockDisk
 	if parsed, perr := virshcli.ParseDomain(domainXML); perr == nil {
@@ -6644,6 +7221,44 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// returned, exactly like the backup-side check in BackupVM.
 	if len(vmRestoreBlockDisks) > 0 && s.ssh == nil {
 		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured — zvol restore requires SSH", name)
+	}
+
+	// CROSS-INSTANCE zvol rebase: destBase remaps a FILE-backed disk onto the
+	// destination's FILESYSTEM PATH, but that path carries no ZFS pool
+	// information — RestoreZvolDisk would otherwise always derive its `zfs
+	// receive` target from SourceDataset (the SOURCE box's pool, re-derived
+	// unchanged from the domain XML above), which almost certainly does not
+	// exist on the destination box under that name, and fail deep inside a
+	// `zfs receive` call once the restore is already underway. REFUSE here,
+	// before any restic/SSH work starts, when destZvolPool wasn't supplied;
+	// when it was, rebase every zvol disk's dataset onto it now so the plan's
+	// blockDisks already carry the correct destination target.
+	//
+	// destZvolPool is trimmed before the emptiness check so a whitespace-only
+	// value ("   ", e.g. a stray space pasted into a direct API call) hits
+	// THIS clear refusal rather than slipping through to
+	// RebaseZvolDatasetPool's own less-actionable error below (it trims
+	// internally too, so a whitespace-only pool reads there as empty and
+	// fails the "no segment past its own pool" check instead of naming the
+	// real problem).
+	if destBase != "" && len(vmRestoreBlockDisks) > 0 {
+		if strings.TrimSpace(destZvolPool) == "" {
+			// The web UI has NO field for zvolPool yet (Recovery page — see
+			// this repo's tracked follow-up); an operator hitting this
+			// through the UI has no in-app way to act on this error, so the
+			// message spells out the only path that currently exists: a
+			// direct API call. Keep this in sync with
+			// docs/vm-backup-ssh-setup.md's TrueNAS section, which carries
+			// the same guidance for someone reading ahead of time.
+			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified — the destination pool cannot be inferred from the chosen destination folder. There is no web UI field for this yet: call POST /api/foreign/restore directly with its zvolPool parameter set to the destination pool name (see docs/vm-backup-ssh-setup.md's TrueNAS section), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
+		}
+		for i := range vmRestoreBlockDisks {
+			rebased, ok := virshcli.RebaseZvolDatasetPool(vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
+			if !ok {
+				return vmRestorePlan{}, &zvolRebaseErr{msg: fmt.Sprintf("restore vm: %q: cannot rebase zvol dataset %q onto destination pool %q", name, vmRestoreBlockDisks[i].SourceDataset, destZvolPool)}
+			}
+			vmRestoreBlockDisks[i].RestoreBaseDataset = rebased
+		}
 	}
 
 	// preDefine writes the captured NVRAM/TPM state back to the host over SSH
@@ -6987,7 +7602,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		}
 	}
 	rkey := "vm:" + name
-	rctx := s.progBegin(ctx, rkey, "restore")
+	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
 	rerr := backup.RestoreVM(rctx, backup.VMRestoreDeps{
 		Confirmed:    true, // prepareRestoreVM rejected unconfirmed requests
 		Name:         name,
@@ -7014,7 +7629,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
 	}
-	s.progEnd(rkey, "restore", rerr == nil)
+	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	return rerr
 }
 
@@ -7038,6 +7653,9 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 	bctx := context.WithoutCancel(ctx)
 	key := "vm:" + name // the exact progBegin key executeRestoreVM publishes under
 	go func() {
+		defer s.recoverOperation("restore vm: "+name, nil, func(msg string) {
+			s.failStuckRun(plan.targetID, msg)
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -7151,7 +7769,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	// Healthchecks /start ping: deferred to here, past the /boot-mounted + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "flash")
-	fctx := s.progBegin(ctx, "flash", "backup")
+	fctx, startedAt := s.progBegin(ctx, "flash", "backup")
 	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
@@ -7159,7 +7777,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
-	s.progEnd("flash", "backup", err == nil)
+	s.progEnd("flash", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -7205,8 +7823,8 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	// dashboard activity log WHILE it writes, not only after (#109). The terminal
 	// event is deferred so any failure path above clears the live line. A disabled
 	// export publishes nothing (nothing ran) — hence below the guard.
-	s.progBegin(ctx, "export:flash", "maintenance")
-	defer func() { s.progEnd("export:flash", "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, "export:flash", "maintenance")
+	defer func() { s.progEnd("export:flash", "maintenance", err == nil, startedAt) }()
 	runID, rErr := s.store.StartRun(store.FlashTargetID, "export")
 	if rErr != nil {
 		log.Printf("api: flash zip export: could not start run record (continuing): %v", rErr)
@@ -7357,7 +7975,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "files")
 	key := "files:" + set.Name
-	fctx := s.progBegin(ctx, key, "backup")
+	fctx, startedAt := s.progBegin(ctx, key, "backup")
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
 		SourceDir: src,
 		Repo:      repo,
@@ -7367,7 +7985,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
-	s.progEnd(key, "backup", err == nil)
+	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -7711,6 +8329,13 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 	bctx := context.WithoutCancel(ctx)
 	rkey := "files:" + plan.setName // the exact progBegin key this restore publishes under
 	go func() {
+		var runID string // see StartRestoreFiles's identical goroutine for why this is declared here
+		defer s.recoverOperation("restore file set: "+id, nil, func(msg string) {
+			// A panic is a genuine failure, never restic.ErrRestoreMetadataOnly, so
+			// finishRestoreRun directly (bypassing concludeFileSetRestore's
+			// metadata-only downgrade) is the correct, simpler call here.
+			s.finishRestoreRun(runID, "", errors.New(msg))
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -7718,10 +8343,10 @@ func (s *Service) StartRestoreFileSet(ctx context.Context, id, snapshotID, sourc
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRunForTarget(plan.setID)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		runID = s.beginRestoreRunForTarget(plan.setID)
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFileSet(pctx, plan)
-		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
+		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt); err != nil {
 			log.Printf("api: restore file set: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
@@ -7958,6 +8583,10 @@ func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snap
 	bctx := context.WithoutCancel(ctx)
 	rkey := "files:" + plan.setName // the exact progBegin key this restore publishes under
 	go func() {
+		var runID string // see StartRestoreFiles's identical goroutine for why this is declared here
+		defer s.recoverOperation("restore file set files: "+id, nil, func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore
+		})
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -7965,10 +8594,10 @@ func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snap
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID := s.beginRestoreRunForTarget(plan.setID)
-		pctx := s.progBegin(rctx, rkey, "restore")
+		runID = s.beginRestoreRunForTarget(plan.setID)
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		rerr := s.runRestoreFileSetFiles(pctx, plan)
-		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr); err != nil {
+		if err := s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt); err != nil {
 			log.Printf("api: restore file set files: %q failed: %v", plan.setName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
@@ -7986,6 +8615,17 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
 	settings, repo, err := s.domainRepo("files")
 	if err != nil {
 		return err
+	}
+	// Issue #152: refused when this repo IS a remote primary flagged append-only
+	// in its saved safety settings (same gate as pruneDomain/DeleteSnapshot/
+	// DeleteBackupsVM) — this function has no source parameter, so it always
+	// targets the primary/local repo and only the primary half of the gate
+	// applies (there is no separate off-site source to check here). This path
+	// runs Forget with prune=true, so skipping it here would have let a
+	// compromised on-box credential irreversibly reclaim space on an immutable
+	// primary.
+	if s.primaryIsImmutable("files", repo) {
+		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return err
@@ -8126,7 +8766,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	// Healthchecks /start ping: deferred to here, past staging + EnsureRepo guards,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "config")
-	fctx := s.progBegin(ctx, "config", "backup")
+	fctx, startedAt := s.progBegin(ctx, "config", "backup")
 	sum, err := backup.BackupConfig(fctx, backup.ConfigBackupDeps{
 		SourceDir: stagingDir,
 		Repo:      repo,
@@ -8134,7 +8774,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
 		Runs:      runsAdapter{s.store},
 	})
-	s.progEnd("config", "backup", err == nil)
+	s.progEnd("config", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
 	if err != nil {
 		return backup.Summary{}, err
@@ -8407,6 +9047,42 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 // IS scheduled the guard is held until the container goes down (so nothing new can
 // start in the restart window); if the restart later fails, ScheduleSelfRestart
 // releases the guard so operations can resume.
+//
+// Unlike the other Start* restores in this file, this one does NOT hand the actual
+// restore off to a detached background goroutine and return immediately: the
+// caller (Recovery.tsx's restore-own-config step) needs the real staged/autoRestart
+// outcome synchronously to decide whether to poll for the self-restart or show the
+// manual-restart instructions, and a fire-and-forget response here would make the
+// SPA wait on a restart that may never come if the (now invisible) background
+// restore fails. Instead it borrows RunRestoreDrill's approach: RestoreConfig still
+// runs on THIS goroutine, but against a context detached from ctx
+// (context.WithoutCancel) and capped by restoreTimeout — so a browser tab close or
+// reverse-proxy idle timeout on the HTTP request can no longer reach into restic
+// and kill a still-in-flight restore mid-write. This does NOT mean a truncated
+// restore corrupts the live config on the next boot's swap: selfrestore.ApplyPending
+// is marker-gated and runs validSQLite (PRAGMA quick_check) on the staged DB BEFORE
+// touching the live one, moving a bad/truncated staged DB to <root>.bad and leaving
+// the live DB untouched — the swap was never blind. The real, narrower residual risk
+// (pre-existing, not introduced by this fix) is that RestoreConfig clears the
+// staging dir on entry but never clears a stale marker: a successful restore #1
+// (autoRestart=false, so the marker sits pending until a manual restart) followed
+// by a FAILED restore #2 can leave that old marker pointing at restore #2's partial
+// staging. validSQLite still catches a truncated bombvault.sqlite, but not a
+// complete DB sitting beside a truncated rclone.conf or a partial ssh/ directory —
+// ApplyPending only checks fileExists/dirExists for those, not their content, so
+// that combination would still get swapped in. This fix reduces how often that
+// window is hit (fewer restores now get killed mid-write) but doesn't close it;
+// closing it fully is out of scope here. Separately: on a client disconnect during
+// a config restore, the restore now runs to completion and self-restarts
+// server-side, but the SPA's fetch rejects into its error branch and reports a
+// failure to the user anyway — a real but minor reporting gap (not a correctness
+// bug), also out of scope: closing it would mean moving outcome reporting off the
+// synchronous HTTP response (e.g. polling or SSE), a bigger refactor than detaching
+// the context. A panic anywhere in this call graph is now recovered like every
+// other manual op on this branch: since RestoreConfig's own run-record id is local
+// to it (never returned here), the fallback is FailRunningRun keyed by
+// store.ConfigTargetID — the same fallback StartBackupConfig's sibling goroutine
+// already uses for this domain.
 func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source string) (started bool, autoRestart bool, err error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, false, nil
@@ -8415,7 +9091,18 @@ func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source str
 		s.batchActive.Store(false)
 		return false, false, fmt.Errorf("%s is running on config", op)
 	}
-	if rerr := s.RestoreConfig(ctx, snapshotID, source); rerr != nil {
+	// On a recovered panic the guard must ALSO be released here: unlike the
+	// success path below, nothing else is left running that would release it, and
+	// every future backup/restore would otherwise refuse forever with "already
+	// running".
+	defer s.recoverOperation("restore config: "+store.ConfigTargetID, &err, func(msg string) {
+		s.batchActive.Store(false)
+		s.failStuckRun(store.ConfigTargetID, msg)
+	})
+	bctx := context.WithoutCancel(ctx)
+	rctx, cancel := context.WithTimeout(bctx, restoreTimeout)
+	defer cancel()
+	if rerr := s.RestoreConfig(rctx, snapshotID, source); rerr != nil {
 		s.batchActive.Store(false)
 		return false, false, rerr
 	}
@@ -8648,8 +9335,8 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	// verify shows up on the dashboard activity log/run history instead of running
 	// invisibly.
 	vkey := "verify:" + domain
-	s.progBegin(ctx, vkey, "maintenance")
-	defer func() { s.progEnd(vkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
+	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
 	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -8794,8 +9481,8 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	// finished (#109). The terminal event is deferred so an error/panic can never
 	// leave a stuck live line.
 	dkey := "drill:" + domain
-	s.progBegin(ctx, dkey, "maintenance")
-	defer func() { s.progEnd(dkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, dkey, "maintenance")
+	defer func() { s.progEnd(dkey, "maintenance", err == nil, startedAt) }()
 
 	mode := s.ModeFor(settings)
 	// An initialised-but-empty repo (no snapshots) has nothing to verify. Treat it
@@ -8957,8 +9644,8 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// the local read-back check. The terminal event is deferred so an error/panic
 	// can never leave a stuck live line.
 	dkey := "drdrill:" + domain
-	s.progBegin(ctx, dkey, "maintenance")
-	defer func() { s.progEnd(dkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, dkey, "maintenance")
+	defer func() { s.progEnd(dkey, "maintenance", err == nil, startedAt) }()
 
 	// Detach from the request/scheduler ctx for the whole drill: a real DR restore
 	// can take hours over a slow off-site link, and a browser tab close (request
@@ -9330,7 +10017,7 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	}
 	msg := fmt.Sprintf("Restore verification of %s (%s) FAILED — the backup may not be restorable: %s", target, source, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: restore verification FAILED", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -9631,8 +10318,8 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	mode := s.ModeFor(settings)
 
 	pkey := "prune:" + domain
-	s.progBegin(ctx, pkey, "maintenance")
-	defer func() { s.progEnd(pkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
+	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
 	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -9698,6 +10385,14 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	// off-site history. The local repo is unaffected. Per-target: bare "offsite"
 	// uses the primary target's flag (== today), "offsite:<id>" that target's.
 	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, domain, source) {
+		return errOffsiteAppendOnly
+	}
+	// Issue #152: the SAME refusal applies when the "local" source IS actually a
+	// remote primary flagged append-only in its saved safety settings (same gate
+	// as pruneDomain) — there is no separate off-site copy in that shape, so
+	// refusing here is the only thing standing between an on-box credential and
+	// deleting backup history.
+	if !isOffsiteSource(source) && s.primaryIsImmutable(domain, repo) {
 		return errOffsiteAppendOnly
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
@@ -10373,7 +11068,7 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	// Honour the same policy: notifyBackup already returned for "never", so send
 	// on "always" or on any failure. In scheduled summary mode, drop the per-item
 	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) &&
+	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
@@ -10439,7 +11134,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	// warning must reach the user even in summary mode (like the update notice).
 	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers",
 		notify.Event{Title: "BombVault: backup target skipped", Message: msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: backup target skipped", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
@@ -10552,7 +11247,7 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 	// an all-success summary out under On="failure").
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain,
 		notify.Event{Title: "BombVault", Message: summary, OK: ok})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid && (c.On == "always" || !ok) {
+	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) {
 		level := "normal"
 		if !ok {
 			level = "warning"
@@ -10618,7 +11313,7 @@ func (s *Service) TestNotify(ctx context.Context, c notify.Config) error {
 		// non-Unraid platform gets a clear, immediate refusal instead of an SSH
 		// attempt that could only fail on the far end.
 		if s.platformFn().Kind() != platform.KindUnraid {
-			return errors.New("unraid: the Unraid notification channel is only available when BombVault detects an Unraid host")
+			return fmt.Errorf("unraid: %w", s.unraidPlatformMismatchError("the Unraid notification channel"))
 		}
 		if err := s.sendUnraidNotify(ctx, "BombVault test notification",
 			"If you see this in Unraid, BombVault notifications are working.", "normal"); err != nil {

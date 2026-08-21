@@ -531,6 +531,68 @@ func TestSettingsPutImmutableRetentionWarning(t *testing.T) {
 	}
 }
 
+// TestSettingsPutAcceptsDrDrillTargetVmWithSpace pins the fix for the finding
+// that handlePutSettings validated settings.drDrillTargetVm with
+// validResourceName (charset [A-Za-z0-9._-], which rejects spaces) instead of
+// validVMName (the libvirt-aware validator that correctly allows them) — the
+// identical bug class already fixed at handleSetVmBackupOrder for the VM
+// ordering list (#127), never carried over to this adjacent, similar check. A
+// VM named "Windows 11" must now save; a genuinely unsafe value must still be
+// refused.
+func TestSettingsPutAcceptsDrDrillTargetVmWithSpace(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"drDrillTargetVm": "Windows 11"
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK {
+		t.Fatalf("put status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("a VM name with a space must be accepted (validVMName, not validResourceName), got %v", m)
+	}
+
+	// GET reflects the saved value.
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status = %d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	if settings["drDrillTargetVm"] != "Windows 11" {
+		t.Fatalf("expected the saved DR-drill target to round-trip, got %v", settings["drDrillTargetVm"])
+	}
+
+	// Control: a genuinely unsafe value (path traversal) must still be refused —
+	// the fix must not have widened the check into a no-op.
+	badBody := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"drDrillTargetVm": "../etc/passwd"
+	}`
+	w, m = doJSON(t, h, http.MethodPut, "/api/settings", badBody)
+	if w.Code != http.StatusOK {
+		t.Fatalf("put status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != false {
+		t.Fatalf("a path-traversal-shaped VM name must still be refused, got %v", m)
+	}
+}
+
 func TestSettingsPutRejectsBadCadence(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})
