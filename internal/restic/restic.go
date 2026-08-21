@@ -1128,6 +1128,21 @@ var reasonPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 // without risking a false NEGATIVE on a real credential wasn't obvious to
 // construct safely, so this is accepted as a known tradeoff rather than
 // forced.
+//
+// There is also a real, separate false NEGATIVE, pre-existing and independent
+// of the false positive above: a password containing an unencoded "/" is only
+// partially caught. credentialRe's password class excludes "/", and by the
+// time it runs, scrubSecrets' path pass has already consumed the credential's
+// leading "//...@" span as an ordinary path token (see scrubSecrets' doc
+// comment for why paths must run first) — leaving no "@" left for
+// credentialRe to anchor on, so its "[redacted]@" marker never fires at all.
+// Depending on where the "/" falls inside the password, a fragment of the
+// actual secret survives in the clear: e.g.
+// "rest:https://user:wJalrXUtnFEMI/K7MDENG@host:8000/repo" scrubs to
+// "rest:https:[path]:wJalrXUtnFEMI[path]:8000[path]" — the username and the
+// back half of the password vanish as unlabeled path noise, but
+// "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
+// text. A password with no embedded "/" is unaffected.
 var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
 
 // scrubSecrets strips absolute-path-like tokens and then URL-embedded

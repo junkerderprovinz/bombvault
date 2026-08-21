@@ -5366,14 +5366,20 @@ func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr er
 // truncateRunErr scrubs and bounds an error message so it fits the
 // runs.error_message column (mirrors the orchestrator's truncateErr).
 //
-// This ALWAYS applies scrubSecrets, not just for restic-originated errors.
-// The restic adapter's own lastReason already scrubs before this ever sees
-// the message, so for those callers scrubSecrets runs a harmless second time
-// on already-clean text (scrubbing an already-scrubbed string is a no-op).
-// But not every caller of this function goes through restic first: tamper.go's
-// tamperProbe can surface a raw url.Parse error — url.Error's Error() embeds
-// the full, UNPARSED input URL verbatim, credentials and all — when a repo's
-// URL fails to parse into an *http.Request, and primary_remote.go's
+// This applies scrubSecrets to every error EXCEPT the sentinel types
+// scrubBypassMessage (handlers.go) already carves out for scrubError — those
+// pass through completely unscrubbed instead, for the identical reason
+// scrubError itself bypasses them: the path-shaped content in their message
+// (a host:port conflict list, a ZFS dataset name, /boot vs /host/boot, …) IS
+// the actionable content, not a leak. Every other error is scrubbed
+// unconditionally, not just restic-originated ones. The restic adapter's own
+// lastReason already scrubs before this ever sees the message, so for those
+// callers scrubSecrets runs a harmless second time on already-clean text
+// (scrubbing an already-scrubbed string is a no-op). But not every caller of
+// this function goes through restic first: tamper.go's tamperProbe can
+// surface a raw url.Parse error — url.Error's Error() embeds the full,
+// UNPARSED input URL verbatim, credentials and all — when a repo's URL fails
+// to parse into an *http.Request, and primary_remote.go's
 // RunPrimaryTamperTest hits the exact same code path for a domain's remote
 // PRIMARY. Truncating without scrubbing FIRST let that raw URL (with any
 // embedded "user:pass@") reach runs.error verbatim, and from there the UI
@@ -5383,11 +5389,30 @@ func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr er
 // forwarded it unscrubbed. Scrubbing HERE, at the one function that writes
 // runs.error, protects all three downstream readers at once and doesn't rely
 // on finding every current AND FUTURE non-restic call site individually.
+//
+// An earlier version of this function scrubbed EVERYTHING unconditionally,
+// including the sentinel-tagged errors above, on the theory that running the
+// scrub regexes over already-clean text is a harmless no-op. That was false
+// for exactly these sentinels: scrubSecrets' path regex matches ANY
+// slash-containing token, not just a filesystem path, so routing them through
+// unconditionally silently mangled the very content scrubError's bypasses
+// exist to protect — e.g. turning "host port 8080/tcp is already used by
+// container ..." into "host port 8080[path] is already used ..." and eating
+// a zvol rebase failure's ZFS dataset name the same way — even though the
+// SAME underlying error survives intact when it goes through scrubError
+// instead. Checking scrubBypassMessage first closes that gap without
+// reimplementing scrubError's bypass logic a second, independently-drifting
+// time.
 func truncateRunErr(err error) string {
 	if err == nil {
 		return ""
 	}
-	msg := scrubSecrets(err.Error())
+	msg := err.Error()
+	if bypass, ok := scrubBypassMessage(err); ok {
+		msg = bypass
+	} else {
+		msg = scrubSecrets(msg)
+	}
 	const max = 500
 	if len(msg) > max {
 		return msg[:max]

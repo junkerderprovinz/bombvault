@@ -2,6 +2,7 @@ package backup
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -67,6 +68,31 @@ func TestTruncateErrPreservesHostname(t *testing.T) {
 	}
 	if !strings.Contains(got, "storage.example.com") {
 		t.Fatalf("truncateErr destroyed the hostname an operator needs to diagnose which target failed, got %q", got)
+	}
+}
+
+// TestTruncateErrBypassesRestoreConflict is the regression test for the
+// finding that truncateErr used to run EVERY error through scrubRunErr
+// unconditionally, on the false theory that scrubbing already-clean text is a
+// harmless no-op. ErrRestoreConflict's message is a perfect counterexample:
+// checkRestoreConflicts' host:port conflict list ("host port 8080/tcp is
+// already used by container ...") is already user-safe, but contains "/",
+// which runErrPathRe mistakes for a filesystem path. Before
+// restoreConflictBypass, this exact error — produced by
+// checkRestoreConflicts, in this same package — reached runs.error_message
+// via orchestrator.go's Restore path with its port numbers mangled into
+// "[path]", even though the identical error survives intact through the api
+// package's scrubError.
+func TestTruncateErrBypassesRestoreConflict(t *testing.T) {
+	err := fmt.Errorf("%w — free these and retry: %s", ErrRestoreConflict,
+		`host port 8080/tcp is already used by container "other-app"`)
+
+	got := truncateErr(err)
+	if strings.Contains(got, "[path]") {
+		t.Fatalf("truncateErr mangled the restore-conflict text into [path], got %q", got)
+	}
+	if !strings.Contains(got, "8080/tcp") {
+		t.Fatalf("truncateErr must preserve the literal host:port conflict text, got %q", got)
 	}
 }
 

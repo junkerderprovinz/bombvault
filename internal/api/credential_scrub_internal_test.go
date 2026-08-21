@@ -2,8 +2,11 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
 // TestScrubErrorScrubsURLCredentials pins the fix for the finding that
@@ -60,6 +63,109 @@ func TestScrubErrorScrubsNumericUsername(t *testing.T) {
 	}
 	if !strings.Contains(got, "unable to open repository") {
 		t.Fatalf("scrubError should keep the actual cause, got %q", got)
+	}
+}
+
+// TestTruncateRunErrScrubsCredentials pins that truncateRunErr's bypass-first
+// rework (scrubBypassMessage) did not weaken the tamper-leak fix it sits
+// alongside: an ordinary, non-sentinel error carrying a raw URL credential
+// must still come out scrubbed, exactly like scrubError.
+func TestTruncateRunErrScrubsCredentials(t *testing.T) {
+	err := errors.New(`unable to open repository at rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers: repository does not exist`)
+	got := truncateRunErr(err)
+	if strings.Contains(got, "Tr0ub4dor") {
+		t.Fatalf("truncateRunErr leaked the repo password, got %q", got)
+	}
+	if strings.Contains(got, "backupuser") {
+		t.Fatalf("truncateRunErr leaked the repo username, got %q", got)
+	}
+	if !strings.Contains(got, "unable to open repository") {
+		t.Fatalf("truncateRunErr should keep the actual cause, got %q", got)
+	}
+}
+
+// TestTruncateRunErrBypassesRestoreConflict is the regression test for the
+// finding that truncateRunErr used to run EVERY error through scrubSecrets
+// unconditionally, on the false theory that scrubbing already-clean text is a
+// harmless no-op. backup.ErrRestoreConflict's message is a perfect
+// counterexample: scrubError has always bypassed it (see scrubBypassMessage)
+// specifically because its host:port conflict list contains "/" (as in
+// "8080/tcp") that absPathRe mistakes for a filesystem path. truncateRunErr
+// had no equivalent bypass, so the SAME error that survives scrubError intact
+// used to reach runs.error_message with its port numbers mangled.
+func TestTruncateRunErrBypassesRestoreConflict(t *testing.T) {
+	err := fmt.Errorf("%w — free these and retry: %s", backup.ErrRestoreConflict,
+		`host port 8080/tcp is already used by container "other-app"`)
+
+	// Confirm scrubError already treats this as safe-verbatim (the baseline
+	// truncateRunErr must now match).
+	if got := scrubError(err); strings.Contains(got, "[path]") {
+		t.Fatalf("test setup: scrubError itself mangled the conflict text, got %q — fix the fixture", got)
+	}
+
+	got := truncateRunErr(err)
+	if strings.Contains(got, "[path]") {
+		t.Fatalf("truncateRunErr mangled the restore-conflict text into [path], got %q", got)
+	}
+	if !strings.Contains(got, "8080/tcp") {
+		t.Fatalf("truncateRunErr must preserve the literal host:port conflict text, got %q", got)
+	}
+}
+
+// TestTruncateRunErrBypassesZvolRebaseFailed is the same regression, for the
+// other sentinel this exact review round is about: a zvol-rebase failure
+// names a ZFS dataset ("<pool>/<rest>"), which necessarily contains "/". This
+// mirrors TestPrepareRestoreVMCrossInstanceZvolRebaseFailureBypassesScrubber's
+// scrubError assertion (foreign_vm_restore_internal_test.go), but for
+// truncateRunErr — the run-bookkeeping path that error also travels through
+// via recordContainerFailure/finishRestoreRun-style callers.
+func TestTruncateRunErrBypassesZvolRebaseFailed(t *testing.T) {
+	err := fmt.Errorf("rebase dataset %q onto pool %q: %w", "tank/vms/zvolvm/disk1", "-badpool", errZvolRebaseFailed)
+
+	if got := scrubError(err); strings.Contains(got, "[path]") {
+		t.Fatalf("test setup: scrubError itself mangled the dataset name, got %q — fix the fixture", got)
+	}
+
+	got := truncateRunErr(err)
+	if strings.Contains(got, "[path]") {
+		t.Fatalf("truncateRunErr mangled the ZFS dataset name into [path], got %q", got)
+	}
+	if !strings.Contains(got, "tank/vms/zvolvm/disk1") {
+		t.Fatalf("truncateRunErr must preserve the literal ZFS dataset name, got %q", got)
+	}
+}
+
+// TestTruncateRunErrDockerDaemonUnreachableStillScrubbed documents a THIRD
+// slash-heavy operator-facing shape this same review round raised (a Docker
+// connectivity failure naming its socket path, e.g. "Cannot connect to the
+// Docker daemon at unix:///var/run/docker.sock" — the exact fixture
+// TestBackupRecordsFailedRunOnPreflightFault, backup_failure_recorded_test.go,
+// uses for its "inspect fault" case, reaching truncateRunErr via
+// recordContainerFailure). Unlike the 8080/tcp and ZFS-dataset cases above,
+// this text is NOT wrapped in any of scrubError's 5 sentinel-bypass types —
+// nothing in this codebase tags a raw Docker-daemon-unreachable error that
+// way — so scrubBypassMessage correctly does NOT exempt it, and it is still
+// scrubbed post-fix exactly as it was before and exactly as scrubError itself
+// would scrub the identical text. This is intentional parity, not a residual
+// bug: extending the bypass to arbitrary slash-heavy text (rather than only
+// the named sentinels) would reopen exactly the kind of unreviewed bypass
+// surface this fix was careful to avoid. Pinned here so a future change to
+// scrubBypassMessage can't silently start (or stop) exempting this shape
+// without a test noticing.
+func TestTruncateRunErrDockerDaemonUnreachableStillScrubbed(t *testing.T) {
+	err := fmt.Errorf("inspect container: %w", errors.New("Cannot connect to the Docker daemon at unix:///var/run/docker.sock"))
+
+	got := truncateRunErr(err)
+	if strings.Contains(got, "unix:///var/run/docker.sock") {
+		t.Fatalf("expected the socket path to still be scrubbed (parity with scrubError), got %q", got)
+	}
+	if !strings.Contains(got, "Cannot connect to the Docker daemon") {
+		t.Fatalf("truncateRunErr should keep the actual cause, got %q", got)
+	}
+	// Parity check: scrubError must treat the identical input identically —
+	// truncateRunErr must never diverge from scrubError in EITHER direction.
+	if want, gotScrub := scrubError(err), got; want != gotScrub {
+		t.Fatalf("truncateRunErr and scrubError diverged on a non-bypassed error: scrubError=%q truncateRunErr=%q", want, gotScrub)
 	}
 }
 

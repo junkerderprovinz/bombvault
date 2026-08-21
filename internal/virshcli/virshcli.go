@@ -43,10 +43,11 @@ var absPathRe = regexp.MustCompile(`(/[^\s:'"]+)+`)
 // apply to their own surfaced errors (see restic.go's credentialRe doc
 // comment for the full reasoning: the username class, why it covers a
 // fully-numeric username, the known Docker-digest-style false-positive
-// tradeoff, and why it runs AFTER absPathRe rather than before). Applied here
-// too, for the parity this package's own doc comment above already claims,
-// even though a libvirt "qemu+ssh://user@host/system" URI doesn't normally
-// carry a password.
+// tradeoff, the known unencoded-"/"-in-password false-negative tradeoff, and
+// why it runs AFTER absPathRe rather than before). Applied here too, for the
+// parity this package's own doc comment above already claims, even though a
+// libvirt "qemu+ssh://user@host/system" URI doesn't normally carry a
+// password.
 var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
 
 // run executes virsh with the given arguments. It returns the trimmed stdout
