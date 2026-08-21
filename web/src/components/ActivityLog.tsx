@@ -55,28 +55,44 @@ function glyphFor(status: LogStatus): string {
 // running so a log line reads as the same colour language as the rest of the
 // app (#66-style shared vocabulary), not a new palette.
 //
-// "running"/"offsite" (Task 7: resolve the fifth hue) — was text-statusInfo,
-// the old fifth hue. Both mean genuine activity happening right now, so
-// accent-derived text — but plain colour on text in a scrolling list, never
-// a solid fill: this log routinely shows several "running"/"offsite" lines
-// at once (independent domains backing up concurrently all merge into one
-// list), and rule 3's "at most one solid accent" cap is specifically about
-// SOLID accent claiming the page's one primary-action weight. Coloured text
-// reads at the same register as the success/failed lines right next to it.
-// text-accentText, not the flat text-accent: this same commit's spec-
-// compliance follow-up found the flat accent gold measures ~1.6:1 in light
-// theme against this log's surfaces — badly under the 4.5:1 text minimum
-// (dark theme is fine). Same fix as Recovery.tsx's identical pattern; see
-// index.css's --accent-text comment for the measured numbers.
-function colorFor(status: LogStatus): string {
+// "running" (Task 7: resolve the fifth hue) — was text-statusInfo, the old
+// fifth hue. It means genuine activity happening right now, so accent-derived
+// text — but plain colour on text in a scrolling list, never a solid fill:
+// this log routinely shows several "running" lines at once (independent
+// domains backing up concurrently all merge into one list), and rule 3's "at
+// most one solid accent" cap is specifically about SOLID accent claiming the
+// page's one primary-action weight. Coloured text reads at the same register
+// as the success/failed lines right next to it. text-accentText, not the flat
+// text-accent: that same commit's spec-compliance follow-up found the flat
+// accent gold measures ~1.6:1 in light theme against this log's surfaces —
+// badly under the 4.5:1 text minimum (dark theme is fine). Same fix as
+// Recovery.tsx's identical pattern; see index.css's --accent-text comment for
+// the measured numbers.
+//
+// "offsite" (issue #164) — deliberately NOT the accent, and split back out of
+// the "running" arm Task 7 merged it into. Task 7's stated premise was "both
+// mean genuine activity happening right now"; for this status that is simply
+// false. lib/activityLog.ts's finishedLineText returns status "offsite" for a
+// FINISHED, successful replication run ("Off-site replication done —
+// Containers (4m 17s)"), so the merged arm painted completed runs with the
+// "in progress" accent — and, because colorFor("info") is text-statusWarn
+// #f1c21b and the default accent is #FCC419 (~11 RGB / 1.05:1 apart, see
+// index.css's --status-warn-text KNOWN LIMITATION), it also made off-site
+// lines and info lines near-indistinguishable amber in the same log, which is
+// exactly the glance value #164 reported losing. text-statusOffsite is a
+// DOMAIN IDENTITY colour for one job type, not a resurrected fifth state hue
+// — index.css's --color-statusOffsite comment has the full reasoning and the
+// pairing note for internal/api/widget.html, which hard-codes the same hex.
+export function colorFor(status: LogStatus): string {
   switch (status) {
     case "success":
       return "text-statusOk";
     case "failed":
       return "text-statusFail";
     case "running":
-    case "offsite":
       return "text-accentText";
+    case "offsite":
+      return "text-statusOffsite";
     case "info":
       return "text-statusWarn";
   }
