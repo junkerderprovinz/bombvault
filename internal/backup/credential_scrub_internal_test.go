@@ -79,7 +79,7 @@ func TestTruncateErrPreservesHostname(t *testing.T) {
 // already used by container ...") is already user-safe, but contains "/",
 // which runErrPathRe mistakes for a filesystem path. Before
 // restoreConflictBypass, this exact error — produced by
-// checkRestoreConflicts, in this same package — reached runs.error_message
+// checkRestoreConflicts, in this same package — reached runs.error
 // via orchestrator.go's Restore path with its port numbers mangled into
 // "[path]", even though the identical error survives intact through the api
 // package's scrubError.

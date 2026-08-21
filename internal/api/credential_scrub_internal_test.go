@@ -92,7 +92,7 @@ func TestTruncateRunErrScrubsCredentials(t *testing.T) {
 // specifically because its host:port conflict list contains "/" (as in
 // "8080/tcp") that absPathRe mistakes for a filesystem path. truncateRunErr
 // had no equivalent bypass, so the SAME error that survives scrubError intact
-// used to reach runs.error_message with its port numbers mangled.
+// used to reach runs.error with its port numbers mangled.
 func TestTruncateRunErrBypassesRestoreConflict(t *testing.T) {
 	err := fmt.Errorf("%w — free these and retry: %s", backup.ErrRestoreConflict,
 		`host port 8080/tcp is already used by container "other-app"`)

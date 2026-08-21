@@ -5364,7 +5364,7 @@ func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr er
 }
 
 // truncateRunErr scrubs and bounds an error message so it fits the
-// runs.error_message column (mirrors the orchestrator's truncateErr).
+// runs.error column (mirrors the orchestrator's truncateErr).
 //
 // This applies scrubSecrets to every error EXCEPT the sentinel types
 // scrubBypassMessage (handlers.go) already carves out for scrubError — those
