@@ -179,8 +179,8 @@ describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
   });
 });
 
-describe("OffsiteIndicator — live snapshot/percent (issue #159's real percentage)", () => {
-  it("shows a live snapshot-of-total percentage once the backend reports one", () => {
+describe("OffsiteIndicator — live run-level percentage (issue #159's real percentage)", () => {
+  it("shows a run-level percentage once the backend reports a snapshot index/total", () => {
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
       lastInstance().emit({
@@ -192,10 +192,48 @@ describe("OffsiteIndicator — live snapshot/percent (issue #159's real percenta
         snapshotTotal: 4,
       });
     });
-    expect(screen.getByText(/Replicating snapshot 2 of 4 \(63%\)/)).toBeTruthy();
+    expect(screen.getByText(/Replicating… 41% overall \(snapshot 2 of 4\)/)).toBeTruthy();
   });
 
-  it("combines the live percentage with the elapsed duration", () => {
+  // End-to-end version of the case reported on #159: the numbers from that
+  // screenshot must render as RUN progress (~12%), not as the current
+  // snapshot's own pack progress (55%) sitting where a run percentage reads.
+  it("renders the reported 15-of-126-at-55% frame as ~12% overall, never 55%", () => {
+    render(<OffsiteIndicator domain="containers" />);
+    act(() => {
+      lastInstance().emit({
+        key: "offsite:containers",
+        phase: "replicate",
+        percent: 55,
+        active: true,
+        snapshotIndex: 15,
+        snapshotTotal: 126,
+      });
+    });
+    expect(screen.getByText(/Replicating… 12% overall \(snapshot 15 of 126\)/)).toBeTruthy();
+    expect(document.body.textContent).not.toContain("55%");
+  });
+
+  // snapshotTotal 0/absent is the backend's honest "could not estimate" (see
+  // api.progBeginCopySink). No denominator, so no run-level claim at all.
+  it("falls back to the duration readout when no snapshot total was reported", () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    render(<OffsiteIndicator domain="containers" />);
+    act(() => {
+      lastInstance().emit({
+        key: "offsite:containers",
+        phase: "replicate",
+        percent: 55,
+        active: true,
+        startedAt: nowSec,
+        snapshotIndex: 15,
+      });
+    });
+    expect(screen.getByText(/Replicating…\s*\(0s\)/)).toBeTruthy();
+    expect(document.body.textContent).not.toContain("overall");
+  });
+
+  it("combines the run-level percentage with the elapsed duration", () => {
     const nowSec = Math.floor(Date.now() / 1000);
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
@@ -209,7 +247,7 @@ describe("OffsiteIndicator — live snapshot/percent (issue #159's real percenta
         snapshotTotal: 1,
       });
     });
-    expect(screen.getByText(/Replicating snapshot 1 of 1 \(10%\).*0s/)).toBeTruthy();
+    expect(screen.getByText(/Replicating… 10% overall \(snapshot 1 of 1\).*0s/)).toBeTruthy();
   });
 
   it("a single-snapshot run still renders correctly (not misread as 'unknown')", () => {
@@ -224,6 +262,29 @@ describe("OffsiteIndicator — live snapshot/percent (issue #159's real percenta
         snapshotTotal: 1,
       });
     });
-    expect(screen.getByText(/Replicating snapshot 1 of 1 \(80%\)/)).toBeTruthy();
+    expect(screen.getByText(/Replicating… 80% overall \(snapshot 1 of 1\)/)).toBeTruthy();
+  });
+
+  // The percentage counts SNAPSHOTS against a best-effort estimate, not bytes.
+  // That caveat rides an (i) rather than the line itself, and must appear only
+  // in the tier that actually shows a percentage.
+  it("attaches the estimate info bubble only while a run-level percentage is shown", () => {
+    render(<OffsiteIndicator domain="containers" />);
+    act(() => {
+      lastInstance().emit({ key: "offsite:containers", phase: "replicate", percent: 0, active: true });
+    });
+    expect(document.querySelector('[aria-label^="Overall progress"]')).toBeNull();
+
+    act(() => {
+      lastInstance().emit({
+        key: "offsite:containers",
+        phase: "replicate",
+        percent: 30,
+        active: true,
+        snapshotIndex: 2,
+        snapshotTotal: 4,
+      });
+    });
+    expect(document.querySelector('[aria-label^="Overall progress"]')).not.toBeNull();
   });
 });

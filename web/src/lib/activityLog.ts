@@ -20,7 +20,7 @@
 
 import type { Run, ScheduleNext } from "./api";
 import type { ProgressMap, ProgressState } from "./progress";
-import { STALE_MS } from "./progress";
+import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 
 // ---------------------------------------------------------------------------
@@ -250,18 +250,21 @@ const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | 
  * offsiteLiveLineText picks the honest live-line text for an "offsite:<domain>"
  * progress state (issue #159), mirroring OffsiteIndicator's offsiteStatusText
  * tiering exactly (see that function's doc comment for the full reasoning):
- * a live per-snapshot percentage when available ("… snapshot {index} of
- * {total} ({percent}%)"), else the plain elapsed-duration text, else the bare
- * "running" text. Each tier has its own "WithDuration" sibling key so a live
- * percentage never has to drop the duration.
+ * a RUN-LEVEL percentage when one can honestly be derived ("… {percent}%
+ * overall (snapshot {index} of {total})"), else the plain elapsed-duration
+ * text, else the bare "running" text. Each tier has its own "WithDuration"
+ * sibling key so a live percentage never has to drop the duration.
+ *
+ * The percentage comes from progress.ts's shared offsiteRunProgress so this
+ * line and OffsiteIndicator cannot drift apart on the arithmetic — see that
+ * function for why a raw per-snapshot percentage next to "k of N" is the
+ * defect being fixed here, not the feature.
  */
 function offsiteLiveLineText(resolveName: ResolveName, domain: LogDomain, state: ProgressState, duration: string): string {
   const domainText = domainLabel(resolveName, domain);
-  const index = state.snapshotIndex;
-  const percent = state.percent;
-  if (typeof index === "number" && index > 0 && typeof percent === "number") {
-    const total = Math.max(state.snapshotTotal ?? 0, index);
-    const params = { domain: domainText, index: String(index), total: String(total), percent: String(displayPercent(percent)), duration };
+  const run = offsiteRunProgress(state);
+  if (run) {
+    const params = { domain: domainText, index: String(run.index), total: String(run.total), percent: String(run.percent), duration };
     return duration
       ? resolveName("activityLog.lineOffsiteRunningSnapshotPercentWithDuration", params)
       : resolveName("activityLog.lineOffsiteRunningSnapshotPercent", params);

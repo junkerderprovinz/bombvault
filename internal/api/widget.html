@@ -59,10 +59,27 @@
   .ts { color: #8d8d8d; flex: 0 0 auto; }
   .g  { width: 12px; text-align: center; flex: 0 0 auto; }
   .msg { overflow: hidden; text-overflow: ellipsis; }
-  .ok   { color: #6fdc8c; }
-  .fail { color: #ff8389; }
-  .info { color: #78a9ff; }
-  .idle { color: #f1c21b; }
+  /* Line colours — these MIRROR the SPA's ActivityLog.tsx colorFor(), one
+     class per LogStatus bucket. This file cannot read web/src/index.css's
+     custom properties (it is a standalone, dark-only document served straight
+     from the Go binary), so each hex below is a hard-copy of that file's dark
+     token. That silent pairing is how issue #164 happened: the dashboard's
+     off-site colour moved and this file, frozen at the old value, was never
+     swept. Do not change one side alone —
+     internal/api/widget_internal_test.go's TestWidgetOffsiteColourMatchesToken
+     fails if `.offsite` here and --status-offsite-text there ever drift.
+       .ok      = --status-ok-text
+       .fail    = --status-fail-text
+       .offsite = --status-offsite-text  (off-site replication, its own
+                  identity colour — NOT the accent; see index.css)
+       .info    = --status-warn-text     (skipped / unexpected)
+       .idle    = --status-warn-text     (the trailing "next: …" line, which
+                  the SPA also renders as a status-"info" line) */
+  .ok      { color: #6fdc8c; }
+  .fail    { color: #ff8389; }
+  .offsite { color: #78a9ff; }
+  .info    { color: #f1c21b; }
+  .idle    { color: #f1c21b; }
 
   .tile-footer {
     flex: 0 0 auto;
@@ -157,7 +174,13 @@
     return b === "ok" ? "✓" : b === "fail" ? "✗" :
       b === "offsite" ? "↗" : "ⓘ"; // ✓ ✗ ↗ ⓘ
   }
-  function cls(b) { return b === "ok" ? "ok" : b === "fail" ? "fail" : "info"; }
+  // One class per bucket — deliberately NOT collapsing "offsite" into "info"
+  // (issue #164): before this fix the offsite bucket fell through to `.info`,
+  // so the two shared a colour here and a later edit to `.info` alone could
+  // silently re-break the SPA pairing. See the .offsite rule's comment above.
+  function cls(b) {
+    return b === "ok" ? "ok" : b === "fail" ? "fail" : b === "offsite" ? "offsite" : "info";
+  }
   function other(name, r) { return name + " " + r.kind + " — " + r.status; }
   function lineText(r) {
     var dur = fmtDur(((r.finishedAt != null ? r.finishedAt : r.startedAt) - r.startedAt));
