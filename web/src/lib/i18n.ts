@@ -671,7 +671,10 @@ export const en = {
   "excludes.assistRemoveLine": "Remove exclusion {line}",
 
   // Appearance / Accent
-  "settings.appearance": "Appearance",
+  // ("settings.appearance", the old umbrella Card title, was removed here and
+  // from every locale in the GlimStone follow-up pass — the shared Appearance
+  // Card it titled was split into one Card per sub-topic (live-review point
+  // 5), and nothing else ever read this key.)
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
   // Shape (GlimStone form-engine — shape engine): round/soft/square corner
@@ -686,14 +689,20 @@ export const en = {
   "settings.shape.square": "Square",
   // Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent, plural:
   // an eight-colour palette handed out by list position instead of one
-  // accent everywhere. Wording matches the same keys in KnightLoader, the
-  // other shipped app using this exact mechanism, so the family reads as
-  // one product in every language, not just in English.
-  "settings.rainbow": "Rainbow",
+  // accent everywhere. Originally matched the same keys in KnightLoader (the
+  // other shipped app using this exact mechanism) verbatim; the GlimStone
+  // follow-up pass renamed "settings.rainbow"/"settings.rainbowReactive"/
+  // "settings.rainbowRotate" per live-review feedback (short verb-phrase
+  // labels, their old descriptive sentences moved into InfoBubbles instead —
+  // see Settings.tsx's Rainbow Card comment) — a deliberate, accepted
+  // divergence from KnightLoader's wording, not an oversight.
+  "settings.rainbow": "Rainbow Mode",
   "settings.rainbowHint": "Instead of one accent, a palette of eight handed out by position, so a long list reads as separate rows.",
   "settings.rainbowOn": "Use the palette",
-  "settings.rainbowReactive": "Quiet until touched: colour on hover and on what is running",
-  "settings.rainbowRotate": "Shuffle where the palette starts",
+  "settings.rainbowReactive": "Reactive Mode",
+  "settings.rainbowReactiveHint": "Quiet until touched: colour on hover and on what is running",
+  "settings.rainbowRotate": "Colour Rotation",
+  "settings.rainbowRotateHint": "Shuffle where the palette starts",
   "settings.rainbowPalette": "Palette colour",
   // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
   // toast system; "success"/routine toasts are suppressed, failures never are.
@@ -2064,7 +2073,6 @@ export const de: Translations = {
   "excludes.assistRemoveLine": "Ausschluss {line} entfernen",
 
   // Appearance / Accent
-  "settings.appearance": "Erscheinungsbild",
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
   "settings.shape": "Ecken",
@@ -2072,11 +2080,13 @@ export const de: Translations = {
   "settings.shape.round": "Rund",
   "settings.shape.soft": "Leicht",
   "settings.shape.square": "Eckig",
-  "settings.rainbow": "Regenbogen",
+  "settings.rainbow": "Regenbogen-Modus",
   "settings.rainbowHint": "Statt einer Akzentfarbe acht, nach Position vergeben — eine lange Liste liest sich dann als einzelne Zeilen.",
   "settings.rainbowOn": "Palette verwenden",
-  "settings.rainbowReactive": "Ruhig bis berührt: Farbe beim Überfahren und bei dem, was läuft",
-  "settings.rainbowRotate": "Startfarbe der Palette durchmischen",
+  "settings.rainbowReactive": "Reaktiver Modus",
+  "settings.rainbowReactiveHint": "Ruhig bis berührt: Farbe beim Überfahren und bei dem, was läuft",
+  "settings.rainbowRotate": "Farbenrotation",
+  "settings.rainbowRotateHint": "Startfarbe der Palette durchmischen",
   "settings.rainbowPalette": "Palettenfarbe",
   "settings.quietToasts": "Leise Benachrichtigungen",
   "settings.quietToastsHint": "Zeigt Popup-Hinweise nur bei Fehlern. Routinemäßige Speicher- und Kopierbestätigungen bleiben stumm.",
