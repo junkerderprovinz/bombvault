@@ -404,17 +404,35 @@ function Card({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
-      {/* Task 5 (rule 11): this is Dashboard's own equivalent of Settings.tsx's
-          Card — same Badge-in-<h2> treatment, see Badge.tsx's file header for
-          the tone/size reasoning shared across every converted heading. */}
-      <div className="flex items-center justify-between">
-        <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{title}</Badge>
-        </h2>
-        {action}
+    // GlimStone follow-up pass (live-review round, "half-overlap card
+    // notch"): the heading Badge is now `position: absolute`, straddling
+    // THIS card's own top edge (see Badge.tsx's badgeClassName comment) —
+    // it needs a `relative` ancestor whose edge IS the card's real visual
+    // edge, which the bg-carbon-surface box below can no longer provide on
+    // its own: that box's own `overflow-hidden` (there so a Card containing
+    // a ProgressBar clips the bar's square ends to the card's rounded
+    // corners — see ProgressBar.tsx) would just as happily clip the badge's
+    // own -11px poke above it. So `relative` moves to this new, purely
+    // structural OUTER div (no bg/radius/shadow of its own — all of that
+    // stays on the inner div below), with the badge rendering as its direct
+    // child: it escapes the inner div's clipping entirely while still
+    // measuring its offset against a box whose top edge is pixel-identical
+    // to the visual card's own (this outer div has no padding/border, so it
+    // hugs the inner div exactly).
+    <div className="relative">
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{title}</Badge>
+      </h2>
+      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
+        {/* action used to share a `justify-between` row with the <h2> above,
+            pinned to the row's far end opposite the title. Now that the
+            title lives outside this div entirely, `justify-end` replaces
+            `justify-between` (which needs 2+ items to do anything — with
+            only `action` left in the row, `justify-between` would dock it
+            to the START instead of the end it always visually occupied). */}
+        {action && <div className="flex justify-end">{action}</div>}
+        {children}
       </div>
-      {children}
     </div>
   );
 }
@@ -1800,7 +1818,16 @@ function minutesOfDay(hhmm: string): number {
 
 function SummaryCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
+    // GlimStone follow-up pass ("half-overlap card notch"): same outer/inner
+    // split as Card() above — `relative` moves to this structural outer div
+    // so the heading Badge's -11px poke above the card isn't clipped by the
+    // inner div's own overflow-hidden (#98's fix for a status chip + a
+    // relative-time pair that doesn't fit on one line in this narrow
+    // sm:grid-cols-3 cell — unrelated to the heading, but sharing the same
+    // box before this pass). `min-w-0` stays on the outer too: it's a grid
+    // item, and Chromium/Firefox's grid-track sizing reads min-width off
+    // whatever box IS the direct grid child, which is now this outer div.
+    <div className="relative min-w-0">
       {/* Task 5 (rule 11): each SummaryCell is its own standalone
           bg-carbon-surface rounded-card box — not nested inside an
           already-badged heading — so it gets the same Badge-in-<h2>
@@ -1810,10 +1837,12 @@ function SummaryCell({ label, children }: { label: string; children: React.React
       <h2 className="flex items-center min-w-0">
         <Badge tone="heading" size="heading" wrap className="max-w-full">{label}</Badge>
       </h2>
-      {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
-          relative time in a narrow half-width cell) drops to a second line and stays
-          fully readable, instead of being hard-clipped by overflow-hidden (#98). */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-7 min-w-0">{children}</div>
+      <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
+        {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
+            relative time in a narrow half-width cell) drops to a second line and stays
+            fully readable, instead of being hard-clipped by overflow-hidden (#98). */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-7 min-w-0">{children}</div>
+      </div>
     </div>
   );
 }
@@ -2276,7 +2305,7 @@ export function Dashboard() {
 
       {/* Hidden-cards tray — only while editing and something is hidden. */}
       {editing && hiddenBlocks.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
+        <div className="relative flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("dashboard.hiddenCards")}</Badge>
           </h2>

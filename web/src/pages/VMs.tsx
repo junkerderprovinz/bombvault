@@ -1476,7 +1476,12 @@ export function VMs() {
       {!loading && orphans.length > 0 && (
         <div className="flex flex-col gap-3">
           <div>
-            <h2 className="flex items-center">
+            {/* GlimStone follow-up pass ("half-overlap card notch"):
+                `relative` directly on this <h2> — no padding wraps it, so
+                the h2 itself is the right anchor; see Badge.tsx's
+                badgeClassName comment and Containers.tsx's identical
+                notInstalled section. */}
+            <h2 className="relative flex items-center">
               <Badge tone="heading" size="heading" wrap>{t("containers.notInstalledTitle")}</Badge>
             </h2>
             <p className="mt-1 text-xs text-carbon-textMuted">

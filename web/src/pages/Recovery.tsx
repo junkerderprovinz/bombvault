@@ -734,8 +734,12 @@ function ForeignRestoreCard({
       <div>
         {/* Task 5 (rule 11): page-level group heading, direct analogue of
             Settings.tsx's schedulesBackup heading (see that call site) —
-            same Badge-in-<h2> treatment. */}
-        <h2 className="flex items-center">
+            same Badge-in-<h2> treatment.
+            GlimStone follow-up pass ("half-overlap card notch"): `relative`
+            added directly on this <h2> — no padding wraps it, so the h2
+            itself is the right anchor; see Badge.tsx's badgeClassName
+            comment. */}
+        <h2 className="relative flex items-center">
           <Badge tone="heading" size="heading" wrap>{t("recovery.foreignTitle")}</Badge>
         </h2>
         <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.foreignIntro")}</p>

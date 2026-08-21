@@ -102,23 +102,36 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+    // GlimStone follow-up pass (live-review round, "half-overlap card
+    // notch"): `relative` added here so the heading Badge — now
+    // `position: absolute`, straddling THIS card's own top edge, see
+    // Badge.tsx's badgeClassName comment — resolves its offset against
+    // this actual card, not some larger ancestor. This also retires the
+    // old "InfoBubble sits as a sibling outside the badge" placement noted
+    // below: a flex sibling can no longer ride beside the badge's text once
+    // the badge leaves normal flow (it would drop to the badge's old flow
+    // position instead — alone, at the top of the card, no longer next to
+    // any visible title text). The InfoBubble moves INSIDE the Badge's own
+    // children instead, riding along as one floating unit. Its rule-8
+    // contract ("neutral, never the accent") still holds: InfoBubble's own
+    // icon colour is a fixed neutral token (text-carbon-textMuted, see
+    // InfoBubble.tsx) that doesn't adapt to whatever it sits on, so sitting
+    // on the badge's accent-soft wash instead of the plain card surface
+    // introduces no new contrast math — and InfoBubble's own tooltip is
+    // portal-rendered off the icon's live getBoundingClientRect, so it
+    // isn't affected by the icon's new ancestor being position:absolute.
+    <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
       {/* Task 5 (design-language.md rule 11, "every heading is a filled
           section badge") resolution, for whoever finds this next: the <h2>
           tag stays (screen readers still get a real heading, e.g. "heading
           level 2: Off-site Copy"), but its VISIBLE content is now a Badge
           (tone="heading" size="heading" — see Badge.tsx's file header for
-          the full colour/size reasoning). The InfoBubble, when present, sits
-          as a SIBLING outside the badge, not nested inside its coloured
-          fill — the option this comment used to leave open. Chosen over
-          computing a contrast-aware icon colour per badge fill because it
-          keeps InfoBubble's rule-8 contract ("neutral, never the accent")
-          true with zero per-instance exceptions: the icon still sits on the
-          Card's own plain bg-carbon-surface, never on the badge's
-          accent-soft wash, so no contrast math is needed at all. */}
-      <h2 className="flex items-center gap-1.5">
-        <Badge tone="heading" size="heading" wrap>{title}</Badge>
-        {hint && <InfoBubble tip={hint} />}
+          the full colour/size reasoning). */}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>
+          {title}
+          {hint && <InfoBubble tip={hint} />}
+        </Badge>
       </h2>
       {children}
     </div>
@@ -3788,8 +3801,13 @@ export function SettingsPage() {
               matching the single-Card off-site / self-backup / checks groups.
               Task 5 (rule 11): same Badge treatment as Card's own <h2> above,
               since this IS a Card-title-equivalent heading, just labelling
-              three sibling Cards instead of sitting inside one. */}
-          <h2 className="flex items-center">
+              three sibling Cards instead of sitting inside one.
+              GlimStone follow-up pass ("half-overlap card notch"): `relative`
+              added directly on this <h2> (no wrapping div otherwise exists
+              here) — there's no padding between the heading and the edge it
+              straddles, so the h2 itself is the right anchor; see
+              Badge.tsx's badgeClassName comment for the positioning math. */}
+          <h2 className="relative flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("settings.schedulesBackup")}</Badge>
           </h2>
           {/* Per-item schedules toggle (#121): opt in to per-container/VM overrides.
@@ -4733,7 +4751,11 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
       <div id="offsite">
-      <h2 className="flex items-center">
+      {/* GlimStone follow-up pass ("half-overlap card notch"): `relative`
+          added directly on this <h2> — same bare-heading, no-padding case as
+          settings.schedulesBackup above; see Badge.tsx's badgeClassName
+          comment. */}
+      <h2 className="relative flex items-center">
         <Badge tone="heading" size="heading" wrap>{t("offsite.sectionTitle")}</Badge>
       </h2>
       <Card title={t("settings.offsiteTitle")}>

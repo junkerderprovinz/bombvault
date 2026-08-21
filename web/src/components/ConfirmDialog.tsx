@@ -104,7 +104,7 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirmdialog-title"
         aria-describedby="confirmdialog-message"
-        className="bv-modal-card flex max-h-[85vh] w-full max-w-md flex-col rounded-card bg-carbon-surface shadow-2xl"
+        className="bv-modal-card relative flex max-h-[85vh] w-full max-w-md flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
@@ -115,7 +115,14 @@ export function ConfirmDialog({
               The <h2>+id stays exactly where it was — aria-labelledby reads
               the referenced element's computed text content, which still
               includes the Badge's text regardless of the span nested inside,
-              so the accessible name is unaffected by this markup change. */}
+              so the accessible name is unaffected by this markup change.
+              GlimStone follow-up pass ("half-overlap card notch"): `relative`
+              added on the OUTER dialog div above (not this Header, not the
+              <h2> below) — this outer box has no overflow/scroll of its own
+              (only the Body further down scrolls), so the heading Badge's
+              new `position: absolute` -11px poke straddles the WHOLE
+              modal's own top edge cleanly, unclipped; see Badge.tsx's
+              badgeClassName comment. */}
           <h2 id="confirmdialog-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{title}</Badge>
           </h2>

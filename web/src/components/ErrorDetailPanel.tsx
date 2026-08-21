@@ -172,13 +172,16 @@ export function ErrorDetailPanel({
         role="dialog"
         aria-modal="true"
         aria-labelledby="errorpanel-title"
-        className="bv-modal-card flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
+        className="bv-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
           {/* Task 5 follow-up (rule 15, "title as a badge" for window
               chrome) — see ConfirmDialog.tsx for the aria-labelledby-safety
-              reasoning; identical here. */}
+              reasoning; identical here.
+              GlimStone follow-up pass ("half-overlap card notch"): `relative`
+              added on the OUTER dialog div above — same reasoning as
+              ConfirmDialog.tsx's identical structure. */}
           <h2 id="errorpanel-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("errorPanel.title")}</Badge>
           </h2>

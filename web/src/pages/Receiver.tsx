@@ -420,22 +420,29 @@ function ReceiverDialog({
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={editing ? t("receiver.editTitle") : t("receiver.addTitle")}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
-      >
-        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
-            This dialog's accessible name comes from aria-label on the
-            role="dialog" div (see above), not aria-labelledby, so there's no
-            id/association to preserve here. */}
+      {/* GlimStone follow-up pass ("half-overlap card notch"): the dialog box
+          itself scrolls (`max-h-[90vh] overflow-y-auto`), which would clip
+          the heading Badge's own -11px poke above it — a scrollable box
+          can't reveal content positioned above its own top edge at
+          scrollTop 0. So this wraps in a non-scrolling, non-clipping
+          `relative` shell that hosts the badge, with the ORIGINAL
+          scrollable box moved one level in as its only child. `w-full
+          max-w-lg` moves to this outer shell (it's now the actual flex item
+          inside the centring backdrop below) and the inner box gets a plain
+          `w-full` instead, so the rendered width/centring is pixel-identical
+          to before this split. */}
+      <div className="relative w-full max-w-lg">
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap>{editing ? t("receiver.editTitle") : t("receiver.addTitle")}</Badge>
         </h2>
-
-        {/* Name */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={editing ? t("receiver.editTitle") : t("receiver.addTitle")}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        >
+          {/* Name */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
           <input
@@ -554,6 +561,7 @@ function ReceiverDialog({
             {saving ? t("common.saving") : t("settings.save")}
           </button>
         </div>
+      </div>
       </div>
     </div>,
     document.body,

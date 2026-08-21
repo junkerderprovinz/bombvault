@@ -257,6 +257,72 @@ describe("Badge — tone/status-color mapping", () => {
   });
 });
 
+describe("Badge — heading notch (tone=heading + size=heading straddles the card's top edge)", () => {
+  it("positions absolutely, exactly half its own 22px height above the edge, with a raised z-index", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("absolute");
+    expect(cls).toContain("-top-[11px]");
+    expect(cls).toContain("z-10");
+  });
+
+  it("forces a pill radius, overriding the default shape-engine-driven rounded-control", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("rounded-pill");
+    expect(cls).not.toContain("rounded-control");
+  });
+
+  it("forces rounded-pill even if a shape prop is explicitly passed — the notch is fixed chrome, not shape-engine-governed", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading", shape: "square" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("rounded-pill");
+    expect(cls).not.toContain("rounded-none");
+  });
+
+  it("carries the elevation shadow token, and only elevation (no --hairline)", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("shadow-[var(--elevation)]");
+    expect(cls).not.toContain("hairline");
+  });
+
+  it("sets no explicit left/right/start/end offset — relies on the CSS static-position fallback so the notch inherits each call site's own padding and flips correctly under RTL for free", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
+    const cls = el.props!.className as string;
+    const tokens = cls.split(/\s+/);
+    expect(tokens.some((c) => /^-?(left|right|start|end|inset)-/.test(c))).toBe(false);
+  });
+
+  it("a plain heading-SIZED badge without tone=heading does NOT get the notch treatment (both props must match)", () => {
+    const el = root(Badge({ children: "x", tone: "neutral", size: "heading" }));
+    const cls = el.props!.className as string;
+    expect(cls).not.toContain("absolute");
+    expect(cls).not.toContain("-top-[11px]");
+  });
+
+  it("a heading-TONED badge at a non-heading size does NOT get the notch treatment (both props must match)", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "medium" }));
+    const cls = el.props!.className as string;
+    expect(cls).not.toContain("absolute");
+    expect(cls).not.toContain("-top-[11px]");
+  });
+
+  it("every other tone/size combination stays static-positioned (no regression to non-heading badges)", () => {
+    const cases: Array<[BadgeTone, BadgeSize]> = [
+      ["ok", "small"],
+      ["fail", "medium"],
+      ["warn", "large"],
+      ["active", "medium"],
+      ["neutral", "icon"],
+    ];
+    for (const [tone, size] of cases) {
+      const cls = root(Badge({ children: "x", tone, size })).props!.className as string;
+      expect(cls).not.toContain("absolute");
+    }
+  });
+});
+
 describe("Badge — content and extension", () => {
   it("renders children as visible text", () => {
     const el = Badge({ children: "3 failed" });
