@@ -1108,23 +1108,48 @@ var reasonPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 // backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
 // — a syntax the generated deploy recipe documents as valid for restic's
 // rest:/s3: remote backends. reasonPathRe alone can't catch this: it stops at
-// the first ":", so it never reaches past "user" into the password. Requiring
-// the closing "@" and excluding "/" from the password body keeps this from
-// matching ordinary "host:port" text (which has no "@") or a "name/tag" split
-// by "/" from something after it (excluded from the password body) — only a
-// real userinfo segment has a ":"-separated pair immediately followed by "@".
+// the first ":", so it never reaches past "user" into the password. The
+// username class covers a fully-numeric username too (e.g.
+// "123456:SuperSecret@host") — an earlier version of this regex required the
+// FIRST character to be a letter, which let a numeric-only username through
+// completely unscrubbed. Requiring the closing "@" and excluding "/" from the
+// password body keeps this from matching ordinary "host:port" text (which has
+// no "@") or a "name/tag" split by "/" from something after it (excluded from
+// the password body) — only a real userinfo segment has a ":"-separated pair
+// immediately followed by "@".
+// See internal/api/handlers.go's identically-reasoned twin (and
+// internal/virshcli/virshcli.go's, for libvirt URIs): this is one of several
+// independent applications of the same defense-in-depth scrub.
 //
-// MUST be applied before reasonPathRe (see scrubSecrets): once that regex
-// turns the scheme's leading "//" into "[path]", the "word:" prefix this
-// regex keys off is gone and the password survives untouched.
-var credentialRe = regexp.MustCompile(`[A-Za-z][\w.+%-]*:[^\s/@"']+@`)
+// Known cosmetic limitation, not a security issue: this also matches benign
+// "word:word@word" shapes that merely look like userinfo, e.g. a Docker image
+// digest reference "nginx:1.25@sha256:abc123" scrubs to
+// "[redacted]@sha256:abc123". A regex tight enough to exclude that class
+// without risking a false NEGATIVE on a real credential wasn't obvious to
+// construct safely, so this is accepted as a known tradeoff rather than
+// forced.
+var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
 
-// scrubSecrets strips URL-embedded "user:pass@" credentials and then
-// absolute-path-like tokens from s, in that order — see credentialRe's doc
-// comment for why the order is load-bearing.
+// scrubSecrets strips absolute-path-like tokens and then URL-embedded
+// "user:pass@" credentials from s, in that order.
+//
+// This order is NOT a correctness requirement — both orders fully redact the
+// password — but running credentialRe FIRST produces a worse result: once it
+// replaces "user:pass@" with "[redacted]@", the leftover
+// "scheme://[redacted]@host" is exactly the path-like shape reasonPathRe
+// matches next, so reasonPathRe's pass eats the HOSTNAME right along with it
+// (verified: "rest:https://user:pass@storage.example.com:8000/repo" scrubs to
+// "rest:https:[path]:8000[path]" — storage.example.com is gone, along with
+// any hope of telling which off-site target failed). Running reasonPathRe
+// FIRST consumes the bare scheme separator "//" before credentialRe ever
+// runs, so the only "word:...@" shape left for credentialRe to match stops at
+// the real "@" — producing "[redacted]@storage.example.com:8000[path]"
+// instead, which hides the password exactly as well while keeping the
+// hostname an operator with multiple off-site targets needs to diagnose a
+// failure.
 func scrubSecrets(s string) string {
-	s = credentialRe.ReplaceAllString(s, "[redacted]@")
-	return reasonPathRe.ReplaceAllString(s, "[path]")
+	s = reasonPathRe.ReplaceAllString(s, "[path]")
+	return credentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
 // lastReason returns the most informative line of stderr, with absolute paths
