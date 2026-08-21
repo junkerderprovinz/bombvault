@@ -852,15 +852,47 @@ func publishedHostPorts(in model.Inspect) map[string]bool {
 	return out
 }
 
-// truncateErr returns an error message bounded to the DB column length. It is a
-// length-only guard: the adapters (restic/dockercli) already scrub
-// secrets/paths from their own errors, so this only trims the message so it fits
-// the runs.error_message column.
+// runErrPathRe and runErrCredentialRe are this package's own copy of the
+// path/credential scrub applied by internal/restic/restic.go and
+// internal/api/handlers.go (see restic.go's credentialRe doc comment for the
+// full reasoning behind the shape of these two and why the path regex must
+// run first). Duplicated rather than imported: this package is
+// dependency-injected and deliberately imports ONLY the Docker/Restic/
+// Templates/Runs interfaces defined here, never the concrete restic/dockercli
+// adapters (see the package doc comment above) — a real dependency on
+// internal/restic just to reuse a two-line regex would break that isolation
+// for something this small and stable to just duplicate, matching how the
+// api and restic packages already each keep their own copy.
+var (
+	runErrPathRe       = regexp.MustCompile(`(/[^\s:"']+)+`)
+	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+)
+
+// scrubRunErr strips absolute-path-like tokens and then URL-embedded
+// "user:pass@" credentials from s, in that order (path first — see
+// restic.go's scrubSecrets doc comment for why credentials-first would
+// destroy the hostname instead).
+func scrubRunErr(s string) string {
+	s = runErrPathRe.ReplaceAllString(s, "[path]")
+	return runErrCredentialRe.ReplaceAllString(s, "[redacted]@")
+}
+
+// truncateErr scrubs and bounds an error message so it fits the DB's
+// runs.error_message column.
+//
+// This ALWAYS scrubs, not just for the restic/dockercli adapters whose errors
+// already come pre-scrubbed through their own interfaces (scrubbing an
+// already-clean string is a no-op, so that costs nothing). It's the same
+// belt-and-suspenders reasoning as the api package's twin, truncateRunErr:
+// this function is the one place that writes runs.error_message, so scrubbing
+// HERE protects every current caller and every future one, instead of relying
+// on every backupErr/restoreErr this package ever builds having been routed
+// through a scrubbing adapter first.
 func truncateErr(err error) string {
 	if err == nil {
 		return ""
 	}
-	msg := err.Error()
+	msg := scrubRunErr(err.Error())
 	const max = 500
 	if len(msg) > max {
 		return msg[:max]

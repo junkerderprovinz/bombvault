@@ -5363,14 +5363,31 @@ func (s *Service) concludeFileSetRestore(runID, rkey, snapshotID string, rerr er
 	return rerr
 }
 
-// truncateRunErr bounds an error message so it fits the runs.error_message
-// column (mirrors the orchestrator's truncateErr; the restic adapter already
-// scrubs secrets/paths from its own errors).
+// truncateRunErr scrubs and bounds an error message so it fits the
+// runs.error_message column (mirrors the orchestrator's truncateErr).
+//
+// This ALWAYS applies scrubSecrets, not just for restic-originated errors.
+// The restic adapter's own lastReason already scrubs before this ever sees
+// the message, so for those callers scrubSecrets runs a harmless second time
+// on already-clean text (scrubbing an already-scrubbed string is a no-op).
+// But not every caller of this function goes through restic first: tamper.go's
+// tamperProbe can surface a raw url.Parse error — url.Error's Error() embeds
+// the full, UNPARSED input URL verbatim, credentials and all — when a repo's
+// URL fails to parse into an *http.Request, and primary_remote.go's
+// RunPrimaryTamperTest hits the exact same code path for a domain's remote
+// PRIMARY. Truncating without scrubbing FIRST let that raw URL (with any
+// embedded "user:pass@") reach runs.error verbatim, and from there the UI
+// (handleRuns embeds store.Run directly), the weekly digest (digest.go reads
+// run.Error and forwards it to every notification channel), and the widget
+// feed (widget.go's truncateWidgetError only limits length) all displayed or
+// forwarded it unscrubbed. Scrubbing HERE, at the one function that writes
+// runs.error, protects all three downstream readers at once and doesn't rely
+// on finding every current AND FUTURE non-restic call site individually.
 func truncateRunErr(err error) string {
 	if err == nil {
 		return ""
 	}
-	msg := err.Error()
+	msg := scrubSecrets(err.Error())
 	const max = 500
 	if len(msg) > max {
 		return msg[:max]
