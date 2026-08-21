@@ -197,17 +197,33 @@ describe("buildLogLines — live off-site line (#159)", () => {
     expect(lines[0].text).not.toContain("-");
   });
 
-  it("shows a live snapshot-of-total percentage once the backend reports one", () => {
+  it("shows a RUN-LEVEL percentage once the backend reports a snapshot index/total", () => {
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 62.6, active: true, lastSeen: 5_000_000, snapshotIndex: 2, snapshotTotal: 4 },
     };
     const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    // 1 whole snapshot done + 62.6% of the second, out of 4 => 40.65% => 41.
+    // NOT 63, which is snapshot 2's own pack progress (see offsiteRunProgress).
     expect(lines[0].text).toBe(
-      "activityLog.lineOffsiteRunningSnapshotPercent domain=activityLog.domainContainers index=2 total=4 percent=63 duration="
+      "activityLog.lineOffsiteRunningSnapshotPercent domain=activityLog.domainContainers index=2 total=4 percent=41 duration="
     );
   });
 
-  it("combines the live percentage with the elapsed duration", () => {
+  // The exact numbers from issue #159's report: "snapshot 15 of 126 (55%)" on a
+  // 1h 7m run. 55 was snapshot 15's own pack progress, but sat in parentheses
+  // right after the fraction, so it read as "15/126 = 55%" — which is what made
+  // the line look broken. Real run progress is ~12%, and the fraction beside it
+  // now agrees instead of contradicting.
+  it("renders the reported 15-of-126-at-55% case as ~12% overall, never 55%", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 55, active: true, lastSeen: 5_000_000, snapshotIndex: 15, snapshotTotal: 126 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(lines[0].text).toContain("index=15 total=126 percent=12");
+    expect(lines[0].text).not.toContain("percent=55");
+  });
+
+  it("combines the run-level percentage with the elapsed duration", () => {
     const progress: ProgressMap = {
       "offsite:containers": {
         phase: "replicate",
@@ -239,6 +255,18 @@ describe("buildLogLines — live off-site line (#159)", () => {
     };
     const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
     expect(lines[0].text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainContainers");
+  });
+
+  // The backend publishes snapshotTotal 0/absent when it could not estimate the
+  // candidate count at all (see api.progBeginCopySink). There is no honest
+  // denominator then, so the line must fall back rather than divide by the live
+  // index and claim a confident ~99%.
+  it("falls back to the duration line when the backend has no snapshot total to divide by", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 55, active: true, lastSeen: 5_030_000, startedAt: 5000, snapshotIndex: 15 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_030_000);
+    expect(lines[0].text).toBe("activityLog.lineOffsiteRunningWithDuration domain=activityLog.domainContainers duration=30s");
   });
 
   // Review fix: ActivityLog.tsx's `now` ticks at a coarse 60s cadence (its
