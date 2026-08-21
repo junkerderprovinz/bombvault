@@ -89,6 +89,21 @@ var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 // scheme/"://" anchor doesn't survive scrubSecrets' ordering below, since
 // absPathRe already strips it) wasn't obvious to construct safely, so this is
 // accepted as a known tradeoff rather than forced.
+//
+// There is also a real, separate false NEGATIVE, pre-existing and independent
+// of the false positive above: a password containing an unencoded "/" is only
+// partially caught. credentialRe's password class excludes "/", and by the
+// time it runs, scrubSecrets' path pass has already consumed the credential's
+// leading "//...@" span as an ordinary path token (see scrubSecrets' doc
+// comment for why paths must run first) — leaving no "@" left for
+// credentialRe to anchor on, so its "[redacted]@" marker never fires at all.
+// Depending on where the "/" falls inside the password, a fragment of the
+// actual secret survives in the clear: e.g.
+// "rest:https://user:wJalrXUtnFEMI/K7MDENG@host:8000/repo" scrubs to
+// "rest:https:[path]:wJalrXUtnFEMI[path]:8000[path]" — the username and the
+// back half of the password vanish as unlabeled path noise, but
+// "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
+// text. A password with no embedded "/" is unaffected.
 var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
 
 // scrubSecrets strips absolute-path-like tokens and then URL-embedded
@@ -139,6 +154,54 @@ func destinationRefusal(format string, a ...any) error {
 	return &restoreDestErr{msg: fmt.Sprintf(format, a...)}
 }
 
+// scrubBypassMessage reports whether err carries one of the sentinel types
+// this codebase creates specifically because their Error() text is
+// deliberately UNSAFE to run through scrubSecrets: the path-shaped content
+// inside the message (a restore destination folder, the relative repo
+// location an operator should type instead, /boot vs /host/boot, a ZFS
+// dataset/pool name, a host:port conflict list) IS the actionable content the
+// message exists to convey, not an internal filesystem/secret leak that
+// needs hiding. When it matches, it returns err's message completely
+// unscrubbed, and true.
+//
+// Both scrubError below and truncateRunErr (service.go — the other place
+// error text is persisted, to runs.error_message) call this FIRST, before
+// ever touching scrubSecrets, so the two can never independently drift on
+// which shapes are safe to show verbatim. truncateRunErr didn't always do
+// this: an earlier version scrubbed every error unconditionally, on the
+// (false) theory that running the regexes over already-clean text is a
+// harmless no-op. That broke exactly for these sentinels — scrubSecrets'
+// path regex matches ANY slash-containing token, not just a filesystem path —
+// mangling e.g. "host port 8080/tcp is already used by container ..." into
+// "host port 8080[path] is already used ..." and eating a zvol rebase
+// failure's ZFS dataset name the same way, even though scrubError itself had
+// already solved precisely this problem for its own callers.
+func scrubBypassMessage(err error) (string, bool) {
+	switch {
+	case errors.Is(err, backup.ErrRestoreConflict):
+		// Already user-safe (IP / host-port / container names, no host paths) and
+		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
+		return err.Error(), true
+	case errors.Is(err, errRestoreDestination):
+		// The destination path IS the message (see errRestoreDestination).
+		return err.Error(), true
+	case errors.Is(err, errRepoPathGuidance):
+		// Same deal: the rejected location AND the relative form to use instead
+		// are the whole point of the message (see errRepoPathGuidance).
+		return err.Error(), true
+	case errors.Is(err, errUnraidPlatformMismatch):
+		// Same deal again: /boot and /host/boot ARE the actionable content of
+		// a platform-mismatch refusal (TestNotify's Unraid channel, the
+		// dashboard-tile plugin) — see unraidPlatformMismatchError.
+		return err.Error(), true
+	case errors.Is(err, errZvolRebaseFailed):
+		// Same deal again: the ZFS dataset/pool names ARE the message, and
+		// necessarily contain "/" — see errZvolRebaseFailed.
+		return err.Error(), true
+	}
+	return "", false
+}
+
 // scrubError maps known sentinels to clear messages and strips absolute paths
 // from anything else.
 func scrubError(err error) string {
@@ -149,26 +212,9 @@ func scrubError(err error) string {
 		return "restore not confirmed — set confirm:true to proceed"
 	case errors.Is(err, backup.ErrInvalidSnapshotID):
 		return "invalid snapshot id (must be 8–64 lowercase hex)"
-	case errors.Is(err, backup.ErrRestoreConflict):
-		// Already user-safe (IP / host-port / container names, no host paths) and
-		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
-		return err.Error()
-	case errors.Is(err, errRestoreDestination):
-		// The destination path IS the message (see errRestoreDestination).
-		return err.Error()
-	case errors.Is(err, errRepoPathGuidance):
-		// Same deal: the rejected location AND the relative form to use instead
-		// are the whole point of the message (see errRepoPathGuidance).
-		return err.Error()
-	case errors.Is(err, errUnraidPlatformMismatch):
-		// Same deal again: /boot and /host/boot ARE the actionable content of
-		// a platform-mismatch refusal (TestNotify's Unraid channel, the
-		// dashboard-tile plugin) — see unraidPlatformMismatchError.
-		return err.Error()
-	case errors.Is(err, errZvolRebaseFailed):
-		// Same deal again: the ZFS dataset/pool names ARE the message, and
-		// necessarily contain "/" — see errZvolRebaseFailed.
-		return err.Error()
+	}
+	if msg, ok := scrubBypassMessage(err); ok {
+		return msg
 	}
 	msg := err.Error()
 	// Map restic's password/key mismatch to an actionable hint: the repo was
