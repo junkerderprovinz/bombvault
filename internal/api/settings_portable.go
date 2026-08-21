@@ -339,7 +339,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	if h.scheduler != nil {
-		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun); err != nil {
+		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
 			return err
 		}
 	}

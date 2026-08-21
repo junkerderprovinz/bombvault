@@ -745,6 +745,91 @@ func TestSettingsFilesImmutableRetentionWarning(t *testing.T) {
 	}
 }
 
+// TestSettingsEverythingFieldsRoundTrip pins the settings DTO's "Backup
+// Everything" fields (Task 5 of the backup-everything plan,
+// docs/superpowers/plans/2026-08-20-backup-everything.md): a PUT carrying
+// everythingSchedule/everythingPreHook/everythingPostHook is persisted and
+// comes back verbatim on the following GET — the same round-trip contract as
+// every other domain's fields (see TestSettingsConfigFieldsRoundTrip/
+// TestSettingsFilesFieldsRoundTrip).
+func TestSettingsEverythingFieldsRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"everythingSchedule": "daily 04:00",
+		"everythingPreHook": "echo pre",
+		"everythingPostHook": "curl -fsS https://hc-ping.com/test-uuid"
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status=%d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	for k, want := range map[string]any{
+		"everythingSchedule": "daily 04:00",
+		"everythingPreHook":  "echo pre",
+		"everythingPostHook": "curl -fsS https://hc-ping.com/test-uuid",
+	} {
+		if settings[k] != want {
+			t.Fatalf("%s not round-tripped: got %v, want %v", k, settings[k], want)
+		}
+	}
+}
+
+// TestSettingsPutRejectsBadEverythingCadence mirrors
+// TestSettingsPutRejectsBadCadence for the new EverythingSchedule field: an
+// invalid cadence is rejected with ok:false at save time, exactly like every
+// other domain's schedule.
+func TestSettingsPutRejectsBadEverythingCadence(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	body := `{"containersPath":"backups/c","vmsPath":"backups/v","flashPath":"backups/f",
+		"containersSchedule":"off","vmsSchedule":"off","flashSchedule":"off",
+		"everythingSchedule":"daily 99:99"}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false for bad everything cadence, got %v", m)
+	}
+}
+
+// TestSettingsEverythingScheduleAllowsEveryN proves EverythingSchedule was
+// added to the cadence-validation loop that ALLOWS 'everyN' (the due-gate is
+// wired via LastSuccessfulEverythingBackup, matching the five domain
+// schedules), NOT the separate loop that rejects 'everyN' for the off-site/
+// drills/tamper/digest schedules — the design spec's explicit call-out
+// ("Settings / API surface" section of docs/superpowers/specs/
+// 2026-08-20-backup-everything-design.md). Without this, a save would fail
+// with "this schedule does not support 'everyN'".
+func TestSettingsEverythingScheduleAllowsEveryN(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	body := `{"containersPath":"backups/c","vmsPath":"backups/v","flashPath":"backups/f",
+		"containersSchedule":"off","vmsSchedule":"off","flashSchedule":"off",
+		"everythingSchedule":"everyN 3 04:00"}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("everyN must be accepted for everythingSchedule, got status=%d body=%v", w.Code, m)
+	}
+}
+
 // TestCheckFilesDomainAccepted pins that POST /api/check/files reaches the
 // service (the domain switch no longer 400s "unknown domain"): with no files
 // repo initialised yet it reports the friendly not-yet error instead.

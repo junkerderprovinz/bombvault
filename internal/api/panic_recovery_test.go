@@ -431,3 +431,68 @@ func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 		t.Fatalf("a later config restore must be able to start — the guard must not be stuck from the earlier panic: started=%v err=%v", started, err)
 	}
 }
+
+// panickingHostShell is a HostShell (hostshell.go) that panics instead of
+// running the command — the cheapest way to raise a panic INSIDE a "Backup
+// Everything" pass at a point where the parent run row is already open. The
+// post-hook is deliberately the trigger used below: it fires after
+// BackupEverything's store.StartRun but before its matching FinishRun, so a
+// panic there is exactly the "nothing left alive will ever close this run"
+// case failStuckRun exists for.
+type panickingHostShell struct{}
+
+var _ api.HostShell = panickingHostShell{}
+
+func (panickingHostShell) Run(_ context.Context, cmd string) error {
+	panic("boom: host shell exploded on " + cmd)
+}
+
+// TestStartBackupEverythingPanicRecordsFailedRunAndReleasesGuard extends this
+// file's panic-recovery guarantee to StartBackupEverything's own detached
+// goroutine. It is the newest of the Start* goroutines and therefore the
+// easiest one to leave out of the recoverOperation convention every sibling
+// follows: without it, a panic anywhere in a pass takes down the WHOLE
+// process — the HTTP server, the SSE progress stream, and every other
+// domain's concurrently in-flight work — which is precisely what a
+// "back up everything, then ping the dead-man's switch" job must never do.
+// Reaching the assertions below at all (instead of the test binary crashing)
+// is the first half of the proof; the second is that the pass's PARENT run
+// row is closed out as "failed" via the failStuckRun/EverythingTargetID
+// fallback rather than left stuck "running" forever, and that the
+// everythingActive single-flight guard is released so a later pass can start.
+func TestStartBackupEverythingPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
+	svc, st, _, _ := everythingTestService(t, &fakeResticEngine{})
+	s := mustSettings(t, st)
+	s.EverythingPostHook = "ping-the-switch"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	svc.SetHostShell(panickingHostShell{})
+
+	started, err := svc.StartBackupEverything(context.Background())
+	if err != nil || !started {
+		t.Fatalf("StartBackupEverything should have launched the pass: started=%v err=%v", started, err)
+	}
+	waitForEverythingDone(t, svc)
+
+	run := waitForRunTerminal(t, st, store.EverythingTargetID)
+	if run.Status != "failed" {
+		t.Fatalf("a panicked pass must record a FAILED parent run, not leave it stuck, got status=%q run=%+v", run.Status, run)
+	}
+	if run.FinishedAt == nil {
+		t.Fatalf("a panicked pass's parent run must be closed (finished_at set), got %+v", run)
+	}
+	if !strings.Contains(run.Error, "recovered panic") {
+		t.Fatalf("the failed parent run should carry the panic detail, got error=%q", run.Error)
+	}
+
+	if svc.EverythingInProgress() {
+		t.Fatal("the everythingActive guard must be released after a recovered panic, not left stuck")
+	}
+	// Disarm and prove the guard really is reusable: a second pass must start.
+	svc.SetHostShell(&everythingFakeHostShell{})
+	if started, err := svc.StartBackupEverything(context.Background()); err != nil || !started {
+		t.Fatalf("a later pass must be able to start — the guard must not be stuck from the earlier panic: started=%v err=%v", started, err)
+	}
+	waitForEverythingDone(t, svc)
+}

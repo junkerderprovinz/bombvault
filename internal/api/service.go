@@ -189,6 +189,11 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// hostShell runs the "Backup Everything" global pre/post hook commands in
+	// BombVault's OWN container (see hostshell.go). Defaulted to the real
+	// execHostShell adapter in NewService, so it is never nil in production;
+	// SetHostShell overrides it for tests.
+	hostShell HostShell
 	// platform is the detected/injected Platform adapter (Unraid/generic/…)
 	// for the appdata-fallback convention, cross-instance restore-destination
 	// defaults, and the Unraid update-status reconcile step. Optional; nil
@@ -251,6 +256,19 @@ type Service struct {
 	// they contend on repo locks and container stop/start).
 	batchActive atomic.Bool
 
+	// everythingActive is the single-flight guard for a "Backup Everything" pass
+	// (internal/api/everything.go): only one pass — scheduled or manually
+	// triggered via StartBackupEverything — can be in flight at a time. Separate
+	// from batchActive on purpose: a pass drives the very same per-domain
+	// starters batchActive already guards (s.Backup/s.BackupVM/…), so reusing
+	// batchActive here would make a routine single-container backup refuse to
+	// start merely because an unrelated "Backup Everything" pass is mid-flight,
+	// and vice versa. Each domain step's own existing lock (s.lockDomain) still
+	// governs contention between the two at the repo level — this guard only
+	// stops a SECOND "Backup Everything" pass from overlapping the first
+	// (design spec, decision 7).
+	everythingActive atomic.Bool
+
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
 	// every replication while over budget); the latch clears when growth drops
@@ -307,6 +325,7 @@ func (s *Service) lockTamper(domain string) func() {
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
 	return &Service{
 		cfg: cfg, store: st, docker: d, virsh: v, engine: eng,
+		hostShell: execHostShell{},
 		repoMu: map[string]*sync.Mutex{
 			"containers": {},
 			"vms":        {},
@@ -489,6 +508,12 @@ func (s *Service) SetHostSSH(ssh HostSSH) { s.ssh = ssh }
 // SetProgress wires the live-progress store that backup/restore operations
 // publish to (and the SSE endpoint subscribes to). Called from main.
 func (s *Service) SetProgress(p *progress.Store) { s.progress = p }
+
+// SetHostShell overrides the "Backup Everything" global hook's shell-exec
+// adapter (see hostshell.go). NewService already defaults it to the real
+// execHostShell adapter, so production callers never need this; it exists for
+// test injection of a fake HostShell.
+func (s *Service) SetHostShell(h HostShell) { s.hostShell = h }
 
 // SetPlatform wires the detected Platform adapter (platform.Detect + main's
 // Kind->Platform mapping): the appdata-fallback convention, cross-instance
@@ -2724,6 +2749,40 @@ func bulkReplicateSuppressed(ctx context.Context) bool {
 	return v
 }
 
+// runGroupKey marks a context whose backup call is one CHILD step of a
+// "Backup Everything" pass (a sequential run over every domain — containers,
+// vms, flash, files, config — triggered as one unit, e.g. so a dead-man's-
+// switch ping can fire only once everything is done). The value is the
+// PARENT run's id; runsAdapter/startedRunsAdapter read it via
+// runGroupFromContext and stamp it onto the CHILD run they just started
+// (store.SetRunGroup), so that run is durably traceable back to the pass
+// that produced it. Unset by every caller today — a pure no-op until
+// BackupEverything (internal/api/everything.go) starts setting it.
+type runGroupKey struct{}
+
+// WithRunGroup marks ctx as belonging to the "Backup Everything" pass whose
+// parent run id is groupID (see runGroupKey). Set by BackupEverything around
+// each domain's own backup entry point (s.Backup/s.BackupVM/s.BackupFlash/
+// s.BackupFileSet/s.BackupConfig); read by runsAdapter/startedRunsAdapter
+// when they record that call's child run.
+func WithRunGroup(ctx context.Context, groupID string) context.Context {
+	return context.WithValue(ctx, runGroupKey{}, groupID)
+}
+
+// runGroupFromContext reports the parent run id this context's backup call
+// belongs to, or "" when it isn't part of a "Backup Everything" pass — true
+// for every context in the codebase today, and for every restore/other-kind
+// runsAdapter construction site that isn't part of such a pass. A nil ctx
+// (e.g. a zero-value runsAdapter/startedRunsAdapter built without one) is
+// treated the same as "no group", never a panic.
+func runGroupFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	v, _ := ctx.Value(runGroupKey{}).(string)
+	return v
+}
+
 // ReplicateOffsiteAfterBulk runs ONE off-site replication for a domain after a
 // scheduled multi-item backup loop, replacing the per-item inline replication that
 // the scheduled run suppressed (issue #95). It is a no-op when the domain has no
@@ -3690,7 +3749,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		Docker:                 s.docker,
 		Restic:                 &resticAdapter{engine: s.engine, mode: mode},
 		Templates:              templatesAdapter{},
-		Runs:                   runsAdapter{s.store},
+		Runs:                   runsAdapter{st: s.store, ctx: ctx},
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
@@ -3754,18 +3813,25 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		s.setUpdateCheck(name, "up-to-date")
 		return
 	}
-	runID, rErr := runsAdapter{s.store}.Start(targetID, "update")
+	// context.Background(), not ctx: an "update" run is a side effect of the
+	// container backup, not one of the five domain steps a "Backup Everything"
+	// pass groups (see runGroupKey's doc comment) — deliberately excluded here,
+	// same as recordUpdateFailure's failure path, so whether an "update" run
+	// gets grouped never depends on which of the two paths happens to fire.
+	// Applies to all three runsAdapter sites below; ctx itself is still the live
+	// context and stays in use above for the Docker calls.
+	runID, rErr := runsAdapter{st: s.store, ctx: context.Background()}.Start(targetID, "update")
 	if rErr != nil {
 		log.Printf("api: update-after-backup: start run for %q: %v", name, rErr) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
 	if err := s.recreateForUpdate(ctx, name, in); err != nil {
-		_ = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(err))
+		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(err))
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{s.store}.Finish(runID, "success", "", 0, "")
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", "", 0, "")
 	s.setUpdateCheck(name, "updated")
 
 	// #116: BombVault just recreated the container, so its image tag moved to the
@@ -3856,12 +3922,16 @@ func (s *Service) setUpdateCheck(name, result string) {
 // recorded separately by the recreate path.)
 func (s *Service) recordUpdateFailure(name, targetID string, cause error) {
 	s.setUpdateCheck(name, "failed")
-	runID, rErr := runsAdapter{s.store}.Start(targetID, "update")
+	// No ctx reaches this function (recordUpdateFailure takes none) — this "update"
+	// kind run is never part of a "Backup Everything" pass's group-stamped children
+	// (see runGroupKey's doc comment), so context.Background() is a genuine no-op,
+	// not a stand-in for a real context that was dropped.
+	runID, rErr := runsAdapter{st: s.store, ctx: context.Background()}.Start(targetID, "update")
 	if rErr != nil {
 		log.Printf("api: update-after-backup: %q could not record update failure: %v (cause: %v)", name, rErr, cause) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(cause))
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(cause))
 }
 
 // StartBackupAll launches a server-side batch backup of the named containers,
@@ -5025,7 +5095,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		Docker:            s.docker,
 		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode},
 		Templates:         templatesAdapter{},
-		Runs:              runsAdapter{s.store},
+		Runs:              runsAdapter{st: s.store, ctx: ctx},
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
@@ -5495,7 +5565,10 @@ func (s *Service) beginRestoreRun(name string) string {
 // recording fails (store error) — the restore itself must never be blocked by
 // bookkeeping.
 func (s *Service) beginRestoreRunForTarget(targetID string) string {
-	runID, err := runsAdapter{s.store}.Start(targetID, "restore")
+	// No ctx reaches this function — a restore run is never part of a
+	// "Backup Everything" pass's group-stamped children (see runGroupKey's
+	// doc comment), so context.Background() is a genuine no-op here.
+	runID, err := runsAdapter{st: s.store, ctx: context.Background()}.Start(targetID, "restore")
 	if err != nil {
 		log.Printf("api: restore: record run start for target %q failed: %v", targetID, err) //nolint:gosec // G706: targetID is %q-quoted
 		return ""
@@ -5510,17 +5583,21 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 	if runID == "" {
 		return
 	}
+	// No ctx reaches this function — same as beginRestoreRunForTarget above, a
+	// restore run is never part of a "Backup Everything" pass's group-stamped
+	// children (see runGroupKey's doc comment), so context.Background() is a
+	// genuine no-op in every branch below.
 	var err error
 	switch {
 	case rerr == nil:
-		err = runsAdapter{s.store}.Finish(runID, "success", snapshotID, 0, "")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, "")
 	case errors.Is(rerr, context.Canceled):
 		// A user cancel is an intentional, recorded outcome — NOT a failure: record
 		// it as "cancelled" and fire no failure alert (restores have no failure
 		// notifier today; the terminal progEnd already fired to clear the bar).
-		err = runsAdapter{s.store}.Finish(runID, "cancelled", "", 0, "cancelled by user")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", "", 0, "cancelled by user")
 	default:
-		err = runsAdapter{s.store}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
 	}
 	if err != nil {
 		log.Printf("api: restore: record run finish failed: %v", err)
@@ -5536,7 +5613,11 @@ func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
 	if runID == "" {
 		return
 	}
-	err := runsAdapter{s.store}.Finish(runID, "success", snapshotID, 0, warn)
+	// No ctx reaches this function — same as beginRestoreRunForTarget above, a
+	// restore run is never part of a "Backup Everything" pass's group-stamped
+	// children (see runGroupKey's doc comment), so context.Background() is a
+	// genuine no-op here.
+	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, warn)
 	if err != nil {
 		log.Printf("api: restore: record run finish (warning) failed: %v", err)
 	}
@@ -6304,12 +6385,32 @@ func (templatesAdapter) Read(dir, name string) (string, bool, error) { return te
 func (templatesAdapter) Write(dir, name, xml string) error           { return template.Write(dir, name, xml) }
 
 // runsAdapter satisfies backup.Runs over *store.Repo (StartRun/FinishRun).
-type runsAdapter struct{ st *store.Repo }
+// ctx is captured at construction solely so Start can read
+// runGroupFromContext and stamp a "Backup Everything" pass's parent run id
+// onto the child run it just created (see runGroupKey's doc comment) — every
+// caller whose ctx carries no group (everyone today) sees no behaviour
+// change at all.
+type runsAdapter struct {
+	st  *store.Repo
+	ctx context.Context
+}
 
 var _ backup.Runs = runsAdapter{}
 
 func (r runsAdapter) Start(targetID, kind string) (string, error) {
-	return r.st.StartRun(targetID, kind)
+	id, err := r.st.StartRun(targetID, kind)
+	if err != nil {
+		return "", err
+	}
+	if gid := runGroupFromContext(r.ctx); gid != "" {
+		// Best-effort, like every other post-Start bookkeeping call in this
+		// file: the run already started successfully, so a stamp failure is
+		// logged, never returned (see store.SetRunGroup's doc comment).
+		if serr := r.st.SetRunGroup(id, gid); serr != nil {
+			log.Printf("api: run %s: stamp group %s failed: %v", id, gid, serr) //nolint:gosec // G706: id/gid are internal ids, not user input
+		}
+	}
+	return id, nil
 }
 
 func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
@@ -6880,6 +6981,16 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	runID, err := s.store.StartRun(tg.ID, "backup")
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
+	}
+	if gid := runGroupFromContext(ctx); gid != "" {
+		// Same "Backup Everything" group-stamp runsAdapter.Start does — inline
+		// here (rather than inside startedRunsAdapter) because the run id, and
+		// therefore the stamp, is produced ONCE right here, not inside a later
+		// Start() call (see startedRunsAdapter's doc comment above). Best-effort:
+		// a stamp failure must never fail a backup that already started.
+		if serr := s.store.SetRunGroup(runID, gid); serr != nil {
+			log.Printf("api: BackupVM: run %s: stamp group %s failed: %v", runID, gid, serr) //nolint:gosec // G706: runID/gid are internal ids, not user input
+		}
 	}
 	deps.Runs = startedRunsAdapter{st: s.store, runID: runID}
 	// RunTag correlates every snapshot ONE backup invocation produces — only
@@ -7634,7 +7745,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		DataDir:    s.cfg.DataDir,
 		VM:         s.virsh,
 		Restic:     &resticAdapter{engine: s.engine, mode: plan.mode},
-		Runs:       runsAdapter{s.store},
+		Runs:       runsAdapter{st: s.store, ctx: ctx},
 		BlockDisks: plan.blockDisks,
 		ZFSHost:    sshZFSHost{ssh: s.ssh},
 		ZvolRestic: &resticZvolAdapter{engine: s.engine, mode: plan.mode},
@@ -7788,7 +7899,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{s.store},
+		Runs:      runsAdapter{st: s.store, ctx: ctx},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
@@ -7996,7 +8107,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		SetName:   set.Name,
 		Excludes:  set.Excludes,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{s.store},
+		Runs:      runsAdapter{st: s.store, ctx: ctx},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
@@ -8785,7 +8896,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		Repo:      repo,
 		TargetID:  store.ConfigTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{s.store},
+		Runs:      runsAdapter{st: s.store, ctx: ctx},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
