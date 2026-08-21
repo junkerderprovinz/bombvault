@@ -521,9 +521,9 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 			var runID string
 			run := func(rctx context.Context) error {
 				runID = s.beginRestoreRunForTarget(plan.setID)
-				pctx := s.progBegin(rctx, rkey, "restore")
+				pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 				rerr := s.runRestoreFileSetFiles(pctx, plan)
-				return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr)
+				return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt)
 			}
 			onPanic := func(msg string) {
 				s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore
@@ -538,9 +538,9 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		var runID string                // see the selective branch above for why this is declared here
 		run := func(rctx context.Context) error {
 			runID = s.beginRestoreRunForTarget(plan.setID)
-			pctx := s.progBegin(rctx, rkey, "restore")
+			pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 			rerr := s.runRestoreFileSet(pctx, plan)
-			return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr)
+			return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt)
 		}
 		onPanic := func(msg string) {
 			s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore

@@ -6,6 +6,17 @@
 //
 //   { "key": "container:plex", "phase": "backup", "percent": 42.5, "active": true }
 //
+// Some keys (currently: off-site replication, "offsite:<domain>" — see
+// issue #159) also carry a "startedAt" (Unix SECONDS, omitted when unset) so a
+// consumer can render a live elapsed duration for the whole run, PLUS —
+// whenever a live per-snapshot signal is available — "snapshotIndex" (1-based)
+// and "snapshotTotal" (a best-effort candidate count; restic itself never
+// reports a whole-run total across snapshots — see restic.Copy's doc comment)
+// alongside a REAL "percent" scoped to that one snapshot's own pack-copy
+// progress (not a fabrication: restic copy genuinely prints this, once
+// RESTIC_PROGRESS_FPS is wired up the same way backup/restore already get
+// it — a first cut of this feature concluded otherwise).
+//
 // We keep ONE module-level EventSource for the whole app and ref-count its
 // subscribers so multiple cards/rows don't each open their own connection.
 // `useProgress()` returns a map keyed by the event `key` field; consumers index
@@ -25,6 +36,25 @@ export interface ProgressState {
   // crash, a reconnect where the clear never ran) so a stuck active:true entry
   // can't disable every bulk button app-wide until a reload. See STALE_MS.
   lastSeen: number;
+  // Epoch SECONDS (backend's time.Now().Unix(), not Date.now()'s ms) the
+  // operation began, repeated on every event for this key — including the
+  // terminal one. Undefined for a key whose events don't carry it — treat
+  // that as "unknown", never as 0/epoch (see lib/reltime.ts's elapsedSince,
+  // which enforces this). Lets a consumer render a live elapsed duration
+  // (issue #159) for the whole run.
+  startedAt?: number;
+  // Set only for off-site replication ("offsite:<domain>", phase
+  // "replicate") once a live per-snapshot signal is available — see
+  // restic.Copy's doc comment for the whole story: restic copy DOES print a
+  // real, parseable per-snapshot pack-copy percentage, it just needed the
+  // same RESTIC_PROGRESS_FPS wiring backup/restore already had. `percent` is
+  // then scoped to the CURRENT snapshot (snapshotIndex, 1-based) of an
+  // estimated snapshotTotal (a best-effort candidate count the backend
+  // computes; restic itself never reports a whole-run total across
+  // snapshots). Both undefined whenever no such signal is available yet
+  // (e.g. restic is still walking the source tree) or for every other phase.
+  snapshotIndex?: number;
+  snapshotTotal?: number;
 }
 
 export type ProgressMap = Record<string, ProgressState>;
@@ -71,7 +101,15 @@ function applyEvent(ev: ProgressEvent): void {
   // 100 on success and 0 on failure) rather than forcing 100 — otherwise a
   // failed/cancelled backup would flash a full green bar. Consumers render the
   // bar only while `active` is true, so we hold `active` during the linger.
-  const entry: ProgressState = { phase: ev.phase, percent: ev.percent, active: true, lastSeen: Date.now() };
+  const entry: ProgressState = {
+    phase: ev.phase,
+    percent: ev.percent,
+    active: true,
+    lastSeen: Date.now(),
+    startedAt: ev.startedAt,
+    snapshotIndex: ev.snapshotIndex,
+    snapshotTotal: ev.snapshotTotal,
+  };
 
   current = { ...current, [ev.key]: entry };
   emit();
@@ -120,6 +158,9 @@ function handleMessage(e: MessageEvent<string>): void {
               : "backup",
       percent: typeof ev.percent === "number" ? ev.percent : 0,
       active: !!ev.active,
+      startedAt: typeof ev.startedAt === "number" ? ev.startedAt : undefined,
+      snapshotIndex: typeof ev.snapshotIndex === "number" ? ev.snapshotIndex : undefined,
+      snapshotTotal: typeof ev.snapshotTotal === "number" ? ev.snapshotTotal : undefined,
     });
   }
 }

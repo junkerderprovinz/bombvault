@@ -117,6 +117,133 @@ loop:
 	}
 }
 
+// heartbeatRealProgressFakeEngine's Copy reports ONE real per-snapshot
+// percentage through the CopySink installed in ctx (see progBeginCopySink),
+// exactly like restic.Copy does when it parses a live "packs copied" line,
+// then blocks — so every "offsite:flash" event observed afterwards can only
+// have come from the heartbeat goroutine, never from another real update.
+type heartbeatRealProgressFakeEngine struct {
+	ResticEngine
+	proceed chan struct{}
+}
+
+func (f *heartbeatRealProgressFakeEngine) RepoOpens(context.Context, string, restic.Mode) bool {
+	return true
+}
+
+func (f *heartbeatRealProgressFakeEngine) Unlock(context.Context, string, bool, restic.Mode) error {
+	return nil
+}
+
+func (f *heartbeatRealProgressFakeEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
+	return nil, nil
+}
+
+func (f *heartbeatRealProgressFakeEngine) Copy(ctx context.Context, _, _ string, _ []string, _ restic.Limits, _ restic.Mode) error {
+	if sink := progress.CopySinkFrom(ctx); sink != nil {
+		sink(progress.CopyProgress{SnapshotIndex: 2, Percent: 63})
+	}
+	<-f.proceed
+	return nil
+}
+
+// TestCopyToOffsiteHeartbeatPreservesRealPercentage is the reviewer's exact
+// repro for the code-review blocker on this fix: before it, the heartbeat
+// unconditionally republished Percent:0 with no SnapshotIndex/SnapshotTotal
+// on the SAME "offsite:<domain>" key every offsiteProgressHeartbeat tick,
+// which — since Publish's map replaces the stored/streamed state wholesale —
+// erased whatever real percentage progBeginCopySink's sink had just reported
+// (e.g. "Replicating snapshot 2 of 4 (63%)" regressing to a bare
+// "Replicating…" on every heartbeat tick). On a slow transfer, where a whole
+// real percentage step can take many seconds, the heartbeat "wins" almost
+// every render. This test drives copyToOffsite for real (not a synthetic
+// event sequence): one real CopyProgress update lands, then several
+// heartbeat ticks fire (the interval is shrunk via the package var) while
+// Copy is still blocked — every one of them must still carry that same real
+// percent/snapshotIndex/snapshotTotal, proving the heartbeat now republishes
+// the last known real value instead of overwriting it.
+func TestCopyToOffsiteHeartbeatPreservesRealPercentage(t *testing.T) {
+	orig := offsiteProgressHeartbeat
+	offsiteProgressHeartbeat = 3 * time.Millisecond
+	t.Cleanup(func() { offsiteProgressHeartbeat = orig })
+
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("open mem store: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	st := store.New(db)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.FlashOffsite = "rest:http://192.168.1.2:8000/flash"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	fake := &heartbeatRealProgressFakeEngine{proceed: make(chan struct{})}
+	prog := progress.NewStore()
+	svc := &Service{store: st, engine: fake, progress: prog}
+
+	ch, cancel := prog.Subscribe()
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- svc.copyToOffsite(context.Background(), "flash", settings, restic.Mode{}, "/local/flash")
+	}()
+
+	sawReal := false
+	verifiedAfter := 0
+	deadline := time.After(2 * time.Second)
+loop:
+	for {
+		select {
+		case e := <-ch:
+			if e.Key != "offsite:flash" || !e.Active {
+				continue
+			}
+			if !sawReal {
+				if e.SnapshotIndex == 2 && e.Percent == 63 {
+					sawReal = true
+				}
+				continue
+			}
+			// Every active event from here on — heartbeat-driven, since Copy is
+			// still blocked and can publish no further real update — must still
+			// carry the real values. Regressing to Percent:0/SnapshotIndex:0 here
+			// is exactly the bug this test guards against.
+			if e.Percent != 63 || e.SnapshotIndex != 2 || e.SnapshotTotal < 2 {
+				t.Fatalf("event after the real percentage lost it: %+v", e)
+			}
+			verifiedAfter++
+			if verifiedAfter >= 3 {
+				break loop
+			}
+		case <-deadline:
+			t.Fatal("timed out waiting for heartbeat ticks after the real percentage")
+		}
+	}
+	close(fake.proceed)
+
+	select {
+	case cerr := <-done:
+		if cerr != nil {
+			t.Fatalf("copyToOffsite: %v", cerr)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("copyToOffsite did not return after unblocking Copy")
+	}
+
+	if !sawReal {
+		t.Fatal("never observed the real percentage event")
+	}
+}
+
 // TestCopyToOffsiteHeartbeatStopsAfterFinish pins the shutdown-ordering half
 // of #134: once copyToOffsite returns, no further heartbeat can fire — the
 // heartbeat goroutine is stopped (via defer, registered after progEnd so it

@@ -143,13 +143,61 @@ type Summary struct {
 	BytesAdded   float64 `json:"data_added"`
 }
 
-// Snapshot holds a subset of the restic snapshot JSON.
+// Snapshot holds a subset of the restic snapshot JSON. Original is the hex id
+// of the snapshot this one was COPIED FROM (restic sets it once, on the first
+// `restic copy`, and every further copy of that copy preserves the ORIGINAL
+// value rather than chaining — see cmd/restic/cmd_copy.go's
+// copySaveSnapshot); "" for a snapshot that was never copied (the normal case
+// for a snapshot restic `backup` created directly). Used by PendingCopyIDs to
+// tell whether a source snapshot already has a copy at a destination.
 type Snapshot struct {
 	ID       string   `json:"id"`
 	Time     string   `json:"time"`
 	Paths    []string `json:"paths"`
 	Tags     []string `json:"tags"`
 	Hostname string   `json:"hostname"`
+	Original string   `json:"original,omitempty"`
+}
+
+// PendingCopyIDs returns the SOURCE snapshot ids (from src) that have no
+// matching copy in dst yet, giving a caller an upfront candidate count ("N")
+// for a `restic copy` run before actually running one (see
+// api.copyToOffsiteTarget's "snapshot k of N" progress display — issue #159).
+//
+// This is a DISPLAY-ONLY estimate, never used to scope the real copy call: the
+// actual `restic copy` invocation always leaves snapshotIDs nil/unbounded so
+// restic's own dedup (cmd_copy.go's collectAllSnapshots + similarSnapshots, a
+// stricter check that also compares full snapshot metadata) is the sole
+// authority on what actually gets copied. A wrong estimate here can only make
+// the "of N" number briefly off — for example if a destination snapshot's
+// Original was mutated by something outside restic/BombVault, an extremely
+// unlikely edge case — it can never cause a snapshot to be silently skipped.
+//
+// The identity check mirrors restic's own: a destination snapshot represents
+// the SAME snapshot as a source one when the destination's Original (or, for
+// an uncopied destination snapshot, its own id) equals the source's own
+// "effective identity" (its Original if it is itself a copy, else its own
+// id) — exactly the key restic's collectAllSnapshots looks up dstSnapshotByOriginal
+// with. A source snapshot with no match in dst is "pending".
+func PendingCopyIDs(src, dst []Snapshot) []string {
+	known := make(map[string]struct{}, len(dst)*2)
+	for _, d := range dst {
+		if d.Original != "" {
+			known[d.Original] = struct{}{}
+		}
+		known[d.ID] = struct{}{}
+	}
+	var pending []string
+	for _, s := range src {
+		identity := s.ID
+		if s.Original != "" {
+			identity = s.Original
+		}
+		if _, ok := known[identity]; !ok {
+			pending = append(pending, s.ID)
+		}
+	}
+	return pending
 }
 
 // StatsResult holds the fields we extract from `restic stats --json`. Which
@@ -906,10 +954,14 @@ func runToWriter(cmd *exec.Cmd, args []string, w io.Writer) error {
 	return nil
 }
 
-// runStreaming runs restic and scans its --json stdout line by line, forwarding
-// each "status" line's percent_done to the sink while still accumulating the
-// full output so a trailing summary line can be parsed afterwards.
-func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, error) {
+// scanLines runs cmd with stdout piped, invoking onLine for every complete
+// line written before the process exits, while still accumulating the full
+// output so a trailing summary line can be parsed afterwards. Shared
+// scaffolding for runStreaming (restic backup/restore's --json "status"
+// lines) and runStreamingCopy (restic copy's plain-text progress line, which
+// has no --json mode at all — see Restic.Copy's doc comment); the two differ
+// only in what a line means, not in how it is read.
+func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, error) {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()
@@ -931,9 +983,7 @@ func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, err
 		line := sc.Bytes()
 		out.Write(line)
 		out.WriteByte('\n')
-		if pct, ok := statusPercent(line); ok {
-			sink(pct)
-		}
+		onLine(line)
 	}
 	// A scanner error (e.g. an over-long line) is logged, not fatal: still wait
 	// for the process and let the caller parse whatever output was captured.
@@ -950,6 +1000,96 @@ func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, err
 		return nil, runError(args, stderr.String())
 	}
 	return out.Bytes(), nil
+}
+
+// runStreaming runs restic and scans its --json stdout line by line, forwarding
+// each "status" line's percent_done to the sink while still accumulating the
+// full output so a trailing summary line can be parsed afterwards.
+func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, error) {
+	return scanLines(cmd, args, func(line []byte) {
+		if pct, ok := statusPercent(line); ok {
+			sink(pct)
+		}
+	})
+}
+
+// copyStartedRe matches restic copy's per-snapshot section header — "  copy
+// started, this may take a while..." (see cmd/restic/cmd_copy.go's
+// copyTreeBatched) — which marks the point restic begins a NEW snapshot's own
+// pack-copy counter (see copyStatusPercent). Anchored to the START of the
+// line (past any leading whitespace — restic's own indent, verified against
+// the real transcript in restic_copy_progress_internal_test.go), not a bare
+// substring search anywhere in the line: a substring match would let a
+// domain whose backed-up path literally contains the text "copy started"
+// (e.g. "/mnt/user/copy started backups") fire a spurious extra
+// snapshot-boundary if that path is ever echoed back on some OTHER line of
+// copy's output, inflating the live "snapshot k of N" count. The trailing
+// wording ("...this may take a while...") is still left unanchored so a
+// future restic punctuation/wording tweak doesn't silently stop
+// snapshot-boundary detection — worst case a boundary is missed and the
+// count just undercounts for that run, never a crash.
+var copyStartedRe = regexp.MustCompile(`(?i)^\s*copy started`)
+
+// copyPercentRe matches the LEADING shape of restic copy's own plain-text
+// progress line — there is no --json mode for `copy` at all (see Restic.Copy's
+// doc comment) — e.g. "[0:13] 50.00%  2 / 4 packs copied" (built from
+// internal/ui/progress/terminal.go's `"[%s] %s  %d / %d %s"` with
+// ui.FormatPercent's `"%3.2f%%"`). Deliberately anchored only to the bracketed
+// elapsed-time prefix and the percent itself, NOT the trailing " X / Y packs
+// copied" wording, so a future restic release changing that trailing text
+// still parses a real percentage instead of silently breaking.
+var copyPercentRe = regexp.MustCompile(`^\[[0-9:]+\]\s+([0-9]+(?:\.[0-9]+)?)%`)
+
+// copyStatusPercent extracts the 0..100 percentage from one line of restic
+// copy's plain-text progress output. Returns ok=false for any other line —
+// the snapshot header, "copy started", a summary, or (see
+// internal/ui/progress/terminal.go's newProgressMax "max==0" branch) a line
+// restic prints before it knows a pack total yet, which has no "%" at all.
+// Never errors: an unrecognized line just carries no percentage this tick,
+// exactly like statusPercent's JSON counterpart degrades on a line it does
+// not understand — a future restic wording change fails to show a percentage
+// for that run, not a crash.
+func copyStatusPercent(line []byte) (float64, bool) {
+	m := copyPercentRe.FindSubmatch(line)
+	if m == nil {
+		return 0, false
+	}
+	pct, err := strconv.ParseFloat(string(m[1]), 64)
+	if err != nil {
+		return 0, false
+	}
+	if pct < 0 {
+		pct = 0
+	} else if pct > 100 {
+		pct = 100 // defensive: restic's own FormatPercent already clamps to 100, but never trust a text scrape past what it claims to guarantee
+	}
+	return pct, true
+}
+
+// runStreamingCopy runs restic copy, scanning its plain-text stdout (no
+// --json mode exists for this subcommand — see Restic.Copy's doc comment)
+// line by line: a "copy started" section header (copyStartedRe) advances a
+// LOCAL 1-based snapshot index (restic itself never numbers these sections —
+// this is purely runStreamingCopy's own count of how many boundaries it has
+// seen), and a percentage line (copyStatusPercent) reports that snapshot's
+// own live pack-copy percentage to sink. A percentage line seen before any
+// recognized boundary (idx still 0) is defensively attributed to snapshot 1
+// rather than 0, in case a future restic version reorders/renames the header.
+func runStreamingCopy(cmd *exec.Cmd, args []string, sink progress.CopySink) ([]byte, error) {
+	idx := 0
+	return scanLines(cmd, args, func(line []byte) {
+		if copyStartedRe.Match(line) {
+			idx++
+			return
+		}
+		if pct, ok := copyStatusPercent(line); ok {
+			snap := idx
+			if snap == 0 {
+				snap = 1
+			}
+			sink(progress.CopyProgress{SnapshotIndex: snap, Percent: pct})
+		}
+	})
 }
 
 // ErrRestoreMetadataOnly tags a restore failure whose ONLY errors were per-file
@@ -1497,6 +1637,38 @@ func (r Restic) DumpRaw(ctx context.Context, repo, snapshotID, path string, w io
 // via RESTIC_PASSWORD (authEnv), the source via RESTIC_FROM_PASSWORD — never argv.
 // destRepo must already exist (the caller EnsureRepo's it first). lim caps the
 // transfer bandwidth (zero = unlimited) so replication doesn't saturate the WAN.
+//
+// # Issue #159 ("a percentage counter on off-site upload progress")
+//
+// A first cut of this feature (see git history) concluded a percentage wasn't
+// achievable, because Copy called runBuffered directly instead of going
+// through r.run() — bypassing BOTH the progress.SinkFrom(ctx) check AND the
+// RESTIC_PROGRESS_FPS=3 env var r.run() sets when a sink is present. Without
+// that env var, restic copy — like every restic subcommand — only ever prints
+// its periodic progress when stdout is a TTY or RESTIC_PROGRESS_FPS is set;
+// our stdout is a pipe, so nothing showed. That was a BombVault wiring gap,
+// not a restic limitation: verified against upstream cmd/restic/cmd_copy.go
+// and internal/ui/progress/terminal.go, and hands-on against the installed
+// restic 0.17.3 binary, restic copy DOES print real, parseable progress on
+// stdout — repeatedly, over a pipe — once that env var is set, e.g.:
+//
+//	[0:13] 50.00%  2 / 4 packs copied
+//
+// It is plain TEXT, not --json (copy's printer is built with json hard-coded
+// false in NewTerminalPrinter, regardless of the global --json flag — copy
+// genuinely has no JSON mode, confirming half of the original investigation),
+// so runStreamingCopy parses that line directly (see copyStatusPercent)
+// instead of the JSON "status" messages runStreaming looks for.
+//
+// The other half of the original investigation was correct: restic copy
+// prints this progress PER SOURCE SNAPSHOT (a fresh pack-copy counter,
+// restarting at 0%, for each one — see cmd_copy.go's copyTreeBatched/copyTree)
+// and never reports a whole-run total across a multi-snapshot batch. When a
+// CopySink is present, runStreamingCopy tracks a LOCAL 1-based snapshot index
+// from restic's own "copy started" section markers and reports it alongside
+// each snapshot's own live percentage (progress.CopyProgress) — the caller
+// (api.copyToOffsiteTarget) pairs that index with its own best-effort total
+// estimate (restic.PendingCopyIDs) for a "snapshot k of N" display.
 func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) error {
 	args := CopyArgs(destRepo, srcRepo, snapshotIDs, lim, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
@@ -1504,6 +1676,16 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 	env := r.authEnv(m)
 	if m.Encrypted {
 		env = append(env, "RESTIC_FROM_PASSWORD="+m.Password)
+	}
+	if sink := progress.CopySinkFrom(ctx); sink != nil {
+		// Same reasoning as r.run(): restic only emits its periodic progress when
+		// stdout is a TTY or RESTIC_PROGRESS_FPS is set, and ours is a pipe. Copy
+		// does not go through r.run() (it authenticates the SOURCE repo too, via
+		// RESTIC_FROM_PASSWORD, which no other command needs), so it must set this
+		// itself.
+		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
+		_, err := runStreamingCopy(cmd, args, sink)
+		return err
 	}
 	cmd.Env = env
 	_, err := runBuffered(cmd, args)

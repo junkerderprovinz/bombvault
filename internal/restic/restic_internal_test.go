@@ -29,6 +29,73 @@ func TestStatusPercent(t *testing.T) {
 	}
 }
 
+// TestCopyStatusPercent pins the text-format parser that replaced the original
+// (mistaken) "restic copy has no percentage at all" conclusion — issue #159.
+// The real line shape, confirmed against upstream
+// internal/ui/progress/terminal.go's newProgressMax and hands-on against the
+// installed restic 0.17.3 binary, is "[M:SS] NN.NN%  X / Y packs copied"
+// (or "[H:MM:SS] ..." past an hour). Deliberately loose (leading bracket +
+// percent only), so a future wording change to the trailing "X / Y packs
+// copied" text still parses — only a change to the bracket+percent PREFIX
+// itself would stop parsing, and even then it degrades to "no percentage this
+// line", never a crash (see copyStatusPercent's doc comment).
+func TestCopyStatusPercent(t *testing.T) {
+	cases := []struct {
+		name   string
+		line   string
+		want   float64
+		wantOK bool
+	}{
+		{"mid run", `[0:13] 50.00%  2 / 4 packs copied`, 50, true},
+		{"complete", `[1:02] 100.00%  4 / 4 packs copied`, 100, true},
+		{"past an hour", `[1:02:03] 12.50%  1 / 8 packs copied`, 12.5, true},
+		{"no total yet (restic's own max==0 branch, no %% at all)", `[0:02]          0 packs copied`, 0, false},
+		{"snapshot header", `  copy started, this may take a while...`, 0, false},
+		{"summary/other", `snapshot abc123 saved, copied from source snapshot def456`, 0, false},
+		{"non-json JSON line from an unrelated command", `{"message_type":"status","percent_done":0.5}`, 0, false},
+		{"empty", ``, 0, false},
+		{"over 100 clamped", `[0:01] 150.00%  9 / 4 packs copied`, 100, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, ok := copyStatusPercent([]byte(c.line))
+			if ok != c.wantOK || got != c.want {
+				t.Fatalf("copyStatusPercent(%q) = (%v, %v); want (%v, %v)", c.line, got, ok, c.want, c.wantOK)
+			}
+		})
+	}
+}
+
+// TestCopyStartedRegex pins the case-insensitive match for restic copy's
+// per-snapshot section header, anchored to the START of the line (past any
+// leading whitespace) but not the trailing wording ("...this may take a
+// while..."), so a minor upstream punctuation tweak still advances the
+// snapshot boundary while a user-controlled backed-up path that happens to
+// CONTAIN the text "copy started" elsewhere in a line can no longer trigger
+// a false boundary (see copyStartedRe's doc comment).
+func TestCopyStartedRegex(t *testing.T) {
+	cases := []struct {
+		line string
+		want bool
+	}{
+		{"  copy started, this may take a while...", true},
+		{"Copy started", true},   // case-insensitive
+		{"\tcopy started", true}, // any leading whitespace, not just two spaces
+		{"[0:13] 50.00%  2 / 4 packs copied", false},
+		{"snapshot abc123 saved, copied from source snapshot def456", false},
+		// A backed-up path containing the literal text "copy started" must NOT
+		// fire a spurious snapshot boundary just because the substring appears
+		// somewhere mid-line — only a line that STARTS with it counts.
+		{"snapshot abc123 of /mnt/user/copy started backups at 2026-08-16 10:00:00:", false},
+		{"", false},
+	}
+	for _, c := range cases {
+		if got := copyStartedRe.MatchString(c.line); got != c.want {
+			t.Fatalf("copyStartedRe.MatchString(%q) = %v, want %v", c.line, got, c.want)
+		}
+	}
+}
+
 // TestLastReasonPrefersInformativeLine pins the behaviour that surfaced the
 // real cause to forum users: restic's data-corruption error ends with a generic
 // "open an issue" trailer, but we must show the "Detected data corruption" line.
