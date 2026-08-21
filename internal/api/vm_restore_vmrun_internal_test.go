@@ -93,7 +93,7 @@ func TestPrepareRestoreVMResolvesVmrunGroupForAllThreeDisks(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: snaps}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestPrepareRestoreVMExplicitSnapshotIDResolvesVmrunGroup(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: snaps}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "aaaaaaaaaaaaaaaa", tg, "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "aaaaaaaaaaaaaaaa", tg, "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestPrepareRestoreVMLatestPicksNewestRunsGroupNotOlder(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: all}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestPrepareRestoreVMFallsBackWhenNoVmrunTag(t *testing.T) {
 	}}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -233,7 +233,7 @@ func TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks(t *testin
 	}}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}

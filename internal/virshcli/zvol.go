@@ -33,6 +33,20 @@ import (
 // attempt to recognize; see zvolDatasetFromDevPath's doc comment).
 const zvolDevPrefix = "/dev/zvol/"
 
+// hasUnsafeZFSNameChars reports whether s contains characters that must never
+// reach a `zfs` argv unescaped: a ".." substring (looks like path traversal,
+// even though ZFS dataset/pool names aren't filesystem paths) or whitespace/
+// quote characters (would break shell-quoting downstream). Shared by
+// ZvolDatasetFromDevPath (applied to a dataset's remainder) and
+// RebaseZvolDatasetPool (applied to a destination pool name) — both apply
+// this SAME defensive rule to their respective input; see each function's own
+// doc comment for the additional, input-specific rules layered on top (a
+// bare-pool/no-dataset-segment check, a path-separator check, a
+// leading-getopt-character check).
+func hasUnsafeZFSNameChars(s string) bool {
+	return strings.Contains(s, "..") || strings.ContainsAny(s, " \t\n\r'\"")
+}
+
 // ZvolDatasetFromDevPath extracts the "<pool>/<dataset>" ZFS dataset path
 // from a block-device disk's source dev path, following ZFS/TrueNAS's
 // documented /dev/zvol/<pool>/<dataset> device-node convention.
@@ -62,13 +76,67 @@ func ZvolDatasetFromDevPath(devPath string) (string, bool) {
 	if !strings.Contains(rest, "/") {
 		return "", false // a bare pool name with no dataset segment is not a valid zvol path
 	}
-	if strings.Contains(rest, "..") {
-		return "", false // defensive: never let a traversal-looking segment through
-	}
-	if strings.ContainsAny(rest, " \t\n\r'\"") {
-		return "", false // defensive: never splice whitespace/quotes into a `zfs` argv
+	if hasUnsafeZFSNameChars(rest) {
+		return "", false // defensive: never splice a traversal-looking or shell-unsafe segment into a `zfs` argv
 	}
 	return rest, true
+}
+
+// RebaseZvolDatasetPool replaces dataset's leading POOL component with
+// destPool, leaving every dataset segment after it unchanged — e.g.
+// "tank/vms/win10/disk0" rebased onto "flashpool" becomes
+// "flashpool/vms/win10/disk0".
+//
+// This exists for a CROSS-INSTANCE zvol restore: destBase (internal/api/
+// service.go's prepareRestoreVMForTarget) remaps a FILE-backed disk onto a
+// chosen destination FILESYSTEM PATH, but that path carries no ZFS pool
+// information at all — a zvol-backed disk's `zfs receive` target is a
+// DATASET, and the source dataset's pool (the first path segment
+// ZvolDatasetFromDevPath returns) almost certainly does not exist on the
+// destination box under that name. Without this rebase, RestoreZvolDisk
+// would derive its receive target purely from the SOURCE pool's name and
+// fail deep inside `zfs receive` on the destination — see
+// docs/vm-backup-ssh-setup.md's TrueNAS section for the operator-facing
+// explanation of why an explicit destination pool is required.
+//
+// dataset MUST already be in the "<pool>/<rest...>" shape
+// ZvolDatasetFromDevPath returns (the only caller in this codebase). destPool
+// is validated with the SAME defensive rules ZvolDatasetFromDevPath applies
+// to a dataset segment: never empty, never containing a path separator
+// (a pool name is one segment, not a nested dataset path — a caller wanting
+// to also pin a destination PARENT dataset gets that for free from the
+// source's own remaining segments), ".." traversal, or shell-unsafe
+// whitespace/quote characters — PLUS a leading '-'/'@'/'#'/'%', none of
+// which a ZFS pool name may legally start with (not exploitable — SSH args
+// are shell-quoted regardless — just a cleaner rejection than the getopt
+// error `zfs receive` would otherwise produce for something like "-F").
+// ok=false on any violation — a caller MUST treat that as "cannot safely
+// rebase this restore" and refuse, NEVER fall back to the unrebased dataset
+// (which would silently reintroduce the exact wrong-pool bug this function
+// exists to close).
+func RebaseZvolDatasetPool(dataset, destPool string) (string, bool) {
+	destPool = strings.TrimSpace(destPool)
+	if destPool == "" {
+		return "", false
+	}
+	if strings.Contains(destPool, "/") || hasUnsafeZFSNameChars(destPool) {
+		return "", false // a pool name is a single segment — never a nested path, traversal-looking, or shell-unsafe
+	}
+	if strings.IndexByte("-@#%", destPool[0]) >= 0 {
+		// Not exploitable (SSH args are shell-quoted regardless), just a
+		// clean-rejection nicety: zfs(8) reserves '@'/'#' as the
+		// snapshot/bookmark delimiter and a pool name can't start with them,
+		// and a leading '-' is the sharper practical trap — it gets read as
+		// an option flag by `zfs receive`'s own getopt parsing, turning a
+		// bad pool name like "-F" into a cryptic getopt error deep inside
+		// that call instead of this clean rejection.
+		return "", false
+	}
+	_, rest, ok := strings.Cut(dataset, "/")
+	if !ok || rest == "" {
+		return "", false // dataset must already carry at least one segment past its own pool
+	}
+	return destPool + "/" + rest, true
 }
 
 // ZFSSnapshotArgs returns the argv for `zfs snapshot <dataset>@<snapName>` —

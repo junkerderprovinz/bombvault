@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
-	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -71,8 +70,8 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	// activity log WHILE it probes the far side (#109). The terminal event is
 	// deferred so an early error/panic can never leave a stuck live line.
 	tkey := "tamper:" + domain
-	s.progBegin(ctx, tkey, "maintenance")
-	defer func() { s.progEnd(tkey, "maintenance", err == nil) }()
+	_, startedAt := s.progBegin(ctx, tkey, "maintenance")
+	defer func() { s.progEnd(tkey, "maintenance", err == nil, startedAt) }()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return TamperVerdict{}, fmt.Errorf("read settings: %w", err)
@@ -312,7 +311,7 @@ func (s *Service) notifyProtectionLost(ctx context.Context, domain, detail strin
 	subject := "Off-site protection LOST for " + domain
 	msg := fmt.Sprintf("The off-site tamper test for %s reports the append-only protection is GONE — the far side accepted a delete: %s", domain, detail)
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + " — " + msg, OK: false})
-	if c.Unraid && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}

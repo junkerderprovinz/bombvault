@@ -198,6 +198,27 @@ restored dataset into place, generally after shutting the VM down and
 pointing its domain XML at the new dataset (or renaming the restored dataset
 to the original's name once the original has been renamed aside).
 
+**Cross-instance restore (fleet mesh / disaster recovery) needs an explicit
+destination pool.** A cross-instance VM restore — restoring onto a DIFFERENT
+BombVault instance than the one that took the backup, the normal
+disaster-recovery case — remaps a file-backed disk onto a chosen destination
+FOLDER on the receiving box. A zvol-backed disk cannot be remapped the same
+way: its `zfs receive` target is a ZFS **dataset**, and the destination folder
+carries no pool information at all. Without an explicit destination pool,
+BombVault refuses the restore up front with a clear error rather than
+attempting `zfs receive` against the SOURCE box's pool name (which almost
+certainly does not exist on the destination) and failing deep inside that
+call. Supply the destination pool via the foreign-restore API's `zvolPool`
+parameter (`POST /api/foreign/restore`) — every zvol disk's dataset is then
+rebased onto that pool, keeping the rest of its path (e.g.
+`tank/vms/win10/disk0` restoring onto pool `flashpool` lands under
+`flashpool/vms/win10/disk0-bombvault-restore-<timestamp>`, subject to the same
+manual promote step described above). **There is no UI field for this yet —
+it is reachable via a direct API call only; wiring it into the Recovery UI's
+foreign-restore form is a follow-up.** A same-instance restore is unaffected
+either way: it always restores onto its own box's pool, which by definition
+already exists there.
+
 **⚠ This entire mechanism is REASONED from ZFS's and TrueNAS's public
 documentation — the `/dev/zvol/<pool>/<dataset>` device-node convention and
 `zfs send`/`zfs receive` as the ZFS-native way to move a point-in-time

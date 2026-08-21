@@ -355,6 +355,14 @@ type VMRestoreBlockDisk struct {
 	// (see RestoreZvolDeps.SourceDataset — RestoreZvolDisk never issues a
 	// `zfs receive` against this value directly, see its doc comment).
 	SourceDataset string
+	// RestoreBaseDataset, when non-empty, is the dataset RestoreZvolDisk bases
+	// its fresh `-bombvault-restore-<ts>` target name on, INSTEAD OF
+	// SourceDataset — see RestoreZvolDeps.RestoreBaseDataset's doc comment for
+	// why (a cross-instance restore rebasing onto the DESTINATION pool via
+	// virshcli.RebaseZvolDatasetPool). Empty (the default, and the ONLY value
+	// a same-instance restore ever sets) leaves RestoreZvolDisk's behavior
+	// byte-for-byte unchanged from before this field existed.
+	RestoreBaseDataset string
 	// SnapshotID is the restic snapshot holding THIS disk's backup — resolved
 	// by the caller (see VMRestoreDeps.BlockDisks's doc comment above).
 	SnapshotID string
@@ -1087,6 +1095,20 @@ type RestoreZvolDeps struct {
 	// RestoreZvolDisk NEVER issues a `zfs receive` against this value
 	// directly — see zvolRestoreTargetDataset's safety property.
 	SourceDataset string
+	// RestoreBaseDataset, when non-empty, is the dataset RestoreZvolDisk bases
+	// its fresh `-bombvault-restore-<ts>` target name on INSTEAD OF
+	// SourceDataset. This is how a CROSS-INSTANCE restore lands its `zfs
+	// receive` on the DESTINATION box's own pool: the caller (internal/api/
+	// service.go's prepareRestoreVMForTarget) rebases SourceDataset's pool
+	// segment onto an explicit destination pool via
+	// virshcli.RebaseZvolDatasetPool and passes the result here — the SOURCE
+	// dataset name (SourceDataset, above) is kept around only for logging/
+	// error messages, never used to build the receive target when this field
+	// is set. Empty (the default) restores EXACTLY the pre-existing
+	// same-instance behavior: the target is derived from SourceDataset
+	// itself, which is already guaranteed to live on a pool that exists on
+	// this box (it was resolved from THIS box's own domain XML).
+	RestoreBaseDataset string
 	// RepoPath is the local restic repository path for the vms domain.
 	RepoPath string
 	// SnapshotID is the restic snapshot to restore from.
@@ -1118,9 +1140,19 @@ type RestoreZvolDeps struct {
 // the operator (see docs/vm-backup-ssh-setup.md's TrueNAS section) — this
 // function never automates that step.
 //
+// The fresh name is derived from d.RestoreBaseDataset when set, else
+// d.SourceDataset (see RestoreZvolDeps.RestoreBaseDataset's doc comment) —
+// either way it goes through zvolRestoreTargetDataset, so the "never the
+// live source dataset" structural safety property holds regardless of which
+// base was used.
+//
 // ⚠ UNVERIFIED AGAINST REAL HARDWARE — see this section's header comment.
 func RestoreZvolDisk(ctx context.Context, d RestoreZvolDeps) (string, error) {
-	target := zvolRestoreTargetDataset(d.SourceDataset, time.Now())
+	base := d.SourceDataset
+	if d.RestoreBaseDataset != "" {
+		base = d.RestoreBaseDataset
+	}
+	target := zvolRestoreTargetDataset(base, time.Now())
 
 	// Bridge Restic.DumpTo (writes to an io.Writer) into Host.StreamReceive
 	// (reads from an io.Reader) via an in-process pipe — never buffers the
@@ -1170,12 +1202,13 @@ func restoreBlockDisksAndLog(ctx context.Context, d VMRestoreDeps) error {
 	var firstErr error
 	for _, bd := range d.BlockDisks {
 		target, err := RestoreZvolDisk(ctx, RestoreZvolDeps{
-			SourceDataset: bd.SourceDataset,
-			RepoPath:      d.RepoPath,
-			SnapshotID:    bd.SnapshotID,
-			StdinPath:     bd.StdinPath,
-			Host:          d.ZFSHost,
-			Restic:        d.ZvolRestic,
+			SourceDataset:      bd.SourceDataset,
+			RestoreBaseDataset: bd.RestoreBaseDataset,
+			RepoPath:           d.RepoPath,
+			SnapshotID:         bd.SnapshotID,
+			StdinPath:          bd.StdinPath,
+			Host:               d.ZFSHost,
+			Restic:             d.ZvolRestic,
 		})
 		if err != nil {
 			log.Printf("vm restore: zvol disk %q: FAILED (%v)", bd.SourceDataset, err)

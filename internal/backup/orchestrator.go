@@ -852,15 +852,92 @@ func publishedHostPorts(in model.Inspect) map[string]bool {
 	return out
 }
 
-// truncateErr returns an error message bounded to the DB column length. It is a
-// length-only guard: the adapters (restic/dockercli) already scrub
-// secrets/paths from their own errors, so this only trims the message so it fits
-// the runs.error_message column.
+// runErrPathRe and runErrCredentialRe are this package's own copy of the
+// path/credential scrub applied by internal/restic/restic.go and
+// internal/api/handlers.go (see restic.go's credentialRe doc comment for the
+// full reasoning behind the shape of these two and why the path regex must
+// run first — including the known Docker-digest-style false-positive
+// tradeoff and the known unencoded-"/"-in-password false-negative tradeoff,
+// both of which apply equally to this copy). Duplicated rather than
+// imported: this package is dependency-injected and deliberately imports
+// ONLY the Docker/Restic/Templates/Runs interfaces defined here, never the
+// concrete restic/dockercli adapters (see the package doc comment above) — a
+// real dependency on internal/restic just to reuse a two-line regex would
+// break that isolation for something this small and stable to just
+// duplicate, matching how the api and restic packages already each keep
+// their own copy.
+var (
+	runErrPathRe       = regexp.MustCompile(`(/[^\s:"']+)+`)
+	runErrCredentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+)
+
+// scrubRunErr strips absolute-path-like tokens and then URL-embedded
+// "user:pass@" credentials from s, in that order (path first — see
+// restic.go's scrubSecrets doc comment for why credentials-first would
+// destroy the hostname instead).
+func scrubRunErr(s string) string {
+	s = runErrPathRe.ReplaceAllString(s, "[path]")
+	return runErrCredentialRe.ReplaceAllString(s, "[redacted]@")
+}
+
+// restoreConflictBypass reports whether err carries this package's own
+// ErrRestoreConflict sentinel and, if so, returns its message completely
+// UNSCRUBBED, and true. checkRestoreConflicts' message ("host port 8080/tcp
+// is already used by container ...") is already user-safe — IP/host-port/
+// container names, never a host filesystem path — and runErrPathRe's regex
+// matches ANY slash-containing token, not just a real path, so routing it
+// through scrubRunErr unconditionally mangles "8080/tcp" into "8080[path]",
+// destroying exactly the information the message exists to convey.
+//
+// This mirrors internal/api/handlers.go's scrubBypassMessage, which the api
+// package's own copy of truncateRunErr consults for the identical reason —
+// including this exact sentinel, plus 4 more that are only ever constructed
+// inside package api. This package can't import internal/api to share that
+// helper directly (internal/api already imports internal/backup, so the
+// reverse import would cycle) and, per the package doc comment above,
+// deliberately doesn't take on that kind of dependency anyway — same
+// reasoning as runErrPathRe/runErrCredentialRe's duplication above.
+// ErrRestoreConflict is the only one of those 5 sentinels this package's own
+// error paths can ever produce or receive, so it's the only one this bypass
+// needs to know about.
+func restoreConflictBypass(err error) (string, bool) {
+	if errors.Is(err, ErrRestoreConflict) {
+		return err.Error(), true
+	}
+	return "", false
+}
+
+// truncateErr scrubs and bounds an error message so it fits the DB's
+// runs.error column.
+//
+// This scrubs every error EXCEPT one carrying ErrRestoreConflict (see
+// restoreConflictBypass), which passes through unscrubbed instead. Every
+// other error is scrubbed unconditionally, not just for the restic/dockercli
+// adapters whose errors already come pre-scrubbed through their own
+// interfaces (scrubbing an already-clean string is a no-op, so that costs
+// nothing). It's the same belt-and-suspenders reasoning as the api package's
+// twin, truncateRunErr: this function is the one place that writes
+// runs.error, so scrubbing HERE protects every current caller and
+// every future one, instead of relying on every backupErr/restoreErr this
+// package ever builds having been routed through a scrubbing adapter first.
+//
+// An earlier version of this function scrubbed EVERYTHING unconditionally,
+// including an ErrRestoreConflict-wrapped error, on the theory that running
+// the scrub regexes over already-clean text is a harmless no-op. That was
+// false for exactly this sentinel — see restoreConflictBypass — so
+// checkRestoreConflicts' host:port conflict list used to reach runs.error
+// with its port numbers mangled into "[path]" even though the identical
+// error survives intact through the api package's scrubError.
 func truncateErr(err error) string {
 	if err == nil {
 		return ""
 	}
 	msg := err.Error()
+	if bypass, ok := restoreConflictBypass(err); ok {
+		msg = bypass
+	} else {
+		msg = scrubRunErr(msg)
+	}
 	const max = 500
 	if len(msg) > max {
 		return msg[:max]

@@ -328,11 +328,20 @@ func foreignItems(m map[string][]restic.Snapshot) []ForeignItem {
 // so a bad request fails immediately and no goroutine starts. Shares
 // batchActive with backups and the other restores; returns (false, nil) when
 // one is already running.
-func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool) (bool, error) {
+//
+// zvolPool is a VMS-DOMAIN-ONLY, OPTIONAL destination ZFS pool name for a VM
+// whose domain XML carries TrueNAS zvol-backed (block-device) disks —
+// destBase (derived from targetSubPath, see foreignVMDestBase) is a
+// filesystem path and carries no ZFS pool information, so a zvol disk's `zfs
+// receive` target cannot be rebased from it the way a file-backed disk's path
+// is. See prepareRestoreVMForTarget's destZvolPool doc comment for the full
+// rebase/refusal behavior. Ignored for every other domain and for a VM with
+// no zvol disks.
+func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
-	key, run, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths, overwrite)
+	key, run, onPanic, err := s.prepareForeignRestore(ctx, sessionID, domain, item, snapshotID, confirm, targetSubPath, filePaths, overwrite, zvolPool)
 	if err != nil {
 		s.batchActive.Store(false)
 		return false, err
@@ -342,6 +351,20 @@ func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, it
 	// registration; the run outcome lands in the run history).
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		// onPanic is built PER DOMAIN by prepareForeignRestore, because which of
+		// recoverOperation's two run-closing strategies is correct depends on which
+		// branch of the switch below ran: the containers/vms branches dispatch into
+		// s.executeRestore/executeRestoreVM, whose deep orchestrator (like
+		// StartRestore/StartRestoreVM's own goroutine) calls store.StartRun itself —
+		// so only the TARGET id is known here, and failStuckRun is correct. The files
+		// branch instead drives its own beginRestoreRunForTarget/finishRestoreRun
+		// bookkeeping inline (like StartRestoreFileSet/StartRestoreFileSetFiles) — so
+		// there IS a local runID, and finishRestoreRun is correct instead. Each
+		// branch already builds the right closure when it builds run itself; this
+		// defer just wires it into the same outermost position every other
+		// backup/restore goroutine in this package uses (see recoverOperation's own
+		// doc comment for why outermost matters).
+		defer s.recoverOperation("foreign restore: "+domain+":"+item, nil, onPanic)
 		defer s.batchActive.Store(false)
 		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
 		defer tcancel()
@@ -357,13 +380,20 @@ func (s *Service) StartForeignRestore(ctx context.Context, sessionID, domain, it
 }
 
 // prepareForeignRestore runs ALL of a foreign restore's validation and
-// resolution synchronously and returns the progress key plus the detached
-// work for the domain. The confirm guard fires FIRST (the familiar sentinel,
-// same discipline as prepareRestore); the item name is boundary-checked here
-// because it feeds restic tags, def filenames and progress keys.
-func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool) (string, func(context.Context) error, error) {
+// resolution synchronously and returns the progress key, the detached work
+// for the domain, and an onPanic closure for recoverOperation to call if that
+// detached work panics (see StartForeignRestore's goroutine for why this is
+// domain-specific rather than one shared strategy — the containers/vms
+// branches return a failStuckRun(plan.targetID, ...) closure, the files
+// branch a finishRestoreRun(runID, ...) closure that closes over a runID
+// declared alongside its run closure, exactly as StartRestoreFileSet does).
+// The confirm guard fires FIRST (the familiar sentinel, same discipline as
+// prepareRestore); the item name is boundary-checked here because it feeds
+// restic tags, def filenames and progress keys. zvolPool is StartForeignRestore's
+// own parameter, passed straight through — see its doc comment.
+func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, item, snapshotID string, confirm bool, targetSubPath string, filePaths []string, overwrite bool, zvolPool string) (string, func(context.Context) error, func(string), error) {
 	if !confirm {
-		return "", nil, backup.ErrNotConfirmed
+		return "", nil, nil, backup.ErrNotConfirmed
 	}
 	// Domain-aware name check: libvirt VM names legitimately contain spaces
 	// (e.g. "Windows Server 2022"), so VMs use the libvirt-aware validVMName
@@ -374,11 +404,11 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		nameOK = validVMName(item)
 	}
 	if !nameOK {
-		return "", nil, errors.New("invalid item name")
+		return "", nil, nil, errors.New("invalid item name")
 	}
 	sess, err := s.foreignSession(sessionID)
 	if err != nil {
-		return "", nil, err
+		return "", nil, nil, err
 	}
 	ref := repoRef{repo: sess.repo, mode: sess.mode}
 	switch domain {
@@ -390,10 +420,10 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// definition + appdata_paths byte-for-byte.
 		tg, err := s.foreignContainerTarget(sess, item)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
-			return "", nil, backup.ErrInvalidSnapshotID
+			return "", nil, nil, backup.ErrInvalidSnapshotID
 		}
 		// A cross-instance container restore ALWAYS remaps appdata onto a destination
 		// on THIS host (#125): the request Target chooses it, else the configured
@@ -404,46 +434,59 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// prepareRestoreForTarget before any destructive Stop/Remove.
 		destBase, err := s.foreignContainerDestBase(targetSubPath)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg, destBase, overwrite)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		adopted, err := s.store.UpsertTarget(tg)
 		if err != nil {
-			return "", nil, fmt.Errorf("adopt container %q: %w", item, err)
+			return "", nil, nil, fmt.Errorf("adopt container %q: %w", item, err)
 		}
 		plan.targetID = adopted.ID // attribute the run to the persisted row
-		return "container:" + item, func(rctx context.Context) error {
+		run := func(rctx context.Context) error {
 			return s.executeRestore(rctx, item, plan, false)
-		}, nil
+		}
+		// executeRestore's deep orchestrator (backup.RestoreContainer) calls
+		// store.StartRun(plan.targetID, ...) itself — a plain sequential call, not
+		// deferred — so a panic during the restore leaves that run stuck "running"
+		// without this, exactly like StartRestore's own goroutine.
+		onPanic := func(msg string) {
+			s.failStuckRun(plan.targetID, msg)
+		}
+		return "container:" + item, run, onPanic, nil
 	case "vms":
 		// Same validate-before-adopt discipline as the containers case.
 		tg, err := s.foreignVMTarget(sess, item)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
-			return "", nil, backup.ErrInvalidSnapshotID
+			return "", nil, nil, backup.ErrInvalidSnapshotID
 		}
 		// A cross-instance VM restore MUST remap the source server's disk paths onto
 		// a destination on THIS host (the source pool is not mounted here — restoring
 		// there would fill the host's RAM and brick it, #122). targetSubPath (the
 		// request Target) chooses the destination; empty falls back to the local VM
 		// domains path. prepareRestoreVMForTarget remaps disks + XML and guards the
-		// destination before any restic write.
+		// destination before any restic write. zvolPool is the SEPARATE destination
+		// ZFS pool a TrueNAS zvol-backed disk needs (destBase carries no ZFS pool
+		// information — see prepareRestoreVMForTarget's destZvolPool doc comment);
+		// prepareRestoreVMForTarget refuses cleanly if the VM has zvol disks and
+		// zvolPool was left empty, rather than attempting `zfs receive` against the
+		// source box's pool name on this host.
 		destBase, err := s.foreignVMDestBase(targetSubPath)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
-		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg, destBase)
+		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg, destBase, zvolPool)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		adopted, err := s.store.UpsertVMTarget(tg)
 		if err != nil {
-			return "", nil, fmt.Errorf("adopt vm %q: %w", item, err)
+			return "", nil, nil, fmt.Errorf("adopt vm %q: %w", item, err)
 		}
 		plan.targetID = adopted.ID
 		// A foreign-restored VM is defined but NEVER autostarted: it carries the
@@ -451,9 +494,15 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// or on host boot — could wedge libvirt. Force autostart off and leave it
 		// stopped; the operator starts it once they have vetted the definition.
 		plan.wasAutostart = false
-		return "vm:" + item, func(rctx context.Context) error {
+		run := func(rctx context.Context) error {
 			return s.executeRestoreVM(rctx, item, plan, true)
-		}, nil
+		}
+		// Same reasoning as the containers branch above, for executeRestoreVM's
+		// backup.RestoreVM orchestrator.
+		onPanic := func(msg string) {
+			s.failStuckRun(plan.targetID, msg)
+		}
+		return "vm:" + item, run, onPanic, nil
 	case "files":
 		// A non-empty selection restores only those paths/subfolders (the manilx
 		// #123 case: pull one stack out of a whole-appdata set); empty restores the
@@ -461,29 +510,44 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		if len(filePaths) > 0 {
 			plan, err := s.prepareForeignFileSetFilesRestore(ctx, sess, item, snapshotID, targetSubPath, filePaths)
 			if err != nil {
-				return "", nil, err
+				return "", nil, nil, err
 			}
 			rkey := "files:" + plan.setName
-			return rkey, func(rctx context.Context) error {
-				runID := s.beginRestoreRunForTarget(plan.setID)
-				pctx := s.progBegin(rctx, rkey, "restore")
+			// runID is declared here (before the closures below) rather than with :=
+			// at its assignment inside run, so onPanic — which can only run AFTER
+			// that assignment, since a panic before it means beginRestoreRunForTarget
+			// never got called and no run needs closing — sees whatever value it
+			// holds at panic time (exactly StartRestoreFileSet's own goroutine).
+			var runID string
+			run := func(rctx context.Context) error {
+				runID = s.beginRestoreRunForTarget(plan.setID)
+				pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 				rerr := s.runRestoreFileSetFiles(pctx, plan)
-				return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr)
-			}, nil
+				return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt)
+			}
+			onPanic := func(msg string) {
+				s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore
+			}
+			return rkey, run, onPanic, nil
 		}
 		plan, err := s.prepareForeignFileSetRestore(ctx, sess, item, snapshotID, targetSubPath)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		rkey := "files:" + plan.setName // the exact progBegin key this restore publishes under
-		return rkey, func(rctx context.Context) error {
-			runID := s.beginRestoreRunForTarget(plan.setID)
-			pctx := s.progBegin(rctx, rkey, "restore")
+		var runID string                // see the selective branch above for why this is declared here
+		run := func(rctx context.Context) error {
+			runID = s.beginRestoreRunForTarget(plan.setID)
+			pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 			rerr := s.runRestoreFileSet(pctx, plan)
-			return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr)
-		}, nil
+			return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt)
+		}
+		onPanic := func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore
+		}
+		return rkey, run, onPanic, nil
 	default:
-		return "", nil, errors.New("unknown domain (must be containers, vms or files)")
+		return "", nil, nil, errors.New("unknown domain (must be containers, vms or files)")
 	}
 }
 

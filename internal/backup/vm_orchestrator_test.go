@@ -1021,3 +1021,44 @@ func TestRunTagSetHasNoEffectOnRestoreCalls(t *testing.T) {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
 	}
 }
+
+// TestRestoreVMBlockDiskRestoreBaseDatasetReachesZFSReceiveTarget is the
+// end-to-end wiring proof for the cross-instance zvol restore fix: a
+// VMRestoreBlockDisk carrying a RestoreBaseDataset (what
+// internal/api/service.go's prepareRestoreVMForTarget sets after rebasing the
+// source dataset's pool onto an explicit destination pool via
+// virshcli.RebaseZvolDatasetPool) must have that value — not SourceDataset —
+// actually reach the fake ZFS host's StreamReceive target through the full
+// RestoreVM -> restoreBlockDisksAndLog -> RestoreZvolDisk call chain.
+// Complements vm_zvol_test.go's RestoreZvolDisk-level tests by proving the
+// value is actually threaded from VMRestoreDeps.BlockDisks all the way down.
+func TestRestoreVMBlockDiskRestoreBaseDatasetReachesZFSReceiveTarget(t *testing.T) {
+	vm := &fakeVM{stateVal: "running"}
+	r := &fakeRestic{}
+	runs := &fakeRuns{}
+	host := &fakeZFSHost{}
+	zr := &fakeZvolRestic{dumpData: []byte("restored zvol bytes")}
+
+	d := sampleVMRestoreDeps(t, vm, r, runs)
+	d.BlockDisks = []backup.VMRestoreBlockDisk{
+		{
+			SourceDataset:      "tank/vms/win10/disk1",
+			RestoreBaseDataset: "flashpool/vms/win10/disk1", // rebased onto the DESTINATION pool
+			SnapshotID:         "zvolsnapid1",
+			StdinPath:          "/vm-disks/tank/vms/win10/disk1@bombvault-20260816120000",
+		},
+	}
+	d.ZFSHost = host
+	d.ZvolRestic = zr
+
+	if err := backup.RestoreVM(t.Context(), d); err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+
+	if !strings.HasPrefix(host.streamReceiveTarget, "flashpool/vms/win10/disk1-bombvault-restore-") {
+		t.Fatalf("StreamReceive target = %q, want it derived from RestoreBaseDataset (flashpool/vms/win10/disk1), not SourceDataset", host.streamReceiveTarget)
+	}
+	if strings.HasPrefix(host.streamReceiveTarget, "tank/") {
+		t.Fatalf("StreamReceive target = %q targeted the SOURCE pool — the exact wrong-pool bug this fix closes", host.streamReceiveTarget)
+	}
+}

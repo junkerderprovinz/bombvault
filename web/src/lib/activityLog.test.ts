@@ -137,6 +137,153 @@ describe("buildLogLines — live domain-op checks (#109)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Issue #159 — a first cut of this feature concluded restic copy had no
+// machine-readable percentage and shipped a duration-only live off-site line.
+// That conclusion was wrong (see restic.Copy's doc comment for the corrected
+// story): restic copy DOES print a real per-snapshot pack-copy percentage
+// once RESTIC_PROGRESS_FPS is wired up, so offsiteLiveLineText shows it once
+// available, falling back to the honest elapsed-duration signal (from the
+// backend-stamped startedAt) and finally to the plain running line whenever
+// neither is known/usable — so a stale/skewed/zero/negative timestamp can
+// never render "NaN" or a negative span.
+// ---------------------------------------------------------------------------
+describe("buildLogLines — live off-site line (#159)", () => {
+  it("renders the plain running line when startedAt is not known yet", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_000_000 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(lines).toHaveLength(1);
+    const live = lines[0];
+    expect(live.status).toBe("offsite");
+    expect(live.kind).toBe("offsite");
+    expect(live.text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainContainers");
+  });
+
+  it("appends a live elapsed duration once startedAt is known", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_030_000, startedAt: 5000 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_030_000);
+    expect(lines).toHaveLength(1);
+    const live = lines[0];
+    expect(live.text).toBe("activityLog.lineOffsiteRunningWithDuration domain=activityLog.domainContainers duration=30s");
+  });
+
+  it("degrades to the plain running line — asserting the ACTUAL fallback text, not just the absence of NaN — when startedAt is in the future (clock skew)", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_030_000, startedAt: 6000 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_030_000);
+    const live = lines[0];
+    expect(live.text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainContainers");
+    expect(live.text).not.toContain("NaN");
+  });
+
+  it("treats startedAt: 0 as unknown, never rendering the epoch's ~56-year elapsed span", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_030_000, startedAt: 0 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_030_000);
+    expect(lines[0].text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainContainers");
+  });
+
+  it("treats a negative startedAt as unknown, never rendering a negative duration", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_030_000, startedAt: -500 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_030_000);
+    expect(lines[0].text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainContainers");
+    expect(lines[0].text).not.toContain("-");
+  });
+
+  it("shows a live snapshot-of-total percentage once the backend reports one", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 62.6, active: true, lastSeen: 5_000_000, snapshotIndex: 2, snapshotTotal: 4 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(lines[0].text).toBe(
+      "activityLog.lineOffsiteRunningSnapshotPercent domain=activityLog.domainContainers index=2 total=4 percent=63 duration="
+    );
+  });
+
+  it("combines the live percentage with the elapsed duration", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": {
+        phase: "replicate",
+        percent: 10,
+        active: true,
+        lastSeen: 5_030_000,
+        startedAt: 5000,
+        snapshotIndex: 1,
+        snapshotTotal: 1,
+      },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_030_000);
+    expect(lines[0].text).toBe(
+      "activityLog.lineOffsiteRunningSnapshotPercentWithDuration domain=activityLog.domainContainers index=1 total=1 percent=10 duration=30s"
+    );
+  });
+
+  it("widens the displayed total to at least the live index if the estimate undercounted", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 5, active: true, lastSeen: 5_000_000, snapshotIndex: 3, snapshotTotal: 2 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(lines[0].text).toContain("index=3 total=3");
+  });
+
+  it("ignores a snapshotIndex of 0 (not yet attributed) even if percent is a number", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 40, active: true, lastSeen: 5_000_000, snapshotIndex: 0 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(lines[0].text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainContainers");
+  });
+
+  // Review fix: ActivityLog.tsx's `now` ticks at a coarse 60s cadence (its
+  // idle countdown doesn't need better) — reusing it for the off-site
+  // duration meant that for a run's first ~60s, `now` could sit BEHIND the
+  // backend-stamped startedAt, making the computed span go NEGATIVE (blank),
+  // then jump once `now` finally caught up. `liveNow` is the fix: a second,
+  // faster-ticking clock buildLogLines/buildLiveLines take SEPARATELY from
+  // `now`, used ONLY for this computation.
+  it("uses liveNow (not now) for the off-site duration, so a stale `now` doesn't go negative", () => {
+    // startedAt = 5000s (5,000,000ms). `now` is 1s BEHIND that in ms terms —
+    // reusing `now` for elapsedSince (the pre-fix bug) would compute a
+    // NEGATIVE span, which formatDuration rejects, rendering blank. `liveNow`
+    // is 3s AHEAD of startedAt and must be what actually drives the text.
+    const now = 4_999_000;
+    const liveNow = 5_003_000;
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: now, startedAt: 5000 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, now, liveNow);
+    expect(lines[0].text).toBe("activityLog.lineOffsiteRunningWithDuration domain=activityLog.domainContainers duration=3s");
+  });
+
+  it("still gates staleness on `now`, independent of liveNow", () => {
+    // lastSeen is far enough behind `now` to be stale (> STALE_MS), even
+    // though `liveNow` alone would suggest the entry is fresh — staleness must
+    // stay governed by `now`, unaffected by the liveNow fix.
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 0, startedAt: 0 },
+    };
+    const now = 20_000; // 20s > STALE_MS (15s, see progress.ts)
+    const lines = buildLogLines([], progress, [], resolveName, now, now);
+    expect(lines.some((l) => l.text.includes("lineOffsiteRunning"))).toBe(false);
+  });
+
+  it("buildLogLines defaults liveNow to now when the caller doesn't pass one (backward compatible)", () => {
+    const progress: ProgressMap = {
+      "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_030_000, startedAt: 5000 },
+    };
+    const lines = buildLogLines([], progress, [], resolveName, 5_030_000); // no 6th arg
+    expect(lines[0].text).toBe("activityLog.lineOffsiteRunningWithDuration domain=activityLog.domainContainers duration=30s");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // #109 follow-up — the off-site DR drill has its own kind "drdrill" (live key
 // "drdrill:<domain>", run kind "drdrill") so it is distinguishable from the
 // local subset drill ("drill"), and a tamper run that produced no verdict is

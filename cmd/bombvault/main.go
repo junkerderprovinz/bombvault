@@ -221,7 +221,21 @@ func run() error {
 	// step. Unraid, TrueNAS and generic all have real implementations; only a
 	// genuinely unrecognized override value falls back to Generic{} with a
 	// logged warning rather than silently misbehaving.
-	svc.SetPlatform(platformFor(platform.Detect(context.Background(), cfg.PlatformOverride, cfg.FlashDir)))
+	detectedKind := platform.Detect(context.Background(), cfg.PlatformOverride, cfg.FlashDir)
+	// Always log the resolved Kind, not just on an override typo (the
+	// unrecognized-value branches above): auto-detection's only Unraid signal
+	// is one filesystem marker under cfg.FlashDir (config/plugins/dockerMan),
+	// which requires the container's /host/boot mount to be present and
+	// correctly pointed at the real flash drive. A genuinely Unraid host
+	// whose mount is missing/misconfigured silently resolves to "generic"
+	// and every Unraid-only feature goes dark with no boot-log trace of why —
+	// this line is that trace, for every start, on every platform.
+	if cfg.PlatformOverride != "" {
+		log.Printf("platform: detected %q (PLATFORM override)", detectedKind)
+	} else {
+		log.Printf("platform: detected %q (auto; marker checked: %s)", detectedKind, filepath.Join(cfg.FlashDir, "config/plugins/dockerMan"))
+	}
+	svc.SetPlatform(platformFor(detectedKind))
 	// Tell the service where the persistent cache lives so the post-run cache
 	// trim (TrimResticCache) can measure + evict per-repo cache subdirs. Empty
 	// (the mkdir-failed fallback above) disables the size-based trim.

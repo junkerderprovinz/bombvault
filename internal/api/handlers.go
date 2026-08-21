@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
@@ -60,6 +61,72 @@ func failEnvelope(err error) map[string]any {
 // message that slips through to the API surface.
 var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 
+// credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
+// backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
+// — a syntax the generated deploy recipe documents as valid for restic's
+// rest:/s3: remote backends. absPathRe alone can't catch this: it stops at the
+// first ":", so it never reaches past "user" into the password. The username
+// class covers a fully-numeric username too (e.g. "123456:SuperSecret@host")
+// — an earlier version of this regex required the FIRST character to be a
+// letter, which let a numeric-only username through completely unscrubbed.
+// Requiring the closing "@" and excluding "/" from the password body keeps
+// this from matching ordinary "host:port" text (which has no "@") or a
+// "name/tag" split by "/" from something after it (excluded from the password
+// body) — only a real userinfo segment has a ":"-separated pair immediately
+// followed by "@".
+// See internal/restic/restic.go's identically-reasoned twin (and
+// internal/virshcli/virshcli.go's, for libvirt URIs): this is one of several
+// independent applications of the same defense-in-depth scrub, so an error
+// that reaches this handler without having gone through restic.lastReason
+// first still gets its credentials stripped here.
+//
+// Known cosmetic limitation, not a security issue: this also matches benign
+// "word:word@word" shapes that merely look like userinfo, e.g. a Docker image
+// digest reference "nginx:1.25@sha256:abc123" scrubs to
+// "[redacted]@sha256:abc123", or an SFTP host reference like "user:1@host".
+// A regex tight enough to exclude that class without risking a false
+// NEGATIVE on a real credential (a numeric-looking password is legal; a
+// scheme/"://" anchor doesn't survive scrubSecrets' ordering below, since
+// absPathRe already strips it) wasn't obvious to construct safely, so this is
+// accepted as a known tradeoff rather than forced.
+//
+// There is also a real, separate false NEGATIVE, pre-existing and independent
+// of the false positive above: a password containing an unencoded "/" is only
+// partially caught. credentialRe's password class excludes "/", and by the
+// time it runs, scrubSecrets' path pass has already consumed the credential's
+// leading "//...@" span as an ordinary path token (see scrubSecrets' doc
+// comment for why paths must run first) — leaving no "@" left for
+// credentialRe to anchor on, so its "[redacted]@" marker never fires at all.
+// Depending on where the "/" falls inside the password, a fragment of the
+// actual secret survives in the clear: e.g.
+// "rest:https://user:wJalrXUtnFEMI/K7MDENG@host:8000/repo" scrubs to
+// "rest:https:[path]:wJalrXUtnFEMI[path]:8000[path]" — the username and the
+// back half of the password vanish as unlabeled path noise, but
+// "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
+// text. A password with no embedded "/" is unaffected.
+var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+
+// scrubSecrets strips absolute-path-like tokens and then URL-embedded
+// "user:pass@" credentials from s, in that order.
+//
+// This order is NOT a correctness requirement — both orders fully redact the
+// password — but running credentialRe FIRST produces a worse result: once it
+// replaces "user:pass@" with "[redacted]@", the leftover
+// "scheme://[redacted]@host" is exactly the path-like shape absPathRe matches
+// next, so absPathRe's pass eats the HOSTNAME right along with it (verified:
+// "rest:https://user:pass@storage.example.com:8000/repo" scrubs to
+// "rest:https:[path]:8000[path]" — storage.example.com is gone, along with
+// any hope of telling which off-site target failed). Running absPathRe FIRST
+// consumes the bare scheme separator "//" before credentialRe ever runs, so
+// the only "word:...@" shape left for credentialRe to match stops at the
+// real "@" — producing "[redacted]@storage.example.com:8000[path]" instead,
+// which hides the password exactly as well while keeping the hostname an
+// operator with multiple off-site targets needs to diagnose a failure.
+func scrubSecrets(s string) string {
+	s = absPathRe.ReplaceAllString(s, "[path]")
+	return credentialRe.ReplaceAllString(s, "[redacted]@")
+}
+
 // errRestoreDestination tags a restore-DESTINATION refusal whose message is only
 // actionable WITH the path in it: "this destination already holds data", "this
 // destination is not on a mounted pool", "this destination has no room". The path
@@ -87,6 +154,54 @@ func destinationRefusal(format string, a ...any) error {
 	return &restoreDestErr{msg: fmt.Sprintf(format, a...)}
 }
 
+// scrubBypassMessage reports whether err carries one of the sentinel types
+// this codebase creates specifically because their Error() text is
+// deliberately UNSAFE to run through scrubSecrets: the path-shaped content
+// inside the message (a restore destination folder, the relative repo
+// location an operator should type instead, /boot vs /host/boot, a ZFS
+// dataset/pool name, a host:port conflict list) IS the actionable content the
+// message exists to convey, not an internal filesystem/secret leak that
+// needs hiding. When it matches, it returns err's message completely
+// unscrubbed, and true.
+//
+// Both scrubError below and truncateRunErr (service.go — the other place
+// error text is persisted, to runs.error) call this FIRST, before
+// ever touching scrubSecrets, so the two can never independently drift on
+// which shapes are safe to show verbatim. truncateRunErr didn't always do
+// this: an earlier version scrubbed every error unconditionally, on the
+// (false) theory that running the regexes over already-clean text is a
+// harmless no-op. That broke exactly for these sentinels — scrubSecrets'
+// path regex matches ANY slash-containing token, not just a filesystem path —
+// mangling e.g. "host port 8080/tcp is already used by container ..." into
+// "host port 8080[path] is already used ..." and eating a zvol rebase
+// failure's ZFS dataset name the same way, even though scrubError itself had
+// already solved precisely this problem for its own callers.
+func scrubBypassMessage(err error) (string, bool) {
+	switch {
+	case errors.Is(err, backup.ErrRestoreConflict):
+		// Already user-safe (IP / host-port / container names, no host paths) and
+		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
+		return err.Error(), true
+	case errors.Is(err, errRestoreDestination):
+		// The destination path IS the message (see errRestoreDestination).
+		return err.Error(), true
+	case errors.Is(err, errRepoPathGuidance):
+		// Same deal: the rejected location AND the relative form to use instead
+		// are the whole point of the message (see errRepoPathGuidance).
+		return err.Error(), true
+	case errors.Is(err, errUnraidPlatformMismatch):
+		// Same deal again: /boot and /host/boot ARE the actionable content of
+		// a platform-mismatch refusal (TestNotify's Unraid channel, the
+		// dashboard-tile plugin) — see unraidPlatformMismatchError.
+		return err.Error(), true
+	case errors.Is(err, errZvolRebaseFailed):
+		// Same deal again: the ZFS dataset/pool names ARE the message, and
+		// necessarily contain "/" — see errZvolRebaseFailed.
+		return err.Error(), true
+	}
+	return "", false
+}
+
 // scrubError maps known sentinels to clear messages and strips absolute paths
 // from anything else.
 func scrubError(err error) string {
@@ -97,17 +212,9 @@ func scrubError(err error) string {
 		return "restore not confirmed — set confirm:true to proceed"
 	case errors.Is(err, backup.ErrInvalidSnapshotID):
 		return "invalid snapshot id (must be 8–64 lowercase hex)"
-	case errors.Is(err, backup.ErrRestoreConflict):
-		// Already user-safe (IP / host-port / container names, no host paths) and
-		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
-		return err.Error()
-	case errors.Is(err, errRestoreDestination):
-		// The destination path IS the message (see errRestoreDestination).
-		return err.Error()
-	case errors.Is(err, errRepoPathGuidance):
-		// Same deal: the rejected location AND the relative form to use instead
-		// are the whole point of the message (see errRepoPathGuidance).
-		return err.Error()
+	}
+	if msg, ok := scrubBypassMessage(err); ok {
+		return msg
 	}
 	msg := err.Error()
 	// Map restic's password/key mismatch to an actionable hint: the repo was
@@ -115,7 +222,7 @@ func scrubError(err error) string {
 	if strings.Contains(msg, "wrong password or no key found") {
 		return "backup repository can't be opened — the APP_KEY differs from when this repo was first created (or encryption was toggled). Use the original APP_KEY, or point Settings at a fresh, empty backup path."
 	}
-	msg = absPathRe.ReplaceAllString(msg, "[path]")
+	msg = scrubSecrets(msg)
 	return strings.TrimSpace(msg)
 }
 
@@ -1446,7 +1553,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validResourceName(dt) {
+	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validVMName(dt) { // VM names may contain spaces ("Windows 11"); validResourceName wrongly rejected them (#127)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok": false, "error": "invalid DR-drill target",
 		})
@@ -2443,36 +2550,197 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 // Body: {password string}
 // login brute-force throttle: lock out after loginMaxFails failures within
 // loginWindow, so the optional password gate can't be guessed at full speed.
+//
+// The throttle is checked BEFORE secret.VerifyPassword runs, deliberately: a
+// throttled key is rejected without ever hashing the submitted password, not
+// merely denied credit for a correct guess afterwards. If verification ran
+// FIRST and the throttle only gated on failure, a throttled attacker could
+// keep submitting guesses at full, unthrottled rate: a correct guess would
+// still get verified before the throttle check ever saw it, letting the
+// attacker infer correct/incorrect from response timing or content alone —
+// making the throttle purely cosmetic for exactly the attacker it exists to
+// stop. Checking the throttle first, unconditionally, is what actually caps
+// *attempts* rather than just successes. The tradeoff is that a client which
+// is currently throttled gets a 429 even on a correct password rather than
+// having it be honored immediately; see loginClientKey's doc for why that
+// tradeoff is now scoped to the offending client instead of every client.
 const (
 	loginMaxFails = 5
 	loginWindow   = time.Minute
 )
 
-// loginThrottled prunes the failed-attempt window and reports whether logins are
-// currently locked out.
-func (h *Handler) loginThrottled() bool {
+// loginClientKey returns the throttle key for r: the connecting peer's IP,
+// with any port stripped.
+//
+// This deliberately reads net/http's RemoteAddr — the actual TCP peer — and
+// NOT a client-supplied header such as X-Forwarded-For. This codebase has no
+// trusted-proxy configuration (no allowlisted proxy CIDR, no "trust this hop"
+// setting anywhere), so honoring a forwarded-for header here would let any
+// caller pick their own throttle bucket at will, which defeats the point of
+// keying by client in the first place. When BombVault does sit behind a
+// reverse proxy (the documented remote-access setup, see
+// docs/configuration.md), every request the proxy forwards shares the
+// proxy's address here — clients behind it share one throttle bucket, same as
+// they would for any other per-IP limiter with no trusted-proxy support. That
+// is a coarser bucket than per-real-client, but it is still strictly better
+// than the single global bucket this replaces, and it can't be spoofed by an
+// unauthenticated caller.
+func loginClientKey(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		// No port present (or an otherwise unparseable value, e.g. in tests
+		// that set RemoteAddr directly) — fall back to the raw value rather
+		// than collapsing every such caller onto one shared "" bucket.
+		return r.RemoteAddr
+	}
+	return host
+}
+
+// loginSweepEvery bounds how often loginThrottled performs a full-map sweep
+// (pruning every key's window, not just the one just queried), independent of
+// the per-key prune below. Without this, a flood of one-off distinct keys
+// that each fail exactly once — a botnet, or a single attacker rotating
+// through an IPv6 /64 (effectively unlimited source addresses) — would each
+// leave a permanent map entry: loginThrottled on its own only prunes the ONE
+// key it was asked about, so a key that's never queried again never gets
+// cleaned up. Sweeping the whole map every loginSweepEvery calls bounds that
+// growth to at most loginSweepEvery stale one-off entries between sweeps,
+// without paying the cost of a full sweep on every single request.
+const loginSweepEvery = 256
+
+// loginMaxTracked hard-caps the number of distinct keys loginFails holds,
+// independent of the periodic sweep above. If a burst of one-off keys arrives
+// faster than loginSweepEvery calls apart, the map could otherwise grow past
+// that sweep's protection before it fires; this is the backstop that kicks in
+// immediately once the map exceeds the cap, evicting the
+// least-recently-touched entries down to the limit rather than letting an
+// unauthenticated caller grow it without bound.
+const loginMaxTracked = 10_000
+
+// loginThrottled prunes key's failed-attempt window and reports whether
+// logins from it are currently locked out. An empty window after pruning
+// deletes key's own map entry. Separately (see loginSweepEvery/loginMaxTracked
+// above), it also periodically sweeps EVERY key's window — not just key's —
+// and hard-caps the map's total size, so a flood of one-off distinct keys
+// that are each queried only once still can't accumulate unbounded memory.
+func (h *Handler) loginThrottled(key string) bool {
 	h.loginMu.Lock()
 	defer h.loginMu.Unlock()
+	h.sweepLoginFailsLocked()
 	cutoff := time.Now().Add(-loginWindow)
-	kept := h.loginFails[:0]
-	for _, ts := range h.loginFails {
+	kept := pruneLoginFails(h.loginFails[key], cutoff)
+	if len(kept) == 0 {
+		delete(h.loginFails, key)
+	} else {
+		h.loginFails[key] = kept
+	}
+	return len(kept) >= loginMaxFails
+}
+
+// pruneLoginFails returns fails with every timestamp at or before cutoff
+// dropped, reusing fails' backing array (no allocation on the common case).
+func pruneLoginFails(fails []time.Time, cutoff time.Time) []time.Time {
+	kept := fails[:0]
+	for _, ts := range fails {
 		if ts.After(cutoff) {
 			kept = append(kept, ts)
 		}
 	}
-	h.loginFails = kept
-	return len(h.loginFails) >= loginMaxFails
+	return kept
 }
 
-func (h *Handler) recordLoginFail() {
+// sweepLoginFailsLocked prunes every key's window (not just the single key the
+// caller is asking about) once every loginSweepEvery calls (see
+// loginSweepCalls, api.go), or immediately if the map has already grown past
+// loginMaxTracked — so a flood of one-off distinct keys that are each queried
+// exactly once still gets cleaned up eventually, instead of leaving a
+// permanent entry per key forever. If the map is still over loginMaxTracked
+// after that full prune, hands off to evictLeastRecentlyTouchedLocked. Must
+// be called with loginMu held.
+func (h *Handler) sweepLoginFailsLocked() {
+	h.loginSweepCalls++
+	if h.loginSweepCalls < loginSweepEvery && len(h.loginFails) <= loginMaxTracked {
+		return
+	}
+	h.loginSweepCalls = 0
+	cutoff := time.Now().Add(-loginWindow)
+	for k, fails := range h.loginFails {
+		if kept := pruneLoginFails(fails, cutoff); len(kept) == 0 {
+			delete(h.loginFails, k)
+		} else {
+			h.loginFails[k] = kept
+		}
+	}
+	if len(h.loginFails) > loginMaxTracked {
+		h.evictLeastRecentlyTouchedLocked()
+	}
+}
+
+// evictLeastRecentlyTouchedLocked deletes entries from h.loginFails, oldest
+// first, until it is back at or under loginMaxTracked. Only called by
+// sweepLoginFailsLocked, and only once a full prune still leaves the map over
+// that cap — e.g. loginMaxTracked distinct keys are ALL currently within
+// their window, so none of them were empty for the prune to remove. Must be
+// called with loginMu held.
+//
+// "Least recently touched" = the LATEST remaining failure timestamp
+// (fails[len(fails)-1], since recordLoginFail appends in chronological
+// order), so an attacker actively retrying stays tracked longer than one who
+// fired once and went quiet.
+//
+// Eviction candidates EXCLUDE any key that is currently throttled (len(fails)
+// >= loginMaxFails, the same condition loginThrottled itself uses to return
+// true). This matters because a throttled key's own timestamps stop
+// advancing the instant it starts being throttled: handleLogin checks
+// loginThrottled BEFORE ever calling recordLoginFail, so a blocked attacker
+// can't add new entries to its own window while waiting it out. Its "last
+// touched" timestamp therefore goes stale immediately, even though the
+// attacker is still very much active from a security standpoint — sorting on
+// recency and evicting the oldest would evict a genuinely-throttled attacker
+// BEFORE a flood of one-off keys that only just arrived, un-throttling them
+// mid-lockout. (Reproduced end-to-end: attacker throttled after
+// loginMaxFails failures, then a flood of one-off keys large enough to push
+// the map over loginMaxTracked evicted the attacker's own entry — since
+// their last fail predated the flood — and the attacker's very next request
+// came back 200 instead of 429.) A bounded number of currently-throttled keys
+// sitting over the nominal cap is an acceptable, self-limiting exception:
+// it's bounded by how many callers actually reach loginMaxFails failures, a
+// far smaller and self-capping population than an unlimited flood of one-off
+// keys that only ever fail once — not the same unbounded-growth risk the cap
+// exists to guard against.
+func (h *Handler) evictLeastRecentlyTouchedLocked() {
+	type keyAge struct {
+		key  string
+		last time.Time
+	}
+	ages := make([]keyAge, 0, len(h.loginFails))
+	for k, fails := range h.loginFails {
+		if len(fails) >= loginMaxFails {
+			continue // currently throttled — never an eviction candidate
+		}
+		ages = append(ages, keyAge{k, fails[len(fails)-1]})
+	}
+	sort.Slice(ages, func(i, j int) bool { return ages[i].last.Before(ages[j].last) })
+	for _, a := range ages {
+		if len(h.loginFails) <= loginMaxTracked {
+			break
+		}
+		delete(h.loginFails, a.key)
+	}
+}
+
+func (h *Handler) recordLoginFail(key string) {
 	h.loginMu.Lock()
-	h.loginFails = append(h.loginFails, time.Now())
+	if h.loginFails == nil {
+		h.loginFails = make(map[string][]time.Time)
+	}
+	h.loginFails[key] = append(h.loginFails[key], time.Now())
 	h.loginMu.Unlock()
 }
 
-func (h *Handler) recordLoginSuccess() {
+func (h *Handler) recordLoginSuccess(key string) {
 	h.loginMu.Lock()
-	h.loginFails = nil
+	delete(h.loginFails, key)
 	h.loginMu.Unlock()
 }
 
@@ -2482,7 +2750,8 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
 		return
 	}
-	if h.loginThrottled() {
+	key := loginClientKey(r)
+	if h.loginThrottled(key) {
 		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts — wait a minute and try again"})
 		return
 	}
@@ -2495,11 +2764,11 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !secret.VerifyPassword(h.cfg.AppKey, body.Password, hash) {
-		h.recordLoginFail()
+		h.recordLoginFail(key)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid password"})
 		return
 	}
-	h.recordLoginSuccess()
+	h.recordLoginSuccess(key)
 
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
 	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
@@ -3465,9 +3734,16 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 // fails right away with a 4xx and nothing starts; the shared single-flight
 // guard answers 409 like the other backup/restore starters. The session key
 // stays server-side (never in this request), and errors are scrubbed.
-// POST /api/foreign/restore  body {session, domain, item, snapshot, confirm, target, paths}
+// POST /api/foreign/restore  body {session, domain, item, snapshot, confirm, target, paths, zvolPool}
 // A non-empty paths[] (files domain only) restores just those subfolders/files
-// from the set into target; empty restores the whole set (issue #123).
+// from the set into target; empty restores the whole set (issue #123). zvolPool
+// is VMS-DOMAIN-ONLY and OPTIONAL: a destination ZFS pool name for a VM whose
+// disks include a TrueNAS zvol (block-device) disk — required for such a VM's
+// zvol disk(s) to actually restore on a cross-instance (target set) restore;
+// see StartForeignRestore's doc comment. There is no UI for this field yet —
+// it is reachable via a direct API call only; the request fails with a clear,
+// actionable error instead of a deep zfs-receive failure when it's needed but
+// missing.
 func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session   string   `json:"session"`
@@ -3478,11 +3754,12 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		Target    string   `json:"target"`
 		Paths     []string `json:"paths"`
 		Overwrite bool     `json:"overwrite"`
+		ZvolPool  string   `json:"zvolPool"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite)
+	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
 	if err != nil { // synchronous validation failed — nothing was started
 		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
 		return

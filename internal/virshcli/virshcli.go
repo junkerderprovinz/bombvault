@@ -38,6 +38,18 @@ func (c *Client) baseArgs(args ...string) []string {
 // leak to the caller (mirrors restic's lastReason scrubbing).
 var absPathRe = regexp.MustCompile(`(/[^\s:'"]+)+`)
 
+// credentialRe matches a "user:password@" URL-userinfo segment — the same
+// defense-in-depth scrub internal/restic/restic.go and internal/api/handlers.go
+// apply to their own surfaced errors (see restic.go's credentialRe doc
+// comment for the full reasoning: the username class, why it covers a
+// fully-numeric username, the known Docker-digest-style false-positive
+// tradeoff, the known unencoded-"/"-in-password false-negative tradeoff, and
+// why it runs AFTER absPathRe rather than before). Applied here too, for the
+// parity this package's own doc comment above already claims, even though a
+// libvirt "qemu+ssh://user@host/system" URI doesn't normally carry a
+// password.
+var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
+
 // run executes virsh with the given arguments. It returns the trimmed stdout
 // on success. On failure it logs the full stderr server-side and returns a
 // scrubbed error containing only the last non-empty stderr line (paths stripped).
@@ -56,12 +68,18 @@ func (c *Client) run(ctx context.Context, args ...string) (string, error) {
 }
 
 // lastReason extracts the last non-empty line of virsh stderr and scrubs
-// absolute paths so host filesystem layout does not reach the caller.
+// absolute paths and URL-embedded credentials so host filesystem layout and
+// secrets do not reach the caller. Paths are scrubbed BEFORE credentials —
+// not a correctness requirement, both orders fully redact a password, but
+// this order avoids also destroying the hostname; see
+// internal/restic/restic.go's scrubSecrets doc comment for the full
+// reasoning.
 func lastReason(stderr string) string {
 	lines := strings.Split(strings.TrimSpace(stderr), "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
 		if l := strings.TrimSpace(lines[i]); l != "" {
-			return absPathRe.ReplaceAllString(l, "[path]")
+			l = absPathRe.ReplaceAllString(l, "[path]")
+			return credentialRe.ReplaceAllString(l, "[redacted]@")
 		}
 	}
 	return "unknown error"
