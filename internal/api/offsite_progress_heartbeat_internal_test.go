@@ -217,7 +217,14 @@ loop:
 			// still blocked and can publish no further real update — must still
 			// carry the real values. Regressing to Percent:0/SnapshotIndex:0 here
 			// is exactly the bug this test guards against.
-			if e.Percent != 63 || e.SnapshotIndex != 2 || e.SnapshotTotal < 2 {
+			// SnapshotTotal is 0 here on purpose: this fake's Snapshots returns
+			// nothing for either repo, so copyToOffsiteTarget's upfront candidate
+			// count is "could not estimate" — and progBeginCopySink now publishes
+			// that unknown honestly instead of widening it to the live index (see
+			// TestProgBeginCopySinkTotal and issue #159's follow-up). What this
+			// test guards is unchanged: every heartbeat tick must republish the
+			// sink's LAST REAL values, not a blank frame.
+			if e.Percent != 63 || e.SnapshotIndex != 2 || e.SnapshotTotal != 0 {
 				t.Fatalf("event after the real percentage lost it: %+v", e)
 			}
 			verifiedAfter++
@@ -290,5 +297,62 @@ func TestCopyToOffsiteHeartbeatStopsAfterFinish(t *testing.T) {
 		t.Fatalf("unexpected event after copyToOffsite returned: %+v", e)
 	case <-time.After(50 * time.Millisecond):
 		// no event — heartbeat goroutine correctly stopped
+	}
+}
+
+// TestProgBeginCopySinkTotal pins what progBeginCopySink publishes as
+// SnapshotTotal, which is the number web/src/lib/progress.ts's
+// offsiteRunProgress divides by to derive the run-level percentage the
+// dashboard and OffsiteIndicator now show (issue #159's follow-up).
+//
+// Three cases, and the first one is the fix:
+//   - no estimate at all (0) stays 0, the documented "unknown" on the wire.
+//     It used to be widened to the live index, which fabricated a plausible
+//     "snapshot 7 of 7" out of nothing — indistinguishable from a genuine
+//     final snapshot, and enough to make a derived run percentage claim ~99%
+//     for a run that had barely started.
+//   - a real estimate is published as-is.
+//   - a real estimate the live index has overtaken IS widened, because there
+//     the estimate is known to have undercounted and "snapshot 3 of 2" would
+//     be worse than a slightly optimistic total.
+func TestProgBeginCopySinkTotal(t *testing.T) {
+	cases := []struct {
+		name      string
+		estimate  int
+		index     int
+		wantTotal int
+	}{
+		{"no estimate stays unknown", 0, 7, 0},
+		{"real estimate is published as-is", 4, 2, 4},
+		{"undercounting estimate is widened to the live index", 2, 3, 3},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			prog := progress.NewStore()
+			svc := &Service{progress: prog}
+			ch, cancel := prog.Subscribe()
+			defer cancel()
+
+			ctx := svc.progBeginCopySink(context.Background(), "flash", 1700000000, tc.estimate, nil)
+			sink := progress.CopySinkFrom(ctx)
+			if sink == nil {
+				t.Fatal("progBeginCopySink installed no CopySink on the context")
+			}
+			sink(progress.CopyProgress{SnapshotIndex: tc.index, Percent: 42})
+
+			select {
+			case e := <-ch:
+				if e.Key != "offsite:flash" || e.SnapshotIndex != tc.index {
+					t.Fatalf("unexpected event: %+v", e)
+				}
+				if e.SnapshotTotal != tc.wantTotal {
+					t.Fatalf("SnapshotTotal = %d, want %d (estimate %d, live index %d)",
+						e.SnapshotTotal, tc.wantTotal, tc.estimate, tc.index)
+				}
+			case <-time.After(2 * time.Second):
+				t.Fatal("no event published")
+			}
+		})
 	}
 }
