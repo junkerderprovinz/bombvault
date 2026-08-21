@@ -42,11 +42,26 @@ type Handler struct {
 	// lock out every other client — including the legitimate operator logging in
 	// from a different address. A single shared counter would let an
 	// unauthenticated caller with no credentials permanently deny the real
-	// password from anywhere else, which is worse than having no throttle at
-	// all for the "reachable beyond the LAN, behind a reverse proxy" case this
-	// gate exists to cover (see docs/configuration.md).
+	// password from anywhere else.
+	//
+	// This genuinely fixes that for BombVault's default deployment — direct
+	// exposure or bridge networking, where each client's real address reaches
+	// RemoteAddr unmodified: an attacker's failures on one IP no longer touch
+	// the operator's bucket on another. It does NOT help the OTHER documented
+	// topology, remote access behind a reverse proxy (docs/configuration.md):
+	// every request the proxy forwards shares the proxy's address in
+	// RemoteAddr, so every client behind that proxy — attacker and operator
+	// alike — still lands in one shared bucket, same as the single global
+	// counter this replaces. See loginClientKey's doc comment (handlers.go)
+	// for the full reasoning and why trusting a forwarded-for header to fix
+	// that isn't safe here.
 	loginMu    sync.Mutex
 	loginFails map[string][]time.Time
+	// loginSweepCalls counts loginThrottled calls since the last full sweep of
+	// loginFails (see loginSweepEvery/sweepLoginFailsLocked in handlers.go) —
+	// bounds the map's total memory even under a flood of one-off keys that
+	// are each queried exactly once. Guarded by loginMu, like loginFails.
+	loginSweepCalls int
 }
 
 // NewHandler constructs the API handler.
@@ -70,6 +85,13 @@ func NewHandler(
 		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
 		configLastRun:     schedule.LastRunFunc(st.LastSuccessfulConfigBackup),
 		filesLastRun:      schedule.LastRunFunc(st.LastSuccessfulFilesBackup),
+		// Initialized explicitly rather than relying on every loginFails call
+		// site happening to only read-or-delete a nil map without ever
+		// assigning into it directly (recordLoginFail lazily allocates too,
+		// but only because it has to for zero-value *Handler in tests — a
+		// future edit that assigns into loginFails elsewhere without that
+		// same nil-check would panic).
+		loginFails: make(map[string][]time.Time),
 	}
 }
 
