@@ -168,6 +168,19 @@ func (s *Service) StartBackupEverything(ctx context.Context) (bool, error) {
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
+		// Deferred FIRST (so it runs LAST), exactly like every other detached
+		// backup/restore goroutine in this package — see recoverOperation's own
+		// doc comment. A panic anywhere inside the pass would otherwise reach
+		// the top of this goroutine unrecovered and take the whole process down,
+		// including the four domain steps that had nothing to do with it.
+		// failStuckRun closes out the PARENT run row (EverythingTargetID), which
+		// BackupEverything opened with store.StartRun and would otherwise leave
+		// "running" forever: the pass's own FinishRun is what the panic skipped.
+		// Any CHILD domain run that was in flight is closed out by that domain's
+		// own orchestrator path exactly as it is for any other caller.
+		defer s.recoverOperation("backup everything: "+store.EverythingTargetID, nil, func(msg string) {
+			s.failStuckRun(store.EverythingTargetID, msg)
+		})
 		defer s.everythingActive.Store(false)
 		if _, err := s.BackupEverything(bctx); err != nil {
 			log.Printf("api: backup everything: pass failed to start: %v", err)
