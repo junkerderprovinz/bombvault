@@ -674,6 +674,16 @@ export const en = {
   "settings.appearance": "Appearance",
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
+  // Shape (GlimStone form-engine — shape engine): round/soft/square corner
+  // radius, applied everywhere via one attribute (index.css's [data-shape]
+  // rules, lib/shape.ts's applyShape()). Wording matches KnightLoader's own
+  // copy of this exact picker, the same "one product, every language" reason
+  // the rainbow keys below give.
+  "settings.shape": "Corners",
+  "settings.shapeHint": "Applies to cards, buttons, tabs, inputs and badges at once.",
+  "settings.shape.round": "Round",
+  "settings.shape.soft": "Soft",
+  "settings.shape.square": "Square",
   // Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent, plural:
   // an eight-colour palette handed out by list position instead of one
   // accent everywhere. Wording matches the same keys in KnightLoader, the
@@ -2057,6 +2067,11 @@ export const de: Translations = {
   "settings.appearance": "Erscheinungsbild",
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
+  "settings.shape": "Ecken",
+  "settings.shapeHint": "Gilt für Karten, Knöpfe, Reiter, Eingabefelder und Abzeichen zugleich.",
+  "settings.shape.round": "Rund",
+  "settings.shape.soft": "Leicht",
+  "settings.shape.square": "Eckig",
   "settings.rainbow": "Regenbogen",
   "settings.rainbowHint": "Statt einer Akzentfarbe acht, nach Position vergeben — eine lange Liste liest sich dann als einzelne Zeilen.",
   "settings.rainbowOn": "Palette verwenden",

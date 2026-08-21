@@ -8,14 +8,14 @@
 // everywhere — a set of eight, with optional "reactive" (rest neutral,
 // colour on hover/active) and "rotate" (offset the starting colour) modes.
 //
-// This file deliberately does NOT re-implement shape or the single accent:
-// BombVault has no shape axis yet (see index.css's own "[data-shape] axis...
-// that's a later task" comment — the design language treats shape as its own
-// separate engine from the colour engine anyway, see "The user-owned axes"),
-// and the single accent already has a working, tested home in accent.ts
-// (Phase 1). This file adds only the plural half, reusing accent.ts's
-// contrastOn()/parseHex() rather than re-deriving sRGB luminance a second
-// time in the same app.
+// This file deliberately does NOT implement shape or the single accent: the
+// design language treats shape as its own separate engine from the colour
+// engine anyway (see "The user-owned axes"), and it now has its own working,
+// tested home in shape.ts, the same way the single accent already had one in
+// accent.ts (Phase 1) before this file existed. This file adds only the
+// plural half of the colour engine, reusing accent.ts's contrastOn()/
+// parseHex() rather than re-deriving sRGB luminance a second time in the
+// same app.
 //
 // Persistence: localStorage, per-browser — the SAME mechanism every other
 // appearance/UI-preference axis in this app already uses (accent.ts,
