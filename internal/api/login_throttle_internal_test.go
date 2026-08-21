@@ -166,6 +166,90 @@ func TestLoginThrottleSweepsStaleOneOffKeys(t *testing.T) {
 	}
 }
 
+// TestLoginThrottleEvictionNeverUnthrottlesAnActiveAttacker is the regression
+// test for the finding that sweepLoginFailsLocked's eviction pass could evict
+// a CURRENTLY-throttled attacker's own map entry: loginThrottled calls
+// sweepLoginFailsLocked (which may evict) BEFORE it reads/prunes the caller's
+// own key, and eviction used to sort every key by its LAST failure timestamp
+// and delete the oldest first with no regard for whether a key was actively
+// throttled. A throttled attacker is blocked by handleLogin's throttle check
+// before ever reaching recordLoginFail, so its own timestamps stop advancing
+// the moment it gets throttled — its "last touched" time goes stale
+// immediately even though it is still the exact caller the throttle exists to
+// stop. A flood of one-off keys that each fail exactly once, arriving AFTER
+// the attacker is already throttled, therefore looks "more recently touched"
+// than the attacker and used to get evicted last, while the attacker's own
+// (older, stale-because-blocked) entry got evicted FIRST — deleting its
+// window and letting its very next request through unthrottled.
+//
+// This drives real HTTP requests through handleLogin end to end (the exact
+// interaction the bug depended on — a smaller, direct map manipulation would
+// not exercise the real ordering between the throttle check and the flood),
+// mirroring the real-world scenario: an attacker exhausts loginMaxFails from
+// one address, then a flood of ~loginMaxTracked one-off addresses (e.g. a
+// botnet, or a single attacker rotating through an IPv6 /64) each fail once,
+// pushing loginFails over loginMaxTracked and triggering the hard-cap
+// eviction. The attacker must still be throttled afterward.
+func TestLoginThrottleEvictionNeverUnthrottlesAnActiveAttacker(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuth(t, h, repo) // password is "hunter2"
+
+	attacker := "203.0.113.9:51000"
+
+	// The attacker exhausts the throttle from their own address...
+	for i := 0; i < loginMaxFails; i++ {
+		code, ok, _ := doLogin(t, h, attacker, "wrong-guess")
+		if code != http.StatusOK || ok {
+			t.Fatalf("attacker fail #%d: want 200/ok=false (not yet throttled), got code=%d ok=%v", i, code, ok)
+		}
+	}
+	// ...and is now throttled.
+	if code, ok, _ := doLogin(t, h, attacker, "hunter2"); code != http.StatusTooManyRequests || ok {
+		t.Fatalf("attacker after %d fails: want 429, got code=%d ok=%v", loginMaxFails, code, ok)
+	}
+
+	// A flood of distinct one-off addresses, each failing exactly once,
+	// arrives AFTER the attacker is already throttled and sitting idle — so
+	// every flood entry's timestamp is strictly newer than the attacker's
+	// stale (blocked-from-advancing) window. Comfortably exceed
+	// loginMaxTracked so the hard-cap eviction is guaranteed to fire at least
+	// once (it fires on every call once the map is over cap, so a modest
+	// margin past the threshold is enough — no need to flood further).
+	const flood = loginMaxTracked + 200
+	for i := 0; i < flood; i++ {
+		// loginClientKey keys ONLY on the host (SplitHostPort strips the
+		// port), so distinctness must come from the host octets, not the
+		// port — a fixed port with varying "IP" here, one flood entry per
+		// distinct host.
+		addr := fmt.Sprintf("10.0.%d.%d:1234", i/256, i%256) // distinct, never reused
+		if code, ok, _ := doLogin(t, h, addr, "wrong-guess"); code != http.StatusOK || ok {
+			t.Fatalf("flood entry #%d: want 200/ok=false (a brand-new key must never be pre-throttled), got code=%d ok=%v", i, code, ok)
+		}
+	}
+
+	// Sanity check only (TestLoginThrottleCapsMapSize pins the exact cap
+	// behavior): the map must still be roughly capped, not left to grow with
+	// the flood. A LITTLE slack over loginMaxTracked is expected and correct
+	// here — the one throttled attacker key is deliberately exempt from
+	// eviction (see sweepLoginFailsLocked's doc comment), and the flood's
+	// very last iteration adds its own new entry right after that same
+	// call's eviction pass already ran.
+	h.loginMu.Lock()
+	mapSize := len(h.loginFails)
+	h.loginMu.Unlock()
+	if mapSize > loginMaxTracked+50 {
+		t.Fatalf("loginFails held %d entries after a %d-entry flood, want roughly <= loginMaxTracked=%d — the hard cap did not evict", mapSize, flood, loginMaxTracked)
+	}
+
+	// The bug: the attacker's own entry, not just some of the flood's, must
+	// have been evicted for a correct password to succeed here. This is the
+	// exploit reproduced end to end — the fix must keep this a 429.
+	code, ok, errMsg := doLogin(t, h, attacker, "hunter2")
+	if code != http.StatusTooManyRequests || ok {
+		t.Fatalf("attacker still throttled after the flood triggered eviction: want 429, got code=%d ok=%v err=%q — eviction un-throttled an active attacker", code, ok, errMsg)
+	}
+}
+
 // TestLoginThrottleCapsMapSize is the backstop for a burst faster than
 // loginSweepEvery calls apart: even loginMaxTracked+50 distinct keys, all with
 // CURRENT (within-window) timestamps that a plain prune-empty-entries pass
