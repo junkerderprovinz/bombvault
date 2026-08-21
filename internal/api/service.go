@@ -720,9 +720,20 @@ func (l *offsiteLastCopy) get() (cp progress.CopyProgress, total int, ok bool) {
 // StartedAt every other event for this replication uses. estimatedTotal is
 // the caller's best-effort "N" for a "snapshot k of N" display (see
 // restic.PendingCopyIDs's doc comment for why it is only ever a display
-// estimate); if the live SnapshotIndex ever exceeds it — the estimate
-// undercounted — the published total is widened to match rather than
-// claiming fewer snapshots than are visibly running. Percent updates are
+// estimate); if the live SnapshotIndex ever exceeds a REAL estimate — the
+// estimate undercounted — the published total is widened to match rather than
+// claiming fewer snapshots than are visibly running.
+//
+// estimatedTotal 0 means "the caller could not estimate at all" (both snapshot
+// listings failed, or restic's own stricter dedup found work PendingCopyIDs
+// did not) and is published UNCHANGED as SnapshotTotal 0 — the documented
+// "unknown" on the wire (see progress.Event). It is deliberately NOT widened
+// to SnapshotIndex: that produced a fabricated "snapshot 7 of 7" that a
+// consumer cannot tell apart from a genuine final snapshot, and the run-level
+// percentage the frontend now derives from k/N (issue #159's follow-up — see
+// web/src/lib/progress.ts's offsiteRunProgress) would have read a confident
+// ~99% for the whole run on nothing but that fabrication. An honest 0 makes
+// the frontend fall back to its duration-only text instead. Percent updates are
 // throttled like progBegin's plain Sink (whole-percent steps), but a
 // SnapshotIndex change always forwards immediately so "k of N" advances
 // without waiting on the new snapshot's first live percentage. No-op
@@ -744,8 +755,10 @@ func (s *Service) progBeginCopySink(ctx context.Context, domain string, startedA
 			return // throttle: only forward ≥1% steps within the SAME snapshot
 		}
 		lastIndex, lastPct = cp.SnapshotIndex, cp.Percent
+		// Widen an UNDERCOUNTING estimate, never invent one from nothing:
+		// estimatedTotal 0 stays 0 ("unknown") — see the doc comment above.
 		total := estimatedTotal
-		if cp.SnapshotIndex > total {
+		if total > 0 && cp.SnapshotIndex > total {
 			total = cp.SnapshotIndex
 		}
 		last.set(cp, total)

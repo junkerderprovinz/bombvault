@@ -315,12 +315,22 @@ export const en = {
   // place, same as before percentage support existed.
   "offsite.replicatingWithDuration": "Replicating… ({duration})",
   // Issue #159: restic copy DOES print a real, parseable per-snapshot
-  // pack-copy percentage (see restic.Copy's doc comment) — this is used once
-  // OffsiteIndicator has a live SnapshotIndex/percent for the CURRENT
-  // snapshot, alongside a best-effort candidate total (SnapshotTotal; restic
-  // itself never reports a whole-run total across snapshots).
-  "offsite.replicatingSnapshotPercent": "Replicating snapshot {index} of {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replicating snapshot {index} of {total} ({percent}%) · {duration}",
+  // pack-copy percentage (see restic.Copy's doc comment), and lib/progress.ts's
+  // offsiteRunProgress folds it into the snapshot count to get ONE run-level
+  // figure. Word order matters here and is not free styling: the first cut read
+  // "Replicating snapshot 15 of 126 (55%)", where the parenthetical was the
+  // CURRENT snapshot's own pack progress but every reader took it as
+  // "15/126 = 55%" — two correct numbers rendered as one wrong claim. With the
+  // percentage leading and "snapshot k of N" demoted to the parenthetical, the
+  // two now agree (~12% either way) instead of fighting. Do not reorder them
+  // back. The "overall" wording is what makes the scope explicit — keep an
+  // equivalent in every locale.
+  "offsite.replicatingSnapshotPercent": "Replicating… {percent}% overall (snapshot {index} of {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replicating… {percent}% overall (snapshot {index} of {total}) · {duration}",
+  // The (i) next to that readout (OffsiteIndicator). The percentage counts
+  // SNAPSHOTS against a best-effort estimate, not bytes — house rule says that
+  // caveat belongs behind an info bubble, not as permanent prose on the line.
+  "offsite.overallPercentHint": "Overall progress for this replication run, counted in snapshots: restic only ever reports progress for one snapshot at a time, never for a whole copy. Snapshots differ in size, so treat this as an estimate.",
   "offsite.replicateFailed": "Replication failed",
   "offsite.test": "Test connection",
   // Shown instead of offsite.test once the domain has additional targets: that
@@ -1333,12 +1343,13 @@ export const en = {
   // once the live progress event's startedAt is known (see activityLog.ts's
   // buildLiveLines) but no live per-snapshot percentage is available yet.
   "activityLog.lineOffsiteRunningWithDuration": "Off-site upload — {domain} … ({duration})",
-  // Issue #159: used once a live SnapshotIndex/percent is known for the
-  // CURRENT snapshot restic copy is transferring (see restic.Copy's doc
-  // comment) — {total} is a best-effort candidate count, since restic never
-  // reports a whole-run total across snapshots.
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site upload — {domain} … snapshot {index} of {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site upload — {domain} … snapshot {index} of {total} ({percent}%) · {duration}",
+  // Issue #159: the RUN-LEVEL percentage (lib/progress.ts's offsiteRunProgress),
+  // with the snapshot count as the parenthetical detail behind it — {total} is
+  // a best-effort candidate count, since restic never reports a whole-run total
+  // across snapshots. Same word-order rule as offsite.replicatingSnapshotPercent
+  // above, for the same reason; that key's comment has the full story.
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site upload — {domain} … {percent}% overall (snapshot {index} of {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site upload — {domain} … {percent}% overall (snapshot {index} of {total}) · {duration}",
   "activityLog.linePruneRunning": "Pruning — {domain} …",
   "activityLog.lineVerifyRunning": "Verifying — {domain} …",
   "activityLog.lineDrillRunning": "Restore check running — {domain} …",
@@ -1710,8 +1721,9 @@ export const de: Translations = {
   "offsite.replicateStarted": "Replikation gestartet - sie läuft im Hintergrund; der Laufindikator zeigt den Fortschritt.",
   "offsite.replicating": "Repliziere…",
   "offsite.replicatingWithDuration": "Repliziere… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Repliziere Snapshot {index} von {total} ({percent} %)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Repliziere Snapshot {index} von {total} ({percent} %) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Repliziere… {percent} % gesamt (Snapshot {index} von {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Repliziere… {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
+  "offsite.overallPercentHint": "Gesamtfortschritt dieses Replikationslaufs, gezählt in Snapshots: restic meldet Fortschritt immer nur für einen einzelnen Snapshot, nie für einen ganzen Kopiervorgang. Snapshots sind unterschiedlich groß, das hier ist also ein Schätzwert.",
   "offsite.replicateFailed": "Replikation fehlgeschlagen",
   "offsite.test": "Verbindung testen",
   "offsite.testPrimary": "Primäres Ziel testen",
@@ -2687,8 +2699,8 @@ export const de: Translations = {
   "activityLog.lineBackingUpBatch": "Sichere alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-Site-Upload — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Off-Site-Upload — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-Site-Upload — {domain} … Snapshot {index} von {total} ({percent} %)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-Site-Upload — {domain} … Snapshot {index} von {total} ({percent} %) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-Site-Upload — {domain} … {percent} % gesamt (Snapshot {index} von {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-Site-Upload — {domain} … {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
   "activityLog.linePruneRunning": "Räume auf — {domain} …",
   "activityLog.lineVerifyRunning": "Prüfe — {domain} …",
   "activityLog.lineDrillRunning": "Wiederherstellungs-Prüfung läuft — {domain} …",

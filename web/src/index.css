@@ -54,6 +54,28 @@
      dark/light token blocks below for the full resolution note (search
      "TASK 7" in this file for where every former consumer landed). */
 
+  /* --color-statusOffsite is the one narrow blue that IS allowed, and it is
+     not a state hue at all: it is a DOMAIN IDENTITY colour for exactly one
+     job type (rule 5 territory), never a resurrected fifth state.
+     DELIBERATE, DOCUMENTED EXCEPTION (issue #164). Task 7 folded "offsite"
+     into the accent alongside "running" on the premise that "both mean
+     genuine activity happening right now". That premise does not hold:
+     lib/activityLog.ts's finishedLineText returns status "offsite" for a
+     FINISHED, successful replication run ("Off-site replication done —
+     Containers (4m 17s)"), so a completed run ended up wearing the
+     "in progress" accent — and sat in the same scrolling log as the "info"
+     lines' --status-warn amber, which is only ~11 RGB / 1.05:1 away from the
+     default accent gold (see --status-warn-text's KNOWN LIMITATION below).
+     Scope is fixed and must stay fixed: ONE consumer (ActivityLog's
+     colorFor("offsite")), text only, no Bg/Border/Solid siblings, and
+     "running" stays on --accent-text.
+     PAIRED HARD-CODED COPY: internal/api/widget.html is a standalone,
+     dark-only file that cannot read these tokens, so its `.offsite` rule
+     hard-codes the dark hex below. The two must change together — that
+     silent pairing is exactly how #164 happened, so
+     internal/api/widget_internal_test.go now fails if they drift. */
+  --color-statusOffsite: var(--status-offsite-text);
+
   --color-statusNeutral: var(--status-neutral-text);
   --color-statusNeutralBg: var(--status-neutral-bg);
   --color-statusNeutralBorder: var(--status-neutral-border);
@@ -407,6 +429,17 @@
      above (what became --accent vs. --status-neutral-* vs. tone="neutral")
      was not wrong and did not change — this was pure colour arithmetic that
      was never checked against WCAG contrast at the time. */
+  /* Off-site replication identity colour (#164) — Carbon blue-40. Byte-identical
+     to internal/api/widget.html's `.offsite` rule and to the pre-Task-7
+     --status-info-text this one surface has always painted, which is the whole
+     point: the widget never moved off it, so restoring it here is what makes the
+     dashboard and the plugin widget agree again. See the @theme block's
+     --color-statusOffsite comment for why this blue is allowed back and why it
+     is not the fifth state hue returning. Measured (WCAG relative luminance):
+     6.42:1 on --carbon-surface (#262626), 7.68:1 on --carbon-bg (#161616) —
+     clears the 4.5:1 text minimum on both surfaces this log renders against. */
+  --status-offsite-text:      #78a9ff;  /* blue-40 */
+
   --status-neutral-text:      #a8a8b0;  /* skipped/neutral chip */
   --status-neutral-bg:        #2a2a2e;
   --status-neutral-border:    #3a3a40;
@@ -619,6 +652,15 @@
 
   /* --status-info-* removed — see the dark block's TASK 7 comment above for
      the full resolution (this theme carried the same tokens, same fate). */
+
+  /* Off-site identity colour (#164) — the value this theme's old
+     --status-info-text already carried, so it is a restored, previously
+     contrast-checked light-theme blue rather than a new one. Measured 7.79:1
+     on --carbon-surface (#ffffff) and 7.09:1 on --carbon-bg (#f4f4f4). The
+     dark block's #78a9ff would be 2.4:1 here, which is why this theme needs
+     its own value rather than inheriting. */
+  --status-offsite-text:      #0043ce;  /* blue-70 */
+
   --status-neutral-text:      #525252;  /* gray-70 */
   --status-neutral-bg:        #e8e8e8;
   --status-neutral-border:    #c6c6c6;  /* gray-30 */
@@ -684,6 +726,14 @@
        restating here for the identical no-explicit-attribute reason as
        --focus-ring above. */
     --accent-text: #7a5c00;
+    /* Same reasoning again for the off-site identity colour (#164): the bare
+       :root value is the dark blue-40, which measures 2.4:1 on this block's
+       white surfaces. NOTE for the next reader: the --status-ok/fail/warn/
+       neutral text tones are NOT restated in this block and therefore still
+       fall through to their dark values here — a pre-existing gap in the
+       JS-disabled fallback, not something this token opted out of. Left alone
+       deliberately; auditing all four is its own task. */
+    --status-offsite-text: #0043ce;
   }
 }
 
