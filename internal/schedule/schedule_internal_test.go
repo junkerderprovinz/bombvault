@@ -112,7 +112,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	sc.SetConfigJob(func() error { return nil })
 
 	s := store.Settings{ConfigEnabled: true, ConfigSchedule: "daily 03:30"}
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	if got := len(sc.entries); got != 1 {
@@ -122,7 +122,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	// Turning the config cadence off must deregister it — proving the single
 	// entry above was driven by ConfigSchedule (i.e. it is the config job).
 	s.ConfigSchedule = "off"
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (config off): %v", err)
 	}
 	if got := len(sc.entries); got != 0 {
@@ -172,6 +172,67 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 	}
 }
 
+// TestEverythingJobScheduledAndSurvivesReload verifies the "Backup Everything"
+// pseudo-domain (Task 5 of the backup-everything plan) is wired into the
+// scheduler exactly like the five existing domains: (a) an empty/"off"
+// EverythingSchedule registers NO cron entry — the feature is genuinely inert
+// by default (the core "opt-in" requirement of the whole feature) — and (b) a
+// valid cadence registers exactly one "everything" entry (job=backup,
+// domain=everything, via jobDomainFromName's default branch — unmodified), which
+// survives a Reload cycle: still present after a second reload with the SAME
+// cadence, and removed again by a third reload that turns it back off. Mirrors
+// TestConfigJobScheduledAndExcludedFromDrills's structure — the closest existing
+// singleton-domain on/off registration test.
+func TestEverythingJobScheduledAndSurvivesReload(t *testing.T) {
+	noopBackup := func(string) error { return nil }
+	noTargets := func() ([]store.Target, error) { return nil, nil }
+
+	sc := New(noopBackup, noTargets)
+	sc.SetEverythingJob(func() error { return nil })
+
+	// (a) Off by default (zero-value EverythingSchedule parses to "off", like
+	// every other domain's zero value) — with every other domain also off, zero
+	// entries must register.
+	off := store.Settings{}
+	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks (off): %v", err)
+	}
+	if got := len(sc.entries); got != 0 {
+		t.Fatalf("expected 0 registered jobs with EverythingSchedule off, got %d", got)
+	}
+
+	// (b) A valid cadence registers exactly one entry, labeled job=backup,
+	// domain=everything.
+	on := store.Settings{EverythingSchedule: "daily 03:00"}
+	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks (on): %v", err)
+	}
+	if got := len(sc.entries); got != 1 {
+		t.Fatalf("expected exactly 1 registered job (everything), got %d", got)
+	}
+	if sc.entries[0].job != "backup" || sc.entries[0].domain != "everything" {
+		t.Fatalf("expected job=backup domain=everything, got job=%q domain=%q", sc.entries[0].job, sc.entries[0].domain)
+	}
+
+	// The entry survives a Reload cycle: re-registering the SAME cadence again
+	// must still leave exactly one entry, not accumulate a duplicate.
+	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks (on again): %v", err)
+	}
+	if got := len(sc.entries); got != 1 {
+		t.Fatalf("expected the entry to survive a same-cadence reload as exactly 1, got %d", got)
+	}
+
+	// Turning the cadence back off must deregister it — proving the entry above
+	// was driven by EverythingSchedule (i.e. it is the everything job).
+	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks (off again): %v", err)
+	}
+	if got := len(sc.entries); got != 0 {
+		t.Fatalf("expected 0 registered jobs when EverythingSchedule is off again, got %d", got)
+	}
+}
+
 // TestFilesJobScheduledWithOffsiteEntry verifies the files domain is wired into
 // the scheduler like the other domains: (a) a files backup job registers when
 // FilesSchedule has a real cadence, (b) FilesOffsiteSchedule registers a separate
@@ -193,7 +254,7 @@ func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
 	// drills off, and no immutable off-site, exactly one entry must register —
 	// the files backup job.
 	s := store.Settings{FilesEnabled: true, FilesSchedule: "daily 03:00"}
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	if got := len(sc.entries); got != 1 {
@@ -202,7 +263,7 @@ func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
 
 	// (b) An off-site cadence adds the files-offsite replication entry.
 	s.FilesOffsiteSchedule = "daily 04:00"
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (files offsite): %v", err)
 	}
 	if got := len(sc.entries); got != 2 {
@@ -213,7 +274,7 @@ func TestFilesJobScheduledWithOffsiteEntry(t *testing.T) {
 	// above were driven by FilesSchedule/FilesOffsiteSchedule.
 	s.FilesSchedule = "off"
 	s.FilesOffsiteSchedule = ""
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (files off): %v", err)
 	}
 	if got := len(sc.entries); got != 0 {

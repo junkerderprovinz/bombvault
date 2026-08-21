@@ -378,6 +378,45 @@ func TestSettingsWidgetTokenRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSettingsEverythingFieldsRoundTrip pins the v89 "Backup Everything"
+// settings columns: the migration defaults to schedule 'off' and empty hooks
+// (fully inert until the user opts in), and all three round-trip through
+// UpdateSettings/GetSettings.
+func TestSettingsEverythingFieldsRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.EverythingSchedule != "off" {
+		t.Fatalf("default everything_schedule wrong: %q", s.EverythingSchedule)
+	}
+	if s.EverythingPreHook != "" || s.EverythingPostHook != "" {
+		t.Fatalf("default everything hooks must be empty: %+v", s)
+	}
+
+	s.EverythingSchedule = "daily 06:00"
+	s.EverythingPreHook = "echo starting"
+	s.EverythingPostHook = "curl -fsS https://hc-ping.com/your-uuid"
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.EverythingSchedule != "daily 06:00" ||
+		got.EverythingPreHook != "echo starting" ||
+		got.EverythingPostHook != "curl -fsS https://hc-ping.com/your-uuid" {
+		t.Fatalf("everything fields not round-tripped: %+v", got)
+	}
+}
+
 func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

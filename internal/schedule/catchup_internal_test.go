@@ -232,7 +232,7 @@ func TestCatchUpMissedTriggersBackupJob(t *testing.T) {
 		ContainersSchedule: "daily 03:00",
 		FlashSchedule:      "daily 03:00",
 	}
-	if err := sc.ReloadWithDueChecks(settings, staleLastRun, nil, freshLastRun, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(settings, staleLastRun, nil, freshLastRun, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 
@@ -270,7 +270,7 @@ func TestCatchUpMissedSkipsNeverRanAndErrors(t *testing.T) {
 		ContainersSchedule: "daily 03:00",
 		VMsSchedule:        "daily 03:00",
 	}
-	if err := sc.ReloadWithDueChecks(settings, neverRan, failing, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(settings, neverRan, failing, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 
@@ -294,7 +294,7 @@ func TestWatchdogEntryRegisteredAndFires(t *testing.T) {
 	fired := 0
 	sc.SetWatchdogJob(func() error { fired++; return nil })
 
-	if err := sc.ReloadWithDueChecks(store.Settings{WatchdogEnabled: true}, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(store.Settings{WatchdogEnabled: true}, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	found := false
@@ -312,7 +312,7 @@ func TestWatchdogEntryRegisteredAndFires(t *testing.T) {
 	}
 
 	// Disabled → the reload drops the entry again.
-	if err := sc.ReloadWithDueChecks(store.Settings{}, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(store.Settings{}, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks(off): %v", err)
 	}
 	for _, e := range sc.entries {

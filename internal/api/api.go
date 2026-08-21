@@ -29,6 +29,7 @@ type Handler struct {
 	flashLastRun      schedule.LastRunFunc
 	configLastRun     schedule.LastRunFunc
 	filesLastRun      schedule.LastRunFunc
+	everythingLastRun schedule.LastRunFunc
 
 	// Cached host-integration check, warmed once at startup so the dashboard
 	// shows the result list instantly. Guarded by spikeMu; refreshed on POST.
@@ -85,6 +86,7 @@ func NewHandler(
 		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
 		configLastRun:     schedule.LastRunFunc(st.LastSuccessfulConfigBackup),
 		filesLastRun:      schedule.LastRunFunc(st.LastSuccessfulFilesBackup),
+		everythingLastRun: schedule.LastRunFunc(st.LastSuccessfulEverythingBackup),
 		// Initialized explicitly rather than relying on every loginFails call
 		// site happening to only read-or-delete a nil map without ever
 		// assigning into it directly (recordLoginFail lazily allocates too,
@@ -254,6 +256,12 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/dashboard-plugin", h.handleDashboardPluginStatus)
 	mux.HandleFunc("POST /api/dashboard-plugin/install", h.handleDashboardPluginInstall)
 	mux.HandleFunc("POST /api/dashboard-plugin/remove", h.handleDashboardPluginRemove)
+
+	// "Backup Everything" (a 6th, independent pseudo-domain manual trigger that
+	// runs containers/vms/flash/files/config in sequence, see
+	// internal/api/everything.go). Response shape mirrors POST
+	// /api/containers/backup-all.
+	mux.HandleFunc("POST /api/backup-everything", h.handleBackupEverything)
 
 	// Flash endpoints (singleton domain — the Unraid USB).
 	mux.HandleFunc("POST /api/flash/backup", h.handleBackupFlash)

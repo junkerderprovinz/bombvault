@@ -30,9 +30,11 @@ import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 /** Visual/semantic bucket for a line's glyph + colour (see ActivityLog.tsx). */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
 
-/** The domain a line belongs to, for the domain quick-filter. "" when a
- *  finished run's target could not be resolved (e.g. a deleted item). */
-export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "";
+/** The domain a line belongs to, for the domain quick-filter. "everything" is
+ *  the "Backup Everything" pseudo-domain (a sequential pass over the other
+ *  five, see store.EverythingTargetID / runTargetMaps on the backend). "" when
+ *  a finished run's target could not be resolved (e.g. a deleted item). */
+export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "everything" | "";
 
 /** The operation kind, for the type quick-filter. "update" is a real kind
  *  (the post-backup image-update run) that deliberately has no dedicated
@@ -82,6 +84,7 @@ const DOMAIN_KEYS: Record<string, string> = {
   flash: "activityLog.domainFlash",
   config: "activityLog.domainConfig",
   files: "activityLog.domainFiles",
+  everything: "activityLog.domainEverything",
 };
 
 const JOB_KEYS: Record<string, string> = {
@@ -117,7 +120,14 @@ function jobLabel(resolveName: ResolveName, job: string): string {
 function normalizeDomain(domain: string): LogDomain {
   if (domain === "container") return "containers";
   if (domain === "vm") return "vms";
-  if (domain === "containers" || domain === "vms" || domain === "flash" || domain === "config" || domain === "files") {
+  if (
+    domain === "containers" ||
+    domain === "vms" ||
+    domain === "flash" ||
+    domain === "config" ||
+    domain === "files" ||
+    domain === "everything"
+  ) {
     return domain;
   }
   return "";
@@ -626,7 +636,7 @@ function isoDateOf(atMs: number): string {
 // ---------------------------------------------------------------------------
 
 /** Domain quick-filter value ("all" plus every LogDomain except ""). */
-export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files";
+export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files" | "everything";
 
 /** Type quick-filter value ("all" plus the operation kinds the filter bar
  *  offers — deliberately NOT including "update", which has no chip). "drill"

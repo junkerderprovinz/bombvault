@@ -384,6 +384,53 @@ describe("buildLogLines — DR drill kind + skipped tamper (#109 follow-up)", ()
   });
 });
 
+// ---------------------------------------------------------------------------
+// Backup Everything (Task 6 of the backup-everything plan) — a 6th pseudo-
+// domain: the parent run the backend records for a pass (kind="backup",
+// targetId=domain="everything", target="Backup Everything") reuses the
+// existing generic backup-line formatter untouched (Decision 3/4 of the
+// design spec), so this only proves the DOMAIN plumbing — domainLabel's
+// DOMAIN_KEYS entry (exercised here via the idle next-up line, the one
+// existing path that already renders a domain label) and normalizeDomain +
+// the new "everything" LogFilterDomain value actually matching a real line.
+// ---------------------------------------------------------------------------
+describe("buildLogLines / filterLogLines — Backup Everything pseudo-domain (Task 6)", () => {
+  it("resolves the everything domain via domainLabel in the idle next-up line", () => {
+    const next: ScheduleNext[] = [
+      { job: "backup", domain: "everything", next: new Date(7_200_000).toISOString() },
+    ];
+    const lines = buildLogLines([], {}, next, resolveName, 3_600_000);
+    expect(lines).toHaveLength(1);
+    expect(lines[0].text).toContain("activityLog.lineNextWithDomain");
+    expect(lines[0].text).toContain("domain=activityLog.domainEverything");
+  });
+
+  it("normalizes a finished Backup Everything run's domain and matches the new filter value", () => {
+    const run = makeRun({
+      id: "r-everything",
+      targetId: "everything",
+      target: "Backup Everything",
+      domain: "everything", // already the backend's runTargetMaps literal — no singular→plural mapping needed
+      bytes: 0,
+    });
+    const other = makeRun({}); // id "r1", domain "container" → normalized "containers"
+    const lines = buildLogLines([run, other], {}, [], resolveName, 5_000_000);
+    expect(lines.map((l) => l.id).sort()).toEqual(["run:r-everything", "run:r1"].sort());
+
+    const everythingLine = lines.find((l) => l.id === "run:r-everything")!;
+    expect(everythingLine.domain).toBe("everything");
+    expect(everythingLine.text).toContain("activityLog.lineBackupSuccess");
+    expect(everythingLine.text).toContain("name=Backup Everything");
+
+    expect(
+      filterLogLines(lines, { domain: "everything", kind: "all", text: "" }).map((l) => l.id)
+    ).toEqual(["run:r-everything"]);
+    expect(
+      filterLogLines(lines, { domain: "containers", kind: "all", text: "" }).map((l) => l.id)
+    ).toEqual(["run:r1"]);
+  });
+});
+
 describe("filterLogLines", () => {
   const makeLine = (over: Partial<LogLine>): LogLine => ({
     id: "x",
