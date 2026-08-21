@@ -23,6 +23,7 @@ import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragm
 import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
+import { ColorPickerSwatch } from "../components/ColorPickerPopover";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
 import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
@@ -268,12 +269,16 @@ const ACCENT_PRESETS = [
 // (GlimStone form-engine Phase 2, Task 1). Deliberately matches the existing
 // accent-preset swatches' own visual language above (a rounded-pill circle
 // showing the colour, a border) rather than introducing a new component
-// family: a native <input type="color"> is a real, always-valid-hex colour
-// picker, layered transparently over the swatch so a click opens the OS
-// picker directly on it. `disabled` dims the control on its OWN element
-// (native `disabled` + `disabled:opacity-50`), never via a wrapping
-// container's opacity (rule 15 / this branch's own established "dimmed via
-// disabled, not opacity-on-container" fix from Phase 1 Task 4).
+// family: ColorPickerSwatch (the shared GlimStone-picker trigger — see its
+// own header comment) opens the same floating popover the Accent Card's
+// custom swatch below uses, pre-synced to this position's own value, instead
+// of a native <input type="color"> (a genuinely separate browser/OS window —
+// jdp: "kein eigenes Fenster welches sich öffnet"). `disabled` dims the
+// control on its OWN element (native `disabled` + `disabled:opacity-50`),
+// never via a wrapping container's opacity (rule 15 / this branch's own
+// established "dimmed via disabled, not opacity-on-container" fix from Phase
+// 1 Task 4) — ColorPickerSwatch's own `disabled` prop follows that same
+// contract.
 //
 // `rounded-pill`, not a hardcoded `rounded-full` (GlimStone follow-up pass,
 // live-review point 4): a literal `rounded-full` is a fixed 50% radius that
@@ -303,24 +308,13 @@ function PaletteSwatch({
 }) {
   const label = `${t("settings.rainbowPalette")} ${index + 1}`;
   return (
-    // A plain <label> has no :disabled pseudo-class of its own (only the
-    // form control it wraps does), so the dimming is an inline style keyed
-    // off the same `disabled` prop passed to the real control below it,
-    // not a Tailwind disabled: utility that would silently never match here.
-    <label
-      title={label}
-      className="relative h-7 w-7 shrink-0 rounded-pill border-2 border-carbon-border overflow-hidden"
-      style={{ backgroundColor: hex, opacity: disabled ? 0.5 : undefined }}
-    >
-      <input
-        type="color"
-        value={hex}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
-        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
-      />
-    </label>
+    <ColorPickerSwatch
+      value={hex}
+      onChange={onChange}
+      label={label}
+      disabled={disabled}
+      className="h-7 w-7 shrink-0 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+    />
   );
 }
 
@@ -5208,16 +5202,21 @@ export function SettingsPage() {
       {tab === "general" && (
       <Card title={t("settings.accentColor")}>
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Native color picker */}
-          <input
-            type="color"
+          {/* Custom-colour trigger — a flat swatch, same size/shape as the
+              preset swatches beside it (design-language.md, "The user-owned
+              axes" > Accent: every custom colour value gets the SAME
+              trigger). Opens the shared GlimStone picker popover instead of
+              a native <input type="color"> — see ColorPickerPopover.tsx's
+              own header comment for why (jdp: "kein eigenes Fenster welches
+              sich öffnet" — no separate window opening). */}
+          <ColorPickerSwatch
             value={accentHex}
-            onChange={(e) => {
-              setAccentHex(e.target.value);
-              setAccent(e.target.value);
+            onChange={(hex) => {
+              setAccentHex(hex);
+              setAccent(hex);
             }}
-            className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)"
-            title={t("settings.accentColor")}
+            label={t("settings.accentColor")}
+            className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
           />
           {/* Preset swatches */}
           <div className="flex items-center gap-2 flex-wrap">

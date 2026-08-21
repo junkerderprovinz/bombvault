@@ -765,6 +765,102 @@ body {
   white-space: normal;
 }
 
+/* Colour picker (GlimStone reference/colorPicker.ts + reference/tokens.css's
+   .glim-picker family, verbatim) — a REAL saturation/value square + hue bar,
+   opened as a floating popover anchored to a trigger swatch. Never a native
+   `<input type="color">`, which hands off to a browser/OS surface entirely
+   outside the page (jdp: "kein eigenes Fenster welches sich öffnet" — no
+   separate window opening; the whole reason this exists). Paired with
+   ColorPickerSwatch.tsx's own header comment for the JS/React side.
+     .glim-picker-sv is sized against --radius-control (a real 2D control,
+   not a badge) so it follows the shape engine like any other rectangular
+   field. */
+.glim-picker {
+  width: 100%;
+  min-width: 0;
+}
+.glim-picker-sv {
+  position: relative;
+  height: 7rem;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--carbon-border);
+  cursor: crosshair;
+}
+.glim-picker-dot {
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin: -0.375rem 0 0 -0.375rem;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 3px rgba(0, 0, 0, .8);
+  pointer-events: none;
+}
+.glim-picker-hue {
+  position: relative;
+  height: 0.875rem;
+  margin-top: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  cursor: pointer;
+}
+.glim-picker-hdot {
+  position: absolute;
+  top: -0.125rem;
+  width: 0.5rem;
+  height: 1.125rem;
+  margin-left: -0.25rem;
+  background: #fff;
+  border-radius: calc(var(--radius-control) / 2);
+  box-shadow: 0 0 3px rgba(0, 0, 0, .8);
+  pointer-events: none;
+}
+
+/* The floating popover the picker renders into — own elevated surface, same
+   recipe .glim-bubble above and .glim-toast further down both already use
+   (one elevation, one hairline — GlimStone 1.8.0's own bubble fix), sized to
+   the picker's own natural width rather than stretching to whatever's
+   beneath it. Column flex: the picker itself, then the hex field below it.
+   `.glim-fade` (already wired up for the info bubble above) gives it the
+   same short fade-in entrance — "eine Blase die eingeblendet wird" (jdp). */
+.glim-picker-popover {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--carbon-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--elevation), var(--hairline);
+}
+.glim-picker-popover .glim-picker {
+  width: 13.75rem;
+}
+
+/* The hex field beside the picker — a plain borderless filled field (rule
+   14), monospace so every hex digit lines up, uppercase-styled via
+   letter-spacing/text-transform rather than forcing the stored value's own
+   case. */
+.glim-picker-hex {
+  appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  border-radius: var(--radius-control);
+  background-color: var(--carbon-surface2);
+  color: var(--carbon-text);
+  font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: var(--text-caption);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.glim-picker-hex:focus {
+  outline: none;
+  background-color: var(--carbon-hover);
+}
+
 /* Field focus (GlimStone form-engine #8, design-language.md rule 14): "form
    fields are borderless and filled, focus is a brightness step rather than a
    ring." Every text input/select/textarea used to focus with the same
