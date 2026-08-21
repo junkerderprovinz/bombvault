@@ -29,6 +29,7 @@ import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appea
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
+import { Flag } from "../components/Sidebar";
 
 // AboutFooter shows the running version (linking to the releases page) and a
 // "Report a bug" link at the very bottom of Settings, so the sidebar stays clean.
@@ -315,6 +316,97 @@ function PaletteSwatch({
       disabled={disabled}
       className="h-7 w-7 shrink-0 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
     />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Language Card (GlimStone follow-up pass, live-review point 9) — the app's
+// UI-language switcher, MOVED here out of Sidebar.tsx's own footer, not
+// duplicated (jdp: "verschieb den Sprachschalter... auch als eigene card ins
+// allgemein setting"). Same picker mechanism as before: useT()'s
+// lang/setLanguage/languages (lib/i18n.ts — a flat 26-locale list, persisted
+// to localStorage's "bv-lang" key, applied to <html lang>/[dir] immediately,
+// no Save step) and Sidebar.tsx's own exported `Flag` glyph for each entry.
+// Only the TRIGGER's styling changed, from the sidebar's nav-rail look
+// (navBase/navInactive, which key off `--sidebar-text`/`--sidebar-hover` and
+// mean nothing outside the rail) to a plain bg-carbon-surface2 button — the
+// same idle-chip fill every other inline picker trigger in this file already
+// uses (e.g. VMSSHCard's copy buttons above). The dropdown listbox itself
+// (role="listbox", flag+label options, outside-click/Escape-to-close) is
+// reused verbatim; only the open direction flipped from `bottom-full` (the
+// sidebar footer sits at the viewport's bottom edge) to `top-full` (this
+// Card sits in normal page flow, so it opens downward like any other
+// dropdown on this page).
+export function LanguageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const { lang, setLanguage, languages } = useT();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const current = languages.find((l) => l.code === lang) ?? languages[0];
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  return (
+    <Card title={t("settings.language")}>
+      <div className="relative inline-block" ref={ref}>
+        <button
+          type="button"
+          aria-label={`${t("language.label")}: ${current.label}`}
+          title={`${t("language.label")}: ${current.label}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+        >
+          <Flag code={current.flag} />
+          <span>{current.label}</span>
+        </button>
+        {open && (
+          <div
+            role="listbox"
+            aria-label={t("language.label")}
+            className="absolute start-0 top-full mt-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
+            style={{ scrollbarColor: "var(--carbon-border) transparent" }}
+          >
+            {languages.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                role="option"
+                aria-selected={l.code === lang}
+                onClick={() => { setLanguage(l.code); setOpen(false); }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-start transition-colors ${
+                  l.code === lang
+                    ? "bg-carbon-surface3 text-carbon-text"
+                    : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                }`}
+              >
+                <Flag code={l.flag} />
+                <span>{l.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -3591,8 +3683,14 @@ export function SettingsPage() {
     (settings.filesOffsite !== "" && settings.filesOffsiteImmutable);
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
-      {/* Page heading */}
+    <div className="flex flex-col gap-6">
+      {/* Page heading — deliberately NOT inside the max-w-3xl reading column
+          below (GlimStone follow-up pass, live-review point 7): every OTHER
+          page's own <h1>/<p> (Dashboard.tsx, Containers.tsx, VMs.tsx,
+          Files.tsx, Flash.tsx, Config.tsx, Receiver.tsx, Fleet.tsx) renders
+          at the page's own full width, un-capped — Settings.tsx was the one
+          page that swept its heading into the same narrow column as its
+          form content, which this pass undoes to match that convention. */}
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">
           {t("settings.title")}
@@ -3615,6 +3713,35 @@ export function SettingsPage() {
       {/* none — TAB_ICON above is this task's own addition, satisfying the   */}
       {/* "no icon beats the wrong one" rule with a per-section glyph rather  */}
       {/* than a placeholder.                                                */}
+      {/*                                                                    */}
+      {/* GlimStone follow-up pass, live-review point 7 (real bug, not a     */}
+      {/* Selector defect): this strip used to live INSIDE the same           */}
+      {/* `max-w-3xl` reading column as the form content below, which capped  */}
+      {/* it to 768px — narrower than the ~814px seven icon+label "lg"        */}
+      {/* segments need in German (the longest-label locale), so it wrapped   */}
+      {/* to two lines (a lone "System" tab stranded on row 2) even on a wide  */}
+      {/* desktop window. Selector's own "wraps, it never scrolls" rule       */}
+      {/* (design-language.md, "The one horizontal selector") is working      */}
+      {/* exactly as designed — the bug was Settings.tsx capping its PRIMARY   */}
+      {/* NAVIGATION to the same narrow column as its prose/form content, the  */}
+      {/* one page in the app that did (every sibling page's own <h1> above    */}
+      {/* renders un-capped too). Moving `max-w-3xl` down onto the tab panels  */}
+      {/* wrapper below (and off this strip + the heading above) restores a    */}
+      {/* one-line fit at any normal desktop width without touching Selector   */}
+      {/* itself, so its wrap-not-scroll fallback still protects every OTHER   */}
+      {/* call site (and this one too, on a genuinely narrow viewport) exactly */}
+      {/* as before.                                                          */}
+      {/*                                                                    */}
+      {/* `plain` dropped (live-review point 8): the ten toolbar-chip call    */}
+      {/* sites across Containers/VMs/Files/CadenceBuilder give an unselected  */}
+      {/* segment a visible bg-carbon-surface2 idle fill, so the WHOLE strip   */}
+      {/* reads as a row of badges with one filled/active — `plain` (this     */}
+      {/* strip's pre-migration look, preserved verbatim by Task 3 on purpose) */}
+      {/* instead rendered unselected tabs as bare text with no badge shape at */}
+      {/* all. Matching the dominant convention instead of the one other      */}
+      {/* `plain` call site (Dashboard's heatmap toggle, left untouched — out  */}
+      {/* of THIS strip's scope) is a deliberate, requested style change, not  */}
+      {/* a migration-fidelity slip.                                          */}
       {/* ------------------------------------------------------------------ */}
       <Selector
         items={([
@@ -3640,8 +3767,13 @@ export function SettingsPage() {
           }
         }}
         size="lg"
-        plain
       />
+
+      {/* Tab panels — the max-w-3xl reading column lives HERE now (see the
+          strip's own comment above), so every Card and direct-child section
+          below keeps its exact previous width; only the heading and the tab
+          strip above moved out of it. */}
+      <div className="flex flex-col gap-6 max-w-3xl">
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
@@ -5180,6 +5312,15 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
+      {/* GENERAL — Language (GlimStone follow-up pass, live-review point 9). */}
+      {/* Moved out of Sidebar.tsx's footer — see LanguageCard's own header    */}
+      {/* comment above for the full move rationale. Sits right after Domains */}
+      {/* (a fundamental, whole-app setting, same register) and right before  */}
+      {/* the purely-cosmetic Appearance cluster below.                       */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "general" && <LanguageCard t={t} />}
+
+      {/* ------------------------------------------------------------------ */}
       {/* GENERAL — Appearance                                               */}
       {/* GlimStone follow-up pass, live-review point 5: this used to be ONE  */}
       {/* shared Card with four sub-topics (accent / shape / rainbow / quiet  */}
@@ -5493,6 +5634,7 @@ export function SettingsPage() {
 
       {/* SYSTEM — Version + report-a-bug (kept out of the sidebar for a clean UI). */}
       {tab === "system" && <AboutFooter />}
+      </div>
     </div>
   );
 }
