@@ -2679,15 +2679,41 @@ func (h *Handler) sweepLoginFailsLocked() {
 	// keys are ALL currently within their window, so none of them were empty
 	// to prune) — evict the least-recently-touched entries until back under
 	// it, rather than let the map grow without bound. "Least recently
-	// touched" = the earliest remaining failure timestamp, so an attacker
+	// touched" = the LATEST remaining failure timestamp (fails[len(fails)-1],
+	// since recordLoginFail appends in chronological order), so an attacker
 	// actively retrying stays tracked longer than one who fired once and
 	// went quiet.
+	//
+	// Eviction candidates EXCLUDE any key that is currently throttled
+	// (len(fails) >= loginMaxFails, the same condition loginThrottled itself
+	// uses to return true). This matters because a throttled key's own
+	// timestamps stop advancing the instant it starts being throttled:
+	// handleLogin checks loginThrottled BEFORE ever calling recordLoginFail,
+	// so a blocked attacker can't add new entries to its own window while
+	// waiting it out. Its "last touched" timestamp therefore goes stale
+	// immediately, even though the attacker is still very much active from a
+	// security standpoint — sorting on recency and evicting the oldest would
+	// evict a genuinely-throttled attacker BEFORE a flood of one-off keys
+	// that only just arrived, un-throttling them mid-lockout. (Reproduced
+	// end-to-end: attacker throttled after loginMaxFails failures, then a
+	// flood of one-off keys large enough to push the map over
+	// loginMaxTracked evicted the attacker's own entry — since their last
+	// fail predated the flood — and the attacker's very next request came
+	// back 200 instead of 429.) A bounded number of currently-throttled keys
+	// sitting over the nominal cap is an acceptable, self-limiting exception:
+	// it's bounded by how many callers actually reach loginMaxFails
+	// failures, a far smaller and self-capping population than an unlimited
+	// flood of one-off keys that only ever fail once — not the same
+	// unbounded-growth risk the cap exists to guard against.
 	type keyAge struct {
 		key  string
 		last time.Time
 	}
 	ages := make([]keyAge, 0, len(h.loginFails))
 	for k, fails := range h.loginFails {
+		if len(fails) >= loginMaxFails {
+			continue // currently throttled — never an eviction candidate
+		}
 		ages = append(ages, keyAge{k, fails[len(fails)-1]})
 	}
 	sort.Slice(ages, func(i, j int) bool { return ages[i].last.Before(ages[j].last) })
