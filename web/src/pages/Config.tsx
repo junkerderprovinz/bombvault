@@ -191,7 +191,7 @@ function ConfigSettingsCard({
   }
 
   return (
-    <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+    <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
       {/* Task 5 (rule 11): same Badge-in-<h2> pattern as Settings.tsx's own
           Card component — this hand-rolled Card equivalent never shared
           Card's component, so it needed its own copy of the conversion. */}
@@ -370,27 +370,37 @@ export function Config() {
         <ConfigSettingsCard t={t} settings={settings} setSettings={(u) => setSettings((prev) => (prev ? u(prev) : prev))} />
       )}
 
-      {/* Backup card */}
-      <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+      {/* Backup card. GlimStone follow-up pass ("half-overlap card notch"):
+          split into an outer structural `relative` div (hosting the heading
+          Badge, now `position: absolute`) + this same inner
+          `relative overflow-hidden` div (unchanged, still the box
+          ProgressBar.tsx documents clipping itself to) — the inner div's own
+          overflow-hidden would otherwise clip the badge's -11px poke above
+          it, so the badge needed to move outside that clipping box; see
+          Badge.tsx's badgeClassName comment and Dashboard.tsx's Card() for
+          the identical split. */}
+      <div className="relative">
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap>{t("config.backupTitle")}</Badge>
         </h2>
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("config.backupHint")}</p>
-        <ConfigBackupButton
-          t={t}
-          onBackedUp={() => void load()}
-          externallyBusy={running.active}
-          busyPhase={running.phase}
-        />
+        <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+          <p className="text-xs text-carbon-textMuted -mt-1">{t("config.backupHint")}</p>
+          <ConfigBackupButton
+            t={t}
+            onBackedUp={() => void load()}
+            externallyBusy={running.active}
+            busyPhase={running.phase}
+          />
 
-        {/* Live backup/restore progress, pinned to the card's bottom edge */}
-        {progress && (
-          <ProgressBar percent={progress.percent} active={progress.active} />
-        )}
+          {/* Live backup/restore progress, pinned to the card's bottom edge */}
+          {progress && (
+            <ProgressBar percent={progress.percent} active={progress.active} />
+          )}
+        </div>
       </div>
 
       {/* Snapshots card — list + delete; restoring settings lives in Recovery. */}
-      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+      <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap>{t("config.snapshotsTitle")}</Badge>
         </h2>

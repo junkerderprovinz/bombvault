@@ -403,13 +403,99 @@ function badgeClassName({
   const sizing = wrap
     ? `${minHeight} py-0.5 leading-tight wrap-break-word`
     : `${height} min-h-0 leading-none`;
+
+  // tone="heading" + size="heading" (GlimStone follow-up pass, live-review
+  // round — "half-overlap card notch"): every real call site pairs these two
+  // props together (verified — no call site uses one without the other), so
+  // gating on BOTH is the precise, self-documenting condition for "this is
+  // the notch treatment," not just "any heading-sized or heading-toned
+  // badge" in isolation.
+  //
+  // jdp disliked the old inline filled-badge-inside-the-content-flow look
+  // (this same accent-soft chip, just sitting in normal document flow) and
+  // asked for CannonadeCommand's fieldset/legend-style tab instead: the
+  // badge now straddles ITS OWN CARD's top edge, half poking above the
+  // card's visual boundary, half overlapping onto it — a notch, not a
+  // heading floating inside the content area. BombVault's Cards are plain
+  // divs (no real <fieldset>/<legend>), so this reproduces that look
+  // synthetically with `position: absolute` on the badge + `position:
+  // relative` on the card (added at each call site — see those call sites'
+  // own comments for why a shared Card component doesn't exist here to
+  // carry that in one place).
+  //
+  // top: -11px is exactly HALF of this stage's own real height — 22px
+  // (`h-[22px]` in SIZE_TOKENS.heading above) — not CC's own 26px/13px pair,
+  // which belongs to a differently-sized badge on a different app. Assumes a
+  // single text line: `wrap` (used defensively at every heading call site,
+  // see the file header) lets a badge grow past 22px for a genuinely long
+  // string, and a badge that actually wraps to two lines pokes out more than
+  // exactly half — accepted as a known, rare-in-practice tradeoff (checked
+  // against this app's longest heading strings across all 26 locales: short
+  // section-title phrases that fit on one line at this stage's roomy px-3
+  // padding, except the one narrow sm:grid-cols-3 cell that already
+  // documents wrapping as expected in the DEFAULT locale too) rather than a
+  // JS-measured dynamic offset for what a fixed CSS value already covers in
+  // the overwhelming common case.
+  //
+  // Deliberately no explicit left/right/start/end offset: with both left and
+  // right left `auto`, an absolutely positioned box falls back to its CSS
+  // "static position" — where it would have rendered had position stayed
+  // static. Every call site wraps Badge in a `flex items-center` <h2> (or,
+  // per this project's RTL-positioning convention — see FilterPopover.tsx
+  // and Settings.tsx's dropdown menu — the logical `start`/`end` pair is how
+  // this app expresses direction-aware offsets elsewhere), so the static
+  // position is the flex container's own start edge: it automatically
+  // inherits whichever padding the real call site's card already uses (p-5
+  // here, p-4 there, zero on a few bare group-label headings, or wherever a
+  // heading sits deeper in a decorated row — StepCard.tsx's numbered-circle
+  // row, for one) with zero per-call-site horizontal class needed, AND it is
+  // automatically RTL-correct (a flex row's start edge is the row's RIGHT
+  // edge under dir="rtl") for the same zero-extra-classes reason — the
+  // static-position fallback is direction-aware by definition, so this
+  // extends the RTL sweep's own logical-property convention without
+  // needing to repeat it as literal start-N classes at 20+ call sites.
+  //
+  // z-10: only needs to draw above this SAME card's own in-flow content
+  // immediately below it (default z-index:auto siblings don't establish
+  // their own stacking order); nothing here reaches for a shared app-wide
+  // z-index scale (dialogs/backdrops sit at z-50, popovers at z-20/z-50 —
+  // this badge never needs to out-rank those, it always renders inside its
+  // own card's local stacking, never competing with a DIFFERENT card or a
+  // dialog above it).
+  //
+  // rounded-pill (not this stage's usual shape-engine-driven radius, which
+  // is what plain `RADIUS_CLASSES[shape]` below would otherwise resolve to
+  // for the default shape="rounded" every heading call site actually
+  // passes): a fixed pill regardless of the app's round/soft/square
+  // shape-engine setting, matching CC's own reference implementation. A
+  // card-edge notch reads as its own fixed piece of window chrome — like a
+  // physical tab cut into the edge — not a data control the shape engine is
+  // meant to govern; the shape engine's whole point is reshaping CONTROLS
+  // (buttons, fields, swatches), and a heading was never one of those even
+  // before this pass (rule 11 exempts headings from rule 9's reactive-colour
+  // treatment for the identical reason — a heading isn't a control).
+  //
+  // shadow: var(--elevation) only, not this app's usual elevation+hairline
+  // pairing (`.rounded-card`'s own box-shadow: var(--elevation),
+  // var(--hairline) — see index.css): CC's own reference snippet specifies
+  // a single box-shadow (the elevation lift that reads as "this sits above
+  // the surface, not flush with it"), and --hairline is this app's
+  // border-emulating inset highlight for a surface's OWN edge — a different
+  // concern from "this floats above a surface," and one this same
+  // tone="heading" treatment never reached for even before this pass (a
+  // heading badge is furniture riding on the card, not a card boundary of
+  // its own).
+  const isHeadingNotch = tone === "heading" && size === "heading";
+  const notchPositioning = isHeadingNotch ? "absolute -top-[11px] z-10 shadow-[var(--elevation)]" : "";
+
   return [
     "inline-flex box-border items-center justify-center gap-1 font-medium",
     sizing,
     text,
     isCircle ? "px-0 aspect-square" : padding,
-    RADIUS_CLASSES[shape],
+    isHeadingNotch ? "rounded-pill" : RADIUS_CLASSES[shape],
     TONE_CLASSES[tone],
+    notchPositioning,
     className,
   ]
     .filter(Boolean)

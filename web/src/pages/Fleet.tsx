@@ -295,20 +295,20 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4" onClick={onClose}>
+      {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
+          `relative` shell wraps the scrollable dialog box, same split as
+          Receiver.tsx's ReceiverDialog — see that call site's comment. */}
+      <div className="relative w-full max-w-lg">
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
+      </h2>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={t("fleet.mesh.proposeTitle")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
-            This dialog's accessible name comes from aria-label on the
-            role="dialog" div (see above), not aria-labelledby, so there's no
-            id/association to preserve here. */}
-        <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
-        </h2>
         <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.proposeHint").replace("{peer}", peer.name)}</p>
 
         {!snippet ? (
@@ -374,6 +374,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             </div>
           </>
         )}
+      </div>
       </div>
     </div>,
     document.body,
@@ -627,21 +628,21 @@ function FleetDialog({
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
     >
+      {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
+          `relative` shell wraps the scrollable dialog box — see
+          Receiver.tsx's ReceiverDialog and this file's own proposeTitle
+          dialog above for the identical split. */}
+      <div className="relative w-full max-w-lg">
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{editing ? t("fleet.editTitle") : t("fleet.addTitle")}</Badge>
+      </h2>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={editing ? t("fleet.editTitle") : t("fleet.addTitle")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
-            This dialog's accessible name comes from aria-label on the
-            role="dialog" div (see above), not aria-labelledby, so there's no
-            id/association to preserve here. */}
-        <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{editing ? t("fleet.editTitle") : t("fleet.addTitle")}</Badge>
-        </h2>
-
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{t("fleet.name")}</label>
           <input
@@ -713,6 +714,7 @@ function FleetDialog({
           </button>
         </div>
       </div>
+      </div>
     </div>,
     document.body,
   );
@@ -778,12 +780,17 @@ export function Fleet() {
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
 
       {!loading && pendingOffers.length > 0 && (
-        <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+        <div className="relative bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
           <div>
             {/* Task 5 (rule 11): outermost heading of this rounded-card p-4
                 panel — not nested inside anything already badged — same
                 Badge-in-<h2> treatment as every other converted Card
-                heading. */}
+                heading. GlimStone follow-up pass ("half-overlap card
+                notch"): `relative` added on the outer p-4 card above (not
+                this bare inner div) — the heading Badge is now
+                `position: absolute` and needs to straddle the padded card's
+                real edge, not just this inner div's own (padding-less)
+                position within it. */}
             <h2 className="flex items-center">
               <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.offersTitle")}</Badge>
             </h2>

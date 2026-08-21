@@ -809,21 +809,20 @@ function FileSetDialog({
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
     >
+      {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
+          `relative` shell wraps the scrollable dialog box — see
+          Receiver.tsx's ReceiverDialog for the identical split and why. */}
+      <div className="relative w-full max-w-lg">
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap>{initial ? t("files.editSet") : t("files.addSet")}</Badge>
+      </h2>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={initial ? t("files.editSet") : t("files.addSet")}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
+        className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        {/* Task 5 follow-up (rule 15, "title as a badge" for window chrome).
-            This dialog's accessible name comes from aria-label on the
-            role="dialog" div (see above), not aria-labelledby pointing at
-            this heading, so there's no id/association to preserve here. */}
-        <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{initial ? t("files.editSet") : t("files.addSet")}</Badge>
-        </h2>
-
         {/* Name — feeds the restic tag, so the server validates it strictly. */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-carbon-textSub">{t("files.name")}</label>
@@ -892,6 +891,7 @@ function FileSetDialog({
             {saving ? t("common.saving") : t("settings.save")}
           </button>
         </div>
+      </div>
       </div>
     </div>,
     document.body,

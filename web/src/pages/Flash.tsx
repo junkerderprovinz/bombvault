@@ -219,28 +219,36 @@ export function Flash() {
         <div className="mt-2"><OffsiteIndicator domain="flash" /></div>
       </div>
 
-      {/* Backup card */}
-      <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+      {/* Backup card. GlimStone follow-up pass ("half-overlap card notch"):
+          split into an outer structural `relative` div (hosting the heading
+          Badge, now `position: absolute`) + this same inner
+          `relative overflow-hidden` div (unchanged, still the box
+          ProgressBar.tsx documents clipping itself to) — see Config.tsx's
+          identical backup-card split and Badge.tsx's badgeClassName
+          comment. */}
+      <div className="relative">
         {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text. */}
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap>{t("flash.backupTitle")}</Badge>
         </h2>
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
-        <FlashBackupButton
-          t={t}
-          onBackedUp={() => void load()}
-          externallyBusy={running.active}
-          busyPhase={running.phase}
-        />
+        <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+          <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
+          <FlashBackupButton
+            t={t}
+            onBackedUp={() => void load()}
+            externallyBusy={running.active}
+            busyPhase={running.phase}
+          />
 
-        {/* Live backup/restore progress, pinned to the card's bottom edge */}
-        {progress && (
-          <ProgressBar percent={progress.percent} active={progress.active} />
-        )}
+          {/* Live backup/restore progress, pinned to the card's bottom edge */}
+          {progress && (
+            <ProgressBar percent={progress.percent} active={progress.active} />
+          )}
+        </div>
       </div>
 
       {/* Restore card */}
-      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+      <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap>{t("snapshots.title")}</Badge>
         </h2>

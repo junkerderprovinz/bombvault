@@ -245,7 +245,7 @@ export function ActivityLog({
   };
 
   return (
-    <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
+    <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap>{t("activityLog.title")}</Badge>
       </h2>
