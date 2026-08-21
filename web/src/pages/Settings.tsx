@@ -130,6 +130,7 @@ function Card({
 export function ToggleRow({
   label,
   description,
+  hint,
   checked,
   onChange,
   disabled,
@@ -137,6 +138,15 @@ export function ToggleRow({
 }: {
   label: string;
   description?: string;
+  /** Optional (i) bubble beside the visible label — same content contract as
+   *  Card's own `hint` (design-language.md rule 8, "explanations live in a
+   *  bubble, not on the page"). Added for the GlimStone follow-up pass's
+   *  rainbow-section rework: "Reactive mode"/"Colour rotation" need a node
+   *  (icon + text) next to the label, which a plain string `label` can't
+   *  carry — see Card's own header comment for the identical constraint on
+   *  its `title`/`hint` pair. Renders only when `!hideLabel` (nothing to sit
+   *  beside once the label itself is hidden). */
+  hint?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
@@ -163,7 +173,12 @@ export function ToggleRow({
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-0.5">
-        {!hideLabel && <span className={`text-sm text-carbon-text${dim}`}>{label}</span>}
+        {!hideLabel && (
+          <span className={`flex items-center gap-1.5 text-sm text-carbon-text${dim}`}>
+            {label}
+            {hint && <InfoBubble tip={hint} />}
+          </span>
+        )}
         {description && (
           <span className={`text-xs text-carbon-textMuted${dim}`}>{description}</span>
         )}
@@ -251,14 +266,27 @@ const ACCENT_PRESETS = [
 // ---------------------------------------------------------------------------
 // Palette swatch — one editable colour in the rainbow palette editor
 // (GlimStone form-engine Phase 2, Task 1). Deliberately matches the existing
-// accent-preset swatches' own visual language above (a rounded-full circle
+// accent-preset swatches' own visual language above (a rounded-pill circle
 // showing the colour, a border) rather than introducing a new component
 // family: a native <input type="color"> is a real, always-valid-hex colour
-// picker, layered transparently over the circle so a click opens the OS
-// picker directly on the swatch itself. `disabled` dims the control on its
-// OWN element (native `disabled` + `disabled:opacity-50`), never via a
-// wrapping container's opacity (rule 15 / this branch's own established
-// "dimmed via disabled, not opacity-on-container" fix from Phase 1 Task 4).
+// picker, layered transparently over the swatch so a click opens the OS
+// picker directly on it. `disabled` dims the control on its OWN element
+// (native `disabled` + `disabled:opacity-50`), never via a wrapping
+// container's opacity (rule 15 / this branch's own established "dimmed via
+// disabled, not opacity-on-container" fix from Phase 1 Task 4).
+//
+// `rounded-pill`, not a hardcoded `rounded-full` (GlimStone follow-up pass,
+// live-review point 4): a literal `rounded-full` is a fixed 50% radius that
+// never moves, so this swatch (and the accent-preset swatches below) used to
+// stay a perfect circle no matter what shape the user picked in Settings —
+// the one pair of controls on this page that silently ignored the shape
+// engine. `rounded-pill` is the SAME token every pill-shaped Badge already
+// reads (Badge.tsx's shape="pill"/"circle" -> RADIUS_CLASSES.pill/circle),
+// and both swatches here are already fixed equal-width/-height boxes, so no
+// `aspect-square` is needed the way Badge's circle shape needs one — points
+// at var(--radius-pill), which index.css already varies per data-shape:
+// 9999px (round, a true circle), 0.3125rem (soft, a lightly rounded square),
+// 0 (square, a hard corner) — reactive with zero new CSS.
 // ---------------------------------------------------------------------------
 function PaletteSwatch({
   hex,
@@ -281,7 +309,7 @@ function PaletteSwatch({
     // not a Tailwind disabled: utility that would silently never match here.
     <label
       title={label}
-      className="relative h-7 w-7 shrink-0 rounded-full border-2 border-carbon-border overflow-hidden"
+      className="relative h-7 w-7 shrink-0 rounded-pill border-2 border-carbon-border overflow-hidden"
       style={{ backgroundColor: hex, opacity: disabled ? 0.5 : undefined }}
     >
       <input
@@ -5121,258 +5149,264 @@ export function SettingsPage() {
 
       {/* ------------------------------------------------------------------ */}
       {/* GENERAL — Appearance                                               */}
+      {/* GlimStone follow-up pass, live-review point 5: this used to be ONE  */}
+      {/* shared Card with four sub-topics (accent / shape / rainbow / quiet  */}
+      {/* toasts) separated by `border-t border-carbon-border` divider lines  */}
+      {/* — a real, previously-unnoticed violation of this app's own "never a */}
+      {/* border line, only shade/shadow" house rule (see index.css's shape-  */}
+      {/* token comments and Badge.tsx's file header: every OTHER visual      */}
+      {/* separation in this app comes from a surface's own elevation, not a  */}
+      {/* rule). Each of the four is now its OWN Card — same bg-carbon-       */}
+      {/* surface + rounded-card + shadow every other Settings topic already  */}
+      {/* renders through, no divider needed because there's no longer a      */}
+      {/* shared surface to divide. `settings.appearance` (the old umbrella   */}
+      {/* title) has no call site left after this split and was removed from  */}
+      {/* every locale rather than kept as a dead key. Same "general" tab     */}
+      {/* condition repeated per Card — the pattern every OTHER multi-Card    */}
+      {/* tab on this page already uses (e.g. the "system" tab's Settings     */}
+      {/* Portability Card + AboutFooter further down), not a wrapping        */}
+      {/* Fragment introduced just for this section.                         */}
       {/* ------------------------------------------------------------------ */}
       {tab === "general" && (
-      <Card title={t("settings.appearance")}>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-sm text-carbon-text">{t("settings.accentColor")}</span>
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Native color picker */}
-              <input
-                type="color"
-                value={accentHex}
-                onChange={(e) => {
-                  setAccentHex(e.target.value);
-                  setAccent(e.target.value);
-                }}
-                className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)"
-                title={t("settings.accentColor")}
-              />
-              {/* Preset swatches */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
-                {ACCENT_PRESETS.map((p) => (
-                  <button
-                    key={p.hex}
-                    title={p.label}
-                    onClick={() => {
-                      setAccentHex(p.hex);
-                      setAccent(p.hex);
-                    }}
-                    className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
-                    style={{
-                      backgroundColor: p.hex,
-                      borderColor: accentHex.toLowerCase() === p.hex.toLowerCase()
-                        ? "var(--carbon-text)"
-                        : "var(--carbon-border)",
-                    }}
-                  />
-                ))}
-                {/* Reset to default */}
-                {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
-                  <button
-                    onClick={() => {
-                      setAccentHex(DEFAULT_ACCENT);
-                      setAccent(DEFAULT_ACCENT);
-                    }}
-                    className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
-                  >
-                    {t("common.reset")}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Shape (GlimStone form-engine — shape engine; design-language.md's
-              "The user-owned axes": data-shape on <html>, round/soft/square,
-              one radius token set driving every rounded corner). This is the
-              one axis both prior GlimStone integration phases in this app
-              deliberately deferred — lib/shape.ts is the JS half (read/write/
-              persist which of the three is chosen, stamp the attribute),
-              index.css already carries the matching [data-shape="soft"|
-              "square"] radius-token overrides. Lives directly below the
-              single accent above: same kind of setting (client-only, applied
-              at the app root — shape.ts's own header comment), same "one
-              picker, no Save step" shape.
-                Selector, not a bespoke button row: this IS "three mutually
-              exclusive options" (design-language.md's "The one horizontal
-              selector"), the exact shape Dashboard.tsx's heatmap-domain
-              toggle already uses this component for. hue={false} for the
-              same reason as that toggle — round/soft/square are a form
-              choice, not a position in a list, and tinting the segments
-              would compete with the glyph that already carries the meaning.
-              Each item's `icon` is a small outlined square drawn at that
-              option's own preview radius (6px/2px/0, scaled down from the
-              real --radius-control tokens for legibility at 14px) — the
-              corner IS the label, visible before it's picked, the same
-              reasoning and the same values as KnightLoader's own copy of
-              this exact picker (web/src/pages/settings/Look.tsx). Outline
-              rather than filled: a filled square reads as a colour swatch
-              (that's the accent row above), and this glyph only has to say
-              which shape it is. */}
-          <div className="flex flex-col gap-2 border-t border-carbon-border pt-4">
-            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-              {t("settings.shape")}
-              <InfoBubble tip={t("settings.shapeHint")} />
-            </span>
-            <Selector
-              items={SHAPES.map((s) => ({
-                id: s,
-                label: t(`settings.shape.${s}` as TranslationKey),
-                icon: (
-                  <span
-                    aria-hidden
-                    className="h-3.5 w-3.5 shrink-0 border-[1.5px] border-current"
-                    style={{ borderRadius: s === "round" ? "6px" : s === "soft" ? "2px" : "0" }}
-                  />
-                ),
-              }))}
-              label={t("settings.shape")}
-              select="one"
-              active={shape}
-              onChange={(id) => {
-                setShapeLocal(id as Shape);
-                setShape(id as Shape);
-              }}
-              size="sm"
-              hue={false}
-            />
-          </div>
-
-          {/* Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent,
-              plural: an eight-colour palette handed out by list position
-              instead of one accent everywhere (design-language.md, "The
-              colour engine" / "Rainbow"). Lives right below the single
-              accent above, the same section, since both are the same kind
-              of setting (client-only, applied at the app root — see
-              lib/appearance.ts's header comment for why this stays
-              localStorage like every other appearance preference in this
-              app rather than round-tripping through the server). As of
-              Task 3 this switch genuinely repaints the app: every hue-enabled
-              Selector segment (components/Selector.tsx, its own default —
-              twelve call sites across seven files, including the Settings
-              tab strip above and the drill-type toggle further down) and the
-              container/VM/file-set list rows all read a rainbow position
-              now, so turning this on sets data-rainbow + --rb-0..--rb-7 on
-              <html> AND immediately recolours those real call sites — not
-              just the CSS variables Task 1 verified. The sidebar nav is
-              deliberately NOT a consumer (Sidebar.tsx carries the reasoning),
-              so flipping this switch never changes the rail's own colours. */}
-          <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-            {/* The master switch shares the section heading's own row rather
-                than sitting on a row of its own.
-                  - Tracks flush right, never label-then-track: BombVault's
-                    Toggle renders label-then-track (the GlimStone reference/
-                    KnightLoader render track-then-label), so a bare Toggle's
-                    track x-position drifts with that switch's own label
-                    length — three different x-positions for three different
-                    label lengths, the exact trap the design language's
-                    Switches rule and KnightLoader's own code comment call
-                    out. `justify-between` (what ToggleRow uses for the two
-                    sub-switches below and "Quiet toasts" further down) pins
-                    every track to the same right edge regardless of label
-                    length.
-                  - No caption of its OWN: the heading beside it already says
-                    "Rainbow" — a switch captioned "use the palette" next to
-                    it would say the same decision twice (design language's
-                    Switches section). The words survive as the accessible
-                    name via Toggle's unconditional aria-label.
-                But a `hideLabel` ToggleRow would then leave this row's left
-                half empty, stranding a caption-less track ~900px from the
-                heading that names it (that IS the pattern for a single-
-                purpose Card whose TITLE is the decision — see the metrics
-                ToggleRow — but this heading is a plain in-card sub-heading,
-                not a Card title, so the association has to survive being
-                read across one row). Hence ToggleRow's exact markup inlined
-                here with the heading (plus its InfoBubble, a node ToggleRow's
-                string `label` cannot carry) as the row's left half: same
-                shape, same track x-position, one row instead of two, and the
-                switch sits next to the words it belongs to. */}
-            <div className="flex items-start justify-between gap-4">
-              <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-                {t("settings.rainbow")}
-                <InfoBubble tip={t("settings.rainbowHint")} />
-              </span>
-              <Toggle
-                hideLabel
-                label={t("settings.rainbowOn")}
-                checked={rainbow.on}
-                onChange={(v) => updateRainbow({ on: v })}
-                className="mt-0.5"
-              />
-            </div>
-
-            {/* ToggleRow, so these two land on the same track column as the
-                master above and "Quiet toasts" below. Dimmed via each
-                control's OWN `disabled` — ToggleRow dims its switch AND its
-                caption together (rule 15, and the exact fix this branch's own
-                ToggleRow carries from Phase 1 Task 4 — see its own header
-                comment above). "Switched off, not hidden": these stay visible
-                and reachable even while off, so nobody has to guess what the
-                mode does. */}
-            <ToggleRow
-              label={t("settings.rainbowReactive")}
-              checked={rainbow.reactive}
-              disabled={!rainbow.on}
-              onChange={(v) => updateRainbow({ reactive: v })}
-            />
-            <ToggleRow
-              label={t("settings.rainbowRotate")}
-              checked={rainbow.rotate}
-              disabled={!rainbow.on}
-              onChange={(v) =>
-                // Turning rotation on draws a fresh offset immediately, so
-                // the switch does something visible instead of silently
-                // re-applying whatever rotation the palette already had.
-                updateRainbow({
-                  rotate: v,
-                  seed: v ? 1 + Math.floor(Math.random() * (RAINBOW.length - 1)) : 0,
-                })
-              }
-            />
-
-            {/* The very same row shape as the accent swatches above it,
-                because it is the very same job: pick colours. Each of the 8
-                is independently editable; setRainbow()/isValidPalette()
-                enforce all-or-nothing validation on the resulting palette
-                before it ever reaches document.documentElement.style — see
-                lib/appearance.ts. */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-xs text-carbon-textMuted${rainbow.on ? "" : " opacity-50"}`}>
-                {t("settings.rainbowPalette")}:
-              </span>
-              {rainbow.palette.map((hex, i) => (
-                <PaletteSwatch
-                  key={i}
-                  hex={hex}
-                  index={i}
-                  disabled={!rainbow.on}
-                  t={t}
-                  onChange={(v) => {
-                    const next = rainbow.palette.slice();
-                    next[i] = v;
-                    updateRainbow({ palette: next });
-                  }}
-                />
-              ))}
+      <Card title={t("settings.accentColor")}>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Native color picker */}
+          <input
+            type="color"
+            value={accentHex}
+            onChange={(e) => {
+              setAccentHex(e.target.value);
+              setAccent(e.target.value);
+            }}
+            className="h-8 w-14 cursor-pointer rounded-control bg-carbon-surface2 p-0.5 focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)"
+            title={t("settings.accentColor")}
+          />
+          {/* Preset swatches */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
+            {ACCENT_PRESETS.map((p) => (
               <button
-                type="button"
-                disabled={!rainbow.on}
-                onClick={() => updateRainbow({ palette: RAINBOW })}
-                className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1 disabled:opacity-50 disabled:pointer-events-none"
+                key={p.hex}
+                title={p.label}
+                onClick={() => {
+                  setAccentHex(p.hex);
+                  setAccent(p.hex);
+                }}
+                // rounded-pill, not a hardcoded rounded-full (GlimStone
+                // follow-up pass, live-review point 4) — see PaletteSwatch's
+                // own header comment above for the full reasoning; the two
+                // swatch families share the same fix for the same reason.
+                className="w-6 h-6 rounded-pill border-2 transition-transform hover:scale-110"
+                style={{
+                  backgroundColor: p.hex,
+                  borderColor: accentHex.toLowerCase() === p.hex.toLowerCase()
+                    ? "var(--carbon-text)"
+                    : "var(--carbon-border)",
+                }}
+              />
+            ))}
+            {/* Reset to default */}
+            {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
+              <button
+                onClick={() => {
+                  setAccentHex(DEFAULT_ACCENT);
+                  setAccent(DEFAULT_ACCENT);
+                }}
+                className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
               >
                 {t("common.reset")}
               </button>
-            </div>
+            )}
           </div>
-
-          {/* Quiet toasts (GlimStone form-engine Task 9) — the toast system's
-              severity-based quiet mode. Lives here, next to the other purely
-              client-side display preferences (accent), rather than as a new
-              standalone setting with nothing else around it, and rather than
-              being bolted onto NotifyConfig's server-side "on" field above
-              (that one gates external webhook/Matrix/email notifications —
-              a different axis entirely; muting a toast in THIS browser must
-              never silently change what a webhook receives elsewhere). */}
-          <ToggleRow
-            label={t("settings.quietToasts")}
-            description={t("settings.quietToastsHint")}
-            checked={quiet}
-            onChange={setQuiet}
-          />
         </div>
+      </Card>
+      )}
+
+      {/* Shape (GlimStone form-engine — shape engine; design-language.md's
+          "The user-owned axes": data-shape on <html>, round/soft/square,
+          one radius token set driving every rounded corner). lib/shape.ts is
+          the JS half (read/write/persist which of the three is chosen, stamp
+          the attribute), index.css already carries the matching
+          [data-shape="soft"|"square"] radius-token overrides. Lives directly
+          below the accent Card above: same kind of setting (client-only,
+          applied at the app root — shape.ts's own header comment), same "one
+          picker, no Save step" shape.
+            Selector, not a bespoke button row: this IS "three mutually
+          exclusive options" (design-language.md's "The one horizontal
+          selector"), the exact shape Dashboard.tsx's heatmap-domain toggle
+          already uses this component for. hue={false} for the same reason as
+          that toggle — round/soft/square are a form choice, not a position
+          in a list, and tinting the segments would compete with the choice
+          itself.
+            `size="lg"` (GlimStone follow-up pass, live-review point 1 —
+          up from the original "sm"): this is a full, standalone Settings
+          decision in its own right, the same visual register as the page's
+          OWN 7-tab Selector strip further up this file (also `size="lg"`),
+          not a tight toolbar chip like Dashboard's heatmap toggle or
+          CadenceBuilder's weekday pills — "sm" undersold it next to
+          everything else in this Card.
+            No `icon` per item anymore (live-review point 2): the original
+          per-option glyph (a small outlined square drawn at a SCALED-DOWN
+          6px/2px/0 preview radius — deliberately not the real 10px/5px/0
+          --radius-control values, for legibility at 14px) turned out to
+          undercut its own point live: a smaller-than-real preview sitting
+          right next to the label read as "round isn't very round," the
+          opposite of what it was meant to show. Text-only avoids that
+          entirely — the real Selector segment the user is looking at IS the
+          shape preview, at its own true radius, with no scaled-down stand-in
+          competing with it. */}
+      {tab === "general" && (
+      <Card title={t("settings.shape")} hint={t("settings.shapeHint")}>
+        <Selector
+          items={SHAPES.map((s) => ({
+            id: s,
+            label: t(`settings.shape.${s}` as TranslationKey),
+          }))}
+          label={t("settings.shape")}
+          select="one"
+          active={shape}
+          onChange={(id) => {
+            setShapeLocal(id as Shape);
+            setShape(id as Shape);
+          }}
+          size="lg"
+          hue={false}
+        />
+      </Card>
+      )}
+
+      {/* Rainbow (GlimStone form-engine Phase 2, Task 1; renamed "Rainbow
+          Mode" in the follow-up pass, live-review point 6) — the accent,
+          plural: an eight-colour palette handed out by list position instead
+          of one accent everywhere (design-language.md, "The colour engine" /
+          "Rainbow"). Lives right below the shape Card above, the same kind
+          of setting (client-only, applied at the app root — see
+          lib/appearance.ts's header comment for why this stays localStorage
+          like every other appearance preference in this app rather than
+          round-tripping through the server). This switch genuinely repaints
+          the app: every hue-enabled Selector segment (components/
+          Selector.tsx, its own default — twelve call sites across seven
+          files, including the Settings tab strip above and the drill-type
+          toggle further down) and the container/VM/file-set list rows all
+          read a rainbow position, so turning this on sets data-rainbow +
+          --rb-0..--rb-7 on <html> AND immediately recolours those real call
+          sites. The sidebar nav is deliberately NOT a consumer (Sidebar.tsx
+          carries the reasoning), so flipping this switch never changes the
+          rail's own colours.
+            The master switch is now a plain `hideLabel` ToggleRow instead of
+          hand-inlined markup sharing a row with the section heading: now
+          that Rainbow is its OWN Card (not a sub-heading sharing space with
+          three OTHER sub-topics in one shared Card), the Card's own title
+          bar sits directly above this toggle, which is exactly ToggleRow's
+          documented "single-purpose Card whose title IS the decision this
+          switch makes" case — the "stranding a caption-less track far from
+          its heading" problem that used to rule this out no longer applies
+          once the two are inches apart in the same Card.
+            The reactive/rotate sub-toggles used to show their FULL
+          explanatory sentence as the permanent visible label (design-
+          language.md rule 8 violation — "explanations live in a bubble, not
+          on the page"). Both now carry a short verb-phrase label
+          ("settings.rainbowReactive"/"settings.rainbowRotate") plus that
+          same descriptive sentence moved verbatim into an InfoBubble via
+          ToggleRow's new `hint` prop — the text itself didn't change, only
+          where it lives. */}
+      {tab === "general" && (
+      <Card title={t("settings.rainbow")} hint={t("settings.rainbowHint")}>
+        <div className="flex flex-col gap-3">
+          <ToggleRow
+            hideLabel
+            label={t("settings.rainbowOn")}
+            checked={rainbow.on}
+            onChange={(v) => updateRainbow({ on: v })}
+          />
+
+          {/* Dimmed via each control's OWN `disabled` — ToggleRow dims its
+              switch AND its caption together (rule 15, and the exact fix
+              this branch's own ToggleRow carries from Phase 1 Task 4 — see
+              its own header comment above). "Switched off, not hidden":
+              these stay visible and reachable even while off, so nobody has
+              to guess what the mode does. */}
+          <ToggleRow
+            label={t("settings.rainbowReactive")}
+            hint={t("settings.rainbowReactiveHint")}
+            checked={rainbow.reactive}
+            disabled={!rainbow.on}
+            onChange={(v) => updateRainbow({ reactive: v })}
+          />
+          <ToggleRow
+            label={t("settings.rainbowRotate")}
+            hint={t("settings.rainbowRotateHint")}
+            checked={rainbow.rotate}
+            disabled={!rainbow.on}
+            onChange={(v) =>
+              // Turning rotation on draws a fresh offset immediately, so
+              // the switch does something visible instead of silently
+              // re-applying whatever rotation the palette already had.
+              updateRainbow({
+                rotate: v,
+                seed: v ? 1 + Math.floor(Math.random() * (RAINBOW.length - 1)) : 0,
+              })
+            }
+          />
+
+          {/* The very same row shape as the accent swatches in the Accent
+              Card above, because it is the very same job: pick colours. Each
+              of the 8 is independently editable; setRainbow()/
+              isValidPalette() enforce all-or-nothing validation on the
+              resulting palette before it ever reaches
+              document.documentElement.style — see lib/appearance.ts. */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-xs text-carbon-textMuted${rainbow.on ? "" : " opacity-50"}`}>
+              {t("settings.rainbowPalette")}:
+            </span>
+            {rainbow.palette.map((hex, i) => (
+              <PaletteSwatch
+                key={i}
+                hex={hex}
+                index={i}
+                disabled={!rainbow.on}
+                t={t}
+                onChange={(v) => {
+                  const next = rainbow.palette.slice();
+                  next[i] = v;
+                  updateRainbow({ palette: next });
+                }}
+              />
+            ))}
+            <button
+              type="button"
+              disabled={!rainbow.on}
+              onClick={() => updateRainbow({ palette: RAINBOW })}
+              className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {t("common.reset")}
+            </button>
+          </div>
+        </div>
+      </Card>
+      )}
+
+      {/* Quiet toasts (GlimStone form-engine Task 9) — the toast system's
+          severity-based quiet mode. Its own Card now (previously the last,
+          divider-less sub-topic tacked onto the shared Appearance Card), next
+          to the other purely client-side display preferences, rather than
+          being bolted onto NotifyConfig's server-side "on" field above (that
+          one gates external webhook/Matrix/email notifications — a different
+          axis entirely; muting a toast in THIS browser must never silently
+          change what a webhook receives elsewhere). `hideLabel` because the
+          Card's own title already says "Quiet toasts" — the same single-
+          purpose-Card pattern the Rainbow Card's master toggle now uses
+          above; the `description` (unaffected by this pass) still renders
+          under the hidden label. */}
+      {tab === "general" && (
+      <Card title={t("settings.quietToasts")}>
+        <ToggleRow
+          hideLabel
+          label={t("settings.quietToasts")}
+          description={t("settings.quietToastsHint")}
+          checked={quiet}
+          onChange={setQuiet}
+        />
       </Card>
       )}
 
