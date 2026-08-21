@@ -255,7 +255,7 @@
 import type { ReactNode } from "react";
 
 export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading";
-export type BadgeSize = "small" | "medium" | "large" | "heading";
+export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon";
 // Four shapes per the design language's Badges section: pill (fully round,
 // standalone chips/count badges), rounded (small fixed radius, compact
 // inline badges — the default, matching every predecessor's rounded-control),
@@ -353,6 +353,18 @@ const SIZE_TOKENS: Record<BadgeSize, { height: string; minHeight: string; text: 
   // typographic character; roomier px-3 padding fits a title's worth of
   // text rather than a two-character status word.
   heading: { height: "h-[22px]", minHeight: "min-h-[22px]", text: "text-dense uppercase tracking-widest", padding: "px-3" },
+  // GlimStone follow-up pass, live-review round 3 point 3: the rainbow
+  // palette editor's reset control needed to sit at the exact same 28px
+  // footprint as its own PaletteSwatch neighbours (Settings.tsx, h-7 w-7) —
+  // none of the three existing status-chip stages (18/20/24px) hit that, and
+  // "heading" (22px) is a different visual register entirely (a section
+  // title, not a row-level control). This is the first live call site for
+  // shape="circle" (previously type-only, see BadgeShape's own comment) — an
+  // icon-only glyph badge, sized to match a same-row swatch rather than a
+  // text stage. text/padding are unused whenever shape="circle" (that branch
+  // always overrides to px-0, and there is no visible text), but are filled
+  // in anyway for interface completeness / a future non-circle "icon" call.
+  icon: { height: "h-7", minHeight: "min-h-7", text: "text-dense", padding: "px-1" },
 };
 
 interface BadgeStyleOptions {
@@ -420,6 +432,13 @@ export interface BadgeProps {
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
+  /** Accessible name for an icon-only badge (its visible content is a
+   *  decorative aria-hidden glyph, so the element has no text of its own to
+   *  compute a name from). Pass alongside `title` for an icon-only control —
+   *  `title` alone gives a hover tooltip and would work as an accname
+   *  fallback, but an explicit `aria-label` is the direct, unambiguous
+   *  signal for assistive tech rather than relying on that fallback chain. */
+  ariaLabel?: string;
   /** `as="a"` only: passed straight through to the underlying <a>. */
   href?: string;
   target?: string;
@@ -445,6 +464,7 @@ export function Badge({
   onClick,
   disabled,
   title,
+  ariaLabel,
   href,
   target,
   rel,
@@ -460,6 +480,7 @@ export function Badge({
         onClick={onClick}
         disabled={disabled}
         title={title}
+        aria-label={ariaLabel}
         className={`appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${shared}`}
       >
         {children}
@@ -469,14 +490,14 @@ export function Badge({
 
   if (as === "a") {
     return (
-      <a href={href} target={target} rel={rel} title={title} className={`transition-opacity hover:opacity-80 ${shared}`}>
+      <a href={href} target={target} rel={rel} title={title} aria-label={ariaLabel} className={`transition-opacity hover:opacity-80 ${shared}`}>
         {children}
       </a>
     );
   }
 
   return (
-    <span title={title} className={shared}>
+    <span title={title} aria-label={ariaLabel} className={shared}>
       {children}
     </span>
   );

@@ -74,6 +74,12 @@ describe("Badge — size stages", () => {
     expect(cls).toContain("px-3");
   });
 
+  it("icon stage is a 28px-tall chip, matching Settings.tsx's PaletteSwatch (h-7 w-7) for a same-row icon-only badge", () => {
+    const el = root(Badge({ children: "x", size: "icon" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("h-7");
+  });
+
   it("heading stage is a distinct height from every status-chip stage, so a heading never has the exact footprint of a real status/activity chip", () => {
     const heading = root(Badge({ children: "x", size: "heading" })).props!.className as string;
     for (const size of ["small", "medium", "large"] as BadgeSize[]) {
@@ -194,6 +200,14 @@ describe("Badge — shape", () => {
       expect(el.props!.className as string).toContain("h-6");
     }
   );
+
+  it("circle + icon stage locks the same 28px footprint as PaletteSwatch, for an icon-only badge sitting beside it", () => {
+    const el = root(Badge({ children: "!", shape: "circle", size: "icon" }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("h-7");
+    expect(cls).toContain("aspect-square");
+    expect(cls).toContain("px-0");
+  });
 });
 
 describe("Badge — tone/status-color mapping", () => {
@@ -261,6 +275,15 @@ describe("Badge — content and extension", () => {
     const button = root(Badge({ children: "x", as: "button", title: "hint" }));
     expect(span.props!.title).toBe("hint");
     expect(button.props!.title).toBe("hint");
+  });
+
+  it("passes ariaLabel through as aria-label on span, button and a — the accessible name for an icon-only badge whose content is a decorative glyph", () => {
+    const span = root(Badge({ children: "!", ariaLabel: "Reset" }));
+    const button = root(Badge({ children: "!", as: "button", ariaLabel: "Reset" }));
+    const anchor = root(Badge({ children: "!", as: "a", href: "https://example.test", ariaLabel: "Reset" }));
+    expect(span.props!["aria-label"]).toBe("Reset");
+    expect(button.props!["aria-label"]).toBe("Reset");
+    expect(anchor.props!["aria-label"]).toBe("Reset");
   });
 });
 
