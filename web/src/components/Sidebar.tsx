@@ -252,10 +252,21 @@ function NavItem({ to, label, icon }: NavItem) {
 }
 
 // ---------------------------------------------------------------------------
-// SidebarControls — theme toggle + language switcher in the sidebar footer
+// SidebarControls — theme toggle + Simple/Advanced view toggle in the sidebar
+// footer. The language switcher that used to live here (flag + name,
+// dropdown opening upward) moved into its own Card in Settings' General tab
+// (GlimStone follow-up pass, live-review point 9 — jdp: "verschieb den
+// Sprachschalter... auch als eigene card ins allgemein setting", a MOVE, not
+// a duplicate) — this footer no longer renders it at all.
 // ---------------------------------------------------------------------------
 
-function Flag({ code }: { code: string }) {
+// Exported: Settings.tsx's own Language Card (GlimStone follow-up pass,
+// live-review point 9) reuses this exact flag glyph for its relocated
+// language picker — same "small shared piece imported straight from
+// Sidebar.tsx" precedent this file's own IconContainers/IconVM/IconFiles/
+// IconReceiver/IconFleet already established for Containers.tsx/VMs.tsx/
+// Files.tsx/Receiver.tsx/Fleet.tsx.
+export function Flag({ code }: { code: string }) {
   return (
     <span
       className={`fi fi-${code}`}
@@ -265,17 +276,13 @@ function Flag({ code }: { code: string }) {
 }
 
 function SidebarControls() {
-  const { t, lang, setLanguage, languages } = useT();
+  const { t } = useT();
   const { advanced, setAdvanced } = useAdvanced();
   // getResolvedTheme(), not the raw stored preference: the default is now
   // "system" (GlimStone form-engine #1), and this toggle only ever shows/
   // sets an explicit dark or light state, so it must reflect what's
   // actually painted rather than the unresolved "system" value.
   const [theme, setThemeState] = useState(getResolvedTheme);
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  const current = languages.find((l) => l.code === lang) ?? languages[0];
 
   function handleToggleTheme() {
     const next = toggleTheme();
@@ -295,68 +302,8 @@ function SidebarControls() {
     });
   }, []);
 
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open]);
-
   return (
     <div className="flex flex-col gap-1">
-      {/* Language picker — flag + name, dropdown opens upward */}
-      <div className="relative" ref={ref}>
-        <button
-          aria-label={`${t("language.label")}: ${current.label}`}
-          title={`${t("language.label")}: ${current.label}`}
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className={`${navBase} ${navInactive} w-full`}
-        >
-          <Flag code={current.flag} />
-          <span>{current.label}</span>
-        </button>
-        {open && (
-          <div
-            role="listbox"
-            aria-label={t("language.label")}
-            className="absolute start-0 bottom-full mb-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
-            style={{ scrollbarColor: "var(--carbon-border) transparent" }}
-          >
-            {languages.map((l) => (
-              <button
-                key={l.code}
-                role="option"
-                aria-selected={l.code === lang}
-                onClick={() => { setLanguage(l.code); setOpen(false); }}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-start transition-colors ${
-                  l.code === lang
-                    ? "bg-carbon-surface3 text-carbon-text"
-                    : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                }`}
-              >
-                <Flag code={l.flag} />
-                <span>{l.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Dark / Light mode — icon + current-mode label */}
       <button
         onClick={handleToggleTheme}
