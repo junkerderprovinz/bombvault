@@ -231,7 +231,7 @@ func TestLoginThrottleEvictionNeverUnthrottlesAnActiveAttacker(t *testing.T) {
 	// behavior): the map must still be roughly capped, not left to grow with
 	// the flood. A LITTLE slack over loginMaxTracked is expected and correct
 	// here — the one throttled attacker key is deliberately exempt from
-	// eviction (see sweepLoginFailsLocked's doc comment), and the flood's
+	// eviction (see evictLeastRecentlyTouchedLocked's doc comment), and the flood's
 	// very last iteration adds its own new entry right after that same
 	// call's eviction pass already ran.
 	h.loginMu.Lock()

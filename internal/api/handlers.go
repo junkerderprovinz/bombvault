@@ -165,7 +165,7 @@ func destinationRefusal(format string, a ...any) error {
 // unscrubbed, and true.
 //
 // Both scrubError below and truncateRunErr (service.go — the other place
-// error text is persisted, to runs.error_message) call this FIRST, before
+// error text is persisted, to runs.error) call this FIRST, before
 // ever touching scrubSecrets, so the two can never independently drift on
 // which shapes are safe to show verbatim. truncateRunErr didn't always do
 // this: an earlier version scrubbed every error unconditionally, on the
@@ -2649,15 +2649,14 @@ func pruneLoginFails(fails []time.Time, cutoff time.Time) []time.Time {
 	return kept
 }
 
-// loginSweepCalls counts calls to loginThrottled since the last full sweep of
-// loginFails; guarded by loginMu, like loginFails itself.
-//
 // sweepLoginFailsLocked prunes every key's window (not just the single key the
-// caller is asking about) once every loginSweepEvery calls, or immediately if
-// the map has already grown past loginMaxTracked — so a flood of one-off
-// distinct keys that are each queried exactly once still gets cleaned up
-// eventually, instead of leaving a permanent entry per key forever. Must be
-// called with loginMu held.
+// caller is asking about) once every loginSweepEvery calls (see
+// loginSweepCalls, api.go), or immediately if the map has already grown past
+// loginMaxTracked — so a flood of one-off distinct keys that are each queried
+// exactly once still gets cleaned up eventually, instead of leaving a
+// permanent entry per key forever. If the map is still over loginMaxTracked
+// after that full prune, hands off to evictLeastRecentlyTouchedLocked. Must
+// be called with loginMu held.
 func (h *Handler) sweepLoginFailsLocked() {
 	h.loginSweepCalls++
 	if h.loginSweepCalls < loginSweepEvery && len(h.loginFails) <= loginMaxTracked {
@@ -2672,39 +2671,44 @@ func (h *Handler) sweepLoginFailsLocked() {
 			h.loginFails[k] = kept
 		}
 	}
-	if len(h.loginFails) <= loginMaxTracked {
-		return
+	if len(h.loginFails) > loginMaxTracked {
+		h.evictLeastRecentlyTouchedLocked()
 	}
-	// Still over the cap after a full prune (e.g. loginMaxTracked distinct
-	// keys are ALL currently within their window, so none of them were empty
-	// to prune) — evict the least-recently-touched entries until back under
-	// it, rather than let the map grow without bound. "Least recently
-	// touched" = the LATEST remaining failure timestamp (fails[len(fails)-1],
-	// since recordLoginFail appends in chronological order), so an attacker
-	// actively retrying stays tracked longer than one who fired once and
-	// went quiet.
-	//
-	// Eviction candidates EXCLUDE any key that is currently throttled
-	// (len(fails) >= loginMaxFails, the same condition loginThrottled itself
-	// uses to return true). This matters because a throttled key's own
-	// timestamps stop advancing the instant it starts being throttled:
-	// handleLogin checks loginThrottled BEFORE ever calling recordLoginFail,
-	// so a blocked attacker can't add new entries to its own window while
-	// waiting it out. Its "last touched" timestamp therefore goes stale
-	// immediately, even though the attacker is still very much active from a
-	// security standpoint — sorting on recency and evicting the oldest would
-	// evict a genuinely-throttled attacker BEFORE a flood of one-off keys
-	// that only just arrived, un-throttling them mid-lockout. (Reproduced
-	// end-to-end: attacker throttled after loginMaxFails failures, then a
-	// flood of one-off keys large enough to push the map over
-	// loginMaxTracked evicted the attacker's own entry — since their last
-	// fail predated the flood — and the attacker's very next request came
-	// back 200 instead of 429.) A bounded number of currently-throttled keys
-	// sitting over the nominal cap is an acceptable, self-limiting exception:
-	// it's bounded by how many callers actually reach loginMaxFails
-	// failures, a far smaller and self-capping population than an unlimited
-	// flood of one-off keys that only ever fail once — not the same
-	// unbounded-growth risk the cap exists to guard against.
+}
+
+// evictLeastRecentlyTouchedLocked deletes entries from h.loginFails, oldest
+// first, until it is back at or under loginMaxTracked. Only called by
+// sweepLoginFailsLocked, and only once a full prune still leaves the map over
+// that cap — e.g. loginMaxTracked distinct keys are ALL currently within
+// their window, so none of them were empty for the prune to remove. Must be
+// called with loginMu held.
+//
+// "Least recently touched" = the LATEST remaining failure timestamp
+// (fails[len(fails)-1], since recordLoginFail appends in chronological
+// order), so an attacker actively retrying stays tracked longer than one who
+// fired once and went quiet.
+//
+// Eviction candidates EXCLUDE any key that is currently throttled (len(fails)
+// >= loginMaxFails, the same condition loginThrottled itself uses to return
+// true). This matters because a throttled key's own timestamps stop
+// advancing the instant it starts being throttled: handleLogin checks
+// loginThrottled BEFORE ever calling recordLoginFail, so a blocked attacker
+// can't add new entries to its own window while waiting it out. Its "last
+// touched" timestamp therefore goes stale immediately, even though the
+// attacker is still very much active from a security standpoint — sorting on
+// recency and evicting the oldest would evict a genuinely-throttled attacker
+// BEFORE a flood of one-off keys that only just arrived, un-throttling them
+// mid-lockout. (Reproduced end-to-end: attacker throttled after
+// loginMaxFails failures, then a flood of one-off keys large enough to push
+// the map over loginMaxTracked evicted the attacker's own entry — since
+// their last fail predated the flood — and the attacker's very next request
+// came back 200 instead of 429.) A bounded number of currently-throttled keys
+// sitting over the nominal cap is an acceptable, self-limiting exception:
+// it's bounded by how many callers actually reach loginMaxFails failures, a
+// far smaller and self-capping population than an unlimited flood of one-off
+// keys that only ever fail once — not the same unbounded-growth risk the cap
+// exists to guard against.
+func (h *Handler) evictLeastRecentlyTouchedLocked() {
 	type keyAge struct {
 		key  string
 		last time.Time

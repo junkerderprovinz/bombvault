@@ -896,7 +896,7 @@ func scrubRunErr(s string) string {
 // helper directly (internal/api already imports internal/backup, so the
 // reverse import would cycle) and, per the package doc comment above,
 // deliberately doesn't take on that kind of dependency anyway — same
-// reasoning as runErrPathRe/runErrCredentialRe's duplication below.
+// reasoning as runErrPathRe/runErrCredentialRe's duplication above.
 // ErrRestoreConflict is the only one of those 5 sentinels this package's own
 // error paths can ever produce or receive, so it's the only one this bypass
 // needs to know about.
@@ -908,7 +908,7 @@ func restoreConflictBypass(err error) (string, bool) {
 }
 
 // truncateErr scrubs and bounds an error message so it fits the DB's
-// runs.error_message column.
+// runs.error column.
 //
 // This scrubs every error EXCEPT one carrying ErrRestoreConflict (see
 // restoreConflictBypass), which passes through unscrubbed instead. Every
@@ -917,7 +917,7 @@ func restoreConflictBypass(err error) (string, bool) {
 // interfaces (scrubbing an already-clean string is a no-op, so that costs
 // nothing). It's the same belt-and-suspenders reasoning as the api package's
 // twin, truncateRunErr: this function is the one place that writes
-// runs.error_message, so scrubbing HERE protects every current caller and
+// runs.error, so scrubbing HERE protects every current caller and
 // every future one, instead of relying on every backupErr/restoreErr this
 // package ever builds having been routed through a scrubbing adapter first.
 //
