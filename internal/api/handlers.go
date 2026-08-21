@@ -2483,12 +2483,15 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 //
 // The throttle is checked BEFORE secret.VerifyPassword runs, deliberately: a
 // throttled key is rejected without ever hashing the submitted password, not
-// merely denied credit for a correct guess afterwards. VerifyPassword is a
-// cheap HMAC today, but keying the check to "have we already seen too many
-// failures" and running it first keeps that true even if the hash ever gets
-// more expensive, and it matches the throttle's actual purpose — capping
-// *attempts*, not just successes. The tradeoff is that a client which is
-// currently throttled gets a 429 even on a correct password rather than
+// merely denied credit for a correct guess afterwards. If verification ran
+// FIRST and the throttle only gated on failure, a throttled attacker could
+// keep submitting guesses at full, unthrottled rate: a correct guess would
+// still get verified before the throttle check ever saw it, letting the
+// attacker infer correct/incorrect from response timing or content alone —
+// making the throttle purely cosmetic for exactly the attacker it exists to
+// stop. Checking the throttle first, unconditionally, is what actually caps
+// *attempts* rather than just successes. The tradeoff is that a client which
+// is currently throttled gets a 429 even on a correct password rather than
 // having it be honored immediately; see loginClientKey's doc for why that
 // tradeoff is now scoped to the offending client instead of every client.
 const (
@@ -2523,28 +2526,107 @@ func loginClientKey(r *http.Request) string {
 	return host
 }
 
+// loginSweepEvery bounds how often loginThrottled performs a full-map sweep
+// (pruning every key's window, not just the one just queried), independent of
+// the per-key prune below. Without this, a flood of one-off distinct keys
+// that each fail exactly once — a botnet, or a single attacker rotating
+// through an IPv6 /64 (effectively unlimited source addresses) — would each
+// leave a permanent map entry: loginThrottled on its own only prunes the ONE
+// key it was asked about, so a key that's never queried again never gets
+// cleaned up. Sweeping the whole map every loginSweepEvery calls bounds that
+// growth to at most loginSweepEvery stale one-off entries between sweeps,
+// without paying the cost of a full sweep on every single request.
+const loginSweepEvery = 256
+
+// loginMaxTracked hard-caps the number of distinct keys loginFails holds,
+// independent of the periodic sweep above. If a burst of one-off keys arrives
+// faster than loginSweepEvery calls apart, the map could otherwise grow past
+// that sweep's protection before it fires; this is the backstop that kicks in
+// immediately once the map exceeds the cap, evicting the
+// least-recently-touched entries down to the limit rather than letting an
+// unauthenticated caller grow it without bound.
+const loginMaxTracked = 10_000
+
 // loginThrottled prunes key's failed-attempt window and reports whether
 // logins from it are currently locked out. An empty window after pruning
-// deletes the map entry so a flood of one-off distinct keys (e.g. a botnet
-// trying to grow this map) can't accumulate unbounded memory: only clients
-// throttled within the last loginWindow keep an entry.
+// deletes key's own map entry. Separately (see loginSweepEvery/loginMaxTracked
+// above), it also periodically sweeps EVERY key's window — not just key's —
+// and hard-caps the map's total size, so a flood of one-off distinct keys
+// that are each queried only once still can't accumulate unbounded memory.
 func (h *Handler) loginThrottled(key string) bool {
 	h.loginMu.Lock()
 	defer h.loginMu.Unlock()
+	h.sweepLoginFailsLocked()
 	cutoff := time.Now().Add(-loginWindow)
-	fails := h.loginFails[key]
-	kept := fails[:0]
-	for _, ts := range fails {
-		if ts.After(cutoff) {
-			kept = append(kept, ts)
-		}
-	}
+	kept := pruneLoginFails(h.loginFails[key], cutoff)
 	if len(kept) == 0 {
 		delete(h.loginFails, key)
 	} else {
 		h.loginFails[key] = kept
 	}
 	return len(kept) >= loginMaxFails
+}
+
+// pruneLoginFails returns fails with every timestamp at or before cutoff
+// dropped, reusing fails' backing array (no allocation on the common case).
+func pruneLoginFails(fails []time.Time, cutoff time.Time) []time.Time {
+	kept := fails[:0]
+	for _, ts := range fails {
+		if ts.After(cutoff) {
+			kept = append(kept, ts)
+		}
+	}
+	return kept
+}
+
+// loginSweepCalls counts calls to loginThrottled since the last full sweep of
+// loginFails; guarded by loginMu, like loginFails itself.
+//
+// sweepLoginFailsLocked prunes every key's window (not just the single key the
+// caller is asking about) once every loginSweepEvery calls, or immediately if
+// the map has already grown past loginMaxTracked — so a flood of one-off
+// distinct keys that are each queried exactly once still gets cleaned up
+// eventually, instead of leaving a permanent entry per key forever. Must be
+// called with loginMu held.
+func (h *Handler) sweepLoginFailsLocked() {
+	h.loginSweepCalls++
+	if h.loginSweepCalls < loginSweepEvery && len(h.loginFails) <= loginMaxTracked {
+		return
+	}
+	h.loginSweepCalls = 0
+	cutoff := time.Now().Add(-loginWindow)
+	for k, fails := range h.loginFails {
+		if kept := pruneLoginFails(fails, cutoff); len(kept) == 0 {
+			delete(h.loginFails, k)
+		} else {
+			h.loginFails[k] = kept
+		}
+	}
+	if len(h.loginFails) <= loginMaxTracked {
+		return
+	}
+	// Still over the cap after a full prune (e.g. loginMaxTracked distinct
+	// keys are ALL currently within their window, so none of them were empty
+	// to prune) — evict the least-recently-touched entries until back under
+	// it, rather than let the map grow without bound. "Least recently
+	// touched" = the earliest remaining failure timestamp, so an attacker
+	// actively retrying stays tracked longer than one who fired once and
+	// went quiet.
+	type keyAge struct {
+		key  string
+		last time.Time
+	}
+	ages := make([]keyAge, 0, len(h.loginFails))
+	for k, fails := range h.loginFails {
+		ages = append(ages, keyAge{k, fails[len(fails)-1]})
+	}
+	sort.Slice(ages, func(i, j int) bool { return ages[i].last.Before(ages[j].last) })
+	for _, a := range ages {
+		if len(h.loginFails) <= loginMaxTracked {
+			break
+		}
+		delete(h.loginFails, a.key)
+	}
 }
 
 func (h *Handler) recordLoginFail(key string) {
