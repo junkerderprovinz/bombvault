@@ -92,8 +92,9 @@
    copy here removes the interaction entirely — a later [data-shape] rule
    just needs to come after this block in the file, with no theme selector
    to out-run.
-   No [data-shape] axis yet (that's Task 2), so these are the reference's
-   "round" values without any variant. */
+   These are the reference's "round" values — the default, and the fallback
+   lib/shape.ts's applyShape() paints when nothing is stored yet or the
+   stored value is invalid. */
 :root {
   --radius-card:      1rem;
   --radius-control:   0.625rem;
@@ -103,6 +104,29 @@
   --text-body:    0.875rem; /* 14px */
   --text-dense:   0.75rem;  /* 12px */
   --text-caption: 0.6875rem; /* 11px */
+}
+
+/* The [data-shape] axis itself (GlimStone form-engine — shape engine; Task 2,
+   completing what the block above deferred). One knob for the whole app:
+   every rounded corner reads --radius-card/--radius-control/--radius-pill,
+   nothing hard-codes a literal radius, so switching the attribute recolors —
+   reshapes — cards, buttons, tabs, inputs, pills and badges together. Values
+   ported verbatim from glimstone/reference/appearance.ts's own SHAPES set and
+   knightloader/web/src/index.css's real shipped copy of this exact block, so
+   "soft"/"square" look identical across every app sharing this language.
+   lib/shape.ts's applyShape() is what actually sets the attribute on
+   <html>, validating against SHAPES and defaulting to "round" — this CSS
+   side only has to key off the three known values. */
+:root[data-shape="soft"] {
+  --radius-card:    0.5rem;
+  --radius-control: 0.3125rem;
+  --radius-pill:    0.3125rem;
+}
+
+:root[data-shape="square"] {
+  --radius-card:    0;
+  --radius-control: 0;
+  --radius-pill:    0;
 }
 
 /*

@@ -8,12 +8,14 @@ import { applyStoredTheme } from "./lib/theme";
 import { applyStoredLanguage } from "./lib/i18n";
 import { applyStoredAccent } from "./lib/accent";
 import { applyStoredRainbow } from "./lib/appearance";
+import { applyStoredShape } from "./lib/shape";
 
 // Apply persisted preferences before first paint (flash prevention).
 applyStoredTheme();
 applyStoredLanguage();
 applyStoredAccent();
 applyStoredRainbow();
+applyStoredShape();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

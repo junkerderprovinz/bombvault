@@ -25,6 +25,7 @@ import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
 import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
+import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 
@@ -3170,6 +3171,11 @@ export function SettingsPage() {
   // Accent color state — synced from/to localStorage via accent.ts
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
 
+  // Shape state (GlimStone form-engine — shape engine, the one axis both
+  // prior GlimStone integration phases in this app deferred) — synced
+  // to/from localStorage via shape.ts, the same pattern as accentHex above.
+  const [shape, setShapeLocal] = useState<Shape>(() => getShape());
+
   // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
   // localStorage via appearance.ts, the same pattern as accentHex above.
   // setRainbow() persists + applies + returns the new (validated) state in
@@ -5167,6 +5173,62 @@ export function SettingsPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Shape (GlimStone form-engine — shape engine; design-language.md's
+              "The user-owned axes": data-shape on <html>, round/soft/square,
+              one radius token set driving every rounded corner). This is the
+              one axis both prior GlimStone integration phases in this app
+              deliberately deferred — lib/shape.ts is the JS half (read/write/
+              persist which of the three is chosen, stamp the attribute),
+              index.css already carries the matching [data-shape="soft"|
+              "square"] radius-token overrides. Lives directly below the
+              single accent above: same kind of setting (client-only, applied
+              at the app root — shape.ts's own header comment), same "one
+              picker, no Save step" shape.
+                Selector, not a bespoke button row: this IS "three mutually
+              exclusive options" (design-language.md's "The one horizontal
+              selector"), the exact shape Dashboard.tsx's heatmap-domain
+              toggle already uses this component for. hue={false} for the
+              same reason as that toggle — round/soft/square are a form
+              choice, not a position in a list, and tinting the segments
+              would compete with the glyph that already carries the meaning.
+              Each item's `icon` is a small outlined square drawn at that
+              option's own preview radius (6px/2px/0, scaled down from the
+              real --radius-control tokens for legibility at 14px) — the
+              corner IS the label, visible before it's picked, the same
+              reasoning and the same values as KnightLoader's own copy of
+              this exact picker (web/src/pages/settings/Look.tsx). Outline
+              rather than filled: a filled square reads as a colour swatch
+              (that's the accent row above), and this glyph only has to say
+              which shape it is. */}
+          <div className="flex flex-col gap-2 border-t border-carbon-border pt-4">
+            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+              {t("settings.shape")}
+              <InfoBubble tip={t("settings.shapeHint")} />
+            </span>
+            <Selector
+              items={SHAPES.map((s) => ({
+                id: s,
+                label: t(`settings.shape.${s}` as TranslationKey),
+                icon: (
+                  <span
+                    aria-hidden
+                    className="h-3.5 w-3.5 shrink-0 border-[1.5px] border-current"
+                    style={{ borderRadius: s === "round" ? "6px" : s === "soft" ? "2px" : "0" }}
+                  />
+                ),
+              }))}
+              label={t("settings.shape")}
+              select="one"
+              active={shape}
+              onChange={(id) => {
+                setShapeLocal(id as Shape);
+                setShape(id as Shape);
+              }}
+              size="sm"
+              hue={false}
+            />
           </div>
 
           {/* Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent,
