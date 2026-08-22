@@ -1501,6 +1501,34 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+// rejectEveryNSchedules reports the user-facing error for a settings view whose
+// off-site, drills, tamper-test or digest cadence uses "everyN" — those jobs have
+// no per-domain last-run gate, so an everyN cadence would silently fire daily.
+// They are restricted to off / daily / weekly / cron, which all fire on an exact
+// schedule. Returns "" when the view is acceptable.
+//
+// This is THE authority for that split, called from every path that writes
+// settings: handlePutSettings (the UI save) and validateExport (settings import,
+// #166). An import that slipped an everyN into one of these fields would persist
+// it and then break every later settings save from any card, because the UI
+// always PUTs the full settings object.
+//
+// The five domain schedules plus EverythingSchedule are deliberately absent: each
+// has a last-run gate (LastSuccessful*Backup) that makes everyN meaningful. The
+// UI mirrors this list — web/src/components/CadenceBuilder.tsx's `modes` prop,
+// which is what stops the picker from offering a mode the save then refuses.
+func rejectEveryNSchedules(v settingsView) string {
+	for _, cad := range []string{
+		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule,
+	} {
+		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
+			return "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression"
+		}
+	}
+	return ""
+}
+
 func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	var v settingsView
 	if !decodeBody(w, r, &v) {
@@ -1563,17 +1591,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// Off-site, drills, tamper-test and digest schedules can't use "everyN":
-	// those jobs have no per-domain last-run gate, so an everyN cadence would
-	// silently fire daily. Restrict them to off / daily / weekly / cron, which
-	// all fire on an exact schedule.
-	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule, v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule} {
-		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": false, "error": "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
-			})
-			return
-		}
+	if msg := rejectEveryNSchedules(v); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok": false, "error": msg,
+		})
+		return
 	}
 
 	// A DR-drill target, when set, is a container/VM name fed by the UI dropdown.
