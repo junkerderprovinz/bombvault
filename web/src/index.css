@@ -766,11 +766,32 @@ body {
    at body level (position measured off the trigger icon in InfoBubble.tsx) so
    no card/table/scroll-container overflow:hidden can clip it, and
    pointer-events:none so it never swallows a click meant for whatever is
-   underneath it. */
+   underneath it.
+
+   CORRECTED (viewport-clamp bugfix, live-tested at a 380px-wide viewport):
+   `width: max-content` was missing — this rule was NOT actually verbatim
+   despite the comment above claiming it was. Without it, a `position: fixed`
+   box with `left` set but no `width`/`right` sizes itself via the CSS
+   shrink-to-fit algorithm, whose available width is `containing-block-width
+   - left` — i.e. the box's own WIDTH silently depends on wherever `left`
+   happens to be. That's fatal for InfoBubble.tsx/Selector.tsx's own
+   measure-then-clamp positioning (lib/bubblePosition.ts): they read
+   offsetWidth/offsetHeight, compute a clamped `left`/`top` from it, then
+   apply that `left` — which could then change the box's own width/height
+   (more wrap → taller), invalidating the very measurement the position was
+   based on. Caught live: a narrow-viewport bubble whose clamped `left` sat
+   close to the right edge shrank from 280px down to ~155px wide and grew
+   from ~126px to ~253px tall AFTER being positioned, silently working only
+   by chance in that specific case. `width: max-content` makes the box's
+   width purely intrinsic (content's natural width, still capped by
+   `max-width` below) — independent of `left` — so measuring once before
+   positioning is actually valid instead of a race with the browser's own
+   layout. */
 .glim-bubble {
   position: fixed;
   z-index: 60;
   transform: translateX(-50%);
+  width: max-content;
   max-width: 280px;
   pointer-events: none;
   background-color: var(--carbon-surface);
