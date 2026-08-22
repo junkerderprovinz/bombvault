@@ -278,6 +278,38 @@ export function IconCloud() {
   );
 }
 
+// Plus glyph — the conventional "add a new one" symbol (Settings.tsx's own
+// "Registry hinzufügen" icon-only button, GlimStone follow-up round: "beide
+// sollen einen Glyph statt Text bekommen"). Two overlapping filled rounded
+// rects, per design-language.md's own icon-glyph rule for a line-like shape
+// ("a plus... needs real geometry, not a thicker stroke... two overlapping
+// filled rects"), at this file's own 16×16 icon-only-badge scale (IconFolder/
+// IconCloud above), not the 22×22 nav-rail scale.
+export function IconAdd() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" />
+      <rect x="2.5" y="6.8" width="11" height="2.4" rx="0.6" />
+    </svg>
+  );
+}
+
+// Download glyph — a downward arrow over a tray, the conventional "save this
+// to disk" symbol (Settings.tsx's own "Recovery-Kit herunterladen" icon-only
+// button, same GlimStone follow-up round point as IconAdd above). One closed
+// filled silhouette for the shaft+arrowhead (design-language.md: "a line
+// glyph... needs real geometry" — no `stroke` anywhere), plus a separate
+// filled bar for the tray, matching this file's own 16×16 icon-only-badge
+// scale.
+export function IconDownload() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M6.9 2.4h2.2v4.9h2.45L8 11.1 4.45 7.3H6.9V2.4Z" />
+      <rect x="2.6" y="12.6" width="10.8" height="1.6" rx="0.6" />
+    </svg>
+  );
+}
+
 // Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
 // controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
 function IconLayers() {
