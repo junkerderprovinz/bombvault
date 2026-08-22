@@ -220,11 +220,25 @@ export function IconFleet() {
 // IconVM/../IconFleet) are ALL hardcoded to the sidebar's fixed scale with no
 // size prop either, so parameterizing just this one would make it the only
 // resizable icon in an otherwise fixed-size family.
+//
+// FILLED, not stroked (GlimStone follow-up round, live-review — icon-badge
+// consistency pass): IconFiles above is a stroke outline to match ITS OWN
+// sibling nav-rail icons (IconVM/IconConfig/IconRecovery/...), but this
+// export is a SEPARATE glyph for a different context — an icon-only coloured
+// badge (FolderBrowser's Browse button, PathModeSwitch's Local segment), not
+// a nav-rail row sitting beside a permanent text label. jdp, live-review
+// screenshot: the two icon-only badges read as visually inconsistent — one
+// glyph a solid shape, the sibling Remote badge a thin outline — and a
+// small enclosed shape drawn as a 1.5px outline at 16px doesn't read as
+// "the same weight" as a genuinely filled sibling once both sit side by
+// side. `fill="currentColor"`, no `stroke` — reuses the exact same
+// silhouette path (the folder+tab outline, unchanged) just painted solid
+// instead of traced; the second interior "crease" path (purely decorative on
+// a stroked glyph) is dropped since a filled solid folder doesn't carry it.
 export function IconFolder() {
   return (
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
-      <path d="M2.75 5.5A1.75 1.75 0 0 1 4.5 3.75h3.3c.47 0 .92.19 1.25.52l1.06 1.06c.14.14.33.22.53.22h4.86c.97 0 1.75.78 1.75 1.75v7.2a1.75 1.75 0 0 1-1.75 1.75h-11a1.75 1.75 0 0 1-1.75-1.75V5.5Z" strokeLinejoin="round" />
-      <path d="M2.75 8.25h14.5" strokeLinecap="round" />
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M2.75 5.5A1.75 1.75 0 0 1 4.5 3.75h3.3c.47 0 .92.19 1.25.52l1.06 1.06c.14.14.33.22.53.22h4.86c.97 0 1.75.78 1.75 1.75v7.2a1.75 1.75 0 0 1-1.75 1.75h-11a1.75 1.75 0 0 1-1.75-1.75V5.5Z" />
     </svg>
   );
 }
@@ -239,10 +253,17 @@ export function IconFolder() {
 // destinations") — that comment is about TAB semantics, not about whether the
 // raw glyph shape can be reused elsewhere, so this copies the path data here
 // rather than exporting the tab-scoped original.
+//
+// FILLED, not stroked — this was the actual bug the live-review screenshot
+// caught: this glyph and IconFolder above sit in the SAME icon-only-badge
+// row (PathModeSwitch's Local/Remote pair) and must read as the same weight,
+// but this one was still a 1.3px stroke outline while its sibling read as
+// solid. Same fix as IconFolder's own comment above, applied to this glyph's
+// existing closed cloud-silhouette path: `fill="currentColor"`, no `stroke`.
 export function IconCloud() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
-      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" strokeLinejoin="round" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" />
     </svg>
   );
 }

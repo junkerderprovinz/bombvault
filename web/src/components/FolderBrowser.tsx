@@ -151,12 +151,22 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
         />
         {/* Icon-only (GlimStone follow-up round, point 1 — "Durchsuchen"
-            becomes a glyph, no text label). Symmetric p-[2px] padding around
-            a 16×16 glyph renders a true 20×20 square — the same height
-            PathModeSwitch's own Local/Remote Selector (size="sm") computes
-            for its icon-only segments (16px content + 2×2px padding), so the
-            two controls read at the same vertical scale on a shared row (see
-            PathModeSwitch.tsx's own comment, point 5). `rounded-control`
+            becomes a glyph, no text label).
+            CORRECTED (jdp, live-review screenshot — the Local/Remote badges
+            above this row read as wider/pill-shaped while this button read as
+            genuinely square, and neither matched this very input's own
+            height): the original `p-[2px]` around a 16×16 glyph rendered a
+            true 20×20 square, which WAS internally consistent with
+            PathModeSwitch's Selector segments at the time this comment was
+            written, but neither control was ever actually checked against
+            THIS field's own real rendered height — verified live via
+            getComputedStyle: this input (text-sm px-3 py-1.5) renders at
+            exactly 32px tall, not 20px. Fixed `h-8 w-8` (Tailwind's own
+            plain default spacing scale, step 8 = 2rem = 32px, not a new
+            bracket/arbitrary value) makes this button a true square at
+            exactly that height — the same fixed size Selector.tsx now gives
+            every `iconOnly` segment for the identical reason (see that
+            file's own comment on the `item.iconOnly` branch). `rounded-control`
             (not Badge's shape="circle" convention the two colour-reset
             buttons elsewhere in Settings.tsx use) — this button sits flush
             beside the path input's own shape-engine-reactive `rounded-control`
@@ -166,7 +176,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           onClick={handleOpen}
           title={t("folder.browseTitle")}
           aria-label={t("folder.browseTitle")}
-          className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 p-[2px] text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <IconFolder />
         </button>
