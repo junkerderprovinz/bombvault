@@ -99,14 +99,30 @@
 //      its own individually filled/outlined badge, not a shared padded
 //      track — is what round 6 specifically built ("idle badge fill" for
 //      unselected tabs); switching to `well` would trade that identity away
-//      to solve a width problem `well` doesn't uniquely solve. `flex-nowrap`
-//      alongside it for the same reason `well` itself is `flex-nowrap` (this
-//      file's own item 5 below): equal-width flex children assume one row,
-//      wrapping them is a different, broken-looking layout, not a smaller
-//      version of the same one. Scoped to exactly one call site (the
-//      Settings tab strip) for now, same "try it on one control" pattern
-//      `variant="well"` already set — every other "chip" call site keeps its
-//      own content-hugging width, unchanged.
+//      to solve a width problem `well` doesn't uniquely solve.
+//
+//      `flex-wrap`, NOT `flex-nowrap` (caught live, not in the harness —
+//      the first cut of this correction shipped `flex-nowrap`, copying
+//      `well`'s reasoning verbatim without re-checking whether it still
+//      applied). `well`'s segments are `flex: 1` shares of a track that IS
+//      the available width by construction — they can never overflow it, so
+//      forcing one row there is free. `stretch` segments are now a FIXED
+//      pixel width (the widest label's own measured content size), a number
+//      with NO relationship to whatever width happens to be available — 7
+//      German labels at this stage's own padding sum to ~1243px, which
+//      genuinely does not fit inside every real viewport (measured live:
+//      overflowed a 1400px-wide window's ~1113px available column, spilling
+//      "System" straight past the page's right edge and forcing a page-wide
+//      horizontal scrollbar — a real, visible regression, not a theoretical
+//      one). `flex-wrap` here is simply Selector's own general "wraps,
+//      never scrolls" rule (this file's header) applying to `stretch` the
+//      same way it already applies to every plain "chip" call site — a
+//      6-tabs-then-1 wrap is a plainer fallback than jdp's ideal, but a
+//      wrapped SECOND ROW beats spilling content off the edge of the page.
+//      Scoped to exactly one call site (the Settings tab strip) for now,
+//      same "try it on one control" pattern `variant="well"` already set —
+//      every other "chip" call site keeps its own content-hugging width,
+//      unchanged.
 //   5. `variant` ("chip", default, vs "well"). Live-review follow-up: "turn
 //      the shape picker into a horizontal selector styled like the one in
 //      TrickWork." TrickWork's own segmentedRow() (ui/src/controlWidgets.ts)
@@ -419,21 +435,24 @@ export function Selector(props: SelectorProps) {
       // which assumes one row — wrapping equal-width flex children onto a
       // second line is a different, broken-looking layout, not a smaller
       // version of the same one.
-      // `stretch` (item 5b, corrected): same "one row, no wrap" reasoning as
-      // "well" above, no shared track background — each segment keeps its
-      // own chip fill, just pinned to the widest segment's own measured
-      // content width (via inline `style.width` below) instead of hugging
-      // its own individually. This wrapper itself is NOT stretched to fill
-      // anything — it's a plain flex row with no `flex-1`/`w-full` of its
-      // own, so its rendered width is simply the sum of its now-fixed-width
-      // children, exactly like a content-hugging row would be.
+      // `stretch` (item 5b, corrected — see the file header for the live bug
+      // this fixed): `flex-wrap`, NOT `flex-nowrap` like "well" above — a
+      // fixed-pixel-width segment set has no guaranteed relationship to the
+      // available row width the way `well`'s `flex: 1` shares do, so it can
+      // genuinely need to wrap. No shared track background either way — each
+      // segment keeps its own chip fill, just pinned to the widest segment's
+      // own measured content width (via inline `style.width` below) instead
+      // of hugging its own individually. This wrapper itself is NOT
+      // stretched to fill anything — it's a plain flex row with no
+      // `flex-1`/`w-full` of its own, so its rendered width is simply
+      // whichever is smaller: the sum of its now-fixed-width children (if
+      // they all fit on one line), or the available row width (once they
+      // don't and a second line is needed).
       className={[
         "flex items-center",
         well
           ? "flex-nowrap gap-[0.2rem] rounded-control bg-carbon-surface2 p-[0.2rem]"
-          : stretch
-            ? "flex-nowrap gap-1"
-            : "flex-wrap gap-1",
+          : "flex-wrap gap-1",
         className,
       ]
         .filter(Boolean)

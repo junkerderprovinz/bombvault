@@ -259,13 +259,17 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     expect(tab.className).not.toContain("flex-1");
   });
 
-  it("equalWidth switches the strip to flex-nowrap and every segment to flex-none (content-width matched, not stretched), while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
+  it("equalWidth keeps the strip flex-wrap (fixed-width segments can genuinely overflow a narrow row, unlike well's flex-1 shares) and every segment becomes flex-none (content-width matched, not stretched), while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
     );
     const list = screen.getByRole("tablist");
-    expect(list.className).toContain("flex-nowrap");
-    expect(list.className).not.toContain("flex-wrap");
+    // flex-wrap, NOT flex-nowrap (caught live — a fixed-pixel-width row can
+    // overflow a real viewport where a `flex: 1` share never could; see
+    // Selector.tsx's own file header, item 5b, for the live overflow bug
+    // this corrects).
+    expect(list.className).toContain("flex-wrap");
+    expect(list.className).not.toContain("flex-nowrap");
     // No shared well track — each segment still carries its own chip fill.
     expect(list.className).not.toContain("bg-carbon-surface2");
 
