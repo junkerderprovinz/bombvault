@@ -153,7 +153,7 @@ const no: Partial<Translations> = {
   "settings.encryption": "Kryptering",
   "settings.encryptionOn": "Aktivert (passord utledet fra APP_KEY)",
   "settings.encryptionOff": "Deaktivert (intet passord)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Kryptering er fastlåst per repository ved initialisering. Endring krever en ny tom sti.",
   "settings.paths": "Sikkerhetskopistier",
   "settings.pathsHint": "Relative understier under host-monteringens rot ({root}). Klikk på Bla gjennom for å navigere i mapper, eller skriv inn en sti direkte.",

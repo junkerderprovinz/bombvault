@@ -5451,7 +5451,13 @@ export function SettingsPage() {
         )}
 
         {/* Plain-export encryption (age) -------------------------------------- */}
-        <div className={`flex flex-col gap-3${settings.flashEnabled ? " border-t border-carbon-border pt-4" : ""}`}>
+        {/* No `border-t` divider against the Flash-zip-export block above it
+            (jdp, live review: "die Linien dazwischen weg") — the Card's own
+            `gap-4` between direct children already separates the three
+            sub-sections, same spacing-only convention as the Rainbow Card's
+            ToggleRow trio (settings.rainbow/-Reactive/-Rotate) further down
+            this file, which never had a rule line between them either. */}
+        <div className="flex flex-col gap-3">
           <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("export.encrypt.title")}
             {/* "(age)" dropped from the visible title (design-language.md's
@@ -5506,9 +5512,26 @@ export function SettingsPage() {
         </div>
 
         {/* Repository encryption ---------------------------------------------- */}
-        <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-          <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+        {/* jdp, live review: "keine Überschrift und nochmal darunter der
+            Text. Nur die Überschrift als Text, alles andere in die
+            Infobubble." This sub-heading was the one holdout in this card
+            still pairing a bare <h3> with a permanent paragraph underneath
+            it (settings.encryptionWarning, now settings.encryptionHint) —
+            its two siblings above already fold that same kind of one-time
+            "here's what this does" text into the heading's own InfoBubble
+            (flash.zipExport.hint, export.encrypt.hint+ageInfo). Renamed
+            .../Warning -> .../Hint on the move: it's no longer a
+            statusWarnBg banner, so it no longer earns the "Warning" name —
+            see the still-conditional flash.zipExport.plaintextWarn a few
+            lines up for the genuine, actively-risky warning case (only
+            rendered while the risk applies) this text never was: it's an
+            unconditional, one-time explainer of how the toggle behaves, the
+            exact content InfoBubble exists for. No `border-t` here either,
+            same reasoning as the Plain-export block above. */}
+        <div className="flex flex-col gap-3">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("settings.encryption")}
+            <InfoBubble tip={t("settings.encryptionHint")} />
           </h3>
           <ToggleRow
             label={
@@ -5521,11 +5544,8 @@ export function SettingsPage() {
             disabled={mergedFieldBusy.encryptionEnabled}
             shakeNonce={mergedFieldShake.encryptionEnabled}
           />
-          <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-            {t("settings.encryptionWarning")}
-          </div>
           {settings.encryptionEnabled && (
-            <div className="flex flex-col gap-2 border-t border-carbon-border pt-4">
+            <div className="flex flex-col gap-2">
               {/* recovery.why is bubbled, not kept as permanent text, even though
                   it explains a real data-loss risk: the RECURRING "you still
                   haven't saved this" job is already owned by Dashboard.tsx's own

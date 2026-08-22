@@ -154,7 +154,7 @@ const sv: Partial<Translations> = {
   "settings.encryption": "Kryptering",
   "settings.encryptionOn": "Aktiverad (lösenord härlett från APP_KEY)",
   "settings.encryptionOff": "Inaktiverad (inget lösenord)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Kryptering fastställs per arkiv vid initieringen. En ändring kräver en ny tom sökväg.",
   "settings.paths": "Säkerhetskopiesökvägar",
   "settings.pathsHint": "Relativa undersökvägar under host-monteringens rot ({root}). Klicka på Bläddra för att navigera i mappar, eller skriv en sökväg direkt.",

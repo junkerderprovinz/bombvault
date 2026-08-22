@@ -154,7 +154,7 @@ const es: Partial<Translations> = {
   "settings.encryption": "Cifrado",
   "settings.encryptionOn": "Habilitado (contraseña derivada de APP_KEY)",
   "settings.encryptionOff": "Deshabilitado (sin contraseña)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "El cifrado se fija por repositorio al inicializar. Cambiarlo requiere una nueva ruta vacía.",
   "settings.paths": "Rutas de copia",
   "settings.pathsHint": "Subrutas relativas bajo la raíz del montaje del host ({root}). Haz clic en Examinar para navegar por directorios o escribe una ruta directamente.",

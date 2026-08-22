@@ -154,7 +154,7 @@ const fr: Partial<Translations> = {
   "settings.encryption": "Chiffrement",
   "settings.encryptionOn": "Activé (mot de passe dérivé de APP_KEY)",
   "settings.encryptionOff": "Désactivé (sans mot de passe)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Le chiffrement est fixé par dépôt à l'initialisation. Le modifier nécessite un nouveau chemin vide.",
   "settings.paths": "Chemins de sauvegarde",
   "settings.pathsHint": "Sous-chemins relatifs sous la racine du montage hôte ({root}). Cliquez sur Parcourir pour naviguer dans les dossiers, ou saisissez un chemin directement.",

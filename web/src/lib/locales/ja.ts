@@ -154,7 +154,7 @@ const ja: Partial<Translations> = {
   "settings.encryption": "暗号化",
   "settings.encryptionOn": "有効（APP_KEY からパスワードを導出）",
   "settings.encryptionOff": "無効（パスワードなし）",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "暗号化は初期化時にリポジトリに対して固定されます。変更するには新しい空のパスが必要です。",
   "settings.paths": "バックアップパス",
   "settings.pathsHint": "ホストマウントのルート（{root}）配下の相対サブパスです。参照をクリックしてディレクトリを移動するか、パスを直接入力してください。",

@@ -154,7 +154,7 @@ const el: Partial<Translations> = {
   "settings.encryption": "Κρυπτογράφηση",
   "settings.encryptionOn": "Ενεργό (κωδικός από APP_KEY)",
   "settings.encryptionOff": "Ανενεργό (χωρίς κωδικό)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Η κρυπτογράφηση καθορίζεται κατά την αρχικοποίηση του αποθετηρίου. Η αλλαγή απαιτεί νέα κενή διαδρομή.",
   "settings.paths": "Διαδρομές αντιγράφων",
   "settings.pathsHint": "Σχετικές υποδιαδρομές κάτω από τη ρίζα προσάρτησης του host ({root}). Κάντε κλικ στο Περιήγηση για να πλοηγηθείτε στους καταλόγους, ή πληκτρολογήστε μια διαδρομή απευθείας.",
