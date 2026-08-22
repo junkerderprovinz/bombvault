@@ -184,6 +184,7 @@ const nl: Partial<Translations> = {
   "settings.schedule": "Planning",
   "settings.scheduleOff": "uit",
   "settings.language": "Taal",
+  "settings.theme": "Thema",
   "settings.save": "Opslaan",
   "settings.saved": "Instellingen opgeslagen",
   "settings.error": "Fout bij opslaan",

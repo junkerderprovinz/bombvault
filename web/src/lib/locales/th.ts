@@ -189,6 +189,7 @@ const th: Partial<Translations> = {
   "settings.schedule": "ตารางเวลา",
   "settings.scheduleOff": "ปิด",
   "settings.language": "ภาษา",
+  "settings.theme": "ธีม",
   "settings.save": "บันทึก",
   "settings.saved": "บันทึกการตั้งค่าแล้ว",
   "settings.error": "เกิดข้อผิดพลาดในการบันทึก",

@@ -228,11 +228,13 @@ describe("Badge — tone/status-color mapping", () => {
     // measured numbers.
     ["active", "bg-accentSoft", "text-accentText"],
     ["neutral", "bg-carbon-surface2", "text-carbon-textSub"],
-    // heading (rule 11): accent-soft WASH, never solid accent (rule 3 is
-    // activity-only) and never one of the four state hues (rule 4 — see the
-    // file header's full reasoning). Text stays the same quiet
-    // text-carbon-textSub the eyebrow treatment always used.
-    ["heading", "bg-accentSoft", "text-carbon-textSub"],
+    // heading (rule 11, REVISED — live-review round: "the notch reads as
+    // darkened/dimmed, not the real accent colour"): the full, solid
+    // bg-accent fill + text-accentContrast ink, the same pairing this app's
+    // other solid CTAs (navActive, "Speichern") already use — not a
+    // translucent or opaque-composited wash of it. See the file header's
+    // tone="heading" section for the two earlier (now-superseded) rounds.
+    ["heading", "bg-accent", "text-accentContrast"],
   ];
 
   it.each(cases)("tone=%s renders %s / %s", (tone, bg, text) => {
@@ -242,11 +244,12 @@ describe("Badge — tone/status-color mapping", () => {
     expect(cls).toContain(text);
   });
 
-  it("heading tone never renders the solid bg-accent fill (rule 3: accent means activity, not furniture)", () => {
+  it("heading tone renders the full solid bg-accent fill (REVISED, live-review round: a pale accent-soft wash always reads as darkened, whatever its alpha)", () => {
     const el = root(Badge({ children: "x", tone: "heading" }));
     const cls = el.props!.className as string;
-    expect(cls).not.toContain("bg-accent ");
-    expect(cls.split(/\s+/)).not.toContain("bg-accent");
+    const tokens = cls.split(/\s+/);
+    expect(tokens).toContain("bg-accent");
+    expect(tokens).not.toContain("bg-accentSoft");
   });
 
   it("defaults to the neutral tone when omitted", () => {
@@ -322,26 +325,31 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     }
   });
 
-  // Live-review round: "the notch reads as semi-transparent." Root cause was
-  // --accent-soft always being a genuine 14%-alpha wash (never solid, by
-  // design, for its OTHER tone="active"/.glim-tint consumers) that only
-  // visibly betrayed its own transparency once the notch made it straddle
-  // two different backdrops at once — see index.css's --accent-soft-solid
-  // comment for the full measurement. Fix: the real notch combination swaps
-  // in a fully OPAQUE color-mix() of the same wash instead.
-  it("uses the OPAQUE bg-accentSoftSolid fill, not the translucent bg-accentSoft wash every other accent-soft consumer uses", () => {
+  // Live-review round history: an earlier fix here swapped the notch's fill
+  // to an OPAQUE color-mix() of --accent-soft (to fix a semi-transparent
+  // two-tone seam at the card edge), but jdp reviewed that live and said it
+  // still read as "abgedunkelt" (darkened/dimmed) — a 14%-accent-into-
+  // surface wash is inherently pale no matter its alpha. Fix: drop the wash
+  // entirely and use the same full, solid bg-accent/text-accentContrast
+  // pairing this app's other solid CTAs already use — see Badge.tsx's file
+  // header for the full history and index.css's (now-removed)
+  // --accent-soft-solid comment for the superseded intermediate fix.
+  it("uses the full solid bg-accent fill, not any accent-soft wash (opaque or translucent)", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
-    expect(tokens).toContain("bg-accentSoftSolid");
+    expect(tokens).toContain("bg-accent");
+    expect(tokens).toContain("text-accentContrast");
     expect(tokens).not.toContain("bg-accentSoft");
+    expect(tokens).not.toContain("bg-accentSoftSolid");
   });
 
-  it("a heading-toned badge WITHOUT the notch (non-heading size) keeps the ordinary translucent bg-accentSoft wash, not the notch's solid fill", () => {
+  it("a heading-toned badge WITHOUT the notch (non-heading size) renders the identical solid bg-accent fill — no separate 'notch-only' colour anymore", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "medium" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
-    expect(tokens).toContain("bg-accentSoft");
+    expect(tokens).toContain("bg-accent");
+    expect(tokens).not.toContain("bg-accentSoft");
     expect(tokens).not.toContain("bg-accentSoftSolid");
   });
 });

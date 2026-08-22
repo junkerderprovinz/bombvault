@@ -189,6 +189,7 @@ const da: Partial<Translations> = {
   "settings.schedule": "Tidsplan",
   "settings.scheduleOff": "fra",
   "settings.language": "Sprog",
+  "settings.theme": "Tema",
   "settings.save": "Gem",
   "settings.saved": "Indstillinger gemt",
   "settings.error": "Fejl ved gemning af indstillinger",

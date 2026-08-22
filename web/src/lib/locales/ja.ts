@@ -189,6 +189,7 @@ const ja: Partial<Translations> = {
   "settings.schedule": "スケジュール",
   "settings.scheduleOff": "オフ",
   "settings.language": "言語",
+  "settings.theme": "テーマ",
   "settings.save": "保存",
   "settings.saved": "設定を保存しました",
   "settings.error": "保存エラー",

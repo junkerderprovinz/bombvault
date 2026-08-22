@@ -186,6 +186,7 @@ const ro: Partial<Translations> = {
   "settings.schedule": "Programare",
   "settings.scheduleOff": "oprit",
   "settings.language": "Limbă",
+  "settings.theme": "Temă",
   "settings.save": "Salvare",
   "settings.saved": "Setări salvate",
   "settings.error": "Eroare la salvare",

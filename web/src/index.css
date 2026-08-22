@@ -24,13 +24,6 @@
   --color-accentContrast: var(--accent-contrast);
   --color-accentSoft: var(--accent-soft);
   --color-accentText: var(--accent-text);
-  /* accentSoftSolid — see --accent-soft-solid's own comment in the dark
-     block below (live-review round: "the heading notch reads as
-     transparent"). A fully opaque stand-in for accentSoft, for the one
-     call site (Badge.tsx's tone="heading" notch) whose fill straddles two
-     DIFFERENT backdrops at once, where accentSoft's real 14%-alpha
-     genuinely shows through. */
-  --color-accentSoftSolid: var(--accent-soft-solid);
 
   /* Status tokens (#105) — semantic ok/fail/warn/info/neutral colors that flip
      with the theme. text = plain colored text, Bg/Border = tinted chip surfaces,
@@ -196,65 +189,6 @@
   --accent:           #FCC419;
   --accent-contrast:  #161616;
   --accent-soft:      rgba(252, 196, 25, 0.14);
-
-  /* --accent-soft-solid (live-review round, "the heading notch reads as
-     transparent") — a fully OPAQUE stand-in for --accent-soft above, for
-     Badge.tsx's tone="heading" notch specifically.
-       Root cause, found by inspecting what actually paints, not by
-     guessing: --accent-soft was never touched by the notch-positioning
-     commit (34c1a3f) — TONE_CLASSES.heading still resolves to the exact
-     same `bg-accentSoft` it always did, and lib/accent.ts's softTint()
-     still emits the same real rgba(...,0.14) it always has (a genuine
-     14%-alpha wash, BY DESIGN, for the "identity, not activity" register
-     rule 5/rule 11 call for — see Badge.tsx's file header). So this was
-     ALWAYS a translucent fill, even in the pre-notch inline badge; nothing
-     regressed at the class-list level.
-       What DID change is what sits BEHIND it. The pre-notch badge rendered
-     in normal flow, wholly inside its Card's own bg-carbon-surface — one
-     single, uniform backdrop, so the 14%-alpha wash blended evenly into
-     one flat-looking tint that read as "a light solid fill" at a glance.
-     The notch (`position: absolute; top: -11px`) now straddles the card's
-     own top edge: roughly its top half paints over whatever is BEHIND the
-     card (the page's own --carbon-bg, a different, usually darker/lighter
-     shade than --carbon-surface) while its bottom half still paints over
-     --carbon-surface. Same alpha, two different backdrops in one badge —
-     the composite splits into a visible two-tone seam exactly at the
-     card's edge, which is what actually reads as "this badge has some
-     transparency": the wash was never opaque, the notch just put it
-     somewhere its transparency shows.
-       Fix: composite the exact same wash — 14% of --accent, the identical
-     percentage softTint() already uses, not a new number invented for
-     this — onto --carbon-surface (the backdrop the ORIGINAL inline badge
-     always sat fully on) as a genuinely OPAQUE colour via color-mix(),
-     rather than as an alpha blend. color-mix(in srgb, A P%, B) performs the
-     exact same linear-blend arithmetic browsers already use to alpha-
-     composite rgba(A, 0.14) over an opaque B — so this reproduces the
-     ORIGINAL inline badge's exact apparent colour on a Card, byte-for-byte
-     the "same accent fill visual weight" — but the color-mix() OUTPUT
-     carries no alpha channel at all: it's a flat, fully opaque sRGB value,
-     so it now paints identically solid whether it's sitting on
-     --carbon-surface below the notch or on --carbon-bg above it — no more
-     seam, no more visible see-through.
-       Declared once here (not duplicated into the [data-theme="light"] /
-     :root:not([data-theme]) blocks the way the literal --accent-soft above
-     is) — this is a FORMULA, not a literal, and CSS custom properties
-     substitute their var() references at used-value time against whatever
-     the consuming element's own cascaded environment resolves --accent and
-     --carbon-surface to. Since :root always matches (regardless of which
-     data-theme, if any, is also present), this single declaration already
-     reads the correct light/dark --carbon-surface and the correct
-     user-chosen --accent in every theme without restating the formula —
-     duplicating an auto-reactive formula would only be able to drift from
-     itself, never help.
-       Only used by Badge.tsx's isHeadingNotch branch (bg-accentSoftSolid,
-     swapped in for bg-accentSoft the same way `rounded-pill` already swaps
-     in for RADIUS_CLASSES[shape] just below it — never appended alongside,
-     which this file's own padding/circle comment already flags as an
-     unpredictable same-specificity Tailwind hazard). Every OTHER
-     tone="active"/.glim-tint consumer of the real, translucent
-     --accent-soft is untouched — this is a new, narrowly-scoped sibling
-     token, not a change to the wash itself. */
-  --accent-soft-solid: color-mix(in srgb, var(--accent) 14%, var(--carbon-surface));
 
   /* accent-text (spec-compliance fix, GlimStone form-engine Phase 2 Task 7
      follow-up) — accent-derived TEXT/graphics (Badge's tone="active",

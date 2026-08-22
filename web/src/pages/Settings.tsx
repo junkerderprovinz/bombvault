@@ -37,6 +37,7 @@ import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 import { Flag } from "../components/Sidebar";
+import { getResolvedTheme, getTheme, onSystemThemeChange, toggleTheme } from "../lib/theme";
 
 // AboutFooter shows the running version (linking to the releases page) and a
 // "Report a bug" link at the very bottom of Settings, so the sidebar stays clean.
@@ -641,6 +642,73 @@ export function LanguageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           </div>
         )}
       </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Theme Card (GlimStone follow-up pass, live-review round — jdp asked for the
+// dark/light toggle to move out of Sidebar.tsx's footer into its own Card in
+// Settings' General tab, the exact same "move, don't duplicate" request
+// already applied to the language picker above — see LanguageCard's own
+// header comment for that precedent, and Sidebar.tsx's SidebarControls for
+// where this toggle used to render). Reuses lib/theme.ts's own
+// getResolvedTheme()/toggleTheme()/getTheme()/onSystemThemeChange() verbatim
+// — the exact same state machine and "system"-tracking effect the sidebar
+// button used, byte-for-byte, only the surrounding chrome changed (the
+// sidebar's nav-rail button look → a plain bg-carbon-surface2 trigger, the
+// same idle-chip fill LanguageCard's own trigger already uses).
+export function ThemeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  // getResolvedTheme(), not the raw stored preference: the default is
+  // "system" (GlimStone form-engine #1), and this toggle only ever shows/
+  // sets an explicit dark or light state, so it must reflect what's actually
+  // painted rather than the unresolved "system" value.
+  const [theme, setThemeState] = useState(getResolvedTheme);
+
+  function handleToggleTheme() {
+    const next = toggleTheme();
+    setThemeState(next);
+  }
+
+  // Keep the displayed label live-accurate on "system": lib/theme.ts's own
+  // matchMedia listener repaints data-theme (and every colour token)
+  // immediately on an OS-level flip, but this component's `theme` state was
+  // only ever set at mount and on an explicit toggle — without this, the
+  // Card's Light/Dark label goes stale the moment the OS changes out from
+  // under a "system" user, even though the rest of the UI has already
+  // repainted correctly.
+  useEffect(() => {
+    return onSystemThemeChange(() => {
+      if (getTheme() === "system") setThemeState(getResolvedTheme());
+    });
+  }, []);
+
+  return (
+    <Card title={t("settings.theme")}>
+      <button
+        type="button"
+        onClick={handleToggleTheme}
+        title={t("theme.toggle")}
+        className="flex items-center gap-2.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+      >
+        {theme === "dark" ? (
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+            <path
+              d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
+              stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+            <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+            />
+          </svg>
+        )}
+        <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
+      </button>
     </Card>
   );
 }
@@ -3976,14 +4044,31 @@ export function SettingsPage() {
     (settings.filesOffsite !== "" && settings.filesOffsiteImmutable);
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page heading — deliberately NOT inside the max-w-3xl reading column
-          below (GlimStone follow-up pass, live-review point 7): every OTHER
-          page's own <h1>/<p> (Dashboard.tsx, Containers.tsx, VMs.tsx,
+    // gap-10 (live-review round — "gap between the tab strip and the first
+    // card is too small"): was gap-6 (24px), same value the tab-panels
+    // wrapper further down used to use for the SAME job before its own
+    // gap-10 bump (see that wrapper's own comment). This outer wrapper now
+    // has exactly two children — the heading+tab-strip block immediately
+    // below, and the tab-panels wrapper — so bumping ITS gap to gap-10 is
+    // what actually widens the space between the tab strip and the first
+    // Card's top edge to the same 40px rhythm every Card-to-Card gap already
+    // uses, without touching the (unrelated, still gap-6) space between the
+    // heading and the tab strip itself.
+    <div className="flex flex-col gap-10">
+      {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
+          follow-up pass, live-review round — the width-mismatch fix below
+          needed a wrapper here to isolate this pair's own 24px gap from the
+          new gap-10 the OUTER wrapper now uses for the tab-strip-to-first-
+          card gap; before this pass, heading/strip/panels were three
+          siblings sharing one flat gap value). Deliberately NOT inside the
+          max-w-3xl reading column the panels wrapper further down used to
+          own alone (GlimStone follow-up pass, live-review point 7): every
+          OTHER page's own <h1>/<p> (Dashboard.tsx, Containers.tsx, VMs.tsx,
           Files.tsx, Flash.tsx, Config.tsx, Receiver.tsx, Fleet.tsx) renders
           at the page's own full width, un-capped — Settings.tsx was the one
           page that swept its heading into the same narrow column as its
-          form content, which this pass undoes to match that convention. */}
+          form content, which that pass undid to match that convention. */}
+      <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">
           {t("settings.title")}
@@ -4061,23 +4146,37 @@ export function SettingsPage() {
         }}
         size="lg"
       />
+      </div>
 
-      {/* Tab panels — the max-w-3xl reading column lives HERE now (see the
-          strip's own comment above), so every Card and direct-child section
-          below keeps its exact previous width; only the heading and the tab
-          strip above moved out of it.
+      {/* Tab panels. GlimStone follow-up pass, live-review round ("Settings
+          cards should match the tab row's width"): the `max-w-3xl` cap that
+          used to live on this wrapper is GONE — removed, not resized to a
+          new guessed number. The tab strip immediately above (now the sole
+          content of its own un-capped gap-6 wrapper, see that wrapper's own
+          comment) already renders at this page's full <main> width, exactly
+          like every sibling page's content; capping just the panels below it
+          to 768px was what made the two visually mismatch in the first
+          place. With no cap here either, this wrapper — and therefore every
+          Card inside it — resolves to the SAME width as the tab strip above
+          by construction (both are plain, unconstrained block children of
+          this component's own full-width layout), not merely a close visual
+          match at one specific viewport.
             gap-10 (live-review round — "more air between Cards, there's
           plenty of room"): was gap-6 (24px), already the single largest gap
-          value used anywhere in this app (verified — no other call site
-          reaches past gap-6). Every direct child of this wrapper is either a
-          whole Card (own bg-carbon-surface + p-5 box) or an equivalent
-          top-level section, so this one value IS the vertical rhythm between
-          Settings' Domains/Language/Accent/Shape/Rainbow/Quiet-toasts blocks
-          — bumping it here, and only here, reaches every one of them.
-          40px (~1.67x the old 24px, inside the requested 1.5-2x range) reads
-          as a deliberate step up without the Cards feeling disconnected from
-          each other on the page. */}
-      <div className="flex flex-col gap-10 max-w-3xl">
+          value used anywhere in this app before this bump (verified — no
+          other call site reaches past gap-6). Every direct child of this
+          wrapper is either a whole Card (own bg-carbon-surface + p-5 box) or
+          an equivalent top-level section, so this one value IS the vertical
+          rhythm between Settings' Domains/Language/Theme/Accent/Shape/
+          Rainbow/Quiet-toasts blocks — bumping it here, and only here,
+          reaches every one of them. 40px (~1.67x the old 24px, inside the
+          requested 1.5-2x range) reads as a deliberate step up without the
+          Cards feeling disconnected from each other on the page. The outer
+          wrapper above reuses this same gap-10 value for the tab-strip-to-
+          first-card gap (a separate live-review ask, its own comment) —
+          matching this established rhythm rather than inventing a different
+          number for that gap too. */}
+      <div className="flex flex-col gap-10">
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
@@ -5625,6 +5724,16 @@ export function SettingsPage() {
       {/* the purely-cosmetic Appearance cluster below.                       */}
       {/* ------------------------------------------------------------------ */}
       {tab === "general" && <LanguageCard t={t} />}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* GENERAL — Theme (GlimStone follow-up pass, later live-review round). */}
+      {/* Moved out of Sidebar.tsx's footer — see ThemeCard's own header       */}
+      {/* comment above. Same register and immediately below Language: both   */}
+      {/* are fundamental, whole-app identity settings (not one of the purely */}
+      {/* cosmetic Appearance sub-topics below), so this Card sits right      */}
+      {/* after Language and right before Accent colour.                      */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "general" && <ThemeCard t={t} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* GENERAL — Appearance                                               */}

@@ -98,16 +98,26 @@
 // `tone="heading"` / `size="heading"` (Task 5, rule 11 — "every heading is a
 // filled section badge, never bare text... always coloured: it is a heading,
 // not a control, so rule 9 [the three-way reactive colour mode] does not
-// apply to it"). Colour choice, reasoned from the rest of the spec rather
-// than copied from an example (no adopting app — including this plan's own
-// KnightLoader reference implementation — has actually built rule 11 yet, so
-// there was no existing call site to match):
-//   - NOT solid `--accent`: rule 3 reserves the accent for ACTIVITY ("the
-//     active nav item, the single primary action, progress fills... a page
-//     has at most one solid accent button") — a page with a dozen Settings
-//     Cards would need a dozen solid-accent headings, which turns "activity"
-//     into "everything", and the one real primary action on the page would
-//     stop reading as special.
+// apply to it"). Colour choice:
+//   - IS the full, solid `--accent` fill + `--accent-contrast` ink — the
+//     EXACT SAME pairing this app already uses for a solid CTA elsewhere
+//     (Sidebar.tsx's `navActive`, the "Speichern" button). REVISED from this
+//     component's original rule-3-driven reasoning (rule 3 reserves solid
+//     accent for ACTIVITY — "the active nav item, the single primary action,
+//     progress fills... a page has at most one solid accent button" — and a
+//     first pass read a Card heading as NOT activity, so it shipped a soft
+//     `--accent-soft` wash instead, then an even-more-opaque `color-mix()`
+//     of that same wash once the wash's own transparency became visible at
+//     the notch's card-edge seam). jdp reviewed BOTH of those live and, on
+//     the second round, said the notch still read as "abgedunkelt"
+//     (darkened/dimmed) regardless of opacity — because a 14%-accent-into-
+//     surface wash is inherently a pale, muted colour, full stop, whether
+//     it's rendered with alpha or composited to a flat opaque equivalent of
+//     the exact same pale colour. What was actually wanted is the real,
+//     saturated accent colour, unmixed with anything — so this tone now
+//     renders `bg-accent text-accentContrast` (see TONE_CLASSES below), and
+//     `--accent-soft-solid` (the interim opaque-wash token from the prior
+//     round) is gone from index.css entirely — nothing references it anymore.
 //   - NOT any of the four state hues (ok/fail/warn/neutral): rule 4's hues
 //     are load-bearing semantic signals elsewhere on the same pages these
 //     headings live on (a container's running/settled/fault state, a
@@ -120,27 +130,26 @@
 //     for actual chips/badges elsewhere — see the TONE_CLASSES comment below
 //     on the Task 7 "→ neutral" sites, which lands in that other,
 //     pre-existing role instead.)
-//   - IS `--accent-soft`: the spec's own vocabulary already has a distinct
-//     register for "identity, not activity" — rule 5's "what is selected is
-//     filled with the accent; what owns a rainbow position is washed with
-//     it" and the colour engine's `.glim-tint` (a 7% wash, not a solid fill,
-//     for a settled row that still needs to read as coloured without
-//     re-triggering the running/activity read). A heading badge borrows that
-//     same wash vocabulary: `--accent-soft` ties every heading to the app's
-//     own chosen brand colour — "coloured", genuinely, and consistent with
-//     whichever accent preset the user picked — without ever reading as
-//     "this is currently active" the way a solid fill would. Every heading
-//     gets the SAME flat accent-soft wash (not a rainbow position): a badge
-//     is not a list row with an identity to distinguish from its neighbours,
-//     and cycling 21+ headings through 8 rainbow hues would fight rule 2
-//     ("one hero, everything else quiet") far worse than a uniform wash does.
-//   - Text stays `text-carbon-textSub` (not full-strength `text-carbon-text`
-//     and not `--accent-contrast`, which assumes a SOLID accent background
-//     dark/light enough to need a computed-contrast partner — accent-soft is
-//     11-14% opacity, so the card surface underneath still dominates the
-//     actual contrast ratio): this keeps a heading badge reading at the same
-//     quiet register the eyebrow treatment always used, rather than
-//     brightening 20+ headings per page to full text strength.
+//   - Every heading gets the SAME solid accent fill (not a rainbow
+//     position): a badge is not a list row with an identity to distinguish
+//     from its neighbours, and cycling 21+ headings through 8 rainbow hues
+//     would fight rule 2 ("one hero, everything else quiet") far worse than
+//     a uniform fill does. This does mean rule 3's "at most one solid accent
+//     thing per page" no longer literally holds once a page has several
+//     Cards — an accepted, deliberate consequence of this live-review
+//     round's explicit ask, not an oversight: a heading badge is furniture
+//     (rule 11 already exempts it from rule 9's reactive-colour treatment
+//     for the same "not a control" reason), not a second competing call to
+//     action, so several solid-accent HEADINGS on one page don't dilute the
+//     page's one real primary-action button the way several solid-accent
+//     BUTTONS would.
+//   - Text is `text-accentContrast` (the computed black/white ink for
+//     legibility ON TOP of a solid accent fill — see index.css's
+//     `--accent-contrast` comment), not the previous quiet
+//     `text-carbon-textSub`: that muted ink was chosen specifically for a
+//     translucent wash where the card surface still dominated the contrast
+//     ratio, a premise that no longer holds now the fill is fully opaque
+//     accent.
 //   - Sizing is a dedicated stage, not a reuse of `large` (the existing
 //     tallest stage, already the visual weight of a real status/count chip —
 //     ErrorDetailPanel's count badge, a "Resolve" button): giving headings
@@ -202,11 +211,16 @@
 // RecoveryNag (`bg-statusWarnBg` + `recovery.nagTitle`). Rule 11's "filled
 // section badge" silently assumes a neutral card surface underneath for the
 // fill to register against; a status callout has already spent that budget
-// on its own background. Measured live at that site, badge-fill vs. the
-// panel it would sit on: accent-soft 1.06:1 light / 1.39:1 dark, and
-// warn-strong 1.00:1 light (index.css gives --status-warn-bg and
-// --status-warn-bg-strong the same value in light mode) / 1.11:1 dark. So
-// the badge would read as plain text with extra padding, while also
+// on its own background. Measured live at that site, at the time, against
+// tone="heading"'s THEN-current accent-soft wash fill: accent-soft 1.06:1
+// light / 1.39:1 dark, and warn-strong 1.00:1 light (index.css gives
+// --status-warn-bg and --status-warn-bg-strong the same value in light mode)
+// / 1.11:1 dark (numbers now superseded — a later live-review round replaced
+// tone="heading"'s wash with a solid `bg-accent` fill, see this file's own
+// tone="heading" section above — not re-measured against that fill, since
+// RecoveryNag's heading stays plain either way and this site's own
+// conclusion doesn't turn on the exact figure). So the badge would read as
+// plain text with extra padding, while also
 // discarding the text-statusWarn colour that currently carries the alert's
 // meaning at 8.62:1. Left plain on purpose — this is a token gap, not an
 // oversight, and the call site says so too. Every OTHER outermost heading
@@ -316,16 +330,15 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   warn: "bg-statusWarnBgStrong text-statusWarn",
   active: "bg-accentSoft text-accentText",
   neutral: "bg-carbon-surface2 text-carbon-textSub",
-  // See the file header's long-form reasoning: accent-soft wash (identity,
-  // matching rule 5's "washed" vocabulary), not solid accent (rule 3,
-  // activity-only) and not one of the four state hues (rule 4, semantic
-  // elsewhere on the same page). This literal entry is the fallback for a
-  // (currently unreached) heading-toned badge at a non-heading size —
-  // badgeClassName's own isHeadingNotch branch below swaps this out for the
-  // OPAQUE bg-accentSoftSolid whenever tone AND size both say "heading" (see
-  // that branch's own comment for why the real notch needs a solid fill
-  // instead of this translucent wash).
-  heading: "bg-accentSoft text-carbon-textSub",
+  // See the file header's long-form reasoning (REVISED, live-review round —
+  // "the notch reads as darkened/dimmed, not the real accent colour"): the
+  // full, solid `--accent` fill + `--accent-contrast` ink, the same pairing
+  // `navActive`/the "Speichern" button use, not a translucent or
+  // opaque-composited wash of it. Used unconditionally for every
+  // tone="heading" badge, at any size — badgeClassName's own isHeadingNotch
+  // branch below no longer swaps in a different fill for the notch
+  // specifically; this single entry now covers both cases identically.
+  heading: "bg-accent text-accentContrast",
 };
 
 const RADIUS_CLASSES: Record<BadgeShape, string> = {
@@ -493,23 +506,13 @@ function badgeClassName({
   const isHeadingNotch = tone === "heading" && size === "heading";
   const notchPositioning = isHeadingNotch ? "absolute -top-[11px] z-10 shadow-[var(--elevation)]" : "";
 
-  // Live-review round: "the notch reads as semi-transparent." Root cause
-  // (see index.css's own --accent-soft-solid comment for the full
-  // measurement): TONE_CLASSES.heading's `bg-accentSoft` is, and always
-  // was, a genuine 14%-alpha wash — that never changed when the notch
-  // positioning landed. What changed is that the notch straddles TWO
-  // different backdrops at once (the page ground above the card's edge,
-  // the card surface below it), so that same alpha now visibly splits into
-  // a two-tone seam instead of blending evenly into one flat tint the way
-  // it did sitting wholly on a card. `bg-accentSoftSolid` is a fully
-  // opaque color-mix() of the identical 14%-accent wash, composited onto
-  // --carbon-surface once (the ORIGINAL inline badge's own backdrop) — same
-  // apparent colour, no alpha channel, so it paints solid regardless of
-  // what's actually behind it. Swapped in wholesale for TONE_CLASSES[tone]
-  // (never appended alongside `bg-accentSoft` — two same-specificity bg-*
-  // utilities in one class list is the exact hazard this file's own
-  // padding/circle-shape comment above already flags as unpredictable).
-  const toneClasses = isHeadingNotch ? "bg-accentSoftSolid text-carbon-textSub" : TONE_CLASSES[tone];
+  // No per-notch colour override anymore (see the file header's tone=heading
+  // section for the two earlier rounds this went through — a translucent
+  // wash, then an opaque color-mix() of that same wash — and why jdp's
+  // latest live review replaced both with the plain, full-strength
+  // TONE_CLASSES.heading fill below). A heading-toned badge renders the
+  // identical solid accent fill whether or not it's also the notch size.
+  const toneClasses = TONE_CLASSES[tone];
 
   return [
     "inline-flex box-border items-center justify-center gap-1 font-medium",

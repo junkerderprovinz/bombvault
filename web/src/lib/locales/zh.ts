@@ -189,6 +189,7 @@ const zh: Partial<Translations> = {
   "settings.schedule": "计划",
   "settings.scheduleOff": "关闭",
   "settings.language": "语言",
+  "settings.theme": "主题",
   "settings.save": "保存",
   "settings.saved": "设置已保存",
   "settings.error": "保存设置出错",

@@ -189,6 +189,7 @@ const el: Partial<Translations> = {
   "settings.schedule": "Χρονοδιάγραμμα",
   "settings.scheduleOff": "ανενεργό",
   "settings.language": "Γλώσσα",
+  "settings.theme": "Θέμα",
   "settings.save": "Αποθήκευση",
   "settings.saved": "Οι ρυθμίσεις αποθηκεύτηκαν",
   "settings.error": "Σφάλμα αποθήκευσης ρυθμίσεων",
