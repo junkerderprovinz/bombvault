@@ -324,11 +324,27 @@ export function ToggleRow({
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-function SaveBar({
+// `hueIndex` (GlimStone follow-up round, Paths & Storage tab rework, point 3
+// — jdp, live review: "die Speichern-Buttons sind nicht in der Farbengine,
+// im Regenbogenmodus haben alle die gleiche Farbe"). Every one of this file's
+// ~25 remaining SaveBar call sites rendered the identical flat `bg-accent`
+// fill even with rainbow mode on — the exact same bug Badge's tone="heading"
+// notches and ToggleRow's Domains rows already had fixed for themselves.
+// Reuses the SAME mechanism (`.glim-hue` + `hueVars(rainbowAt(i))`), and the
+// SAME index its own Card's title notch already got from `nextHue()` —
+// passed straight through by each call site (`hueIndex={cardHue}` alongside
+// `<Card hueIndex={cardHue}>`) rather than a second, independent `nextHue()`
+// call. A card and its own action button read as one coloured group this
+// way, instead of two unrelated rainbow positions competing for attention
+// inside the same card. `export`ed for the same reason ToggleRow already is
+// (Settings.toggleRow.test.ts) — a plain function component, testable
+// directly with no jsdom needed.
+export function SaveBar({
   state,
   onSave,
   t,
   disabled = false,
+  hueIndex,
 }: {
   state: SaveState;
   /** Always null post-migration — see this component's header comment. */
@@ -336,13 +352,16 @@ function SaveBar({
   onSave: () => void;
   t: ReturnType<typeof useT>["t"];
   disabled?: boolean;
+  hueIndex?: number;
 }) {
+  const hueOn = hueIndex !== undefined;
   return (
     <div className="flex items-center gap-3 pt-1">
       <button
         onClick={onSave}
         disabled={disabled || state === "saving"}
-        className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        style={hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+        className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
       >
         {state === "saving" ? (
           <>
@@ -4888,6 +4907,7 @@ export function SettingsPage() {
             )
           }
           t={t}
+          hueIndex={nextHue()}
         />
       </Card>
       )}
@@ -4954,6 +4974,7 @@ export function SettingsPage() {
             )
           }
           t={t}
+          hueIndex={nextHue()}
         />
       </Card>
       )}
@@ -5261,6 +5282,7 @@ export function SettingsPage() {
             )
           }
           t={t}
+          hueIndex={nextHue()}
         />
       </Card>
       )}
