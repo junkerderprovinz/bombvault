@@ -363,6 +363,8 @@ const vi: Partial<Translations> = {
 
   "settings.retentionTitle": "Lưu giữ ảnh chụp nhanh",
   "settings.retentionHint": "Số bản sao lưu cần giữ cho mỗi mục. Sau mỗi lần sao lưu, restic sẽ dọn các snapshot cũ theo chính sách này. Tất cả bằng 0 = giữ tất cả (tắt).",
+  "settings.imageMaintenanceTitle": "Dọn dẹp Image & Registry",
+  "settings.imageMaintenanceHint": "Bảo trì xoay quanh việc cập nhật container sau khi sao lưu: dọn dẹp image đã bị thay thế, làm mới trạng thái cập nhật được lưu đệm của chính Unraid, và lưu thông tin đăng nhập cho các registry riêng tư mà việc kéo cập nhật cần.",
   "settings.retentionLast": "Giữ gần nhất",
   "settings.retentionDaily": "Giữ theo ngày",
   "settings.retentionWeekly": "Giữ theo tuần",
@@ -393,8 +395,9 @@ const vi: Partial<Translations> = {
   "cloud.credSets.add": "Thêm bộ thông tin xác thực",
   "cloud.credSets.name": "Tên",
   "cloud.credSets.none": "Chưa có bộ thông tin xác thực bổ sung nào.",
-  "export.encrypt.title": "Mã hóa các bản xuất dạng thô (age)",
+  "export.encrypt.title": "Mã hóa các bản xuất dạng thô",
   "export.encrypt.hint": "Các kho restic đã được mã hóa. Tùy chọn này mã hóa các thành phần xuất dạng thô (tar.gz của container và VM cùng với xml của chúng, và zip flash) bằng age, để có thể lưu trữ hoặc di chuyển ra ngoài máy chủ một cách an toàn.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) là một công cụ mã hóa tệp nhỏ gọn, hiện đại — một lựa chọn thay thế đơn giản hơn GPG để niêm phong một tệp cho một hoặc nhiều người nhận.",
   "export.encrypt.enable": "Mã hóa bản xuất bằng age",
   "export.encrypt.enableHint": "Khi bật, các bản xuất container, VM và flash được niêm phong bằng age trước khi ghi ra đĩa và có thêm hậu tố .age.",
   "export.encrypt.recipients": "Người nhận age",
@@ -436,6 +439,8 @@ const vi: Partial<Translations> = {
   "flash.none": "Chưa có bản sao lưu flash nào — chạy một bản sao lưu ở trên.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Xuất & Mã hóa",
+  "settings.exportsEncryptionHint": "Các tùy chọn cho việc xuất zip flash, mã hóa các thành phần xuất dạng thô, và mã hóa chính các kho restic.",
   "flash.zipExport.title": "Xuất ZIP flash",
   "flash.zipExport.hint": "Sau mỗi lần sao lưu flash, cũng ghi ảnh chụp ra một tệp .zip thường vào một thư mục — sẵn sàng để đồng bộ ngoài máy chủ (Syncthing, rclone, một ổ đĩa đám mây).",
   "flash.zipExport.enable": "Xuất một tệp ZIP sau mỗi lần sao lưu flash",
@@ -778,6 +783,8 @@ const vi: Partial<Translations> = {
   "settings.configPath": "Đường dẫn Tự sao lưu",
   "settings.pathMode.local": "Cục bộ",
   "settings.pathMode.remote": "Từ xa",
+  "settings.pathMode.localTip": "Đường dẫn cục bộ trên máy chủ này",
+  "settings.pathMode.remoteTip": "Kho restic từ xa",
   "settings.primaryRemote.title": "Cài đặt an toàn cho kho chính từ xa",
   "settings.primaryRemote.hint": "Đường dẫn sao lưu này là một kho restic từ xa — đây CHÍNH LÀ bản sao chính, không phải bản sao lưu trữ. Cấu hình giới hạn băng thông, bảo vệ chỉ-thêm và cảnh báo ngân sách tăng trưởng tại đây, cùng mức bảo vệ mà một bản sao ngoài trang nhận được.",
   "settings.primaryRemote.budgetHint": "Cảnh báo khi kho này vượt quá ngân sách byte (0 = tắt).",

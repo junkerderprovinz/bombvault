@@ -366,6 +366,8 @@ const he: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "שמירת תמונות מצב",
   "settings.retentionHint": "כמה גיבויים לשמור לכל פריט. אחרי כל גיבוי, restic גוזם snapshots ישנים לפי מדיניות זו. הכל 0 = לשמור הכל (כבוי).",
+  "settings.imageMaintenanceTitle": "ניקוי images ו-Registries",
+  "settings.imageMaintenanceHint": "תחזוקה סביב עדכון הקונטיינר לאחר הגיבוי: מחיקת ה-image הישן, רענון מצב העדכון השמור של Unraid, ואחסון פרטי גישה ל-registries פרטיים שהעדכון זקוק להם.",
   "settings.retentionLast": "שמור אחרונים",
   "settings.retentionDaily": "שמור יומיים",
   "settings.retentionWeekly": "שמור שבועיים",
@@ -397,8 +399,9 @@ const he: Partial<Translations> = {
   "cloud.credSets.add": "הוסף ערכת אישורים",
   "cloud.credSets.name": "שם",
   "cloud.credSets.none": "אין עדיין ערכות אישורים נוספות.",
-  "export.encrypt.title": "הצפנת ייצוא רגיל (age)",
+  "export.encrypt.title": "הצפנת ייצוא רגיל",
   "export.encrypt.hint": "מאגרי restic כבר מוצפנים. זה מצפין באופן אופציונלי את פריטי הייצוא הרגילים (tar.gz של קונטיינר ו-VM יחד עם קובצי ה-xml שלהם, וה-zip של flash) באמצעות age, כדי שניתן יהיה לאחסן או להעביר אותם מחוץ לשרת בבטחה.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) הוא כלי הצפנת קבצים קטן ומודרני — חלופה פשוטה יותר ל-GPG לאיטום קובץ עבור נמען אחד או יותר.",
   "export.encrypt.enable": "הצפנת ייצוא באמצעות age",
   "export.encrypt.enableHint": "כשמופעל, ייצוא של קונטיינר, VM ו-flash נאטם באמצעות age לפני הכתיבה לדיסק ומקבל סיומת .age.",
   "export.encrypt.recipients": "נמעני age",
@@ -443,6 +446,8 @@ const he: Partial<Translations> = {
   "flash.none": "אין עדיין גיבויי flash — הרץ גיבוי למעלה.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "ייצוא והצפנה",
+  "settings.exportsEncryptionHint": "הגדרות לייצוא ה-zip של הפלאש, הצפנת פריטי הייצוא הרגילים, וההצפנה של מאגרי restic עצמם.",
   "flash.zipExport.title": "ייצוא Flash ל-zip",
   "flash.zipExport.hint": "אחרי כל גיבוי flash, כותב את התמונה גם כקובץ .zip פשוט לתיקייה — מוכן לסנכרון מחוץ לשרת (Syncthing, rclone, כונן ענן).",
   "flash.zipExport.enable": "ייצא zip אחרי כל גיבוי flash",
@@ -761,6 +766,8 @@ const he: Partial<Translations> = {
   "settings.configPath": "נתיב גיבוי עצמי",
   "settings.pathMode.local": "מקומי",
   "settings.pathMode.remote": "מרוחק",
+  "settings.pathMode.localTip": "נתיב מקומי במארח הזה",
+  "settings.pathMode.remoteTip": "מאגר restic מרוחק",
   "settings.primaryRemote.title": "הגדרות אבטחה למאגר ראשי מרוחק",
   "settings.primaryRemote.hint": "נתיב הגיבוי הזה הוא מאגר restic מרוחק — זהו העותק הראשי עצמו, לא שכפול. הגדר כאן מגבלות רוחב פס, הגנת append-only והתראת תקציב גדילה, אותה הגנה שמקבל עותק חוץ-אתרי.",
   "settings.primaryRemote.budgetHint": "התראה כאשר המאגר הזה חורג מתקציב בייטים (0 = כבוי).",

@@ -366,6 +366,8 @@ const fi: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Tilannevedosten säilytys",
   "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
+  "settings.imageMaintenanceTitle": "Image-siivous ja rekisterit",
+  "settings.imageMaintenanceHint": "Ylläpitoa varmuuskopion jälkeisen konttipäivityksen ympärillä: poistetaan korvattu image, päivitetään Unraidin oma välimuistissa oleva päivitystila ja tallennetaan tunnukset yksityisiin rekistereihin, joita päivityksen haku tarvitsee.",
   "settings.retentionLast": "Säilytä viimeisimmät",
   "settings.retentionDaily": "Säilytä päivittäin",
   "settings.retentionWeekly": "Säilytä viikoittain",
@@ -397,8 +399,9 @@ const fi: Partial<Translations> = {
   "cloud.credSets.add": "Lisää kirjautumistietojoukko",
   "cloud.credSets.name": "Nimi",
   "cloud.credSets.none": "Ei vielä lisäkirjautumistietojoukkoja.",
-  "export.encrypt.title": "Salaa selkokieliset viennit (age)",
+  "export.encrypt.title": "Salaa selkokieliset viennit",
   "export.encrypt.hint": "restic-arkistot ovat jo salattuja. Tämä salaa valinnaisesti selkokieliset vientiartefaktit (kontin ja virtuaalikoneen tar.gz sekä niiden xml, ja flash-zip) age:lla, jotta ne voi tallentaa tai siirtää turvallisesti pois palvelimelta.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) on pieni, moderni tiedostojen salaustyökalu — yksinkertaisempi vaihtoehto GPG:lle tiedoston sinetöimiseen yhdelle tai useammalle vastaanottajalle.",
   "export.encrypt.enable": "Salaa viennit age:lla",
   "export.encrypt.enableHint": "Kun päällä, kontin, virtuaalikoneen ja flashin viennit sinetöidään age:lla ennen levylle kirjoittamista, ja ne saavat .age-päätteen.",
   "export.encrypt.recipients": "age-vastaanottajat",
@@ -443,6 +446,8 @@ const fi: Partial<Translations> = {
   "flash.none": "Ei vielä flash-varmuuskopioita — suorita varmuuskopio yllä.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Viennit ja salaus",
+  "settings.exportsEncryptionHint": "Asetukset flash-zip-viennille, selkokielisten vientitiedostojen salaukselle ja itse restic-tietovarastojen salaukselle.",
   "flash.zipExport.title": "Flashin zip-vienti",
   "flash.zipExport.hint": "Jokaisen flash-varmuuskopion jälkeen tilannevedos kirjoitetaan myös tavallisena .zip-tiedostona kansioon — valmiina palvelimen ulkopuoliseen synkronointiin (Syncthing, rclone, pilviasema).",
   "flash.zipExport.enable": "Vie zip jokaisen flash-varmuuskopion jälkeen",
@@ -786,6 +791,8 @@ const fi: Partial<Translations> = {
   "settings.configPath": "Itsevarmuuskopion polku",
   "settings.pathMode.local": "Paikallinen",
   "settings.pathMode.remote": "Etä",
+  "settings.pathMode.localTip": "Paikallinen polku tällä isännällä",
+  "settings.pathMode.remoteTip": "Etäinen restic-tietovarasto",
   "settings.primaryRemote.title": "Etäisen ensisijaisen tietovaraston turva-asetukset",
   "settings.primaryRemote.hint": "Tämä varmuuskopiopolku on etäinen restic-tietovarasto — se ON ensisijainen kopio, ei replika. Määritä täällä kaistanleveysrajat, append-only-suojaus ja kasvubudjettihälytys, samat suojat kuin etäkopio saa.",
   "settings.primaryRemote.budgetHint": "Hälytä, kun tämä tietovarasto ylittää tavubudjetin (0 = pois).",

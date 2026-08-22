@@ -366,6 +366,8 @@ const ar: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "الاحتفاظ باللقطات",
   "settings.retentionHint": "عدد النسخ الاحتياطية المحتفظ بها لكل عنصر. بعد كل نسخة احتياطية، يقلّم restic اللقطات الأقدم وفق هذه السياسة. الكل صفر = الاحتفاظ بكل شيء (معطّل).",
+  "settings.imageMaintenanceTitle": "تنظيف الصور والسجلات",
+  "settings.imageMaintenanceHint": "صيانة لتحديث الحاوية بعد النسخ الاحتياطي: حذف الصورة القديمة، وتحديث حالة تحديث Unraid المخزّنة مؤقتًا، وتخزين بيانات اعتماد السجلات الخاصة التي يحتاجها سحب التحديث.",
   "settings.retentionLast": "الاحتفاظ بالأخيرة",
   "settings.retentionDaily": "الاحتفاظ اليومي",
   "settings.retentionWeekly": "الاحتفاظ الأسبوعي",
@@ -397,8 +399,9 @@ const ar: Partial<Translations> = {
   "cloud.credSets.add": "إضافة مجموعة بيانات اعتماد",
   "cloud.credSets.name": "الاسم",
   "cloud.credSets.none": "لا توجد مجموعات بيانات اعتماد إضافية بعد.",
-  "export.encrypt.title": "تشفير عمليات التصدير النصية (age)",
+  "export.encrypt.title": "تشفير عمليات التصدير النصية",
   "export.encrypt.hint": "مستودعات restic مشفّرة بالفعل. هذا يشفّر اختياريًا مخرجات التصدير النصية (ملفات tar.gz للحاوية والجهاز الافتراضي مع ملفات xml الخاصة بها، وملف flash المضغوط) باستخدام age، لتخزينها أو نقلها خارج الخادم بأمان.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) هي أداة تشفير ملفات صغيرة وحديثة — بديل أبسط لـ GPG لتشفير ملف لمستلم واحد أو أكثر.",
   "export.encrypt.enable": "تشفير عمليات التصدير باستخدام age",
   "export.encrypt.enableHint": "عند التفعيل، تُختم عمليات تصدير الحاوية والجهاز الافتراضي وflash باستخدام age قبل كتابتها على القرص، وتحصل على اللاحقة .age.",
   "export.encrypt.recipients": "مستلمو age",
@@ -443,6 +446,8 @@ const ar: Partial<Translations> = {
   "flash.none": "لا توجد نسخ احتياطية للفلاش بعد — شغّل نسخاً احتياطياً أعلاه.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "التصديرات والتشفير",
+  "settings.exportsEncryptionHint": "إعدادات تصدير ملف الفلاش المضغوط، وتشفير عناصر التصدير النصية، وتشفير مستودعات restic نفسها.",
   "flash.zipExport.title": "تصدير Flash إلى zip",
   "flash.zipExport.hint": "بعد كل نسخة احتياطية للفلاش، تُكتب اللقطة أيضاً كملف .zip عادي إلى مجلد — جاهزة للمزامنة خارج الخادم (Syncthing أو rclone أو قرص سحابي).",
   "flash.zipExport.enable": "تصدير ملف zip بعد كل نسخة احتياطية للفلاش",
@@ -789,6 +794,8 @@ const ar: Partial<Translations> = {
   "settings.configPath": "مسار النسخ الذاتي",
   "settings.pathMode.local": "محلي",
   "settings.pathMode.remote": "عن بُعد",
+  "settings.pathMode.localTip": "مسار محلي على هذا المضيف",
+  "settings.pathMode.remoteTip": "مستودع restic بعيد",
   "settings.primaryRemote.title": "إعدادات أمان المستودع الأساسي البعيد",
   "settings.primaryRemote.hint": "مسار النسخ الاحتياطي هذا هو مستودع restic بعيد — إنه النسخة الأساسية، وليس نسخة مكررة. اضبط هنا حدود النطاق الترددي، وحماية الإلحاق فقط، وتنبيه ميزانية النمو، وهي نفس الحمايات التي تحصل عليها نسخة خارج الموقع.",
   "settings.primaryRemote.budgetHint": "التنبيه عند تجاوز هذا المستودع لميزانية البايت (0 = إيقاف).",

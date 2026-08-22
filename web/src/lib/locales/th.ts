@@ -366,6 +366,8 @@ const th: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "การเก็บรักษาสแนปช็อต",
   "settings.retentionHint": "จำนวนการสำรองข้อมูลที่เก็บไว้ต่อรายการ หลังการสำรองข้อมูลแต่ละครั้ง restic จะตัดสแนปช็อตเก่าตามนโยบายนี้ ทั้งหมดเป็น 0 = เก็บทุกอย่าง (ปิด)",
+  "settings.imageMaintenanceTitle": "การล้างอิมเมจและรีจิสทรี",
+  "settings.imageMaintenanceHint": "การดูแลรอบการอัปเดตคอนเทนเนอร์หลังการสำรองข้อมูล: ล้างอิมเมจที่ถูกแทนที่ รีเฟรชสถานะการอัปเดตที่แคชไว้ของ Unraid เอง และจัดเก็บข้อมูลรับรองสำหรับรีจิสทรีส่วนตัวที่การดึงอัปเดตต้องใช้",
   "settings.retentionLast": "เก็บล่าสุด",
   "settings.retentionDaily": "เก็บรายวัน",
   "settings.retentionWeekly": "เก็บรายสัปดาห์",
@@ -397,8 +399,9 @@ const th: Partial<Translations> = {
   "cloud.credSets.add": "เพิ่มชุดข้อมูลรับรอง",
   "cloud.credSets.name": "ชื่อ",
   "cloud.credSets.none": "ยังไม่มีชุดข้อมูลรับรองเพิ่มเติม",
-  "export.encrypt.title": "เข้ารหัสการส่งออกแบบข้อความธรรมดา (age)",
+  "export.encrypt.title": "เข้ารหัสการส่งออกแบบข้อความธรรมดา",
   "export.encrypt.hint": "ที่เก็บ restic ถูกเข้ารหัสอยู่แล้ว สิ่งนี้จะเข้ารหัสอาร์ติแฟกต์การส่งออกแบบข้อความธรรมดา (tar.gz ของคอนเทนเนอร์และ VM พร้อมไฟล์ xml และ zip แฟลช) ด้วย age เป็นทางเลือก เพื่อให้จัดเก็บหรือย้ายออกนอกเซิร์ฟเวอร์ได้อย่างปลอดภัย",
+  "export.encrypt.ageInfo": "age (age-encryption.org) เป็นเครื่องมือเข้ารหัสไฟล์ขนาดเล็กที่ทันสมัย — ทางเลือกที่ง่ายกว่า GPG สำหรับการปิดผนึกไฟล์ให้ผู้รับหนึ่งคนขึ้นไป",
   "export.encrypt.enable": "เข้ารหัสการส่งออกด้วย age",
   "export.encrypt.enableHint": "เมื่อเปิด การส่งออกคอนเทนเนอร์ VM และแฟลชจะถูกผนึกด้วย age ก่อนเขียนลงดิสก์ และได้รับส่วนขยาย .age",
   "export.encrypt.recipients": "ผู้รับ age",
@@ -443,6 +446,8 @@ const th: Partial<Translations> = {
   "flash.none": "ยังไม่มีการสำรองข้อมูลแฟลช — เรียกใช้การสำรองข้อมูลด้านบน",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "การส่งออกและการเข้ารหัส",
+  "settings.exportsEncryptionHint": "การตั้งค่าสำหรับการส่งออก zip แฟลช การเข้ารหัสไฟล์ส่งออกแบบข้อความธรรมดา และการเข้ารหัสของที่เก็บ restic เอง",
   "flash.zipExport.title": "ส่งออก ZIP ของแฟลช",
   "flash.zipExport.hint": "หลังการสำรองข้อมูลแฟลชแต่ละครั้ง ให้เขียนสแนปช็อตออกมาเป็นไฟล์ .zip ธรรมดาไปยังโฟลเดอร์ด้วย — พร้อมสำหรับการซิงค์นอกเซิร์ฟเวอร์ (Syncthing, rclone, ไดรฟ์คลาวด์)",
   "flash.zipExport.enable": "ส่งออก ZIP หลังการสำรองข้อมูลแฟลชแต่ละครั้ง",
@@ -789,6 +794,8 @@ const th: Partial<Translations> = {
   "settings.configPath": "พาธสำรองข้อมูลตัวเอง",
   "settings.pathMode.local": "ในเครื่อง",
   "settings.pathMode.remote": "ระยะไกล",
+  "settings.pathMode.localTip": "เส้นทางในเครื่องบนโฮสต์นี้",
+  "settings.pathMode.remoteTip": "ที่เก็บ restic ระยะไกล",
   "settings.primaryRemote.title": "การตั้งค่าความปลอดภัยของที่เก็บหลักระยะไกล",
   "settings.primaryRemote.hint": "เส้นทางสำรองข้อมูลนี้เป็นที่เก็บ restic ระยะไกล — มันคือสำเนาหลักเอง ไม่ใช่สำเนาซ้ำ กำหนดค่าขีดจำกัดแบนด์วิดท์ การป้องกันแบบเพิ่มข้อมูลอย่างเดียว และการแจ้งเตือนงบประมาณการเติบโตได้ที่นี่ ซึ่งเป็นการป้องกันแบบเดียวกับที่สำเนานอกสถานที่ได้รับ",
   "settings.primaryRemote.budgetHint": "แจ้งเตือนเมื่อที่เก็บนี้เติบโตเกินงบประมาณไบต์ (0 = ปิด)",

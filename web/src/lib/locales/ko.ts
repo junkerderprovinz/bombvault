@@ -363,6 +363,8 @@ const ko: Partial<Translations> = {
 
   "settings.retentionTitle": "스냅샷 보존",
   "settings.retentionHint": "항목별로 유지할 백업 수입니다. 백업할 때마다 restic이 이 정책에 따라 오래된 스냅샷을 정리합니다. 모두 0 = 전부 보존(끔).",
+  "settings.imageMaintenanceTitle": "이미지 정리 및 레지스트리",
+  "settings.imageMaintenanceHint": "백업 후 컨테이너 업데이트 관련 유지 관리: 교체된 이미지 정리, Unraid 자체의 캐시된 업데이트 상태 갱신, 업데이트 풀에 필요한 프라이빗 레지스트리 자격 증명 저장.",
   "settings.retentionLast": "최근 보존",
   "settings.retentionDaily": "일별 보존",
   "settings.retentionWeekly": "주별 보존",
@@ -393,8 +395,9 @@ const ko: Partial<Translations> = {
   "cloud.credSets.add": "자격 증명 세트 추가",
   "cloud.credSets.name": "이름",
   "cloud.credSets.none": "아직 추가 자격 증명 세트가 없습니다.",
-  "export.encrypt.title": "평문 내보내기 암호화 (age)",
+  "export.encrypt.title": "평문 내보내기 암호화",
   "export.encrypt.hint": "restic 리포지토리는 이미 암호화되어 있습니다. 이것은 평문 내보내기 산출물 (컨테이너 및 VM 의 tar.gz 와 그 xml, 그리고 플래시 zip) 을 age 로 선택적으로 암호화하여 서버 밖에 안전하게 저장하거나 옮길 수 있게 합니다.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) 는 작고 현대적인 파일 암호화 도구입니다 — 하나 이상의 수신자를 위해 파일을 봉인하는, GPG보다 더 간단한 대안입니다.",
   "export.encrypt.enable": "age 로 내보내기 암호화",
   "export.encrypt.enableHint": "켜면 컨테이너, VM, 플래시 내보내기가 디스크에 기록되기 전에 age 로 봉인되고 .age 접미사가 붙습니다.",
   "export.encrypt.recipients": "age 수신자",
@@ -436,6 +439,8 @@ const ko: Partial<Translations> = {
   "flash.none": "아직 플래시 백업이 없습니다 — 위에서 백업을 실행하세요.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "내보내기 및 암호화",
+  "settings.exportsEncryptionHint": "플래시 zip 내보내기, 평문 내보내기 산출물 암호화, restic 저장소 자체 암호화에 대한 설정입니다.",
   "flash.zipExport.title": "플래시 zip 내보내기",
   "flash.zipExport.hint": "각 플래시 백업 후 스냅샷을 일반 .zip으로도 폴더에 기록합니다 — 서버 외부 동기화(Syncthing, rclone, 클라우드 드라이브)에 바로 사용할 수 있습니다.",
   "flash.zipExport.enable": "각 플래시 백업 후 zip 내보내기",
@@ -753,6 +758,8 @@ const ko: Partial<Translations> = {
   "settings.configPath": "셀프 백업 경로",
   "settings.pathMode.local": "로컬",
   "settings.pathMode.remote": "원격",
+  "settings.pathMode.localTip": "이 호스트의 로컬 경로",
+  "settings.pathMode.remoteTip": "원격 restic 저장소",
   "settings.primaryRemote.title": "원격 기본 저장소 안전 설정",
   "settings.primaryRemote.hint": "이 백업 경로는 원격 restic 저장소입니다 — 복제본이 아니라 기본 사본입니다. 오프사이트 사본과 동일한 보호 기능인 대역폭 제한, 추가 전용 보호, 증가 예산 알람을 여기서 설정하세요.",
   "settings.primaryRemote.budgetHint": "이 저장소가 바이트 예산을 초과하면 경고합니다(0 = 꺼짐).",

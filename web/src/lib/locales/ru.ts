@@ -358,6 +358,8 @@ const ru: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Хранение снимков",
   "settings.retentionHint": "Сколько резервных копий хранить для каждого элемента. После каждой копии restic удаляет более старые снимки согласно этой политике. Все нули = хранить всё (отключено).",
+  "settings.imageMaintenanceTitle": "Очистка образов и реестры",
+  "settings.imageMaintenanceHint": "Обслуживание вокруг обновления контейнера после резервного копирования: удаление устаревшего образа, обновление собственного кешированного статуса обновления Unraid и хранение учётных данных для приватных реестров, нужных для загрузки обновления.",
   "settings.retentionLast": "Хранить последние",
   "settings.retentionDaily": "Хранить ежедневные",
   "settings.retentionWeekly": "Хранить еженедельные",
@@ -389,8 +391,9 @@ const ru: Partial<Translations> = {
   "cloud.credSets.add": "Добавить набор учётных данных",
   "cloud.credSets.name": "Имя",
   "cloud.credSets.none": "Дополнительных наборов учётных данных пока нет.",
-  "export.encrypt.title": "Шифровать обычные экспорты (age)",
+  "export.encrypt.title": "Шифровать обычные экспорты",
   "export.encrypt.hint": "Репозитории restic уже зашифрованы. Это опционально шифрует обычные артефакты экспорта (tar.gz контейнера и ВМ вместе с их xml, и flash-zip) с помощью age, чтобы их можно было безопасно хранить или перемещать за пределы сервера.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) — небольшой современный инструмент шифрования файлов, более простая альтернатива GPG для шифрования файла для одного или нескольких получателей.",
   "export.encrypt.enable": "Шифровать экспорты с помощью age",
   "export.encrypt.enableHint": "Когда включено, экспорты контейнеров, ВМ и flash запечатываются age перед записью на диск и получают суффикс .age.",
   "export.encrypt.recipients": "Получатели age",
@@ -435,6 +438,8 @@ const ru: Partial<Translations> = {
   "flash.none": "Копий Flash пока нет — создайте копию выше.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Экспорты и шифрование",
+  "settings.exportsEncryptionHint": "Настройки экспорта flash-zip, шифрования обычных артефактов экспорта и шифрования самих репозиториев restic.",
   "flash.zipExport.title": "Экспорт flash в ZIP",
   "flash.zipExport.hint": "После каждой копии flash также записывать снимок в виде обычного .zip в папку — готового для синхронизации вне сервера (Syncthing, rclone, облачный диск).",
   "flash.zipExport.enable": "Экспортировать ZIP после каждой копии flash",
@@ -752,6 +757,8 @@ const ru: Partial<Translations> = {
   "settings.configPath": "Путь автобэкапа",
   "settings.pathMode.local": "Локально",
   "settings.pathMode.remote": "Удалённо",
+  "settings.pathMode.localTip": "Локальный путь на этом хосте",
+  "settings.pathMode.remoteTip": "Удалённый репозиторий restic",
   "settings.primaryRemote.title": "Настройки безопасности удалённого основного репозитория",
   "settings.primaryRemote.hint": "Этот путь резервного копирования — удалённый репозиторий restic: это ОСНОВНАЯ копия, а не реплика. Настройте здесь ограничения пропускной способности, защиту append-only и оповещение о бюджете роста — те же меры защиты, что и у внешней копии.",
   "settings.primaryRemote.budgetHint": "Оповещать, когда этот репозиторий превышает бюджет в байтах (0 = выключено).",

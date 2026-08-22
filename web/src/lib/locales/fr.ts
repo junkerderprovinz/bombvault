@@ -366,6 +366,8 @@ const fr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Rétention des instantanés",
   "settings.retentionHint": "Combien de sauvegardes conserver par élément. Après chaque sauvegarde, restic élague les instantanés plus anciens selon cette règle. Tout à zéro = tout conserver (désactivé).",
+  "settings.imageMaintenanceTitle": "Nettoyage des images et registries",
+  "settings.imageMaintenanceHint": "Maintenance autour de la mise à jour des conteneurs après sauvegarde : purger l'image remplacée, actualiser le statut de mise à jour mis en cache par Unraid, et stocker les identifiants des registries privés dont la mise à jour a besoin.",
   "settings.retentionLast": "Conserver les dernières",
   "settings.retentionDaily": "Conserver quotidiennes",
   "settings.retentionWeekly": "Conserver hebdomadaires",
@@ -397,8 +399,9 @@ const fr: Partial<Translations> = {
   "cloud.credSets.add": "Ajouter un ensemble d'identifiants",
   "cloud.credSets.name": "Nom",
   "cloud.credSets.none": "Aucun ensemble d'identifiants supplémentaire pour le moment.",
-  "export.encrypt.title": "Chiffrer les exports en clair (age)",
+  "export.encrypt.title": "Chiffrer les exports en clair",
   "export.encrypt.hint": "Les dépôts restic sont déjà chiffrés. Ceci chiffre en option les artefacts d'export en clair (tar.gz de conteneur et de VM avec leurs fichiers xml, et le zip flash) avec age, afin qu'ils puissent être stockés ou déplacés hors du serveur en toute sécurité.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) est un outil de chiffrement de fichiers petit et moderne — une alternative plus simple à GPG pour sceller un fichier pour un ou plusieurs destinataires.",
   "export.encrypt.enable": "Chiffrer les exports avec age",
   "export.encrypt.enableHint": "Lorsqu'activé, les exports de conteneurs, de VM et flash sont scellés avec age avant d'être écrits sur le disque, et reçoivent un suffixe .age.",
   "export.encrypt.recipients": "Destinataires age",
@@ -443,6 +446,8 @@ const fr: Partial<Translations> = {
   "flash.none": "Aucune sauvegarde flash pour l'instant — lancez-en une ci-dessus.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Exports & chiffrement",
+  "settings.exportsEncryptionHint": "Réglages pour l'export zip du flash, le chiffrement des artefacts d'export en clair, et le chiffrement des dépôts restic eux-mêmes.",
   "flash.zipExport.title": "Export Flash en zip",
   "flash.zipExport.hint": "Après chaque sauvegarde flash, écrit aussi l'instantané sous forme de .zip simple dans un dossier — prêt pour une synchronisation hors serveur (Syncthing, rclone, un disque cloud).",
   "flash.zipExport.enable": "Exporter un zip après chaque sauvegarde flash",
@@ -761,6 +766,8 @@ const fr: Partial<Translations> = {
   "settings.configPath": "Chemin Auto-sauvegarde",
   "settings.pathMode.local": "Local",
   "settings.pathMode.remote": "Distant",
+  "settings.pathMode.localTip": "Chemin local sur cet hôte",
+  "settings.pathMode.remoteTip": "Dépôt restic distant",
   "settings.primaryRemote.title": "Paramètres de sécurité du dépôt primaire distant",
   "settings.primaryRemote.hint": "Ce chemin de sauvegarde est un dépôt restic distant — il EST la copie primaire, pas une réplique. Configurez ici les limites de bande passante, la protection append-only et une alerte de budget de croissance, les mêmes protections qu'une copie hors site.",
   "settings.primaryRemote.budgetHint": "Alerte lorsque ce dépôt dépasse un budget en octets (0 = désactivé).",

@@ -366,6 +366,8 @@ const it: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Conservazione degli snapshot",
   "settings.retentionHint": "Quanti backup conservare per elemento. Dopo ogni backup, restic elimina gli snapshot più vecchi secondo questa regola. Tutto a zero = conserva tutto (disattivato).",
+  "settings.imageMaintenanceTitle": "Pulizia immagini e registry",
+  "settings.imageMaintenanceHint": "Manutenzione per l'aggiornamento dei container dopo il backup: elimina l'immagine sostituita, aggiorna lo stato di aggiornamento memorizzato da Unraid e salva le credenziali per i registry privati necessari al pull dell'aggiornamento.",
   "settings.retentionLast": "Conserva ultimi",
   "settings.retentionDaily": "Conserva giornalieri",
   "settings.retentionWeekly": "Conserva settimanali",
@@ -397,8 +399,9 @@ const it: Partial<Translations> = {
   "cloud.credSets.add": "Aggiungi set di credenziali",
   "cloud.credSets.name": "Nome",
   "cloud.credSets.none": "Nessun set di credenziali aggiuntivo ancora.",
-  "export.encrypt.title": "Cifra le esportazioni in chiaro (age)",
+  "export.encrypt.title": "Cifra le esportazioni in chiaro",
   "export.encrypt.hint": "I repository restic sono già cifrati. Questo cifra facoltativamente gli artefatti di esportazione in chiaro (tar.gz di container e VM con i relativi xml, e lo zip flash) con age, così da poterli archiviare o spostare fuori dal server in sicurezza.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) è uno strumento di cifratura file piccolo e moderno — un'alternativa più semplice a GPG per sigillare un file per uno o più destinatari.",
   "export.encrypt.enable": "Cifra le esportazioni con age",
   "export.encrypt.enableHint": "Se attivo, le esportazioni di container, VM e flash vengono sigillate con age prima di essere scritte su disco e ricevono il suffisso .age.",
   "export.encrypt.recipients": "Destinatari age",
@@ -443,6 +446,8 @@ const it: Partial<Translations> = {
   "flash.none": "Ancora nessun backup del flash — avviane uno sopra.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Esportazioni e cifratura",
+  "settings.exportsEncryptionHint": "Impostazioni per l'esportazione zip del flash, la cifratura degli artefatti di esportazione in chiaro e la cifratura dei repository restic stessi.",
   "flash.zipExport.title": "Esportazione zip del flash",
   "flash.zipExport.hint": "Dopo ogni backup del flash, scrivi lo snapshot anche come semplice .zip in una cartella — pronto per la sincronizzazione fuori dal server (Syncthing, rclone, un drive cloud).",
   "flash.zipExport.enable": "Esporta uno zip dopo ogni backup del flash",
@@ -761,6 +766,8 @@ const it: Partial<Translations> = {
   "settings.configPath": "Percorso Auto-backup",
   "settings.pathMode.local": "Locale",
   "settings.pathMode.remote": "Remoto",
+  "settings.pathMode.localTip": "Percorso locale su questo host",
+  "settings.pathMode.remoteTip": "Repository restic remoto",
   "settings.primaryRemote.title": "Impostazioni di sicurezza del repository primario remoto",
   "settings.primaryRemote.hint": "Questo percorso di backup è un repository restic remoto: È la copia primaria, non una replica. Configura qui i limiti di banda, la protezione append-only e un allarme di budget di crescita, le stesse protezioni di una copia off-site.",
   "settings.primaryRemote.budgetHint": "Avvisa quando questo repository supera un budget in byte (0 = disattivato).",

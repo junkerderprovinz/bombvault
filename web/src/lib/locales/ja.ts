@@ -363,6 +363,8 @@ const ja: Partial<Translations> = {
 
   "settings.retentionTitle": "スナップショットの保持",
   "settings.retentionHint": "項目ごとに保持するバックアップ数。バックアップのたびに restic がこのポリシーに従って古いスナップショットを削除します。すべて 0 = すべて保持（オフ）。",
+  "settings.imageMaintenanceTitle": "イメージのクリーンアップとレジストリ",
+  "settings.imageMaintenanceHint": "バックアップ後のコンテナ更新まわりのメンテナンス: 置き換えられたイメージの削除、Unraid自身のキャッシュされた更新ステータスの更新、更新のプルに必要なプライベートレジストリの認証情報の保存。",
   "settings.retentionLast": "直近を保持",
   "settings.retentionDaily": "日次を保持",
   "settings.retentionWeekly": "週次を保持",
@@ -393,8 +395,9 @@ const ja: Partial<Translations> = {
   "cloud.credSets.add": "認証情報セットを追加",
   "cloud.credSets.name": "名前",
   "cloud.credSets.none": "追加の認証情報セットはまだありません。",
-  "export.encrypt.title": "平文エクスポートを暗号化 (age)",
+  "export.encrypt.title": "平文エクスポートを暗号化",
   "export.encrypt.hint": "restic リポジトリはすでに暗号化されています。これはオプションで平文のエクスポート成果物 (コンテナと VM の tar.gz とその xml、およびフラッシュ zip) を age で暗号化し、サーバー外に安全に保存または移動できるようにします。",
+  "export.encrypt.ageInfo": "age (age-encryption.org) は小さくてモダンなファイル暗号化ツールです — 1人以上の受信者に向けてファイルを封印するための、GPGよりシンプルな代替手段です。",
   "export.encrypt.enable": "age でエクスポートを暗号化",
   "export.encrypt.enableHint": "オンにすると、コンテナ、VM、フラッシュのエクスポートはディスクに書き込む前に age で封印され、.age の拡張子が付きます。",
   "export.encrypt.recipients": "age の受信者",
@@ -436,6 +439,8 @@ const ja: Partial<Translations> = {
   "flash.none": "フラッシュバックアップはまだありません — 上でバックアップを実行してください。",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "エクスポートと暗号化",
+  "settings.exportsEncryptionHint": "フラッシュ zip エクスポート、平文エクスポート成果物の暗号化、restic リポジトリ自体の暗号化の設定。",
   "flash.zipExport.title": "フラッシュ ZIP エクスポート",
   "flash.zipExport.hint": "各フラッシュバックアップの後、スナップショットをプレーンな .zip としてフォルダーにも書き出します — サーバー外への同期（Syncthing、rclone、クラウドドライブ）にすぐ使えます。",
   "flash.zipExport.enable": "各フラッシュバックアップの後に ZIP をエクスポート",
@@ -753,6 +758,8 @@ const ja: Partial<Translations> = {
   "settings.configPath": "セルフバックアップパス",
   "settings.pathMode.local": "ローカル",
   "settings.pathMode.remote": "リモート",
+  "settings.pathMode.localTip": "このホスト上のローカルパス",
+  "settings.pathMode.remoteTip": "リモートの restic リポジトリ",
   "settings.primaryRemote.title": "リモートプライマリの安全設定",
   "settings.primaryRemote.hint": "このバックアップパスはリモートのresticリポジトリです — これはレプリカではなくプライマリコピーそのものです。帯域幅制限、追記専用保護、増加量予算アラームをここで設定できます。オフサイトコピーと同じ保護です。",
   "settings.primaryRemote.budgetHint": "このリポジトリがバイト予算を超えたときに警告します（0 = オフ）。",
