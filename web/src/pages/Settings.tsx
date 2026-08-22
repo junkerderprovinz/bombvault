@@ -3659,6 +3659,39 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
   system: <IconTabSystem />,
 };
 
+// keepRegistryAuths — the pure filtering logic behind the Image Cleanup &
+// Registries card's own save (GlimStone follow-up round, merge A auto-save):
+// drops untouched blank rows, and marks a freshly typed token as "stored" so
+// the field shows the kept-placeholder once the save lands. Pulled out as a
+// standalone, exported function (no React, no `save()` side effect) so it's
+// directly unit-testable without mounting SettingsPage — same "extract the
+// pure decision, test it without a renderer" shape as isRemotePath
+// (PathModeSwitch.tsx) and Selector.tsx's own nextFocusIndex/rovedIndex.
+// `auths`/`rowIds` are always the SAME length and index-aligned by
+// construction (every mutation site keeps them in lockstep) — the caller
+// (saveRegistries below) passes the freshly computed pair rather than
+// letting this function read component state directly.
+export function keepRegistryAuths(
+  auths: RegistryAuthEntry[],
+  rowIds: string[]
+): { auths: RegistryAuthEntry[]; rowIds: string[] } {
+  const kept = auths
+    .map((a, idx) => ({ a, idx }))
+    .filter(
+      ({ a }) =>
+        a.host.trim() !== "" ||
+        a.username.trim() !== "" ||
+        a.token.trim() !== ""
+    );
+  return {
+    auths: kept.map(({ a }) => ({
+      ...a,
+      tokenSet: a.tokenSet || a.token.trim() !== "",
+    })),
+    rowIds: kept.map(({ idx }) => rowIds[idx]),
+  };
+}
+
 export function SettingsPage() {
   const { t } = useT();
   const { advanced } = useAdvanced();
@@ -3800,23 +3833,27 @@ export function SettingsPage() {
   }
 
   // Per-section save state
-  const [encSaveState, setEncSaveState] = useState<SaveState>("idle");
-  const [encSaveError, setEncSaveError] = useState<string | null>(null);
+  // Flash zip export / plain-export encryption / repository encryption (#28)
+  // — merged into one auto-save card (GlimStone follow-up round, merge B):
+  // no SaveBar reads these anymore, so only the setters survive, as the
+  // callback params autoSaveField/debouncedSave still require — same "only
+  // the setters are needed" shape as setDomSaveState/setDomSaveError above.
+  const [, setEncSaveState] = useState<SaveState>("idle");
+  const [, setEncSaveError] = useState<string | null>(null);
   // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
   // answer when auth is off) — surfaced next to the download button.
   const [kitError, setKitError] = useState<string | null>(null);
 
   const [pathSaveState, setPathSaveState] = useState<SaveState>("idle");
   const [pathSaveError, setPathSaveError] = useState<string | null>(null);
-  // Flash zip export (#28) — its own save state, persisted via the shared save().
-  const [flashZipSaveState, setFlashZipSaveState] = useState<SaveState>("idle");
-  const [flashZipSaveError, setFlashZipSaveError] = useState<string | null>(null);
+  const [, setFlashZipSaveState] = useState<SaveState>("idle");
+  const [, setFlashZipSaveError] = useState<string | null>(null);
   // Remembers the last "keep N" the user picked so toggling history OFF (which
   // zeroes flashZipExportKeep) and back ON restores their count instead of the
   // default. Updated whenever the keepN input is set to a value >= 1.
   const [rememberedKeep, setRememberedKeep] = useState(7);
-  const [exportEncSaveState, setExportEncSaveState] = useState<SaveState>("idle");
-  const [exportEncSaveError, setExportEncSaveError] = useState<string | null>(null);
+  const [, setExportEncSaveState] = useState<SaveState>("idle");
+  const [, setExportEncSaveError] = useState<string | null>(null);
   const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
   const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
@@ -3853,16 +3890,18 @@ export function SettingsPage() {
   const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
   const [retSaveError, setRetSaveError] = useState<string | null>(null);
 
-  const [pruneSaveState, setPruneSaveState] = useState<SaveState>("idle");
-  const [pruneSaveError, setPruneSaveError] = useState<string | null>(null);
-  // #116: reconcile Unraid's cached update status after a post-backup update.
-  const [reconcileSaveState, setReconcileSaveState] = useState<SaveState>("idle");
-  const [reconcileSaveError, setReconcileSaveError] = useState<string | null>(null);
-
-  // Container-registry credentials (#106) — its own save state, persisted via
-  // the shared baseline-merging save().
-  const [registrySaveState, setRegistrySaveState] = useState<SaveState>("idle");
-  const [registrySaveError, setRegistrySaveError] = useState<string | null>(null);
+  // Image cleanup / Unraid update-status reconciliation / registries (#56,
+  // #116, #106) — merged into one auto-save card (GlimStone follow-up round,
+  // merge A): no SaveBar reads these anymore, so only the setters survive, as
+  // the callback params autoSaveField/saveRegistries still require — same
+  // "only the setters are needed" shape as setDomSaveState/setDomSaveError
+  // above (see that comment for the full reasoning).
+  const [, setPruneSaveState] = useState<SaveState>("idle");
+  const [, setPruneSaveError] = useState<string | null>(null);
+  const [, setReconcileSaveState] = useState<SaveState>("idle");
+  const [, setReconcileSaveError] = useState<string | null>(null);
+  const [, setRegistrySaveState] = useState<SaveState>("idle");
+  const [, setRegistrySaveError] = useState<string | null>(null);
 
   const [cacheSaveState, setCacheSaveState] = useState<SaveState>("idle");
   const [cacheSaveError, setCacheSaveError] = useState<string | null>(null);
@@ -4109,6 +4148,113 @@ export function SettingsPage() {
       setSettings((s) => (s ? { ...s, [key]: prev ?? !next } : s));
       setDomainToggleShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
     }
+  }
+
+  // autoSaveField (GlimStone follow-up round, Paths & Storage tab rework,
+  // merge A/B — "no Speichern button, every field auto-saves"): the SAME
+  // optimistic-flip + persist + revert-on-failure shape toggleDomainEnabled
+  // above already established, generalized from "one of 7 domain booleans"
+  // to any single Settings field the two merged cards' own toggles need.
+  // Busy/shake are keyed by field name, same map shape as
+  // domainToggleBusy/domainToggleShake above, just covering a different,
+  // smaller set of keys (the merged cards' own toggles, not the 7 domains).
+  type MergedAutoSaveKey =
+    | "pruneImageAfterUpdate"
+    | "reconcileUnraidUpdateStatus"
+    | "flashZipExportEnabled"
+    | "flashZipExportKeep"
+    | "exportEncryptEnabled"
+    | "encryptionEnabled";
+  const [mergedFieldBusy, setMergedFieldBusy] = useState<Partial<Record<MergedAutoSaveKey, boolean>>>({});
+  const [mergedFieldShake, setMergedFieldShake] = useState<Partial<Record<MergedAutoSaveKey, number>>>({});
+
+  async function autoSaveField<K extends MergedAutoSaveKey>(
+    key: K,
+    next: Settings[K],
+    setSaveState: (s: SaveState) => void,
+    setSaveError: (e: string | null) => void
+  ): Promise<boolean> {
+    const prev = settings?.[key];
+    setSettings((s) => (s ? { ...s, [key]: next } : s));
+    setMergedFieldBusy((b) => ({ ...b, [key]: true }));
+    const ok = await save({ [key]: next } as Partial<Settings>, setSaveState, setSaveError);
+    setMergedFieldBusy((b) => ({ ...b, [key]: false }));
+    if (!ok) {
+      // Roll back to the pre-click state; save() already pushed the reason —
+      // meaningful for a toggle (a boolean has an obvious "before" to revert
+      // to); the merged cards' free-text/number fields below use
+      // debouncedSave instead, which intentionally has no revert (see that
+      // function's own comment).
+      setSettings((s) => (s ? { ...s, [key]: prev as Settings[K] } : s));
+      setMergedFieldShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+    }
+    return ok;
+  }
+
+  // debouncedSave/cancelDebounce — the free-text/number half of the same
+  // merge A/B auto-save requirement: a registry host/username/token, a flash
+  // zip export path/keep-count, or the age recipients list would be wasteful
+  // (or outright annoying, mid-keystroke) to persist on every single change,
+  // so these fire `run` DELAY_MS after the last edit to the same `key`
+  // instead of immediately. Deliberately NO revert-on-failure here (unlike
+  // autoSaveField above) — save()'s own toast already reports a failure, and
+  // reverting a text field the user might still be actively typing into
+  // would be jarring rather than helpful; the value simply stays as typed
+  // and the next edit (or a page reload) gets another chance to save it.
+  // Keyed by a caller-chosen string (not a Settings field name) so ONE
+  // debounce line can cover several fields that only make sense saved
+  // together (e.g. every registry-row edit shares the "registryAuths" key,
+  // since they all resolve to the SAME registryAuths patch).
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const DEBOUNCE_MS = 800;
+
+  function debouncedSave(key: string, run: () => void) {
+    const existing = debounceTimers.current[key];
+    if (existing) clearTimeout(existing);
+    debounceTimers.current[key] = setTimeout(run, DEBOUNCE_MS);
+  }
+
+  function cancelDebounce(key: string) {
+    const existing = debounceTimers.current[key];
+    if (existing) {
+      clearTimeout(existing);
+      delete debounceTimers.current[key];
+    }
+  }
+
+  // A pending debounce must not fire (and call setSettings/save with stale
+  // closures) after this page has unmounted — e.g. the user types into the
+  // registry host field and navigates away within the 800ms window. The
+  // ref's own object identity never changes (only its properties are
+  // mutated in place by debouncedSave/cancelDebounce above), but it's still
+  // captured into a local first — the plain, lint-satisfying version of the
+  // same "don't read .current fresh inside a cleanup" rule, even though this
+  // ref never actually goes stale the way a DOM-node ref could.
+  useEffect(() => {
+    const timers = debounceTimers.current;
+    return () => {
+      Object.values(timers).forEach(clearTimeout);
+    };
+  }, []);
+
+  // saveRegistries — the merge A registries sub-section's own save, shared by
+  // both the debounced per-field edit path and the immediate Remove-row path
+  // (see the Card below). Reproduces the exact "drop untouched blank rows,
+  // mark a freshly typed token as stored" logic the old batched Speichern
+  // button used to run on click, now against an EXPLICIT (auths, rowIds)
+  // pair rather than reading `settings`/`registryRowIds` directly — both
+  // callers already have the freshly computed arrays in hand (the state
+  // update and this save race the same render otherwise), so passing them
+  // in avoids acting on a one-render-stale snapshot.
+  function saveRegistries(nextAuths: RegistryAuthEntry[], nextRowIds: string[]) {
+    const { auths, rowIds } = keepRegistryAuths(nextAuths, nextRowIds);
+    void save(
+      { registryAuths: auths },
+      setRegistrySaveState,
+      setRegistrySaveError
+    ).then((ok) => {
+      if (ok) setRegistryRowIds(rowIds);
+    });
   }
 
   // buildSchedulePatch collects EVERY schedule field for the Schedules tab's one
@@ -4980,263 +5126,184 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Prune the superseded image after a post-backup container   */}
-      {/* update (#56). Opt-in; keeping the old image makes rollback cheap.    */}
+      {/* STORAGE — Image cleanup, Unraid's own update-status reconciliation,  */}
+      {/* and private container registries, merged into one card (GlimStone    */}
+      {/* follow-up round, merge A): all three feed the SAME post-backup       */}
+      {/* container-update pipeline (#56, #116, #106). Every field here now    */}
+      {/* auto-saves instead of batching into a Speichern button — mirrors     */}
+      {/* the Domains card's own auto-save mechanism (#142): the two toggles   */}
+      {/* use the exact optimistic-flip + persist + revert-on-failure shape    */}
+      {/* toggleDomainEnabled established (see autoSaveField below); the       */}
+      {/* registry text fields debounce instead (typing on every keystroke     */}
+      {/* would be wasteful for a free-text host/username/token), while        */}
+      {/* removing a row still saves immediately, same as before.              */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.imageCleanupTitle")} hint={t("settings.imageCleanupHint")} hueIndex={nextHue()}>
+      <Card title={t("settings.imageMaintenanceTitle")} hint={t("settings.imageMaintenanceHint")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.pruneImageAfterUpdate")}
           hint={t("settings.pruneImageAfterUpdateHint")}
           checked={settings.pruneImageAfterUpdate}
-          onChange={(v) =>
-            setSettings((prev) => (prev ? { ...prev, pruneImageAfterUpdate: v } : prev))
-          }
+          onChange={(v) => void autoSaveField("pruneImageAfterUpdate", v, setPruneSaveState, setPruneSaveError)}
+          disabled={mergedFieldBusy.pruneImageAfterUpdate}
+          shakeNonce={mergedFieldShake.pruneImageAfterUpdate}
         />
-        <SaveBar
-          state={pruneSaveState}
-          error={pruneSaveError}
-          onSave={() =>
-            void save(
-              { pruneImageAfterUpdate: settings.pruneImageAfterUpdate },
-              setPruneSaveState,
-              setPruneSaveError
-            )
-          }
-          t={t}
-        />
-      </Card>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Reconcile Unraid's update status (#116). After the         */}
-      {/* post-backup update recreates a container, ask Unraid to refresh its  */}
-      {/* own cached "update available" status over the host SSH link so the   */}
-      {/* Docker tab's stale banner clears. Best-effort and non-fatal.         */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
-      <Card title={t("settings.reconcileTitle")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.reconcileUnraidStatus")}
           hint={t("settings.reconcileUnraidStatusHint")}
           checked={settings.reconcileUnraidUpdateStatus}
-          onChange={(v) =>
-            setSettings((prev) =>
-              prev ? { ...prev, reconcileUnraidUpdateStatus: v } : prev
-            )
-          }
+          onChange={(v) => void autoSaveField("reconcileUnraidUpdateStatus", v, setReconcileSaveState, setReconcileSaveError)}
+          disabled={mergedFieldBusy.reconcileUnraidUpdateStatus}
+          shakeNonce={mergedFieldShake.reconcileUnraidUpdateStatus}
         />
-        <SaveBar
-          state={reconcileSaveState}
-          error={reconcileSaveError}
-          onSave={() =>
-            void save(
-              { reconcileUnraidUpdateStatus: settings.reconcileUnraidUpdateStatus },
-              setReconcileSaveState,
-              setReconcileSaveError
-            )
-          }
-          t={t}
-        />
-      </Card>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Private container registries (#106): credentials the       */}
-      {/* post-backup update pull uses for images in private/sponsor-gated     */}
-      {/* registries (e.g. a ghcr.io sponsor image). Tokens are write-only:    */}
-      {/* GET returns them blank (tokenSet = stored), blank-on-save keeps the  */}
-      {/* stored one, and removing a row deletes that registry's credential.   */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
-      <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")} hueIndex={nextHue()}>
-        {settings.registryAuths.length === 0 && (
-          <p className="text-sm text-carbon-textMuted">
-            {t("settings.registriesEmpty")}
-          </p>
-        )}
-        {settings.registryAuths.map((entry, i) => {
-          // Fallback only guards a transient/impossible index mismatch (see
-          // registryRowIds' declaration) — every mutation site below keeps
-          // the two arrays in lockstep, so this should never actually miss.
-          const rowId = registryRowIds[i] ?? `registry-row-fallback-${i}`;
-          return (
-          <div
-            key={rowId}
-            className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end"
-          >
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">
-                {t("settings.registryHost")}
-              </span>
-              <input
-                type="text"
-                value={entry.host}
-                placeholder="ghcr.io"
-                onChange={(e) => {
-                  const host = e.target.value;
-                  setSettings((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          registryAuths: prev.registryAuths.map((a, j) =>
-                            j === i ? { ...a, host } : a
-                          ),
-                        }
-                      : prev
-                  );
+        {/* Private container registries (#106) ---------------------------- */}
+        <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+            {t("settings.registriesTitle")}
+            <InfoBubble tip={t("settings.registriesHint")} />
+          </h3>
+          {settings.registryAuths.length === 0 && (
+            <p className="text-sm text-carbon-textMuted">
+              {t("settings.registriesEmpty")}
+            </p>
+          )}
+          {settings.registryAuths.map((entry, i) => {
+            // Fallback only guards a transient/impossible index mismatch (see
+            // registryRowIds' declaration) — every mutation site below keeps
+            // the two arrays in lockstep, so this should never actually miss.
+            const rowId = registryRowIds[i] ?? `registry-row-fallback-${i}`;
+            return (
+            <div
+              key={rowId}
+              className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-end"
+            >
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">
+                  {t("settings.registryHost")}
+                </span>
+                <input
+                  type="text"
+                  value={entry.host}
+                  placeholder="ghcr.io"
+                  onChange={(e) => {
+                    const host = e.target.value;
+                    const nextAuths = settings.registryAuths.map((a, j) =>
+                      j === i ? { ...a, host } : a
+                    );
+                    setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
+                    debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
+                  }}
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">
+                  {t("settings.registryUser")}
+                </span>
+                <input
+                  type="text"
+                  value={entry.username}
+                  autoComplete="off"
+                  onChange={(e) => {
+                    const username = e.target.value;
+                    const nextAuths = settings.registryAuths.map((a, j) =>
+                      j === i ? { ...a, username } : a
+                    );
+                    setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
+                    debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
+                  }}
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">
+                  {t("settings.registryToken")}
+                </span>
+                <RevealInput
+                  visible={!!registryTokenVisible[rowId]}
+                  onToggleVisible={() =>
+                    setRegistryTokenVisible((p) => ({ ...p, [rowId]: !p[rowId] }))
+                  }
+                  showLabel={t("common.showValue")}
+                  hideLabel={t("common.hideValue")}
+                  value={entry.token}
+                  autoComplete="new-password"
+                  placeholder={
+                    entry.tokenSet && entry.token === ""
+                      ? t("cloud.secretSet")
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const token = e.target.value;
+                    const nextAuths = settings.registryAuths.map((a, j) =>
+                      j === i ? { ...a, token } : a
+                    );
+                    setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
+                    debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
+                  }}
+                  wrapperClassName="w-full"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  // Removing a row is a discrete action, not a text edit — it
+                  // saves IMMEDIATELY (no debounce), and cancels any pending
+                  // debounced save from an edit elsewhere in this section so
+                  // a stale pre-removal snapshot can't land after this one.
+                  const nextAuths = settings.registryAuths.filter((_, j) => j !== i);
+                  const nextRowIds = registryRowIds.filter((_, j) => j !== i);
+                  setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
+                  setRegistryRowIds(nextRowIds);
+                  // Drop this row's reveal-state entry too, so neither an id
+                  // nor a stray "revealed" flag survives to be picked up by
+                  // whatever row slides into this index next.
+                  setRegistryTokenVisible((prev) => {
+                    if (!(rowId in prev)) return prev;
+                    const next = { ...prev };
+                    delete next[rowId];
+                    return next;
+                  });
+                  cancelDebounce("registryAuths");
+                  saveRegistries(nextAuths, nextRowIds);
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">
-                {t("settings.registryUser")}
-              </span>
-              <input
-                type="text"
-                value={entry.username}
-                autoComplete="off"
-                onChange={(e) => {
-                  const username = e.target.value;
-                  setSettings((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          registryAuths: prev.registryAuths.map((a, j) =>
-                            j === i ? { ...a, username } : a
-                          ),
-                        }
-                      : prev
-                  );
-                }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">
-                {t("settings.registryToken")}
-              </span>
-              <RevealInput
-                visible={!!registryTokenVisible[rowId]}
-                onToggleVisible={() =>
-                  setRegistryTokenVisible((p) => ({ ...p, [rowId]: !p[rowId] }))
-                }
-                showLabel={t("common.showValue")}
-                hideLabel={t("common.hideValue")}
-                value={entry.token}
-                autoComplete="new-password"
-                placeholder={
-                  entry.tokenSet && entry.token === ""
-                    ? t("cloud.secretSet")
-                    : ""
-                }
-                onChange={(e) => {
-                  const token = e.target.value;
-                  setSettings((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          registryAuths: prev.registryAuths.map((a, j) =>
-                            j === i ? { ...a, token } : a
-                          ),
-                        }
-                      : prev
-                  );
-                }}
-                wrapperClassName="w-full"
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
-              />
-            </label>
+                className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              >
+                {t("settings.registryRemove")}
+              </button>
+            </div>
+            );
+          })}
+          <div>
             <button
               type="button"
               onClick={() => {
-                setSettings((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        registryAuths: prev.registryAuths.filter((_, j) => j !== i),
-                      }
-                    : prev
-                );
-                // Drop this row's id AND its reveal-state entry together, so
-                // neither an id nor a stray "revealed" flag survives to be
-                // picked up by whatever row slides into this index next.
-                setRegistryRowIds((prev) => prev.filter((_, j) => j !== i));
-                setRegistryTokenVisible((prev) => {
-                  if (!(rowId in prev)) return prev;
-                  const next = { ...prev };
-                  delete next[rowId];
-                  return next;
+                setSettings((prev) => {
+                  if (!prev) return prev;
+                  const blank: RegistryAuthEntry = {
+                    host: "",
+                    username: "",
+                    token: "",
+                    tokenSet: false,
+                  };
+                  return { ...prev, registryAuths: [...prev.registryAuths, blank] };
                 });
+                // A brand-new row always starts with its OWN fresh id — never
+                // reusing one, so it can't inherit a stale "revealed" flag left
+                // behind by a since-removed row that used to sit at this index.
+                // Not saved yet — a blank row has nothing worth persisting
+                // until a field in it is actually filled in (debouncedSave
+                // above then fires, and its own "kept" filter would drop it
+                // again anyway if it's abandoned blank).
+                setRegistryRowIds((prev) => [...prev, randomId()]);
               }}
-              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
             >
-              {t("settings.registryRemove")}
+              {t("settings.registryAdd")}
             </button>
           </div>
-          );
-        })}
-        <div>
-          <button
-            type="button"
-            onClick={() => {
-              setSettings((prev) => {
-                if (!prev) return prev;
-                const blank: RegistryAuthEntry = {
-                  host: "",
-                  username: "",
-                  token: "",
-                  tokenSet: false,
-                };
-                return { ...prev, registryAuths: [...prev.registryAuths, blank] };
-              });
-              // A brand-new row always starts with its OWN fresh id — never
-              // reusing one, so it can't inherit a stale "revealed" flag left
-              // behind by a since-removed row that used to sit at this index.
-              setRegistryRowIds((prev) => [...prev, randomId()]);
-            }}
-            className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
-          >
-            {t("settings.registryAdd")}
-          </button>
         </div>
-        <SaveBar
-          state={registrySaveState}
-          error={registrySaveError}
-          onSave={() => {
-            // Save drops untouched blank rows (below) — reproduce that SAME
-            // filter over registryRowIds so ids stay aligned with the rows
-            // that actually survive. Only committed once the save actually
-            // succeeds, matching save()'s own settings/savedSettings update
-            // (its `res.ok` branch) — an in-flight or failed save leaves
-            // registryRowIds exactly as it was.
-            const kept = settings.registryAuths
-              .map((a, idx) => ({ a, idx }))
-              .filter(
-                ({ a }) =>
-                  a.host.trim() !== "" ||
-                  a.username.trim() !== "" ||
-                  a.token.trim() !== ""
-              );
-            void save(
-              {
-                // Drop untouched blank rows; mark a freshly typed token as
-                // stored so its input shows the kept-placeholder after saving
-                // (mirrors the metricsTokenSet handling).
-                registryAuths: kept.map(({ a }) => ({
-                  ...a,
-                  tokenSet: a.tokenSet || a.token.trim() !== "",
-                })),
-              },
-              setRegistrySaveState,
-              setRegistrySaveError
-            ).then((ok) => {
-              if (ok) setRegistryRowIds(kept.map(({ idx }) => registryRowIds[idx]));
-            });
-          }}
-          t={t}
-        />
       </Card>
       )}
 
@@ -5288,158 +5355,208 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Flash zip export (#28) — a plain .zip written after each   */}
-      {/* flash backup, for off-server sync. Only relevant when Flash is on.   */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && settings.flashEnabled && (
-      <Card title={t("flash.zipExport.title")} hint={t("flash.zipExport.hint")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("flash.zipExport.enable")}
-          hint={t("flash.zipExport.enableHint")}
-          checked={settings.flashZipExportEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, flashZipExportEnabled: v } : prev)
-          }
-        />
-        {settings.flashZipExportEnabled && (
-          <>
-            <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-              {t("flash.zipExport.plaintextWarn")}
-            </div>
-            <FolderBrowser
-              label={t("flash.zipExport.path")}
-              value={settings.flashZipExportPath}
-              hostMountRoot={hostMountRoot}
-              hint={t("flash.zipExport.pathHint")}
-              onChange={(v) =>
-                setSettings((prev) => prev ? { ...prev, flashZipExportPath: v } : prev)
-              }
-            />
-            {!settings.flashZipExportPath.trim() && (
-              <p className="text-xs text-statusFail -mt-1">{t("flash.zipExport.pathRequired")}</p>
-            )}
-            <ToggleRow
-              label={t("flash.zipExport.keepHistory")}
-              hint={t("flash.zipExport.keepHistoryHint")}
-              // History is "on" whenever we keep more than a single overwritten zip.
-              // Turning it on restores the last count the user picked (rememberedKeep,
-              // default 7); off collapses back to 0 = a single flash-latest.zip.
-              checked={settings.flashZipExportKeep > 0}
-              onChange={(v) =>
-                setSettings((prev) =>
-                  prev
-                    ? { ...prev, flashZipExportKeep: v ? rememberedKeep : 0 }
-                    : prev
-                )
-              }
-            />
-            {settings.flashZipExportKeep > 0 ? (
-              <label className="flex flex-col gap-1 max-w-40">
-                {/* Live-review round 3 sweep: same field-caption-to-bubble
-                    fix as settings.restartHealthTimeoutHint above. */}
-                <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                  {t("flash.zipExport.keepN")}
-                  <InfoBubble tip={t("flash.zipExport.keepNHint")} />
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  value={settings.flashZipExportKeep}
-                  onChange={(e) => {
-                    const n = Math.max(1, parseInt(e.target.value, 10) || 1);
-                    setRememberedKeep(n);
-                    setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
-                  }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
-                />
-              </label>
-            ) : (
-              <p className="text-xs text-carbon-textMuted">{t("flash.zipExport.latestNote")}</p>
-            )}
-          </>
-        )}
-        <SaveBar
-          state={flashZipSaveState}
-          error={flashZipSaveError}
-          disabled={settings.flashZipExportEnabled && !settings.flashZipExportPath.trim()}
-          onSave={() =>
-            void save(
-              {
-                flashZipExportEnabled: settings.flashZipExportEnabled,
-                flashZipExportPath: settings.flashZipExportPath,
-                flashZipExportKeep: settings.flashZipExportKeep,
-              },
-              setFlashZipSaveState,
-              setFlashZipSaveError
-            )
-          }
-          t={t}
-        />
-      </Card>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE: Export encryption (age). Optionally seals the PLAIN export   */}
-      {/* artifacts (container/VM tar.gz + xml, flash zip) with age recipients. */}
-      {/* Applies across domains, so it is not gated on any single domain.      */}
+      {/* STORAGE — Flash zip export (#28), plain-export encryption (age), and */}
+      {/* the restic repositories' own encryption, merged into one card         */}
+      {/* (GlimStone follow-up round, merge B): all three are ways backup       */}
+      {/* exports/repositories get protected. Every field auto-saves instead    */}
+      {/* of batching into a Speichern button (#142's own mechanism) — the      */}
+      {/* three toggles use autoSaveField (optimistic + revert-on-failure);     */}
+      {/* the path/keep-count/recipients fields debounce instead, same          */}
+      {/* reasoning as the registries fields in the Image Cleanup card above.   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("export.encrypt.title")} hint={t("export.encrypt.hint")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={t("export.encrypt.enable")}
-          hint={t("export.encrypt.enableHint")}
-          checked={settings.exportEncryptEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, exportEncryptEnabled: v } : prev)
-          }
-        />
-        {settings.exportEncryptEnabled && (
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
-            {/* Live-review round 3 sweep: export.encrypt.recipientsHint below
-                (the "one per line, age1.../SSH key format" caption on the
-                textarea) is left as permanent text on purpose, the same
-                "genuine toss-up" carve-out settings.offsiteHint documents
-                further up this file — it names the exact accepted KEY
-                SYNTAX for a multi-line field someone fills in by pasting one
-                key per line, which reads as reference to consult while
-                composing the list rather than a one-time "what does this
-                toggle do" explainer (that half is already covered by
-                export.encrypt.enableHint on the ToggleRow above). Flagged,
-                not force-converted. */}
-            <textarea
-              value={settings.exportAgeRecipients}
-              spellCheck={false}
-              rows={3}
-              onChange={(e) =>
-                setSettings((prev) => prev ? { ...prev, exportAgeRecipients: e.target.value } : prev)
-              }
-              placeholder={t("export.encrypt.recipientsPlaceholder")}
-              dir="ltr"
-              className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
+      <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
+        {/* Flash zip export — only relevant when Flash is on. ---------------- */}
+        {settings.flashEnabled && (
+          <div className="flex flex-col gap-3">
+            <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+              {t("flash.zipExport.title")}
+              <InfoBubble tip={t("flash.zipExport.hint")} />
+            </h3>
+            <ToggleRow
+              label={t("flash.zipExport.enable")}
+              hint={t("flash.zipExport.enableHint")}
+              checked={settings.flashZipExportEnabled}
+              onChange={(v) => void autoSaveField("flashZipExportEnabled", v, setFlashZipSaveState, setFlashZipSaveError)}
+              disabled={mergedFieldBusy.flashZipExportEnabled}
+              shakeNonce={mergedFieldShake.flashZipExportEnabled}
             />
-            <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
-            {!settings.exportAgeRecipients.trim() && (
-              <span className="text-xs text-statusFail">{t("export.encrypt.recipientsRequired")}</span>
+            {settings.flashZipExportEnabled && (
+              <>
+                <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                  {t("flash.zipExport.plaintextWarn")}
+                </div>
+                <FolderBrowser
+                  label={t("flash.zipExport.path")}
+                  value={settings.flashZipExportPath}
+                  hostMountRoot={hostMountRoot}
+                  hint={t("flash.zipExport.pathHint")}
+                  onChange={(v) => {
+                    setSettings((prev) => prev ? { ...prev, flashZipExportPath: v } : prev);
+                    debouncedSave("flashZipExportPath", () =>
+                      void save({ flashZipExportPath: v }, setFlashZipSaveState, setFlashZipSaveError)
+                    );
+                  }}
+                />
+                {!settings.flashZipExportPath.trim() && (
+                  <p className="text-xs text-statusFail -mt-1">{t("flash.zipExport.pathRequired")}</p>
+                )}
+                <ToggleRow
+                  label={t("flash.zipExport.keepHistory")}
+                  hint={t("flash.zipExport.keepHistoryHint")}
+                  // History is "on" whenever we keep more than a single overwritten zip.
+                  // Turning it on restores the last count the user picked (rememberedKeep,
+                  // default 7); off collapses back to 0 = a single flash-latest.zip.
+                  checked={settings.flashZipExportKeep > 0}
+                  onChange={(v) =>
+                    void autoSaveField(
+                      "flashZipExportKeep",
+                      v ? rememberedKeep : 0,
+                      setFlashZipSaveState,
+                      setFlashZipSaveError
+                    )
+                  }
+                  disabled={mergedFieldBusy.flashZipExportKeep}
+                  shakeNonce={mergedFieldShake.flashZipExportKeep}
+                />
+                {settings.flashZipExportKeep > 0 ? (
+                  <label className="flex flex-col gap-1 max-w-40">
+                    {/* Live-review round 3 sweep: same field-caption-to-bubble
+                        fix as settings.restartHealthTimeoutHint above. */}
+                    <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                      {t("flash.zipExport.keepN")}
+                      <InfoBubble tip={t("flash.zipExport.keepNHint")} />
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={settings.flashZipExportKeep}
+                      onChange={(e) => {
+                        const n = Math.max(1, parseInt(e.target.value, 10) || 1);
+                        setRememberedKeep(n);
+                        setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
+                        debouncedSave("flashZipExportKeep", () =>
+                          void save({ flashZipExportKeep: n }, setFlashZipSaveState, setFlashZipSaveError)
+                        );
+                      }}
+                      className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                    />
+                  </label>
+                ) : (
+                  <p className="text-xs text-carbon-textMuted">{t("flash.zipExport.latestNote")}</p>
+                )}
+              </>
             )}
-          </label>
+          </div>
         )}
-        <SaveBar
-          state={exportEncSaveState}
-          error={exportEncSaveError}
-          disabled={settings.exportEncryptEnabled && !settings.exportAgeRecipients.trim()}
-          onSave={() =>
-            void save(
-              {
-                exportEncryptEnabled: settings.exportEncryptEnabled,
-                exportAgeRecipients: settings.exportAgeRecipients,
-              },
-              setExportEncSaveState,
-              setExportEncSaveError
-            )
-          }
-          t={t}
-        />
+
+        {/* Plain-export encryption (age) -------------------------------------- */}
+        <div className={`flex flex-col gap-3${settings.flashEnabled ? " border-t border-carbon-border pt-4" : ""}`}>
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+            {t("export.encrypt.title")}
+            {/* "(age)" dropped from the visible title (design-language.md's
+                "explanations live in a bubble" rule) — what age IS moves here,
+                concatenated onto the existing hint the same way
+                settings.retentionHint + settings.retentionCombineInfo already
+                fold two sentences into one bubble above. */}
+            <InfoBubble tip={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")}`} />
+          </h3>
+          <ToggleRow
+            label={t("export.encrypt.enable")}
+            checked={settings.exportEncryptEnabled}
+            onChange={(v) => void autoSaveField("exportEncryptEnabled", v, setExportEncSaveState, setExportEncSaveError)}
+            disabled={mergedFieldBusy.exportEncryptEnabled}
+            shakeNonce={mergedFieldShake.exportEncryptEnabled}
+          />
+          {settings.exportEncryptEnabled && (
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">{t("export.encrypt.recipients")}</span>
+              {/* Live-review round 3 sweep: export.encrypt.recipientsHint below
+                  (the "one per line, age1.../SSH key format" caption on the
+                  textarea) is left as permanent text on purpose, the same
+                  "genuine toss-up" carve-out settings.offsiteHint documents
+                  further up this file — it names the exact accepted KEY
+                  SYNTAX for a multi-line field someone fills in by pasting one
+                  key per line, which reads as reference to consult while
+                  composing the list rather than a one-time "what does this
+                  toggle do" explainer (that half is already covered by
+                  export.encrypt.enableHint, now folded into the sub-heading's
+                  own InfoBubble above). Flagged, not force-converted. */}
+              <textarea
+                value={settings.exportAgeRecipients}
+                spellCheck={false}
+                rows={3}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSettings((prev) => prev ? { ...prev, exportAgeRecipients: v } : prev);
+                  debouncedSave("exportAgeRecipients", () =>
+                    void save({ exportAgeRecipients: v }, setExportEncSaveState, setExportEncSaveError)
+                  );
+                }}
+                placeholder={t("export.encrypt.recipientsPlaceholder")}
+                dir="ltr"
+                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
+              />
+              <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
+              {!settings.exportAgeRecipients.trim() && (
+                <span className="text-xs text-statusFail">{t("export.encrypt.recipientsRequired")}</span>
+              )}
+            </label>
+          )}
+        </div>
+
+        {/* Repository encryption ---------------------------------------------- */}
+        <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
+          <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+            {t("settings.encryption")}
+          </h3>
+          <ToggleRow
+            label={
+              settings.encryptionEnabled
+                ? t("settings.encryptionOn")
+                : t("settings.encryptionOff")
+            }
+            checked={settings.encryptionEnabled}
+            onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
+            disabled={mergedFieldBusy.encryptionEnabled}
+            shakeNonce={mergedFieldShake.encryptionEnabled}
+          />
+          <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            {t("settings.encryptionWarning")}
+          </div>
+          {settings.encryptionEnabled && (
+            <div className="flex flex-col gap-2 border-t border-carbon-border pt-4">
+              {/* recovery.why is bubbled, not kept as permanent text, even though
+                  it explains a real data-loss risk: the RECURRING "you still
+                  haven't saved this" job is already owned by Dashboard.tsx's own
+                  separate, more prominent recovery.nagTitle/nagBody banner
+                  (dismissed only by recovery.stored) — this paragraph is purely
+                  the one-time "here's why, if you're curious" context for the
+                  button below it, not the app's only safeguard against
+                  forgetting. */}
+              <h4 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+                {t("recovery.title")}
+                <InfoBubble tip={t("recovery.why")} />
+              </h4>
+              <button
+                type="button"
+                onClick={() => {
+                  setKitError(null);
+                  void downloadRecoveryKit().then(setKitError);
+                }}
+                className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+              >
+                {t("recovery.download")}
+              </button>
+              {kitError && (
+                // Backend-provided error text shown verbatim BY DESIGN (e.g. the
+                // fail-closed "set a login password" refusal when auth is off) —
+                // the API answers English and is not translated client-side.
+                <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
+              )}
+            </div>
+          )}
+        </div>
       </Card>
       )}
 
@@ -5759,72 +5876,6 @@ export function SettingsPage() {
           hueIndex={nextHue()}
         />
         </>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Encryption                                               */}
-      {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
-      <Card title={t("settings.encryption")} hueIndex={nextHue()}>
-        <ToggleRow
-          label={
-            settings.encryptionEnabled
-              ? t("settings.encryptionOn")
-              : t("settings.encryptionOff")
-          }
-          checked={settings.encryptionEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, encryptionEnabled: v } : prev)
-          }
-        />
-        <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-          {t("settings.encryptionWarning")}
-        </div>
-        {settings.encryptionEnabled && (
-          <div className="flex flex-col gap-2 border-t border-carbon-border pt-4">
-            {/* recovery.why is bubbled, not kept as permanent text, even though
-                it explains a real data-loss risk: the RECURRING "you still
-                haven't saved this" job is already owned by Dashboard.tsx's own
-                separate, more prominent recovery.nagTitle/nagBody banner
-                (dismissed only by recovery.stored) — this paragraph is purely
-                the one-time "here's why, if you're curious" context for the
-                button below it, not the app's only safeguard against
-                forgetting. */}
-            <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-              {t("recovery.title")}
-              <InfoBubble tip={t("recovery.why")} />
-            </h3>
-            <button
-              type="button"
-              onClick={() => {
-                setKitError(null);
-                void downloadRecoveryKit().then(setKitError);
-              }}
-              className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
-            >
-              {t("recovery.download")}
-            </button>
-            {kitError && (
-              // Backend-provided error text shown verbatim BY DESIGN (e.g. the
-              // fail-closed "set a login password" refusal when auth is off) —
-              // the API answers English and is not translated client-side.
-              <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
-            )}
-          </div>
-        )}
-        <SaveBar
-          state={encSaveState}
-          error={encSaveError}
-          onSave={() =>
-            void save(
-              { encryptionEnabled: settings.encryptionEnabled },
-              setEncSaveState,
-              setEncSaveError
-            )
-          }
-          t={t}
-        />
-      </Card>
       )}
 
       {/* ------------------------------------------------------------------ */}
