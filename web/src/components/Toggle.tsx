@@ -99,7 +99,28 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
           // simply: do not put a Toggle inside a dir-overriding container.
           // Pin only the technical TEXT with `dir="ltr"` (a `<span>` around
           // the literal), never a container that also holds layout.
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-carbon-background transition-transform ${
+          //
+          // rounded-pill (shape engine follow-up, live-review point 2 —
+          // "the knob should ALSO adapt, not stay a permanent circle"): reads
+          // the exact same `--radius-pill` custom property the OUTER track
+          // above already keys its own `rounded-pill` off, not a separate,
+          // size-tuned token. Two reasons this is the right token rather than
+          // `--radius-control` (index.css's other candidate, used by cards/
+          // buttons/fields): (1) consistency — the track and its own thumb
+          // reading the same variable is what makes them read as one control
+          // reshaping together, not two independently-tuned pieces that
+          // happen to move in the same direction; (2) the actual numbers only
+          // work out right with --radius-pill. At shape="round", --radius-pill
+          // is 9999px — on this 14px (h-3.5 w-3.5) box that still resolves to
+          // a perfect circle (any radius ≥ half the box side does), matching
+          // "round shape → circular knob (current, unchanged)" exactly.
+          // --radius-control at "round" is only 0.625rem (10px), which on a
+          // 14px box would render a rounded SQUARE, not a circle — it would
+          // silently break the one shape this change must leave alone. At
+          // "soft" (--radius-pill: 0.3125rem / 5px) this reads as a gently
+          // rounded square knob; at "square" (--radius-pill: 0) it's sharp
+          // corners — both exactly the ask.
+          className={`inline-block h-3.5 w-3.5 rounded-pill bg-carbon-background transition-transform ${
             checked ? "translate-x-[18px] rtl:-translate-x-[18px]!" : "translate-x-[3px] rtl:-translate-x-[3px]!"
           }`}
         />
