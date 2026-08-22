@@ -645,8 +645,18 @@ export function Badge({
   // call site on the page — no separate subscription needed for the one real
   // place this value can change while the page showing it is mounted.
   const hueOn = hueIndex !== undefined && tone === "heading";
+  // A hue-enabled heading badge is always the notch treatment (badgeClassName's
+  // own isHeadingNotch above gates the SAME tone==="heading" && size==="heading"
+  // pair — every real call site already pairs them, see that comment) — but
+  // this is computed again here, explicitly, rather than trusted as an
+  // established invariant: `.glim-notch-hue` below is a load-bearing selector
+  // hook (index.css's card-wide reactive-hover rule keys off it specifically,
+  // not the general `.glim-hue` every rainbow-hued element carries), and a
+  // future call site that ever passed `hueIndex` without `size="heading"`
+  // must NOT silently pick up that card-wide reveal too.
+  const isNotchHue = hueOn && size === "heading";
   const shared = badgeClassName({ tone, size, shape, wrap, className });
-  const merged = hueOn ? `glim-hue ${shared}` : shared;
+  const merged = hueOn ? `glim-hue ${isNotchHue ? "glim-notch-hue " : ""}${shared}` : shared;
   const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
 
   if (as === "button") {
