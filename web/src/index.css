@@ -1502,6 +1502,29 @@ body {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Shake — generic "this action couldn't be done" error feedback (#142, first
+   applied to the Domains card's auto-save toggles: enabling VMs with no
+   working SSH connection to the libvirt host reverts the switch AND shakes
+   it). Deliberately NOT named after any one control — any future control
+   that needs the same "you clicked it, the backend said no" feedback applies
+   `.glim-shake` and, if it isn't a one-shot DOM node already (a toast IS —
+   see glim-toast-in above and lib/toast.tsx's push(), which mints a fresh id
+   per toast so even a repeated identical message gets a fresh node and its
+   entrance animation always plays), replays it the same way ToggleRow does:
+   key the element on a nonce that increments once per failure, so a genuinely
+   NEW element (and a fresh animation timeline) exists even when the SAME
+   control fails twice in a row. A short, decaying horizontal oscillation —
+   left/right a few times, settling back to 0 — reads as "rejected" without
+   needing any text; four cycles decaying from 4px to 2px, done in well under
+   half a second so it never feels like it's blocking the next click. */
+@keyframes glim-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-4px); }
+  40%      { transform: translateX(4px); }
+  60%      { transform: translateX(-2px); }
+  80%      { transform: translateX(2px); }
+}
+
 /* The logo mark hosts the normal <img> plus (at boom) the fragment grid. The FX
    overlay (.bv-boom-fx) is a sibling so the flash / shockwave / cloud / sparks are
    never clipped or transformed by the mark. Both overflow the 64px box freely and
@@ -1616,6 +1639,10 @@ body {
   /* What's-new modal enter (#48). */
   .bv-modal-backdrop { animation: bv-fade-in 200ms ease both; }
   .bv-modal-card { animation: bv-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
+
+  /* Generic error-feedback shake (#142) — see glim-shake's own keyframe
+     comment above for the reusability contract. */
+  .glim-shake { animation: glim-shake 360ms ease-in-out; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1636,4 +1663,10 @@ body {
      pairing) — it still needs to arrive legibly, just without the motion
      component (design-language.md's motion engine section). */
   .glim-toast { animation: glim-fade-in 160ms ease both; }
+
+  /* Reduced motion: no lateral shake — reuses the egg wobble's own quiet
+     fade-pulse (bv-egg-fade-pulse is already a generic opacity pulse despite
+     its name; the failure still needs to register, just without the
+     side-to-side motion component). */
+  .glim-shake { animation: bv-egg-fade-pulse 300ms ease-in-out; }
 }

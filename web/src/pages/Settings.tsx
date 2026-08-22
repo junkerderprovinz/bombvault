@@ -157,6 +157,7 @@ export function ToggleRow({
   onChange,
   disabled,
   hideLabel = false,
+  shakeNonce,
 }: {
   label: string;
   description?: string;
@@ -177,6 +178,22 @@ export function ToggleRow({
    *  the decision this switch makes) — the label still reaches screen readers
    *  via the underlying Toggle's aria-label. Any `description` still renders. */
   hideLabel?: boolean;
+  /** Bump this (any new, truthy number) to replay the `.glim-shake` error
+   *  feedback animation once — e.g. an auto-save rejected by the backend
+   *  (design-language.md's motion engine, "shake" pattern). Passed straight
+   *  through as the underlying Toggle's React `key`: a genuinely NEW value
+   *  unmounts and remounts that one <button>, so the CSS animation restarts
+   *  from its first frame even when the previous shake never fully settled
+   *  and even for the SAME domain failing twice in a row — a class toggled
+   *  on an element that never leaves the DOM would need an `animationend`
+   *  handler (or a forced-reflow class-remove-then-readd trick) to replay on
+   *  a repeated identical failure; this codebase's existing precedent for
+   *  "replay on a repeated identical trigger" is lib/toast.tsx's push(),
+   *  which mints a fresh `id` per toast so an identical message still gets a
+   *  fresh DOM node and its entrance animation always plays. Undefined/0
+   *  (never shaken yet) renders no `.glim-shake` class at all, so a normal
+   *  page load or a successful toggle never shakes. */
+  shakeNonce?: number;
 }) {
   // The switch dims itself via its own `disabled:opacity-50` (Toggle.tsx), but
   // that left the caption and description next to it at full opacity, so a
@@ -205,7 +222,15 @@ export function ToggleRow({
           <span className={`text-xs text-carbon-textMuted${dim}`}>{description}</span>
         )}
       </div>
-      <Toggle hideLabel label={label} checked={checked} onChange={onChange} disabled={disabled} className="mt-0.5" />
+      <Toggle
+        key={shakeNonce}
+        hideLabel
+        label={label}
+        checked={checked}
+        onChange={onChange}
+        disabled={disabled}
+        className={`mt-0.5${shakeNonce ? " glim-shake" : ""}`}
+      />
     </div>
   );
 }
@@ -3536,8 +3561,33 @@ export function SettingsPage() {
   // Which domain's guided off-site setup wizard is expanded (null = none).
   const [offsiteWizard, setOffsiteWizard] = useState<"containers" | "vms" | "flash" | "files" | null>(null);
 
-  const [domSaveState, setDomSaveState] = useState<SaveState>("idle");
-  const [domSaveError, setDomSaveError] = useState<string | null>(null);
+  // Domains card (#142 — auto-save, no Speichern button): each row now saves
+  // itself the instant it's clicked instead of batching into one SaveBar, so
+  // there is no single "is the card saving" state left to show — only
+  // setDomSaveState/setDomSaveError survive, as the two callback params the
+  // shared save() helper still requires; nothing reads the values back
+  // anymore. Same "only the setters are needed" shape as setTgtState/
+  // setTgtError above (see that comment for the full reasoning) — save()'s
+  // own toast already reports the outcome.
+  const [, setDomSaveState] = useState<SaveState>("idle");
+  const [, setDomSaveError] = useState<string | null>(null);
+  // Per-row busy flag (disables that ONE toggle while its own request is in
+  // flight) and shake-replay nonce (bumped on a rejected save so ToggleRow's
+  // `.glim-shake` plays once more even on a second consecutive failure of the
+  // SAME domain — see ToggleRow's shakeNonce doc comment). Both keyed by the
+  // Settings field name, mirroring IncludeToggle.tsx's own per-row `busy`
+  // state, adapted to a map since all 7 rows live inline in this one
+  // component rather than as separate IncludeToggle instances.
+  type DomainToggleKey =
+    | "containersEnabled"
+    | "vmsEnabled"
+    | "flashEnabled"
+    | "filesEnabled"
+    | "configEnabled"
+    | "receiverEnabled"
+    | "fleetEnabled";
+  const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
+  const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
 
   const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
   const [retSaveError, setRetSaveError] = useState<string | null>(null);
@@ -3767,6 +3817,36 @@ export function SettingsPage() {
       setSaveState("idle");
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
       return false;
+    }
+  }
+
+  // toggleDomainEnabled (#142 — "Bei Domänen der Speichern-Button entfernen, es
+  // soll automatisch speichern"): each Domains-card row saves ITSELF the instant
+  // it's clicked, mirroring OffsiteWizard.tsx's toggleImmutable — the one other
+  // place in this app already does "flip a single boolean settings field the
+  // moment its switch is touched, no batching Save button": optimistic
+  // setSettings flip, then the shared save() helper above (which already
+  // merges onto the confirmed baseline, persists, dispatches
+  // "bv:settings-changed" so Layout/Sidebar re-fetch and the tab appears/
+  // disappears live, and pushes the toast) — never a new persistence path.
+  //
+  // A rejected save (e.g. enabling VMs with no working SSH connection to the
+  // libvirt host — internal/api/handlers.go's handlePutSettings checks that
+  // OFF→ON transition specifically) rolls the optimistic flip back to
+  // whatever it was before this click and bumps this row's shake nonce so
+  // ToggleRow replays `.glim-shake` — generic by construction: it keys off
+  // `!ok`, not off which domain or why the backend refused, so ANY domain's
+  // enable failing for ANY reason gets the same revert + shake + toast.
+  async function toggleDomainEnabled(key: DomainToggleKey, next: boolean) {
+    const prev = settings?.[key];
+    setSettings((s) => (s ? { ...s, [key]: next } : s));
+    setDomainToggleBusy((b) => ({ ...b, [key]: true }));
+    const ok = await save({ [key]: next } as Partial<Settings>, setDomSaveState, setDomSaveError);
+    setDomainToggleBusy((b) => ({ ...b, [key]: false }));
+    if (!ok) {
+      // Roll back to the pre-click state; save() already pushed the reason.
+      setSettings((s) => (s ? { ...s, [key]: prev ?? !next } : s));
+      setDomainToggleShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
     }
   }
 
@@ -4256,82 +4336,75 @@ export function SettingsPage() {
             fleet already had a real i18n key for their caption and just
             needed the prop swapped; containers/vms/flash/files/config
             needed a NEW *Hint key added (and translated into all 26
-            locales) since their old text was never a translation key. */}
+            locales) since their old text was never a translation key.
+
+            #142 (jdp, live review): "Bei Domänen der Speichern-Button
+            entfernen, es soll automatisch speichern und den Tab live
+            einblenden/ausblenden" — no more batched SaveBar. Each row now
+            calls toggleDomainEnabled directly: optimistic flip, persist via
+            the shared save() (which already broadcasts
+            "bv:settings-changed" so Layout/Sidebar re-fetch and the domain's
+            nav tab appears/disappears live, no reload), and on a rejected
+            save — e.g. enabling VMs with no working SSH connection to the
+            libvirt host — revert to the pre-click state and shake. `disabled`
+            covers this row's own request still being in flight
+            (domainToggleBusy), so a user can't fire a second click at the
+            same toggle before the first one resolves. */}
         <ToggleRow
           label={t("settings.containersEnabled")}
           hint={t("settings.containersEnabledHint")}
           checked={settings.containersEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, containersEnabled: v } : prev)
-          }
+          onChange={(v) => void toggleDomainEnabled("containersEnabled", v)}
+          disabled={domainToggleBusy.containersEnabled}
+          shakeNonce={domainToggleShake.containersEnabled}
         />
         <ToggleRow
           label={t("settings.vmsEnabled")}
           hint={t("settings.vmsEnabledHint")}
           checked={settings.vmsEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, vmsEnabled: v } : prev)
-          }
+          onChange={(v) => void toggleDomainEnabled("vmsEnabled", v)}
+          disabled={domainToggleBusy.vmsEnabled}
+          shakeNonce={domainToggleShake.vmsEnabled}
         />
         <ToggleRow
           label={t("settings.flashEnabled")}
           hint={t("settings.flashEnabledHint")}
           checked={settings.flashEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, flashEnabled: v } : prev)
-          }
+          onChange={(v) => void toggleDomainEnabled("flashEnabled", v)}
+          disabled={domainToggleBusy.flashEnabled}
+          shakeNonce={domainToggleShake.flashEnabled}
         />
         <ToggleRow
           label={t("settings.filesEnabled")}
           hint={t("settings.filesEnabledHint")}
           checked={settings.filesEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, filesEnabled: v } : prev)
-          }
+          onChange={(v) => void toggleDomainEnabled("filesEnabled", v)}
+          disabled={domainToggleBusy.filesEnabled}
+          shakeNonce={domainToggleShake.filesEnabled}
         />
         <ToggleRow
           label={t("settings.configEnabled")}
           hint={t("settings.configEnabledHint")}
           checked={settings.configEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, configEnabled: v } : prev)
-          }
+          onChange={(v) => void toggleDomainEnabled("configEnabled", v)}
+          disabled={domainToggleBusy.configEnabled}
+          shakeNonce={domainToggleShake.configEnabled}
         />
         <ToggleRow
           label={t("settings.receiverEnabled")}
           hint={t("settings.receiverEnabledHint")}
           checked={settings.receiverEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, receiverEnabled: v } : prev)
-          }
+          onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
+          disabled={domainToggleBusy.receiverEnabled}
+          shakeNonce={domainToggleShake.receiverEnabled}
         />
         <ToggleRow
           label={t("settings.fleetEnabled")}
           hint={t("settings.fleetEnabledHint")}
           checked={settings.fleetEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, fleetEnabled: v } : prev)
-          }
-        />
-        <SaveBar
-          state={domSaveState}
-          error={domSaveError}
-          onSave={() =>
-            void save(
-              {
-                containersEnabled: settings.containersEnabled,
-                vmsEnabled: settings.vmsEnabled,
-                flashEnabled: settings.flashEnabled,
-                filesEnabled: settings.filesEnabled,
-                configEnabled: settings.configEnabled,
-                receiverEnabled: settings.receiverEnabled,
-                fleetEnabled: settings.fleetEnabled,
-              },
-              setDomSaveState,
-              setDomSaveError
-            )
-          }
-          t={t}
+          onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
+          disabled={domainToggleBusy.fleetEnabled}
+          shakeNonce={domainToggleShake.fleetEnabled}
         />
       </Card>
       )}
