@@ -377,15 +377,20 @@ describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's 
     expect(list.className).not.toContain("flex-wrap");
   });
 
-  it("idle segments are transparent and flush (no radius, no idle chip background); the active segment still fills with the accent", () => {
+  it("idle segments are transparent and flush (no idle chip background), but still shape-reactive like every other segment; the active segment still fills with the accent", () => {
     render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
     const active = screen.getByRole("tab", { name: "Alpha" });
     const idle = screen.getByRole("tab", { name: "Beta" });
     expect(active.className).toContain("bg-accent");
     expect(active.className).toContain("text-accentContrast");
+    // CORRECTED (jdp, live-review — the well track's own segments must reshape
+    // with round/soft/square too, the same as the track itself and every
+    // "chip" segment already do; see Selector.tsx's own comment on this line
+    // for the live getComputedStyle proof of the regression this fixes).
+    expect(active.className).toContain("rounded-control");
     expect(idle.className).toContain("bg-transparent");
     expect(idle.className).not.toContain("bg-carbon-surface2");
-    expect(idle.className).not.toContain("rounded-control");
+    expect(idle.className).toContain("rounded-control");
   });
 
   it("segments are equal-width and centered, with the crossfade-only transition and --badge-md height from the exact TrickWork spec — no sliding pill element", () => {

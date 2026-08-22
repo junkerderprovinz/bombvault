@@ -463,16 +463,34 @@ export function Selector(props: SelectorProps) {
         const itemDisabled = disabledFlags[i];
         const cls = [
           "inline-flex min-w-0 max-w-full items-center font-medium",
-          // "well" segments carry no radius of their own — TrickWork's
-          // `.segmented-button` doesn't set border-radius at all, relying on
-          // the track's own 0.2rem padding to inset them from the row's
-          // rounded corners (see the wrapper's own comment above). Also the
-          // exact `transition: background-color 120ms ease;` from that same
-          // rule, in place of "chip"'s Tailwind `transition-colors` (which
-          // covers more properties at Tailwind's own default 150ms/timing —
-          // fine for a chip's idle-background swap, not what TrickWork's
-          // spec actually says for this track).
-          well ? "[transition:background-color_120ms_ease]" : "rounded-control transition-colors",
+          // CORRECTED (jdp, live-review — "the shape picker's own well
+          // track/segments don't reshape"): this used to read "well segments
+          // carry no radius of their own", copying TrickWork's
+          // `.segmented-button` verbatim (it sets no border-radius at all,
+          // relying only on the track's own 0.2rem padding to inset flush
+          // segments from the row's rounded corners). Verified live
+          // (getComputedStyle on a real well segment across all three
+          // [data-shape] values): the TRACK's own `rounded-control` above DID
+          // reshape correctly (10px/5px/0px), but every segment stayed at a
+          // hard 0px regardless — meaning the one piece of this control
+          // someone actually watches while clicking Rund/Leicht/Eckig (the
+          // filled, selected pill) never visibly changed, which reads as
+          // "nothing is happening" even though the track quietly did its
+          // job. TrickWork's own reference is a fixed-shape app with no
+          // per-user shape engine, so "no radius of its own" was never load-
+          // bearing there the way it is here — jdp's explicit ask ("the same
+          // way every other shape-reactive element on the page does") wins
+          // over the ported spec. `rounded-control` now applies to a "well"
+          // segment too, same token/class the track itself and every "chip"
+          // segment already reshape through — no new mechanism, just the one
+          // this file already proved works. Kept alongside the exact
+          // `transition: background-color 120ms ease;` from TrickWork's own
+          // rule (not "chip"'s broader `transition-colors`, which times more
+          // properties at Tailwind's own default 150ms — fine for a chip's
+          // idle-background swap, not what this track's spec asks for);
+          // border-radius was never part of either transition list, so this
+          // addition doesn't newly animate anything.
+          well ? "rounded-control [transition:background-color_120ms_ease]" : "rounded-control transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           hue ? "glim-hue glim-hue-icon" : "",
           on
