@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
@@ -132,14 +132,21 @@ function Card({
     // the badge leaves normal flow (it would drop to the badge's old flow
     // position instead — alone, at the top of the card, no longer next to
     // any visible title text). The InfoBubble moves INSIDE the Badge's own
-    // children instead, riding along as one floating unit. Its rule-8
-    // contract ("neutral, never the accent") still holds: InfoBubble's own
-    // icon colour is a fixed neutral token (text-carbon-textMuted, see
-    // InfoBubble.tsx) that doesn't adapt to whatever it sits on, so sitting
-    // on the badge's accent-soft wash instead of the plain card surface
-    // introduces no new contrast math — and InfoBubble's own tooltip is
-    // portal-rendered off the icon's live getBoundingClientRect, so it
-    // isn't affected by the icon's new ancestor being position:absolute.
+    // children instead, riding along as one floating unit.
+    //
+    // `onAccent` (live-review follow-up: the badge went from an accent-soft
+    // wash to a full solid `bg-accent` fill — see Badge.tsx's tone="heading"
+    // section — and InfoBubble's OLD fixed-neutral icon colour, fine on that
+    // soft wash, turned out hard to see against a bright/light accent hue).
+    // Passed here specifically because this is the one InfoBubble call site
+    // that actually sits INSIDE a tone="heading" Badge; every other hint in
+    // this file (ToggleRow's caption, a plain Card-body hint) sits on the
+    // ordinary card surface and correctly omits it, keeping the original
+    // neutral icon. See InfoBubble.tsx's own header for what the prop does.
+    // InfoBubble's tooltip itself is unaffected either way — it's portal-
+    // rendered off the icon's live getBoundingClientRect, not a descendant of
+    // the coloured badge, so the icon's new ancestor being position:absolute
+    // (and, now, its own colour inheriting from that ancestor) never reaches it.
     <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
       {/* Task 5 (design-language.md rule 11, "every heading is a filled
           section badge") resolution, for whoever finds this next: the <h2>
@@ -150,7 +157,7 @@ function Card({
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
           {title}
-          {hint && <InfoBubble tip={hint} />}
+          {hint && <InfoBubble tip={hint} onAccent />}
         </Badge>
       </h2>
       {children}
@@ -754,19 +761,35 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
         title={t("theme.toggle")}
         className="flex items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
       >
+        {/* Filled + coloured (live-review point 4: "the sun/moon icon is a
+            thin outline, jdp wants it filled and preferably coloured"). Fixed
+            hex fills rather than `currentColor`/an accent token on purpose —
+            a sun and a moon each already carry their OWN conventional colour
+            (warm gold, cool indigo) independent of whatever accent hue or
+            rainbow position the rest of the app is using; tying either to
+            --accent would make the sun render blue if the user's accent
+            happened to be blue, which reads wrong regardless of theme. Both
+            values are solid, mode-independent literals — no [data-theme]
+            variance needed, they read fine on this button's bg-carbon-surface2
+            chip in both palettes. */}
         {theme === "dark" ? (
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
+            {/* Moon — solid fill, no stroke (the crescent path already closes
+                with "z", so a plain fill renders the correct silhouette). */}
             <path
               d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
-              stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+              fill="#818CF8"
             />
           </svg>
         ) : (
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-            <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5" />
+            {/* Sun — filled disc (was stroke-only) + bolder rays, same gold
+                as the app's own default accent (#FCC419 in index.css) but
+                spelled as its own literal, not --accent — see comment above. */}
+            <circle cx="10" cy="10" r="4.25" fill="#FACC15" />
             <path
               d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
-              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+              stroke="#FACC15" strokeWidth="1.75" strokeLinecap="round"
             />
           </svg>
         )}
@@ -3615,6 +3638,43 @@ export function SettingsPage() {
   const { push, quiet, setQuiet } = useToast();
 
   const [tab, setTab] = useState<TabKey>("general");
+  // Tab-strip width tracking (GlimStone follow-up pass, live-review round —
+  // "the equal-width tab fix should match content, not stretch to fill" —
+  // see Selector.tsx's own `equalWidth`/`stretch` header for the corrected
+  // behaviour). The tab strip below now renders at its own hugged content
+  // width (sum of 7 fixed, matched-to-the-widest-label segments) instead of
+  // the page's full width, so the Card panels underneath it — which used to
+  // rely on "both are plain, unconstrained full-width children, so they
+  // match by construction" (see that wrapper's own comment) — need an
+  // explicit width to track now that the strip is no longer full-width.
+  // tabStripRef is measured, not guessed at, because the actual pixel value
+  // depends on the active locale's longest label ("Benachrichtigungen" in
+  // German is not the same width in every one of the 26 shipped locales) and
+  // on the live font/zoom the browser is actually rendering with — nothing
+  // about that is a fixed, hard-codable constant.
+  const tabStripRef = useRef<HTMLDivElement>(null);
+  const [tabStripWidth, setTabStripWidth] = useState<number | null>(null);
+
+  // ResizeObserver (not a resize-event listener): the strip's rendered width
+  // can change WITHOUT the window resizing at all — a locale swap changes
+  // every label's own natural width, and Selector's own two-pass measurement
+  // effect (see its file header) settles onto a new matched width entirely
+  // inside a layout-effect flush the window never hears about. Observing the
+  // actual box directly catches both the window-resize case AND this one.
+  // The ref is attached to a plain wrapping <div>, not `Selector` itself
+  // (that component has no forwarded ref) — see the JSX below for why an
+  // `inline-flex` wrapper is also what makes this div hug the strip's own
+  // content width rather than the page's full width in the first place.
+  useLayoutEffect(() => {
+    const el = tabStripRef.current;
+    if (!el) return;
+    const measure = () => setTabStripWidth(el.getBoundingClientRect().width);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedSettings is the server's last-confirmed state. Each card's Save persists
   // its own fields merged onto THIS baseline (not the live, possibly-edited
@@ -4234,10 +4294,23 @@ export function SettingsPage() {
       {/* though the Card below (its own width cap already removed, see that  */}
       {/* wrapper's own comment below) renders edge-to-edge across the same    */}
       {/* container — a container-width match that still LOOKED mismatched     */}
-      {/* because the visible pills never filled it. See Selector.tsx's own    */}
-      {/* file header item 5b for why this stays inside the "chip" variant     */}
-      {/* (keeping each tab its own filled/outlined badge) rather than         */}
-      {/* switching to `variant="well"`'s shared track.                        */}
+      {/* because the visible pills never filled it.                          */}
+      {/*                                                                    */}
+      {/* CORRECTED (jdp, round 2, explicit): a full-row `flex-1` stretch was  */}
+      {/* the wrong fix — "Ich wollte die Tab-Badges nur so breit wie sie      */}
+      {/* breit sein müssen... alle so breit wie der Benachrichtigungen-       */}
+      {/* Badge." Selector's `equalWidth` now measures the widest label's own  */}
+      {/* content width and pins every segment to THAT fixed width instead     */}
+      {/* (see Selector.tsx's own file header, item 5b, for the full           */}
+      {/* corrected mechanism) — the row hugs its own content again, just      */}
+      {/* with 7 equal segments instead of 7 ragged ones. That makes this      */}
+      {/* strip narrower than the page's full width once more, which is       */}
+      {/* exactly why it's now wrapped in its own measured `tabStripRef`       */}
+      {/* container below: the Card panels wrapper further down reads that     */}
+      {/* SAME measured width back as its own max-width, instead of the old    */}
+      {/* "both happen to be full-width, so they match automatically"          */}
+      {/* assumption — see that wrapper's own comment for why that assumption  */}
+      {/* no longer holds.                                                    */}
       {/*                                                                    */}
       {/* `title: label` (equalWidth follow-up): equal-width segments trade    */}
       {/* away content-hugging, so the single longest label at a given         */}
@@ -4252,6 +4325,18 @@ export function SettingsPage() {
       {/* this specific change can newly introduce, at any label length in     */}
       {/* any of the 26 locales, not just the one word measured live today.    */}
       {/* ------------------------------------------------------------------ */}
+      {/* inline-flex (not the default block `<div>`): a plain block child of  */}
+      {/* this column would still stretch to the column's full cross-axis     */}
+      {/* width regardless of what its own content needs (default              */}
+      {/* `align-items: stretch`) — the very mismatch this whole fix is        */}
+      {/* undoing, just moved one element out. `inline-flex` shrink-to-fits    */}
+      {/* to the Selector's own now-content-hugging rendered width instead,    */}
+      {/* which is also the exact box `tabStripRef`'s ResizeObserver (above,   */}
+      {/* this component's own state block) measures. `max-w-full` keeps it    */}
+      {/* from overflowing a genuinely narrow viewport (Selector's own          */}
+      {/* flex-wrap fallback still applies inside whatever width this ends up  */}
+      {/* getting). */}
+      <div ref={tabStripRef} className="inline-flex max-w-full">
       <Selector
         items={([
           ["general", t("settings.tab.general")],
@@ -4279,20 +4364,33 @@ export function SettingsPage() {
         equalWidth
       />
       </div>
+      </div>
 
       {/* Tab panels. GlimStone follow-up pass, live-review round ("Settings
           cards should match the tab row's width"): the `max-w-3xl` cap that
           used to live on this wrapper is GONE — removed, not resized to a
-          new guessed number. The tab strip immediately above (now the sole
-          content of its own un-capped gap-6 wrapper, see that wrapper's own
-          comment) already renders at this page's full <main> width, exactly
-          like every sibling page's content; capping just the panels below it
-          to 768px was what made the two visually mismatch in the first
-          place. With no cap here either, this wrapper — and therefore every
-          Card inside it — resolves to the SAME width as the tab strip above
-          by construction (both are plain, unconstrained block children of
-          this component's own full-width layout), not merely a close visual
-          match at one specific viewport.
+          new guessed number.
+
+          UPDATED (equalWidth correction round — see the tab strip's own
+          comment block above): back when `equalWidth` stretched the strip to
+          fill the full row, this wrapper needed no cap at all — both it and
+          the strip were simply full-width by construction, so they matched
+          automatically. Now that the strip hugs its own (narrower, content-
+          matched) width instead, that "both happen to be full-width"
+          assumption no longer holds — a truly uncapped Card would render
+          wider than the tabs sitting above it again, the exact mismatch this
+          whole feature exists to prevent. `style={{ maxWidth: tabStripWidth
+          }}` (below) is the fix: `tabStripWidth` is a REAL measured pixel
+          value (this component's own ResizeObserver, set up in the state
+          block near the top of SettingsPage), read off the actual rendered
+          tab strip rather than a guessed literal — so it tracks correctly
+          across every locale's own longest label, a window resize, or a
+          zoom level change, none of which a hard-coded number could.
+          `?? undefined` for the one frame before the observer's first
+          measurement lands (mount): `maxWidth: null` is not valid CSS and
+          React would warn, `undefined` simply omits the style property that
+          render, matching this wrapper's original uncapped look until the
+          real number is known.
             gap-10 (live-review round — "more air between Cards, there's
           plenty of room"): was gap-6 (24px), already the single largest gap
           value used anywhere in this app before this bump (verified — no
@@ -4308,7 +4406,7 @@ export function SettingsPage() {
           first-card gap (a separate live-review ask, its own comment) —
           matching this established rhythm rather than inventing a different
           number for that gap too. */}
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-10" style={{ maxWidth: tabStripWidth ?? undefined }}>
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
