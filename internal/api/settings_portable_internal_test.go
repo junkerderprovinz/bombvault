@@ -249,6 +249,49 @@ func TestImportRejectsBadSchemaAndMalformed(t *testing.T) {
 	}
 }
 
+// TestImportRejectsEveryNWhereTheSaveWould pins that the import path applies the
+// SAME everyN restriction handlePutSettings applies (#166) — one guard, both
+// write paths.
+//
+// Without it, a hand-written or older-build export carrying
+// "drillsSchedule": "everyN 3 04:00" imported cleanly and then made EVERY later
+// settings save fail from ANY card, because the UI always PUTs the full settings
+// object: the poisoned drills field alone rejected the whole Schedules tab, with
+// nothing on screen pointing at drills. A domain schedule with a last-run gate
+// still imports fine.
+func TestImportRejectsEveryNWhereTheSaveWould(t *testing.T) {
+	dst, dstStore := newPortableHandler(t, appKeyB)
+
+	poisoned := settingsExport{
+		SchemaVersion: settingsExportSchema,
+		Settings:      settingsView{ContainersSchedule: "off", DrillsSchedule: "everyN 3 04:00"},
+	}
+	body, _ := json.Marshal(poisoned)
+	env := doImport(t, dst, body, "?apply=true")
+	if env["ok"] != false {
+		t.Fatalf("an everyN drills schedule must be rejected on import: %v", env)
+	}
+	if msg, _ := env["error"].(string); !strings.Contains(msg, "does not support 'everyN'") {
+		t.Fatalf("want the everyN guidance error, got %q", msg)
+	}
+	if s, _ := dstStore.GetSettings(); s.DrillsSchedule == "everyN 3 04:00" {
+		t.Fatal("the rejected everyN drills schedule must never reach the store")
+	}
+
+	// The counterpart: everyN on a schedule that HAS a last-run gate still imports.
+	ok := settingsExport{
+		SchemaVersion: settingsExportSchema,
+		Settings:      settingsView{ContainersSchedule: "everyN 3 04:00"},
+	}
+	okBody, _ := json.Marshal(ok)
+	if env := doImport(t, dst, okBody, "?apply=true"); env["ok"] != true {
+		t.Fatalf("everyN on containersSchedule must still import: %v", env)
+	}
+	if s, _ := dstStore.GetSettings(); s.ContainersSchedule != "everyN 3 04:00" {
+		t.Fatalf("containersSchedule not applied: %q", s.ContainersSchedule)
+	}
+}
+
 // TestImportWithoutCredentialsPreservesExisting: an apply of a file with NO
 // credentials block leaves the destination's stored secrets untouched.
 func TestImportWithoutCredentialsPreservesExisting(t *testing.T) {

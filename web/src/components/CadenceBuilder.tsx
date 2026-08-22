@@ -9,6 +9,24 @@ import { Selector } from "./Selector";
 
 export type CadenceMode = "off" | "daily" | "weekly" | "everyN" | "cron";
 
+/** Every mode the grammar knows, in the order the pills are rendered. */
+export const ALL_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "everyN", "cron"];
+
+/**
+ * EXACT_CADENCE_MODES is the set a schedule WITHOUT a last-run gate may use
+ * (#166). The backend refuses `everyN` for the off-site, drills, tamper-test,
+ * digest and per-item schedules — see `rejectEveryNSchedules` in
+ * internal/api/handlers.go and SetScheduleCadence/SetVMScheduleCadence in
+ * internal/api/service.go — because those jobs have nothing to count the
+ * interval from and would silently fire daily.
+ *
+ * The picker used to offer all five modes everywhere regardless, so choosing
+ * "Every N days" on the drills/tamper/digest cards made the WHOLE Schedules
+ * tab unsavable (one Save button PUTs the full settings object). Pass this
+ * constant at those call sites so the mode is never offered in the first place.
+ */
+export const EXACT_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "cron"];
+
 export const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 export interface CadenceState {
@@ -168,36 +186,59 @@ export function CadenceBuilder({
   label,
   value,
   disabled,
+  modes,
   onChange,
 }: {
   label: string;
   value: string;
   disabled?: boolean;
+  /**
+   * Which modes this call site may offer. Defaults to ALL_CADENCE_MODES, so the
+   * schedules whose backend accepts everyN are untouched; pass
+   * EXACT_CADENCE_MODES where it doesn't (#166).
+   */
+  modes?: CadenceMode[];
   onChange: (v: string) => void;
 }) {
   const { t, lang } = useT();
   const [state, setState] = useState<CadenceState>(() => parseCadenceString(value));
+
+  const allowed = modes ?? ALL_CADENCE_MODES;
+  // Legacy-value guard, mirroring parseCadenceString's cron-preservation
+  // rationale: a value already stored out-of-band (a settings import from an
+  // older build, a hand-edited DB) keeps its own pill for this instance, so it
+  // is DISPLAYED rather than silently rewritten by the first onChange. Once the
+  // user moves off it the pill goes away, because there is nothing to preserve
+  // any more.
+  const offered = ALL_CADENCE_MODES.filter((m) => allowed.includes(m) || m === state.mode);
 
   // Re-parse when the stored value changes externally (e.g. after load or sync checkbox)
   useEffect(() => {
     setState(parseCadenceString(value));
   }, [value]);
 
+  // update() derives the next state from the CURRENT render's `state`, not from
+  // a setState updater callback. The parent notification must stay OUT of an
+  // updater: React runs those during render, so calling the parent's onChange
+  // (a setState on another component) from inside one is a
+  // "Cannot update a component while rendering a different component"
+  // violation, and StrictMode's double-invoke fired it twice per click. Every
+  // caller here is a discrete user event (one Selector/input change per event),
+  // so the closure's `state` is the latest — the same assumption toggleWeekday
+  // below already makes when it reads state.weekdays.
   function update(patch: Partial<CadenceState>) {
-    setState((prev) => {
-      let next = { ...prev, ...patch };
-      // Entering cron mode with no expression yet: prefill the equivalent of
-      // the schedule the user was on, so the field starts valid and editable.
-      if (patch.mode === "cron" && next.cron.trim() === "") {
-        next = { ...next, cron: cronFromState(prev) };
-      }
-      // Never emit a broken cadence string: while the cron text is invalid the
-      // parent keeps the last good value and the editor shows an inline error.
-      if (next.mode !== "cron" || isValidCronExpression(next.cron)) {
-        onChange(buildCadenceString(next));
-      }
-      return next;
-    });
+    let next = { ...state, ...patch };
+    // Entering cron mode with no expression yet: prefill the equivalent of
+    // the schedule the user was on, so the field starts valid and editable.
+    if (patch.mode === "cron" && next.cron.trim() === "") {
+      next = { ...next, cron: cronFromState(state) };
+    }
+    setState(next);
+    // Never emit a broken cadence string: while the cron text is invalid the
+    // parent keeps the last good value and the editor shows an inline error.
+    if (next.mode !== "cron" || isValidCronExpression(next.cron)) {
+      onChange(buildCadenceString(next));
+    }
   }
 
   function toggleWeekday(day: string) {
@@ -248,7 +289,7 @@ export function CadenceBuilder({
           <button> elements, which a native fieldset already disables
           regardless of the wrapping <div> between them. */}
       <Selector
-        items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[]).map((m) => ({
+        items={offered.map((m) => ({
           id: m,
           label:
             m === "off"
@@ -266,6 +307,15 @@ export function CadenceBuilder({
         active={state.mode}
         onChange={(id) => update({ mode: id as CadenceMode })}
       />
+
+      {/* Say WHY a mode is missing rather than leaving a silent gap (#166): a
+          user who used "Every N days" on another card and cannot find it here
+          otherwise has no way to tell whether it's absent on purpose or broken.
+          Keyed off the caller's allow-list, not `offered`, so it still explains
+          itself while a legacy everyN value is being displayed. */}
+      {!allowed.includes("everyN") && (
+        <p className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.everyNUnavailable")}</p>
+      )}
 
       {/* Time picker — shown for all non-off modes except cron (the expression carries its own times) */}
       {state.mode !== "off" && state.mode !== "cron" && (
