@@ -187,6 +187,7 @@ const uk: Partial<Translations> = {
   "settings.schedule": "Розклад",
   "settings.scheduleOff": "вимк",
   "settings.language": "Мова",
+  "settings.theme": "Тема",
   "settings.save": "Зберегти",
   "settings.saved": "Налаштування збережено",
   "settings.error": "Помилка збереження",

@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { getResolvedTheme, getTheme, onSystemThemeChange, toggleTheme } from "../lib/theme";
 import { useAdvanced } from "../lib/advanced";
 
 interface SidebarProps {
@@ -252,12 +251,17 @@ function NavItem({ to, label, icon }: NavItem) {
 }
 
 // ---------------------------------------------------------------------------
-// SidebarControls — theme toggle + Simple/Advanced view toggle in the sidebar
-// footer. The language switcher that used to live here (flag + name,
-// dropdown opening upward) moved into its own Card in Settings' General tab
-// (GlimStone follow-up pass, live-review point 9 — jdp: "verschieb den
-// Sprachschalter... auch als eigene card ins allgemein setting", a MOVE, not
-// a duplicate) — this footer no longer renders it at all.
+// SidebarControls — Simple/Advanced view toggle in the sidebar footer. Both
+// the language switcher (flag + name, dropdown opening upward — GlimStone
+// follow-up pass, live-review point 9) and the dark/light theme toggle
+// (GlimStone follow-up pass, later live-review round) that used to live here
+// have MOVED into their own Cards in Settings' General tab — jdp asked for
+// each as a literal move ("verschieb den Sprachschalter... auch als eigene
+// card ins allgemein setting", then the same for the theme toggle), never a
+// duplicate — so this footer no longer renders either of them. See
+// Settings.tsx's LanguageCard/ThemeCard for where they live now, and
+// Sidebar.language.dom.test.tsx for the regression guard against either one
+// reappearing here.
 // ---------------------------------------------------------------------------
 
 // Exported: Settings.tsx's own Language Card (GlimStone follow-up pass,
@@ -278,60 +282,15 @@ export function Flag({ code }: { code: string }) {
 function SidebarControls() {
   const { t } = useT();
   const { advanced, setAdvanced } = useAdvanced();
-  // getResolvedTheme(), not the raw stored preference: the default is now
-  // "system" (GlimStone form-engine #1), and this toggle only ever shows/
-  // sets an explicit dark or light state, so it must reflect what's
-  // actually painted rather than the unresolved "system" value.
-  const [theme, setThemeState] = useState(getResolvedTheme);
-
-  function handleToggleTheme() {
-    const next = toggleTheme();
-    setThemeState(next);
-  }
-
-  // Keep the displayed label live-accurate on "system": lib/theme.ts's own
-  // matchMedia listener repaints data-theme (and every colour token)
-  // immediately on an OS-level flip, but this component's `theme` state was
-  // only ever set at mount and on an explicit toggle — without this, the
-  // sidebar's Light/Dark label goes stale the moment the OS changes out from
-  // under a "system" user, even though the rest of the UI has already
-  // repainted correctly.
-  useEffect(() => {
-    return onSystemThemeChange(() => {
-      if (getTheme() === "system") setThemeState(getResolvedTheme());
-    });
-  }, []);
 
   return (
     <div className="flex flex-col gap-1">
-      {/* Dark / Light mode — icon + current-mode label */}
-      <button
-        onClick={handleToggleTheme}
-        title={t("theme.toggle")}
-        className={`${navBase} ${navInactive} w-full`}
-      >
-        {theme === "dark" ? (
-          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
-            <path
-              d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
-              stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
-            />
-          </svg>
-        ) : (
-          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
-            <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
-              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
-            />
-          </svg>
-        )}
-        <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
-      </button>
-
-      {/* Simple / Advanced view — a single-click toggle that mirrors the theme row
-          above (same height, hover, press feedback). The label shows the CURRENT
-          view; a click flips it. Replaces the old segmented switch + hint (Item 4). */}
+      {/* Simple / Advanced view — a single-click toggle (same height, hover,
+          press feedback as every other nav-rail row). The label shows the
+          CURRENT view; a click flips it. Replaces the old segmented switch +
+          hint (Item 4). The dark/light theme row that used to sit above this
+          one moved into Settings' General tab (ThemeCard) — see this
+          function's own header comment. */}
       <button
         onClick={() => setAdvanced(!advanced)}
         title={advanced ? t("mode.advancedView") : t("mode.simpleView")}
@@ -541,8 +500,9 @@ export function Sidebar({ settings }: SidebarProps) {
         )}
       </nav>
 
-      {/* Bottom group: language, dark/light and the Simple/Advanced view toggle
-          (all in SidebarControls), then Settings. */}
+      {/* Bottom group: the Simple/Advanced view toggle (SidebarControls),
+          then Settings. Language and theme both moved out — see
+          SidebarControls' own header comment. */}
       <div className="flex flex-col gap-1 p-3">
         <SidebarControls />
         <NavItem

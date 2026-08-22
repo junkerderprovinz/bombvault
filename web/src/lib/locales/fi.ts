@@ -189,6 +189,7 @@ const fi: Partial<Translations> = {
   "settings.schedule": "Aikataulu",
   "settings.scheduleOff": "pois",
   "settings.language": "Kieli",
+  "settings.theme": "Teema",
   "settings.save": "Tallenna",
   "settings.saved": "Asetukset tallennettu",
   "settings.error": "Virhe asetusten tallennuksessa",

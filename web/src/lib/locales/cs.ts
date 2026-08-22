@@ -189,6 +189,7 @@ const cs: Partial<Translations> = {
   "settings.schedule": "Plán",
   "settings.scheduleOff": "vypnuto",
   "settings.language": "Jazyk",
+  "settings.theme": "Motiv",
   "settings.save": "Uložit",
   "settings.saved": "Nastavení uloženo",
   "settings.error": "Chyba při ukládání nastavení",

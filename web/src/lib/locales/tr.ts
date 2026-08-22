@@ -189,6 +189,7 @@ const tr: Partial<Translations> = {
   "settings.schedule": "Zamanlama",
   "settings.scheduleOff": "kapalı",
   "settings.language": "Dil",
+  "settings.theme": "Tema",
   "settings.save": "Kaydet",
   "settings.saved": "Ayarlar kaydedildi",
   "settings.error": "Ayarlar kaydedilemedi",

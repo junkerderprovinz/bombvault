@@ -189,6 +189,7 @@ const fr: Partial<Translations> = {
   "settings.schedule": "Planning",
   "settings.scheduleOff": "désactivé",
   "settings.language": "Langue",
+  "settings.theme": "Thème",
   "settings.save": "Enregistrer",
   "settings.saved": "Paramètres enregistrés",
   "settings.error": "Erreur lors de l'enregistrement",
