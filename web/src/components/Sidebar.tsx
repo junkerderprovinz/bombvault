@@ -207,6 +207,46 @@ export function IconFleet() {
   );
 }
 
+// Folder glyph (GlimStone follow-up round — Paths & Storage tab rework, point
+// 1/2: FolderBrowser's icon-only "Durchsuchen" button and PathModeSwitch's
+// icon-only "Local" segment both need a folder glyph, and this app already
+// has exactly one — IconFiles above, "Folder glyph for the Files tab"). Same
+// path data, verbatim, just exported at a smaller fixed size for inline use
+// next to a text field instead of IconFiles' own fixed 22×22 nav-rail scale:
+// a folder is the conventional "browse/local directory" glyph everywhere
+// else (OS file pickers, IDEs, ...), so this reuses that established shape
+// rather than inventing a second, visually competing one. Not given a size
+// prop on IconFiles itself — its five nav-icon siblings (IconContainers/
+// IconVM/../IconFleet) are ALL hardcoded to the sidebar's fixed scale with no
+// size prop either, so parameterizing just this one would make it the only
+// resizable icon in an otherwise fixed-size family.
+export function IconFolder() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
+      <path d="M2.75 5.5A1.75 1.75 0 0 1 4.5 3.75h3.3c.47 0 .92.19 1.25.52l1.06 1.06c.14.14.33.22.53.22h4.86c.97 0 1.75.78 1.75 1.75v7.2a1.75 1.75 0 0 1-1.75 1.75h-11a1.75 1.75 0 0 1-1.75-1.75V5.5Z" strokeLinejoin="round" />
+      <path d="M2.75 8.25h14.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Cloud glyph — same design as Settings.tsx's own IconTabOffsite ("A cloud —
+// the remote/off-site replica target"), reused here at this file's shared
+// icon-set scale for the same "remote" concept elsewhere (PathModeSwitch's
+// icon-only "Remote" segment, GlimStone follow-up round point 2): both files
+// intentionally draw the exact same shape rather than each inventing an
+// independent cloud glyph. Settings.tsx's own tab icons stay local/private by
+// their own header comment ("a different taxonomy than the sidebar's page
+// destinations") — that comment is about TAB semantics, not about whether the
+// raw glyph shape can be reused elsewhere, so this copies the path data here
+// rather than exporting the tab-scoped original.
+export function IconCloud() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
 // controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
 function IconLayers() {
