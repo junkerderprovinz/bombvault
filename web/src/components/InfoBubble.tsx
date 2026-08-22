@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { computeBubblePosition } from "../lib/bubblePosition";
 
 // InfoBubble — a neutral (i) icon that reveals a short help text on hover AND
 // focus (keyboard-accessible). House convention (matches CannonadeCommand's
@@ -15,6 +16,24 @@ import { createPortal } from "react-dom";
 //   - pointer-events:none on the bubble — it must never eat a click meant for
 //     whatever is underneath it.
 //   - The help text is also the icon's aria-label; Escape closes it.
+//   - ALWAYS fully within the viewport — never clipped at any edge. Live bug
+//     (jdp): the "Wiederherstellungskit"/recovery-kit bubble in Settings.tsx
+//     overflowed the browser window and part of it couldn't be read. Root
+//     cause: this component (and Selector.tsx's SelectorTab, which had the
+//     identical copy-pasted positioning line) centred the bubble on the
+//     trigger and always opened downward with NO viewport awareness at all —
+//     a trigger near the right edge pushed the horizontally-centred bubble
+//     half off-screen, and a trigger low on a tall page (or a long tip like
+//     recovery.why's multi-sentence explanation, which wraps to a genuinely
+//     tall box) pushed it past the bottom. Fixed by `computeBubblePosition`
+//     (lib/bubblePosition.ts, ported pixel-for-pixel from GlimStone's
+//     reference/tooltip.ts): clamps left/right into the viewport with an 8px
+//     margin, and flips the bubble above the trigger when opening below
+//     would clip the bottom edge and there's actually room above to flip
+//     into. Measured via the bubble's REAL rendered size (offsetWidth/
+//     offsetHeight after it mounts, in a `useLayoutEffect` so the corrected
+//     position lands before the first paint) rather than an assumed
+//     constant, since height depends on how many lines the tip wraps to.
 //
 // `onAccent` (live-review follow-up: "the (i) icon is hard to see on a
 // solid-accent section-title badge, especially a light/yellow accent").
@@ -35,19 +54,44 @@ import { createPortal } from "react-dom";
 // look it always had.
 export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const iconRef = useRef<HTMLSpanElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
   const tooltipId = useId();
 
   function show() {
-    const r = iconRef.current?.getBoundingClientRect();
-    if (!r) return;
-    setPos({ left: r.left + r.width / 2, top: r.bottom + 6 });
+    if (!iconRef.current) return;
     setOpen(true);
   }
   function hide() {
     setOpen(false);
   }
+
+  // Positions the bubble (and flips it above the trigger when needed) AFTER
+  // it has actually mounted and laid out — offsetWidth/offsetHeight only
+  // resolve once the element is in the DOM, so the real wrapped size (which
+  // depends on the tip's own length, not just the CSS max-width) is known.
+  // useLayoutEffect, not useEffect: this must run before the browser paints
+  // — matching reference/tooltip.ts's own synchronous measure-then-place —
+  // so the corrected position is what's actually painted, not a visible
+  // jump on the next frame.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const trigger = iconRef.current;
+    const bubble = bubbleRef.current;
+    if (!trigger || !bubble) return;
+    const r = trigger.getBoundingClientRect();
+    const viewport = {
+      width: document.documentElement.clientWidth || window.innerWidth,
+      height: document.documentElement.clientHeight || window.innerHeight,
+    };
+    const { left, top } = computeBubblePosition(
+      r,
+      { width: bubble.offsetWidth, height: bubble.offsetHeight },
+      viewport
+    );
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${top}px`;
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -85,14 +129,8 @@ export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: 
         </svg>
       </span>
       {open &&
-        pos &&
         createPortal(
-          <div
-            role="tooltip"
-            id={tooltipId}
-            style={{ left: pos.left, top: pos.top }}
-            className="glim-bubble glim-fade"
-          >
+          <div ref={bubbleRef} role="tooltip" id={tooltipId} className="glim-bubble glim-fade">
             {tip}
           </div>,
           document.body
