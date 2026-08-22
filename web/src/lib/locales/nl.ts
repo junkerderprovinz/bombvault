@@ -360,6 +360,8 @@ const nl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Bewaarbeleid voor snapshots",
   "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
+  "settings.imageMaintenanceTitle": "Image-opschoning & registries",
+  "settings.imageMaintenanceHint": "Onderhoud rond de container-update na backup: de vervangen image opruimen, Unraids eigen gecachete updatestatus vernieuwen, en inloggegevens opslaan voor privéregistries die de update-pull nodig heeft.",
   "settings.retentionLast": "Laatste bewaren",
   "settings.retentionDaily": "Dagelijks bewaren",
   "settings.retentionWeekly": "Wekelijks bewaren",
@@ -391,8 +393,9 @@ const nl: Partial<Translations> = {
   "cloud.credSets.add": "Referentieset toevoegen",
   "cloud.credSets.name": "Naam",
   "cloud.credSets.none": "Nog geen extra referentiesets.",
-  "export.encrypt.title": "Platte exports versleutelen (age)",
+  "export.encrypt.title": "Platte exports versleutelen",
   "export.encrypt.hint": "De restic-repositories zijn al versleuteld. Dit versleutelt optioneel de platte export-artefacten (container- en VM-tar.gz met hun xml, en de flash-zip) met age, zodat ze veilig buiten de server kunnen worden bewaard of verplaatst.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) is een klein, modern bestandsversleutelingsprogramma — een eenvoudiger alternatief voor GPG om een bestand voor een of meer ontvangers te verzegelen.",
   "export.encrypt.enable": "Exports versleutelen met age",
   "export.encrypt.enableHint": "Indien aan worden container-, VM- en flash-exports met age verzegeld voordat ze naar schijf worden geschreven, en krijgen ze een .age-achtervoegsel.",
   "export.encrypt.recipients": "age-ontvangers",
@@ -437,6 +440,8 @@ const nl: Partial<Translations> = {
   "flash.none": "Nog geen flash-back-ups — maak er hierboven een.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Exports & versleuteling",
+  "settings.exportsEncryptionHint": "Instellingen voor de flash-zip-export, het versleutelen van platte export-artefacten, en de versleuteling van de restic-repositories zelf.",
   "flash.zipExport.title": "Flash-zip-export",
   "flash.zipExport.hint": "Na elke flash-back-up de snapshot ook als gewone .zip naar een map wegschrijven — klaar voor synchronisatie buiten de server (Syncthing, rclone, een cloud-drive).",
   "flash.zipExport.enable": "Een zip exporteren na elke flash-back-up",
@@ -754,6 +759,8 @@ const nl: Partial<Translations> = {
   "settings.configPath": "Zelf-back-up-pad",
   "settings.pathMode.local": "Lokaal",
   "settings.pathMode.remote": "Extern",
+  "settings.pathMode.localTip": "Lokaal pad op deze host",
+  "settings.pathMode.remoteTip": "Extern restic-repository",
   "settings.primaryRemote.title": "Beveiligingsinstellingen voor extern primair repository",
   "settings.primaryRemote.hint": "Dit back-uppad is een extern restic-repository — het IS de primaire kopie, geen replica. Configureer hier bandbreedtelimieten, append-only-bescherming en een groeibudgetalarm, dezelfde bescherming die een externe kopie krijgt.",
   "settings.primaryRemote.budgetHint": "Alarmeren wanneer dit repository een bytebudget overschrijdt (0 = uit).",

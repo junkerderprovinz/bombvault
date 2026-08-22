@@ -363,6 +363,8 @@ const ro: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenția instantaneelor",
   "settings.retentionHint": "Câte copii de rezervă să se păstreze per element. După fiecare backup, restic curăță instantaneele mai vechi conform acestei politici. Toate zero = păstrează tot (oprit).",
+  "settings.imageMaintenanceTitle": "Curățare imagini și registry",
+  "settings.imageMaintenanceHint": "Întreținere legată de actualizarea containerului după backup: elimină imaginea înlocuită, reîmprospătează starea de actualizare memorată de Unraid și stochează credențialele pentru registry-urile private de care are nevoie actualizarea.",
   "settings.retentionLast": "Păstrează ultimele",
   "settings.retentionDaily": "Păstrează zilnic",
   "settings.retentionWeekly": "Păstrează săptămânal",
@@ -394,8 +396,9 @@ const ro: Partial<Translations> = {
   "cloud.credSets.add": "Adaugă set de credențiale",
   "cloud.credSets.name": "Nume",
   "cloud.credSets.none": "Încă nu există seturi suplimentare de credențiale.",
-  "export.encrypt.title": "Criptează exporturile în clar (age)",
+  "export.encrypt.title": "Criptează exporturile în clar",
   "export.encrypt.hint": "Depozitele restic sunt deja criptate. Aceasta criptează opțional artefactele de export în clar (tar.gz de container și VM împreună cu fișierele lor xml, și zip-ul flash) cu age, astfel încât să poată fi stocate sau mutate în siguranță în afara serverului.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) este un instrument mic și modern de criptare a fișierelor — o alternativă mai simplă la GPG pentru sigilarea unui fișier către unul sau mai mulți destinatari.",
   "export.encrypt.enable": "Criptează exporturile cu age",
   "export.encrypt.enableHint": "Când este activat, exporturile de container, VM și flash sunt sigilate cu age înainte de a fi scrise pe disc și primesc sufixul .age.",
   "export.encrypt.recipients": "Destinatari age",
@@ -440,6 +443,8 @@ const ro: Partial<Translations> = {
   "flash.none": "Încă nicio copie de rezervă flash — rulați un backup mai sus.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Exporturi și criptare",
+  "settings.exportsEncryptionHint": "Setări pentru exportul zip al flash-ului, criptarea artefactelor de export în clar și criptarea propriu-zisă a depozitelor restic.",
   "flash.zipExport.title": "Export ZIP flash",
   "flash.zipExport.hint": "După fiecare backup flash, scrie snapshotul și ca un simplu .zip într-un folder — gata pentru sincronizare în afara serverului (Syncthing, rclone, un drive cloud).",
   "flash.zipExport.enable": "Exportă un ZIP după fiecare backup flash",
@@ -760,6 +765,8 @@ const ro: Partial<Translations> = {
   "settings.configPath": "Cale Auto-backup",
   "settings.pathMode.local": "Local",
   "settings.pathMode.remote": "La distanță",
+  "settings.pathMode.localTip": "Cale locală pe această gazdă",
+  "settings.pathMode.remoteTip": "Repozitoriu restic la distanță",
   "settings.primaryRemote.title": "Setări de securitate pentru repozitoriul primar la distanță",
   "settings.primaryRemote.hint": "Această cale de backup este un repozitoriu restic la distanță — ESTE copia primară, nu o replică. Configurează aici limitele de bandă, protecția append-only și o alarmă de buget de creștere, aceleași protecții pe care le primește o copie off-site.",
   "settings.primaryRemote.budgetHint": "Alarmă când acest repozitoriu depășește un buget de octeți (0 = dezactivat).",

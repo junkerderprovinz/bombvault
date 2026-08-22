@@ -363,6 +363,8 @@ const zh: Partial<Translations> = {
 
   "settings.retentionTitle": "快照保留",
   "settings.retentionHint": "每个项目保留的备份数量。每次备份后，restic 会按此策略清理较旧的快照。全部为 0 = 全部保留（关闭）。",
+  "settings.imageMaintenanceTitle": "镜像清理与 Registry",
+  "settings.imageMaintenanceHint": "备份后容器更新相关的维护：清理被替换的镜像、刷新 Unraid 自身缓存的更新状态，并存储更新拉取所需的私有 registry 凭据。",
   "settings.retentionLast": "保留最近",
   "settings.retentionDaily": "保留每日",
   "settings.retentionWeekly": "保留每周",
@@ -393,8 +395,9 @@ const zh: Partial<Translations> = {
   "cloud.credSets.add": "添加凭据集",
   "cloud.credSets.name": "名称",
   "cloud.credSets.none": "尚无附加凭据集。",
-  "export.encrypt.title": "加密明文导出 (age)",
+  "export.encrypt.title": "加密明文导出",
   "export.encrypt.hint": "restic 仓库已经加密。此项可选地使用 age 加密明文导出产物 (容器和虚拟机的 tar.gz 及其 xml，以及闪存 zip)，以便安全地在服务器外存储或移动。",
+  "export.encrypt.ageInfo": "age (age-encryption.org) 是一个小巧的现代文件加密工具——为一个或多个接收者封装文件时，比 GPG 更简单的替代方案。",
   "export.encrypt.enable": "使用 age 加密导出",
   "export.encrypt.enableHint": "开启后，容器、虚拟机和闪存导出在写入磁盘前会用 age 封装，并带上 .age 后缀。",
   "export.encrypt.recipients": "age 收件人",
@@ -436,6 +439,8 @@ const zh: Partial<Translations> = {
   "flash.none": "尚无 Flash 备份——请在上方运行一次备份。",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "导出与加密",
+  "settings.exportsEncryptionHint": "闪存 zip 导出、明文导出产物加密，以及 restic 仓库自身加密的相关设置。",
   "flash.zipExport.title": "Flash ZIP 导出",
   "flash.zipExport.hint": "每次 flash 备份后，另外将快照以普通 .zip 形式写出到一个文件夹 — 便于服务器外同步（Syncthing、rclone、云盘）。",
   "flash.zipExport.enable": "每次 flash 备份后导出一个 ZIP",
@@ -778,6 +783,8 @@ const zh: Partial<Translations> = {
   "settings.configPath": "自我备份路径",
   "settings.pathMode.local": "本地",
   "settings.pathMode.remote": "远程",
+  "settings.pathMode.localTip": "此主机上的本地路径",
+  "settings.pathMode.remoteTip": "远程 restic 仓库",
   "settings.primaryRemote.title": "远程主仓库安全设置",
   "settings.primaryRemote.hint": "此备份路径是一个远程 restic 仓库——它就是主副本，而不是复制品。在此处配置带宽限制、仅追加保护和增长预算警报，与异地副本获得的保护相同。",
   "settings.primaryRemote.budgetHint": "当此仓库超过字节预算时发出警报（0 = 关闭）。",

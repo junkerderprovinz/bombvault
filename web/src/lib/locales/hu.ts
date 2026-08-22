@@ -366,6 +366,8 @@ const hu: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pillanatképek megőrzése",
   "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
+  "settings.imageMaintenanceTitle": "Image-takarítás és registryk",
+  "settings.imageMaintenanceHint": "Karbantartás a backup utáni konténerfrissítés körül: a lecserélt image törlése, Unraid saját gyorsítótárazott frissítési állapotának frissítése, és a frissítéshez szükséges privát registryk hitelesítő adatainak tárolása.",
   "settings.retentionLast": "Utolsók megtartása",
   "settings.retentionDaily": "Napi megtartása",
   "settings.retentionWeekly": "Heti megtartása",
@@ -397,8 +399,9 @@ const hu: Partial<Translations> = {
   "cloud.credSets.add": "Hitelesítő adatkészlet hozzáadása",
   "cloud.credSets.name": "Név",
   "cloud.credSets.none": "Még nincs további hitelesítő adatkészlet.",
-  "export.encrypt.title": "Sima exportok titkosítása (age)",
+  "export.encrypt.title": "Sima exportok titkosítása",
   "export.encrypt.hint": "A restic tárolók már titkosítottak. Ez opcionálisan titkosítja a sima exportált fájlokat (konténer és VM tar.gz az xml fájljaikkal, valamint a flash zip) age segítségével, hogy biztonságosan tárolhatók vagy mozgathatók legyenek a szerveren kívülre.",
+  "export.encrypt.ageInfo": "Az age (age-encryption.org) egy kicsi, modern fájltitkosító eszköz — egyszerűbb alternatíva a GPG-nek egy fájl egy vagy több címzett számára történő lezárásához.",
   "export.encrypt.enable": "Exportok titkosítása age-dzsel",
   "export.encrypt.enableHint": "Ha be van kapcsolva, a konténer-, VM- és flash-exportok age-dzsel lezárásra kerülnek, mielőtt lemezre írnák őket, és .age kiterjesztést kapnak.",
   "export.encrypt.recipients": "age címzettek",
@@ -443,6 +446,8 @@ const hu: Partial<Translations> = {
   "flash.none": "Még nincs flash mentés — indítson egyet fent.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Exportok és titkosítás",
+  "settings.exportsEncryptionHint": "Beállítások a flash zip exporthoz, a sima exportfájlok titkosításához, és magukhoz a restic tárolók titkosításához.",
   "flash.zipExport.title": "Flash ZIP-exportálás",
   "flash.zipExport.hint": "Minden flash mentés után a pillanatképet egyszerű .zip fájlként is kiírja egy mappába — készen a szerveren kívüli szinkronizáláshoz (Syncthing, rclone, felhőmeghajtó).",
   "flash.zipExport.enable": "ZIP exportálása minden flash mentés után",
@@ -764,6 +769,8 @@ const hu: Partial<Translations> = {
   "settings.configPath": "Önmentés útvonala",
   "settings.pathMode.local": "Helyi",
   "settings.pathMode.remote": "Távoli",
+  "settings.pathMode.localTip": "Helyi útvonal ezen a hoszton",
+  "settings.pathMode.remoteTip": "Távoli restic tároló",
   "settings.primaryRemote.title": "Távoli elsődleges tároló biztonsági beállításai",
   "settings.primaryRemote.hint": "Ez a biztonsági mentési útvonal egy távoli restic tároló — ez az elsődleges másolat, nem replika. Itt állítsd be a sávszélesség-korlátokat, a csak hozzáfűzhető védelmet és a növekedési költségvetési riasztást, ugyanazt a védelmet, amit egy külső helyszíni másolat kap.",
   "settings.primaryRemote.budgetHint": "Riasztás, ha ez a tároló túllépi a byte-költségvetést (0 = kikapcsolva).",

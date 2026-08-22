@@ -364,6 +364,8 @@ const cs: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Uchovávání snímků",
   "settings.retentionHint": "Kolik záloh ponechat pro každou položku. Po každé záloze restic prořeže starší snímky podle této zásady. Vše nula = ponechat vše (vypnuto).",
+  "settings.imageMaintenanceTitle": "Úklid images a registry",
+  "settings.imageMaintenanceHint": "Údržba kolem aktualizace kontejneru po zálohování: odstranění nahrazeného image, obnovení vlastního uloženého stavu aktualizace Unraid a uložení přihlašovacích údajů pro soukromé registry, které aktualizace potřebuje.",
   "settings.retentionLast": "Ponechat poslední",
   "settings.retentionDaily": "Ponechat denní",
   "settings.retentionWeekly": "Ponechat týdenní",
@@ -395,8 +397,9 @@ const cs: Partial<Translations> = {
   "cloud.credSets.add": "Přidat sadu přihlašovacích údajů",
   "cloud.credSets.name": "Název",
   "cloud.credSets.none": "Zatím žádné další sady přihlašovacích údajů.",
-  "export.encrypt.title": "Šifrovat prosté exporty (age)",
+  "export.encrypt.title": "Šifrovat prosté exporty",
   "export.encrypt.hint": "Repozitáře restic jsou už šifrované. Toto volitelně šifruje prosté artefakty exportu (tar.gz kontejneru a VM spolu s jejich xml a flash zip) pomocí age, aby je bylo možné bezpečně uložit nebo přesunout mimo server.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) je malý, moderní nástroj pro šifrování souborů — jednodušší alternativa k GPG pro zapečetění souboru pro jednoho nebo více příjemců.",
   "export.encrypt.enable": "Šifrovat exporty pomocí age",
   "export.encrypt.enableHint": "Když je zapnuto, exporty kontejneru, VM a flash se před zápisem na disk zapečetí pomocí age a získají příponu .age.",
   "export.encrypt.recipients": "Příjemci age",
@@ -441,6 +444,8 @@ const cs: Partial<Translations> = {
   "flash.none": "Zatím žádné zálohy Flash — spusťte zálohu výše.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Exporty a šifrování",
+  "settings.exportsEncryptionHint": "Nastavení pro export flash zip, šifrování prostých exportních artefaktů a šifrování samotných repozitářů restic.",
   "flash.zipExport.title": "Export Flash do zip",
   "flash.zipExport.hint": "Po každé záloze flashe zapiš snímek také jako prostý .zip do složky — připravený pro synchronizaci mimo server (Syncthing, rclone, cloudový disk).",
   "flash.zipExport.enable": "Exportovat zip po každé záloze flashe",
@@ -784,6 +789,8 @@ const cs: Partial<Translations> = {
   "settings.configPath": "Cesta k autozáloze",
   "settings.pathMode.local": "Místní",
   "settings.pathMode.remote": "Vzdálené",
+  "settings.pathMode.localTip": "Místní cesta na tomto hostiteli",
+  "settings.pathMode.remoteTip": "Vzdálený repozitář restic",
   "settings.primaryRemote.title": "Nastavení zabezpečení vzdáleného primárního repozitáře",
   "settings.primaryRemote.hint": "Tato cesta zálohy je vzdálený repozitář restic — JE primární kopií, ne replikou. Nastavte zde limity šířky pásma, ochranu append-only a alarm rozpočtu růstu, stejnou ochranu, jakou dostává mimolokální kopie.",
   "settings.primaryRemote.budgetHint": "Upozornit, když tento repozitář překročí rozpočet v bajtech (0 = vypnuto).",

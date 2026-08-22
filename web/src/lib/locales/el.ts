@@ -366,6 +366,8 @@ const el: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Διατήρηση στιγμιότυπων",
   "settings.retentionHint": "Πόσα αντίγραφα να διατηρούνται ανά στοιχείο. Μετά από κάθε αντίγραφο, το restic κλαδεύει παλαιότερα στιγμιότυπα βάσει αυτής της πολιτικής. Όλα μηδέν = διατήρηση όλων (ανενεργό).",
+  "settings.imageMaintenanceTitle": "Εκκαθάριση images & Registries",
+  "settings.imageMaintenanceHint": "Συντήρηση γύρω από την ενημέρωση κοντέινερ μετά το backup: εκκαθάριση της παλιάς εικόνας, ανανέωση της αποθηκευμένης κατάστασης ενημέρωσης του Unraid και αποθήκευση διαπιστευτηρίων για ιδιωτικά registries που χρειάζεται η λήψη ενημέρωσης.",
   "settings.retentionLast": "Διατήρηση τελευταίων",
   "settings.retentionDaily": "Διατήρηση ημερήσιων",
   "settings.retentionWeekly": "Διατήρηση εβδομαδιαίων",
@@ -397,8 +399,9 @@ const el: Partial<Translations> = {
   "cloud.credSets.add": "Προσθήκη συνόλου διαπιστευτηρίων",
   "cloud.credSets.name": "Όνομα",
   "cloud.credSets.none": "Δεν υπάρχουν ακόμη πρόσθετα σύνολα διαπιστευτηρίων.",
-  "export.encrypt.title": "Κρυπτογράφηση απλών εξαγωγών (age)",
+  "export.encrypt.title": "Κρυπτογράφηση απλών εξαγωγών",
   "export.encrypt.hint": "Τα αποθετήρια restic είναι ήδη κρυπτογραφημένα. Αυτό κρυπτογραφεί προαιρετικά τα απλά artifacts εξαγωγής (tar.gz κοντέινερ και VM μαζί με τα xml τους, και το flash zip) με age, ώστε να αποθηκεύονται ή να μετακινούνται με ασφάλεια εκτός του διακομιστή.",
+  "export.encrypt.ageInfo": "Το age (age-encryption.org) είναι ένα μικρό, σύγχρονο εργαλείο κρυπτογράφησης αρχείων — μια απλούστερη εναλλακτική του GPG για τη σφράγιση ενός αρχείου σε έναν ή περισσότερους παραλήπτες.",
   "export.encrypt.enable": "Κρυπτογράφηση εξαγωγών με age",
   "export.encrypt.enableHint": "Όταν είναι ενεργό, οι εξαγωγές κοντέινερ, VM και flash σφραγίζονται με age πριν γραφτούν στον δίσκο και αποκτούν κατάληξη .age.",
   "export.encrypt.recipients": "Παραλήπτες age",
@@ -443,6 +446,8 @@ const el: Partial<Translations> = {
   "flash.none": "Δεν υπάρχουν ακόμα αντίγραφα flash — εκτελέστε ένα αντίγραφο παραπάνω.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Εξαγωγές & Κρυπτογράφηση",
+  "settings.exportsEncryptionHint": "Ρυθμίσεις για την εξαγωγή flash zip, την κρυπτογράφηση απλών αρχείων εξαγωγής και την ίδια την κρυπτογράφηση των αποθετηρίων restic.",
   "flash.zipExport.title": "Εξαγωγή Flash σε zip",
   "flash.zipExport.hint": "Μετά από κάθε αντίγραφο flash, το στιγμιότυπο γράφεται επίσης ως απλό .zip σε έναν φάκελο — έτοιμο για συγχρονισμό εκτός διακομιστή (Syncthing, rclone, δίσκος cloud).",
   "flash.zipExport.enable": "Εξαγωγή ενός zip μετά από κάθε αντίγραφο flash",
@@ -786,6 +791,8 @@ const el: Partial<Translations> = {
   "settings.configPath": "Διαδρομή αυτο-αντιγράφου",
   "settings.pathMode.local": "Τοπικό",
   "settings.pathMode.remote": "Απομακρυσμένο",
+  "settings.pathMode.localTip": "Τοπική διαδρομή σε αυτόν τον υπολογιστή",
+  "settings.pathMode.remoteTip": "Απομακρυσμένο αποθετήριο restic",
   "settings.primaryRemote.title": "Ρυθμίσεις ασφαλείας απομακρυσμένου κύριου αποθετηρίου",
   "settings.primaryRemote.hint": "Αυτή η διαδρομή αντιγράφου ασφαλείας είναι ένα απομακρυσμένο αποθετήριο restic — ΕΙΝΑΙ το κύριο αντίγραφο, όχι ρέπλικα. Ρυθμίστε εδώ τα όρια εύρους ζώνης, την προστασία append-only και έναν συναγερμό προϋπολογισμού ανάπτυξης, την ίδια προστασία που λαμβάνει ένα εκτός τοποθεσίας αντίγραφο.",
   "settings.primaryRemote.budgetHint": "Ειδοποίηση όταν αυτό το αποθετήριο ξεπεράσει έναν προϋπολογισμό byte (0 = απενεργοποιημένο).",

@@ -358,6 +358,8 @@ const pl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Przechowywanie migawek",
   "settings.retentionHint": "Ile kopii zapasowych zachować dla każdego elementu. Po każdej kopii restic usuwa starsze migawki zgodnie z tą zasadą. Wszystkie zero = zachowaj wszystko (wyłączone).",
+  "settings.imageMaintenanceTitle": "Czyszczenie obrazów i registry",
+  "settings.imageMaintenanceHint": "Konserwacja wokół aktualizacji kontenera po backupie: usunięcie zastąpionego obrazu, odświeżenie własnego zbuforowanego statusu aktualizacji Unraid oraz przechowywanie poświadczeń do prywatnych registry potrzebnych przy pobieraniu aktualizacji.",
   "settings.retentionLast": "Zachowaj ostatnie",
   "settings.retentionDaily": "Zachowaj dzienne",
   "settings.retentionWeekly": "Zachowaj tygodniowe",
@@ -389,8 +391,9 @@ const pl: Partial<Translations> = {
   "cloud.credSets.add": "Dodaj zestaw poświadczeń",
   "cloud.credSets.name": "Nazwa",
   "cloud.credSets.none": "Brak dodatkowych zestawów poświadczeń.",
-  "export.encrypt.title": "Szyfruj eksporty w postaci jawnej (age)",
+  "export.encrypt.title": "Szyfruj eksporty w postaci jawnej",
   "export.encrypt.hint": "Repozytoria restic są już zaszyfrowane. To opcjonalnie szyfruje jawne artefakty eksportu (tar.gz kontenera i VM wraz z ich plikami xml oraz zip flash) za pomocą age, aby można je było bezpiecznie przechowywać lub przenosić poza serwer.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) to małe, nowoczesne narzędzie do szyfrowania plików — prostsza alternatywa dla GPG do zapieczętowania pliku dla jednego lub wielu odbiorców.",
   "export.encrypt.enable": "Szyfruj eksporty za pomocą age",
   "export.encrypt.enableHint": "Gdy włączone, eksporty kontenera, VM i flash są pieczętowane za pomocą age przed zapisem na dysk i otrzymują przyrostek .age.",
   "export.encrypt.recipients": "Odbiorcy age",
@@ -435,6 +438,8 @@ const pl: Partial<Translations> = {
   "flash.none": "Brak kopii Flash — utwórz kopię powyżej.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Eksporty i szyfrowanie",
+  "settings.exportsEncryptionHint": "Ustawienia eksportu zip flash, szyfrowania jawnych artefaktów eksportu oraz szyfrowania samych repozytoriów restic.",
   "flash.zipExport.title": "Eksport zip Flash",
   "flash.zipExport.hint": "Po każdej kopii Flash zapisuje migawkę także jako zwykły plik .zip do folderu — gotowy do synchronizacji poza serwerem (Syncthing, rclone, dysk w chmurze).",
   "flash.zipExport.enable": "Eksportuj zip po każdej kopii Flash",
@@ -752,6 +757,8 @@ const pl: Partial<Translations> = {
   "settings.configPath": "Ścieżka autokopii",
   "settings.pathMode.local": "Lokalne",
   "settings.pathMode.remote": "Zdalne",
+  "settings.pathMode.localTip": "Lokalna ścieżka na tym hoście",
+  "settings.pathMode.remoteTip": "Zdalne repozytorium restic",
   "settings.primaryRemote.title": "Ustawienia bezpieczeństwa zdalnego repozytorium podstawowego",
   "settings.primaryRemote.hint": "Ta ścieżka kopii zapasowej to zdalne repozytorium restic — JEST kopią podstawową, a nie repliką. Skonfiguruj tutaj limity przepustowości, ochronę append-only i alarm budżetu wzrostu — taką samą ochronę, jaką otrzymuje kopia zewnętrzna.",
   "settings.primaryRemote.budgetHint": "Alarmuj, gdy to repozytorium przekroczy budżet bajtów (0 = wyłączone).",

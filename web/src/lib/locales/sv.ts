@@ -366,6 +366,8 @@ const sv: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Lagring av ögonblicksbilder",
   "settings.retentionHint": "Hur många säkerhetskopior som behålls per objekt. Efter varje säkerhetskopiering rensar restic äldre ögonblicksbilder enligt den här policyn. Allt 0 = behåll allt (av).",
+  "settings.imageMaintenanceTitle": "Image-uppstädning & registries",
+  "settings.imageMaintenanceHint": "Underhåll kring containeruppdateringen efter backup: rensa bort den ersatta avbildningen, uppdatera Unraids egen cachade uppdateringsstatus, och spara autentiseringsuppgifter för privata registries som uppdateringen behöver.",
   "settings.retentionLast": "Behåll senaste",
   "settings.retentionDaily": "Behåll dagliga",
   "settings.retentionWeekly": "Behåll veckovisa",
@@ -397,8 +399,9 @@ const sv: Partial<Translations> = {
   "cloud.credSets.add": "Lägg till autentiseringsuppsättning",
   "cloud.credSets.name": "Namn",
   "cloud.credSets.none": "Inga ytterligare autentiseringsuppsättningar än.",
-  "export.encrypt.title": "Kryptera oskyddade exporter (age)",
+  "export.encrypt.title": "Kryptera oskyddade exporter",
   "export.encrypt.hint": "restic-repositorierna är redan krypterade. Detta krypterar valfritt de oskyddade exportartefakterna (container- och VM-tar.gz med deras xml, och flash-zip) med age, så att de kan lagras eller flyttas utanför servern på ett säkert sätt.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) är ett litet, modernt filkrypteringsverktyg — ett enklare alternativ till GPG för att försegla en fil åt en eller flera mottagare.",
   "export.encrypt.enable": "Kryptera exporter med age",
   "export.encrypt.enableHint": "När på förseglas container-, VM- och flash-exporter med age innan de skrivs till disk och får ändelsen .age.",
   "export.encrypt.recipients": "age-mottagare",
@@ -443,6 +446,8 @@ const sv: Partial<Translations> = {
   "flash.none": "Inga flash-säkerhetskopior än — kör en säkerhetskopiering ovan.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Exporter & kryptering",
+  "settings.exportsEncryptionHint": "Inställningar för flash-zip-exporten, kryptering av oskyddade exportartefakter, och krypteringen av själva restic-repositorierna.",
   "flash.zipExport.title": "Flash-ZIP-export",
   "flash.zipExport.hint": "Efter varje flash-säkerhetskopia, skriv även ut ögonblicksbilden som en vanlig .zip till en mapp — redo för synk utanför servern (Syncthing, rclone, en molndisk).",
   "flash.zipExport.enable": "Exportera en ZIP efter varje flash-säkerhetskopia",
@@ -786,6 +791,8 @@ const sv: Partial<Translations> = {
   "settings.configPath": "Sökväg för auto-säkerhetskopia",
   "settings.pathMode.local": "Lokal",
   "settings.pathMode.remote": "Fjärran",
+  "settings.pathMode.localTip": "Lokal sökväg på denna värd",
+  "settings.pathMode.remoteTip": "Fjärranslutet restic-repo",
   "settings.primaryRemote.title": "Säkerhetsinställningar för fjärransluten primärrepo",
   "settings.primaryRemote.hint": "Denna säkerhetskopieringssökväg är ett fjärranslutet restic-repo — det ÄR primärkopian, inte en replik. Konfigurera bandbreddsgränser, append-only-skydd och ett tillväxtbudgetlarm här, samma skydd som en extern kopia får.",
   "settings.primaryRemote.budgetHint": "Larma när detta repo överskrider en bytebudget (0 = av).",

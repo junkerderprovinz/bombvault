@@ -366,6 +366,8 @@ const tr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Anlık görüntü saklama",
   "settings.retentionHint": "Öğe başına kaç yedek tutulacağı. Her yedeklemeden sonra restic, eski anlık görüntüleri bu ilkeye göre budar. Tümü sıfır = her şeyi tut (kapalı).",
+  "settings.imageMaintenanceTitle": "Image Temizliği & Registry'ler",
+  "settings.imageMaintenanceHint": "Yedekleme sonrası konteyner güncellemesi etrafındaki bakım: yerini alınan image'ı temizler, Unraid'in kendi önbelleğe alınmış güncelleme durumunu yeniler ve güncelleme çekmenin ihtiyaç duyduğu özel registry'ler için kimlik bilgilerini saklar.",
   "settings.retentionLast": "Son yedekleri tut",
   "settings.retentionDaily": "Günlük tut",
   "settings.retentionWeekly": "Haftalık tut",
@@ -397,8 +399,9 @@ const tr: Partial<Translations> = {
   "cloud.credSets.add": "Kimlik bilgisi kümesi ekle",
   "cloud.credSets.name": "Ad",
   "cloud.credSets.none": "Henüz ek kimlik bilgisi kümesi yok.",
-  "export.encrypt.title": "Düz metin dışa aktarmalarını şifrele (age)",
+  "export.encrypt.title": "Düz metin dışa aktarmalarını şifrele",
   "export.encrypt.hint": "restic depoları zaten şifrelidir. Bu, düz metin dışa aktarma yapıtlarını (konteyner ve VM tar.gz dosyaları ile xml'leri ve flash zip) isteğe bağlı olarak age ile şifreler; böylece sunucu dışında güvenle saklanabilir veya taşınabilirler.",
+  "export.encrypt.ageInfo": "age (age-encryption.org), küçük ve modern bir dosya şifreleme aracıdır — bir dosyayı bir veya daha fazla alıcı için mühürlemek üzere GPG'ye göre daha basit bir alternatiftir.",
   "export.encrypt.enable": "Dışa aktarmaları age ile şifrele",
   "export.encrypt.enableHint": "Açıkken konteyner, VM ve flash dışa aktarmaları diske yazılmadan önce age ile mühürlenir ve .age uzantısı alır.",
   "export.encrypt.recipients": "age alıcıları",
@@ -443,6 +446,8 @@ const tr: Partial<Translations> = {
   "flash.none": "Henüz flash yedeği yok — yukarıdan bir yedekleme çalıştırın.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Dışa Aktarmalar & Şifreleme",
+  "settings.exportsEncryptionHint": "Flash zip dışa aktarımı, düz metin dışa aktarma yapıtlarının şifrelenmesi ve restic depolarının kendisinin şifrelenmesi için denetimler.",
   "flash.zipExport.title": "Flash ZIP dışa aktarma",
   "flash.zipExport.hint": "Her flash yedeğinden sonra anlık görüntüyü ayrıca düz bir .zip olarak bir klasöre yaz — sunucu dışı senkronizasyon için hazır (Syncthing, rclone, bir bulut sürücüsü).",
   "flash.zipExport.enable": "Her flash yedeğinden sonra bir ZIP dışa aktar",
@@ -786,6 +791,8 @@ const tr: Partial<Translations> = {
   "settings.configPath": "Öz yedek yolu",
   "settings.pathMode.local": "Yerel",
   "settings.pathMode.remote": "Uzak",
+  "settings.pathMode.localTip": "Bu sunucudaki yerel yol",
+  "settings.pathMode.remoteTip": "Uzak restic deposu",
   "settings.primaryRemote.title": "Uzak birincil depo güvenlik ayarları",
   "settings.primaryRemote.hint": "Bu yedekleme yolu uzak bir restic deposudur — bu, bir kopya değil BİRİNCİL kopyadır. Bant genişliği sınırlarını, yalnızca-ekleme korumasını ve büyüme bütçesi alarmını burada yapılandırın; site dışı bir kopyanın aldığı aynı korumalar.",
   "settings.primaryRemote.budgetHint": "Bu depo bayt bütçesini aştığında uyar (0 = kapalı).",

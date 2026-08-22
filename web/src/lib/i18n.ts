@@ -291,6 +291,11 @@ export const en = {
   // opens the connection-test/safety-settings dialog instead of the folder browser.
   "settings.pathMode.local": "Local",
   "settings.pathMode.remote": "Remote",
+  // Hover/focus explanation for the icon-only Local/Remote segments above
+  // (GlimStone follow-up round, point 2) — removing the text label loses the
+  // meaning, so each glyph gets a fuller InfoBubble-style tooltip instead.
+  "settings.pathMode.localTip": "Local path on this host",
+  "settings.pathMode.remoteTip": "Remote restic repository",
   "settings.primaryRemote.title": "Remote primary safety settings",
   "settings.primaryRemote.hint": "This backup path is a remote restic repository — it IS the primary copy, not a replica. Configure bandwidth limits, append-only protection and a growth-budget alarm for it here, the same protections an off-site copy gets.",
   "settings.primaryRemote.budgetHint": "Alarm when this repository grows past a byte budget (0 = off).",
@@ -426,6 +431,12 @@ export const en = {
   // Retention
   "settings.retentionTitle": "Snapshot retention",
   "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
+  // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
+  // A) — image cleanup, Unraid's own update-status reconciliation, and
+  // private registry credentials all sit under one roof: everything the
+  // post-backup container update pull touches.
+  "settings.imageMaintenanceTitle": "Image Cleanup & Registries",
+  "settings.imageMaintenanceHint": "Housekeeping for the post-backup container update: prune the superseded image, refresh Unraid's own cached update status, and store credentials for private registries the update pull needs.",
   "settings.imageCleanupTitle": "Image cleanup",
   "settings.imageCleanupHint": "Housekeeping for the optional \"update container after backup\".",
   "settings.pruneImageAfterUpdate": "Remove the old image after an update",
@@ -958,6 +969,12 @@ export const en = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore downloads a ZIP of the snapshot — the running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash.",
   "flash.none": "No flash backups yet — run a backup above.",
+  // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
+  // B) — the flash zip export, plain-export encryption, and the restic
+  // repositories' own encryption all sit under one roof: how backup exports
+  // and repositories are protected.
+  "settings.exportsEncryptionTitle": "Exports & Encryption",
+  "settings.exportsEncryptionHint": "Controls for the flash zip export, encrypting plain export artifacts, and the restic repositories' own encryption.",
   // Scheduled flash zip export (#28): a plain .zip written to a folder after each flash backup.
   "flash.zipExport.title": "Flash zip export",
   "flash.zipExport.hint": "After each flash backup, also write the snapshot out as a plain .zip to a folder — ready for off-server sync (Syncthing, rclone, a cloud drive).",
@@ -972,8 +989,14 @@ export const en = {
   "flash.zipExport.latestNote": "A single flash-latest.zip is overwritten after every backup.",
   "flash.zipExport.plaintextWarn": "The exported .zip is not encrypted, even if your flash repository is. Only sync it somewhere you trust.",
   "flash.zipExport.pathRequired": "Choose an export folder to turn this on.",
-  "export.encrypt.title": "Encrypt plain exports (age)",
+  // GlimStone follow-up round, Paths & Storage tab rework, merge B: "(age)"
+  // dropped from the visible title — design-language.md's own "explanations
+  // live in a bubble" rule, same as every other Card title in this file. What
+  // age IS moves to export.encrypt.ageInfo below, an InfoBubble on the
+  // merged card's sub-heading, so the information isn't lost, just relocated.
+  "export.encrypt.title": "Encrypt plain exports",
   "export.encrypt.hint": "The restic repositories are already encrypted. This optionally seals the plain export artifacts (container and VM tar.gz plus their xml sidecars, and the flash zip) with age, so they are safe to store or move off the box.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) is a small, modern file-encryption tool — a simpler alternative to GPG for sealing a file to one or more recipients.",
   "export.encrypt.enable": "Encrypt exports with age",
   "export.encrypt.enableHint": "When on, container, VM, and flash exports are sealed with age before they are written to disk, and gain a .age suffix.",
   "export.encrypt.recipients": "age recipients",
@@ -1731,6 +1754,8 @@ export const de: Translations = {
   "settings.restoreFolderHint": "Wohin 'in einen Ordner wiederherstellen' Snapshots standardmäßig entpackt.",
   "settings.pathMode.local": "Lokal",
   "settings.pathMode.remote": "Remote",
+  "settings.pathMode.localTip": "Lokaler Pfad auf diesem Host",
+  "settings.pathMode.remoteTip": "Remote-restic-Repository",
   "settings.primaryRemote.title": "Sicherheitseinstellungen für Remote-Primärrepo",
   "settings.primaryRemote.hint": "Dieser Backup-Pfad ist ein Remote-restic-Repository — er IST die primäre Kopie, keine Replik. Bandbreitenlimits, Append-only-Schutz und einen Wachstumsbudget-Alarm dafür hier konfigurieren, denselben Schutz, den eine Offsite-Kopie erhält.",
   "settings.primaryRemote.budgetHint": "Alarm auslösen, wenn dieses Repository ein Byte-Budget überschreitet (0 = aus).",
@@ -1848,6 +1873,8 @@ export const de: Translations = {
   // Retention
   "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
+  "settings.imageMaintenanceTitle": "Image-Bereinigung & Registries",
+  "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen, Unraids eigenen Update-Status zurücksetzen und Zugangsdaten für private Registries hinterlegen, die der Update-Pull benötigt.",
   "settings.imageCleanupTitle": "Image-Aufräumen",
   "settings.imageCleanupHint": "Aufräumen für das optionale Container-Update nach Backup.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
@@ -2341,6 +2368,8 @@ export const de: Translations = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter — der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen.",
   "flash.none": "Noch keine Flash-Backups — oben eines starten.",
+  "settings.exportsEncryptionTitle": "Exporte & Verschlüsselung",
+  "settings.exportsEncryptionHint": "Einstellungen für den Flash-Zip-Export, die Verschlüsselung der Plain-Export-Artefakte und die Verschlüsselung der restic-Repositories selbst.",
   // Geplanter Flash-ZIP-Export (#28): ein einfaches .zip, das nach jedem Flash-Backup in einen Ordner geschrieben wird.
   "flash.zipExport.title": "Flash-ZIP-Export",
   "flash.zipExport.hint": "Nach jedem Flash-Backup den Snapshot zusätzlich als einfaches .zip in einen Ordner schreiben — bereit für Off-Server-Sync (Syncthing, rclone, ein Cloud-Laufwerk).",
@@ -2355,8 +2384,9 @@ export const de: Translations = {
   "flash.zipExport.latestNote": "Eine einzige flash-latest.zip wird nach jedem Backup überschrieben.",
   "flash.zipExport.plaintextWarn": "Das exportierte .zip ist nicht verschlüsselt, auch wenn dein Flash-Repository es ist. Synce es nur an einen vertrauenswürdigen Ort.",
   "flash.zipExport.pathRequired": "Wähle einen Export-Ordner, um dies zu aktivieren.",
-  "export.encrypt.title": "Plain-Exporte verschlüsseln (age)",
+  "export.encrypt.title": "Plain-Exporte verschlüsseln",
   "export.encrypt.hint": "Die restic-Repositories sind bereits verschlüsselt. Dies verschlüsselt optional die Plain-Export-Artefakte (Container- und VM-tar.gz samt xml-Beidateien sowie das Flash-Zip) mit age, damit sie sicher außerhalb des Servers gespeichert oder bewegt werden können.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) ist ein kleines, modernes Verschlüsselungswerkzeug — eine einfachere Alternative zu GPG, um eine Datei für einen oder mehrere Empfänger zu versiegeln.",
   "export.encrypt.enable": "Exporte mit age verschlüsseln",
   "export.encrypt.enableHint": "Wenn aktiv, werden Container-, VM- und Flash-Exporte vor dem Schreiben mit age versiegelt und erhalten die Endung .age.",
   "export.encrypt.recipients": "age-Empfänger",

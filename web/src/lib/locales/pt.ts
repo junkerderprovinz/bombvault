@@ -363,6 +363,8 @@ const pt: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenção de instantâneos",
   "settings.retentionHint": "Quantos backups manter por item. Após cada backup, o restic elimina os instantâneos mais antigos segundo esta política. Tudo a zero = manter tudo (desativado).",
+  "settings.imageMaintenanceTitle": "Limpeza de imagens e registries",
+  "settings.imageMaintenanceHint": "Manutenção em torno da atualização do contêiner após o backup: remover a imagem substituída, atualizar o estado de atualização em cache do próprio Unraid e guardar credenciais para registries privados de que a atualização precisa.",
   "settings.retentionLast": "Manter últimos",
   "settings.retentionDaily": "Manter diários",
   "settings.retentionWeekly": "Manter semanais",
@@ -394,8 +396,9 @@ const pt: Partial<Translations> = {
   "cloud.credSets.add": "Adicionar conjunto de credenciais",
   "cloud.credSets.name": "Nome",
   "cloud.credSets.none": "Ainda não há conjuntos de credenciais adicionais.",
-  "export.encrypt.title": "Cifrar exportações em texto simples (age)",
+  "export.encrypt.title": "Cifrar exportações em texto simples",
   "export.encrypt.hint": "Os repositórios restic já são cifrados. Isto cifra opcionalmente os artefatos de exportação em texto simples (tar.gz de contêiner e VM com os seus xml, e o zip flash) com age, para que possam ser armazenados ou movidos para fora do servidor com segurança.",
+  "export.encrypt.ageInfo": "age (age-encryption.org) é uma ferramenta de cifragem de ficheiros pequena e moderna — uma alternativa mais simples ao GPG para selar um ficheiro para um ou mais destinatários.",
   "export.encrypt.enable": "Cifrar exportações com age",
   "export.encrypt.enableHint": "Quando ativado, as exportações de contêiner, VM e flash são seladas com age antes de serem gravadas no disco e recebem o sufixo .age.",
   "export.encrypt.recipients": "Destinatários age",
@@ -440,6 +443,8 @@ const pt: Partial<Translations> = {
   "flash.none": "Ainda sem backups do flash — inicie um backup acima.",
 
   // Flash zip export
+  "settings.exportsEncryptionTitle": "Exportações e cifragem",
+  "settings.exportsEncryptionHint": "Controlos para a exportação em zip do flash, a cifragem dos artefactos de exportação em texto simples, e a cifragem dos próprios repositórios restic.",
   "flash.zipExport.title": "Exportação zip do flash",
   "flash.zipExport.hint": "Após cada backup do flash, escreve também o snapshot como um .zip simples para uma pasta — pronto para sincronização fora do servidor (Syncthing, rclone, um drive na nuvem).",
   "flash.zipExport.enable": "Exportar um zip após cada backup do flash",
@@ -757,6 +762,8 @@ const pt: Partial<Translations> = {
   "settings.configPath": "Caminho da autocópia",
   "settings.pathMode.local": "Local",
   "settings.pathMode.remote": "Remoto",
+  "settings.pathMode.localTip": "Caminho local neste host",
+  "settings.pathMode.remoteTip": "Repositório restic remoto",
   "settings.primaryRemote.title": "Definições de segurança do repositório primário remoto",
   "settings.primaryRemote.hint": "Este caminho de backup é um repositório restic remoto — É a cópia primária, não uma réplica. Configure aqui os limites de largura de banda, a proteção append-only e um alarme de orçamento de crescimento, as mesmas proteções que uma cópia off-site recebe.",
   "settings.primaryRemote.budgetHint": "Alertar quando este repositório ultrapassar um orçamento em bytes (0 = desativado).",
