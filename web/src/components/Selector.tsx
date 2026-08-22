@@ -606,7 +606,22 @@ export function Selector(props: SelectorProps) {
           // addition doesn't newly animate anything.
           well ? "rounded-control [transition:background-color_120ms_ease]" : "rounded-control transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          hue ? "glim-hue glim-hue-icon" : "",
+          // `.glim-hue-icon` (index.css) additionally tints the glyph itself
+          // with the item's own hue while idle — right for a tab-strip icon
+          // that sits beside its own always-visible text label (the Settings
+          // tab strip, this class's one real consumer so far), wrong for an
+          // `iconOnly` segment: there the glyph IS the badge's entire visible
+          // content, and design-language.md's own icon-only-badge rule is
+          // explicit that only the BADGE (background/fill) ever carries
+          // colour, the glyph itself always stays plain contrast ink
+          // ("die icons sollen nicht eingefärbt werden, nur die badges also
+          // der hintergrund" — a real adopting app's own rejection of exactly
+          // this, quoted verbatim in that doc). `.glim-hue` still applies
+          // unconditionally either way — the ACTIVE segment's own
+          // `bg-accent text-accentContrast` below still needs it to resolve
+          // this item's position colour for its background/contrast-ink text,
+          // only the separate glyph-tint rider is what iconOnly opts out of.
+          hue ? (item.iconOnly ? "glim-hue" : "glim-hue glim-hue-icon") : "",
           on
             ? "glim-active bg-accent text-accentContrast"
             : well
@@ -637,11 +652,42 @@ export function Selector(props: SelectorProps) {
           // padding otherwise — height still comes from padding +
           // line-height, a "chip" trait this variant doesn't touch, so it
           // stays visually a chip, just a fixed-width one.
+          //
+          // `iconOnly` (GlimStone follow-up round, live-review screenshot —
+          // "the Local/Remote badges read as wider/pill-shaped, the separate
+          // Browse button below them reads as square, they need to match"):
+          // a per-stage `SIZE[size].padding` (`px-2 py-0.5` at "sm", asymmetric
+          // on purpose for a TEXT chip's pill shape) renders a single 16px
+          // icon as a ~32×20 rectangle, not a square, and independently of
+          // whatever height FolderBrowser's own Browse button happened to be
+          // built to. Fixed `h-8 w-8` (Tailwind's own plain default spacing
+          // scale, step 8 = 2rem = 32px — not a new bracket/arbitrary value
+          // invented for this one call site) makes every iconOnly segment a
+          // true square, and 32px is the SAME height the adjacent path
+          // `<input>` (FolderBrowser's own `text-sm px-3 py-1.5` field, and
+          // PathModeSwitch's own remote-mode URL field) actually renders at —
+          // verified live via getComputedStyle, not assumed: neither
+          // Badge.tsx's own three status-chip stages (18/20/24px) nor this
+          // file's own `--badge-md` (2.35rem, a value ported verbatim from a
+          // DIFFERENT app's — TrickWork's — segmented-row spec for the
+          // Settings shape-picker's own well track, never independently
+          // checked against BombVault's own field heights) happens to equal
+          // that number, so reusing either here would still leave a visible
+          // height mismatch. FolderBrowser's own Browse button below is sized
+          // the identical `h-8 w-8` for exactly this reason — one fixed
+          // square footprint, shared by both controls in this row, matching
+          // the one real field height that's actually next to them. Checked
+          // ahead of `stretch`/`well` (both unused by today's one iconOnly
+          // consumer, PathModeSwitch) so a future combination degrades to
+          // this fixed square rather than silently falling through to a
+          // per-stage padding class that was never sized for a bare glyph.
           well
             ? "flex-1 justify-center text-center h-[var(--badge-md)]"
             : stretch
               ? `flex-none justify-center text-center ${SIZE[size].padding}`
-              : SIZE[size].padding,
+              : item.iconOnly
+                ? "justify-center h-8 w-8 p-0"
+                : SIZE[size].padding,
         ]
           .filter(Boolean)
           .join(" ");

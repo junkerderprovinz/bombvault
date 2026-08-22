@@ -1111,7 +1111,23 @@ body {
    only visibly matters where an item actually carries an icon: today that is
    just the Settings tab strip (see SelectorItem.icon's own comment). The
    sidebar remains deliberately not rainbowed (Sidebar.tsx carries that
-   reasoning) and so is still not a consumer. */
+   reasoning) and so is still not a consumer.
+
+   CORRECTED (GlimStone follow-up round, live-review screenshot —
+   PathModeSwitch's icon-only Local/Remote pair): Selector.tsx now withholds
+   this class specifically from `iconOnly` items, even though hue stays on
+   (`.glim-hue` alone). An icon-only segment's glyph IS the badge's entire
+   visible content, not a small tinted rider beside its own always-visible
+   text label the way the Settings tab strip uses it — painting that glyph in
+   its own position hue (this rule, below) on top of an otherwise-uncoloured
+   idle chip background gave a coloured icon with no colour-carrying badge
+   behind it — exactly the "icon-only TOGGLE badge" case GlimStone's own
+   design-language.md documents the rule for (a real adopting app rejected
+   exactly this once before: "die icons sollen nicht eingefärbt werden, nur
+   die badges also der hintergrund"): only `.glim-hue` unconditionally, no
+   glyph-tinting class at all, glyph stays `currentColor`/neutral. That rule
+   was already written down there; this was the first BombVault call site
+   that actually violated it. */
 [data-rainbow] .glim-hue {
   --accent: var(--item-hue);
   --accent-contrast: var(--item-hue-ink);
