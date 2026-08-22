@@ -441,3 +441,92 @@ describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's 
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Alpha" }));
   });
 });
+
+describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimStone follow-up round)", () => {
+  const ICON_ITEMS: SelectorItem[] = [
+    { id: "local", label: "Local", icon: <span data-testid="icon-local" />, iconOnly: true, tip: "Local path on this host" },
+    { id: "remote", label: "Remote", icon: <span data-testid="icon-remote" />, iconOnly: true, tip: "Remote restic repository" },
+  ];
+
+  it("iconOnly hides the visible label text but keeps it as the accessible name via aria-label", () => {
+    render(<Selector items={ICON_ITEMS} label="Path mode" active="local" onChange={() => {}} />);
+    // getByRole({name}) matches the computed accessible name, which for an
+    // iconOnly segment now comes from aria-label, not visible text content —
+    // finding it this way IS the assertion that the accessible name survived.
+    const local = screen.getByRole("tab", { name: "Local" });
+    expect(local.querySelector("span.truncate")).toBeNull();
+    expect(local.getAttribute("aria-label")).toBe("Local");
+    expect(local.querySelector("[data-testid='icon-local']")).not.toBeNull();
+  });
+
+  it("a non-iconOnly item is unaffected — visible label still renders, no aria-label added", () => {
+    render(<OneOfThree />);
+    const alpha = screen.getByRole("tab", { name: "Alpha" });
+    expect(alpha.querySelector("span.truncate")).not.toBeNull();
+    expect(alpha.getAttribute("aria-label")).toBeNull();
+  });
+
+  it("hovering an item with `tip` reveals a portal-rendered .glim-bubble tooltip with that text", () => {
+    render(<Selector items={ICON_ITEMS} label="Path mode" active="local" onChange={() => {}} />);
+    expect(document.querySelector(".glim-bubble")).toBeNull();
+    fireEvent.mouseEnter(screen.getByRole("tab", { name: "Local" }));
+    const bubble = document.querySelector(".glim-bubble");
+    expect(bubble).not.toBeNull();
+    expect(bubble?.textContent).toBe("Local path on this host");
+  });
+
+  it("moving the mouse off the item hides the tooltip again", () => {
+    render(<Selector items={ICON_ITEMS} label="Path mode" active="local" onChange={() => {}} />);
+    const tab = screen.getByRole("tab", { name: "Local" });
+    fireEvent.mouseEnter(tab);
+    expect(document.querySelector(".glim-bubble")).not.toBeNull();
+    fireEvent.mouseLeave(tab);
+    expect(document.querySelector(".glim-bubble")).toBeNull();
+  });
+
+  it("focusing an item with `tip` also reveals the tooltip (keyboard-accessible, same as InfoBubble)", () => {
+    render(<Selector items={ICON_ITEMS} label="Path mode" active="local" onChange={() => {}} />);
+    const remote = screen.getByRole("tab", { name: "Remote" });
+    fireEvent.focus(remote);
+    const bubble = document.querySelector(".glim-bubble");
+    expect(bubble?.textContent).toBe("Remote restic repository");
+    fireEvent.blur(remote);
+    expect(document.querySelector(".glim-bubble")).toBeNull();
+  });
+
+  it("an item with no `tip` never renders a tooltip on hover, and stays a plain click/keyboard target", () => {
+    const spy = vi.fn();
+    render(<OneOfThree onChangeSpy={spy} />);
+    const alpha = screen.getByRole("tab", { name: "Alpha" });
+    fireEvent.mouseEnter(alpha);
+    expect(document.querySelector(".glim-bubble")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Beta" }));
+    expect(spy).toHaveBeenCalledWith("b");
+  });
+
+  it("keyboard arrow navigation is unregressed for iconOnly/tip items — roving tabindex and selection still work", () => {
+    const spy = vi.fn();
+    function IconTwo() {
+      const [active, setActive] = useState("local");
+      return (
+        <Selector
+          items={ICON_ITEMS}
+          label="Path mode"
+          select="one"
+          active={active}
+          onChange={(id) => {
+            setActive(id);
+            spy(id);
+          }}
+        />
+      );
+    }
+    render(<IconTwo />);
+    screen.getByRole("tab", { name: "Local" }).focus();
+    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Remote" }));
+    expect(spy).toHaveBeenCalledWith("remote");
+    expect((screen.getByRole("tab", { name: "Remote" }) as HTMLElement).tabIndex).toBe(0);
+    expect((screen.getByRole("tab", { name: "Local" }) as HTMLElement).tabIndex).toBe(-1);
+  });
+});
