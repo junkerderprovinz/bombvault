@@ -40,6 +40,16 @@ interface NavItem {
 // beside its twin. KnightLoader's Sidebar.tsx does hue its nav, but off 6
 // hard-coded destinations, so neither point above applies to it; that
 // precedent doesn't transfer to a rail whose length changes.
+//
+// STILL not rainbowed (GlimStone follow-up round, live-review — the
+// tab-strip 3-state colour rule, jdp: "...Hauptabs in der Sidebar..."): this
+// decision and its two counts above stand unchanged. The nav rail's own
+// idle-colourless/hover-tints-icon/selected-fills-badge behaviour (see
+// `navInactive`'s own `bv-nav-idle` marker and index.css's matching rule)
+// reads the single FLAT --accent token, never .glim-hue/hueVars() — the flat
+// accent is the same one colour for every destination regardless of how many
+// are visible or in what order, so point 2 above (no stable position) never
+// gets a chance to apply in the first place.
 
 // Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
 type EggState = "idle" | "wobble" | "boom";
@@ -294,8 +304,20 @@ const navActive =
 // keeps the nudge pointed at the content instead of away from it once the
 // sidebar sits on the right. `!` beats the base rule regardless of Tailwind's
 // generated declaration order, same reasoning as the Toggle thumb fix.
+//
+// `bv-nav-idle` (GlimStone follow-up round, live-review — the tab-strip
+// 3-state colour rule, jdp: "Beim Mouseover soll das Icon eingefärbt
+// werden..."): a plain marker class, no styling of its own here — index.css's
+// matching `.bv-nav-idle:hover svg`/`:focus-within svg` rule reads it to tint
+// just the glyph with the flat `--accent` token on hover/focus, while idle
+// (no marker match) and active (a different class entirely, navActive below,
+// never carries this marker) both stay as they already were. See that CSS
+// rule's own comment for why this reads the single flat accent rather than
+// .glim-hue/hueVars() the way the Settings tab strip's icons do — this
+// file's own header comment already explains why the nav rail can't own a
+// stable rainbow position.
 const navInactive =
-  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
+  "bv-nav-idle text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
 
 function NavItem({ to, label, icon }: NavItem) {
   return (
