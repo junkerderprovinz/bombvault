@@ -603,6 +603,18 @@ export function LanguageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   return (
     <Card title={t("settings.language")}>
       <div className="relative inline-block" ref={ref}>
+        {/* w-48 (GlimStone follow-up pass, live-review round — "widen the
+            Language button, then match the Theme button to it"): was
+            content-hugging (only as wide as the current flag+label pair),
+            which read as too narrow/incidental for a deliberate settings
+            control. w-48 (192px) isn't an arbitrary new number — it's the
+            SAME width this button's own dropdown listbox already uses
+            (`w-48` a few lines below), so the trigger now sits flush above
+            the exact footprint of the menu it opens, rather than a narrower
+            button popping open a visibly wider list. `truncate`/`min-w-0` on
+            the label span below keeps a genuinely long locale name (this
+            list has 26) from overflowing the now-fixed width instead of
+            just growing the button the way it used to. */}
         <button
           type="button"
           aria-label={`${t("language.label")}: ${current.label}`}
@@ -610,10 +622,10 @@ export function LanguageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+          className="flex items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
         >
           <Flag code={current.flag} />
-          <span>{current.label}</span>
+          <span className="min-w-0 truncate text-start">{current.label}</span>
         </button>
         {open && (
           <div
@@ -685,11 +697,16 @@ export function ThemeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   return (
     <Card title={t("settings.theme")}>
+      {/* w-48 (GlimStone follow-up pass, live-review round): matches
+          LanguageCard's own trigger button EXACTLY (same class, same value —
+          see that button's own comment for why 192px) — jdp's ask was
+          specifically "widen Language, then size Theme to match it", not two
+          independently-chosen widths that happen to be close. */}
       <button
         type="button"
         onClick={handleToggleTheme}
         title={t("theme.toggle")}
-        className="flex items-center gap-2.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+        className="flex items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
       >
         {theme === "dark" ? (
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
@@ -707,7 +724,7 @@ export function ThemeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             />
           </svg>
         )}
-        <span>{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
+        <span className="min-w-0 truncate text-start">{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
       </button>
     </Card>
   );
