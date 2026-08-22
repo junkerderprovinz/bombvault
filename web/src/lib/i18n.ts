@@ -799,6 +799,7 @@ export const en = {
   "cadence.daily": "Daily",
   "cadence.weekly": "Weekly",
   "cadence.everyN": "Every N days",
+  "cadence.everyNUnavailable": "Every N days is not available for this schedule — it fires at fixed times and has nothing to count the interval from. Use one of the other modes instead.",
   "cadence.time": "Time",
   "cadence.days": "Days",
   "cadence.every": "Every",
@@ -858,7 +859,7 @@ export const en = {
   "schedule.overrideTitle": "Schedule override",
   "schedule.overrideUsesDefault": "Uses the domain schedule",
   "schedule.overrideEdit": "Set override",
-  "schedule.overrideHint": "Empty uses the domain schedule. Per-item overrides do not support the every-N-days mode.",
+  "schedule.overrideHint": "Empty uses the domain schedule.",
   "schedule.overrideSave": "Save override",
   "schedule.overrideSaved": "Override saved",
 
@@ -2187,6 +2188,7 @@ export const de: Translations = {
   "cadence.daily": "Täglich",
   "cadence.weekly": "Wöchentlich",
   "cadence.everyN": "Alle N Tage",
+  "cadence.everyNUnavailable": "Alle N Tage ist für diesen Zeitplan nicht verfügbar — er läuft zu festen Zeiten und hat nichts, woran er den Abstand abzählen könnte. Nimm stattdessen einen der anderen Modi.",
   "cadence.time": "Zeit",
   "cadence.days": "Tage",
   "cadence.every": "Alle",
@@ -2246,7 +2248,7 @@ export const de: Translations = {
   "schedule.overrideTitle": "Zeitplan-Überschreibung",
   "schedule.overrideUsesDefault": "Nutzt den Domänen-Zeitplan",
   "schedule.overrideEdit": "Überschreibung festlegen",
-  "schedule.overrideHint": "Leer nutzt den Domänen-Zeitplan. Überschreibungen pro Element unterstützen den Alle-N-Tage-Modus nicht.",
+  "schedule.overrideHint": "Leer nutzt den Domänen-Zeitplan.",
   "schedule.overrideSave": "Überschreibung speichern",
   "schedule.overrideSaved": "Überschreibung gespeichert",
 
