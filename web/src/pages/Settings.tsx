@@ -8,7 +8,7 @@ import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import { InfoBubble } from "../components/InfoBubble";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
-import { CadenceBuilder } from "../components/CadenceBuilder";
+import { CadenceBuilder, EXACT_CADENCE_MODES } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
 import { Badge, type BadgeTone } from "../components/Badge";
@@ -2978,6 +2978,7 @@ function RestoreChecksSection({
           label={t("settings.schedule")}
           value={settings.drillsSchedule}
           disabled={!settings.drillsEnabled}
+          modes={EXACT_CADENCE_MODES}
           onChange={(v) => update({ drillsSchedule: v })}
         />
       </div>
@@ -3939,6 +3940,7 @@ export function SettingsPage() {
               <CadenceBuilder
                 label={t("settings.tamperTestSchedule")}
                 value={settings.tamperTestSchedule}
+                modes={EXACT_CADENCE_MODES}
                 onChange={(v) =>
                   setSettings((prev) => (prev ? { ...prev, tamperTestSchedule: v } : prev))
                 }
@@ -5069,6 +5071,7 @@ export function SettingsPage() {
               label={t("settings.schedule")}
               value={settings.digestSchedule}
               disabled={!settings.digestEnabled}
+              modes={EXACT_CADENCE_MODES}
               onChange={(v) =>
                 setSettings((prev) => (prev ? { ...prev, digestSchedule: v } : prev))
               }
