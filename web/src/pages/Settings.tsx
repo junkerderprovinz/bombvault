@@ -7,6 +7,7 @@ import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import { InfoBubble } from "../components/InfoBubble";
+import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
@@ -36,7 +37,7 @@ import { RAINBOW, getRainbow, setRainbow, hueVars, rainbowAt, type RainbowState 
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
-import { Flag } from "../components/Sidebar";
+import { Flag, IconAdd, IconDownload } from "../components/Sidebar";
 import { getResolvedTheme, getTheme, onSystemThemeChange, toggleTheme } from "../lib/theme";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -5275,9 +5276,23 @@ export function SettingsPage() {
             </div>
             );
           })}
-          <div>
-            <button
-              type="button"
+          {/* Icon-only + right-aligned (GlimStone follow-up round, live-review:
+              "Registry hinzufügen button soll bündig nach rechts... einen
+              Glyph statt Text bekommen, mit Hover-Infobubble") — `flex
+              justify-end` is this file's own established idiom for a single
+              trailing action in an otherwise block-level row (see e.g.
+              Dashboard.tsx's/VMs.tsx's identical `<div className="flex
+              justify-end">` wrapper for a lone action). The row's own text
+              label moves onto the button's `IconTipButton` tip instead of
+              disappearing — an icon-only trigger has no other way to say
+              what it does. Same `h-8 w-8`/`rounded-control`/
+              `bg-carbon-surface3` footprint as FolderBrowser's own
+              "Durchsuchen" icon button (that fix's own comment: the one
+              real field/control height already established on this page,
+              32px, not a new bracket invented for this call site). */}
+          <div className="flex justify-end">
+            <IconTipButton
+              tip={t("settings.registryAdd")}
               onClick={() => {
                 setSettings((prev) => {
                   if (!prev) return prev;
@@ -5298,10 +5313,10 @@ export function SettingsPage() {
                 // again anyway if it's abandoned blank).
                 setRegistryRowIds((prev) => [...prev, randomId()]);
               }}
-              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
             >
-              {t("settings.registryAdd")}
-            </button>
+              <IconAdd />
+            </IconTipButton>
           </div>
         </div>
       </Card>
@@ -5604,16 +5619,32 @@ export function SettingsPage() {
                 {t("recovery.title")}
                 <InfoBubble tip={t("recovery.why")} />
               </h4>
-              <button
-                type="button"
+              {/* Icon-only + right-aligned (GlimStone follow-up round,
+                  live-review: "...ebenso der Recovery Kit herunterladen
+                  button. Beide sollen einen Glyph statt Text bekommen, mit
+                  Hover-Infobubble") — the visible "Recovery-Kit
+                  herunterladen" label moves onto the IconTipButton's own
+                  tip, the only remaining visible text in this sub-section is
+                  its heading, same "only heading + a bare bubbled/tooltipped
+                  control" shape the encryption toggle right above it now
+                  has. `self-end` (not a `flex justify-end` wrapper — this
+                  button is already a direct child of the section's own
+                  `flex flex-col` above) flips this from the row's start edge
+                  to its end edge, RTL-safe, same as every other logical
+                  start/end pairing on this page. Same `h-8 w-8`/
+                  `rounded-control`/`bg-carbon-surface3` icon-button footprint
+                  as FolderBrowser's own Browse button and the Registry-add
+                  button above. */}
+              <IconTipButton
+                tip={t("recovery.download")}
                 onClick={() => {
                   setKitError(null);
                   void downloadRecoveryKit().then(setKitError);
                 }}
-                className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+                className="self-end shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
               >
-                {t("recovery.download")}
-              </button>
+                <IconDownload />
+              </IconTipButton>
               {kitError && (
                 // Backend-provided error text shown verbatim BY DESIGN (e.g. the
                 // fail-closed "set a login password" refusal when auth is off) —
