@@ -259,7 +259,7 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     expect(tab.className).not.toContain("flex-1");
   });
 
-  it("equalWidth switches the strip to flex-nowrap and every segment to flex-1, while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
+  it("equalWidth switches the strip to flex-nowrap and every segment to flex-none (content-width matched, not stretched), while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
     );
@@ -270,7 +270,11 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     expect(list.className).not.toContain("bg-carbon-surface2");
 
     const idle = screen.getByRole("tab", { name: "Beta" });
-    expect(idle.className).toContain("flex-1");
+    // flex-none, NOT flex-1 (jdp's correction: pinned to the widest segment's
+    // own measured content width via inline style, not stretched to fill the
+    // row via a flex share — see Selector.tsx's own file header, item 5b).
+    expect(idle.className).toContain("flex-none");
+    expect(idle.className).not.toContain("flex-1");
     expect(idle.className).toContain("justify-center");
     expect(idle.className).toContain("bg-carbon-surface2");
     expect(idle.className).not.toContain("h-[var(--badge-md)]");
@@ -278,6 +282,36 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     const active = screen.getByRole("tab", { name: "Alpha" });
     expect(active.className).toContain("bg-accent");
     expect(active.className).toContain("text-accentContrast");
+  });
+
+  it("equalWidth measures each segment's natural content width and pins EVERY segment to the WIDEST one's width, not a full-row stretch", () => {
+    // jsdom's getBoundingClientRect() is always a zero rect by default (see
+    // ColorPickerPopover.dom.test.tsx's own identical stub) — stub it here,
+    // keyed by data-sel-id, so the three segments report distinct, realistic
+    // natural widths for the component's own two-pass measurement effect to
+    // actually exercise, rather than every segment trivially "matching" 0.
+    const restore = HTMLElement.prototype.getBoundingClientRect;
+    const widths: Record<string, number> = { a: 60, b: 40, c: 80 };
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      const id = this.getAttribute("data-sel-id");
+      const w = id ? (widths[id] ?? 0) : 0;
+      return { x: 0, y: 0, left: 0, top: 0, right: w, bottom: 0, width: w, height: 0, toJSON() {} } as DOMRect;
+    };
+    try {
+      render(
+        <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
+      );
+      // "Gamma" (id "c") is the widest at 80px — every segment, including the
+      // narrower "Alpha" (60px) and "Beta" (40px), must end up pinned to that
+      // SAME 80px, not their own natural width and not a container-filling
+      // stretch (there is no container width involved in this test at all).
+      for (const id of ["a", "b", "c"]) {
+        const btn = document.querySelector(`[data-sel-id="${id}"]`) as HTMLElement;
+        expect(btn.style.width).toBe("80px");
+      }
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = restore;
+    }
   });
 
   it("equalWidth is ignored under variant=\"well\" (already always equal-width) — no double-application, no crash", () => {

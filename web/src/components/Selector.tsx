@@ -72,27 +72,41 @@
 //      VISIBLE content: seven ragged, left-hugging pills leave a stretch of
 //      bare gap to the right of the last tab ("System"), while the Card
 //      below fills that same width edge-to-edge — a container-width match
-//      that still looks wrong once actually rendered. `equalWidth` gives
-//      every segment an identical `flex: 1 1 0%` share of the row instead
-//      (plain CSS flex division, not a JS-measured width), so the row's
-//      right edge is always the LAST segment's right edge, which is also the
-//      row's own container edge — the same edge the Card below already
-//      renders flush to. Kept inside the "chip" branch specifically (own
-//      prop, not folded into `variant="well"`): the chip look this strip
-//      already has — each tab its own individually filled/outlined badge,
-//      not a shared padded track — is what round 6 specifically built ("idle
-//      badge fill" for unselected tabs); switching to `well` would trade
-//      that identity away to solve a width problem `well` doesn't uniquely
-//      solve (equal width is just `flex-1` either way — `well`'s OTHER
-//      differences, the shared track background and flush borderless
-//      segments, aren't what was asked for here). `flex-nowrap` alongside it
-//      for the same reason `well` itself is `flex-nowrap` (this file's own
-//      item 5 below): equal-width flex children assume one row, wrapping
-//      them is a different, broken-looking layout, not a smaller version of
-//      the same one. Scoped to exactly one call site (the Settings tab
-//      strip) for now, same "try it on one control" pattern `variant="well"`
-//      already set — every other "chip" call site keeps its own
-//      content-hugging width, unchanged.
+//      that still looks wrong once actually rendered.
+//
+//      CORRECTED (jdp, live-review round 2, explicit): the first pass gave
+//      every segment an identical `flex: 1 1 0%` share of the row — that
+//      does make all seven equal, but by stretching them to fill whatever
+//      width the row's ancestor happens to have, which is NOT what was
+//      asked. jdp's own words: "Ich wollte die Tab-Badges nur so breit wie
+//      sie breit sein müssen. Also alle so breit wie der
+//      Benachrichtigungen-Badge weil das ist der breiteste" — every badge
+//      should be exactly as wide as the WIDEST label's own natural content
+//      width ("Benachrichtigungen"), no wider, and the row's own rendered
+//      width should be the sum of that (now-fixed) per-segment width, not a
+//      stretch to the container. That's a genuinely different number (a
+//      content measurement, not a CSS percentage), so this now does a real
+//      one-time DOM measurement pass instead of a flex trick — see the
+//      `itemRefs`/`matchedWidth` state below. `flex: 1` is gone; every
+//      segment instead gets an explicit `width: <widest>px` inline style, so
+//      the row's own box naturally shrinks to hug that fixed sum (given a
+//      caller that doesn't itself force the row to stretch — Settings.tsx's
+//      tab-strip call site wraps this in its own `inline-flex` measuring
+//      container for exactly that reason; see its own comment).
+//
+//      Kept inside the "chip" branch specifically (own prop, not folded into
+//      `variant="well"`): the chip look this strip already has — each tab
+//      its own individually filled/outlined badge, not a shared padded
+//      track — is what round 6 specifically built ("idle badge fill" for
+//      unselected tabs); switching to `well` would trade that identity away
+//      to solve a width problem `well` doesn't uniquely solve. `flex-nowrap`
+//      alongside it for the same reason `well` itself is `flex-nowrap` (this
+//      file's own item 5 below): equal-width flex children assume one row,
+//      wrapping them is a different, broken-looking layout, not a smaller
+//      version of the same one. Scoped to exactly one call site (the
+//      Settings tab strip) for now, same "try it on one control" pattern
+//      `variant="well"` already set — every other "chip" call site keeps its
+//      own content-hugging width, unchanged.
 //   5. `variant` ("chip", default, vs "well"). Live-review follow-up: "turn
 //      the shape picker into a horizontal selector styled like the one in
 //      TrickWork." TrickWork's own segmentedRow() (ui/src/controlWidgets.ts)
@@ -130,7 +144,7 @@
 // and grepping every one of its twelve call sites confirms none of them do
 // either (see the migration commit).
 // ---------------------------------------------------------------------------
-import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 
@@ -284,6 +298,61 @@ export function Selector(props: SelectorProps) {
   // own `flex-1` (see that branch below), so this never double-applies.
   const stretch = equalWidth && !well;
 
+  // Content-width measurement for `stretch` (item 5b, corrected — see the
+  // file header): every segment gets pinned to the WIDEST segment's own
+  // natural content width, which only a real DOM measurement can answer (a
+  // pure-CSS flex/grid trick can equalize widths, but "equal to N's own
+  // intrinsic size" specifically needs to know what N's intrinsic size IS).
+  //
+  // itemsKey is a primitive string, not the `items` array reference itself:
+  // Settings.tsx's tab-strip call site rebuilds that array with `.map()` on
+  // every render of its (very large) parent component, so a NEW array
+  // identity says nothing about whether the LABELS actually changed — using
+  // it directly as a dependency would re-run the reset-and-remeasure pair
+  // below on every unrelated keystroke elsewhere on the page, flashing the
+  // strip back to its natural (momentarily unequal) widths each time. Two
+  // JS string primitives with the same characters compare equal (`===`) even
+  // when freshly concatenated on every call, so this stays referentially
+  // stable across renders unless a label genuinely changed (e.g. a locale
+  // switch).
+  const itemsKey = items.map((it) => it.label).join("");
+  const [matchedWidth, setMatchedWidth] = useState<number | null>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  // Pass 1: release any previously matched width whenever the label set (or
+  // the size stage, which changes padding/font and therefore every label's
+  // natural width) changes. Necessary because a segment currently holding an
+  // explicit `width` renders with NO overflow, so measuring it directly
+  // (getBoundingClientRect/scrollWidth) would just report that stale applied
+  // width back, not the new content's actual natural size — e.g. switching
+  // from German (longer labels) to English (shorter ones) must not leave
+  // every tab permanently wearing German's width forever. Both effects are
+  // useLayoutEffect, so the null-render and the re-measured render both
+  // commit before the browser's next paint — no visible flash back to
+  // ragged widths.
+  useLayoutEffect(() => {
+    if (stretch) setMatchedWidth(null);
+  }, [stretch, itemsKey, size]);
+
+  // Pass 2: once segments have rendered at their own natural width (either
+  // the very first render, or immediately after pass 1 cleared a stale
+  // match), measure the widest one and pin every segment to that SAME fixed
+  // pixel width. Skipped once matchedWidth is already set — there is nothing
+  // to re-measure until the label set changes again and pass 1 clears it.
+  useLayoutEffect(() => {
+    if (!stretch || matchedWidth !== null) return;
+    // Sliced to the CURRENT item count before filtering: a shrunk item list
+    // (not a concern for Settings.tsx's fixed 7-tab strip today, but this is
+    // a shared component) would otherwise leave stale trailing refs from a
+    // longer previous render mixed into the measurement.
+    const nodes = itemRefs.current
+      .slice(0, items.length)
+      .filter((n): n is HTMLButtonElement => n !== null);
+    if (nodes.length === 0) return;
+    const widest = Math.max(...nodes.map((n) => n.getBoundingClientRect().width));
+    setMatchedWidth(widest);
+  }, [stretch, matchedWidth, itemsKey, size, items.length]);
+
   // Subscribed, not read — see lib/useRainbow.ts's own header for why this
   // has to happen during render rather than an effect. Called unconditionally
   // (rules of hooks) even when hue=false: a hue=false strip (Dashboard's
@@ -350,9 +419,14 @@ export function Selector(props: SelectorProps) {
       // which assumes one row — wrapping equal-width flex children onto a
       // second line is a different, broken-looking layout, not a smaller
       // version of the same one.
-      // `stretch` (item 5b): same "one row, no wrap" reasoning as "well"
-      // above, no shared track background — each segment keeps its own chip
-      // fill, just an equal-width one instead of content-hugging.
+      // `stretch` (item 5b, corrected): same "one row, no wrap" reasoning as
+      // "well" above, no shared track background — each segment keeps its
+      // own chip fill, just pinned to the widest segment's own measured
+      // content width (via inline `style.width` below) instead of hugging
+      // its own individually. This wrapper itself is NOT stretched to fill
+      // anything — it's a plain flex row with no `flex-1`/`w-full` of its
+      // own, so its rendered width is simply the sum of its now-fixed-width
+      // children, exactly like a content-hugging row would be.
       className={[
         "flex items-center",
         well
@@ -401,24 +475,42 @@ export function Selector(props: SelectorProps) {
           // (index.css) instead of padding, so every segment in the row is
           // the same height regardless of label length or an icon's own
           // intrinsic size.
-          // `stretch` (item 5b): the same `flex-1 justify-center text-center`
-          // equal-width/centered treatment as "well", MINUS the fixed
-          // --badge-md height swap — a stretch chip keeps its own per-stage
-          // padding (its height still comes from padding + line-height, a
-          // "chip" trait this variant doesn't touch), so it stays visually a
-          // chip, just an evenly-shared-width one.
+          // `stretch` (item 5b, corrected): centred content within a FIXED
+          // width (set via inline `style.width` below, not `flex-1` — see
+          // this file's header for why a flex share was the wrong fix).
+          // `flex-none` pins the segment to exactly that width rather than
+          // letting the default `flex-shrink: 1` compress it back down if
+          // the row's own content ever exceeds its container (matched-width
+          // segments should shrink together with the row wrapping, per
+          // `flex-nowrap` above, not individually). Keeps its own per-stage
+          // padding otherwise — height still comes from padding +
+          // line-height, a "chip" trait this variant doesn't touch, so it
+          // stays visually a chip, just a fixed-width one.
           well
             ? "flex-1 justify-center text-center h-[var(--badge-md)]"
             : stretch
-              ? `flex-1 justify-center text-center ${SIZE[size].padding}`
+              ? `flex-none justify-center text-center ${SIZE[size].padding}`
               : SIZE[size].padding,
         ]
           .filter(Boolean)
           .join(" ");
 
+        // Merge the rainbow custom-property style (if any) with the matched
+        // fixed width (if `stretch` has completed its measurement pass) —
+        // both are optional and independent, so this stays undefined
+        // whenever neither applies rather than always allocating an object.
+        const hueStyle = hue ? (hueVars(rainbowAt(i)) as CSSProperties) : undefined;
+        const widthStyle: CSSProperties | undefined =
+          stretch && matchedWidth !== null ? { width: `${matchedWidth}px` } : undefined;
+        const itemStyle =
+          hueStyle || widthStyle ? { ...hueStyle, ...widthStyle } : undefined;
+
         return (
           <button
             key={item.id}
+            ref={(el) => {
+              itemRefs.current[i] = el;
+            }}
             type="button"
             data-sel-id={item.id}
             role={many ? undefined : "tab"}
@@ -427,7 +519,7 @@ export function Selector(props: SelectorProps) {
             title={item.title}
             disabled={itemDisabled}
             tabIndex={i === roved ? 0 : -1}
-            style={hue ? (hueVars(rainbowAt(i)) as CSSProperties) : undefined}
+            style={itemStyle}
             className={cls}
             onClick={() => {
               if (!itemDisabled) onChange(item.id);
