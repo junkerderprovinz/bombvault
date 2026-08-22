@@ -154,7 +154,7 @@ const tr: Partial<Translations> = {
   "settings.encryption": "Şifreleme",
   "settings.encryptionOn": "Etkin (parola APP_KEY'den türetildi)",
   "settings.encryptionOff": "Devre dışı (parola yok)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Şifreleme, depo başlatıldığında sabit olarak belirlenir. Değiştirmek için yeni boş bir yol gerekir.",
   "settings.paths": "Yedekleme Yolları",
   "settings.pathsHint": "Host bağlama kökü ({root}) altındaki göreli alt yollar. Dizinlerde gezinmek için Gözat'a tıklayın veya bir yolu doğrudan yazın.",

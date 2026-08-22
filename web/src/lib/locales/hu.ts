@@ -154,7 +154,7 @@ const hu: Partial<Translations> = {
   "settings.encryption": "Titkosítás",
   "settings.encryptionOn": "Engedélyezett (jelszó az APP_KEY-ből)",
   "settings.encryptionOff": "Letiltott (nincs jelszó)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "A titkosítás az adattár inicializálásakor rögzül. A módosítás új, üres elérési utat igényel.",
   "settings.paths": "Mentési útvonalak",
   "settings.pathsHint": "Relatív alútvonalak a gazdagép csatolási gyökere alatt ({root}). Kattints a Tallózás gombra a könyvtárak közötti navigáláshoz, vagy írj be egy útvonalat közvetlenül.",

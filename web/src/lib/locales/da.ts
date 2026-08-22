@@ -154,7 +154,7 @@ const da: Partial<Translations> = {
   "settings.encryption": "Kryptering",
   "settings.encryptionOn": "Aktiveret (adgangskode afledt fra APP_KEY)",
   "settings.encryptionOff": "Deaktiveret (ingen adgangskode)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Kryptering er fastsat per arkiv ved initialisering. En ændring kræver en ny tom sti.",
   "settings.paths": "Sikkerhedskopistier",
   "settings.pathsHint": "Relative understier under host-monteringsroden ({root}). Klik på Gennemse for at navigere i mapper, eller indtast en sti direkte.",

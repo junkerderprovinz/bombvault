@@ -153,7 +153,7 @@ const ro: Partial<Translations> = {
   "settings.encryption": "Criptare",
   "settings.encryptionOn": "Activată (parolă derivată din APP_KEY)",
   "settings.encryptionOff": "Dezactivată (fără parolă)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Criptarea este fixată pe depozit la momentul inițializării. Modificarea necesită o cale nouă și goală.",
   "settings.paths": "Căi de copiere de rezervă",
   "settings.pathsHint": "Subcăi relative sub rădăcina montării gazdei ({root}). Apasă pe Răsfoiește pentru a naviga prin directoare, sau introdu o cale direct.",

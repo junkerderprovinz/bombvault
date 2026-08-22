@@ -154,7 +154,7 @@ const th: Partial<Translations> = {
   "settings.encryption": "การเข้ารหัส",
   "settings.encryptionOn": "เปิดใช้งาน (รหัสผ่านนำมาจาก APP_KEY)",
   "settings.encryptionOff": "ปิดใช้งาน (ไม่มีรหัสผ่าน)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "การเข้ารหัสถูกกำหนดตายตัวต่อรีพอสิทอรีตั้งแต่การเริ่มต้น การเปลี่ยนแปลงต้องใช้พาธว่างใหม่",
   "settings.paths": "พาธการสำรองข้อมูล",
   "settings.pathsHint": "พาธย่อยแบบสัมพัทธ์ภายใต้รากการเมานต์ของโฮสต์ ({root}) คลิกเรียกดูเพื่อไปยังไดเรกทอรี หรือพิมพ์พาธโดยตรง",

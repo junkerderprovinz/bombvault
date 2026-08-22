@@ -154,7 +154,7 @@ const fi: Partial<Translations> = {
   "settings.encryption": "Salaus",
   "settings.encryptionOn": "Käytössä (salasana johdettu APP_KEY:stä)",
   "settings.encryptionOff": "Ei käytössä (ei salasanaa)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Salaus on kiinnitetty arkistokohtaisesti alustuksen yhteydessä. Muutos edellyttää uutta tyhjää polkua.",
   "settings.paths": "Varmuuskopiopolut",
   "settings.pathsHint": "Suhteelliset alipolut isäntäkoneen liitosjuuren alla ({root}). Napsauta Selaa siirtyäksesi kansioissa, tai kirjoita polku suoraan.",

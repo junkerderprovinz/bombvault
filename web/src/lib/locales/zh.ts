@@ -154,7 +154,7 @@ const zh: Partial<Translations> = {
   "settings.encryption": "加密",
   "settings.encryptionOn": "已启用（密码来自 APP_KEY）",
   "settings.encryptionOff": "已禁用（无密码）",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "加密在初始化时固定绑定到仓库。更改此项需要新的空路径。",
   "settings.paths": "备份路径",
   "settings.pathsHint": "主机挂载根目录（{root}）下的相对子路径。点击浏览以浏览目录，或直接输入路径。",

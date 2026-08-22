@@ -154,7 +154,7 @@ const he: Partial<Translations> = {
   "settings.encryption": "הצפנה",
   "settings.encryptionOn": "מופעל (סיסמה נגזרת מ-APP_KEY)",
   "settings.encryptionOff": "מושבת (ללא סיסמה)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "ההצפנה קבועה לכל מאגר בעת האתחול. שינוי מחייב נתיב ריק חדש.",
   "settings.paths": "נתיבי גיבוי",
   "settings.pathsHint": "נתיבי משנה יחסיים תחת שורש נקודת העיגון של המארח ({root}). לחץ על עיון כדי לנווט בין תיקיות, או הקלד נתיב ישירות.",

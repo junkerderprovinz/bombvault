@@ -154,7 +154,7 @@ const ko: Partial<Translations> = {
   "settings.encryption": "암호화",
   "settings.encryptionOn": "활성화됨 (APP_KEY에서 파생된 비밀번호)",
   "settings.encryptionOff": "비활성화됨 (비밀번호 없음)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "암호화는 초기화 시 리포지토리에 고정됩니다. 변경하려면 새로운 빈 경로가 필요합니다.",
   "settings.paths": "백업 경로",
   "settings.pathsHint": "호스트 마운트 루트({root}) 아래의 상대 하위 경로입니다. 찾아보기를 클릭해 디렉터리를 탐색하거나 경로를 직접 입력하세요.",

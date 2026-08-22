@@ -152,7 +152,7 @@ const nl: Partial<Translations> = {
   "settings.encryption": "Versleuteling",
   "settings.encryptionOn": "Ingeschakeld (wachtwoord afgeleid van APP_KEY)",
   "settings.encryptionOff": "Uitgeschakeld (geen wachtwoord)",
-  "settings.encryptionWarning": "Versleuteling wordt eenmalig vastgelegd bij het initialiseren van de repository. Een wijziging vereist een nieuw leeg pad.",
+  "settings.encryptionHint": "Versleuteling wordt eenmalig vastgelegd bij het initialiseren van de repository. Een wijziging vereist een nieuw leeg pad.",
   "settings.paths": "Back-uppaden",
   "settings.pathsHint": "Relatieve subpaden onder de host-mount-root ({root}). Klik op Bladeren om door mappen te navigeren, of typ een pad rechtstreeks in.",
   "settings.containersPath": "Containers-pad",

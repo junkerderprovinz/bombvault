@@ -154,7 +154,7 @@ const vi: Partial<Translations> = {
   "settings.encryption": "Mã hóa",
   "settings.encryptionOn": "Bật (mật khẩu lấy từ APP_KEY)",
   "settings.encryptionOff": "Tắt (không có mật khẩu)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Mã hóa được cố định theo kho lưu trữ khi khởi tạo. Thay đổi yêu cầu đường dẫn mới trống.",
   "settings.paths": "Đường dẫn sao lưu",
   "settings.pathsHint": "Đường dẫn con tương đối bên dưới gốc điểm gắn kết của host ({root}). Nhấp Duyệt để điều hướng thư mục, hoặc nhập đường dẫn trực tiếp.",

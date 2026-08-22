@@ -154,7 +154,7 @@ const it: Partial<Translations> = {
   "settings.encryption": "Crittografia",
   "settings.encryptionOn": "Abilitata (password derivata da APP_KEY)",
   "settings.encryptionOff": "Disabilitata (nessuna password)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "La crittografia è fissa per repository al momento dell'inizializzazione. Modificarla richiede un nuovo percorso vuoto.",
   "settings.paths": "Percorsi di backup",
   "settings.pathsHint": "Sottopercorsi relativi sotto la radice del mount dell'host ({root}). Fai clic su Sfoglia per navigare tra le cartelle, oppure digita un percorso direttamente.",

@@ -152,7 +152,7 @@ const pl: Partial<Translations> = {
   "settings.encryption": "Szyfrowanie",
   "settings.encryptionOn": "Włączone (hasło pochodzi z APP_KEY)",
   "settings.encryptionOff": "Wyłączone (bez hasła)",
-  "settings.encryptionWarning": "Szyfrowanie jest ustawiane raz podczas inicjalizacji repozytorium. Zmiana wymaga nowej, pustej ścieżki.",
+  "settings.encryptionHint": "Szyfrowanie jest ustawiane raz podczas inicjalizacji repozytorium. Zmiana wymaga nowej, pustej ścieżki.",
   "settings.paths": "Ścieżki kopii zapasowych",
   "settings.pathsHint": "Względne podścieżki w katalogu montowania hosta ({root}). Kliknij Przeglądaj, aby nawigować po katalogach, lub wpisz ścieżkę bezpośrednio.",
   "settings.containersPath": "Ścieżka kontenerów",

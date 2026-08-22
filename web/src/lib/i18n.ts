@@ -265,7 +265,7 @@ export const en = {
   "settings.encryption": "Encryption",
   "settings.encryptionOn": "Enabled (password derived from APP_KEY)",
   "settings.encryptionOff": "Disabled (no password)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Encryption is fixed per repository at init time. Changing this requires a new empty path.",
 
   // Encryption-key recovery kit
@@ -1731,7 +1731,7 @@ export const de: Translations = {
   "settings.encryption": "Verschlüsselung",
   "settings.encryptionOn": "Aktiviert (Passwort aus APP_KEY)",
   "settings.encryptionOff": "Deaktiviert (kein Passwort)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Die Verschlüsselung ist beim Initialisieren des Repositorys festgelegt. Eine Änderung erfordert einen neuen leeren Pfad.",
 
   // Encryption-key recovery kit

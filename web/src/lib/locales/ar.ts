@@ -154,7 +154,7 @@ const ar: Partial<Translations> = {
   "settings.encryption": "التشفير",
   "settings.encryptionOn": "مفعّل (كلمة المرور مشتقة من APP_KEY)",
   "settings.encryptionOff": "معطّل (بدون كلمة مرور)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "التشفير ثابت لكل مستودع عند التهيئة. تغييره يتطلب مساراً فارغاً جديداً.",
   "settings.paths": "مسارات النسخ الاحتياطي",
   "settings.pathsHint": "مسارات فرعية نسبية ضمن جذر نقطة تركيب المضيف ({root}). انقر على استعراض للتنقل بين المجلدات، أو اكتب المسار مباشرة.",

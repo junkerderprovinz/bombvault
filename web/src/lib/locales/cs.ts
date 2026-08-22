@@ -154,7 +154,7 @@ const cs: Partial<Translations> = {
   "settings.encryption": "Šifrování",
   "settings.encryptionOn": "Povoleno (heslo odvozeno z APP_KEY)",
   "settings.encryptionOff": "Vypnuto (bez hesla)",
-  "settings.encryptionWarning":
+  "settings.encryptionHint":
     "Šifrování je fixně nastaveno při inicializaci repozitáře. Změna vyžaduje novou prázdnou cestu.",
   "settings.paths": "Zálohovací cesty",
   "settings.pathsHint": "Relativní podcesty pod kořenem připojení hostitele ({root}). Klikněte na Procházet pro procházení adresářů, nebo zadejte cestu přímo.",
