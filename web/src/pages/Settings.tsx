@@ -5371,11 +5371,27 @@ export function SettingsPage() {
           <div className="flex flex-col gap-3">
             <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
               {t("flash.zipExport.title")}
-              <InfoBubble tip={t("flash.zipExport.hint")} />
+              {/* jdp, live-review (fresh screenshot proved a prior round's
+                  claim wrong — this sub-heading still paired a bare <h3> with
+                  the master ToggleRow's own visible "Nach jedem Flash-Backup
+                  ein ZIP exportieren" label directly beneath it): "da sollen
+                  nur folgende Texte stehen: Flash-ZIP-Export... Die übrigen
+                  Texte in deren Infobubbles." The switch's own label
+                  (flash.zipExport.enable) folds in here alongside its own
+                  enableHint — same concatenation shape as the Plain-export
+                  sub-heading below (`${hint} ${ageInfo}`) — since hiding the
+                  ToggleRow's visible label (see `hideLabel` below) leaves
+                  nowhere else for that text's own meaning to live. The switch
+                  ITSELF, not just its text, stays on the page: `hideLabel`
+                  only suppresses the caption, never the control (Toggle.tsx's
+                  own contract) — the filled/unfilled track still shows
+                  on/off state at a glance, it just no longer repeats the
+                  heading's own topic as prose next to it. */}
+              <InfoBubble tip={`${t("flash.zipExport.hint")} ${t("flash.zipExport.enableHint")}`} />
             </h3>
             <ToggleRow
               label={t("flash.zipExport.enable")}
-              hint={t("flash.zipExport.enableHint")}
+              hideLabel
               checked={settings.flashZipExportEnabled}
               onChange={(v) => void autoSaveField("flashZipExportEnabled", v, setFlashZipSaveState, setFlashZipSaveError)}
               disabled={mergedFieldBusy.flashZipExportEnabled}
@@ -5464,11 +5480,22 @@ export function SettingsPage() {
                 "explanations live in a bubble" rule) — what age IS moves here,
                 concatenated onto the existing hint the same way
                 settings.retentionHint + settings.retentionCombineInfo already
-                fold two sentences into one bubble above. */}
-            <InfoBubble tip={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")}`} />
+                fold two sentences into one bubble above.
+                  jdp, live-review (fresh screenshot proved a prior round's
+                claim wrong): the master ToggleRow's own visible "Exporte mit
+                age verschlüsseln" label directly under this heading is gone
+                too now (see `hideLabel` below) — export.encrypt.enableHint
+                folds in here alongside it, fixing a stale claim in this
+                file's own history: the recipientsHint comment a little further
+                down already asserted "that half is already covered by
+                export.encrypt.enableHint, now folded into the sub-heading's
+                own InfoBubble above," but the actual code never did — this is
+                that fold, made real. */}
+            <InfoBubble tip={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")}`} />
           </h3>
           <ToggleRow
             label={t("export.encrypt.enable")}
+            hideLabel
             checked={settings.exportEncryptEnabled}
             onChange={(v) => void autoSaveField("exportEncryptEnabled", v, setExportEncSaveState, setExportEncSaveError)}
             disabled={mergedFieldBusy.exportEncryptEnabled}
@@ -5527,11 +5554,29 @@ export function SettingsPage() {
             rendered while the risk applies) this text never was: it's an
             unconditional, one-time explainer of how the toggle behaves, the
             exact content InfoBubble exists for. No `border-t` here either,
-            same reasoning as the Plain-export block above. */}
+            same reasoning as the Plain-export block above.
+              FOLLOW-UP (jdp, live-review, fresh screenshot proved a prior
+            round's claim wrong): that earlier pass only bubbled the STATIC
+            explainer above — it left the master ToggleRow's own DYNAMIC
+            status label ("Aktiviert (Passwort aus APP_KEY)" /
+            "Deaktiviert (kein Passwort)") sitting directly under this same
+            heading in plain view, which is exactly the line the fresh
+            screenshot still showed. `hideLabel` below hides it now, same as
+            its two siblings above; the state it used to carry moves into the
+            bubble's own tip — computed per render off the live
+            `settings.encryptionEnabled` value (the same values
+            settings.encryptionOn/Off already translate in every locale, just
+            read here instead of handed to the ToggleRow as visible text) —
+            rather than a static string, so the bubble still answers "is this
+            actually on right now" concretely instead of only explaining the
+            feature in the abstract. The switch's own filled/unfilled track
+            still shows on/off at a glance without hovering anything. */}
         <div className="flex flex-col gap-3">
           <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("settings.encryption")}
-            <InfoBubble tip={t("settings.encryptionHint")} />
+            <InfoBubble
+              tip={`${settings.encryptionEnabled ? t("settings.encryptionOn") : t("settings.encryptionOff")} ${t("settings.encryptionHint")}`}
+            />
           </h3>
           <ToggleRow
             label={
@@ -5539,6 +5584,7 @@ export function SettingsPage() {
                 ? t("settings.encryptionOn")
                 : t("settings.encryptionOff")
             }
+            hideLabel
             checked={settings.encryptionEnabled}
             onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
             disabled={mergedFieldBusy.encryptionEnabled}
