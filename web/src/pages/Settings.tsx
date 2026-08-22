@@ -21,7 +21,7 @@ import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { randomId } from "../lib/uuid";
-import { useAdvanced, Advanced } from "../lib/advanced";
+import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
 import {
@@ -5080,8 +5080,15 @@ export function SettingsPage() {
       {/* /config (RESTIC_CACHE_DIR) survives restarts and would otherwise     */}
       {/* grow unbounded; LRU per-repo caches are evicted after scheduled runs.*/}
       {/* ------------------------------------------------------------------ */}
-      {tab === "storage" && (
-      <Advanced>
+      {/* `advanced &&` inline (not the <Advanced> wrapper component): the
+          wrapper takes children as an ALREADY-BUILT prop, so this Card's own
+          hueIndex={nextHue()} would fire every render regardless of whether
+          Advanced end up showing it — caught live (Playwright against the
+          real container) as a hue slot silently "spent" on a Card that never
+          painted, shifting every later Storage-tab heading by one position
+          while Advanced was off. Plain `&&` short-circuits properly, exactly
+          like every other conditional Card on this page. */}
+      {tab === "storage" && advanced && (
       <Card title={t("settings.cacheTitle")} hint={t("settings.cacheHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
@@ -5112,7 +5119,6 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
-      </Advanced>
       )}
 
       {/* ------------------------------------------------------------------ */}
@@ -5445,8 +5451,11 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* OFFSITE — Off-site bandwidth                                        */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "offsite" && (
-      <Advanced>
+      {/* `advanced &&` inline, not the <Advanced> wrapper — see the Storage
+          tab's cacheTitle Card (above) for why: the wrapper's children are
+          already built before it decides whether to render them, so a
+          hueIndex={nextHue()} inside it fires every render regardless. */}
+      {tab === "offsite" && advanced && (
       <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
         <div className="grid grid-cols-2 gap-3">
           {([
@@ -5484,14 +5493,14 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
-      </Advanced>
       )}
 
       {/* ------------------------------------------------------------------ */}
       {/* SYSTEM — Monitoring (Prometheus)                                   */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (
-      <Advanced>
+      {/* `advanced &&` inline, not the <Advanced> wrapper — same reason as
+          the Storage tab's cacheTitle Card above. */}
+      {tab === "system" && advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
         {/* GlimStone follow-up pass: stays permanent text, NOT bubbled — it
             names the exact /metrics path AND the exact
@@ -5551,7 +5560,6 @@ export function SettingsPage() {
           t={t}
         />
       </Card>
-      </Advanced>
       )}
 
       {/* ------------------------------------------------------------------ */}
@@ -5750,24 +5758,21 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* SYSTEM — Spike (host-integration check; KEEP — it is LIVE).         */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (
-      <Advanced>
-        {/* nextHue() here is evaluated whenever this JSX subtree is
-            constructed, REGARDLESS of whether Advanced ends up rendering it
-            (its `children` prop is already-built by the time Advanced's own
-            `advanced && when` check runs) — unlike every `{tab === "x" && (
-            <Card hueIndex={nextHue()} .../>)}` gate elsewhere on this page,
-            where `&&` short-circuits and never evaluates the right side at
-            all. A non-advanced user's render therefore "spends" one hue slot
-            on a Card that never paints, so the System tab's remaining
-            headings shift by one position while Advanced is off. Accepted:
-            no two SIMULTANEOUSLY VISIBLE headings ever collide either way —
-            a skipped position changes which colour a heading gets, not
-            whether two visible ones match. */}
+      {/* `advanced &&` inline, not the <Advanced> wrapper component: the
+          wrapper takes `children` as an ALREADY-BUILT prop, so a
+          hueIndex={nextHue()} inside it would fire every render regardless
+          of whether Advanced ends up showing it — caught live (Playwright
+          against the real deployed container: this exact site, plus three
+          more of the same shape — cacheTitle/offsiteLimits/metrics above —
+          were each silently "spending" a hue slot on a Card that never
+          painted, shifting every later heading on that tab by one position
+          while Advanced was off). Plain `&&` short-circuits correctly,
+          exactly like every other conditional Card on this page — this was
+          the one call site that still used the wrapper component instead. */}
+      {tab === "system" && advanced && (
         <Card title={t("spike.title")} hueIndex={nextHue()}>
           <SpikePanel t={t} />
         </Card>
-      </Advanced>
       )}
 
       {/* ------------------------------------------------------------------ */}
@@ -5777,7 +5782,15 @@ export function SettingsPage() {
       {/* flow, alongside the un-gated off-site + retention cards above.       */}
       {/* ------------------------------------------------------------------ */}
       {tab === "integrity" && (
-      <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
+      // No hueIndex: this is the ONLY Card the Integrity tab ever renders
+      // (unlike every other tab, nothing here is conditional) — a genuine
+      // singleton per design-language's own exclusion ("the only one of its
+      // kind on the page keeps the single accent"), not an oversight. A
+      // stray nextHue() call was caught live (Playwright against the real
+      // container: this heading rendered rainbow position 0 instead of the
+      // flat accent) — removed rather than "fixed" by consuming a slot, so
+      // no other tab's numbering shifts either.
+      <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} />
       )}
 
       {/* ------------------------------------------------------------------ */}
