@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useT } from "../lib/i18n";
-import { CadenceBuilder, formatCadence } from "./CadenceBuilder";
+import { CadenceBuilder, EXACT_CADENCE_MODES, formatCadence } from "./CadenceBuilder";
 import { Badge } from "./Badge";
 import { useToast } from "../lib/toast";
 
@@ -78,6 +78,7 @@ export function ItemScheduleOverride({
           <CadenceBuilder
             label={`${t("schedule.overrideTitle")}: ${name}`}
             value={value}
+            modes={EXACT_CADENCE_MODES}
             onChange={setValue}
           />
           <p className="text-xs text-carbon-textMuted">{t("schedule.overrideHint")}</p>
