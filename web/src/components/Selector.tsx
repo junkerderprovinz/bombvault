@@ -163,6 +163,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { hueVars, rainbowAt } from "../lib/appearance";
+import { computeBubblePosition } from "../lib/bubblePosition";
 import { useRainbow } from "../lib/useRainbow";
 
 export interface SelectorItem {
@@ -338,20 +339,44 @@ interface SelectorTabProps {
 
 function SelectorTab({ item, many, on, disabled, roved, className, style, onSelect, registerRef }: SelectorTabProps) {
   const [tipOpen, setTipOpen] = useState(false);
-  const [tipPos, setTipPos] = useState<{ left: number; top: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement | null>(null);
+  const bubbleRef = useRef<HTMLDivElement | null>(null);
   const tooltipId = useId();
 
   function showTip() {
     if (!item.tip) return;
-    const r = btnRef.current?.getBoundingClientRect();
-    if (!r) return;
-    setTipPos({ left: r.left + r.width / 2, top: r.bottom + 6 });
     setTipOpen(true);
   }
   function hideTip() {
     setTipOpen(false);
   }
+
+  // Positions the bubble (clamped into the viewport, flipped above the
+  // trigger when opening below would clip the bottom edge) AFTER it has
+  // mounted and laid out — same fix, same shared computeBubblePosition, as
+  // InfoBubble.tsx's identical tooltip. This copy had the exact same bug:
+  // centred on the trigger with no viewport clamp and always opening
+  // downward, so an icon-only tab near a toolbar's edge (or a table's last
+  // column) could push its tip half off-screen. See InfoBubble.tsx's header
+  // comment for the full root-cause writeup.
+  useLayoutEffect(() => {
+    if (!tipOpen) return;
+    const trigger = btnRef.current;
+    const bubble = bubbleRef.current;
+    if (!trigger || !bubble) return;
+    const r = trigger.getBoundingClientRect();
+    const viewport = {
+      width: document.documentElement.clientWidth || window.innerWidth,
+      height: document.documentElement.clientHeight || window.innerHeight,
+    };
+    const { left, top } = computeBubblePosition(
+      r,
+      { width: bubble.offsetWidth, height: bubble.offsetHeight },
+      viewport
+    );
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${top}px`;
+  }, [tipOpen]);
 
   // Same scroll-closes / Escape-closes contract as InfoBubble.tsx's own
   // tooltip — a floating box anchored to a live rect must not drift out of
@@ -400,9 +425,8 @@ function SelectorTab({ item, many, on, disabled, roved, className, style, onSele
       </button>
       {item.tip &&
         tipOpen &&
-        tipPos &&
         createPortal(
-          <div role="tooltip" id={tooltipId} style={{ left: tipPos.left, top: tipPos.top }} className="glim-bubble glim-fade">
+          <div ref={bubbleRef} role="tooltip" id={tooltipId} className="glim-bubble glim-fade">
             {item.tip}
           </div>,
           document.body
