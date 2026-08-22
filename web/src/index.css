@@ -81,6 +81,28 @@
   --text-caption: var(--text-caption);
 }
 
+/* Selector "well" variant control height (components/Selector.tsx's
+   `variant="well"`, first exercised by Settings.tsx's shape picker) — ported
+   from TrickWork's segmentedRow() (ui/src/controlWidgets.ts), whose own
+   `.segmented-button` rule reads `height: var(--badge-md)` verbatim, with
+   that file's own comment calling it "TrickWork's canonical badge-height
+   token." BombVault's own Badge.tsx already has a three-stage height scale
+   (small 18px / medium 20px / large 24px, that file's own SIZE_TOKENS), but
+   all three are status-CHIP heights tuned to sit inline with body text —
+   none of them is this value or even close to it, and bending one of those
+   stages to double as a control-ROW height would quietly couple two things
+   (an inline status chip, a segmented-control track) that happen to share a
+   number today but have no reason to move together tomorrow. This is a new
+   token rather than a reused one for that reason, kept under TrickWork's own
+   name so a future well-variant consumer has one place to point at instead
+   of a bare rem literal living only inside Selector.tsx. Theme- and
+   shape-invariant like --radius-control below (a control's own height isn't
+   a per-shape corner value), so it lives once here rather than duplicated
+   into the [data-shape="..."] blocks. */
+:root {
+  --badge-md: 2.35rem;
+}
+
 /* Shape and type scale (GlimStone form-engine #1) — theme-invariant: radius
    and font size don't change between dark and light, only colors do, so
    these are declared ONCE on a bare :root rather than duplicated identically
