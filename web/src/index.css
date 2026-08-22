@@ -1307,11 +1307,80 @@ body {
   }
 }
 
-/* Opt-in: the element's glyph takes the hue too. A list row owns a colour
-   but its action icons must stay quiet, hence the second class. The active
-   item is excluded via :not(.glim-active): it's FILLED with the hue already,
-   so an icon painted the same colour would vanish into its own background. */
-[data-rainbow] .glim-hue-icon:not(.glim-active) svg {
+/* Opt-in: the element's glyph takes the hue too — but ONLY on hover/focus,
+   never at rest. GlimStone follow-up round (live-review, jdp): "Die Tabs
+   (Einstellungstabs und Hauptabs in der Sidebar) sollen nicht ausgewählt
+   farblos sein. Beim Mouseover soll das Icon eingefärbt werden und wenn man
+   sie anklickt soll der Badge eingefärbt werden und das Icon wieder in
+   schwarz oder weiß angezeigt werden." — a genuine 3-state machine per tab
+   (idle colourless / hover tints the icon / selected fills the badge and
+   reverts the icon to plain contrast ink), documented as its own named
+   pattern in design-language.md ("The tab strip colour rule"), extending
+   this rule 9 mechanism rather than replacing it.
+     Previously this fired UNCONDITIONALLY at rest whenever any rainbow mode
+   was on (gated only behind `[data-rainbow]`), which is backwards for the
+   new spec two different ways at once: under plain "on" mode an idle,
+   unselected tab was ALREADY coloured (hovering it changed nothing, since it
+   was already lit); under rainbow fully OFF nothing coloured it at all, ever
+   (`[data-rainbow]` never matches). Dropping the `[data-rainbow]` gate and
+   moving the trigger to `:hover`/`:focus-within` fixes both by leaning on
+   how --accent ALREADY resolves in every mode rather than adding a new one:
+     - rainbow off: --accent is just the flat theme accent, untouched by any
+       .glim-hue rule (all of them are scoped behind [data-rainbow]) — hover
+       now tints the icon with that single flat colour, matching the spec's
+       own explicit "or the accent colour in non-rainbow mode".
+     - rainbow "on": the base [data-rainbow] .glim-hue block below sets
+       --accent to this item's own --item-hue UNCONDITIONALLY (not hover-
+       scoped) — so at rest this rule simply never matches (no :hover/
+       :focus-within), the icon falls back to its own plain neutral text
+       colour, and on hover it reads that already-resolved, always-stable
+       --item-hue. The item's own hue position never moves between idle and
+       hover — it was always the fixed value hueVars()/.glim-hue already
+       assigned it; this rule only changes WHEN the icon looks at it.
+     - rainbow "reactive": [data-rainbow="reactive"] .glim-hue further down
+       this file already rests --accent to neutral and restores --item-hue on
+       :hover/:focus-within/.glim-active — this rule's own :hover/
+       :focus-within condition lines up with that swap for free, no separate
+       reactive-only variant needed.
+   The active item is still excluded via :not(.glim-active): it's FILLED with
+   the hue already (the badge's own `bg-accent` background, see the on/off
+   ternary below), so an icon painted the same colour on top of it would
+   vanish into its own background — the icon's plain contrast-ink colour in
+   that state comes for free from `text-accentContrast` on the same button,
+   via ordinary currentColor inheritance, no extra rule needed for that half. */
+.glim-hue-icon svg {
+  transition: color 150ms ease;
+}
+.glim-hue-icon:not(.glim-active):hover svg,
+.glim-hue-icon:not(.glim-active):focus-within svg {
+  color: var(--accent);
+}
+
+/* Sidebar main-nav icon hover-tint — the SAME 3-state tab-strip rule as
+   .glim-hue-icon above (idle colourless / hover tints the icon / selected
+   fills the badge and reverts the icon to contrast ink), applied to
+   Sidebar.tsx's own nav rail. Deliberately NOT wired into .glim-hue/
+   hueVars() the way the Settings tab strip is: Sidebar.tsx's own header
+   comment explains at length why the rail stays out of the rainbow engine
+   entirely — the visible destination set is user-configured (4 to 10
+   entries depending on which domains are enabled) and its length/order can
+   change on any render, so no destination's rainbow POSITION could ever
+   stay stable the way a fixed-membership set (the Settings tab strip's 7
+   tabs) can. Reading the flat --accent token directly sidesteps that
+   problem rather than solving it: it's the same single colour for every
+   destination regardless of how many are currently visible or in what
+   order, so there is no position to destabilize in the first place.
+     `.bv-nav-idle` (Sidebar.tsx's own navInactive constant) marks the
+   not-yet-selected state; navActive carries no marker and needs no extra
+   rule here, since its own `bg-accent text-accentContrast` already fills
+   the badge and reverts the icon to contrast ink via the exact same
+   currentColor inheritance .glim-hue-icon's own selected state already
+   rides for free. */
+.bv-nav-idle svg {
+  transition: color 150ms ease;
+}
+.bv-nav-idle:hover svg,
+.bv-nav-idle:focus-within svg {
   color: var(--accent);
 }
 
