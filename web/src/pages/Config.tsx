@@ -135,10 +135,17 @@ function ConfigSettingsCard({
   t,
   settings,
   setSettings,
+  hueIndex,
 }: {
   t: T;
   settings: Settings;
   setSettings: (updater: (prev: Settings) => Settings) => void;
+  /** Rainbow position for this Card's own heading notch — see Settings.tsx's
+   *  own `Card`/Badge.tsx's `hueIndex` doc for the full history. This page
+   *  has exactly three static, always-in-the-same-order Cards (this one,
+   *  the backup Card, the snapshots Card below), a genuine small list, so
+   *  each gets its own position rather than the flat single accent. */
+  hueIndex?: number;
 }) {
   const { push } = useToast();
   // Only "idle"/"saving" are ever set now — the SaveBar success/error pattern
@@ -196,7 +203,7 @@ function ConfigSettingsCard({
           Card component — this hand-rolled Card equivalent never shared
           Card's component, so it needed its own copy of the conversion. */}
       <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap>{t("config.settingsTitle")}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{t("config.settingsTitle")}</Badge>
       </h2>
       <p className="text-xs text-carbon-textMuted -mt-1">{t("config.settingsHint")}</p>
 
@@ -367,7 +374,7 @@ export function Config() {
 
       {/* Settings card */}
       {settings && (
-        <ConfigSettingsCard t={t} settings={settings} setSettings={(u) => setSettings((prev) => (prev ? u(prev) : prev))} />
+        <ConfigSettingsCard t={t} settings={settings} setSettings={(u) => setSettings((prev) => (prev ? u(prev) : prev))} hueIndex={0} />
       )}
 
       {/* Backup card. GlimStone follow-up pass ("half-overlap card notch"):
@@ -381,7 +388,7 @@ export function Config() {
           the identical split. */}
       <div className="relative">
         <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{t("config.backupTitle")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={1}>{t("config.backupTitle")}</Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
           <p className="text-xs text-carbon-textMuted -mt-1">{t("config.backupHint")}</p>
@@ -402,7 +409,7 @@ export function Config() {
       {/* Snapshots card — list + delete; restoring settings lives in Recovery. */}
       <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{t("config.snapshotsTitle")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={2}>{t("config.snapshotsTitle")}</Badge>
         </h2>
         {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
             pure informational prose about how the feature works, no activity

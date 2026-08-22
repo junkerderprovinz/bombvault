@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
@@ -32,7 +32,7 @@ import {
   setAccentPresets,
   DEFAULT_ACCENT_PRESETS,
 } from "../lib/accent";
-import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
+import { RAINBOW, getRainbow, setRainbow, hueVars, rainbowAt, type RainbowState } from "../lib/appearance";
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
@@ -93,6 +93,7 @@ function Card({
   title,
   hint,
   children,
+  hueIndex,
 }: {
   title: string;
   /** Optional one-line explanation of what this whole Card does, rendered as
@@ -108,6 +109,17 @@ function Card({
    *  viewport widths — but it is a real className change, not a no-op. */
   hint?: string;
   children: React.ReactNode;
+  /** Rainbow position for THIS Card's own heading notch, by its position
+   *  among the Cards visible on the CURRENTLY ACTIVE tab (jdp's live-review
+   *  override — see Badge.tsx's own tone="heading" section for the full
+   *  history). Threaded straight through to Badge's own `hueIndex`; see that
+   *  prop's doc for the "only meaningful on tone='heading'" / "omit for a
+   *  tab's only Card" rules, both of which apply identically here. Assigned
+   *  at every call site via the single `nextHue()` counter declared at the
+   *  top of this component's own return — see that counter's comment for
+   *  why a shared counter, not per-tab hand-counted literals, is what keeps
+   *  ~50 Card call sites across seven tabs correctly numbered. */
+  hueIndex?: number;
 }) {
   return (
     // GlimStone follow-up pass (live-review round, "half-overlap card
@@ -136,7 +148,7 @@ function Card({
           (tone="heading" size="heading" — see Badge.tsx's file header for
           the full colour/size reasoning). */}
       <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
           {title}
           {hint && <InfoBubble tip={hint} />}
         </Badge>
@@ -159,6 +171,7 @@ export function ToggleRow({
   disabled,
   hideLabel = false,
   shakeNonce,
+  hueIndex,
 }: {
   label: string;
   description?: string;
@@ -195,7 +208,36 @@ export function ToggleRow({
    *  (never shaken yet) renders no `.glim-shake` class at all, so a normal
    *  page load or a successful toggle never shakes. */
   shakeNonce?: number;
+  /** Rainbow position for THIS row's own switch, by LIST INDEX among a
+   *  genuine equal-weight, mutually-independent set of ToggleRows (jdp,
+   *  live-review: "Die ganzen Toggle... sind nicht in der Farbengine!!") —
+   *  the Domains list (settings.domains Card: Container/VMs/Flash/Ordner/
+   *  Selbst-Backup/Empfänger-Dashboard/Fleet-Ansicht) is exactly this case,
+   *  design-language.md's own "walk every genuine equal-member set" rule,
+   *  not the singleton exclusion right next to it. Omit for every OTHER
+   *  ToggleRow in this file (a lone domain-independent switch like "Leise
+   *  Benachrichtigungen", or a switch that is itself one of a pair like
+   *  "Reaktiver Modus"/"Farbenrotation" inside the Rainbow Card — those are
+   *  not members of an equal, trackable list the way seven independent
+   *  domain toggles are, so they correctly keep the flat single accent). */
+  hueIndex?: number;
 }) {
+  // Deliberately NO useRainbow() subscription — ToggleRow (like Toggle and
+  // Badge) is a pure, hookless function component by established convention
+  // (Settings.toggleRow.test.ts's own header: "invoked directly as a plain
+  // function... no jsdom/testing-library needed"). A first attempt at this
+  // added the hook and broke that entire suite with "Cannot read properties
+  // of null (reading 'useSyncExternalStore')" — calling a component as a
+  // plain function outside React's reconciler leaves hooks with no
+  // dispatcher. hueVars()/rainbowAt() below are plain functions reading
+  // module state, not hooks, so they still resolve correctly at render time.
+  // The only real caller of `hueIndex` today (the Domains Card, seven rows
+  // below) lives inside Settings.tsx's own SettingsPage(), the SAME
+  // component whose Rainbow Card holds rainbow settings in a plain
+  // useState() (`rainbow`/`setRainbowLocal`) — flipping the mode there
+  // already re-renders this entire function, recomputing every ToggleRow's
+  // hueVars right along with it. See Badge.tsx's own identical comment for
+  // the fuller version of this reasoning.
   // The switch dims itself via its own `disabled:opacity-50` (Toggle.tsx), but
   // that left the caption and description next to it at full opacity, so a
   // disabled row misleadingly still read as enabled. Rule 15 rules out opacity
@@ -210,8 +252,12 @@ export function ToggleRow({
   // fieldset would only add an unnamed `group` to the accessibility tree at
   // every call site, the very defect the <legend> was added to fix.
   const dim = disabled ? " opacity-50" : "";
+  const hueOn = hueIndex !== undefined;
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div
+      className={`flex items-start justify-between gap-4${hueOn ? " glim-hue" : ""}`}
+      style={hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+    >
       <div className="flex flex-col gap-0.5">
         {!hideLabel && (
           <span className={`flex items-center gap-1.5 text-sm text-carbon-text${dim}`}>
@@ -463,7 +509,7 @@ function AccentPresetSwatch({
 // more coherently following EACH OTHER's rule than each independently
 // matching a different sibling Card.
 // ---------------------------------------------------------------------------
-export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function AccentCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
   const [presets, setPresets] = useState<string[]>(() => getAccentPresets());
 
@@ -485,7 +531,7 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   );
 
   return (
-    <Card title={t("settings.accentColor")}>
+    <Card title={t("settings.accentColor")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         {/* Custom-colour trigger — a flat swatch, same size/shape as the
             preset swatches beside it (design-language.md, "The user-owned
@@ -573,7 +619,7 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // sidebar footer sits at the viewport's bottom edge) to `top-full` (this
 // Card sits in normal page flow, so it opens downward like any other
 // dropdown on this page).
-export function LanguageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { lang, setLanguage, languages } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -601,7 +647,7 @@ export function LanguageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }, [open]);
 
   return (
-    <Card title={t("settings.language")}>
+    <Card title={t("settings.language")} hueIndex={hueIndex}>
       <div className="relative inline-block" ref={ref}>
         {/* w-48 (GlimStone follow-up pass, live-review round — "widen the
             Language button, then match the Theme button to it"): was
@@ -670,7 +716,7 @@ export function LanguageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // button used, byte-for-byte, only the surrounding chrome changed (the
 // sidebar's nav-rail button look → a plain bg-carbon-surface2 trigger, the
 // same idle-chip fill LanguageCard's own trigger already uses).
-export function ThemeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   // getResolvedTheme(), not the raw stored preference: the default is
   // "system" (GlimStone form-engine #1), and this toggle only ever shows/
   // sets an explicit dark or light state, so it must reflect what's actually
@@ -696,7 +742,7 @@ export function ThemeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }, []);
 
   return (
-    <Card title={t("settings.theme")}>
+    <Card title={t("settings.theme")} hueIndex={hueIndex}>
       {/* w-48 (GlimStone follow-up pass, live-review round): matches
           LanguageCard's own trigger button EXACTLY (same class, same value —
           see that button's own comment for why 192px) — jdp's ask was
@@ -737,7 +783,7 @@ export function ThemeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // VMSSHCard shows BombVault's SSH public key (to authorize on the Unraid host)
 // and a connection test. Self-contained: fetches its own data so the large
 // SettingsPage doesn't need extra state.
-function VMSSHCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
@@ -805,7 +851,7 @@ chmod 600 /root/.ssh/authorized_keys`
   }
 
   return (
-    <Card title={t("vm.ssh.title")} hint={t("vm.ssh.desc")}>
+    <Card title={t("vm.ssh.title")} hint={t("vm.ssh.desc")} hueIndex={hueIndex}>
       <div className="flex flex-col gap-3">
         <div className="text-sm text-carbon-text">
           {t("vm.ssh.host")}: <span dir="ltr" className="font-mono text-start">{host || "—"}</span>
@@ -907,7 +953,7 @@ const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   exportEncryption: "settingsIO.group.exportEncryption",
 };
 
-function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [includeCreds, setIncludeCreds] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -986,7 +1032,7 @@ function SettingsPortabilityCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const busy = importBusy !== "idle" || exporting;
 
   return (
-    <Card title={t("settingsIO.title")} hint={t("settingsIO.desc")}>
+    <Card title={t("settingsIO.title")} hint={t("settingsIO.desc")} hueIndex={hueIndex}>
       {/* EXPORT ---------------------------------------------------------- */}
       <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
         <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
@@ -1316,10 +1362,12 @@ function DashboardWidgetCard({
   t,
   tokenSet,
   onTokenSet,
+  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   tokenSet: boolean;
   onTokenSet: (set: boolean) => void;
+  hueIndex?: number;
 }) {
   const { push } = useToast();
   const [token, setToken] = useState<string | null>(null);
@@ -1374,7 +1422,7 @@ function DashboardWidgetCard({
   }
 
   return (
-    <Card title={t("settings.widget")} hint={t("settings.widgetHint")}>
+    <Card title={t("settings.widget")} hint={t("settings.widgetHint")} hueIndex={hueIndex}>
 
       <ul className="list-disc ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
         <li>{t("settings.widgetHow")}</li>
@@ -1477,6 +1525,7 @@ function FleetSettingsCard({
   save,
   tokenSet,
   onTokenSet,
+  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   settings: Settings;
@@ -1488,6 +1537,7 @@ function FleetSettingsCard({
   ) => Promise<boolean>;
   tokenSet: boolean;
   onTokenSet: (set: boolean) => void;
+  hueIndex?: number;
 }) {
   const { push } = useToast();
   const [nameSaveState, setNameSaveState] = useState<SaveState>("idle");
@@ -1548,7 +1598,7 @@ function FleetSettingsCard({
   }
 
   return (
-    <Card title={t("settings.fleet")} hint={t("settings.fleetHint")}>
+    <Card title={t("settings.fleet")} hint={t("settings.fleetHint")} hueIndex={hueIndex}>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs text-carbon-textSub">{t("settings.instanceName")}</label>
@@ -1649,7 +1699,7 @@ function FleetSettingsCard({
 // RcloneCard manages the off-site rclone config (paste rclone.conf). It is
 // stored encrypted; only the remote NAMES are read back for display. Backup
 // paths can then be set to "rclone:<remote>:<bucket>" in Backup Paths.
-export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [remotes, setRemotes] = useState<string[]>([]);
   const [conf, setConf] = useState("");
@@ -1688,7 +1738,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   }
 
   return (
-    <Card title={t("rclone.title")} hint={t("rclone.hint")}>
+    <Card title={t("rclone.title")} hint={t("rclone.hint")} hueIndex={hueIndex}>
       <div className="text-sm text-carbon-text">
         {t("rclone.configured")}:{" "}
         <span dir="ltr" className="font-mono text-start">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
@@ -1728,7 +1778,7 @@ export function RcloneCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // CloudCard stores credentials for off-site restic backends (S3 + restic REST),
 // kept encrypted. Secrets are write-only: blank on load, blank-on-save keeps the
 // stored value. Field labels are restic's actual env var names (self-documenting).
-export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [secretSet, setSecretSet] = useState(false);
@@ -1779,7 +1829,7 @@ export function CloudCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
-    <Card title={t("cloud.title")}>
+    <Card title={t("cloud.title")} hueIndex={hueIndex}>
       {/* GlimStone follow-up pass (Phase 2 Task 4's remainder): stays permanent
           text, NOT bubbled — it is the only complete reference for all four
           remote-URL prefixes this card's credentials unlock (s3:/rest:/b2:/
@@ -1853,7 +1903,7 @@ function toDraft(s: CloudCredSetInfo): CloudCredSet {
 // whole list round-trips through setCloudCredSets (replace-all), which is why
 // every save resends every set (via toDraft — see its own comment for why
 // that is safe for the sets NOT being edited).
-export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [sets, setSets] = useState<CloudCredSetInfo[]>([]);
   const [editing, setEditing] = useState<CloudCredSet | null>(null);
@@ -1942,7 +1992,7 @@ export function CloudCredSetsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
-    <Card title={t("cloud.credSets.title")} hint={t("cloud.credSets.hint")}>
+    <Card title={t("cloud.credSets.title")} hint={t("cloud.credSets.hint")} hueIndex={hueIndex}>
 
       {sets.length === 0 && !editing && (
         <span className="text-xs text-carbon-textMuted">{t("cloud.credSets.none")}</span>
@@ -2116,6 +2166,7 @@ const emptyNotify: NotifyConfig = {
 function NotifyCard({
   t,
   platformKind,
+  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   // The detected/overridden platform.Kind ("unraid" | "generic" | "truenas"),
@@ -2125,6 +2176,7 @@ function NotifyCard({
   // no UI trace — see unraidGate's doc comment in internal/api/service.go for
   // why the backend gate itself stays hard rather than trusting the toggle).
   platformKind: string;
+  hueIndex?: number;
 }) {
   const { push } = useToast();
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
@@ -2196,7 +2248,7 @@ function NotifyCard({
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
-    <Card title={t("notify.title")} hint={t("notify.hint")}>
+    <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
       <label className={labelCls}>
         {t("notify.on")}
         <select value={cfg.on} onChange={(e) => set("on", e.target.value)} className={selectCardCls}>
@@ -2557,6 +2609,7 @@ function IntegrityCard({
   settings,
   setSettings,
   save,
+  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   settings: Settings;
@@ -2566,6 +2619,7 @@ function IntegrityCard({
     setSaveState: (s: SaveState) => void,
     setSaveError: (e: string | null) => void
   ) => Promise<boolean>;
+  hueIndex?: number;
 }) {
   // Prune deletes snapshots, so it stays advanced-only even though the rest of
   // this card (verify, unlock, DR drill) is a first-class default-mode feature.
@@ -2786,7 +2840,7 @@ function IntegrityCard({
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
 
   return (
-    <Card title={t("integrity.title")} hint={t("integrity.hint")}>
+    <Card title={t("integrity.title")} hint={t("integrity.hint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
         <SourceToggle
@@ -3076,6 +3130,7 @@ function ContainersSection({
   onChange,
   perItem,
   t,
+  hueIndex,
 }: {
   settings: Settings;
   containers: Container[];
@@ -3083,6 +3138,7 @@ function ContainersSection({
   /** #121: when on, each included container exposes a per-item schedule override. */
   perItem: boolean;
   t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
 }) {
   const schedule = settings.containersSchedule;
   const status = scheduleStatus(schedule);
@@ -3091,7 +3147,7 @@ function ContainersSection({
   const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
 
   return (
-    <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")}>
+    <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
       {/* Cadence row */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
@@ -3161,6 +3217,7 @@ function VMsSection({
   vms,
   perItem,
   t,
+  hueIndex,
 }: {
   settings: Settings;
   syncSchedules: boolean;
@@ -3170,13 +3227,14 @@ function VMsSection({
   /** #121: when on, each included VM exposes a per-item schedule override. */
   perItem: boolean;
   t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
 }) {
   const schedule = syncSchedules ? settings.containersSchedule : settings.vmsSchedule;
   const status = scheduleStatus(schedule);
   const included = vms.filter((v) => v.includeInSchedule);
 
   return (
-    <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")}>
+    <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3237,17 +3295,19 @@ function FlashSection({
   syncSchedules,
   onChange,
   t,
+  hueIndex,
 }: {
   settings: Settings;
   syncSchedules: boolean;
   onChange: (schedule: string) => void;
   t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
 }) {
   const schedule = syncSchedules ? settings.containersSchedule : settings.flashSchedule;
   const status = scheduleStatus(schedule);
 
   return (
-    <Card title={t("jobs.flashSection")}>
+    <Card title={t("jobs.flashSection")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3295,6 +3355,7 @@ function FilesSection({
   onChange,
   onSetsChanged,
   t,
+  hueIndex,
 }: {
   settings: Settings;
   fileSets: FileSetView[];
@@ -3302,6 +3363,7 @@ function FilesSection({
   /** A toggle PATCHed a set — reload the list so the rows reflect the server. */
   onSetsChanged: () => void;
   t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
 }) {
   const { push } = useToast();
   const schedule = settings.filesSchedule;
@@ -3326,7 +3388,7 @@ function FilesSection({
   }
 
   return (
-    <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")}>
+    <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3385,13 +3447,15 @@ function RestoreChecksSection({
   settings,
   update,
   t,
+  hueIndex,
 }: {
   settings: Settings;
   update: (patch: Partial<Settings>) => void;
   t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
 }) {
   return (
-    <Card title={t("verify.auto")} hint={t("verify.hint")}>
+    <Card title={t("verify.auto")} hint={t("verify.hint")} hueIndex={hueIndex}>
       <ToggleRow
         hideLabel
         label={t("verify.auto")}
@@ -4060,6 +4124,30 @@ export function SettingsPage() {
     (settings.configOffsite !== "" && settings.configOffsiteImmutable) ||
     (settings.filesOffsite !== "" && settings.filesOffsiteImmutable);
 
+  // hueSeq/nextHue (GlimStone follow-up pass, jdp's second live-review round
+  // — "Die ganzen... Abschnittsbadges sind nicht in der Farbengine!!"):
+  // every Card/section-title notch below now takes an optional `hueIndex`,
+  // by its own LIST INDEX among the notches visible on the CURRENTLY ACTIVE
+  // tab (see Card's own doc comment and Badge.tsx's tone="heading" section
+  // for the full history/reasoning). A hand-counted literal per tab would
+  // silently drift the moment a Card is added/removed/reordered — this
+  // plain, freshly-reset-every-render counter instead assigns 0,1,2,... in
+  // exactly the order the JSX below actually evaluates each call, which for
+  // a `{tab === "x" && (<Card hueIndex={nextHue()} .../>)}` gate is ALSO
+  // exactly the order those Cards are, or would be, painted: `&&`
+  // short-circuits, so an inactive tab's own `nextHue()` calls never run at
+  // all (the counter is never incremented for cards that aren't on screen),
+  // and a re-render always starts back at 0 (a plain local `let`, not a
+  // ref/state — nothing here needs to survive between renders). One
+  // exception, documented at its own two call sites below: the four
+  // Domain-schedule sections (ContainersSection/VMsSection/FlashSection/
+  // FilesSection) and RestoreChecksSection are each passed their OWN
+  // `nextHue()` result the same way every inline `<Card>` is — the counter
+  // does not care whether the notch it is numbering renders directly here or
+  // one function-call away inside a child component.
+  let hueSeq = 0;
+  const nextHue = () => hueSeq++;
+
   return (
     // gap-10 (live-review round — "gap between the tab strip and the first
     // card is too small"): was gap-6 (24px), same value the tab-panels
@@ -4242,7 +4330,7 @@ export function SettingsPage() {
               straddles, so the h2 itself is the right anchor; see
               Badge.tsx's badgeClassName comment for the positioning math. */}
           <h2 className="relative flex items-center">
-            <Badge tone="heading" size="heading" wrap>{t("settings.schedulesBackup")}</Badge>
+            <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("settings.schedulesBackup")}</Badge>
           </h2>
           {/* Per-item schedules toggle (#121): opt in to per-container/VM overrides.
               Off by default — while off, the member lists below are unchanged. */}
@@ -4268,6 +4356,7 @@ export function SettingsPage() {
             }
             perItem={settings.perItemSchedules}
             t={t}
+            hueIndex={nextHue()}
           />
           {/* Sync checkbox — applies the Containers cadence to VMs + Flash too. */}
           <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -4288,6 +4377,7 @@ export function SettingsPage() {
             vms={vms}
             perItem={settings.perItemSchedules}
             t={t}
+            hueIndex={nextHue()}
           />
           <FlashSection
             settings={settings}
@@ -4296,6 +4386,7 @@ export function SettingsPage() {
               setSettings((prev) => (prev ? { ...prev, flashSchedule: v } : prev))
             }
             t={t}
+            hueIndex={nextHue()}
           />
           <FilesSection
             settings={settings}
@@ -4305,12 +4396,13 @@ export function SettingsPage() {
             }
             onSetsChanged={loadFileSets}
             t={t}
+            hueIndex={nextHue()}
           />
 
           {/* Off-site replication schedules (schedulesOffsite): one cadence per
               domain (+ config + files). Editors here are the sole owner of these
               fields. */}
-          <Card title={t("settings.schedulesOffsite")}>
+          <Card title={t("settings.schedulesOffsite")} hueIndex={nextHue()}>
             {([
               ["containersOffsiteSchedule", "nav.containers"],
               ["vmsOffsiteSchedule", "nav.vms"],
@@ -4335,7 +4427,7 @@ export function SettingsPage() {
           </Card>
 
           {/* Self-backup schedule (schedulesSelfBackup): BombVault's own config. */}
-          <Card title={t("settings.schedulesSelfBackup")} hint={t("config.scheduleHint")}>
+          <Card title={t("settings.schedulesSelfBackup")} hint={t("config.scheduleHint")} hueIndex={nextHue()}>
             <div className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("nav.config")}</span>
               <input
@@ -4358,12 +4450,13 @@ export function SettingsPage() {
               setSettings((prev) => (prev ? { ...prev, ...patch } : prev))
             }
             t={t}
+            hueIndex={nextHue()}
           />
 
           {/* Missed schedules: anacron-style catch-up after start. Backend runs
               the missed domain job ~2 minutes after boot (see internal/schedule
               CatchUpMissed). */}
-          <Card title={t("settings.missedSchedulesTitle")}>
+          <Card title={t("settings.missedSchedulesTitle")} hueIndex={nextHue()}>
             <ToggleRow
               label={t("settings.catchUpMissed")}
               hint={t("settings.catchUpMissedHint")}
@@ -4380,7 +4473,7 @@ export function SettingsPage() {
               healthy/running before its dependents start. The wait also holds
               through the post-backup update recreate (see internal/backup
               orchestrator WhileDependentsStopped). */}
-          <Card title={t("settings.restartHealthTitle")}>
+          <Card title={t("settings.restartHealthTitle")} hueIndex={nextHue()}>
             <ToggleRow
               label={t("settings.restartHealthWait")}
               hint={t("settings.restartHealthWaitHint")}
@@ -4437,7 +4530,7 @@ export function SettingsPage() {
 
           {/* Restore-check schedule (schedulesChecks): the scheduled off-site
               append-only tamper test. Previously had no UI editor at all. */}
-          <Card title={t("settings.schedulesChecks")}>
+          <Card title={t("settings.schedulesChecks")} hueIndex={nextHue()}>
             <div className="rounded-card bg-carbon-surface2 p-4">
               <CadenceBuilder
                 label={t("settings.tamperTestSchedule")}
@@ -4470,7 +4563,7 @@ export function SettingsPage() {
       {/* GENERAL — Domains                                                   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "general" && (
-      <Card title={t("settings.domains")} hint={t("settings.domainsHint")}>
+      <Card title={t("settings.domains")} hint={t("settings.domainsHint")} hueIndex={nextHue()}>
         {/* Live-review round 3, point 4: all 7 rows here used to show a
             permanent visible caption under the label (rule 8 violation — the
             first 5 were even raw hardcoded English strings, never localized
@@ -4500,6 +4593,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("containersEnabled", v)}
           disabled={domainToggleBusy.containersEnabled}
           shakeNonce={domainToggleShake.containersEnabled}
+          hueIndex={0}
         />
         <ToggleRow
           label={t("settings.vmsEnabled")}
@@ -4508,6 +4602,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("vmsEnabled", v)}
           disabled={domainToggleBusy.vmsEnabled}
           shakeNonce={domainToggleShake.vmsEnabled}
+          hueIndex={1}
         />
         <ToggleRow
           label={t("settings.flashEnabled")}
@@ -4516,6 +4611,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("flashEnabled", v)}
           disabled={domainToggleBusy.flashEnabled}
           shakeNonce={domainToggleShake.flashEnabled}
+          hueIndex={2}
         />
         <ToggleRow
           label={t("settings.filesEnabled")}
@@ -4524,6 +4620,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("filesEnabled", v)}
           disabled={domainToggleBusy.filesEnabled}
           shakeNonce={domainToggleShake.filesEnabled}
+          hueIndex={3}
         />
         <ToggleRow
           label={t("settings.configEnabled")}
@@ -4532,6 +4629,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("configEnabled", v)}
           disabled={domainToggleBusy.configEnabled}
           shakeNonce={domainToggleShake.configEnabled}
+          hueIndex={4}
         />
         <ToggleRow
           label={t("settings.receiverEnabled")}
@@ -4540,6 +4638,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
           disabled={domainToggleBusy.receiverEnabled}
           shakeNonce={domainToggleShake.receiverEnabled}
+          hueIndex={5}
         />
         <ToggleRow
           label={t("settings.fleetEnabled")}
@@ -4548,6 +4647,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
           disabled={domainToggleBusy.fleetEnabled}
           shakeNonce={domainToggleShake.fleetEnabled}
+          hueIndex={6}
         />
       </Card>
       )}
@@ -4556,7 +4656,7 @@ export function SettingsPage() {
       {/* STORAGE — Backup paths                                             */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)}>
+      <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
         <PathModeSwitch
           label={t("settings.containersPath")}
           domain="containers"
@@ -4667,6 +4767,7 @@ export function SettingsPage() {
         // into the one title-level bubble rather than leaving the second as
         // an orphaned bare icon once the wrapping <p> it lived in is gone.
         hint={`${t("settings.retentionHint")} ${t("settings.retentionCombineInfo")}`}
+        hueIndex={nextHue()}
       >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
@@ -4718,7 +4819,7 @@ export function SettingsPage() {
       {/* update (#56). Opt-in; keeping the old image makes rollback cheap.    */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.imageCleanupTitle")} hint={t("settings.imageCleanupHint")}>
+      <Card title={t("settings.imageCleanupTitle")} hint={t("settings.imageCleanupHint")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.pruneImageAfterUpdate")}
           hint={t("settings.pruneImageAfterUpdateHint")}
@@ -4749,7 +4850,7 @@ export function SettingsPage() {
       {/* Docker tab's stale banner clears. Best-effort and non-fatal.         */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.reconcileTitle")}>
+      <Card title={t("settings.reconcileTitle")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.reconcileUnraidStatus")}
           hint={t("settings.reconcileUnraidStatusHint")}
@@ -4783,7 +4884,7 @@ export function SettingsPage() {
       {/* stored one, and removing a row deletes that registry's credential.   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")}>
+      <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")} hueIndex={nextHue()}>
         {settings.registryAuths.length === 0 && (
           <p className="text-sm text-carbon-textMuted">
             {t("settings.registriesEmpty")}
@@ -4981,7 +5082,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
       <Advanced>
-      <Card title={t("settings.cacheTitle")} hint={t("settings.cacheHint")}>
+      <Card title={t("settings.cacheTitle")} hint={t("settings.cacheHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
           <input
@@ -5019,7 +5120,7 @@ export function SettingsPage() {
       {/* flash backup, for off-server sync. Only relevant when Flash is on.   */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && settings.flashEnabled && (
-      <Card title={t("flash.zipExport.title")} hint={t("flash.zipExport.hint")}>
+      <Card title={t("flash.zipExport.title")} hint={t("flash.zipExport.hint")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("flash.zipExport.enable")}
           hint={t("flash.zipExport.enableHint")}
@@ -5111,7 +5212,7 @@ export function SettingsPage() {
       {/* Applies across domains, so it is not gated on any single domain.      */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("export.encrypt.title")} hint={t("export.encrypt.hint")}>
+      <Card title={t("export.encrypt.title")} hint={t("export.encrypt.hint")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("export.encrypt.enable")}
           hint={t("export.encrypt.enableHint")}
@@ -5183,9 +5284,9 @@ export function SettingsPage() {
           settings.schedulesBackup above; see Badge.tsx's badgeClassName
           comment. */}
       <h2 className="relative flex items-center">
-        <Badge tone="heading" size="heading" wrap>{t("offsite.sectionTitle")}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("offsite.sectionTitle")}</Badge>
       </h2>
-      <Card title={t("settings.offsiteTitle")}>
+      <Card title={t("settings.offsiteTitle")} hueIndex={nextHue()}>
         {/* GlimStone follow-up pass: the one genuine toss-up in this pass —
             left as permanent text rather than force a call. It names three
             backend URL prefixes (rest:/s3:/b2:), but that's only PARTIALLY
@@ -5294,6 +5395,7 @@ export function SettingsPage() {
         // sentences (what this Card does, the OR-combination rule, and the
         // immutable-destination override) into the one title-level bubble.
         hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionOffsiteImmutableInfo")}`}
+        hueIndex={nextHue()}
       >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
@@ -5345,7 +5447,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
       <Advanced>
-      <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")}>
+      <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
         <div className="grid grid-cols-2 gap-3">
           {([
             ["offsiteLimitUpload", "settings.limitUpload"],
@@ -5390,7 +5492,7 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && (
       <Advanced>
-      <Card title={t("settings.metrics")}>
+      <Card title={t("settings.metrics")} hueIndex={nextHue()}>
         {/* GlimStone follow-up pass: stays permanent text, NOT bubbled — it
             names the exact /metrics path AND the exact
             "Authorization: Bearer <token>" scrape syntax someone pastes into
@@ -5468,6 +5570,7 @@ export function SettingsPage() {
             setSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
             setSavedSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
           }}
+          hueIndex={nextHue()}
         />
         <FleetSettingsCard
           t={t}
@@ -5479,6 +5582,7 @@ export function SettingsPage() {
             setSettings((prev) => (prev ? { ...prev, fleetTokenSet: set } : prev));
             setSavedSettings((prev) => (prev ? { ...prev, fleetTokenSet: set } : prev));
           }}
+          hueIndex={nextHue()}
         />
         </>
       )}
@@ -5487,7 +5591,7 @@ export function SettingsPage() {
       {/* STORAGE — Encryption                                               */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
-      <Card title={t("settings.encryption")}>
+      <Card title={t("settings.encryption")} hueIndex={nextHue()}>
         <ToggleRow
           label={
             settings.encryptionEnabled
@@ -5554,7 +5658,7 @@ export function SettingsPage() {
       {/* Advanced, OR shown whenever VMs are enabled so the SSH setup you    */}
       {/* need to make VM backups work is never hidden behind Advanced.       */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (advanced || settings.vmsEnabled) && <VMSSHCard t={t} />}
+      {tab === "system" && (advanced || settings.vmsEnabled) && <VMSSHCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* OFFSITE — Off-site backends (rclone + cloud credentials). Same     */}
@@ -5564,22 +5668,22 @@ export function SettingsPage() {
       {/* off-site setup for Simple-mode users (they'd only find these two   */}
       {/* cards by way of the Recovery page, which never gated them either). */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "offsite" && <RcloneCard t={t} />}
+      {tab === "offsite" && <RcloneCard t={t} hueIndex={nextHue()} />}
 
-      {tab === "offsite" && <CloudCard t={t} />}
-      {tab === "offsite" && <CloudCredSetsCard t={t} />}
+      {tab === "offsite" && <CloudCard t={t} hueIndex={nextHue()} />}
+      {tab === "offsite" && <CloudCredSetsCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* NOTIFICATIONS — NotifyCard (renders always; not re-gated).          */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "notifications" && <NotifyCard t={t} platformKind={platformKind} />}
+      {tab === "notifications" && <NotifyCard t={t} platformKind={platformKind} hueIndex={nextHue()} />}
 
       {/* NOTIFICATIONS — Weekly digest: one summary message per week through
           the channels configured above. Schedule input mirrors the drills/
           tamper cadence editors (CadenceBuilder's own <fieldset disabled>
           handles the dimming — no opacity gate on the wrapping container). */}
       {tab === "notifications" && (
-        <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")}>
+        <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")} hueIndex={nextHue()}>
           <ToggleRow
             hideLabel
             label={t("settings.digestToggle")}
@@ -5620,7 +5724,7 @@ export function SettingsPage() {
           that pushes ONE notification per overdue episode through the channels
           configured above; a new successful backup re-arms it. */}
       {tab === "notifications" && (
-        <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")}>
+        <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")} hueIndex={nextHue()}>
           <ToggleRow
             label={t("settings.watchdogToggle")}
             checked={settings.watchdogEnabled}
@@ -5648,7 +5752,19 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && (
       <Advanced>
-        <Card title={t("spike.title")}>
+        {/* nextHue() here is evaluated whenever this JSX subtree is
+            constructed, REGARDLESS of whether Advanced ends up rendering it
+            (its `children` prop is already-built by the time Advanced's own
+            `advanced && when` check runs) — unlike every `{tab === "x" && (
+            <Card hueIndex={nextHue()} .../>)}` gate elsewhere on this page,
+            where `&&` short-circuits and never evaluates the right side at
+            all. A non-advanced user's render therefore "spends" one hue slot
+            on a Card that never paints, so the System tab's remaining
+            headings shift by one position while Advanced is off. Accepted:
+            no two SIMULTANEOUSLY VISIBLE headings ever collide either way —
+            a skipped position changes which colour a heading gets, not
+            whether two visible ones match. */}
+        <Card title={t("spike.title")} hueIndex={nextHue()}>
           <SpikePanel t={t} />
         </Card>
       </Advanced>
@@ -5661,14 +5777,14 @@ export function SettingsPage() {
       {/* flow, alongside the un-gated off-site + retention cards above.       */}
       {/* ------------------------------------------------------------------ */}
       {tab === "integrity" && (
-      <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} />
+      <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
       )}
 
       {/* ------------------------------------------------------------------ */}
       {/* SYSTEM — Security                                                  */}
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && (
-      <Card title={t("auth.security")} hint={t("auth.passwordHint")}>
+      <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={nextHue()}>
         {/* Status badge */}
         <div className="flex items-center gap-2">
           <span
@@ -5767,7 +5883,7 @@ export function SettingsPage() {
       {/* (a fundamental, whole-app setting, same register) and right before  */}
       {/* the purely-cosmetic Appearance cluster below.                       */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "general" && <LanguageCard t={t} />}
+      {tab === "general" && <LanguageCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* GENERAL — Theme (GlimStone follow-up pass, later live-review round). */}
@@ -5777,7 +5893,7 @@ export function SettingsPage() {
       {/* cosmetic Appearance sub-topics below), so this Card sits right      */}
       {/* after Language and right before Accent colour.                      */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "general" && <ThemeCard t={t} />}
+      {tab === "general" && <ThemeCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* GENERAL — Appearance                                               */}
@@ -5799,7 +5915,7 @@ export function SettingsPage() {
       {/* Portability Card + AboutFooter further down), not a wrapping        */}
       {/* Fragment introduced just for this section.                         */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "general" && <AccentCard t={t} />}
+      {tab === "general" && <AccentCard t={t} hueIndex={nextHue()} />}
 
       {/* Shape (GlimStone form-engine — shape engine; design-language.md's
           "The user-owned axes": data-shape on <html>, round/soft/square,
@@ -5850,7 +5966,7 @@ export function SettingsPage() {
           control per this session's "try it on one, generalize later if it
           lands well" pattern, not a page-wide restyle. */}
       {tab === "general" && (
-      <Card title={t("settings.shape")} hint={t("settings.shapeHint")}>
+      <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
         <Selector
           items={SHAPES.map((s) => ({
             id: s,
@@ -5913,7 +6029,7 @@ export function SettingsPage() {
           ToggleRow's new `hint` prop — the text itself didn't change, only
           where it lives. */}
       {tab === "general" && (
-      <Card title={t("settings.rainbow")} hint={t("settings.rainbowHint")}>
+      <Card title={t("settings.rainbow")} hint={t("settings.rainbowHint")} hueIndex={nextHue()}>
         <div className="flex flex-col gap-3">
           <ToggleRow
             label={t("settings.rainbow")}
@@ -6042,7 +6158,7 @@ export function SettingsPage() {
           above; the `description` (unaffected by this pass) still renders
           under the hidden label. */}
       {tab === "general" && (
-      <Card title={t("settings.quietToasts")}>
+      <Card title={t("settings.quietToasts")} hueIndex={nextHue()}>
         <ToggleRow
           hideLabel
           label={t("settings.quietToasts")}
@@ -6059,7 +6175,7 @@ export function SettingsPage() {
       {/* destinations (and, opt-in, credentials) to another install. Backups, */}
       {/* snapshots and history are never touched.                            */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && <SettingsPortabilityCard t={t} />}
+      {tab === "system" && <SettingsPortabilityCard t={t} hueIndex={nextHue()} />}
 
       {/* SYSTEM — Version + report-a-bug (kept out of the sidebar for a clean UI). */}
       {tab === "system" && <AboutFooter />}

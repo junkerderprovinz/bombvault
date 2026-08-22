@@ -130,11 +130,39 @@
 //     for actual chips/badges elsewhere — see the TONE_CLASSES comment below
 //     on the Task 7 "→ neutral" sites, which lands in that other,
 //     pre-existing role instead.)
-//   - Every heading gets the SAME solid accent fill (not a rainbow
-//     position): a badge is not a list row with an identity to distinguish
-//     from its neighbours, and cycling 21+ headings through 8 rainbow hues
-//     would fight rule 2 ("one hero, everything else quiet") far worse than
-//     a uniform fill does. This does mean rule 3's "at most one solid accent
+//   - REVISED AGAIN (jdp, second live-review round, emphatic): "Die ganzen
+//     Toggle, Abschnittsbadges sind nicht in der Farbengine!! Im
+//     Regenbogen-Modus hat alles die gleiche Farbe!" — every heading on a
+//     rainbow-mode page WAS rendering the identical flat accent fill,
+//     confirmed live against the real deployed container (Settings' seven
+//     general-tab Card notches — Domänen/Sprache/Design/Akzentfarbe/Ecken/
+//     Regenbogen-Modus/Leise Benachrichtigungen — all measured
+//     rgb(252,196,25), the flat accent, with rainbow mode ON). The
+//     paragraph below (kept for its still-correct "a heading isn't a
+//     control" / rule-9 reasoning) argued headings should NEVER take a
+//     rainbow position at all; jdp's live reaction overrides that specific
+//     conclusion, not the reasoning about rule 3/rule 9 — a heading can
+//     hold a rainbow POSITION (like any other list member) while still
+//     being furniture rather than a control.
+//
+//     `hueIndex` (optional, below) is the opt-in this reversal needed:
+//     omitted, a heading renders exactly as before (flat `bg-accent`,
+//     unaffected by rainbow mode — correct for a genuine singleton heading,
+//     the one-of-a-kind case design-language.md's rainbow section itself
+//     carves out). Passed, the heading joins the rainbow the same way a
+//     Selector segment or a ContainerRow does: `.glim-hue` +
+//     `hueVars(rainbowAt(hueIndex))`, position assigned by the caller's own
+//     LIST INDEX among the headings visible on that page/tab at once — a
+//     page's several Card titles are exactly the "genuine equal-member set"
+//     rule 2's "one hero, everything else quiet" was never meant to flatten
+//     into a single shared colour; rule 2 governs the page's ONE <h1>, not
+//     how many DIFFERENT hues its supporting section headings may carry.
+//     Deliberately restricted to `tone === "heading"` only (see the Badge()
+//     body below): every other tone is one of rule 4's four state hues, a
+//     load-bearing status signal a stray `hueIndex` must never overwrite.
+//   - Every heading gets a SOLID fill (not a translucent wash) either way —
+//     flat accent when no `hueIndex` is given, its own rainbow position's
+//     colour when one is. This does mean rule 3's "at most one solid accent
 //     thing per page" no longer literally holds once a page has several
 //     Cards — an accepted, deliberate consequence of this live-review
 //     round's explicit ask, not an oversight: a heading badge is furniture
@@ -266,7 +294,8 @@
 // app has that shape today, so there's no live case to design against.
 // ---------------------------------------------------------------------------
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { hueVars, rainbowAt } from "../lib/appearance";
 
 export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading";
 export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon";
@@ -565,6 +594,19 @@ export interface BadgeProps {
    *  a narrow-column badge that needs to wrap rather than overflow — pair
    *  with `wrap` so the box grows instead of clipping). */
   className?: string;
+  /** Rainbow position, by the caller's own LIST INDEX (never a hash) among
+   *  the heading badges visible at once on the same page/tab — jdp's
+   *  live-review override of this file's original "every heading gets the
+   *  same flat fill" stance, see the file header's tone="heading" section
+   *  for the full history. ONLY meaningful when `tone === "heading"`:
+   *  every other tone is one of rule 4's four state hues (ok/fail/warn/
+   *  active's soft accent), a semantic signal `hueIndex` must never
+   *  overwrite, so it is silently ignored for any other tone. Omit for a
+   *  genuine singleton heading (the only Card on its page/tab) — that one
+   *  keeps the flat, un-rainbowed accent, per design-language's own
+   *  "the only one of its kind on the page keeps the single accent"
+   *  exclusion. */
+  hueIndex?: number;
 }
 
 export function Badge({
@@ -582,8 +624,30 @@ export function Badge({
   rel,
   wrap,
   className,
+  hueIndex,
 }: BadgeProps) {
+  // Deliberately NO useRainbow() subscription here, unlike Selector's own
+  // identical-looking hue support: Badge (like Toggle) is a pure, hookless
+  // function component by established convention (see Badge.test.ts's own
+  // header comment — "invoked directly as a plain function... no jsdom/
+  // testing-library needed"), and a first attempt at this DID add the hook,
+  // which broke that entire suite (and Settings.tsx's own ToggleRow tests)
+  // with "Cannot read properties of null (reading 'useSyncExternalStore')" —
+  // calling a component as a plain function outside React's reconciler gives
+  // hooks no dispatcher to run against. Reverted; hueVars()/rainbowAt() below
+  // are plain functions reading module state, not hooks, so they still
+  // resolve correctly at render time with zero subscription. The live-repaint
+  // job this would otherwise cover is instead already handled by the ONE
+  // caller that actually edits rainbow settings: Settings.tsx's own
+  // SettingsPage() holds the Rainbow Card's state in a plain useState() in
+  // THAT SAME component (see its own `rainbow`/`setRainbowLocal`), so
+  // flipping the mode there already re-renders every Card/ToggleRow hueIndex
+  // call site on the page — no separate subscription needed for the one real
+  // place this value can change while the page showing it is mounted.
+  const hueOn = hueIndex !== undefined && tone === "heading";
   const shared = badgeClassName({ tone, size, shape, wrap, className });
+  const merged = hueOn ? `glim-hue ${shared}` : shared;
+  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
 
   if (as === "button") {
     return (
@@ -593,7 +657,8 @@ export function Badge({
         disabled={disabled}
         title={title}
         aria-label={ariaLabel}
-        className={`appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${shared}`}
+        style={hueStyle}
+        className={`appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${merged}`}
       >
         {children}
       </button>
@@ -602,14 +667,14 @@ export function Badge({
 
   if (as === "a") {
     return (
-      <a href={href} target={target} rel={rel} title={title} aria-label={ariaLabel} className={`transition-opacity hover:opacity-80 ${shared}`}>
+      <a href={href} target={target} rel={rel} title={title} aria-label={ariaLabel} style={hueStyle} className={`transition-opacity hover:opacity-80 ${merged}`}>
         {children}
       </a>
     );
   }
 
   return (
-    <span title={title} aria-label={ariaLabel} className={shared}>
+    <span title={title} aria-label={ariaLabel} style={hueStyle} className={merged}>
       {children}
     </span>
   );
