@@ -1319,6 +1319,49 @@ body {
   --color-accentSoft: var(--item-hue-soft);
 }
 
+/* Section-title (notch) badge — card-wide hover zone (jdp, live-review: "a
+   heading badge only lights up in reactive mode when hovering the tiny
+   glyph itself, not anywhere in its own card" — a 22px-tall pill is an
+   impractically small target for a control that visually straddles a whole
+   card's edge). The block above already reveals a hued element on its OWN
+   `:hover`/`:focus-within`/`.glim-active` — that still applies here
+   unchanged (hovering the badge glyph directly still works, it's just no
+   longer the ONLY way in). This block ADDS the badge's ENCLOSING CARD as a
+   second, much larger hover/focus zone, matching the one real precedent
+   this app already has for "the coloured element and the hover target are
+   the same size": ContainerRow/VMRow/FileSetRow carry `.glim-hue` directly
+   on the whole row, so a row's own `:hover` (the base rule above) already
+   IS a whole-row hover zone with no extra CSS needed — there was nothing to
+   port from that case, just the same instinct ("hover the container, not
+   the pixel") applied to a badge that, unlike a row, is a small element
+   riding on top of a much bigger surface it doesn't itself fill.
+     `.glim-notch-card` marks the badge's own `position: relative` ancestor
+   (Settings.tsx's shared Card() component, and the handful of bespoke
+   card-shaped divs in Flash.tsx/Config.tsx that predate/duplicate it — see
+   each call site) — NOT the general `.rounded-card`/`rounded-card` utility,
+   which also lands on dozens of unrelated nested boxes (inner hint panels,
+   status banners, list rows) that have nothing to do with a heading notch
+   and would turn this into "hover ANYTHING card-shaped, anywhere" instead
+   of "hover THIS badge's own card."
+     `.glim-notch-hue` (Badge.tsx) marks the badge itself, specifically
+   narrower than the general `.glim-hue` every rainbow-hued element carries:
+   without this second, more specific class, `.glim-notch-card:hover
+   .glim-hue` would ALSO reveal any unrelated hue-enabled control that
+   happens to live in the same card's body (a Selector, a nested row) purely
+   because the mouse is somewhere else in that card — which is not "colour
+   marks activity" (rule 3), it's colour marking proximity. Scoping to
+   `.glim-notch-hue` means only the heading this rule is actually about ever
+   reacts to the card-wide zone. */
+[data-rainbow="reactive"] .glim-notch-card:hover .glim-notch-hue,
+[data-rainbow="reactive"] .glim-notch-card:focus-within .glim-notch-hue {
+  --accent: var(--item-hue);
+  --accent-contrast: var(--item-hue-ink);
+  --accent-soft: var(--item-hue-soft);
+  --color-accent: var(--item-hue);
+  --color-accentContrast: var(--item-hue-ink);
+  --color-accentSoft: var(--item-hue-soft);
+}
+
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`
    variant (dark mark on the light surface, light mark on the dark surface), so the
    logo always reads on --carbon-sidebar without any frame, glow or tile. */

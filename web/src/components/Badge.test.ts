@@ -354,6 +354,47 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
   });
 });
 
+describe("Badge — hueIndex (rainbow position) and the card-wide reactive-hover marker", () => {
+  // jdp, live-review: a reactive-mode section-title badge only lit up on
+  // hover of the ~22px badge glyph itself — an impractically small target.
+  // The fix lives mostly in index.css (a `.glim-notch-card:hover
+  // .glim-notch-hue` rule scoped to each notch's own enclosing card), but
+  // that rule needs a marker class narrower than the general `.glim-hue`
+  // every rainbow-hued element carries (Selector segments, ContainerRow/
+  // VMRow/FileSetRow) — otherwise hovering a card would also light up some
+  // unrelated hued control sitting in the same card body. `.glim-notch-hue`
+  // is that marker, applied only when hueIndex is actually driving a real
+  // heading NOTCH (tone AND size both "heading" — badgeClassName's own
+  // isHeadingNotch gates the identical pair for the positioning treatment).
+  it("a hueIndex'd heading notch carries both glim-hue and the notch-specific glim-notch-hue marker", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading", hueIndex: 2 }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("glim-hue");
+    expect(cls).toContain("glim-notch-hue");
+  });
+
+  it("omitting hueIndex on a heading notch renders neither hue class (the pre-existing flat-accent singleton case)", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
+    const cls = el.props!.className as string;
+    expect(cls).not.toContain("glim-hue");
+    expect(cls).not.toContain("glim-notch-hue");
+  });
+
+  it("hueIndex is silently ignored for any non-heading tone — no glim-hue, no glim-notch-hue", () => {
+    const el = root(Badge({ children: "x", tone: "ok", size: "medium", hueIndex: 2 }));
+    const cls = el.props!.className as string;
+    expect(cls).not.toContain("glim-hue");
+    expect(cls).not.toContain("glim-notch-hue");
+  });
+
+  it("a hueIndex'd heading badge at a non-heading size gets the general glim-hue but NOT the card-wide glim-notch-hue marker (it isn't the notch treatment, so it must not opt into the card-wide reveal)", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "medium", hueIndex: 2 }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("glim-hue");
+    expect(cls).not.toContain("glim-notch-hue");
+  });
+});
+
 describe("Badge — content and extension", () => {
   it("renders children as visible text", () => {
     const el = Badge({ children: "3 failed" });

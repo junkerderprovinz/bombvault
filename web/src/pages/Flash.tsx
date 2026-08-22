@@ -226,7 +226,12 @@ export function Flash() {
           ProgressBar.tsx documents clipping itself to) — see Config.tsx's
           identical backup-card split and Badge.tsx's badgeClassName
           comment. */}
-      <div className="relative">
+      {/* `glim-notch-card` on this OUTER div, not the inner overflow-hidden
+          box: the badge itself lives here (see the split's own comment
+          above), so this is the element that has to be the hover/focus zone
+          for index.css's card-wide reactive-hover rule — see Settings.tsx's
+          Card() for the full reasoning. */}
+      <div className="relative glim-notch-card">
         {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text. */}
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={0}>{t("flash.backupTitle")}</Badge>
@@ -247,8 +252,9 @@ export function Flash() {
         </div>
       </div>
 
-      {/* Restore card */}
-      <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+      {/* Restore card. `glim-notch-card`: see Settings.tsx's Card() for the
+          reasoning. */}
+      <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={1}>{t("snapshots.title")}</Badge>
         </h2>

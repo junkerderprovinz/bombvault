@@ -198,7 +198,11 @@ function ConfigSettingsCard({
   }
 
   return (
-    <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+    // `glim-notch-card` (jdp, live-review — see Settings.tsx's Card() for the
+    // full reasoning): lets this card's own hueIndex'd heading notch reveal
+    // its colour in reactive rainbow mode on hover/focus anywhere in the
+    // card, not just its own tiny badge glyph.
+    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
       {/* Task 5 (rule 11): same Badge-in-<h2> pattern as Settings.tsx's own
           Card component — this hand-rolled Card equivalent never shared
           Card's component, so it needed its own copy of the conversion. */}
@@ -386,7 +390,14 @@ export function Config() {
           it, so the badge needed to move outside that clipping box; see
           Badge.tsx's badgeClassName comment and Dashboard.tsx's Card() for
           the identical split. */}
-      <div className="relative">
+      {/* `glim-notch-card` on this OUTER div, not the inner overflow-hidden
+          box: the badge itself lives here (see the split's own comment
+          above), so this is the element that has to be the hover/focus zone
+          for index.css's card-wide reactive-hover rule — see Settings.tsx's
+          Card() for the full reasoning. Its own bounding box is still
+          exactly the visible card (h2 + the inner box beneath it), so this
+          doesn't change what "hovering the card" looks like. */}
+      <div className="relative glim-notch-card">
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={1}>{t("config.backupTitle")}</Badge>
         </h2>
@@ -406,8 +417,9 @@ export function Config() {
         </div>
       </div>
 
-      {/* Snapshots card — list + delete; restoring settings lives in Recovery. */}
-      <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+      {/* Snapshots card — list + delete; restoring settings lives in Recovery.
+          `glim-notch-card`: see Settings.tsx's Card() for the reasoning. */}
+      <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={2}>{t("config.snapshotsTitle")}</Badge>
         </h2>

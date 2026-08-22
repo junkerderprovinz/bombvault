@@ -147,7 +147,15 @@ function Card({
     // rendered off the icon's live getBoundingClientRect, not a descendant of
     // the coloured badge, so the icon's new ancestor being position:absolute
     // (and, now, its own colour inheriting from that ancestor) never reaches it.
-    <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+    // `glim-notch-card` (jdp, live-review: "the heading badge only lights up
+    // in reactive mode when hovering the badge itself, not the whole card")
+    // — a plain marker class (no styling of its own) that index.css's
+    // `[data-rainbow="reactive"] .glim-notch-card:hover .glim-notch-hue`
+    // rule keys off, so this Card's own hueIndex'd heading notch reveals its
+    // colour on hover/focus anywhere in this card, not just its own ~22px
+    // glyph. See that rule's own comment in index.css for why it's a
+    // dedicated class rather than the general `rounded-card` utility.
+    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
       {/* Task 5 (design-language.md rule 11, "every heading is a filled
           section badge") resolution, for whoever finds this next: the <h2>
           tag stays (screen readers still get a real heading, e.g. "heading
