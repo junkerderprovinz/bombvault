@@ -229,7 +229,7 @@ export function Flash() {
       <div className="relative">
         {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text. */}
         <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{t("flash.backupTitle")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={0}>{t("flash.backupTitle")}</Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
           <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
@@ -250,7 +250,7 @@ export function Flash() {
       {/* Restore card */}
       <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
         <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap>{t("snapshots.title")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={1}>{t("snapshots.title")}</Badge>
         </h2>
         {/* Safe-restore explainer */}
         {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
