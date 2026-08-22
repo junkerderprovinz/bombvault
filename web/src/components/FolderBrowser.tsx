@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
+import { IconFolder } from "./Sidebar";
 import { useToast } from "../lib/toast";
 
 // ---------------------------------------------------------------------------
@@ -29,9 +30,18 @@ export interface FolderBrowserProps {
    *  PathModeSwitch's own internal Local-mode use) render byte-for-byte the
    *  same as before. */
   hint?: string;
+  /** Suppresses this component's own label row (text + optional hint bubble)
+   *  — GlimStone follow-up round, Paths & Storage tab rework point 5:
+   *  PathModeSwitch now renders the SAME label on a shared row alongside its
+   *  own Local/Remote Selector, so FolderBrowser must not also render a
+   *  second copy of it directly underneath. Default true: every other call
+   *  site (Recovery.tsx, Files.tsx, Containers.tsx, RestorePanel.tsx,
+   *  Settings.tsx's own direct calls) keeps rendering its own label exactly
+   *  as before. */
+  renderLabel?: boolean;
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint }: FolderBrowserProps) {
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true }: FolderBrowserProps) {
   const { t } = useT();
   const { push } = useToast();
   // browsePath tracks the *current directory being listed* (not the selected value).
@@ -122,10 +132,12 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="flex items-center gap-1 text-xs text-carbon-textSub">
-        {label}
-        {hint && <InfoBubble tip={hint} />}
-      </label>
+      {renderLabel && (
+        <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+          {label}
+          {hint && <InfoBubble tip={hint} />}
+        </label>
+      )}
 
       {/* Current value + browser trigger */}
       <div className="flex items-center gap-2">
@@ -138,12 +150,25 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           dir="ltr"
           className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
         />
+        {/* Icon-only (GlimStone follow-up round, point 1 — "Durchsuchen"
+            becomes a glyph, no text label). Symmetric p-[2px] padding around
+            a 16×16 glyph renders a true 20×20 square — the same height
+            PathModeSwitch's own Local/Remote Selector (size="sm") computes
+            for its icon-only segments (16px content + 2×2px padding), so the
+            two controls read at the same vertical scale on a shared row (see
+            PathModeSwitch.tsx's own comment, point 5). `rounded-control`
+            (not Badge's shape="circle" convention the two colour-reset
+            buttons elsewhere in Settings.tsx use) — this button sits flush
+            beside the path input's own shape-engine-reactive `rounded-control`
+            corner, and a permanently-circular neighbour would visibly break
+            from it under the square/soft shape settings. */}
         <button
           onClick={handleOpen}
           title={t("folder.browseTitle")}
-          className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+          aria-label={t("folder.browseTitle")}
+          className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 p-[2px] text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
-          {t("folder.browse")}
+          <IconFolder />
         </button>
       </div>
 

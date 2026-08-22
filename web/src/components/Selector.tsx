@@ -160,7 +160,8 @@
 // and grepping every one of its twelve call sites confirms none of them do
 // either (see the migration commit).
 // ---------------------------------------------------------------------------
-import { useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 
@@ -176,6 +177,20 @@ export interface SelectorItem {
   /** Native tooltip — e.g. Files.tsx's "pick a target folder first" hint on
    *  a disabled destination chip. */
   title?: string;
+  /** Hides the visible text label so only `icon` shows (PathModeSwitch's
+   *  Local/Remote pair, GlimStone follow-up round point 2 — "replace the
+   *  text labels with icon glyphs"). `label` still becomes the button's
+   *  `aria-label` so the accessible name survives removing the visible text —
+   *  design-language's own rule that a control's name must never depend on
+   *  content that stops rendering. */
+  iconOnly?: boolean;
+  /** Hover/focus-revealed explanation, portal-rendered in the same
+   *  `.glim-bubble` chrome InfoBubble.tsx's (i) icon already uses (not a
+   *  second, differently-styled tooltip mechanism) — needed once `iconOnly`
+   *  strips a segment of its own visible meaning and a bare `label`/`title`
+   *  native tooltip isn't enough context on its own. Independent of `title`
+   *  (a plain native attribute, still passed straight through unchanged). */
+  tip?: string;
 }
 
 export type SelectorSize = "sm" | "md" | "lg";
@@ -295,6 +310,105 @@ export function rovedIndex(disabled: boolean[], activeIndex: number): number {
   if (activeIndex >= 0 && !disabled[activeIndex]) return activeIndex;
   const firstEnabled = disabled.findIndex((d) => !d);
   return firstEnabled >= 0 ? firstEnabled : 0;
+}
+
+// ---------------------------------------------------------------------------
+// SelectorTab — one rendered segment (GlimStone follow-up round, PathModeSwitch
+// icon-only tooltip point). Pulled out of Selector's own `.map()` into a real
+// component, rather than inline JSX, specifically so `tip`'s hover/focus
+// tooltip state below (useState/useEffect) is legal: each array item gets its
+// OWN component instance this way, which is the ordinary "list of stateful
+// components" shape — a hook called directly inside a `.map()` callback body
+// would violate the rules of hooks the moment the item count ever changed.
+// Every other prop is threaded straight through from Selector's own render
+// loop unchanged; nothing here duplicates Selector's own selection/hue/sizing
+// logic, so an item with no `tip` renders byte-identical output to before.
+// ---------------------------------------------------------------------------
+interface SelectorTabProps {
+  item: SelectorItem;
+  many: boolean;
+  on: boolean;
+  disabled: boolean;
+  roved: boolean;
+  className: string;
+  style?: CSSProperties;
+  onSelect: () => void;
+  registerRef: (el: HTMLButtonElement | null) => void;
+}
+
+function SelectorTab({ item, many, on, disabled, roved, className, style, onSelect, registerRef }: SelectorTabProps) {
+  const [tipOpen, setTipOpen] = useState(false);
+  const [tipPos, setTipPos] = useState<{ left: number; top: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const tooltipId = useId();
+
+  function showTip() {
+    if (!item.tip) return;
+    const r = btnRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setTipPos({ left: r.left + r.width / 2, top: r.bottom + 6 });
+    setTipOpen(true);
+  }
+  function hideTip() {
+    setTipOpen(false);
+  }
+
+  // Same scroll-closes / Escape-closes contract as InfoBubble.tsx's own
+  // tooltip — a floating box anchored to a live rect must not drift out of
+  // position under the trigger it's supposed to be pointing at.
+  useEffect(() => {
+    if (!tipOpen) return;
+    const onScroll = () => hideTip();
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") hideTip();
+    };
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [tipOpen]);
+
+  return (
+    <>
+      <button
+        ref={(el) => {
+          btnRef.current = el;
+          registerRef(el);
+        }}
+        type="button"
+        data-sel-id={item.id}
+        role={many ? undefined : "tab"}
+        aria-selected={many ? undefined : on}
+        aria-pressed={many ? on : undefined}
+        aria-label={item.iconOnly ? item.label : undefined}
+        aria-describedby={item.tip && tipOpen ? tooltipId : undefined}
+        title={item.title}
+        disabled={disabled}
+        tabIndex={roved ? 0 : -1}
+        style={style}
+        className={className}
+        onClick={onSelect}
+        onMouseEnter={item.tip ? showTip : undefined}
+        onMouseLeave={item.tip ? hideTip : undefined}
+        onFocus={item.tip ? showTip : undefined}
+        onBlur={item.tip ? hideTip : undefined}
+      >
+        {item.icon}
+        {!item.iconOnly && <span className="truncate">{item.label}</span>}
+      </button>
+      {item.tip &&
+        tipOpen &&
+        tipPos &&
+        createPortal(
+          <div role="tooltip" id={tooltipId} style={{ left: tipPos.left, top: tipPos.top }} className="glim-bubble glim-fade">
+            {item.tip}
+          </div>,
+          document.body
+        )}
+    </>
+  );
 }
 
 export function Selector(props: SelectorProps) {
@@ -543,28 +657,22 @@ export function Selector(props: SelectorProps) {
           hueStyle || widthStyle ? { ...hueStyle, ...widthStyle } : undefined;
 
         return (
-          <button
+          <SelectorTab
             key={item.id}
-            ref={(el) => {
-              itemRefs.current[i] = el;
-            }}
-            type="button"
-            data-sel-id={item.id}
-            role={many ? undefined : "tab"}
-            aria-selected={many ? undefined : on}
-            aria-pressed={many ? on : undefined}
-            title={item.title}
+            item={item}
+            many={many}
+            on={on}
             disabled={itemDisabled}
-            tabIndex={i === roved ? 0 : -1}
-            style={itemStyle}
+            roved={i === roved}
             className={cls}
-            onClick={() => {
+            style={itemStyle}
+            onSelect={() => {
               if (!itemDisabled) onChange(item.id);
             }}
-          >
-            {item.icon}
-            <span className="truncate">{item.label}</span>
-          </button>
+            registerRef={(el) => {
+              itemRefs.current[i] = el;
+            }}
+          />
         );
       })}
     </div>

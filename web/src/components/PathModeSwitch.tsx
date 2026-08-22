@@ -3,6 +3,7 @@ import type { Settings, PrimaryRemoteDomain } from "../lib/api";
 import { FolderBrowser } from "./FolderBrowser";
 import { OffsiteWizard } from "./OffsiteWizard";
 import { Selector } from "./Selector";
+import { IconCloud, IconFolder } from "./Sidebar";
 import { useT } from "../lib/i18n";
 
 // ---------------------------------------------------------------------------
@@ -44,6 +45,28 @@ import { useT } from "../lib/i18n";
 // ever could. No `disabled` prop existed on this component before the
 // migration and none was added — the original two buttons were never
 // wired to any busy/disabled state, so there is nothing to carry over.
+//
+// UPDATED (GlimStone follow-up round, Paths & Storage tab rework, points 2/5):
+// the two segments are now icon-only (IconFolder/IconCloud, from
+// Sidebar.tsx's shared icon set — the SAME folder glyph FolderBrowser's own
+// "Durchsuchen" button now uses, and the SAME cloud glyph Settings.tsx's own
+// Off-site tab icon draws) instead of the "Lokal"/"Remote" text labels. Since
+// `label` is no longer visible ANYWHERE inside the strip, `SelectorItem.label`
+// now does double duty as each segment's `aria-label` too (Selector's own
+// `iconOnly` flag) — the "reuses the caller's own per-domain string" reasoning
+// above still holds, it just also drives the strip's own leading caption on
+// this shared row now that removing the text would otherwise remove the
+// row's only visible name for a sighted user as well. Each segment also
+// carries a `tip` (a fuller InfoBubble-style hover/focus explanation, portal-
+// rendered — Selector's own `SelectorTab` subcomponent), since a bare glyph
+// alone doesn't say "this path lives on this host" vs "this is a remote
+// restic repository" the way the old text did. The Selector itself renders
+// on a shared row alongside its own path-field's label (`justify-between`,
+// label at the start, Selector at the end) instead of a separate right-
+// aligned row above the field — FolderBrowser's own label row is suppressed
+// via `renderLabel={false}` below, and the Remote branch's own inline
+// <label> was dropped the same way, so there is exactly one copy of `label`
+// rendered per path row, not two.
 // ---------------------------------------------------------------------------
 
 // Mirrors restic's remoteRepoRe (internal/restic/restic.go): a leading
@@ -98,13 +121,35 @@ export function PathModeSwitch({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-end gap-2 -mb-1">
+      {/* GlimStone follow-up round, points 2/5: the label and the Local/Remote
+          control now share ONE row (was label above, Selector on its own
+          right-aligned row below it) — jdp, live review: the two read as one
+          decision about the SAME path, so they sit on the same line, the
+          Selector at the row's trailing edge. This row is FolderBrowser's own
+          label slot moved up here (see `renderLabel={false}` below and the
+          plain <label> the Remote branch used to render for itself — both
+          retired in favour of this single shared copy). */}
+      <div className="flex items-center justify-between gap-2">
+        <label className="text-xs text-carbon-textSub">{label}</label>
         <Selector
           items={[
-            { id: "local", label: t("settings.pathMode.local") },
-            { id: "remote", label: t("settings.pathMode.remote") },
+            {
+              id: "local",
+              label: t("settings.pathMode.local"),
+              icon: <IconFolder />,
+              iconOnly: true,
+              tip: t("settings.pathMode.localTip"),
+            },
+            {
+              id: "remote",
+              label: t("settings.pathMode.remote"),
+              icon: <IconCloud />,
+              iconOnly: true,
+              tip: t("settings.pathMode.remoteTip"),
+            },
           ]}
           label={label}
+          size="sm"
           select="one"
           active={remoteMode ? "remote" : "local"}
           onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
@@ -113,7 +158,6 @@ export function PathModeSwitch({
 
       {remoteMode ? (
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{label}</label>
           {/* Task 6 (RTL sweep): this input occupies the SAME slot as
               FolderBrowser's path field below and holds the same kind of
               technical value (a restic remote URL), so it carries the same
@@ -144,7 +188,14 @@ export function PathModeSwitch({
           )}
         </div>
       ) : (
-        <FolderBrowser label={label} value={value} hostMountRoot={hostMountRoot} onChange={onChange} placeholder={placeholder} />
+        <FolderBrowser
+          label={label}
+          renderLabel={false}
+          value={value}
+          hostMountRoot={hostMountRoot}
+          onChange={onChange}
+          placeholder={placeholder}
+        />
       )}
     </div>
   );
