@@ -319,7 +319,12 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   // See the file header's long-form reasoning: accent-soft wash (identity,
   // matching rule 5's "washed" vocabulary), not solid accent (rule 3,
   // activity-only) and not one of the four state hues (rule 4, semantic
-  // elsewhere on the same page).
+  // elsewhere on the same page). This literal entry is the fallback for a
+  // (currently unreached) heading-toned badge at a non-heading size —
+  // badgeClassName's own isHeadingNotch branch below swaps this out for the
+  // OPAQUE bg-accentSoftSolid whenever tone AND size both say "heading" (see
+  // that branch's own comment for why the real notch needs a solid fill
+  // instead of this translucent wash).
   heading: "bg-accentSoft text-carbon-textSub",
 };
 
@@ -488,13 +493,31 @@ function badgeClassName({
   const isHeadingNotch = tone === "heading" && size === "heading";
   const notchPositioning = isHeadingNotch ? "absolute -top-[11px] z-10 shadow-[var(--elevation)]" : "";
 
+  // Live-review round: "the notch reads as semi-transparent." Root cause
+  // (see index.css's own --accent-soft-solid comment for the full
+  // measurement): TONE_CLASSES.heading's `bg-accentSoft` is, and always
+  // was, a genuine 14%-alpha wash — that never changed when the notch
+  // positioning landed. What changed is that the notch straddles TWO
+  // different backdrops at once (the page ground above the card's edge,
+  // the card surface below it), so that same alpha now visibly splits into
+  // a two-tone seam instead of blending evenly into one flat tint the way
+  // it did sitting wholly on a card. `bg-accentSoftSolid` is a fully
+  // opaque color-mix() of the identical 14%-accent wash, composited onto
+  // --carbon-surface once (the ORIGINAL inline badge's own backdrop) — same
+  // apparent colour, no alpha channel, so it paints solid regardless of
+  // what's actually behind it. Swapped in wholesale for TONE_CLASSES[tone]
+  // (never appended alongside `bg-accentSoft` — two same-specificity bg-*
+  // utilities in one class list is the exact hazard this file's own
+  // padding/circle-shape comment above already flags as unpredictable).
+  const toneClasses = isHeadingNotch ? "bg-accentSoftSolid text-carbon-textSub" : TONE_CLASSES[tone];
+
   return [
     "inline-flex box-border items-center justify-center gap-1 font-medium",
     sizing,
     text,
     isCircle ? "px-0 aspect-square" : padding,
     isHeadingNotch ? "rounded-pill" : RADIUS_CLASSES[shape],
-    TONE_CLASSES[tone],
+    toneClasses,
     notchPositioning,
     className,
   ]
