@@ -251,6 +251,75 @@ describe("Selector — hue opt-out (Dashboard's heatmap toggle)", () => {
   });
 });
 
+describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
+  it("default (equalWidth unset) keeps content-hugging chips, flex-wrap, no flex-1", () => {
+    render(<OneOfThree />);
+    expect(screen.getByRole("tablist").className).toContain("flex-wrap");
+    const tab = screen.getByRole("tab", { name: "Alpha" });
+    expect(tab.className).not.toContain("flex-1");
+  });
+
+  it("equalWidth switches the strip to flex-nowrap and every segment to flex-1, while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
+    render(
+      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
+    );
+    const list = screen.getByRole("tablist");
+    expect(list.className).toContain("flex-nowrap");
+    expect(list.className).not.toContain("flex-wrap");
+    // No shared well track — each segment still carries its own chip fill.
+    expect(list.className).not.toContain("bg-carbon-surface2");
+
+    const idle = screen.getByRole("tab", { name: "Beta" });
+    expect(idle.className).toContain("flex-1");
+    expect(idle.className).toContain("justify-center");
+    expect(idle.className).toContain("bg-carbon-surface2");
+    expect(idle.className).not.toContain("h-[var(--badge-md)]");
+
+    const active = screen.getByRole("tab", { name: "Alpha" });
+    expect(active.className).toContain("bg-accent");
+    expect(active.className).toContain("text-accentContrast");
+  });
+
+  it("equalWidth is ignored under variant=\"well\" (already always equal-width) — no double-application, no crash", () => {
+    render(
+      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth variant="well" />
+    );
+    const tab = screen.getByRole("tab", { name: "Alpha" });
+    // Still the well segment's own single flex-1 + fixed well height, not a
+    // second/duplicate flex-1 class or the chip's per-stage padding leaking in.
+    expect(tab.className).toContain("flex-1");
+    expect(tab.className).toContain("h-[var(--badge-md)]");
+  });
+
+  it("keyboard navigation is unregressed under equalWidth", () => {
+    const spy = vi.fn();
+    render(<OneOfThree onChangeSpy={spy} />);
+    // Re-render with equalWidth via a fresh controlled instance.
+    cleanup();
+    function EqualWidthThree() {
+      const [active, setActive] = useState("a");
+      return (
+        <Selector
+          items={ITEMS}
+          label="Test strip"
+          select="one"
+          active={active}
+          onChange={(id) => {
+            setActive(id);
+            spy(id);
+          }}
+          equalWidth
+        />
+      );
+    }
+    render(<EqualWidthThree />);
+    screen.getByRole("tab", { name: "Alpha" }).focus();
+    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Beta" }));
+    expect(spy).toHaveBeenCalledWith("b");
+  });
+});
+
 describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's shape picker)", () => {
   it("default variant (\"chip\") renders none of the well track's wrapper/segment classes", () => {
     render(<OneOfThree />);
