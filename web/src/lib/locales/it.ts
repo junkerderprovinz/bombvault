@@ -196,6 +196,8 @@ const it: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Colore di accento",
   "settings.accentPresets": "Predefiniti",
+  "settings.accentPreset": "Predefinito",
+  "settings.accentPresetsReset": "Reimposta i predefiniti",
   "settings.shape": "Angoli",
   "settings.shapeHint": "Si applica insieme a schede, pulsanti, tab, campi e badge.",
   "settings.shape.round": "Arrotondati",

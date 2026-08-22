@@ -24,7 +24,14 @@ import { randomId } from "../lib/uuid";
 import { useAdvanced, Advanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
-import { getAccent, setAccent, DEFAULT_ACCENT } from "../lib/accent";
+import {
+  getAccent,
+  setAccent,
+  DEFAULT_ACCENT,
+  getAccentPresets,
+  setAccentPresets,
+  DEFAULT_ACCENT_PRESETS,
+} from "../lib/accent";
 import { RAINBOW, getRainbow, setRainbow, type RainbowState } from "../lib/appearance";
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
@@ -266,17 +273,10 @@ function SaveBar({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Accent preset swatches
-// ---------------------------------------------------------------------------
-
-const ACCENT_PRESETS = [
-  { hex: "#FCC419", label: "Sunflower" },
-  { hex: "#1D99F3", label: "Blue" },
-  { hex: "#6FDC8C", label: "Green" },
-  { hex: "#FF8389", label: "Red" },
-  { hex: "#BE95FF", label: "Purple" },
-] as const;
+// Accent preset swatches: DEFAULT_ACCENT_PRESETS (lib/accent.ts) now owns
+// both the hex values AND the persistence/reset shape — see that module's
+// own header comment. AccentCard/AccentPresetSwatch further down are the UI
+// half.
 
 // ---------------------------------------------------------------------------
 // Palette swatch — one editable colour in the rainbow palette editor
@@ -329,6 +329,203 @@ function PaletteSwatch({
       disabled={disabled}
       className="h-7 w-7 shrink-0 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
     />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AccentPresetSwatch — one preset in the Accent Card's own preset row
+// (GlimStone follow-up pass, live-review round 6: jdp asked for the presets
+// to become individually editable, get a reset, and for there to be more of
+// them). Wraps the SAME ColorPickerSwatch trigger PaletteSwatch above
+// already uses for the rainbow palette's 8 editable swatches — clicking it
+// opens the shared popover, pre-synced to THIS preset's own stored value,
+// exactly like a palette swatch does for its own position.
+//
+// Interaction (chosen over "click only selects, editing needs a separate
+// trigger"): a click both SELECTS this preset as the live accent AND opens
+// its editor, and further edits (drag/type) inside the open popover keep
+// updating the live accent too — selecting and editing are the same
+// gesture, matching how PaletteSwatch/ColorPickerSwatch already behave
+// (there is no separate "select" step for a palette position either; opening
+// IS the only interaction). Concretely: ColorPickerSwatch's own trigger
+// button owns the click (it opens the popover); a plain wrapping
+// `<span onClick>` catches the SAME click event on its way up through the
+// DOM's ordinary bubble phase and fires the selection — both handlers run
+// inside the one click (and the one synthetic click a screen reader /
+// keyboard Enter-or-Space activation of the inner <button> produces), so
+// there is no visible order or flicker between "opened" and "selected".
+//
+// The active-preset ring used to be a border colour swap on the swatch
+// button itself (the plain-<button> version before this round). It moves to
+// this wrapping span instead — ColorPickerSwatch owns its own border via its
+// fixed `className` prop, with no per-call override for it — so the inner
+// swatch renders borderless and the wrapper supplies the SAME 2px border,
+// scaling and hover-transform together as one visual unit.
+// ---------------------------------------------------------------------------
+function AccentPresetSwatch({
+  hex,
+  index,
+  active,
+  onSelect,
+  onChangePreset,
+  t,
+}: {
+  hex: string;
+  index: number;
+  /** Whether this preset's OWN stored colour currently matches the live
+   *  accent — drives the highlighted ring, same "is this the active one"
+   *  signal the old plain-button version's border colour swap gave. */
+  active: boolean;
+  /** Fires on click (select this preset as the live accent) AND on every
+   *  live edit inside the popover — see this component's own header comment. */
+  onSelect: (hex: string) => void;
+  /** Fires on every live edit inside the popover — persists the edited
+   *  value back into THIS preset's own slot in the stored array. */
+  onChangePreset: (hex: string) => void;
+  t: ReturnType<typeof useT>["t"];
+}) {
+  const label = `${t("settings.accentPreset")} ${index + 1}`;
+  return (
+    <span
+      onClick={() => onSelect(hex)}
+      className="inline-flex rounded-pill border-2 transition-transform hover:scale-110"
+      style={{ borderColor: active ? "var(--carbon-text)" : "var(--carbon-border)" }}
+    >
+      <ColorPickerSwatch
+        value={hex}
+        onChange={(v) => {
+          onChangePreset(v);
+          onSelect(v);
+        }}
+        label={label}
+        className="w-6 h-6 rounded-pill"
+      />
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Accent Card (GlimStone follow-up pass, live-review round 6 — jdp, in
+// German: "Die Voreinstellungsfelder der Akzentfarbe sollen auch bearbeitbar
+// sein und auch ein Reset-Badge bekommen. Bitte mehr
+// Voreinstellungsfarbfelder"). Pulled out into its own exported component
+// (previously inlined directly in SettingsPage's JSX), the same way
+// LanguageCard below already was: its state (accentHex + presets) was never
+// read anywhere else in SettingsPage — `accentHex` had exactly one
+// declaration and one consuming Card before this round — so the split is
+// behaviour-preserving, not a refactor of anything shared.
+//
+// Presets are now individually EDITABLE (previously five fixed buttons that
+// only ever selected, never changed, their own colour) — see
+// AccentPresetSwatch's own header comment for the click-both-selects-and-
+// opens interaction, and lib/accent.ts's own header comment for the
+// persistence shape and the 5→8 preset-count/colour reasoning.
+//
+// Reset is ROW-LEVEL, not per-preset: the rainbow palette right below this
+// Card in the same "general" tab is the closest existing precedent for "a
+// fixed-size set of individually editable swatches, resettable," and it
+// ships exactly ONE reset for its whole row of 8
+// (`updateRainbow({ palette: RAINBOW })`), not eight individual ones —
+// matched here for the same granularity, the same Badge shape="circle" icon,
+// the same SVG glyph. Unlike the rainbow reset (always shown while its
+// master switch is on), this one only renders once at least one preset has
+// actually drifted from ITS OWN shipped default — matching the pre-existing
+// "Reset to default" text button a few pixels to its right in THIS SAME
+// Card (which already only shows once accentHex has drifted from
+// DEFAULT_ACCENT), rather than the separate Rainbow Card's own
+// always-visible convention: two reset affordances sharing one Card read
+// more coherently following EACH OTHER's rule than each independently
+// matching a different sibling Card.
+// ---------------------------------------------------------------------------
+export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [accentHex, setAccentHex] = useState<string>(() => getAccent());
+  const [presets, setPresets] = useState<string[]>(() => getAccentPresets());
+
+  function selectAccent(hex: string) {
+    setAccentHex(hex);
+    setAccent(hex);
+  }
+
+  function changePreset(index: number, hex: string) {
+    setPresets((prev) => {
+      const next = prev.slice();
+      next[index] = hex;
+      return setAccentPresets(next);
+    });
+  }
+
+  const presetsAreDefault = presets.every(
+    (hex, i) => hex.toLowerCase() === DEFAULT_ACCENT_PRESETS[i]?.toLowerCase()
+  );
+
+  return (
+    <Card title={t("settings.accentColor")}>
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Custom-colour trigger — a flat swatch, same size/shape as the
+            preset swatches beside it (design-language.md, "The user-owned
+            axes" > Accent: every custom colour value gets the SAME
+            trigger). Opens the shared GlimStone picker popover instead of
+            a native <input type="color"> — see ColorPickerPopover.tsx's
+            own header comment for why (jdp: "kein eigenes Fenster welches
+            sich öffnet" — no separate window opening). */}
+        <ColorPickerSwatch
+          value={accentHex}
+          onChange={selectAccent}
+          label={t("settings.accentColor")}
+          className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
+        />
+        {/* Preset swatches */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
+          {presets.map((hex, i) => (
+            <AccentPresetSwatch
+              key={i}
+              hex={hex}
+              index={i}
+              active={accentHex.toLowerCase() === hex.toLowerCase()}
+              onSelect={selectAccent}
+              onChangePreset={(v) => changePreset(i, v)}
+              t={t}
+            />
+          ))}
+          {/* Reset the PRESET SWATCHES back to their shipped defaults — a
+              separate concern from the "reset the active accent" button
+              below (that one resets accentHex to DEFAULT_ACCENT; this one
+              resets the presets array to DEFAULT_ACCENT_PRESETS). Row-level,
+              not per-preset — see this component's own header comment. */}
+          {!presetsAreDefault && (
+            <Badge
+              as="button"
+              shape="circle"
+              size="icon"
+              tone="neutral"
+              onClick={() => setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS))}
+              title={t("settings.accentPresetsReset")}
+              ariaLabel={t("settings.accentPresetsReset")}
+            >
+              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+                <path
+                  d="M0.67 2.67 L0.67 6.67 L4.67 6.67 M2.34 10 a6 6 0 1 0 1.42 -6.24 L0.67 6.67"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Badge>
+          )}
+          {/* Reset to default — the ACTIVE accent, not the presets above. */}
+          {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
+            <button
+              onClick={() => selectAccent(DEFAULT_ACCENT)}
+              className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
+            >
+              {t("common.reset")}
+            </button>
+          )}
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -3295,12 +3492,15 @@ export function SettingsPage() {
   // spread entry would break every settings save, not just this card.
   const [registryRowIds, setRegistryRowIds] = useState<string[]>([]);
 
-  // Accent color state — synced from/to localStorage via accent.ts
-  const [accentHex, setAccentHex] = useState<string>(() => getAccent());
+  // Accent colour state now lives entirely inside the exported AccentCard
+  // component above (GlimStone follow-up pass, live-review round 6) — it
+  // was never read anywhere else in this function, so nothing here needs to
+  // track it any more.
 
   // Shape state (GlimStone form-engine — shape engine, the one axis both
   // prior GlimStone integration phases in this app deferred) — synced
-  // to/from localStorage via shape.ts, the same pattern as accentHex above.
+  // to/from localStorage via shape.ts, the same pattern the old accentHex
+  // state used before its move.
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
 
   // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
@@ -5373,65 +5573,7 @@ export function SettingsPage() {
       {/* Portability Card + AboutFooter further down), not a wrapping        */}
       {/* Fragment introduced just for this section.                         */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "general" && (
-      <Card title={t("settings.accentColor")}>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Custom-colour trigger — a flat swatch, same size/shape as the
-              preset swatches beside it (design-language.md, "The user-owned
-              axes" > Accent: every custom colour value gets the SAME
-              trigger). Opens the shared GlimStone picker popover instead of
-              a native <input type="color"> — see ColorPickerPopover.tsx's
-              own header comment for why (jdp: "kein eigenes Fenster welches
-              sich öffnet" — no separate window opening). */}
-          <ColorPickerSwatch
-            value={accentHex}
-            onChange={(hex) => {
-              setAccentHex(hex);
-              setAccent(hex);
-            }}
-            label={t("settings.accentColor")}
-            className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
-          />
-          {/* Preset swatches */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
-            {ACCENT_PRESETS.map((p) => (
-              <button
-                key={p.hex}
-                title={p.label}
-                onClick={() => {
-                  setAccentHex(p.hex);
-                  setAccent(p.hex);
-                }}
-                // rounded-pill, not a hardcoded rounded-full (GlimStone
-                // follow-up pass, live-review point 4) — see PaletteSwatch's
-                // own header comment above for the full reasoning; the two
-                // swatch families share the same fix for the same reason.
-                className="w-6 h-6 rounded-pill border-2 transition-transform hover:scale-110"
-                style={{
-                  backgroundColor: p.hex,
-                  borderColor: accentHex.toLowerCase() === p.hex.toLowerCase()
-                    ? "var(--carbon-text)"
-                    : "var(--carbon-border)",
-                }}
-              />
-            ))}
-            {/* Reset to default */}
-            {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
-              <button
-                onClick={() => {
-                  setAccentHex(DEFAULT_ACCENT);
-                  setAccent(DEFAULT_ACCENT);
-                }}
-                className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
-              >
-                {t("common.reset")}
-              </button>
-            )}
-          </div>
-        </div>
-      </Card>
-      )}
+      {tab === "general" && <AccentCard t={t} />}
 
       {/* Shape (GlimStone form-engine — shape engine; design-language.md's
           "The user-owned axes": data-shape on <html>, round/soft/square,

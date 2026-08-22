@@ -191,6 +191,8 @@ const pl: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Kolor akcentu",
   "settings.accentPresets": "Ustawienia wstępne",
+  "settings.accentPreset": "Ustawienie wstępne",
+  "settings.accentPresetsReset": "Resetuj ustawienia wstępne",
   "settings.shape": "Narożniki",
   "settings.shapeHint": "Dotyczy jednocześnie kart, przycisków, zakładek, pól i odznak.",
   "settings.shape.round": "Zaokrąglone",

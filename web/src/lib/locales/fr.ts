@@ -196,6 +196,8 @@ const fr: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Couleur d'accentuation",
   "settings.accentPresets": "Préréglages",
+  "settings.accentPreset": "Préréglage",
+  "settings.accentPresetsReset": "Réinitialiser les préréglages",
   "settings.shape": "Angles",
   "settings.shapeHint": "S'applique d'un coup aux cartes, boutons, onglets, champs et badges.",
   "settings.shape.round": "Arrondis",

@@ -196,6 +196,8 @@ const ja: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "アクセントカラー",
   "settings.accentPresets": "プリセット",
+  "settings.accentPreset": "プリセット",
+  "settings.accentPresetsReset": "プリセットをリセット",
   "settings.shape": "角の形状",
   "settings.shapeHint": "カード、ボタン、タブ、入力欄、バッジすべてに一括で適用されます。",
   "settings.shape.round": "丸め",

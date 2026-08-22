@@ -196,6 +196,8 @@ const zh: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "强调色",
   "settings.accentPresets": "预设",
+  "settings.accentPreset": "预设",
+  "settings.accentPresetsReset": "重置预设",
   "settings.shape": "圆角",
   "settings.shapeHint": "同时应用于卡片、按钮、标签页、输入框和徽章。",
   "settings.shape.round": "圆润",

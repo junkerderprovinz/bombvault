@@ -681,6 +681,18 @@ export const en = {
   // 5), and nothing else ever read this key.)
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
+  // New in the GlimStone follow-up pass, live-review round 6 (presets became
+  // individually editable + resettable, and the count grew from 5 to 8):
+  // "accentPreset" (singular) numbers each swatch's own accessible name
+  // ("Preset 1", "Preset 2", …) the same way "settings.rainbowPalette" does
+  // for the rainbow palette's 8 swatches; "accentPresetsReset" is the new
+  // row-level reset control's own label, deliberately NOT sharing
+  // "common.reset" with the pre-existing "reset the active accent" text
+  // button a few pixels to its right in the same Card — two adjacent
+  // "Reset"-labelled controls doing two different things would be genuinely
+  // ambiguous there.
+  "settings.accentPreset": "Preset",
+  "settings.accentPresetsReset": "Reset presets",
   // Shape (GlimStone form-engine — shape engine): round/soft/square corner
   // radius, applied everywhere via one attribute (index.css's [data-shape]
   // rules, lib/shape.ts's applyShape()). Wording matches KnightLoader's own
@@ -2084,6 +2096,8 @@ export const de: Translations = {
   // Appearance / Accent
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
+  "settings.accentPreset": "Voreinstellung",
+  "settings.accentPresetsReset": "Voreinstellungen zurücksetzen",
   "settings.shape": "Ecken",
   "settings.shapeHint": "Gilt für Karten, Knöpfe, Reiter, Eingabefelder und Abzeichen zugleich.",
   "settings.shape.round": "Rund",

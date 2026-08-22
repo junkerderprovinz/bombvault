@@ -196,6 +196,8 @@ const ko: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "강조 색상",
   "settings.accentPresets": "프리셋",
+  "settings.accentPreset": "프리셋",
+  "settings.accentPresetsReset": "프리셋 재설정",
   "settings.shape": "모서리",
   "settings.shapeHint": "카드, 버튼, 탭, 입력란, 배지에 한꺼번에 적용됩니다.",
   "settings.shape.round": "둥글게",

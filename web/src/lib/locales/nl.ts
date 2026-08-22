@@ -191,6 +191,8 @@ const nl: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Accentkleur",
   "settings.accentPresets": "Voorinstellingen",
+  "settings.accentPreset": "Voorinstelling",
+  "settings.accentPresetsReset": "Voorinstellingen herstellen",
   "settings.shape": "Hoeken",
   "settings.shapeHint": "Geldt tegelijk voor kaarten, knoppen, tabbladen, velden en badges.",
   "settings.shape.round": "Rond",

@@ -196,6 +196,8 @@ const ar: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "لون التمييز",
   "settings.accentPresets": "إعدادات مسبقة",
+  "settings.accentPreset": "إعداد مسبق",
+  "settings.accentPresetsReset": "إعادة تعيين الإعدادات المسبقة",
   "settings.shape": "الزوايا",
   "settings.shapeHint": "تُطبَّق دفعة واحدة على البطاقات والأزرار والتبويبات وحقول الإدخال والشارات.",
   "settings.shape.round": "دائرية",

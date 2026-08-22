@@ -193,6 +193,8 @@ const ro: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Culoare de accent",
   "settings.accentPresets": "Presetări",
+  "settings.accentPreset": "Presetare",
+  "settings.accentPresetsReset": "Resetează presetările",
   "settings.shape": "Colțuri",
   "settings.shapeHint": "Se aplică simultan cardurilor, butoanelor, filelor, câmpurilor și insignelor.",
   "settings.shape.round": "Rotunjite",

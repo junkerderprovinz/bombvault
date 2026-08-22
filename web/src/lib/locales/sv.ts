@@ -196,6 +196,8 @@ const sv: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Accentfärg",
   "settings.accentPresets": "Förinställningar",
+  "settings.accentPreset": "Förinställning",
+  "settings.accentPresetsReset": "Återställ förinställningar",
   "settings.shape": "Hörn",
   "settings.shapeHint": "Gäller kort, knappar, flikar, fält och märken på en gång.",
   "settings.shape.round": "Runda",

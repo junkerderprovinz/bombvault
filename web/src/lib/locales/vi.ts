@@ -196,6 +196,8 @@ const vi: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Màu nhấn",
   "settings.accentPresets": "Cài đặt sẵn",
+  "settings.accentPreset": "Cài đặt sẵn",
+  "settings.accentPresetsReset": "Đặt lại cài đặt sẵn",
   "settings.shape": "Góc",
   "settings.shapeHint": "Áp dụng cùng lúc cho thẻ, nút, tab, ô nhập và huy hiệu.",
   "settings.shape.round": "Bo tròn",
