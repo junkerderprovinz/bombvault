@@ -4325,18 +4325,31 @@ export function SettingsPage() {
       {/* this specific change can newly introduce, at any label length in     */}
       {/* any of the 26 locales, not just the one word measured live today.    */}
       {/* ------------------------------------------------------------------ */}
-      {/* inline-flex (not the default block `<div>`): a plain block child of  */}
-      {/* this column would still stretch to the column's full cross-axis     */}
-      {/* width regardless of what its own content needs (default              */}
-      {/* `align-items: stretch`) — the very mismatch this whole fix is        */}
-      {/* undoing, just moved one element out. `inline-flex` shrink-to-fits    */}
-      {/* to the Selector's own now-content-hugging rendered width instead,    */}
-      {/* which is also the exact box `tabStripRef`'s ResizeObserver (above,   */}
-      {/* this component's own state block) measures. `max-w-full` keeps it    */}
-      {/* from overflowing a genuinely narrow viewport (Selector's own          */}
-      {/* flex-wrap fallback still applies inside whatever width this ends up  */}
-      {/* getting). */}
-      <div ref={tabStripRef} className="inline-flex max-w-full">
+      {/* self-start (verified live — first pass shipped WITHOUT this and      */}
+      {/* silently under-measured): this wrapper's own parent is itself a      */}
+      {/* `flex flex-col` column (the gap-6 heading+strip group above), so a   */}
+      {/* child here is a genuine FLEX ITEM regardless of what display value   */}
+      {/* the child itself specifies — flex items are always "blockified"      */}
+      {/* (the CSS Display spec forces a flex child's used display to a        */}
+      {/* block-outside value, `inline-flex` included), and the column's own   */}
+      {/* default `align-items: stretch` then stretches that blockified item's */}
+      {/* CROSS axis (width, since the column's main axis is vertical) to the  */}
+      {/* line's full width regardless of content. A plain `inline-flex`       */}
+      {/* class alone does NOT opt out of that — it only changes what would    */}
+      {/* happen in a normal block-flow parent, which this isn't. `self-start` */}
+      {/* is the actual escape hatch (align-self overriding the inherited      */}
+      {/* stretch), letting this item's width resolve via ordinary shrink-to-  */}
+      {/* fit sizing instead — confirmed live: without it, `tabStripRef`       */}
+      {/* measured the STRETCHED (column-width, ~1113px) box while the         */}
+      {/* Selector strip inside it kept rendering at its own real, narrower    */}
+      {/* content width (~1243px in German at 1400px viewport) and simply      */}
+      {/* overflowed the stretched wrapper — capping the Card panels below to  */}
+      {/* the WRONG, too-narrow number. `max-w-full` still guards the opposite */}
+      {/* edge (a genuinely narrow viewport), and `inline-flex` is kept        */}
+      {/* alongside `self-start` for correctness if this wrapper is ever moved */}
+      {/* under a non-flex (normal block-flow) parent instead, where the       */}
+      {/* inline-level box model would matter again. */}
+      <div ref={tabStripRef} className="inline-flex self-start max-w-full">
       <Selector
         items={([
           ["general", t("settings.tab.general")],
