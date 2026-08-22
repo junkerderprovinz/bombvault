@@ -306,7 +306,7 @@ export function ActivityLog({
               onClick={onClearDayFilter}
               aria-label={t("activityLog.clearDayFilter")}
               title={t("activityLog.clearDayFilter")}
-              className="cursor-pointer rounded-full px-1 leading-none hover:bg-black/10"
+              className="cursor-pointer rounded-control px-1 leading-none hover:bg-black/10"
             >
               ×
             </button>

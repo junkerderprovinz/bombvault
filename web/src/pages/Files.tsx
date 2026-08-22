@@ -964,24 +964,28 @@ function FileSetRow({
               {set.name}
             </span>
             {set.excludes.length > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-carbon-surface2 text-carbon-textSub">
+              // GlimStone completeness sweep: was a hand-rolled span byte-
+              // identical to Badge's own tone="neutral" medium-stage classes
+              // (bg-carbon-surface2/text-carbon-textSub, rounded-control) —
+              // exactly the drift Badge.tsx exists to prevent. `wrap` matches
+              // this straggler's original un-clipped, content-grows sizing
+              // (no fixed height, just px-2/py-0.5) more closely than the
+              // default fixed-height stage would.
+              <Badge tone="neutral" wrap>
                 {t("files.excludesCount").replace("{n}", String(set.excludes.length))}
-              </span>
+              </Badge>
             )}
             {/* Source-folder problems, loudest first: no folder at all (discovered
                 set), then folder configured but missing on disk. */}
             {noPath && (
-              <span
-                title={t("files.noPathHint")}
-                className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-statusWarnBgStrong text-statusWarn"
-              >
+              <Badge tone="warn" wrap title={t("files.noPathHint")}>
                 {t("files.noPath")}
-              </span>
+              </Badge>
             )}
             {pathMissing && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-control text-xs font-medium bg-statusFailBg text-statusFail">
+              <Badge tone="fail" wrap>
                 {t("files.pathMissing")}
-              </span>
+              </Badge>
             )}
           </div>
           {!noPath && (
