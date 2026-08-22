@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
+import { IconTipButton } from "./IconTipButton";
 import { IconFolder } from "./Sidebar";
 import { useToast } from "../lib/toast";
 
@@ -171,15 +172,29 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             buttons elsewhere in Settings.tsx use) — this button sits flush
             beside the path input's own shape-engine-reactive `rounded-control`
             corner, and a permanently-circular neighbour would visibly break
-            from it under the square/soft shape settings. */}
-        <button
+            from it under the square/soft shape settings.
+              CORRECTED AGAIN (jdp, live-review: "beim Ordnersymbol ist die
+            Hover-Infobubble nicht im GlimStone") — this button's icon-only
+            conversion above never actually got a hover tooltip of its OWN
+            kind: it carried a plain native `title=`/`aria-label=`, the
+            browser's own OS balloon, while PathModeSwitch's own Local/Remote
+            icon pair right next to it already renders the app's real
+            `.glim-bubble` chrome (via Selector's `tip`) — two icon-only
+            triggers sitting in the same view, two visibly different tooltip
+            systems. `IconTipButton` (new shared component, extracted
+            specifically so a third bespoke copy of InfoBubble.tsx's/
+            SelectorTab's identical tooltip-state logic didn't need to exist)
+            is the same engine wired to a plain `<button>` instead of a
+            Selector segment. `folder.browseTitle` (already translated in
+            every locale — it was this button's native `title` a moment ago)
+            becomes the tip text and the button's `aria-label` unchanged. */}
+        <IconTipButton
           onClick={handleOpen}
-          title={t("folder.browseTitle")}
-          aria-label={t("folder.browseTitle")}
+          tip={t("folder.browseTitle")}
           className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <IconFolder />
-        </button>
+        </IconTipButton>
       </div>
 
       {/* Absolute path preview */}
