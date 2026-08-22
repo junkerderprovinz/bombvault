@@ -196,6 +196,8 @@ const he: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "צבע הדגשה",
   "settings.accentPresets": "ערכות מוגדרות מראש",
+  "settings.accentPreset": "ערכה מוגדרת מראש",
+  "settings.accentPresetsReset": "איפוס ערכות מוגדרות מראש",
   "settings.shape": "פינות",
   "settings.shapeHint": "חל בו-זמנית על כרטיסים, כפתורים, לשוניות, שדות ותגיות.",
   "settings.shape.round": "מעוגלות",

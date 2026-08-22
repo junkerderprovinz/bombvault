@@ -196,6 +196,8 @@ const el: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Χρώμα επισήμανσης",
   "settings.accentPresets": "Προεπιλογές",
+  "settings.accentPreset": "Προεπιλογή",
+  "settings.accentPresetsReset": "Επαναφορά προεπιλογών",
   "settings.shape": "Γωνίες",
   "settings.shapeHint": "Ισχύει ταυτόχρονα για κάρτες, κουμπιά, καρτέλες, πεδία και ετικέτες.",
   "settings.shape.round": "Στρογγυλές",

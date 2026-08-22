@@ -6,7 +6,14 @@
 // actually dark or light. These tests pin the real bug: a dark accent must
 // resolve to light ink, and a light accent must resolve to dark ink.
 import { describe, expect, it } from "vitest";
-import { contrastOn, softTint, DEFAULT_ACCENT, DEFAULT_ACCENT_CONTRAST } from "./accent";
+import {
+  contrastOn,
+  softTint,
+  DEFAULT_ACCENT,
+  DEFAULT_ACCENT_CONTRAST,
+  DEFAULT_ACCENT_PRESETS,
+  isValidAccentPresets,
+} from "./accent";
 
 describe("contrastOn", () => {
   it("puts light ink on a dark custom accent", () => {
@@ -84,5 +91,57 @@ describe("softTint", () => {
 
   it("falls back to the default accent's tint for an unparseable hex", () => {
     expect(softTint("nope")).toBe(softTint(DEFAULT_ACCENT));
+  });
+});
+
+// GlimStone follow-up pass, live-review round 6 — presets became
+// individually editable + resettable, and the count grew from 5 to 8. Pure
+// logic only (no localStorage): the DOM/localStorage-touching half
+// (getAccentPresets/setAccentPresets) has its own jsdom-backed coverage in
+// accent.dom.test.ts, mirroring how appearance.test.ts/appearance.dom.test.tsx
+// already split the SAME kind of concern for the rainbow palette.
+describe("DEFAULT_ACCENT_PRESETS", () => {
+  it("is a fixed set of eight valid, unique hex colours", () => {
+    expect(DEFAULT_ACCENT_PRESETS).toHaveLength(8);
+    for (const hex of DEFAULT_ACCENT_PRESETS) {
+      expect(hex).toMatch(/^#[0-9a-fA-F]{6}$/);
+    }
+    expect(new Set(DEFAULT_ACCENT_PRESETS.map((h) => h.toLowerCase())).size).toBe(8);
+  });
+
+  it("includes the default accent, so one preset always matches it", () => {
+    expect(DEFAULT_ACCENT_PRESETS).toContain(DEFAULT_ACCENT);
+  });
+
+  it("keeps the original 5 presets in their original order, widened by 3", () => {
+    expect(DEFAULT_ACCENT_PRESETS.slice(0, 5)).toEqual([
+      "#FCC419",
+      "#1D99F3",
+      "#6FDC8C",
+      "#FF8389",
+      "#BE95FF",
+    ]);
+  });
+});
+
+describe("isValidAccentPresets", () => {
+  it("accepts the built-in default preset set", () => {
+    expect(isValidAccentPresets(DEFAULT_ACCENT_PRESETS)).toBe(true);
+  });
+
+  it("accepts any full set of 8 valid hex colours", () => {
+    const custom = ["#111111", "#222222", "#333333", "#444444", "#555555", "#666666", "#777777", "#888888"];
+    expect(isValidAccentPresets(custom)).toBe(true);
+  });
+
+  it("rejects the WHOLE set when even one entry is invalid — all-or-nothing", () => {
+    const almostAllValid = [...DEFAULT_ACCENT_PRESETS.slice(0, 7), "javascript:alert(1)"];
+    expect(isValidAccentPresets(almostAllValid)).toBe(false);
+  });
+
+  it("rejects a set with the wrong length, short or long", () => {
+    expect(isValidAccentPresets(DEFAULT_ACCENT_PRESETS.slice(0, 7))).toBe(false);
+    expect(isValidAccentPresets([...DEFAULT_ACCENT_PRESETS, "#000000"])).toBe(false);
+    expect(isValidAccentPresets([])).toBe(false);
   });
 });

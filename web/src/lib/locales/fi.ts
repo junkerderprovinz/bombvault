@@ -196,6 +196,8 @@ const fi: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Korostusväri",
   "settings.accentPresets": "Esiasetukset",
+  "settings.accentPreset": "Esiasetus",
+  "settings.accentPresetsReset": "Palauta esiasetukset",
   "settings.shape": "Kulmat",
   "settings.shapeHint": "Vaikuttaa kerralla kortteihin, painikkeisiin, välilehtiin, kenttiin ja merkkeihin.",
   "settings.shape.round": "Pyöreät",

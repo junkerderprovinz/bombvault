@@ -196,6 +196,8 @@ const da: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Accentfarve",
   "settings.accentPresets": "Forudindstillinger",
+  "settings.accentPreset": "Forudindstilling",
+  "settings.accentPresetsReset": "Nulstil forudindstillinger",
   "settings.shape": "Hjørner",
   "settings.shapeHint": "Gælder for kort, knapper, faner, felter og mærkater på én gang.",
   "settings.shape.round": "Runde",

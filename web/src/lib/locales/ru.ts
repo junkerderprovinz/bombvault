@@ -191,6 +191,8 @@ const ru: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Акцентный цвет",
   "settings.accentPresets": "Предустановки",
+  "settings.accentPreset": "Предустановка",
+  "settings.accentPresetsReset": "Сбросить предустановки",
   "settings.shape": "Углы",
   "settings.shapeHint": "Применяется сразу к карточкам, кнопкам, вкладкам, полям и значкам.",
   "settings.shape.round": "Скруглённые",

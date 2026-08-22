@@ -196,6 +196,8 @@ const hu: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Kiemelőszín",
   "settings.accentPresets": "Előbeállítások",
+  "settings.accentPreset": "Előbeállítás",
+  "settings.accentPresetsReset": "Előbeállítások visszaállítása",
   "settings.shape": "Sarkok",
   "settings.shapeHint": "Egyszerre vonatkozik a kártyákra, gombokra, fülekre, mezőkre és jelvényekre.",
   "settings.shape.round": "Kerekített",

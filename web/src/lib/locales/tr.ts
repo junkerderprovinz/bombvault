@@ -196,6 +196,8 @@ const tr: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Vurgu rengi",
   "settings.accentPresets": "Ön ayarlar",
+  "settings.accentPreset": "Ön ayar",
+  "settings.accentPresetsReset": "Ön ayarları sıfırla",
   "settings.shape": "Köşeler",
   "settings.shapeHint": "Kartlara, düğmelere, sekmelere, alanlara ve rozetlere aynı anda uygulanır.",
   "settings.shape.round": "Yuvarlak",

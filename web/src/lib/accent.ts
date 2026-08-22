@@ -97,6 +97,103 @@ export function parseHex(hex: string): { r: number; g: number; b: number } | und
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
+// ---------------------------------------------------------------------------
+// Accent presets — GlimStone follow-up pass, live-review round 6 (jdp: "Die
+// Voreinstellungsfelder der Akzentfarbe sollen auch bearbeitbar sein und
+// auch ein Reset-Badge bekommen. Bitte mehr Voreinstellungsfarbfelder" — the
+// preset swatches should become individually editable too, get a reset, and
+// there should be more of them).
+//
+// DEFAULT_ACCENT_PRESETS is now 8 long, not 5 — reusing the exact same 8 hex
+// values as lib/appearance.ts's own RAINBOW array (just reordered: the
+// original 5 keep their original order, the 3 new ones — Orange/Teal/
+// Magenta — are appended in RAINBOW's own wheel order). Reusing RAINBOW's
+// hexes rather than inventing new ones means no new colour math is needed,
+// every one of the 8 already has a proven contrastOn() ink pairing (see
+// appearance.ts's own "KNOWN LIMITATION" comment for the two that coincide
+// with fixed status hues in dark theme — same accepted trade-off, now also
+// reachable from here), and the Accent Card's presets and the Rainbow
+// Card's palette become LITERALLY the same 8 swatches, offered through two
+// different mental models (pick one vs. hand eight out by position) — the
+// "visual/systemic consistency between the two colour-set UIs on the same
+// page" this round asked for.
+//
+// This is a DELIBERATE, BombVault-local divergence from GlimStone's shared
+// reference/appearance.ts, whose own ACCENTS comment is explicit that the
+// preset list is "the same five across every adopting app... so someone who
+// set 'Blue' in one app finds the same blue in the next" — fixed, not
+// editable, exactly five. Diverging here is accepted per jdp's own
+// "prototype in BombVault first" pattern (the same one the card-notch-badge
+// work already followed), not a signal to backport editability or the
+// widened count into the shared reference — every other GlimStone adopter
+// keeps the original 5-fixed contract unless and until that's a separate,
+// deliberate decision.
+//
+// Persistence: localStorage, mirroring appearance.ts's own
+// getRainbow()/setRainbow() shape — same all-or-nothing validation
+// (isValidAccentPresets, below), same "corrupt/missing storage silently
+// falls back to the built-in default" contract. These are the same *kind*
+// of appearance preference as the rainbow palette, just feeding the single
+// accent instead of eight positions at once, so there is no reason for the
+// persistence shape to differ.
+// ---------------------------------------------------------------------------
+
+export const DEFAULT_ACCENT_PRESETS: string[] = [
+  "#FCC419", // Sunflower — also DEFAULT_ACCENT
+  "#1D99F3", // Blue
+  "#6FDC8C", // Green
+  "#FF8389", // Red
+  "#BE95FF", // Purple
+  "#FF832B", // Orange — new, = RAINBOW[1]
+  "#3DDBD9", // Teal — new, = RAINBOW[4]
+  "#FF7EB6", // Magenta — new, = RAINBOW[7]
+];
+
+const PRESETS_STORAGE_KEY = "bv-accent-presets";
+
+/** isValidAccentPresets mirrors appearance.ts's own isValidPalette(): same
+ * fixed length + every entry independently parseable, checked all-or-
+ * nothing so a corrupt/tampered localStorage value can never partially
+ * apply (one bad entry among eight good ones falls back to the full
+ * built-in default, same rule the rainbow palette already enforces). */
+export function isValidAccentPresets(p: string[]): boolean {
+  return p.length === DEFAULT_ACCENT_PRESETS.length && p.every((c) => parseHex(c) !== undefined);
+}
+
+function usablePresets(p: string[] | undefined): string[] {
+  if (!p || !isValidAccentPresets(p)) return DEFAULT_ACCENT_PRESETS;
+  return p;
+}
+
+/** getAccentPresets is the persisted preset set, defaulting to the built-in
+ * 8 when nothing is stored (or storage is disabled/corrupt) — same contract
+ * as getRainbow(). */
+export function getAccentPresets(): string[] {
+  try {
+    const raw = localStorage.getItem(PRESETS_STORAGE_KEY);
+    if (!raw) return DEFAULT_ACCENT_PRESETS;
+    return usablePresets(JSON.parse(raw) as string[]);
+  } catch {
+    return DEFAULT_ACCENT_PRESETS;
+  }
+}
+
+/** setAccentPresets persists the VALIDATED result — never the raw input —
+ * and returns it, the same "never let a locally-clamped value diverge from
+ * what's on disk" reasoning as setRainbow()'s own comment: a caller should
+ * sync its component state from this return value, not a second
+ * localStorage round-trip. */
+export function setAccentPresets(next: string[]): string[] {
+  const usable = usablePresets(next);
+  try {
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(usable));
+  } catch {
+    // A browser with storage disabled simply pays one flash per load; the
+    // in-memory value returned below still makes this call correct.
+  }
+  return usable;
+}
+
 /**
  * luminance is the perceptual brightness used to decide black or white on
  * top. The sRGB channels are linearised first, because the raw values

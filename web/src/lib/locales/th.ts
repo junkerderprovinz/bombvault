@@ -196,6 +196,8 @@ const th: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "สีเน้น",
   "settings.accentPresets": "ค่าที่ตั้งไว้ล่วงหน้า",
+  "settings.accentPreset": "ค่าที่ตั้งไว้ล่วงหน้า",
+  "settings.accentPresetsReset": "รีเซ็ตค่าที่ตั้งไว้ล่วงหน้า",
   "settings.shape": "มุม",
   "settings.shapeHint": "มีผลกับการ์ด ปุ่ม แท็บ ช่องกรอกข้อมูล และป้ายกำกับพร้อมกัน",
   "settings.shape.round": "โค้งมน",

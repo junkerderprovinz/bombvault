@@ -196,6 +196,8 @@ const cs: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Barva zvýraznění",
   "settings.accentPresets": "Předvolby",
+  "settings.accentPreset": "Předvolba",
+  "settings.accentPresetsReset": "Obnovit předvolby",
   "settings.shape": "Rohy",
   "settings.shapeHint": "Platí najednou pro karty, tlačítka, karty záložek, pole a odznaky.",
   "settings.shape.round": "Kulaté",

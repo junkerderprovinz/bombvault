@@ -193,6 +193,8 @@ const pt: Partial<Translations> = {
   // Appearance / Accent
   "settings.accentColor": "Cor de destaque",
   "settings.accentPresets": "Predefinições",
+  "settings.accentPreset": "Predefinição",
+  "settings.accentPresetsReset": "Redefinir predefinições",
   "settings.shape": "Cantos",
   "settings.shapeHint": "Aplica-se de uma vez a cartões, botões, abas, campos e emblemas.",
   "settings.shape.round": "Arredondados",
