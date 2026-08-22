@@ -234,6 +234,14 @@ func validateExport(exp settingsExport) string {
 			return "invalid schedule in settings: " + scrubError(err)
 		}
 	}
+	// …and must respect the SAME everyN restriction the settings save enforces
+	// (#166). Without this, an imported "drillsSchedule": "everyN 3 04:00" would
+	// persist happily and then make EVERY later settings save fail from any card:
+	// the UI always PUTs the full settings object, so one poisoned field blocks
+	// the whole Schedules tab. One guard, both write paths.
+	if msg := rejectEveryNSchedules(exp.Settings); msg != "" {
+		return "invalid schedule in settings: " + msg
+	}
 	return ""
 }
 
