@@ -3647,12 +3647,37 @@ export function SettingsPage() {
   // rely on "both are plain, unconstrained full-width children, so they
   // match by construction" (see that wrapper's own comment) — need an
   // explicit width to track now that the strip is no longer full-width.
-  // tabStripRef is measured, not guessed at, because the actual pixel value
+  // This width is measured, not guessed at, because the actual pixel value
   // depends on the active locale's longest label ("Benachrichtigungen" in
   // German is not the same width in every one of the 26 shipped locales) and
   // on the live font/zoom the browser is actually rendering with — nothing
   // about that is a fixed, hard-codable constant.
-  const tabStripRef = useRef<HTMLDivElement>(null);
+  //
+  // A CALLBACK ref (state, not a plain useRef) — caught live, not in the
+  // harness: this component has an early `if (!settings) return (<...
+  // loading placeholder...>)` further down (before the tab strip's own JSX
+  // even exists), so the FIRST commit of this component's lifetime never
+  // renders the strip at all. A plain `useRef` + a mount-only
+  // `useLayoutEffect(fn, [])` runs exactly once, against THAT first
+  // (loading) commit, sees `tabStripRef.current === null`, and exits —
+  // permanently, since an empty dependency array never re-fires once
+  // `settings` later resolves and the real strip mounts. The ResizeObserver
+  // then simply never gets attached, `tabStripWidth` stays `null` forever,
+  // and the Card panels wrapper below silently never receives a max-width at
+  // all (confirmed live: verified against a real deployed container at a
+  // WIDE viewport where the strip fits on one line — the panels wrapper
+  // rendered at <main>'s own full content width, not the narrower tab-strip
+  // width, because no width was ever actually being applied; a narrower
+  // viewport had merely LOOKED correct by coincidence, since the tab strip's
+  // OWN `max-w-full` clamp and the panels wrapper's un-related default
+  // full-width block sizing happened to resolve to the identical <main>
+  // content-box number in that specific case). Storing the DOM node in STATE
+  // via the ref CALLBACK below fixes this the standard React way: React
+  // calls that callback exactly when the node is actually attached
+  // (regardless of which render pass that happens on), so the effect below,
+  // keyed on that state value, correctly (re-)runs once the strip genuinely
+  // exists — not just once at this component's very first commit.
+  const [tabStripEl, setTabStripEl] = useState<HTMLDivElement | null>(null);
   const [tabStripWidth, setTabStripWidth] = useState<number | null>(null);
 
   // ResizeObserver (not a resize-event listener): the strip's rendered width
@@ -3663,17 +3688,17 @@ export function SettingsPage() {
   // actual box directly catches both the window-resize case AND this one.
   // The ref is attached to a plain wrapping <div>, not `Selector` itself
   // (that component has no forwarded ref) — see the JSX below for why an
-  // `inline-flex` wrapper is also what makes this div hug the strip's own
-  // content width rather than the page's full width in the first place.
+  // `inline-flex self-start` wrapper is also what makes this div hug the
+  // strip's own content width rather than the page's full width in the
+  // first place.
   useLayoutEffect(() => {
-    const el = tabStripRef.current;
-    if (!el) return;
-    const measure = () => setTabStripWidth(el.getBoundingClientRect().width);
+    if (!tabStripEl) return;
+    const measure = () => setTabStripWidth(tabStripEl.getBoundingClientRect().width);
     measure();
     const ro = new ResizeObserver(measure);
-    ro.observe(el);
+    ro.observe(tabStripEl);
     return () => ro.disconnect();
-  }, []);
+  }, [tabStripEl]);
 
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedSettings is the server's last-confirmed state. Each card's Save persists
@@ -4296,21 +4321,21 @@ export function SettingsPage() {
       {/* container — a container-width match that still LOOKED mismatched     */}
       {/* because the visible pills never filled it.                          */}
       {/*                                                                    */}
-      {/* CORRECTED (jdp, round 2, explicit): a full-row `flex-1` stretch was  */}
-      {/* the wrong fix — "Ich wollte die Tab-Badges nur so breit wie sie      */}
-      {/* breit sein müssen... alle so breit wie der Benachrichtigungen-       */}
-      {/* Badge." Selector's `equalWidth` now measures the widest label's own  */}
-      {/* content width and pins every segment to THAT fixed width instead     */}
-      {/* (see Selector.tsx's own file header, item 5b, for the full           */}
-      {/* corrected mechanism) — the row hugs its own content again, just      */}
-      {/* with 7 equal segments instead of 7 ragged ones. That makes this      */}
-      {/* strip narrower than the page's full width once more, which is       */}
-      {/* exactly why it's now wrapped in its own measured `tabStripRef`       */}
-      {/* container below: the Card panels wrapper further down reads that     */}
-      {/* SAME measured width back as its own max-width, instead of the old    */}
-      {/* "both happen to be full-width, so they match automatically"          */}
-      {/* assumption — see that wrapper's own comment for why that assumption  */}
-      {/* no longer holds.                                                    */}
+      {/* CORRECTED (jdp, round 2, explicit): a full-row `flex-1` stretch was   */}
+      {/* the wrong fix — "Ich wollte die Tab-Badges nur so breit wie sie       */}
+      {/* breit sein müssen... alle so breit wie der Benachrichtigungen-        */}
+      {/* Badge." Selector's `equalWidth` now measures the widest label's own   */}
+      {/* content width and pins every segment to THAT fixed width instead      */}
+      {/* (see Selector.tsx's own file header, item 5b, for the full            */}
+      {/* corrected mechanism) — the row hugs its own content again, just       */}
+      {/* with 7 equal segments instead of 7 ragged ones. That makes this       */}
+      {/* strip narrower than the page's full width once more, which is why     */}
+      {/* it's now wrapped in its own measured container below (`tabStripEl`/   */}
+      {/* `tabStripWidth`, this component's own state block): the Card panels   */}
+      {/* wrapper further down reads that SAME measured width back as its own   */}
+      {/* max-width, instead of the old "both happen to be full-width, so they  */}
+      {/* match automatically" assumption — see that wrapper's own comment for  */}
+      {/* why that assumption no longer holds.                                 */}
       {/*                                                                    */}
       {/* `title: label` (equalWidth follow-up): equal-width segments trade    */}
       {/* away content-hugging, so the single longest label at a given         */}
@@ -4349,7 +4374,7 @@ export function SettingsPage() {
       {/* alongside `self-start` for correctness if this wrapper is ever moved */}
       {/* under a non-flex (normal block-flow) parent instead, where the       */}
       {/* inline-level box model would matter again. */}
-      <div ref={tabStripRef} className="inline-flex self-start max-w-full">
+      <div ref={setTabStripEl} className="inline-flex self-start max-w-full">
       <Selector
         items={([
           ["general", t("settings.tab.general")],
