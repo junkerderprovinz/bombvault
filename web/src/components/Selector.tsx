@@ -62,6 +62,30 @@
 //      (arrow-selects-as-it-moves) is hard-wired to `!many`, matching the
 //      reference's own default for select="one" (a JTabbedPane-style tab
 //      strip) without exposing a knob nothing here turns.
+//   5. `variant` ("chip", default, vs "well"). Live-review follow-up: "turn
+//      the shape picker into a horizontal selector styled like the one in
+//      TrickWork." TrickWork's own segmentedRow() (ui/src/controlWidgets.ts)
+//      is a shared padded track (the row itself carries background + 0.2rem
+//      padding + `border-radius: var(--radius-control)`) holding flush,
+//      equal-width segments with a crossfade-only active fill (a plain
+//      120ms `background-color` transition — no sliding pill/thumb element,
+//      no transform/left animation). That track treatment is `variant`,
+//      applied ADDITIVELY on top of everything above: a "well" strip still
+//      gets this component's roving tabindex, arrow-key/Home/End nav, RTL
+//      direction read and disabled-segment handling verbatim — none of
+//      which TrickWork's own version has (it hands each segment its own
+//      independent Tab stop, no arrow keys, no ARIA tablist/radiogroup role,
+//      no RTL awareness, no disabled concept at all). Only the VISUAL
+//      treatment is ported; the more complete interaction model here is
+//      kept, not regressed to match. `plain` is meaningless under
+//      `variant="well"` (the well track answers the same "does an idle
+//      segment carry its own background" question `plain` answers for
+//      "chip", just differently — transparent-until-hover either way) and
+//      is ignored whenever both are given. Scoped to exactly one call site
+//      for now (Settings.tsx's shape picker) — GlimStone's own "try it on
+//      one control, generalize later if it lands well" pattern — so the
+//      other eleven migrated call sites keep rendering byte-identical
+//      "chip" output; nothing about this addition changes their classes.
 //
 // No wrapping container (design-language.md: "the container is gone
 // entirely, the gap alone carries the separation") — this renders a bare
@@ -95,6 +119,13 @@ export interface SelectorItem {
 
 export type SelectorSize = "sm" | "md" | "lg";
 
+/** "chip" (default) is every existing call site's own treatment — see the
+ *  `plain` doc below for the two flavours of it. "well" is TrickWork's
+ *  shared padded track with flush, crossfade-only segments; see the file
+ *  header's item 5 for the full rationale and exactly what is/isn't ported
+ *  from TrickWork's version. */
+export type SelectorVariant = "chip" | "well";
+
 interface SelectorCommon {
   items: SelectorItem[];
   /** Accessible name for the strip, e.g. "Sort", "Settings sections". */
@@ -111,8 +142,11 @@ interface SelectorCommon {
   hue?: boolean;
   /** Page-tab treatment (no idle background) instead of the default
    *  toolbar-chip treatment (idle `bg-carbon-surface2` pill). See the file
-   *  header for which of the twelve call sites uses which. */
+   *  header for which of the twelve call sites uses which. Ignored under
+   *  `variant="well"` — see that prop's own doc. */
   plain?: boolean;
+  /** "chip" (default) vs "well" — see the file header's item 5. */
+  variant?: SelectorVariant;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
@@ -123,10 +157,20 @@ export type SelectorProps =
   | (SelectorCommon & { select?: "one"; active: string | null; onChange: (id: string) => void })
   | (SelectorCommon & { select: "many"; active: ReadonlySet<string>; onChange: (id: string) => void });
 
-const SIZE: Record<SelectorSize, string> = {
-  sm: "gap-1 px-2 py-0.5 text-xs",
-  md: "gap-1.5 px-3 py-1 text-xs",
-  lg: "gap-2 px-3 py-1.5 text-sm",
+// Split into gap/padding/text (rather than one combined string, the
+// pre-`variant` shape of this table) so `variant="well"` can drop just the
+// padding third — a well segment's box comes from the fixed --badge-md
+// height below instead, per TrickWork's own segmented-button rule, which
+// carries no padding of its own either — while still sharing the same
+// gap/text-size values "chip" uses at each stage. `chip`'s own classes are
+// the same three utility classes as before, just reassembled from these
+// three fields instead of one literal string; reordering plain, independent
+// Tailwind utility classes within a `className` doesn't change the
+// generated CSS, so this is a pure refactor for that branch.
+const SIZE: Record<SelectorSize, { gap: string; padding: string; text: string }> = {
+  sm: { gap: "gap-1", padding: "px-2 py-0.5", text: "text-xs" },
+  md: { gap: "gap-1.5", padding: "px-3 py-1", text: "text-xs" },
+  lg: { gap: "gap-2", padding: "px-3 py-1.5", text: "text-sm" },
 };
 
 // ---------------------------------------------------------------------------
@@ -187,7 +231,17 @@ export function rovedIndex(disabled: boolean[], activeIndex: number): number {
 }
 
 export function Selector(props: SelectorProps) {
-  const { items, label, size = "md", hue = true, plain = false, disabled = false, className = "" } = props;
+  const {
+    items,
+    label,
+    size = "md",
+    hue = true,
+    plain = false,
+    variant = "chip",
+    disabled = false,
+    className = "",
+  } = props;
+  const well = variant === "well";
 
   // Subscribed, not read — see lib/useRainbow.ts's own header for why this
   // has to happen during render rather than an effect. Called unconditionally
@@ -242,25 +296,64 @@ export function Selector(props: SelectorProps) {
       aria-label={label}
       aria-orientation="horizontal"
       onKeyDown={onKeyDown}
-      // No background, no padding, no border on this wrapper — the filled
-      // segment already says which one is chosen; a box around the row is
-      // one elevation too many (rule 1) and says nothing a plain gap between
-      // bare badges doesn't already say. Wraps (flex-wrap), never scrolls.
-      className={`flex flex-wrap items-center gap-1 ${className}`}
+      // "chip" (default): no background, no padding, no border on this
+      // wrapper — the filled segment already says which one is chosen; a
+      // box around the row is one elevation too many (rule 1) and says
+      // nothing a plain gap between bare badges doesn't already say. Wraps
+      // (flex-wrap), never scrolls.
+      // "well": the one deliberate exception (file header item 5) — this IS
+      // TrickWork's shared track surface (background + 0.2rem padding +
+      // `rounded-control`, so it still reshapes with the shape engine like
+      // every other radius in the app), holding equal-width flush segments.
+      // No flex-wrap here: TrickWork's segments are `flex: 1` (see below),
+      // which assumes one row — wrapping equal-width flex children onto a
+      // second line is a different, broken-looking layout, not a smaller
+      // version of the same one.
+      className={[
+        "flex items-center",
+        well ? "flex-nowrap gap-[0.2rem] rounded-control bg-carbon-surface2 p-[0.2rem]" : "flex-wrap gap-1",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {items.map((item, i) => {
         const on = isOn(item.id);
         const itemDisabled = disabledFlags[i];
         const cls = [
-          "inline-flex min-w-0 max-w-full items-center rounded-control font-medium transition-colors",
+          "inline-flex min-w-0 max-w-full items-center font-medium",
+          // "well" segments carry no radius of their own — TrickWork's
+          // `.segmented-button` doesn't set border-radius at all, relying on
+          // the track's own 0.2rem padding to inset them from the row's
+          // rounded corners (see the wrapper's own comment above). Also the
+          // exact `transition: background-color 120ms ease;` from that same
+          // rule, in place of "chip"'s Tailwind `transition-colors` (which
+          // covers more properties at Tailwind's own default 150ms/timing —
+          // fine for a chip's idle-background swap, not what TrickWork's
+          // spec actually says for this track).
+          well ? "[transition:background-color_120ms_ease]" : "rounded-control transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           hue ? "glim-hue glim-hue-icon" : "",
           on
             ? "glim-active bg-accent text-accentContrast"
-            : plain
-              ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
-          SIZE[size],
+            : well
+              ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+              : plain
+                ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
+          SIZE[size].gap,
+          SIZE[size].text,
+          // "chip" keeps its own per-stage padding (the box comes from
+          // padding + line-height, as it always has). "well" segments are
+          // `flex-1` (equal-width, sharing the track evenly — TrickWork's
+          // own layout, which only makes sense un-wrapped, see above) with
+          // their content centered (TrickWork's `justify-content`/
+          // `text-align: center` — a "chip"'s intrinsic, shrink-to-fit width
+          // never needed this) and a fixed height read off --badge-md
+          // (index.css) instead of padding, so every segment in the row is
+          // the same height regardless of label length or an icon's own
+          // intrinsic size.
+          well ? "flex-1 justify-center text-center h-[var(--badge-md)]" : SIZE[size].padding,
         ]
           .filter(Boolean)
           .join(" ");

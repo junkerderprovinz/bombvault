@@ -250,3 +250,82 @@ describe("Selector — hue opt-out (Dashboard's heatmap toggle)", () => {
     expect(tab.style.getPropertyValue("--item-hue")).toBe("");
   });
 });
+
+describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's shape picker)", () => {
+  it("default variant (\"chip\") renders none of the well track's wrapper/segment classes", () => {
+    render(<OneOfThree />);
+    expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface2");
+    const tab = screen.getByRole("tab", { name: "Alpha" });
+    expect(tab.className).not.toContain("flex-1");
+    expect(tab.className).not.toContain("--badge-md");
+  });
+
+  it("the strip itself becomes the padded well track: shared background, well gap/padding, no flex-wrap", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
+    const list = screen.getByRole("tablist");
+    expect(list.className).toContain("bg-carbon-surface2");
+    expect(list.className).toContain("rounded-control");
+    expect(list.className).toContain("gap-[0.2rem]");
+    expect(list.className).toContain("p-[0.2rem]");
+    expect(list.className).not.toContain("flex-wrap");
+  });
+
+  it("idle segments are transparent and flush (no radius, no idle chip background); the active segment still fills with the accent", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
+    const active = screen.getByRole("tab", { name: "Alpha" });
+    const idle = screen.getByRole("tab", { name: "Beta" });
+    expect(active.className).toContain("bg-accent");
+    expect(active.className).toContain("text-accentContrast");
+    expect(idle.className).toContain("bg-transparent");
+    expect(idle.className).not.toContain("bg-carbon-surface2");
+    expect(idle.className).not.toContain("rounded-control");
+  });
+
+  it("segments are equal-width and centered, with the crossfade-only transition and --badge-md height from the exact TrickWork spec — no sliding pill element", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
+    const tab = screen.getByRole("tab", { name: "Alpha" });
+    expect(tab.className).toContain("flex-1");
+    expect(tab.className).toContain("justify-center");
+    expect(tab.className).toContain("h-[var(--badge-md)]");
+    expect(tab.className).toContain("[transition:background-color_120ms_ease]");
+    // No pill/thumb: every "on" state lives on the segment's OWN background
+    // colour, there is no extra sibling element carrying position/transform.
+    expect(screen.getByRole("tablist").querySelectorAll("[data-sel-id]").length).toBe(ITEMS.length);
+  });
+
+  it("keyboard navigation is unregressed under variant=\"well\" — arrow keys still move focus and select (TrickWork's own version has no arrow-key support at all)", () => {
+    const spy = vi.fn();
+    function WellThree() {
+      const [active, setActive] = useState("a");
+      return (
+        <Selector
+          items={ITEMS}
+          label="Test strip"
+          select="one"
+          active={active}
+          onChange={(id) => {
+            setActive(id);
+            spy(id);
+          }}
+          variant="well"
+        />
+      );
+    }
+    render(<WellThree />);
+    screen.getByRole("tab", { name: "Alpha" }).focus();
+    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Beta" }));
+    expect(spy).toHaveBeenCalledWith("b");
+    expect((screen.getByRole("tab", { name: "Beta" }) as HTMLElement).tabIndex).toBe(0);
+    expect((screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).tabIndex).toBe(-1);
+  });
+
+  it("RTL still mirrors under variant=\"well\" — ArrowRight moves backward, same as \"chip\" (the direction read is variant-independent)", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
+    const list = screen.getByRole("tablist");
+    list.style.direction = "rtl";
+    screen.getByRole("tab", { name: "Beta" }).focus();
+    fireEvent.keyDown(list, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Alpha" }));
+  });
+});

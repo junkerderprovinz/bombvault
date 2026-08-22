@@ -5789,7 +5789,22 @@ export function SettingsPage() {
           opposite of what it was meant to show. Text-only avoids that
           entirely — the real Selector segment the user is looking at IS the
           shape preview, at its own true radius, with no scaled-down stand-in
-          competing with it. */}
+          competing with it.
+            `variant="well"` (GlimStone follow-up pass, live-review point 7 —
+          "turn the shape picker into a horizontal selector styled like the
+          one in TrickWork"): the one call site exercising Selector's new
+          well track (components/Selector.tsx's own file header, item 5) —
+          TrickWork's shared padded background with flush, crossfade-only
+          segments, no sliding pill. Picked for the FIRST try of this variant
+          specifically because it's already `hue={false}` and icon-free (no
+          rainbow tint, no glyph competing with the track's own look) and
+          already the page's most "three mutually exclusive settings, read
+          together as one control" Selector on this page — the shape it
+          suits best. Every other Selector on this page (the 7-tab strip
+          above, Rainbow's own controls further down) stays on the default
+          `variant="chip"`, unchanged — this is deliberately scoped to one
+          control per this session's "try it on one, generalize later if it
+          lands well" pattern, not a page-wide restyle. */}
       {tab === "general" && (
       <Card title={t("settings.shape")} hint={t("settings.shapeHint")}>
         <Selector
@@ -5806,6 +5821,7 @@ export function SettingsPage() {
           }}
           size="lg"
           hue={false}
+          variant="well"
         />
       </Card>
       )}
