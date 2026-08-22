@@ -830,6 +830,73 @@ func TestSettingsEverythingScheduleAllowsEveryN(t *testing.T) {
 	}
 }
 
+// TestSettingsEveryNSplitPinned pins WHICH schedules accept "everyN" and which
+// refuse it, field by field, so the split can never silently invert (#166).
+//
+// The split is not arbitrary: the domain schedules (and Backup Everything) each
+// have a last-run gate — LastSuccessful*Backup — to count the interval from, so
+// "every 3 days" means what it says. The off-site, drills, tamper-test and
+// digest jobs have none, so an everyN cadence there would just fire daily.
+//
+// BaukeZwart hit the second half of this table through the UI: the shared
+// cadence picker offered "Every N days" on the drills/tamper/digest cards
+// regardless, and because the Schedules tab PUTs the FULL settings object under
+// one Save button, one everyN in the drills card rejected the whole tab's save.
+// The frontend fix is the picker's `modes` allow-list
+// (web/src/components/CadenceBuilder.tsx, CadenceBuilder.dom.test.tsx); this
+// test is the backend half of the same contract.
+func TestSettingsEveryNSplitPinned(t *testing.T) {
+	// The everyN cadence from the report, sent one schedule field at a time.
+	const everyN = "everyN 3 04:00"
+
+	accepted := []string{
+		"containersSchedule", "vmsSchedule", "flashSchedule", "configSchedule", "filesSchedule",
+		"everythingSchedule",
+	}
+	rejected := []string{
+		"containersOffsiteSchedule", "vmsOffsiteSchedule", "flashOffsiteSchedule",
+		"configOffsiteSchedule", "filesOffsiteSchedule",
+		"drillsSchedule", "tamperTestSchedule", "digestSchedule",
+	}
+
+	// put sends a settings save with exactly ONE schedule field set to everyN,
+	// every other cadence left at its default, mirroring a single card's edit
+	// arriving inside the full-object PUT the UI performs.
+	put := func(t *testing.T, field string) map[string]any {
+		t.Helper()
+		h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+		body := fmt.Sprintf(`{"containersPath":"backups/c","vmsPath":"backups/v","flashPath":"backups/f",
+			"containersSchedule":"off","vmsSchedule":"off","flashSchedule":"off",
+			%q:%q}`, field, everyN)
+		w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+		if w.Code != http.StatusOK {
+			t.Fatalf("%s: expected a graceful 200 envelope, got %d", field, w.Code)
+		}
+		return m
+	}
+
+	for _, field := range accepted {
+		t.Run("accepted/"+field, func(t *testing.T) {
+			if m := put(t, field); m["ok"] != true {
+				t.Fatalf("%s must accept %q (it has a last-run gate), got %v", field, everyN, m)
+			}
+		})
+	}
+
+	for _, field := range rejected {
+		t.Run("rejected/"+field, func(t *testing.T) {
+			m := put(t, field)
+			if m["ok"] != false {
+				t.Fatalf("%s must reject %q (no last-run gate — it would fire daily), got %v", field, everyN, m)
+			}
+			errMsg, _ := m["error"].(string)
+			if !strings.Contains(errMsg, "does not support 'everyN'") {
+				t.Fatalf("%s: want the everyN guidance error, got %q", field, errMsg)
+			}
+		})
+	}
+}
+
 // TestCheckFilesDomainAccepted pins that POST /api/check/files reaches the
 // service (the domain switch no longer 400s "unknown domain"): with no files
 // repo initialised yet it reports the friendly not-yet error instead.
