@@ -62,6 +62,37 @@
 //      (arrow-selects-as-it-moves) is hard-wired to `!many`, matching the
 //      reference's own default for select="one" (a JTabbedPane-style tab
 //      strip) without exposing a knob nothing here turns.
+//   5b. `equalWidth` (default false, "chip" only). Live-review follow-up:
+//      Settings.tsx's 7-tab strip is content-hugging chips (each badge only
+//      as wide as its own label — "Allgemein" narrower than "Pfade &
+//      Speicher") sitting in a `flex-wrap` row that itself renders at the
+//      page's full width (the width-mismatch fix two rounds back removed the
+//      Settings Cards' own width cap so they'd match this row's CONTAINER).
+//      That fix matched the two elements' bounding boxes but not their
+//      VISIBLE content: seven ragged, left-hugging pills leave a stretch of
+//      bare gap to the right of the last tab ("System"), while the Card
+//      below fills that same width edge-to-edge — a container-width match
+//      that still looks wrong once actually rendered. `equalWidth` gives
+//      every segment an identical `flex: 1 1 0%` share of the row instead
+//      (plain CSS flex division, not a JS-measured width), so the row's
+//      right edge is always the LAST segment's right edge, which is also the
+//      row's own container edge — the same edge the Card below already
+//      renders flush to. Kept inside the "chip" branch specifically (own
+//      prop, not folded into `variant="well"`): the chip look this strip
+//      already has — each tab its own individually filled/outlined badge,
+//      not a shared padded track — is what round 6 specifically built ("idle
+//      badge fill" for unselected tabs); switching to `well` would trade
+//      that identity away to solve a width problem `well` doesn't uniquely
+//      solve (equal width is just `flex-1` either way — `well`'s OTHER
+//      differences, the shared track background and flush borderless
+//      segments, aren't what was asked for here). `flex-nowrap` alongside it
+//      for the same reason `well` itself is `flex-nowrap` (this file's own
+//      item 5 below): equal-width flex children assume one row, wrapping
+//      them is a different, broken-looking layout, not a smaller version of
+//      the same one. Scoped to exactly one call site (the Settings tab
+//      strip) for now, same "try it on one control" pattern `variant="well"`
+//      already set — every other "chip" call site keeps its own
+//      content-hugging width, unchanged.
 //   5. `variant` ("chip", default, vs "well"). Live-review follow-up: "turn
 //      the shape picker into a horizontal selector styled like the one in
 //      TrickWork." TrickWork's own segmentedRow() (ui/src/controlWidgets.ts)
@@ -147,6 +178,12 @@ interface SelectorCommon {
   plain?: boolean;
   /** "chip" (default) vs "well" — see the file header's item 5. */
   variant?: SelectorVariant;
+  /** Stretch every "chip" segment to an equal `flex-1` share of the row
+   *  instead of each hugging its own label width — see the file header's
+   *  item 5b. Ignored under `variant="well"` (already always equal-width).
+   *  Default false: every pre-existing "chip" call site keeps its own
+   *  content-hugging width. */
+  equalWidth?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
@@ -238,10 +275,14 @@ export function Selector(props: SelectorProps) {
     hue = true,
     plain = false,
     variant = "chip",
+    equalWidth = false,
     disabled = false,
     className = "",
   } = props;
   const well = variant === "well";
+  // Only meaningful on "chip" — "well" is already always equal-width via its
+  // own `flex-1` (see that branch below), so this never double-applies.
+  const stretch = equalWidth && !well;
 
   // Subscribed, not read — see lib/useRainbow.ts's own header for why this
   // has to happen during render rather than an effect. Called unconditionally
@@ -309,9 +350,16 @@ export function Selector(props: SelectorProps) {
       // which assumes one row — wrapping equal-width flex children onto a
       // second line is a different, broken-looking layout, not a smaller
       // version of the same one.
+      // `stretch` (item 5b): same "one row, no wrap" reasoning as "well"
+      // above, no shared track background — each segment keeps its own chip
+      // fill, just an equal-width one instead of content-hugging.
       className={[
         "flex items-center",
-        well ? "flex-nowrap gap-[0.2rem] rounded-control bg-carbon-surface2 p-[0.2rem]" : "flex-wrap gap-1",
+        well
+          ? "flex-nowrap gap-[0.2rem] rounded-control bg-carbon-surface2 p-[0.2rem]"
+          : stretch
+            ? "flex-nowrap gap-1"
+            : "flex-wrap gap-1",
         className,
       ]
         .filter(Boolean)
@@ -353,7 +401,17 @@ export function Selector(props: SelectorProps) {
           // (index.css) instead of padding, so every segment in the row is
           // the same height regardless of label length or an icon's own
           // intrinsic size.
-          well ? "flex-1 justify-center text-center h-[var(--badge-md)]" : SIZE[size].padding,
+          // `stretch` (item 5b): the same `flex-1 justify-center text-center`
+          // equal-width/centered treatment as "well", MINUS the fixed
+          // --badge-md height swap — a stretch chip keeps its own per-stage
+          // padding (its height still comes from padding + line-height, a
+          // "chip" trait this variant doesn't touch), so it stays visually a
+          // chip, just an evenly-shared-width one.
+          well
+            ? "flex-1 justify-center text-center h-[var(--badge-md)]"
+            : stretch
+              ? `flex-1 justify-center text-center ${SIZE[size].padding}`
+              : SIZE[size].padding,
         ]
           .filter(Boolean)
           .join(" ");

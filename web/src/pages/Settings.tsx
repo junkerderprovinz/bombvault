@@ -4120,6 +4120,32 @@ export function SettingsPage() {
       {/* `plain` call site (Dashboard's heatmap toggle, left untouched — out  */}
       {/* of THIS strip's scope) is a deliberate, requested style change, not  */}
       {/* a migration-fidelity slip.                                          */}
+      {/*                                                                    */}
+      {/* `equalWidth` (GlimStone follow-up pass, live-review round — "make    */}
+      {/* the tab strip's badges all equal width, then size the cards to      */}
+      {/* match that row"): each of the 7 tabs used to hug its own label       */}
+      {/* width ("Allgemein" narrower than "Pfade & Speicher"), so the wrapped */}
+      {/* row left a stretch of bare gap after the last tab ("System") even    */}
+      {/* though the Card below (its own width cap already removed, see that  */}
+      {/* wrapper's own comment below) renders edge-to-edge across the same    */}
+      {/* container — a container-width match that still LOOKED mismatched     */}
+      {/* because the visible pills never filled it. See Selector.tsx's own    */}
+      {/* file header item 5b for why this stays inside the "chip" variant     */}
+      {/* (keeping each tab its own filled/outlined badge) rather than         */}
+      {/* switching to `variant="well"`'s shared track.                        */}
+      {/*                                                                    */}
+      {/* `title: label` (equalWidth follow-up): equal-width segments trade    */}
+      {/* away content-hugging, so the single longest label at a given         */}
+      {/* viewport ("Benachrichtigungen" in German, verified live at 1400px)  */}
+      {/* can now truncate where it never did before — the label span's own    */}
+      {/* `truncate` class (Selector.tsx) already handles the ellipsis, but    */}
+      {/* nothing previously surfaced the untruncated text anywhere, because   */}
+      {/* no pre-migration "chip" segment ever needed to (each was always      */}
+      {/* exactly as wide as its own content). A native title tooltip is the   */}
+      {/* same low-cost fallback Files.tsx's destChip already uses for its own */}
+      {/* disabled-hint case — cheap insurance for the one truncation case     */}
+      {/* this specific change can newly introduce, at any label length in     */}
+      {/* any of the 26 locales, not just the one word measured live today.    */}
       {/* ------------------------------------------------------------------ */}
       <Selector
         items={([
@@ -4130,7 +4156,7 @@ export function SettingsPage() {
           ["notifications", t("settings.tab.notifications")],
           ["integrity", t("settings.tab.integrity")],
           ["system", t("settings.tab.system")],
-        ] as const).map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key] }))}
+        ] as const).map(([key, label]) => ({ id: key, label, icon: TAB_ICON[key], title: label }))}
         label={t("settings.title")}
         select="one"
         active={tab}
@@ -4145,6 +4171,7 @@ export function SettingsPage() {
           }
         }}
         size="lg"
+        equalWidth
       />
       </div>
 
