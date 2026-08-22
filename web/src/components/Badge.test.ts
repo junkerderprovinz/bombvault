@@ -321,6 +321,29 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
       expect(cls).not.toContain("absolute");
     }
   });
+
+  // Live-review round: "the notch reads as semi-transparent." Root cause was
+  // --accent-soft always being a genuine 14%-alpha wash (never solid, by
+  // design, for its OTHER tone="active"/.glim-tint consumers) that only
+  // visibly betrayed its own transparency once the notch made it straddle
+  // two different backdrops at once — see index.css's --accent-soft-solid
+  // comment for the full measurement. Fix: the real notch combination swaps
+  // in a fully OPAQUE color-mix() of the same wash instead.
+  it("uses the OPAQUE bg-accentSoftSolid fill, not the translucent bg-accentSoft wash every other accent-soft consumer uses", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
+    const cls = el.props!.className as string;
+    const tokens = cls.split(/\s+/);
+    expect(tokens).toContain("bg-accentSoftSolid");
+    expect(tokens).not.toContain("bg-accentSoft");
+  });
+
+  it("a heading-toned badge WITHOUT the notch (non-heading size) keeps the ordinary translucent bg-accentSoft wash, not the notch's solid fill", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "medium" }));
+    const cls = el.props!.className as string;
+    const tokens = cls.split(/\s+/);
+    expect(tokens).toContain("bg-accentSoft");
+    expect(tokens).not.toContain("bg-accentSoftSolid");
+  });
 });
 
 describe("Badge — content and extension", () => {

@@ -3785,8 +3785,19 @@ export function SettingsPage() {
       {/* Tab panels — the max-w-3xl reading column lives HERE now (see the
           strip's own comment above), so every Card and direct-child section
           below keeps its exact previous width; only the heading and the tab
-          strip above moved out of it. */}
-      <div className="flex flex-col gap-6 max-w-3xl">
+          strip above moved out of it.
+            gap-10 (live-review round — "more air between Cards, there's
+          plenty of room"): was gap-6 (24px), already the single largest gap
+          value used anywhere in this app (verified — no other call site
+          reaches past gap-6). Every direct child of this wrapper is either a
+          whole Card (own bg-carbon-surface + p-5 box) or an equivalent
+          top-level section, so this one value IS the vertical rhythm between
+          Settings' Domains/Language/Accent/Shape/Rainbow/Quiet-toasts blocks
+          — bumping it here, and only here, reaches every one of them.
+          40px (~1.67x the old 24px, inside the requested 1.5-2x range) reads
+          as a deliberate step up without the Cards feeling disconnected from
+          each other on the page. */}
+      <div className="flex flex-col gap-10 max-w-3xl">
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
@@ -5493,15 +5504,22 @@ export function SettingsPage() {
           sites. The sidebar nav is deliberately NOT a consumer (Sidebar.tsx
           carries the reasoning), so flipping this switch never changes the
           rail's own colours.
-            The master switch is now a plain `hideLabel` ToggleRow instead of
-          hand-inlined markup sharing a row with the section heading: now
-          that Rainbow is its OWN Card (not a sub-heading sharing space with
-          three OTHER sub-topics in one shared Card), the Card's own title
-          bar sits directly above this toggle, which is exactly ToggleRow's
-          documented "single-purpose Card whose title IS the decision this
-          switch makes" case — the "stranding a caption-less track far from
-          its heading" problem that used to rule this out no longer applies
-          once the two are inches apart in the same Card.
+            The master switch was briefly a plain `hideLabel` ToggleRow
+          (reasoning at the time: now that Rainbow is its OWN Card, not a
+          sub-heading sharing space with three OTHER sub-topics in one shared
+          Card, the Card's own title bar sits directly above this toggle,
+          which looked like ToggleRow's documented "single-purpose Card whose
+          title IS the decision this switch makes" case). jdp reviewed that
+          live and asked for the row's own "Regenbogen-Modus"/"Rainbow Mode"
+          label back, in addition to the Card's heading badge above it — so
+          `hideLabel` is gone again and `label` now reads `t("settings.rainbow")`,
+          the SAME key the Card's own `title` above already uses (not
+          `settings.rainbowOn`, a different string — "Use the palette"/
+          "Palette verwenden" — which this row used while hidden but was
+          never the text being asked for here). `settings.rainbowOn` itself
+          stays in every locale file even though this was its only call site:
+          removing a translation key from 26 locale files is real, separate
+          churn this live-review point never asked for.
             The reactive/rotate sub-toggles used to show their FULL
           explanatory sentence as the permanent visible label (design-
           language.md rule 8 violation — "explanations live in a bubble, not
@@ -5514,8 +5532,7 @@ export function SettingsPage() {
       <Card title={t("settings.rainbow")} hint={t("settings.rainbowHint")}>
         <div className="flex flex-col gap-3">
           <ToggleRow
-            hideLabel
-            label={t("settings.rainbowOn")}
+            label={t("settings.rainbow")}
             checked={rainbow.on}
             onChange={(v) => updateRainbow({ on: v })}
           />
@@ -5585,17 +5602,24 @@ export function SettingsPage() {
                 stage to land on the exact same 28px (h-7 w-7) footprint as
                 the PaletteSwatch circles it sits beside, so it reads as part
                 of the same row of controls rather than a mismatched
-                afterthought. `ms-auto` pushes it to the row's own far right
-                — the same idiom this app already uses everywhere else for
-                "trailing item in a flex row" (Containers.tsx, VMs.tsx,
-                Files.tsx, Fleet.tsx, Dashboard.tsx, Receiver.tsx), and since
-                this row shares the Card's own content width with the
-                ToggleRow switches above, that right edge lines up with
-                theirs. Icon-only, so `title`+`ariaLabel` both carry
-                common.reset ("Reset"/"Zurücksetzen"/…) as the accessible
-                name and native hover tooltip — same generic reset wording
-                the Accent Card's own (text) reset button above already uses
-                for the identical action on a sibling swatch row. */}
+                afterthought.
+                  `ms-auto` (pushing it to the row's own far right, flush
+                with the ToggleRow switches above) is GONE again — a later
+                live-review round (this one) asked it back next to swatch 8
+                instead: jdp reviewed the far-right placement live and wants
+                the reset control reading as "the next control in the same
+                row of colours," not stranded at the row's opposite edge with
+                a gap nothing else explains. With no `ms-auto` (and no other
+                margin/justify override), this Badge is just the next child
+                in the same `flex items-center gap-2` row as the 8 swatches
+                above, so the shared `gap-2` places it immediately after the
+                8th swatch — the same spacing every swatch already keeps from
+                its own neighbour, no special-cased gap needed. Icon-only, so
+                `title`+`ariaLabel` both carry common.reset ("Reset"/
+                "Zurücksetzen"/…) as the accessible name and native hover
+                tooltip — same generic reset wording the Accent Card's own
+                (text) reset button above already uses for the identical
+                action on a sibling swatch row. */}
             <Badge
               as="button"
               shape="circle"
@@ -5605,7 +5629,6 @@ export function SettingsPage() {
               onClick={() => updateRainbow({ palette: RAINBOW })}
               title={t("common.reset")}
               ariaLabel={t("common.reset")}
-              className="ms-auto"
             >
               <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
                 <path
