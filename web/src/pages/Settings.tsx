@@ -347,31 +347,36 @@ export function ToggleRow({
 // the prop signature (still passed by all ~30 call sites, always null now)
 // rather than forcing a signature change across every one of them for a
 // prop that would otherwise go unused — `_error` names that deliberately.
+//
+// Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
+// Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
+// speichern. Nur dort sollen Speicher-Buttons bleiben, wo es unbedingt sein
+// muss."): every one of this file's own call sites converted to auto-save —
+// the four genuine hold-outs left on this page (RcloneCard, CloudCredSetsCard,
+// OffsiteTargetsSection's own draft editor, SettingsPage's own
+// handleSetPassword form) each render a plain `<button>` of their own rather
+// than this shared component, for reasons documented at each site. That
+// leaves ZERO call sites of THIS component anywhere in the app (Config.tsx's
+// own comment above referencing it is a precedent citation, not an import).
+// `hueIndex` — added in an earlier round for exactly this component, but
+// (per this same sweep's own audit) never actually wired from a real call
+// site, the flagged bug this pass was asked to close out — is removed below
+// rather than fixed: fixing dead plumbing nothing renders would just be a
+// different kind of not-genuinely-integrated. The component itself stays,
+// exported and still directly testable, as a plain reusable primitive for
+// whichever FUTURE control turns out to have as hard a reason to keep a
+// manual Save as the four exceptions above — should one arrive, wire a real
+// hueIndex through then, the same way every other hue-aware control on this
+// page already does, rather than pre-emptively re-adding unused plumbing now.
 // ---------------------------------------------------------------------------
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
-// `hueIndex` (GlimStone follow-up round, Paths & Storage tab rework, point 3
-// — jdp, live review: "die Speichern-Buttons sind nicht in der Farbengine,
-// im Regenbogenmodus haben alle die gleiche Farbe"). Every one of this file's
-// ~25 remaining SaveBar call sites rendered the identical flat `bg-accent`
-// fill even with rainbow mode on — the exact same bug Badge's tone="heading"
-// notches and ToggleRow's Domains rows already had fixed for themselves.
-// Reuses the SAME mechanism (`.glim-hue` + `hueVars(rainbowAt(i))`), and the
-// SAME index its own Card's title notch already got from `nextHue()` —
-// passed straight through by each call site (`hueIndex={cardHue}` alongside
-// `<Card hueIndex={cardHue}>`) rather than a second, independent `nextHue()`
-// call. A card and its own action button read as one coloured group this
-// way, instead of two unrelated rainbow positions competing for attention
-// inside the same card. `export`ed for the same reason ToggleRow already is
-// (Settings.toggleRow.test.ts) — a plain function component, testable
-// directly with no jsdom needed.
 export function SaveBar({
   state,
   onSave,
   t,
   disabled = false,
-  hueIndex,
 }: {
   state: SaveState;
   /** Always null post-migration — see this component's header comment. */
@@ -379,16 +384,13 @@ export function SaveBar({
   onSave: () => void;
   t: ReturnType<typeof useT>["t"];
   disabled?: boolean;
-  hueIndex?: number;
 }) {
-  const hueOn = hueIndex !== undefined;
   return (
     <div className="flex items-center gap-3 pt-1">
       <button
         onClick={onSave}
         disabled={disabled || state === "saving"}
-        style={hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
-        className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+        className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {state === "saving" ? (
           <>
@@ -1888,11 +1890,30 @@ function FleetSettingsCard({
   hueIndex?: number;
 }) {
   const { push } = useToast();
-  const [nameSaveState, setNameSaveState] = useState<SaveState>("idle");
-  const [nameSaveError, setNameSaveError] = useState<string | null>(null);
+  // Only the setters are needed post-conversion (see instanceName's own
+  // onChange below) — save()'s toast already reports the outcome, same
+  // "only setters needed" shape as SettingsPage's own setDomSaveState/
+  // setDomSaveError.
+  const [, setNameSaveState] = useState<SaveState>("idle");
+  const [, setNameSaveError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const reveal = useReveal();
+  // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
+  // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
+  // speichern."): instanceName used to batch into its own bottom SaveBar.
+  // This Card is a standalone component with no access to SettingsPage's own
+  // shared `debouncedSave` (only the generic `save` prop crosses that
+  // boundary), so it gets its own local debounce timer — the exact same
+  // local mechanism FlashZipExportCard already established for its own
+  // path/keep-count fields, for the identical reason (a self-contained Card
+  // that can't reach the page's own debounce helper).
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  function debounced(key: string, run: () => void) {
+    const existing = debounceTimers.current[key];
+    if (existing) clearTimeout(existing);
+    debounceTimers.current[key] = setTimeout(run, 800);
+  }
 
   // GlimStone follow-up pass (v8.0.0): the persistent "✗ {error}" banner
   // (never auto-cleared; only reset by the next generate/disable attempt) is
@@ -1954,19 +1975,17 @@ function FleetSettingsCard({
           <input
             type="text"
             value={settings.instanceName}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, instanceName: e.target.value } : prev))}
+            onChange={(e) => {
+              const v = e.target.value;
+              setSettings((prev) => (prev ? { ...prev, instanceName: v } : prev));
+              debounced("instanceName", () => void save({ instanceName: v }, setNameSaveState, setNameSaveError));
+            }}
             spellCheck={false}
             autoComplete="off"
             placeholder="tower"
             className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
           />
         </div>
-        <SaveBar
-          state={nameSaveState}
-          error={nameSaveError}
-          onSave={() => void save({ instanceName: settings.instanceName }, setNameSaveState, setNameSaveError)}
-          t={t}
-        />
       </div>
 
       <ul className="list-disc ps-5 text-xs text-carbon-textSub flex flex-col gap-1">
@@ -2047,6 +2066,26 @@ function FleetSettingsCard({
 // RcloneCard manages the off-site rclone config (paste rclone.conf). It is
 // stored encrypted; only the remote NAMES are read back for display. Backup
 // paths can then be set to "rclone:<remote>:<bucket>" in Backup Paths.
+//
+// GENUINE EXCEPTION to the full-page Speichern-Button sweep (jdp, live
+// review, emphatic: "Die Speicher-Buttons sollen in allen Tabs weg. Überall
+// soll es automatisch speichern. Nur dort sollen Speicher-Buttons bleiben,
+// wo es unbedingt sein muss."). Every other manual Save on this page got
+// converted; this one stays, for a reason specific to this field's shape,
+// not "it's a text field" (debounced auto-save already handles those fine
+// everywhere else): the textarea below is a WRITE-ONLY one-shot paste — it
+// never round-trips the actual stored rclone.conf (`conf` starts blank on
+// every load and is blanked again after a successful save; `remotes` above
+// is a SEPARATE read-only summary fetched fresh from the server), so there
+// is no live "current value" here to keep in sync the way autoSaveField's
+// contract assumes. setRclone() also REPLACES the whole config wholesale,
+// not a partial PATCH — auto-saving mid-paste/mid-edit would push a
+// momentarily incomplete or invalid TOML blob live, and a scheduled off-site
+// job that happens to run in that exact window would see a broken config
+// instead of the working one it had a moment ago. This matches the "a
+// multi-step DRAFT of something not meant to take effect until deliberately
+// applied" exception named in the sweep's own criteria — it's the one
+// genuine case of that shape actually present in this file.
 export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [remotes, setRemotes] = useState<string[]>([]);
@@ -2131,9 +2170,30 @@ export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [secretSet, setSecretSet] = useState(false);
   const [pwSet, setPwSet] = useState(false);
-  const [state, setState] = useState<SaveState>("idle");
+  // No SaveBar/button reads this back anymore post-conversion (see
+  // persistPatch below) — only the setter is needed, same "only the setters
+  // are needed" shape as Settings.tsx's own setDomSaveState.
+  const [, setState] = useState<SaveState>("idle");
   const revealS3Secret = useReveal();
   const revealRestPassword = useReveal();
+  // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
+  // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
+  // speichern."): unlike RcloneCard right above (kept as a genuine exception
+  // — see that Card's own header comment), every field here already
+  // round-trips a real persisted value (getCloud below), the two secrets
+  // included via the exact same "blank = keep the stored one" contract
+  // Settings.tsx's own metricsToken/exportAgeRecipients fields already use
+  // safely — there is no "draft not meant to take effect" shape to protect
+  // here, just plain settings fields that happen to live in this Card's own
+  // local state instead of the page-wide `settings` object. Same local-
+  // debounce mechanism as FleetSettingsCard's own instanceName conversion
+  // (this Card has no access to SettingsPage's shared debouncedSave either).
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  function debounced(key: string, run: () => void) {
+    const existing = debounceTimers.current[key];
+    if (existing) clearTimeout(existing);
+    debounceTimers.current[key] = setTimeout(run, 800);
+  }
 
   function refresh() {
     getCloud()
@@ -2148,19 +2208,29 @@ export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   }
   useEffect(refresh, []);
 
-  function set<K extends keyof typeof c>(k: K, v: string) {
-    setC((p) => ({ ...p, [k]: v }));
-  }
-
-  // GlimStone follow-up pass (v8.0.0): "saved"/"error" flash -> toast.
-  async function handleSave() {
+  // persistPatch merges one field's freshly-typed value onto the CURRENT `c`
+  // snapshot (closed over at the point the caller scheduled it, same
+  // "correct as long as one field is edited at a time" reasoning
+  // debouncedSave's own callers rely on elsewhere in this file) and POSTs the
+  // whole object — setCloud has no partial-patch form, unlike SettingsPage's
+  // own save(). Blanking a just-saved secret mirrors handleSave's old
+  // behaviour exactly, so a saved secret immediately shows as "already set"
+  // without waiting for a refresh().
+  async function persistPatch(patch: Partial<typeof c>) {
     setState("saving");
+    const merged = { ...c, ...patch };
     try {
-      const r = await setCloud(c);
+      const r = await setCloud(merged);
       if (r.ok) {
         setState("idle");
-        setC((p) => ({ ...p, s3Secret: "", restPassword: "" }));
-        refresh();
+        if (patch.s3Secret !== undefined) {
+          setC((p) => ({ ...p, s3Secret: "" }));
+          if (patch.s3Secret !== "") setSecretSet(true);
+        }
+        if (patch.restPassword !== undefined) {
+          setC((p) => ({ ...p, restPassword: "" }));
+          if (patch.restPassword !== "") setPwSet(true);
+        }
         push(t("settings.saved"), "success");
       } else {
         setState("idle");
@@ -2170,6 +2240,23 @@ export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
       setState("idle");
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
+  }
+
+  // set — continuously-typed fields (the four text inputs): optimistic local
+  // update + debounce, same shape as every other free-text field on this
+  // page.
+  function set<K extends keyof typeof c>(k: K, v: string) {
+    setC((p) => ({ ...p, [k]: v }));
+    debounced(String(k), () => void persistPatch({ [k]: v } as Partial<typeof c>));
+  }
+
+  // A <select> fires once per discrete pick, not per keystroke — same
+  // "single discrete choice, not continuous typing" reasoning
+  // autoSaveScheduleField's own header comment gives for immediate (not
+  // debounced) saves, so this one saves right away instead.
+  function setImmediate<K extends keyof typeof c>(k: K, v: string) {
+    setC((p) => ({ ...p, [k]: v }));
+    void persistPatch({ [k]: v } as Partial<typeof c>);
   }
 
   const inputCls =
@@ -2202,7 +2289,7 @@ export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
             {t("cloud.storageClass.label")}
             <InfoBubble tip={t("cloud.storageClass.hint")} />
           </span>
-          <select value={c.s3StorageClass} onChange={(e) => set("s3StorageClass", e.target.value)} className={inputCls}>
+          <select value={c.s3StorageClass} onChange={(e) => setImmediate("s3StorageClass", e.target.value)} className={inputCls}>
             <option value="">{t("cloud.storageClass.default")}</option>
             <option value="STANDARD">STANDARD</option>
             <option value="STANDARD_IA">STANDARD_IA</option>
@@ -2219,16 +2306,6 @@ export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
         <label className={fieldCls}>RESTIC_REST_PASSWORD
           <RevealInput {...revealRestPassword} value={c.restPassword} onChange={(e) => set("restPassword", e.target.value)} spellCheck={false}
             placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
-      </div>
-
-      <div className="flex items-center gap-3 pt-1">
-        <button
-          onClick={() => void handleSave()}
-          disabled={state === "saving"}
-          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {state === "saving" ? t("auth.saving") : t("settings.save")}
-        </button>
       </div>
     </Card>
   );
@@ -2251,6 +2328,22 @@ function toDraft(s: CloudCredSetInfo): CloudCredSet {
 // whole list round-trips through setCloudCredSets (replace-all), which is why
 // every save resends every set (via toDraft — see its own comment for why
 // that is safe for the sets NOT being edited).
+//
+// GENUINE EXCEPTION to the full-page Speichern-Button sweep (jdp, live
+// review, emphatic: "Die Speicher-Buttons sollen in allen Tabs weg... Nur
+// dort sollen Speicher-Buttons bleiben, wo es unbedingt sein muss."): the
+// `editing` form's own Save button stays, unlike every plain settings field
+// converted elsewhere in this file. This is exactly the "multi-step DRAFT of
+// something not meant to take effect until deliberately applied" shape the
+// sweep's own criteria calls out: `editing` is a scratch draft (openNew()
+// mints one with a random id that exists NOWHERE in `sets` yet), sitting
+// beside an explicit "Close" button that discards it — auto-saving per
+// keystroke would create a half-filled, visibly-listed credential set the
+// instant the FIRST character of its name is typed, and would silently
+// defeat Close's own "discard my edits" contract (the whole point of a
+// cancel affordance). Every other row-level action here (Edit/Remove) is
+// already immediate, unbatched CRUD against the same API — only this one
+// scratch-draft form keeps a manual commit step.
 export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
   const [sets, setSets] = useState<CloudCredSetInfo[]>([]);
@@ -4210,12 +4303,18 @@ export function SettingsPage() {
   // answer when auth is off) — surfaced next to the download button.
   const [kitError, setKitError] = useState<string | null>(null);
 
-  const [pathSaveState, setPathSaveState] = useState<SaveState>("idle");
-  const [pathSaveError, setPathSaveError] = useState<string | null>(null);
+  // Paths & off-site repo URLs — full-page Speichern-Button sweep: each field
+  // now debounce-auto-saves itself (see the Paths/Off-site copy Cards' own
+  // onChange handlers), so no SaveBar reads these anymore — only the setters
+  // survive, as debouncedSave/save's own callback params still require. Same
+  // "only the setters are needed" shape as setDomSaveState/setDomSaveError
+  // above.
+  const [, setPathSaveState] = useState<SaveState>("idle");
+  const [, setPathSaveError] = useState<string | null>(null);
   const [, setExportEncSaveState] = useState<SaveState>("idle");
   const [, setExportEncSaveError] = useState<string | null>(null);
-  const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
-  const [offsiteSaveError, setOffsiteSaveError] = useState<string | null>(null);
+  const [, setOffsiteSaveState] = useState<SaveState>("idle");
+  const [, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
   const [offsiteWizard, setOffsiteWizard] = useState<"containers" | "vms" | "flash" | "files" | null>(null);
 
@@ -4247,8 +4346,10 @@ export function SettingsPage() {
   const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
   const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
 
-  const [retSaveState, setRetSaveState] = useState<SaveState>("idle");
-  const [retSaveError, setRetSaveError] = useState<string | null>(null);
+  // Same "only the setters are needed" shape as pathSaveState above — this
+  // retention grid's own SaveBar is gone too (each cell debounce-auto-saves).
+  const [, setRetSaveState] = useState<SaveState>("idle");
+  const [, setRetSaveError] = useState<string | null>(null);
 
   // Image cleanup / Unraid update-status reconciliation / registries (#56,
   // #116, #106) — merged into one auto-save card (GlimStone follow-up round,
@@ -4263,27 +4364,31 @@ export function SettingsPage() {
   const [, setRegistrySaveState] = useState<SaveState>("idle");
   const [, setRegistrySaveError] = useState<string | null>(null);
 
-  const [cacheSaveState, setCacheSaveState] = useState<SaveState>("idle");
-  const [cacheSaveError, setCacheSaveError] = useState<string | null>(null);
+  // Same "only the setters are needed" shape as pathSaveState above — every
+  // field below debounce/toggle-auto-saves itself now, so nothing reads
+  // these values back; save()'s own toast already reports the outcome.
+  const [, setCacheSaveState] = useState<SaveState>("idle");
+  const [, setCacheSaveError] = useState<string | null>(null);
 
-  const [offRetSaveState, setOffRetSaveState] = useState<SaveState>("idle");
-  const [offRetSaveError, setOffRetSaveError] = useState<string | null>(null);
+  const [, setOffRetSaveState] = useState<SaveState>("idle");
+  const [, setOffRetSaveError] = useState<string | null>(null);
 
-  const [limSaveState, setLimSaveState] = useState<SaveState>("idle");
-  const [limSaveError, setLimSaveError] = useState<string | null>(null);
+  const [, setLimSaveState] = useState<SaveState>("idle");
+  const [, setLimSaveError] = useState<string | null>(null);
 
-  const [metricsSaveState, setMetricsSaveState] = useState<SaveState>("idle");
-  const [metricsSaveError, setMetricsSaveError] = useState<string | null>(null);
+  const [, setMetricsSaveState] = useState<SaveState>("idle");
+  const [, setMetricsSaveError] = useState<string | null>(null);
 
-  // Weekly digest (notifications tab) — its own save state, persisted via the
-  // shared baseline-merging save().
-  const [digestSaveState, setDigestSaveState] = useState<SaveState>("idle");
-  const [digestSaveError, setDigestSaveError] = useState<string | null>(null);
+  // Weekly digest (notifications tab) — persisted via the shared
+  // baseline-merging save() (autoSaveToggle for the toggle, debouncedSave
+  // for the cadence).
+  const [, setDigestSaveState] = useState<SaveState>("idle");
+  const [, setDigestSaveError] = useState<string | null>(null);
 
-  // Overdue-backup watchdog (notifications tab) — its own save state, same
-  // baseline-merging save() as the digest card above it.
-  const [watchdogSaveState, setWatchdogSaveState] = useState<SaveState>("idle");
-  const [watchdogSaveError, setWatchdogSaveError] = useState<string | null>(null);
+  // Overdue-backup watchdog (notifications tab) — same baseline-merging
+  // save() as the digest card above it (autoSaveToggle).
+  const [, setWatchdogSaveState] = useState<SaveState>("idle");
+  const [, setWatchdogSaveError] = useState<string | null>(null);
 
   // Schedules tab (migrated from the retired Plans page). The container list
   // feeds the Containers schedule section's included-members list; syncSchedules
@@ -4314,11 +4419,20 @@ export function SettingsPage() {
   // make the name lie about what it covers. See autoSaveScheduleField below
   // for the actual save function (same optimistic-flip + revert + shake
   // shape as autoSaveField/toggleDomainEnabled).
+  //   restartHealthWait joined this union in the full-page Speichern-Button
+  // sweep (jdp, live review: "Die Speicher-Buttons sollen in allen Tabs weg.
+  // Überall soll es automatisch speichern.") — it was the one field left on
+  // this tab still batched into its own manual SaveBar (see the comment that
+  // used to sit on restartSaveState/-Error below, now removed along with
+  // that dead state). It genuinely belongs in THIS union, not a new one of
+  // its own: same tab, same "single discrete boolean" shape as the other
+  // four.
   type ScheduleBoolKey =
     | "perItemSchedules"
     | "catchUpMissed"
     | "drillsEnabled"
-    | "offsiteDrillsEnabled";
+    | "offsiteDrillsEnabled"
+    | "restartHealthWait";
   const [schedFieldBusy, setSchedFieldBusy] = useState<Partial<Record<ScheduleBoolKey, boolean>>>({});
   const [schedFieldShake, setSchedFieldShake] = useState<Partial<Record<ScheduleBoolKey, number>>>({});
   // The "sync" toggle itself isn't a Settings field (syncSchedules above is
@@ -4335,13 +4449,6 @@ export function SettingsPage() {
   // than widening that generic. See toggleConfigSchedule below.
   const [configScheduleToggleBusy, setConfigScheduleToggleBusy] = useState(false);
   const [configScheduleToggleShake, setConfigScheduleToggleShake] = useState(0);
-  // Health-gated ordered restart (#119) — its own save state, same
-  // baseline-merging save() as the other cards on this tab. Explicitly NOT
-  // part of Task 5's auto-save conversion — a DIFFERENT settings group
-  // (restartHealthWait/restartHealthTimeoutSec) with its own still-manual
-  // SaveBar further down, left untouched on purpose.
-  const [restartSaveState, setRestartSaveState] = useState<SaveState>("idle");
-  const [restartSaveError, setRestartSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getSettings()
@@ -4617,6 +4724,46 @@ export function SettingsPage() {
     return ok;
   }
 
+  // autoSaveToggle (full-page Speichern-Button sweep, jdp, live review,
+  // emphatic: "Die Speicher-Buttons sollen in allen Tabs weg. Überall soll
+  // es automatisch speichern."): the SAME optimistic-flip + persist +
+  // revert-on-failure + shake shape as autoSaveField/toggleDomainEnabled/
+  // autoSaveScheduleField above, generalized ONE step further — those three
+  // each own a small, closed key union (MergedAutoSaveKey/DomainToggleKey/
+  // ScheduleBoolKey) because each covers a specific GROUP of related toggles
+  // on one shared Card/tab, worth naming as a set. This sweep's remaining
+  // holdouts (Monitoring's metricsEnabled, the Weekly-digest Card's
+  // digestEnabled, the Overdue-watchdog Card's watchdogEnabled) are three
+  // unrelated, standalone toggles on three different Cards across two
+  // different tabs — inventing a same-shaped one-member union per Card would
+  // just be MergedAutoSaveKey's own pattern copy-pasted three times for zero
+  // benefit, so this widens the generic to any boolean Settings key instead,
+  // with its own single shared busy/shake map keyed by field name (same
+  // "keyed by field name in one map" shape every other per-field map on this
+  // page already uses). Reach for one of the narrower, named unions above
+  // instead when a NEW group of related toggles arrives together; reach for
+  // this one for a standalone toggle that doesn't belong to any such group.
+  const [fieldBusy, setFieldBusy] = useState<Partial<Record<keyof Settings, boolean>>>({});
+  const [fieldShake, setFieldShake] = useState<Partial<Record<keyof Settings, number>>>({});
+
+  async function autoSaveToggle<K extends keyof Settings>(
+    key: K,
+    next: Settings[K],
+    setSaveState: (s: SaveState) => void,
+    setSaveError: (e: string | null) => void
+  ): Promise<boolean> {
+    const prev = settings?.[key];
+    setSettings((s) => (s ? { ...s, [key]: next } : s));
+    setFieldBusy((b) => ({ ...b, [key]: true }));
+    const ok = await save({ [key]: next } as Partial<Settings>, setSaveState, setSaveError);
+    setFieldBusy((b) => ({ ...b, [key]: false }));
+    if (!ok) {
+      setSettings((s) => (s ? { ...s, [key]: prev as Settings[K] } : s));
+      setFieldShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+    }
+    return ok;
+  }
+
   // debouncedSave/cancelDebounce — the free-text/number half of the same
   // merge A/B auto-save requirement: a registry host/username/token, a flash
   // zip export path/keep-count, or the age recipients list would be wasteful
@@ -4843,6 +4990,25 @@ export function SettingsPage() {
   // surface rather than a 4-second toast that could vanish while they're
   // still typing (design-language.md: a toast duplicating a surface that
   // already exists and is meant to persist is the wrong tool here).
+  //
+  // GENUINE EXCEPTION to the full-page Speichern-Button sweep (jdp, live
+  // review, emphatic: "Die Speicher-Buttons sollen in allen Tabs weg...
+  // Nur dort sollen Speicher-Buttons bleiben, wo es unbedingt sein muss."):
+  // this Save button stays. Two independent hard reasons, either one alone
+  // would qualify: (1) it requires TWO fields (new + confirm) to agree
+  // before the write is even safe to attempt — exactly the "requires
+  // explicit two-step confirmation for safety" exception named in the
+  // sweep's own criteria, and there is no sane per-keystroke auto-save
+  // trigger for a two-field agreement check (auto-saving on the FIRST
+  // field alone, before the second is even filled in, would either save a
+  // password the user never finished typing or spam a mismatch failure on
+  // every keystroke of the second field). (2) setAuthPassword takes effect
+  // IMMEDIATELY and controls access to the whole instance — a blank save
+  // disables auth entirely — the closest thing on this page to "immediately
+  // rotating a live credential," the sweep's own worked example of a
+  // legitimate hold-out. Not kept because it's "security-related" in a
+  // vague sense; kept because auto-saving would either be unsafe or simply
+  // impossible to trigger correctly.
   async function handleSetPassword() {
     if (pwNew !== pwConfirm) {
       setPwSaveMsg(t("auth.passwordMismatch"));
@@ -5352,13 +5518,23 @@ export function SettingsPage() {
               through the post-backup update recreate (see internal/backup
               orchestrator WhileDependentsStopped). */}
           <Card title={t("settings.restartHealthTitle")} hueIndex={nextHue()}>
+            {/* Full-page Speichern-Button sweep (jdp, live review, emphatic:
+                "Die Speicher-Buttons sollen in allen Tabs weg. Überall soll
+                es automatisch speichern."): this was the one Card left on
+                the Schedules tab still batched into its own manual SaveBar
+                after Task 5 converted every other field here — that task's
+                own comment named it as a deliberate exception at the time;
+                this pass closes it out with the exact same shapes Task 5
+                already established one Card up (autoSaveScheduleField for
+                the discrete toggle, scheduleField's debounce for the
+                continuously-typed number). */}
             <ToggleRow
               label={t("settings.restartHealthWait")}
               hint={t("settings.restartHealthWaitHint")}
               checked={settings.restartHealthWait}
-              onChange={(v) =>
-                setSettings((prev) => (prev ? { ...prev, restartHealthWait: v } : prev))
-              }
+              onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
+              disabled={schedFieldBusy.restartHealthWait}
+              shakeNonce={schedFieldShake.restartHealthWait}
             />
             {settings.restartHealthWait && (
               <label className="flex flex-col gap-1 sm:w-1/2">
@@ -5381,29 +5557,12 @@ export function SettingsPage() {
                     // Clamp to the field minimum (5): never let a transient sub-5
                     // value sit in component state. The server clamps to 5..3600.
                     const n = Math.max(5, parseInt(raw, 10) || 0);
-                    setSettings((prev) =>
-                      prev ? { ...prev, restartHealthTimeoutSec: n } : prev
-                    );
+                    scheduleField("restartHealthTimeoutSec", n);
                   }}
                   className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
                 />
               </label>
             )}
-            <SaveBar
-              state={restartSaveState}
-              error={restartSaveError}
-              onSave={() =>
-                void save(
-                  {
-                    restartHealthWait: settings.restartHealthWait,
-                    restartHealthTimeoutSec: settings.restartHealthTimeoutSec,
-                  },
-                  setRestartSaveState,
-                  setRestartSaveError
-                )
-              }
-              t={t}
-            />
           </Card>
 
           {/* Restore-check schedule (schedulesChecks): the scheduled off-site
@@ -5543,14 +5702,26 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
       <Card title={t("settings.paths")} hint={t("settings.pathsHint").replace("{root}", hostMountRoot)} hueIndex={nextHue()}>
+        {/* Full-page Speichern-Button sweep (jdp, live review, emphatic:
+            "Die Speicher-Buttons sollen in allen Tabs weg. Überall soll es
+            automatisch speichern."): all six fields below used to batch into
+            one bottom SaveBar. Each now debounce-auto-saves itself instead —
+            the exact same `debouncedSave`-keyed-by-field-name shape the
+            Schedules tab's own `scheduleField` already established for
+            continuously-typed values (a path is typed/browsed the same way a
+            cron string is), just called directly here since these six PATCH
+            single independent fields rather than a whole cadence group. */}
         <PathModeSwitch
           label={t("settings.containersPath")}
           domain="containers"
           value={settings.containersPath}
           hostMountRoot={hostMountRoot}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, containersPath: v } : prev)
-          }
+          onChange={(v) => {
+            setSettings((prev) => prev ? { ...prev, containersPath: v } : prev);
+            debouncedSave("containersPath", () =>
+              void save({ containersPath: v }, setPathSaveState, setPathSaveError)
+            );
+          }}
           settings={settings}
           setSettings={setSettings}
           save={save}
@@ -5560,9 +5731,12 @@ export function SettingsPage() {
           domain="vms"
           value={settings.vmsPath}
           hostMountRoot={hostMountRoot}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev)
-          }
+          onChange={(v) => {
+            setSettings((prev) => prev ? { ...prev, vmsPath: v } : prev);
+            debouncedSave("vmsPath", () =>
+              void save({ vmsPath: v }, setPathSaveState, setPathSaveError)
+            );
+          }}
           settings={settings}
           setSettings={setSettings}
           save={save}
@@ -5572,9 +5746,12 @@ export function SettingsPage() {
           domain="flash"
           value={settings.flashPath}
           hostMountRoot={hostMountRoot}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, flashPath: v } : prev)
-          }
+          onChange={(v) => {
+            setSettings((prev) => prev ? { ...prev, flashPath: v } : prev);
+            debouncedSave("flashPath", () =>
+              void save({ flashPath: v }, setPathSaveState, setPathSaveError)
+            );
+          }}
           settings={settings}
           setSettings={setSettings}
           save={save}
@@ -5584,9 +5761,12 @@ export function SettingsPage() {
           domain="config"
           value={settings.configPath}
           hostMountRoot={hostMountRoot}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, configPath: v } : prev)
-          }
+          onChange={(v) => {
+            setSettings((prev) => prev ? { ...prev, configPath: v } : prev);
+            debouncedSave("configPath", () =>
+              void save({ configPath: v }, setPathSaveState, setPathSaveError)
+            );
+          }}
           settings={settings}
           setSettings={setSettings}
           save={save}
@@ -5596,9 +5776,12 @@ export function SettingsPage() {
           domain="files"
           value={settings.filesPath}
           hostMountRoot={hostMountRoot}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, filesPath: v } : prev)
-          }
+          onChange={(v) => {
+            setSettings((prev) => prev ? { ...prev, filesPath: v } : prev);
+            debouncedSave("filesPath", () =>
+              void save({ filesPath: v }, setPathSaveState, setPathSaveError)
+            );
+          }}
           settings={settings}
           setSettings={setSettings}
           save={save}
@@ -5608,29 +5791,12 @@ export function SettingsPage() {
           value={settings.restoreFolder}
           hostMountRoot={hostMountRoot}
           hint={t("settings.restoreFolderHint")}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, restoreFolder: v } : prev)
-          }
-        />
-        <SaveBar
-          state={pathSaveState}
-          error={pathSaveError}
-          onSave={() =>
-            void save(
-              {
-                containersPath: settings.containersPath,
-                vmsPath: settings.vmsPath,
-                flashPath: settings.flashPath,
-                configPath: settings.configPath,
-                filesPath: settings.filesPath,
-                restoreFolder: settings.restoreFolder,
-              },
-              setPathSaveState,
-              setPathSaveError
-            )
-          }
-          t={t}
-          hueIndex={nextHue()}
+          onChange={(v) => {
+            setSettings((prev) => prev ? { ...prev, restoreFolder: v } : prev);
+            debouncedSave("restoreFolder", () =>
+              void save({ restoreFolder: v }, setPathSaveState, setPathSaveError)
+            );
+          }}
         />
       </Card>
       )}
@@ -5675,30 +5841,17 @@ export function SettingsPage() {
                 onChange={(e) => {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                  // Full-page Speichern-Button sweep: this whole grid used to
+                  // batch into one bottom SaveBar — each cell now debounce-
+                  // auto-saves itself, keyed by its own field name so typing
+                  // in one cell never resets another cell's pending timer.
+                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setRetSaveState, setRetSaveError));
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
         </div>
-        <SaveBar
-          state={retSaveState}
-          error={retSaveError}
-          onSave={() =>
-            void save(
-              {
-                retentionKeepLast: settings.retentionKeepLast,
-                retentionKeepDaily: settings.retentionKeepDaily,
-                retentionKeepWeekly: settings.retentionKeepWeekly,
-                retentionKeepMonthly: settings.retentionKeepMonthly,
-              },
-              setRetSaveState,
-              setRetSaveError
-            )
-          }
-          t={t}
-          hueIndex={nextHue()}
-        />
       </Card>
       )}
 
@@ -5969,23 +6122,14 @@ export function SettingsPage() {
               const raw = (e.target as unknown as { value: string }).value;
               const n = Math.max(0, parseInt(raw, 10) || 0);
               setSettings((prev) => (prev ? { ...prev, resticCacheMaxMB: n } : prev));
+              // Full-page Speichern-Button sweep: was its own bottom SaveBar.
+              debouncedSave("resticCacheMaxMB", () =>
+                void save({ resticCacheMaxMB: n }, setCacheSaveState, setCacheSaveError)
+              );
             }}
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
           />
         </label>
-        <SaveBar
-          state={cacheSaveState}
-          error={cacheSaveError}
-          onSave={() =>
-            void save(
-              { resticCacheMaxMB: settings.resticCacheMaxMB },
-              setCacheSaveState,
-              setCacheSaveError
-            )
-          }
-          t={t}
-          hueIndex={nextHue()}
-        />
       </Card>
       )}
 
@@ -6294,9 +6438,17 @@ export function SettingsPage() {
                 <input
                   value={settings[repoKey]}
                   spellCheck={false}
-                  onChange={(e) =>
-                    setSettings((prev) => (prev ? { ...prev, [repoKey]: e.target.value } : prev))
-                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
+                    // Full-page Speichern-Button sweep: this Card's own bottom
+                    // SaveBar is gone — each repo URL debounce-auto-saves
+                    // itself, keyed by its own field name (the off-site
+                    // *cadences* stay owned by the Schedules tab, unaffected).
+                    debouncedSave(repoKey, () =>
+                      void save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)
+                    );
+                  }}
                   placeholder="rest:http://host:8000/repo"
                   dir="ltr"
                   className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
@@ -6315,25 +6467,6 @@ export function SettingsPage() {
           </div>
           );
         })}
-        <SaveBar
-          state={offsiteSaveState}
-          error={offsiteSaveError}
-          onSave={() =>
-            // Repo URLs only — the off-site *cadences* are owned by the Schedules
-            // tab now, so this Save no longer writes (or clobbers) them.
-            void save(
-              {
-                containersOffsite: settings.containersOffsite,
-                vmsOffsite: settings.vmsOffsite,
-                flashOffsite: settings.flashOffsite,
-                filesOffsite: settings.filesOffsite,
-              },
-              setOffsiteSaveState,
-              setOffsiteSaveError
-            )
-          }
-          t={t}
-        />
       </Card>
       </div>
       )}
@@ -6370,29 +6503,13 @@ export function SettingsPage() {
                 onChange={(e) => {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError));
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
         </div>
-        <SaveBar
-          state={offRetSaveState}
-          error={offRetSaveError}
-          onSave={() =>
-            void save(
-              {
-                offsiteRetentionKeepLast: settings.offsiteRetentionKeepLast,
-                offsiteRetentionKeepDaily: settings.offsiteRetentionKeepDaily,
-                offsiteRetentionKeepWeekly: settings.offsiteRetentionKeepWeekly,
-                offsiteRetentionKeepMonthly: settings.offsiteRetentionKeepMonthly,
-              },
-              setOffRetSaveState,
-              setOffRetSaveError
-            )
-          }
-          t={t}
-        />
       </Card>
       )}
 
@@ -6419,27 +6536,13 @@ export function SettingsPage() {
                 onChange={(e) => {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setLimSaveState, setLimSaveError));
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
               />
             </label>
           ))}
         </div>
-        <SaveBar
-          state={limSaveState}
-          error={limSaveError}
-          onSave={() =>
-            void save(
-              {
-                offsiteLimitUpload: settings.offsiteLimitUpload,
-                offsiteLimitDownload: settings.offsiteLimitDownload,
-              },
-              setLimSaveState,
-              setLimSaveError
-            )
-          }
-          t={t}
-        />
       </Card>
       )}
 
@@ -6467,9 +6570,9 @@ export function SettingsPage() {
           hideLabel
           label={t("settings.metricsEnable")}
           checked={settings.metricsEnabled}
-          onChange={(v) =>
-            setSettings((prev) => prev ? { ...prev, metricsEnabled: v } : prev)
-          }
+          onChange={(v) => void autoSaveToggle("metricsEnabled", v, setMetricsSaveState, setMetricsSaveError)}
+          disabled={fieldBusy.metricsEnabled}
+          shakeNonce={fieldShake.metricsEnabled}
         />
         {/* Write-only secret (the GET never echoes it): blank-on-save keeps the
             stored token, so a stored one shows as the same "saved — leave blank
@@ -6481,32 +6584,26 @@ export function SettingsPage() {
             value={settings.metricsToken}
             spellCheck={false}
             autoComplete="off"
-            onChange={(e) =>
-              setSettings((prev) => prev ? { ...prev, metricsToken: e.target.value } : prev)
-            }
+            onChange={(e) => {
+              const v = e.target.value;
+              setSettings((prev) => prev ? { ...prev, metricsToken: v } : prev);
+              // Full-page Speichern-Button sweep: was this Card's own bottom
+              // SaveBar. Keeps the SAME "is-set flag honest locally" patch
+              // shape the old onSave sent — a non-blank token being saved
+              // marks itself set; a blank save keeps whatever was stored.
+              debouncedSave("metricsToken", () =>
+                void save(
+                  { metricsToken: v, metricsTokenSet: v.trim() !== "" || settings.metricsTokenSet },
+                  setMetricsSaveState,
+                  setMetricsSaveError
+                )
+              );
+            }}
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
             wrapperClassName="w-full"
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
         </label>
-        <SaveBar
-          state={metricsSaveState}
-          error={metricsSaveError}
-          onSave={() =>
-            void save(
-              {
-                metricsEnabled: settings.metricsEnabled,
-                metricsToken: settings.metricsToken,
-                // Keep the is-set flag honest locally: saving a non-blank token
-                // stores one; a blank save keeps whatever was stored before.
-                metricsTokenSet: settings.metricsToken.trim() !== "" || settings.metricsTokenSet,
-              },
-              setMetricsSaveState,
-              setMetricsSaveError
-            )
-          }
-          t={t}
-        />
       </Card>
       )}
 
@@ -6581,40 +6678,33 @@ export function SettingsPage() {
         const hueIdx = nextHue();
         return (
           <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")} hueIndex={hueIdx}>
+            {/* Full-page Speichern-Button sweep: this Card's own bottom
+                SaveBar is gone — the toggle auto-saves immediately (revert +
+                shake on failure, via the page-wide autoSaveToggle), the
+                cadence debounces (via debouncedSave), same split every other
+                toggle+cadence pairing on this page already uses. */}
             <ToggleRow
               hideLabel
               label={t("settings.digestToggle")}
               checked={settings.digestEnabled}
-              onChange={(v) =>
-                setSettings((prev) => (prev ? { ...prev, digestEnabled: v } : prev))
-              }
+              onChange={(v) => void autoSaveToggle("digestEnabled", v, setDigestSaveState, setDigestSaveError)}
+              disabled={fieldBusy.digestEnabled}
+              shakeNonce={fieldShake.digestEnabled}
             />
             <div className="rounded-card bg-carbon-surface2 p-4">
               <CadenceBuilder
                 label={t("settings.schedule")}
                 value={settings.digestSchedule}
                 disabled={!settings.digestEnabled}
-                onChange={(v) =>
-                  setSettings((prev) => (prev ? { ...prev, digestSchedule: v } : prev))
-                }
+                onChange={(v) => {
+                  setSettings((prev) => (prev ? { ...prev, digestSchedule: v } : prev));
+                  debouncedSave("digestSchedule", () =>
+                    void save({ digestSchedule: v }, setDigestSaveState, setDigestSaveError)
+                  );
+                }}
                 hueIndex={hueIdx}
               />
             </div>
-            <SaveBar
-              state={digestSaveState}
-              error={digestSaveError}
-              onSave={() =>
-                void save(
-                  {
-                    digestEnabled: settings.digestEnabled,
-                    digestSchedule: settings.digestSchedule,
-                  },
-                  setDigestSaveState,
-                  setDigestSaveError
-                )
-              }
-              t={t}
-            />
           </Card>
         );
       })()}
@@ -6624,24 +6714,14 @@ export function SettingsPage() {
           configured above; a new successful backup re-arms it. */}
       {tab === "notifications" && (
         <Card title={t("settings.watchdogTitle")} hint={t("settings.watchdogHint")} hueIndex={nextHue()}>
+          {/* Full-page Speichern-Button sweep: was this Card's own bottom
+              SaveBar — a single toggle, so it now just auto-saves itself. */}
           <ToggleRow
             label={t("settings.watchdogToggle")}
             checked={settings.watchdogEnabled}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, watchdogEnabled: v } : prev))
-            }
-          />
-          <SaveBar
-            state={watchdogSaveState}
-            error={watchdogSaveError}
-            onSave={() =>
-              void save(
-                { watchdogEnabled: settings.watchdogEnabled },
-                setWatchdogSaveState,
-                setWatchdogSaveError
-              )
-            }
-            t={t}
+            onChange={(v) => void autoSaveToggle("watchdogEnabled", v, setWatchdogSaveState, setWatchdogSaveError)}
+            disabled={fieldBusy.watchdogEnabled}
+            shakeNonce={fieldShake.watchdogEnabled}
           />
         </Card>
       )}
