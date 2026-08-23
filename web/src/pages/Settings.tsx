@@ -2935,6 +2935,31 @@ function NotifyCard({
   const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false });
   const revealMatrixToken = useReveal();
   const revealSmtpPassword = useReveal();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide: "Wenn
+  // etwas fehlschlägt soll der Toggle/Button kurz zittern"), closing a gap
+  // that survived even this Card's own full-page Speichern-Button sweep
+  // (see that comment below): persistNotify already pushed a "fail" toast
+  // on a rejected save but never reverted the optimistically-updated field
+  // back to what the server actually still holds, nor shook it — an
+  // un-reverted field showing a value that never actually saved is worse
+  // than a silent failure (it reads as "saved", not "failed"). lastGoodRef
+  // tracks the last CONFIRMED-persisted snapshot (the initial getNotify
+  // load below, then re-stamped to the exact object `setNotify` just
+  // accepted on every successful persistNotify — see that function's own
+  // comment for why the WHOLE merged object, not just the touched patch
+  // key, is the correct "last good" snapshot here). set()/setImmediate()
+  // below both revert their own key to `lastGoodRef.current[k]` and bump
+  // `fieldShake[key]` on failure — ONE shared mechanism so every one of
+  // this Card's ~25 auto-save fields (8 toggles, the "on" Selector, 2
+  // selects, ~15 text/number fields including the 5 per-domain Healthchecks
+  // overrides) gets revert+shake for free, the same "fix the shared helper
+  // once, every caller benefits" shape autoSaveField/autoSaveToggle already
+  // established in SettingsPage's own save() further down this file.
+  const lastGoodRef = useRef<NotifyConfig>(emptyNotify);
+  const [fieldShake, setFieldShake] = useState<Partial<Record<string, number>>>({});
+  function bumpShake(key: string) {
+    setFieldShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+  }
   // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
   // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
   // speichern."): every field below already round-trips a real persisted
@@ -2954,7 +2979,14 @@ function NotifyCard({
   useEffect(() => {
     getNotify()
       .then((r) => {
-        if (r.ok && r.notify) setCfg({ ...emptyNotify, ...r.notify });
+        if (r.ok && r.notify) {
+          const merged = { ...emptyNotify, ...r.notify };
+          setCfg(merged);
+          // The freshly-loaded server value IS the last-known-good snapshot —
+          // a revert before any edit has ever been attempted rolls back to
+          // exactly this, same as a fresh page load never shaking anything.
+          lastGoodRef.current = merged;
+        }
         setSecretSet({ smtp: !!r.smtpPasswordSet, matrix: !!r.matrixTokenSet });
       })
       .catch(() => undefined);
@@ -2964,8 +2996,18 @@ function NotifyCard({
   // whole object — setNotify has no partial-patch form, same "merge onto the
   // freshest local state" shape as CloudCard's own persistPatch (this Card
   // has no OTHER card's concurrent edits to protect against, unlike
-  // SettingsPage's own baseline-merging save()).
-  async function persistNotify(patch: Partial<NotifyConfig>) {
+  // SettingsPage's own baseline-merging save()). Returns whether the save
+  // actually succeeded so set()/setImmediate() below can revert+shake their
+  // OWN field on failure — merges the WHOLE accepted `merged` object into
+  // lastGoodRef on success, not just the patch's own key: setNotify always
+  // POSTs a full replace, so a successful call really did persist every
+  // field `merged` carried at that moment (including another field's own
+  // not-yet-separately-saved edit, if one was mid-debounce when THIS call
+  // fired) — the same "the whole object is now the server's truth" fact
+  // toggleDomainEnabled/autoSaveField don't need to reason about, since
+  // SettingsPage's own PATCH-shaped save() never sends untouched sibling
+  // fields in the first place.
+  async function persistNotify(patch: Partial<NotifyConfig>): Promise<boolean> {
     setState("saving");
     const merged = { ...cfg, ...patch };
     try {
@@ -2973,29 +3015,52 @@ function NotifyCard({
       if (r.ok) {
         setState("idle");
         push(t("settings.saved"), "success");
+        lastGoodRef.current = merged;
+        return true;
       } else {
         setState("idle");
         push(r.error ?? t("settings.error"), "fail");
+        return false;
       }
     } catch (err) {
       setState("idle");
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      return false;
     }
   }
 
   // set — continuously-typed text/number fields: optimistic update + debounce,
-  // same shape as every other free-text field on this page.
+  // same shape as every other free-text field on this page. Reverts THIS
+  // field to its last-known-good value and bumps its own shake nonce on a
+  // failed persist (see lastGoodRef's own doc comment above) — the value the
+  // user sees snaps back to what the server actually still holds instead of
+  // silently keeping an unsaved edit that only a toast (now gone the moment
+  // it auto-dismisses) ever said didn't take.
   function set<K extends keyof NotifyConfig>(k: K, v: NotifyConfig[K]) {
     setCfg((c) => ({ ...c, [k]: v }));
-    debounced(String(k), () => void persistNotify({ [k]: v } as Partial<NotifyConfig>));
+    debounced(String(k), () => {
+      void persistNotify({ [k]: v } as Partial<NotifyConfig>).then((ok) => {
+        if (!ok) {
+          setCfg((c) => ({ ...c, [k]: lastGoodRef.current[k] }));
+          bumpShake(String(k));
+        }
+      });
+    });
   }
 
   // setImmediate — discrete clicks (checkboxes/selects): no debounce, same
   // "single discrete choice, not continuous typing" reasoning
   // autoSaveScheduleField's own header comment gives elsewhere on this page.
+  // Same revert+shake on failure as set() above — every toggle/select in
+  // this Card routes through here, so this one fix covers all of them.
   function setImmediate<K extends keyof NotifyConfig>(k: K, v: NotifyConfig[K]) {
     setCfg((c) => ({ ...c, [k]: v }));
-    void persistNotify({ [k]: v } as Partial<NotifyConfig>);
+    void persistNotify({ [k]: v } as Partial<NotifyConfig>).then((ok) => {
+      if (!ok) {
+        setCfg((c) => ({ ...c, [k]: lastGoodRef.current[k] }));
+        bumpShake(String(k));
+      }
+    });
   }
 
   async function handleTest() {
@@ -3047,7 +3112,15 @@ function NotifyCard({
           field in this Card. */}
       <div className={labelCls}>
         <span>{t("notify.on")}</span>
+        {/* key + conditional .glim-shake (revert+shake sweep, this Card's own
+            `set`/`setImmediate` doc comment above): the same remount-to-
+            replay mechanism every other failing control in this session
+            uses, just on Selector's own `className` (which lands on its
+            outer tablist wrapper, Selector.tsx's own `className` prop —
+            there is no per-segment target since "on" is one control, not
+            three independent ones). */}
         <Selector
+          key={fieldShake.on}
           items={[
             { id: "never", label: t("notify.onNever") },
             { id: "failure", label: t("notify.onFailure") },
@@ -3057,6 +3130,7 @@ function NotifyCard({
           select="one"
           active={cfg.on}
           onChange={(id) => setImmediate("on", id)}
+          className={fieldShake.on ? "glim-shake" : undefined}
         />
       </div>
 
@@ -3080,6 +3154,7 @@ function NotifyCard({
         checked={cfg.scheduledSummary}
         onChange={(v) => setImmediate("scheduledSummary", v)}
         hueIndex={0}
+        shakeNonce={fieldShake.scheduledSummary}
       />
       <ToggleRow
         label={t("notify.notifyOnUpdate")}
@@ -3087,6 +3162,7 @@ function NotifyCard({
         checked={cfg.notifyOnUpdate}
         onChange={(v) => setImmediate("notifyOnUpdate", v)}
         hueIndex={1}
+        shakeNonce={fieldShake.notifyOnUpdate}
       />
       {/* Unraid native notifications (delivered over the host SSH connection).
           notify.unraidHint USED to stay permanent text instead of an
@@ -3106,6 +3182,7 @@ function NotifyCard({
         checked={cfg.unraid}
         onChange={(v) => setImmediate("unraid", v)}
         hueIndex={2}
+        shakeNonce={fieldShake.unraid}
       />
 
       {/* Platform-mismatch banner (code-review fix): the toggle above is ON,
@@ -3173,17 +3250,20 @@ function NotifyCard({
           checked={cfg.webhookEnabled}
           onChange={(v) => setImmediate("webhookEnabled", v)}
           hueIndex={0}
+          shakeNonce={fieldShake.webhookEnabled}
         />
         {cfg.webhookEnabled && (
           <>
             <label className={labelCls}>
               {t("notify.webhook")}
-              <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
-                placeholder="https://discord.com/api/webhooks/..." dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.webhookUrl} value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
+                placeholder="https://discord.com/api/webhooks/..." dir="ltr"
+                className={`${inputCls} text-start${fieldShake.webhookUrl ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.webhookFormat")}
-              <select value={cfg.webhookFormat} onChange={(e) => setImmediate("webhookFormat", e.target.value)} className={selectCls}>
+              <select key={fieldShake.webhookFormat} value={cfg.webhookFormat} onChange={(e) => setImmediate("webhookFormat", e.target.value)}
+                className={`${selectCls}${fieldShake.webhookFormat ? " glim-shake" : ""}`}>
                 <option value="generic">Generic JSON</option>
                 <option value="discord">Discord</option>
                 <option value="slack">Slack</option>
@@ -3216,18 +3296,20 @@ function NotifyCard({
           checked={cfg.appriseEnabled}
           onChange={(v) => setImmediate("appriseEnabled", v)}
           hueIndex={1}
+          shakeNonce={fieldShake.appriseEnabled}
         />
         {cfg.appriseEnabled && (
           <>
             <label className={labelCls}>
               {t("notify.appriseUrl")}
-              <input value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
-                placeholder="http://apprise:8000/notify/bombvault" dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.appriseUrl} value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
+                placeholder="http://apprise:8000/notify/bombvault" dir="ltr"
+                className={`${inputCls} text-start${fieldShake.appriseUrl ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.appriseTags")}
-              <input value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
-                placeholder="backups,homelab" className={inputCls} />
+              <input key={fieldShake.appriseTags} value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
+                placeholder="backups,homelab" className={`${inputCls}${fieldShake.appriseTags ? " glim-shake" : ""}`} />
             </label>
           </>
         )}
@@ -3247,23 +3329,27 @@ function NotifyCard({
           checked={cfg.matrixEnabled}
           onChange={(v) => setImmediate("matrixEnabled", v)}
           hueIndex={2}
+          shakeNonce={fieldShake.matrixEnabled}
         />
         {cfg.matrixEnabled && (
           <>
             <label className={labelCls}>
               {t("notify.matrixHomeserver")}
-              <input value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
-                placeholder="https://matrix.org" dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.matrixHomeserver} value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
+                placeholder="https://matrix.org" dir="ltr"
+                className={`${inputCls} text-start${fieldShake.matrixHomeserver ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.matrixToken")}
-              <RevealInput {...revealMatrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
-                placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
+              <RevealInput {...revealMatrixToken} key={fieldShake.matrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
+                placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName="w-full"
+                className={`${inputCls}${fieldShake.matrixToken ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.matrixRoom")}
-              <input value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
-                placeholder="!abcdef:matrix.org" dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.matrixRoom} value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
+                placeholder="!abcdef:matrix.org" dir="ltr"
+                className={`${inputCls} text-start${fieldShake.matrixRoom ? " glim-shake" : ""}`} />
             </label>
           </>
         )}
@@ -3293,22 +3379,24 @@ function NotifyCard({
           checked={cfg.smtpEnabled}
           onChange={(v) => setImmediate("smtpEnabled", v)}
           hueIndex={3}
+          shakeNonce={fieldShake.smtpEnabled}
         />
         {cfg.smtpEnabled && (
           <>
             <label className={labelCls}>
               {t("notify.smtpHost")}
-              <input value={cfg.smtpHost} onChange={(e) => set("smtpHost", e.target.value)} spellCheck={false}
-                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.smtpHost} value={cfg.smtpHost} onChange={(e) => set("smtpHost", e.target.value)} spellCheck={false}
+                placeholder="smtp.example.com" dir="ltr" className={`${inputCls} text-start${fieldShake.smtpHost ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpPort")}
-              <input value={cfg.smtpPort} onChange={(e) => set("smtpPort", Number(e.target.value) || 0)} spellCheck={false}
-                type="number" placeholder="587" className={inputCls} />
+              <input key={fieldShake.smtpPort} value={cfg.smtpPort} onChange={(e) => set("smtpPort", Number(e.target.value) || 0)} spellCheck={false}
+                type="number" placeholder="587" className={`${inputCls}${fieldShake.smtpPort ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpTls")}
-              <select value={cfg.smtpTls} onChange={(e) => setImmediate("smtpTls", e.target.value)} className={selectCls}>
+              <select key={fieldShake.smtpTls} value={cfg.smtpTls} onChange={(e) => setImmediate("smtpTls", e.target.value)}
+                className={`${selectCls}${fieldShake.smtpTls ? " glim-shake" : ""}`}>
                 <option value="starttls">STARTTLS</option>
                 <option value="tls">TLS (implicit)</option>
                 <option value="none">None</option>
@@ -3316,23 +3404,24 @@ function NotifyCard({
             </label>
             <label className={labelCls}>
               {t("notify.smtpUser")}
-              <input value={cfg.smtpUsername} onChange={(e) => set("smtpUsername", e.target.value)} spellCheck={false}
-                dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.smtpUsername} value={cfg.smtpUsername} onChange={(e) => set("smtpUsername", e.target.value)} spellCheck={false}
+                dir="ltr" className={`${inputCls} text-start${fieldShake.smtpUsername ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpPass")}
-              <RevealInput {...revealSmtpPassword} value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
-                placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
+              <RevealInput {...revealSmtpPassword} key={fieldShake.smtpPassword} value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
+                placeholder={secretSet.smtp ? t("cloud.secretSet") : ""} wrapperClassName="w-full"
+                className={`${inputCls}${fieldShake.smtpPassword ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpFrom")}
-              <input value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}
-                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.smtpFrom} value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}
+                placeholder="bombvault@example.com" dir="ltr" className={`${inputCls} text-start${fieldShake.smtpFrom ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpTo")}
-              <input value={cfg.smtpTo} onChange={(e) => set("smtpTo", e.target.value)} spellCheck={false}
-                placeholder="admin@example.com" dir="ltr" className={`${inputCls} text-start`} />
+              <input key={fieldShake.smtpTo} value={cfg.smtpTo} onChange={(e) => set("smtpTo", e.target.value)} spellCheck={false}
+                placeholder="admin@example.com" dir="ltr" className={`${inputCls} text-start${fieldShake.smtpTo ? " glim-shake" : ""}`} />
             </label>
           </>
         )}
@@ -3374,11 +3463,19 @@ function NotifyCard({
           {t("notify.healthchecks")}
           <InfoBubble tip={t("notify.healthchecksLifecycle")} />
         </span>
-        <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
-          placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
+        <input key={fieldShake.healthchecksUrl} value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
+          placeholder="https://hc-ping.com/your-uuid" className={`${inputCls}${fieldShake.healthchecksUrl ? " glim-shake" : ""}`} />
       </label>
 
-      {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
+      {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above.
+          Revert+shake sweep: this field bypasses set()/setImmediate() (it PATCHes
+          one entry of a nested Record, not a top-level NotifyConfig key), so it
+          gets its own bespoke copy of the SAME lastGoodRef-revert + bumpShake
+          shape those two helpers share — reverting only THIS domain's own map
+          entry, not the whole healthchecksByDomain object, so an unrelated
+          domain's already-good override never gets clobbered by this one
+          failing. Shake keyed on the SAME `hc-${key}` string already used for
+          the debounce above, not a second name for the identical field. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
           {t("notify.hcPerDomain")}
@@ -3396,17 +3493,31 @@ function NotifyCard({
           <label key={key} className={labelCls}>
             {label}
             <input
+              key={fieldShake[`hc-${key}`]}
               value={cfg.healthchecksByDomain?.[key] ?? ""}
               onChange={(e) => {
                 const v = e.target.value;
                 const nextMap = { ...cfg.healthchecksByDomain, [key]: v };
                 setCfg((c) => ({ ...c, healthchecksByDomain: nextMap }));
-                debounced(`hc-${key}`, () => void persistNotify({ healthchecksByDomain: nextMap }));
+                debounced(`hc-${key}`, () => {
+                  void persistNotify({ healthchecksByDomain: nextMap }).then((ok) => {
+                    if (!ok) {
+                      setCfg((c) => ({
+                        ...c,
+                        healthchecksByDomain: {
+                          ...c.healthchecksByDomain,
+                          [key]: lastGoodRef.current.healthchecksByDomain?.[key] ?? "",
+                        },
+                      }));
+                      bumpShake(`hc-${key}`);
+                    }
+                  });
+                });
               }}
               spellCheck={false}
               placeholder="https://hc-ping.com/your-uuid"
               dir="ltr"
-              className={`${inputCls} text-start`}
+              className={`${inputCls} text-start${fieldShake[`hc-${key}`] ? " glim-shake" : ""}`}
             />
           </label>
         ))}
