@@ -522,6 +522,7 @@ const el: Partial<Translations> = {
   "notify.channelsTitle": "Κανάλια ειδοποιήσεων",
   "notify.channelsHint": "Ρυθμίστε τα κανάλια webhook, Matrix, Healthchecks και email μέσω των οποίων παραδίδονται οι παραπάνω ρυθμισμένες ειδοποιήσεις.",
   "notify.webhook": "URL Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Μορφή Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "URL του Apprise API",

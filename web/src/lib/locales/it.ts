@@ -522,6 +522,7 @@ const it: Partial<Translations> = {
   "notify.channelsTitle": "Canali di notifica",
   "notify.channelsHint": "Configura i canali webhook, Matrix, Healthchecks ed email attraverso cui vengono inviate le notifiche configurate sopra.",
   "notify.webhook": "URL del Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Formato del Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "URL dell'API Apprise",

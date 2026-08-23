@@ -514,6 +514,7 @@ const ko: Partial<Translations> = {
   "notify.channelsTitle": "알림 채널",
   "notify.channelsHint": "위에서 설정한 알림을 전달할 웹훅, Matrix, Healthchecks, 이메일 채널을 구성하세요.",
   "notify.webhook": "Webhook URL",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Webhook 형식",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "Apprise API URL",

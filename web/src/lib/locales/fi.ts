@@ -522,6 +522,7 @@ const fi: Partial<Translations> = {
   "notify.channelsTitle": "Ilmoituskanavat",
   "notify.channelsHint": "Määritä webhook-, Matrix-, Healthchecks- ja sähköpostikanavat, joita pitkin yllä määritetyt ilmoitukset toimitetaan.",
   "notify.webhook": "Webhook-URL",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Webhook-muoto",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "Apprise API:n URL",

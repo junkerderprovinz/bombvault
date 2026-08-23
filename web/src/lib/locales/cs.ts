@@ -520,6 +520,7 @@ const cs: Partial<Translations> = {
   "notify.channelsTitle": "Kanály oznámení",
   "notify.channelsHint": "Nastavte kanály webhook, Matrix, Healthchecks a e-mail, kterými se doručují výše nastavená oznámení.",
   "notify.webhook": "URL Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Formát Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "URL Apprise API",

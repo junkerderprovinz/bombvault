@@ -522,6 +522,7 @@ const he: Partial<Translations> = {
   "notify.channelsTitle": "ערוצי התראה",
   "notify.channelsHint": "הגדר את ערוצי ה-webhook, Matrix, Healthchecks והדוא\"ל שדרכם נשלחות ההתראות שהוגדרו למעלה.",
   "notify.webhook": "כתובת Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "פורמט Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "כתובת ה-URL של Apprise API",

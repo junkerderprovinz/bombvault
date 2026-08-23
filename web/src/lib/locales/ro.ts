@@ -519,6 +519,7 @@ const ro: Partial<Translations> = {
   "notify.channelsTitle": "Canale de notificare",
   "notify.channelsHint": "Configurează canalele webhook, Matrix, Healthchecks și e-mail prin care sunt livrate notificările configurate mai sus.",
   "notify.webhook": "URL Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Format Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "URL-ul API-ului Apprise",
