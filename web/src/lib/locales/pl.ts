@@ -947,7 +947,6 @@ const pl: Partial<Translations> = {
   "settings.tab.notifications": "Powiadomienia",
   "settings.tab.integrity": "Integralność",
   "settings.tab.system": "System",
-  "settings.schedulesBackup": "Harmonogramy kopii zapasowych",
   "settings.schedulesOptions": "Opcje harmonogramu",
   "settings.schedulesOffsite": "Harmonogramy replikacji poza siedzibą",
   "settings.schedulesSelfBackup": "Harmonogram samodzielnej kopii",

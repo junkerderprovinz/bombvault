@@ -952,7 +952,6 @@ const fi: Partial<Translations> = {
   "settings.tab.notifications": "Ilmoitukset",
   "settings.tab.integrity": "Eheys",
   "settings.tab.system": "Järjestelmä",
-  "settings.schedulesBackup": "Varmuuskopioinnin aikataulut",
   "settings.schedulesOptions": "Aikatauluasetukset",
   "settings.schedulesOffsite": "Etäreplikoinnin aikataulut",
   "settings.schedulesSelfBackup": "Itsevarmuuskopioinnin aikataulu",

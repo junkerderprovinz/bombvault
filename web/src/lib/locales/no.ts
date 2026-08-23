@@ -952,7 +952,6 @@ const no: Partial<Translations> = {
   "settings.tab.notifications": "Varsler",
   "settings.tab.integrity": "Integritet",
   "settings.tab.system": "System",
-  "settings.schedulesBackup": "Sikkerhetskopieringsplaner",
   "settings.schedulesOptions": "Tidsplanalternativer",
   "settings.schedulesOffsite": "Off-site-replikeringsplaner",
   "settings.schedulesSelfBackup": "Plan for selvsikkerhetskopiering",

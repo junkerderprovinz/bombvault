@@ -952,7 +952,6 @@ const sv: Partial<Translations> = {
   "settings.tab.notifications": "Aviseringar",
   "settings.tab.integrity": "Integritet",
   "settings.tab.system": "System",
-  "settings.schedulesBackup": "Säkerhetskopieringsscheman",
   "settings.schedulesOptions": "Schemaalternativ",
   "settings.schedulesOffsite": "Off-site-replikeringsscheman",
   "settings.schedulesSelfBackup": "Schema för självsäkerhetskopiering",

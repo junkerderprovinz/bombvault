@@ -944,7 +944,6 @@ const zh: Partial<Translations> = {
   "settings.tab.notifications": "通知",
   "settings.tab.integrity": "完整性",
   "settings.tab.system": "系统",
-  "settings.schedulesBackup": "备份计划",
   "settings.schedulesOptions": "计划选项",
   "settings.schedulesOffsite": "异地复制计划",
   "settings.schedulesSelfBackup": "自备份计划",

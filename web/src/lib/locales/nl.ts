@@ -949,7 +949,6 @@ const nl: Partial<Translations> = {
   "settings.tab.notifications": "Meldingen",
   "settings.tab.integrity": "Integriteit",
   "settings.tab.system": "Systeem",
-  "settings.schedulesBackup": "Back-upschema's",
   "settings.schedulesOptions": "Planningsopties",
   "settings.schedulesOffsite": "Off-site-replicatieschema's",
   "settings.schedulesSelfBackup": "Zelf-back-upschema",

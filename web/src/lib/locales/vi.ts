@@ -944,7 +944,6 @@ const vi: Partial<Translations> = {
   "settings.tab.notifications": "Thông báo",
   "settings.tab.integrity": "Toàn vẹn",
   "settings.tab.system": "Hệ thống",
-  "settings.schedulesBackup": "Lịch sao lưu",
   "settings.schedulesOptions": "Tùy chọn lịch trình",
   "settings.schedulesOffsite": "Lịch sao chép ngoài site",
   "settings.schedulesSelfBackup": "Lịch tự sao lưu",

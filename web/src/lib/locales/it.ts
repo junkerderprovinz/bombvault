@@ -952,7 +952,6 @@ const it: Partial<Translations> = {
   "settings.tab.notifications": "Notifiche",
   "settings.tab.integrity": "Integrità",
   "settings.tab.system": "Sistema",
-  "settings.schedulesBackup": "Pianificazioni di backup",
   "settings.schedulesOptions": "Opzioni di pianificazione",
   "settings.schedulesOffsite": "Pianificazioni di replica off-site",
   "settings.schedulesSelfBackup": "Pianificazione di auto-backup",

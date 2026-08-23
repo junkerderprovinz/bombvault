@@ -952,7 +952,6 @@ const he: Partial<Translations> = {
   "settings.tab.notifications": "התראות",
   "settings.tab.integrity": "שלמות",
   "settings.tab.system": "מערכת",
-  "settings.schedulesBackup": "תזמוני גיבוי",
   "settings.schedulesOptions": "אפשרויות תזמון",
   "settings.schedulesOffsite": "תזמוני שכפול מחוץ לאתר",
   "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",

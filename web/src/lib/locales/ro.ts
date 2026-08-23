@@ -955,7 +955,6 @@ const ro: Partial<Translations> = {
   "settings.tab.notifications": "Notificări",
   "settings.tab.integrity": "Integritate",
   "settings.tab.system": "Sistem",
-  "settings.schedulesBackup": "Programări de backup",
   "settings.schedulesOptions": "Opțiuni de programare",
   "settings.schedulesOffsite": "Programări de replicare externă",
   "settings.schedulesSelfBackup": "Programare de auto-backup",

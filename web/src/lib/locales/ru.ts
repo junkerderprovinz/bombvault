@@ -947,7 +947,6 @@ const ru: Partial<Translations> = {
   "settings.tab.notifications": "Уведомления",
   "settings.tab.integrity": "Целостность",
   "settings.tab.system": "Система",
-  "settings.schedulesBackup": "Расписания резервного копирования",
   "settings.schedulesOptions": "Настройки расписания",
   "settings.schedulesOffsite": "Расписания внешней репликации",
   "settings.schedulesSelfBackup": "Расписание самокопирования",

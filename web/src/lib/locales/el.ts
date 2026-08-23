@@ -952,7 +952,6 @@ const el: Partial<Translations> = {
   "settings.tab.notifications": "Ειδοποιήσεις",
   "settings.tab.integrity": "Ακεραιότητα",
   "settings.tab.system": "Σύστημα",
-  "settings.schedulesBackup": "Προγραμματισμοί αντιγράφων ασφαλείας",
   "settings.schedulesOptions": "Επιλογές προγραμματισμού",
   "settings.schedulesOffsite": "Προγραμματισμοί αναπαραγωγής εκτός τόπου",
   "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",
