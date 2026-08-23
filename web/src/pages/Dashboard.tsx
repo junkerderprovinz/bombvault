@@ -1862,9 +1862,12 @@ function SummaryCell({
   children: React.ReactNode;
   /** Rainbow position for THIS cell's own heading notch — see Card's own
    *  `hueIndex` doc above for the full history. SummaryTier (this cell's one
-   *  caller) assigns all three of its cells consecutive positions via its own
-   *  passed-in `nextHue` counter, so the three cells read as one genuine
-   *  equal-member set even though each is its own standalone box. */
+   *  caller) assigns all three of its cells consecutive positions, each
+   *  resolved by ITS OWN caller's `nextHue()` at the same synchronous point
+   *  every other block's heading is (see SummaryTier's own `healthHueIndex`
+   *  doc for why that has to be a plain number, not a function passed down
+   *  for this cell's caller to call later), so the three cells read as one
+   *  genuine equal-member set even though each is its own standalone box. */
   hueIndex?: number;
 }) {
   return (
@@ -1905,21 +1908,35 @@ function SummaryTier({
   domains,
   loading,
   newestRun,
-  nextHue,
+  healthHueIndex,
+  nextBackupHueIndex,
+  lastResultHueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   lang: string;
   domains: DomainStatus[];
   loading: boolean;
   newestRun: Run | null;
-  /** The page-wide running hue counter (see the main Dashboard component's
-   *  own `hueSeq`/`nextHue` comment) — called once per SummaryCell below, in
-   *  order, so the three cells claim three CONSECUTIVE rainbow positions
-   *  rather than each independently restarting at 0 (which would make every
-   *  one of this tier's three cells the same colour). Optional: omitted only
-   *  where a future caller wants the tier's flat, un-rainbowed default — no
-   *  call site does today. */
-  nextHue?: () => number;
+  /** This tier's three cells' own rainbow positions — see the main Dashboard
+   *  component's own `hueSeq`/`nextHue` comment. Plain numbers, each computed
+   *  by the CALLER's `nextHue()` at the SAME synchronous point every other
+   *  block's own `hueIndex={nextHue()}` is (not a `nextHue` function passed
+   *  down for this component to call from its OWN body): a first version of
+   *  this fix did exactly that, and it broke, live — React doesn't call a
+   *  child function component's body until AFTER the parent's own render
+   *  function has already returned, so `nextHue()` calls made from inside
+   *  THIS component's body ran strictly after every sibling block's own
+   *  direct `nextHue()` call already consumed slots 0-7, landing this tier's
+   *  three cells on indices 8/9/10 (wrapping back to red/orange/yellow)
+   *  instead of the 0/1/2 they visually occupy first on the page — caught
+   *  live via getComputedStyle against the real deployed container, not by
+   *  reading the code. Passing three already-resolved numbers sidesteps the
+   *  whole "when does React actually call this component" question: the
+   *  values are fixed the instant `nextHue()` runs, in the caller's own
+   *  array order, same as every other block. */
+  healthHueIndex?: number;
+  nextBackupHueIndex?: number;
+  lastResultHueIndex?: number;
 }) {
   // Cell 1 — worst RPO status across enabled, non-off domains: any overdue/never
   // is red, else any warn is amber, else any ok is green, else all off = neutral.
@@ -1962,7 +1979,7 @@ function SummaryTier({
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {/* Overall health — worst RPO status across enabled domains */}
-      <SummaryCell label={t("dashboard.summaryHealth")} hueIndex={nextHue?.()}>
+      <SummaryCell label={t("dashboard.summaryHealth")} hueIndex={healthHueIndex}>
         {loading ? (
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
@@ -1974,7 +1991,7 @@ function SummaryTier({
       </SummaryCell>
 
       {/* Next backup — soonest scheduled cadence as human text (not a countdown) */}
-      <SummaryCell label={t("dashboard.summaryNextBackup")} hueIndex={nextHue?.()}>
+      <SummaryCell label={t("dashboard.summaryNextBackup")} hueIndex={nextBackupHueIndex}>
         {loading ? (
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
@@ -1985,7 +2002,7 @@ function SummaryTier({
       </SummaryCell>
 
       {/* Last result — the newest run: status chip + target + relative time */}
-      <SummaryCell label={t("dashboard.summaryLastResult")} hueIndex={nextHue?.()}>
+      <SummaryCell label={t("dashboard.summaryLastResult")} hueIndex={lastResultHueIndex}>
         {newestRun ? (
           <>
             <Badge tone={statusTone(newestRun.status)}>{statusLabel(newestRun.status, t)}</Badge>
@@ -2144,6 +2161,13 @@ export function Dashboard() {
     {
       id: "summary",
       label: t("dashboard.blockSummary"),
+      // Three DIRECT nextHue() calls, eagerly resolved to plain numbers here
+      // rather than a `nextHue` function handed to SummaryTier to call from
+      // its own component body — see SummaryTier's own `healthHueIndex` doc
+      // for the live ordering bug that shape caused (React doesn't invoke a
+      // child component's body until after this whole `blocks` array/render
+      // pass has already returned, so calls made from inside SummaryTier ran
+      // AFTER every sibling block below had already consumed its own slot).
       render: (nextHue) => (
         <SummaryTier
           t={t}
@@ -2151,7 +2175,9 @@ export function Dashboard() {
           domains={statusDomains}
           loading={statusLoading}
           newestRun={runs[0] ?? null}
-          nextHue={nextHue}
+          healthHueIndex={nextHue()}
+          nextBackupHueIndex={nextHue()}
+          lastResultHueIndex={nextHue()}
         />
       ),
     },
@@ -2374,9 +2400,19 @@ export function Dashboard() {
           still the flat, un-hued Task-5 default; see the `blocks` array's
           own `render` comment above for why a plain per-block literal index
           can't do this and a shared counter can). Each block's own `render`
-          callback calls this once per real heading badge it owns (most
-          blocks once; "summary" three times via SummaryTier's own `nextHue`
-          prop; "stats" zero times — StatCardsRow has no heading to hue). */}
+          callback calls this DIRECTLY, once per real heading badge it owns,
+          right here in this synchronous pass (most blocks once; "summary"
+          three times, back-to-back, for its own three SummaryCells; "stats"
+          zero times — StatCardsRow has no heading to hue) — never by handing
+          the `nextHue` function itself to a child component to call later
+          from its own body: React doesn't actually invoke a child function
+          component until after THIS WHOLE render pass has returned, so a
+          call made from inside a child runs strictly after every direct
+          call made here, landing on the wrong (already-past-the-end)
+          indices — caught live the first time this shipped (see
+          SummaryTier's own `healthHueIndex` doc for the exact live numbers)
+          and fixed by resolving all three of its indices to plain numbers
+          right here, the same way every other block already does. */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {(() => {
           let hueSeq = 0;
