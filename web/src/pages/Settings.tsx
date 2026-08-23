@@ -856,6 +856,24 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
 
   return (
     <Card title={t("settings.theme")} hueIndex={hueIndex}>
+      {/* `inline-flex self-start max-w-full` (jdp, live-review: "Die
+          horizontalen Selektoren sollen nicht auf die ganze Card-Breite
+          gestreckt werden, sondern eine standardisierte Breite bekommen") —
+          this Card's own root is `flex flex-col` (Card's own comment above),
+          whose default `align-items: stretch` blockifies every direct child
+          to the Card's own full content width regardless of what display
+          value the child itself specifies (a `well` Selector's row is
+          `display:flex`, which is ALREADY a block-level box in normal flow —
+          nothing about `variant="well"` opts out of that on its own). Same
+          exact wrapper, same reasoning, as the Settings tab strip's own
+          `tabStripEl` wrapper further down this file (see that div's own,
+          much longer comment for the live-measured proof of why
+          `self-start` — not just `inline-flex` alone — is the part that
+          actually does the work): this is the ONE standardized "don't
+          stretch" mechanism for a horizontal Selector in this app now,
+          reused verbatim rather than inventing a second one for this call
+          site. `max-w-full` still guards a genuinely narrow viewport. */}
+      <div className="inline-flex self-start max-w-full">
       <Selector
         items={[
           { id: "light", label: t("theme.light"), icon: sunIcon },
@@ -868,6 +886,7 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
         size="lg"
         variant="well"
       />
+      </div>
     </Card>
   );
 }
@@ -6465,6 +6484,17 @@ export function SettingsPage() {
           `variant="chip"`, unchanged. */}
       {tab === "general" && (
       <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
+        {/* `inline-flex self-start max-w-full` (jdp, live-review: "Die
+            horizontalen Selektoren sollen nicht auf die ganze Card-Breite
+            gestreckt werden, sondern eine standardisierte Breite bekommen")
+            — same standardized "don't stretch" wrapper as the Theme Card's
+            own identical Selector above and the Settings tab strip's
+            `tabStripEl` wrapper further down this file; see either one's
+            own comment for the full root cause (this Card's `flex flex-col`
+            root stretches an un-wrapped direct child to its own full
+            content width by default) and why `self-start`, not just
+            `inline-flex` alone, is the part that actually opts out of it. */}
+        <div className="inline-flex self-start max-w-full">
         <Selector
           items={SHAPES.map((s) => ({
             id: s,
@@ -6480,6 +6510,7 @@ export function SettingsPage() {
           size="lg"
           variant="well"
         />
+        </div>
       </Card>
       )}
 
