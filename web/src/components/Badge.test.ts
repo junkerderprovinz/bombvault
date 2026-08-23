@@ -269,11 +269,13 @@ describe("Badge — tone/status-color mapping", () => {
 });
 
 describe("Badge — heading notch (tone=heading + size=heading straddles the card's top edge)", () => {
-  it("positions absolutely, exactly half its own 22px height above the edge, with a raised z-index", () => {
+  it("positions absolutely, straddling the edge via top-0 + a self-relative -50% translate (not a fixed pixel offset — see Badge.tsx's own REGRESSION comment: a fixed px value is only ever right for ONE assumed height, silently wrong the moment a wrapped badge renders taller)", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("absolute");
-    expect(cls).toContain("-top-[11px]");
+    expect(cls).toContain("top-0");
+    expect(cls).toContain("-translate-y-1/2");
+    expect(cls).not.toContain("-top-[11px]");
     expect(cls).toContain("z-10");
   });
 
@@ -309,14 +311,14 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     const el = root(Badge({ children: "x", tone: "neutral", size: "heading" }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("absolute");
-    expect(cls).not.toContain("-top-[11px]");
+    expect(cls).not.toContain("-translate-y-1/2");
   });
 
   it("a heading-TONED badge at a non-heading size does NOT get the notch treatment (both props must match)", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "medium" }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("absolute");
-    expect(cls).not.toContain("-top-[11px]");
+    expect(cls).not.toContain("-translate-y-1/2");
   });
 
   it("every other tone/size combination stays static-positioned (no regression to non-heading badges)", () => {
