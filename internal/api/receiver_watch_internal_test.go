@@ -110,7 +110,7 @@ func receiverWatchService(t *testing.T, appKey string) (*Service, *store.Repo, f
 	}
 	st := store.New(db)
 	svc := &Service{cfg: config.Config{AppKey: appKey}, store: st, engine: restic.Restic{Bin: "restic"}}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
 		t.Fatal(err)
 	}
 	get := func() []string {

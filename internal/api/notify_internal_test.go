@@ -289,7 +289,7 @@ func TestScheduledContainersRunSendsOneStartOneSuccess(t *testing.T) {
 
 	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic",
+		On: "always", HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -328,7 +328,7 @@ func TestScheduledContainersRunFailsWhenAnyItemFails(t *testing.T) {
 
 	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic",
+		On: "always", HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
 	}); err != nil {
 		t.Fatal(err)
 	}

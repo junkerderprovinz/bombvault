@@ -18,7 +18,7 @@ func TestSendRespectsPolicy(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer srv.Close()
 
-	cfg := notify.Config{On: "failure", WebhookURL: srv.URL, WebhookFormat: "generic"}
+	cfg := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"}
 	notify.Send(context.Background(), cfg, "", notify.Event{OK: true}) // success under failure-policy → no send
 	if hits != 0 {
 		t.Fatalf("success under failure-policy should not send, hits=%d", hits)
@@ -37,7 +37,7 @@ func TestWebhookDiscordPayload(t *testing.T) {
 	}))
 	defer srv.Close()
 	notify.Send(context.Background(),
-		notify.Config{On: "always", WebhookURL: srv.URL, WebhookFormat: "discord"},
+		notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "discord"},
 		"", notify.Event{Title: "BombVault", Message: "hi", OK: true})
 	if got["content"] != "BombVault: hi" {
 		t.Fatalf("discord content = %v", got["content"])
@@ -54,7 +54,7 @@ func TestMatrixEndpointAndAuth(t *testing.T) {
 	}))
 	defer srv.Close()
 	notify.Send(context.Background(),
-		notify.Config{On: "always", MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"},
+		notify.Config{On: "always", MatrixEnabled: true, MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"},
 		"", notify.Event{Title: "BombVault", Message: "done", OK: true})
 	if !strings.HasPrefix(path, "/_matrix/client/v3/rooms/") || !strings.Contains(path, "/send/m.room.message/") {
 		t.Fatalf("matrix path = %q", path)
@@ -335,6 +335,61 @@ func TestSendTestSMTPUnreachableErrorsClearly(t *testing.T) {
 	}
 }
 
+// TestSendTestWebhookDisabledSkips: a webhook URL with WebhookEnabled=false is not
+// a configured channel, mirroring TestSendTestSMTPDisabledSkips — WebhookEnabled
+// gates the channel the same way SMTPEnabled gates SMTP.
+func TestSendTestWebhookDisabledSkips(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+	cfg := notify.Config{WebhookURL: srv.URL, WebhookFormat: "generic"} // WebhookEnabled false
+	if cfg.Configured() {
+		t.Fatal("a webhook URL with WebhookEnabled=false must not count as configured")
+	}
+	if err := notify.SendTest(context.Background(), cfg); err == nil {
+		t.Fatal("SendTest with WebhookEnabled=false should report no channel configured")
+	}
+	if hits != 0 {
+		t.Fatalf("a disabled webhook must never be dialed, hits=%d", hits)
+	}
+}
+
+// TestSendMatrixDisabledSkips: a Matrix block with MatrixEnabled=false is not a
+// configured channel even with every other field set, mirroring
+// TestSendTestSMTPDisabledSkips.
+func TestSendMatrixDisabledSkips(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+	cfg := notify.Config{MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"} // MatrixEnabled false
+	if cfg.Configured() {
+		t.Fatal("a Matrix block with MatrixEnabled=false must not count as configured")
+	}
+	notify.Send(context.Background(), notify.Config{On: "always", MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"},
+		"", notify.Event{OK: true})
+	if hits != 0 {
+		t.Fatalf("a disabled Matrix channel must never be posted to, hits=%d", hits)
+	}
+}
+
+// TestSendTestAppriseDisabledSkips: an Apprise URL with AppriseEnabled=false is not
+// a configured channel, mirroring TestSendTestSMTPDisabledSkips.
+func TestSendTestAppriseDisabledSkips(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+	cfg := notify.Config{AppriseURL: srv.URL} // AppriseEnabled false
+	if cfg.Configured() {
+		t.Fatal("an Apprise URL with AppriseEnabled=false must not count as configured")
+	}
+	if err := notify.SendTest(context.Background(), cfg); err == nil {
+		t.Fatal("SendTest with AppriseEnabled=false should report no channel configured")
+	}
+	if hits != 0 {
+		t.Fatalf("a disabled Apprise channel must never be posted to, hits=%d", hits)
+	}
+}
+
 // TestSuppressedHealthchecksSkipsPingNotChannels: a context flagged with
 // WithHealthchecksSuppressed folds out the per-call Healthchecks ping in Send and
 // SendStart, while the message channels (here a webhook) still fire. This is what a
@@ -347,7 +402,7 @@ func TestSuppressedHealthchecksSkipsPingNotChannels(t *testing.T) {
 	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { webhookHits++ }))
 	defer wh.Close()
 
-	cfg := notify.Config{On: "always", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic"}
+	cfg := notify.Config{On: "always", HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic"}
 	ctx := notify.WithHealthchecksSuppressed(context.Background())
 
 	notify.SendStart(ctx, cfg, "container") // suppressed → no /start ping
@@ -427,7 +482,7 @@ func TestApprisePayloadAndTypeMapping(t *testing.T) {
 		_ = json.Unmarshal(b, &got)
 	}))
 	defer srv.Close()
-	cfg := notify.Config{On: "always", AppriseURL: srv.URL + "/notify/mykey"}
+	cfg := notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL + "/notify/mykey"}
 
 	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "backup done", OK: true})
 	if path != "/notify/mykey" || contentType != "application/json" {
@@ -456,7 +511,7 @@ func TestAppriseTagPassedThrough(t *testing.T) {
 	}))
 	defer srv.Close()
 	notify.Send(context.Background(),
-		notify.Config{On: "always", AppriseURL: srv.URL, AppriseTags: "backups,homelab"},
+		notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL, AppriseTags: "backups,homelab"},
 		"", notify.Event{Title: "BombVault", Message: "hi", OK: true})
 	if got["tag"] != "backups,homelab" {
 		t.Fatalf("tag = %v, want backups,homelab", got["tag"])
@@ -477,7 +532,7 @@ func TestAppriseStartPostsInfo(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	notify.SendStart(context.Background(), notify.Config{On: "always", AppriseURL: srv.URL}, "containers")
+	notify.SendStart(context.Background(), notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL}, "containers")
 	if hits != 1 {
 		t.Fatalf("On=always should post an apprise start, hits=%d", hits)
 	}
@@ -487,12 +542,12 @@ func TestAppriseStartPostsInfo(t *testing.T) {
 
 	// The Healthchecks-suppress flag affects only Healthchecks, never Apprise.
 	notify.SendStart(notify.WithHealthchecksSuppressed(context.Background()),
-		notify.Config{On: "always", AppriseURL: srv.URL}, "containers")
+		notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL}, "containers")
 	if hits != 2 {
 		t.Fatalf("HC suppression must not silence the apprise start, hits=%d", hits)
 	}
 
-	notify.SendStart(context.Background(), notify.Config{On: "failure", AppriseURL: srv.URL}, "containers")
+	notify.SendStart(context.Background(), notify.Config{On: "failure", AppriseEnabled: true, AppriseURL: srv.URL}, "containers")
 	if hits != 2 {
 		t.Fatalf("On=failure must not post a start notice, hits=%d", hits)
 	}
@@ -506,7 +561,7 @@ func TestAppriseScheduledSummarySuppression(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer srv.Close()
-	cfg := notify.Config{On: "always", AppriseURL: srv.URL, ScheduledSummary: true}
+	cfg := notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL, ScheduledSummary: true}
 	ictx := notify.WithMessagesSuppressed(context.Background())
 
 	notify.Send(ictx, cfg, "container", notify.Event{OK: true})
@@ -541,7 +596,7 @@ func TestAppriseSendErrorRedactsURL(t *testing.T) {
 	defer log.SetOutput(prev)
 
 	notify.Send(context.Background(),
-		notify.Config{On: "always", AppriseURL: deadURL},
+		notify.Config{On: "always", AppriseEnabled: true, AppriseURL: deadURL},
 		"", notify.Event{Title: "BombVault", Message: "x", OK: true})
 
 	if !strings.Contains(buf.String(), "notify: apprise:") {
@@ -552,8 +607,11 @@ func TestAppriseSendErrorRedactsURL(t *testing.T) {
 	}
 }
 
-// TestConfiguredWithOnlyAppriseURL: an Apprise URL alone counts as a configured
-// channel, so SendTest reaches it (and posts a success-type test message).
+// TestConfiguredWithOnlyAppriseURL: an enabled Apprise URL alone counts as a
+// configured channel, so SendTest reaches it (and posts a success-type test
+// message). AppriseEnabled now gates the channel the same way SMTPEnabled
+// gates SMTP, so a URL alone (Enabled left false) no longer counts — see
+// TestAppriseReadyGating in redact_internal_test.go for that negative case.
 func TestConfiguredWithOnlyAppriseURL(t *testing.T) {
 	var got map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
@@ -561,9 +619,9 @@ func TestConfiguredWithOnlyAppriseURL(t *testing.T) {
 		_ = json.Unmarshal(b, &got)
 	}))
 	defer srv.Close()
-	cfg := notify.Config{AppriseURL: srv.URL}
+	cfg := notify.Config{AppriseEnabled: true, AppriseURL: srv.URL}
 	if !cfg.Configured() {
-		t.Fatal("Configured() should be true with only an Apprise URL")
+		t.Fatal("Configured() should be true with an enabled Apprise URL")
 	}
 	if err := notify.SendTest(context.Background(), cfg); err != nil {
 		t.Fatalf("SendTest: %v", err)
@@ -582,7 +640,7 @@ func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
 	var hits int
 	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer wh.Close()
-	cfg := notify.Config{On: "always", WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
+	cfg := notify.Config{On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
 
 	// per-item scheduled message → suppressed in summary mode
 	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true})

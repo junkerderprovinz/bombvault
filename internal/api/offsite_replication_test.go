@@ -35,7 +35,7 @@ func TestScheduledReplicateOffsiteNotifiesOnFailure(t *testing.T) {
 	url, hits := webhookCounter(t)
 	eng := &fakeResticEngine{copyErr: errors.New("copy exploded")}
 	svc, _ := offsiteReplTestService(t, eng)
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookURL: url}); err != nil {
+	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: url}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -66,7 +66,7 @@ func TestReplicateOffsiteFirstOverBudgetAlarms(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookURL: url}); err != nil {
+	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: url}); err != nil {
 		t.Fatal(err)
 	}
 

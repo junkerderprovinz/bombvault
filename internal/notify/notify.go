@@ -84,9 +84,17 @@ func MessagesSuppressed(ctx context.Context) bool {
 
 // Config holds the notification channels. An empty field disables that channel.
 type Config struct {
-	On               string `json:"on"` // "never" | "failure" | "always"
-	WebhookURL       string `json:"webhookUrl"`
-	WebhookFormat    string `json:"webhookFormat"` // generic|discord|slack|gotify|ntfy
+	On string `json:"on"` // "never" | "failure" | "always"
+	// WebhookEnabled gates the webhook channel — a populated WebhookURL with this
+	// off never sends, same enable/disable shape as SMTPEnabled below (added
+	// alongside MatrixEnabled/AppriseEnabled so every message channel that isn't
+	// Unraid-native gets an explicit on/off switch, not just "blank URL = off").
+	WebhookEnabled bool   `json:"webhookEnabled"`
+	WebhookURL     string `json:"webhookUrl"`
+	WebhookFormat  string `json:"webhookFormat"` // generic|discord|slack|gotify|ntfy
+	// MatrixEnabled gates the Matrix channel — same enable/disable shape as
+	// SMTPEnabled below.
+	MatrixEnabled    bool   `json:"matrixEnabled"`
 	MatrixHomeserver string `json:"matrixHomeserver"`
 	MatrixToken      string `json:"matrixToken"`
 	MatrixRoom       string `json:"matrixRoom"`
@@ -109,6 +117,9 @@ type Config struct {
 	SMTPFrom     string `json:"smtpFrom"`
 	SMTPTo       string `json:"smtpTo"`
 	SMTPTLS      string `json:"smtpTls"` // "starttls" (default) | "tls" | "none"
+	// AppriseEnabled gates the Apprise channel — same enable/disable shape as
+	// SMTPEnabled below.
+	AppriseEnabled bool `json:"appriseEnabled"`
 	// AppriseURL is the full notify endpoint of a user-run Apprise API server
 	// (github.com/caronc/apprise-api), typically http://host:8000/notify/<key>.
 	// Each event is POSTed there as JSON {title, body, type}, unlocking Apprise's
@@ -153,7 +164,7 @@ func (c Config) shouldSend(ok bool) bool {
 // Configured reports whether at least one channel is set. Healthchecks counts when
 // the global URL or any per-domain URL is set.
 func (c Config) Configured() bool {
-	return c.WebhookURL != "" || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady() || c.AppriseURL != ""
+	return c.webhookReady() || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady() || c.appriseReady()
 }
 
 // healthchecksURLFor returns the per-domain Healthchecks URL when one is set for
@@ -208,12 +219,24 @@ func mapValues(m map[string]string) []string {
 	return out
 }
 
+// webhookReady only fires when enabled AND a URL is set — the same shape as
+// smtpReady below, added alongside matrixReady/appriseReady's own gates.
+func (c Config) webhookReady() bool {
+	return c.WebhookEnabled && c.WebhookURL != ""
+}
+
 func (c Config) matrixReady() bool {
-	return c.MatrixHomeserver != "" && c.MatrixToken != "" && c.MatrixRoom != ""
+	return c.MatrixEnabled && c.MatrixHomeserver != "" && c.MatrixToken != "" && c.MatrixRoom != ""
 }
 
 func (c Config) smtpReady() bool {
 	return c.SMTPEnabled && c.SMTPHost != "" && c.SMTPFrom != "" && c.SMTPTo != ""
+}
+
+// appriseReady only fires when enabled AND a URL is set — same shape as
+// webhookReady/smtpReady above.
+func (c Config) appriseReady() bool {
+	return c.AppriseEnabled && c.AppriseURL != ""
 }
 
 // Send dispatches ev to the configured channels. Healthchecks is a monitor, not a
@@ -255,7 +278,7 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 		return
 	}
 
-	if c.WebhookURL != "" {
+	if c.webhookReady() {
 		if err := sendWebhook(ctx, client, c, ev); err != nil {
 			log.Printf("notify: webhook: %v", redactErr(err))
 		}
@@ -270,7 +293,7 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 			log.Printf("notify: smtp: %v", err)
 		}
 	}
-	if c.AppriseURL != "" {
+	if c.appriseReady() {
 		if err := sendApprise(ctx, client, c, ev); err != nil {
 			log.Printf("notify: apprise: %v", redactErr(err))
 		}
@@ -293,7 +316,7 @@ func SendStart(ctx context.Context, c Config, domain string) {
 	// A scheduled per-domain run suppresses this per-item /start (context flag) so the
 	// run's ONE aggregate /start (PingDomainStart) speaks for the whole domain job.
 	pingHC := hcURL != "" && !healthchecksSuppressed(ctx)
-	postApprise := c.AppriseURL != "" && c.On == "always" &&
+	postApprise := c.appriseReady() && c.On == "always" &&
 		(!MessagesSuppressed(ctx) || !c.ScheduledSummary)
 	if !pingHC && !postApprise {
 		return
@@ -370,7 +393,7 @@ func SendTest(ctx context.Context, c Config) error {
 	client := &http.Client{Timeout: sendTimeout}
 	ev := Event{Title: "BombVault", Message: "Test notification — notifications are working.", OK: true}
 
-	if c.WebhookURL != "" {
+	if c.webhookReady() {
 		if err := sendWebhook(ctx, client, c, ev); err != nil {
 			return fmt.Errorf("webhook: %w", err)
 		}
@@ -390,7 +413,7 @@ func SendTest(ctx context.Context, c Config) error {
 			return fmt.Errorf("smtp: %w", err)
 		}
 	}
-	if c.AppriseURL != "" {
+	if c.appriseReady() {
 		if err := sendApprise(ctx, client, c, ev); err != nil {
 			return fmt.Errorf("apprise: %w", err)
 		}

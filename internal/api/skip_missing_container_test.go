@@ -72,7 +72,7 @@ func TestBackupSkipsRemovedContainer(t *testing.T) {
 		webhookHits++
 	}))
 	defer wh.Close()
-	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookURL: wh.URL}); err != nil {
+	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: wh.URL}); err != nil {
 		t.Fatalf("SetNotifyConfig: %v", err)
 	}
 

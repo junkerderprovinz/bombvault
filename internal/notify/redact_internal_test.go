@@ -113,3 +113,45 @@ func TestSMTPReadyGating(t *testing.T) {
 		t.Fatal("smtpReady must be true when enabled and host/from/to are set")
 	}
 }
+
+// TestWebhookReadyGating: webhookReady only fires when enabled AND a URL is set —
+// same shape as TestSMTPReadyGating above.
+func TestWebhookReadyGating(t *testing.T) {
+	if (Config{WebhookURL: "https://example.com/hook"}).webhookReady() {
+		t.Fatal("webhookReady must be false when WebhookEnabled is false")
+	}
+	if (Config{WebhookEnabled: true}).webhookReady() {
+		t.Fatal("webhookReady must be false when the URL is empty")
+	}
+	if !(Config{WebhookEnabled: true, WebhookURL: "https://example.com/hook"}).webhookReady() {
+		t.Fatal("webhookReady must be true when enabled and a URL is set")
+	}
+}
+
+// TestMatrixReadyGating: matrixReady only fires when enabled AND
+// homeserver/token/room are all set — same shape as TestSMTPReadyGating above.
+func TestMatrixReadyGating(t *testing.T) {
+	if (Config{MatrixHomeserver: "https://m.example", MatrixToken: "tok", MatrixRoom: "!r:x"}).matrixReady() {
+		t.Fatal("matrixReady must be false when MatrixEnabled is false")
+	}
+	if (Config{MatrixEnabled: true, MatrixToken: "tok", MatrixRoom: "!r:x"}).matrixReady() {
+		t.Fatal("matrixReady must be false when the homeserver is empty")
+	}
+	if !(Config{MatrixEnabled: true, MatrixHomeserver: "https://m.example", MatrixToken: "tok", MatrixRoom: "!r:x"}).matrixReady() {
+		t.Fatal("matrixReady must be true when enabled and homeserver/token/room are all set")
+	}
+}
+
+// TestAppriseReadyGating: appriseReady only fires when enabled AND a URL is set —
+// same shape as TestSMTPReadyGating above.
+func TestAppriseReadyGating(t *testing.T) {
+	if (Config{AppriseURL: "https://apprise.example/notify/key"}).appriseReady() {
+		t.Fatal("appriseReady must be false when AppriseEnabled is false")
+	}
+	if (Config{AppriseEnabled: true}).appriseReady() {
+		t.Fatal("appriseReady must be false when the URL is empty")
+	}
+	if !(Config{AppriseEnabled: true, AppriseURL: "https://apprise.example/notify/key"}).appriseReady() {
+		t.Fatal("appriseReady must be true when enabled and a URL is set")
+	}
+}
