@@ -15,7 +15,7 @@
 // real network round-trip to another site). Modeled on Receiver.tsx.
 // ---------------------------------------------------------------------------
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   listFleetPeers,
@@ -38,6 +38,8 @@ import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -427,11 +429,19 @@ function FleetPeerCard({
   t,
   onRefresh,
   onEdit,
+  index,
 }: {
   peer: FleetPeer;
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  colour engine), matching Containers.tsx's ContainerRow / VMs.tsx's VMRow /
+   *  Files.tsx's FileSetRow: a peer list is exactly the case the mode exists
+   *  for, a variable, user-configured set someone tracks several of at once.
+   *  Assigned by LIST INDEX, never a hash of `peer.name` — see the caller
+   *  below. */
+  index: number;
 }) {
   const [open, setOpen] = useState(false);
   const [polling, setPolling] = useState(false);
@@ -505,7 +515,18 @@ function FleetPeerCard({
     peer.lastPollOk === null ? t("fleet.pollNever") : peer.lastPollOk ? t("fleet.pollOk") : t("fleet.pollFailed");
 
   return (
-    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-hue owns the position; glim-tint washes the WHOLE card with it
+      // (trap #2, design-language.md's "Rainbow" section) — same
+      // relative/overflow-hidden/glim-hue/glim-tint shell as
+      // ContainerRow/VMRow/FileSetRow, so a rainbow-mode Fleet list colours
+      // each monitored peer instead of leaving every row the flat accent. No
+      // glim-active here: unlike those three, a peer card has no
+      // progressMap-tracked backup/restore job of its own to key it off —
+      // Poll/Propose are quick request/response actions, not a tracked job.
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint"
+    >
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -796,6 +817,11 @@ function FleetDialog({
 
 export function Fleet() {
   const { t } = useT();
+  // Registers this page for a re-render on any rainbow-state change (on/off/
+  // reactive/rotate/palette edit) — the FleetPeerCard list below reads
+  // rainbowAt()/hueVars() directly during render; see lib/useRainbow.ts's own
+  // header for why a caller doesn't need the returned value.
+  useRainbow();
   const [peers, setPeers] = useState<FleetPeer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -889,13 +915,14 @@ export function Fleet() {
 
       {!loading && peers.length > 0 && (
         <div className="flex flex-col gap-3">
-          {peers.map((p) => (
+          {peers.map((p, i) => (
             <FleetPeerCard
               key={p.id}
               peer={p}
               t={t}
               onRefresh={() => void loadPeers()}
               onEdit={() => setDialog(p)}
+              index={i}
             />
           ))}
         </div>

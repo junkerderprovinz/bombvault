@@ -11,7 +11,7 @@
 // Files.tsx — one card per received repo with an expandable inventory panel.
 // ---------------------------------------------------------------------------
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   listReceivedRepos,
@@ -35,6 +35,8 @@ import { Badge } from "../components/Badge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { useToast } from "../lib/toast";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -139,11 +141,19 @@ function ReceivedRepoCard({
   t,
   onRefresh,
   onEdit,
+  index,
 }: {
   repo: ReceivedRepoStatus;
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
+  /** Position in the rendered list — the rainbow palette position (GlimStone
+   *  colour engine), matching Containers.tsx's ContainerRow / VMs.tsx's VMRow /
+   *  Files.tsx's FileSetRow (and now Fleet.tsx's FleetPeerCard): a list of
+   *  received repos is exactly the case the mode exists for, a variable,
+   *  user-configured set someone tracks several of at once. Assigned by LIST
+   *  INDEX, never a hash of `repo.name` — see the caller below. */
+  index: number;
 }) {
   const [open, setOpen] = useState(false);
   const [deepCheck, setDeepCheck] = useState(false);
@@ -224,7 +234,19 @@ function ReceivedRepoCard({
       : t("receiver.checkFailed");
 
   return (
-    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    <div
+      style={hueVars(rainbowAt(index)) as CSSProperties}
+      // glim-hue owns the position; glim-tint washes the WHOLE card with it
+      // (trap #2, design-language.md's "Rainbow" section) — same
+      // relative/overflow-hidden/glim-hue/glim-tint shell as
+      // ContainerRow/VMRow/FileSetRow/FleetPeerCard, so a rainbow-mode
+      // Receiver list colours each monitored repo instead of leaving every
+      // row the flat accent. No glim-active here: unlike those first three,
+      // a received-repo card has no progressMap-tracked backup/restore job of
+      // its own to key it off — Check is a quick request/response action,
+      // not a tracked job.
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint"
+    >
       {/* Header: name + badges */}
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -607,6 +629,11 @@ function ReceiverDialog({
 
 export function Receiver() {
   const { t } = useT();
+  // Registers this page for a re-render on any rainbow-state change (on/off/
+  // reactive/rotate/palette edit) — the ReceivedRepoCard list below reads
+  // rainbowAt()/hueVars() directly during render; see lib/useRainbow.ts's own
+  // header for why a caller doesn't need the returned value.
+  useRainbow();
   const [repos, setRepos] = useState<ReceivedRepoStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -667,13 +694,14 @@ export function Receiver() {
       {/* Repo cards */}
       {!loading && repos.length > 0 && (
         <div className="flex flex-col gap-3">
-          {repos.map((r) => (
+          {repos.map((r, i) => (
             <ReceivedRepoCard
               key={r.id}
               repo={r}
               t={t}
               onRefresh={() => void loadRepos()}
               onEdit={() => setDialog(r)}
+              index={i}
             />
           ))}
         </div>
