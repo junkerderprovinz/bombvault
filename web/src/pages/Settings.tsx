@@ -4327,6 +4327,14 @@ export function SettingsPage() {
   // see handleSyncSchedulesToggle below for its own dedicated busy/shake pair.
   const [syncToggleBusy, setSyncToggleBusy] = useState(false);
   const [syncToggleShake, setSyncToggleShake] = useState(0);
+  // The Self-Backup Card's own on/off ToggleRow (jdp, live-review: "Selbst-
+  // Backup-Zeitplan bitte mit Toggle für an/aus"). configSchedule is a
+  // cadence STRING, same as containersSchedule/vmsSchedule/etc — not one of
+  // autoSaveScheduleField's four plain ScheduleBoolKey booleans — so, like
+  // the sync toggle above, it gets its own dedicated busy/shake pair rather
+  // than widening that generic. See toggleConfigSchedule below.
+  const [configScheduleToggleBusy, setConfigScheduleToggleBusy] = useState(false);
+  const [configScheduleToggleShake, setConfigScheduleToggleShake] = useState(0);
   // Health-gated ordered restart (#119) — its own save state, same
   // baseline-merging save() as the other cards on this tab. Explicitly NOT
   // part of Task 5's auto-save conversion — a DIFFERENT settings group
@@ -4779,6 +4787,32 @@ export function SettingsPage() {
     }
   }
 
+  // toggleConfigSchedule — the Self-Backup Card's own on/off ToggleRow. Same
+  // immediate optimistic-flip + save + revert-on-failure + shake shape as
+  // handleSyncSchedulesToggle above, applied to configSchedule's cadence
+  // string instead of the three VMs/Flash/Folders fields that one touches.
+  // OFF writes the literal "off" cadence string; ON restores "daily 02:00"
+  // (the same daily-at-02:00 baseline this grammar already uses elsewhere,
+  // e.g. ContainersSchedule's own portable-settings test fixture) — this
+  // does NOT introduce a new configScheduleEnabled field: parseCadenceString/
+  // buildCadenceString (CadenceBuilder.tsx) already round-trip "off"/""
+  // through CadenceMode "off" cleanly, so a second boolean would just be a
+  // second source of truth for the exact same fact. (BombVault's separate
+  // `configEnabled` field, toggled in the Domains card above, is a different
+  // concept — whether the self-backup domain exists at all — left untouched.)
+  async function toggleConfigSchedule(next: boolean) {
+    const prev = settings?.configSchedule ?? "off";
+    const value = next ? "daily 02:00" : "off";
+    setSettings((s) => (s ? { ...s, configSchedule: value } : s));
+    setConfigScheduleToggleBusy(true);
+    const ok = await save({ configSchedule: value }, setSchedSaveState, setSchedSaveError);
+    setConfigScheduleToggleBusy(false);
+    if (!ok) {
+      setSettings((s) => (s ? { ...s, configSchedule: prev } : s));
+      setConfigScheduleToggleShake((n) => n + 1);
+    }
+  }
+
   if (loadError) {
     return (
       <div className="max-w-3xl">
@@ -5221,20 +5255,71 @@ export function SettingsPage() {
             ))}
           </Card>
 
-          {/* Self-backup schedule (schedulesSelfBackup): BombVault's own config. */}
-          <Card title={t("settings.schedulesSelfBackup")} hint={t("config.scheduleHint")} hueIndex={nextHue()}>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("nav.config")}</span>
-              <input
-                value={settings.configSchedule}
-                spellCheck={false}
-                onChange={(e) => scheduleField("configSchedule", e.target.value)}
-                placeholder={t("config.schedulePlaceholder")}
-                dir="ltr"
-                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
-              />
-            </div>
-          </Card>
+          {/* Self-backup schedule (schedulesSelfBackup): BombVault's own config.
+              Live-review (jdp: "Selbst-Backup-Zeitplan bitte mit Toggle für
+              an/aus, und Zeitplancard wie bei Container, VMs usw."): this was
+              the one schedule editor left in this tab as a bare hand-typed
+              cadence <input> (had to type e.g. "daily 02:00" yourself, and
+              "off" was only reachable by typing the word), no on/off control
+              of its own. Rebuilt to match ContainersSection/VMsSection/
+              FlashSection/FilesSection's own shape: the same status row +
+              CadenceBuilder-in-a-well, one IIFE-captured `hueIdx` feeding
+              both this Card's heading notch and the CadenceBuilder's
+              TimePicker inside it — identical to the schedulesChecks Card
+              just below (see that IIFE's own comment for why a bare inline
+              `hueIndex={nextHue()}` can't feed two hue-aware children from
+              one call).
+                The toggle's label is NOT hidden behind this Card's own title
+              — RestoreChecksSection's `verify.auto` ToggleRow right below
+              this one used to hide its own caption the same way (reasoning:
+              "the Card's title already says the same thing"), and jdp
+              explicitly reversed that exact pattern there ("Bei erstem
+              Toggle bitte 'Automatische Restore-Prüfungen' hinschreiben") —
+              so this toggle reuses that Card's own corrected shape instead:
+              the SAME string as both the Card's `title` and the ToggleRow's
+              visible `label`, no `hideLabel`. No `hueIndex` on the toggle
+              itself either, matching that same corrected ToggleRow (and
+              FlashZipExportCard's lone ToggleRow) — a single stand-alone
+              switch with no sibling toggles of its own kind in this Card is
+              the one case ToggleRow's own hueIndex doc carves out as having
+              no list to walk. See toggleConfigSchedule's own comment above
+              for why this reuses the cadence string's existing "off" mode
+              instead of a new configScheduleEnabled field. */}
+          {(() => {
+            const hueIdx = nextHue();
+            const schedule = settings.configSchedule;
+            const status = scheduleStatus(schedule);
+            return (
+              <Card title={t("settings.schedulesSelfBackup")} hint={t("config.scheduleHint")} hueIndex={hueIdx}>
+                <ToggleRow
+                  label={t("settings.schedulesSelfBackup")}
+                  checked={status !== "off"}
+                  onChange={(v) => void toggleConfigSchedule(v)}
+                  disabled={configScheduleToggleBusy}
+                  shakeNonce={configScheduleToggleShake}
+                />
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
+                  <ScheduleBadge
+                    status={status}
+                    label={
+                      status === "off"
+                        ? t("jobs.notScheduled")
+                        : cadenceLabel(schedule, t)
+                    }
+                  />
+                </div>
+                <div className="rounded-card bg-carbon-surface2 p-4">
+                  <CadenceBuilder
+                    label={t("settings.schedulesSelfBackup")}
+                    value={schedule}
+                    onChange={(v) => scheduleField("configSchedule", v)}
+                    hueIndex={hueIdx}
+                  />
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* Restore-check drills (RestoreChecksSection renders its own Card). */}
           <RestoreChecksSection
