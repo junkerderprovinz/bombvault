@@ -109,6 +109,18 @@ function emptyDraft(domain: Domain): OffsiteTarget {
 function TargetTestButton({ id, t }: { id: string; t: T }) {
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide: "Wenn
+  // etwas fehlschlägt soll der Toggle/Button kurz zittern"): a bumped nonce,
+  // keyed onto this button exactly like every other failing-toast action in
+  // this file (saveDraft's Save button, remove()'s confirm badge below) and
+  // the rest of this session's sweep (Settings.tsx's own TestConnectionButton
+  // twin was left alone — out of THIS file's scope — but the shape is
+  // identical). Only the real "fail" branch shakes, not "warn" — an
+  // uninitialized-but-reachable repo isn't a failure of the test action
+  // itself, the exact same "warn never shakes, fail always does" split
+  // Containers.tsx's backupSelected() already established for its own
+  // 409-vs-real-error branches.
+  const [shake, setShake] = useState(0);
 
   async function go() {
     setBusy(true);
@@ -120,9 +132,11 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
         push(t("offsite.testUninitialized"), "warn");
       } else {
         push(r.error ?? t("offsite.testFailed"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (e) {
       push(e instanceof Error ? e.message : t("offsite.testFailed"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -130,12 +144,14 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
 
   return (
     <Badge
+      key={shake}
       as="button"
       tone="neutral"
       size={ROW_BADGE_SIZE}
       onClick={() => void go()}
       disabled={busy}
       title={t("offsite.test")}
+      className={shake ? "glim-shake" : undefined}
     >
       {busy ? t("offsite.testing") : t("offsite.targets.test")}
     </Badge>
@@ -172,6 +188,18 @@ export function OffsiteTargetsSection({
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // GlimStone standing rule (system-wide, live review): saveDraft/remove
+  // below already push a "fail" toast on a real failure but, unlike every
+  // other action this session already swept (VMs.tsx, Containers.tsx,
+  // Files.tsx, Fleet.tsx, Receiver.tsx, Config.tsx, RestorePanel.tsx,
+  // IntegrityCard, the rest of Settings.tsx), never bumped the triggering
+  // button's own `.glim-shake`. Only one editor/one confirm-remove row can be
+  // open at a time in this section (`draft`/`confirmRemove` are each a
+  // single value, not per-row maps), so a single nonce per action — same
+  // shape as VMSSHCard's/IntegrityCard's own single `shake` state — covers
+  // whichever row is actually showing that button right now.
+  const [saveShake, setSaveShake] = useState(0);
+  const [removeShake, setRemoveShake] = useState(0);
   // Additional named credential sets (#141 stage 2) this target's CredsRef can
   // pick from — loaded once, shared across every domain's section instance
   // isn't needed here since each mount is cheap and the list rarely changes.
@@ -227,6 +255,7 @@ export function OffsiteTargetsSection({
     if (!draft) return;
     if (draft.repo.trim() === "") {
       push(t("offsite.targets.repoRequired"), "fail");
+      setSaveShake((n) => n + 1);
       return;
     }
     setSaveState("saving");
@@ -269,6 +298,7 @@ export function OffsiteTargetsSection({
     } catch (e) {
       setSaveState("idle");
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
+      setSaveShake((n) => n + 1);
     }
   }
 
@@ -285,12 +315,14 @@ export function OffsiteTargetsSection({
       const r = await deleteOffsiteTarget(id);
       if (!r.ok) {
         push(r.error ?? t("settings.error"), "fail");
+        setRemoveShake((n) => n + 1);
         return;
       }
       setConfirmRemove(null);
       refresh();
     } catch (e) {
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
+      setRemoveShake((n) => n + 1);
     } finally {
       setRemovingId(null);
     }
@@ -353,11 +385,13 @@ export function OffsiteTargetsSection({
             </Badge>
             {confirmRemove === tgt.id ? (
               <Badge
+                key={removeShake}
                 as="button"
                 tone="fail"
                 size={ROW_BADGE_SIZE}
                 onClick={() => void remove(tgt.id)}
                 disabled={removingId === tgt.id}
+                className={removeShake ? "glim-shake" : undefined}
               >
                 {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
               </Badge>
@@ -492,10 +526,13 @@ export function OffsiteTargetsSection({
 
           <div className="flex items-center gap-3 flex-wrap">
             <button
+              key={saveShake}
               type="button"
               onClick={() => void saveDraft()}
               disabled={saveState === "saving"}
-              className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
+              className={`rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50${
+                saveShake ? " glim-shake" : ""
+              }`}
             >
               {saveState === "saving" ? t("common.saving") : t("offsite.targets.save")}
             </button>
