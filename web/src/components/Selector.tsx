@@ -23,15 +23,21 @@
 // deliberate differences from that reference:
 //
 //   1. `hue` (default true, opt-out). The reference hues every item
-//      unconditionally with no opt-out at all. Dashboard.tsx's heatmap
-//      domain toggle needs exactly that opt-out — Task 2's own audit
-//      decided that toggle stays deliberately un-rainbowed (5 fixed,
-//      already-label-identified domains sitting right beside the heatmap's
-//      own fixed red/green state hues; a 5-way rainbow strip there competes
-//      with rule 4 for no tracking benefit). `hue={false}` skips both the
+//      unconditionally with no opt-out at all. `hue={false}` skips both the
 //      `.glim-hue`/`.glim-hue-icon` classes and the `hueVars()` inline style
-//      entirely, so that one strip never enters a rainbow subtree no matter
-//      what the global rainbow setting is doing elsewhere on the page.
+//      entirely, so a strip carrying it never enters a rainbow subtree no
+//      matter what the global rainbow setting is doing elsewhere on the page.
+//        REVERSED (jdp, live-review, emphatic standing rule — "Es soll immer
+//      alles in die Farb- und Formengine integriert werden!! IMMER!!"):
+//      Dashboard.tsx's heatmap domain toggle and Settings.tsx's shape picker
+//      both used to pass `hue={false}`, each justified by its own "this one
+//      genuinely shouldn't compete for attention" reasoning at the time —
+//      exactly the self-authored aesthetic exception jdp has now ruled out
+//      categorically. Neither call site opts out any more; every Selector in
+//      this app today relies on the plain `true` default. The prop itself
+//      stays (an escape hatch exists for a genuine HARD TECHNICAL case —
+//      e.g. an item count that isn't a stable, enumerable list position at
+//      all — never a taste call), but has no live consumer as of this pass.
 //   2. `plain` (default false). None of BombVault's twelve call sites are
 //      visually identical at rest: ten are toolbar "chips" that carry a
 //      visible `bg-carbon-surface2` pill even when unselected (so they read

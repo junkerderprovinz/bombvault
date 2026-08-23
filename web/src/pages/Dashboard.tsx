@@ -1342,15 +1342,24 @@ function HealthHeatmapCard({
     }
   };
 
-  // Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 audit,
-  // carried into Task 3's migration to Selector via hue={false}): this is a
-  // small, fixed set of 5 where each entry already has its own durable
-  // identity (a domain name, not "one of several similar rows"), and the
-  // cells it filters sit right beside it painted in the four FIXED state
-  // hues (cellColor() above — red/green shades, rule 4). A 5-way rainbow
-  // strip competing for attention directly next to a red/green heatmap would
-  // hurt legibility for no tracking benefit nobody needs help telling
-  // "Containers" apart from "VMs" by label alone.
+  // REVERSED (jdp, live-review, extremely emphatic — "Es soll immer alles in
+  // die Farb- und Formengine integriert werden!! IMMER!!"): this used to
+  // carry `hue={false}`, justified as "a small, fixed set of 5 where each
+  // entry already has its own durable identity, and a 5-way rainbow strip
+  // competing with the heatmap's own fixed red/green state hues would hurt
+  // legibility for no tracking benefit." That reasoning is exactly the kind
+  // of self-authored aesthetic exception jdp has now ruled out categorically
+  // — a plausible-sounding taste judgement is never grounds to unilaterally
+  // exclude a control from the colour engine, no matter how reasonable it
+  // reads in isolation. This strip is a genuine "select one of several"
+  // Selector like every other hue-enabled one in this app, so it gets the
+  // same default `hue` (true) as the rest — no opt-out prop at all now.
+  //   KNOWN COINCIDENCE, not a reason to exclude: RAINBOW[0] (#FF8389) and
+  // RAINBOW[3] (#6FDC8C) happen to match this page's own fixed --status-fail/
+  // --status-ok hues in dark theme (see lib/appearance.ts's own documented
+  // KNOWN LIMITATION for the full writeup) — a coincidence, not a WCAG
+  // failure (every cell still carries its own count as text, not colour
+  // alone), and not grounds for a fresh opt-out either.
   const toggle = (
     <Selector
       items={(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => ({
@@ -1363,7 +1372,6 @@ function HealthHeatmapCard({
       onChange={(id) => setDomain(id as HeatDomain)}
       size="sm"
       plain
-      hue={false}
     />
   );
 
