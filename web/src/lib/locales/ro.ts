@@ -150,7 +150,6 @@ const ro: Partial<Translations> = {
 
   // Settings
   "settings.title": "Setări",
-  "settings.encryption": "Criptare",
   "settings.encryptionOn": "Activată (parolă derivată din APP_KEY)",
   "settings.encryptionOff": "Dezactivată (fără parolă)",
   "settings.encryptionHint":
@@ -364,8 +363,8 @@ const ro: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenția instantaneelor",
   "settings.retentionHint": "Câte copii de rezervă să se păstreze per element. După fiecare backup, restic curăță instantaneele mai vechi conform acestei politici. Toate zero = păstrează tot (oprit).",
-  "settings.imageMaintenanceTitle": "Curățare imagini și registry",
-  "settings.imageMaintenanceHint": "Întreținere legată de actualizarea containerului după backup: elimină imaginea înlocuită, reîmprospătează starea de actualizare memorată de Unraid și stochează credențialele pentru registry-urile private de care are nevoie actualizarea.",
+  "settings.imageMaintenanceTitle": "Curățare imagini și stare actualizare",
+  "settings.imageMaintenanceHint": "Întreținere legată de actualizarea containerului după backup: elimină imaginea înlocuită și reîmprospătează starea de actualizare memorată de Unraid.",
   "settings.retentionLast": "Păstrează ultimele",
   "settings.retentionDaily": "Păstrează zilnic",
   "settings.retentionWeekly": "Păstrează săptămânal",
@@ -397,7 +396,6 @@ const ro: Partial<Translations> = {
   "cloud.credSets.add": "Adaugă set de credențiale",
   "cloud.credSets.name": "Nume",
   "cloud.credSets.none": "Încă nu există seturi suplimentare de credențiale.",
-  "export.encrypt.title": "Criptează exporturile în clar",
   "export.encrypt.hint": "Depozitele restic sunt deja criptate. Aceasta criptează opțional artefactele de export în clar (tar.gz de container și VM împreună cu fișierele lor xml, și zip-ul flash) cu age, astfel încât să poată fi stocate sau mutate în siguranță în afara serverului.",
   "export.encrypt.ageInfo": "age (age-encryption.org) este un instrument mic și modern de criptare a fișierelor — o alternativă mai simplă la GPG pentru sigilarea unui fișier către unul sau mai mulți destinatari.",
   "export.encrypt.enable": "Criptează exporturile cu age",

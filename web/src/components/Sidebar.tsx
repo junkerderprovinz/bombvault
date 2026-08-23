@@ -310,6 +310,28 @@ export function IconDownload() {
   );
 }
 
+// Trash-can glyph — the conventional "remove this row" symbol (Settings.tsx's
+// own standalone Registries Card, GlimStone follow-up round: "Wenn man eine
+// Registry hinzufügt, soll der Entfernen-Button quadratisch sein mit
+// Mülleimer-Icon"). Same solid, `currentColor`-only, no-`stroke` construction
+// as IconAdd/IconDownload above (design-language.md's icon-glyph rule — "a
+// line glyph... needs real geometry"), at this file's own 16×16
+// icon-only-badge scale: a small handle bar, a wider lid bar, and a tapered
+// body silhouette underneath, three filled shapes, no internal rib lines (a
+// classic trash-can glyph's vertical ribs are normally cut out with a
+// second, contrasting fill — not available here since design-language.md's
+// icon-only-badge rule reserves colour for the BADGE background, never the
+// glyph itself, so the body stays one plain silhouette).
+export function IconTrash() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="6.2" y="1.3" width="3.6" height="1.15" rx="0.5" />
+      <rect x="2.6" y="2.7" width="10.8" height="1.3" rx="0.5" />
+      <path d="M3.8 4.3h8.4l-.8 9.2a1 1 0 0 1-1 .9H5.6a1 1 0 0 1-1-.9l-.8-9.2Z" />
+    </svg>
+  );
+}
+
 // Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
 // controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
 function IconLayers() {

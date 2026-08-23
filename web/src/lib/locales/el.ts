@@ -151,7 +151,6 @@ const el: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ρυθμίσεις",
-  "settings.encryption": "Κρυπτογράφηση",
   "settings.encryptionOn": "Ενεργό (κωδικός από APP_KEY)",
   "settings.encryptionOff": "Ανενεργό (χωρίς κωδικό)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const el: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Διατήρηση στιγμιότυπων",
   "settings.retentionHint": "Πόσα αντίγραφα να διατηρούνται ανά στοιχείο. Μετά από κάθε αντίγραφο, το restic κλαδεύει παλαιότερα στιγμιότυπα βάσει αυτής της πολιτικής. Όλα μηδέν = διατήρηση όλων (ανενεργό).",
-  "settings.imageMaintenanceTitle": "Εκκαθάριση images & Registries",
-  "settings.imageMaintenanceHint": "Συντήρηση γύρω από την ενημέρωση κοντέινερ μετά το backup: εκκαθάριση της παλιάς εικόνας, ανανέωση της αποθηκευμένης κατάστασης ενημέρωσης του Unraid και αποθήκευση διαπιστευτηρίων για ιδιωτικά registries που χρειάζεται η λήψη ενημέρωσης.",
+  "settings.imageMaintenanceTitle": "Εκκαθάριση images & κατάσταση ενημέρωσης",
+  "settings.imageMaintenanceHint": "Συντήρηση γύρω από την ενημέρωση κοντέινερ μετά το backup: εκκαθάριση της παλιάς εικόνας και ανανέωση της αποθηκευμένης κατάστασης ενημέρωσης του Unraid.",
   "settings.retentionLast": "Διατήρηση τελευταίων",
   "settings.retentionDaily": "Διατήρηση ημερήσιων",
   "settings.retentionWeekly": "Διατήρηση εβδομαδιαίων",
@@ -400,7 +399,6 @@ const el: Partial<Translations> = {
   "cloud.credSets.add": "Προσθήκη συνόλου διαπιστευτηρίων",
   "cloud.credSets.name": "Όνομα",
   "cloud.credSets.none": "Δεν υπάρχουν ακόμη πρόσθετα σύνολα διαπιστευτηρίων.",
-  "export.encrypt.title": "Κρυπτογράφηση απλών εξαγωγών",
   "export.encrypt.hint": "Τα αποθετήρια restic είναι ήδη κρυπτογραφημένα. Αυτό κρυπτογραφεί προαιρετικά τα απλά artifacts εξαγωγής (tar.gz κοντέινερ και VM μαζί με τα xml τους, και το flash zip) με age, ώστε να αποθηκεύονται ή να μετακινούνται με ασφάλεια εκτός του διακομιστή.",
   "export.encrypt.ageInfo": "Το age (age-encryption.org) είναι ένα μικρό, σύγχρονο εργαλείο κρυπτογράφησης αρχείων — μια απλούστερη εναλλακτική του GPG για τη σφράγιση ενός αρχείου σε έναν ή περισσότερους παραλήπτες.",
   "export.encrypt.enable": "Κρυπτογράφηση εξαγωγών με age",

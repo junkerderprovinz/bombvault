@@ -151,7 +151,6 @@ const fi: Partial<Translations> = {
 
   // Settings
   "settings.title": "Asetukset",
-  "settings.encryption": "Salaus",
   "settings.encryptionOn": "Käytössä (salasana johdettu APP_KEY:stä)",
   "settings.encryptionOff": "Ei käytössä (ei salasanaa)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const fi: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Tilannevedosten säilytys",
   "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
-  "settings.imageMaintenanceTitle": "Image-siivous ja rekisterit",
-  "settings.imageMaintenanceHint": "Ylläpitoa varmuuskopion jälkeisen konttipäivityksen ympärillä: poistetaan korvattu image, päivitetään Unraidin oma välimuistissa oleva päivitystila ja tallennetaan tunnukset yksityisiin rekistereihin, joita päivityksen haku tarvitsee.",
+  "settings.imageMaintenanceTitle": "Image-siivous ja päivitystila",
+  "settings.imageMaintenanceHint": "Ylläpitoa varmuuskopion jälkeisen konttipäivityksen ympärillä: poistetaan korvattu image ja päivitetään Unraidin oma välimuistissa oleva päivitystila.",
   "settings.retentionLast": "Säilytä viimeisimmät",
   "settings.retentionDaily": "Säilytä päivittäin",
   "settings.retentionWeekly": "Säilytä viikoittain",
@@ -400,7 +399,6 @@ const fi: Partial<Translations> = {
   "cloud.credSets.add": "Lisää kirjautumistietojoukko",
   "cloud.credSets.name": "Nimi",
   "cloud.credSets.none": "Ei vielä lisäkirjautumistietojoukkoja.",
-  "export.encrypt.title": "Salaa selkokieliset viennit",
   "export.encrypt.hint": "restic-arkistot ovat jo salattuja. Tämä salaa valinnaisesti selkokieliset vientiartefaktit (kontin ja virtuaalikoneen tar.gz sekä niiden xml, ja flash-zip) age:lla, jotta ne voi tallentaa tai siirtää turvallisesti pois palvelimelta.",
   "export.encrypt.ageInfo": "age (age-encryption.org) on pieni, moderni tiedostojen salaustyökalu — yksinkertaisempi vaihtoehto GPG:lle tiedoston sinetöimiseen yhdelle tai useammalle vastaanottajalle.",
   "export.encrypt.enable": "Salaa viennit age:lla",

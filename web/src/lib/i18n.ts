@@ -262,7 +262,13 @@ export const en = {
 
   // Settings
   "settings.title": "Settings",
-  "settings.encryption": "Encryption",
+  // `settings.encryption` ("Encryption"), the old standalone <h3> heading
+  // above this sub-section, is RETIRED (jdp, live-review, GlimStone
+  // follow-up round: "Export und Verschlüsselung: Texte normal formatieren,
+  // es sind keine Überschriften mehr") — the ToggleRow below now shows its
+  // own dynamic on/off label directly (settings.encryptionOn/Off), which
+  // already says more than the static generic word this key held, so a
+  // second, now-unused heading string would just be dead weight.
   "settings.encryptionOn": "Enabled (password derived from APP_KEY)",
   "settings.encryptionOff": "Disabled (no password)",
   "settings.encryptionHint":
@@ -435,8 +441,8 @@ export const en = {
   // A) — image cleanup, Unraid's own update-status reconciliation, and
   // private registry credentials all sit under one roof: everything the
   // post-backup container update pull touches.
-  "settings.imageMaintenanceTitle": "Image Cleanup & Registries",
-  "settings.imageMaintenanceHint": "Housekeeping for the post-backup container update: prune the superseded image, refresh Unraid's own cached update status, and store credentials for private registries the update pull needs.",
+  "settings.imageMaintenanceTitle": "Image Cleanup & Update Status",
+  "settings.imageMaintenanceHint": "Housekeeping for the post-backup container update: prune the superseded image and refresh Unraid's own cached update status.",
   "settings.imageCleanupTitle": "Image cleanup",
   "settings.imageCleanupHint": "Housekeeping for the optional \"update container after backup\".",
   "settings.pruneImageAfterUpdate": "Remove the old image after an update",
@@ -1000,9 +1006,16 @@ export const en = {
   // GlimStone follow-up round, Paths & Storage tab rework, merge B: "(age)"
   // dropped from the visible title — design-language.md's own "explanations
   // live in a bubble" rule, same as every other Card title in this file. What
-  // age IS moves to export.encrypt.ageInfo below, an InfoBubble on the
-  // merged card's sub-heading, so the information isn't lost, just relocated.
-  "export.encrypt.title": "Encrypt plain exports",
+  // age IS moved to export.encrypt.ageInfo below, an InfoBubble on the
+  // merged card's sub-heading, so the information wasn't lost, just relocated.
+  //   `export.encrypt.title` itself ("Encrypt plain exports"/"Plain-Exporte
+  // verschlüsseln") is RETIRED (jdp, live-review, GlimStone follow-up round:
+  // "Export und Verschlüsselung: Texte normal formatieren, es sind keine
+  // Überschriften mehr") — the standalone <h3> it used to head is gone;
+  // ToggleRow's own `export.encrypt.enable` label is now this sub-section's
+  // only visible caption (Settings.tsx's own comment on that ToggleRow has
+  // the full writeup), so a second, now-unused heading string would just be
+  // dead weight.
   "export.encrypt.hint": "The restic repositories are already encrypted. This optionally seals the plain export artifacts (container and VM tar.gz plus their xml sidecars, and the flash zip) with age, so they are safe to store or move off the box.",
   "export.encrypt.ageInfo": "age (age-encryption.org) is a small, modern file-encryption tool — a simpler alternative to GPG for sealing a file to one or more recipients.",
   "export.encrypt.enable": "Encrypt exports with age",
@@ -1736,7 +1749,6 @@ export const de: Translations = {
   "run.colContainer": "Container",
 
   "settings.title": "Einstellungen",
-  "settings.encryption": "Verschlüsselung",
   "settings.encryptionOn": "Aktiviert (Passwort aus APP_KEY)",
   "settings.encryptionOff": "Deaktiviert (kein Passwort)",
   "settings.encryptionHint":
@@ -1881,8 +1893,8 @@ export const de: Translations = {
   // Retention
   "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
-  "settings.imageMaintenanceTitle": "Image-Bereinigung & Registries",
-  "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen, Unraids eigenen Update-Status zurücksetzen und Zugangsdaten für private Registries hinterlegen, die der Update-Pull benötigt.",
+  "settings.imageMaintenanceTitle": "Image-Bereinigung & Update-Status",
+  "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen und Unraids eigenen Update-Status zurücksetzen.",
   "settings.imageCleanupTitle": "Image-Aufräumen",
   "settings.imageCleanupHint": "Aufräumen für das optionale Container-Update nach Backup.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
@@ -2393,7 +2405,6 @@ export const de: Translations = {
   "flash.zipExport.latestNote": "Eine einzige flash-latest.zip wird nach jedem Backup überschrieben.",
   "flash.zipExport.plaintextWarn": "Das exportierte .zip ist nicht verschlüsselt, auch wenn dein Flash-Repository es ist. Synce es nur an einen vertrauenswürdigen Ort.",
   "flash.zipExport.pathRequired": "Wähle einen Export-Ordner, um dies zu aktivieren.",
-  "export.encrypt.title": "Plain-Exporte verschlüsseln",
   "export.encrypt.hint": "Die restic-Repositories sind bereits verschlüsselt. Dies verschlüsselt optional die Plain-Export-Artefakte (Container- und VM-tar.gz samt xml-Beidateien sowie das Flash-Zip) mit age, damit sie sicher außerhalb des Servers gespeichert oder bewegt werden können.",
   "export.encrypt.ageInfo": "age (age-encryption.org) ist ein kleines, modernes Verschlüsselungswerkzeug — eine einfachere Alternative zu GPG, um eine Datei für einen oder mehrere Empfänger zu versiegeln.",
   "export.encrypt.enable": "Exporte mit age verschlüsseln",

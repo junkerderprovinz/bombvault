@@ -150,7 +150,6 @@ const no: Partial<Translations> = {
 
   // Settings
   "settings.title": "Innstillinger",
-  "settings.encryption": "Kryptering",
   "settings.encryptionOn": "Aktivert (passord utledet fra APP_KEY)",
   "settings.encryptionOff": "Deaktivert (intet passord)",
   "settings.encryptionHint":
@@ -364,8 +363,8 @@ const no: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Oppbevaring av øyeblikksbilder",
   "settings.retentionHint": "Hvor mange sikkerhetskopier som beholdes per element. Etter hver sikkerhetskopiering rydder restic eldre snapshots etter denne regelen. Alt 0 = behold alt (av).",
-  "settings.imageMaintenanceTitle": "Image-opprydding & registries",
-  "settings.imageMaintenanceHint": "Vedlikehold rundt containeroppdateringen etter backup: rydd opp det utdaterte imaget, oppdater Unraids egen bufrede oppdateringsstatus, og lagre legitimasjon for private registries som oppdateringen trenger.",
+  "settings.imageMaintenanceTitle": "Image-opprydding & oppdateringsstatus",
+  "settings.imageMaintenanceHint": "Vedlikehold rundt containeroppdateringen etter backup: rydd opp det utdaterte imaget og oppdater Unraids egen bufrede oppdateringsstatus.",
   "settings.retentionLast": "Behold siste",
   "settings.retentionDaily": "Behold daglige",
   "settings.retentionWeekly": "Behold ukentlige",
@@ -397,7 +396,6 @@ const no: Partial<Translations> = {
   "cloud.credSets.add": "Legg til legitimasjonssett",
   "cloud.credSets.name": "Navn",
   "cloud.credSets.none": "Ingen ekstra legitimasjonssett ennå.",
-  "export.encrypt.title": "Krypter vanlige eksporter",
   "export.encrypt.hint": "restic-repositoriene er allerede krypterte. Dette krypterer valgfritt de vanlige eksportartefaktene (container- og VM-tar.gz med deres xml, og flash-zip) med age, slik at de trygt kan lagres eller flyttes bort fra serveren.",
   "export.encrypt.ageInfo": "age (age-encryption.org) er et lite, moderne filkrypteringsverktøy — et enklere alternativ til GPG for å forsegle en fil til én eller flere mottakere.",
   "export.encrypt.enable": "Krypter eksporter med age",

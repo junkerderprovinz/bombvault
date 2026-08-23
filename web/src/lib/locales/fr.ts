@@ -151,7 +151,6 @@ const fr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Paramètres",
-  "settings.encryption": "Chiffrement",
   "settings.encryptionOn": "Activé (mot de passe dérivé de APP_KEY)",
   "settings.encryptionOff": "Désactivé (sans mot de passe)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const fr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Rétention des instantanés",
   "settings.retentionHint": "Combien de sauvegardes conserver par élément. Après chaque sauvegarde, restic élague les instantanés plus anciens selon cette règle. Tout à zéro = tout conserver (désactivé).",
-  "settings.imageMaintenanceTitle": "Nettoyage des images et registries",
-  "settings.imageMaintenanceHint": "Maintenance autour de la mise à jour des conteneurs après sauvegarde : purger l'image remplacée, actualiser le statut de mise à jour mis en cache par Unraid, et stocker les identifiants des registries privés dont la mise à jour a besoin.",
+  "settings.imageMaintenanceTitle": "Nettoyage des images et statut de mise à jour",
+  "settings.imageMaintenanceHint": "Maintenance autour de la mise à jour des conteneurs après sauvegarde : purger l'image remplacée et actualiser le statut de mise à jour mis en cache par Unraid.",
   "settings.retentionLast": "Conserver les dernières",
   "settings.retentionDaily": "Conserver quotidiennes",
   "settings.retentionWeekly": "Conserver hebdomadaires",
@@ -400,7 +399,6 @@ const fr: Partial<Translations> = {
   "cloud.credSets.add": "Ajouter un ensemble d'identifiants",
   "cloud.credSets.name": "Nom",
   "cloud.credSets.none": "Aucun ensemble d'identifiants supplémentaire pour le moment.",
-  "export.encrypt.title": "Chiffrer les exports en clair",
   "export.encrypt.hint": "Les dépôts restic sont déjà chiffrés. Ceci chiffre en option les artefacts d'export en clair (tar.gz de conteneur et de VM avec leurs fichiers xml, et le zip flash) avec age, afin qu'ils puissent être stockés ou déplacés hors du serveur en toute sécurité.",
   "export.encrypt.ageInfo": "age (age-encryption.org) est un outil de chiffrement de fichiers petit et moderne — une alternative plus simple à GPG pour sceller un fichier pour un ou plusieurs destinataires.",
   "export.encrypt.enable": "Chiffrer les exports avec age",

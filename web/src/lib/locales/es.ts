@@ -151,7 +151,6 @@ const es: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ajustes",
-  "settings.encryption": "Cifrado",
   "settings.encryptionOn": "Habilitado (contraseña derivada de APP_KEY)",
   "settings.encryptionOff": "Deshabilitado (sin contraseña)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const es: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cuántas copias conservar por elemento. Tras cada copia, restic poda las instantáneas más antiguas según esta política. Todo a cero = conservar todo (desactivado).",
-  "settings.imageMaintenanceTitle": "Limpieza de imágenes y registries",
-  "settings.imageMaintenanceHint": "Mantenimiento en torno a la actualización de contenedores tras el backup: eliminar la imagen sustituida, actualizar el estado de actualización propio de Unraid y guardar credenciales para registries privados que necesita la actualización.",
+  "settings.imageMaintenanceTitle": "Limpieza de imágenes y estado de actualización",
+  "settings.imageMaintenanceHint": "Mantenimiento en torno a la actualización de contenedores tras el backup: eliminar la imagen sustituida y actualizar el estado de actualización propio de Unraid.",
   "settings.retentionLast": "Conservar últimas",
   "settings.retentionDaily": "Conservar diarias",
   "settings.retentionWeekly": "Conservar semanales",
@@ -400,7 +399,6 @@ const es: Partial<Translations> = {
   "cloud.credSets.add": "Añadir conjunto de credenciales",
   "cloud.credSets.name": "Nombre",
   "cloud.credSets.none": "Aún no hay conjuntos de credenciales adicionales.",
-  "export.encrypt.title": "Cifrar exportaciones en texto plano",
   "export.encrypt.hint": "Los repositorios de restic ya están cifrados. Esto cifra opcionalmente los artefactos de exportación en texto plano (tar.gz de contenedor y VM junto con sus xml, y el zip flash) con age, para que se puedan almacenar o mover fuera del servidor de forma segura.",
   "export.encrypt.ageInfo": "age (age-encryption.org) es una herramienta de cifrado de archivos pequeña y moderna: una alternativa más sencilla a GPG para sellar un archivo para uno o varios destinatarios.",
   "export.encrypt.enable": "Cifrar exportaciones con age",

@@ -149,7 +149,6 @@ const nl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Instellingen",
-  "settings.encryption": "Versleuteling",
   "settings.encryptionOn": "Ingeschakeld (wachtwoord afgeleid van APP_KEY)",
   "settings.encryptionOff": "Uitgeschakeld (geen wachtwoord)",
   "settings.encryptionHint": "Versleuteling wordt eenmalig vastgelegd bij het initialiseren van de repository. Een wijziging vereist een nieuw leeg pad.",
@@ -361,8 +360,8 @@ const nl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Bewaarbeleid voor snapshots",
   "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
-  "settings.imageMaintenanceTitle": "Image-opschoning & registries",
-  "settings.imageMaintenanceHint": "Onderhoud rond de container-update na backup: de vervangen image opruimen, Unraids eigen gecachete updatestatus vernieuwen, en inloggegevens opslaan voor privéregistries die de update-pull nodig heeft.",
+  "settings.imageMaintenanceTitle": "Image-opschoning & updatestatus",
+  "settings.imageMaintenanceHint": "Onderhoud rond de container-update na backup: de vervangen image opruimen en Unraids eigen gecachete updatestatus vernieuwen.",
   "settings.retentionLast": "Laatste bewaren",
   "settings.retentionDaily": "Dagelijks bewaren",
   "settings.retentionWeekly": "Wekelijks bewaren",
@@ -394,7 +393,6 @@ const nl: Partial<Translations> = {
   "cloud.credSets.add": "Referentieset toevoegen",
   "cloud.credSets.name": "Naam",
   "cloud.credSets.none": "Nog geen extra referentiesets.",
-  "export.encrypt.title": "Platte exports versleutelen",
   "export.encrypt.hint": "De restic-repositories zijn al versleuteld. Dit versleutelt optioneel de platte export-artefacten (container- en VM-tar.gz met hun xml, en de flash-zip) met age, zodat ze veilig buiten de server kunnen worden bewaard of verplaatst.",
   "export.encrypt.ageInfo": "age (age-encryption.org) is een klein, modern bestandsversleutelingsprogramma — een eenvoudiger alternatief voor GPG om een bestand voor een of meer ontvangers te verzegelen.",
   "export.encrypt.enable": "Exports versleutelen met age",

@@ -151,7 +151,6 @@ const sv: Partial<Translations> = {
 
   // Settings
   "settings.title": "Inställningar",
-  "settings.encryption": "Kryptering",
   "settings.encryptionOn": "Aktiverad (lösenord härlett från APP_KEY)",
   "settings.encryptionOff": "Inaktiverad (inget lösenord)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const sv: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Lagring av ögonblicksbilder",
   "settings.retentionHint": "Hur många säkerhetskopior som behålls per objekt. Efter varje säkerhetskopiering rensar restic äldre ögonblicksbilder enligt den här policyn. Allt 0 = behåll allt (av).",
-  "settings.imageMaintenanceTitle": "Image-uppstädning & registries",
-  "settings.imageMaintenanceHint": "Underhåll kring containeruppdateringen efter backup: rensa bort den ersatta avbildningen, uppdatera Unraids egen cachade uppdateringsstatus, och spara autentiseringsuppgifter för privata registries som uppdateringen behöver.",
+  "settings.imageMaintenanceTitle": "Image-uppstädning & uppdateringsstatus",
+  "settings.imageMaintenanceHint": "Underhåll kring containeruppdateringen efter backup: rensa bort den ersatta avbildningen och uppdatera Unraids egen cachade uppdateringsstatus.",
   "settings.retentionLast": "Behåll senaste",
   "settings.retentionDaily": "Behåll dagliga",
   "settings.retentionWeekly": "Behåll veckovisa",
@@ -400,7 +399,6 @@ const sv: Partial<Translations> = {
   "cloud.credSets.add": "Lägg till autentiseringsuppsättning",
   "cloud.credSets.name": "Namn",
   "cloud.credSets.none": "Inga ytterligare autentiseringsuppsättningar än.",
-  "export.encrypt.title": "Kryptera oskyddade exporter",
   "export.encrypt.hint": "restic-repositorierna är redan krypterade. Detta krypterar valfritt de oskyddade exportartefakterna (container- och VM-tar.gz med deras xml, och flash-zip) med age, så att de kan lagras eller flyttas utanför servern på ett säkert sätt.",
   "export.encrypt.ageInfo": "age (age-encryption.org) är ett litet, modernt filkrypteringsverktyg — ett enklare alternativ till GPG för att försegla en fil åt en eller flera mottagare.",
   "export.encrypt.enable": "Kryptera exporter med age",

@@ -151,7 +151,6 @@ const ja: Partial<Translations> = {
 
   // Settings
   "settings.title": "設定",
-  "settings.encryption": "暗号化",
   "settings.encryptionOn": "有効（APP_KEY からパスワードを導出）",
   "settings.encryptionOff": "無効（パスワードなし）",
   "settings.encryptionHint":
@@ -364,8 +363,8 @@ const ja: Partial<Translations> = {
 
   "settings.retentionTitle": "スナップショットの保持",
   "settings.retentionHint": "項目ごとに保持するバックアップ数。バックアップのたびに restic がこのポリシーに従って古いスナップショットを削除します。すべて 0 = すべて保持（オフ）。",
-  "settings.imageMaintenanceTitle": "イメージのクリーンアップとレジストリ",
-  "settings.imageMaintenanceHint": "バックアップ後のコンテナ更新まわりのメンテナンス: 置き換えられたイメージの削除、Unraid自身のキャッシュされた更新ステータスの更新、更新のプルに必要なプライベートレジストリの認証情報の保存。",
+  "settings.imageMaintenanceTitle": "イメージのクリーンアップと更新ステータス",
+  "settings.imageMaintenanceHint": "バックアップ後のコンテナ更新まわりのメンテナンス: 置き換えられたイメージの削除と、Unraid自身のキャッシュされた更新ステータスの更新。",
   "settings.retentionLast": "直近を保持",
   "settings.retentionDaily": "日次を保持",
   "settings.retentionWeekly": "週次を保持",
@@ -396,7 +395,6 @@ const ja: Partial<Translations> = {
   "cloud.credSets.add": "認証情報セットを追加",
   "cloud.credSets.name": "名前",
   "cloud.credSets.none": "追加の認証情報セットはまだありません。",
-  "export.encrypt.title": "平文エクスポートを暗号化",
   "export.encrypt.hint": "restic リポジトリはすでに暗号化されています。これはオプションで平文のエクスポート成果物 (コンテナと VM の tar.gz とその xml、およびフラッシュ zip) を age で暗号化し、サーバー外に安全に保存または移動できるようにします。",
   "export.encrypt.ageInfo": "age (age-encryption.org) は小さくてモダンなファイル暗号化ツールです — 1人以上の受信者に向けてファイルを封印するための、GPGよりシンプルな代替手段です。",
   "export.encrypt.enable": "age でエクスポートを暗号化",

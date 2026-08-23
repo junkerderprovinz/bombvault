@@ -151,7 +151,6 @@ const th: Partial<Translations> = {
 
   // Settings
   "settings.title": "การตั้งค่า",
-  "settings.encryption": "การเข้ารหัส",
   "settings.encryptionOn": "เปิดใช้งาน (รหัสผ่านนำมาจาก APP_KEY)",
   "settings.encryptionOff": "ปิดใช้งาน (ไม่มีรหัสผ่าน)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const th: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "การเก็บรักษาสแนปช็อต",
   "settings.retentionHint": "จำนวนการสำรองข้อมูลที่เก็บไว้ต่อรายการ หลังการสำรองข้อมูลแต่ละครั้ง restic จะตัดสแนปช็อตเก่าตามนโยบายนี้ ทั้งหมดเป็น 0 = เก็บทุกอย่าง (ปิด)",
-  "settings.imageMaintenanceTitle": "การล้างอิมเมจและรีจิสทรี",
-  "settings.imageMaintenanceHint": "การดูแลรอบการอัปเดตคอนเทนเนอร์หลังการสำรองข้อมูล: ล้างอิมเมจที่ถูกแทนที่ รีเฟรชสถานะการอัปเดตที่แคชไว้ของ Unraid เอง และจัดเก็บข้อมูลรับรองสำหรับรีจิสทรีส่วนตัวที่การดึงอัปเดตต้องใช้",
+  "settings.imageMaintenanceTitle": "การล้างอิมเมจและสถานะการอัปเดต",
+  "settings.imageMaintenanceHint": "การดูแลรอบการอัปเดตคอนเทนเนอร์หลังการสำรองข้อมูล: ล้างอิมเมจที่ถูกแทนที่ และรีเฟรชสถานะการอัปเดตที่แคชไว้ของ Unraid เอง",
   "settings.retentionLast": "เก็บล่าสุด",
   "settings.retentionDaily": "เก็บรายวัน",
   "settings.retentionWeekly": "เก็บรายสัปดาห์",
@@ -400,7 +399,6 @@ const th: Partial<Translations> = {
   "cloud.credSets.add": "เพิ่มชุดข้อมูลรับรอง",
   "cloud.credSets.name": "ชื่อ",
   "cloud.credSets.none": "ยังไม่มีชุดข้อมูลรับรองเพิ่มเติม",
-  "export.encrypt.title": "เข้ารหัสการส่งออกแบบข้อความธรรมดา",
   "export.encrypt.hint": "ที่เก็บ restic ถูกเข้ารหัสอยู่แล้ว สิ่งนี้จะเข้ารหัสอาร์ติแฟกต์การส่งออกแบบข้อความธรรมดา (tar.gz ของคอนเทนเนอร์และ VM พร้อมไฟล์ xml และ zip แฟลช) ด้วย age เป็นทางเลือก เพื่อให้จัดเก็บหรือย้ายออกนอกเซิร์ฟเวอร์ได้อย่างปลอดภัย",
   "export.encrypt.ageInfo": "age (age-encryption.org) เป็นเครื่องมือเข้ารหัสไฟล์ขนาดเล็กที่ทันสมัย — ทางเลือกที่ง่ายกว่า GPG สำหรับการปิดผนึกไฟล์ให้ผู้รับหนึ่งคนขึ้นไป",
   "export.encrypt.enable": "เข้ารหัสการส่งออกด้วย age",

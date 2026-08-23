@@ -151,7 +151,6 @@ const he: Partial<Translations> = {
 
   // Settings
   "settings.title": "הגדרות",
-  "settings.encryption": "הצפנה",
   "settings.encryptionOn": "מופעל (סיסמה נגזרת מ-APP_KEY)",
   "settings.encryptionOff": "מושבת (ללא סיסמה)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const he: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "שמירת תמונות מצב",
   "settings.retentionHint": "כמה גיבויים לשמור לכל פריט. אחרי כל גיבוי, restic גוזם snapshots ישנים לפי מדיניות זו. הכל 0 = לשמור הכל (כבוי).",
-  "settings.imageMaintenanceTitle": "ניקוי images ו-Registries",
-  "settings.imageMaintenanceHint": "תחזוקה סביב עדכון הקונטיינר לאחר הגיבוי: מחיקת ה-image הישן, רענון מצב העדכון השמור של Unraid, ואחסון פרטי גישה ל-registries פרטיים שהעדכון זקוק להם.",
+  "settings.imageMaintenanceTitle": "ניקוי images וסטטוס עדכון",
+  "settings.imageMaintenanceHint": "תחזוקה סביב עדכון הקונטיינר לאחר הגיבוי: מחיקת ה-image הישן ורענון מצב העדכון השמור של Unraid.",
   "settings.retentionLast": "שמור אחרונים",
   "settings.retentionDaily": "שמור יומיים",
   "settings.retentionWeekly": "שמור שבועיים",
@@ -400,7 +399,6 @@ const he: Partial<Translations> = {
   "cloud.credSets.add": "הוסף ערכת אישורים",
   "cloud.credSets.name": "שם",
   "cloud.credSets.none": "אין עדיין ערכות אישורים נוספות.",
-  "export.encrypt.title": "הצפנת ייצוא רגיל",
   "export.encrypt.hint": "מאגרי restic כבר מוצפנים. זה מצפין באופן אופציונלי את פריטי הייצוא הרגילים (tar.gz של קונטיינר ו-VM יחד עם קובצי ה-xml שלהם, וה-zip של flash) באמצעות age, כדי שניתן יהיה לאחסן או להעביר אותם מחוץ לשרת בבטחה.",
   "export.encrypt.ageInfo": "age (age-encryption.org) הוא כלי הצפנת קבצים קטן ומודרני — חלופה פשוטה יותר ל-GPG לאיטום קובץ עבור נמען אחד או יותר.",
   "export.encrypt.enable": "הצפנת ייצוא באמצעות age",
