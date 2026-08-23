@@ -6,7 +6,7 @@ import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
-import { Advanced } from "../lib/advanced";
+import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
@@ -1508,7 +1508,30 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
 
 // StacksPanel renders one card per detected compose stack, above the container
 // list. It renders nothing when no multi-member stack is present.
-function StacksPanel({ containers, onRestored, t }: { containers: Container[]; onRestored: () => void; t: T }) {
+function StacksPanel({
+  containers,
+  onRestored,
+  t,
+  hueIndex,
+}: {
+  containers: Container[];
+  onRestored: () => void;
+  t: T;
+  /** Rainbow position for THIS panel's own heading notch — GlimStone
+   *  follow-up pass (jdp, live review, emphatic, fifth escalation of the
+   *  standing colour-engine rule): this section heading was a
+   *  tone="heading" Badge with no hueIndex at all, so in rainbow mode it
+   *  stayed flat --accent instead of joining the same sequence the
+   *  ContainerRow cards below it clearly carry (rainbowAt(index)). Resolved
+   *  by the caller's own `nextHue()` counter, called DIRECTLY at the JSX
+   *  call site, gated on `stackGroups.length > 0` there (never an
+   *  unconditional call — see that call site's own comment for why: this
+   *  component returns null internally whenever there is no multi-member
+   *  stack, and hueIndex must never fire for a heading that won't actually
+   *  render). Omit for a genuine singleton — same rule as every other
+   *  hueIndex call site. */
+  hueIndex?: number;
+}) {
   const stacks = groupStacks(containers);
   if (stacks.length === 0) return null;
   return (
@@ -1519,7 +1542,9 @@ function StacksPanel({ containers, onRestored, t }: { containers: Container[]; o
           `position: absolute` straddle; see Badge.tsx's badgeClassName
           comment. */}
       <h2 className="relative flex items-center">
-        <Badge tone="heading" size="heading" wrap>{t("stack.title")}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
+          {t("stack.title")}
+        </Badge>
       </h2>
       {stacks.map((g) => (
         <StackCard key={g.project} group={g} onRestored={onRestored} t={t} />
@@ -1544,7 +1569,33 @@ const BACKUP_ORDER_COLLAPSED_KEY = "bombvault.backupOrderCollapsed";
 // sequence (authoritative: the list becomes the explicit order); Clear order
 // PUTs an empty list, returning every container to the most-overdue-first
 // tiebreak.
-function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) {
+function BackupOrderPanel({
+  containers,
+  t,
+  hueIndex,
+}: {
+  containers: Container[];
+  t: T;
+  /** Rainbow position for THIS panel's own heading notch — GlimStone
+   *  follow-up pass (jdp, live review, emphatic, fifth escalation of the
+   *  standing colour-engine rule: "Warum muss ich dich immer wieder extra
+   *  dran erinnern? Kannst du das jetzt nicht einfach selbst immer
+   *  machen?"): this panel's collapsible-header title was still a plain
+   *  `<span>`, never routed through Badge's tone="heading"/hueIndex the way
+   *  every other static Card heading in the app now is (Dashboard.tsx's
+   *  Card(), Config.tsx's Card, Settings.tsx's Card/ToggleRow, VMs.tsx's own
+   *  VMBackupOrderPanel — its exact twin, already fixed a commit ago).
+   *  Resolved by the caller's own `nextHue()` counter, called DIRECTLY at
+   *  the JSX call site (never handed down as a function for this component
+   *  to call from its own body — that exact shape is what caused the
+   *  SummaryTier regression earlier this session: React doesn't invoke a
+   *  child component's body until after the parent's own render pass has
+   *  already returned, so a `nextHue` prop called from inside a child lands
+   *  strictly after every sibling's own direct call already consumed its
+   *  slot). Omit for a genuine singleton — same rule as every other
+   *  `hueIndex` call site. */
+  hueIndex?: number;
+}) {
   const [savedOrder, setSavedOrder] = useState<ContainerOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
@@ -1670,13 +1721,51 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
   if (savedOrder === null) return null;
 
   return (
-    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
-      {/* Collapsible header (#124): chevron + title + a count badge so the size is
-          visible while collapsed. The hint only shows when expanded. */}
+    // relative + glim-notch-card: same "half-overlap card notch" pattern
+    // every other real Card in this app uses (VMs.tsx's own
+    // VMBackupOrderPanel is the closest twin — a single div carrying both
+    // the visible surface AND the notch's positioned ancestor, no separate
+    // outer wrapper needed since this box has no overflow-hidden to clip the
+    // badge's own -11px poke above it). glim-notch-card is the hook
+    // index.css's card-wide reactive-hover rule keys off, so hovering
+    // anywhere on this panel (not just the tiny badge glyph) reveals its hue
+    // in reactive rainbow mode.
+    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+      {/* Title notch, always visible regardless of collapse state (matches
+          the PRE-fix behaviour, where title+count stayed visible collapsed
+          and only the hint hid) — moved OUT of the disclosure <button>
+          below: every real tone="heading" call site in this app keeps the
+          Badge as its <h2>'s SOLE child (Dashboard.tsx's Card()/SummaryCell,
+          Config.tsx's Card, this file's own notInstalledTitle below,
+          StacksPanel above) because size="heading" makes the badge
+          `position: absolute` — a flex-row sibling next to it would render
+          at the badge's own now-vacated in-flow slot instead of after it.
+          The count folds INSIDE the badge's own children instead (Badge's
+          span is `inline-flex gap-1`, built to hold more than one child),
+          same visual "title (N)" pairing as before, just now inheriting the
+          badge's own solid accent-fill/accentContrast ink. */}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
+          {t("backupOrder.title")}
+          {names.length > 0 && (
+            <span className="ms-1.5 font-normal normal-case tracking-normal tabular-nums opacity-80">
+              ({names.length})
+            </span>
+          )}
+        </Badge>
+      </h2>
+      {/* Disclosure toggle, now chevron(+hint)-only: the title text that used
+          to double as this button's accessible name moved into the h2 notch
+          above, so `aria-label` keeps this control genuinely named rather
+          than falling back to nothing once its only other content
+          (`aria-hidden` chevron, hint text hidden while collapsed) has none
+          to offer. `w-full` (unchanged) keeps the full row clickable even
+          though the visible content is now just the chevron while collapsed. */}
       <button
         type="button"
         onClick={toggleCollapsed}
         aria-expanded={!collapsed}
+        aria-label={t("backupOrder.title")}
         className="flex w-full items-start gap-2 text-start"
       >
         <svg
@@ -1689,19 +1778,9 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
         >
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="min-w-0 flex-1">
-          <span className="font-semibold text-carbon-text text-sm">
-            {t("backupOrder.title")}
-            {names.length > 0 && (
-              <span className="ms-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
-                ({names.length})
-              </span>
-            )}
-          </span>
-          {!collapsed && (
-            <span className="mt-0.5 block text-xs text-carbon-textMuted">{t("backupOrder.hint")}</span>
-          )}
-        </span>
+        {!collapsed && (
+          <span className="min-w-0 flex-1 text-xs text-carbon-textMuted">{t("backupOrder.hint")}</span>
+        )}
       </button>
       {!collapsed &&
         (names.length === 0 ? (
@@ -1798,6 +1877,14 @@ export function Containers() {
   // changes for every row at once anyway, so this alone is what makes rainbow
   // on/off/reactive/rotate/palette edits repaint the list live, no reload.
   useRainbow();
+  // Advanced-mode flag read directly (not just via the <Advanced> wrapper
+  // below): BackupOrderPanel's own hueIndex must only be resolved via
+  // `nextHue()` when the panel will ACTUALLY render — a JSX child's props
+  // (including a `hueIndex={nextHue()}` expression) evaluate eagerly as
+  // part of building the <Advanced> element, regardless of whether
+  // <Advanced> itself goes on to render null. See VMs.tsx's identical
+  // `advanced`/VMBackupOrderPanel comment for the full reasoning.
+  const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   const [containers, setContainers] = useState<Container[]>([]);
@@ -1887,6 +1974,17 @@ export function Containers() {
   const sorted = sortContainers(filtered, sortKey);
   const live = sorted.filter((c) => c.installed);
   const orphans = sorted.filter((c) => !c.installed);
+
+  // Precomputed here (against the UNFILTERED containers, matching
+  // StacksPanel's own internal groupStacks() call below) so its own
+  // emptiness can gate the heading's `nextHue()` call at the JSX render
+  // site — StacksPanel returns null internally when there are no
+  // multi-member stacks, and hueIndex must never fire for a heading that
+  // won't actually render (see this file's own `nextHue()` comment near the
+  // return statement for why an ungated call would shift every later
+  // heading's rainbow position by one, the exact bug class VMs.tsx's
+  // notInstalledTitle fix already caught once this session).
+  const stackGroups = groupStacks(containers);
 
   // Sections the installed toggle actually renders below; when none show but the
   // box has containers, the filters excluded everything → show the no-match hint.
@@ -2023,6 +2121,26 @@ export function Containers() {
       setDiscovering(false);
     }
   }
+
+  // hueSeq/nextHue (GlimStone follow-up pass — see Settings.tsx's own
+  // identical hueSeq/nextHue comment for the full reasoning): a plain,
+  // freshly-reset-every-render counter assigning 0,1,2,... to this page's
+  // heading notches in the exact order the JSX below actually evaluates each
+  // `hueIndex={nextHue()}` call, which for a `cond ? nextHue() : undefined`
+  // or `cond && (<Badge hueIndex={nextHue()} />)` short-circuit is also
+  // exactly the order those notches are, or would be, painted. Three heading
+  // notches exist on this page today, in render order: BackupOrderPanel's
+  // own (advanced-only, gated on `advanced` directly rather than trusting
+  // <Advanced> below), StacksPanel's own (gated on `stackGroups.length > 0`,
+  // since that panel returns null internally with no compose stacks present),
+  // and the not-installed section's (gated on `orphans.length > 0`, naturally
+  // short-circuited by the `&&` chain around it). Every call is made DIRECTLY
+  // at its JSX call site as a plain number, never handed down as a function
+  // for a child to call from its own body later — see SummaryTier's own
+  // regression, fixed earlier this session in Dashboard.tsx, for exactly why
+  // that shape breaks the ordering.
+  let hueSeq = 0;
+  const nextHue = () => hueSeq++;
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
@@ -2192,15 +2310,40 @@ export function Containers() {
       )}
 
       {/* Backup-order panel (#119) — advanced: arrange the scheduled/batch backup
-          sequence. Above the list, next to the stacks panel. */}
+          sequence. Above the list, next to the stacks panel.
+          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
+          <Advanced>: a JSX child's own props (this `hueIndex` expression
+          included) evaluate eagerly as part of building the <Advanced>
+          element itself, before <Advanced> ever runs its own `advanced &&
+          when` check — so an unconditional `nextHue()` here would burn a
+          slot every render regardless of whether the panel actually paints,
+          landing every later heading's notch one index late whenever
+          Advanced mode is off. Gating on the same `advanced` flag read
+          directly above keeps the counter honest. */}
       {!loading && !error && (
         <Advanced>
-          <BackupOrderPanel containers={containers} t={t} />
+          <BackupOrderPanel containers={containers} t={t} hueIndex={advanced ? nextHue() : undefined} />
         </Advanced>
       )}
 
-      {/* Stacks panel — one card per detected compose stack, above the list. */}
-      {!loading && !error && <StacksPanel containers={containers} onRestored={() => void loadContainers()} t={t} />}
+      {/* Stacks panel — one card per detected compose stack, above the list.
+          `stackGroups.length > 0 ? nextHue() : undefined`: StacksPanel
+          returns null internally (its own groupStacks() call, computed
+          again from the identical `containers` array) when there are no
+          multi-member stacks — the common case on most setups — so an
+          ungated `nextHue()` here would burn a slot on every render where
+          the panel paints nothing, landing the not-installed heading below
+          one index late. Gating on the parent's own precomputed
+          `stackGroups` (see its own comment above) keeps the counter
+          honest, same reasoning as BackupOrderPanel's `advanced` gate. */}
+      {!loading && !error && (
+        <StacksPanel
+          containers={containers}
+          onRestored={() => void loadContainers()}
+          t={t}
+          hueIndex={stackGroups.length > 0 ? nextHue() : undefined}
+        />
+      )}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3">
@@ -2224,9 +2367,23 @@ export function Containers() {
           <div>
             {/* GlimStone follow-up pass ("half-overlap card notch"):
                 `relative` directly on this <h2> — same bare-heading case as
-                StacksPanel above. */}
+                StacksPanel above.
+                `hueIndex={nextHue()}` (GlimStone follow-up pass, proactive
+                sweep of this same file per the standing colour-engine rule):
+                this badge used to be tone="heading"/size="heading" with no
+                hueIndex at all — a real gap once BackupOrderPanel's and
+                StacksPanel's own notches above can render on the very same
+                page, which silently assumed this was the page's only
+                heading notch and stayed flat --accent while its siblings
+                joined the rainbow (the exact "everything the same colour"
+                pattern this rule exists to catch). Threaded through the
+                same page-wide `nextHue()` counter, in render order after
+                both panels' own calls, so none of the three ever collide on
+                the same rainbow position. */}
             <h2 className="relative flex items-center">
-              <Badge tone="heading" size="heading" wrap>{t("containers.notInstalledTitle")}</Badge>
+              <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>
+                {t("containers.notInstalledTitle")}
+              </Badge>
             </h2>
             <p className="mt-1 text-xs text-carbon-textMuted">
               {t("containers.notInstalledHint")}
