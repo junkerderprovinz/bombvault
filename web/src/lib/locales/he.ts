@@ -214,7 +214,7 @@ const he: Partial<Translations> = {
   "settings.rainbowPalette": "צבע בלוח",
   "settings.rainbowPaletteLabel": "לוח צבעים",
   "settings.quietToasts": "התראות שקטות",
-  "settings.quietToastsHint": "הצג הודעות קופצות רק בעת כשלים. אישורי שמירה והעתקה שגרתיים יישארו שקטים.",
+  "settings.quietToastsHint": "מסתיר הודעות הצלחה כמו אישורי שמירה והעתקה. שגיאות וכל דבר אחר שדורש את תשומת ליבך ימשיכו להיות מוצגים.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -668,6 +668,7 @@ const he: Partial<Translations> = {
   "settings.dashTileInstalledHint": "האריח מופיע בלוח הבקרה של Unraid — אם אינו נראה, הפעילו אותו בניהול האריחים של לוח הבקרה.",
   "settings.dashTileRemove": "הסר תוסף",
   "settings.dashTileRemoving": "מסיר…",
+  "settings.dashTileRemoveOk": "התוסף הוסר. הוא כבר לא מופיע בלוח הבקרה של Unraid.",
 
   // Notifications — SMTP
   "notify.smtp": "אימייל (SMTP)",

@@ -214,7 +214,7 @@ const el: Partial<Translations> = {
   "settings.rainbowPalette": "Χρώμα παλέτας",
   "settings.rainbowPaletteLabel": "Χρωματική παλέτα",
   "settings.quietToasts": "Σιωπηλές ειδοποιήσεις",
-  "settings.quietToastsHint": "Εμφάνιση αναδυόμενων ειδοποιήσεων μόνο για αποτυχίες. Οι συνήθεις επιβεβαιώσεις αποθήκευσης και αντιγραφής παραμένουν σιωπηλές.",
+  "settings.quietToastsHint": "Αποκρύπτει ειδοποιήσεις επιτυχίας όπως επιβεβαιώσεις αποθήκευσης και αντιγραφής. Σφάλματα και οτιδήποτε άλλο χρειάζεται την προσοχή σου εξακολουθούν να εμφανίζονται.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -692,6 +692,7 @@ const el: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Το πλακίδιο εμφανίζεται στον πίνακα ελέγχου του Unraid — αν δεν φαίνεται, ενεργοποιήστε το στη διαχείριση πλακιδίων του πίνακα.",
   "settings.dashTileRemove": "Αφαίρεση πρόσθετου",
   "settings.dashTileRemoving": "Αφαίρεση…",
+  "settings.dashTileRemoveOk": "Το πρόσθετο αφαιρέθηκε. Δεν εμφανίζεται πλέον στον πίνακα ελέγχου του Unraid.",
 
   // Notifications — SMTP
   "notify.smtp": "Email (SMTP)",

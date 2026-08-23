@@ -214,7 +214,7 @@ const es: Partial<Translations> = {
   "settings.rainbowPalette": "Color de la paleta",
   "settings.rainbowPaletteLabel": "Paleta de colores",
   "settings.quietToasts": "Notificaciones silenciosas",
-  "settings.quietToastsHint": "Mostrar avisos emergentes solo para fallos. Las confirmaciones rutinarias de guardado y copia permanecen silenciosas.",
+  "settings.quietToastsHint": "Oculta los avisos de éxito, como las confirmaciones de guardado y copia. Los errores y cualquier otra cosa que requiera tu atención se siguen mostrando.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Contenedores",
@@ -700,6 +700,7 @@ const es: Partial<Translations> = {
   "settings.dashTileInstalledHint": "El mosaico aparece en el panel de Unraid — si no está visible, actívalo en la gestión de mosaicos del panel.",
   "settings.dashTileRemove": "Eliminar plugin",
   "settings.dashTileRemoving": "Eliminando…",
+  "settings.dashTileRemoveOk": "Plugin eliminado. Ya no aparece en el panel de Unraid.",
 
   // Restore-verification drills ("verify restorability")
   "verify.now": "Verificar restaurabilidad",

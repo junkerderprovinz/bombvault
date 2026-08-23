@@ -214,7 +214,7 @@ const ar: Partial<Translations> = {
   "settings.rainbowPalette": "لون اللوحة",
   "settings.rainbowPaletteLabel": "لوحة الألوان",
   "settings.quietToasts": "إشعارات هادئة",
-  "settings.quietToastsHint": "إظهار الإشعارات المنبثقة عند حدوث أخطاء فقط. تبقى تأكيدات الحفظ والنسخ الروتينية صامتة.",
+  "settings.quietToastsHint": "إخفاء إشعارات النجاح مثل تأكيدات الحفظ والنسخ. الأخطاء وأي شيء آخر يحتاج انتباهك سيظل يظهر.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -695,6 +695,7 @@ const ar: Partial<Translations> = {
   "settings.dashTileInstalledHint": "يظهر المربع على لوحة تحكم Unraid — إذا لم يكن ظاهرًا، فعّله من إدارة المربعات في لوحة التحكم.",
   "settings.dashTileRemove": "إزالة الإضافة",
   "settings.dashTileRemoving": "جارٍ الإزالة…",
+  "settings.dashTileRemoveOk": "تمت إزالة الإضافة. لم تعد تظهر في لوحة تحكم Unraid.",
 
   // Email (SMTP)
   "notify.smtp": "البريد الإلكتروني (SMTP)",

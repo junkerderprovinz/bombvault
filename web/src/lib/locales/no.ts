@@ -211,7 +211,7 @@ const no: Partial<Translations> = {
   "settings.rainbowPalette": "Palettfarge",
   "settings.rainbowPaletteLabel": "Fargepalett",
   "settings.quietToasts": "Stille varsler",
-  "settings.quietToastsHint": "Vis kun sprettoppvarsler ved feil. Rutinemessige lagre- og kopieringsbekreftelser forblir stille.",
+  "settings.quietToastsHint": "Skjuler suksessmeldinger som lagre- og kopieringsbekreftelser. Feil og alt annet som krever oppmerksomheten din, vises fortsatt.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontainere",
@@ -665,6 +665,7 @@ const no: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Flisen vises på Unraid-dashbordet — hvis den ikke er synlig, slå den på i dashbordets flisbehandling.",
   "settings.dashTileRemove": "Fjern plugin",
   "settings.dashTileRemoving": "Fjerner…",
+  "settings.dashTileRemoveOk": "Plugin fjernet. Det vises ikke lenger på Unraid-dashbordet.",
 
   // Notifications — email (SMTP)
   "notify.smtp": "E-post (SMTP)",

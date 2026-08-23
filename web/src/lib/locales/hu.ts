@@ -214,7 +214,7 @@ const hu: Partial<Translations> = {
   "settings.rainbowPalette": "Palettaszín",
   "settings.rainbowPaletteLabel": "Színpaletta",
   "settings.quietToasts": "Csendes értesítések",
-  "settings.quietToastsHint": "Csak hibák esetén jelenjenek meg felugró értesítések. A rutin mentési és másolási visszaigazolások csendben maradnak.",
+  "settings.quietToastsHint": "Elrejti a sikeres műveletekről szóló értesítéseket, például a mentési és másolási visszaigazolásokat. A hibák és minden más, ami figyelmet igényel, továbbra is megjelenik.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konténerek",
@@ -671,6 +671,7 @@ const hu: Partial<Translations> = {
   "settings.dashTileInstalledHint": "A csempe az Unraid irányítópultján jelenik meg — ha nem látható, engedélyezze az irányítópult csempekezelőjében.",
   "settings.dashTileRemove": "Bővítmény eltávolítása",
   "settings.dashTileRemoving": "Eltávolítás…",
+  "settings.dashTileRemoveOk": "Bővítmény eltávolítva. Már nem jelenik meg az Unraid irányítópultján.",
 
   // Notifications — SMTP
   "notify.smtp": "E-mail (SMTP)",

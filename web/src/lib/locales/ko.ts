@@ -214,7 +214,7 @@ const ko: Partial<Translations> = {
   "settings.rainbowPalette": "팔레트 색",
   "settings.rainbowPaletteLabel": "색상 팔레트",
   "settings.quietToasts": "알림 최소화",
-  "settings.quietToastsHint": "실패 시에만 팝업 알림을 표시합니다. 저장 및 복사에 대한 일반적인 확인 알림은 표시되지 않습니다.",
+  "settings.quietToastsHint": "저장 및 복사 확인 같은 성공 알림을 숨깁니다. 오류와 주의가 필요한 항목은 계속 표시됩니다.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "컨테이너",
@@ -660,6 +660,7 @@ const ko: Partial<Translations> = {
   "settings.dashTileInstalledHint": "타일은 Unraid 대시보드에 나타납니다 — 보이지 않으면 대시보드의 타일 관리에서 활성화하세요.",
   "settings.dashTileRemove": "플러그인 제거",
   "settings.dashTileRemoving": "제거 중…",
+  "settings.dashTileRemoveOk": "플러그인이 제거되었습니다. 더 이상 Unraid 대시보드에 표시되지 않습니다.",
 
   // Restore-verification drills
   "verify.now": "복원 가능 여부 검증",

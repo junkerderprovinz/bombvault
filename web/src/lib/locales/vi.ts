@@ -214,7 +214,7 @@ const vi: Partial<Translations> = {
   "settings.rainbowPalette": "Màu trong bảng",
   "settings.rainbowPaletteLabel": "Bảng màu",
   "settings.quietToasts": "Thông báo im lặng",
-  "settings.quietToastsHint": "Chỉ hiển thị thông báo bật lên khi có lỗi. Các xác nhận lưu và sao chép thông thường sẽ không hiển thị.",
+  "settings.quietToastsHint": "Ẩn các thông báo thành công như xác nhận lưu và sao chép. Lỗi và mọi thứ khác cần sự chú ý của bạn vẫn sẽ hiển thị.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -684,6 +684,7 @@ const vi: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Ô sẽ xuất hiện trên bảng điều khiển Unraid — nếu không thấy, hãy bật nó trong phần quản lý ô của bảng điều khiển.",
   "settings.dashTileRemove": "Gỡ plugin",
   "settings.dashTileRemoving": "Đang gỡ…",
+  "settings.dashTileRemoveOk": "Đã gỡ plugin. Nó không còn xuất hiện trên bảng điều khiển Unraid nữa.",
 
   // Notifications — Email (SMTP)
   "notify.smtp": "Email (SMTP)",
