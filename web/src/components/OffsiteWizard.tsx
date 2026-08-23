@@ -131,6 +131,7 @@ export function OffsiteWizard({
   save,
   t,
   primary = false,
+  hueIndex,
 }: {
   domain: Domain;
   settings: Settings;
@@ -156,6 +157,21 @@ export function OffsiteWizard({
    * backed by the primary-remote-target API instead of Settings.
    */
   primary?: boolean;
+  /** GlimStone follow-up pass audit fix: this domain's own enclosing Card's
+   *  rainbow position (off-site tab: the SAME `hueIdx` Settings.tsx already
+   *  threads into that Card's own TestConnectionButton/ReplicateNowButton/
+   *  Einrichten toggle) — not a second independent value. Before this fix,
+   *  the Step 3 connection-test button and Step 4 tamper-test button below
+   *  never joined the colour engine at all, so opening the wizard visibly
+   *  de-coloured those two actions in rainbow mode even though every OTHER
+   *  clickable control for the same domain stayed hued. Optional (like
+   *  TestConnectionButton's/ReplicateNowButton's own `hueIndex?`) — a caller
+   *  with no single per-domain hue to offer (PathModeSwitch's remote-mode
+   *  dialog, which shares one hue across five domains' worth of chrome that
+   *  isn't itself hued yet) simply omits it, and both Badges below render
+   *  their flat, un-rainbowed `tone="active"` look, same as any other
+   *  singleton hue-eligible badge with no `hueIndex` passed. */
+  hueIndex?: number;
 }) {
   // Off-site mode never receives "config" (see the Domain/OffsiteDomain
   // comment above) — this narrows once so REPO_KEY/IMM_KEY lookups below
@@ -279,8 +295,26 @@ export function OffsiteWizard({
   // follow-up pass, v8.0.0), so neither mode's "saved"/"error" render (dead
   // for one mode already, now dead for both) is needed — removed below.
   const [immState, setImmState] = useState<SaveState>("idle");
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide: "Wenn
+  // etwas fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!") —
+  // audit fix: toggleImmutable already rolls the optimistic flip back and
+  // pushes a fail toast in BOTH modes below, but never bumped a shake nonce,
+  // unlike every other copy of this exact optimistic-flip+revert shape in the
+  // app (Settings.tsx's toggleDomainEnabled/autoSaveField, VMs.tsx's various
+  // toggles) — despite toggleDomainEnabled explicitly documenting itself as
+  // mirroring THIS function. A genuinely new value forces the Toggle below to
+  // remount (passed as its `key`), so `.glim-shake` replays from its first
+  // frame even for the same domain failing twice in a row — same mechanism as
+  // ToggleRow's own shakeNonce (Settings.tsx).
+  const [immShake, setImmShake] = useState(0);
   const [tamperState, setTamperState] = useState<"idle" | "busy" | "done">("idle");
   const [verdict, setVerdict] = useState<{ testable: boolean; protected: boolean; detail: string } | null>(null);
+  // Audit fix: a FAILURE to even run the tamper test (runTamper's own two
+  // catch-all branches below, the exact "toast+shake standard" target named
+  // by IntegrityCard's own runTamperFor comment in Settings.tsx) pushed a
+  // fail toast but never shook the triggering button — same nonce/key/
+  // className shape as immShake above.
+  const [tamperShake, setTamperShake] = useState(0);
 
   // Step 6 — retention strategy (UI-only; only the budget number persists).
   const [retention, setRetention] = useState<"farside" | "window" | "grow">(
@@ -423,10 +457,12 @@ export function OffsiteWizard({
       } else {
         setTamperState("idle");
         push(r.error ?? t("offsite.tamperError"), "fail");
+        setTamperShake((n) => n + 1);
       }
     } catch (e) {
       setTamperState("idle");
       push(e instanceof Error ? e.message : t("offsite.tamperError"), "fail");
+      setTamperShake((n) => n + 1);
     }
   }
 
@@ -476,6 +512,10 @@ export function OffsiteWizard({
   // (below) is now a toast — the off-site branch (via the shared `save` prop)
   // already got this for free from the prior pass; this brings primary mode to
   // the same behaviour rather than leaving the two modes inconsistent.
+  //
+  // Audit fix: BOTH branches below now also bump immShake on a failed save —
+  // see that state's own doc comment above for why this was a gap despite
+  // being the toast+revert pattern's own named origin.
   async function toggleImmutable(next: boolean) {
     if (primary) {
       if (!primaryLoaded) return; // never save before the config was actually read (mirrors cloudLoaded)
@@ -486,12 +526,14 @@ export function OffsiteWizard({
         if (!r.ok) {
           setPrimaryConfig((prev) => (prev ? { ...prev, immutable: !next } : prev));
           push(r.error ?? t("settings.error"), "fail");
+          setImmShake((n) => n + 1);
           return;
         }
         push(t("settings.saved"), "success");
       } catch (e) {
         setPrimaryConfig((prev) => (prev ? { ...prev, immutable: !next } : prev));
         push(e instanceof Error ? e.message : t("settings.error"), "fail");
+        setImmShake((n) => n + 1);
         return;
       } finally {
         setImmState("idle");
@@ -508,6 +550,7 @@ export function OffsiteWizard({
     if (!ok) {
       // Roll back the optimistic toggle; save() already pushed the reason.
       setSettings((prev) => (prev ? { ...prev, [immKey]: !next } : prev));
+      setImmShake((n) => n + 1);
       return;
     }
     if (next) void runTamper();
@@ -741,16 +784,29 @@ export function OffsiteWizard({
           </div>
         )}
 
-        {/* Connection test */}
+        {/* Connection test. Audit fix: this used to be a plain, un-hued
+            `bg-carbon-surface` <button> — unlike its sibling OUTSIDE the
+            wizard (Settings.tsx's TestConnectionButton), which already reads
+            this same enclosing Card's hueIndex through `Badge tone="active"`,
+            this one never joined the colour engine at all, visibly
+            de-colouring the action in rainbow mode the moment the wizard
+            opened. Reuses the exact text-badge shape this same file's own
+            "regenerate" Badge above already established (`size="small"`),
+            just `tone="active"` + `hueIndex` instead of `tone="neutral"` —
+            this IS a domain action (the same connection probe
+            TestConnectionButton runs), not a neutral utility like
+            copy/regenerate. */}
         <div className="flex items-center gap-3">
-          <button
-            type="button"
+          <Badge
+            as="button"
+            tone="active"
+            size="small"
+            hueIndex={hueIndex}
             onClick={() => void runTest()}
             disabled={testBusy}
-            className="rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
           >
             {testBusy ? t("offsite.testing") : t("offsite.test")}
-          </button>
+          </Badge>
         </div>
       </div>
 
@@ -763,12 +819,13 @@ export function OffsiteWizard({
             <span className="text-xs text-carbon-textMuted">{t("offsite.immutableHint")}</span>
           </div>
           <Toggle
+            key={immShake}
             hideLabel
             label={t("offsite.immutable")}
             checked={immutable}
             onChange={(next) => void toggleImmutable(next)}
             disabled={immState === "saving"}
-            className="mt-0.5"
+            className={`mt-0.5${immShake ? " glim-shake" : ""}`}
           />
         </div>
 
@@ -795,17 +852,29 @@ export function OffsiteWizard({
             actually tamper-proof" persistently — the same "what did the last
             check say" reasoning as IntegrityCard's results. Only a FAILURE to
             even run the test (couldn't reach the backend at all) moved to a
-            toast — see runTamper's own comment. */}
+            toast — see runTamper's own comment.
+            Audit fix: this button had the SAME missing-hueIndex gap as the
+            Step 3 connection-test button above (same un-hued
+            `bg-carbon-surface` shape, same sibling-Card-control comparison),
+            plus its own separate gap — the "couldn't even run" toast never
+            shook the button, unlike every other copy of the toast+shake
+            standard in the app (see tamperShake's own doc comment, and
+            IntegrityCard's runTamperFor in Settings.tsx, the exact site whose
+            comment names this failure case as the standard's target). */}
         {urlBackend === "rest" ? (
           <div className="flex items-center gap-3 flex-wrap">
-            <button
-              type="button"
+            <Badge
+              key={tamperShake}
+              as="button"
+              tone="active"
+              size="small"
+              hueIndex={hueIndex}
               onClick={() => void runTamper()}
               disabled={tamperState === "busy" || !immutable}
-              className="rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className={tamperShake ? "glim-shake" : undefined}
             >
               {tamperState === "busy" ? t("offsite.tamperTesting") : t("offsite.tamperTestNow")}
-            </button>
+            </Badge>
             {tamperState === "done" && verdict && (
               <span className={`text-sm wrap-break-word ${verdictColor}`}>
                 {verdictGlyph && <span aria-hidden="true">{verdictGlyph}&nbsp;</span>}
