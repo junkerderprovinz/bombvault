@@ -255,6 +255,27 @@ interface SelectorCommon {
    *  Default false: every pre-existing "chip" call site keeps its own
    *  content-hugging width. */
   equalWidth?: boolean;
+  /** Bumps the idle "chip" fill one step deeper — `bg-carbon-surface3`
+   *  instead of the default `bg-carbon-surface2` (jdp, live-review: "Aus,
+   *  Täglich, Wöchentlich, Alle N Tage, Cron sollen auch im nicht
+   *  ausgewählten Zustand als Badge erkennbar sein"). CadenceBuilder's own
+   *  mode/weekday pills are the one real consumer: every one of its 8 call
+   *  sites in Settings.tsx wraps the whole builder in its own
+   *  `rounded-card bg-carbon-surface2 p-4` well, so the default idle chip
+   *  fill is the literal SAME token as its own ambient background —
+   *  confirmed live against the running container, an idle pill was
+   *  genuinely indistinguishable from the card behind it until hovered or
+   *  selected, not merely a faint-but-adequate chip. Mirrors the EXACT
+   *  convention CadenceBuilder's own sibling controls (the time/cron/
+   *  everyN `<input>`s, `inputCls`) already use inside that identical well:
+   *  `bg-carbon-surface3`, one step deeper than the surrounding surface2
+   *  box. Ignored under `variant="well"` (that variant's idle segments are
+   *  transparent against their own track, not surface2 — nothing to bump).
+   *  Default false: every other "chip" call site (the Settings tab strip,
+   *  ten toolbar chips) sits directly on a plain page/card background, not
+   *  inside a surface2 well, so their existing idle fill already
+   *  contrasts correctly and stays unchanged. */
+  raised?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
@@ -501,6 +522,7 @@ export function Selector(props: SelectorProps) {
     plain = false,
     variant = "chip",
     equalWidth = false,
+    raised = false,
     disabled = false,
     className = "",
   } = props;
@@ -749,7 +771,9 @@ export function Selector(props: SelectorProps) {
               ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
               : plain
                 ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
+                : raised
+                  ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                  : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
           SIZE[size].gap,
           SIZE[size].text,
           // "chip" keeps its own per-stage padding (the box comes from
