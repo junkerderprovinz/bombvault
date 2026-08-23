@@ -424,7 +424,7 @@ function HooksEditor({
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
         </svg>
         {t("hooks.title")}
         {(initialPre || initialPost) && <span className="text-statusOk">●</span>}
@@ -595,7 +595,7 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
         </svg>
         {t("folders.title")}
       </button>
@@ -718,7 +718,7 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
         </svg>
         {t("stophook.title")}
         {initial.length > 0 && <span className="text-statusOk">●</span>}
@@ -904,7 +904,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
         </svg>
         {t("excludes.title")}
         {initial.length > 0 && <span className="text-statusOk">●</span>}
@@ -974,7 +974,7 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
               className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
-                <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
               </svg>
               {t("excludes.assistTitle")}
             </button>
@@ -1451,7 +1451,7 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           className="shrink-0 inline-flex items-center rounded-control p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-            <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
           </svg>
         </button>
       </div>
@@ -1779,7 +1779,7 @@ function BackupOrderPanel({
           aria-hidden="true"
           className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
         >
-          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
         </svg>
         {!collapsed && (
           <span className="min-w-0 flex-1 text-xs text-carbon-textMuted">{t("backupOrder.hint")}</span>
@@ -1825,7 +1825,7 @@ function BackupOrderPanel({
                     className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path fill="currentColor" d="M1.3 8.7 6 3.3 10.7 8.7Z" />
                     </svg>
                   </button>
                   <button
@@ -1836,7 +1836,7 @@ function BackupOrderPanel({
                     className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path fill="currentColor" d="M1.3 3.3 6 8.7 10.7 3.3Z" />
                     </svg>
                   </button>
                 </li>

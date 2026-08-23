@@ -59,28 +59,41 @@ function roleFor(severity: ToastSeverity): "alert" | "status" {
   return severity === "success" ? "status" : "alert";
 }
 
+// FILLED (design-language.md "Icon glyphs" — GlimStone follow-up round, full
+// icon-fill sweep): each badge shape below was already a closed silhouette
+// (a circle, a triangle) so it flips directly to a solid fill (rule 218);
+// the exclamation mark / checkmark inside each is now punched out in
+// `var(--carbon-surface, ...)` — the toast card's own `bg-carbon-surface` —
+// rather than drawn as a second currentColor fill, so it reads as a genuine
+// cutout against the solid badge the same way the old thin stroke read
+// against the outline (same technique this app already uses for a slider
+// knob/switch dot).
 function ToastGlyph({ severity }: { severity: ToastSeverity }) {
   const className = `mt-0.5 shrink-0 ${SEVERITY_ICON_CLASS[severity]}`;
+  const cutout = "var(--carbon-surface, transparent)";
   if (severity === "fail") {
     return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
-        <circle cx="8" cy="8" r="6.4" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M8 4.8v3.8M8 10.9h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={className}>
+        <circle cx="8" cy="8" r="6.4" />
+        <rect x="7.3" y="4.6" width="1.4" height="4" rx="0.7" fill={cutout} />
+        <circle cx="8" cy="10.9" r="0.85" fill={cutout} />
       </svg>
     );
   }
   if (severity === "warn") {
     return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
-        <path d="M8 2.2 14.5 13.6H1.5L8 2.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-        <path d="M8 6.6v3M8 11.9h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={className}>
+        <path d="M8 2.2 14.5 13.6H1.5L8 2.2Z" />
+        <rect x="7.3" y="6.6" width="1.4" height="3" rx="0.7" fill={cutout} />
+        <circle cx="8" cy="11.9" r="0.85" fill={cutout} />
       </svg>
     );
   }
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
-      <circle cx="8" cy="8" r="6.4" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M5.3 8.2 7.2 10.1 10.7 5.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={className}>
+      <circle cx="8" cy="8" r="6.4" />
+      <rect x="4.5" y="8.4" width="3.5" height="1.5" rx="0.75" fill={cutout} transform="rotate(45 6.25 9.15)" />
+      <rect x="5.815" y="7.25" width="6.27" height="1.5" rx="0.75" fill={cutout} transform="rotate(-50.2 8.95 8)" />
     </svg>
   );
 }
@@ -128,8 +141,11 @@ export function ToastCard({
         aria-label={dismissLabel}
         className="-m-1 shrink-0 rounded-control p-1 text-carbon-textMuted opacity-80 hover:bg-carbon-hover hover:text-carbon-text hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M2.5 2.5l11 11M13.5 2.5l-11 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        {/* FILLED × (design-language.md "Icon glyphs", rule 219) — same
+            technique as Sidebar.tsx's own IconClose, same 16×16 box. */}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" transform="rotate(45 8 8)" />
+          <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" transform="rotate(-45 8 8)" />
         </svg>
       </button>
     </div>

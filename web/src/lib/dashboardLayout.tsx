@@ -247,81 +247,46 @@ function GripIcon() {
   );
 }
 
+// FILLED (design-language.md "Icon glyphs" — GlimStone follow-up round, full
+// icon-fill sweep): all four glyphs below were the last stroke-only icons in
+// the dashboard's per-card control bar. Chevrons are redrawn as filled
+// triangles (rule 219 — a chevron is a line glyph, needs real geometry, not
+// a thicker stroke); the eye and the columns split use the same
+// filled-shape-with-a-surface-colour-cutout technique this app already uses
+// elsewhere for a slider knob/switch dot (rule 220's thin-structural-line
+// case), so the pupil/divider still reads as a gap rather than vanishing
+// into a solid blob.
 function ChevronUpIcon() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="block"
-    >
-      <polyline points="4,10 8,6 12,10" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="block">
+      <path d="M3.2 10.7 8 5.3 12.8 10.7Z" />
     </svg>
   );
 }
 
 function ChevronDownIcon() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="block"
-    >
-      <polyline points="4,6 8,10 12,6" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="block">
+      <path d="M3.2 5.3 8 10.7 12.8 5.3Z" />
     </svg>
   );
 }
 
 function EyeOffIcon() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="block"
-    >
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="block">
       <path d="M2 8s2.4-4 6-4 6 4 6 4-2.4 4-6 4-6-4-6-4Z" />
-      <circle cx="8" cy="8" r="1.6" />
-      <line x1="2.5" y1="2.5" x2="13.5" y2="13.5" />
+      <circle cx="8" cy="8" r="1.6" fill="var(--carbon-surface2, transparent)" />
+      <rect x="0.5" y="7.2" width="15" height="1.6" rx="0.8" transform="rotate(45 8 8)" />
     </svg>
   );
 }
 
 function ColumnsIcon() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="block"
-    >
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="block">
       <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
-      <line x1="8" y1="2.5" x2="8" y2="13.5" />
+      <rect x="7.35" y="3.3" width="1.3" height="9.4" rx="0.65" fill="var(--carbon-surface2, transparent)" />
     </svg>
   );
 }

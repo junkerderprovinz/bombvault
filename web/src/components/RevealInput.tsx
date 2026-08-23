@@ -165,26 +165,26 @@ export function RevealInput({
           // never mirrored/rotated for RTL (design-language.md's RTL section:
           // a symmetric icon with no inherent reading direction, like the
           // reveal eye it names explicitly, never gets mirrored).
-          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true">
-            <path
-              d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinejoin="round"
-              opacity="0.55"
-            />
-            <circle cx="8" cy="8" r="2.1" stroke="currentColor" strokeWidth="1.3" opacity="0.55" />
-            <path d="M2.3 2.3L13.7 13.7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          // FILLED eye (design-language.md "Icon glyphs"): the lens was
+          // already a closed silhouette (rule 218 — direct flip); the pupil
+          // is punched out in the field's own surface colour (same cutout
+          // technique this app uses for a slider knob) rather than drawn as
+          // a second currentColor fill, and the slash is a solid filled bar
+          // (rule 219 — a line glyph needs real geometry) at full opacity
+          // over the dimmed lens+pupil, same 0.55 dim as before.
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
+            <g opacity="0.55">
+              <path d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z" />
+              <circle cx="8" cy="8" r="2.1" fill="var(--carbon-surface2, transparent)" />
+            </g>
+            <rect x="-0.5" y="7.2" width="17" height="1.6" rx="0.8" transform="rotate(45 8 8)" />
           </svg>
         ) : (
-          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true">
-            <path
-              d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinejoin="round"
-            />
-            <circle cx="8" cy="8" r="2.1" stroke="currentColor" strokeWidth="1.3" />
+          // FILLED eye (open state) — same lens, same surface-colour pupil
+          // cutout, no slash, full opacity.
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
+            <path d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z" />
+            <circle cx="8" cy="8" r="2.1" fill="var(--carbon-surface2, transparent)" />
           </svg>
         )}
       </button>

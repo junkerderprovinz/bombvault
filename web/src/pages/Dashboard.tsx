@@ -2333,21 +2333,18 @@ export function Dashboard() {
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
           }`}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M4 20h4L18.5 9.5a2.121 2.121 0 0 0-3-3L5 17v3z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M13.5 6.5l3 3"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          {/* FILLED pencil (design-language.md "Icon glyphs", rule 218 —
+              already a closed silhouette under its old stroke, so it flips
+              directly: same path data, `fill="currentColor"`). The old
+              facet-highlight line is dropped rather than faked as a
+              surface-colour cutout — this button's own background flips
+              between `bg-carbon-surface2` and `bg-accent` (the `editing`
+              state above), so a cutout hard-coded to one of those two colours
+              would show a visible mismatched patch in the other; the plain
+              pencil silhouette alone already reads clearly as "edit" without
+              it. */}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M4 20h4L18.5 9.5a2.121 2.121 0 0 0-3-3L5 17v3z" />
           </svg>
         </button>
       </div>
