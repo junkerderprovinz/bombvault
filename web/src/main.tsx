@@ -8,7 +8,7 @@ import { applyStoredTheme } from "./lib/theme";
 import { applyStoredLanguage } from "./lib/i18n";
 import { applyStoredAccent } from "./lib/accent";
 import { applyStoredRainbow } from "./lib/appearance";
-import { applyStoredShape } from "./lib/shape";
+import { applyStoredShape, armShapeTransitions } from "./lib/shape";
 import { applyStoredMotionIntensity } from "./lib/motion";
 
 // Apply persisted preferences before first paint (flash prevention).
@@ -26,3 +26,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </AdvancedProvider>
   </React.StrictMode>
 );
+
+// GlimStone motion-engine, animation 1 (shape-morph) — armed two animation
+// frames after the render call above, never before: see armShapeTransitions()'s
+// own comment in lib/shape.ts for why two frames, not zero or one.
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    armShapeTransitions();
+  });
+});

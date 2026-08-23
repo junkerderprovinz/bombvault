@@ -25,7 +25,7 @@
 // getRainbow() read. See the "persists the CLAMPED/REJECTED..." and
 // "converges" tests below.
 // ---------------------------------------------------------------------------
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RAINBOW, RAINBOW_OFF, applyRainbow, getRainbow, setRainbow } from "./appearance";
 
 const STORAGE_KEY = "bv-rainbow";
@@ -43,12 +43,33 @@ const CUSTOM_PALETTE = [
 
 beforeEach(() => {
   localStorage.clear();
+  // Fake timers — GlimStone motion-engine, animation 4 (colour-wipe):
+  // applyRainbow() now schedules a real setTimeout (beginColourWipe(), see
+  // that function's own comment in appearance.ts) whenever data-rainbow
+  // actually changes, and this file's OWN beforeEach below deliberately
+  // drives a real on→off→on sequence across many tests sharing one module
+  // instance — without fake timers each of those would leave a genuine
+  // pending 500ms browser timer running past the end of its test.
+  vi.useFakeTimers();
+  document.documentElement.classList.remove("bv-colour-wipe");
   // Drive the module back to a known, fully-off baseline. appearance.ts
   // holds `state` at module scope deliberately (see its own "Live state"
   // comment) — applyRainbow() resets both that singleton and the DOM
   // attribute/properties, so this also isolates `state` between tests
   // sharing this same module instance within the test file/process.
   applyRainbow(RAINBOW_OFF);
+  // The reset above can itself be a genuine on→off flip carried over from
+  // the PREVIOUS test (module state, including the colour-wipe's own
+  // wipeMounted/wipeLastAttr, persists across `it()` blocks in this file —
+  // same reasoning as the comment above) and so can legitimately arm a
+  // wipe of its own; clear it here so every test starts from a clean,
+  // wipe-free baseline regardless of what the previous test left mid-flight.
+  vi.runOnlyPendingTimers();
+  document.documentElement.classList.remove("bv-colour-wipe");
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("applyRainbow — data-rainbow attribute", () => {
@@ -184,5 +205,54 @@ describe("setRainbow", () => {
     expect(third.seed).toBe(clamped);
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
     expect(stored.seed).toBe(clamped);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GlimStone motion-engine, animation 4 — colour-wipe. index.css's own
+// ".bv-colour-wipe" rule (inside @media (prefers-reduced-motion:
+// no-preference)) is what actually turns this class into a transition; this
+// suite only covers the JS half's WIRING — that the class lands on a real
+// flip, never on a no-op re-apply, and comes back off on its own.
+// ---------------------------------------------------------------------------
+describe("applyRainbow — colour-wipe class", () => {
+  it("adds .bv-colour-wipe on a real off→on flip", () => {
+    applyRainbow({ on: true, reactive: false });
+    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+  });
+
+  it("adds .bv-colour-wipe on an on→reactive flip (still a resolved-attribute change)", () => {
+    applyRainbow({ on: true, reactive: false });
+    vi.runOnlyPendingTimers();
+    document.documentElement.classList.remove("bv-colour-wipe");
+    applyRainbow({ on: true, reactive: true });
+    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+  });
+
+  it("does NOT add .bv-colour-wipe on a no-op re-apply of the identical resolved state", () => {
+    applyRainbow({ on: true, reactive: false });
+    vi.runOnlyPendingTimers();
+    document.documentElement.classList.remove("bv-colour-wipe");
+    // Same on/reactive as above — a different call (e.g. re-applying a
+    // stored palette edit) but the resolved data-rainbow value is unchanged.
+    applyRainbow({ on: true, reactive: false, seed: 3 });
+    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(false);
+  });
+
+  it("removes .bv-colour-wipe again after its own timer fires", () => {
+    applyRainbow({ on: true, reactive: false });
+    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+    vi.runOnlyPendingTimers();
+    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(false);
+  });
+
+  it("restarts its own timer on a second rapid flip instead of removing the class early", () => {
+    applyRainbow({ on: true, reactive: false }); // t=0: timer A armed, due at t=500
+    vi.advanceTimersByTime(200); // t=200
+    applyRainbow({ on: true, reactive: true }); // second flip: clears A, arms timer B due at t=700
+    vi.advanceTimersByTime(400); // t=600 — B (t=700) not due yet; had A survived it WOULD have fired at 500
+    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+    vi.advanceTimersByTime(150); // t=750 — past B's own t=700
+    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(false);
   });
 });

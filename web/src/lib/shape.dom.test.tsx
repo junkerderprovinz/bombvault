@@ -13,13 +13,14 @@
 // already have for their own sibling appearance settings.
 // ---------------------------------------------------------------------------
 import { beforeEach, describe, expect, it } from "vitest";
-import { SHAPES, applyShape, getShape, setShape, type Shape } from "./shape";
+import { SHAPES, applyShape, armShapeTransitions, getShape, setShape, type Shape } from "./shape";
 
 const STORAGE_KEY = "bv-shape";
 
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.removeAttribute("data-shape");
+  document.documentElement.classList.remove("bv-shape-transitions");
 });
 
 describe("SHAPES", () => {
@@ -87,5 +88,35 @@ describe("setShape", () => {
     const stored: Shape | null = localStorage.getItem(STORAGE_KEY) as Shape | null;
     expect(stored).toBe("round");
     expect(getShape()).toBe("round");
+  });
+});
+
+// GlimStone motion-engine, animation 1 (shape-morph) — armShapeTransitions()
+// only ever ADDS the class main.tsx arms two frames after boot; index.css's
+// own "Round 2, item 1" rule is what actually turns its presence into a
+// live `transition: border-radius`. This suite covers only the JS-side
+// contract: absent until armed, present (and idempotent) once armed.
+describe("armShapeTransitions", () => {
+  it("does not add .bv-shape-transitions until called", () => {
+    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(false);
+  });
+
+  it("adds .bv-shape-transitions when called", () => {
+    armShapeTransitions();
+    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(true);
+  });
+
+  it("is idempotent — calling it again never removes or duplicates the class", () => {
+    armShapeTransitions();
+    armShapeTransitions();
+    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(true);
+    expect(document.documentElement.className.split(/\s+/).filter((c) => c === "bv-shape-transitions").length).toBe(1);
+  });
+
+  it("a subsequent setShape() call after arming leaves the class in place", () => {
+    armShapeTransitions();
+    setShape("soft");
+    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(true);
+    expect(document.documentElement.getAttribute("data-shape")).toBe("soft");
   });
 });
