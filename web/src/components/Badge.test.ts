@@ -178,10 +178,18 @@ describe("Badge — shape", () => {
     expect(cls).toContain("rounded-control");
   });
 
-  it("square shape uses rounded-none", () => {
+  // FIXED (GlimStone follow-up round, jdp's live review of the off-site
+  // tab's four square icon badges: "nicht in der Formengine... die sind
+  // falsch eingefaerbt"): `square` used to hard-code `rounded-none` (0px,
+  // in EVERY shape-engine mode) instead of reading the shape engine's own
+  // --radius-control token like every other control does — the same mistake
+  // pattern as a Selector or field ignoring the shape engine. Now shares the
+  // exact same `rounded-control` class `rounded` uses below.
+  it("square shape reads the shape-engine's own rounded-control token, not a hard-coded 0", () => {
     const el = root(Badge({ children: "x", shape: "square" }));
     const cls = el.props!.className as string;
-    expect(cls).toContain("rounded-none");
+    expect(cls).toContain("rounded-control");
+    expect(cls).not.toContain("rounded-none");
   });
 
   it("circle shape uses rounded-pill, locks aspect-square, and zeroes horizontal padding", () => {
@@ -417,6 +425,45 @@ describe("Badge — hueIndex (rainbow position) and the card-wide reactive-hover
     const cls = el.props!.className as string;
     expect(cls).toContain("glim-hue");
     expect(cls).not.toContain("glim-notch-hue");
+  });
+});
+
+// GlimStone follow-up round (jdp's live review of the off-site tab's four
+// icon-only "active" badges, on top of the earlier "farbige Schrift" fix
+// that made this branch neutral-ink-on-a-wash in the first place): "die sind
+// falsch eingefaerbt, so halb abgedunkelt" — bg-accentSoft IS a 14%-alpha
+// wash (the exact same "half-darkened" failure mode tone="heading" above
+// already fixed once), so an icon-only tone="active" badge gets the
+// identical treatment: full solid bg-accent, computed-contrast ink.
+describe("Badge — icon-only tone=\"active\" (tip set) uses a full solid fill, not the accent-soft wash", () => {
+  it("renders bg-accent + text-accentContrast, never the accent-soft wash or the old flat neutral ink", () => {
+    const el = root(Badge({ children: "!", as: "button", tone: "active", shape: "square", tip: "Test" }));
+    const cls = el.props!.className as string;
+    const tokens = cls.split(/\s+/);
+    expect(tokens).toContain("bg-accent");
+    expect(tokens).toContain("text-accentContrast");
+    expect(tokens).not.toContain("bg-accentSoft");
+    expect(tokens).not.toContain("text-carbon-textSub");
+  });
+
+  it("still holds with a hueIndex — a rainbow-positioned icon badge is a solid hue fill, not a hued wash", () => {
+    const el = root(
+      Badge({ children: "!", as: "button", tone: "active", shape: "square", tip: "Test", hueIndex: 1 })
+    );
+    const cls = el.props!.className as string;
+    const tokens = cls.split(/\s+/);
+    expect(tokens).toContain("bg-accent");
+    expect(tokens).toContain("text-accentContrast");
+    expect(tokens).toContain("glim-hue");
+    expect(tokens).not.toContain("bg-accentSoft");
+  });
+
+  it("a non-icon-only tone=\"active\" text badge is unaffected — still the soft wash + text-accentText pairing", () => {
+    const el = root(Badge({ children: "running", tone: "active" }));
+    const cls = el.props!.className as string;
+    const tokens = cls.split(/\s+/);
+    expect(tokens).toContain("bg-accentSoft");
+    expect(tokens).toContain("text-accentText");
   });
 });
 

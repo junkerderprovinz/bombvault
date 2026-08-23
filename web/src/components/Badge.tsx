@@ -308,14 +308,35 @@ export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon" | "fie
 // Four shapes per the design language's Badges section: pill (fully round,
 // standalone chips/count badges), rounded (small fixed radius, compact
 // inline badges — the default, matching every predecessor's rounded-control),
-// square (0, mirrors the shape engine's square setting), circle (pill radius
-// again but width locked to height, for icon-only/single-glyph badges — same
+// square (a square-ASPECT icon badge — see `iconOnly`/`tip` — that still
+// tracks the shape engine's own --radius-control token, exactly like
+// `rounded` below; kept as its own named value purely so a call site reads
+// as "this is a square icon tile" rather than "this is a rounded text chip",
+// not because the two resolve to different CSS), circle (pill radius again
+// but width locked to height, for icon-only/single-glyph badges — same
 // radius as pill, distinct semantic use). Deliberately NOT the percentage-
 // capped `min(var(--radius-pill), 50%)` formula: a CSS percentage
 // border-radius resolves per-axis into an ellipse, not a stadium, so the
 // plain length-based `rounded-pill` token (which already auto-scales
 // correctly against this component's own fixed per-stage heights) is used
 // as-is, with zero cap needed.
+//
+// FIXED (GlimStone follow-up round, jdp's live review of the off-site tab's
+// four square icon badges — "nicht in der Formengine... die sind falsch
+// eingefärbt"): `square` used to hard-code `rounded-none` (literal 0px
+// corners, ALWAYS, in every shape-engine mode) — see RADIUS_CLASSES below.
+// That was a real shape-engine miss, the SAME mistake pattern as if a
+// Selector or any other control ignored `--radius-control`: with the app's
+// shape engine set to "soft" or "round", these four badges stayed hard
+// square instead of picking up the user's own chosen corner roundness,
+// because the doc comment above (kept, now corrected) conflated "this
+// component's own shape option named square" with "the global shape
+// engine's square PRESET" and hard-coded the latter's value (0) instead of
+// reading the engine's live token. Fixed by pointing `square` at the exact
+// same `rounded-control` class `rounded` already uses — a square-aspect
+// badge now renders 0 corners in "square" mode, genuinely rounded corners in
+// "soft"/"round" mode, verified live with getComputedStyle against all three
+// shape-engine settings.
 export type BadgeShape = "pill" | "rounded" | "square" | "circle";
 
 // warn uses --status-warn-bg-STRONG, not the plain --status-warn-bg: the
@@ -378,8 +399,14 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
 
 const RADIUS_CLASSES: Record<BadgeShape, string> = {
   pill: "rounded-pill",
+  // square: shape-engine token, not a literal 0 — see BadgeShape's own doc
+  // comment above for the live bug this fixes (a square-aspect badge used to
+  // stay hard-square in every shape-engine mode; now it reads the SAME
+  // --radius-control token `rounded` does, so "soft"/"round" genuinely
+  // rounds its corners and "square" still resolves to 0 via that token's own
+  // [data-shape="square"] value).
+  square: "rounded-control",
   rounded: "rounded-control",
-  square: "rounded-none",
   circle: "rounded-pill",
 };
 
@@ -587,25 +614,49 @@ function badgeClassName({
   // identical solid accent fill whether or not it's also the notch size.
   //
   // isIconOnly && tone==="active" is the one exception to reusing
-  // TONE_CLASSES verbatim (GlimStone follow-up round, jdp's live review of
-  // the converted off-site buttons, emphatic and specific: "Die Buttons ...
-  // haben farbige Schrift" — the coloured TEXT itself, not the tinted
-  // background wash, was the complaint; the wash stays, per the same
-  // request's own "hueIndex/Farbengine... war schon richtig" framing). A
-  // text badge's `text-accentText` ink is only legible BECAUSE it carries the
-  // hue — there is no text left to read once the content is a bare glyph, so
-  // that reasoning no longer applies, and design-language's own established
-  // "icons carry no colour of their own, only the badge does" rule (already
-  // the reason IconAdd/IconTrash render `currentColor` inside a plain
-  // `text-carbon-textSub` button, Settings.tsx's Registries card) takes over
-  // instead: `text-carbon-textSub`, the same neutral ink every other
-  // icon-only badge in the app already reads its glyph colour from, riding
-  // on the UNCHANGED hued `bg-accentSoft` wash underneath it. Every other
-  // tone/isIconOnly combination (a text chip, or an icon-only badge of any
-  // OTHER tone — none exist live today, but nothing here assumes otherwise)
-  // keeps the plain TONE_CLASSES lookup untouched.
+  // TONE_CLASSES verbatim.
+  //
+  // ROUND 1 (GlimStone follow-up round, jdp's live review of the converted
+  // off-site buttons, emphatic and specific: "Die Buttons ... haben farbige
+  // Schrift" — the coloured TEXT itself, not the tinted background wash, was
+  // the complaint). A text badge's `text-accentText` ink is only legible
+  // BECAUSE it carries the hue — there is no text left to read once the
+  // content is a bare glyph, so that reasoning no longer applies, and
+  // design-language's own established "icons carry no colour of their own,
+  // only the badge does" rule (already the reason IconAdd/IconTrash render
+  // `currentColor` inside a plain `text-carbon-textSub` button, Settings.tsx's
+  // Registries card) took over instead: `text-carbon-textSub`, the same
+  // neutral ink every other icon-only badge in the app already reads its
+  // glyph colour from — riding on the UNCHANGED hued `bg-accentSoft` wash
+  // underneath it.
+  //
+  // ROUND 2, THIS FIX (jdp's next live-review round, on those same four
+  // badges: "die sind falsch eingefärbt, so halb abgedunkelt, das soll nicht
+  // so sein"): `bg-accentSoft` IS a 14%-alpha wash (`--accent-soft: rgba(...,
+  // 0.14)`/`--item-hue-soft` — see index.css/appearance.ts) — the EXACT same
+  // "half-darkened" failure mode this file's own tone="heading" section
+  // documents fixing once already (a translucent accent-into-surface wash
+  // reads as pale/dimmed no matter its alpha, full stop). Round 1 only ever
+  // touched the TEXT colour and explicitly left "the wash stays" — but the
+  // wash was the actual bug jdp is now naming directly. Fixed the same way:
+  // drop the wash, use the full solid `bg-accent` fill instead — which,
+  // exactly like tone="heading", now needs a computed-contrast ink rather
+  // than a flat neutral one (`text-carbon-textSub` was only ever safe against
+  // a PALE 14%-wash background; measured live against the RAINBOW palette's
+  // own solid hues once the fill went opaque, several dropped to ~1.0–1.8:1
+  // in dark theme and ~2.5–4.9:1 in light theme — a real contrast failure,
+  // the identical premise-no-longer-holds reasoning tone="heading" already
+  // gives for why IT moved off `text-carbon-textSub` onto `text-accentContrast`
+  // when ITS fill went from wash to solid). `text-accentContrast` is still a
+  // NEUTRAL ink in the sense the design-language rule actually cares about —
+  // computed black/white (`contrastOn()`/`--item-hue-ink`), carrying no hue of
+  // its own — it only stops being the specific token `text-carbon-textSub`,
+  // which was tuned for a pale wash background this badge no longer has.
+  // Every other tone/isIconOnly combination (a text chip, or an icon-only
+  // badge of any OTHER tone — none exist live today, but nothing here assumes
+  // otherwise) keeps the plain TONE_CLASSES lookup untouched.
   const toneClasses =
-    isIconOnly && tone === "active" ? "bg-accentSoft text-carbon-textSub" : TONE_CLASSES[tone];
+    isIconOnly && tone === "active" ? "bg-accent text-accentContrast" : TONE_CLASSES[tone];
 
   return [
     "inline-flex box-border items-center justify-center gap-1 font-medium",
