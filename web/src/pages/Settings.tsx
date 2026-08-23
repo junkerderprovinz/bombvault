@@ -96,7 +96,18 @@ function Card({
   children,
   hueIndex,
 }: {
-  title: string;
+  /** GlimStone follow-up pass (live-review, "Bei allen Zeitplanpicker Cards
+   *  soll der Name raus... das ist redundant"): optional, not required —
+   *  the four Schedules-tab domain-schedule Cards (Containers/VMs/Flash/
+   *  Folders) drop their own title entirely because CadenceBuilder's own
+   *  `<legend>{label}</legend>` right inside them already names the same
+   *  domain, one level down. Omitting `title` while still passing `hint`
+   *  (see below) still renders the heading Badge — just without the now-
+   *  redundant text — so the Card keeps its rainbow-hue notch instead of
+   *  silently losing it the moment a title goes away (never regress a
+   *  control's hue wiring, see this repo's own standing rule). A Card with
+   *  neither `title` nor `hint` renders no heading at all. */
+  title?: string;
   /** Optional one-line explanation of what this whole Card does, rendered as
    *  a neutral (i) beside the title (design-language.md rule 8, "explanations
    *  live in a bubble, not on the page") instead of a permanent grey <p>
@@ -163,12 +174,14 @@ function Card({
           level 2: Off-site Copy"), but its VISIBLE content is now a Badge
           (tone="heading" size="heading" — see Badge.tsx's file header for
           the full colour/size reasoning). */}
-      <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
-          {title}
-          {hint && <InfoBubble tip={hint} onAccent />}
-        </Badge>
-      </h2>
+      {(title || hint) && (
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
+            {title}
+            {hint && <InfoBubble tip={hint} onAccent />}
+          </Badge>
+        </h2>
+      )}
       {children}
     </div>
   );
@@ -3472,7 +3485,12 @@ function ContainersSection({
   const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
 
   return (
-    <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
+    // GlimStone follow-up pass ("Bei allen Zeitplanpicker Cards soll der
+    // Name raus... das ist redundant"): `title` dropped — CadenceBuilder's
+    // own <legend> right below already names "Containers"; `hint` stays,
+    // so the heading Badge still renders (icon-only) and keeps this Card's
+    // rainbow-hue notch instead of losing it, see Card's own doc comment.
+    <Card hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
       {/* Cadence row */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
@@ -3559,7 +3577,9 @@ function VMsSection({
   const included = vms.filter((v) => v.includeInSchedule);
 
   return (
-    <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
+    // See ContainersSection's own comment above — same redundant-title
+    // removal, same "hint keeps the notch alive" reasoning.
+    <Card hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3632,7 +3652,14 @@ function FlashSection({
   const status = scheduleStatus(schedule);
 
   return (
-    <Card title={t("jobs.flashSection")} hueIndex={hueIndex}>
+    // Redundant-title removal (see ContainersSection's own comment above) —
+    // this Card had no `hint` at all before, so one is added here purely to
+    // keep the heading Badge (and this Card's rainbow-hue notch) alive
+    // without a title: unlike Containers/VMs/Folders, Flash has no
+    // per-item member list to explain, so its hint instead states what a
+    // Flash backup actually covers (mirrors settings.flashEnabledHint's own
+    // content, scoped to "at the scheduled time" like its three siblings).
+    <Card hint={t("jobs.flashScheduleHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3656,15 +3683,25 @@ function FlashSection({
             nothing yet") someone hits while confused about why a saved
             Flash schedule never runs, not a one-time "what does this do"
             explainer. Same carve-out category as notify.healthchecksLifecycle
-            above (NotifyCard's own header comment). */}
+            above (NotifyCard's own header comment).
+              Live-review round (jdp, Task 7 — "Wieso steht in der Flash
+            Zeitplan Card die Zeile mit dem Text 'Unraid Flash-
+            Konfiguration'? Kann das nicht weg?"): that was a SEPARATE
+            trailing "member row" below this paragraph (dot + name +
+            "planned" status, styled like a ContainersSection/VMsSection
+            member-list row) — removed outright, along with its now-orphaned
+            jobs.flashRow/jobs.flashPlanned keys, since Flash has no actual
+            per-item collection to list and the row conveyed nothing this
+            paragraph doesn't already say. THIS paragraph is deliberately
+            kept: jdp's own task description explicitly carves out "the Flash
+            cadence itself not being wired to a real backend job yet" as the
+            still-true, genuinely-different case — which is exactly what this
+            says (the executor isn't implemented), as opposed to the removed
+            row's purely decorative, redundant "planned" restatement of the
+            same fact. */}
         {!syncSchedules && (
           <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.flashNotImplemented")}</p>
         )}
-      </div>
-      <div className="flex items-center gap-3 py-2 text-sm border-t border-carbon-border">
-        <div className="w-2 h-2 rounded-full bg-carbon-surface3 shrink-0" />
-        <span className="font-medium text-carbon-text flex-1">{t("jobs.flashRow")}</span>
-        <span className="text-xs text-carbon-textMuted italic">{t("jobs.flashPlanned")}</span>
       </div>
     </Card>
   );
@@ -3676,6 +3713,7 @@ function FlashSection({
 // same {enabled} flag the Files tab edits) — they are not part of the SaveBar.
 function FilesSection({
   settings,
+  syncSchedules,
   fileSets,
   onChange,
   onSetsChanged,
@@ -3683,6 +3721,13 @@ function FilesSection({
   hueIndex,
 }: {
   settings: Settings;
+  /** #? — "Container-Zeitplan auch für VMs, Flash und Ordner verwenden"
+   *  (jdp, live-review): Folders now follows the same sync toggle VMs/Flash
+   *  already had, mirroring their exact pattern below (schedule resolves to
+   *  the Containers cadence while synced, its own CadenceBuilder disabled
+   *  meanwhile). Previously this section had no syncSchedules concept at
+   *  all and always used its own independent settings.filesSchedule. */
+  syncSchedules: boolean;
   fileSets: FileSetView[];
   onChange: (schedule: string) => void;
   /** A toggle PATCHed a set — reload the list so the rows reflect the server. */
@@ -3691,7 +3736,7 @@ function FilesSection({
   hueIndex?: number;
 }) {
   const { push } = useToast();
-  const schedule = settings.filesSchedule;
+  const schedule = syncSchedules ? settings.containersSchedule : settings.filesSchedule;
   const status = scheduleStatus(schedule);
   // Per-set toggle busy state, keyed by set id.
   const [busy, setBusy] = useState<Record<string, boolean>>({});
@@ -3713,7 +3758,8 @@ function FilesSection({
   }
 
   return (
-    <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
+    // Redundant-title removal (see ContainersSection's own comment above).
+    <Card hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3729,6 +3775,7 @@ function FilesSection({
         <CadenceBuilder
           label={t("jobs.filesSection")}
           value={schedule}
+          disabled={syncSchedules}
           onChange={onChange}
         />
       </div>
@@ -3771,11 +3818,19 @@ function FilesSection({
 function RestoreChecksSection({
   settings,
   update,
+  busy,
+  shake,
   t,
   hueIndex,
 }: {
   settings: Settings;
   update: (patch: Partial<Settings>) => void;
+  /** Task 5 auto-save (no Speichern button on this tab anymore): busy/shake
+   *  feedback for this Card's two plain booleans, keyed the same way
+   *  domainToggleBusy/domainToggleShake and mergedFieldBusy/mergedFieldShake
+   *  already are elsewhere — see SettingsPage's own autoSaveScheduleField. */
+  busy?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", boolean>>;
+  shake?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", number>>;
   t: ReturnType<typeof useT>["t"];
   hueIndex?: number;
 }) {
@@ -3786,6 +3841,8 @@ function RestoreChecksSection({
         label={t("verify.auto")}
         checked={settings.drillsEnabled}
         onChange={(v) => update({ drillsEnabled: v })}
+        disabled={busy?.drillsEnabled}
+        shakeNonce={shake?.drillsEnabled}
       />
       {/* Sub-toggle: only meaningful while scheduled drills are on. ToggleRow
           itself dims its switch AND its caption/description together — no
@@ -3794,8 +3851,9 @@ function RestoreChecksSection({
         label={t("settings.offsiteDrills")}
         hint={t("settings.offsiteDrillsHelp")}
         checked={settings.offsiteDrillsEnabled}
-        disabled={!settings.drillsEnabled}
+        disabled={!settings.drillsEnabled || busy?.offsiteDrillsEnabled}
         onChange={(v) => update({ offsiteDrillsEnabled: v })}
+        shakeNonce={shake?.offsiteDrillsEnabled}
       />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
@@ -4198,17 +4256,51 @@ export function SettingsPage() {
 
   // Schedules tab (migrated from the retired Plans page). The container list
   // feeds the Containers schedule section's included-members list; syncSchedules
-  // applies the Containers cadence to VMs + Flash; schedSave* drives its SaveBar.
+  // applies the Containers cadence to VMs + Flash + Folders.
   const [containers, setContainers] = useState<Container[]>([]);
   // VMs feed the VMs schedule section's per-item override list (#121).
   const [vms, setVMs] = useState<VM[]>([]);
   // File sets feed the Files schedule section's member list (live enabled toggles).
   const [fileSets, setFileSets] = useState<FileSetView[]>([]);
   const [syncSchedules, setSyncSchedules] = useState(false);
-  const [schedSaveState, setSchedSaveState] = useState<SaveState>("idle");
-  const [schedSaveError, setSchedSaveError] = useState<string | null>(null);
+  // Task 5 (live-review — "Speichern-Buttons können weg, es soll immer alles
+  // live gespeichert werden"): this whole tab used to funnel every field
+  // (buildSchedulePatch, now gone — see scheduleField/autoSaveScheduleField
+  // below) into ONE bottom SaveBar keyed on this pair. No SaveBar reads them
+  // anymore — only the setters survive, as the callback params save()/
+  // debouncedSave still require. Same "only the setters are needed" shape as
+  // setDomSaveState/setDomSaveError above (see that comment for the full
+  // reasoning) — save()'s own toast already reports every outcome.
+  const [, setSchedSaveState] = useState<SaveState>("idle");
+  const [, setSchedSaveError] = useState<string | null>(null);
+  // Task 5's plain-boolean half of the schedules-tab auto-save conversion:
+  // perItemSchedules (Task 1's new ToggleRow), catchUpMissed (Missed
+  // schedules Card) and RestoreChecksSection's own drillsEnabled/
+  // offsiteDrillsEnabled — a dedicated key/map pair rather than widening
+  // MergedAutoSaveKey/mergedFieldBusy/mergedFieldShake above: that type and
+  // its two maps are named for, and documented against, the Paths & Storage
+  // merge specifically, and folding an unrelated tab's fields into it would
+  // make the name lie about what it covers. See autoSaveScheduleField below
+  // for the actual save function (same optimistic-flip + revert + shake
+  // shape as autoSaveField/toggleDomainEnabled).
+  type ScheduleBoolKey =
+    | "perItemSchedules"
+    | "catchUpMissed"
+    | "drillsEnabled"
+    | "offsiteDrillsEnabled";
+  const [schedFieldBusy, setSchedFieldBusy] = useState<Partial<Record<ScheduleBoolKey, boolean>>>({});
+  const [schedFieldShake, setSchedFieldShake] = useState<Partial<Record<ScheduleBoolKey, number>>>({});
+  // The "sync" toggle itself isn't a Settings field (syncSchedules above is
+  // local UI state derived from whether the domain schedules already match),
+  // so it can't go through autoSaveScheduleField's Settings-keyed generic —
+  // see handleSyncSchedulesToggle below for its own dedicated busy/shake pair.
+  const [syncToggleBusy, setSyncToggleBusy] = useState(false);
+  const [syncToggleShake, setSyncToggleShake] = useState(0);
   // Health-gated ordered restart (#119) — its own save state, same
-  // baseline-merging save() as the other cards on this tab.
+  // baseline-merging save() as the other cards on this tab. Explicitly NOT
+  // part of Task 5's auto-save conversion — a DIFFERENT settings group
+  // (restartHealthWait/restartHealthTimeoutSec) with its own still-manual
+  // SaveBar further down, left untouched on purpose.
   const [restartSaveState, setRestartSaveState] = useState<SaveState>("idle");
   const [restartSaveError, setRestartSaveError] = useState<string | null>(null);
 
@@ -4229,12 +4321,18 @@ export function SettingsPage() {
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           if (res.platform) setPlatformKind(res.platform);
           // Detect whether the domain schedules are already in sync (Containers ==
-          // VMs == Flash, and not off), so the Schedules tab's sync checkbox
-          // reflects it on load. Reproduced from the retired Plans page.
+          // VMs == Flash == Folders, and not off), so the Schedules tab's sync
+          // toggle reflects it on load. Reproduced from the retired Plans page;
+          // filesSchedule added to the comparison alongside Task 2's own
+          // extension of the toggle's live effect to cover Folders too — without
+          // it, a server state where Containers/VMs/Flash already matched but
+          // Folders didn't would show the toggle ON while Folders still quietly
+          // held its own independent value until the next edit.
           const s = res.settings;
           if (
             s.vmsSchedule === s.containersSchedule &&
             s.flashSchedule === s.containersSchedule &&
+            s.filesSchedule === s.containersSchedule &&
             s.containersSchedule !== "off" &&
             s.containersSchedule !== ""
           ) {
@@ -4315,22 +4413,39 @@ export function SettingsPage() {
     return () => window.removeEventListener("hashchange", applyHash);
   }, []);
 
-  // While "sync" is on, mirror the Containers cadence onto VMs + Flash in live
-  // state (not just in the save patch), so unchecking sync doesn't snap the
-  // VM/Flash editors back to stale pre-sync values. The equality guard stops
-  // re-renders from looping. Reproduced verbatim from the retired Plans page.
+  // While "sync" is on, mirror the Containers cadence onto VMs + Flash +
+  // Folders (Task 2 — "der toggle soll auch ordner einschließen") in live
+  // state (not just in the save patch), so unchecking sync doesn't snap
+  // those editors back to stale pre-sync values. The equality guard stops
+  // re-renders from looping. Reproduced from the retired Plans page, with
+  // filesSchedule folded in alongside the original vms/flash pair, and a
+  // Task 5 auto-save persist: editing the Containers cadence WHILE synced
+  // (e.g. typing in its cron field) used to only ever update local state,
+  // relying on the bottom SaveBar to persist the mirrored fields later — now
+  // debouncedSave (keyed "schedSync", independent of containersSchedule's
+  // own "containersSchedule" debounce key below) coalesces rapid edits into
+  // one PATCH of the three mirrored fields, 800ms after the last change.
   useEffect(() => {
-    if (!syncSchedules) return;
-    setSettings((prev) => {
-      if (!prev) return prev;
-      if (
-        prev.vmsSchedule === prev.containersSchedule &&
-        prev.flashSchedule === prev.containersSchedule
-      ) {
-        return prev;
-      }
-      return { ...prev, vmsSchedule: prev.containersSchedule, flashSchedule: prev.containersSchedule };
+    if (!syncSchedules || !settings) return;
+    const merged = settings.containersSchedule;
+    if (
+      settings.vmsSchedule === merged &&
+      settings.flashSchedule === merged &&
+      settings.filesSchedule === merged
+    ) {
+      return;
+    }
+    setSettings((prev) =>
+      prev ? { ...prev, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged } : prev
+    );
+    debouncedSave("schedSync", () => {
+      void save(
+        { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged },
+        setSchedSaveState,
+        setSchedSaveError
+      );
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncSchedules, settings?.containersSchedule]);
 
   // ---------------------------------------------------------------------------
@@ -4529,43 +4644,108 @@ export function SettingsPage() {
     });
   }
 
-  // buildSchedulePatch collects EVERY schedule field for the Schedules tab's one
-  // SaveBar, applying Jobs' exact sync semantics: Containers always; VMs + Flash
-  // mirror Containers when synced, else their own value. Persisted via save(),
-  // which merges onto the savedSettings baseline (never clobbering other tabs).
-  function buildSchedulePatch(): Partial<Settings> {
-    if (!settings) return {};
-    const patch: Partial<Settings> = {
-      containersSchedule: settings.containersSchedule,
-    };
-    if (syncSchedules) {
-      patch.vmsSchedule = settings.containersSchedule;
-      patch.flashSchedule = settings.containersSchedule;
-    } else {
-      patch.vmsSchedule = settings.vmsSchedule;
-      patch.flashSchedule = settings.flashSchedule;
+  // Task 5 (live-review — "Speichern-Buttons können weg, es soll immer alles
+  // live gespeichert werden"): replaces buildSchedulePatch + the Schedules
+  // tab's one bottom SaveBar that used to persist every field in this comment's
+  // old list (Containers/VMs/Flash/Folders cadences, the drills Card, every
+  // offsite cadence, the self-backup cadence, tamperTestSchedule,
+  // catchUpMissed, perItemSchedules) in a single manually-triggered PATCH.
+  // Every one of those fields now saves itself the instant it changes, via
+  // one of the three helpers below — the exact same "optimistic update,
+  // immediate PATCH, revert + `.glim-shake` on failure" shape already proven
+  // by toggleDomainEnabled (Domains card) and autoSaveField (Paths & Storage
+  // merge cards), applied to a click/selection; or, for anything that fires
+  // onChange on every keystroke (a raw cron `<input>`, CadenceBuilder's own
+  // time/number/cron sub-fields), the debounced-no-revert shape those same
+  // merge cards already established for free text.
+  //
+  // scheduleField — every CadenceBuilder-driven cadence AND every plain
+  // offsite/self-backup cron <input> in this tab: optimistic setSettings +
+  // a debouncedSave keyed by the field name, so rapid changes to the SAME
+  // field (typing a cron expression, dragging through time-picker values)
+  // coalesce into one PATCH 800ms after the last one, matching
+  // debouncedSave's own "no revert — a user may still be typing, and save()'s
+  // toast already reports a failure" reasoning above.
+  function scheduleField<K extends keyof Settings>(key: K, value: Settings[K]) {
+    setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+    debouncedSave(String(key), () => {
+      void save({ [key]: value } as Partial<Settings>, setSchedSaveState, setSchedSaveError);
+    });
+  }
+
+  // autoSaveScheduleField — the four plain booleans left in this tab
+  // (perItemSchedules, catchUpMissed, drillsEnabled, offsiteDrillsEnabled):
+  // a single discrete click, not continuous typing, so it gets the immediate
+  // save + revert-on-failure + shake treatment instead, identical in shape to
+  // autoSaveField above (see schedFieldBusy/schedFieldShake's own doc for why
+  // this is a dedicated map rather than widening MergedAutoSaveKey).
+  async function autoSaveScheduleField<K extends ScheduleBoolKey>(key: K, next: Settings[K]): Promise<boolean> {
+    const prev = settings?.[key];
+    setSettings((s) => (s ? { ...s, [key]: next } : s));
+    setSchedFieldBusy((b) => ({ ...b, [key]: true }));
+    const ok = await save({ [key]: next } as Partial<Settings>, setSchedSaveState, setSchedSaveError);
+    setSchedFieldBusy((b) => ({ ...b, [key]: false }));
+    if (!ok) {
+      setSettings((s) => (s ? { ...s, [key]: prev as Settings[K] } : s));
+      setSchedFieldShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
     }
-    // Files cadence — independent of the sync checkbox (it covers VMs + Flash).
-    patch.filesSchedule = settings.filesSchedule;
-    // Restore-check (drill) schedule.
-    patch.drillsEnabled = settings.drillsEnabled;
-    patch.offsiteDrillsEnabled = settings.offsiteDrillsEnabled;
-    patch.drillsSchedule = settings.drillsSchedule;
-    patch.drillsSubsetPct = settings.drillsSubsetPct;
-    // Off-site replication cadences (+ config + files) — sole owner is this tab.
-    patch.containersOffsiteSchedule = settings.containersOffsiteSchedule;
-    patch.vmsOffsiteSchedule = settings.vmsOffsiteSchedule;
-    patch.flashOffsiteSchedule = settings.flashOffsiteSchedule;
-    patch.configOffsiteSchedule = settings.configOffsiteSchedule;
-    patch.filesOffsiteSchedule = settings.filesOffsiteSchedule;
-    // Self-backup cadence + scheduled off-site tamper test.
-    patch.configSchedule = settings.configSchedule;
-    patch.tamperTestSchedule = settings.tamperTestSchedule;
-    // Anacron-style catch-up toggle (Missed schedules card on this tab).
-    patch.catchUpMissed = settings.catchUpMissed;
-    // Per-item schedules opt-in (#121).
-    patch.perItemSchedules = settings.perItemSchedules;
-    return patch;
+    return ok;
+  }
+
+  // scheduleUpdate — RestoreChecksSection's own `update` prop, unchanged in
+  // shape (a Partial<Settings> patch, always exactly one key from that
+  // component's own four call sites) but now dispatching each key through
+  // the right one of the two helpers above instead of a bare setSettings
+  // merge: its two ToggleRows (drillsEnabled/offsiteDrillsEnabled) auto-save
+  // immediately with revert+shake, its CadenceBuilder and % number field
+  // debounce like every other cadence/text field in this tab.
+  function scheduleUpdate(patch: Partial<Settings>) {
+    for (const [key, value] of Object.entries(patch) as [keyof Settings, Settings[keyof Settings]][]) {
+      if (key === "drillsEnabled" || key === "offsiteDrillsEnabled") {
+        void autoSaveScheduleField(key, value as boolean);
+      } else {
+        scheduleField(key, value);
+      }
+    }
+  }
+
+  // handleSyncSchedulesToggle — the "sync" toggle's own save. Unlike the
+  // Settings fields above, `syncSchedules` is local UI state (derived on
+  // load from whether the domain schedules already matched, see the load
+  // effect's own comment), not a field the backend stores directly, so it
+  // cannot go through autoSaveScheduleField's Settings-keyed generic.
+  // Flipping it ON is the one case with real, immediate side effects worth
+  // persisting right away: VMs/Flash/Folders adopt the Containers cadence
+  // this instant, mirroring toggleDomainEnabled's optimistic-flip +
+  // save + revert-on-failure + shake shape, just against three fields at
+  // once instead of one. Flipping it OFF persists nothing new — every field
+  // already holds its own last-saved value, so there is nothing to PATCH;
+  // subsequent edits to VMs/Flash/Folders individually go through
+  // scheduleField again on their own, same as before sync was ever turned on.
+  async function handleSyncSchedulesToggle(next: boolean) {
+    setSyncSchedules(next);
+    if (!next || !settings) return;
+    const merged = settings.containersSchedule;
+    const prevVms = settings.vmsSchedule;
+    const prevFlash = settings.flashSchedule;
+    const prevFiles = settings.filesSchedule;
+    setSettings((s) =>
+      s ? { ...s, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged } : s
+    );
+    setSyncToggleBusy(true);
+    const ok = await save(
+      { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged },
+      setSchedSaveState,
+      setSchedSaveError
+    );
+    setSyncToggleBusy(false);
+    if (!ok) {
+      setSyncSchedules(false);
+      setSettings((s) =>
+        s ? { ...s, vmsSchedule: prevVms, flashSchedule: prevFlash, filesSchedule: prevFiles } : s
+      );
+      setSyncToggleShake((n) => n + 1);
+    }
   }
 
   if (loadError) {
@@ -4893,9 +5073,12 @@ export function SettingsPage() {
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
-      {/* Backup schedules reuse the proven per-domain sections + sync checkbox; */}
+      {/* Backup schedules reuse the proven per-domain sections + sync toggle;  */}
       {/* off-site / self-backup / restore-check cadences are edited here too.   */}
-      {/* One SaveBar persists them all via the shared baseline-merging save().  */}
+      {/* Task 5 (live-review — "Speichern-Buttons können weg, es soll immer    */}
+      {/* alles live gespeichert werden"): every field on this tab auto-saves   */}
+      {/* itself now (scheduleField/autoSaveScheduleField/handleSyncSchedules-  */}
+      {/* Toggle above) — there is no tab-wide SaveBar left to persist them.    */}
       {/* ------------------------------------------------------------------ */}
       {tab === "schedules" && (
         <>
@@ -4913,48 +5096,53 @@ export function SettingsPage() {
           <h2 className="relative flex items-center">
             <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("settings.schedulesBackup")}</Badge>
           </h2>
-          {/* Per-item schedules toggle (#121): opt in to per-container/VM overrides.
-              Off by default — while off, the member lists below are unchanged. */}
-          <label className="flex items-start gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
+          {/* Schedule options (jdp, live-review — "Die beiden Toggle sollen in
+              eine eigene Card"): perItemSchedules (#121) and the Containers-
+              sync toggle used to be two raw <input type="checkbox"> rows
+              sitting directly in this tab, outside any Card. Both are now the
+              shared ToggleRow component, grouped in their own Card between
+              the schedulesBackup heading and ContainersSection — perItem
+              first, sync directly below it, per jdp's own ordering. A genuine
+              two-member list, so each ToggleRow gets its own LOCAL hueIndex
+              (0/1, independent of this Card's own nextHue() notch), the same
+              "own local 0-based index per group" rule the Domains card's
+              seven rows and the merged Colors Card's three rainbow toggles
+              already follow. */}
+          <Card title={t("settings.schedulesOptions")} hueIndex={nextHue()}>
+            <ToggleRow
+              label={t("settings.perItemSchedules")}
+              hint={t("settings.perItemSchedulesHint")}
               checked={settings.perItemSchedules}
-              onChange={(e) =>
-                setSettings((prev) => (prev ? { ...prev, perItemSchedules: e.target.checked } : prev))
-              }
-              className="mt-0.5 h-4 w-4 rounded-control border-carbon-border bg-carbon-surface2 accent-(--accent)"
+              onChange={(v) => void autoSaveScheduleField("perItemSchedules", v)}
+              disabled={schedFieldBusy.perItemSchedules}
+              shakeNonce={schedFieldShake.perItemSchedules}
+              hueIndex={0}
             />
-            <span className="flex items-center gap-1 text-sm text-carbon-text">
-              {t("settings.perItemSchedules")}
-              <InfoBubble tip={t("settings.perItemSchedulesHint")} />
-            </span>
-          </label>
+            {/* Sync toggle — applies the Containers cadence to VMs, Flash AND
+                Folders (Task 2 extended this from "VMs + Flash" to also cover
+                Folders — see FilesSection's own new syncSchedules prop). */}
+            <ToggleRow
+              label={t("jobs.syncSchedules")}
+              hint={t("jobs.syncSchedulesHint")}
+              checked={syncSchedules}
+              onChange={(v) => void handleSyncSchedulesToggle(v)}
+              disabled={syncToggleBusy}
+              shakeNonce={syncToggleShake || undefined}
+              hueIndex={1}
+            />
+          </Card>
           <ContainersSection
             settings={settings}
             containers={containers}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, containersSchedule: v } : prev))
-            }
+            onChange={(v) => scheduleField("containersSchedule", v)}
             perItem={settings.perItemSchedules}
             t={t}
             hueIndex={nextHue()}
           />
-          {/* Sync checkbox — applies the Containers cadence to VMs + Flash too. */}
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={syncSchedules}
-              onChange={(e) => setSyncSchedules(e.target.checked)}
-              className="h-4 w-4 rounded-control border-carbon-border bg-carbon-surface2 accent-(--accent)"
-            />
-            <span className="text-sm text-carbon-text">{t("jobs.syncSchedules")}</span>
-          </label>
           <VMsSection
             settings={settings}
             syncSchedules={syncSchedules}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, vmsSchedule: v } : prev))
-            }
+            onChange={(v) => scheduleField("vmsSchedule", v)}
             vms={vms}
             perItem={settings.perItemSchedules}
             t={t}
@@ -4963,18 +5151,15 @@ export function SettingsPage() {
           <FlashSection
             settings={settings}
             syncSchedules={syncSchedules}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, flashSchedule: v } : prev))
-            }
+            onChange={(v) => scheduleField("flashSchedule", v)}
             t={t}
             hueIndex={nextHue()}
           />
           <FilesSection
             settings={settings}
+            syncSchedules={syncSchedules}
             fileSets={fileSets}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, filesSchedule: v } : prev))
-            }
+            onChange={(v) => scheduleField("filesSchedule", v)}
             onSetsChanged={loadFileSets}
             t={t}
             hueIndex={nextHue()}
@@ -4996,9 +5181,7 @@ export function SettingsPage() {
                 <input
                   value={settings[key]}
                   spellCheck={false}
-                  onChange={(e) =>
-                    setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))
-                  }
+                  onChange={(e) => scheduleField(key, e.target.value)}
                   placeholder={t("offsite.schedulePlaceholder")}
                   dir="ltr"
                   className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
@@ -5014,9 +5197,7 @@ export function SettingsPage() {
               <input
                 value={settings.configSchedule}
                 spellCheck={false}
-                onChange={(e) =>
-                  setSettings((prev) => (prev ? { ...prev, configSchedule: e.target.value } : prev))
-                }
+                onChange={(e) => scheduleField("configSchedule", e.target.value)}
                 placeholder={t("config.schedulePlaceholder")}
                 dir="ltr"
                 className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
@@ -5027,9 +5208,9 @@ export function SettingsPage() {
           {/* Restore-check drills (RestoreChecksSection renders its own Card). */}
           <RestoreChecksSection
             settings={settings}
-            update={(patch) =>
-              setSettings((prev) => (prev ? { ...prev, ...patch } : prev))
-            }
+            update={scheduleUpdate}
+            busy={schedFieldBusy}
+            shake={schedFieldShake}
             t={t}
             hueIndex={nextHue()}
           />
@@ -5042,9 +5223,9 @@ export function SettingsPage() {
               label={t("settings.catchUpMissed")}
               hint={t("settings.catchUpMissedHint")}
               checked={settings.catchUpMissed}
-              onChange={(v) =>
-                setSettings((prev) => (prev ? { ...prev, catchUpMissed: v } : prev))
-              }
+              onChange={(v) => void autoSaveScheduleField("catchUpMissed", v)}
+              disabled={schedFieldBusy.catchUpMissed}
+              shakeNonce={schedFieldShake.catchUpMissed}
             />
           </Card>
 
@@ -5116,9 +5297,7 @@ export function SettingsPage() {
               <CadenceBuilder
                 label={t("settings.tamperTestSchedule")}
                 value={settings.tamperTestSchedule}
-                onChange={(v) =>
-                  setSettings((prev) => (prev ? { ...prev, tamperTestSchedule: v } : prev))
-                }
+                onChange={(v) => scheduleField("tamperTestSchedule", v)}
               />
               {/* #109: the scheduler stays inert without a qualifying domain — this
                   is the only place that told manilx why Sun 08:00 never ran. */}
@@ -5129,14 +5308,6 @@ export function SettingsPage() {
               )}
             </div>
           </Card>
-
-          {/* One Save persists every schedule field via the shared save(). */}
-          <SaveBar
-            state={schedSaveState}
-            error={schedSaveError}
-            onSave={() => void save(buildSchedulePatch(), setSchedSaveState, setSchedSaveError)}
-            t={t}
-          />
         </>
       )}
 
