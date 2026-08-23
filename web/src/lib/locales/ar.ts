@@ -195,6 +195,7 @@ const ar: Partial<Translations> = {
   "settings.error": "خطأ في الحفظ",
 
   // Appearance / Accent
+  "settings.colors": "الألوان",
   "settings.accentColor": "لون التمييز",
   "settings.accentPresets": "إعدادات مسبقة",
   "settings.accentPreset": "إعداد مسبق",
@@ -205,7 +206,7 @@ const ar: Partial<Translations> = {
   "settings.shape.soft": "ناعمة",
   "settings.shape.square": "مربعة",
   "settings.rainbow": "وضع قوس قزح",
-  "settings.rainbowHint": "بدل لون تمييز واحد، لوحة من ثمانية ألوان تُوزَّع حسب الموضع، فتُقرأ القائمة الطويلة صفوفًا منفصلة.",
+  "settings.rainbowHint": "يحصل كل صف في القائمة على لونه الخاص من مجموعة مكوّنة من ثمانية ألوان، بدلاً من أن يشترك كل شيء في لون تمييز واحد — ما يجعل القوائم الطويلة أسهل تمييزًا للوهلة الأولى.",
   "settings.rainbowOn": "استخدام اللوحة",
   "settings.rainbowReactive": "الوضع التفاعلي",
   "settings.rainbowReactiveHint": "عند التفعيل، يعرض الصف أو العنصر لونه فقط عند تمرير المؤشر فوقه، أو أثناء تشغيله أو تحديده — وإلا يبقى محايدًا. عند الإيقاف، يعرض كل صف وعنصر ملوّن لونه طوال الوقت.",
@@ -446,8 +447,8 @@ const ar: Partial<Translations> = {
   "flash.none": "لا توجد نسخ احتياطية للفلاش بعد — شغّل نسخاً احتياطياً أعلاه.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "التصديرات والتشفير",
-  "settings.exportsEncryptionHint": "إعدادات تصدير ملف الفلاش المضغوط، وتشفير عناصر التصدير النصية، وتشفير مستودعات restic نفسها.",
+  "settings.exportsEncryptionTitle": "تشفير التصدير والمستودع",
+  "settings.exportsEncryptionHint": "إعدادات لتشفير عناصر التصدير النصية وتشفير مستودعات restic نفسها.",
   "flash.zipExport.title": "تصدير Flash إلى zip",
   "flash.zipExport.hint": "بعد كل نسخة احتياطية للفلاش، تُكتب اللقطة أيضاً كملف .zip عادي إلى مجلد — جاهزة للمزامنة خارج الخادم (Syncthing أو rclone أو قرص سحابي).",
   "flash.zipExport.enable": "تصدير ملف zip بعد كل نسخة احتياطية للفلاش",

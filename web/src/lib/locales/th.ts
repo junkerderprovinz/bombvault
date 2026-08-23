@@ -195,6 +195,7 @@ const th: Partial<Translations> = {
   "settings.error": "เกิดข้อผิดพลาดในการบันทึก",
 
   // Appearance / Accent
+  "settings.colors": "สี",
   "settings.accentColor": "สีเน้น",
   "settings.accentPresets": "ค่าที่ตั้งไว้ล่วงหน้า",
   "settings.accentPreset": "ค่าที่ตั้งไว้ล่วงหน้า",
@@ -205,7 +206,7 @@ const th: Partial<Translations> = {
   "settings.shape.soft": "โค้งเล็กน้อย",
   "settings.shape.square": "เหลี่ยม",
   "settings.rainbow": "โหมดสายรุ้ง",
-  "settings.rainbowHint": "แทนที่จะใช้สีเน้นเดียว ใช้จานแปดสีแจกตามตำแหน่ง รายการยาวจึงอ่านแยกเป็นแถวได้",
+  "settings.rainbowHint": "แต่ละแถวในรายการจะได้สีของตัวเองจากชุดแปดสี แทนที่จะใช้สีเน้นเดียวร่วมกันทั้งหมด — ทำให้รายการยาว ๆ แยกความแตกต่างได้ง่ายเพียงมองแวบเดียว",
   "settings.rainbowOn": "ใช้จานสี",
   "settings.rainbowReactive": "โหมดตอบสนอง",
   "settings.rainbowReactiveHint": "เมื่อเปิดใช้งาน แถวหรือรายการจะแสดงสีของตัวเองเฉพาะตอนวางเมาส์ไว้เหนือ หรือขณะกำลังทำงานหรือถูกเลือกเท่านั้น — นอกจากนั้นจะเป็นสีกลาง เมื่อปิดใช้งาน ทุกแถวและรายการที่มีสีจะแสดงสีของตัวเองตลอดเวลา",
@@ -446,8 +447,8 @@ const th: Partial<Translations> = {
   "flash.none": "ยังไม่มีการสำรองข้อมูลแฟลช — เรียกใช้การสำรองข้อมูลด้านบน",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "การส่งออกและการเข้ารหัส",
-  "settings.exportsEncryptionHint": "การตั้งค่าสำหรับการส่งออก zip แฟลช การเข้ารหัสไฟล์ส่งออกแบบข้อความธรรมดา และการเข้ารหัสของที่เก็บ restic เอง",
+  "settings.exportsEncryptionTitle": "การเข้ารหัสการส่งออกและที่เก็บข้อมูล",
+  "settings.exportsEncryptionHint": "การตั้งค่าสำหรับการเข้ารหัสไฟล์ส่งออกแบบข้อความธรรมดา และการเข้ารหัสของที่เก็บ restic เอง",
   "flash.zipExport.title": "ส่งออก ZIP ของแฟลช",
   "flash.zipExport.hint": "หลังการสำรองข้อมูลแฟลชแต่ละครั้ง ให้เขียนสแนปช็อตออกมาเป็นไฟล์ .zip ธรรมดาไปยังโฟลเดอร์ด้วย — พร้อมสำหรับการซิงค์นอกเซิร์ฟเวอร์ (Syncthing, rclone, ไดรฟ์คลาวด์)",
   "flash.zipExport.enable": "ส่งออก ZIP หลังการสำรองข้อมูลแฟลชแต่ละครั้ง",

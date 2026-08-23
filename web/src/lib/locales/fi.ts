@@ -195,6 +195,7 @@ const fi: Partial<Translations> = {
   "settings.error": "Virhe asetusten tallennuksessa",
 
   // Appearance / Accent
+  "settings.colors": "Värit",
   "settings.accentColor": "Korostusväri",
   "settings.accentPresets": "Esiasetukset",
   "settings.accentPreset": "Esiasetus",
@@ -205,7 +206,7 @@ const fi: Partial<Translations> = {
   "settings.shape.soft": "Pehmeät",
   "settings.shape.square": "Suorakulmaiset",
   "settings.rainbow": "Sateenkaaritila",
-  "settings.rainbowHint": "Yhden korostuksen sijaan kahdeksan värin paletti sijainnin mukaan, jolloin pitkä lista lukeutuu erillisinä riveinä.",
+  "settings.rainbowHint": "Jokainen listan rivi saa oman värinsä kahdeksan värin joukosta sen sijaan, että kaikki jakaisivat saman korostusvärin — pitkät listat erottuvat näin yhdellä silmäyksellä.",
   "settings.rainbowOn": "Käytä palettia",
   "settings.rainbowReactive": "Reaktiivinen tila",
   "settings.rainbowReactiveHint": "Kun päällä, rivi tai kohde näyttää värinsä vain kohdistettaessa hiirellä tai kun se on käynnissä tai valittuna — muuten se pysyy neutraalina. Kun pois päältä, jokainen väritetty rivi ja kohde näyttää värinsä koko ajan.",
@@ -446,8 +447,8 @@ const fi: Partial<Translations> = {
   "flash.none": "Ei vielä flash-varmuuskopioita — suorita varmuuskopio yllä.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Viennit ja salaus",
-  "settings.exportsEncryptionHint": "Asetukset flash-zip-viennille, selkokielisten vientitiedostojen salaukselle ja itse restic-tietovarastojen salaukselle.",
+  "settings.exportsEncryptionTitle": "Viennin ja tietovaraston salaus",
+  "settings.exportsEncryptionHint": "Asetukset selkokielisten vientitiedostojen salaukselle ja itse restic-tietovarastojen salaukselle.",
   "flash.zipExport.title": "Flashin zip-vienti",
   "flash.zipExport.hint": "Jokaisen flash-varmuuskopion jälkeen tilannevedos kirjoitetaan myös tavallisena .zip-tiedostona kansioon — valmiina palvelimen ulkopuoliseen synkronointiin (Syncthing, rclone, pilviasema).",
   "flash.zipExport.enable": "Vie zip jokaisen flash-varmuuskopion jälkeen",

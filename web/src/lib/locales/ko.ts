@@ -195,6 +195,7 @@ const ko: Partial<Translations> = {
   "settings.error": "설정 저장 오류",
 
   // Appearance / Accent
+  "settings.colors": "색상",
   "settings.accentColor": "강조 색상",
   "settings.accentPresets": "프리셋",
   "settings.accentPreset": "프리셋",
@@ -205,7 +206,7 @@ const ko: Partial<Translations> = {
   "settings.shape.soft": "살짝 둥글게",
   "settings.shape.square": "각지게",
   "settings.rainbow": "무지개 모드",
-  "settings.rainbowHint": "강조색 하나 대신 위치별로 배정되는 여덟 색 팔레트. 긴 목록이 행 단위로 구분되어 읽힙니다.",
+  "settings.rainbowHint": "목록의 각 행은 하나의 강조색을 공유하는 대신 여덟 가지 색상 중 자신만의 색을 받습니다 — 긴 목록을 한눈에 구분하기 쉬워집니다.",
   "settings.rainbowOn": "팔레트 사용",
   "settings.rainbowReactive": "반응형 모드",
   "settings.rainbowReactiveHint": "켜면 행이나 항목은 마우스를 올렸을 때, 또는 실행 중이거나 선택되었을 때만 색을 보여주고 그 외에는 중립 상태를 유지합니다. 끄면 색이 지정된 모든 행과 항목이 항상 색을 표시합니다.",
@@ -439,8 +440,8 @@ const ko: Partial<Translations> = {
   "flash.none": "아직 플래시 백업이 없습니다 — 위에서 백업을 실행하세요.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "내보내기 및 암호화",
-  "settings.exportsEncryptionHint": "플래시 zip 내보내기, 평문 내보내기 산출물 암호화, restic 저장소 자체 암호화에 대한 설정입니다.",
+  "settings.exportsEncryptionTitle": "내보내기 및 저장소 암호화",
+  "settings.exportsEncryptionHint": "평문 내보내기 산출물 암호화와 restic 저장소 자체 암호화에 대한 설정입니다.",
   "flash.zipExport.title": "플래시 zip 내보내기",
   "flash.zipExport.hint": "각 플래시 백업 후 스냅샷을 일반 .zip으로도 폴더에 기록합니다 — 서버 외부 동기화(Syncthing, rclone, 클라우드 드라이브)에 바로 사용할 수 있습니다.",
   "flash.zipExport.enable": "각 플래시 백업 후 zip 내보내기",

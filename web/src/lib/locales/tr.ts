@@ -195,6 +195,7 @@ const tr: Partial<Translations> = {
   "settings.error": "Ayarlar kaydedilemedi",
 
   // Appearance / Accent
+  "settings.colors": "Renkler",
   "settings.accentColor": "Vurgu rengi",
   "settings.accentPresets": "Ön ayarlar",
   "settings.accentPreset": "Ön ayar",
@@ -205,7 +206,7 @@ const tr: Partial<Translations> = {
   "settings.shape.soft": "Yumuşak",
   "settings.shape.square": "Köşeli",
   "settings.rainbow": "Gökkuşağı modu",
-  "settings.rainbowHint": "Tek vurgu yerine konuma göre dağıtılan sekiz renklik bir palet; uzun bir liste ayrı satırlar olarak okunur.",
+  "settings.rainbowHint": "Listedeki her satır, tek bir vurgu rengini paylaşmak yerine sekiz renkten oluşan bir setten kendi rengini alır — bu da uzun listeleri tek bakışta ayırt etmeyi kolaylaştırır.",
   "settings.rainbowOn": "Paleti kullan",
   "settings.rainbowReactive": "Reaktif mod",
   "settings.rainbowReactiveHint": "Açıkken bir satır veya öge rengini yalnızca üzerine gelindiğinde ya da çalışırken veya seçiliyken gösterir — aksi halde nötr kalır. Kapalıyken renkli her satır ve öge rengini her zaman gösterir.",
@@ -446,8 +447,8 @@ const tr: Partial<Translations> = {
   "flash.none": "Henüz flash yedeği yok — yukarıdan bir yedekleme çalıştırın.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Dışa Aktarmalar & Şifreleme",
-  "settings.exportsEncryptionHint": "Flash zip dışa aktarımı, düz metin dışa aktarma yapıtlarının şifrelenmesi ve restic depolarının kendisinin şifrelenmesi için denetimler.",
+  "settings.exportsEncryptionTitle": "Dışa Aktarma ve Depo Şifrelemesi",
+  "settings.exportsEncryptionHint": "Düz metin dışa aktarma yapıtlarının şifrelenmesi ve restic depolarının kendisinin şifrelenmesi için denetimler.",
   "flash.zipExport.title": "Flash ZIP dışa aktarma",
   "flash.zipExport.hint": "Her flash yedeğinden sonra anlık görüntüyü ayrıca düz bir .zip olarak bir klasöre yaz — sunucu dışı senkronizasyon için hazır (Syncthing, rclone, bir bulut sürücüsü).",
   "flash.zipExport.enable": "Her flash yedeğinden sonra bir ZIP dışa aktar",

@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 // ---------------------------------------------------------------------------
 // ThemeCard (GlimStone follow-up pass, live-review round) — the dark/light
-// toggle, moved out of Sidebar.tsx's own footer into its own Card in
-// Settings' General tab. This covers the toggle's OWN behaviour in its new
-// home: it renders the current mode, clicking it flips dark<->light and
-// persists via lib/theme.ts's toggleTheme()/setTheme() (same STORAGE_KEY,
-// same data-theme paint), and an OS-level prefers-color-scheme flip repaints
-// the label live while "system" is the stored preference — the exact same
-// state machine SidebarControls' old theme row had, just relocated.
+// picker, moved out of Sidebar.tsx's own footer into its own Card in
+// Settings' General tab. Converted to a horizontal Selector in a LATER
+// live-review round (jdp: "das design dunkel/hell bitte ein horizontaler
+// selektor machen") — see ThemeCard's own header comment in Settings.tsx for
+// the full rationale. This covers the picker's OWN behaviour in that shape:
+// both segments are always present (light and dark), clicking one sets the
+// theme DIRECTLY to that segment (never a flip-the-current-value toggle) and
+// persists via lib/theme.ts's setTheme() (same STORAGE_KEY, same data-theme
+// paint), the active segment reflects the current mode via aria-selected,
+// and an OS-level prefers-color-scheme flip repaints the active segment live
+// while "system" is the stored preference — the exact same state machine
+// SidebarControls' old theme row had, just relocated and re-skinned.
 // Sidebar.language.dom.test.tsx (sibling file) is the other half: proving
 // the OLD location no longer renders it.
 //
@@ -71,41 +76,57 @@ afterEach(() => {
 });
 
 describe("ThemeCard", () => {
-  it("renders as a Card with the theme heading and the current mode on its trigger", () => {
+  it("renders as a Card with the theme heading and both segments always present", () => {
     localStorage.setItem(STORAGE_KEY, "light");
     renderCard();
     expect(screen.getByText("Theme")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Light" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Light" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Dark" })).toBeTruthy();
   });
 
-  it("clicking the trigger flips light to dark and persists via lib/theme.ts", () => {
+  it("the segment matching the current mode is the one marked selected", () => {
     localStorage.setItem(STORAGE_KEY, "light");
     renderCard();
-    fireEvent.click(screen.getByRole("button", { name: "Light" }));
-    expect(screen.getByRole("button", { name: "Dark" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Light" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("false");
+  });
+
+  it("clicking the Dark segment sets dark and persists via lib/theme.ts", () => {
+    localStorage.setItem(STORAGE_KEY, "light");
+    renderCard();
+    fireEvent.click(screen.getByRole("tab", { name: "Dark" }));
+    expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("true");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("dark");
     expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
   });
 
-  it("clicking again flips dark back to light", () => {
+  it("clicking the Light segment sets light and persists via lib/theme.ts", () => {
     localStorage.setItem(STORAGE_KEY, "dark");
     renderCard();
-    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
-    expect(screen.getByRole("button", { name: "Light" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Light" }));
+    expect(screen.getByRole("tab", { name: "Light" }).getAttribute("aria-selected")).toBe("true");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("light");
     expect(document.documentElement.getAttribute("data-theme")).toBe("light");
   });
 
-  it("with no stored preference (\"system\" default), shows whatever the OS currently resolves to", () => {
-    stubMatchMedia(true); // OS prefers dark
+  it("clicking the already-active segment is a harmless no-op", () => {
+    localStorage.setItem(STORAGE_KEY, "light");
     renderCard();
-    expect(screen.getByRole("button", { name: "Dark" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Light" }));
+    expect(localStorage.getItem(STORAGE_KEY)).toBe("light");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
   });
 
-  it("while on \"system\", an OS-level prefers-color-scheme flip repaints the label live", () => {
+  it("with no stored preference (\"system\" default), the segment matching what the OS currently resolves to is selected", () => {
+    stubMatchMedia(true); // OS prefers dark
+    renderCard();
+    expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("while on \"system\", an OS-level prefers-color-scheme flip repaints the active segment live", () => {
     stubMatchMedia(false); // OS starts light, no stored preference -> "system"
     renderCard();
-    expect(screen.getByRole("button", { name: "Light" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Light" }).getAttribute("aria-selected")).toBe("true");
 
     // Simulate the OS flipping to dark: update what matchMedia reports, then
     // fire the captured change listener the way a real matchMedia would.
@@ -119,10 +140,10 @@ describe("ThemeCard", () => {
       changeListeners.forEach((cb) => cb());
     });
 
-    expect(screen.getByRole("button", { name: "Dark" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  it("once explicitly toggled off \"system\", a later OS flip does NOT change the label", () => {
+  it("once explicitly set to \"light\", a later OS flip does NOT change the active segment", () => {
     localStorage.setItem(STORAGE_KEY, "light");
     renderCard();
     // Explicit preference is "light" — an OS-level flip must be ignored.
@@ -130,7 +151,7 @@ describe("ThemeCard", () => {
     act(() => {
       changeListeners.forEach((cb) => cb());
     });
-    expect(screen.getByRole("button", { name: "Light" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Light" }).getAttribute("aria-selected")).toBe("true");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("light");
   });
 });

@@ -195,6 +195,7 @@ const ja: Partial<Translations> = {
   "settings.error": "保存エラー",
 
   // Appearance / Accent
+  "settings.colors": "カラー",
   "settings.accentColor": "アクセントカラー",
   "settings.accentPresets": "プリセット",
   "settings.accentPreset": "プリセット",
@@ -205,7 +206,7 @@ const ja: Partial<Translations> = {
   "settings.shape.soft": "やや丸め",
   "settings.shape.square": "角ばった",
   "settings.rainbow": "レインボーモード",
-  "settings.rainbowHint": "アクセント1色ではなく、位置ごとに割り当てる8色のパレット。長い一覧が行ごとに読み分けられます。",
+  "settings.rainbowHint": "リストの各行は、単一のアクセントカラーを共有する代わりに、8色のセットから自分専用の色を得ます。これにより長いリストが一目で区別しやすくなります。",
   "settings.rainbowOn": "パレットを使う",
   "settings.rainbowReactive": "リアクティブモード",
   "settings.rainbowReactiveHint": "オンにすると、行や項目はマウスを重ねたとき、または実行中や選択中だけ自分の色を表示し、それ以外は中立色のままになります。オフにすると、色付きの行や項目は常に自分の色を表示します。",
@@ -439,8 +440,8 @@ const ja: Partial<Translations> = {
   "flash.none": "フラッシュバックアップはまだありません — 上でバックアップを実行してください。",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "エクスポートと暗号化",
-  "settings.exportsEncryptionHint": "フラッシュ zip エクスポート、平文エクスポート成果物の暗号化、restic リポジトリ自体の暗号化の設定。",
+  "settings.exportsEncryptionTitle": "エクスポートとリポジトリの暗号化",
+  "settings.exportsEncryptionHint": "平文エクスポート成果物の暗号化と、restic リポジトリ自体の暗号化の設定。",
   "flash.zipExport.title": "フラッシュ ZIP エクスポート",
   "flash.zipExport.hint": "各フラッシュバックアップの後、スナップショットをプレーンな .zip としてフォルダーにも書き出します — サーバー外への同期（Syncthing、rclone、クラウドドライブ）にすぐ使えます。",
   "flash.zipExport.enable": "各フラッシュバックアップの後に ZIP をエクスポート",

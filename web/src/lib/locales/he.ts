@@ -195,6 +195,7 @@ const he: Partial<Translations> = {
   "settings.error": "שגיאה בשמירה",
 
   // Appearance / Accent
+  "settings.colors": "צבעים",
   "settings.accentColor": "צבע הדגשה",
   "settings.accentPresets": "ערכות מוגדרות מראש",
   "settings.accentPreset": "ערכה מוגדרת מראש",
@@ -205,7 +206,7 @@ const he: Partial<Translations> = {
   "settings.shape.soft": "רכות",
   "settings.shape.square": "מרובעות",
   "settings.rainbow": "מצב קשת",
-  "settings.rainbowHint": "במקום צבע הדגשה אחד, לוח של שמונה צבעים לפי מיקום, כך שרשימה ארוכה נקראת כשורות נפרדות.",
+  "settings.rainbowHint": "כל שורה ברשימה מקבלת צבע משלה מתוך מערך של שמונה צבעים, במקום שהכול ישתף צבע הדגשה אחד — כך רשימות ארוכות קלות יותר להבחנה במבט אחד.",
   "settings.rainbowOn": "להשתמש בלוח",
   "settings.rainbowReactive": "מצב תגובתי",
   "settings.rainbowReactiveHint": "כשמופעל, שורה או פריט מציגים את הצבע שלהם רק בעת ריחוף העכבר, או בזמן שהם פועלים או נבחרים — אחרת הם נשארים ניטרליים. כשמושבת, כל שורה ופריט צבעוניים מציגים את הצבע שלהם כל הזמן.",
@@ -446,8 +447,8 @@ const he: Partial<Translations> = {
   "flash.none": "אין עדיין גיבויי flash — הרץ גיבוי למעלה.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "ייצוא והצפנה",
-  "settings.exportsEncryptionHint": "הגדרות לייצוא ה-zip של הפלאש, הצפנת פריטי הייצוא הרגילים, וההצפנה של מאגרי restic עצמם.",
+  "settings.exportsEncryptionTitle": "הצפנת ייצוא ומאגר",
+  "settings.exportsEncryptionHint": "הגדרות להצפנת פריטי הייצוא הרגילים ולהצפנה של מאגרי restic עצמם.",
   "flash.zipExport.title": "ייצוא Flash ל-zip",
   "flash.zipExport.hint": "אחרי כל גיבוי flash, כותב את התמונה גם כקובץ .zip פשוט לתיקייה — מוכן לסנכרון מחוץ לשרת (Syncthing, rclone, כונן ענן).",
   "flash.zipExport.enable": "ייצא zip אחרי כל גיבוי flash",

@@ -691,6 +691,14 @@ export const en = {
   // from every locale in the GlimStone follow-up pass — the shared Appearance
   // Card it titled was split into one Card per sub-topic (live-review point
   // 5), and nothing else ever read this key.)
+  //   "settings.colors" is a LATER live-review round's own new key (jdp:
+  // "Die card von Akzentfarbe und Regenbogenmodus in eine mergen. Gehört ja
+  // zusammen") — the merged accent+rainbow Card's own title. Deliberately a
+  // THIRD string, not a repurposed "settings.accentColor"/"settings.rainbow":
+  // those two keep their existing meaning as the merged Card's own two
+  // sub-topic row labels below, so the Card's own heading needed its own
+  // "colour, broadly" word that doesn't collide with either.
+  "settings.colors": "Colors",
   "settings.accentColor": "Accent color",
   "settings.accentPresets": "Presets",
   // New in the GlimStone follow-up pass, live-review round 6 (presets became
@@ -725,7 +733,7 @@ export const en = {
   // see Settings.tsx's Rainbow Card comment) — a deliberate, accepted
   // divergence from KnightLoader's wording, not an oversight.
   "settings.rainbow": "Rainbow Mode",
-  "settings.rainbowHint": "Instead of one accent, a palette of eight handed out by position, so a long list reads as separate rows.",
+  "settings.rainbowHint": "Each row in a list gets its own colour from a set of eight, instead of everything sharing one accent colour — makes long lists easier to tell apart at a glance.",
   "settings.rainbowOn": "Use the palette",
   "settings.rainbowReactive": "Reactive Mode",
   "settings.rainbowReactiveHint": "When on, a row or item's colour only appears while you're hovering it, or while it's running or selected — otherwise it stays neutral. When off, every coloured row and item shows its colour all the time.",
@@ -973,8 +981,8 @@ export const en = {
   // B) — the flash zip export, plain-export encryption, and the restic
   // repositories' own encryption all sit under one roof: how backup exports
   // and repositories are protected.
-  "settings.exportsEncryptionTitle": "Exports & Encryption",
-  "settings.exportsEncryptionHint": "Controls for the flash zip export, encrypting plain export artifacts, and the restic repositories' own encryption.",
+  "settings.exportsEncryptionTitle": "Export & Repository Encryption",
+  "settings.exportsEncryptionHint": "Controls for encrypting plain export artifacts and the restic repositories' own encryption.",
   // Scheduled flash zip export (#28): a plain .zip written to a folder after each flash backup.
   "flash.zipExport.title": "Flash zip export",
   "flash.zipExport.hint": "After each flash backup, also write the snapshot out as a plain .zip to a folder — ready for off-server sync (Syncthing, rclone, a cloud drive).",
@@ -2123,6 +2131,7 @@ export const de: Translations = {
   "excludes.assistRemoveLine": "Ausschluss {line} entfernen",
 
   // Appearance / Accent
+  "settings.colors": "Farben",
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
   "settings.accentPreset": "Voreinstellung",
@@ -2133,7 +2142,7 @@ export const de: Translations = {
   "settings.shape.soft": "Leicht",
   "settings.shape.square": "Eckig",
   "settings.rainbow": "Regenbogen-Modus",
-  "settings.rainbowHint": "Statt einer Akzentfarbe acht, nach Position vergeben — eine lange Liste liest sich dann als einzelne Zeilen.",
+  "settings.rainbowHint": "Jede Zeile in einer Liste bekommt eine eigene Farbe aus einer festen Auswahl von acht, statt dass alles dieselbe Akzentfarbe hat — das macht lange Listen auf einen Blick leichter unterscheidbar.",
   "settings.rainbowOn": "Palette verwenden",
   "settings.rainbowReactive": "Reaktiver Modus",
   "settings.rainbowReactiveHint": "Wenn aktiv, bleiben farbige Zeilen und Elemente neutral, bis du sie mit der Maus berührst oder sie gerade laufen oder ausgewählt sind — die Farbe erscheint also nur bei Bedarf. Wenn deaktiviert, zeigen alle farbigen Zeilen und Elemente ihre Farbe durchgehend.",
@@ -2368,8 +2377,8 @@ export const de: Translations = {
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter — der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen.",
   "flash.none": "Noch keine Flash-Backups — oben eines starten.",
-  "settings.exportsEncryptionTitle": "Exporte & Verschlüsselung",
-  "settings.exportsEncryptionHint": "Einstellungen für den Flash-Zip-Export, die Verschlüsselung der Plain-Export-Artefakte und die Verschlüsselung der restic-Repositories selbst.",
+  "settings.exportsEncryptionTitle": "Export- und Repository-Verschlüsselung",
+  "settings.exportsEncryptionHint": "Einstellungen für die Verschlüsselung der Plain-Export-Artefakte und die Verschlüsselung der restic-Repositories selbst.",
   // Geplanter Flash-ZIP-Export (#28): ein einfaches .zip, das nach jedem Flash-Backup in einen Ordner geschrieben wird.
   "flash.zipExport.title": "Flash-ZIP-Export",
   "flash.zipExport.hint": "Nach jedem Flash-Backup den Snapshot zusätzlich als einfaches .zip in einen Ordner schreiben — bereit für Off-Server-Sync (Syncthing, rclone, ein Cloud-Laufwerk).",
