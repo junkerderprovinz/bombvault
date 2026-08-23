@@ -1678,6 +1678,57 @@ body {
 
   --motion-shake-scale: 1;                /* multiplies glim-shake's translateX steps */
   --motion-shake-dur: 360ms;
+
+  /* Round 2 (seven more animations plugged into this SAME engine, from day
+     one rather than a later retrofit — see this file's own git history for
+     the exact failure mode this avoids): every token below follows the
+     identical "declare full-intensity on bare :root first, override in
+     [data-motion=subtle]/[data-motion=off], consume only inside the
+     (prefers-reduced-motion: no-preference) block further down" shape the
+     five originals above already established. Each one is introduced at its
+     own consuming rule further down this file, not here — this block is
+     only ever the OFF/SUBTLE/FULL numbers, kept together so the whole dial
+     is readable in one place.
+
+     1) Shape-morph (--motion-shape-*): border-radius transition duration
+        when data-shape changes live (armed post-mount by lib/shape.ts's
+        armShapeTransitions() — see .bv-shape-transitions further down).
+     2) Confirmation-pulse (--motion-pulse-*): glim-pulse's glow+scale
+        amplitude/duration on an auto-saved field's SUCCESS, the gentler
+        sibling of glim-shake's failure feedback above.
+     3) Staggered list fade-in (--motion-stagger-*): per-row entrance delay
+        step and the hard cap on total stagger time, plus the row's own
+        fade/slide-in duration.
+     4) Colour-wipe (--motion-wipe-*): how long a coordinated colour
+        transition runs across the whole page when [data-rainbow] itself
+        changes (lib/appearance.ts's applyRainbow() toggles .bv-colour-wipe
+        for exactly this long — see that function's own comment).
+     5) Drawn-checkmark (--motion-check-*): the SVG stroke-dashoffset draw
+        duration for a check that just went busy -> fresh success.
+     6) Skeleton-to-content crossfade (--motion-content-*): the fade-in
+        duration for a Card/section's real content once its loading
+        placeholder is gone.
+     7) Settings tab slide (--motion-tab-*): the directional slide distance
+        and duration when the tab strip's active tab changes. */
+  --motion-shape-dur: 260ms;
+  --motion-shape-ease: cubic-bezier(.2, .6, .2, 1);
+
+  --motion-pulse-scale: 1;                /* multiplies glim-pulse's glow spread + scale delta */
+  --motion-pulse-dur: 420ms;
+
+  --motion-stagger-step: 30ms;            /* per-row delay increment */
+  --motion-stagger-cap: 480ms;            /* max delay any row in a list can reach */
+  --motion-stagger-dur: 240ms;
+
+  --motion-wipe-dur: 320ms;
+  --motion-wipe-ease: ease;
+
+  --motion-check-dur: 360ms;
+
+  --motion-content-dur: 220ms;
+
+  --motion-tab-dist: 18px;
+  --motion-tab-dur: 220ms;
 }
 
 :root[data-motion="subtle"] {
@@ -1693,6 +1744,27 @@ body {
 
   --motion-shake-scale: .5;
   --motion-shake-dur: 220ms;
+
+  /* Round 2, "still present" — same shorter+smaller treatment as the five
+     originals above, not a near-off compromise (see :root's own header
+     comment for what each of these seven drives). */
+  --motion-shape-dur: 140ms;
+
+  --motion-pulse-scale: .5;
+  --motion-pulse-dur: 260ms;
+
+  --motion-stagger-step: 15ms;
+  --motion-stagger-cap: 200ms;
+  --motion-stagger-dur: 140ms;
+
+  --motion-wipe-dur: 160ms;
+
+  --motion-check-dur: 200ms;
+
+  --motion-content-dur: 120ms;
+
+  --motion-tab-dist: 10px;
+  --motion-tab-dur: 130ms;
 }
 
 :root[data-motion="off"] {
@@ -1734,6 +1806,36 @@ body {
 
   --motion-shake-scale: 0;
   --motion-shake-dur: 300ms;
+
+  /* Round 2 — "off" as the manual equivalent of what OS-level reduced
+     motion already does (this block's own header comment, unchanged
+     reasoning for these seven): every duration collapses to (near) zero so
+     the animation's END state paints on the very next frame instead of
+     playing out, exactly like the five originals above. --motion-stagger-*
+     gets the same treatment as --motion-shake-scale: 0 above — a genuinely
+     zero step/cap already makes every row's animation-delay resolve to 0,
+     which combined with a 0 duration is indistinguishable from "no stagger
+     at all," so no keyframe swap is needed here the way glim-shake's own
+     "off" needed one (a 0-amplitude PULSE or FADE is still a legitimate,
+     visible "instant" end state — unlike a 0-amplitude SHAKE, nothing here
+     needs to still read as a rejection signal). */
+  --motion-shape-dur: 0ms;
+
+  --motion-pulse-scale: 0;
+  --motion-pulse-dur: 0ms;
+
+  --motion-stagger-step: 0ms;
+  --motion-stagger-cap: 0ms;
+  --motion-stagger-dur: 0ms;
+
+  --motion-wipe-dur: 0ms;
+
+  --motion-check-dur: 0ms;
+
+  --motion-content-dur: 0ms;
+
+  --motion-tab-dist: 0px;
+  --motion-tab-dur: 0ms;
 }
 
 /* Logo idle hover sway (Item 7b) */
@@ -1888,6 +1990,116 @@ body {
   80%      { transform: translateX(calc(var(--motion-shake-scale, 1) * 2px)); }
 }
 
+/* ---------------------------------------------------------------------------
+   Round 2 — seven more motion-engine animations, each plugging into the
+   off/subtle/full tokens declared above from the start (design-language.md's
+   own "a guard applied once is a guard missing twice" convention applied to
+   motion this time: every one of these reads its numbers from a token, none
+   hard-codes a literal the engine can't reach).
+   --------------------------------------------------------------------------- */
+
+/* 1) Shape-morph. .bv-shape-transitions is added to <html> by lib/shape.ts's
+   armShapeTransitions() two animation frames after first paint (see that
+   function's own comment for why two, not zero or one) — NEVER present
+   during the very first render, so the very first (correct, already-
+   resolved) border-radius a freshly-mounted element ever computes is not a
+   "change" this transition could animate away from. Once armed the class
+   never comes off again: everything after first paint is by definition a
+   LIVE change, which is exactly what this is for. Scoped to the three
+   Tailwind radius utilities directly (not a bare `*`) — cheap enough to stay
+   on permanently, unlike the wipe below. The actual `transition:` rule
+   lives inside the (prefers-reduced-motion: no-preference) block further
+   down, alongside the rest of this file's live-consuming rules, NOT here —
+   a transition property is real motion, so it gets the same OS-always-wins
+   gate every keyframe below it already has. */
+
+/* 2) Confirmation-pulse — glim-shake's gentler success sibling: a soft glow
+   ring (--accent-soft, so a .glim-hue row pulses its OWN rainbow position —
+   see that class's [data-rainbow] .glim-hue redefinition further up this
+   file, no extra rainbow-specific rule needed here) plus a small scale pop,
+   never the violent shake reserved for "the backend said no." Applied the
+   exact same way glim-shake is (ToggleRow's `pulseNonce` keys the Toggle,
+   see that prop's own doc comment) — never both classes on the same
+   element, since a save either fails (shake) or succeeds (pulse), not both. */
+@keyframes glim-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-soft); transform: scale(1); }
+  40%  { box-shadow: 0 0 0 calc(var(--motion-pulse-scale, 1) * 6px) var(--accent-soft); transform: scale(calc(1 + var(--motion-pulse-scale, 1) * .05)); }
+  100% { box-shadow: 0 0 0 0 var(--accent-soft); transform: scale(1); }
+}
+
+/* 3) Staggered list fade-in. --row-i is set inline per row (ContainerRow/
+   VMRow/FileSetRow/FleetPeerCard/ReceivedRepoCard, each already threading a
+   0-based `index` prop for the colour engine — this reuses that SAME index,
+   not a second one) via the `bv-stagger-row` class. `min()` is what enforces
+   the "a 50-row list still finishes within ~480ms" cap from a single
+   declaration — no JS clamping needed. A row's animation only ever plays
+   once: it fires when React actually CREATES that row's DOM node (a fresh
+   mount — a new container appearing, or the whole list's first render), and
+   a list re-rendering with the SAME rows (a polling refresh) never replays
+   it, because those nodes never unmount in the first place. */
+@keyframes bv-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 4) Colour-wipe. lib/appearance.ts's applyRainbow() adds `.bv-colour-wipe`
+   to <html> for exactly --motion-wipe-dur (plus a small margin) whenever
+   [data-rainbow]'s resolved value actually changes AFTER mount (never on
+   the boot-time applyStoredRainbow() call) — see that function's own
+   comment for the exact guard. The actual `.bv-colour-wipe *` rule (further
+   down, inside the no-preference block) is scoped to that TEMPORARY class,
+   not a permanent app-wide rule, specifically because it must not run
+   during ordinary hover/press colour changes elsewhere in the app — it only
+   exists for the brief window right after a genuine mode flip, and the
+   class comes back off again once that window closes. */
+
+/* 5) Drawn-checkmark. `pathLength="1"` on the <path> (components/CheckDraw.tsx)
+   makes the path exactly 1 unit long regardless of its real geometry, so a
+   plain 1 -> 0 dashoffset keyframe always draws the whole glyph without any
+   getTotalLength() math. The SAFE DEFAULT lives OUTSIDE this media query
+   (further down, an unconditional `.bv-check-draw` rule sets dashoffset to
+   0 — fully drawn, no animation declared at all): a reduced-motion viewer
+   must see a complete checkmark immediately, never one stuck permanently
+   invisible at dashoffset 1 because the only rule that ever set it to 0
+   lived inside a media query that never matched for them. */
+@keyframes bv-check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* 6) Skeleton-to-content crossfade. Dashboard.tsx's (and other pages')
+   loading placeholder is today a plain "Checking…" text line, not a
+   shimmering skeleton — .bv-content-fade fades the REPLACEMENT content in
+   once `loading` flips false, the exact node React creates fresh at that
+   moment (the placeholder and the real content are two different
+   conditionally-rendered elements, never the same DOM node with its text
+   swapped), so — like every other entrance keyframe on this file — this
+   needs no extra "did it just load" tracking of its own: a persistent class
+   on a freshly-mounted node already plays exactly once. */
+@keyframes bv-content-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 7) Settings tab slide. --tab-dir is set inline (1 = moving to a LATER tab,
+   -1 = moving to an EARLIER one) by SettingsPage's own tab-strip onChange,
+   which knows both the old and new tab index in the same event handler —
+   see that call site's own comment. --tab-dir-sign (declared once below,
+   mirrored under [dir="rtl"] exactly like --glim-toast-slide above) flips
+   the PHYSICAL side so "later tab" keeps meaning "enters from the trailing
+   edge" in both writing directions, not "always enters from the right." The
+   whole tab-content wrapper is keyed on `tab` (forced remount) purely so
+   THIS animation replays on every click — every Card inside it already
+   fully unmounts/remounts on a tab switch today via its own
+   `{tab === "x" && ...}` gate, so keying the wrapper too changes nothing
+   about which children exist, only that the wrapper itself is a fresh node
+   each time. */
+:root { --tab-dir-sign: 1; }
+[dir="rtl"] { --tab-dir-sign: -1; }
+@keyframes bv-tab-slide {
+  from { opacity: 0; transform: translateX(calc(var(--tab-dir, 1) * var(--tab-dir-sign, 1) * var(--motion-tab-dist, 18px))); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* The logo mark hosts the normal <img> plus (at boom) the fragment grid. The FX
    overlay (.bv-boom-fx) is a sibling so the flash / shockwave / cloud / sparks are
    never clipped or transformed by the mark. Both overflow the 64px box freely and
@@ -1965,6 +2177,17 @@ body {
   opacity: 0;
 }
 
+/* Drawn-checkmark (Round 2, item 5) SAFE DEFAULT — deliberately OUTSIDE the
+   (prefers-reduced-motion: no-preference) block below: a reduced-motion
+   viewer must see a fully-drawn checkmark on the very first frame, not one
+   permanently stuck invisible because the only rule that ever set
+   stroke-dashoffset to a visible value lived inside a media query that
+   never matches for them. The no-preference block below OVERRIDES this to
+   start at dashoffset 1 (fully undrawn) and animates back to 0 — this
+   bare rule is what every OTHER case (reduced motion, or a browser that
+   somehow never runs that block) falls back to. */
+.bv-check-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
+
 @media (prefers-reduced-motion: no-preference) {
   /* Gentle sway on hover, only while the logo is idle (not mid-egg). */
   .bv-logo-btn:hover .bv-logo-idle { animation: bv-logo-sway 2.4s ease-in-out infinite; }
@@ -2032,6 +2255,66 @@ body {
      block already uses for the same control for the same reason. */
   .glim-shake { animation: glim-shake var(--motion-shake-dur, 360ms) ease-in-out; }
   :root[data-motion="off"] .glim-shake { animation: bv-egg-fade-pulse 300ms ease-in-out; }
+
+  /* Round 2, item 1 — shape-morph. See .bv-shape-transitions's own comment
+     (further up this file, alongside the other six keyframes) for why this
+     lives here rather than as a permanent, unconditional rule. */
+  .bv-shape-transitions .rounded-card,
+  .bv-shape-transitions .rounded-control,
+  .bv-shape-transitions .rounded-pill {
+    transition: border-radius var(--motion-shape-dur, 260ms) var(--motion-shape-ease, cubic-bezier(.2, .6, .2, 1));
+  }
+
+  /* Round 2, item 2 — confirmation-pulse. Applied by ToggleRow exactly like
+     .glim-shake (its own `pulseNonce` prop keys the Toggle the same way
+     `shakeNonce` does — see that prop's own doc comment in Settings.tsx). */
+  .glim-pulse { animation: glim-pulse var(--motion-pulse-dur, 420ms) ease-out; }
+
+  /* Round 2, item 3 — staggered list fade-in. `min()` caps the total spread
+     regardless of list length; see this keyframe's own comment further up
+     for why a re-render of already-mounted rows never replays this. */
+  .bv-stagger-row {
+    animation: bv-row-in var(--motion-stagger-dur, 240ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both;
+    animation-delay: min(calc(var(--row-i, 0) * var(--motion-stagger-step, 30ms)), var(--motion-stagger-cap, 480ms));
+  }
+
+  /* Round 2, item 4 — colour-wipe. See that keyframe-section comment further
+     up for the JS half (lib/appearance.ts's applyRainbow()) that adds/
+     removes this class around a genuine [data-rainbow] change. Every colour
+     channel a hued element could be transitioning (background, text,
+     border, the hue-ring's box-shadow, and SVG fill/stroke for icon glyphs)
+     gets the same duration so nothing visibly lags behind the rest of the
+     wipe. */
+  .bv-colour-wipe,
+  .bv-colour-wipe * {
+    transition:
+      background-color var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
+      color var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
+      border-color var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
+      box-shadow var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
+      fill var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
+      stroke var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease);
+  }
+
+  /* Round 2, item 5 — drawn-checkmark. Overrides the safe default above
+     (dashoffset 0, no animation) to start fully undrawn and animate the
+     draw — see components/CheckDraw.tsx and that default rule's own
+     comment for the reduced-motion fallback this intentionally does NOT
+     touch. */
+  .bv-check-draw {
+    stroke-dashoffset: 1;
+    animation: bv-check-draw var(--motion-check-dur, 360ms) ease forwards;
+  }
+
+  /* Round 2, item 6 — skeleton-to-content crossfade. Plays once per mount of
+     the freshly-loaded content block, the same "persistent class on a
+     freshly-created node" mechanism every other entrance keyframe here
+     already relies on. */
+  .bv-content-fade { animation: bv-content-fade-in var(--motion-content-dur, 220ms) ease both; }
+
+  /* Round 2, item 7 — Settings tab slide. See --tab-dir/--tab-dir-sign's own
+     comment further up for the direction contract. */
+  .bv-tab-slide { animation: bv-tab-slide var(--motion-tab-dur, 220ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both; }
 }
 
 @media (prefers-reduced-motion: reduce) {
