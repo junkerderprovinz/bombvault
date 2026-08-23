@@ -265,6 +265,8 @@ const no: Partial<Translations> = {
   "cadence.cronExWeekdays": "på hverdager kl. 02:30",
   "cadence.cronExMonthly": "den 1. i hver måned",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Time",
+  "timePicker.minute": "Minutt",
   "time.justNow": "akkurat nå",
   "time.minuteAgo": "1 minutt siden",
   "time.minutesAgo": "{n} minutter siden",

@@ -268,6 +268,8 @@ const hu: Partial<Translations> = {
   "cadence.cronExWeekdays": "hétköznap 02:30-kor",
   "cadence.cronExMonthly": "minden hónap 1-jén",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Óra",
+  "timePicker.minute": "Perc",
   "time.justNow": "épp most",
   "time.minuteAgo": "1 perce",
   "time.minutesAgo": "{n} perce",

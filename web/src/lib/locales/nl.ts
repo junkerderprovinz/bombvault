@@ -263,6 +263,8 @@ const nl: Partial<Translations> = {
   "cadence.cronExWeekdays": "op werkdagen om 02:30",
   "cadence.cronExMonthly": "op de 1e van elke maand",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Uur",
+  "timePicker.minute": "Minuut",
   "time.justNow": "zojuist",
   "time.minuteAgo": "1 minuut geleden",
   "time.minutesAgo": "{n} minuten geleden",

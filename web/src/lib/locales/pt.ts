@@ -265,6 +265,8 @@ const pt: Partial<Translations> = {
   "cadence.cronExWeekdays": "em dias úteis às 02:30",
   "cadence.cronExMonthly": "no dia 1 de cada mês",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Hora",
+  "timePicker.minute": "Minuto",
   "time.justNow": "agora mesmo",
   "time.minuteAgo": "há 1 minuto",
   "time.minutesAgo": "há {n} minutos",

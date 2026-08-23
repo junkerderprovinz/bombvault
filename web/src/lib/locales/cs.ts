@@ -268,6 +268,8 @@ const cs: Partial<Translations> = {
   "cadence.cronExWeekdays": "ve všední dny v 02:30",
   "cadence.cronExMonthly": "1. den každého měsíce",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Hodina",
+  "timePicker.minute": "Minuta",
   "time.justNow": "právě teď",
   "time.minuteAgo": "před 1 minutou",
   "time.minutesAgo": "před {n} minutami",

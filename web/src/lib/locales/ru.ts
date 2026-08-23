@@ -263,6 +263,8 @@ const ru: Partial<Translations> = {
   "cadence.cronExWeekdays": "по будням в 02:30",
   "cadence.cronExMonthly": "1-го числа каждого месяца",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Час",
+  "timePicker.minute": "Минута",
   "time.justNow": "только что",
   "time.minuteAgo": "1 минуту назад",
   "time.minutesAgo": "{n} минут назад",

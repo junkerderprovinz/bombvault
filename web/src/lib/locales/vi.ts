@@ -268,6 +268,8 @@ const vi: Partial<Translations> = {
   "cadence.cronExWeekdays": "các ngày trong tuần lúc 02:30",
   "cadence.cronExMonthly": "ngày 1 hằng tháng",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Giờ",
+  "timePicker.minute": "Phút",
   "time.justNow": "vừa xong",
   "time.minuteAgo": "1 phút trước",
   "time.minutesAgo": "{n} phút trước",

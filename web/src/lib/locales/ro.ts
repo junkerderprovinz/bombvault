@@ -265,6 +265,8 @@ const ro: Partial<Translations> = {
   "cadence.cronExWeekdays": "în zilele lucrătoare la 02:30",
   "cadence.cronExMonthly": "pe 1 ale fiecărei luni",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Oră",
+  "timePicker.minute": "Minut",
   "time.justNow": "chiar acum",
   "time.minuteAgo": "acum 1 minut",
   "time.minutesAgo": "acum {n} minute",

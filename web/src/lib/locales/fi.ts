@@ -268,6 +268,8 @@ const fi: Partial<Translations> = {
   "cadence.cronExWeekdays": "arkisin klo 02:30",
   "cadence.cronExMonthly": "kuukauden 1. päivänä",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Tunti",
+  "timePicker.minute": "Minuutti",
   "time.justNow": "juuri nyt",
   "time.minuteAgo": "1 minuutti sitten",
   "time.minutesAgo": "{n} minuuttia sitten",

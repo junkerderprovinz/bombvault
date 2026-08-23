@@ -268,6 +268,8 @@ const ja: Partial<Translations> = {
   "cadence.cronExWeekdays": "平日の02:30",
   "cadence.cronExMonthly": "毎月1日",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "時",
+  "timePicker.minute": "分",
   "time.justNow": "たった今",
   "time.minuteAgo": "1分前",
   "time.minutesAgo": "{n}分前",
