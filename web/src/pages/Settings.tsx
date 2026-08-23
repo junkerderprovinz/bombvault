@@ -5862,10 +5862,26 @@ export function SettingsPage() {
                   the one-time "here's why, if you're curious" context for the
                   button below it, not the app's only safeguard against
                   forgetting. */}
-              <h4 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
+              {/* No more heading-styled <h4> here either (jdp, live-review:
+                  "Wiederherstellungs-Kit bitte auch normal formatieren") — same
+                  fix, same reasoning, as the Plain-export/Encryption blocks
+                  above: this sub-section is just a caption plus a single
+                  icon-only download button beneath it, not a heading
+                  introducing its own block of content, so it shouldn't LOOK
+                  like a section heading either. Swapped the semantic `<h4>`
+                  for a plain `<span>` carrying ToggleRow's own exact label
+                  classes (`flex items-center gap-1.5 text-sm text-carbon-text`,
+                  see ToggleRow's own label span above) instead of the retired
+                  bold/uppercase/tracking-widest heading treatment — the ONE
+                  normal-caption style this page already uses everywhere else,
+                  reused verbatim rather than inventing a second one for this
+                  call site. The InfoBubble stays put unchanged; there's no
+                  ToggleRow here to fold it onto (this row is a caption + a
+                  bare download button, not a toggle). */}
+              <span className="flex items-center gap-1.5 text-sm text-carbon-text">
                 {t("recovery.title")}
                 <InfoBubble tip={t("recovery.why")} />
-              </h4>
+              </span>
               {/* Icon-only + right-aligned (GlimStone follow-up round,
                   live-review: "...ebenso der Recovery Kit herunterladen
                   button. Beide sollen einen Glyph statt Text bekommen, mit
