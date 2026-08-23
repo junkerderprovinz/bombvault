@@ -286,9 +286,6 @@ const ro: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} eșuate",
   "vm.method.saveFailed": "Metoda de backup nu a putut fi schimbată — nu a fost modificată.",
   "jobs.noContainersIncluded": "Niciun container inclus în programare.",
-  "jobs.flashRow": "Configurație Unraid flash",
-  "jobs.flashPlanned": "planificat",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Parolă",
@@ -735,8 +732,10 @@ const ro: Partial<Translations> = {
   "filter.noMatch": "Niciun element nu corespunde filtrelor curente.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Folosește programarea Containerelor și pentru VM-uri și Flash",
+  "jobs.syncSchedules": "Folosește programarea Containerelor și pentru VM-uri, Flash și Foldere",
+  "jobs.syncSchedulesHint": "Când este activată, VM-urile, Flash și Folderele urmează programarea Containerelor în loc de propria lor — dezactivați pentru a seta ritmul fiecărui domeniu în mod independent.",
   "jobs.vmIncludeHint": "Face backup fiecărui VM cu „Includeți în programare” activat (se setează per VM în fila VMs).",
+  "jobs.flashScheduleHint": "Face copie de rezervă a stick-ului USB de pornire Flash al Unraid (/boot) la ora programată.",
   "jobs.flashNotImplemented": "Notă: Executorul de backup Flash nu este încă implementat în Faza 1 — programarea este salvată, dar nu este executată.",
   "schedule.includeAll": "Include toate în programare",
   "schedule.excludeAll": "Exclude toate din programare",
@@ -959,6 +958,7 @@ const ro: Partial<Translations> = {
   "settings.tab.integrity": "Integritate",
   "settings.tab.system": "Sistem",
   "settings.schedulesBackup": "Programări de backup",
+  "settings.schedulesOptions": "Opțiuni de programare",
   "settings.schedulesOffsite": "Programări de replicare externă",
   "settings.schedulesSelfBackup": "Programare de auto-backup",
   "settings.schedulesChecks": "Programare de verificare a restaurării",

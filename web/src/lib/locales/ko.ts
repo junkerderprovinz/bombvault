@@ -289,9 +289,6 @@ const ko: Partial<Translations> = {
   "containers.bulkResult": "성공 {ok}, 실패 {fail}",
   "vm.method.saveFailed": "백업 방식을 변경할 수 없습니다 — 변경되지 않았습니다.",
   "jobs.noContainersIncluded": "일정에 포함된 컨테이너가 없습니다.",
-  "jobs.flashRow": "Unraid 플래시 구성",
-  "jobs.flashPlanned": "계획됨",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "비밀번호",
@@ -728,8 +725,10 @@ const ko: Partial<Translations> = {
   "filter.noMatch": "현재 필터와 일치하는 항목이 없습니다.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "VM과 Flash에도 컨테이너 일정을 사용",
+  "jobs.syncSchedules": "VM, Flash, 폴더에도 컨테이너 일정을 사용",
+  "jobs.syncSchedulesHint": "활성화하면 VM, Flash, 폴더가 자체 일정 대신 컨테이너 일정을 따릅니다 — 각 도메인의 주기를 독립적으로 설정하려면 끄세요.",
   "jobs.vmIncludeHint": "「일정에 포함」이 활성화된 모든 VM을 백업합니다(VMs 탭에서 VM별로 설정).",
+  "jobs.flashScheduleHint": "예약된 시간에 Unraid USB 플래시 부팅 드라이브(/boot)를 백업합니다.",
   "jobs.flashNotImplemented": "참고: Flash 백업 실행기는 1단계에서 아직 구현되지 않았습니다 — 일정은 저장되지만 실행되지는 않습니다.",
   "schedule.includeAll": "모두 일정에 포함",
   "schedule.excludeAll": "모두 일정에서 제외",
@@ -948,6 +947,7 @@ const ko: Partial<Translations> = {
   "settings.tab.integrity": "무결성",
   "settings.tab.system": "시스템",
   "settings.schedulesBackup": "백업 일정",
+  "settings.schedulesOptions": "일정 옵션",
   "settings.schedulesOffsite": "오프사이트 복제 일정",
   "settings.schedulesSelfBackup": "자체 백업 일정",
   "settings.schedulesChecks": "복원 확인 일정",

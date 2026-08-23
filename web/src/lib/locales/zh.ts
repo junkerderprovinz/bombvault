@@ -289,9 +289,6 @@ const zh: Partial<Translations> = {
   "containers.bulkResult": "成功 {ok}，失败 {fail}",
   "vm.method.saveFailed": "无法更改备份方式 — 未做更改。",
   "jobs.noContainersIncluded": "计划中没有包含任何容器。",
-  "jobs.flashRow": "Unraid 闪存配置",
-  "jobs.flashPlanned": "已计划",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "密码",
@@ -753,8 +750,10 @@ const zh: Partial<Translations> = {
   "filter.noMatch": "没有符合当前筛选条件的项目。",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "VMs 和 Flash 也使用容器的计划",
+  "jobs.syncSchedules": "VMs、Flash 和文件夹也使用容器的计划",
+  "jobs.syncSchedulesHint": "启用后，VMs、Flash 和文件夹都将使用容器的计划，而不是各自的计划 — 关闭后可为每个域单独设置节奏。",
   "jobs.vmIncludeHint": "备份每台启用了“加入计划”的 VM（在 VMs 标签页中逐台设置）。",
+  "jobs.flashScheduleHint": "在计划时间备份 Unraid 的 USB 闪存启动盘(/boot)。",
   "jobs.flashNotImplemented": "注意：Flash 备份执行器在第 1 阶段尚未实现——计划会被保存但不会执行。",
   "schedule.includeAll": "全部加入计划",
   "schedule.excludeAll": "全部移出计划",
@@ -948,6 +947,7 @@ const zh: Partial<Translations> = {
   "settings.tab.integrity": "完整性",
   "settings.tab.system": "系统",
   "settings.schedulesBackup": "备份计划",
+  "settings.schedulesOptions": "计划选项",
   "settings.schedulesOffsite": "异地复制计划",
   "settings.schedulesSelfBackup": "自备份计划",
   "settings.schedulesChecks": "还原检查计划",

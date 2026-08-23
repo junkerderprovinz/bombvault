@@ -289,9 +289,6 @@ const fr: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} en échec",
   "vm.method.saveFailed": "Impossible de changer la méthode de sauvegarde — elle n'a pas été modifiée.",
   "jobs.noContainersIncluded": "Aucun conteneur inclus dans le planning.",
-  "jobs.flashRow": "Configuration flash Unraid",
-  "jobs.flashPlanned": "planifié",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Mot de passe",
@@ -736,8 +733,10 @@ const fr: Partial<Translations> = {
   "filter.noMatch": "Aucun élément ne correspond aux filtres actuels.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Utiliser le planning des Conteneurs aussi pour les VMs et Flash",
+  "jobs.syncSchedules": "Utiliser le planning des Conteneurs aussi pour les VMs, Flash et Dossiers",
+  "jobs.syncSchedulesHint": "Une fois activé, les VMs, Flash et Dossiers suivent le planning des Conteneurs au lieu du leur — désactivez pour définir le rythme de chaque domaine indépendamment.",
   "jobs.vmIncludeHint": "Sauvegarde chaque VM dont l'option « inclure dans le planning » est activée (à régler par VM dans l'onglet VMs).",
+  "jobs.flashScheduleHint": "Sauvegarde la clé USB de démarrage Flash d'Unraid (/boot) à l'heure planifiée.",
   "jobs.flashNotImplemented": "Remarque : l'exécuteur de sauvegarde Flash n'est pas encore implémenté en phase 1 — le planning est enregistré mais pas exécuté.",
   "schedule.includeAll": "Tout inclure dans le planning",
   "schedule.excludeAll": "Tout exclure du planning",
@@ -956,6 +955,7 @@ const fr: Partial<Translations> = {
   "settings.tab.integrity": "Intégrité",
   "settings.tab.system": "Système",
   "settings.schedulesBackup": "Plannings de sauvegarde",
+  "settings.schedulesOptions": "Options de planning",
   "settings.schedulesOffsite": "Plannings de réplication hors site",
   "settings.schedulesSelfBackup": "Planning d'auto-sauvegarde",
   "settings.schedulesChecks": "Planning de vérification de restauration",

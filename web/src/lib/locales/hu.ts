@@ -289,9 +289,6 @@ const hu: Partial<Translations> = {
   "containers.bulkResult": "{ok} rendben, {fail} sikertelen",
   "vm.method.saveFailed": "A mentési módszer nem módosítható — nem változott.",
   "jobs.noContainersIncluded": "Nincsenek konténerek az ütemezésben.",
-  "jobs.flashRow": "Unraid flash-konfiguráció",
-  "jobs.flashPlanned": "tervezett",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Jelszó",
@@ -739,8 +736,10 @@ const hu: Partial<Translations> = {
   "filter.noMatch": "Egyetlen elem sem felel meg a jelenlegi szűrőknek.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "A konténerek ütemezésének használata a VM-ekhez és a Flashhez is",
+  "jobs.syncSchedules": "A konténerek ütemezésének használata a VM-ekhez, a Flashhez és a Mappákhoz is",
+  "jobs.syncSchedulesHint": "Ha be van kapcsolva, a VM-ek, a Flash és a Mappák a saját ütemezésük helyett a konténerek ütemezését követik — kapcsolja ki, ha minden tartománynak külön ritmust szeretne beállítani.",
   "jobs.vmIncludeHint": "Minden VM-et ment, amelynél az „Ütemezésbe foglalás“ engedélyezve van (VM-enként a VMs lapon állítható be).",
+  "jobs.flashScheduleHint": "Az Unraid USB Flash rendszerindító meghajtóját (/boot) menti az ütemezett időpontban.",
   "jobs.flashNotImplemented": "Megjegyzés: A Flash mentési végrehajtó az 1. fázisban még nincs megvalósítva — az ütemezés mentésre kerül, de nem fut le.",
   "schedule.includeAll": "Mind az ütemezésbe",
   "schedule.excludeAll": "Mind ki az ütemezésből",
@@ -959,6 +958,7 @@ const hu: Partial<Translations> = {
   "settings.tab.integrity": "Integritás",
   "settings.tab.system": "Rendszer",
   "settings.schedulesBackup": "Biztonsági mentési ütemezések",
+  "settings.schedulesOptions": "Ütemezési beállítások",
   "settings.schedulesOffsite": "Telephelyen kívüli replikációs ütemezések",
   "settings.schedulesSelfBackup": "Önmentési ütemezés",
   "settings.schedulesChecks": "Visszaállítás-ellenőrzési ütemezés",

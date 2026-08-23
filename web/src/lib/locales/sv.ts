@@ -289,9 +289,6 @@ const sv: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} misslyckades",
   "vm.method.saveFailed": "Det gick inte att ändra säkerhetskopieringsmetoden — den ändrades inte.",
   "jobs.noContainersIncluded": "Inga containers ingår i schemat.",
-  "jobs.flashRow": "Unraid Flash-konfiguration",
-  "jobs.flashPlanned": "planerad",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Lösenord",
@@ -761,8 +758,10 @@ const sv: Partial<Translations> = {
   "filter.noMatch": "Inga objekt matchar de aktuella filtren.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Använd Containers-schemat även för VMs och Flash",
+  "jobs.syncSchedules": "Använd Containers-schemat även för VMs, Flash och Mappar",
+  "jobs.syncSchedulesHint": "När det är aktiverat följer VMs, Flash och Mappar Containers-schemat i stället för sitt eget — stäng av för att ställa in varje domäns takt separat.",
   "jobs.vmIncludeHint": "Säkerhetskopierar varje VM med ”inkludera i schema” aktiverat (ställs in per VM på VMs-fliken).",
+  "jobs.flashScheduleHint": "Säkerhetskopierar Unraids USB-flashenhet för uppstart (/boot) vid den schemalagda tiden.",
   "jobs.flashNotImplemented": "Obs: Flash-säkerhetskopieringsexekutorn är ännu inte implementerad i fas 1 — schemat sparas men körs inte.",
   "schedule.includeAll": "Inkludera alla i schemat",
   "schedule.excludeAll": "Exkludera alla från schemat",
@@ -956,6 +955,7 @@ const sv: Partial<Translations> = {
   "settings.tab.integrity": "Integritet",
   "settings.tab.system": "System",
   "settings.schedulesBackup": "Säkerhetskopieringsscheman",
+  "settings.schedulesOptions": "Schemaalternativ",
   "settings.schedulesOffsite": "Off-site-replikeringsscheman",
   "settings.schedulesSelfBackup": "Schema för självsäkerhetskopiering",
   "settings.schedulesChecks": "Schema för återställningskontroll",

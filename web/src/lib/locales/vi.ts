@@ -289,9 +289,6 @@ const vi: Partial<Translations> = {
   "containers.bulkResult": "{ok} ổn, {fail} thất bại",
   "vm.method.saveFailed": "Không thể đổi phương thức sao lưu — phương thức không thay đổi.",
   "jobs.noContainersIncluded": "Không có containers nào trong lịch trình.",
-  "jobs.flashRow": "Cấu hình Unraid flash",
-  "jobs.flashPlanned": "đã lên kế hoạch",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Mật khẩu",
@@ -753,8 +750,10 @@ const vi: Partial<Translations> = {
   "filter.noMatch": "Không có mục nào khớp với bộ lọc hiện tại.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Dùng lịch của Containers cho cả VMs và Flash",
+  "jobs.syncSchedules": "Dùng lịch của Containers cho cả VMs, Flash và Thư mục",
+  "jobs.syncSchedulesHint": "Khi bật, VMs, Flash và Thư mục sẽ theo lịch của Containers thay vì lịch riêng — tắt để đặt nhịp độ riêng cho từng miền.",
   "jobs.vmIncludeHint": "Sao lưu mọi VM có bật \"đưa vào lịch trình\" (đặt riêng cho từng VM trong tab VMs).",
+  "jobs.flashScheduleHint": "Sao lưu ổ USB khởi động Flash của Unraid (/boot) vào thời điểm đã lên lịch.",
   "jobs.flashNotImplemented": "Lưu ý: Bộ thực thi sao lưu Flash chưa được triển khai trong Giai đoạn 1 — lịch được lưu nhưng không được thực thi.",
   "schedule.includeAll": "Đưa tất cả vào lịch trình",
   "schedule.excludeAll": "Loại tất cả khỏi lịch trình",
@@ -948,6 +947,7 @@ const vi: Partial<Translations> = {
   "settings.tab.integrity": "Toàn vẹn",
   "settings.tab.system": "Hệ thống",
   "settings.schedulesBackup": "Lịch sao lưu",
+  "settings.schedulesOptions": "Tùy chọn lịch trình",
   "settings.schedulesOffsite": "Lịch sao chép ngoài site",
   "settings.schedulesSelfBackup": "Lịch tự sao lưu",
   "settings.schedulesChecks": "Lịch kiểm tra khôi phục",

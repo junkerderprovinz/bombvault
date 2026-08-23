@@ -286,9 +286,6 @@ const pt: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} com falha",
   "vm.method.saveFailed": "Não foi possível alterar o método de backup — ele não foi alterado.",
   "jobs.noContainersIncluded": "Nenhum container incluído no agendamento.",
-  "jobs.flashRow": "Configuração flash Unraid",
-  "jobs.flashPlanned": "agendado",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Palavra-passe",
@@ -732,8 +729,10 @@ const pt: Partial<Translations> = {
   "filter.noMatch": "Nenhum item corresponde aos filtros atuais.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Usar o agendamento dos Containers também para as VMs e Flash",
+  "jobs.syncSchedules": "Usar o agendamento dos Containers também para as VMs, Flash e Pastas",
+  "jobs.syncSchedulesHint": "Quando ativado, VMs, Flash e Pastas seguem o agendamento dos Containers em vez do próprio — desative para definir o ritmo de cada domínio de forma independente.",
   "jobs.vmIncludeHint": "Faz backup de cada VM com «incluir no agendamento» ativado (defina por VM no separador VMs).",
+  "jobs.flashScheduleHint": "Faz backup do pendrive de boot Flash do Unraid (/boot) no horário agendado.",
   "jobs.flashNotImplemented": "Nota: o executor de backup do Flash ainda não está implementado na fase 1 — o agendamento é guardado mas não executado.",
   "schedule.includeAll": "Incluir tudo no agendamento",
   "schedule.excludeAll": "Excluir tudo do agendamento",
@@ -956,6 +955,7 @@ const pt: Partial<Translations> = {
   "settings.tab.integrity": "Integridade",
   "settings.tab.system": "Sistema",
   "settings.schedulesBackup": "Agendamentos de backup",
+  "settings.schedulesOptions": "Opções de agendamento",
   "settings.schedulesOffsite": "Agendamentos de replicação externa",
   "settings.schedulesSelfBackup": "Agendamento de auto-backup",
   "settings.schedulesChecks": "Agendamento de verificação de restauração",

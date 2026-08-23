@@ -289,9 +289,6 @@ const it: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} falliti",
   "vm.method.saveFailed": "Impossibile cambiare il metodo di backup — non è stato modificato.",
   "jobs.noContainersIncluded": "Nessun container incluso nel calendario.",
-  "jobs.flashRow": "Configurazione flash Unraid",
-  "jobs.flashPlanned": "pianificato",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Password",
@@ -736,8 +733,10 @@ const it: Partial<Translations> = {
   "notify.smtpTls": "Crittografia",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Usa il calendario dei Container anche per VM e Flash",
+  "jobs.syncSchedules": "Usa il calendario dei Container anche per VM, Flash e Cartelle",
+  "jobs.syncSchedulesHint": "Se attivo, VM, Flash e Cartelle seguono il calendario dei Container invece del proprio — disattiva per impostare il ritmo di ogni dominio in modo indipendente.",
   "jobs.vmIncludeHint": "Esegue il backup di ogni VM con «includi nel calendario» attivo (impostabile per VM nella scheda VM).",
+  "jobs.flashScheduleHint": "Esegue il backup della chiavetta USB di avvio Flash di Unraid (/boot) all'orario pianificato.",
   "jobs.flashNotImplemented": "Nota: l'esecutore di backup Flash non è ancora implementato nella fase 1 — il calendario viene salvato ma non eseguito.",
   "schedule.includeAll": "Includi tutto nel calendario",
   "schedule.excludeAll": "Escludi tutto dal calendario",
@@ -956,6 +955,7 @@ const it: Partial<Translations> = {
   "settings.tab.integrity": "Integrità",
   "settings.tab.system": "Sistema",
   "settings.schedulesBackup": "Pianificazioni di backup",
+  "settings.schedulesOptions": "Opzioni di pianificazione",
   "settings.schedulesOffsite": "Pianificazioni di replica off-site",
   "settings.schedulesSelfBackup": "Pianificazione di auto-backup",
   "settings.schedulesChecks": "Pianificazione di verifica del ripristino",

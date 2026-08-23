@@ -289,9 +289,6 @@ const fi: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} epäonnistui",
   "vm.method.saveFailed": "Varmuuskopiointitapaa ei voitu vaihtaa — sitä ei muutettu.",
   "jobs.noContainersIncluded": "Aikatauluun ei ole sisällytetty kontteja.",
-  "jobs.flashRow": "Unraid Flash -kokoonpano",
-  "jobs.flashPlanned": "suunniteltu",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Salasana",
@@ -761,8 +758,10 @@ const fi: Partial<Translations> = {
   "filter.noMatch": "Mikään kohde ei vastaa nykyisiä suodattimia.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Käytä konttien aikataulua myös VM:ille ja Flashille",
+  "jobs.syncSchedules": "Käytä konttien aikataulua myös VM:ille, Flashille ja Kansioille",
+  "jobs.syncSchedulesHint": "Kun käytössä, VM:t, Flash ja Kansiot noudattavat konttien aikataulua oman sijaan — poista käytöstä, jos haluat asettaa kunkin osa-alueen rytmin erikseen.",
   "jobs.vmIncludeHint": "Varmuuskopioi jokaisen VM:n, jolla „sisällytä aikatauluun” on käytössä (asetetaan VM-kohtaisesti VMs-välilehdellä).",
+  "jobs.flashScheduleHint": "Varmuuskopioi Unraidin käynnistys-USB:n (Flash, /boot) ajoitettuna aikana.",
   "jobs.flashNotImplemented": "Huomautus: Flash-varmuuskopioinnin suoritinta ei ole vielä toteutettu vaiheessa 1 — aikataulu tallennetaan, mutta sitä ei suoriteta.",
   "schedule.includeAll": "Sisällytä kaikki aikatauluun",
   "schedule.excludeAll": "Poista kaikki aikataulusta",
@@ -956,6 +955,7 @@ const fi: Partial<Translations> = {
   "settings.tab.integrity": "Eheys",
   "settings.tab.system": "Järjestelmä",
   "settings.schedulesBackup": "Varmuuskopioinnin aikataulut",
+  "settings.schedulesOptions": "Aikatauluasetukset",
   "settings.schedulesOffsite": "Etäreplikoinnin aikataulut",
   "settings.schedulesSelfBackup": "Itsevarmuuskopioinnin aikataulu",
   "settings.schedulesChecks": "Palautustarkistuksen aikataulu",

@@ -284,9 +284,6 @@ const pl: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} nieudane",
   "vm.method.saveFailed": "Nie udało się zmienić metody kopii — nie została zmieniona.",
   "jobs.noContainersIncluded": "Żaden kontener nie jest uwzględniony w harmonogramie.",
-  "jobs.flashRow": "Konfiguracja Unraid flash",
-  "jobs.flashPlanned": "zaplanowane",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Hasło",
@@ -727,8 +724,10 @@ const pl: Partial<Translations> = {
   "filter.noMatch": "Żaden element nie pasuje do bieżących filtrów.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Użyj harmonogramu Containers także dla VMs i Flash",
+  "jobs.syncSchedules": "Użyj harmonogramu Containers także dla VMs, Flash i Folderów",
+  "jobs.syncSchedulesHint": "Po włączeniu VMs, Flash i Foldery korzystają z harmonogramu Containers zamiast własnego — wyłącz, aby ustawić rytm każdej domeny niezależnie.",
   "jobs.vmIncludeHint": "Tworzy kopię każdej VM z włączoną opcją „uwzględnij w harmonogramie” (ustawiane osobno dla każdej VM w zakładce VMs).",
+  "jobs.flashScheduleHint": "Tworzy kopię zapasową nośnika rozruchowego USB Flash Unraid (/boot) o zaplanowanej godzinie.",
   "jobs.flashNotImplemented": "Uwaga: executor kopii Flash nie jest jeszcze zaimplementowany w fazie 1 — harmonogram jest zapisywany, ale nie wykonywany.",
   "schedule.includeAll": "Uwzględnij wszystkie w harmonogramie",
   "schedule.excludeAll": "Wyklucz wszystkie z harmonogramu",
@@ -951,6 +950,7 @@ const pl: Partial<Translations> = {
   "settings.tab.integrity": "Integralność",
   "settings.tab.system": "System",
   "settings.schedulesBackup": "Harmonogramy kopii zapasowych",
+  "settings.schedulesOptions": "Opcje harmonogramu",
   "settings.schedulesOffsite": "Harmonogramy replikacji poza siedzibą",
   "settings.schedulesSelfBackup": "Harmonogram samodzielnej kopii",
   "settings.schedulesChecks": "Harmonogram sprawdzania przywracania",

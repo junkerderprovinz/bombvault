@@ -289,9 +289,6 @@ const cs: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} selhalo",
   "vm.method.saveFailed": "Nepodařilo se změnit metodu zálohování — nebyla změněna.",
   "jobs.noContainersIncluded": "Do plánu nejsou zahrnuty žádné kontejnery.",
-  "jobs.flashRow": "Konfigurace Unraid Flash",
-  "jobs.flashPlanned": "plánováno",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Heslo",
@@ -759,8 +756,10 @@ const cs: Partial<Translations> = {
   "filter.noMatch": "Žádné položky neodpovídají aktuálním filtrům.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Použít plán kontejnerů i pro VM a Flash",
+  "jobs.syncSchedules": "Použít plán kontejnerů i pro VM, Flash a Složky",
+  "jobs.syncSchedulesHint": "Když je zapnuto, VM, Flash a Složky se řídí plánem kontejnerů místo vlastního — vypněte, chcete-li nastavit rytmus každé domény samostatně.",
   "jobs.vmIncludeHint": "Zálohuje každý VM se zapnutým „Zahrnout do plánu“ (nastavíte u jednotlivých VM na kartě VMs).",
+  "jobs.flashScheduleHint": "Zálohuje zaváděcí USB flash disk Unraid (/boot) v naplánovaný čas.",
   "jobs.flashNotImplemented": "Poznámka: Executor zálohování Flash zatím není ve fázi 1 implementován — plán se uloží, ale nespustí.",
   "schedule.includeAll": "Zahrnout vše do plánu",
   "schedule.excludeAll": "Vyřadit vše z plánu",
@@ -954,6 +953,7 @@ const cs: Partial<Translations> = {
   "settings.tab.integrity": "Integrita",
   "settings.tab.system": "Systém",
   "settings.schedulesBackup": "Plány zálohování",
+  "settings.schedulesOptions": "Možnosti plánu",
   "settings.schedulesOffsite": "Plány replikace mimo lokalitu",
   "settings.schedulesSelfBackup": "Plán vlastního zálohování",
   "settings.schedulesChecks": "Plán kontroly obnovení",
