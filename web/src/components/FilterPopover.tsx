@@ -58,8 +58,11 @@ export function FilterPopover({
         aria-haspopup="dialog"
         className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="M1 2.5h10L7 7v3.5L5 11.5V7z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+        {/* FILLED funnel (design-language.md "Icon glyphs", rule 218 — this
+            silhouette was already closed under its old stroke, so it flips
+            directly: same path data, `fill="currentColor"`, no redraw). */}
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+          <path d="M1 2.5h10L7 7v3.5L5 11.5V7z" />
         </svg>
         {label}
         {/* Active-filter indicator: a persisted non-default filter silently

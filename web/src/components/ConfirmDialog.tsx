@@ -132,8 +132,13 @@ export function ConfirmDialog({
             aria-label={closeLabel}
             className="shrink-0 rounded-control p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            {/* FILLED × (design-language.md "Icon glyphs", rule 219 — an X
+                needs real geometry, two overlapping filled rects, not a
+                thicker stroke): same technique as Sidebar.tsx's own
+                IconClose, just at this dialog header's own 20×20 scale. */}
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <rect x="9" y="3" width="2" height="14" rx="1" transform="rotate(45 10 10)" />
+              <rect x="9" y="3" width="2" height="14" rx="1" transform="rotate(-45 10 10)" />
             </svg>
           </button>
         </div>

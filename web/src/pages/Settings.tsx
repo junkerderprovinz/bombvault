@@ -717,15 +717,7 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             title={t("settings.accentPresetsReset")}
             ariaLabel={t("settings.accentPresetsReset")}
           >
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-              <path
-                d="M0.67 2.67 L0.67 6.67 L4.67 6.67 M2.34 10 a6 6 0 1 0 1.42 -6.24 L0.67 6.67"
-                stroke="currentColor"
-                strokeWidth="1.3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <IconResetSwirl />
           </Badge>
         )}
         {/* Reset to default — the ACTIVE accent, not the presets above. */}
@@ -917,13 +909,26 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   // regardless of theme. Both values are solid, mode-independent literals —
   // no [data-theme] variance needed, they read fine on a "well" segment's
   // idle/hover/active fills in both palettes.
+  // FILLED rays (design-language.md "Icon glyphs", rule 220 — "a structural
+  // detail that has to stay a thin line... renders as a thin filled shape,
+  // never stroke"): the disc itself was already filled (see the fixed-hex
+  // colour note above, unrelated to this fix); only the 8 sunburst rays were
+  // still stroked lines. Each ray is now a thin filled rounded rect — the
+  // four cardinal ones axis-aligned, the four diagonal ones a `<rect>`
+  // rotated to its own 45°, same start/end points as the old stroke
+  // segments — same `#FACC15` fixed fill as the disc (still deliberately
+  // not `currentColor`/the accent, per this Card's own header comment).
   const sunIcon = (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
-      <circle cx="10" cy="10" r="4.25" fill="#FACC15" />
-      <path
-        d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
-        stroke="#FACC15" strokeWidth="1.75" strokeLinecap="round"
-      />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="#FACC15" className="shrink-0" aria-hidden="true">
+      <circle cx="10" cy="10" r="4.25" />
+      <rect x="9.15" y="2" width="1.7" height="2" rx="0.85" />
+      <rect x="9.15" y="16" width="1.7" height="2" rx="0.85" />
+      <rect x="2" y="9.15" width="2" height="1.7" rx="0.85" />
+      <rect x="16" y="9.15" width="2" height="1.7" rx="0.85" />
+      <rect x="4.435" y="4.785" width="2.4" height="1.7" rx="0.85" transform="rotate(45 5.635 5.635)" />
+      <rect x="13.165" y="13.515" width="2.4" height="1.7" rx="0.85" transform="rotate(45 14.365 14.365)" />
+      <rect x="4.435" y="13.515" width="2.4" height="1.7" rx="0.85" transform="rotate(-45 5.635 14.365)" />
+      <rect x="13.165" y="4.785" width="2.4" height="1.7" rx="0.85" transform="rotate(-45 14.365 5.635)" />
     </svg>
   );
   const moonIcon = (
@@ -4662,64 +4667,97 @@ const TAB_ORDER: TabKey[] = [
 // different taxonomy than the sidebar's page destinations, and none of the
 // seven map onto an existing sidebar glyph without lying about what it is.
 // ---------------------------------------------------------------------------
+// FILLED (design-language.md "Icon glyphs" — every icon glyph is a solid
+// shape, `fill="currentColor"`, never a stroked outline): all seven tab
+// glyphs below were the last stroke-only holdouts in the app (GlimStone
+// follow-up round, full-area sweep after IconFolder/IconCloud/the off-site
+// action badges were fixed) — each redrawn using this section's own
+// established techniques: a closed silhouette flips directly (rule 218,
+// IconTabOffsite's cloud), a line glyph becomes a filled polygon (rule 219,
+// the shield's checkmark), and a structural detail that has to stay thin
+// (a switch track, a clock's hand, a slider's track) becomes a thin filled
+// shape instead of a stroke (rule 220) — several already used the
+// `var(--carbon-surface, ...)` cutout-circle trick for a knob and keep it,
+// since that part was never a stroke to begin with.
 function IconTabGeneral() {
   // Two stacked switches — the domain on/off toggles this tab actually holds.
+  // The rounded track is now a solid filled pill (was a stroked outline);
+  // the knob keeps its existing surface-colour cutout circle, now punched
+  // into a filled track instead of a hollow one, same toggle-switch reading.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden="true">
-      <rect x="1" y="3" width="10" height="4" rx="2" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="8" cy="5" r="1.15" fill="currentColor" />
-      <rect x="5" y="9" width="10" height="4" rx="2" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="8" cy="11" r="1.15" fill="currentColor" />
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="1" y="3" width="10" height="4" rx="2" />
+      <circle cx="8" cy="5" r="1.15" fill="var(--carbon-surface, transparent)" />
+      <rect x="5" y="9" width="10" height="4" rx="2" />
+      <circle cx="8" cy="11" r="1.15" fill="var(--carbon-surface, transparent)" />
     </svg>
   );
 }
 
 function IconTabStorage() {
-  // A drive/disk stack — backup storage paths.
+  // A drive/disk stack — backup storage paths. One filled cylinder silhouette
+  // (top ellipse arced straight into a rounded-bottom body) — the old middle
+  // divider line is dropped rather than faked as a cutout, same "don't cram
+  // in every decorative stroke line" call as Sidebar.tsx's own IconReceiver.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
-      <ellipse cx="8" cy="4" rx="6" ry="2.2" />
-      <path d="M2 4v8c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V4" strokeLinecap="round" />
-      <path d="M2 8c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2" strokeLinecap="round" />
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M2 4a6 2.2 0 1 0 12 0v7a6 2.2 0 0 1 -12 0Z" />
     </svg>
   );
 }
 
 function IconTabSchedules() {
-  // A clock — cadence/timing.
+  // A clock — cadence/timing. Solid dial + the hands punched out in the
+  // surface colour (rule 220's own named example — "a clock's hands...
+  // renders as a thin filled shape", here a thin surface-coloured cutout
+  // rather than a second currentColor fill, same knob technique as
+  // IconTabGeneral/IconTabSystem's own cutouts above/below).
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
       <circle cx="8" cy="8" r="6.2" />
-      <path d="M8 4.5V8l3 1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="7.35" y="4.5" width="1.3" height="3.6" rx="0.6" fill="var(--carbon-surface, transparent)" />
+      <rect x="7.55" y="8.25" width="3.9" height="1.3" rx="0.6" fill="var(--carbon-surface, transparent)" transform="rotate(31 9.5 8.9)" />
     </svg>
   );
 }
 
 function IconTabOffsite() {
-  // A cloud — the remote/off-site replica target.
+  // A cloud — the remote/off-site replica target. Already a closed
+  // silhouette under its old stroke (rule 218) — flips directly to a solid
+  // fill with the identical path data, no redraw needed.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
-      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" strokeLinejoin="round" />
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" />
     </svg>
   );
 }
 
 function IconTabNotifications() {
-  // A bell — alerts.
+  // A bell — alerts. The bell body was already a closed silhouette (rule
+  // 218 — direct flip). The clapper "ring" beneath it was a short open
+  // stroke — redrawn as a small solid filled tab rather than a line.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
-      <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" strokeLinejoin="round" />
-      <path d="M6.6 12.5a1.5 1.5 0 0 0 2.8 0" strokeLinecap="round" />
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" />
+      <path d="M6.5 12.1h3a1.5 1.5 0 0 1-3 0Z" />
     </svg>
   );
 }
 
 function IconTabIntegrity() {
-  // A checked shield — repo/backup integrity checks.
+  // A checked shield — repo/backup integrity checks. The shield body was
+  // already a closed silhouette (rule 218 — direct flip). The checkmark
+  // inside it was an open stroke line (rule 219) — redrawn as a filled
+  // check polygon, cut out of the shield in the surface colour so it reads
+  // against the solid shield the same way the old stroke read against the
+  // outline.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
-      <path d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z" strokeLinejoin="round" />
-      <path d="M5.8 8 7.3 9.5l3-3.1" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z" />
+      <path
+        d="M5.2 7.85 6.9 9.55 10.55 5.6 11.65 6.6 7.15 11.5 4.15 8.5Z"
+        fill="var(--carbon-surface, transparent)"
+      />
     </svg>
   );
 }
@@ -4728,12 +4766,35 @@ function IconTabSystem() {
   // Sliders — system/advanced/SSH knobs. Distinct from IconTabGeneral's
   // rounded toggle switches (a discrete on/off pair) — these are inline
   // continuous sliders, matching Sidebar.tsx's own IconConfig-vs-IconSettings
-  // "deliberately distinct so the two never read alike" precedent.
+  // "deliberately distinct so the two never read alike" precedent. Same
+  // filled-track-with-cutout-knob technique as Sidebar.tsx's own IconConfig
+  // (and this file's own IconTabGeneral above) — each track is now one solid
+  // filled bar instead of two stroked segments broken around the knob.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="shrink-0" aria-hidden="true">
-      <path d="M2 5h5.5M10 5h4M2 11h2.5M7 11h7" strokeLinecap="round" />
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="2" y="4.35" width="12" height="1.3" rx="0.65" />
+      <rect x="2" y="10.35" width="12" height="1.3" rx="0.65" />
       <circle cx="8.5" cy="5" r="1.4" fill="var(--carbon-surface, transparent)" />
       <circle cx="5" cy="11" r="1.4" fill="var(--carbon-surface, transparent)" />
+    </svg>
+  );
+}
+
+// "Reset to default" swirl — the Accent Card's preset-row reset button and the
+// Off-site tab's rainbow-palette reset button (two separate call sites, same
+// icon-only circle badge, GlimStone follow-up round: full-area icon sweep).
+// FILLED (design-language.md "Icon glyphs"): the old glyph was an open stroke
+// (an L-shaped corner + a big circular arc — a "line glyph" per rule 219).
+// Redrawn once here and shared by both call sites (rather than duplicating
+// the path twice) as a filled ring segment + a solid triangular arrowhead —
+// the exact same construction as Sidebar.tsx's own IconRecovery, just at
+// this file's smaller 16×16 icon-only-badge scale, so the app's two
+// "revert/restore" concepts read as one visual family.
+function IconResetSwirl() {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+      <path d="M14 8A6 6 0 1 1 8 2L8 3.8A4.2 4.2 0 1 0 12.2 8Z" />
+      <path d="M8 1.1 4.3 3 8 4.9Z" />
     </svg>
   );
 }
@@ -8081,15 +8142,7 @@ export function SettingsPage() {
               title={t("common.reset")}
               ariaLabel={t("common.reset")}
             >
-              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-                <path
-                  d="M0.67 2.67 L0.67 6.67 L4.67 6.67 M2.34 10 a6 6 0 1 0 1.42 -6.24 L0.67 6.67"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <IconResetSwirl />
             </Badge>
           </div>
         </div>

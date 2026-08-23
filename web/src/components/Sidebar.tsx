@@ -125,13 +125,21 @@ export function IconContainers() {
   );
 }
 
-// Desktop/monitor icon — matches Unraid's "VMs" tab glyph (screen + stand + base)
+// Desktop/monitor icon — matches Unraid's "VMs" tab glyph (screen + stand + base).
+// FILLED (design-language.md "Icon glyphs" — every glyph is a solid shape,
+// `fill="currentColor"`, never a stroked outline): three solid pieces —
+// screen (a filled rounded rect, same footprint as the old stroked rect —
+// a filled monitor glyph shows the whole bezel solid, not a hollow "glass"
+// cutout, matching how Material Symbols Filled's own desktop icon works),
+// a thin filled neck and a thin filled base bar (rule 220's "a structural
+// detail that has to stay a thin line... renders as a thin filled shape" —
+// the neck/base were plain strokes before, now two small solid bars instead).
 export function IconVM() {
   return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
-      <rect x="2" y="3" width="16" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M7 17h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M10 13v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="2" y="3" width="16" height="10" rx="1.5" />
+      <rect x="9.2" y="13" width="1.6" height="3.3" rx="0.5" />
+      <rect x="7" y="16.3" width="6" height="1.4" rx="0.7" />
     </svg>
   );
 }
@@ -144,23 +152,38 @@ function IconFlash() {
   );
 }
 
-// Folder glyph for the Files (file-set backup) tab — stroked to match the
-// sibling VM/Config/Recovery icons.
+// Folder glyph for the Files (file-set backup) tab — FILLED (design-language.md
+// "Icon glyphs"): this exact silhouette is already a closed shape under its
+// old stroke, so per rule 218 ("a closed silhouette flips directly... just
+// needs stroke='none' fill='currentColor' and the same path data") it just
+// needed the same treatment IconFolder below already got for the SAME path
+// data at a smaller badge scale — reused verbatim here at the nav-rail size
+// instead of drawing a second, competing folder shape. The old divider-crease
+// line is dropped, same reasoning as IconFolder's own header comment: a
+// filled solid folder doesn't carry it.
 export function IconFiles() {
   return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
-      <path d="M2.75 5.5A1.75 1.75 0 0 1 4.5 3.75h3.3c.47 0 .92.19 1.25.52l1.06 1.06c.14.14.33.22.53.22h4.86c.97 0 1.75.78 1.75 1.75v7.2a1.75 1.75 0 0 1-1.75 1.75h-11a1.75 1.75 0 0 1-1.75-1.75V5.5Z" strokeLinejoin="round" />
-      <path d="M2.75 8.25h14.5" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M2.75 5.5A1.75 1.75 0 0 1 4.5 3.75h3.3c.47 0 .92.19 1.25.52l1.06 1.06c.14.14.33.22.53.22h4.86c.97 0 1.75.78 1.75 1.75v7.2a1.75 1.75 0 0 1-1.75 1.75h-11a1.75 1.75 0 0 1-1.75-1.75V5.5Z" />
     </svg>
   );
 }
 
 // Sliders/tuner glyph for the Config self-backup tab — settings-like, but
 // deliberately distinct from the Settings cog below so the two never read alike.
+// FILLED (design-language.md "Icon glyphs", rule 220 — "a structural detail
+// that has to stay a thin line (a lock's shackle, a slider's track...)
+// renders as a thin filled shape, never stroke"): each track is now a thin
+// filled bar instead of a stroked line; the knob keeps the exact same
+// `var(--sidebar-surface, ...)` cutout-circle technique this glyph already
+// used for its two knobs (that part never was a stroke), just sitting on a
+// filled track now instead of a stroked one — same real slider silhouette
+// (a filled bar with a punched-out knob), no stroke render model left.
 function IconConfig() {
   return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
-      <path d="M3 6h9M15 6h2M3 14h2M8 14h9" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="3" y="5.35" width="14" height="1.3" rx="0.65" />
+      <rect x="3" y="13.35" width="14" height="1.3" rx="0.65" />
       <circle cx="13.5" cy="6" r="2" fill="var(--sidebar-surface, transparent)" />
       <circle cx="6.5" cy="14" r="2" fill="var(--sidebar-surface, transparent)" />
     </svg>
@@ -181,38 +204,68 @@ function IconSettings() {
 }
 
 // Circular "restore" arrow — a recovery/roll-back glyph for the Recovery tab.
-// 20×20 viewBox + strokeWidth 1.5 to match the sibling stroked nav icons (was a
-// 16×16 viewBox at 1.4, which rendered a visibly heavier stroke at 22px).
+// FILLED (design-language.md "Icon glyphs"): the old glyph was two open
+// strokes (a big arc + an L-shaped arrowhead) — a "line glyph" per rule 219,
+// which needs real geometry, not a thicker stroke. Redrawn as one filled
+// ring segment (rule 220's "thin filled shape" technique — two concentric
+// arcs, outer r=7.4 / inner r=5.6, closed into a band) sweeping 270°
+// clockwise from the right (3 o'clock) up to the top (12 o'clock), plus a
+// solid filled triangular arrowhead capping the top end and pointing back
+// along the sweep — same "mostly a circle, gap + arrowhead at one end"
+// reading as the old stroke version, just filled. Same construction reused
+// at the smaller 16×16 icon-only-badge scale for Settings.tsx's own
+// "reset to default" swirl (IconResetSwirl) — this app's other "revert"
+// concept — so the two read as the same visual family.
 function IconRecovery() {
   return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
-      <path d="M10 3.125a6.875 6.875 0 1 0 6.5 4.625" strokeLinecap="round" />
-      <path d="M16.875 2.5v4H12.875" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M17.4 10A7.4 7.4 0 1 1 10 2.6L10 4.4A5.6 5.6 0 1 0 15.6 10Z" />
+      <path d="M10 1.6 5.4 3.5 10 5.4Z" />
     </svg>
   );
 }
 
 // Inbox / tray-with-down-arrow glyph for the Receiver tab — "off-site copies
-// land here". Stroked to match the sibling VM/Files/Recovery nav icons.
+// land here". FILLED (design-language.md "Icon glyphs"): the tray's outer
+// silhouette was ALREADY a closed shape under its old stroke, so per rule 218
+// it flips directly to `fill="currentColor"` with the same path data, no
+// redraw needed. The old inner "lip" curve (a purely decorative structural
+// line across the middle) is dropped rather than faked as a cutout — a
+// solid tray silhouette alone already reads clearly as "inbox/tray" at this
+// glyph's actual rendered size, and a groove cutout there would compete with
+// the arrow above it for the same small amount of negative space (this
+// file's own icon-legibility rule: appropriate negative space over cramming
+// in every original decorative line). The down-arrow above the tray (a
+// genuine line glyph per rule 219) is redrawn as a solid filled shaft +
+// triangular arrowhead, same silhouette a viewer already reads as "arrow".
 export function IconReceiver() {
   return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
-      <path d="M3 12.5 4.4 5.2A1.75 1.75 0 0 1 6.1 3.75h7.8a1.75 1.75 0 0 1 1.7 1.45L17 12.5v2.75a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 15.25V12.5Z" strokeLinejoin="round" />
-      <path d="M3 12.5h3.5a1 1 0 0 1 1 1 1.5 1.5 0 0 0 1.5 1.5h2a1.5 1.5 0 0 0 1.5-1.5 1 1 0 0 1 1-1H17" strokeLinejoin="round" />
-      <path d="M10 5.75v4.5M8 8.25l2 2 2-2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M3 12.5 4.4 5.2A1.75 1.75 0 0 1 6.1 3.75h7.8a1.75 1.75 0 0 1 1.7 1.45L17 12.5v2.75a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 15.25V12.5Z" />
+      <rect x="9.3" y="5.75" width="1.4" height="3.6" rx="0.5" />
+      <path d="M7.7 9.2h4.6L10 12.2Z" />
     </svg>
   );
 }
 
 // Connected-nodes glyph for the Fleet tab — "several boxes, watched from one
-// place". Stroked to match the sibling VM/Files/Receiver nav icons.
+// place". FILLED (design-language.md "Icon glyphs"): the three nodes are now
+// solid filled dots (dropping the hollow-ring stroke look); the connecting
+// lines (rule 220's "structural detail that has to stay thin" — same
+// treatment as a slider's track) are now thin filled bars instead of
+// strokes — the vertical one a plain rect, the two diagonals a `<rect>`
+// rotated to each segment's own angle (same rotated-filled-rect technique
+// IconClose already uses for its ×, just non-45° angles here), same
+// endpoints as the old stroke paths.
 export function IconFleet() {
   return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" aria-hidden="true">
-      <circle cx="10" cy="4.5" r="2" />
-      <circle cx="4" cy="15.5" r="2" />
-      <circle cx="16" cy="15.5" r="2" />
-      <path d="M10 6.5v3M8.6 11.2 5.4 13.8M11.4 11.2l3.2 2.6" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="9.3" y="6.5" width="1.4" height="3" rx="0.5" />
+      <rect x="4.55" y="11.8" width="4.9" height="1.4" rx="0.5" transform="rotate(140.9 7 12.5)" />
+      <rect x="10.55" y="11.8" width="4.9" height="1.4" rx="0.5" transform="rotate(39.1 13 12.5)" />
+      <circle cx="10" cy="4.5" r="2.2" />
+      <circle cx="4" cy="15.5" r="2.2" />
+      <circle cx="16" cy="15.5" r="2.2" />
     </svg>
   );
 }
@@ -432,12 +485,19 @@ export function IconClose() {
 
 // Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
 // controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
+// FILLED (design-language.md "Icon glyphs"): the top diamond was ALREADY a
+// closed shape under its old stroke, so per rule 218 it flips directly to
+// `fill="currentColor"` with the same path data. The two lower "V" folds were
+// open line glyphs (rule 219) — each redrawn as a thin filled ribbon (two
+// parallel V-paths closed into one band, rule 220's thin-filled-shape
+// technique) with a small gap left above it so the three layers still read
+// as separate, not fused into one blob.
 function IconLayers() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" className="shrink-0" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path d="M12 2 2 7l10 5 10-5-10-5Z" />
-      <path d="m2 17 10 5 10-5" />
-      <path d="m2 12 10 5 10-5" />
+      <path d="M2 12.6 12 16.6 22 12.6 22 13.9 12 17.9 2 13.9Z" />
+      <path d="M2 18.5 12 22.5 22 18.5 22 19.8 12 23.8 2 19.8Z" />
     </svg>
   );
 }

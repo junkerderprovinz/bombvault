@@ -472,7 +472,7 @@ function CompareSnapshots({
         className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
         </svg>
         {t("snapshot.compare")}
       </button>
@@ -880,13 +880,7 @@ export function RestorePanel({ name, t, installed = true }: RestorePanelProps) {
           fill="none"
           className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
         >
-          <path
-            d="M4 2l4 4-4 4"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
         </svg>
         {t("snapshots.title")}
       </button>

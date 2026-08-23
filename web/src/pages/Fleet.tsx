@@ -594,7 +594,7 @@ function FleetPeerCard({
               fill="none"
               className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
             >
-              <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
             </svg>
             {t("fleet.details")}
           </button>

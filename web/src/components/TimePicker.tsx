@@ -167,13 +167,20 @@ export function parseTime(value: string): { hour: number; minute: number } {
 // new one closes whichever was already open).
 let activeCloser: (() => void) | null = null;
 
-// A small clock glyph for the trigger — thin stroke, `currentColor` (never a
-// hard-coded tone), matching InfoBubble.tsx's own inline-SVG icon style.
+// A small clock glyph for the trigger — FILLED (design-language.md "Icon
+// glyphs"; `currentColor`, never a hard-coded tone). Unlike InfoBubble.tsx's
+// own "(i)" glyph (that file's rule 221 named exception — explanatory
+// furniture, not a control), this clock names an actual control (the
+// time-picker trigger), so it gets the same fill-and-cutout treatment as
+// every other content icon: a solid dial, hands punched out in the field's
+// own surface colour (rule 220's own named example — "a clock's hands...
+// renders as a thin filled shape").
 function ClockGlyph() {
   return (
-    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true" className="flex-none">
-      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M8 4.6V8l2.6 1.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true" className="flex-none">
+      <circle cx="8" cy="8" r="6.5" />
+      <rect x="7.4" y="4.6" width="1.2" height="3.4" rx="0.6" fill="var(--carbon-surface2, transparent)" />
+      <rect x="7.325" y="8.2" width="3.95" height="1.2" rx="0.6" fill="var(--carbon-surface2, transparent)" transform="rotate(31.6 9.3 8.8)" />
     </svg>
   );
 }
