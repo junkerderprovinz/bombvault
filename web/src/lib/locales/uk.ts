@@ -819,9 +819,7 @@ const uk: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL репозиторію + облікові дані",
   "offsite.wizard.repoUrl": "URL зовнішнього репозиторію",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Зберегти репозиторій",
   "offsite.wizard.credentials": "Облікові дані REST-сервера",
-  "offsite.wizard.saveCreds": "Зберегти облікові дані",
   "offsite.wizard.credLoadError": "Не вдалося завантажити наявні облікові дані — перезавантажте перед редагуванням.",
   "offsite.wizard.step4": "4 · Увімкніть захист append-only",
   "offsite.immutable": "Незмінний (append-only)",
@@ -843,7 +841,6 @@ const uk: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Стосується лише напрямків rest-server — цей бекенд не може запустити тимчасовий другий сервер проти нього. Використовуйте натомість очищення на віддаленій стороні або Зростання + бюджетне сповіщення.",
   "offsite.retention.growHint": "Ніколи не очищайте зовнішнє сховище; натомість сповіщайте, коли репозиторій перевищує бюджет у байтах. Чесний варіант за замовчуванням, поки ви не оберете спосіб очищення.",
   "offsite.retention.budget": "Бюджет зростання (ГБ, 0 = вимк)",
-  "offsite.retention.saveBudget": "Зберегти бюджет",
 
   "offsite.targets.title": "Додаткові віддалені цілі",
   "offsite.targets.hint": "Реплікуйте цей домен у декілька віддалених місць. Основна ціль вище редагується окремо; додані тут є додатковими копіями.",

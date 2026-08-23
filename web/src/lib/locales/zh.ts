@@ -816,9 +816,7 @@ const zh: Partial<Translations> = {
   "offsite.wizard.step3": "3 · 仓库 URL + 凭据",
   "offsite.wizard.repoUrl": "异地仓库 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "保存仓库",
   "offsite.wizard.credentials": "REST 服务器凭据",
-  "offsite.wizard.saveCreds": "保存凭据",
   "offsite.wizard.credLoadError": "无法加载现有凭据 — 请先重新加载再编辑。",
   "offsite.wizard.step4": "4 · 启用 append-only 保护",
   "offsite.immutable": "不可变（append-only）",
@@ -840,7 +838,6 @@ const zh: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "仅适用于 rest-server 目标 — 此后端无法针对它运行临时的第二个服务器。请改用对端清理或「增长 + 预算警报」。",
   "offsite.retention.growHint": "绝不清理异地；而是在仓库增长超过字节预算时告警。在你选定清理方式之前，这是最稳妥的默认选择。",
   "offsite.retention.budget": "增长预算（GB，0 = 关闭）",
-  "offsite.retention.saveBudget": "保存预算",
 
   "offsite.targets.title": "其他异地目标",
   "offsite.targets.hint": "将此域复制到多个异地位置。上面的主目标单独编辑；此处添加的是额外副本。",

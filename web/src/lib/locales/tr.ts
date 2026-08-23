@@ -824,9 +824,7 @@ const tr: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Depo URL'si + kimlik bilgileri",
   "offsite.wizard.repoUrl": "Site dışı depo URL'si",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Depoyu kaydet",
   "offsite.wizard.credentials": "REST sunucu kimlik bilgileri",
-  "offsite.wizard.saveCreds": "Kimlik bilgilerini kaydet",
   "offsite.wizard.credLoadError": "Mevcut kimlik bilgileri yüklenemedi — düzenlemeden önce yeniden yükleyin.",
   "offsite.wizard.step4": "4 · Append-only korumasını etkinleştir",
   "offsite.immutable": "Değiştirilemez (append-only)",
@@ -848,7 +846,6 @@ const tr: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Yalnızca rest-server hedefleri için geçerlidir — bu arka uç, ona karşı geçici ikinci bir sunucu çalıştıramaz. Bunun yerine karşı tarafta budama veya Büyüme + bütçe alarmını kullanın.",
   "offsite.retention.growHint": "Site dışını asla budamayın; bunun yerine depo bir bayt bütçesini aştığında alarm verin. Bir budama yolu seçene kadar dürüst varsayılan.",
   "offsite.retention.budget": "Büyüme bütçesi (GB, 0 = kapalı)",
-  "offsite.retention.saveBudget": "Bütçeyi kaydet",
 
   "offsite.targets.title": "Ek dış hedefler",
   "offsite.targets.hint": "Bu etki alanını birden fazla dış konuma çoğaltın. Yukarıdaki birincil hedef ayrı düzenlenir; buraya eklediğiniz hedefler ek kopyalardır.",

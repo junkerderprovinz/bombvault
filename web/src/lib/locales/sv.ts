@@ -824,9 +824,7 @@ const sv: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository-URL + uppgifter",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Spara repository",
   "offsite.wizard.credentials": "REST-server-uppgifter",
-  "offsite.wizard.saveCreds": "Spara uppgifter",
   "offsite.wizard.credLoadError": "Det gick inte att läsa in befintliga uppgifter — läs in på nytt innan du redigerar.",
   "offsite.wizard.step4": "4 · Aktivera append-only-skydd",
   "offsite.immutable": "Oföränderlig (append-only)",
@@ -848,7 +846,6 @@ const sv: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Gäller endast rest-server-mål — detta backend kan inte köra en tillfällig andra server mot det. Använd i stället rensning på fjärrsidan eller Tillväxt + budgetlarm.",
   "offsite.retention.growHint": "Rensa aldrig off-site; larma i stället när repot växer förbi en byte-budget. Det ärliga standardvalet tills du väljer en rensningsstrategi.",
   "offsite.retention.budget": "Tillväxtbudget (GB, 0 = av)",
-  "offsite.retention.saveBudget": "Spara budget",
 
   "offsite.targets.title": "Ytterligare externa mål",
   "offsite.targets.hint": "Replikera denna domän till fler än en extern plats. Det primära målet ovan redigeras separat; de du lägger till här är extra kopior.",

@@ -827,9 +827,7 @@ const th: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL รีพอสิทอรี + ข้อมูลรับรอง",
   "offsite.wizard.repoUrl": "URL รีพอสิทอรีนอกสถานที่",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "บันทึกรีพอสิทอรี",
   "offsite.wizard.credentials": "ข้อมูลรับรองเซิร์ฟเวอร์ REST",
-  "offsite.wizard.saveCreds": "บันทึกข้อมูลรับรอง",
   "offsite.wizard.credLoadError": "โหลดข้อมูลรับรองที่มีอยู่ไม่สำเร็จ — โหลดใหม่ก่อนแก้ไข",
   "offsite.wizard.step4": "4 · เปิดใช้การป้องกัน append-only",
   "offsite.immutable": "เปลี่ยนแปลงไม่ได้ (append-only)",
@@ -851,7 +849,6 @@ const th: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "ใช้ได้เฉพาะปลายทางแบบ rest-server เท่านั้น — แบ็กเอนด์นี้ไม่สามารถเรียกใช้เซิร์ฟเวอร์ที่สองชั่วคราวกับมันได้ ใช้การพรูนที่ฝั่งปลายทางหรือการเติบโต + การแจ้งเตือนงบประมาณแทน",
   "offsite.retention.growHint": "อย่าพรูนนอกสถานที่เลย; แต่ให้แจ้งเตือนเมื่อรีพอสิทอรีเติบโตเกินงบประมาณไบต์ เป็นค่าเริ่มต้นที่ตรงไปตรงมาจนกว่าคุณจะเลือกวิธีพรูน",
   "offsite.retention.budget": "งบประมาณการเติบโต (GB, 0 = ปิด)",
-  "offsite.retention.saveBudget": "บันทึกงบประมาณ",
 
   "offsite.targets.title": "เป้าหมายนอกสถานที่เพิ่มเติม",
   "offsite.targets.hint": "จำลองโดเมนนี้ไปยังตำแหน่งนอกสถานที่มากกว่าหนึ่งแห่ง เป้าหมายหลักด้านบนแก้ไขแยกต่างหาก รายการที่คุณเพิ่มที่นี่เป็นสำเนาเพิ่มเติม",

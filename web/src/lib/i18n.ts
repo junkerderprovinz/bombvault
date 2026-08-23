@@ -361,9 +361,7 @@ export const en = {
   "offsite.wizard.step3": "3 · Repository URL + credentials",
   "offsite.wizard.repoUrl": "Off-site repository URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Save repository",
   "offsite.wizard.credentials": "REST server credentials",
-  "offsite.wizard.saveCreds": "Save credentials",
   "offsite.wizard.credLoadError": "Could not load existing credentials — reload before editing.",
   "offsite.wizard.step4": "4 · Enable append-only protection",
   "offsite.immutable": "Immutable (append-only)",
@@ -387,7 +385,6 @@ export const en = {
   "offsite.retention.windowRestOnly": "Only applies to REST-server destinations — this backend can't run a temporary second server against it. Use Far-side prune or Grow + budget alarm instead.",
   "offsite.retention.growHint": "Never prune off-site; instead alarm when the repo grows past a byte budget. The honest default until you pick a prune path.",
   "offsite.retention.budget": "Growth budget (GB, 0 = off)",
-  "offsite.retention.saveBudget": "Save budget",
 
   // Additional off-site targets (multi-off-site) — extra per-domain copies
   "offsite.targets.title": "Additional off-site targets",
@@ -1835,9 +1832,7 @@ export const de: Translations = {
   "offsite.wizard.step3": "3 · Repository-URL + Zugangsdaten",
   "offsite.wizard.repoUrl": "Off-site-Repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Repository speichern",
   "offsite.wizard.credentials": "REST-Server-Zugangsdaten",
-  "offsite.wizard.saveCreds": "Zugangsdaten speichern",
   "offsite.wizard.credLoadError": "Vorhandene Zugangsdaten konnten nicht geladen werden — vor dem Bearbeiten neu laden.",
   "offsite.wizard.step4": "4 · Append-only-Schutz aktivieren",
   "offsite.immutable": "Unveränderlich (append-only)",
@@ -1859,7 +1854,6 @@ export const de: Translations = {
   "offsite.retention.windowRestOnly": "Gilt nur für REST-Server-Ziele — für dieses Backend lässt sich kein temporärer zweiter Server betreiben. Nutze stattdessen Prune auf der Gegenseite oder Wachsen + Budget-Alarm.",
   "offsite.retention.growHint": "Off-site nie prunen; stattdessen alarmieren, wenn das Repo ein Byte-Budget überschreitet. Der ehrliche Standard, bis du einen Prune-Pfad wählst.",
   "offsite.retention.budget": "Wachstumsbudget (GB, 0 = aus)",
-  "offsite.retention.saveBudget": "Budget speichern",
 
   // Additional off-site targets (multi-off-site) — extra per-domain copies
   "offsite.targets.title": "Weitere Off-site-Ziele",

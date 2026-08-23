@@ -796,9 +796,7 @@ const no: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository-URL + legitimasjon",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Lagre repository",
   "offsite.wizard.credentials": "REST-server-legitimasjon",
-  "offsite.wizard.saveCreds": "Lagre legitimasjon",
   "offsite.wizard.credLoadError": "Kunne ikke laste eksisterende legitimasjon — last inn på nytt før redigering.",
   "offsite.wizard.step4": "4 · Aktiver append-only-beskyttelse",
   "offsite.immutable": "Uforanderlig (append-only)",
@@ -820,7 +818,6 @@ const no: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Gjelder bare for rest-server-mål — denne backenden kan ikke kjøre en midlertidig ekstra server mot den. Bruk i stedet beskjæring på fjernsiden eller Vekst + budsjettalarm.",
   "offsite.retention.growHint": "Beskjær aldri off-site; varsle i stedet når repoet vokser forbi et byte-budsjett. Det ærlige standardvalget til du velger en beskjæringsstrategi.",
   "offsite.retention.budget": "Vekstbudsjett (GB, 0 = av)",
-  "offsite.retention.saveBudget": "Lagre budsjett",
 
   "offsite.targets.title": "Flere eksterne mål",
   "offsite.targets.hint": "Replikér dette domenet til mer enn ett eksternt sted. Det primære målet over redigeres separat; de du legger til her er ekstra kopier.",

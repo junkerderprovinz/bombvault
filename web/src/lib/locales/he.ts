@@ -800,9 +800,7 @@ const he: Partial<Translations> = {
   "offsite.wizard.step3": "3 · כתובת URL של המאגר + פרטי התחברות",
   "offsite.wizard.repoUrl": "כתובת URL של מאגר מחוץ לאתר",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "שמור מאגר",
   "offsite.wizard.credentials": "פרטי התחברות לשרת REST",
-  "offsite.wizard.saveCreds": "שמור פרטי התחברות",
   "offsite.wizard.credLoadError": "לא ניתן לטעון את פרטי ההתחברות הקיימים — טען מחדש לפני עריכה.",
   "offsite.wizard.step4": "4 · הפעל הגנת append-only",
   "offsite.immutable": "בלתי ניתן לשינוי (append-only)",
@@ -824,7 +822,6 @@ const he: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "חל רק על יעדי rest-server — קצה עורפי זה אינו יכול להפעיל שרת שני זמני מולו. השתמש במקום זאת בגיזום בצד המרוחק או בגדילה + התראת תקציב.",
   "offsite.retention.growHint": "לעולם אל תגזום מחוץ לאתר; במקום זאת התרע כשהמאגר גדל מעבר לתקציב בתים. ברירת המחדל הכנה עד שתבחר נתיב גיזום.",
   "offsite.retention.budget": "תקציב גדילה (GB, 0 = כבוי)",
-  "offsite.retention.saveBudget": "שמור תקציב",
 
   "offsite.targets.title": "יעדים חיצוניים נוספים",
   "offsite.targets.hint": "שכפל תחום זה ליותר ממיקום חיצוני אחד. היעד הראשי למעלה נערך בנפרד; אלה שתוסיף כאן הם עותקים נוספים.",

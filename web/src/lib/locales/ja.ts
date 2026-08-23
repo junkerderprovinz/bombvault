@@ -792,9 +792,7 @@ const ja: Partial<Translations> = {
   "offsite.wizard.step3": "3 · リポジトリ URL + 認証情報",
   "offsite.wizard.repoUrl": "オフサイトリポジトリ URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "リポジトリを保存",
   "offsite.wizard.credentials": "REST サーバーの認証情報",
-  "offsite.wizard.saveCreds": "認証情報を保存",
   "offsite.wizard.credLoadError": "既存の認証情報を読み込めませんでした — 編集する前に再読み込みしてください。",
   "offsite.wizard.step4": "4 · append-only 保護を有効化",
   "offsite.immutable": "イミュータブル（append-only）",
@@ -816,7 +814,6 @@ const ja: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "rest-server の宛先にのみ適用されます — このバックエンドでは一時的な2台目のサーバーを対して実行できません。代わりにリモート側での整理、または「増加 + 予算アラート」を使用してください。",
   "offsite.retention.growHint": "オフサイトでは決して整理せず、代わりにリポジトリがバイト予算を超えて増加したらアラームを出します。整理方法を選ぶまでの正直なデフォルトです。",
   "offsite.retention.budget": "増加予算（GB、0 = オフ）",
-  "offsite.retention.saveBudget": "予算を保存",
 
   "offsite.targets.title": "追加のオフサイトターゲット",
   "offsite.targets.hint": "このドメインを複数のオフサイトの場所に複製します。上記のプライマリターゲットは別途編集します。ここで追加するものは追加のコピーです。",

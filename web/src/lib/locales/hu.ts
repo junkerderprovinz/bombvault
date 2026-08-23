@@ -803,9 +803,7 @@ const hu: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository URL + hitelesítő adatok",
   "offsite.wizard.repoUrl": "Telephelyen kívüli repository URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Repository mentése",
   "offsite.wizard.credentials": "REST szerver hitelesítő adatok",
-  "offsite.wizard.saveCreds": "Hitelesítő adatok mentése",
   "offsite.wizard.credLoadError": "A meglévő hitelesítő adatokat nem sikerült betölteni — töltsd újra a szerkesztés előtt.",
   "offsite.wizard.step4": "4 · Append-only védelem engedélyezése",
   "offsite.immutable": "Nem módosítható (append-only)",
@@ -827,7 +825,6 @@ const hu: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Csak rest-server célokra vonatkozik — ez a háttérrendszer nem tud ideiglenes második szervert futtatni ellene. Használd inkább a túloldali nyesést vagy a Növekedés + költségvetési riasztást.",
   "offsite.retention.growHint": "Soha ne nyesd a telephelyen kívüli másolatot; helyette riassz, ha a repó túllép egy bájtkereten. Ez az őszinte alapértelmezés, amíg nem választasz nyesési módot.",
   "offsite.retention.budget": "Növekedési keret (GB, 0 = ki)",
-  "offsite.retention.saveBudget": "Keret mentése",
 
   "offsite.targets.title": "További külső célok",
   "offsite.targets.hint": "Replikálja ezt a tartományt több külső helyre is. A fenti elsődleges cél külön szerkeszthető; az itt hozzáadottak további másolatok.",

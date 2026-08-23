@@ -824,9 +824,7 @@ const el: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL αποθετηρίου + διαπιστευτήρια",
   "offsite.wizard.repoUrl": "URL αποθετηρίου εκτός τόπου",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Αποθήκευση αποθετηρίου",
   "offsite.wizard.credentials": "Διαπιστευτήρια διακομιστή REST",
-  "offsite.wizard.saveCreds": "Αποθήκευση διαπιστευτηρίων",
   "offsite.wizard.credLoadError": "Δεν ήταν δυνατή η φόρτωση των υπαρχόντων διαπιστευτηρίων — επαναφορτώστε πριν την επεξεργασία.",
   "offsite.wizard.step4": "4 · Ενεργοποίηση προστασίας append-only",
   "offsite.immutable": "Αμετάβλητο (append-only)",
@@ -848,7 +846,6 @@ const el: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Ισχύει μόνο για προορισμούς rest-server — αυτό το backend δεν μπορεί να εκτελέσει προσωρινά έναν δεύτερο διακομιστή απέναντί του. Χρησιμοποιήστε αντ' αυτού κλάδεμα στην απέναντι πλευρά ή Ανάπτυξη + ειδοποίηση προϋπολογισμού.",
   "offsite.retention.growHint": "Ποτέ μην κλαδεύετε εκτός τόπου· αντ' αυτού ειδοποιήστε όταν το repo ξεπεράσει ένα όριο byte. Η ειλικρινής προεπιλογή μέχρι να επιλέξετε μια διαδρομή κλαδέματος.",
   "offsite.retention.budget": "Προϋπολογισμός ανάπτυξης (GB, 0 = ανενεργό)",
-  "offsite.retention.saveBudget": "Αποθήκευση προϋπολογισμού",
 
   "offsite.targets.title": "Πρόσθετοι απομακρυσμένοι προορισμοί",
   "offsite.targets.hint": "Αναπαραγάγετε αυτόν τον τομέα σε περισσότερες από μία απομακρυσμένες τοποθεσίες. Ο κύριος προορισμός παραπάνω επεξεργάζεται ξεχωριστά· όσοι προσθέτετε εδώ είναι επιπλέον αντίγραφα.",
