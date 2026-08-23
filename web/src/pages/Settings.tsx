@@ -6828,6 +6828,7 @@ export function SettingsPage() {
                 setSettings={setSettings}
                 save={save}
                 t={t}
+                hueIndex={hueIdx}
               />
             ) : (
               <>
