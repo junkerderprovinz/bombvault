@@ -234,12 +234,39 @@ export function CadenceBuilder({
     <fieldset disabled={disabled} className="group flex min-w-0 flex-col gap-3 border-0 m-0 p-0">
       {/* The label doubles as the fieldset's accessible name via <legend> —
           a bare leading <span> left the group unnamed in the a11y tree.
-          A <legend> renders in its own out-of-flow legend box, never as a
-          flex item, so the fieldset's `gap-3` never reaches it — mb-3
-          (0.75rem, the same value gap-3 resolves to between the rows below)
-          puts the lost 12px back explicitly. Measured live: 0px without
-          this, 12px with it, matching the pre-<legend> <span> spacing. */}
-      <legend className="p-0 mb-3 text-xs text-carbon-textSub font-medium group-disabled:opacity-50">
+            Live-review round 5 (jdp, correcting a misread of an earlier
+          request: "Den Text in die Cardtitelbadges wieder einfügen, den habe
+          ich nicht gemeint. Den 'Titeltext' aus der Zeitplancard [entfernen].
+          Siehe Screenshot. Das ist es, das Wort 'Container'."): every one of
+          this component's callers wraps it in its own Card, and that Card's
+          `title` names the exact same domain one level up (e.g. "Container")
+          — this <legend> then repeated that same word again, in plain grey
+          text, directly above the schedule pills. jdp's screenshot showed
+          THIS plain-text repeat, not the Card's own heading badge (a
+          previous round misread the complaint and removed the Card's
+          `title` instead, which is reverted separately — see each
+          ContainersSection/VMsSection/FlashSection/FilesSection/
+          RestoreChecksSection Card in Settings.tsx).
+            `sr-only` (Tailwind's built-in visually-hidden utility — clips to
+          a 1px box, not `display:none`/`visibility:hidden`, so screen
+          readers still read it) rather than deleting the element outright:
+          a fieldset's accessible name comes from its <legend>, and nothing
+          else in this component names the group (no aria-label on the
+          fieldset itself) — removing this entirely would leave the fieldset
+          unnamed in the a11y tree again, the exact regression this
+          <legend> was originally added to fix (see this file's own commit
+          history / the paragraph above). Visually hiding it keeps the
+          accessible name intact for screen-reader users while sighted users
+          see the word exactly once (the Card's own heading badge above),
+          not twice.
+            The `mb-3` spacing compensation this <legend> used to provide
+          (a <legend> renders in its own out-of-flow box, never as a flex
+          item, so the fieldset's own `gap-3` never reached it) is now moot:
+          an `sr-only` element is clipped to a 1x1px box removed from normal
+          flow-affecting layout, so it no longer displaces the row below it
+          either way — verified live, no gap regression at any of this
+          component's call sites. */}
+      <legend className="sr-only">
         {label}
       </legend>
 
