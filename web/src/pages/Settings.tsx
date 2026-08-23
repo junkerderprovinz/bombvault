@@ -3495,12 +3495,16 @@ function ContainersSection({
   const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
 
   return (
-    // GlimStone follow-up pass ("Bei allen Zeitplanpicker Cards soll der
-    // Name raus... das ist redundant"): `title` dropped — CadenceBuilder's
-    // own <legend> right below already names "Containers"; `hint` stays,
-    // so the heading Badge still renders (icon-only) and keeps this Card's
-    // rainbow-hue notch instead of losing it, see Card's own doc comment.
-    <Card hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
+    // Live-review round 5 REVERSES the previous round's "Bei allen
+    // Zeitplanpicker Cards soll der Name raus... das ist redundant" removal
+    // (jdp: "Den Text in die Cardtitelbadges wieder einfügen, den habe ich
+    // nicht gemeint. Den 'Titeltext' aus der Zeitplancard entfernen" — put
+    // the heading BADGE text back; the duplicate jdp actually meant was the
+    // plain-text <legend> INSIDE CadenceBuilder, fixed there instead — see
+    // CadenceBuilder.tsx's own header comment for that half of this
+    // correction). `title` restored; `hint` stays alongside it exactly as
+    // every other title+hint Card in this file already composes both.
+    <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
       {/* Cadence row */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
@@ -3587,9 +3591,9 @@ function VMsSection({
   const included = vms.filter((v) => v.includeInSchedule);
 
   return (
-    // See ContainersSection's own comment above — same redundant-title
-    // removal, same "hint keeps the notch alive" reasoning.
-    <Card hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
+    // See ContainersSection's own comment above — `title` restored, same
+    // Task 3 `hueIndex` threaded into CadenceBuilder below.
+    <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3662,14 +3666,13 @@ function FlashSection({
   const status = scheduleStatus(schedule);
 
   return (
-    // Redundant-title removal (see ContainersSection's own comment above) —
-    // this Card had no `hint` at all before, so one is added here purely to
-    // keep the heading Badge (and this Card's rainbow-hue notch) alive
-    // without a title: unlike Containers/VMs/Folders, Flash has no
-    // per-item member list to explain, so its hint instead states what a
-    // Flash backup actually covers (mirrors settings.flashEnabledHint's own
-    // content, scoped to "at the scheduled time" like its three siblings).
-    <Card hint={t("jobs.flashScheduleHint")} hueIndex={hueIndex}>
+    // See ContainersSection's own comment above — `title` restored
+    // (jobs.flashScheduleHint's own text, added when the title was dropped,
+    // stays too: unlike Containers/VMs/Folders, Flash has no per-item member
+    // list, so the hint states what a Flash backup actually covers rather
+    // than explaining a list). Same Task 3 `hueIndex` threaded into
+    // CadenceBuilder below.
+    <Card title={t("jobs.flashSection")} hint={t("jobs.flashScheduleHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
@@ -3768,8 +3771,9 @@ function FilesSection({
   }
 
   return (
-    // Redundant-title removal (see ContainersSection's own comment above).
-    <Card hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
+    // See ContainersSection's own comment above — `title` restored, same
+    // Task 3 `hueIndex` threaded into CadenceBuilder below.
+    <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
         <ScheduleBadge
