@@ -193,6 +193,7 @@ const uk: Partial<Translations> = {
   "settings.error": "Помилка збереження",
 
   // Appearance / Accent
+  "settings.colors": "Кольори",
   "settings.accentColor": "Акцентний колір",
   "settings.accentPresets": "Передустановки",
   "settings.accentPreset": "Передустановка",
@@ -203,7 +204,7 @@ const uk: Partial<Translations> = {
   "settings.shape.soft": "М'які",
   "settings.shape.square": "Прямі",
   "settings.rainbow": "Режим веселки",
-  "settings.rainbowHint": "Замість одного акценту палітра з восьми кольорів за позицією, щоб довгий список читався як окремі рядки.",
+  "settings.rainbowHint": "Кожен рядок у списку отримує власний колір з набору восьми, замість того щоб усе використовувало один акцентний колір — це робить довгі списки легшими для розрізнення з першого погляду.",
   "settings.rainbowOn": "Використовувати палітру",
   "settings.rainbowReactive": "Реактивний режим",
   "settings.rainbowReactiveHint": "Коли увімкнено, рядок або елемент показує свій колір лише під час наведення курсора, або поки він виконується чи вибраний — в інший час залишається нейтральним. Коли вимкнено, кожен кольоровий рядок і елемент показує свій колір постійно.",
@@ -441,8 +442,8 @@ const uk: Partial<Translations> = {
   "flash.none": "Копій Flash ще немає — створіть копію вище.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Експорти та шифрування",
-  "settings.exportsEncryptionHint": "Налаштування для експорту flash-zip, шифрування звичайних артефактів експорту та шифрування самих репозиторіїв restic.",
+  "settings.exportsEncryptionTitle": "Шифрування експорту та репозиторію",
+  "settings.exportsEncryptionHint": "Налаштування для шифрування звичайних артефактів експорту та шифрування самих репозиторіїв restic.",
   "flash.zipExport.title": "Експорт flash у ZIP",
   "flash.zipExport.hint": "Після кожної копії flash також записувати знімок у вигляді звичайного .zip до папки — готового для синхронізації поза сервером (Syncthing, rclone, хмарний диск).",
   "flash.zipExport.enable": "Експортувати ZIP після кожної копії flash",

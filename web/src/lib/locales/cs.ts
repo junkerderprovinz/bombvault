@@ -195,6 +195,7 @@ const cs: Partial<Translations> = {
   "settings.error": "Chyba při ukládání nastavení",
 
   // Appearance / Accent
+  "settings.colors": "Barvy",
   "settings.accentColor": "Barva zvýraznění",
   "settings.accentPresets": "Předvolby",
   "settings.accentPreset": "Předvolba",
@@ -205,7 +206,7 @@ const cs: Partial<Translations> = {
   "settings.shape.soft": "Jemné",
   "settings.shape.square": "Hranaté",
   "settings.rainbow": "Duhový režim",
-  "settings.rainbowHint": "Místo jednoho akcentu paleta osmi barev podle pozice, aby se dlouhý seznam četl jako jednotlivé řádky.",
+  "settings.rainbowHint": "Každý řádek v seznamu dostane vlastní barvu z osmi barevné palety místo toho, aby vše sdílelo jeden akcent — dlouhé seznamy se tak na první pohled snáze rozliší.",
   "settings.rainbowOn": "Použít paletu",
   "settings.rainbowReactive": "Reaktivní režim",
   "settings.rainbowReactiveHint": "Když je zapnuto, řádek nebo prvek zobrazí svou barvu jen při najetí myší, nebo když právě běží či je vybraný — jinak zůstává neutrální. Když je vypnuto, každý barevný řádek a prvek zobrazuje svou barvu neustále.",
@@ -444,8 +445,8 @@ const cs: Partial<Translations> = {
   "flash.none": "Zatím žádné zálohy Flash — spusťte zálohu výše.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Exporty a šifrování",
-  "settings.exportsEncryptionHint": "Nastavení pro export flash zip, šifrování prostých exportních artefaktů a šifrování samotných repozitářů restic.",
+  "settings.exportsEncryptionTitle": "Šifrování exportu a repozitáře",
+  "settings.exportsEncryptionHint": "Nastavení pro šifrování prostých exportních artefaktů a šifrování samotných repozitářů restic.",
   "flash.zipExport.title": "Export Flash do zip",
   "flash.zipExport.hint": "Po každé záloze flashe zapiš snímek také jako prostý .zip do složky — připravený pro synchronizaci mimo server (Syncthing, rclone, cloudový disk).",
   "flash.zipExport.enable": "Exportovat zip po každé záloze flashe",

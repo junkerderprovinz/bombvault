@@ -195,6 +195,7 @@ const sv: Partial<Translations> = {
   "settings.error": "Fel vid sparande av inställningar",
 
   // Appearance / Accent
+  "settings.colors": "Färger",
   "settings.accentColor": "Accentfärg",
   "settings.accentPresets": "Förinställningar",
   "settings.accentPreset": "Förinställning",
@@ -205,7 +206,7 @@ const sv: Partial<Translations> = {
   "settings.shape.soft": "Mjuka",
   "settings.shape.square": "Fyrkantiga",
   "settings.rainbow": "Regnbågsläge",
-  "settings.rainbowHint": "I stället för en accent en palett med åtta färger efter position, så att en lång lista läses som skilda rader.",
+  "settings.rainbowHint": "Varje rad i en lista får sin egen färg från en uppsättning på åtta, i stället för att allt delar en enda accentfärg — gör långa listor lättare att skilja åt med en blick.",
   "settings.rainbowOn": "Använd paletten",
   "settings.rainbowReactive": "Reaktivt läge",
   "settings.rainbowReactiveHint": "När aktiverat visar en rad eller ett objekt bara sin färg vid hovring, eller medan den körs eller är markerad — annars förblir den neutral. När avaktiverat visar varje färgad rad och objekt sin färg hela tiden.",
@@ -446,8 +447,8 @@ const sv: Partial<Translations> = {
   "flash.none": "Inga flash-säkerhetskopior än — kör en säkerhetskopiering ovan.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Exporter & kryptering",
-  "settings.exportsEncryptionHint": "Inställningar för flash-zip-exporten, kryptering av oskyddade exportartefakter, och krypteringen av själva restic-repositorierna.",
+  "settings.exportsEncryptionTitle": "Export- och repositorykryptering",
+  "settings.exportsEncryptionHint": "Inställningar för kryptering av oskyddade exportartefakter och krypteringen av själva restic-repositorierna.",
   "flash.zipExport.title": "Flash-ZIP-export",
   "flash.zipExport.hint": "Efter varje flash-säkerhetskopia, skriv även ut ögonblicksbilden som en vanlig .zip till en mapp — redo för synk utanför servern (Syncthing, rclone, en molndisk).",
   "flash.zipExport.enable": "Exportera en ZIP efter varje flash-säkerhetskopia",

@@ -190,6 +190,7 @@ const pl: Partial<Translations> = {
   "settings.error": "Błąd podczas zapisywania",
 
   // Appearance / Accent
+  "settings.colors": "Kolory",
   "settings.accentColor": "Kolor akcentu",
   "settings.accentPresets": "Ustawienia wstępne",
   "settings.accentPreset": "Ustawienie wstępne",
@@ -200,7 +201,7 @@ const pl: Partial<Translations> = {
   "settings.shape.soft": "Łagodne",
   "settings.shape.square": "Kwadratowe",
   "settings.rainbow": "Tryb tęczowy",
-  "settings.rainbowHint": "Zamiast jednego akcentu paleta ośmiu barw przydzielanych według pozycji, więc długa lista czyta się jako osobne wiersze.",
+  "settings.rainbowHint": "Każdy wiersz na liście otrzymuje własny kolor z zestawu ośmiu, zamiast dzielić jeden wspólny kolor akcentu — dzięki temu długie listy łatwiej odróżnić na pierwszy rzut oka.",
   "settings.rainbowOn": "Użyj palety",
   "settings.rainbowReactive": "Tryb reaktywny",
   "settings.rainbowReactiveHint": "Gdy włączone, wiersz lub element pokazuje swój kolor tylko po najechaniu kursorem albo gdy działa lub jest zaznaczony — w innym wypadku pozostaje neutralny. Gdy wyłączone, każdy kolorowy wiersz i element pokazuje swój kolor przez cały czas.",
@@ -438,8 +439,8 @@ const pl: Partial<Translations> = {
   "flash.none": "Brak kopii Flash — utwórz kopię powyżej.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Eksporty i szyfrowanie",
-  "settings.exportsEncryptionHint": "Ustawienia eksportu zip flash, szyfrowania jawnych artefaktów eksportu oraz szyfrowania samych repozytoriów restic.",
+  "settings.exportsEncryptionTitle": "Szyfrowanie eksportu i repozytorium",
+  "settings.exportsEncryptionHint": "Ustawienia szyfrowania jawnych artefaktów eksportu oraz szyfrowania samych repozytoriów restic.",
   "flash.zipExport.title": "Eksport zip Flash",
   "flash.zipExport.hint": "Po każdej kopii Flash zapisuje migawkę także jako zwykły plik .zip do folderu — gotowy do synchronizacji poza serwerem (Syncthing, rclone, dysk w chmurze).",
   "flash.zipExport.enable": "Eksportuj zip po każdej kopii Flash",

@@ -10,6 +10,7 @@ import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
 import { useToast } from "../lib/toast";
+import { FlashZipExportCard } from "./Settings";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -287,6 +288,23 @@ export function Flash() {
           </div>
         )}
       </div>
+
+      {/* Flash-ZIP-Export card — MOVED here from Settings' Storage tab (jdp,
+          two live-review messages in sequence, the second superseding the
+          first: "trenn bitte flash zip export und den rest wieder in zwei
+          separate cards", then "soll die flash zip export toggle nicht
+          einfach in den flash tab? macht doch mehr sinn"). This setting is
+          entirely about THIS domain's own backup behaviour (an extra plain
+          .zip written after every flash backup), so it now lives on this
+          page instead of a generic Settings card — see FlashZipExportCard's
+          own header comment in Settings.tsx for the full move rationale and
+          why it's self-contained (fetches/persists its own settings slice
+          rather than reaching into SettingsPage's state, which doesn't exist
+          here). `hueIndex={2}`: this page hand-numbers its own Card notches
+          (0 = Backup, 1 = Restore, both above) rather than using
+          Settings.tsx's `nextHue()` counter, which is scoped to that file's
+          own component — the next literal in the same sequence. */}
+      <FlashZipExportCard t={t} hueIndex={2} />
     </div>
   );
 }

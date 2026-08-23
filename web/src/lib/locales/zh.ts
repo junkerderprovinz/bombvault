@@ -195,6 +195,7 @@ const zh: Partial<Translations> = {
   "settings.error": "保存设置出错",
 
   // Appearance / Accent
+  "settings.colors": "颜色",
   "settings.accentColor": "强调色",
   "settings.accentPresets": "预设",
   "settings.accentPreset": "预设",
@@ -205,7 +206,7 @@ const zh: Partial<Translations> = {
   "settings.shape.soft": "微圆",
   "settings.shape.square": "直角",
   "settings.rainbow": "彩虹模式",
-  "settings.rainbowHint": "不用单一强调色，而是按位置分配的八色调色板，长列表因此能逐行区分。",
+  "settings.rainbowHint": "列表中的每一行都会从八种颜色中获得专属颜色，而不是所有内容共用一种强调色——让长列表一眼就能区分开。",
   "settings.rainbowOn": "使用调色板",
   "settings.rainbowReactive": "响应模式",
   "settings.rainbowReactiveHint": "开启后，行或项目仅在鼠标悬停、正在运行或被选中时显示其颜色，其余时间保持中性色。关闭后，所有彩色行和项目会一直显示各自的颜色。",
@@ -439,8 +440,8 @@ const zh: Partial<Translations> = {
   "flash.none": "尚无 Flash 备份——请在上方运行一次备份。",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "导出与加密",
-  "settings.exportsEncryptionHint": "闪存 zip 导出、明文导出产物加密，以及 restic 仓库自身加密的相关设置。",
+  "settings.exportsEncryptionTitle": "导出与仓库加密",
+  "settings.exportsEncryptionHint": "用于加密明文导出产物以及 restic 仓库自身加密的相关设置。",
   "flash.zipExport.title": "Flash ZIP 导出",
   "flash.zipExport.hint": "每次 flash 备份后，另外将快照以普通 .zip 形式写出到一个文件夹 — 便于服务器外同步（Syncthing、rclone、云盘）。",
   "flash.zipExport.enable": "每次 flash 备份后导出一个 ZIP",

@@ -195,6 +195,7 @@ const hu: Partial<Translations> = {
   "settings.error": "Hiba a beállítások mentésekor",
 
   // Appearance / Accent
+  "settings.colors": "Színek",
   "settings.accentColor": "Kiemelőszín",
   "settings.accentPresets": "Előbeállítások",
   "settings.accentPreset": "Előbeállítás",
@@ -205,7 +206,7 @@ const hu: Partial<Translations> = {
   "settings.shape.soft": "Enyhe",
   "settings.shape.square": "Szögletes",
   "settings.rainbow": "Szivárvány mód",
-  "settings.rainbowHint": "Egy kiemelőszín helyett nyolcból álló paletta pozíció szerint, így a hosszú lista külön sorokként olvasható.",
+  "settings.rainbowHint": "A lista minden sora saját színt kap egy nyolcból álló készletből, ahelyett hogy minden egy kiemelőszínt osztana meg — így a hosszú listák egy pillantással megkülönböztethetők.",
   "settings.rainbowOn": "Paletta használata",
   "settings.rainbowReactive": "Reaktív mód",
   "settings.rainbowReactiveHint": "Ha be van kapcsolva, egy sor vagy elem csak rámutatáskor, vagy amíg fut vagy ki van választva mutatja a színét — egyébként semleges marad. Ha ki van kapcsolva, minden színes sor és elem folyamatosan mutatja a színét.",
@@ -446,8 +447,8 @@ const hu: Partial<Translations> = {
   "flash.none": "Még nincs flash mentés — indítson egyet fent.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Exportok és titkosítás",
-  "settings.exportsEncryptionHint": "Beállítások a flash zip exporthoz, a sima exportfájlok titkosításához, és magukhoz a restic tárolók titkosításához.",
+  "settings.exportsEncryptionTitle": "Export- és tárolótitkosítás",
+  "settings.exportsEncryptionHint": "Beállítások a sima exportfájlok titkosításához és magának a restic tárolóknak a titkosításához.",
   "flash.zipExport.title": "Flash ZIP-exportálás",
   "flash.zipExport.hint": "Minden flash mentés után a pillanatképet egyszerű .zip fájlként is kiírja egy mappába — készen a szerveren kívüli szinkronizáláshoz (Syncthing, rclone, felhőmeghajtó).",
   "flash.zipExport.enable": "ZIP exportálása minden flash mentés után",

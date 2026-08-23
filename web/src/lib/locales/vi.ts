@@ -195,6 +195,7 @@ const vi: Partial<Translations> = {
   "settings.error": "Lỗi khi lưu cài đặt",
 
   // Appearance / Accent
+  "settings.colors": "Màu sắc",
   "settings.accentColor": "Màu nhấn",
   "settings.accentPresets": "Cài đặt sẵn",
   "settings.accentPreset": "Cài đặt sẵn",
@@ -205,7 +206,7 @@ const vi: Partial<Translations> = {
   "settings.shape.soft": "Bo nhẹ",
   "settings.shape.square": "Vuông",
   "settings.rainbow": "Chế độ cầu vồng",
-  "settings.rainbowHint": "Thay vì một màu nhấn, một bảng tám màu chia theo vị trí, để danh sách dài đọc ra từng dòng riêng.",
+  "settings.rainbowHint": "Mỗi dòng trong danh sách nhận màu riêng từ một bộ tám màu, thay vì tất cả dùng chung một màu nhấn — giúp các danh sách dài dễ phân biệt chỉ bằng một cái nhìn.",
   "settings.rainbowOn": "Dùng bảng màu",
   "settings.rainbowReactive": "Chế độ phản ứng",
   "settings.rainbowReactiveHint": "Khi bật, một hàng hoặc mục chỉ hiện màu của nó khi bạn di chuột qua, hoặc khi nó đang chạy hoặc được chọn — còn lại thì giữ màu trung tính. Khi tắt, mọi hàng và mục có màu sẽ luôn hiện màu của nó.",
@@ -439,8 +440,8 @@ const vi: Partial<Translations> = {
   "flash.none": "Chưa có bản sao lưu flash nào — chạy một bản sao lưu ở trên.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Xuất & Mã hóa",
-  "settings.exportsEncryptionHint": "Các tùy chọn cho việc xuất zip flash, mã hóa các thành phần xuất dạng thô, và mã hóa chính các kho restic.",
+  "settings.exportsEncryptionTitle": "Mã hóa Xuất & Kho lưu trữ",
+  "settings.exportsEncryptionHint": "Các tùy chọn để mã hóa các thành phần xuất dạng thô và mã hóa chính các kho restic.",
   "flash.zipExport.title": "Xuất ZIP flash",
   "flash.zipExport.hint": "Sau mỗi lần sao lưu flash, cũng ghi ảnh chụp ra một tệp .zip thường vào một thư mục — sẵn sàng để đồng bộ ngoài máy chủ (Syncthing, rclone, một ổ đĩa đám mây).",
   "flash.zipExport.enable": "Xuất một tệp ZIP sau mỗi lần sao lưu flash",

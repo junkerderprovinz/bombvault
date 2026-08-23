@@ -195,6 +195,7 @@ const el: Partial<Translations> = {
   "settings.error": "Σφάλμα αποθήκευσης ρυθμίσεων",
 
   // Appearance / Accent
+  "settings.colors": "Χρώματα",
   "settings.accentColor": "Χρώμα επισήμανσης",
   "settings.accentPresets": "Προεπιλογές",
   "settings.accentPreset": "Προεπιλογή",
@@ -205,7 +206,7 @@ const el: Partial<Translations> = {
   "settings.shape.soft": "Απαλές",
   "settings.shape.square": "Τετράγωνες",
   "settings.rainbow": "Λειτουργία ουράνιου τόξου",
-  "settings.rainbowHint": "Αντί για ένα χρώμα τονισμού, μια παλέτα οκτώ χρωμάτων ανά θέση, ώστε μια μεγάλη λίστα να διαβάζεται ως ξεχωριστές γραμμές.",
+  "settings.rainbowHint": "Κάθε γραμμή σε μια λίστα αποκτά το δικό της χρώμα από ένα σύνολο οκτώ, αντί όλα να μοιράζονται ένα χρώμα τονισμού — έτσι οι μεγάλες λίστες ξεχωρίζουν με μια ματιά.",
   "settings.rainbowOn": "Χρήση παλέτας",
   "settings.rainbowReactive": "Αντιδραστική λειτουργία",
   "settings.rainbowReactiveHint": "Όταν είναι ενεργό, μια γραμμή ή στοιχείο δείχνει το χρώμα του μόνο όταν περνάς το ποντίκι από πάνω, ή ενώ εκτελείται ή είναι επιλεγμένο — διαφορετικά παραμένει ουδέτερο. Όταν είναι ανενεργό, κάθε έγχρωμη γραμμή και στοιχείο δείχνει το χρώμα του συνέχεια.",
@@ -446,8 +447,8 @@ const el: Partial<Translations> = {
   "flash.none": "Δεν υπάρχουν ακόμα αντίγραφα flash — εκτελέστε ένα αντίγραφο παραπάνω.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Εξαγωγές & Κρυπτογράφηση",
-  "settings.exportsEncryptionHint": "Ρυθμίσεις για την εξαγωγή flash zip, την κρυπτογράφηση απλών αρχείων εξαγωγής και την ίδια την κρυπτογράφηση των αποθετηρίων restic.",
+  "settings.exportsEncryptionTitle": "Κρυπτογράφηση Εξαγωγής & Αποθετηρίου",
+  "settings.exportsEncryptionHint": "Ρυθμίσεις για την κρυπτογράφηση απλών αρχείων εξαγωγής και την κρυπτογράφηση των ίδιων των αποθετηρίων restic.",
   "flash.zipExport.title": "Εξαγωγή Flash σε zip",
   "flash.zipExport.hint": "Μετά από κάθε αντίγραφο flash, το στιγμιότυπο γράφεται επίσης ως απλό .zip σε έναν φάκελο — έτοιμο για συγχρονισμό εκτός διακομιστή (Syncthing, rclone, δίσκος cloud).",
   "flash.zipExport.enable": "Εξαγωγή ενός zip μετά από κάθε αντίγραφο flash",

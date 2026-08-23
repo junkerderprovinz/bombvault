@@ -190,6 +190,7 @@ const nl: Partial<Translations> = {
   "settings.error": "Fout bij opslaan",
 
   // Appearance / Accent
+  "settings.colors": "Kleuren",
   "settings.accentColor": "Accentkleur",
   "settings.accentPresets": "Voorinstellingen",
   "settings.accentPreset": "Voorinstelling",
@@ -200,7 +201,7 @@ const nl: Partial<Translations> = {
   "settings.shape.soft": "Zacht",
   "settings.shape.square": "Vierkant",
   "settings.rainbow": "Regenboogmodus",
-  "settings.rainbowHint": "In plaats van één accent een palet van acht, verdeeld op positie, zodat een lange lijst als losse rijen leest.",
+  "settings.rainbowHint": "Elke rij in een lijst krijgt zijn eigen kleur uit een set van acht, in plaats van dat alles dezelfde accentkleur deelt — zo zijn lange lijsten in één oogopslag te onderscheiden.",
   "settings.rainbowOn": "Palet gebruiken",
   "settings.rainbowReactive": "Reactieve modus",
   "settings.rainbowReactiveHint": "Indien aan toont een rij of item zijn kleur alleen bij hover, of terwijl het draait of geselecteerd is — anders blijft het neutraal. Indien uit tonen alle gekleurde rijen en items hun kleur voortdurend.",
@@ -440,8 +441,8 @@ const nl: Partial<Translations> = {
   "flash.none": "Nog geen flash-back-ups — maak er hierboven een.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Exports & versleuteling",
-  "settings.exportsEncryptionHint": "Instellingen voor de flash-zip-export, het versleutelen van platte export-artefacten, en de versleuteling van de restic-repositories zelf.",
+  "settings.exportsEncryptionTitle": "Export- en repositoryversleuteling",
+  "settings.exportsEncryptionHint": "Instellingen voor het versleutelen van platte export-artefacten en de versleuteling van de restic-repositories zelf.",
   "flash.zipExport.title": "Flash-zip-export",
   "flash.zipExport.hint": "Na elke flash-back-up de snapshot ook als gewone .zip naar een map wegschrijven — klaar voor synchronisatie buiten de server (Syncthing, rclone, een cloud-drive).",
   "flash.zipExport.enable": "Een zip exporteren na elke flash-back-up",

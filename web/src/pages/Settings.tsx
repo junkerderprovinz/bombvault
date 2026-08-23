@@ -38,7 +38,7 @@ import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 import { Flag, IconAdd, IconDownload } from "../components/Sidebar";
-import { getResolvedTheme, getTheme, onSystemThemeChange, toggleTheme } from "../lib/theme";
+import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
 
 // AboutFooter shows the running version (linking to the releases page) and a
 // "Report a bug" link at the very bottom of Settings, so the sidebar stays clean.
@@ -224,18 +224,31 @@ export function ToggleRow({
    *  (never shaken yet) renders no `.glim-shake` class at all, so a normal
    *  page load or a successful toggle never shakes. */
   shakeNonce?: number;
-  /** Rainbow position for THIS row's own switch, by LIST INDEX among a
-   *  genuine equal-weight, mutually-independent set of ToggleRows (jdp,
-   *  live-review: "Die ganzen Toggle... sind nicht in der Farbengine!!") —
-   *  the Domains list (settings.domains Card: Container/VMs/Flash/Ordner/
-   *  Selbst-Backup/Empfänger-Dashboard/Fleet-Ansicht) is exactly this case,
-   *  design-language.md's own "walk every genuine equal-member set" rule,
-   *  not the singleton exclusion right next to it. Omit for every OTHER
-   *  ToggleRow in this file (a lone domain-independent switch like "Leise
-   *  Benachrichtigungen", or a switch that is itself one of a pair like
-   *  "Reaktiver Modus"/"Farbenrotation" inside the Rainbow Card — those are
-   *  not members of an equal, trackable list the way seven independent
-   *  domain toggles are, so they correctly keep the flat single accent). */
+  /** Rainbow position for THIS row's own switch, by LIST INDEX among the
+   *  ToggleRows rendered together in one place (jdp, live-review: "Die
+   *  ganzen Toggle... sind nicht in der Farbengine!!") — the Domains list
+   *  (settings.domains Card: Container/VMs/Flash/Ordner/Selbst-Backup/
+   *  Empfänger-Dashboard/Fleet-Ansicht) was the first case fixed this way,
+   *  design-language.md's own "walk every genuine equal-member set" rule.
+   *  Own local 0-based index PER GROUP (unrelated to Card's/Badge's own
+   *  `nextHue()` sequence) — the merged Colors Card's own three rainbow
+   *  toggles (master/Reactive/Rotate) are a second, independent group with
+   *  their own 0/1/2, not a continuation of the Domains list's 0-6.
+   *    CORRECTED (jdp, live-review, extremely emphatic standing rule — "auch
+   *  nicht die Toggles der Regenbogen-Card! ... Es soll immer alles in die
+   *  Farb- und Formengine integriert werden!! IMMER!!"): this doc used to
+   *  claim the Rainbow Card's own three toggles correctly stayed flat,
+   *  reasoned as "not members of an equal, trackable list the way seven
+   *  independent domain toggles are." That reasoning was exactly the kind
+   *  of self-authored design exception jdp has now ruled out categorically
+   *  — three toggles rendered together in the same Card, one per row, are a
+   *  list by construction regardless of whether they're logically
+   *  independent switches or a master-plus-sub-options group. They now
+   *  carry hueIndex 0/1/2 (see the merged Colors Card's own comment in
+   *  SettingsPage). Omit only for a genuinely LONE ToggleRow with no
+   *  siblings of its own kind on screen (e.g. "Leise Benachrichtigungen",
+   *  the sole toggle in its own single-purpose Card) — that case has no
+   *  list to walk at all, not a list this doc is choosing to exclude. */
   hueIndex?: number;
 }) {
   // Deliberately NO useRainbow() subscription — ToggleRow (like Toggle and
@@ -247,13 +260,13 @@ export function ToggleRow({
   // plain function outside React's reconciler leaves hooks with no
   // dispatcher. hueVars()/rainbowAt() below are plain functions reading
   // module state, not hooks, so they still resolve correctly at render time.
-  // The only real caller of `hueIndex` today (the Domains Card, seven rows
-  // below) lives inside Settings.tsx's own SettingsPage(), the SAME
-  // component whose Rainbow Card holds rainbow settings in a plain
-  // useState() (`rainbow`/`setRainbowLocal`) — flipping the mode there
-  // already re-renders this entire function, recomputing every ToggleRow's
-  // hueVars right along with it. See Badge.tsx's own identical comment for
-  // the fuller version of this reasoning.
+  // Callers of `hueIndex` today (the Domains Card's seven rows, and the
+  // merged Colors Card's own three rainbow toggles) live inside
+  // Settings.tsx's own SettingsPage(), the SAME component whose `rainbow`
+  // plain useState() (`rainbow`/`setRainbowLocal`) backs the mode itself —
+  // flipping it already re-renders this entire function, recomputing every
+  // ToggleRow's hueVars right along with it. See Badge.tsx's own identical
+  // comment for the fuller version of this reasoning.
   // The switch dims itself via its own `disabled:opacity-50` (Toggle.tsx), but
   // that left the caption and description next to it at full opacity, so a
   // disabled row misleadingly still read as enabled. Rule 15 rules out opacity
@@ -543,8 +556,20 @@ function AccentPresetSwatch({
 // always-visible convention: two reset affordances sharing one Card read
 // more coherently following EACH OTHER's rule than each independently
 // matching a different sibling Card.
+//
+// No own `<Card>` wrapper any more (jdp, live-review: "Die card von
+// Akzentfarbe und Regenbogenmodus in eine mergen. Gehört ja zusammen") —
+// this now returns just its own body content, composed inside the shared
+// "settings.colors" Card alongside the Rainbow controls at that Card's own
+// call site in SettingsPage. `hueIndex` is gone from the signature too: it
+// used to be threaded straight through to this component's own Card, which
+// no longer exists here — the merged Card's single heading notch owns that
+// position now. Settings.accentCard.dom.test.tsx renders this standalone
+// (`<AccentCard t={t} />`, no wrapping Card) and only ever asserted against
+// the preset buttons/dialogs inside, never the old Card chrome, so it keeps
+// passing unchanged.
 // ---------------------------------------------------------------------------
-export function AccentCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
   const [presets, setPresets] = useState<string[]>(() => getAccentPresets());
 
@@ -566,73 +591,71 @@ export function AccentCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; h
   );
 
   return (
-    <Card title={t("settings.accentColor")} hueIndex={hueIndex}>
-      <div className="flex items-center gap-3 flex-wrap">
-        {/* Custom-colour trigger — a flat swatch, same size/shape as the
-            preset swatches beside it (design-language.md, "The user-owned
-            axes" > Accent: every custom colour value gets the SAME
-            trigger). Opens the shared GlimStone picker popover instead of
-            a native <input type="color"> — see ColorPickerPopover.tsx's
-            own header comment for why (jdp: "kein eigenes Fenster welches
-            sich öffnet" — no separate window opening). */}
-        <ColorPickerSwatch
-          value={accentHex}
-          onChange={selectAccent}
-          label={t("settings.accentColor")}
-          className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
-        />
-        {/* Preset swatches */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
-          {presets.map((hex, i) => (
-            <AccentPresetSwatch
-              key={i}
-              hex={hex}
-              index={i}
-              active={accentHex.toLowerCase() === hex.toLowerCase()}
-              onSelect={selectAccent}
-              onChangePreset={(v) => changePreset(i, v)}
-              t={t}
-            />
-          ))}
-          {/* Reset the PRESET SWATCHES back to their shipped defaults — a
-              separate concern from the "reset the active accent" button
-              below (that one resets accentHex to DEFAULT_ACCENT; this one
-              resets the presets array to DEFAULT_ACCENT_PRESETS). Row-level,
-              not per-preset — see this component's own header comment. */}
-          {!presetsAreDefault && (
-            <Badge
-              as="button"
-              shape="circle"
-              size="icon"
-              tone="neutral"
-              onClick={() => setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS))}
-              title={t("settings.accentPresetsReset")}
-              ariaLabel={t("settings.accentPresetsReset")}
-            >
-              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-                <path
-                  d="M0.67 2.67 L0.67 6.67 L4.67 6.67 M2.34 10 a6 6 0 1 0 1.42 -6.24 L0.67 6.67"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Badge>
-          )}
-          {/* Reset to default — the ACTIVE accent, not the presets above. */}
-          {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
-            <button
-              onClick={() => selectAccent(DEFAULT_ACCENT)}
-              className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
-            >
-              {t("common.reset")}
-            </button>
-          )}
-        </div>
+    <div className="flex items-center gap-3 flex-wrap">
+      {/* Custom-colour trigger — a flat swatch, same size/shape as the
+          preset swatches beside it (design-language.md, "The user-owned
+          axes" > Accent: every custom colour value gets the SAME
+          trigger). Opens the shared GlimStone picker popover instead of
+          a native <input type="color"> — see ColorPickerPopover.tsx's
+          own header comment for why (jdp: "kein eigenes Fenster welches
+          sich öffnet" — no separate window opening). */}
+      <ColorPickerSwatch
+        value={accentHex}
+        onChange={selectAccent}
+        label={t("settings.accentColor")}
+        className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
+      />
+      {/* Preset swatches */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
+        {presets.map((hex, i) => (
+          <AccentPresetSwatch
+            key={i}
+            hex={hex}
+            index={i}
+            active={accentHex.toLowerCase() === hex.toLowerCase()}
+            onSelect={selectAccent}
+            onChangePreset={(v) => changePreset(i, v)}
+            t={t}
+          />
+        ))}
+        {/* Reset the PRESET SWATCHES back to their shipped defaults — a
+            separate concern from the "reset the active accent" button
+            below (that one resets accentHex to DEFAULT_ACCENT; this one
+            resets the presets array to DEFAULT_ACCENT_PRESETS). Row-level,
+            not per-preset — see this component's own header comment. */}
+        {!presetsAreDefault && (
+          <Badge
+            as="button"
+            shape="circle"
+            size="icon"
+            tone="neutral"
+            onClick={() => setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS))}
+            title={t("settings.accentPresetsReset")}
+            ariaLabel={t("settings.accentPresetsReset")}
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+              <path
+                d="M0.67 2.67 L0.67 6.67 L4.67 6.67 M2.34 10 a6 6 0 1 0 1.42 -6.24 L0.67 6.67"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Badge>
+        )}
+        {/* Reset to default — the ACTIVE accent, not the presets above. */}
+        {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
+          <button
+            onClick={() => selectAccent(DEFAULT_ACCENT)}
+            className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
+          >
+            {t("common.reset")}
+          </button>
+        )}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -746,28 +769,53 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
 // already applied to the language picker above — see LanguageCard's own
 // header comment for that precedent, and Sidebar.tsx's SidebarControls for
 // where this toggle used to render). Reuses lib/theme.ts's own
-// getResolvedTheme()/toggleTheme()/getTheme()/onSystemThemeChange() verbatim
-// — the exact same state machine and "system"-tracking effect the sidebar
-// button used, byte-for-byte, only the surrounding chrome changed (the
-// sidebar's nav-rail button look → a plain bg-carbon-surface2 trigger, the
-// same idle-chip fill LanguageCard's own trigger already uses).
+// getResolvedTheme()/getTheme()/setTheme()/onSystemThemeChange() — the exact
+// same state machine the sidebar button used, only the surrounding chrome
+// changed.
+//
+// A horizontal Selector, not the old single toggle button (jdp, live-review:
+// "das design dunkel/hell bitte ein horizontaler selektor machen") — this IS
+// "one of a small, mutually exclusive set of options," design-language.md's
+// own "The one horizontal selector" case, the exact shape the Shape Card's
+// own round/soft/square picker right below it already uses. Matched to that
+// picker's OWN exact established treatment (jdp approved that look live for
+// the same kind of control): `size="lg"` (the page's own full Settings-
+// decision register, not a tight toolbar chip) and `variant="well"`
+// (TrickWork's shared padded track, flush crossfade-only segments — see
+// Selector.tsx's file header item 5). No `hue={false}` — see that Card's own
+// comment for why an opt-out here would be exactly the self-authored
+// aesthetic exception jdp has ruled out; this Selector uses the plain `true`
+// default like every other hue-enabled one in the app, so its active segment
+// reads its own rainbow position in Rainbow Mode instead of one flat colour
+// (positions 0/1 — RAINBOW[0]/[1] — light/dark in that order below).
+//
+// Two segments only (light/dark), not three (adding "system"): lib/theme.ts's
+// own toggleTheme() header already flags "no UI path back to system" as a
+// KNOWN GAP, explicitly deferred as its own separate piece of UI design work,
+// not a mechanical follow-on — jdp's own ask here named "dunkel/hell"
+// specifically, not a third state, so this stays scoped to what was asked
+// rather than silently expanding it. onChange sets the theme DIRECTLY to the
+// clicked segment's id (never toggleTheme()'s old flip-the-current-value
+// logic, which only made sense for a single two-state button) — clicking the
+// segment that's already active is a harmless no-op, same as clicking the
+// already-active Shape segment.
 export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   // getResolvedTheme(), not the raw stored preference: the default is
-  // "system" (GlimStone form-engine #1), and this toggle only ever shows/
+  // "system" (GlimStone form-engine #1), and this picker only ever shows/
   // sets an explicit dark or light state, so it must reflect what's actually
   // painted rather than the unresolved "system" value.
   const [theme, setThemeState] = useState(getResolvedTheme);
 
-  function handleToggleTheme() {
-    const next = toggleTheme();
+  function selectTheme(next: ResolvedTheme) {
+    setTheme(next);
     setThemeState(next);
   }
 
-  // Keep the displayed label live-accurate on "system": lib/theme.ts's own
+  // Keep the displayed selection live-accurate on "system": lib/theme.ts's own
   // matchMedia listener repaints data-theme (and every colour token)
   // immediately on an OS-level flip, but this component's `theme` state was
-  // only ever set at mount and on an explicit toggle — without this, the
-  // Card's Light/Dark label goes stale the moment the OS changes out from
+  // only ever set at mount and on an explicit pick — without this, the
+  // Card's active segment goes stale the moment the OS changes out from
   // under a "system" user, even though the rest of the UI has already
   // repainted correctly.
   useEffect(() => {
@@ -776,53 +824,246 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
     });
   }, []);
 
+  // Filled + coloured glyphs (live-review point 4: "the sun/moon icon is a
+  // thin outline, jdp wants it filled and preferably coloured"). Fixed hex
+  // fills rather than `currentColor`/an accent token on purpose — a sun and
+  // a moon each already carry their OWN conventional colour (warm gold, cool
+  // indigo) independent of whatever accent hue or rainbow position the rest
+  // of the app is using; tying either to --accent would make the sun render
+  // blue if the user's accent happened to be blue, which reads wrong
+  // regardless of theme. Both values are solid, mode-independent literals —
+  // no [data-theme] variance needed, they read fine on a "well" segment's
+  // idle/hover/active fills in both palettes.
+  const sunIcon = (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
+      <circle cx="10" cy="10" r="4.25" fill="#FACC15" />
+      <path
+        d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
+        stroke="#FACC15" strokeWidth="1.75" strokeLinecap="round"
+      />
+    </svg>
+  );
+  const moonIcon = (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0" aria-hidden="true">
+      {/* Solid fill, no stroke — the crescent path already closes with "z",
+          so a plain fill renders the correct silhouette. */}
+      <path
+        d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
+        fill="#818CF8"
+      />
+    </svg>
+  );
+
   return (
     <Card title={t("settings.theme")} hueIndex={hueIndex}>
-      {/* w-48 (GlimStone follow-up pass, live-review round): matches
-          LanguageCard's own trigger button EXACTLY (same class, same value —
-          see that button's own comment for why 192px) — jdp's ask was
-          specifically "widen Language, then size Theme to match it", not two
-          independently-chosen widths that happen to be close. */}
-      <button
-        type="button"
-        onClick={handleToggleTheme}
-        title={t("theme.toggle")}
-        className="flex items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
-      >
-        {/* Filled + coloured (live-review point 4: "the sun/moon icon is a
-            thin outline, jdp wants it filled and preferably coloured"). Fixed
-            hex fills rather than `currentColor`/an accent token on purpose —
-            a sun and a moon each already carry their OWN conventional colour
-            (warm gold, cool indigo) independent of whatever accent hue or
-            rainbow position the rest of the app is using; tying either to
-            --accent would make the sun render blue if the user's accent
-            happened to be blue, which reads wrong regardless of theme. Both
-            values are solid, mode-independent literals — no [data-theme]
-            variance needed, they read fine on this button's bg-carbon-surface2
-            chip in both palettes. */}
-        {theme === "dark" ? (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-            {/* Moon — solid fill, no stroke (the crescent path already closes
-                with "z", so a plain fill renders the correct silhouette). */}
-            <path
-              d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
-              fill="#818CF8"
-            />
-          </svg>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-            {/* Sun — filled disc (was stroke-only) + bolder rays, same gold
-                as the app's own default accent (#FCC419 in index.css) but
-                spelled as its own literal, not --accent — see comment above. */}
-            <circle cx="10" cy="10" r="4.25" fill="#FACC15" />
-            <path
-              d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"
-              stroke="#FACC15" strokeWidth="1.75" strokeLinecap="round"
-            />
-          </svg>
-        )}
-        <span className="min-w-0 truncate text-start">{theme === "dark" ? t("theme.dark") : t("theme.light")}</span>
-      </button>
+      <Selector
+        items={[
+          { id: "light", label: t("theme.light"), icon: sunIcon },
+          { id: "dark", label: t("theme.dark"), icon: moonIcon },
+        ]}
+        label={t("settings.theme")}
+        select="one"
+        active={theme}
+        onChange={(id) => selectTheme(id as ResolvedTheme)}
+        size="lg"
+        variant="well"
+      />
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Flash-ZIP-Export Card (#28) — MOVED here from Settings' Storage tab (jdp,
+// two live-review messages in sequence, the second superseding/refining the
+// first: "trenn bitte flash zip export und den rest wieder in zwei separate
+// cards", then "soll die flash zip export toggle nicht einfach in den flash
+// tab? macht doch mehr sinn" — implemented as the SECOND ask, not both: this
+// setting now lives ONLY on the dedicated Flash page (pages/Flash.tsx), not
+// as a Settings card at all any more). Exported from Settings.tsx and
+// imported into Flash.tsx the same way Config.tsx already imports ToggleRow
+// and Recovery.tsx already imports CloudCard/RcloneCard/ToggleRow from this
+// same file — a real, pre-existing cross-page reuse pattern, not a new one
+// invented for this move.
+//
+// Self-contained the SAME way VMSSHCard/RcloneCard/CloudCard below already
+// are ("fetches its own data so the large SettingsPage doesn't need extra
+// state") — necessarily so here, since this Card now renders OUTSIDE
+// SettingsPage entirely and can't reach that component's own settings/
+// savedSettings state or its save()/autoSaveField()/debouncedSave() helpers.
+// Persists via the same "re-fetch the latest settings, merge only the
+// fields THIS card owns, PUT" pattern Config.tsx's ConfigSettingsCard
+// already established for exactly this situation (a card living on a
+// domain's own page, editing a few fields of the shared Settings object) —
+// see that component's own handleSave() for the reference implementation.
+// Kept the ORIGINAL per-field auto-save behaviour (optimistic flip + revert-
+// on-failure + shake for the two toggles, debounce for the path/keep-count
+// fields) rather than switching to Config.tsx's single "Save" button: this
+// feature already had, and jdp already approved, the no-Speichern-button
+// auto-save UX (#142) before this move — relocating a control is not licence
+// to silently redesign how it saves.
+export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+  const { push } = useToast();
+  const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
+  const [enabled, setEnabled] = useState(false);
+  const [path, setPath] = useState("");
+  const [keep, setKeep] = useState(0);
+  // Remembers the last "keep N" the user picked so toggling history OFF
+  // (which zeroes the persisted count) and back ON restores their count
+  // instead of the shipped default — same behaviour, same variable name, as
+  // the one this card used to keep inside SettingsPage's own state before
+  // the move.
+  const [rememberedKeep, setRememberedKeep] = useState(7);
+  const [busyEnabled, setBusyEnabled] = useState(false);
+  const [busyKeep, setBusyKeep] = useState(false);
+  const [shakeEnabled, setShakeEnabled] = useState(0);
+  const [shakeKeep, setShakeKeep] = useState(0);
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const DEBOUNCE_MS = 800;
+
+  useEffect(() => {
+    getSettings()
+      .then((res) => {
+        if (!res.ok) return;
+        setEnabled(res.settings.flashZipExportEnabled);
+        setPath(res.settings.flashZipExportPath);
+        setKeep(res.settings.flashZipExportKeep);
+        if (res.settings.flashZipExportKeep > 0) setRememberedKeep(res.settings.flashZipExportKeep);
+        setHostMountRoot(res.hostMountRoot);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  // persist re-fetches the current server state and merges ONLY this card's
+  // own patch onto it before PUTting — never a stale mount-time snapshot,
+  // which could otherwise re-assert a field some OTHER open tab/page has
+  // since changed. Mirrors Config.tsx's ConfigSettingsCard.handleSave()
+  // exactly (see that component's own comment for the fuller rationale);
+  // unlike that one, this fires per-field rather than from one batched
+  // "Save" click, so it also mirrors SettingsPage's own save() helper's
+  // return-a-boolean contract so callers can revert an optimistic flip.
+  async function persist(patch: Partial<Settings>): Promise<boolean> {
+    try {
+      const latest = await getSettings();
+      if (!latest.ok) {
+        push(latest.error ?? t("settings.error"), "fail");
+        return false;
+      }
+      const merged: Settings = { ...latest.settings, ...patch };
+      const res = await putSettings(merged);
+      if (res.ok) {
+        push(t("settings.saved"), "success");
+        return true;
+      }
+      push(res.error ?? t("settings.error"), "fail");
+      return false;
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      return false;
+    }
+  }
+
+  async function toggleEnabled(next: boolean) {
+    const prev = enabled;
+    setEnabled(next);
+    setBusyEnabled(true);
+    const ok = await persist({ flashZipExportEnabled: next });
+    setBusyEnabled(false);
+    if (!ok) {
+      setEnabled(prev);
+      setShakeEnabled((n) => n + 1);
+    }
+  }
+
+  async function toggleKeepHistory(next: boolean) {
+    const prev = keep;
+    const nextKeep = next ? rememberedKeep : 0;
+    setKeep(nextKeep);
+    setBusyKeep(true);
+    const ok = await persist({ flashZipExportKeep: nextKeep });
+    setBusyKeep(false);
+    if (!ok) {
+      setKeep(prev);
+      setShakeKeep((n) => n + 1);
+    }
+  }
+
+  function debounced(key: string, run: () => void) {
+    const existing = debounceTimers.current[key];
+    if (existing) clearTimeout(existing);
+    debounceTimers.current[key] = setTimeout(run, DEBOUNCE_MS);
+  }
+
+  return (
+    <Card
+      title={t("flash.zipExport.title")}
+      hint={`${t("flash.zipExport.hint")} ${t("flash.zipExport.enableHint")}`}
+      hueIndex={hueIndex}
+    >
+      {/* hideLabel: the Card's own title/hint above already carry this
+          switch's own explanation (the exact same content, verbatim) — the
+          same "everything but the heading moves into a bubble" shape this
+          section kept while it was a sub-heading inside Settings' merged
+          Exports & Encryption card, now promoted one level since the Card
+          itself IS this section. */}
+      <ToggleRow
+        label={t("flash.zipExport.enable")}
+        hideLabel
+        checked={enabled}
+        onChange={(v) => void toggleEnabled(v)}
+        disabled={busyEnabled}
+        shakeNonce={shakeEnabled}
+      />
+      {enabled && (
+        <>
+          <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            {t("flash.zipExport.plaintextWarn")}
+          </div>
+          <FolderBrowser
+            label={t("flash.zipExport.path")}
+            value={path}
+            hostMountRoot={hostMountRoot}
+            hint={t("flash.zipExport.pathHint")}
+            onChange={(v) => {
+              setPath(v);
+              debounced("flashZipExportPath", () => void persist({ flashZipExportPath: v }));
+            }}
+          />
+          {!path.trim() && (
+            <p className="text-xs text-statusFail -mt-1">{t("flash.zipExport.pathRequired")}</p>
+          )}
+          <ToggleRow
+            label={t("flash.zipExport.keepHistory")}
+            hint={t("flash.zipExport.keepHistoryHint")}
+            // History is "on" whenever we keep more than a single overwritten zip.
+            checked={keep > 0}
+            onChange={(v) => void toggleKeepHistory(v)}
+            disabled={busyKeep}
+            shakeNonce={shakeKeep}
+          />
+          {keep > 0 ? (
+            <label className="flex flex-col gap-1 max-w-40">
+              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t("flash.zipExport.keepN")}
+                <InfoBubble tip={t("flash.zipExport.keepNHint")} />
+              </span>
+              <input
+                type="number"
+                min={1}
+                value={keep}
+                onChange={(e) => {
+                  const n = Math.max(1, parseInt(e.target.value, 10) || 1);
+                  setRememberedKeep(n);
+                  setKeep(n);
+                  debounced("flashZipExportKeep", () => void persist({ flashZipExportKeep: n }));
+                }}
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+              />
+            </label>
+          ) : (
+            <p className="text-xs text-carbon-textMuted">{t("flash.zipExport.latestNote")}</p>
+          )}
+        </>
+      )}
     </Card>
   );
 }
@@ -3834,11 +4075,13 @@ export function SettingsPage() {
   }
 
   // Per-section save state
-  // Flash zip export / plain-export encryption / repository encryption (#28)
-  // — merged into one auto-save card (GlimStone follow-up round, merge B):
-  // no SaveBar reads these anymore, so only the setters survive, as the
-  // callback params autoSaveField/debouncedSave still require — same "only
-  // the setters are needed" shape as setDomSaveState/setDomSaveError above.
+  // Plain-export encryption / repository encryption (#28) — merged into one
+  // auto-save card (GlimStone follow-up round, merge B): no SaveBar reads
+  // these anymore, so only the setters survive, as the callback params
+  // autoSaveField/debouncedSave still require — same "only the setters are
+  // needed" shape as setDomSaveState/setDomSaveError above. Flash-zip-export's
+  // own save state moved out along with the feature itself — see
+  // FlashZipExportCard's own header comment for where it lives now.
   const [, setEncSaveState] = useState<SaveState>("idle");
   const [, setEncSaveError] = useState<string | null>(null);
   // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
@@ -3847,12 +4090,6 @@ export function SettingsPage() {
 
   const [pathSaveState, setPathSaveState] = useState<SaveState>("idle");
   const [pathSaveError, setPathSaveError] = useState<string | null>(null);
-  const [, setFlashZipSaveState] = useState<SaveState>("idle");
-  const [, setFlashZipSaveError] = useState<string | null>(null);
-  // Remembers the last "keep N" the user picked so toggling history OFF (which
-  // zeroes flashZipExportKeep) and back ON restores their count instead of the
-  // default. Updated whenever the keepN input is set to a value >= 1.
-  const [rememberedKeep, setRememberedKeep] = useState(7);
   const [, setExportEncSaveState] = useState<SaveState>("idle");
   const [, setExportEncSaveError] = useState<string | null>(null);
   const [offsiteSaveState, setOffsiteSaveState] = useState<SaveState>("idle");
@@ -4159,11 +4396,12 @@ export function SettingsPage() {
   // Busy/shake are keyed by field name, same map shape as
   // domainToggleBusy/domainToggleShake above, just covering a different,
   // smaller set of keys (the merged cards' own toggles, not the 7 domains).
+  // "flashZipExportEnabled"/"flashZipExportKeep" moved out of this union along
+  // with the feature itself — FlashZipExportCard now owns its own busy/shake
+  // state independently (see that component's own header comment).
   type MergedAutoSaveKey =
     | "pruneImageAfterUpdate"
     | "reconcileUnraidUpdateStatus"
-    | "flashZipExportEnabled"
-    | "flashZipExportKeep"
     | "exportEncryptEnabled"
     | "encryptionEnabled";
   const [mergedFieldBusy, setMergedFieldBusy] = useState<Partial<Record<MergedAutoSaveKey, boolean>>>({});
@@ -5370,124 +5608,41 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Flash zip export (#28), plain-export encryption (age), and */}
-      {/* the restic repositories' own encryption, merged into one card         */}
-      {/* (GlimStone follow-up round, merge B): all three are ways backup       */}
-      {/* exports/repositories get protected. Every field auto-saves instead    */}
-      {/* of batching into a Speichern button (#142's own mechanism) — the      */}
-      {/* three toggles use autoSaveField (optimistic + revert-on-failure);     */}
-      {/* the path/keep-count/recipients fields debounce instead, same          */}
-      {/* reasoning as the registries fields in the Image Cleanup card above.   */}
+      {/* STORAGE — Plain-export encryption (age) and the restic repositories'  */}
+      {/* own encryption, merged into one card (GlimStone follow-up round,      */}
+      {/* merge B). Every field auto-saves instead of batching into a           */}
+      {/* Speichern button (#142's own mechanism) — the two toggles use         */}
+      {/* autoSaveField (optimistic + revert-on-failure); the recipients field  */}
+      {/* debounces instead, same reasoning as the registries fields in the     */}
+      {/* Image Cleanup card above.                                            */}
+      {/*   Flash-ZIP-Export (#28) used to be a third sub-section in THIS same  */}
+      {/* card. Moved out in TWO steps, live-review (jdp): first "trenn bitte   */}
+      {/* flash zip export und den rest wieder in zwei separate cards", then    */}
+      {/* — superseding that — "soll die flash zip export toggle nicht einfach  */}
+      {/* in den flash tab? macht doch mehr sinn." It now lives on the Flash    */}
+      {/* page itself (pages/Flash.tsx's own FlashZipExportCard, exported from  */}
+      {/* this file the same way AccentCard/ThemeCard/RcloneCard/CloudCard      */}
+      {/* already are for cross-page reuse — see that component's own header    */}
+      {/* comment for the full move and why it's self-contained rather than     */}
+      {/* threaded through SettingsPage's own save()/autoSaveField()). This     */}
+      {/* card's own title/hint dropped every flash-zip-export mention          */}
+      {/* accordingly — it now only covers what's actually left: plain-export   */}
+      {/* encryption and repository encryption, both real "encrypt SOMETHING"   */}
+      {/* settings, so `settings.exportsEncryptionTitle`/`Hint` keep their OLD   */}
+      {/* key names (an internal identifier, not user-facing) with NEW values.  */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
       <Card title={t("settings.exportsEncryptionTitle")} hint={t("settings.exportsEncryptionHint")} hueIndex={nextHue()}>
-        {/* Flash zip export — only relevant when Flash is on. ---------------- */}
-        {settings.flashEnabled && (
-          <div className="flex flex-col gap-3">
-            <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-              {t("flash.zipExport.title")}
-              {/* jdp, live-review (fresh screenshot proved a prior round's
-                  claim wrong — this sub-heading still paired a bare <h3> with
-                  the master ToggleRow's own visible "Nach jedem Flash-Backup
-                  ein ZIP exportieren" label directly beneath it): "da sollen
-                  nur folgende Texte stehen: Flash-ZIP-Export... Die übrigen
-                  Texte in deren Infobubbles." The switch's own label
-                  (flash.zipExport.enable) folds in here alongside its own
-                  enableHint — same concatenation shape as the Plain-export
-                  sub-heading below (`${hint} ${ageInfo}`) — since hiding the
-                  ToggleRow's visible label (see `hideLabel` below) leaves
-                  nowhere else for that text's own meaning to live. The switch
-                  ITSELF, not just its text, stays on the page: `hideLabel`
-                  only suppresses the caption, never the control (Toggle.tsx's
-                  own contract) — the filled/unfilled track still shows
-                  on/off state at a glance, it just no longer repeats the
-                  heading's own topic as prose next to it. */}
-              <InfoBubble tip={`${t("flash.zipExport.hint")} ${t("flash.zipExport.enableHint")}`} />
-            </h3>
-            <ToggleRow
-              label={t("flash.zipExport.enable")}
-              hideLabel
-              checked={settings.flashZipExportEnabled}
-              onChange={(v) => void autoSaveField("flashZipExportEnabled", v, setFlashZipSaveState, setFlashZipSaveError)}
-              disabled={mergedFieldBusy.flashZipExportEnabled}
-              shakeNonce={mergedFieldShake.flashZipExportEnabled}
-            />
-            {settings.flashZipExportEnabled && (
-              <>
-                <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-                  {t("flash.zipExport.plaintextWarn")}
-                </div>
-                <FolderBrowser
-                  label={t("flash.zipExport.path")}
-                  value={settings.flashZipExportPath}
-                  hostMountRoot={hostMountRoot}
-                  hint={t("flash.zipExport.pathHint")}
-                  onChange={(v) => {
-                    setSettings((prev) => prev ? { ...prev, flashZipExportPath: v } : prev);
-                    debouncedSave("flashZipExportPath", () =>
-                      void save({ flashZipExportPath: v }, setFlashZipSaveState, setFlashZipSaveError)
-                    );
-                  }}
-                />
-                {!settings.flashZipExportPath.trim() && (
-                  <p className="text-xs text-statusFail -mt-1">{t("flash.zipExport.pathRequired")}</p>
-                )}
-                <ToggleRow
-                  label={t("flash.zipExport.keepHistory")}
-                  hint={t("flash.zipExport.keepHistoryHint")}
-                  // History is "on" whenever we keep more than a single overwritten zip.
-                  // Turning it on restores the last count the user picked (rememberedKeep,
-                  // default 7); off collapses back to 0 = a single flash-latest.zip.
-                  checked={settings.flashZipExportKeep > 0}
-                  onChange={(v) =>
-                    void autoSaveField(
-                      "flashZipExportKeep",
-                      v ? rememberedKeep : 0,
-                      setFlashZipSaveState,
-                      setFlashZipSaveError
-                    )
-                  }
-                  disabled={mergedFieldBusy.flashZipExportKeep}
-                  shakeNonce={mergedFieldShake.flashZipExportKeep}
-                />
-                {settings.flashZipExportKeep > 0 ? (
-                  <label className="flex flex-col gap-1 max-w-40">
-                    {/* Live-review round 3 sweep: same field-caption-to-bubble
-                        fix as settings.restartHealthTimeoutHint above. */}
-                    <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-                      {t("flash.zipExport.keepN")}
-                      <InfoBubble tip={t("flash.zipExport.keepNHint")} />
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      value={settings.flashZipExportKeep}
-                      onChange={(e) => {
-                        const n = Math.max(1, parseInt(e.target.value, 10) || 1);
-                        setRememberedKeep(n);
-                        setSettings((prev) => prev ? { ...prev, flashZipExportKeep: n } : prev);
-                        debouncedSave("flashZipExportKeep", () =>
-                          void save({ flashZipExportKeep: n }, setFlashZipSaveState, setFlashZipSaveError)
-                        );
-                      }}
-                      className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
-                    />
-                  </label>
-                ) : (
-                  <p className="text-xs text-carbon-textMuted">{t("flash.zipExport.latestNote")}</p>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
         {/* Plain-export encryption (age) -------------------------------------- */}
-        {/* No `border-t` divider against the Flash-zip-export block above it
-            (jdp, live review: "die Linien dazwischen weg") — the Card's own
-            `gap-4` between direct children already separates the three
-            sub-sections, same spacing-only convention as the Rainbow Card's
-            ToggleRow trio (settings.rainbow/-Reactive/-Rotate) further down
-            this file, which never had a rule line between them either. */}
+        {/* No `border-t` divider against Repository encryption below it (jdp,
+            live review: "die Linien dazwischen weg") — the Card's own `gap-4`
+            between direct children already separates the two sub-sections,
+            same spacing-only convention as the Colors Card's own accent/
+            rainbow halves and its own rainbow ToggleRow trio
+            (settings.rainbow/-Reactive/-Rotate) elsewhere in this file, none
+            of which ever had a rule line between their parts either. (A
+            THIRD sub-section, Flash-ZIP-Export, used to sit above this one —
+            see this Card's own header comment for where it moved.) */}
         <div className="flex flex-col gap-3">
           <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
             {t("export.encrypt.title")}
@@ -6231,18 +6386,23 @@ export function SettingsPage() {
       {/* border line, only shade/shadow" house rule (see index.css's shape-  */}
       {/* token comments and Badge.tsx's file header: every OTHER visual      */}
       {/* separation in this app comes from a surface's own elevation, not a  */}
-      {/* rule). Each of the four is now its OWN Card — same bg-carbon-       */}
-      {/* surface + rounded-card + shadow every other Settings topic already  */}
-      {/* renders through, no divider needed because there's no longer a      */}
-      {/* shared surface to divide. `settings.appearance` (the old umbrella   */}
-      {/* title) has no call site left after this split and was removed from  */}
-      {/* every locale rather than kept as a dead key. Same "general" tab     */}
-      {/* condition repeated per Card — the pattern every OTHER multi-Card    */}
-      {/* tab on this page already uses (e.g. the "system" tab's Settings     */}
-      {/* Portability Card + AboutFooter further down), not a wrapping        */}
-      {/* Fragment introduced just for this section.                         */}
+      {/* rule). Each of the four became its OWN Card that round — same       */}
+      {/* bg-carbon-surface + rounded-card + shadow every other Settings      */}
+      {/* topic already renders through, no divider needed because there's   */}
+      {/* no longer a shared surface to divide.                              */}
+      {/*   LATER live-review round (jdp: "Die card von Akzentfarbe und       */}
+      {/* Regenbogenmodus in eine mergen. Gehört ja zusammen"): accent and    */}
+      {/* rainbow are back to ONE Card below — see that Card's own header     */}
+      {/* comment for the merge, the hint relocation, and the hue-integration  */}
+      {/* fixes that landed in the same pass. Shape and Quiet toasts stay     */}
+      {/* their own separate Cards; `settings.appearance` (the old umbrella   */}
+      {/* title from the FOUR-way split) still has no call site and stays     */}
+      {/* removed from every locale rather than kept as a dead key. Same      */}
+      {/* "general" tab condition repeated per Card — the pattern every OTHER */}
+      {/* multi-Card tab on this page already uses (e.g. the "system" tab's   */}
+      {/* Settings Portability Card + AboutFooter further down), not a        */}
+      {/* wrapping Fragment introduced just for this section.                 */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "general" && <AccentCard t={t} hueIndex={nextHue()} />}
 
       {/* Shape (GlimStone form-engine — shape engine; design-language.md's
           "The user-owned axes": data-shape on <html>, round/soft/square,
@@ -6250,16 +6410,28 @@ export function SettingsPage() {
           the JS half (read/write/persist which of the three is chosen, stamp
           the attribute), index.css already carries the matching
           [data-shape="soft"|"square"] radius-token overrides. Lives directly
-          below the accent Card above: same kind of setting (client-only,
-          applied at the app root — shape.ts's own header comment), same "one
-          picker, no Save step" shape.
+          above the merged Colors Card below: same kind of setting
+          (client-only, applied at the app root — shape.ts's own header
+          comment), same "one picker, no Save step" shape.
             Selector, not a bespoke button row: this IS "three mutually
           exclusive options" (design-language.md's "The one horizontal
           selector"), the exact shape Dashboard.tsx's heatmap-domain toggle
-          already uses this component for. hue={false} for the same reason as
-          that toggle — round/soft/square are a form choice, not a position
-          in a list, and tinting the segments would compete with the choice
-          itself.
+          already uses this component for.
+            REVERSED (jdp, live-review, extremely emphatic standing rule —
+          "Der horizontale Selektor der Ecken ist nicht im Regenbogen-Modus
+          integriert... Es soll immer alles in die Farb- und Formengine
+          integriert werden!! IMMER!!"): this used to carry `hue={false}`,
+          reasoned at the time as "round/soft/square are a form choice, not a
+          position in a list, and tinting the segments would compete with
+          the choice itself." That is exactly the kind of self-authored
+          aesthetic exception jdp has now ruled out categorically — a
+          plausible-sounding taste judgement is never grounds to unilaterally
+          exclude a control from the colour engine. `hue` now stays on its
+          plain `true` default, so this Selector's three segments read
+          RAINBOW[0]/[1]/[2] like any other hue-enabled Selector in the app —
+          see Selector.tsx's own file header item 1 for the full reversal
+          note (Dashboard's heatmap toggle got the identical fix in the same
+          pass).
             `size="lg"` (GlimStone follow-up pass, live-review point 1 —
           up from the original "sm"): this is a full, standalone Settings
           decision in its own right, the same visual register as the page's
@@ -6283,15 +6455,14 @@ export function SettingsPage() {
           well track (components/Selector.tsx's own file header, item 5) —
           TrickWork's shared padded background with flush, crossfade-only
           segments, no sliding pill. Picked for the FIRST try of this variant
-          specifically because it's already `hue={false}` and icon-free (no
-          rainbow tint, no glyph competing with the track's own look) and
-          already the page's most "three mutually exclusive settings, read
-          together as one control" Selector on this page — the shape it
-          suits best. Every other Selector on this page (the 7-tab strip
-          above, Rainbow's own controls further down) stays on the default
-          `variant="chip"`, unchanged — this is deliberately scoped to one
-          control per this session's "try it on one, generalize later if it
-          lands well" pattern, not a page-wide restyle. */}
+          specifically because it's already icon-free (no glyph competing
+          with the track's own look) and already the page's most "three
+          mutually exclusive settings, read together as one control"
+          Selector on this page — the shape it suits best. A LATER round
+          gave the Theme Card's own light/dark picker (above) this exact same
+          treatment. Every other Selector on this page (the 7-tab strip
+          above, the drill-type toggle further down) stays on the default
+          `variant="chip"`, unchanged. */}
       {tab === "general" && (
       <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
         <Selector
@@ -6307,61 +6478,87 @@ export function SettingsPage() {
             setShape(id as Shape);
           }}
           size="lg"
-          hue={false}
           variant="well"
         />
       </Card>
       )}
 
-      {/* Rainbow (GlimStone form-engine Phase 2, Task 1; renamed "Rainbow
-          Mode" in the follow-up pass, live-review point 6) — the accent,
-          plural: an eight-colour palette handed out by list position instead
-          of one accent everywhere (design-language.md, "The colour engine" /
-          "Rainbow"). Lives right below the shape Card above, the same kind
-          of setting (client-only, applied at the app root — see
-          lib/appearance.ts's header comment for why this stays localStorage
-          like every other appearance preference in this app rather than
-          round-tripping through the server). This switch genuinely repaints
-          the app: every hue-enabled Selector segment (components/
-          Selector.tsx, its own default — twelve call sites across seven
-          files, including the Settings tab strip above and the drill-type
-          toggle further down) and the container/VM/file-set list rows all
-          read a rainbow position, so turning this on sets data-rainbow +
-          --rb-0..--rb-7 on <html> AND immediately recolours those real call
-          sites. The sidebar nav is deliberately NOT a consumer (Sidebar.tsx
-          carries the reasoning), so flipping this switch never changes the
-          rail's own colours.
-            The master switch was briefly a plain `hideLabel` ToggleRow
-          (reasoning at the time: now that Rainbow is its OWN Card, not a
-          sub-heading sharing space with three OTHER sub-topics in one shared
-          Card, the Card's own title bar sits directly above this toggle,
-          which looked like ToggleRow's documented "single-purpose Card whose
-          title IS the decision this switch makes" case). jdp reviewed that
-          live and asked for the row's own "Regenbogen-Modus"/"Rainbow Mode"
-          label back, in addition to the Card's heading badge above it — so
-          `hideLabel` is gone again and `label` now reads `t("settings.rainbow")`,
-          the SAME key the Card's own `title` above already uses (not
-          `settings.rainbowOn`, a different string — "Use the palette"/
-          "Palette verwenden" — which this row used while hidden but was
-          never the text being asked for here). `settings.rainbowOn` itself
-          stays in every locale file even though this was its only call site:
-          removing a translation key from 26 locale files is real, separate
-          churn this live-review point never asked for.
-            The reactive/rotate sub-toggles used to show their FULL
-          explanatory sentence as the permanent visible label (design-
-          language.md rule 8 violation — "explanations live in a bubble, not
-          on the page"). Both now carry a short verb-phrase label
-          ("settings.rainbowReactive"/"settings.rainbowRotate") plus that
-          same descriptive sentence moved verbatim into an InfoBubble via
-          ToggleRow's new `hint` prop — the text itself didn't change, only
-          where it lives. */}
+      {/* Colors (GlimStone form-engine Phase 2, Task 1; the accent Card and
+          the Rainbow Card, MERGED — jdp, live-review: "Die card von
+          Akzentfarbe und Regenbogenmodus in eine mergen. Gehört ja
+          zusammen"). AccentCard above now returns just its own body (no
+          Card wrapper of its own — see its header comment), composed here
+          alongside the Rainbow controls this Card used to hold on its own.
+          One heading, `settings.colors` ("Colours"/"Farben") — new key, not
+          a repurposed `settings.accentColor`/`settings.rainbow`: those two
+          stay in use as the sub-topics' own row labels below, so the Card's
+          own title needed a THIRD string that reads as "colour, broadly"
+          without clashing with either. No `hint` on the Card itself any
+          more (see the master toggle below for where Rainbow's own hint
+          moved). No divider between the two halves — spacing only, this
+          app's established "cards separate sections, never a rule line"
+          convention (see the Shape/Rainbow split's own comment above for
+          the fuller house-rule writeup); AccentCard's body and the rainbow
+          `<div>` below it are simply two direct children of this Card's own
+          `flex flex-col gap-4`, the same "adjacent flex children, no divider"
+          shape the (now-relocated) Flash-zip-export/Plain-export/Repository
+          trio in the Storage tab's encryption Card already established.
+            hueIndex: merging two Cards into one Card means one FEWER
+          `nextHue()` call in the sequence than before — removed here rather
+          than left as a dead call, since `hueSeq++` would otherwise burn a
+          position nothing renders. Every Card below this one (Quiet toasts,
+          the "system"/"storage"/etc. tabs' own Cards) is still numbered
+          correctly with no manual re-numbering: `nextHue()` is a plain
+          `hueSeq++` evaluated in JSX order at render time (see this
+          function's own `hueSeq`/`nextHue` comment above), so removing one
+          call site automatically shifts every LATER one down by one — the
+          exact self-correcting behaviour that comment already documents.
+            This switch genuinely repaints the app: every hue-enabled
+          Selector segment (components/Selector.tsx, its own default —
+          twelve call sites across seven files, including the Settings tab
+          strip above and the drill-type toggle further down) and the
+          container/VM/file-set list rows all read a rainbow position, so
+          turning this on sets data-rainbow + --rb-0..--rb-7 on <html> AND
+          immediately recolours those real call sites. The sidebar nav is
+          deliberately NOT a consumer (Sidebar.tsx carries the reasoning), so
+          flipping this switch never changes the rail's own colours.
+            The master toggle's own hueIndex/hint fixes are documented right
+          on that ToggleRow below — see its own comment for both. */}
       {tab === "general" && (
-      <Card title={t("settings.rainbow")} hint={t("settings.rainbowHint")} hueIndex={nextHue()}>
+      <Card title={t("settings.colors")} hueIndex={nextHue()}>
+        <AccentCard t={t} />
         <div className="flex flex-col gap-3">
+          {/* hueIndex 0/1/2 (jdp, live-review, extremely emphatic — "auch
+              nicht die Toggles der Regenbogen-Card! ... Es soll immer alles
+              in die Farb- und Formengine integriert werden!! IMMER!!"):
+              these three ToggleRows used to carry NO hueIndex at all,
+              reasoned in ToggleRow's own doc comment as "not members of an
+              equal, trackable list the way seven independent domain toggles
+              are, so they correctly keep the flat single accent." That
+              exclusion — like the Shape Selector's own former `hue={false}`
+              right above — is exactly the self-authored design exception jdp
+              has now ruled out: three toggles rendered together, one per
+              row, are a list by construction regardless of whether they're
+              logically independent or a master-plus-two-sub-options group.
+              Given the SAME `.glim-hue`/`hueVars(rainbowAt(i))` treatment
+              the Domains Card's seven rows already use (own local 0-based
+              index, unrelated to this Card's own `nextHue()` sequence — see
+              ToggleRow's `hueIndex` doc). ToggleRow's own comment excluding
+              this exact trio by name has been corrected to match. */}
           <ToggleRow
             label={t("settings.rainbow")}
+            // Moved DOWN from the Card's own `hint` (jdp, live-review: "die
+            // infobubble des regenbogenmodus ist unverständlich und sie soll
+            // von titelbadge runterwandern in die toggle zeile") — same
+            // `hint` prop mechanism the Reactive/Rotation rows below already
+            // use for their own explanations. Text rewritten for this same
+            // move: see settings.rainbowHint's own value for the rewrite
+            // rationale (a fresh, concrete one-pass explanation, not the old
+            // abstract "handed out by position" phrasing jdp found unclear).
+            hint={t("settings.rainbowHint")}
             checked={rainbow.on}
             onChange={(v) => updateRainbow({ on: v })}
+            hueIndex={0}
           />
 
           {/* Dimmed via each control's OWN `disabled` — ToggleRow dims its
@@ -6376,6 +6573,7 @@ export function SettingsPage() {
             checked={rainbow.reactive}
             disabled={!rainbow.on}
             onChange={(v) => updateRainbow({ reactive: v })}
+            hueIndex={1}
           />
           <ToggleRow
             label={t("settings.rainbowRotate")}
@@ -6391,6 +6589,7 @@ export function SettingsPage() {
                 seed: v ? 1 + Math.floor(Math.random() * (RAINBOW.length - 1)) : 0,
               })
             }
+            hueIndex={2}
           />
 
           {/* The very same row shape as the accent swatches in the Accent
@@ -6481,9 +6680,12 @@ export function SettingsPage() {
           axis entirely; muting a toast in THIS browser must never silently
           change what a webhook receives elsewhere). `hideLabel` because the
           Card's own title already says "Quiet toasts" — the same single-
-          purpose-Card pattern the Rainbow Card's master toggle now uses
-          above; the `description` (unaffected by this pass) still renders
-          under the hidden label. */}
+          purpose-Card pattern this Card kept even after the merged Colors
+          Card above went the OTHER way (its own master "Regenbogen-Modus"
+          toggle keeps a visible label alongside the Card's title — jdp
+          asked for that back explicitly; see that ToggleRow's own comment);
+          the `description` (unaffected by this pass) still renders under
+          the hidden label. */}
       {tab === "general" && (
       <Card title={t("settings.quietToasts")} hueIndex={nextHue()}>
         <ToggleRow

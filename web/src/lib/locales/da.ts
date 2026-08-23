@@ -195,6 +195,7 @@ const da: Partial<Translations> = {
   "settings.error": "Fejl ved gemning af indstillinger",
 
   // Appearance / Accent
+  "settings.colors": "Farver",
   "settings.accentColor": "Accentfarve",
   "settings.accentPresets": "Forudindstillinger",
   "settings.accentPreset": "Forudindstilling",
@@ -205,7 +206,7 @@ const da: Partial<Translations> = {
   "settings.shape.soft": "Bløde",
   "settings.shape.square": "Firkantede",
   "settings.rainbow": "Regnbuetilstand",
-  "settings.rainbowHint": "I stedet for én accent en palet med otte farver efter position, så en lang liste læses som enkelte rækker.",
+  "settings.rainbowHint": "Hver række på en liste får sin egen farve fra et sæt på otte, i stedet for at alt deler én accentfarve — gør lange lister nemmere at skelne på et øjeblik.",
   "settings.rainbowOn": "Brug paletten",
   "settings.rainbowReactive": "Reaktiv tilstand",
   "settings.rainbowReactiveHint": "Når slået til viser en række eller et element kun sin farve ved hover, eller mens det kører eller er valgt — ellers forbliver den neutral. Når slået fra viser hver farvet række og element sin farve hele tiden.",
@@ -446,8 +447,8 @@ const da: Partial<Translations> = {
   "flash.none": "Ingen flash-sikkerhedskopier endnu — kør en sikkerhedskopiering ovenfor.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Eksporter & kryptering",
-  "settings.exportsEncryptionHint": "Indstillinger for flash-zip-eksporten, kryptering af almindelige eksportartefakter og selve krypteringen af restic-repositorierne.",
+  "settings.exportsEncryptionTitle": "Eksport- og repositorykryptering",
+  "settings.exportsEncryptionHint": "Indstillinger for kryptering af almindelige eksportartefakter og selve krypteringen af restic-repositorierne.",
   "flash.zipExport.title": "Flash-zip-eksport",
   "flash.zipExport.hint": "Efter hver flash-sikkerhedskopi skrives snapshottet også ud som en almindelig .zip til en mappe — klar til synkronisering uden for serveren (Syncthing, rclone, et cloud-drev).",
   "flash.zipExport.enable": "Eksportér en zip efter hver flash-sikkerhedskopi",

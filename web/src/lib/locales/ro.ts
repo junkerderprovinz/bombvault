@@ -192,6 +192,7 @@ const ro: Partial<Translations> = {
   "settings.error": "Eroare la salvare",
 
   // Appearance / Accent
+  "settings.colors": "Culori",
   "settings.accentColor": "Culoare de accent",
   "settings.accentPresets": "Presetări",
   "settings.accentPreset": "Presetare",
@@ -202,7 +203,7 @@ const ro: Partial<Translations> = {
   "settings.shape.soft": "Ușor rotunjite",
   "settings.shape.square": "Drepte",
   "settings.rainbow": "Mod curcubeu",
-  "settings.rainbowHint": "În loc de un singur accent, o paletă de opt culori după poziție, ca o listă lungă să se citească pe rânduri distincte.",
+  "settings.rainbowHint": "Fiecare rând dintr-o listă primește propria culoare dintr-un set de opt, în loc ca totul să împartă o singură culoare de accent — face listele lungi mai ușor de distins dintr-o privire.",
   "settings.rainbowOn": "Folosește paleta",
   "settings.rainbowReactive": "Mod reactiv",
   "settings.rainbowReactiveHint": "Când e activat, un rând sau element își arată culoarea doar la trecerea cu mouse-ul, sau cât timp rulează sau e selectat — altfel rămâne neutru. Când e dezactivat, fiecare rând și element colorat își arată culoarea tot timpul.",
@@ -443,8 +444,8 @@ const ro: Partial<Translations> = {
   "flash.none": "Încă nicio copie de rezervă flash — rulați un backup mai sus.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Exporturi și criptare",
-  "settings.exportsEncryptionHint": "Setări pentru exportul zip al flash-ului, criptarea artefactelor de export în clar și criptarea propriu-zisă a depozitelor restic.",
+  "settings.exportsEncryptionTitle": "Criptarea exportului și a depozitului",
+  "settings.exportsEncryptionHint": "Setări pentru criptarea artefactelor de export în clar și criptarea propriu-zisă a depozitelor restic.",
   "flash.zipExport.title": "Export ZIP flash",
   "flash.zipExport.hint": "După fiecare backup flash, scrie snapshotul și ca un simplu .zip într-un folder — gata pentru sincronizare în afara serverului (Syncthing, rclone, un drive cloud).",
   "flash.zipExport.enable": "Exportă un ZIP după fiecare backup flash",

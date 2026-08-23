@@ -195,6 +195,7 @@ const es: Partial<Translations> = {
   "settings.error": "Error al guardar los ajustes",
 
   // Appearance / Accent
+  "settings.colors": "Colores",
   "settings.accentColor": "Color de acento",
   "settings.accentPresets": "Predeterminados",
   "settings.accentPreset": "Predeterminado",
@@ -205,7 +206,7 @@ const es: Partial<Translations> = {
   "settings.shape.soft": "Suaves",
   "settings.shape.square": "Cuadradas",
   "settings.rainbow": "Modo arcoíris",
-  "settings.rainbowHint": "En lugar de un solo acento, una paleta de ocho repartida por posición, así una lista larga se lee como filas distintas.",
+  "settings.rainbowHint": "Cada fila de una lista recibe su propio color de un conjunto de ocho, en lugar de que todo comparta un solo color de acento — así las listas largas se distinguen de un vistazo.",
   "settings.rainbowOn": "Usar la paleta",
   "settings.rainbowReactive": "Modo reactivo",
   "settings.rainbowReactiveHint": "Activado, una fila o elemento solo muestra su color al pasar el ratón por encima, o mientras se está ejecutando o está seleccionado — el resto del tiempo permanece neutro. Desactivado, todas las filas y elementos coloreados muestran su color todo el tiempo.",
@@ -446,8 +447,8 @@ const es: Partial<Translations> = {
   "flash.none": "Aún no hay copias del flash — inicia una copia arriba.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Exportaciones y cifrado",
-  "settings.exportsEncryptionHint": "Controles para la exportación en zip del flash, el cifrado de los artefactos de exportación en texto plano y el propio cifrado de los repositorios restic.",
+  "settings.exportsEncryptionTitle": "Cifrado de exportación y repositorio",
+  "settings.exportsEncryptionHint": "Controles para cifrar los artefactos de exportación en texto plano y el propio cifrado de los repositorios restic.",
   "flash.zipExport.title": "Exportación de Flash a zip",
   "flash.zipExport.hint": "Después de cada copia del flash, escribe también la instantánea como un .zip sencillo en una carpeta — lista para sincronizar fuera del servidor (Syncthing, rclone, una unidad en la nube).",
   "flash.zipExport.enable": "Exportar un zip tras cada copia del flash",

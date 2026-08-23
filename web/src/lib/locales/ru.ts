@@ -190,6 +190,7 @@ const ru: Partial<Translations> = {
   "settings.error": "Ошибка сохранения",
 
   // Appearance / Accent
+  "settings.colors": "Цвета",
   "settings.accentColor": "Акцентный цвет",
   "settings.accentPresets": "Предустановки",
   "settings.accentPreset": "Предустановка",
@@ -200,7 +201,7 @@ const ru: Partial<Translations> = {
   "settings.shape.soft": "Мягкие",
   "settings.shape.square": "Прямые",
   "settings.rainbow": "Режим радуги",
-  "settings.rainbowHint": "Вместо одного акцента палитра из восьми цветов по позиции, чтобы длинный список читался как отдельные строки.",
+  "settings.rainbowHint": "Каждая строка в списке получает свой собственный цвет из набора восьми, вместо того чтобы всё использовало один акцентный цвет — так длинные списки легче различить с первого взгляда.",
   "settings.rainbowOn": "Использовать палитру",
   "settings.rainbowReactive": "Реактивный режим",
   "settings.rainbowReactiveHint": "Когда включено, строка или элемент показывает свой цвет только при наведении курсора, либо пока выполняется или выбран — в остальное время остаётся нейтральным. Когда выключено, каждая цветная строка и элемент показывают свой цвет постоянно.",
@@ -438,8 +439,8 @@ const ru: Partial<Translations> = {
   "flash.none": "Копий Flash пока нет — создайте копию выше.",
 
   // Flash zip export
-  "settings.exportsEncryptionTitle": "Экспорты и шифрование",
-  "settings.exportsEncryptionHint": "Настройки экспорта flash-zip, шифрования обычных артефактов экспорта и шифрования самих репозиториев restic.",
+  "settings.exportsEncryptionTitle": "Шифрование экспорта и репозитория",
+  "settings.exportsEncryptionHint": "Настройки шифрования обычных артефактов экспорта и шифрования самих репозиториев restic.",
   "flash.zipExport.title": "Экспорт flash в ZIP",
   "flash.zipExport.hint": "После каждой копии flash также записывать снимок в виде обычного .zip в папку — готового для синхронизации вне сервера (Syncthing, rclone, облачный диск).",
   "flash.zipExport.enable": "Экспортировать ZIP после каждой копии flash",
