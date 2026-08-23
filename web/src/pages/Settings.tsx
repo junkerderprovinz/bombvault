@@ -618,7 +618,17 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
           the colon is appended here, not baked into the shared key, because
           settings.accentColor is ALSO read bare (no colon) as that caption's
           own aria-label/title. */}
-      <span className="text-xs text-carbon-textMuted">{t("settings.accentColor")}:</span>
+      {/* Live-review round 5 (jdp: "Akzentfarbe und Farbpalette bitte normal
+          formatieren, wie der Text von Regenbogen-Modus") — this caption used
+          to borrow the small/muted "Voreinstellungen:" look from the preset
+          label beside it (see this block's own header comment above), but
+          jdp compared it against the master "Regenbogen-Modus" ToggleRow's
+          plain label right below in the same merged Card and wants the same
+          plain look here too. Copies that label's own literal classes
+          (`text-sm text-carbon-text`, see ToggleRow's render above) instead
+          of inventing a third style — same font-size/weight/colour token as
+          every other row-opening label in this Card now. */}
+      <span className="text-sm text-carbon-text">{t("settings.accentColor")}:</span>
       {/* Custom-colour trigger — a flat swatch, same size/shape as the
           preset swatches beside it (design-language.md, "The user-owned
           axes" > Accent: every custom colour value gets the SAME
@@ -6909,7 +6919,13 @@ export function SettingsPage() {
               consistent pair rather than the swatch row being the odd one
               out again. */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-carbon-textMuted">{t("settings.rainbowPaletteLabel")}:</span>
+            {/* Live-review round 5, same correction as the Accent Card's own
+                caption above (jdp: "Akzentfarbe und Farbpalette bitte normal
+                formatieren, wie der Text von Regenbogen-Modus") — was the
+                muted/small "Voreinstellungen:"-style caption, now the same
+                plain `text-sm text-carbon-text` the master Regenbogen-Modus
+                ToggleRow's own label renders with. */}
+            <span className="text-sm text-carbon-text">{t("settings.rainbowPaletteLabel")}:</span>
             {rainbow.palette.map((hex, i) => (
               <PaletteSwatch
                 key={i}
