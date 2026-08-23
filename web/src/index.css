@@ -1623,7 +1623,118 @@ body {
    All energetic motion lives under (prefers-reduced-motion: no-preference);
    reduced-motion users get a quiet fade fallback instead (never a violent shake).
    The Tailwind-driven nav hover/press transforms are motion-safe-gated inline.
-   --------------------------------------------------------------------------- */
+
+   GlimStone motion-engine (data-motion="off"|"subtle"|"full" — lib/motion.ts
+   is the JS half: read/write/persist which of the three is chosen, stamp the
+   attribute on <html>, the exact shape/pattern as the shape engine's own
+   data-shape above). A DELIBERATE reversal of this file's — and design-
+   language.md's — own prior "rein OS-gesteuert, kein fünfter Nutzer-Schalter"
+   decision (2026-08-18): jdp asked for a real engine with its own toggle
+   after all. See design-language.md's own updated Motion Intensity section
+   for the full course-correction writeup.
+
+   This is a MANUAL, additive dial that sits ALONGSIDE prefers-reduced-motion,
+   never in front of it — OS accessibility signal always wins. That is
+   enforced structurally, not by a specificity fight: every token below is
+   only ever CONSUMED by rules living inside THIS section's own existing
+   `@media (prefers-reduced-motion: no-preference)` block further down. The
+   `@media (prefers-reduced-motion: reduce)` block at the very end of this
+   section is completely untouched by this axis — still unconditional,
+   still hard-coded — so a browser reporting OS-level reduced motion never
+   even evaluates a data-motion selector for these properties; it simply
+   never reaches that media query at all. A user who manually picks "off"
+   without OS-level reduced motion gets the SAME numbers that block already
+   uses (see each token's own comment below for exactly which value it
+   mirrors) — "off" is defined as "the manual equivalent of what OS-level
+   reduced motion already does," not a second, separately-tuned recipe.
+
+   Tokens, not per-state duplicated rules: "subtle" and "off" reuse the
+   IDENTICAL keyframes as "full", just parameterized to smaller numbers —
+   the same technique this file already uses for --glim-toast-slide (per
+   [dir]) and --bv-indet-from/--bv-indet-to (per [dir]) rather than forking
+   the keyframe itself. Declared on a bare :root FIRST as the full-intensity
+   values (byte-identical to what this app already shipped before this axis
+   existed), so anything that runs before main.tsx's
+   applyStoredMotionIntensity() paints (or a page that never runs JS at all)
+   still renders the pre-existing look rather than an undefined fourth state.
+
+   Retrofit, not new-code-only: these tokens drive the 5 keyframes that
+   already existed before this axis (bv-page-in/glim-toast-in/glim-fade-in/
+   the shake pulse fallback/glim-shake) — the exact "new pattern only wired
+   into freshly-written code, old code silently exempt" trap this codebase's
+   own colour-engine standing rule already diagnoses once for the rainbow
+   axis. A future pass adding new keyframes should read these vars too,
+   not reinvent a second scheme. */
+:root {
+  --motion-page-dist: 8px;               /* .bv-page-enter's translateY distance */
+  --motion-page-dur: 320ms;
+  --motion-page-ease: cubic-bezier(.2, .6, .2, 1);
+
+  --motion-toast-slide-scale: 1;          /* multiplies --glim-toast-slide/-rtl below */
+  --motion-toast-dur: 220ms;
+  --motion-toast-ease: cubic-bezier(.2, .6, .2, 1);
+
+  --motion-fade-dur: 110ms;               /* .glim-fade (info-bubble entrance) */
+
+  --motion-shake-scale: 1;                /* multiplies glim-shake's translateX steps */
+  --motion-shake-dur: 360ms;
+}
+
+:root[data-motion="subtle"] {
+  /* Shorter AND smaller — "still present," per design-language.md's own
+     phrasing for this state, not a near-off compromise. */
+  --motion-page-dist: 4px;
+  --motion-page-dur: 180ms;
+
+  --motion-toast-slide-scale: .5;
+  --motion-toast-dur: 140ms;
+
+  --motion-fade-dur: 70ms;
+
+  --motion-shake-scale: .5;
+  --motion-shake-dur: 220ms;
+}
+
+:root[data-motion="off"] {
+  /* Every number here is copied LITERALLY from the
+     `@media (prefers-reduced-motion: reduce)` block further down this same
+     section, for the same element — see this token block's own file-header
+     paragraph above for why "off" borrows those numbers rather than
+     inventing its own.
+       --motion-page-dist: 0 makes bv-page-in a PURE opacity fade —
+     translateY(0) is a no-op transform, so this is numerically identical to
+     bv-fade-in already, with no keyframe swap needed to match that block's
+     own `bv-fade-in 200ms ease`.
+       --motion-toast-slide-scale: 0 does the identical trick for
+     glim-toast-in, matching that block's own swap to `glim-fade-in 160ms
+     ease` (a pure fade, translateX(0) the whole time).
+       --motion-fade-dur: 0 means .glim-fade's animation completes
+     instantly — visually indistinguishable from having no animation at
+     all, which is exactly what the (reduce) block already gives it (that
+     block never mentions `.glim-fade`, since its own header comment already
+     judged 110ms too short for reduced-motion to need a fallback — "off"
+     reaches that same "nothing to see" outcome by a duration of zero rather
+     than by omitting a rule).
+       --motion-shake-scale is set to 0 here for documentation symmetry, but
+     amplitude-alone can't be the whole story for shake: a 0-amplitude shake
+     is INVISIBLE, not a signal, and this control exists specifically to
+     tell a user "you clicked it, the backend said no" — so `.glim-shake`
+     itself (see its own rule below) swaps animation-name entirely to
+     bv-egg-fade-pulse for data-motion="off", the exact keyframe the
+     (reduce) block already uses for the same reason. */
+  --motion-page-dist: 0px;
+  --motion-page-dur: 200ms;
+  --motion-page-ease: ease;
+
+  --motion-toast-slide-scale: 0;
+  --motion-toast-dur: 160ms;
+  --motion-toast-ease: ease;
+
+  --motion-fade-dur: 0ms;
+
+  --motion-shake-scale: 0;
+  --motion-shake-dur: 300ms;
+}
 
 /* Logo idle hover sway (Item 7b) */
 @keyframes bv-logo-sway {
@@ -1682,9 +1793,12 @@ body {
   50%      { opacity: .55; }
 }
 
-/* Route/page enter (Item 7c) */
+/* Route/page enter (Item 7c). `translateY(var(--motion-page-dist))`, not a
+   hard-coded 8px — the motion-engine token above (GlimStone motion-engine
+   section, further up this file) parameterizes the distance per
+   off/subtle/full without needing a second keyframe. */
 @keyframes bv-page-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(var(--motion-page-dist, 8px)); }
   /* End at `none`, not translateY(0): animation-fill-mode:both keeps the final
      keyframe, and any transform other than none makes .bv-page-enter a
      containing block for position:fixed descendants — which anchored in-page
@@ -1726,8 +1840,13 @@ body {
    the edge, not from off-canvas toward the edge like every other toast. */
 :root { --glim-toast-slide: 12px; }
 [dir="rtl"] { --glim-toast-slide: -12px; }
+/* `calc(... * var(--motion-toast-slide-scale))`, not the bare
+   --glim-toast-slide above — the motion-engine token (further up this
+   file) scales the slide distance per off/subtle/full (0 / .5 / 1) on top
+   of the RTL-aware base distance, without needing a second keyframe or a
+   second [dir] pair. */
 @keyframes glim-toast-in {
-  from { opacity: 0; transform: translateX(var(--glim-toast-slide)); }
+  from { opacity: 0; transform: translateX(calc(var(--glim-toast-slide) * var(--motion-toast-slide-scale, 1))); }
   to   { opacity: 1; transform: none; }
 }
 
@@ -1751,13 +1870,22 @@ body {
    control fails twice in a row. A short, decaying horizontal oscillation —
    left/right a few times, settling back to 0 — reads as "rejected" without
    needing any text; four cycles decaying from 4px to 2px, done in well under
-   half a second so it never feels like it's blocking the next click. */
+   half a second so it never feels like it's blocking the next click.
+
+   `calc(var(--motion-shake-scale) * ...)` on every step, not bare px —
+   the motion-engine token (further up this file) scales the whole
+   oscillation per off/subtle/full (0 / .5 / 1) without a second keyframe.
+   The scale-0 case is never actually reached in practice: data-motion="off"
+   swaps `.glim-shake`'s animation-name entirely to bv-egg-fade-pulse below
+   (a 0-amplitude shake is invisible, not a "rejected" signal) — the token
+   is still defined for that state for documentation symmetry with the
+   other three motion tokens. */
 @keyframes glim-shake {
   0%, 100% { transform: translateX(0); }
-  20%      { transform: translateX(-4px); }
-  40%      { transform: translateX(4px); }
-  60%      { transform: translateX(-2px); }
-  80%      { transform: translateX(2px); }
+  20%      { transform: translateX(calc(var(--motion-shake-scale, 1) * -4px)); }
+  40%      { transform: translateX(calc(var(--motion-shake-scale, 1) * 4px)); }
+  60%      { transform: translateX(calc(var(--motion-shake-scale, 1) * -2px)); }
+  80%      { transform: translateX(calc(var(--motion-shake-scale, 1) * 2px)); }
 }
 
 /* The logo mark hosts the normal <img> plus (at boom) the fragment grid. The FX
@@ -1862,22 +1990,48 @@ body {
     animation-delay: var(--delay, 0ms);
   }
 
-  .bv-page-enter { animation: bv-page-in 320ms cubic-bezier(.2, .6, .2, 1) both; }
+  /* Duration/easing/distance all read the GlimStone motion-engine tokens
+     (data-motion="off"|"subtle"|"full" — declared at the top of this
+     section) instead of a literal 320ms/8px: this animation now runs at a
+     different intensity depending on that attribute, WITHOUT this rule
+     itself needing to fork into three copies — see the token block's own
+     comment for exactly what "off"/"subtle" resolve to. */
+  .bv-page-enter { animation: bv-page-in var(--motion-page-dur, 320ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both; }
 
-  /* Info bubble entrance (GlimStone form-engine #3). */
-  .glim-fade { animation: glim-fade-in 110ms ease both; }
+  /* Info bubble entrance (GlimStone form-engine #3). Motion-engine retrofit:
+     duration reads --motion-fade-dur (110/70/0ms for full/subtle/off) — at
+     "off" this completes instantly, the same "nothing to see" outcome the
+     (reduce) block below already gives this element by never mentioning it
+     at all (see that token's own comment above for why). */
+  .glim-fade { animation: glim-fade-in var(--motion-fade-dur, 110ms) ease both; }
 
   /* Toast entrance (GlimStone form-engine #9) — slides in from the trailing
-     edge (translateX) + fades. */
-  .glim-toast { animation: glim-toast-in 220ms cubic-bezier(.2, .6, .2, 1) both; }
+     edge (translateX) + fades. Motion-engine retrofit: duration/easing read
+     the --motion-toast-* tokens, and the keyframe's own translateX now
+     scales by --motion-toast-slide-scale (1/.5/0 for full/subtle/off) — at
+     "off" this is a pure fade, matching the (reduce) block's own swap to
+     glim-fade-in below. */
+  .glim-toast { animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) both; }
 
-  /* What's-new modal enter (#48). */
+  /* What's-new modal enter (#48) — NOT part of the motion-engine retrofit's
+     5 keyframes (page-in/toast-in/fade-in/pulse/shake); left at its
+     original fixed timing, unaffected by data-motion. Flagged here
+     deliberately rather than silently: a future pass giving this axis
+     broader coverage should read this comment before assuming it was
+     missed by accident. */
   .bv-modal-backdrop { animation: bv-fade-in 200ms ease both; }
   .bv-modal-card { animation: bv-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
 
   /* Generic error-feedback shake (#142) — see glim-shake's own keyframe
-     comment above for the reusability contract. */
-  .glim-shake { animation: glim-shake 360ms ease-in-out; }
+     comment above for the reusability contract. Motion-engine retrofit:
+     duration reads --motion-shake-dur (360/220ms for full/subtle) and the
+     keyframe's own amplitude scales by --motion-shake-scale — but "off"
+     needs more than a smaller number: a 0-amplitude shake is invisible, not
+     a "rejected" signal, so data-motion="off" swaps the animation-name
+     entirely to bv-egg-fade-pulse below, the exact keyframe the (reduce)
+     block already uses for the same control for the same reason. */
+  .glim-shake { animation: glim-shake var(--motion-shake-dur, 360ms) ease-in-out; }
+  :root[data-motion="off"] .glim-shake { animation: bv-egg-fade-pulse 300ms ease-in-out; }
 }
 
 @media (prefers-reduced-motion: reduce) {

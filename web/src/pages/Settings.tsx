@@ -35,6 +35,7 @@ import {
 } from "../lib/accent";
 import { RAINBOW, getRainbow, setRainbow, hueVars, rainbowAt, type RainbowState } from "../lib/appearance";
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
+import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, type MotionIntensity } from "../lib/motion";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 import { Flag, IconAdd, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
@@ -4832,6 +4833,13 @@ export function SettingsPage() {
   // state used before its move.
   const [shape, setShapeLocal] = useState<Shape>(() => getShape());
 
+  // Motion-intensity state (GlimStone motion-engine — the deliberate
+  // reversal of design-language.md's own prior "kein fünfter Nutzer-
+  // Schalter" decision, see lib/motion.ts's own header) — synced to/from
+  // localStorage via motion.ts, the identical pattern shape state above
+  // already uses.
+  const [motion, setMotionLocal] = useState<MotionIntensity>(() => getMotionIntensity());
+
   // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
   // localStorage via appearance.ts, the same pattern as accentHex above.
   // setRainbow() persists + applies + returns the new (validated) state in
@@ -7636,6 +7644,55 @@ export function SettingsPage() {
           onChange={(id) => {
             setShapeLocal(id as Shape);
             setShape(id as Shape);
+          }}
+          size="lg"
+          variant="well"
+        />
+        </div>
+      </Card>
+      )}
+
+      {/* Motion intensity (GlimStone motion-engine — jdp, live-review:
+          "Wäre eine Animationsengine gut?" -> "Echte Engine mit eigenem
+          Nutzer-Schalter"). A DELIBERATE reversal of design-language.md's
+          own prior Motion-Engine section (2026-08-18: "kein In-App-Schalter
+          dafür ... kein fünfter Nutzer-Schalter, rein OS-gesteuert für
+          jetzt") — see that doc's updated Motion Intensity write-up for the
+          full course-correction note, quoting the old text rather than
+          silently dropping it.
+            Same architecture as the Shape Card right above (lib/motion.ts
+          mirrors lib/shape.ts's getShape/setShape/applyShape/
+          applyStoredShape exactly; index.css's `[data-motion="..."]` token
+          blocks mirror `[data-shape="..."]`'s own), so this Card sits
+          directly below Shape: same kind of setting (client-only, applied
+          at the app root), same "one Selector, no Save step" shape, same
+          `variant="well"`/`size="lg"` treatment already proven live on
+          Theme's and Shape's own pickers right above.
+            `hue` stays on its plain `true` default (Selector's own
+          default) — this repo's standing colour-engine rule is explicit
+          that "it's a settings control, not content" is exactly the kind
+          of self-authored exception that rule forbids; this Selector's
+          three segments read RAINBOW[0]/[1]/[2] like Shape's own segments
+          right above, and the Card's own heading badge gets a real
+          `hueIndex={nextHue()}` the same way every other Card on this tab
+          does. */}
+      {tab === "general" && (
+      <Card title={t("settings.motion")} hint={t("settings.motionHint")} hueIndex={nextHue()}>
+        {/* Same standardized "don't stretch" wrapper as the Theme/Shape
+            Selectors right above — see either one's own comment for the
+            full root cause. */}
+        <div className="inline-flex self-start max-w-full">
+        <Selector
+          items={MOTION_INTENSITIES.map((m) => ({
+            id: m,
+            label: t(`settings.motion.${m}` as TranslationKey),
+          }))}
+          label={t("settings.motion")}
+          select="one"
+          active={motion}
+          onChange={(id) => {
+            setMotionLocal(id as MotionIntensity);
+            setMotionIntensity(id as MotionIntensity);
           }}
           size="lg"
           variant="well"
