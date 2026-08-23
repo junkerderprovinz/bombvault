@@ -24,7 +24,7 @@
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { Selector, type SelectorItem } from "./Selector";
+import { Selector, MIN_PINNED_WIDTH, type SelectorItem } from "./Selector";
 import { RAINBOW_OFF, applyRainbow } from "../lib/appearance";
 
 const ITEMS: SelectorItem[] = [
@@ -294,7 +294,40 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     // keyed by data-sel-id, so the three segments report distinct, realistic
     // natural widths for the component's own two-pass measurement effect to
     // actually exercise, rather than every segment trivially "matching" 0.
+    // Widths are all comfortably ABOVE MIN_PINNED_WIDTH (round 3's own
+    // standardized floor, see Selector.tsx's own doc near that constant) so
+    // this test still isolates the pre-existing "widest segment wins" claim
+    // — the floor's own behaviour (every segment BELOW it) gets its own test
+    // right below this one.
     const restore = HTMLElement.prototype.getBoundingClientRect;
+    const widths: Record<string, number> = { a: 220, b: 180, c: 260 };
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      const id = this.getAttribute("data-sel-id");
+      const w = id ? (widths[id] ?? 0) : 0;
+      return { x: 0, y: 0, left: 0, top: 0, right: w, bottom: 0, width: w, height: 0, toJSON() {} } as DOMRect;
+    };
+    try {
+      render(
+        <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
+      );
+      // "Gamma" (id "c") is the widest at 260px — every segment, including the
+      // narrower "Alpha" (220px) and "Beta" (180px), must end up pinned to
+      // that SAME 260px, not their own natural width and not a
+      // container-filling stretch (there is no container width involved in
+      // this test at all).
+      for (const id of ["a", "b", "c"]) {
+        const btn = document.querySelector(`[data-sel-id="${id}"]`) as HTMLElement;
+        expect(btn.style.width).toBe("260px");
+      }
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = restore;
+    }
+  });
+
+  it("equalWidth never pins narrower than MIN_PINNED_WIDTH, even when every segment's own natural content is smaller (round 3's own standardized floor — jdp: \"Die horizontalen Selektoren bitte breiter und möglichst gleich breit\")", () => {
+    const restore = HTMLElement.prototype.getBoundingClientRect;
+    // All three well below the floor — the widest of these (80px) alone would
+    // have been last round's own answer; the floor must win instead.
     const widths: Record<string, number> = { a: 60, b: 40, c: 80 };
     HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
       const id = this.getAttribute("data-sel-id");
@@ -305,13 +338,9 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
       render(
         <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
       );
-      // "Gamma" (id "c") is the widest at 80px — every segment, including the
-      // narrower "Alpha" (60px) and "Beta" (40px), must end up pinned to that
-      // SAME 80px, not their own natural width and not a container-filling
-      // stretch (there is no container width involved in this test at all).
       for (const id of ["a", "b", "c"]) {
         const btn = document.querySelector(`[data-sel-id="${id}"]`) as HTMLElement;
-        expect(btn.style.width).toBe("80px");
+        expect(btn.style.width).toBe(`${MIN_PINNED_WIDTH}px`);
       }
     } finally {
       HTMLElement.prototype.getBoundingClientRect = restore;

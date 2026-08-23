@@ -130,6 +130,21 @@
 //      same "try it on one control" pattern `variant="well"` already set —
 //      every other "chip" call site keeps its own content-hugging width,
 //      unchanged.
+//   5c. MIN_PINNED_WIDTH (round 3, live-review refinement on top of 5b/5):
+//      "Die horizontalen Selektoren bitte breiter und möglichst gleich
+//      breit." Every `pinWidth` strip (both "well" and "chip"'s own
+//      `equalWidth`) used to pin ONLY to its own widest label's own natural
+//      width — correct per-strip, but with nothing shared ACROSS strips, so
+//      the tab strip (174px, driven by "Benachrichtigungen"), the Theme
+//      Card's well track (97px, "Dunkel" + icon) and the Shape Card's well
+//      track (62px, "Leicht") each rendered a different, narrow number. A
+//      shared floor (see MIN_PINNED_WIDTH's own doc, near SIZE below) folds
+//      into the SAME widest-segment Math.max used for the truncation fix
+//      instead of a separate clamp, so it stays a floor, never a cap — a
+//      future locale whose longest label needs more than that floor still
+//      gets exactly that larger number. Scoped to every EXISTING pinWidth
+//      call site (all three are "lg") — see that constant's own doc for why
+//      a per-size table isn't warranted yet.
 //   5. `variant` ("chip", default, vs "well"). Live-review follow-up: "turn
 //      the shape picker into a horizontal selector styled like the one in
 //      TrickWork." TrickWork's own segmentedRow() (ui/src/controlWidgets.ts)
@@ -265,6 +280,38 @@ const SIZE: Record<SelectorSize, { gap: string; padding: string; text: string }>
   md: { gap: "gap-1.5", padding: "px-3 py-1", text: "text-xs" },
   lg: { gap: "gap-2", padding: "px-3 py-1.5", text: "text-sm" },
 };
+
+// MIN_PINNED_WIDTH — the one standardized floor every `pinWidth` segment (both
+// "well" and "chip"'s own `equalWidth`) now measures up to (jdp, live-review
+// round 3, refinement on top of item 5b's own fix: "Die horizontalen
+// Selektoren bitte breiter und möglichst gleich breit" — wider, and as
+// equal-width as possible). Before this, `matchedWidth` pinned every strip to
+// ONLY its own widest label's own natural content width — correct per-strip
+// (item 5b fixed a real truncation bug doing exactly that), but with no floor
+// shared ACROSS strips, so three genuinely different call sites rendered
+// three genuinely different widths: measured live at "lg", 1400px viewport —
+// the Settings tab strip's own segment (driven by "Benachrichtigungen", the
+// single longest label across every one of the 26 shipped locales for that
+// strip, already documented above) at 174px, the Theme Card's "well" segment
+// (driven by "Dunkel" + its own 20px icon) at 97px, the Shape Card's "well"
+// segment (driven by "Leicht", no icon) at 62px — each one narrower than the
+// last, reading as three unrelated controls rather than one recurring
+// pattern, and none of them "wide" by any absolute measure either.
+//   200px is a round number chosen to comfortably clear the app's OWN current
+// ceiling (174px) with real breathing room, not just barely clear it — every
+// pinned segment in the app today (all three call sites are "lg") ends up
+// pinned to this SAME 200px, which happens to make all three literally
+// identical right now (200 > every one of 174/97/62), not merely "closer."
+// `Math.max` below keeps this a FLOOR, not a cap: a future locale whose
+// longest label genuinely needs more than 200px still gets exactly that
+// larger measured width (the real bug item 5b fixed — silently truncating a
+// genuinely-too-narrow segment — must never come back), it just never goes
+// narrower than this. Deliberately a bare, size-independent constant rather
+// than one entry per `SelectorSize`: every pinned segment in this app is "lg"
+// today (see this constant's own three call sites), so a per-size table would
+// be speculative generality with no second stage to size against yet — add
+// one the moment a real "sm"/"md" pinned consumer exists, not before.
+export const MIN_PINNED_WIDTH = 200;
 
 // ---------------------------------------------------------------------------
 // Pure, DOM-free navigation math — exported and unit-tested directly (see
@@ -545,7 +592,11 @@ export function Selector(props: SelectorProps) {
       .slice(0, items.length)
       .filter((n): n is HTMLButtonElement => n !== null);
     if (nodes.length === 0) return;
-    const widest = Math.max(...nodes.map((n) => n.getBoundingClientRect().width));
+    // MIN_PINNED_WIDTH folded into the SAME Math.max as the widest-segment
+    // measurement, not a separate clamp afterwards — one call, one floor,
+    // still a pure floor (see that constant's own doc): a widest label that
+    // already measures past 200px keeps its own larger number untouched.
+    const widest = Math.max(...nodes.map((n) => n.getBoundingClientRect().width), MIN_PINNED_WIDTH);
     setMatchedWidth(widest);
   }, [pinWidth, matchedWidth, itemsKey, size, items.length]);
 
