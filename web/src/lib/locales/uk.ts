@@ -266,6 +266,8 @@ const uk: Partial<Translations> = {
   "cadence.cronExWeekdays": "у будні о 02:30",
   "cadence.cronExMonthly": "1-го числа щомісяця",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Година",
+  "timePicker.minute": "Хвилина",
   "time.justNow": "щойно",
   "time.minuteAgo": "1 хвилину тому",
   "time.minutesAgo": "{n} хвилин тому",

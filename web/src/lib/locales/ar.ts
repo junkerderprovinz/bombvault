@@ -268,6 +268,8 @@ const ar: Partial<Translations> = {
   "cadence.cronExWeekdays": "أيام الأسبوع في 02:30",
   "cadence.cronExMonthly": "في اليوم الأول من كل شهر",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "ساعة",
+  "timePicker.minute": "دقيقة",
   "time.justNow": "الآن",
   "time.minuteAgo": "منذ دقيقة واحدة",
   "time.minutesAgo": "منذ {n} دقيقة",

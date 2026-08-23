@@ -268,6 +268,8 @@ const th: Partial<Translations> = {
   "cadence.cronExWeekdays": "วันธรรมดาเวลา 02:30",
   "cadence.cronExMonthly": "วันที่ 1 ของทุกเดือน",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "ชั่วโมง",
+  "timePicker.minute": "นาที",
   "time.justNow": "เมื่อสักครู่",
   "time.minuteAgo": "1 นาทีที่แล้ว",
   "time.minutesAgo": "{n} นาทีที่แล้ว",

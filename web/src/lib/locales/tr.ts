@@ -268,6 +268,8 @@ const tr: Partial<Translations> = {
   "cadence.cronExWeekdays": "hafta içi 02:30'da",
   "cadence.cronExMonthly": "her ayın 1'inde",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Saat",
+  "timePicker.minute": "Dakika",
   "time.justNow": "az önce",
   "time.minuteAgo": "1 dakika önce",
   "time.minutesAgo": "{n} dakika önce",

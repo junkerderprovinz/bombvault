@@ -268,6 +268,8 @@ const zh: Partial<Translations> = {
   "cadence.cronExWeekdays": "工作日 02:30",
   "cadence.cronExMonthly": "每月 1 日",
   "cadence.fmtCron": "cron：{expr}",
+  "timePicker.hour": "时",
+  "timePicker.minute": "分",
   "time.justNow": "刚刚",
   "time.minuteAgo": "1分钟前",
   "time.minutesAgo": "{n}分钟前",

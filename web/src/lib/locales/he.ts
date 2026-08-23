@@ -268,6 +268,8 @@ const he: Partial<Translations> = {
   "cadence.cronExWeekdays": "בימי חול בשעה 02:30",
   "cadence.cronExMonthly": "ב-1 בכל חודש",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "שעה",
+  "timePicker.minute": "דקה",
   "time.justNow": "הרגע",
   "time.minuteAgo": "לפני דקה",
   "time.minutesAgo": "לפני {n} דקות",

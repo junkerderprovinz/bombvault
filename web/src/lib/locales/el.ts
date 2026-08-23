@@ -268,6 +268,8 @@ const el: Partial<Translations> = {
   "cadence.cronExWeekdays": "καθημερινές στις 02:30",
   "cadence.cronExMonthly": "την 1η κάθε μήνα",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "Ώρα",
+  "timePicker.minute": "Λεπτό",
   "time.justNow": "μόλις τώρα",
   "time.minuteAgo": "πριν 1 λεπτό",
   "time.minutesAgo": "πριν {n} λεπτά",

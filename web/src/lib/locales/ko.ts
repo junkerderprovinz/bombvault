@@ -268,6 +268,8 @@ const ko: Partial<Translations> = {
   "cadence.cronExWeekdays": "평일 02:30",
   "cadence.cronExMonthly": "매월 1일",
   "cadence.fmtCron": "cron: {expr}",
+  "timePicker.hour": "시",
+  "timePicker.minute": "분",
   "time.justNow": "방금 전",
   "time.minuteAgo": "1분 전",
   "time.minutesAgo": "{n}분 전",
