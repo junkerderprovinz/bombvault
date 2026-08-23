@@ -592,10 +592,18 @@ function ForeignRestoreCard({
   hostMountRoot,
   t,
   otherActive,
+  nextHue,
 }: {
   hostMountRoot: string;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
+  /** The PARENT Recovery()'s own `nextHue()` counter, passed down as the
+   *  function itself (not a single computed value): this card renders THREE
+   *  of its own heading notches (the section h2 below + its two StepCards),
+   *  so each needs its own call to keep continuing the same page-flat
+   *  sequence in JSX order, exactly as if these three headings were inline
+   *  in Recovery()'s own return. */
+  nextHue: () => number;
 }) {
   // Connect input. The backend only opens a LOCALLY MOUNTED repository, so the
   // location is always a folder under the host mount (e.g. a mounted share
@@ -740,13 +748,13 @@ function ForeignRestoreCard({
             itself is the right anchor; see Badge.tsx's badgeClassName
             comment. */}
         <h2 className="relative flex items-center">
-          <Badge tone="heading" size="heading" wrap>{t("recovery.foreignTitle")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("recovery.foreignTitle")}</Badge>
         </h2>
         <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.foreignIntro")}</p>
       </div>
 
       {/* Foreign step 1 — connect (read-only; nothing is saved). */}
-      <StepCard n={1} title={t("recovery.foreignStepConnect")} state={connectState}>
+      <StepCard n={1} title={t("recovery.foreignStepConnect")} state={connectState} hueIndex={nextHue()}>
         {/* Local mounted path only — the backend never opens a remote/off-site
             repo here, so the other server's backup share must be mounted on this
             host and pointed at below. */}
@@ -807,7 +815,7 @@ function ForeignRestoreCard({
       </StepCard>
 
       {/* Foreign step 2 — browse the inventory & restore single items. */}
-      <StepCard n={2} title={t("recovery.foreignStepBrowse")} state={browseState}>
+      <StepCard n={2} title={t("recovery.foreignStepBrowse")} state={browseState} hueIndex={nextHue()}>
         {!session || !inventory ? (
           <p className="text-sm text-carbon-textMuted">{t("recovery.foreignNotConnected")}</p>
         ) : (
@@ -1221,6 +1229,20 @@ export default function Recovery() {
   // (between two items the SSE store can briefly show nothing active).
   const rowOtherActive = running.active || restoreAllBusy;
 
+  // hueSeq/nextHue — same mechanism as Settings.tsx's own counter (see that
+  // file's comment for the full history and jdp's standing rule, "Es soll
+  // immer alles in die Farb- und Formengine integriert werden!! IMMER!!").
+  // Recovery has no tabs, so this is one flat, page-wide sequence: every
+  // StepCard/CloudCard/RcloneCard heading notch below takes
+  // `hueIndex={nextHue()}` in exactly the order the JSX evaluates each call,
+  // so a branch that isn't currently rendering (e.g. Step 3's own
+  // settings-not-loaded-yet fallback) never leaves a gap in the visible
+  // rainbow sequence. ForeignRestoreCard gets the counter FUNCTION itself
+  // (not one computed value) so its own three headings continue this same
+  // sequence rather than restarting at 0.
+  let hueSeq = 0;
+  const nextHue = () => hueSeq++;
+
   return (
     <div className="flex flex-col gap-5 p-1">
       <div>
@@ -1229,7 +1251,7 @@ export default function Recovery() {
       </div>
 
       {/* Step 1 — Can BombVault read your backups? (repo-readable / APP_KEY) */}
-      <StepCard n={1} title={t("recovery.step1")} state={readableState}>
+      <StepCard n={1} title={t("recovery.step1")} state={readableState} hueIndex={nextHue()}>
         <p className="max-w-2xl">{t("recovery.appKeyExplain")}</p>
 
         <div className="flex items-center gap-3 pt-1">
@@ -1272,7 +1294,7 @@ export default function Recovery() {
           On a rebuilt box this pre-fills the attach + discover steps below; it
           ends with a self-restart, so it lives here rather than on the Config
           page. Skippable — a user without a settings backup attaches manually. */}
-      <StepCard n={2} title={t("recovery.stepConfig")} state={configStepState}>
+      <StepCard n={2} title={t("recovery.stepConfig")} state={configStepState} hueIndex={nextHue()}>
         {configSkipped ? (
           <p className="text-sm text-carbon-textMuted">{t("recovery.configSkipped")}</p>
         ) : (
@@ -1396,7 +1418,7 @@ export default function Recovery() {
       </StepCard>
 
       {/* Step 3 — Attach your backups (consolidated; cloud creds un-gated here) */}
-      <StepCard n={3} title={t("recovery.step2")} state={previewed ? readableState : "idle"}>
+      <StepCard n={3} title={t("recovery.step2")} state={previewed ? readableState : "idle"} hueIndex={nextHue()}>
         <p className="max-w-2xl">{t("recovery.attachHint")}</p>
 
         {settings ? (
@@ -1462,9 +1484,13 @@ export default function Recovery() {
             </div>
 
             {/* Cloud + rclone credential cards — the exact Settings components,
-                self-persisting via setCloud/setRclone (no duplicate persistence). */}
-            <CloudCard t={t} />
-            <RcloneCard t={t} />
+                self-persisting via setCloud/setRclone (no duplicate persistence).
+                hueIndex={nextHue()} (GlimStone follow-up pass, jdp's standing
+                rule): both already accept the prop — Settings.tsx's offsite
+                tab passes it to these SAME exported components the identical
+                way — so this was a drop-in fix, not new plumbing. */}
+            <CloudCard t={t} hueIndex={nextHue()} />
+            <RcloneCard t={t} hueIndex={nextHue()} />
 
             {/* Credentials save via each card's OWN Save button, not "Connect &
                 preview" below — flag it so the user saves creds first. */}
@@ -1493,7 +1519,7 @@ export default function Recovery() {
       </StepCard>
 
       {/* Step 4 — Discover everything (rebuild targets from the backup defs) */}
-      <StepCard n={4} title={t("recovery.step3")} state={discoverStepState}>
+      <StepCard n={4} title={t("recovery.step3")} state={discoverStepState} hueIndex={nextHue()}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => void runDiscover()}
@@ -1533,7 +1559,7 @@ export default function Recovery() {
       </StepCard>
 
       {/* Step 5 — Review & restore everything (in place, left stopped) */}
-      <StepCard n={5} title={t("recovery.step4")} state={restoreStepState}>
+      <StepCard n={5} title={t("recovery.step4")} state={restoreStepState} hueIndex={nextHue()}>
         {!anyDiscovered ? (
           <p className="text-sm text-carbon-textMuted">{t("recovery.noneDiscovered")}</p>
         ) : (
@@ -1642,7 +1668,7 @@ export default function Recovery() {
       </StepCard>
 
       {/* Step 6 — Your recovery kit (safety net for next time) */}
-      <StepCard n={6} title={t("recovery.step5")} state="idle">
+      <StepCard n={6} title={t("recovery.step5")} state="idle" hueIndex={nextHue()}>
         <p className="max-w-2xl">{t("recovery.kitHint")}</p>
         <button
           type="button"
@@ -1664,7 +1690,7 @@ export default function Recovery() {
 
       {/* Restore from ANOTHER BombVault repo (#61) — visually separate from the
           attach steps above; read-only session, nothing persisted. */}
-      <ForeignRestoreCard hostMountRoot={hostMountRoot} t={t} otherActive={rowOtherActive} />
+      <ForeignRestoreCard hostMountRoot={hostMountRoot} t={t} otherActive={rowOtherActive} nextHue={nextHue} />
       {confirmDialog}
     </div>
   );

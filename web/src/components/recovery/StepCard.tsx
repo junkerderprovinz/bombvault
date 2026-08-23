@@ -3,7 +3,26 @@ import { Badge } from "../Badge";
 
 export type StepState = "idle" | "ok" | "warn" | "bad";
 
-export function StepCard({ n, title, state, children }: { n: number; title: string; state: StepState; children: ReactNode }) {
+export function StepCard({
+  n,
+  title,
+  state,
+  children,
+  hueIndex,
+}: {
+  n: number;
+  title: string;
+  state: StepState;
+  children: ReactNode;
+  /** Rainbow position for this step's own heading notch — same mechanism as
+   *  every other Card's `hueIndex` (see Settings.tsx's `Card()`/Badge.tsx's
+   *  own doc for the full history). Recovery.tsx assigns these via its own
+   *  page-flat `nextHue()` counter (no tabs here, so one running sequence
+   *  for the whole page) at every call site. Optional so a bare StepCard
+   *  used without rainbow wiring still renders (Badge itself no-ops without
+   *  an index). */
+  hueIndex?: number;
+}) {
   const dot = state === "ok" ? "bg-statusOkSolid" : state === "bad" ? "bg-statusFailSolid" : state === "warn" ? "bg-statusWarnSolid" : "bg-carbon-surface3";
   return (
     <div className="relative rounded-card bg-carbon-surface p-4">
@@ -21,7 +40,7 @@ export function StepCard({ n, title, state, children }: { n: number; title: stri
             whether its content renders in normal flow, so removing the
             badge from flow doesn't collapse the gap between them). */}
         <h2 className="flex items-center min-w-0 flex-1">
-          <Badge tone="heading" size="heading" wrap className="max-w-full">{title}</Badge>
+          <Badge tone="heading" size="heading" wrap className="max-w-full" hueIndex={hueIndex}>{title}</Badge>
         </h2>
         <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
       </div>
