@@ -118,6 +118,34 @@ export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: 
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
+        // Bugfix (found live while verifying a NEW label+InfoBubble call site
+        // this same round, notify.healthchecks — but the gap turned out to
+        // pre-exist at every one of this component's OTHER call sites that
+        // already sit inside a <label> alongside their own input/select:
+        // cloud.storageClass.label, flash.zipExport.keepN, drill.target, and
+        // the two ["key", info] map-driven labels). A plain `<span>`, even
+        // with `tabIndex`, is not one of the browser's natively-recognised
+        // "interactive" exemptions from a <label>'s implicit click-forwarding
+        // (unlike a real <button>/<a>/form control) — clicking this icon
+        // therefore ALSO fired the ancestor label's default action, stealing
+        // focus to its associated input/select, which immediately fired this
+        // span's own `onBlur={hide}` and closed the tooltip a frame after it
+        // opened. Verified live (getting `document.activeElement` after a
+        // real, trusted click landed on the icon): the adjacent field, not
+        // this span, ended up focused, and the bubble closed instantly.
+        //   `stopPropagation()` alone does NOT fix this — verified live, it
+        // changed nothing — because a <label>'s forwarding is native browser
+        // behaviour keyed off the click event's target chain, not a JS
+        // bubble-phase listener stopPropagation can intercept.
+        // `preventDefault()` on click IS what blocks it (also verified live:
+        // this span correctly keeps focus on itself and the tooltip opens
+        // and stays open), without disabling anything this component
+        // otherwise relies on — the span's own focus-on-click still happens
+        // (browsers assign focus on mousedown, before "click" fires, so
+        // preventDefault here doesn't undo it), and at every call site that
+        // does NOT sit inside a <label> a plain <span> click has no default
+        // action to prevent in the first place, so this is a no-op there.
+        onClick={(e) => e.preventDefault()}
         className={`inline-flex h-[15px] w-[15px] flex-none cursor-help items-center justify-center rounded-pill focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) ${
           onAccent ? "text-current" : "text-carbon-textMuted opacity-80 hover:opacity-100 focus:opacity-100"
         }`}
