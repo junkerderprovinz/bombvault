@@ -214,7 +214,7 @@ const tr: Partial<Translations> = {
   "settings.rainbowPalette": "Palet rengi",
   "settings.rainbowPaletteLabel": "Renk paleti",
   "settings.quietToasts": "Sessiz bildirimler",
-  "settings.quietToastsHint": "Açılır bildirimleri yalnızca hatalarda göster. Rutin kaydetme ve kopyalama onayları sessiz kalır.",
+  "settings.quietToastsHint": "Kaydetme ve kopyalama onayları gibi başarı bildirimlerini gizler. Hatalar ve dikkatini gerektiren her şey gösterilmeye devam eder.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Konteynerler",
@@ -692,6 +692,7 @@ const tr: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Kutucuk Unraid kontrol panelinde görünür — görünmüyorsa panelin kutucuk yönetiminden etkinleştirin.",
   "settings.dashTileRemove": "Eklentiyi kaldır",
   "settings.dashTileRemoving": "Kaldırılıyor…",
+  "settings.dashTileRemoveOk": "Eklenti kaldırıldı. Artık Unraid kontrol panelinde görünmüyor.",
 
   // Notifications — Email (SMTP)
   "notify.smtp": "E-posta (SMTP)",

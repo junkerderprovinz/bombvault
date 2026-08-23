@@ -214,7 +214,7 @@ const sv: Partial<Translations> = {
   "settings.rainbowPalette": "Palettfärg",
   "settings.rainbowPaletteLabel": "Färgpalett",
   "settings.quietToasts": "Tysta aviseringar",
-  "settings.quietToastsHint": "Visa popup-aviseringar endast vid fel. Rutinmässiga bekräftelser för sparande och kopiering förblir tysta.",
+  "settings.quietToastsHint": "Döljer lyckade-meddelanden som bekräftelser för sparande och kopiering. Fel och allt annat som kräver din uppmärksamhet visas fortfarande.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -692,6 +692,7 @@ const sv: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Rutan visas på Unraids Dashboard — om den inte syns, aktivera den i Dashboardens rutehantering.",
   "settings.dashTileRemove": "Ta bort plugin",
   "settings.dashTileRemoving": "Tar bort…",
+  "settings.dashTileRemoveOk": "Pluginet är borttaget. Det visas inte längre på Unraid-Dashboard.",
 
   // Notifications — SMTP
   "notify.smtp": "E-post (SMTP)",

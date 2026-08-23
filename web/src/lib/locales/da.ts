@@ -214,7 +214,7 @@ const da: Partial<Translations> = {
   "settings.rainbowPalette": "Paletfarve",
   "settings.rainbowPaletteLabel": "Farvepalet",
   "settings.quietToasts": "Stille notifikationer",
-  "settings.quietToastsHint": "Vis kun pop op-beskeder ved fejl. Rutinemæssige gem- og kopibekræftelser forbliver stille.",
+  "settings.quietToastsHint": "Skjuler succesmeddelelser som gem- og kopibekræftelser. Fejl og alt andet, der kræver din opmærksomhed, vises stadig.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -692,6 +692,7 @@ const da: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Flisen vises på Unraids Dashboard — hvis den ikke er synlig, så slå den til i Dashboardets flisestyring.",
   "settings.dashTileRemove": "Fjern plugin",
   "settings.dashTileRemoving": "Fjerner…",
+  "settings.dashTileRemoveOk": "Plugin fjernet. Det vises ikke længere på Unraid-dashboardet.",
 
   // Notifications — email (SMTP)
   "notify.smtp": "E-mail (SMTP)",

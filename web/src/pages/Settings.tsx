@@ -1536,10 +1536,16 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // `status` stays exactly as it was — GlimStone follow-up pass (v8.0.0)
   // audit note: this is a PERSISTENT "is the tile currently installed" fact
   // (plus, on failure, a possibly multi-line command `output` block), not a
-  // one-shot completion notice — a poor fit for a 4s, w-80 toast, so it's
-  // deliberately left as inline status rather than forced into one. Only the
-  // two genuinely ephemeral notices below (the URL copy-feedback swap and the
-  // ok-alongside-persistent-status install flash) moved to toasts.
+  // one-shot completion notice — a poor fit for a 4s, w-80 toast, so it stays
+  // as inline status rather than being replaced by one. Toast-on-save sweep
+  // (jdp, live review, "a toast every time something auto-saves"): install
+  // already pushed a success toast alongside this persistent status, but
+  // remove's success and BOTH ops' failures didn't — an asymmetry with no
+  // real justification (a failed install/remove is exactly the "auto-save
+  // error" case that toast-on-save exists to always surface, quiet mode or
+  // not), now fixed to match. The toast is the ephemeral "it worked/it
+  // didn't" ping; `status`'s inline banner still separately carries the full
+  // multi-line command `output` a toast has no room for.
   const [status, setStatus] = useState<DashPluginStatus>({ kind: "loading" });
   const [busy, setBusy] = useState<"idle" | "install" | "remove">("idle");
 
@@ -1571,20 +1577,17 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
     try {
       const r = await (op === "install" ? installDashboardPlugin() : removeDashboardPlugin());
       if (r.ok) {
-        if (op === "install") push(t("settings.dashTileInstallOk"), "success");
+        push(op === "install" ? t("settings.dashTileInstallOk") : t("settings.dashTileRemoveOk"), "success");
         refresh();
       } else {
-        setStatus({
-          kind: "error",
-          message: r.error ?? t("settings.error"),
-          output: r.output,
-        });
+        const message = r.error ?? t("settings.error");
+        setStatus({ kind: "error", message, output: r.output });
+        push(message, "fail");
       }
     } catch (err) {
-      setStatus({
-        kind: "error",
-        message: err instanceof Error ? err.message : t("settings.error"),
-      });
+      const message = err instanceof Error ? err.message : t("settings.error");
+      setStatus({ kind: "error", message });
+      push(message, "fail");
     } finally {
       setBusy("idle");
     }

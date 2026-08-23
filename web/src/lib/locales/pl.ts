@@ -209,7 +209,7 @@ const pl: Partial<Translations> = {
   "settings.rainbowPalette": "Kolor palety",
   "settings.rainbowPaletteLabel": "Paleta kolorów",
   "settings.quietToasts": "Ciche powiadomienia",
-  "settings.quietToastsHint": "Pokazuj powiadomienia tylko przy błędach. Rutynowe potwierdzenia zapisu i kopiowania pozostają wyciszone.",
+  "settings.quietToastsHint": "Ukrywa powiadomienia o powodzeniu, takie jak potwierdzenia zapisu i kopiowania. Błędy i wszystko inne wymagające uwagi nadal się wyświetlają.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -660,6 +660,7 @@ const pl: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Kafelek pojawia się na panelu Unraid — jeśli go nie widać, włącz go w zarządzaniu kafelkami panelu.",
   "settings.dashTileRemove": "Usuń plugin",
   "settings.dashTileRemoving": "Usuwanie…",
+  "settings.dashTileRemoveOk": "Wtyczka usunięta. Nie pojawia się już na panelu Unraid.",
 
   // Notifications — SMTP
   "notify.smtp": "E-mail (SMTP)",

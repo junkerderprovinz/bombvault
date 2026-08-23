@@ -214,7 +214,7 @@ const fr: Partial<Translations> = {
   "settings.rainbowPalette": "Couleur de la palette",
   "settings.rainbowPaletteLabel": "Palette de couleurs",
   "settings.quietToasts": "Notifications discrètes",
-  "settings.quietToastsHint": "N'afficher les notifications que pour les échecs. Les confirmations habituelles d'enregistrement et de copie restent silencieuses.",
+  "settings.quietToastsHint": "Masque les notifications de réussite comme les confirmations d'enregistrement et de copie. Les erreurs et tout ce qui nécessite votre attention restent affichées.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Conteneurs",
@@ -668,6 +668,7 @@ const fr: Partial<Translations> = {
   "settings.dashTileInstalledHint": "La tuile apparaît sur le tableau de bord Unraid — si elle n'est pas visible, activez-la dans la gestion des tuiles du tableau de bord.",
   "settings.dashTileRemove": "Retirer le plugin",
   "settings.dashTileRemoving": "Retrait…",
+  "settings.dashTileRemoveOk": "Plugin supprimé. Il n'apparaît plus sur le tableau de bord Unraid.",
 
   // Notifications — SMTP
   "notify.smtp": "E-mail (SMTP)",

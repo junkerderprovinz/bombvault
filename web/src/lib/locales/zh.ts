@@ -214,7 +214,7 @@ const zh: Partial<Translations> = {
   "settings.rainbowPalette": "调色板颜色",
   "settings.rainbowPaletteLabel": "调色板",
   "settings.quietToasts": "安静通知",
-  "settings.quietToastsHint": "仅在失败时显示弹出通知。常规的保存和复制确认将保持静默。",
+  "settings.quietToastsHint": "隐藏保存和复制确认等成功通知。错误以及其他需要你注意的内容仍会显示。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "容器",
@@ -684,6 +684,7 @@ const zh: Partial<Translations> = {
   "settings.dashTileInstalledHint": "磁贴会显示在 Unraid 仪表板上 — 如果看不到，请在仪表板的磁贴管理中启用它。",
   "settings.dashTileRemove": "移除插件",
   "settings.dashTileRemoving": "正在移除…",
+  "settings.dashTileRemoveOk": "插件已移除。它不再显示在 Unraid 仪表板上。",
 
   // Notifications — Email (SMTP)
   "notify.smtp": "邮件 (SMTP)",

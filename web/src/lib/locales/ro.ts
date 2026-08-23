@@ -211,7 +211,7 @@ const ro: Partial<Translations> = {
   "settings.rainbowPalette": "Culoare din paletă",
   "settings.rainbowPaletteLabel": "Paletă de culori",
   "settings.quietToasts": "Notificări discrete",
-  "settings.quietToastsHint": "Afișează notificările pop-up doar pentru erori. Confirmările de rutină de salvare și copiere rămân silențioase.",
+  "settings.quietToastsHint": "Ascunde notificările de succes, cum ar fi confirmările de salvare și copiere. Erorile și orice altceva care necesită atenția ta sunt afișate în continuare.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containere",
@@ -668,6 +668,7 @@ const ro: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Dala apare pe panoul principal Unraid — dacă nu este vizibilă, activați-o din gestionarea dalelor panoului.",
   "settings.dashTileRemove": "Elimină pluginul",
   "settings.dashTileRemoving": "Se elimină…",
+  "settings.dashTileRemoveOk": "Modul eliminat. Nu mai apare pe panoul Unraid.",
 
   // SMTP email notifications
   "notify.smtp": "E-mail (SMTP)",

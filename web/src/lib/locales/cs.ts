@@ -214,7 +214,7 @@ const cs: Partial<Translations> = {
   "settings.rainbowPalette": "Barva palety",
   "settings.rainbowPaletteLabel": "Barevná paleta",
   "settings.quietToasts": "Tichá oznámení",
-  "settings.quietToastsHint": "Zobrazovat vyskakovací oznámení jen při chybách. Běžná potvrzení uložení a kopírování zůstanou bez oznámení.",
+  "settings.quietToastsHint": "Skrývá úspěšná oznámení, jako potvrzení uložení a kopírování. Chyby a vše ostatní, co vyžaduje pozornost, se stále zobrazí.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontejnery",
@@ -690,6 +690,7 @@ const cs: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Dlaždice se objeví na Dashboardu Unraidu — pokud není vidět, zapněte ji ve správě dlaždic Dashboardu.",
   "settings.dashTileRemove": "Odebrat plugin",
   "settings.dashTileRemoving": "Odebírání…",
+  "settings.dashTileRemoveOk": "Plugin odebrán. Na Dashboardu Unraidu se už nezobrazuje.",
 
   // Email (SMTP)
   "notify.smtp": "E-mail (SMTP)",

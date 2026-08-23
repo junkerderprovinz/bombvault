@@ -520,6 +520,7 @@ export const en = {
   "settings.dashTileInstalledHint": "The tile appears on the Unraid Dashboard — if it is not visible, enable it in the Dashboard's tile management.",
   "settings.dashTileRemove": "Remove plugin",
   "settings.dashTileRemoving": "Removing…",
+  "settings.dashTileRemoveOk": "Plugin removed. It no longer appears on the Unraid Dashboard.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
@@ -750,9 +751,17 @@ export const en = {
   // with a different string" history.
   "settings.rainbowPaletteLabel": "Colour palette",
   // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
-  // toast system; "success"/routine toasts are suppressed, failures never are.
+  // toast system; "success" toasts are suppressed, "warn"/"fail" never are
+  // (lib/toastEngine.ts's shouldShowToast). Copy reworded (jdp, live review —
+  // "same as KnightLoader's quiet-notifications toggle, adapted to
+  // BombVault's own always-shown category") to name BOTH always-shown
+  // severities instead of only "failures": an offsite-target test that
+  // hasn't run yet, or a batch action that partly failed, push a "warn"
+  // toast (see toastEngine.ts's ToastSeverity) and must stay visible in
+  // quiet mode exactly like a save error does — the old copy's "only for
+  // failures" undersold that.
   "settings.quietToasts": "Quiet toasts",
-  "settings.quietToastsHint": "Only show pop-up notices for failures. Routine save and copy confirmations stay silent.",
+  "settings.quietToastsHint": "Hides success notices like save and copy confirmations. Errors, and anything else that needs your attention, still show.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -1981,6 +1990,7 @@ export const de: Translations = {
   "settings.dashTileInstalledHint": "Die Kachel erscheint auf dem Unraid-Dashboard — falls sie nicht sichtbar ist, in der Kachelverwaltung des Dashboards aktivieren.",
   "settings.dashTileRemove": "Plugin entfernen",
   "settings.dashTileRemoving": "Wird entfernt…",
+  "settings.dashTileRemoveOk": "Plugin entfernt. Es erscheint nicht mehr auf dem Unraid-Dashboard.",
 
   // Off-site (rclone)
   "rclone.title": "Off-site (rclone)",
@@ -2168,7 +2178,7 @@ export const de: Translations = {
   "settings.rainbowPalette": "Palettenfarbe",
   "settings.rainbowPaletteLabel": "Farbpalette",
   "settings.quietToasts": "Leise Benachrichtigungen",
-  "settings.quietToastsHint": "Zeigt Popup-Hinweise nur bei Fehlern. Routinemäßige Speicher- und Kopierbestätigungen bleiben stumm.",
+  "settings.quietToastsHint": "Blendet Erfolgsmeldungen wie Speicher- und Kopierbestätigungen aus. Fehler und alles andere, das deine Aufmerksamkeit braucht, werden weiterhin angezeigt.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",

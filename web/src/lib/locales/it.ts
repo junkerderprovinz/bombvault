@@ -214,7 +214,7 @@ const it: Partial<Translations> = {
   "settings.rainbowPalette": "Colore della tavolozza",
   "settings.rainbowPaletteLabel": "Tavolozza dei colori",
   "settings.quietToasts": "Notifiche silenziose",
-  "settings.quietToastsHint": "Mostra gli avvisi pop-up solo per gli errori. Le conferme di routine di salvataggio e copia restano silenziose.",
+  "settings.quietToastsHint": "Nasconde le notifiche di successo come le conferme di salvataggio e copia. Gli errori e tutto ciò che richiede la tua attenzione restano visibili.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Container",
@@ -668,6 +668,7 @@ const it: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Il riquadro compare sulla dashboard di Unraid — se non è visibile, attivalo nella gestione dei riquadri della dashboard.",
   "settings.dashTileRemove": "Rimuovi plugin",
   "settings.dashTileRemoving": "Rimozione…",
+  "settings.dashTileRemoveOk": "Plugin rimosso. Non compare più nella dashboard di Unraid.",
 
   // Restore-verification drills ("verify restorability")
   "verify.now": "Verifica ripristinabilità",

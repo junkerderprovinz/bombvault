@@ -214,7 +214,7 @@ const ja: Partial<Translations> = {
   "settings.rainbowPalette": "パレットの色",
   "settings.rainbowPaletteLabel": "カラーパレット",
   "settings.quietToasts": "通知を控えめにする",
-  "settings.quietToastsHint": "失敗時のみポップアップ通知を表示します。保存やコピーの通常の確認通知は表示されません。",
+  "settings.quietToastsHint": "保存やコピーの完了通知など、成功通知を非表示にします。エラーや注意が必要な内容は引き続き表示されます。",
 
   // Dashboard stat cards
   "dashboard.statContainers": "コンテナ",
@@ -660,6 +660,7 @@ const ja: Partial<Translations> = {
   "settings.dashTileInstalledHint": "タイルは Unraid のダッシュボードに表示されます — 表示されない場合は、ダッシュボードのタイル管理で有効にしてください。",
   "settings.dashTileRemove": "プラグインを削除",
   "settings.dashTileRemoving": "削除中…",
+  "settings.dashTileRemoveOk": "プラグインを削除しました。Unraid のダッシュボードには表示されなくなります。",
 
   // Email (SMTP)
   "notify.smtp": "メール (SMTP)",

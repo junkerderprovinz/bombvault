@@ -209,7 +209,7 @@ const nl: Partial<Translations> = {
   "settings.rainbowPalette": "Paletkleur",
   "settings.rainbowPaletteLabel": "Kleurenpalet",
   "settings.quietToasts": "Stille meldingen",
-  "settings.quietToastsHint": "Toon pop-upmeldingen alleen bij fouten. Routinematige opslaan- en kopieerbevestigingen blijven stil.",
+  "settings.quietToastsHint": "Verbergt succesmeldingen zoals opslaan- en kopieerbevestigingen. Fouten en al het andere dat je aandacht nodig heeft, blijven zichtbaar.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -662,6 +662,7 @@ const nl: Partial<Translations> = {
   "settings.dashTileInstalledHint": "De tegel verschijnt op het Unraid-dashboard — is hij niet zichtbaar, schakel hem dan in via het tegelbeheer van het dashboard.",
   "settings.dashTileRemove": "Plugin verwijderen",
   "settings.dashTileRemoving": "Verwijderen…",
+  "settings.dashTileRemoveOk": "Plugin verwijderd. Het verschijnt niet meer op het Unraid-dashboard.",
 
   // Notifications (SMTP email)
   "notify.smtp": "E-mail (SMTP)",

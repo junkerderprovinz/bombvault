@@ -214,7 +214,7 @@ const fi: Partial<Translations> = {
   "settings.rainbowPalette": "Paletin väri",
   "settings.rainbowPaletteLabel": "Väripaletti",
   "settings.quietToasts": "Hiljaiset ilmoitukset",
-  "settings.quietToastsHint": "Näytä ponnahdusilmoitukset vain virheistä. Rutiininomaiset tallennus- ja kopiointivahvistukset pysyvät hiljaisina.",
+  "settings.quietToastsHint": "Piilottaa onnistumisilmoitukset, kuten tallennus- ja kopiointivahvistukset. Virheet ja kaikki muu huomiotasi vaativa näytetään edelleen.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Kontit",
@@ -692,6 +692,7 @@ const fi: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Ruutu näkyy Unraidin kojelaudalla — jos se ei näy, ota se käyttöön kojelaudan ruutujen hallinnassa.",
   "settings.dashTileRemove": "Poista lisäosa",
   "settings.dashTileRemoving": "Poistetaan…",
+  "settings.dashTileRemoveOk": "Lisäosa poistettu. Se ei enää näy Unraidin kojelaudalla.",
 
   // Notifications — SMTP
   "notify.smtp": "Sähköposti (SMTP)",

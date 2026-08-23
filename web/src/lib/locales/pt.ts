@@ -211,7 +211,7 @@ const pt: Partial<Translations> = {
   "settings.rainbowPalette": "Cor da paleta",
   "settings.rainbowPaletteLabel": "Paleta de cores",
   "settings.quietToasts": "Notificações silenciosas",
-  "settings.quietToastsHint": "Mostrar avisos pop-up apenas para falhas. As confirmações de rotina de salvar e copiar permanecem silenciosas.",
+  "settings.quietToastsHint": "Oculta avisos de sucesso, como confirmações de salvar e copiar. Erros e qualquer outra coisa que precise da sua atenção continuam a aparecer.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -665,6 +665,7 @@ const pt: Partial<Translations> = {
   "settings.dashTileInstalledHint": "O bloco aparece no painel do Unraid — se não estiver visível, ative-o na gestão de blocos do painel.",
   "settings.dashTileRemove": "Remover plugin",
   "settings.dashTileRemoving": "Removendo…",
+  "settings.dashTileRemoveOk": "Plugin removido. Ele não aparece mais no painel do Unraid.",
 
   // Notifications — email (SMTP)
   "notify.smtp": "E-mail (SMTP)",

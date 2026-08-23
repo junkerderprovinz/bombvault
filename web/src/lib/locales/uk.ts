@@ -212,7 +212,7 @@ const uk: Partial<Translations> = {
   "settings.rainbowPalette": "Колір палітри",
   "settings.rainbowPaletteLabel": "Кольорова палітра",
   "settings.quietToasts": "Тихі сповіщення",
-  "settings.quietToastsHint": "Показувати спливаючі сповіщення лише про помилки. Звичайні підтвердження збереження й копіювання лишаються без сповіщень.",
+  "settings.quietToastsHint": "Приховує сповіщення про успіх, як-от підтвердження збереження й копіювання. Помилки та все інше, що потребує вашої уваги, як і раніше показуються.",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Контейнери",
@@ -687,6 +687,7 @@ const uk: Partial<Translations> = {
   "settings.dashTileInstalledHint": "Плитка з'являється на панелі Unraid — якщо її не видно, увімкніть її в керуванні плитками панелі.",
   "settings.dashTileRemove": "Видалити плагін",
   "settings.dashTileRemoving": "Видалення…",
+  "settings.dashTileRemoveOk": "Плагін видалено. Він більше не відображається на панелі Unraid.",
 
   // Notifications — Email (SMTP)
   "notify.smtp": "Електронна пошта (SMTP)",

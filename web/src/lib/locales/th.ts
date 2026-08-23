@@ -214,7 +214,7 @@ const th: Partial<Translations> = {
   "settings.rainbowPalette": "สีในจานสี",
   "settings.rainbowPaletteLabel": "จานสี",
   "settings.quietToasts": "การแจ้งเตือนแบบเงียบ",
-  "settings.quietToastsHint": "แสดงการแจ้งเตือนแบบป๊อปอัปเฉพาะเมื่อล้มเหลวเท่านั้น การยืนยันการบันทึกและคัดลอกตามปกติจะไม่แสดง",
+  "settings.quietToastsHint": "ซ่อนการแจ้งเตือนความสำเร็จ เช่น การยืนยันการบันทึกและคัดลอก ข้อผิดพลาดและสิ่งอื่นที่ต้องการความสนใจของคุณจะยังคงแสดงอยู่",
 
   // Dashboard stat cards
   "dashboard.statContainers": "Containers",
@@ -695,6 +695,7 @@ const th: Partial<Translations> = {
   "settings.dashTileInstalledHint": "ไทล์จะปรากฏบนแดชบอร์ดของ Unraid — หากมองไม่เห็น ให้เปิดใช้งานในหน้าจัดการไทล์ของแดชบอร์ด",
   "settings.dashTileRemove": "ถอนปลั๊กอิน",
   "settings.dashTileRemoving": "กำลังถอน…",
+  "settings.dashTileRemoveOk": "ถอนปลั๊กอินแล้ว จะไม่ปรากฏบนแดชบอร์ดของ Unraid อีกต่อไป",
 
   // Email (SMTP)
   "notify.smtp": "อีเมล (SMTP)",
