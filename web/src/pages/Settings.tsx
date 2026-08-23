@@ -6617,7 +6617,13 @@ export function SettingsPage() {
             Schedules tab's own `scheduleField` already established for
             continuously-typed values (a path is typed/browsed the same way a
             cron string is), just called directly here since these six PATCH
-            single independent fields rather than a whole cadence group. */}
+            single independent fields rather than a whole cadence group.
+              `hueIndex={0..4}` below (GlimStone standing colour-engine rule,
+            closing the gap OffsiteWizard's own hueIndex doc comment already
+            named): these five PathModeSwitch rows are one related GROUP (own
+            local 0-based index per group, same rule as the Domains Card's
+            seven ToggleRows), separate from this Card's own heading
+            `nextHue()` call above. */}
         <PathModeSwitch
           label={t("settings.containersPath")}
           domain="containers"
@@ -6632,6 +6638,7 @@ export function SettingsPage() {
           settings={settings}
           setSettings={setSettings}
           save={save}
+          hueIndex={0}
         />
         <PathModeSwitch
           label={t("settings.vmsPath")}
@@ -6647,6 +6654,7 @@ export function SettingsPage() {
           settings={settings}
           setSettings={setSettings}
           save={save}
+          hueIndex={1}
         />
         <PathModeSwitch
           label={t("settings.flashPath")}
@@ -6662,6 +6670,7 @@ export function SettingsPage() {
           settings={settings}
           setSettings={setSettings}
           save={save}
+          hueIndex={2}
         />
         <PathModeSwitch
           label={t("settings.configPath")}
@@ -6677,6 +6686,7 @@ export function SettingsPage() {
           settings={settings}
           setSettings={setSettings}
           save={save}
+          hueIndex={3}
         />
         <PathModeSwitch
           label={t("settings.filesPath")}
@@ -6692,6 +6702,7 @@ export function SettingsPage() {
           settings={settings}
           setSettings={setSettings}
           save={save}
+          hueIndex={4}
         />
         <FolderBrowser
           label={t("settings.restoreFolder")}
