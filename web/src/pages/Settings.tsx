@@ -3442,6 +3442,17 @@ function IntegrityCard({
           const tLast = lastTamper[domain];
           return (
             <div key={domain} className="flex flex-col gap-1">
+              {/* Domain actions + the restore-verification drill on ONE row
+                  (jdp, live-review: "Die Buttons bei Container, VMs, etc
+                  sollen alle in einer Zeile stehen") — was two separate flex
+                  rows (verify/unlock/prune, then a second row for the drill/
+                  DR-run button behind an empty w-24 spacer just to align
+                  under the first row's buttons). The label alone already
+                  anchors the whole row's left edge now that everything sits
+                  on it, so that spacer is gone along with the second row;
+                  every button below keeps its exact behavior, disabled state
+                  and inline busy/ok/fail feedback — this is a pure layout
+                  merge, no logic changed. */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-carbon-textSub w-24 shrink-0">{label}</span>
                 {actions.map((a) => {
@@ -3460,12 +3471,6 @@ function IntegrityCard({
                     </span>
                   );
                 })}
-              </div>
-
-              {/* Restore-verification drill: its own row + inline result + last drill.
-                  The run button + labels follow the selected drill kind. */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="w-24 shrink-0" />
                 <button
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}
