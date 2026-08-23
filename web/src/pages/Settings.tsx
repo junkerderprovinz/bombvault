@@ -2622,6 +2622,7 @@ function NotifyCard({
   t,
   platformKind,
   hueIndex,
+  channelsHueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   // The detected/overridden platform.Kind ("unraid" | "generic" | "truenas"),
@@ -2631,7 +2632,26 @@ function NotifyCard({
   // no UI trace — see unraidGate's doc comment in internal/api/service.go for
   // why the backend gate itself stays hard rather than trusting the toggle).
   platformKind: string;
+  // This function now returns TWO Cards (jdp, live-review: "Können wir die
+  // Einstellungen für die Benachrichtigungen und die Kanäle für
+  // Benachrichtigungen (Matrix, Apprise, Email) in zwei eigene Cards
+  // auftrennen?") — the settings Card (trigger condition, the three toggles,
+  // the platform-mismatch banner, Test) and the channels Card (webhook/
+  // Apprise/Matrix/Healthchecks/SMTP). One shared cfg/persistNotify/debounce
+  // underneath (both Cards edit the same NotifyConfig object), so this stays
+  // ONE component/one set of hooks — only the JSX splits, hence two distinct
+  // hueIndex props rather than two components each taking their own.
   hueIndex?: number;
+  // The channels Card only renders while `advanced` is true, so THIS value
+  // must come from a `nextHue()` call made INSIDE the same `tab ===
+  // "notifications" && advanced &&` gate the call site guards the Card
+  // itself with — never an unconditional call whose result just happens not
+  // to get used. See this file's own "hueIndex={nextHue()} inside it fires
+  // every render regardless" comment (the SYSTEM tab's Spike Card, and the
+  // three Storage-tab Cards it references) for the exact silent-hue-shift
+  // bug this guards against: an eager `nextHue()` at the call site burns a
+  // slot even with Advanced off, shifting every later tab heading by one.
+  channelsHueIndex?: number;
 }) {
   const { push } = useToast();
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
@@ -2735,6 +2755,7 @@ function NotifyCard({
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
+    <>
     <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
       <label className={labelCls}>
         {t("notify.on")}
@@ -2745,59 +2766,53 @@ function NotifyCard({
         </select>
       </label>
 
-      {/* #56: one summary per scheduled run instead of one message per container. */}
-      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={cfg.scheduledSummary}
-          onChange={(e) => setImmediate("scheduledSummary", e.target.checked)}
-          className="mt-0.5"
-          style={{ accentColor: "var(--accent)" }}
-        />
-        <span className="flex flex-col gap-0.5">
-          <span className="flex items-center gap-1 text-sm text-carbon-text">
-            {t("notify.scheduledSummary")}
-            <InfoBubble tip={t("notify.scheduledSummaryHint")} />
-          </span>
-        </span>
-      </label>
-
-      {/* #56: notify when a container is updated by the post-backup image update. */}
-      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={cfg.notifyOnUpdate}
-          onChange={(e) => setImmediate("notifyOnUpdate", e.target.checked)}
-          className="mt-0.5"
-          style={{ accentColor: "var(--accent)" }}
-        />
-        <span className="flex flex-col gap-0.5">
-          <span className="flex items-center gap-1 text-sm text-carbon-text">
-            {t("notify.notifyOnUpdate")}
-            <InfoBubble tip={t("notify.notifyOnUpdateHint")} />
-          </span>
-        </span>
-      </label>
-
+      {/* #56/#106 toggle sweep (jdp, live-review: "Geplante Läufe
+          zusammenfassen, Bei Container-Update benachrichtigen, Unraid-
+          Benachrichtigungen sollen Toggles sein"): these three used to be
+          raw hand-rolled <input type="checkbox"> + <label> blocks, NOT the
+          shared ToggleRow component — so they never picked up ToggleRow's
+          own shake/disabled/hue plumbing the rest of this page's toggles
+          get for free. Converted to ToggleRow here, matching every other
+          toggle on this page. hueIndex 0/1/2: three ToggleRows rendered
+          together, one per row, in the same Card — a list by construction
+          regardless of whether the switches are logically independent (the
+          merged Colors Card's own master/Reactive/Rotate trio and the
+          Domains Card's seven rows are the identical shape; see ToggleRow's
+          own `hueIndex` doc comment for the full "own local 0-based index
+          per group" rule this follows). */}
+      <ToggleRow
+        label={t("notify.scheduledSummary")}
+        hint={t("notify.scheduledSummaryHint")}
+        checked={cfg.scheduledSummary}
+        onChange={(v) => setImmediate("scheduledSummary", v)}
+        hueIndex={0}
+      />
+      <ToggleRow
+        label={t("notify.notifyOnUpdate")}
+        hint={t("notify.notifyOnUpdateHint")}
+        checked={cfg.notifyOnUpdate}
+        onChange={(v) => setImmediate("notifyOnUpdate", v)}
+        hueIndex={1}
+      />
       {/* Unraid native notifications (delivered over the host SSH connection).
-          notify.unraidHint stays permanent text, NOT a bubble — see this
-          Card's own header comment above for why (it names the exact
-          "libvirt not reachable" error string to ignore, which needs to stay
-          findable on the page for someone debugging that message, not
-          hidden behind a hover target). */}
-      <label className="flex items-start gap-2 rounded-card bg-carbon-surface2 p-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={cfg.unraid}
-          onChange={(e) => setImmediate("unraid", e.target.checked)}
-          className="mt-0.5"
-          style={{ accentColor: "var(--accent)" }}
-        />
-        <span className="flex flex-col gap-0.5">
-          <span className="text-sm text-carbon-text">{t("notify.unraid")}</span>
-          <span className="text-xs text-carbon-textMuted">{t("notify.unraidHint")}</span>
-        </span>
-      </label>
+          notify.unraidHint USED to stay permanent text instead of an
+          InfoBubble, reasoned as "it names the exact 'libvirt not
+          reachable' error string to ignore, which needs to stay findable on
+          the page for someone debugging that message, not hidden behind a
+          hover target." jdp's live-review ask on this same pass was
+          explicit and unconditional — "Info-Texte immer in eine
+          Infobubble" — which supersedes that per-instance exception; moved
+          into ToggleRow's own `hint` bubble like the two rows above. If
+          that debugging-findability concern turns out to matter once this
+          is live, it's a one-line revert back to permanent text, not a
+          redesign. */}
+      <ToggleRow
+        label={t("notify.unraid")}
+        hint={t("notify.unraidHint")}
+        checked={cfg.unraid}
+        onChange={(v) => setImmediate("unraid", v)}
+        hueIndex={2}
+      />
 
       {/* Platform-mismatch banner (code-review fix): the toggle above is ON,
           but BombVault's platform detection did not resolve to Unraid, so the
@@ -2812,8 +2827,29 @@ function NotifyCard({
         </div>
       )}
 
-      {advanced && (
-        <>
+      {/* Full-page Speichern-Button sweep: the "Speichern" button that used to
+          sit beside Test is gone — every field on both this Card and the
+          channels Card below now auto-saves itself (debounced text/number,
+          immediate checkboxes/selects/toggles). Test keeps working exactly
+          as before: it always sends the CURRENT form values (from the SAME
+          shared `cfg`, whichever Card each field actually lives in), whether
+          or not this Card's own 800ms debounce has already flushed them.
+          Stays on THIS Card, not the channels one below, so testing (and
+          Unraid notifications generally) keeps working with Advanced off —
+          see this function's own header comment on `channelsHueIndex` and
+          the "Simple mode still gets notify-on-failure via Unraid" comment
+          on `advanced` above for why the channels Card is allowed to
+          disappear but this button never is. */}
+      <div className="flex items-center gap-3 pt-1 flex-wrap">
+        <button onClick={() => void handleTest()}
+          className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
+          {t("notify.test")}
+        </button>
+      </div>
+    </Card>
+
+    {advanced && (
+      <Card title={t("notify.channelsTitle")} hint={t("notify.channelsHint")} hueIndex={channelsHueIndex}>
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <label className={labelCls}>
           {t("notify.webhook")}
@@ -2917,18 +2953,22 @@ function NotifyCard({
         ))}
       </div>
 
-      {/* Email (SMTP), sent via the configured mail server. */}
+      {/* Email (SMTP), sent via the configured mail server. Same "same
+          component/area, same raw-checkbox anti-pattern" gap as the three
+          settings-Card toggles converted above (standing rule: fix every
+          existing caller of the gap being fixed, not just the reported
+          instance) — this was still a hand-rolled <input type="checkbox">,
+          the fourth one in this Card. No hueIndex: the sole toggle in its
+          own single-purpose SMTP subsection, with no sibling toggle of its
+          own kind here — ToggleRow's own doc calls this out by name as the
+          one case that correctly omits it (e.g. "Leise Benachrichtigungen"),
+          not a list to walk. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <label className="flex items-start gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={cfg.smtpEnabled}
-            onChange={(e) => setImmediate("smtpEnabled", e.target.checked)}
-            className="mt-0.5"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          <span className="text-sm text-carbon-text">{t("notify.smtp")}</span>
-        </label>
+        <ToggleRow
+          label={t("notify.smtp")}
+          checked={cfg.smtpEnabled}
+          onChange={(v) => setImmediate("smtpEnabled", v)}
+        />
         {cfg.smtpEnabled && (
           <>
             <label className={labelCls}>
@@ -2972,22 +3012,9 @@ function NotifyCard({
           </>
         )}
       </div>
-        </>
-      )}
-
-      {/* Full-page Speichern-Button sweep: the "Speichern" button that used to
-          sit beside Test is gone — every field above now auto-saves itself
-          (debounced text/number, immediate checkboxes/selects). Test keeps
-          working exactly as before: it always sends the CURRENT form
-          values, whether or not this Card's own 800ms debounce has already
-          flushed them. */}
-      <div className="flex items-center gap-3 pt-1 flex-wrap">
-        <button onClick={() => void handleTest()}
-          className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
-          {t("notify.test")}
-        </button>
-      </div>
-    </Card>
+      </Card>
+    )}
+    </>
   );
 }
 
@@ -6774,9 +6801,35 @@ export function SettingsPage() {
       {tab === "offsite" && <CloudCredSetsCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
-      {/* NOTIFICATIONS — NotifyCard (renders always; not re-gated).          */}
+      {/* NOTIFICATIONS — NotifyCard now renders TWO Cards internally: its    */}
+      {/* settings Card (always) and its channels Card (advanced only) — see */}
+      {/* NotifyCard's own header comment. `channelsHueIndex` MUST be its    */}
+      {/* own `nextHue()` call made INSIDE `tab === "notifications" &&       */}
+      {/* advanced &&`, not an eager call at the unconditional site above:   */}
+      {/* the channels Card only paints while Advanced is on, and this file  */}
+      {/* already has one documented live-Playwright-caught bug from doing  */}
+      {/* it the eager way — see the SYSTEM tab's Spike Card comment ("fires */}
+      {/* every render regardless") for the exact silent-hue-shift failure   */}
+      {/* mode this avoids: a slot burned on a Card that never painted,      */}
+      {/* shifting every later heading on this tab by one position while     */}
+      {/* Advanced was off. Plain `&&` short-circuits correctly, so with     */}
+      {/* Advanced off `channelsHue` is simply never computed and the        */}
+      {/* prop below evaluates to `undefined` — NotifyCard never renders     */}
+      {/* the channels Card in that case anyway, so the unused value never   */}
+      {/* matters, and no hue slot is spent.                                 */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "notifications" && <NotifyCard t={t} platformKind={platformKind} hueIndex={nextHue()} />}
+      {tab === "notifications" && (() => {
+        const settingsHue = nextHue();
+        const channelsHue = advanced ? nextHue() : undefined;
+        return (
+          <NotifyCard
+            t={t}
+            platformKind={platformKind}
+            hueIndex={settingsHue}
+            channelsHueIndex={channelsHue}
+          />
+        );
+      })()}
 
       {/* NOTIFICATIONS — Weekly digest: one summary message per week through
           the channels configured above. Schedule input mirrors the drills/
