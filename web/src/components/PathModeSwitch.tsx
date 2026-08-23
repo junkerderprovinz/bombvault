@@ -4,6 +4,7 @@ import { FolderBrowser } from "./FolderBrowser";
 import { OffsiteWizard } from "./OffsiteWizard";
 import { Selector } from "./Selector";
 import { IconCloud, IconFolder } from "./Sidebar";
+import { Badge } from "./Badge";
 import { useT } from "../lib/i18n";
 
 // ---------------------------------------------------------------------------
@@ -89,6 +90,7 @@ export function PathModeSwitch({
   settings,
   setSettings,
   save,
+  hueIndex,
 }: {
   label: string;
   domain: PrimaryRemoteDomain;
@@ -103,6 +105,21 @@ export function PathModeSwitch({
     setState: (s: "idle" | "saving" | "saved" | "error") => void,
     setError: (e: string | null) => void
   ) => Promise<boolean>;
+  /** GlimStone standing colour-engine rule, closing a gap OffsiteWizard's own
+   *  `hueIndex` doc comment already flagged by name ("PathModeSwitch's
+   *  remote-mode dialog, which shares one hue across five domains' worth of
+   *  chrome that isn't itself hued yet"): the Selector segment above is
+   *  already hue-aware on its own (Selector.tsx handles that internally),
+   *  but the "Configure primary remote"/"Close" toggle below it — and the
+   *  OffsiteWizard panel it opens — were plain flat chrome. Settings.tsx's
+   *  five call sites (Containers/VMs/Flash/Config/Files paths, one shared
+   *  Storage-tab Card) pass their own local 0-based index, the SAME "one
+   *  group, one local sequence" rule the Domains Card's seven ToggleRows and
+   *  the merged Colors Card's own three toggles already follow — a genuine
+   *  list of five sibling rows, not five independent singletons. Threaded
+   *  straight through to OffsiteWizard below (its own `hueIndex` doc
+   *  comment names this exact caller as the one that used to omit it). */
+  hueIndex?: number;
 }) {
   const { t } = useT();
   // The mode starts derived from the CURRENT value (a remote-shaped path
@@ -172,19 +189,31 @@ export function PathModeSwitch({
             dir="ltr"
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
           />
-          <button
-            type="button"
+          {/* Was a plain flat `bg-carbon-surface2` <button> — the un-hued
+              chrome this component's own `hueIndex` doc comment names.
+              `tone="active"` is what makes a passed `hueIndex` actually
+              paint (Badge.tsx's own `hueOn` comment) — same conversion
+              OffsiteTargetsSection's "Ziel hinzufügen" button already made,
+              `size="medium"` matching that same file's own row-level chip
+              weight (ROW_BADGE_SIZE) rather than this row's bigger `field`
+              inputs, since this button has a visible sibling text label, not
+              a bare glyph. */}
+          <Badge
+            as="button"
+            tone="active"
+            size="medium"
+            hueIndex={hueIndex}
             onClick={() => setDialogOpen((o) => !o)}
             disabled={!isRemotePath(value)}
-            className="self-start rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className="self-start"
           >
             {dialogOpen ? t("offsite.wizard.close") : t("settings.primaryRemote.title")}
-          </button>
+          </Badge>
           {!isRemotePath(value) && (
             <p className="text-xs text-carbon-textMuted">{t("settings.primaryRemote.hint")}</p>
           )}
           {dialogOpen && isRemotePath(value) && (
-            <OffsiteWizard domain={domain} settings={settings} setSettings={setSettings} save={save} t={t} primary />
+            <OffsiteWizard domain={domain} settings={settings} setSettings={setSettings} save={save} t={t} primary hueIndex={hueIndex} />
           )}
         </div>
       ) : (
