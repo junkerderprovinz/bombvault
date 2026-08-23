@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
 import { CadenceBuilder, formatCadence } from "./CadenceBuilder";
 import { Badge } from "./Badge";
@@ -15,8 +15,24 @@ import { useToast } from "../lib/toast";
 //
 // The editor is collapsed by default and shows a one-line summary (the override
 // cadence, or "uses the domain schedule"), so a long member list stays compact.
-// A single save persists the current value via the supplied PATCH function.
+//
+// Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die Speicher-
+// Buttons sollen in allen Tabs weg. Überall soll es automatisch speichern."):
+// this used to hold its own manual "Übernehmen"-style Save button, found on a
+// re-sweep after the rest of the Schedules tab's cadence editors (the DOMAIN-
+// level Containers/VMs/Flash/Ordner Cards) had already been converted to
+// auto-save via `scheduleField` in Settings.tsx — the exact same CadenceBuilder
+// control, just wrapped in this collapse/expand disclosure for a potentially
+// long member list. There's no genuine reason for the PER-ITEM copy to still
+// batch into a click: the collapse/expand toggle is a compactness affordance,
+// not a "discard my edit" one — closing the panel never resets `value` back to
+// `initial`, so no cancel semantic exists here to protect (unlike
+// CloudCredSetsCard's/OffsiteTargetsSection's own draft editors elsewhere,
+// which keep their manual Save for exactly that reason). Debounces on the SAME
+// 800ms timing as every other free-text/cadence field on this page.
 // ---------------------------------------------------------------------------
+
+const DEBOUNCE_MS = 800;
 
 export function ItemScheduleOverride({
   name,
@@ -34,19 +50,18 @@ export function ItemScheduleOverride({
   const { push } = useToast();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initial ?? "");
-  const [busy, setBusy] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // A non-empty, non-"off" cadence is an active override; anything else means the
   // item follows its domain schedule.
   const active = value.trim() !== "" && value.trim() !== "off";
   const summary = active ? formatCadence(value, t, lang) : t("schedule.overrideUsesDefault");
 
-  async function handleSave() {
-    setBusy(true);
+  async function persist(v: string) {
+    // Normalize "off" to an empty override: the backend treats "off" as a valid
+    // cadence, but for a per-item override the intent of "off" is "no override".
+    const toStore = v.trim() === "off" ? "" : v.trim();
     try {
-      // Normalize "off" to an empty override: the backend treats "off" as a valid
-      // cadence, but for a per-item override the intent of "off" is "no override".
-      const toStore = value.trim() === "off" ? "" : value.trim();
       const res = await onSave(toStore);
       if (res.ok) {
         push(t("schedule.overrideSaved"), "success");
@@ -55,10 +70,24 @@ export function ItemScheduleOverride({
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
-    } finally {
-      setBusy(false);
     }
   }
+
+  // handleChange — optimistic local update + debounce, same shape as every
+  // other cadence field on this page (Settings.tsx's own scheduleField).
+  function handleChange(v: string) {
+    setValue(v);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => void persist(v), DEBOUNCE_MS);
+  }
+
+  // A pending debounce must not fire after this row unmounts (e.g. the
+  // container list re-fetches while the user is still typing).
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-2">
@@ -78,18 +107,9 @@ export function ItemScheduleOverride({
           <CadenceBuilder
             label={`${t("schedule.overrideTitle")}: ${name}`}
             value={value}
-            onChange={setValue}
+            onChange={handleChange}
           />
           <p className="text-xs text-carbon-textMuted">{t("schedule.overrideHint")}</p>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => void handleSave()}
-              disabled={busy}
-              className="rounded-control bg-accent text-accentContrast px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
-            >
-              {busy ? t("common.saving") : t("schedule.overrideSave")}
-            </button>
-          </div>
         </div>
       )}
     </div>

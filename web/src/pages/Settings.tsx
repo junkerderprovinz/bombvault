@@ -2624,12 +2624,30 @@ function NotifyCard({
   // (webhook/Matrix/Healthchecks/SMTP) are power-user features, so gate those.
   const { advanced } = useAdvanced();
   const [cfg, setCfg] = useState<NotifyConfig>(emptyNotify);
-  const [state, setState] = useState<SaveState>("idle");
+  // Only the setter is needed post-conversion (see persistNotify below) — no
+  // Speichern button reads this back anymore, same "only the setters are
+  // needed" shape as Settings.tsx's own setDomSaveState.
+  const [, setState] = useState<SaveState>("idle");
   // The SMTP password / Matrix token are never sent to the browser; track whether
   // one is stored so the field shows "configured" and a blank submit keeps it.
   const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false });
   const revealMatrixToken = useReveal();
   const revealSmtpPassword = useReveal();
+  // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
+  // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
+  // speichern."): every field below already round-trips a real persisted
+  // value (getNotify below), the two secrets (matrixToken/smtpPassword)
+  // included via the SAME "blank = keep the stored one" contract every other
+  // secret field on this page already uses safely — no draft/cancel shape to
+  // protect here, unlike RcloneCard right above. Local debounce mirrors
+  // CloudCard's own mechanism (this Card is fully self-contained, no access
+  // to SettingsPage's shared debouncedSave).
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  function debounced(key: string, run: () => void) {
+    const existing = debounceTimers.current[key];
+    if (existing) clearTimeout(existing);
+    debounceTimers.current[key] = setTimeout(run, 800);
+  }
 
   useEffect(() => {
     getNotify()
@@ -2640,17 +2658,16 @@ function NotifyCard({
       .catch(() => undefined);
   }, []);
 
-  function set<K extends keyof NotifyConfig>(k: K, v: NotifyConfig[K]) {
-    setCfg((c) => ({ ...c, [k]: v }));
-  }
-
-  // GlimStone follow-up pass (v8.0.0): both the save flash and the separate
-  // "tested" flash below are now toasts — same one-shot-completion-notice
-  // reasoning as the shared save() helper further down.
-  async function handleSave() {
+  // persistNotify merges patch onto the CURRENT cfg snapshot and POSTs the
+  // whole object — setNotify has no partial-patch form, same "merge onto the
+  // freshest local state" shape as CloudCard's own persistPatch (this Card
+  // has no OTHER card's concurrent edits to protect against, unlike
+  // SettingsPage's own baseline-merging save()).
+  async function persistNotify(patch: Partial<NotifyConfig>) {
     setState("saving");
+    const merged = { ...cfg, ...patch };
     try {
-      const r = await setNotify(cfg);
+      const r = await setNotify(merged);
       if (r.ok) {
         setState("idle");
         push(t("settings.saved"), "success");
@@ -2662,6 +2679,21 @@ function NotifyCard({
       setState("idle");
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
+  }
+
+  // set — continuously-typed text/number fields: optimistic update + debounce,
+  // same shape as every other free-text field on this page.
+  function set<K extends keyof NotifyConfig>(k: K, v: NotifyConfig[K]) {
+    setCfg((c) => ({ ...c, [k]: v }));
+    debounced(String(k), () => void persistNotify({ [k]: v } as Partial<NotifyConfig>));
+  }
+
+  // setImmediate — discrete clicks (checkboxes/selects): no debounce, same
+  // "single discrete choice, not continuous typing" reasoning
+  // autoSaveScheduleField's own header comment gives elsewhere on this page.
+  function setImmediate<K extends keyof NotifyConfig>(k: K, v: NotifyConfig[K]) {
+    setCfg((c) => ({ ...c, [k]: v }));
+    void persistNotify({ [k]: v } as Partial<NotifyConfig>);
   }
 
   async function handleTest() {
@@ -2692,7 +2724,7 @@ function NotifyCard({
     <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
       <label className={labelCls}>
         {t("notify.on")}
-        <select value={cfg.on} onChange={(e) => set("on", e.target.value)} className={selectCardCls}>
+        <select value={cfg.on} onChange={(e) => setImmediate("on", e.target.value)} className={selectCardCls}>
           <option value="never">{t("notify.onNever")}</option>
           <option value="failure">{t("notify.onFailure")}</option>
           <option value="always">{t("notify.onAlways")}</option>
@@ -2704,7 +2736,7 @@ function NotifyCard({
         <input
           type="checkbox"
           checked={cfg.scheduledSummary}
-          onChange={(e) => set("scheduledSummary", e.target.checked)}
+          onChange={(e) => setImmediate("scheduledSummary", e.target.checked)}
           className="mt-0.5"
           style={{ accentColor: "var(--accent)" }}
         />
@@ -2721,7 +2753,7 @@ function NotifyCard({
         <input
           type="checkbox"
           checked={cfg.notifyOnUpdate}
-          onChange={(e) => set("notifyOnUpdate", e.target.checked)}
+          onChange={(e) => setImmediate("notifyOnUpdate", e.target.checked)}
           className="mt-0.5"
           style={{ accentColor: "var(--accent)" }}
         />
@@ -2743,7 +2775,7 @@ function NotifyCard({
         <input
           type="checkbox"
           checked={cfg.unraid}
-          onChange={(e) => set("unraid", e.target.checked)}
+          onChange={(e) => setImmediate("unraid", e.target.checked)}
           className="mt-0.5"
           style={{ accentColor: "var(--accent)" }}
         />
@@ -2776,7 +2808,7 @@ function NotifyCard({
         </label>
         <label className={labelCls}>
           {t("notify.webhookFormat")}
-          <select value={cfg.webhookFormat} onChange={(e) => set("webhookFormat", e.target.value)} className={selectCls}>
+          <select value={cfg.webhookFormat} onChange={(e) => setImmediate("webhookFormat", e.target.value)} className={selectCls}>
             <option value="generic">Generic JSON</option>
             <option value="discord">Discord</option>
             <option value="slack">Slack</option>
@@ -2787,8 +2819,9 @@ function NotifyCard({
       </div>
 
       {/* Apprise API: posts to a user-run apprise-api server, unlocking Apprise's
-          100+ services without bundling Python. Shares the card's Save + Test bar
-          like the other channels. */}
+          100+ services without bundling Python. Auto-saves + shares the card's
+          Test button like the other channels (full-page Speichern-Button
+          sweep — see this Card's own header comment). */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
           {t("notify.apprise")}
@@ -2855,12 +2888,12 @@ function NotifyCard({
             {label}
             <input
               value={cfg.healthchecksByDomain?.[key] ?? ""}
-              onChange={(e) =>
-                setCfg((c) => ({
-                  ...c,
-                  healthchecksByDomain: { ...c.healthchecksByDomain, [key]: e.target.value },
-                }))
-              }
+              onChange={(e) => {
+                const v = e.target.value;
+                const nextMap = { ...cfg.healthchecksByDomain, [key]: v };
+                setCfg((c) => ({ ...c, healthchecksByDomain: nextMap }));
+                debounced(`hc-${key}`, () => void persistNotify({ healthchecksByDomain: nextMap }));
+              }}
               spellCheck={false}
               placeholder="https://hc-ping.com/your-uuid"
               dir="ltr"
@@ -2876,7 +2909,7 @@ function NotifyCard({
           <input
             type="checkbox"
             checked={cfg.smtpEnabled}
-            onChange={(e) => set("smtpEnabled", e.target.checked)}
+            onChange={(e) => setImmediate("smtpEnabled", e.target.checked)}
             className="mt-0.5"
             style={{ accentColor: "var(--accent)" }}
           />
@@ -2896,7 +2929,7 @@ function NotifyCard({
             </label>
             <label className={labelCls}>
               {t("notify.smtpTls")}
-              <select value={cfg.smtpTls} onChange={(e) => set("smtpTls", e.target.value)} className={selectCls}>
+              <select value={cfg.smtpTls} onChange={(e) => setImmediate("smtpTls", e.target.value)} className={selectCls}>
                 <option value="starttls">STARTTLS</option>
                 <option value="tls">TLS (implicit)</option>
                 <option value="none">None</option>
@@ -2928,11 +2961,13 @@ function NotifyCard({
         </>
       )}
 
+      {/* Full-page Speichern-Button sweep: the "Speichern" button that used to
+          sit beside Test is gone — every field above now auto-saves itself
+          (debounced text/number, immediate checkboxes/selects). Test keeps
+          working exactly as before: it always sends the CURRENT form
+          values, whether or not this Card's own 800ms debounce has already
+          flushed them. */}
       <div className="flex items-center gap-3 pt-1 flex-wrap">
-        <button onClick={() => void handleSave()} disabled={state === "saving"}
-          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
-          {state === "saving" ? t("auth.saving") : t("notify.save")}
-        </button>
         <button onClick={() => void handleTest()}
           className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
           {t("notify.test")}
