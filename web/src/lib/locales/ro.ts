@@ -799,9 +799,7 @@ const ro: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL depozit + credențiale",
   "offsite.wizard.repoUrl": "URL depozit off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Salvează depozitul",
   "offsite.wizard.credentials": "Credențiale server REST",
-  "offsite.wizard.saveCreds": "Salvează credențialele",
   "offsite.wizard.credLoadError": "Credențialele existente nu au putut fi încărcate — reîncarcă înainte de editare.",
   "offsite.wizard.step4": "4 · Activează protecția append-only",
   "offsite.immutable": "Imuabil (append-only)",
@@ -823,7 +821,6 @@ const ro: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Se aplică doar destinațiilor rest-server — acest backend nu poate rula un al doilea server temporar împotriva lui. Folosește în schimb prune pe partea la distanță sau Creștere + alarmă de buget.",
   "offsite.retention.growHint": "Nu face niciodată prune off-site; în schimb, alarmează când depozitul depășește un buget în octeți. Valoarea implicită onestă până alegi o cale de prune.",
   "offsite.retention.budget": "Buget de creștere (GB, 0 = oprit)",
-  "offsite.retention.saveBudget": "Salvează bugetul",
 
   "offsite.targets.title": "Ținte externe suplimentare",
   "offsite.targets.hint": "Replicați acest domeniu în mai multe locații externe. Ținta principală de mai sus se editează separat; cele adăugate aici sunt copii suplimentare.",

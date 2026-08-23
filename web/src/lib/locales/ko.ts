@@ -792,9 +792,7 @@ const ko: Partial<Translations> = {
   "offsite.wizard.step3": "3 · 리포지토리 URL + 자격 증명",
   "offsite.wizard.repoUrl": "오프사이트 리포지토리 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "리포지토리 저장",
   "offsite.wizard.credentials": "REST 서버 자격 증명",
-  "offsite.wizard.saveCreds": "자격 증명 저장",
   "offsite.wizard.credLoadError": "기존 자격 증명을 불러올 수 없습니다 — 편집하기 전에 새로고침하세요.",
   "offsite.wizard.step4": "4 · append-only 보호 활성화",
   "offsite.immutable": "불변 (append-only)",
@@ -816,7 +814,6 @@ const ko: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "rest-server 대상에만 적용됩니다 — 이 백엔드는 임시 두 번째 서버를 실행할 수 없습니다. 대신 원격 측 정리 또는 증가 + 예산 알림을 사용하세요.",
   "offsite.retention.growHint": "오프사이트를 절대 정리하지 않고, 대신 리포지토리가 바이트 예산을 초과하면 경고합니다. 정리 방식을 선택하기 전까지의 정직한 기본값입니다.",
   "offsite.retention.budget": "증가 예산 (GB, 0 = 끔)",
-  "offsite.retention.saveBudget": "예산 저장",
 
   "offsite.targets.title": "추가 오프사이트 대상",
   "offsite.targets.hint": "이 도메인을 두 곳 이상의 오프사이트 위치에 복제합니다. 위의 기본 대상은 별도로 편집합니다. 여기서 추가한 것은 추가 사본입니다.",

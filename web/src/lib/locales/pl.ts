@@ -791,9 +791,7 @@ const pl: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Adres URL repozytorium + poświadczenia",
   "offsite.wizard.repoUrl": "Adres URL repozytorium poza siedzibą",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Zapisz repozytorium",
   "offsite.wizard.credentials": "Poświadczenia serwera REST",
-  "offsite.wizard.saveCreds": "Zapisz poświadczenia",
   "offsite.wizard.credLoadError": "Nie udało się załadować istniejących poświadczeń — odśwież przed edycją.",
   "offsite.wizard.step4": "4 · Włącz ochronę append-only",
   "offsite.immutable": "Niezmienne (append-only)",
@@ -815,7 +813,6 @@ const pl: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Dotyczy tylko celów typu rest-server — ten backend nie może uruchomić tymczasowego drugiego serwera względem niego. Użyj zamiast tego przycinania po stronie zdalnej lub Wzrostu + alarmu budżetowego.",
   "offsite.retention.growHint": "Nigdy nie przycinaj kopii poza siedzibą; zamiast tego alarmuj, gdy repozytorium przekroczy budżet bajtów. Uczciwe ustawienie domyślne, dopóki nie wybierzesz sposobu przycinania.",
   "offsite.retention.budget": "Budżet wzrostu (GB, 0 = wył.)",
-  "offsite.retention.saveBudget": "Zapisz budżet",
 
   "offsite.targets.title": "Dodatkowe cele zdalne",
   "offsite.targets.hint": "Replikuj tę domenę do więcej niż jednej lokalizacji zdalnej. Główny cel powyżej edytuje się osobno; te dodane tutaj są dodatkowymi kopiami.",

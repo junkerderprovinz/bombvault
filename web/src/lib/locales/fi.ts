@@ -824,9 +824,7 @@ const fi: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repon URL + tunnukset",
   "offsite.wizard.repoUrl": "Etärepon URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Tallenna repo",
   "offsite.wizard.credentials": "REST-palvelimen tunnukset",
-  "offsite.wizard.saveCreds": "Tallenna tunnukset",
   "offsite.wizard.credLoadError": "Olemassa olevia tunnuksia ei voitu ladata — lataa uudelleen ennen muokkausta.",
   "offsite.wizard.step4": "4 · Ota append-only-suojaus käyttöön",
   "offsite.immutable": "Muuttumaton (append-only)",
@@ -848,7 +846,6 @@ const fi: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Koskee vain rest-server-kohteita — tämä taustajärjestelmä ei voi ajaa väliaikaista toista palvelinta sitä vasten. Käytä sen sijaan karsintaa vastapuolella tai Kasvu + budjettihälytys.",
   "offsite.retention.growHint": "Älä koskaan karsi etäkopiota; hälytä sen sijaan, kun repo ylittää tavubudjetin. Rehellinen oletus, kunnes valitset karsintatavan.",
   "offsite.retention.budget": "Kasvubudjetti (GB, 0 = pois)",
-  "offsite.retention.saveBudget": "Tallenna budjetti",
 
   "offsite.targets.title": "Lisää etäkohteita",
   "offsite.targets.hint": "Replikoi tämä toimialue useampaan kuin yhteen etäsijaintiin. Yllä oleva ensisijainen kohde muokataan erikseen; tähän lisätyt ovat lisäkopioita.",

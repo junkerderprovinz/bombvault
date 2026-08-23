@@ -791,9 +791,7 @@ const ru: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL репозитория + учётные данные",
   "offsite.wizard.repoUrl": "URL внешнего репозитория",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Сохранить репозиторий",
   "offsite.wizard.credentials": "Учётные данные REST-сервера",
-  "offsite.wizard.saveCreds": "Сохранить учётные данные",
   "offsite.wizard.credLoadError": "Не удалось загрузить существующие учётные данные — перезагрузите перед редактированием.",
   "offsite.wizard.step4": "4 · Включите защиту append-only",
   "offsite.immutable": "Неизменяемый (append-only)",
@@ -815,7 +813,6 @@ const ru: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Применимо только к назначениям rest-server — этот бэкенд не может запустить временный второй сервер против него. Используйте вместо этого очистку на удалённой стороне или Рост + бюджетное оповещение.",
   "offsite.retention.growHint": "Никогда не очищайте внешнюю копию; вместо этого оповещайте, когда репозиторий превышает бюджет в байтах. Честный вариант по умолчанию, пока вы не выберете способ очистки.",
   "offsite.retention.budget": "Бюджет роста (ГБ, 0 = выкл.)",
-  "offsite.retention.saveBudget": "Сохранить бюджет",
 
   "offsite.targets.title": "Дополнительные удалённые цели",
   "offsite.targets.hint": "Реплицируйте этот домен в несколько удалённых мест. Основная цель выше редактируется отдельно; добавленные здесь являются дополнительными копиями.",

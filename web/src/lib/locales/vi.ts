@@ -816,9 +816,7 @@ const vi: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL kho + thông tin đăng nhập",
   "offsite.wizard.repoUrl": "URL kho off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Lưu kho",
   "offsite.wizard.credentials": "Thông tin đăng nhập REST server",
-  "offsite.wizard.saveCreds": "Lưu thông tin đăng nhập",
   "offsite.wizard.credLoadError": "Không thể tải thông tin đăng nhập hiện có — hãy tải lại trước khi chỉnh sửa.",
   "offsite.wizard.step4": "4 · Bật bảo vệ append-only",
   "offsite.immutable": "Bất biến (append-only)",
@@ -840,7 +838,6 @@ const vi: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Chỉ áp dụng cho đích rest-server — backend này không thể chạy một máy chủ thứ hai tạm thời để đối chiếu. Hãy dùng dọn bớt ở phía bên kia hoặc Tăng trưởng + cảnh báo ngân sách thay thế.",
   "offsite.retention.growHint": "Không bao giờ dọn bớt off-site; thay vào đó cảnh báo khi kho vượt quá một hạn mức byte. Đây là mặc định trung thực cho đến khi bạn chọn một hướng dọn bớt.",
   "offsite.retention.budget": "Hạn mức tăng trưởng (GB, 0 = tắt)",
-  "offsite.retention.saveBudget": "Lưu hạn mức",
 
   "offsite.targets.title": "Đích ngoại vi bổ sung",
   "offsite.targets.hint": "Sao chép miền này đến nhiều vị trí ngoại vi. Đích chính ở trên được chỉnh sửa riêng; những đích bạn thêm ở đây là bản sao bổ sung.",

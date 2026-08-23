@@ -800,9 +800,7 @@ const fr: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL du dépôt + identifiants",
   "offsite.wizard.repoUrl": "URL du dépôt hors site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Enregistrer le dépôt",
   "offsite.wizard.credentials": "Identifiants du serveur REST",
-  "offsite.wizard.saveCreds": "Enregistrer les identifiants",
   "offsite.wizard.credLoadError": "Impossible de charger les identifiants existants — rechargez avant de modifier.",
   "offsite.wizard.step4": "4 · Activer la protection append-only",
   "offsite.immutable": "Immuable (append-only)",
@@ -824,7 +822,6 @@ const fr: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "S'applique uniquement aux destinations rest-server — ce backend ne peut pas exécuter un second serveur temporaire contre lui. Utilisez plutôt l'élagage côté distant ou Croissance + alarme de budget.",
   "offsite.retention.growHint": "N'élaguez jamais hors site ; déclenchez plutôt une alarme lorsque le dépôt dépasse un budget d'octets. L'option honnête par défaut jusqu'à ce que vous optiez pour une stratégie d'élagage.",
   "offsite.retention.budget": "Budget de croissance (GB, 0 = désactivé)",
-  "offsite.retention.saveBudget": "Enregistrer le budget",
 
   "offsite.targets.title": "Cibles hors-site supplémentaires",
   "offsite.targets.hint": "Répliquez ce domaine vers plusieurs emplacements hors-site. La cible principale ci-dessus se modifie séparément ; celles ajoutées ici sont des copies supplémentaires.",

@@ -822,9 +822,7 @@ const cs: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL repozitáře + přihlašovací údaje",
   "offsite.wizard.repoUrl": "URL repozitáře mimo lokalitu",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Uložit repozitář",
   "offsite.wizard.credentials": "Přihlašovací údaje REST serveru",
-  "offsite.wizard.saveCreds": "Uložit přihlašovací údaje",
   "offsite.wizard.credLoadError": "Stávající přihlašovací údaje se nepodařilo načíst — před úpravou znovu načtěte.",
   "offsite.wizard.step4": "4 · Zapněte ochranu append-only",
   "offsite.immutable": "Neměnné (append-only)",
@@ -846,7 +844,6 @@ const cs: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Platí pouze pro cíle typu rest-server — u tohoto backendu nelze proti němu spustit dočasný druhý server. Použijte místo toho čištění na vzdálené straně nebo Růst + rozpočtové upozornění.",
   "offsite.retention.growHint": "Mimo lokalitu nikdy nečistěte; místo toho spusťte alarm, když repozitář překročí bajtový rozpočet. Poctivé výchozí nastavení, dokud si nezvolíte způsob čištění.",
   "offsite.retention.budget": "Rozpočet růstu (GB, 0 = vypnuto)",
-  "offsite.retention.saveBudget": "Uložit rozpočet",
 
   "offsite.targets.title": "Další vzdálené cíle",
   "offsite.targets.hint": "Replikujte tuto doménu do více vzdálených umístění. Primární cíl výše se upravuje samostatně; zde přidané jsou dodatečné kopie.",

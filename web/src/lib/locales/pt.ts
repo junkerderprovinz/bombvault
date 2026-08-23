@@ -796,9 +796,7 @@ const pt: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL do repositório + credenciais",
   "offsite.wizard.repoUrl": "URL do repositório externo",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Guardar repositório",
   "offsite.wizard.credentials": "Credenciais do servidor REST",
-  "offsite.wizard.saveCreds": "Guardar credenciais",
   "offsite.wizard.credLoadError": "Não foi possível carregar as credenciais existentes — recarregue antes de editar.",
   "offsite.wizard.step4": "4 · Ativar a proteção append-only",
   "offsite.immutable": "Imutável (append-only)",
@@ -820,7 +818,6 @@ const pt: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Aplica-se apenas a destinos rest-server — este backend não pode executar um segundo servidor temporário contra ele. Use em vez disso a poda no lado remoto ou Crescimento + alarme de orçamento.",
   "offsite.retention.growHint": "Nunca faça poda no externo; em vez disso, alerte quando o repositório ultrapassar um orçamento de bytes. O padrão honesto até escolher uma estratégia de poda.",
   "offsite.retention.budget": "Orçamento de crescimento (GB, 0 = desativado)",
-  "offsite.retention.saveBudget": "Guardar orçamento",
 
   "offsite.targets.title": "Destinos externos adicionais",
   "offsite.targets.hint": "Replique este domínio para mais de um local externo. O destino principal acima é editado separadamente; os adicionados aqui são cópias adicionais.",

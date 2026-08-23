@@ -793,9 +793,7 @@ const nl: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository-URL + inloggegevens",
   "offsite.wizard.repoUrl": "Off-site repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "Repository opslaan",
   "offsite.wizard.credentials": "REST-server-inloggegevens",
-  "offsite.wizard.saveCreds": "Inloggegevens opslaan",
   "offsite.wizard.credLoadError": "Kon bestaande inloggegevens niet laden — herlaad voordat je bewerkt.",
   "offsite.wizard.step4": "4 · Append-only-bescherming inschakelen",
   "offsite.immutable": "Onveranderlijk (append-only)",
@@ -817,7 +815,6 @@ const nl: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "Geldt alleen voor rest-server-bestemmingen — deze backend kan geen tijdelijke tweede server ertegen draaien. Gebruik in plaats daarvan prune aan de andere kant of Groei + budgetwaarschuwing.",
   "offsite.retention.growHint": "Prune off-site nooit; sla in plaats daarvan alarm als de repo een byte-budget overschrijdt. De eerlijke standaard totdat je een prune-pad kiest.",
   "offsite.retention.budget": "Groeibudget (GB, 0 = uit)",
-  "offsite.retention.saveBudget": "Budget opslaan",
 
   "offsite.targets.title": "Aanvullende off-site bestemmingen",
   "offsite.targets.hint": "Repliceer dit domein naar meer dan één off-site locatie. De primaire bestemming hierboven wordt apart bewerkt; de bestemmingen die je hier toevoegt zijn extra kopieën.",

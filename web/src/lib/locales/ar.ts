@@ -827,9 +827,7 @@ const ar: Partial<Translations> = {
   "offsite.wizard.step3": "3 · رابط المستودع + بيانات الاعتماد",
   "offsite.wizard.repoUrl": "رابط المستودع خارج الموقع",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
-  "offsite.wizard.saveRepo": "حفظ المستودع",
   "offsite.wizard.credentials": "بيانات اعتماد خادم REST",
-  "offsite.wizard.saveCreds": "حفظ بيانات الاعتماد",
   "offsite.wizard.credLoadError": "تعذّر تحميل بيانات الاعتماد الحالية — أعد التحميل قبل التعديل.",
   "offsite.wizard.step4": "4 · تفعيل حماية append-only",
   "offsite.immutable": "غير قابل للتغيير (append-only)",
@@ -851,7 +849,6 @@ const ar: Partial<Translations> = {
   "offsite.retention.windowRestOnly": "ينطبق فقط على وجهات rest-server — لا يمكن لهذا الواجهة الخلفية تشغيل خادم ثانٍ مؤقت ضدها. استخدم بدلاً من ذلك التقليم على الطرف البعيد أو النمو + تنبيه الميزانية.",
   "offsite.retention.growHint": "لا تُقلّم خارج الموقع أبداً؛ بدلاً من ذلك نبّه عندما ينمو المستودع متجاوزاً ميزانية بالبايت. الخيار الافتراضي الصادق حتى تختار مسار تقليم.",
   "offsite.retention.budget": "ميزانية النمو (GB، 0 = إيقاف)",
-  "offsite.retention.saveBudget": "حفظ الميزانية",
 
   "offsite.targets.title": "أهداف خارجية إضافية",
   "offsite.targets.hint": "انسخ هذا النطاق إلى أكثر من موقع خارجي. يتم تحرير الهدف الأساسي أعلاه بشكل منفصل؛ الأهداف التي تضيفها هنا هي نسخ إضافية.",
