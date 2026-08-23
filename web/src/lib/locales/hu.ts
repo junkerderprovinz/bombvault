@@ -416,6 +416,7 @@ const hu: Partial<Translations> = {
   "integrity.checking": "Ellenőrzés…",
   "integrity.ok": "✓ Ép",
   "integrity.failed": "Az ellenőrzés sikertelen",
+  "integrity.failedShort": "✗ Sikertelen",
   "integrity.unlock": "Feloldás",
   "integrity.prune": "Nyesés",
   "integrity.verifyHint": "restic check futtatása a szerkezet és metaadatok ellenőrzéséhez.",

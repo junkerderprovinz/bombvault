@@ -416,6 +416,7 @@ const el: Partial<Translations> = {
   "integrity.checking": "Έλεγχος…",
   "integrity.ok": "✓ Υγιές",
   "integrity.failed": "Ο έλεγχος απέτυχε",
+  "integrity.failedShort": "✗ Απέτυχε",
   "integrity.unlock": "Ξεκλείδωμα",
   "integrity.prune": "Εκκαθάριση",
   "integrity.verifyHint": "Εκτέλεση restic check για επαλήθευση δομής και μεταδεδομένων.",

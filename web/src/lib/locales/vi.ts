@@ -411,6 +411,7 @@ const vi: Partial<Translations> = {
   "integrity.checking": "Đang kiểm tra…",
   "integrity.ok": "✓ Khỏe mạnh",
   "integrity.failed": "Kiểm tra thất bại",
+  "integrity.failedShort": "✗ Thất bại",
   "integrity.unlock": "Mở khóa",
   "integrity.prune": "Dọn bớt",
   "integrity.verifyHint": "Chạy restic check để xác minh cấu trúc và siêu dữ liệu.",

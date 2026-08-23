@@ -408,6 +408,7 @@ const pl: Partial<Translations> = {
   "integrity.checking": "Sprawdzanie…",
   "integrity.ok": "✓ Sprawne",
   "integrity.failed": "Weryfikacja nieudana",
+  "integrity.failedShort": "✗ Nieudane",
   "integrity.unlock": "Odblokuj",
   "integrity.prune": "Przytnij",
   "integrity.verifyHint": "Uruchom restic check, aby zweryfikować strukturę i metadane.",

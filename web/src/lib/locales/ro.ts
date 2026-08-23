@@ -413,6 +413,7 @@ const ro: Partial<Translations> = {
   "integrity.checking": "Verificare…",
   "integrity.ok": "✓ Sănătos",
   "integrity.failed": "Verificare eșuată",
+  "integrity.failedShort": "✗ Eșuat",
   "integrity.unlock": "Deblochează",
   "integrity.prune": "Curăță",
   "integrity.verifyHint": "Rulează restic check pentru a verifica structura și metadatele.",

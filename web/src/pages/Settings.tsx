@@ -3309,10 +3309,22 @@ function IntegrityCard({
   // this card (verify, unlock, DR drill) is a first-class default-mode feature.
   const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
+  const { push } = useToast();
   type ActState = "idle" | "busy" | "ok" | "fail";
   type DrillKind = "subset" | "dr";
   const [state, setState] = useState<Record<string, ActState>>({});
-  const [msg, setMsg] = useState<Record<string, string>>({});
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
+  // action shows its message via a TOAST (push below), never as permanent
+  // page text, and the button that triggered it replays `.glim-shake` once.
+  // `msg` (a per-key error STRING kept around to render inline forever) is
+  // gone — the toast already carries the message the instant the action
+  // fails, so nothing needs to remember it past that point. `shake` replaces
+  // it: a per-key nonce, same shape, bumped on every failure so a fresh
+  // `.glim-shake` class + key remount fires even for the SAME button failing
+  // twice in a row (see ToggleRow's own shakeNonce doc comment for why a
+  // bumped number, not a boolean, is required here).
+  const [shake, setShake] = useState<Record<string, number>>({});
   const [source, setSource] = useState<RepoSource>("local");
   const [kind, setKind] = useState<DrillKind>("subset");
   // The last recorded drill per domain (for the current source), keyed by domain.
@@ -3419,6 +3431,14 @@ function IntegrityCard({
     };
   }, []);
 
+  // bumpShake replays `.glim-shake` on the button keyed `key` (see the
+  // `shake` state's own doc comment above) — called from every failure branch
+  // below alongside the toast `push()` that now carries the message instead
+  // of a permanent inline sentence.
+  function bumpShake(key: string) {
+    setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+  }
+
   // runTamperFor proves the domain's off-site repo still refuses deletes — the
   // exact tamper-test API behind the wizard's "Test append-only now" (#109: users
   // searched for it here, and "append-only" is the plainer word for it).
@@ -3439,14 +3459,23 @@ function IntegrityCard({
         // The verdict + its run row land in /api/status (scorecard tamper state) —
         // broadcast so the dashboard refetches, mirroring runDrillFor above.
         window.dispatchEvent(new Event("bv:settings-changed"));
+        // NOTE: a decisive "not protected" verdict (testable && !protected) is
+        // NOT a failed action — the test ran fine and truthfully reported bad
+        // news, exactly like a red health badge. That stays a persistent inline
+        // verdict (rendered below), not a toast — only the "error" branches
+        // below (the test itself couldn't run) are the "you clicked it, it
+        // didn't work" case the toast+shake standard targets.
       } else {
-        setTamper((m) => ({ ...m, [domain]: { kind: "error", message: r.error ?? t("offsite.tamperError") } }));
+        const message = r.error ?? t("offsite.tamperError");
+        setTamper((m) => ({ ...m, [domain]: { kind: "error", message } }));
+        push(message, "fail");
+        bumpShake(`${domain}:tamper`);
       }
     } catch (err) {
-      setTamper((m) => ({
-        ...m,
-        [domain]: { kind: "error", message: err instanceof Error ? err.message : t("offsite.tamperError") },
-      }));
+      const message = err instanceof Error ? err.message : t("offsite.tamperError");
+      setTamper((m) => ({ ...m, [domain]: { kind: "error", message } }));
+      push(message, "fail");
+      bumpShake(`${domain}:tamper`);
     }
   }
 
@@ -3454,7 +3483,6 @@ function IntegrityCard({
     if (action === "prune" && !(await confirm(t("integrity.pruneConfirm")))) return;
     const key = `${domain}:${action}`;
     setState((s) => ({ ...s, [key]: "busy" }));
-    setMsg((m) => ({ ...m, [key]: "" }));
     try {
       const r =
         action === "verify" ? await checkDomain(domain, source)
@@ -3464,11 +3492,13 @@ function IntegrityCard({
         setState((s) => ({ ...s, [key]: "ok" }));
       } else {
         setState((s) => ({ ...s, [key]: "fail" }));
-        setMsg((m) => ({ ...m, [key]: r.error ?? t("integrity.failed") }));
+        push(r.error ?? t("integrity.failed"), "fail");
+        bumpShake(key);
       }
     } catch (err) {
       setState((s) => ({ ...s, [key]: "fail" }));
-      setMsg((m) => ({ ...m, [key]: err instanceof Error ? err.message : t("integrity.failed") }));
+      push(err instanceof Error ? err.message : t("integrity.failed"), "fail");
+      bumpShake(key);
     }
   }
 
@@ -3480,14 +3510,16 @@ function IntegrityCard({
     if (kind === "dr" && !(await confirm(t("drill.confirmDR")))) return;
     const key = `${domain}:drill`;
     setState((s) => ({ ...s, [key]: "busy" }));
-    setMsg((m) => ({ ...m, [key]: "" }));
     try {
       const r = await runDrill(domain, kind === "dr" ? "offsite" : source, kind);
       if (r.ok && r.drill) {
         const drill = r.drill;
         setLastDrill((m) => ({ ...m, [domain]: drill }));
         setState((s) => ({ ...s, [key]: drill.ok ? "ok" : "fail" }));
-        if (!drill.ok) setMsg((m) => ({ ...m, [key]: drill.detail || t("verify.failed") }));
+        if (!drill.ok) {
+          push(drill.detail || t("verify.failed"), "fail");
+          bumpShake(key);
+        }
         // A recorded drill (pass OR fail) changes the shared /api/status the
         // dashboard scorecard reads. Broadcast so the Dashboard refetches its
         // drill / "proven restorable" pills without a page reload — mirrors how
@@ -3495,11 +3527,13 @@ function IntegrityCard({
         window.dispatchEvent(new Event("bv:settings-changed"));
       } else {
         setState((s) => ({ ...s, [key]: "fail" }));
-        setMsg((m) => ({ ...m, [key]: r.error ?? t("verify.failed") }));
+        push(r.error ?? t("verify.failed"), "fail");
+        bumpShake(key);
       }
     } catch (err) {
       setState((s) => ({ ...s, [key]: "fail" }));
-      setMsg((m) => ({ ...m, [key]: err instanceof Error ? err.message : t("verify.failed") }));
+      push(err instanceof Error ? err.message : t("verify.failed"), "fail");
+      bumpShake(key);
     }
   }
 
@@ -3536,7 +3570,6 @@ function IntegrityCard({
             // last-drill clear here too; the effect above reloads them for `next`.
             setSource(next);
             setState({});
-            setMsg({});
             setLastDrill({});
           }}
           disabled={Object.values(state).some((v) => v === "busy")}
@@ -3562,7 +3595,6 @@ function IntegrityCard({
             // doesn't read as a DR pass (or vice versa) after switching kind.
             setKind(val as DrillKind);
             setState({});
-            setMsg({});
           }}
           disabled={Object.values(state).some((v) => v === "busy")}
         />
@@ -3647,30 +3679,45 @@ function IntegrityCard({
                   return (
                     <span key={a.key} className="inline-flex items-center gap-1">
                       <button
+                        key={shake[k] || 0}
                         onClick={() => void run(domain, a.key)}
                         disabled={state[k] === "busy"}
                         title={t(`integrity.${a.key}Hint`)}
-                        className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                        className={`rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+                          shake[k] ? " glim-shake" : ""
+                        }`}
                       >
                         {state[k] === "busy" ? a.busy : a.label}
                       </button>
                       {state[k] === "ok" && <span className="text-sm text-statusOk">{t("integrity.ok")}</span>}
+                      {/* Minimal fixed glyph, matching the "ok" indicator's OWN
+                          visual weight — the actual error text now lives in the
+                          toast the failure just pushed (jdp, live review,
+                          emphatic standing rule: toast on failure, not a
+                          permanent inline sentence; see run()'s own comment). */}
+                      {state[k] === "fail" && <span className="text-sm text-statusFail">{t("integrity.failedShort")}</span>}
                     </span>
                   );
                 })}
                 <button
+                  key={shake[dKey] || 0}
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}
                   title={kind === "dr" ? t("drill.drNote") : t("verify.hint")}
-                  className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                  className={`rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+                    shake[dKey] ? " glim-shake" : ""
+                  }`}
                 >
                   {state[dKey] === "busy"
                     ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
                     : kind === "dr" ? t("drill.runDR") : t("verify.now")}
                 </button>
                 {state[dKey] === "ok" && <span className="text-sm text-statusOk">✓ {t("verify.ok")}</span>}
+                {/* Same minimal-glyph treatment as the action buttons above —
+                    the raw error/detail text went to the toast when the
+                    failure happened, not into a permanent inline sentence. */}
                 {state[dKey] === "fail" && (
-                  <span className="text-sm text-statusFail wrap-break-word">✗ {msg[dKey] || t("verify.failed")}</span>
+                  <span className="text-sm text-statusFail">✗ {t("verify.failed")}</span>
                 )}
                 {/* Last recorded drill for this domain/source (idle state only).
                     Names WHICH check ran (off-site DR vs local integrity) and,
@@ -3706,10 +3753,13 @@ function IntegrityCard({
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="w-24 shrink-0" />
                   <button
+                    key={shake[`${domain}:tamper`] || 0}
                     onClick={() => void runTamperFor(domain)}
                     disabled={tRes?.kind === "busy"}
                     title={t("integrity.appendOnlyHint")}
-                    className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+                    className={`rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+                      shake[`${domain}:tamper`] ? " glim-shake" : ""
+                    }`}
                   >
                     {tRes?.kind === "busy" ? t("integrity.checking") : t("integrity.appendOnly")}
                   </button>
@@ -3727,8 +3777,15 @@ function IntegrityCard({
                           : t("offsite.tamperFail")}
                     </span>
                   )}
+                  {/* The test itself failing to run (network/server error) is the
+                      "you clicked it, it didn't work" case — the toast pushed by
+                      runTamperFor carries the real message now, so this stays a
+                      fixed, short caption instead of the raw (possibly long)
+                      backend text living on the page forever. A decisive
+                      "not protected" VERDICT above is a different, legitimate
+                      persistent status and is untouched. */}
                   {tRes?.kind === "error" && (
-                    <span className="text-sm text-statusFail wrap-break-word">{tRes.message}</span>
+                    <span className="text-sm text-statusFail">{t("offsite.tamperError")}</span>
                   )}
                   {/* Idle caption: the last recorded check, mirroring the drill
                       row's "Last verified …" line. */}
@@ -3741,14 +3798,6 @@ function IntegrityCard({
                       <span className="text-xs text-carbon-textMuted">{t("integrity.appendOnlyNever")}</span>
                     ))}
                 </div>
-              )}
-
-              {actions.map((a) =>
-                state[`${domain}:${a.key}`] === "fail" ? (
-                  <span key={a.key} className="text-xs text-statusFail wrap-break-word">
-                    {a.label}: {msg[`${domain}:${a.key}`] || t("integrity.failed")}
-                  </span>
-                ) : null
               )}
             </div>
           );

@@ -416,6 +416,7 @@ const th: Partial<Translations> = {
   "integrity.checking": "กำลังตรวจสอบ…",
   "integrity.ok": "✓ สมบูรณ์",
   "integrity.failed": "การตรวจสอบล้มเหลว",
+  "integrity.failedShort": "✗ ล้มเหลว",
   "integrity.unlock": "ปลดล็อก",
   "integrity.prune": "ตัดทิ้ง",
   "integrity.verifyHint": "รัน restic check เพื่อตรวจสอบโครงสร้างและข้อมูลเมตา",

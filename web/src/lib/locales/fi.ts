@@ -416,6 +416,7 @@ const fi: Partial<Translations> = {
   "integrity.checking": "Tarkistetaan…",
   "integrity.ok": "✓ Kunnossa",
   "integrity.failed": "Tarkistus epäonnistui",
+  "integrity.failedShort": "✗ Epäonnistui",
   "integrity.unlock": "Avaa lukitus",
   "integrity.prune": "Karsi",
   "integrity.verifyHint": "Suorita restic check rakenteen ja metatietojen tarkistamiseksi.",

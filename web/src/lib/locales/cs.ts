@@ -414,6 +414,7 @@ const cs: Partial<Translations> = {
   "integrity.checking": "Kontroluji…",
   "integrity.ok": "✓ V pořádku",
   "integrity.failed": "Kontrola selhala",
+  "integrity.failedShort": "✗ Selhalo",
   "integrity.unlock": "Odemknout",
   "integrity.prune": "Vyčistit",
   "integrity.verifyHint": "Spustit restic check k ověření struktury a metadat.",

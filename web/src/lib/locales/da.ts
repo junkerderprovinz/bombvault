@@ -416,6 +416,7 @@ const da: Partial<Translations> = {
   "integrity.checking": "Tjekker…",
   "integrity.ok": "✓ Sund",
   "integrity.failed": "Tjek mislykkedes",
+  "integrity.failedShort": "✗ Mislykkedes",
   "integrity.unlock": "Lås op",
   "integrity.prune": "Beskær",
   "integrity.verifyHint": "Kør restic check for at verificere struktur og metadata.",
