@@ -12,6 +12,7 @@ import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
+import { CheckDraw } from "../components/CheckDraw";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
@@ -200,6 +201,7 @@ export function ToggleRow({
   onChange,
   disabled,
   shakeNonce,
+  pulseNonce,
   hueIndex,
 }: {
   label: string;
@@ -251,6 +253,24 @@ export function ToggleRow({
    *  (never shaken yet) renders no `.glim-shake` class at all, so a normal
    *  page load or a successful toggle never shakes. */
   shakeNonce?: number;
+  /** Bump this (any new, truthy number) to replay `.glim-pulse` — the
+   *  GlimStone motion-engine's animation 2 (confirmation-pulse), glim-
+   *  shake's gentler SUCCESS sibling: a brief glow + a small scale pop on
+   *  the switch that a just-completed auto-save actually touched, layered
+   *  on top of the toast save() already pushes rather than replacing it.
+   *  Same "bump a per-field nonce on the outcome, key the Toggle on it"
+   *  shape as shakeNonce above, just the opposite outcome — see save()'s
+   *  own `fieldPulse` comment in SettingsPage for where these values come
+   *  from (one shared map, bumped for every key in a successful patch, so
+   *  every autoSaveField/autoSaveToggle/autoSaveScheduleField/
+   *  toggleDomainEnabled call site gets this for free without its own
+   *  separate wiring). Undefined/0 (never saved yet, or the LAST outcome on
+   *  this row was a failure) renders no `.glim-pulse` class — a fresh page
+   *  load never pulses, and a row currently mid-`.glim-shake` never also
+   *  pulses (see the combined `key` below for why shake always wins when a
+   *  caller somehow has both truthy at once, which no real call site does:
+   *  a save either fails or succeeds, never both). */
+  pulseNonce?: number;
   /** Rainbow position for THIS row's own switch, by LIST INDEX among the
    *  ToggleRows rendered together in one place (jdp, live-review: "Die
    *  ganzen Toggle... sind nicht in der Farbengine!!") — the Domains list
@@ -309,6 +329,18 @@ export function ToggleRow({
   // every call site, the very defect the <legend> was added to fix.
   const dim = disabled ? " opacity-50" : "";
   const hueOn = hueIndex !== undefined;
+  // Combined remount key (confirmation-pulse, GlimStone motion-engine
+  // animation 2): shakeNonce and pulseNonce are two INDEPENDENT counters
+  // (a save either fails, bumping the first, or succeeds, bumping the
+  // second — never both), so neither alone can safely key the Toggle on its
+  // own once both exist — `shakeNonce ?? 0` frozen after one failure would
+  // never change again on a later SUCCESS, silently killing the pulse for
+  // that row forever. Only build this combined string once either has
+  // actually fired at least once; while both are still undefined/0 (a row
+  // that has never saved, successfully or not) `key` stays `undefined`
+  // exactly like before this animation existed, so a normal page load keys
+  // nothing and remounts nothing extra.
+  const feedbackKey = shakeNonce || pulseNonce ? `${shakeNonce ?? 0}:${pulseNonce ?? 0}` : undefined;
   return (
     <div
       className={`flex items-start justify-between gap-4${hueOn ? " glim-hue" : ""}`}
@@ -324,13 +356,13 @@ export function ToggleRow({
         )}
       </div>
       <Toggle
-        key={shakeNonce}
+        key={feedbackKey}
         hideLabel
         label={label}
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        className={`mt-0.5${shakeNonce ? " glim-shake" : ""}`}
+        className={`mt-0.5${shakeNonce ? " glim-shake" : pulseNonce ? " glim-pulse" : ""}`}
       />
     </div>
   );
@@ -987,6 +1019,13 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
   const [busyKeep, setBusyKeep] = useState(false);
   const [shakeEnabled, setShakeEnabled] = useState(0);
   const [shakeKeep, setShakeKeep] = useState(0);
+  // Confirmation-pulse (GlimStone motion-engine animation 2) — this Card
+  // owns its own local `persist()` rather than SettingsPage's shared save()
+  // (see that function's own comment), so it needs its own pulse nonces
+  // too, same per-toggle shape as shakeEnabled/shakeKeep above, bumped on
+  // the OPPOSITE (`ok`, not `!ok`) branch of each toggle handler below.
+  const [pulseEnabled, setPulseEnabled] = useState(0);
+  const [pulseKeep, setPulseKeep] = useState(0);
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const DEBOUNCE_MS = 800;
 
@@ -1041,6 +1080,8 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
     if (!ok) {
       setEnabled(prev);
       setShakeEnabled((n) => n + 1);
+    } else {
+      setPulseEnabled((n) => n + 1);
     }
   }
 
@@ -1054,6 +1095,8 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
     if (!ok) {
       setKeep(prev);
       setShakeKeep((n) => n + 1);
+    } else {
+      setPulseKeep((n) => n + 1);
     }
   }
 
@@ -1082,6 +1125,7 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
         onChange={(v) => void toggleEnabled(v)}
         disabled={busyEnabled}
         shakeNonce={shakeEnabled}
+        pulseNonce={pulseEnabled}
       />
       {enabled && (
         <>
@@ -1109,6 +1153,7 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
             onChange={(v) => void toggleKeepHistory(v)}
             disabled={busyKeep}
             shakeNonce={shakeKeep}
+            pulseNonce={pulseKeep}
           />
           {keep > 0 ? (
             <label className="flex flex-col gap-1 max-w-40">
@@ -1560,7 +1605,10 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
         )}
 
         {importDone && (
-          <span className="text-xs text-statusOk">✓ {t("settingsIO.importSuccess")}</span>
+          <span className="inline-flex items-center gap-1 text-xs text-statusOk">
+            <CheckDraw />
+            {t("settingsIO.importSuccess")}
+          </span>
         )}
       </div>
     </Card>
@@ -3923,7 +3971,12 @@ function IntegrityCard({
                       >
                         {state[k] === "busy" ? a.busy : a.label}
                       </button>
-                      {state[k] === "ok" && <span className="text-sm text-statusOk">{t("integrity.ok")}</span>}
+                      {state[k] === "ok" && (
+                        <span className="inline-flex items-center gap-1 text-sm text-statusOk">
+                          <CheckDraw />
+                          {t("integrity.ok")}
+                        </span>
+                      )}
                       {/* Minimal fixed glyph, matching the "ok" indicator's OWN
                           visual weight — the actual error text now lives in the
                           toast the failure just pushed (jdp, live review,
@@ -3946,7 +3999,12 @@ function IntegrityCard({
                     ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
                     : kind === "dr" ? t("drill.runDR") : t("verify.now")}
                 </button>
-                {state[dKey] === "ok" && <span className="text-sm text-statusOk">✓ {t("verify.ok")}</span>}
+                {state[dKey] === "ok" && (
+                  <span className="inline-flex items-center gap-1 text-sm text-statusOk">
+                    <CheckDraw />
+                    {t("verify.ok")}
+                  </span>
+                )}
                 {/* Same minimal-glyph treatment as the action buttons above —
                     the raw error/detail text went to the toast when the
                     failure happened, not into a permanent inline sentence. */}
@@ -4003,7 +4061,11 @@ function IntegrityCard({
                         !tRes.testable ? "text-statusWarn" : tRes.protected ? "text-statusOk" : "text-statusFail"
                       }`}
                     >
-                      {tRes.testable && <span aria-hidden="true">{tRes.protected ? "✓" : "✗"}&nbsp;</span>}
+                      {tRes.testable && (
+                        <span aria-hidden="true" className="inline-flex items-center">
+                          {tRes.protected ? <CheckDraw /> : "✗"}&nbsp;
+                        </span>
+                      )}
                       {!tRes.testable
                         ? t("offsite.tamperUnverifiable")
                         : tRes.protected
@@ -4480,6 +4542,7 @@ function RestoreChecksSection({
   update,
   busy,
   shake,
+  pulse,
   t,
   hueIndex,
 }: {
@@ -4491,6 +4554,13 @@ function RestoreChecksSection({
    *  already are elsewhere — see SettingsPage's own autoSaveScheduleField. */
   busy?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", boolean>>;
   shake?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", number>>;
+  /** Confirmation-pulse (GlimStone motion-engine animation 2) — same shape
+   *  as `shake` above, opposite outcome. SettingsPage passes its own shared
+   *  `fieldPulse` map straight through (see that state's own declaration
+   *  comment next to save()) — this narrower prop type is still satisfied
+   *  because `fieldPulse` is keyed by the full `keyof Settings`, a superset
+   *  of the two keys this Card actually reads. */
+  pulse?: Partial<Record<"drillsEnabled" | "offsiteDrillsEnabled", number>>;
   t: ReturnType<typeof useT>["t"];
   hueIndex?: number;
 }) {
@@ -4509,6 +4579,7 @@ function RestoreChecksSection({
         onChange={(v) => update({ drillsEnabled: v })}
         disabled={busy?.drillsEnabled}
         shakeNonce={shake?.drillsEnabled}
+        pulseNonce={pulse?.drillsEnabled}
       />
       {/* Sub-toggle: only meaningful while scheduled drills are on. ToggleRow
           itself dims its switch AND its caption/description together — no
@@ -4520,6 +4591,7 @@ function RestoreChecksSection({
         disabled={!settings.drillsEnabled || busy?.offsiteDrillsEnabled}
         onChange={(v) => update({ offsiteDrillsEnabled: v })}
         shakeNonce={shake?.offsiteDrillsEnabled}
+        pulseNonce={pulse?.offsiteDrillsEnabled}
       />
       {/* `hueIndex` passed straight through to the TimePicker inside (Task 3
           fix) — the SAME position as this Card's own heading notch above. */}
@@ -4562,6 +4634,21 @@ type TabKey =
   | "notifications"
   | "integrity"
   | "system";
+
+/** The tab strip's own left-to-right order — the single source of truth for
+ *  "later" vs "earlier" that both the deep-link hashchange effect (below)
+ *  and the tab-slide direction (GlimStone motion-engine animation 7, its own
+ *  call site further down) read, instead of each keeping its own duplicate
+ *  literal list of the same seven keys. */
+const TAB_ORDER: TabKey[] = [
+  "general",
+  "storage",
+  "schedules",
+  "offsite",
+  "notifications",
+  "integrity",
+  "system",
+];
 
 // ---------------------------------------------------------------------------
 // Settings tab icons (GlimStone form-engine Phase 2, Task 3 — design-language
@@ -4700,6 +4787,22 @@ export function SettingsPage() {
   const { push, quiet, setQuiet } = useToast();
 
   const [tab, setTab] = useState<TabKey>("general");
+  // Settings tab slide (GlimStone motion-engine animation 7) — 1 = the tab
+  // strip's onChange below just moved to a LATER tab (slide in from the
+  // trailing edge), -1 = an EARLIER one. Computed synchronously in the SAME
+  // event handler that calls setTab() (see that call site's own comment), so
+  // by the time the tab-content wrapper remounts with the new `tab`, this
+  // state has already committed alongside it in the same render. A ref, not
+  // state, tracks the CURRENT tab for the hashchange effect below — that
+  // effect only ever runs once (mount) and closes over a stale `tab`
+  // otherwise; `setTab`/`setTabDir` themselves stay stable across renders
+  // (React guarantees this), so only the VALUE read needs the ref, not the
+  // setters.
+  const [tabDir, setTabDir] = useState<1 | -1>(1);
+  const tabRef = useRef<TabKey>(tab);
+  useEffect(() => {
+    tabRef.current = tab;
+  }, [tab]);
   // Tab-strip width tracking (GlimStone follow-up pass, live-review round —
   // "the equal-width tab fix should match content, not stretch to fill" —
   // see Selector.tsx's own `equalWidth`/`stretch` header for the corrected
@@ -5102,18 +5205,18 @@ export function SettingsPage() {
   // switches the tab (no remount happens in that case). The Dashboard's
   // "Link to /settings#offsite" therefore lands on the Off-site tab.
   useEffect(() => {
-    const tabs: TabKey[] = [
-      "general",
-      "storage",
-      "schedules",
-      "offsite",
-      "notifications",
-      "integrity",
-      "system",
-    ];
     const applyHash = () => {
       const h = window.location.hash.replace(/^#/, "");
-      if ((tabs as string[]).includes(h)) setTab(h as TabKey);
+      if ((TAB_ORDER as string[]).includes(h)) {
+        // Direction (motion-engine animation 7): computed the same way the
+        // tab strip's own onChange below does, just reading the CURRENT tab
+        // off tabRef instead of a closed-over (and here, permanently stale —
+        // this effect only ever runs once, at mount) `tab` value.
+        const from = TAB_ORDER.indexOf(tabRef.current);
+        const to = TAB_ORDER.indexOf(h as TabKey);
+        if (from !== -1 && to !== -1) setTabDir(to > from ? 1 : -1);
+        setTab(h as TabKey);
+      }
     };
     applyHash();
     window.addEventListener("hashchange", applyHash);
@@ -5159,6 +5262,23 @@ export function SettingsPage() {
   // Generic save helper
   // ---------------------------------------------------------------------------
 
+  // fieldPulse — GlimStone motion-engine, animation 2 (confirmation-pulse).
+  // ONE shared map, keyed by Settings field name, covering every save() call
+  // site at once (the same leverage this function's own header comment below
+  // already describes for the toast/state-reset migration) — a ToggleRow
+  // call site simply reads `fieldPulse.someKey` and passes it straight
+  // through as `pulseNonce`, the exact same shape `domainToggleShake`/
+  // `mergedFieldShake`/`fieldShake`/`schedFieldShake` already use for
+  // `shakeNonce`, just bumped on the OPPOSITE outcome. Bumped for every key
+  // in a successful patch, not just boolean/ToggleRow ones — a text/number
+  // field's own entry here is simply never read by anything today, which is
+  // harmless (this map costs nothing per unread key) and means a FUTURE
+  // ToggleRow-backed field needs no new plumbing here to get the pulse, only
+  // its own call site threading `pulseNonce={fieldPulse.thatKey}` through —
+  // exactly the "wired once, works everywhere" outcome the standing
+  // colour-engine rule asks for, applied to motion instead of colour.
+  const [fieldPulse, setFieldPulse] = useState<Partial<Record<keyof Settings, number>>>({});
+
   // save persists one card's fields and returns true ONLY when the server confirmed
   // the write. Callers that gate a follow-up action on a confirmed save (e.g. the
   // off-site immutable toggle, which must not run a tamper test on a failed save)
@@ -5197,6 +5317,17 @@ export function SettingsPage() {
         setSavedSettings(updated);
         setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
         setSaveState("idle");
+        // Confirmation-pulse (GlimStone motion-engine animation 2) — bump
+        // every key in THIS patch, not just the ones a ToggleRow happens to
+        // read; see fieldPulse's own declaration comment above for why that
+        // is deliberate rather than wasteful.
+        setFieldPulse((p) => {
+          const next = { ...p };
+          for (const key of Object.keys(patch) as (keyof Settings)[]) {
+            next[key] = (p[key] ?? 0) + 1;
+          }
+          return next;
+        });
         // Tell the Layout/Sidebar to refetch so a newly enabled/disabled domain
         // tab appears or vanishes immediately — no page reload needed.
         window.dispatchEvent(new Event("bv:settings-changed"));
@@ -5808,6 +5939,19 @@ export function SettingsPage() {
         select="one"
         active={tab}
         onChange={(key) => {
+          // Settings tab slide (GlimStone motion-engine animation 7) —
+          // computed HERE, in the same synchronous event handler that also
+          // calls setTab() below, because this is the one place that still
+          // has BOTH the old tab (the `tab` closure variable, not yet
+          // updated) and the new one (`key`) at once. React batches this
+          // setTabDir alongside the setTab() call into the same commit, so
+          // the tab-content wrapper's very first render with the new `tab`
+          // already carries the correct --tab-dir (see that wrapper's own
+          // comment further down for why keying it on `tab` is what makes
+          // the slide replay on every click).
+          const from = TAB_ORDER.indexOf(tab);
+          const to = TAB_ORDER.indexOf(key as TabKey);
+          if (from !== -1 && to !== -1) setTabDir(to > from ? 1 : -1);
           setTab(key as TabKey);
           // Keep the URL hash in sync so reload/bookmark restores the tab
           // (replaceState avoids polluting history and won't re-fire applyHash).
@@ -5863,7 +6007,27 @@ export function SettingsPage() {
           first-card gap (a separate live-review ask, its own comment) —
           matching this established rhythm rather than inventing a different
           number for that gap too. */}
-      <div className="flex flex-col gap-10" style={{ maxWidth: tabStripWidth ?? undefined }}>
+      {/* key={tab} (GlimStone motion-engine animation 7, Settings tab slide):
+          this ONE div wraps every `{tab === "x" && ...}` panel below — every
+          Card inside it ALREADY fully unmounts/remounts on a tab switch via
+          those conditionals alone, key or no key; keying the WRAPPER too
+          changes nothing about which children exist, it only makes the
+          wrapper itself a fresh DOM node each click, which is what lets
+          `.bv-tab-slide`'s own entrance animation (index.css) replay every
+          time instead of only once at Settings' own first mount (a
+          persistent class on a node that never gets recreated never
+          replays its animation, the same reasoning bv-stagger-row's own
+          comment gives for why a list re-render does NOT replay). --tab-dir
+          is set from `tabDir` state, computed by whichever caller last
+          changed `tab` (the Selector's onChange below, or the hashchange
+          effect above) in the SAME synchronous handler that called setTab —
+          see either call site's own comment for the exact "old index vs new
+          index" math. */}
+      <div
+        key={tab}
+        className="flex flex-col gap-10 bv-tab-slide"
+        style={{ maxWidth: tabStripWidth ?? undefined, "--tab-dir": tabDir } as CSSProperties}
+      >
 
       {/* ------------------------------------------------------------------ */}
       {/* SCHEDULES — the single owner of every cadence (migrated from Plans).  */}
@@ -5901,6 +6065,7 @@ export function SettingsPage() {
               onChange={(v) => void autoSaveScheduleField("perItemSchedules", v)}
               disabled={schedFieldBusy.perItemSchedules}
               shakeNonce={schedFieldShake.perItemSchedules}
+              pulseNonce={fieldPulse.perItemSchedules}
               hueIndex={0}
             />
             {/* Sync toggle — applies the Containers cadence to VMs, Flash AND
@@ -5913,6 +6078,11 @@ export function SettingsPage() {
               onChange={(v) => void handleSyncSchedulesToggle(v)}
               disabled={syncToggleBusy}
               shakeNonce={syncToggleShake || undefined}
+              // handleSyncSchedulesToggle's own save() patch touches vms/
+              // flash/filesSchedule together (see that function) — any one
+              // of the three is bumped by save()'s success branch, so
+              // vmsSchedule works as well as either of the others here.
+              pulseNonce={fieldPulse.vmsSchedule}
               hueIndex={1}
             />
           </Card>
@@ -6017,6 +6187,7 @@ export function SettingsPage() {
                   onChange={(v) => void toggleConfigSchedule(v)}
                   disabled={configScheduleToggleBusy}
                   shakeNonce={configScheduleToggleShake}
+                  pulseNonce={fieldPulse.configSchedule}
                 />
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
@@ -6047,6 +6218,7 @@ export function SettingsPage() {
             update={scheduleUpdate}
             busy={schedFieldBusy}
             shake={schedFieldShake}
+            pulse={fieldPulse}
             t={t}
             hueIndex={nextHue()}
           />
@@ -6062,6 +6234,7 @@ export function SettingsPage() {
               onChange={(v) => void autoSaveScheduleField("catchUpMissed", v)}
               disabled={schedFieldBusy.catchUpMissed}
               shakeNonce={schedFieldShake.catchUpMissed}
+              pulseNonce={fieldPulse.catchUpMissed}
             />
           </Card>
 
@@ -6089,6 +6262,7 @@ export function SettingsPage() {
               onChange={(v) => void autoSaveScheduleField("restartHealthWait", v)}
               disabled={schedFieldBusy.restartHealthWait}
               shakeNonce={schedFieldShake.restartHealthWait}
+              pulseNonce={fieldPulse.restartHealthWait}
             />
             {settings.restartHealthWait && (
               <label className="flex flex-col gap-1 sm:w-1/2">
@@ -6192,6 +6366,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("containersEnabled", v)}
           disabled={domainToggleBusy.containersEnabled}
           shakeNonce={domainToggleShake.containersEnabled}
+          pulseNonce={fieldPulse.containersEnabled}
           hueIndex={0}
         />
         <ToggleRow
@@ -6201,6 +6376,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("vmsEnabled", v)}
           disabled={domainToggleBusy.vmsEnabled}
           shakeNonce={domainToggleShake.vmsEnabled}
+          pulseNonce={fieldPulse.vmsEnabled}
           hueIndex={1}
         />
         <ToggleRow
@@ -6210,6 +6386,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("flashEnabled", v)}
           disabled={domainToggleBusy.flashEnabled}
           shakeNonce={domainToggleShake.flashEnabled}
+          pulseNonce={fieldPulse.flashEnabled}
           hueIndex={2}
         />
         <ToggleRow
@@ -6219,6 +6396,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("filesEnabled", v)}
           disabled={domainToggleBusy.filesEnabled}
           shakeNonce={domainToggleShake.filesEnabled}
+          pulseNonce={fieldPulse.filesEnabled}
           hueIndex={3}
         />
         <ToggleRow
@@ -6228,6 +6406,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("configEnabled", v)}
           disabled={domainToggleBusy.configEnabled}
           shakeNonce={domainToggleShake.configEnabled}
+          pulseNonce={fieldPulse.configEnabled}
           hueIndex={4}
         />
         <ToggleRow
@@ -6237,6 +6416,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("receiverEnabled", v)}
           disabled={domainToggleBusy.receiverEnabled}
           shakeNonce={domainToggleShake.receiverEnabled}
+          pulseNonce={fieldPulse.receiverEnabled}
           hueIndex={5}
         />
         <ToggleRow
@@ -6246,6 +6426,7 @@ export function SettingsPage() {
           onChange={(v) => void toggleDomainEnabled("fleetEnabled", v)}
           disabled={domainToggleBusy.fleetEnabled}
           shakeNonce={domainToggleShake.fleetEnabled}
+          pulseNonce={fieldPulse.fleetEnabled}
           hueIndex={6}
         />
       </Card>
@@ -6438,6 +6619,7 @@ export function SettingsPage() {
           onChange={(v) => void autoSaveField("pruneImageAfterUpdate", v, setPruneSaveState, setPruneSaveError)}
           disabled={mergedFieldBusy.pruneImageAfterUpdate}
           shakeNonce={mergedFieldShake.pruneImageAfterUpdate}
+          pulseNonce={fieldPulse.pruneImageAfterUpdate}
         />
         <ToggleRow
           label={t("settings.reconcileUnraidStatus")}
@@ -6446,6 +6628,7 @@ export function SettingsPage() {
           onChange={(v) => void autoSaveField("reconcileUnraidUpdateStatus", v, setReconcileSaveState, setReconcileSaveError)}
           disabled={mergedFieldBusy.reconcileUnraidUpdateStatus}
           shakeNonce={mergedFieldShake.reconcileUnraidUpdateStatus}
+          pulseNonce={fieldPulse.reconcileUnraidUpdateStatus}
         />
       </Card>
       )}
@@ -6753,6 +6936,7 @@ export function SettingsPage() {
             onChange={(v) => void autoSaveField("exportEncryptEnabled", v, setExportEncSaveState, setExportEncSaveError)}
             disabled={mergedFieldBusy.exportEncryptEnabled}
             shakeNonce={mergedFieldShake.exportEncryptEnabled}
+            pulseNonce={fieldPulse.exportEncryptEnabled}
           />
           {settings.exportEncryptEnabled && (
             <label className="flex flex-col gap-1">
@@ -6854,6 +7038,7 @@ export function SettingsPage() {
             onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
             disabled={mergedFieldBusy.encryptionEnabled}
             shakeNonce={mergedFieldShake.encryptionEnabled}
+            pulseNonce={fieldPulse.encryptionEnabled}
           />
           {settings.encryptionEnabled && (
             <div className="flex flex-col gap-2">
@@ -7189,6 +7374,7 @@ export function SettingsPage() {
           onChange={(v) => void autoSaveToggle("metricsEnabled", v, setMetricsSaveState, setMetricsSaveError)}
           disabled={fieldBusy.metricsEnabled}
           shakeNonce={fieldShake.metricsEnabled}
+          pulseNonce={fieldPulse.metricsEnabled}
         />
         {/* Write-only secret (the GET never echoes it): blank-on-save keeps the
             stored token, so a stored one shows as the same "saved — leave blank
@@ -7342,6 +7528,7 @@ export function SettingsPage() {
               onChange={(v) => void autoSaveToggle("digestEnabled", v, setDigestSaveState, setDigestSaveError)}
               disabled={fieldBusy.digestEnabled}
               shakeNonce={fieldShake.digestEnabled}
+              pulseNonce={fieldPulse.digestEnabled}
             />
             <div className="rounded-card bg-carbon-surface2 p-4">
               <CadenceBuilder
@@ -7374,6 +7561,7 @@ export function SettingsPage() {
             onChange={(v) => void autoSaveToggle("watchdogEnabled", v, setWatchdogSaveState, setWatchdogSaveError)}
             disabled={fieldBusy.watchdogEnabled}
             shakeNonce={fieldShake.watchdogEnabled}
+            pulseNonce={fieldPulse.watchdogEnabled}
           />
         </Card>
       )}

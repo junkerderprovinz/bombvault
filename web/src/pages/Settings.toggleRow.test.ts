@@ -1,5 +1,7 @@
 // ---------------------------------------------------------------------------
-// ToggleRow — shakeNonce (#142, Domains card auto-save error feedback).
+// ToggleRow — shakeNonce/pulseNonce (#142, Domains card auto-save feedback;
+// pulseNonce added for GlimStone motion-engine animation 2, confirmation-
+// pulse).
 //
 // ToggleRow (like Toggle itself — see Toggle.test.ts's own header comment)
 // is a pure, hookless function component: props in, a plain React element
@@ -8,18 +10,20 @@
 // needed, keeping this on the "node environment, no DOM" footing
 // vitest.config.ts documents as the default for this repo.
 //
-// This covers the WIRING that makes the `.glim-shake` error-feedback
-// animation (index.css) replay reliably even for a repeated identical
-// failure of the SAME toggle (e.g. the Domains card's VMs row failing twice
-// in a row because SSH still isn't configured): shakeNonce is forwarded as
-// the underlying Toggle's React `key`, so a NEW nonce value always produces a
-// NEW element identity — the same "fresh identity per occurrence" mechanism
-// lib/toast.tsx's push() already uses (a fresh toast `id` per push, so an
-// identical repeated message still gets a fresh DOM node and its entrance
-// animation always plays). Whether the CSS keyframe itself actually animates
-// in a real browser is verified live with Playwright (not something this
-// node-environment tree-inspection test can see) — see the live-verification
-// notes for that proof.
+// This covers the WIRING that makes the `.glim-shake`/`.glim-pulse`
+// feedback animations (index.css) replay reliably even for a repeated
+// identical outcome on the SAME toggle (e.g. the Domains card's VMs row
+// failing twice in a row because SSH still isn't configured, or saving
+// successfully twice in a row): shakeNonce/pulseNonce are combined into the
+// underlying Toggle's React `key` (see ToggleRow's own `feedbackKey`
+// comment for why NEITHER alone is safe once both exist), so a NEW value on
+// EITHER counter always produces a NEW element identity — the same "fresh
+// identity per occurrence" mechanism lib/toast.tsx's push() already uses (a
+// fresh toast `id` per push, so an identical repeated message still gets a
+// fresh DOM node and its entrance animation always plays). Whether the CSS
+// keyframes themselves actually animate in a real browser is verified live
+// with Playwright (not something this node-environment tree-inspection test
+// can see) — see the live-verification notes for that proof.
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
 import { ToggleRow } from "./Settings";
@@ -79,7 +83,7 @@ describe("ToggleRow — shakeNonce", () => {
     const el = findToggleElement(
       ToggleRow({ label: "VMs", checked: false, onChange: () => {}, shakeNonce: 1 })
     );
-    expect(el.key).toBe("1"); // React stringifies numeric keys
+    expect(el.key).toBe("1:0"); // combined shake:pulse key — see feedbackKey's own comment
     expect(String(el.props?.className)).toContain("glim-shake");
   });
 
@@ -121,5 +125,59 @@ describe("ToggleRow — shakeNonce", () => {
     expect(el.props?.label).toBe("VMs backup");
     (el.props?.onChange as (v: boolean) => void)(false);
     expect(seen).toBe(false);
+  });
+});
+
+describe("ToggleRow — pulseNonce (confirmation-pulse, motion-engine animation 2)", () => {
+  it("a truthy pulseNonce both keys the Toggle AND applies .glim-pulse — the first recorded success", () => {
+    const el = findToggleElement(
+      ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: 1 })
+    );
+    expect(el.key).toBe("0:1");
+    expect(String(el.props?.className)).toContain("glim-pulse");
+    expect(String(el.props?.className)).not.toContain("glim-shake");
+  });
+
+  it("a SECOND consecutive success gets a genuinely NEW key, same replay mechanism as shakeNonce", () => {
+    const first = findToggleElement(
+      ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: 1 })
+    );
+    const second = findToggleElement(
+      ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: 2 })
+    );
+    expect(first.key).not.toBe(second.key);
+    expect(String(first.props?.className)).toContain("glim-pulse");
+    expect(String(second.props?.className)).toContain("glim-pulse");
+  });
+
+  it("prefers .glim-shake over .glim-pulse if a caller somehow passes both truthy at once", () => {
+    // No real call site does this (a save either fails or succeeds), but the
+    // precedence must still be deterministic rather than accidental.
+    const el = findToggleElement(
+      ToggleRow({ label: "VMs", checked: true, onChange: () => {}, shakeNonce: 1, pulseNonce: 1 })
+    );
+    expect(String(el.props?.className)).toContain("glim-shake");
+    expect(String(el.props?.className)).not.toContain("glim-pulse");
+  });
+
+  it("a failure AFTER a prior success still gets a fresh key (shakeNonce alone would collide otherwise)", () => {
+    // Row saved successfully once (pulseNonce: 1), then later failed once
+    // (shakeNonce: 1) — the combined key must differ from the pure-success
+    // render above, proving neither counter alone is safe once both exist.
+    const afterSuccess = findToggleElement(
+      ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: 1 })
+    );
+    const afterFailure = findToggleElement(
+      ToggleRow({ label: "VMs", checked: true, onChange: () => {}, shakeNonce: 1, pulseNonce: 1 })
+    );
+    expect(afterSuccess.key).not.toBe(afterFailure.key);
+  });
+
+  it("still renders no .glim-pulse on a fresh page load even when the map hands back 0/undefined", () => {
+    const el = findToggleElement(
+      ToggleRow({ label: "VMs", checked: true, onChange: () => {}, pulseNonce: undefined })
+    );
+    expect(el.key == null).toBe(true);
+    expect(String(el.props?.className)).not.toContain("glim-pulse");
   });
 });
