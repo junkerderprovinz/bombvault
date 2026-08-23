@@ -259,15 +259,15 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     expect(tab.className).not.toContain("flex-1");
   });
 
-  it("equalWidth keeps the strip flex-wrap (fixed-width segments can genuinely overflow a narrow row, unlike well's flex-1 shares) and every segment becomes flex-none (content-width matched, not stretched), while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
+  it("equalWidth keeps the strip flex-wrap (fixed-width segments can genuinely overflow a narrow row, unlike well's own measured-and-pinned segments) and every segment becomes flex-none (content-width matched, not stretched), while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
     );
     const list = screen.getByRole("tablist");
     // flex-wrap, NOT flex-nowrap (caught live — a fixed-pixel-width row can
-    // overflow a real viewport where a `flex: 1` share never could; see
-    // Selector.tsx's own file header, item 5b, for the live overflow bug
-    // this corrects).
+    // overflow a real viewport where "well"'s own row (always exactly the sum
+    // of its segments' pinned widths) never could; see Selector.tsx's own
+    // file header, item 5b, for the live overflow bug this corrects).
     expect(list.className).toContain("flex-wrap");
     expect(list.className).not.toContain("flex-nowrap");
     // No shared well track — each segment still carries its own chip fill.
@@ -323,9 +323,13 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth variant="well" />
     );
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    // Still the well segment's own single flex-1 + fixed well height, not a
-    // second/duplicate flex-1 class or the chip's per-stage padding leaking in.
-    expect(tab.className).toContain("flex-1");
+    // Still just the well segment's own single flex-none + fixed well height,
+    // not a second/duplicate class or the chip's per-stage `stretch` classes
+    // leaking in (jdp's live-review correction, task 1 follow-up: "well" now
+    // pins to a MEASURED width via `pinWidth`, same as `equalWidth`'s own
+    // mechanism, not a `flex-1` share — see Selector.tsx's own `pinWidth` doc).
+    expect(tab.className).toContain("flex-none");
+    expect(tab.className).not.toContain("flex-1");
     expect(tab.className).toContain("h-[var(--badge-md)]");
   });
 
@@ -396,7 +400,14 @@ describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's 
   it("segments are equal-width and centered, with the crossfade-only transition and --badge-md height from the exact TrickWork spec — no sliding pill element", () => {
     render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).toContain("flex-1");
+    // `flex-none`, not TrickWork's own `flex-1` share (jdp's live-review
+    // correction, task 1 follow-up) — every segment is pinned to the widest
+    // one's own MEASURED content width instead, the same `pinWidth`
+    // mechanism `equalWidth`'s "chip" case already used; see that constant's
+    // own doc in Selector.tsx for the live truncation bug `flex-1` caused
+    // the moment an ancestor stopped stretching this whole strip.
+    expect(tab.className).toContain("flex-none");
+    expect(tab.className).not.toContain("flex-1");
     expect(tab.className).toContain("justify-center");
     expect(tab.className).toContain("h-[var(--badge-md)]");
     expect(tab.className).toContain("[transition:background-color_120ms_ease]");

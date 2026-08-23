@@ -110,9 +110,10 @@
 //      `flex-wrap`, NOT `flex-nowrap` (caught live, not in the harness —
 //      the first cut of this correction shipped `flex-nowrap`, copying
 //      `well`'s reasoning verbatim without re-checking whether it still
-//      applied). `well`'s segments are `flex: 1` shares of a track that IS
-//      the available width by construction — they can never overflow it, so
-//      forcing one row there is free. `stretch` segments are now a FIXED
+//      applied). `well`'s own row IS the sum of its segments' pinned widths
+//      by construction (see `pinWidth` in the component body below) — it can
+//      never overflow itself, so forcing one row there is free. `stretch`
+//      segments are now a FIXED
 //      pixel width (the widest label's own measured content size), a number
 //      with NO relationship to whatever width happens to be available — 7
 //      German labels at this stage's own padding sum to ~1243px, which
@@ -230,9 +231,12 @@ interface SelectorCommon {
   plain?: boolean;
   /** "chip" (default) vs "well" — see the file header's item 5. */
   variant?: SelectorVariant;
-  /** Stretch every "chip" segment to an equal `flex-1` share of the row
-   *  instead of each hugging its own label width — see the file header's
-   *  item 5b. Ignored under `variant="well"` (already always equal-width).
+  /** Pin every "chip" segment to the widest one's own MEASURED content
+   *  width, instead of each hugging its own label width — see the file
+   *  header's item 5b (a real DOM measurement, not a `flex-1` share; that
+   *  was the first cut's own bug, corrected there). Ignored under
+   *  `variant="well"` (already always equal-width — via the SAME
+   *  measurement mechanism, see `pinWidth` in the component body).
    *  Default false: every pre-existing "chip" call site keeps its own
    *  content-hugging width. */
   equalWidth?: boolean;
@@ -454,11 +458,43 @@ export function Selector(props: SelectorProps) {
     className = "",
   } = props;
   const well = variant === "well";
-  // Only meaningful on "chip" — "well" is already always equal-width via its
-  // own `flex-1` (see that branch below), so this never double-applies.
+  // Only meaningful on "chip" — "well" gets its own equal-width treatment via
+  // `pinWidth` below regardless of this flag.
   const stretch = equalWidth && !well;
 
-  // Content-width measurement for `stretch` (item 5b, corrected — see the
+  // `pinWidth` — which segment styles get pinned to a real MEASURED width
+  // instead of a pure-CSS sizing trick. Used to read `stretch` alone (the
+  // "chip" `equalWidth` case only); "well" relied on `flex-1` doing the
+  // equal-width job on its own, which worked as long as an ANCESTOR forced
+  // this whole strip to stretch across a wide container — plenty of leftover
+  // flex-grow space meant even the widest label always had generous room.
+  //   BROKEN (jdp, live-review, task 1 verification screenshot — "Dunkel"
+  // rendering as "Du..." in the Theme Card, "Leicht" as "Lei..." in the Shape
+  // Card): once task 1's own fix (Settings.tsx's own `inline-flex self-start`
+  // wrapper) stopped an ANCESTOR from stretching this strip, the browser had
+  // to size the "well" track itself via shrink-to-fit — and a flex item
+  // whose `flex-basis` resolves to a definite value (`flex-1` is shorthand
+  // for `flex: 1 1 0%`, i.e. `flex-basis: 0%`) contributes that ZERO basis,
+  // not its own content width, to a shrink-to-fit ancestor's intrinsic-size
+  // calculation (CSS Flexbox spec section 9.9) — combined with this file's
+  // own unconditional `min-w-0` on every segment (needed for the "chip"
+  // wrap/shrink cases), nothing stopped the widest segment from being sized
+  // narrower than its own label needs. Confirmed live via
+  // getBoundingClientRect: the "Dunkel" segment's own label span reported a
+  // `scrollWidth` bigger than its `clientWidth` — genuine overflow silently
+  // cropped by the `truncate` class, not a font-rendering artifact.
+  //   The fix is the SAME one item 5b already proved for "chip"'s own
+  // `equalWidth`: a real DOM measurement of the widest segment's natural
+  // content width, then an explicit pixel `width` on every segment — no
+  // flex-basis trick involved, so this particular intrinsic-sizing gap never
+  // applies. "well" now measures unconditionally (it has no `equalWidth` opt-
+  // out to begin with — every "well" strip always wants equal segments), so
+  // `pinWidth` is `stretch || well` rather than `stretch` alone; every effect
+  // and the width style below reads `pinWidth`, not `stretch`, so both cases
+  // share one measurement pipeline instead of two parallel ones.
+  const pinWidth = stretch || well;
+
+  // Content-width measurement for `pinWidth` (item 5b, corrected — see the
   // file header): every segment gets pinned to the WIDEST segment's own
   // natural content width, which only a real DOM measurement can answer (a
   // pure-CSS flex/grid trick can equalize widths, but "equal to N's own
@@ -491,8 +527,8 @@ export function Selector(props: SelectorProps) {
   // commit before the browser's next paint — no visible flash back to
   // ragged widths.
   useLayoutEffect(() => {
-    if (stretch) setMatchedWidth(null);
-  }, [stretch, itemsKey, size]);
+    if (pinWidth) setMatchedWidth(null);
+  }, [pinWidth, itemsKey, size]);
 
   // Pass 2: once segments have rendered at their own natural width (either
   // the very first render, or immediately after pass 1 cleared a stale
@@ -500,7 +536,7 @@ export function Selector(props: SelectorProps) {
   // pixel width. Skipped once matchedWidth is already set — there is nothing
   // to re-measure until the label set changes again and pass 1 clears it.
   useLayoutEffect(() => {
-    if (!stretch || matchedWidth !== null) return;
+    if (!pinWidth || matchedWidth !== null) return;
     // Sliced to the CURRENT item count before filtering: a shrunk item list
     // (not a concern for Settings.tsx's fixed 7-tab strip today, but this is
     // a shared component) would otherwise leave stale trailing refs from a
@@ -511,7 +547,7 @@ export function Selector(props: SelectorProps) {
     if (nodes.length === 0) return;
     const widest = Math.max(...nodes.map((n) => n.getBoundingClientRect().width));
     setMatchedWidth(widest);
-  }, [stretch, matchedWidth, itemsKey, size, items.length]);
+  }, [pinWidth, matchedWidth, itemsKey, size, items.length]);
 
   // Subscribed, not read — see lib/useRainbow.ts's own header for why this
   // has to happen during render rather than an effect. Called unconditionally
@@ -574,15 +610,19 @@ export function Selector(props: SelectorProps) {
       // "well": the one deliberate exception (file header item 5) — this IS
       // TrickWork's shared track surface (background + 0.2rem padding +
       // `rounded-control`, so it still reshapes with the shape engine like
-      // every other radius in the app), holding equal-width flush segments.
-      // No flex-wrap here: TrickWork's segments are `flex: 1` (see below),
-      // which assumes one row — wrapping equal-width flex children onto a
-      // second line is a different, broken-looking layout, not a smaller
-      // version of the same one.
+      // every other radius in the app), holding equal-width flush segments —
+      // each pinned to the widest one's own measured content width via
+      // `pinWidth` above (originally `flex: 1` equal-growth alone; see that
+      // constant's own doc for the live truncation bug that fix replaced).
+      // No flex-wrap here: this assumes one row — wrapping equal-width
+      // segments onto a second line is a different, broken-looking layout,
+      // not a smaller version of the same one.
       // `stretch` (item 5b, corrected — see the file header for the live bug
       // this fixed): `flex-wrap`, NOT `flex-nowrap` like "well" above — a
       // fixed-pixel-width segment set has no guaranteed relationship to the
-      // available row width the way `well`'s `flex: 1` shares do, so it can
+      // available row width the way "well"'s own measured-and-pinned
+      // segments do (that row's own width IS the sum of its segments by
+      // construction, so it can never overflow itself), so `stretch` can
       // genuinely need to wrap. No shared track background either way — each
       // segment keeps its own chip fill, just pinned to the widest segment's
       // own measured content width (via inline `style.width` below) instead
@@ -662,18 +702,30 @@ export function Selector(props: SelectorProps) {
           SIZE[size].gap,
           SIZE[size].text,
           // "chip" keeps its own per-stage padding (the box comes from
-          // padding + line-height, as it always has). "well" segments are
-          // `flex-1` (equal-width, sharing the track evenly — TrickWork's
-          // own layout, which only makes sense un-wrapped, see above) with
-          // their content centered (TrickWork's `justify-content`/
-          // `text-align: center` — a "chip"'s intrinsic, shrink-to-fit width
-          // never needed this) and a fixed height read off --badge-md
-          // (index.css) instead of padding, so every segment in the row is
-          // the same height regardless of label length or an icon's own
-          // intrinsic size.
-          // `stretch` (item 5b, corrected): centred content within a FIXED
-          // width (set via inline `style.width` below, not `flex-1` — see
-          // this file's header for why a flex share was the wrong fix).
+          // padding + line-height, as it always has). "well" and `stretch`
+          // ("chip"'s own `equalWidth`) segments now share the SAME "pin
+          // every segment to the widest one's own MEASURED content width"
+          // mechanism (`pinWidth` above) — see that constant's own doc for
+          // why "well"'s original `flex-1`-only approach (equal width from
+          // flex growth alone, no real measurement) broke the moment task 1's
+          // "don't stretch the whole strip" fix stopped an ancestor from
+          // handing this row more width than either segment's own content
+          // needed.
+          //   "well": centred content (TrickWork's own `justify-content`/
+          // `text-align: center`) within a FIXED height read off --badge-md
+          // (index.css) instead of padding — every segment in the row is the
+          // same height regardless of label length or an icon's own
+          // intrinsic size — PLUS this file's own per-stage horizontal
+          // padding (`SIZE[size].padding`, the same token "chip" always used,
+          // newly added here) so the widest segment's own label isn't
+          // touching the pinned box's edge once `matchedWidth` pins every
+          // segment to exactly that width. `flex-none`, not `flex-1` any
+          // more, so the explicit pixel `width` set below actually wins
+          // instead of competing with a flex-grow share.
+          //   `stretch` (item 5b, corrected): centred content within a FIXED
+          // width (set via inline `style.width` below, not a flex-basis
+          // trick — see `pinWidth`'s own doc for why that was the wrong fix
+          // for "well" too, once it needed the exact same treatment).
           // `flex-none` pins the segment to exactly that width rather than
           // letting the default `flex-shrink: 1` compress it back down if
           // the row's own content ever exceeds its container (matched-width
@@ -712,7 +764,7 @@ export function Selector(props: SelectorProps) {
           // this fixed square rather than silently falling through to a
           // per-stage padding class that was never sized for a bare glyph.
           well
-            ? "flex-1 justify-center text-center h-[var(--badge-md)]"
+            ? `flex-none justify-center text-center h-[var(--badge-md)] ${SIZE[size].padding}`
             : stretch
               ? `flex-none justify-center text-center ${SIZE[size].padding}`
               : item.iconOnly
@@ -723,12 +775,12 @@ export function Selector(props: SelectorProps) {
           .join(" ");
 
         // Merge the rainbow custom-property style (if any) with the matched
-        // fixed width (if `stretch` has completed its measurement pass) —
+        // fixed width (if `pinWidth` has completed its measurement pass) —
         // both are optional and independent, so this stays undefined
         // whenever neither applies rather than always allocating an object.
         const hueStyle = hue ? (hueVars(rainbowAt(i)) as CSSProperties) : undefined;
         const widthStyle: CSSProperties | undefined =
-          stretch && matchedWidth !== null ? { width: `${matchedWidth}px` } : undefined;
+          pinWidth && matchedWidth !== null ? { width: `${matchedWidth}px` } : undefined;
         const itemStyle =
           hueStyle || widthStyle ? { ...hueStyle, ...widthStyle } : undefined;
 
