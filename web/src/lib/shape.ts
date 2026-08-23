@@ -65,3 +65,33 @@ export function setShape(shape: Shape): void {
 export function applyStoredShape(): void {
   applyShape(getShape());
 }
+
+/**
+ * armShapeTransitions — GlimStone motion-engine, animation 1 (shape-morph).
+ * Adds `.bv-shape-transitions` to <html>, the class index.css's own
+ * "Round 2, item 1" rule scopes its `transition: border-radius` onto — see
+ * that rule's own comment for the full contract. Never removed once added:
+ * every render after main.tsx calls this is by definition a LIVE change, the
+ * exact case this transition exists for.
+ *
+ * Called from main.tsx via a DOUBLE requestAnimationFrame after the initial
+ * render call, not a plain setTimeout(0) or a single rAF: applyStoredShape()
+ * already stamps the correct data-shape attribute on <html> before React's
+ * very first render, so the first frame ANY element ever paints already
+ * shows the right radius — there is no "wrong then corrected" flash to
+ * avoid. This still waits two frames rather than arming immediately for a
+ * different reason: it is the difference between "this class is added
+ * before or after the browser has committed that first, already-correct
+ * paint" that determines whether a hypothetical same-tick re-render (React
+ * 18 Strict Mode's dev-only double-invoke, a fast-refresh remount, or simply
+ * a slow first paint on a loaded machine) could still land INSIDE the same
+ * paint the class arrives in — one rAF fires before the NEXT paint, so a
+ * second one guarantees at least one full paint has already happened with
+ * the class absent before it is ever added. Cheap (two no-op callbacks,
+ * once, at boot) insurance against a flash that the reasoning above already
+ * argues cannot happen, kept anyway because "cannot happen" is exactly the
+ * kind of claim a live browser is free to disagree with.
+ */
+export function armShapeTransitions(): void {
+  document.documentElement.classList.add("bv-shape-transitions");
+}

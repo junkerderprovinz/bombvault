@@ -122,6 +122,47 @@ export const RAINBOW_OFF: RainbowState = {
 let state: RainbowState = RAINBOW_OFF;
 const listeners = new Set<() => void>();
 
+// ---------------------------------------------------------------------------
+// Colour-wipe (GlimStone motion-engine, animation 4) — module state private
+// to applyRainbow() below, mirroring shape.ts's own armShapeTransitions()
+// gate: `wipeMounted` only ever flips true→once, right after the FIRST
+// applyRainbow() call completes (main.tsx's boot-time applyStoredRainbow()),
+// so that call itself never triggers a wipe — there is nothing on screen yet
+// for a colour to visibly "change" away from. `wipeLastAttr` remembers the
+// resolved `data-rainbow` value (null/"on"/"reactive") across calls so a
+// later call can tell whether this is a genuine flip or a no-op re-apply
+// (e.g. setRainbow() persisting a patch that didn't actually touch on/
+// reactive, or a re-render reapplying the identical state).
+// ---------------------------------------------------------------------------
+let wipeMounted = false;
+let wipeLastAttr: string | null = null;
+let wipeTimer: ReturnType<typeof setTimeout> | undefined;
+
+/**
+ * beginColourWipe adds `.bv-colour-wipe` to <html> — the class index.css's
+ * own "Round 2, item 4" rule scopes its coordinated colour transition onto —
+ * and clears it again after a fixed delay. A flat constant (not read back
+ * out of --motion-wipe-dur) on purpose: that token can be as low as 0ms
+ * ("off"), and removing the class too early would do nothing visible either
+ * way (nothing is still transitioning by the time it comes off), so there is
+ * no correctness reason to parse a CSS value back into JS just to compute a
+ * number this constant already safely over-approximates for every
+ * off/subtle/full state at once. 500ms comfortably exceeds --motion-wipe-dur's
+ * own top end (320ms, "full") with margin for a slow paint. Re-entrant: a
+ * second flip while the first wipe's timer is still pending clears and
+ * restarts it, so a rapid on→off→on never removes the class out from under a
+ * still-settling transition.
+ */
+function beginColourWipe(): void {
+  if (wipeTimer !== undefined) clearTimeout(wipeTimer);
+  const root = document.documentElement;
+  root.classList.add("bv-colour-wipe");
+  wipeTimer = setTimeout(() => {
+    root.classList.remove("bv-colour-wipe");
+    wipeTimer = undefined;
+  }, 500);
+}
+
 /** rainbowState is the current snapshot. Stable identity between changes. */
 export function rainbowState(): RainbowState {
   return state;
@@ -156,8 +197,25 @@ export function applyRainbow(next: Partial<RainbowState> | undefined): void {
   for (let i = 0; i < RAINBOW.length; i++) {
     root.style.setProperty(`--rb-${i}`, rainbowAt(i));
   }
-  if (!merged.on) root.removeAttribute("data-rainbow");
-  else root.setAttribute("data-rainbow", merged.reactive ? "reactive" : "on");
+  const nextAttr = merged.on ? (merged.reactive ? "reactive" : "on") : null;
+
+  // Colour-wipe (GlimStone motion-engine, animation 4) — only for a REAL
+  // flip (nextAttr !== the value this function set last time) that happens
+  // AFTER the boot-time call has already completed once (wipeMounted); see
+  // beginColourWipe()'s own header comment above for the class this adds
+  // and why a flat timeout, not a token read-back, clears it again. Placed
+  // before the attribute write below so the class is already present on
+  // <html> the instant data-rainbow itself changes — a hued element's
+  // --accent/--accent-soft redefinition (the [data-rainbow] .glim-hue rule)
+  // and this transition need to land in the SAME style recalculation for
+  // the wipe to actually catch the colour change instead of missing it by
+  // one frame.
+  if (wipeMounted && nextAttr !== wipeLastAttr) beginColourWipe();
+  wipeLastAttr = nextAttr;
+  wipeMounted = true;
+
+  if (nextAttr === null) root.removeAttribute("data-rainbow");
+  else root.setAttribute("data-rainbow", nextAttr);
 
   for (const fn of listeners) fn();
 }
