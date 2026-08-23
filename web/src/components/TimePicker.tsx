@@ -257,15 +257,32 @@ export function TimePicker({
   // on the trigger would otherwise leave focus stranded on a now-covered
   // button. `scrollIntoView` is guarded: jsdom stubs it as a no-op, real
   // browsers implement it natively.
+  //
+  // Gated on `pos !== null` (not just `open`), and NOT merged into the
+  // positioning effect above despite running right after it: on the very
+  // first render after opening, the popover is still sitting at its
+  // `left:-9999px/top:-9999px` placeholder (see the JSX below) — the
+  // positioning effect above only just SCHEDULED the real coordinates via
+  // `setPos`, which lands in a later commit, not this one. Calling `.focus()`
+  // on an option while its containing popover is still parked off-screen at
+  // -9999px made the BROWSER auto-scroll the page trying to bring that
+  // off-screen element into view — which then tripped this component's own
+  // scroll-closes-the-popover dismissal listener a couple of milliseconds
+  // later, closing the popover it had just opened (caught live: a
+  // MutationObserver on the trigger's aria-expanded attribute showed
+  // true→false ~2ms apart on every open). Waiting for `pos` to be non-null
+  // means this only runs once the real, on-screen position has actually been
+  // committed and painted, so scrollIntoView/focus never has an off-screen
+  // element to react to.
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open || !pos) return;
     hourRefs.current[hour]?.scrollIntoView?.({ block: "nearest" });
     minuteRefs.current[selectedMinute]?.scrollIntoView?.({ block: "nearest" });
     if (!focusedOnOpen.current) {
       focusedOnOpen.current = true;
       hourRefs.current[hour]?.focus();
     }
-  }, [open, hour, selectedMinute]);
+  }, [open, hour, selectedMinute, pos]);
 
   // Dismissal: outside pointerdown, Escape, or scroll/resize — the exact
   // same set ColorPickerSwatch documents and relies on (a fixed popover
