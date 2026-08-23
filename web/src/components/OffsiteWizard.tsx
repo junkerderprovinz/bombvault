@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Settings, DeploySnippetData, PrimaryRemoteConfig, PrimaryRemoteDomain } from "../lib/api";
 import {
   deploySnippet,
@@ -214,6 +214,26 @@ export function OffsiteWizard({
 
   const { push } = useToast();
 
+  // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
+  // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
+  // speichern."): this wizard's own repo-URL/credentials/bandwidth-budget
+  // fields used to batch into their own per-step Save buttons. None of them
+  // are a "draft not meant to take effect until applied" the way
+  // CloudCredSetsCard's/OffsiteTargetsSection's own add-or-edit forms are
+  // (both kept as genuine exceptions — see their own header comments): every
+  // field here already binds straight to a real persisted value (the SAME
+  // shared `settings` object in off-site mode, or the primary-remote config
+  // fetched by getPrimaryRemote below), with no separate "Close = discard"
+  // affordance to protect. Local debounce mirrors FlashZipExportCard's own
+  // mechanism in Settings.tsx — this component has no access to
+  // SettingsPage's shared debouncedSave.
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  function debounced(key: string, run: () => void) {
+    const existing = debounceTimers.current[key];
+    if (existing) clearTimeout(existing);
+    debounceTimers.current[key] = setTimeout(run, 800);
+  }
+
   // Step 2 — rest-server deploy snippet (generated on demand, never persisted).
   const [snippet, setSnippet] = useState<DeploySnippetData | null>(null);
   // GlimStone follow-up pass (v8.0.0): the "error" resting state below is gone
@@ -226,10 +246,12 @@ export function OffsiteWizard({
   const [cloud, setCloudState] = useState({ s3KeyId: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [restPwSet, setRestPwSet] = useState(false);
   const revealRestPassword = useReveal();
-  // GlimStone follow-up pass (v8.0.0): saveCreds' "saved"/"error" 3000ms flash
-  // is now a toast (see saveCreds below) — only "saving" is left to track.
-  const [credState, setCredState] = useState<"idle" | "saving">("idle");
-  // cloudLoaded gates the "Save credentials" button: we must never POST a cloud
+  // Full-page Speichern-Button sweep: the "Save credentials" button is gone
+  // (see persistCreds below) — only the setter survives, as persistCreds
+  // still needs it, same "only the setters are needed" shape as
+  // Settings.tsx's own setDomSaveState.
+  const [, setCredState] = useState<"idle" | "saving">("idle");
+  // cloudLoaded gates persistCreds (below): we must never POST a cloud
   // object that wasn't loaded from the server, or a blank round-trip would WIPE
   // the stored S3/REST non-secret fields (or clear CloudConf entirely).
   const [cloudLoaded, setCloudLoaded] = useState(false);
@@ -241,14 +263,13 @@ export function OffsiteWizard({
   // ok/uninit/fail shape (see runTest below) — so only busy/idle is left.
   const [testBusy, setTestBusy] = useState(false);
 
-  // Repo URL/schedule save state. Kept as the full SaveState (below) because
-  // this setter is threaded into the SHARED `save` prop (Settings.tsx's own
-  // save(), already toast-migrated in the prior pass) — that function's type
-  // signature expects a `(s: SaveState) => void`, even though save() itself
-  // never actually produces "saved"/"error" anymore (see its own comment in
-  // Settings.tsx). The "saved"/"error" render this used to drive is gone
-  // (dead since that prior pass; removed below).
-  const [repoState, setRepoState] = useState<SaveState>("idle");
+  // Repo URL save state. Full-page Speichern-Button sweep: the "Save
+  // repository" button is gone (see patchRepo below) — only the setter
+  // survives, threaded into the SHARED `save` prop (Settings.tsx's own
+  // save()), which still requires a `(s: SaveState) => void` callback even
+  // though save() itself never actually produces "saved"/"error" (see its
+  // own comment in Settings.tsx).
+  const [, setRepoState] = useState<SaveState>("idle");
 
   // Step 4 — immutable flag + tamper verdict. `immState` is SHARED by both
   // modes below: off-site mode routes through the same already-toast-
@@ -266,10 +287,12 @@ export function OffsiteWizard({
     settings.offsiteGrowthBudgetGB > 0 ? "grow" : "farside"
   );
   // `budgetState` is SHARED the same way `immState` is above: off-site mode's
-  // "grow" branch routes through the shared `save` prop (SaveState-typed for
-  // signature compatibility, dead "saved" render removed below); primary
-  // mode's own save button further down now pushes its own toast too.
-  const [budgetState, setBudgetState] = useState<SaveState>("idle");
+  // "grow" branch routes through the shared `save` prop, primary mode's own
+  // branch through savePrimarySafety — both toast their own outcome. Full-
+  // page Speichern-Button sweep: both modes' Save buttons are gone (each
+  // number field now debounce-auto-saves itself below), so only the setter
+  // survives.
+  const [, setBudgetState] = useState<SaveState>("idle");
 
   // Load the stored cloud creds once (mirrors the Cloud card) so a save can keep
   // the S3 fields + treat a blank REST password as "keep the stored one".
@@ -304,8 +327,15 @@ export function OffsiteWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Full-page Speichern-Button sweep: patchRepo used to only update local
+  // state, relying on the "Save repository" button (now gone) to persist it.
+  // It now debounce-auto-saves through the SAME shared `save` prop the off-
+  // site Card's own repo-URL field (Settings.tsx) already converted to.
   function patchRepo(v: string) {
     setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
+    debounced(String(repoKey), () =>
+      void save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined)
+    );
   }
 
   async function genSnippet() {
@@ -326,21 +356,24 @@ export function OffsiteWizard({
     }
   }
 
-  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 3000ms flash is now
-  // a toast, same shape as the shared save() helper's own migration.
-  async function saveCreds() {
+  // Full-page Speichern-Button sweep: was triggered by the "Save
+  // credentials" button (now gone) with no arguments, always sending the
+  // full CURRENT `cloud` state. persistCreds keeps that exact same "blank
+  // secret = keep the stored value, S3 fields round-tripped unchanged" PUT
+  // shape, now called from a debounce 800ms after the last restUser/
+  // restPassword keystroke instead of a click — see the two fields' own
+  // onChange below.
+  async function persistCreds(patch: Partial<typeof cloud>) {
     // Never POST creds that were not loaded from the server (a blank round-trip
-    // would wipe the stored non-secret fields). The button is disabled in this
-    // state too; this is the defensive backstop.
+    // would wipe the stored non-secret fields).
     if (!cloudLoaded) return;
+    const merged = { ...cloud, ...patch };
     setCredState("saving");
     try {
-      // Blank secrets = keep the stored value; S3 fields are round-tripped so the
-      // wizard never wipes an existing S3 credential.
-      const r = await setCloud({ s3KeyId: cloud.s3KeyId, s3Secret: "", s3Region: cloud.s3Region, restUser: cloud.restUser, restPassword: cloud.restPassword, s3StorageClass: cloud.s3StorageClass });
+      const r = await setCloud({ s3KeyId: merged.s3KeyId, s3Secret: "", s3Region: merged.s3Region, restUser: merged.restUser, restPassword: merged.restPassword, s3StorageClass: merged.s3StorageClass });
       if (r.ok) {
         setCloudState((p) => ({ ...p, restPassword: "" }));
-        setRestPwSet(restPwSet || cloud.restPassword !== "");
+        setRestPwSet(restPwSet || merged.restPassword !== "");
         push(t("settings.saved"), "success");
       } else {
         push(r.error ?? t("settings.error"), "fail");
@@ -409,6 +442,29 @@ export function OffsiteWizard({
       limitDownload: patch.limitDownload ?? pLimitDownload,
       growthBudgetGb: patch.growthBudgetGb ?? pBudget,
     });
+  }
+
+  // persistPrimarySafety — the bandwidth-limits/growth-budget form's own
+  // debounced auto-save (full-page Speichern-Button sweep; was a single
+  // click handler inline on the now-removed Save button). Same
+  // primaryLoaded guard the button's own `disabled` used to enforce: never
+  // PUT before the real config was actually read, or a blank round-trip
+  // would wipe the stored limits/budget.
+  async function persistPrimarySafety(patch: { limitUpload?: number; limitDownload?: number; growthBudgetGb?: number }) {
+    if (!primaryLoaded) return;
+    setBudgetState("saving");
+    try {
+      const r = await savePrimarySafety(patch);
+      if (r.ok) {
+        push(t("settings.saved"), "success");
+      } else {
+        push(r.error ?? t("settings.error"), "fail");
+      }
+    } catch (e) {
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
+    } finally {
+      setBudgetState("idle");
+    }
   }
 
   // Toggling immutable ON persists the flag AND — only after a CONFIRMED save —
@@ -636,27 +692,10 @@ export function OffsiteWizard({
               </span>
             </label>
             {/* The off-site schedule is edited in Settings › Schedules now; the wizard
-                saves only the repo URL so it can never clobber that cadence. */}
-            {/* GlimStone follow-up pass (v8.0.0): the "saved"/"error" render this
-                used to show is gone — save() (the shared prop, already toast-
-                migrated in the prior pass) pushes on both outcomes now; see
-                repoState's own declaration comment above. */}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  void save(
-                    { [repoKey]: settings[repoKey] } as Partial<Settings>,
-                    setRepoState,
-                    () => undefined
-                  )
-                }
-                disabled={repoState === "saving"}
-                className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
-              >
-                {repoState === "saving" ? t("common.saving") : t("offsite.wizard.saveRepo")}
-              </button>
-            </div>
+                saves only the repo URL so it can never clobber that cadence.
+                  Full-page Speichern-Button sweep: the "Save repository"
+                button that used to sit here is gone — patchRepo (above)
+                debounce-auto-saves the field itself now. */}
           </>
         )}
 
@@ -670,7 +709,11 @@ export function OffsiteWizard({
               RESTIC_REST_USERNAME
               <input
                 value={cloud.restUser}
-                onChange={(e) => setCloudState((p) => ({ ...p, restUser: e.target.value }))}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setCloudState((p) => ({ ...p, restUser: v }));
+                  debounced("restUser", () => void persistCreds({ restUser: v }));
+                }}
                 spellCheck={false}
                 className={`${inputCls} text-start`}
               />
@@ -680,7 +723,11 @@ export function OffsiteWizard({
               <RevealInput
                 {...revealRestPassword}
                 value={cloud.restPassword}
-                onChange={(e) => setCloudState((p) => ({ ...p, restPassword: e.target.value }))}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setCloudState((p) => ({ ...p, restPassword: v }));
+                  debounced("restPassword", () => void persistCreds({ restPassword: v }));
+                }}
                 spellCheck={false}
                 placeholder={restPwSet ? t("cloud.secretSet") : ""}
                 wrapperClassName="w-full"
@@ -688,16 +735,9 @@ export function OffsiteWizard({
               />
             </label>
             {cloudLoadErr && <span className="text-xs text-statusFail">{cloudLoadErr}</span>}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => void saveCreds()}
-                disabled={credState === "saving" || !cloudLoaded}
-                className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-              >
-                {credState === "saving" ? t("common.saving") : t("offsite.wizard.saveCreds")}
-              </button>
-            </div>
+            {/* Full-page Speichern-Button sweep: the "Save credentials" button
+                that used to sit here is gone — both fields above debounce-
+                auto-save themselves via persistCreds now. */}
           </div>
         )}
 
@@ -786,6 +826,13 @@ export function OffsiteWizard({
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
           <span className={stepTitle}>{t("settings.offsiteLimits")}</span>
           <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.limitHint")}</p>
+          {/* Full-page Speichern-Button sweep: these three fields used to
+              batch into one bottom Save button — each now debounce-auto-
+              saves itself through persistPrimarySafety (below), guarded the
+              same way the old button's `disabled={!primaryLoaded}` was: never
+              PUT before the real config was actually read (a blank round-trip
+              would wipe the stored limits/budget — see primaryLoaded's own
+              declaration comment above). */}
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("settings.limitUpload")}</span>
@@ -793,7 +840,11 @@ export function OffsiteWizard({
                 type="number"
                 min={0}
                 value={pLimitUpload}
-                onChange={(e) => setPLimitUpload(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                onChange={(e) => {
+                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setPLimitUpload(n);
+                  debounced("pLimitUpload", () => void persistPrimarySafety({ limitUpload: n }));
+                }}
                 className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
               />
             </label>
@@ -803,7 +854,11 @@ export function OffsiteWizard({
                 type="number"
                 min={0}
                 value={pLimitDownload}
-                onChange={(e) => setPLimitDownload(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                onChange={(e) => {
+                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setPLimitDownload(n);
+                  debounced("pLimitDownload", () => void persistPrimarySafety({ limitDownload: n }));
+                }}
                 className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
               />
             </label>
@@ -814,41 +869,15 @@ export function OffsiteWizard({
               type="number"
               min={0}
               value={pBudget}
-              onChange={(e) => setPBudget(Math.max(0, parseInt(e.target.value, 10) || 0))}
+              onChange={(e) => {
+                const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                setPBudget(n);
+                debounced("pBudget", () => void persistPrimarySafety({ growthBudgetGb: n }));
+              }}
               className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
             />
           </label>
           <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.primaryRemote.budgetHint")}</p>
-          {/* GlimStone follow-up pass (v8.0.0): the "saved"/"error" flash this
-              used to show is gone — a toast now, same as toggleImmutable's own
-              migration above (this save button owns the SAME budgetState the
-              off-site "grow" branch below shares; see its declaration comment). */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                void (async () => {
-                  setBudgetState("saving");
-                  try {
-                    const r = await savePrimarySafety({ limitUpload: pLimitUpload, limitDownload: pLimitDownload, growthBudgetGb: pBudget });
-                    if (r.ok) {
-                      push(t("settings.saved"), "success");
-                    } else {
-                      push(r.error ?? t("settings.error"), "fail");
-                    }
-                  } catch (e) {
-                    push(e instanceof Error ? e.message : t("settings.error"), "fail");
-                  } finally {
-                    setBudgetState("idle");
-                  }
-                })()
-              }
-              disabled={budgetState === "saving" || !primaryLoaded}
-              className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
-            >
-              {budgetState === "saving" ? t("common.saving") : t("settings.save")}
-            </button>
-          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
@@ -890,6 +919,10 @@ export function OffsiteWizard({
           {retention === "grow" && (
             <div className="flex flex-col gap-2">
               <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.growHint")}</p>
+              {/* Full-page Speichern-Button sweep: this field's own "Save
+                  budget" button is gone — it debounce-auto-saves itself
+                  through the same shared `save` prop every other off-site
+                  field on this page already converted to. */}
               <label className="flex flex-col gap-1 max-w-48">
                 <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
                 <input
@@ -899,30 +932,13 @@ export function OffsiteWizard({
                   onChange={(e) => {
                     const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                     setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
+                    debounced("offsiteGrowthBudgetGB", () =>
+                      void save({ offsiteGrowthBudgetGB: n }, setBudgetState, () => undefined)
+                    );
                   }}
                   className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
                 />
               </label>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    void save(
-                      { offsiteGrowthBudgetGB: settings.offsiteGrowthBudgetGB },
-                      setBudgetState,
-                      () => undefined
-                    )
-                  }
-                  disabled={budgetState === "saving"}
-                  className="rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
-                >
-                  {budgetState === "saving" ? t("common.saving") : t("offsite.retention.saveBudget")}
-                </button>
-                {/* GlimStone follow-up pass (v8.0.0): the "saved" render this
-                    used to show is gone — save() (the shared prop, already
-                    toast-migrated in the prior pass) pushes on both outcomes
-                    now; see budgetState's own declaration comment above. */}
-              </div>
             </div>
           )}
         </div>
