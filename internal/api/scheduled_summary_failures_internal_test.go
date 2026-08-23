@@ -69,7 +69,7 @@ func TestScheduledNotifyResultEnumeratesFailedContainers(t *testing.T) {
 
 	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true,
+		On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true,
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestScheduledNotifyResultAllSuccessNoList(t *testing.T) {
 
 	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true,
+		On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true,
 	}); err != nil {
 		t.Fatal(err)
 	}
