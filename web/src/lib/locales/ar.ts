@@ -289,9 +289,6 @@ const ar: Partial<Translations> = {
   "containers.bulkResult": "{ok} ناجحة، {fail} فاشلة",
   "vm.method.saveFailed": "تعذّر تغيير طريقة النسخ الاحتياطي — لم تتغيّر.",
   "jobs.noContainersIncluded": "لا توجد containers مدرجة في الجدول.",
-  "jobs.flashRow": "إعداد Unraid flash",
-  "jobs.flashPlanned": "مخطَّط",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "كلمة المرور",
@@ -764,8 +761,10 @@ const ar: Partial<Translations> = {
   "filter.noMatch": "لا توجد عناصر تطابق عوامل التصفية الحالية.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "استخدم جدول Containers أيضاً لـ VMs وFlash",
+  "jobs.syncSchedules": "استخدم جدول Containers أيضاً لـ VMs وFlash والمجلدات",
+  "jobs.syncSchedulesHint": "عند التفعيل، تتبع VMs وFlash والمجلدات جدول Containers بدلاً من جدولها الخاص — أوقف التفعيل لضبط وتيرة كل نطاق بشكل مستقل.",
   "jobs.vmIncludeHint": "ينسخ كل VM مفعَّل فيه «التضمين في الجدول» احتياطياً (يُضبط لكل VM في تبويب VMs).",
+  "jobs.flashScheduleHint": "ينسخ محرك أقراص USB الإقلاعي Flash الخاص بـ Unraid (/boot) احتياطيًا في الوقت المجدول.",
   "jobs.flashNotImplemented": "ملاحظة: منفذ نسخ Flash الاحتياطي لم يُنفَّذ بعد في المرحلة الأولى — يُحفظ الجدول لكنه لا يُنفَّذ.",
   "schedule.includeAll": "تضمين الكل في الجدول",
   "schedule.excludeAll": "استبعاد الكل من الجدول",
@@ -959,6 +958,7 @@ const ar: Partial<Translations> = {
   "settings.tab.integrity": "السلامة",
   "settings.tab.system": "النظام",
   "settings.schedulesBackup": "جداول النسخ الاحتياطي",
+  "settings.schedulesOptions": "خيارات الجدولة",
   "settings.schedulesOffsite": "جداول النسخ المتماثل خارج الموقع",
   "settings.schedulesSelfBackup": "جدول النسخ الاحتياطي الذاتي",
   "settings.schedulesChecks": "جدول فحص الاستعادة",

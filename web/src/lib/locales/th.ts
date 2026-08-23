@@ -289,9 +289,6 @@ const th: Partial<Translations> = {
   "containers.bulkResult": "สำเร็จ {ok} ล้มเหลว {fail}",
   "vm.method.saveFailed": "เปลี่ยนวิธีสำรองข้อมูลไม่ได้ — ยังไม่ถูกเปลี่ยน",
   "jobs.noContainersIncluded": "ไม่มี containers ในตารางเวลา",
-  "jobs.flashRow": "การตั้งค่า Unraid flash",
-  "jobs.flashPlanned": "วางแผนแล้ว",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "รหัสผ่าน",
@@ -764,8 +761,10 @@ const th: Partial<Translations> = {
   "filter.noMatch": "ไม่มีรายการที่ตรงกับตัวกรองปัจจุบัน",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "ใช้ตารางเวลาของ Containers สำหรับ VMs และ Flash ด้วย",
+  "jobs.syncSchedules": "ใช้ตารางเวลาของ Containers สำหรับ VMs, Flash และโฟลเดอร์ด้วย",
+  "jobs.syncSchedulesHint": "เมื่อเปิดใช้งาน VMs, Flash และโฟลเดอร์ทั้งหมดจะใช้ตารางเวลาของ Containers แทนตารางของตัวเอง — ปิดเพื่อกำหนดจังหวะของแต่ละโดเมนแยกกัน",
   "jobs.vmIncludeHint": "สำรองข้อมูลทุก VM ที่เปิด «รวมในตารางเวลา» ไว้ (ตั้งค่าแยกแต่ละ VM ในแท็บ VMs)",
+  "jobs.flashScheduleHint": "สำรองข้อมูลไดรฟ์บูต USB Flash ของ Unraid (/boot) ตามเวลาที่กำหนดไว้",
   "jobs.flashNotImplemented": "หมายเหตุ: ตัวประมวลผลสำรองข้อมูล Flash ยังไม่ได้พัฒนาในเฟส 1 — ตารางเวลาจะถูกบันทึกแต่ไม่ถูกดำเนินการ",
   "schedule.includeAll": "รวมทั้งหมดในตารางเวลา",
   "schedule.excludeAll": "ยกเว้นทั้งหมดจากตารางเวลา",
@@ -959,6 +958,7 @@ const th: Partial<Translations> = {
   "settings.tab.integrity": "ความสมบูรณ์",
   "settings.tab.system": "ระบบ",
   "settings.schedulesBackup": "กำหนดการสำรองข้อมูล",
+  "settings.schedulesOptions": "ตัวเลือกกำหนดการ",
   "settings.schedulesOffsite": "กำหนดการจำลองข้อมูลนอกสถานที่",
   "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",
   "settings.schedulesChecks": "กำหนดการตรวจสอบการกู้คืน",

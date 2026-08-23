@@ -289,9 +289,6 @@ const es: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} con error",
   "vm.method.saveFailed": "No se pudo cambiar el método de copia — no se modificó.",
   "jobs.noContainersIncluded": "Ningún contenedor incluido en el calendario.",
-  "jobs.flashRow": "Configuración flash de Unraid",
-  "jobs.flashPlanned": "planificado",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Contraseña",
@@ -759,8 +756,10 @@ const es: Partial<Translations> = {
   "filter.noMatch": "Ningún elemento coincide con los filtros actuales.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Usar el calendario de Contenedores también para las VMs y Flash",
+  "jobs.syncSchedules": "Usar el calendario de Contenedores también para las VMs, Flash y Carpetas",
+  "jobs.syncSchedulesHint": "Cuando está activado, las VMs, Flash y Carpetas siguen el calendario de Contenedores en lugar del propio — desactívalo para establecer el ritmo de cada dominio de forma independiente.",
   "jobs.vmIncludeHint": "Hace copia de cada VM con «incluir en el calendario» activado (configúralo por VM en la pestaña VMs).",
+  "jobs.flashScheduleHint": "Hace copia de seguridad de la unidad USB de arranque Flash de Unraid (/boot) a la hora programada.",
   "jobs.flashNotImplemented": "Nota: el ejecutor de copias de Flash aún no está implementado en la fase 1 — el calendario se guarda pero no se ejecuta.",
   "schedule.includeAll": "Incluir todo en el calendario",
   "schedule.excludeAll": "Excluir todo del calendario",
@@ -954,6 +953,7 @@ const es: Partial<Translations> = {
   "settings.tab.integrity": "Integridad",
   "settings.tab.system": "Sistema",
   "settings.schedulesBackup": "Programaciones de copia de seguridad",
+  "settings.schedulesOptions": "Opciones de programación",
   "settings.schedulesOffsite": "Programaciones de replicación externa",
   "settings.schedulesSelfBackup": "Programación de autocopia",
   "settings.schedulesChecks": "Programación de verificación de restauración",

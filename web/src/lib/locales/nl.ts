@@ -284,9 +284,6 @@ const nl: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} mislukt",
   "vm.method.saveFailed": "Kon de back-upmethode niet wijzigen — er is niets veranderd.",
   "jobs.noContainersIncluded": "Geen containers opgenomen in planning.",
-  "jobs.flashRow": "Unraid flash-configuratie",
-  "jobs.flashPlanned": "gepland",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Wachtwoord",
@@ -729,8 +726,10 @@ const nl: Partial<Translations> = {
   "filter.noMatch": "Geen items komen overeen met de huidige filters.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Gebruik de planning van Containers ook voor VM's en Flash",
+  "jobs.syncSchedules": "Gebruik de planning van Containers ook voor VM's, Flash en Mappen",
+  "jobs.syncSchedulesHint": "Indien ingeschakeld volgen VM's, Flash en Mappen de planning van Containers in plaats van hun eigen planning — schakel uit om voor elk domein een eigen ritme in te stellen.",
   "jobs.vmIncludeHint": "Maakt een back-up van elke VM waarbij „opnemen in planning” is ingeschakeld (stel dit per VM in op het tabblad VM's).",
+  "jobs.flashScheduleHint": "Back-upt de Unraid USB-flash-bootstick (/boot) op het geplande tijdstip.",
   "jobs.flashNotImplemented": "Let op: de Flash-back-upuitvoerder is in fase 1 nog niet geïmplementeerd — de planning wordt opgeslagen maar niet uitgevoerd.",
   "schedule.includeAll": "Alles in planning opnemen",
   "schedule.excludeAll": "Alles uit planning uitsluiten",
@@ -953,6 +952,7 @@ const nl: Partial<Translations> = {
   "settings.tab.integrity": "Integriteit",
   "settings.tab.system": "Systeem",
   "settings.schedulesBackup": "Back-upschema's",
+  "settings.schedulesOptions": "Planningsopties",
   "settings.schedulesOffsite": "Off-site-replicatieschema's",
   "settings.schedulesSelfBackup": "Zelf-back-upschema",
   "settings.schedulesChecks": "Herstelcontroleschema",

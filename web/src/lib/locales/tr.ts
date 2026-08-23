@@ -289,9 +289,6 @@ const tr: Partial<Translations> = {
   "containers.bulkResult": "{ok} tamam, {fail} başarısız",
   "vm.method.saveFailed": "Yedekleme yöntemi değiştirilemedi — değiştirilmedi.",
   "jobs.noContainersIncluded": "Zamanlamaya eklenmiş konteyner yok.",
-  "jobs.flashRow": "Unraid flash yapılandırması",
-  "jobs.flashPlanned": "planlandı",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Parola",
@@ -761,8 +758,10 @@ const tr: Partial<Translations> = {
   "filter.noMatch": "Geçerli filtrelerle eşleşen öğe yok.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Konteyner zamanlamasını VM'ler ve Flash için de kullan",
+  "jobs.syncSchedules": "Konteyner zamanlamasını VM'ler, Flash ve Klasörler için de kullan",
+  "jobs.syncSchedulesHint": "Etkinleştirildiğinde VM'ler, Flash ve Klasörler kendi zamanlamaları yerine Konteyner zamanlamasını izler — her alan için ayrı bir sıklık ayarlamak üzere kapatın.",
   "jobs.vmIncludeHint": "“Zamanlamaya ekle” etkin olan her VM'yi yedekler (her VM için VMs sekmesinden ayarlanır).",
+  "jobs.flashScheduleHint": "Unraid USB Flash önyükleme sürücüsünü (/boot) zamanlanan saatte yedekler.",
   "jobs.flashNotImplemented": "Not: Flash yedekleme yürütücüsü Aşama 1'de henüz uygulanmadı — zamanlama saklanır ancak çalıştırılmaz.",
   "schedule.includeAll": "Tümünü zamanlamaya ekle",
   "schedule.excludeAll": "Tümünü zamanlamadan çıkar",
@@ -956,6 +955,7 @@ const tr: Partial<Translations> = {
   "settings.tab.integrity": "Bütünlük",
   "settings.tab.system": "Sistem",
   "settings.schedulesBackup": "Yedekleme zamanlamaları",
+  "settings.schedulesOptions": "Zamanlama seçenekleri",
   "settings.schedulesOffsite": "Site dışı çoğaltma zamanlamaları",
   "settings.schedulesSelfBackup": "Kendi kendine yedekleme zamanlaması",
   "settings.schedulesChecks": "Geri yükleme denetimi zamanlaması",

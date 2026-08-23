@@ -289,9 +289,6 @@ const el: Partial<Translations> = {
   "containers.bulkResult": "{ok} εντάξει, {fail} απέτυχαν",
   "vm.method.saveFailed": "Δεν ήταν δυνατή η αλλαγή της μεθόδου αντιγράφου — δεν άλλαξε.",
   "jobs.noContainersIncluded": "Δεν περιλαμβάνονται containers στο χρονοδιάγραμμα.",
-  "jobs.flashRow": "Διαμόρφωση Unraid flash",
-  "jobs.flashPlanned": "προγραμματισμένο",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Κωδικός πρόσβασης",
@@ -761,8 +758,10 @@ const el: Partial<Translations> = {
   "filter.noMatch": "Κανένα στοιχείο δεν ταιριάζει με τα τρέχοντα φίλτρα.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Χρήση του χρονοδιαγράμματος Containers και για VMs και Flash",
+  "jobs.syncSchedules": "Χρήση του χρονοδιαγράμματος Containers και για VMs, Flash και Φακέλους",
+  "jobs.syncSchedulesHint": "Όταν είναι ενεργό, τα VMs, το Flash και οι Φάκελοι ακολουθούν το χρονοδιάγραμμα των Containers αντί για το δικό τους — απενεργοποιήστε το για να ορίσετε τον ρυθμό κάθε τομέα ξεχωριστά.",
   "jobs.vmIncludeHint": "Δημιουργεί αντίγραφο κάθε VM με ενεργό το «Συμπερίληψη στο χρονοδιάγραμμα» (ορίζεται ανά VM στην καρτέλα VMs).",
+  "jobs.flashScheduleHint": "Δημιουργεί αντίγραφο ασφαλείας του USB εκκίνησης Flash του Unraid (/boot) την προγραμματισμένη ώρα.",
   "jobs.flashNotImplemented": "Σημείωση: Ο εκτελεστής αντιγράφου Flash δεν έχει υλοποιηθεί ακόμα στη Φάση 1 — το χρονοδιάγραμμα αποθηκεύεται αλλά δεν εκτελείται.",
   "schedule.includeAll": "Συμπερίληψη όλων στο χρονοδιάγραμμα",
   "schedule.excludeAll": "Εξαίρεση όλων από το χρονοδιάγραμμα",
@@ -956,6 +955,7 @@ const el: Partial<Translations> = {
   "settings.tab.integrity": "Ακεραιότητα",
   "settings.tab.system": "Σύστημα",
   "settings.schedulesBackup": "Προγραμματισμοί αντιγράφων ασφαλείας",
+  "settings.schedulesOptions": "Επιλογές προγραμματισμού",
   "settings.schedulesOffsite": "Προγραμματισμοί αναπαραγωγής εκτός τόπου",
   "settings.schedulesSelfBackup": "Προγραμματισμός αυτο-αντιγράφου",
   "settings.schedulesChecks": "Προγραμματισμός ελέγχου επαναφοράς",

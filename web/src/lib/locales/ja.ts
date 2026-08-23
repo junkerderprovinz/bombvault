@@ -289,9 +289,6 @@ const ja: Partial<Translations> = {
   "containers.bulkResult": "成功 {ok}、失敗 {fail}",
   "vm.method.saveFailed": "バックアップ方式を変更できませんでした — 変更されていません。",
   "jobs.noContainersIncluded": "スケジュールに含まれているコンテナがありません。",
-  "jobs.flashRow": "Unraid フラッシュ設定",
-  "jobs.flashPlanned": "計画済み",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "パスワード",
@@ -728,8 +725,10 @@ const ja: Partial<Translations> = {
   "filter.noMatch": "現在のフィルターに一致する項目はありません。",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "コンテナのスケジュールを VM とフラッシュにも使用する",
+  "jobs.syncSchedules": "コンテナのスケジュールを VM、フラッシュ、フォルダーにも使用する",
+  "jobs.syncSchedulesHint": "有効にすると、VM、フラッシュ、フォルダーは独自のスケジュールではなくコンテナのスケジュールに従います — 各ドメインの周期を個別に設定するにはオフにしてください。",
   "jobs.vmIncludeHint": "「スケジュールに含める」が有効なすべての VM をバックアップします（VM ごとに VMs タブで設定）。",
+  "jobs.flashScheduleHint": "予定時刻に Unraid の USB フラッシュ起動ドライブ(/boot)をバックアップします。",
   "jobs.flashNotImplemented": "注意: フラッシュバックアップの実行機能はフェーズ 1 ではまだ未実装です — スケジュールは保存されますが実行されません。",
   "schedule.includeAll": "すべてスケジュールに含める",
   "schedule.excludeAll": "すべてスケジュールから除外",
@@ -948,6 +947,7 @@ const ja: Partial<Translations> = {
   "settings.tab.integrity": "整合性",
   "settings.tab.system": "システム",
   "settings.schedulesBackup": "バックアップスケジュール",
+  "settings.schedulesOptions": "スケジュールオプション",
   "settings.schedulesOffsite": "オフサイトレプリケーションスケジュール",
   "settings.schedulesSelfBackup": "セルフバックアップスケジュール",
   "settings.schedulesChecks": "復元チェックスケジュール",

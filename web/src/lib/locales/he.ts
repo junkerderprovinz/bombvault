@@ -289,9 +289,6 @@ const he: Partial<Translations> = {
   "containers.bulkResult": "{ok} תקין, {fail} נכשלו",
   "vm.method.saveFailed": "לא ניתן לשנות את שיטת הגיבוי — היא לא שונתה.",
   "jobs.noContainersIncluded": "אין containers בלוח הזמנים.",
-  "jobs.flashRow": "הגדרת Unraid flash",
-  "jobs.flashPlanned": "מתוכנן",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "סיסמה",
@@ -736,8 +733,10 @@ const he: Partial<Translations> = {
   "filter.noMatch": "אין פריטים התואמים למסננים הנוכחיים.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "השתמש בלוח הזמנים של Containers גם עבור VMs ו-Flash",
+  "jobs.syncSchedules": "השתמש בלוח הזמנים של Containers גם עבור VMs, Flash ותיקיות",
+  "jobs.syncSchedulesHint": "כאשר מופעל, VMs, Flash ותיקיות פועלים לפי לוח הזמנים של Containers במקום לפי שלהם — כבה כדי להגדיר קצב נפרד לכל תחום.",
   "jobs.vmIncludeHint": "מגבה כל VM שבו מופעל „כלול בלוח הזמנים‟ (נקבע לכל VM בלשונית VMs).",
+  "jobs.flashScheduleHint": "מגבה את כונן ה-USB לאתחול Flash של Unraid (/boot) בשעה המתוזמנת.",
   "jobs.flashNotImplemented": "הערה: מנוע גיבוי Flash טרם מומש בשלב 1 — לוח הזמנים נשמר אך אינו מורץ.",
   "schedule.includeAll": "כלול הכל בלוח הזמנים",
   "schedule.excludeAll": "החרג הכל מלוח הזמנים",
@@ -956,6 +955,7 @@ const he: Partial<Translations> = {
   "settings.tab.integrity": "שלמות",
   "settings.tab.system": "מערכת",
   "settings.schedulesBackup": "תזמוני גיבוי",
+  "settings.schedulesOptions": "אפשרויות תזמון",
   "settings.schedulesOffsite": "תזמוני שכפול מחוץ לאתר",
   "settings.schedulesSelfBackup": "תזמון גיבוי עצמי",
   "settings.schedulesChecks": "תזמון בדיקת שחזור",

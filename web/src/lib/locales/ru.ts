@@ -284,9 +284,6 @@ const ru: Partial<Translations> = {
   "containers.bulkResult": "{ok} ок, {fail} с ошибкой",
   "vm.method.saveFailed": "Не удалось изменить метод резервного копирования — он не был изменён.",
   "jobs.noContainersIncluded": "Ни один контейнер не включён в расписание.",
-  "jobs.flashRow": "Конфигурация Unraid flash",
-  "jobs.flashPlanned": "запланировано",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Пароль",
@@ -727,8 +724,10 @@ const ru: Partial<Translations> = {
   "filter.noMatch": "Нет элементов, соответствующих текущим фильтрам.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Использовать расписание контейнеров также для VM и Flash",
+  "jobs.syncSchedules": "Использовать расписание контейнеров также для VM, Flash и Папок",
+  "jobs.syncSchedulesHint": "Если включено, VM, Flash и Папки используют расписание контейнеров вместо собственного — отключите, чтобы задать ритм для каждого домена отдельно.",
   "jobs.vmIncludeHint": "Создаёт копию каждой VM с включённым «Включить в расписание» (настраивается для каждой VM на вкладке VMs).",
+  "jobs.flashScheduleHint": "Резервное копирование загрузочного USB-накопителя Unraid Flash (/boot) в запланированное время.",
   "jobs.flashNotImplemented": "Примечание: исполнитель резервного копирования Flash в фазе 1 ещё не реализован — расписание сохраняется, но не выполняется.",
   "schedule.includeAll": "Включить все в расписание",
   "schedule.excludeAll": "Исключить все из расписания",
@@ -951,6 +950,7 @@ const ru: Partial<Translations> = {
   "settings.tab.integrity": "Целостность",
   "settings.tab.system": "Система",
   "settings.schedulesBackup": "Расписания резервного копирования",
+  "settings.schedulesOptions": "Настройки расписания",
   "settings.schedulesOffsite": "Расписания внешней репликации",
   "settings.schedulesSelfBackup": "Расписание самокопирования",
   "settings.schedulesChecks": "Расписание проверки восстановления",

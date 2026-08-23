@@ -287,9 +287,6 @@ const uk: Partial<Translations> = {
   "containers.bulkResult": "{ok} ок, {fail} з помилкою",
   "vm.method.saveFailed": "Не вдалося змінити метод резервного копіювання — його не змінено.",
   "jobs.noContainersIncluded": "Жоден контейнер не включено до розкладу.",
-  "jobs.flashRow": "Конфігурація Unraid flash",
-  "jobs.flashPlanned": "заплановано",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Пароль",
@@ -756,8 +753,10 @@ const uk: Partial<Translations> = {
   "filter.noMatch": "Немає елементів, що відповідають поточним фільтрам.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Використовувати розклад контейнерів також для VM і Flash",
+  "jobs.syncSchedules": "Використовувати розклад контейнерів також для VM, Flash і Папок",
+  "jobs.syncSchedulesHint": "Якщо увімкнено, VM, Flash і Папки використовують розклад контейнерів замість власного — вимкніть, щоб налаштувати ритм кожного домену окремо.",
   "jobs.vmIncludeHint": "Створює копію кожної VM з увімкненим «Включити до розкладу» (налаштовується для кожної VM на вкладці VMs).",
+  "jobs.flashScheduleHint": "Резервне копіювання завантажувального USB-накопичувача Unraid Flash (/boot) у запланований час.",
   "jobs.flashNotImplemented": "Примітка: виконавець резервного копіювання Flash у фазі 1 ще не реалізовано — розклад зберігається, але не виконується.",
   "schedule.includeAll": "Включити всі до розкладу",
   "schedule.excludeAll": "Виключити всі з розкладу",
@@ -951,6 +950,7 @@ const uk: Partial<Translations> = {
   "settings.tab.integrity": "Цілісність",
   "settings.tab.system": "Система",
   "settings.schedulesBackup": "Розклади резервного копіювання",
+  "settings.schedulesOptions": "Параметри розкладу",
   "settings.schedulesOffsite": "Розклади зовнішньої реплікації",
   "settings.schedulesSelfBackup": "Розклад самокопіювання",
   "settings.schedulesChecks": "Розклад перевірки відновлення",

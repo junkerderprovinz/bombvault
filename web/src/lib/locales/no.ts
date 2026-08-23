@@ -286,9 +286,6 @@ const no: Partial<Translations> = {
   "containers.bulkResult": "{ok} ok, {fail} mislyktes",
   "vm.method.saveFailed": "Kunne ikke endre sikkerhetskopimetoden — den ble ikke endret.",
   "jobs.noContainersIncluded": "Ingen kontainere inkludert i tidsplan.",
-  "jobs.flashRow": "Unraid flash-konfigurasjon",
-  "jobs.flashPlanned": "planlagt",
-
   // Auth / Login
   "auth.loginTitle": "BombVault",
   "auth.passwordLabel": "Passord",
@@ -732,8 +729,10 @@ const no: Partial<Translations> = {
   "filter.noMatch": "Ingen elementer samsvarer med gjeldende filtre.",
 
   // Schedules / Plans tab
-  "jobs.syncSchedules": "Bruk kontainer-tidsplanen også for VM-er og Flash",
+  "jobs.syncSchedules": "Bruk kontainer-tidsplanen også for VM-er, Flash og Mapper",
+  "jobs.syncSchedulesHint": "Når aktivert følger VM-er, Flash og Mapper kontainer-tidsplanen i stedet for sin egen — slå av for å angi hver domenes rytme uavhengig.",
   "jobs.vmIncludeHint": "Sikkerhetskopierer hver VM med «Inkluder i tidsplan» aktivert (stilles inn per VM i VMs-fanen).",
+  "jobs.flashScheduleHint": "Sikkerhetskopierer Unraids USB-flash-oppstartsdisk (/boot) til planlagt tid.",
   "jobs.flashNotImplemented": "Merk: Flash-sikkerhetskopi-executoren er ennå ikke implementert i fase 1 — tidsplanen lagres, men kjøres ikke.",
   "schedule.includeAll": "Inkluder alle i tidsplan",
   "schedule.excludeAll": "Ekskluder alle fra tidsplan",
@@ -956,6 +955,7 @@ const no: Partial<Translations> = {
   "settings.tab.integrity": "Integritet",
   "settings.tab.system": "System",
   "settings.schedulesBackup": "Sikkerhetskopieringsplaner",
+  "settings.schedulesOptions": "Tidsplanalternativer",
   "settings.schedulesOffsite": "Off-site-replikeringsplaner",
   "settings.schedulesSelfBackup": "Plan for selvsikkerhetskopiering",
   "settings.schedulesChecks": "Plan for gjenopprettingssjekk",
