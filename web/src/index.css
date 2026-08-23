@@ -881,6 +881,93 @@ body {
   width: 13.75rem;
 }
 
+/* Time picker (GlimStone form-engine — a NEW shared component, design-
+   language.md "The time picker") — the popover replacing every native
+   `<input type="time">` in the app (components/TimePicker.tsx). Same portal +
+   measure-then-clamp-position + outside-click/Escape/scroll-dismiss contract
+   as the colour picker above and InfoBubble.tsx/IconTipButton.tsx's tooltip
+   (lib/bubblePosition.ts's computeBubblePosition, which THIS popover actually
+   calls, unlike .glim-picker-popover above which predates that helper and
+   still does its own inline clamp math). `.glim-time-popover` is this
+   control's own version of `.glim-picker-popover`/`.glim-bubble`'s shared
+   floating-chrome recipe: fixed position, one elevation, one hairline,
+   centred on `left` via `transform: translateX(-50%)` + `width: max-content`
+   to match computeBubblePosition's own centred-trigger math exactly (see
+   .glim-bubble's own header comment above for the live bug this exact pairing
+   fixes — a box sized by CSS shrink-to-fit before being positioned silently
+   invalidates the very measurement the position was based on). `.glim-fade`
+   gives it the same short opacity-only entrance and already respects
+   prefers-reduced-motion on its own (see that class's own
+   @media(prefers-reduced-motion:no-preference)-only binding further down this
+   file — no separate reduced-motion override is needed here).
+     Two independently scrollable listbox columns (hour 0-23, minute in
+   configurable steps, default 5) sit inside, each a real `role="listbox"` —
+   the same "custom listbox escape hatch" Settings.tsx's LanguageCard already
+   established for a control that needs full styling control a native
+   `<select>` can't give it, extended here to a scrollable NUMERIC column
+   instead of a short fixed list. `.glim-time-option`'s selected state uses
+   `--accent`/`--accent-contrast` directly, not a rainbow position — this is a
+   standalone field-replacing control, not a row in an enumerable list, the
+   same reasoning ColorPickerSwatch's own trigger/popover use `--accent`
+   directly instead of an `hueIndex` (see that file's header comment); the
+   component itself still accepts an optional `hueIndex` prop for a future
+   call site that DOES sit in a hue-indexed list, wired through the exact same
+   `hueVars(rainbowAt(i))`/`.glim-hue` mechanism Selector.tsx's segments use,
+   so that future consumer needs no new plumbing here. */
+.glim-time-popover {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background-color: var(--carbon-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--elevation), var(--hairline);
+  transform: translateX(-50%);
+  width: max-content;
+}
+.glim-time-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 3.25rem;
+  max-height: 11rem;
+  overflow-y: auto;
+}
+.glim-time-option {
+  flex: none;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-control);
+  padding: 0.3rem 0;
+  font-size: var(--text-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--carbon-text-sub);
+  cursor: pointer;
+  text-align: center;
+}
+.glim-time-option:hover {
+  background-color: var(--carbon-hover);
+  color: var(--carbon-text);
+}
+.glim-time-option[aria-selected="true"] {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+/* A hue-indexed TimePicker (future call site, `hueIndex` prop) needs NO
+   separate rule here: `[data-rainbow] .glim-hue` (earlier in this file)
+   already redefines the PLAIN --accent/--accent-contrast custom properties
+   themselves (not just the Tailwind-mapped --color-* pair) for any element
+   carrying that class, so the `[aria-selected="true"]` rule above — which
+   reads var(--accent)/var(--accent-contrast) directly — resolves to the
+   item's own hue automatically the moment the option also carries
+   `.glim-hue` + its own `--item-hue`/`--item-hue-ink` (via hueVars()). Same
+   composition the base `:focus-visible` rule relies on further down this
+   file for a hue-enabled Selector segment's focus ring — no second,
+   hue-specific selector duplicating the accent one above. */
+
 /* The hex field beside the picker — a plain borderless filled field (rule
    14), monospace so every hex digit lines up, uppercase-styled via
    letter-spacing/text-transform rather than forcing the stored value's own

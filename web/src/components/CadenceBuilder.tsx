@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useT } from "../lib/i18n";
 import { isValidCronExpression, nextCronFires } from "../lib/cron";
 import { Selector } from "./Selector";
+import { TimePicker } from "./TimePicker";
 
 // ---------------------------------------------------------------------------
 // Schedule cadence builder (shared by the Plans tab and the Settings drills card)
@@ -278,15 +279,24 @@ export function CadenceBuilder({
         raised
       />
 
-      {/* Time picker — shown for all non-off modes except cron (the expression carries its own times) */}
+      {/* Time picker — shown for all non-off modes except cron (the expression
+          carries its own times). Formerly a native `<input type="time">`;
+          replaced by the shared TimePicker component (GlimStone form-engine,
+          new standard component — jdp, live-review: "einen schönen Stunden-
+          und Minuten-Picker... damit man es nicht manuell eintippen muss").
+          Same "HH:MM" string wired straight into `update({ time })` as
+          before — only the input UI changed, CadenceState's own data model
+          didn't. Disabling still comes from the ancestor `<fieldset
+          disabled>` alone (a real `<button>` trigger, same as every other
+          disabled-aware control in this fieldset), no separate `disabled`
+          prop needed here. */}
       {state.mode !== "off" && state.mode !== "cron" && (
         <div className="flex items-center gap-3">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.time")}</label>
-          <input
-            type="time"
+          <TimePicker
             value={state.time}
-            onChange={(e) => update({ time: e.target.value })}
-            className={inputCls}
+            onChange={(time) => update({ time })}
+            label={t("cadence.time")}
           />
         </div>
       )}
