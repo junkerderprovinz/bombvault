@@ -212,6 +212,7 @@ const da: Partial<Translations> = {
   "settings.rainbowRotate": "Farverotation",
   "settings.rainbowRotateHint": "Flytter hvilken paletfarve der tæller som position 0, så den samme liste ikke altid starter med præcis samme farve, hver gang du slår Regnbuetilstand til eller genindlæser siden.",
   "settings.rainbowPalette": "Paletfarve",
+  "settings.rainbowPaletteLabel": "Farvepalet",
   "settings.quietToasts": "Stille notifikationer",
   "settings.quietToastsHint": "Vis kun pop op-beskeder ved fejl. Rutinemæssige gem- og kopibekræftelser forbliver stille.",
 

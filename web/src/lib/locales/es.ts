@@ -212,6 +212,7 @@ const es: Partial<Translations> = {
   "settings.rainbowRotate": "Rotación de colores",
   "settings.rainbowRotateHint": "Cambia qué color de la paleta cuenta como posición 0, para que la misma lista no empiece siempre exactamente con el mismo color cada vez que activas el modo arcoíris o recargas la página.",
   "settings.rainbowPalette": "Color de la paleta",
+  "settings.rainbowPaletteLabel": "Paleta de colores",
   "settings.quietToasts": "Notificaciones silenciosas",
   "settings.quietToastsHint": "Mostrar avisos emergentes solo para fallos. Las confirmaciones rutinarias de guardado y copia permanecen silenciosas.",
 

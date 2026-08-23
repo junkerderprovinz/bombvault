@@ -212,6 +212,7 @@ const he: Partial<Translations> = {
   "settings.rainbowRotate": "סבב צבעים",
   "settings.rainbowRotateHint": "מזיז איזה צבע בפלטה נחשב למיקום 0, כך שאותה רשימה לא תמיד תתחיל בדיוק באותו צבע בכל פעם שמפעילים את מצב הקשת או טוענים מחדש את הדף.",
   "settings.rainbowPalette": "צבע בלוח",
+  "settings.rainbowPaletteLabel": "לוח צבעים",
   "settings.quietToasts": "התראות שקטות",
   "settings.quietToastsHint": "הצג הודעות קופצות רק בעת כשלים. אישורי שמירה והעתקה שגרתיים יישארו שקטים.",
 

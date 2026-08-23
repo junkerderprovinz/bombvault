@@ -209,6 +209,7 @@ const pt: Partial<Translations> = {
   "settings.rainbowRotate": "Rotação de cores",
   "settings.rainbowRotateHint": "Muda qual cor da paleta conta como posição 0, para que a mesma lista nem sempre comece exatamente com a mesma cor toda vez que você ativa o Modo Arco-íris ou recarrega a página.",
   "settings.rainbowPalette": "Cor da paleta",
+  "settings.rainbowPaletteLabel": "Paleta de cores",
   "settings.quietToasts": "Notificações silenciosas",
   "settings.quietToastsHint": "Mostrar avisos pop-up apenas para falhas. As confirmações de rotina de salvar e copiar permanecem silenciosas.",
 

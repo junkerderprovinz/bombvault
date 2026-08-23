@@ -209,6 +209,7 @@ const ro: Partial<Translations> = {
   "settings.rainbowRotate": "Rotația culorilor",
   "settings.rainbowRotateHint": "Schimbă ce culoare din paletă contează ca poziția 0, astfel încât aceeași listă să nu înceapă mereu exact cu aceeași culoare de fiecare dată când activezi Modul curcubeu sau reîncarci pagina.",
   "settings.rainbowPalette": "Culoare din paletă",
+  "settings.rainbowPaletteLabel": "Paletă de culori",
   "settings.quietToasts": "Notificări discrete",
   "settings.quietToastsHint": "Afișează notificările pop-up doar pentru erori. Confirmările de rutină de salvare și copiere rămân silențioase.",
 

@@ -207,6 +207,7 @@ const nl: Partial<Translations> = {
   "settings.rainbowRotate": "Kleurrotatie",
   "settings.rainbowRotateHint": "Verschuift welke paletkleur als positie 0 telt, zodat dezelfde lijst niet elke keer met exact dezelfde kleur begint wanneer je Regenboogmodus aanzet of de pagina herlaadt.",
   "settings.rainbowPalette": "Paletkleur",
+  "settings.rainbowPaletteLabel": "Kleurenpalet",
   "settings.quietToasts": "Stille meldingen",
   "settings.quietToastsHint": "Toon pop-upmeldingen alleen bij fouten. Routinematige opslaan- en kopieerbevestigingen blijven stil.",
 

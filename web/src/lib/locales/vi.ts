@@ -212,6 +212,7 @@ const vi: Partial<Translations> = {
   "settings.rainbowRotate": "Luân chuyển màu",
   "settings.rainbowRotateHint": "Dịch chuyển màu nào trong bảng màu được tính là vị trí 0, để cùng một danh sách không phải lúc nào cũng bắt đầu bằng đúng một màu mỗi khi bạn bật Chế độ cầu vồng hoặc tải lại trang.",
   "settings.rainbowPalette": "Màu trong bảng",
+  "settings.rainbowPaletteLabel": "Bảng màu",
   "settings.quietToasts": "Thông báo im lặng",
   "settings.quietToastsHint": "Chỉ hiển thị thông báo bật lên khi có lỗi. Các xác nhận lưu và sao chép thông thường sẽ không hiển thị.",
 

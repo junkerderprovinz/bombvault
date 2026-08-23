@@ -212,6 +212,7 @@ const fi: Partial<Translations> = {
   "settings.rainbowRotate": "Värikierto",
   "settings.rainbowRotateHint": "Siirtää, mikä paletin väri lasketaan positioksi 0, jotta sama lista ei aina ala täsmälleen samasta väristä joka kerta, kun Sateenkaaritila kytketään päälle tai sivu ladataan uudelleen.",
   "settings.rainbowPalette": "Paletin väri",
+  "settings.rainbowPaletteLabel": "Väripaletti",
   "settings.quietToasts": "Hiljaiset ilmoitukset",
   "settings.quietToastsHint": "Näytä ponnahdusilmoitukset vain virheistä. Rutiininomaiset tallennus- ja kopiointivahvistukset pysyvät hiljaisina.",
 

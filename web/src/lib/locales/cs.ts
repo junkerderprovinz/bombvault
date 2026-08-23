@@ -212,6 +212,7 @@ const cs: Partial<Translations> = {
   "settings.rainbowRotate": "Rotace barev",
   "settings.rainbowRotateHint": "Posune, která barva palety se počítá jako pozice 0, takže stejný seznam nezačíná pokaždé přesně stejnou barvou při každém zapnutí Duhového režimu nebo znovunačtení stránky.",
   "settings.rainbowPalette": "Barva palety",
+  "settings.rainbowPaletteLabel": "Barevná paleta",
   "settings.quietToasts": "Tichá oznámení",
   "settings.quietToastsHint": "Zobrazovat vyskakovací oznámení jen při chybách. Běžná potvrzení uložení a kopírování zůstanou bez oznámení.",
 

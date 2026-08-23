@@ -212,6 +212,7 @@ const ja: Partial<Translations> = {
   "settings.rainbowRotate": "カラーローテーション",
   "settings.rainbowRotateHint": "パレットのどの色を位置0とするかをずらし、レインボーモードをオンにするたび、またはページを再読み込みするたびに同じリストが毎回まったく同じ色から始まらないようにします。",
   "settings.rainbowPalette": "パレットの色",
+  "settings.rainbowPaletteLabel": "カラーパレット",
   "settings.quietToasts": "通知を控えめにする",
   "settings.quietToastsHint": "失敗時のみポップアップ通知を表示します。保存やコピーの通常の確認通知は表示されません。",
 

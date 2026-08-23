@@ -212,6 +212,7 @@ const hu: Partial<Translations> = {
   "settings.rainbowRotate": "Színforgatás",
   "settings.rainbowRotateHint": "Eltolja, hogy a paletta melyik színe számít 0. pozíciónak, így ugyanaz a lista nem mindig pontosan ugyanazzal a színnel kezdődik, amikor bekapcsolod a Szivárvány módot vagy újratöltöd az oldalt.",
   "settings.rainbowPalette": "Palettaszín",
+  "settings.rainbowPaletteLabel": "Színpaletta",
   "settings.quietToasts": "Csendes értesítések",
   "settings.quietToastsHint": "Csak hibák esetén jelenjenek meg felugró értesítések. A rutin mentési és másolási visszaigazolások csendben maradnak.",
 

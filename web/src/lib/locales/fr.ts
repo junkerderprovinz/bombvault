@@ -212,6 +212,7 @@ const fr: Partial<Translations> = {
   "settings.rainbowRotate": "Rotation des couleurs",
   "settings.rainbowRotateHint": "Change la couleur de la palette qui compte comme position 0, pour que la même liste ne commence pas toujours exactement par la même couleur à chaque activation du mode arc-en-ciel ou rechargement de la page.",
   "settings.rainbowPalette": "Couleur de la palette",
+  "settings.rainbowPaletteLabel": "Palette de couleurs",
   "settings.quietToasts": "Notifications discrètes",
   "settings.quietToastsHint": "N'afficher les notifications que pour les échecs. Les confirmations habituelles d'enregistrement et de copie restent silencieuses.",
 

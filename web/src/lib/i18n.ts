@@ -746,6 +746,13 @@ export const en = {
   "settings.rainbowRotate": "Colour Rotation",
   "settings.rainbowRotateHint": "Shifts which colour in the palette counts as position 0, so the same list of rows doesn't always start on the exact same colour every time you turn Rainbow Mode on or reload the page.",
   "settings.rainbowPalette": "Palette colour",
+  // Row label in front of the 8 swatches (live-review round 4) — a
+  // DIFFERENT string from settings.rainbowPalette above on purpose: that one
+  // stays a per-swatch aria-label ("Palette colour 1", "...2", …), this one
+  // is the whole row's own opening caption ("Colour palette:"). See the
+  // palette-row JSX's own comment for the "caption removed then reinstated
+  // with a different string" history.
+  "settings.rainbowPaletteLabel": "Colour palette",
   // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
   // toast system; "success"/routine toasts are suppressed, failures never are.
   "settings.quietToasts": "Quiet toasts",
@@ -2161,6 +2168,7 @@ export const de: Translations = {
   "settings.rainbowRotate": "Farbenrotation",
   "settings.rainbowRotateHint": "Verschiebt, welche Farbe der Palette als Position 0 gilt, damit dieselbe Liste nicht bei jedem Aktivieren des Regenbogen-Modus oder jedem Neuladen der Seite mit genau derselben Farbe beginnt.",
   "settings.rainbowPalette": "Palettenfarbe",
+  "settings.rainbowPaletteLabel": "Farbpalette",
   "settings.quietToasts": "Leise Benachrichtigungen",
   "settings.quietToastsHint": "Zeigt Popup-Hinweise nur bei Fehlern. Routinemäßige Speicher- und Kopierbestätigungen bleiben stumm.",
 
