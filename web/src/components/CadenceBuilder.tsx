@@ -246,7 +246,17 @@ export function CadenceBuilder({
           Phase 2, Task 3). Disabling still comes from the ancestor
           <fieldset disabled> above, not a prop here: Selector renders real
           <button> elements, which a native fieldset already disables
-          regardless of the wrapping <div> between them. */}
+          regardless of the wrapping <div> between them.
+          `raised` (jdp, live-review: "Aus, Täglich, ... sollen auch im nicht
+          ausgewählten Zustand als Badge erkennbar sein") — every call site
+          of THIS component wraps it in its own `bg-carbon-surface2` well
+          (see each Settings.tsx caller), which is the exact same token the
+          default "chip" idle fill uses, so an unselected pill was blending
+          straight into its own ambient card instead of reading as a chip —
+          see Selector.tsx's own `raised` doc for the full root-cause
+          writeup. Bumping to `bg-carbon-surface3` here (not at each of the
+          8 wrapping `<div>`s) fixes every call site of this shared
+          component at once. */}
       <Selector
         items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[]).map((m) => ({
           id: m,
@@ -265,6 +275,7 @@ export function CadenceBuilder({
         select="one"
         active={state.mode}
         onChange={(id) => update({ mode: id as CadenceMode })}
+        raised
       />
 
       {/* Time picker — shown for all non-off modes except cron (the expression carries its own times) */}
@@ -293,6 +304,7 @@ export function CadenceBuilder({
             active={new Set(state.weekdays)}
             onChange={toggleWeekday}
             size="sm"
+            raised
           />
         </div>
       )}
