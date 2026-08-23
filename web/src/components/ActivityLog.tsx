@@ -100,6 +100,7 @@ function glyphLabelKey(status: LogStatus): TranslationKey {
 export function ActivityLog({
   dayFilter = null,
   onClearDayFilter,
+  hueIndex,
 }: {
   /** Externally-controlled day filter (ISO YYYY-MM-DD, local calendar day) —
    *  the Dashboard sets it when a heatmap cell is clicked; null = off. Shown
@@ -108,6 +109,15 @@ export function ActivityLog({
   dayFilter?: string | null;
   /** Invoked by the chip's × — the owner (Dashboard) clears its state. */
   onClearDayFilter?: () => void;
+  /** Rainbow position for this block's own heading notch — GlimStone
+   *  follow-up pass, jdp's live review of Dashboard.tsx: "Cardtitelbadges
+   *  sind falsch platziert. Alle sind nicht im Regenbogenmodus." This
+   *  component is self-contained (own card chrome + heading, per this file's
+   *  own header comment) but is mounted as one of Dashboard's own
+   *  customizable blocks, so its own hue position comes from that page's
+   *  shared, running `nextHue()` counter — see Dashboard.tsx's own
+   *  `hueSeq`/`nextHue` comment. Omit for the flat, un-rainbowed default. */
+  hueIndex?: number;
 } = {}) {
   const { t } = useT();
   const [runs, setRuns] = useState<Run[]>([]);
@@ -245,9 +255,13 @@ export function ActivityLog({
   };
 
   return (
-    <div className="relative bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
+    // `glim-notch-card` — same rainbow-hue hover-reveal marker Settings.tsx's
+    // own Card already carries (index.css's `[data-rainbow="reactive"]
+    // .glim-notch-card:hover .glim-notch-hue` rule); this component never had
+    // it, the same gap Dashboard.tsx's own Card() component had.
+    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
       <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap>{t("activityLog.title")}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{t("activityLog.title")}</Badge>
       </h2>
 
       {/* Filter bar — narrows the ONE list below; never a second zone. */}

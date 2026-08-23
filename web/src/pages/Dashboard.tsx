@@ -398,10 +398,26 @@ function Card({
   title,
   children,
   action,
+  hueIndex,
 }: {
   title: string;
   children: React.ReactNode;
   action?: React.ReactNode;
+  /** Rainbow position for THIS Card's own heading notch — GlimStone
+   *  follow-up pass, jdp's live review of this page specifically: "Dashboard:
+   *  Cardtitelbadges sind falsch platziert. Alle sind nicht im
+   *  Regenbogenmodus." Every one of this page's Cards was still the ORIGINAL
+   *  Task 5 flat-accent-only heading, never migrated to the `hueIndex` opt-in
+   *  Settings.tsx's own Card already got — same prop, same Badge.tsx
+   *  mechanism, just never threaded through on this file. Assigned by the
+   *  caller's own running `nextHue()` counter, in the CURRENT rendered order
+   *  of the user's customizable/reorderable block layout (see the main
+   *  component's own `hueSeq`/`nextHue` comment for why that has to be a
+   *  counter passed through the block-render callbacks rather than a static
+   *  per-Card literal, the way Settings.tsx's own fixed tab layout can get
+   *  away with). Omit for a genuine singleton — same rule as Settings.tsx's
+   *  Card. */
+  hueIndex?: number;
 }) {
   return (
     // GlimStone follow-up pass (live-review round, "half-overlap card
@@ -419,9 +435,16 @@ function Card({
     // measuring its offset against a box whose top edge is pixel-identical
     // to the visual card's own (this outer div has no padding/border, so it
     // hugs the inner div exactly).
-    <div className="relative">
+    // `glim-notch-card` (same live-review round's rainbow-hue follow-up as
+    // Settings.tsx's own Card — index.css's `[data-rainbow="reactive"]
+    // .glim-notch-card:hover .glim-notch-hue` rule keys off this marker):
+    // this page's Card never carried it before now — a genuine instance of
+    // the SAME gap jdp is naming here, not a new one invented for this
+    // fix — a hued heading on this page would have lit up on hovering only
+    // its own ~22px glyph, not this card's whole body, in reactive mode.
+    <div className="relative glim-notch-card">
       <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap>{title}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{title}</Badge>
       </h2>
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
         {/* action used to share a `justify-between` row with the <h2> above,
@@ -441,7 +464,7 @@ function Card({
 // Spike status card
 // ---------------------------------------------------------------------------
 
-function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [checks, setChecks] = useState<SpikeCheck[] | null>(null);
   const [allOk, setAllOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
@@ -479,7 +502,7 @@ function SpikeCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const chipFor = (c: SpikeCheck) => (c.OK ? "ok" : c.BestEffort ? "info" : "failed");
 
   return (
-    <Card title={t("spike.title")}>
+    <Card title={t("spike.title")} hueIndex={hueIndex}>
       {loading && (
         <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
@@ -539,10 +562,12 @@ function ProtectionCard({
   t,
   domains,
   loading,
+  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   domains: DomainStatus[];
   loading: boolean;
+  hueIndex?: number;
 }) {
   const { lang } = useT();
 
@@ -630,7 +655,7 @@ function ProtectionCard({
   };
 
   return (
-    <Card title={t("dashboard.protectionTitle")}>
+    <Card title={t("dashboard.protectionTitle")} hueIndex={hueIndex}>
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
@@ -851,10 +876,12 @@ function RansomwareCard({
   t,
   domains,
   loading,
+  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   domains: DomainStatus[];
   loading: boolean;
+  hueIndex?: number;
 }) {
   // Pure renderer: every row is derived from the extended /api/status domain
   // fields (tamperState/replicationState/drillState/encryptionOn/pruneStrategySet),
@@ -943,7 +970,7 @@ function RansomwareCard({
   };
 
   return (
-    <Card title={t("ransomware.title")}>
+    <Card title={t("ransomware.title")} hueIndex={hueIndex}>
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {!loading &&
         shown.map((d) => {
@@ -1053,7 +1080,7 @@ function RansomwareCard({
 // Recent Runs card
 // ---------------------------------------------------------------------------
 
-function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1080,7 +1107,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const shown = day === "all" ? runs : runs.filter((run) => dayOf(run) === day);
 
   return (
-    <Card title={t("run.historyTitle")}>
+    <Card title={t("run.historyTitle")} hueIndex={hueIndex}>
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
@@ -1155,7 +1182,7 @@ function RunsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // Last Backups card
 // ---------------------------------------------------------------------------
 
-function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [containers, setContainers] = useState<Container[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -1178,7 +1205,7 @@ function LastBackupsCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
     .slice(0, 4);
 
   return (
-    <Card title={t("dashboard.lastBackups")}>
+    <Card title={t("dashboard.lastBackups")} hueIndex={hueIndex}>
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
@@ -1265,6 +1292,7 @@ function HealthHeatmapCard({
   t,
   selectedDay,
   onSelectDay,
+  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   /** The Activity Log's active day filter (ISO YYYY-MM-DD, local) — the
@@ -1274,6 +1302,7 @@ function HealthHeatmapCard({
    *  Log day filter and scrolls the log into view. Zero-run days fire too:
    *  the log then honestly shows nothing for that day. */
   onSelectDay: (isoDay: string) => void;
+  hueIndex?: number;
 }) {
   const [days, setDays] = useState<HistoryDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1376,7 +1405,7 @@ function HealthHeatmapCard({
   );
 
   return (
-    <Card title={t("dashboard.healthTitle")} action={toggle}>
+    <Card title={t("dashboard.healthTitle")} action={toggle} hueIndex={hueIndex}>
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
@@ -1507,7 +1536,7 @@ interface DomainStats {
   forecast: StorageForecast | null;
 }
 
-function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [data, setData] = useState<DomainStats[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1562,7 +1591,7 @@ function StorageCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const anyData = !!data && data.some((d) => d.latest != null);
 
   return (
-    <Card title={t("dashboard.storageTitle")}>
+    <Card title={t("dashboard.storageTitle")} hueIndex={hueIndex}>
       {loading && (
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
@@ -1824,7 +1853,20 @@ function minutesOfDay(hhmm: string): number {
   return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 24 * 60;
 }
 
-function SummaryCell({ label, children }: { label: string; children: React.ReactNode }) {
+function SummaryCell({
+  label,
+  children,
+  hueIndex,
+}: {
+  label: string;
+  children: React.ReactNode;
+  /** Rainbow position for THIS cell's own heading notch — see Card's own
+   *  `hueIndex` doc above for the full history. SummaryTier (this cell's one
+   *  caller) assigns all three of its cells consecutive positions via its own
+   *  passed-in `nextHue` counter, so the three cells read as one genuine
+   *  equal-member set even though each is its own standalone box. */
+  hueIndex?: number;
+}) {
   return (
     // GlimStone follow-up pass ("half-overlap card notch"): same outer/inner
     // split as Card() above — `relative` moves to this structural outer div
@@ -1835,7 +1877,9 @@ function SummaryCell({ label, children }: { label: string; children: React.React
     // box before this pass). `min-w-0` stays on the outer too: it's a grid
     // item, and Chromium/Firefox's grid-track sizing reads min-width off
     // whatever box IS the direct grid child, which is now this outer div.
-    <div className="relative min-w-0">
+    // `glim-notch-card` — same rainbow-hue hover-reveal gap as Card() above,
+    // never carried here either.
+    <div className="relative glim-notch-card min-w-0">
       {/* Task 5 (rule 11): each SummaryCell is its own standalone
           bg-carbon-surface rounded-card box — not nested inside an
           already-badged heading — so it gets the same Badge-in-<h2>
@@ -1843,7 +1887,7 @@ function SummaryCell({ label, children }: { label: string; children: React.React
           Card just above and Badge.tsx's file header). `wrap` + max-w-full
           because this sits in a narrow sm:grid-cols-3 cell. */}
       <h2 className="flex items-center min-w-0">
-        <Badge tone="heading" size="heading" wrap className="max-w-full">{label}</Badge>
+        <Badge tone="heading" size="heading" wrap className="max-w-full" hueIndex={hueIndex}>{label}</Badge>
       </h2>
       <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
         {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
@@ -1861,12 +1905,21 @@ function SummaryTier({
   domains,
   loading,
   newestRun,
+  nextHue,
 }: {
   t: ReturnType<typeof useT>["t"];
   lang: string;
   domains: DomainStatus[];
   loading: boolean;
   newestRun: Run | null;
+  /** The page-wide running hue counter (see the main Dashboard component's
+   *  own `hueSeq`/`nextHue` comment) — called once per SummaryCell below, in
+   *  order, so the three cells claim three CONSECUTIVE rainbow positions
+   *  rather than each independently restarting at 0 (which would make every
+   *  one of this tier's three cells the same colour). Optional: omitted only
+   *  where a future caller wants the tier's flat, un-rainbowed default — no
+   *  call site does today. */
+  nextHue?: () => number;
 }) {
   // Cell 1 — worst RPO status across enabled, non-off domains: any overdue/never
   // is red, else any warn is amber, else any ok is green, else all off = neutral.
@@ -1909,7 +1962,7 @@ function SummaryTier({
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {/* Overall health — worst RPO status across enabled domains */}
-      <SummaryCell label={t("dashboard.summaryHealth")}>
+      <SummaryCell label={t("dashboard.summaryHealth")} hueIndex={nextHue?.()}>
         {loading ? (
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
@@ -1921,7 +1974,7 @@ function SummaryTier({
       </SummaryCell>
 
       {/* Next backup — soonest scheduled cadence as human text (not a countdown) */}
-      <SummaryCell label={t("dashboard.summaryNextBackup")}>
+      <SummaryCell label={t("dashboard.summaryNextBackup")} hueIndex={nextHue?.()}>
         {loading ? (
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
@@ -1932,7 +1985,7 @@ function SummaryTier({
       </SummaryCell>
 
       {/* Last result — the newest run: status chip + target + relative time */}
-      <SummaryCell label={t("dashboard.summaryLastResult")}>
+      <SummaryCell label={t("dashboard.summaryLastResult")} hueIndex={nextHue?.()}>
         {newestRun ? (
           <>
             <Badge tone={statusTone(newestRun.status)}>{statusLabel(newestRun.status, t)}</Badge>
@@ -2056,26 +2109,49 @@ export function Dashboard() {
   // reorderable / hideable block, persisted per-browser via useDashboardLayout.
   const [editing, setEditing] = useState(false);
 
-  // Ordered block list. Each block has a stable id, a label, the rendered node
-  // (props preserved exactly from the original render) and an advancedOnly flag.
-  // advancedOnly blocks are dropped from BOTH the render and the customize list
-  // when not in Advanced view — their order/hidden state still persists.
+  // Ordered block list. Each block has a stable id, a label, a `render`
+  // callback that produces the node (props preserved exactly from the
+  // original render) and an advancedOnly flag. advancedOnly blocks are
+  // dropped from BOTH the render and the customize list when not in Advanced
+  // view — their order/hidden state still persists.
+  //
+  // `render` — GlimStone follow-up pass, jdp's live review of this page:
+  // "Cardtitelbadges sind falsch platziert. Alle sind nicht im
+  // Regenbogenmodus." Was `node: React.ReactNode`, a pre-built element
+  // constructed eagerly, in this array's own FIXED definition order — which
+  // cannot give a Card heading a correct rainbow position, because the
+  // block a user actually SEES at position N depends on their own persisted
+  // drag-reorder + hide/show state (`visibleBlocks` below), not this
+  // array's literal order. Deferred to a function so each Card's hueIndex
+  // can be assigned from the shared `nextHue()` counter (declared right
+  // before `visibleBlocks.map()` in the JSX below) at the point each block
+  // is ACTUALLY rendered, in the user's own current visible order — the
+  // exact same "own running counter, consumed in rendered order" contract
+  // Settings.tsx's `nextHue()` already uses, just passed through explicitly
+  // here instead of called inline, since the render order here isn't a
+  // static JSX literal the way Settings.tsx's tab bodies are.
+  //   Most blocks consume exactly one hue slot (one Card, one `nextHue()`
+  // call); "summary" consumes three (its own three SummaryCells, via the
+  // `nextHue` callback threaded into SummaryTier); "stats" consumes none
+  // (StatCardsRow's tiles have no heading badge of their own — nothing to
+  // hue).
   const blocks: {
     id: string;
     label: string;
     advancedOnly?: boolean;
-    node: React.ReactNode;
+    render: (nextHue: () => number) => React.ReactNode;
   }[] = [
     {
       id: "summary",
       label: t("dashboard.blockSummary"),
-      node: (
+      render: (nextHue) => (
         <SummaryTier
           t={t}
           lang={lang}
           domains={statusDomains}
           loading={statusLoading}
           newestRun={runs[0] ?? null}
+          nextHue={nextHue}
         />
       ),
     },
@@ -2084,55 +2160,65 @@ export function Dashboard() {
       label: t("activityLog.title"),
       // The wrapper div carries the scroll anchor for the heatmap drilldown
       // (scroll-mt keeps the card heading clear of the viewport's top edge).
-      node: (
+      render: (nextHue) => (
         <div ref={activityLogBlockRef} className="scroll-mt-4">
-          <ActivityLog dayFilter={logDayFilter} onClearDayFilter={() => setLogDayFilter(null)} />
+          <ActivityLog
+            dayFilter={logDayFilter}
+            onClearDayFilter={() => setLogDayFilter(null)}
+            hueIndex={nextHue()}
+          />
         </div>
       ),
     },
     {
       id: "stats",
       label: t("dashboard.blockStats"),
-      node: <StatCardsRow t={t} advanced={advanced} />,
+      render: () => <StatCardsRow t={t} advanced={advanced} />,
     },
     {
       id: "protection",
       label: t("dashboard.protectionTitle"),
-      node: <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} />,
+      render: (nextHue) => (
+        <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={nextHue()} />
+      ),
     },
     {
       id: "ransomware",
       label: t("ransomware.title"),
       advancedOnly: true,
-      node: <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} />,
+      render: (nextHue) => (
+        <RansomwareCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={nextHue()} />
+      ),
     },
     // Last Backups and Run History are separate blocks (#50 follow-up) so each
     // can be hidden, reordered and read at full width independently.
     {
       id: "lastBackups",
       label: t("dashboard.lastBackups"),
-      node: <LastBackupsCard t={t} />,
+      render: (nextHue) => <LastBackupsCard t={t} hueIndex={nextHue()} />,
     },
     {
       id: "runHistory",
       label: t("run.historyTitle"),
-      node: <RunsCard t={t} />,
+      render: (nextHue) => <RunsCard t={t} hueIndex={nextHue()} />,
     },
     {
       id: "heatmap",
       label: t("dashboard.healthTitle"),
-      node: <HealthHeatmapCard t={t} selectedDay={logDayFilter} onSelectDay={selectLogDay} />,
+      render: (nextHue) => (
+        <HealthHeatmapCard t={t} selectedDay={logDayFilter} onSelectDay={selectLogDay} hueIndex={nextHue()} />
+      ),
     },
     {
       id: "storage",
       label: t("dashboard.storageTitle"),
-      node: <StorageCard t={t} />,
+      render: (nextHue) => <StorageCard t={t} hueIndex={nextHue()} />,
     },
     {
       id: "spike",
       label: t("spike.title"),
       advancedOnly: true,
-      node: <SpikeCard t={t} />,
+      render: (nextHue) => <SpikeCard t={t} hueIndex={nextHue()} />,
     },
   ];
 
@@ -2276,39 +2362,58 @@ export function Dashboard() {
           control bar + native drag-and-drop; otherwise the card renders
           plainly. Dragging still reorders the flat `order` array — the grid
           simply derives each cell's span from order + width. */}
+      {/* hueSeq/nextHue — SAME page-wide running-counter pattern as
+          Settings.tsx's own `nextHue()` (see that file's own `hueSeq`
+          comment), just declared here instead of at the top of the return:
+          it must be freshly reset to 0 on every render (a stale count would
+          drift every heading's colour after any state change) AND consumed
+          in the ACTUAL rendered order of `visibleBlocks` below — the user's
+          own current drag-reorder/hide-show layout, not this file's fixed
+          `blocks` definition order (GlimStone follow-up pass, jdp: "Alle
+          sind nicht im Regenbogenmodus" — every heading on this page was
+          still the flat, un-hued Task-5 default; see the `blocks` array's
+          own `render` comment above for why a plain per-block literal index
+          can't do this and a shared counter can). Each block's own `render`
+          callback calls this once per real heading badge it owns (most
+          blocks once; "summary" three times via SummaryTier's own `nextHue`
+          prop; "stats" zero times — StatCardsRow has no heading to hue). */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {visibleBlocks.map((b, i) => (
-          <div
-            key={b.id}
-            className={getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"}
-          >
-            <CustomizableBlock
-              id={b.id}
-              label={b.label}
-              index={i}
-              total={visibleBlocks.length}
-              isFirst={i === 0}
-              isLast={i === visibleBlocks.length - 1}
-              editing={editing}
-              dragHandlers={dragHandlersFor(b.id)}
-              /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
-                 blocks in the stored order) so a single press always reorders. */
-              onMoveUp={() => {
-                if (i > 0) reorder(b.id, visibleBlocks[i - 1].id);
-              }}
-              onMoveDown={() => {
-                if (i < visibleBlocks.length - 1)
-                  reorder(b.id, visibleBlocks[i + 1].id);
-              }}
-              onHide={() => toggleHidden(b.id)}
-              width={getWidth(b.id)}
-              onToggleWidth={() => toggleWidth(b.id)}
-              t={t}
+        {(() => {
+          let hueSeq = 0;
+          const nextHue = () => hueSeq++;
+          return visibleBlocks.map((b, i) => (
+            <div
+              key={b.id}
+              className={getWidth(b.id) === "half" ? "md:col-span-1" : "md:col-span-2"}
             >
-              {b.node}
-            </CustomizableBlock>
-          </div>
-        ))}
+              <CustomizableBlock
+                id={b.id}
+                label={b.label}
+                index={i}
+                total={visibleBlocks.length}
+                isFirst={i === 0}
+                isLast={i === visibleBlocks.length - 1}
+                editing={editing}
+                dragHandlers={dragHandlersFor(b.id)}
+                /* Move relative to the VISIBLE neighbour (skips hidden / advanced-gated
+                   blocks in the stored order) so a single press always reorders. */
+                onMoveUp={() => {
+                  if (i > 0) reorder(b.id, visibleBlocks[i - 1].id);
+                }}
+                onMoveDown={() => {
+                  if (i < visibleBlocks.length - 1)
+                    reorder(b.id, visibleBlocks[i + 1].id);
+                }}
+                onHide={() => toggleHidden(b.id)}
+                width={getWidth(b.id)}
+                onToggleWidth={() => toggleWidth(b.id)}
+                t={t}
+              >
+                {b.render(nextHue)}
+              </CustomizableBlock>
+            </div>
+          ));
+        })()}
       </div>
 
       {/* Hidden-cards tray — only while editing and something is hidden. */}
