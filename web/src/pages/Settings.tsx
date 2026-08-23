@@ -3846,8 +3846,14 @@ function RestoreChecksSection({
 }) {
   return (
     <Card title={t("verify.auto")} hint={t("verify.hint")} hueIndex={hueIndex}>
+      {/* Task 4 (jdp, live-review: "Bei erstem Toggle bitte 'Automatische
+          Restore-Prüfungen' hinschreiben") — `hideLabel` removed: an earlier
+          round hid this row's own caption on the reasoning that the Card's
+          own title above already says the same thing (the same
+          single-purpose-Card pattern the master Regenbogen-Modus toggle used
+          too), but jdp reversed that exact pattern there as well and wants
+          the label visible directly on the toggle here too. */}
       <ToggleRow
-        hideLabel
         label={t("verify.auto")}
         checked={settings.drillsEnabled}
         onChange={(v) => update({ drillsEnabled: v })}
