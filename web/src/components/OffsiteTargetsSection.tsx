@@ -36,6 +36,21 @@ const ROW_BADGE_SIZE: BadgeSize = "medium";
 //
 // No per-target schedule control is exposed: every target of a domain replicates
 // on that domain's off-site schedule (a short help line says so).
+//
+// GENUINE EXCEPTION to Settings.tsx's full-page Speichern-Button sweep (jdp,
+// live review, emphatic: "Die Speicher-Buttons sollen in allen Tabs weg...
+// Nur dort sollen Speicher-Buttons bleiben, wo es unbedingt sein muss."):
+// saveDraft's own Save button, inside the `draft` editor below, stays — the
+// exact same "multi-step DRAFT not meant to take effect until deliberately
+// applied" shape as Settings.tsx's own CloudCredSetsCard (see that
+// component's header comment for the fuller reasoning). openNew() mints a
+// scratch draft (id "") that exists in no list anywhere yet; closeEditor()
+// is an explicit, currently-functioning "discard my edits" affordance
+// auto-saving on every keystroke would silently break, and — worse than
+// CloudCredSetsCard's own case — a NEW target here calls createOffsiteTarget
+// (a real API side effect, a fresh row with its own id) rather than a
+// harmless local-state PATCH, so a half-typed name would create a real,
+// visible, half-configured off-site destination the instant it's typed.
 // ---------------------------------------------------------------------------
 
 type Domain = "containers" | "vms" | "flash" | "files";
