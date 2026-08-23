@@ -573,7 +573,6 @@ export const en = {
   "notify.smtpFrom": "From address",
   "notify.smtpTo": "To address",
   "notify.smtpTls": "Encryption",
-  "notify.save": "Save",
   "notify.test": "Send test",
   "notify.tested": "Test sent",
 
@@ -921,7 +920,6 @@ export const en = {
   "schedule.overrideUsesDefault": "Uses the domain schedule",
   "schedule.overrideEdit": "Set override",
   "schedule.overrideHint": "Empty uses the domain schedule. Per-item overrides do not support the every-N-days mode.",
-  "schedule.overrideSave": "Save override",
   "schedule.overrideSaved": "Override saved",
 
   // Auth / Login
@@ -2036,7 +2034,6 @@ export const de: Translations = {
   "notify.smtpFrom": "Absenderadresse",
   "notify.smtpTo": "Empfängeradresse",
   "notify.smtpTls": "Verschlüsselung",
-  "notify.save": "Speichern",
   "notify.test": "Test senden",
   "notify.tested": "Test gesendet",
 
@@ -2334,7 +2331,6 @@ export const de: Translations = {
   "schedule.overrideUsesDefault": "Nutzt den Domänen-Zeitplan",
   "schedule.overrideEdit": "Überschreibung festlegen",
   "schedule.overrideHint": "Leer nutzt den Domänen-Zeitplan. Überschreibungen pro Element unterstützen den Alle-N-Tage-Modus nicht.",
-  "schedule.overrideSave": "Überschreibung speichern",
   "schedule.overrideSaved": "Überschreibung gespeichert",
 
   // Auth / Login
