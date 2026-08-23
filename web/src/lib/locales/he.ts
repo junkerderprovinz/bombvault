@@ -514,11 +514,13 @@ const he: Partial<Translations> = {
 
   // Notifications
   "notify.title": "התראות",
-  "notify.hint": "קבל התראה כשגיבוי מסתיים. הגדר כל אחד מהערוצים שלהלן; כולם נשלחים בהתאם למדיניות.",
+  "notify.hint": "קבל התראה כשגיבוי מסתיים, ובחר למטה אילו אירועים מפעילים אותה. התראות Unraid פועלות כאן גם במצב פשוט; ערוצי מסירה נוספים (webhook, Matrix, Healthchecks, דוא\"ל) נמצאים תחת מתקדם.",
   "notify.on": "התראה",
   "notify.onNever": "אף פעם",
   "notify.onFailure": "רק בכישלון",
   "notify.onAlways": "בהצלחה ובכישלון",
+  "notify.channelsTitle": "ערוצי התראה",
+  "notify.channelsHint": "הגדר את ערוצי ה-webhook, Matrix, Healthchecks והדוא\"ל שדרכם נשלחות ההתראות שהוגדרו למעלה.",
   "notify.webhook": "כתובת Webhook",
   "notify.webhookFormat": "פורמט Webhook",
   "notify.apprise": "Apprise",

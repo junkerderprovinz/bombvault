@@ -511,11 +511,13 @@ const ro: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Notificări",
-  "notify.hint": "Primește o notificare la finalizarea unei copii de rezervă. Configurează oricare dintre canalele de mai jos; toate se declanșează conform politicii.",
+  "notify.hint": "Primește o notificare la finalizarea unei copii de rezervă și alege mai jos ce evenimente o declanșează. Notificările Unraid funcționează deja în modul Simplu; mai multe canale de livrare (webhook, Matrix, Healthchecks, e-mail) se găsesc la Avansat.",
   "notify.on": "Notifică",
   "notify.onNever": "Niciodată",
   "notify.onFailure": "Doar la eșec",
   "notify.onAlways": "La succes și eșec",
+  "notify.channelsTitle": "Canale de notificare",
+  "notify.channelsHint": "Configurează canalele webhook, Matrix, Healthchecks și e-mail prin care sunt livrate notificările configurate mai sus.",
   "notify.webhook": "URL Webhook",
   "notify.webhookFormat": "Format Webhook",
   "notify.apprise": "Apprise",

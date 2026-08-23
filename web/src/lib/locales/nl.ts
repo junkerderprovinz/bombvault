@@ -508,11 +508,13 @@ const nl: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Meldingen",
-  "notify.hint": "Krijg een melding wanneer een back-up klaar is. Stel een van de onderstaande kanalen in; ze gaan allemaal af volgens het beleid.",
+  "notify.hint": "Krijg een melding wanneer een back-up klaar is, en kies hieronder welke gebeurtenissen dit activeren. Unraid-meldingen werken al in de eenvoudige modus; meer bezorgkanalen (webhook, Matrix, Healthchecks, e-mail) vind je bij Geavanceerd.",
   "notify.on": "Melden",
   "notify.onNever": "Nooit",
   "notify.onFailure": "Alleen bij mislukking",
   "notify.onAlways": "Bij succes en mislukking",
+  "notify.channelsTitle": "Meldingskanalen",
+  "notify.channelsHint": "Configureer de webhook-, Matrix-, Healthchecks- en e-mailkanalen waarover de hierboven ingestelde meldingen worden verstuurd.",
   "notify.webhook": "Webhook-URL",
   "notify.webhookFormat": "Webhook-formaat",
   "notify.apprise": "Apprise",

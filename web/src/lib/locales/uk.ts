@@ -509,11 +509,13 @@ const uk: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Сповіщення",
-  "notify.hint": "Отримуйте сповіщення після завершення резервного копіювання. Налаштуйте будь-який із каналів нижче; усі вони спрацьовують згідно з правилом.",
+  "notify.hint": "Отримуйте сповіщення після завершення резервного копіювання і виберіть нижче, які події його викликають. Сповіщення Unraid уже працюють у простому режимі; більше каналів доставки (webhook, Matrix, Healthchecks, email) знаходяться в розширених налаштуваннях.",
   "notify.on": "Сповіщати",
   "notify.onNever": "Ніколи",
   "notify.onFailure": "Лише в разі збою",
   "notify.onAlways": "При успіху та збої",
+  "notify.channelsTitle": "Канали сповіщень",
+  "notify.channelsHint": "Налаштуйте канали webhook, Matrix, Healthchecks та електронної пошти, якими надсилаються налаштовані вище сповіщення.",
   "notify.webhook": "URL Webhook",
   "notify.webhookFormat": "Формат Webhook",
   "notify.apprise": "Apprise",

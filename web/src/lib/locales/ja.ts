@@ -506,11 +506,13 @@ const ja: Partial<Translations> = {
 
   // Notifications
   "notify.title": "通知",
-  "notify.hint": "バックアップ完了時に通知を受け取ります。以下のいずれかのチャネルを設定してください。すべてポリシーに従って発火します。",
+  "notify.hint": "バックアップ完了時に通知を受け取り、どのイベントで発火するかを下で選びます。Unraid通知はシンプルモードでも動作します。ほかの配信チャネル（Webhook、Matrix、Healthchecks、メール）は詳細設定にあります。",
   "notify.on": "通知する",
   "notify.onNever": "なし",
   "notify.onFailure": "失敗時のみ",
   "notify.onAlways": "成功時と失敗時",
+  "notify.channelsTitle": "通知チャンネル",
+  "notify.channelsHint": "上記で設定した通知を配信するWebhook、Matrix、Healthchecks、メールの各チャンネルを設定します。",
   "notify.webhook": "Webhook URL",
   "notify.webhookFormat": "Webhook 形式",
   "notify.apprise": "Apprise",

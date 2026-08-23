@@ -514,11 +514,13 @@ const th: Partial<Translations> = {
 
   // Notifications
   "notify.title": "การแจ้งเตือน",
-  "notify.hint": "รับการแจ้งเตือนเมื่อการสำรองข้อมูลเสร็จสิ้น ตั้งค่าช่องทางใดก็ได้ด้านล่าง ทั้งหมดจะทำงานตามนโยบาย",
+  "notify.hint": "รับการแจ้งเตือนเมื่อการสำรองข้อมูลเสร็จสิ้น และเลือกด้านล่างว่าเหตุการณ์ใดเป็นตัวกระตุ้น การแจ้งเตือนของ Unraid ทำงานได้แล้วในโหมดง่าย ส่วนช่องทางการส่งเพิ่มเติม (webhook, Matrix, Healthchecks, อีเมล) อยู่ในโหมดขั้นสูง",
   "notify.on": "แจ้งเตือน",
   "notify.onNever": "ไม่เลย",
   "notify.onFailure": "เฉพาะเมื่อล้มเหลว",
   "notify.onAlways": "เมื่อสำเร็จและล้มเหลว",
+  "notify.channelsTitle": "ช่องทางการแจ้งเตือน",
+  "notify.channelsHint": "ตั้งค่าช่องทาง webhook, Matrix, Healthchecks และอีเมลที่ใช้ส่งการแจ้งเตือนที่ตั้งค่าไว้ด้านบน",
   "notify.webhook": "URL ของ Webhook",
   "notify.webhookFormat": "รูปแบบ Webhook",
   "notify.apprise": "Apprise",

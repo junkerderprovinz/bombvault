@@ -514,11 +514,13 @@ const hu: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Értesítések",
-  "notify.hint": "Kapj értesítést, amikor egy mentés befejeződik. Állítsd be az alábbi csatornák bármelyikét; mind a szabály szerint aktiválódik.",
+  "notify.hint": "Kapj értesítést, amikor egy mentés befejeződik, és válaszd ki alább, mely események váltják ki. Az Unraid-értesítések már Egyszerű módban is működnek; további kézbesítési csatornák (webhook, Matrix, Healthchecks, e-mail) a Speciálisban találhatók.",
   "notify.on": "Értesítés",
   "notify.onNever": "Soha",
   "notify.onFailure": "Csak hiba esetén",
   "notify.onAlways": "Sikernél és hibánál",
+  "notify.channelsTitle": "Értesítési csatornák",
+  "notify.channelsHint": "Állítsd be a webhook-, Matrix-, Healthchecks- és e-mail-csatornákat, amelyeken a fent beállított értesítések kimennek.",
   "notify.webhook": "Webhook URL",
   "notify.webhookFormat": "Webhook formátum",
   "notify.apprise": "Apprise",

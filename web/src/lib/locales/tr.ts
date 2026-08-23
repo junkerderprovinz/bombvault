@@ -514,11 +514,13 @@ const tr: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Bildirimler",
-  "notify.hint": "Bir yedekleme tamamlandığında bildirim alın. Aşağıdaki kanallardan herhangi birini ayarlayın; hepsi kurala göre tetiklenir.",
+  "notify.hint": "Bir yedekleme tamamlandığında bildirim alın ve aşağıda hangi olayların bunu tetikleyeceğini seçin. Unraid bildirimleri Basit modda zaten çalışır; daha fazla iletim kanalı (webhook, Matrix, Healthchecks, e-posta) Gelişmiş bölümünde bulunur.",
   "notify.on": "Bildir",
   "notify.onNever": "Asla",
   "notify.onFailure": "Yalnızca başarısızlıkta",
   "notify.onAlways": "Başarı ve başarısızlıkta",
+  "notify.channelsTitle": "Bildirim kanalları",
+  "notify.channelsHint": "Yukarıda yapılandırılan bildirimlerin iletildiği webhook, Matrix, Healthchecks ve e-posta kanallarını yapılandırın.",
   "notify.webhook": "Webhook URL'si",
   "notify.webhookFormat": "Webhook biçimi",
   "notify.apprise": "Apprise",

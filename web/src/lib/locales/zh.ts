@@ -506,11 +506,13 @@ const zh: Partial<Translations> = {
 
   // Notifications
   "notify.title": "通知",
-  "notify.hint": "在备份完成时获得通知。设置下方任意渠道；它们都会根据策略触发。",
+  "notify.hint": "在备份完成时获得通知，并在下方选择触发通知的事件。Unraid 通知在简单模式下即可使用；更多送达渠道（Webhook、Matrix、Healthchecks、邮件）位于高级设置中。",
   "notify.on": "通知",
   "notify.onNever": "从不",
   "notify.onFailure": "仅在失败时",
   "notify.onAlways": "成功和失败时",
+  "notify.channelsTitle": "通知渠道",
+  "notify.channelsHint": "配置上方所设通知使用的 Webhook、Matrix、Healthchecks 和邮件渠道。",
   "notify.webhook": "Webhook 网址",
   "notify.webhookFormat": "Webhook 格式",
   "notify.apprise": "Apprise",

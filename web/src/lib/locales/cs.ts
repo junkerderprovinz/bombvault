@@ -512,11 +512,13 @@ const cs: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Oznámení",
-  "notify.hint": "Nechte si poslat upozornění po dokončení zálohy. Nastavte kterýkoli z kanálů níže; všechny se spustí podle pravidla.",
+  "notify.hint": "Nechte si poslat upozornění po dokončení zálohy a níže vyberte, jaké události ho spustí. Upozornění Unraid fungují už v jednoduchém režimu; další doručovací kanály (webhook, Matrix, Healthchecks, e-mail) najdete v Pokročilém.",
   "notify.on": "Oznámit",
   "notify.onNever": "Nikdy",
   "notify.onFailure": "Pouze při selhání",
   "notify.onAlways": "Při úspěchu i selhání",
+  "notify.channelsTitle": "Kanály oznámení",
+  "notify.channelsHint": "Nastavte kanály webhook, Matrix, Healthchecks a e-mail, kterými se doručují výše nastavená oznámení.",
   "notify.webhook": "URL Webhook",
   "notify.webhookFormat": "Formát Webhook",
   "notify.apprise": "Apprise",

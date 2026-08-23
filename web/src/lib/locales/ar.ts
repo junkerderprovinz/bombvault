@@ -514,11 +514,13 @@ const ar: Partial<Translations> = {
 
   // Notifications
   "notify.title": "الإشعارات",
-  "notify.hint": "احصل على إشعار عند انتهاء النسخ الاحتياطي. أعدّ أياً من القنوات أدناه؛ تعمل جميعها وفقاً للسياسة.",
+  "notify.hint": "احصل على إشعار عند انتهاء النسخ الاحتياطي، واختر أدناه الأحداث التي تُفعّله. تعمل إشعارات Unraid هنا في الوضع البسيط؛ مزيد من قنوات التسليم (Webhook وMatrix وHealthchecks والبريد الإلكتروني) تجدها ضمن الإعدادات المتقدمة.",
   "notify.on": "إشعار",
   "notify.onNever": "أبداً",
   "notify.onFailure": "عند الفشل فقط",
   "notify.onAlways": "عند النجاح والفشل",
+  "notify.channelsTitle": "قنوات الإشعارات",
+  "notify.channelsHint": "أعدّ قنوات الويب هوك وMatrix وHealthchecks والبريد الإلكتروني التي تُرسَل عبرها الإشعارات المُهيَّأة أعلاه.",
   "notify.webhook": "رابط Webhook",
   "notify.webhookFormat": "تنسيق Webhook",
   "notify.apprise": "Apprise",

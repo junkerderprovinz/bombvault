@@ -514,11 +514,13 @@ const fi: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Ilmoitukset",
-  "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu. Määritä mikä tahansa alla olevista kanavista; ne kaikki laukeavat säännön mukaisesti.",
+  "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu, ja valitse alta mitkä tapahtumat sen laukaisevat. Unraid-ilmoitukset toimivat jo yksinkertaisessa tilassa; lisää toimituskanavia (webhook, Matrix, Healthchecks, sähköposti) löytyy Lisäasetuksista.",
   "notify.on": "Ilmoita",
   "notify.onNever": "Ei koskaan",
   "notify.onFailure": "Vain epäonnistuessa",
   "notify.onAlways": "Onnistuessa ja epäonnistuessa",
+  "notify.channelsTitle": "Ilmoituskanavat",
+  "notify.channelsHint": "Määritä webhook-, Matrix-, Healthchecks- ja sähköpostikanavat, joita pitkin yllä määritetyt ilmoitukset toimitetaan.",
   "notify.webhook": "Webhook-URL",
   "notify.webhookFormat": "Webhook-muoto",
   "notify.apprise": "Apprise",

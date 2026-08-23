@@ -506,11 +506,13 @@ const ko: Partial<Translations> = {
 
   // Notifications
   "notify.title": "알림",
-  "notify.hint": "백업이 완료되면 알림을 받습니다. 아래 채널 중 아무거나 설정하세요. 모두 정책에 따라 실행됩니다.",
+  "notify.hint": "백업이 완료되면 알림을 받고, 아래에서 어떤 이벤트에 발생시킬지 선택하세요. Unraid 알림은 간단 모드에서도 작동합니다. 웹훅, Matrix, Healthchecks, 이메일 등 더 많은 전달 채널은 고급 설정에 있습니다.",
   "notify.on": "알림",
   "notify.onNever": "안 함",
   "notify.onFailure": "실패 시에만",
   "notify.onAlways": "성공 및 실패 시",
+  "notify.channelsTitle": "알림 채널",
+  "notify.channelsHint": "위에서 설정한 알림을 전달할 웹훅, Matrix, Healthchecks, 이메일 채널을 구성하세요.",
   "notify.webhook": "Webhook URL",
   "notify.webhookFormat": "Webhook 형식",
   "notify.apprise": "Apprise",
