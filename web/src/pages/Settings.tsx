@@ -198,7 +198,6 @@ export function ToggleRow({
   checked,
   onChange,
   disabled,
-  hideLabel = false,
   shakeNonce,
   hueIndex,
 }: {
@@ -210,17 +209,31 @@ export function ToggleRow({
    *  rainbow-section rework: "Reactive mode"/"Colour rotation" need a node
    *  (icon + text) next to the label, which a plain string `label` can't
    *  carry — see Card's own header comment for the identical constraint on
-   *  its `title`/`hint` pair. Renders only when `!hideLabel` (nothing to sit
-   *  beside once the label itself is hidden). */
+   *  its `title`/`hint` pair. */
   hint?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
-  /** Suppress the row's own visible caption when a Card title directly above
-   *  already says the same thing (e.g. a single-purpose Card whose title IS
-   *  the decision this switch makes) — the label still reaches screen readers
-   *  via the underlying Toggle's aria-label. Any `description` still renders. */
-  hideLabel?: boolean;
+  // No `hideLabel` prop on this component (REMOVED, not just unused — jdp
+  // audit, "es soll nie leere Toggles geben"): every real call site that ever
+  // set it was the identical anti-pattern — "the Card's title directly above
+  // already says the same thing, so suppress the row's own caption" — and
+  // that exact reasoning got built, then reversed, THREE separate times in
+  // this one file (the merged Colors Card's master "Regenbogen-Modus" row,
+  // RestoreChecksSection's "Automatische Restore-Prüfungen" row, and the
+  // notifications tab's weekly-digest row) before this pass finally deleted
+  // the capability outright instead of patching a fourth instance. A row's
+  // own visible caption must never depend on what text happens to sit in a
+  // Card above it — see design-language.md's Toggles/Switches section for
+  // the standing rule this now enforces structurally: the prop simply isn't
+  // there to reach for anymore. (The underlying Toggle's OWN `hideLabel`
+  // stays a real, legitimate prop — a caller that renders this row's label
+  // itself, in its own layout, e.g. a hand-rolled row like Containers.tsx's
+  // UpdateAfterBackupRow or VMs.tsx's VMIncludeToggle, still needs to tell
+  // the bare switch not to print a second, literally duplicate copy right
+  // next to the one the caller already drew. What's gone is only the
+  // ToggleRow-level shortcut that let a caller skip drawing any caption at
+  // all on the reasoning that a Card title elsewhere covers it.)
   /** Bump this (any new, truthy number) to replay the `.glim-shake` error
    *  feedback animation once — e.g. an auto-save rejected by the backend
    *  (design-language.md's motion engine, "shake" pattern). Passed straight
@@ -301,12 +314,10 @@ export function ToggleRow({
       style={hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
     >
       <div className="flex flex-col gap-0.5">
-        {!hideLabel && (
-          <span className={`flex items-center gap-1.5 text-sm text-carbon-text${dim}`}>
-            {label}
-            {hint && <InfoBubble tip={hint} />}
-          </span>
-        )}
+        <span className={`flex items-center gap-1.5 text-sm text-carbon-text${dim}`}>
+          {label}
+          {hint && <InfoBubble tip={hint} />}
+        </span>
         {description && (
           <span className={`text-xs text-carbon-textMuted${dim}`}>{description}</span>
         )}
@@ -1057,15 +1068,15 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
       hint={`${t("flash.zipExport.hint")} ${t("flash.zipExport.enableHint")}`}
       hueIndex={hueIndex}
     >
-      {/* hideLabel: the Card's own title/hint above already carry this
-          switch's own explanation (the exact same content, verbatim) — the
-          same "everything but the heading moves into a bubble" shape this
-          section kept while it was a sub-heading inside Settings' merged
-          Exports & Encryption card, now promoted one level since the Card
-          itself IS this section. */}
+      {/* No-empty-toggles audit (jdp): this row used to `hideLabel` on the
+          reasoning that the Card's own title/hint above already carry the
+          same explanation, verbatim — the exact pattern jdp has now ruled
+          out categorically ("es soll nie leere Toggles geben"), the same
+          reversal already applied to the merged Colors Card's master
+          "Regenbogen-Modus" row and RestoreChecksSection's "Automatische
+          Restore-Prüfungen" row. The row's own label is visible again. */}
       <ToggleRow
         label={t("flash.zipExport.enable")}
-        hideLabel
         checked={enabled}
         onChange={(v) => void toggleEnabled(v)}
         disabled={busyEnabled}
@@ -3958,13 +3969,27 @@ function FilesSection({
                   {s.path}
                 </span>
               )}
-              <Toggle
-                hideLabel
-                label={`${t("files.enabled")}: ${s.name}`}
-                checked={s.enabled}
-                onChange={() => void toggle(s)}
-                disabled={!!busy[s.id]}
-              />
+              {/* No-empty-toggles audit (jdp): this row used to `hideLabel`
+                  with no visible caption anywhere in the row at all — worse
+                  than the Card-title-redundant pattern found elsewhere, since
+                  there wasn't even a duplicate label to point to, only the
+                  set's own NAME (which identifies the row, not what the
+                  switch does). Wrapped in the same `<label>` + sibling
+                  `<span>` shape VMIncludeToggle/FileSetEnabledToggle already
+                  use for a per-row switch: `hideLabel` stays on the bare
+                  Toggle (legitimate here — the caller right beside it now
+                  draws the same text), but the text is genuinely visible in
+                  the row, always, not just conveyed via aria-label. */}
+              <label className="flex items-center gap-2 shrink-0 cursor-pointer">
+                <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
+                <Toggle
+                  hideLabel
+                  label={`${t("files.enabled")}: ${s.name}`}
+                  checked={s.enabled}
+                  onChange={() => void toggle(s)}
+                  disabled={!!busy[s.id]}
+                />
+              </label>
             </div>
           ))}
         </div>
@@ -6643,11 +6668,14 @@ export function SettingsPage() {
             already covers it — hiding it behind a hover target would silently
             break that reasoning too. */}
         <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
-        {/* No description here: the Card's own hint paragraph above already
+        {/* No `description` here: the Card's own hint paragraph above already
             states the /metrics path — a hardcoded "GET /metrics" description
-            would just orphan itself once hideLabel hides the row's caption. */}
+            would just duplicate it. (No-empty-toggles audit, jdp: this row
+            used to ALSO `hideLabel`, on the same now-banned "Card already
+            says it" reasoning as three other rows in this file — the label
+            stays visible; only the redundant `description` is still
+            deliberately omitted.) */}
         <ToggleRow
-          hideLabel
           label={t("settings.metricsEnable")}
           checked={settings.metricsEnabled}
           onChange={(v) => void autoSaveToggle("metricsEnabled", v, setMetricsSaveState, setMetricsSaveError)}
@@ -6762,9 +6790,16 @@ export function SettingsPage() {
                 SaveBar is gone — the toggle auto-saves immediately (revert +
                 shake on failure, via the page-wide autoSaveToggle), the
                 cadence debounces (via debouncedSave), same split every other
-                toggle+cadence pairing on this page already uses. */}
+                toggle+cadence pairing on this page already uses.
+                  No-empty-toggles audit (jdp: "Wochenbericht-Toggle mit Text
+                'Wochenbericht' hinschreiben. Es soll nie 'leere' Toggles
+                geben."): this row used to `hideLabel` on the Card-title-
+                already-says-it reasoning, the third time that exact pattern
+                got built in this file after jdp reversed it twice before
+                (Rainbow master toggle, Restore-Prüfungen toggle). `hideLabel`
+                is gone from ToggleRow entirely now (see its own header
+                comment) — the row's own label is always visible. */}
             <ToggleRow
-              hideLabel
               label={t("settings.digestToggle")}
               checked={settings.digestEnabled}
               onChange={(v) => void autoSaveToggle("digestEnabled", v, setDigestSaveState, setDigestSaveError)}
@@ -7291,18 +7326,19 @@ export function SettingsPage() {
           being bolted onto NotifyConfig's server-side "on" field above (that
           one gates external webhook/Matrix/email notifications — a different
           axis entirely; muting a toast in THIS browser must never silently
-          change what a webhook receives elsewhere). `hideLabel` because the
-          Card's own title already says "Quiet toasts" — the same single-
-          purpose-Card pattern this Card kept even after the merged Colors
-          Card above went the OTHER way (its own master "Regenbogen-Modus"
-          toggle keeps a visible label alongside the Card's title — jdp
-          asked for that back explicitly; see that ToggleRow's own comment);
-          the `description` (unaffected by this pass) still renders under
-          the hidden label. */}
+          change what a webhook receives elsewhere).
+            No-empty-toggles audit (jdp): this row used to `hideLabel`
+          because the Card's own title already says "Quiet toasts" — the
+          exact single-purpose-Card pattern the merged Colors Card's master
+          "Regenbogen-Modus" toggle and RestoreChecksSection's "Automatische
+          Restore-Prüfungen" toggle already had reversed, and this one was
+          the leftover fourth instance the full-app grep in this pass caught.
+          `hideLabel` is gone from ToggleRow entirely now (see its own header
+          comment) — the label is visible again, with `description` still
+          rendering under it exactly as before. */}
       {tab === "general" && (
       <Card title={t("settings.quietToasts")} hueIndex={nextHue()}>
         <ToggleRow
-          hideLabel
           label={t("settings.quietToasts")}
           description={t("settings.quietToastsHint")}
           checked={quiet}
