@@ -7,8 +7,10 @@
 // der Badge eingefärbt werden und das Icon wieder in schwarz oder weiß
 // angezeigt werden.").
 //
-// index.css's `.bv-nav-idle:hover svg`/`:focus-within svg` rule is what
-// actually paints the hover tint — not exercisable from jsdom (no stylesheet
+// index.css's `.bv-nav-idle svg` rule (mode-aware: always coloured in
+// Normal/Rainbow, `[data-rainbow="reactive"] .bv-nav-idle:hover svg`/
+// `:focus-within svg` for the Reactive-only hover reveal) is what actually
+// paints the tint — not exercisable from jsdom (no stylesheet
 // is loaded by this test's render, and jsdom does not run a real hover
 // pseudo-class/paint pipeline anyway, matching this repo's own established
 // "verify the real CSS live in a browser, unit-test the class contract"
