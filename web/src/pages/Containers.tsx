@@ -258,6 +258,9 @@ function DeleteBackupsButton({
   const [pending, setPending] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button.
+  const [shake, setShake] = useState(0);
 
   async function handleDelete() {
     // TODO(#follow-up): once richer stake-detail copy ("N snapshots, X GB")
@@ -271,9 +274,13 @@ function DeleteBackupsButton({
     try {
       const res = await deleteBackups(name);
       if (res.ok) onDeleted();
-      else push(res.error ?? "Delete failed", "fail");
+      else {
+        push(res.error ?? "Delete failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Delete failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setPending(false);
     }
@@ -282,9 +289,12 @@ function DeleteBackupsButton({
   return (
     <div className="flex flex-col gap-1">
       <button
+        key={shake}
         onClick={() => void handleDelete()}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+        className={`inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+          shake ? " glim-shake" : ""
+        }`}
       >
         {pending ? t("dashboard.checking") : t("containers.deleteBackups")}
       </button>
@@ -307,6 +317,13 @@ function DeleteBackupsButton({
 function ExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button, layered ON TOP of this
+  // button's own pre-existing sticky inline error (kept deliberately — see
+  // this component's header comment: the error is a reference value the user
+  // may need to read/copy, not a one-shot ping the toast alone would replace).
+  const [shake, setShake] = useState(0);
 
   async function run() {
     setState("pending");
@@ -318,20 +335,29 @@ function ExportButton({ name, t }: { name: string; t: T }) {
         setMsg(r.path ?? null);
       } else {
         setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        const message = r.error ?? t("settings.error");
+        setMsg(message);
+        push(message, "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      const message = err instanceof Error ? err.message : t("settings.error");
+      setMsg(message);
+      push(message, "fail");
+      setShake((n) => n + 1);
     }
   }
 
   return (
     <div className="flex flex-col items-end gap-1">
       <button
+        key={shake}
         onClick={() => void run()}
         disabled={state === "pending"}
-        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
+          shake ? " glim-shake" : ""
+        }`}
       >
         {state === "pending" ? "…" : t("export.button")}
       </button>
@@ -364,6 +390,9 @@ function HooksEditor({
   const [post, setPost] = useState(initialPost);
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button alongside the toast on a failed save.
+  const [shake, setShake] = useState(0);
 
   // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 2500ms inline flash
   // is now a toast, same shape as Settings.tsx's shared save() helper.
@@ -375,9 +404,11 @@ function HooksEditor({
         push(t("settings.saved"), "success");
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setState("idle");
     }
@@ -412,8 +443,10 @@ function HooksEditor({
               placeholder="curl -fsS https://hooks.example/done" className={inputCls} />
           </label>
           <div className="flex items-center gap-3 pt-0.5">
-            <button onClick={() => void save()} disabled={state === "saving"}
-              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50">
+            <button key={shake} onClick={() => void save()} disabled={state === "saving"}
+              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                shake ? " glim-shake" : ""
+              }`}>
               {state === "saving" ? "…" : t("settings.save")}
             </button>
           </div>
@@ -434,6 +467,9 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed toggle toasts AND shakes, same mechanism as ToggleRow's shakeNonce.
+  const [shake, setShake] = useState(0);
   useEffect(() => setEnabled(initial), [initial]);
 
   async function handle(next: boolean) {
@@ -441,9 +477,13 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
     try {
       const res = await setUpdateAfterBackup(name, next);
       if (res.ok) setEnabled(next);
-      else push(res.error ?? "Failed to update setting", "fail");
+      else {
+        push(res.error ?? "Failed to update setting", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Failed to update setting", "fail");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -456,11 +496,13 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
         <span className="text-caption text-carbon-textMuted">{t("update.afterBackupHint")}</span>
       </div>
       <Toggle
+        key={shake}
         hideLabel
         label={t("update.afterBackup")}
         checked={enabled}
         onChange={(next) => void handle(next)}
         disabled={busy}
+        className={shake ? "glim-shake" : undefined}
       />
     </div>
   );
@@ -480,6 +522,9 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
   const [hostSourceRoot, setHostSourceRoot] = useState("/mnt");
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button alongside the toast on a failed save.
+  const [shake, setShake] = useState(0);
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -533,9 +578,11 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
         push(t("folders.saved"), "success");
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setState("idle");
     }
@@ -612,9 +659,12 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
           </div>
           <div className="flex items-center gap-3 pt-0.5">
             <button
+              key={shake}
               onClick={() => void save()}
               disabled={state === "saving" || loading}
-              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                shake ? " glim-shake" : ""
+              }`}
             >
               {state === "saving" ? "…" : t("folders.save")}
             </button>
@@ -632,6 +682,9 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
   const [text, setText] = useState(initial.join("\n"));
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button alongside the toast on a failed save.
+  const [shake, setShake] = useState(0);
 
   async function save() {
     setState("saving");
@@ -645,9 +698,11 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
         push(t("settings.saved"), "success");
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setState("idle");
     }
@@ -682,9 +737,12 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
           />
           <div className="flex items-center gap-3 pt-0.5">
             <button
+              key={shake}
               onClick={() => void save()}
               disabled={state === "saving"}
-              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                shake ? " glim-shake" : ""
+              }`}
             >
               {state === "saving" ? "…" : t("settings.save")}
             </button>
@@ -708,6 +766,11 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
   const [preview, setPreview] = useState<ExcludePreviewRow[]>([]);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button on a failed save() — addExclude/removeExclude (the
+  // assistant's per-suggestion chips) share the same saveLines() but are not
+  // wired to this nonce; their own toast still fires either way.
+  const [shakeSave, setShakeSave] = useState(0);
 
   // Debounced live preview: whenever the editor is open and the textarea holds at
   // least one non-blank line, resolve the candidate lines against the container's
@@ -756,9 +819,11 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         push(t("excludes.saved"), "success");
       } else {
         push(r.error ?? t("excludes.error"), "fail");
+        setShakeSave((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("excludes.error"), "fail");
+      setShakeSave((n) => n + 1);
     } finally {
       setState("idle");
     }
@@ -778,6 +843,9 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   // "nothing found" hint below — the failure TEXT itself no longer lives here
   // (see scan()'s own comment), just the fact of it.
   const [scanFailed, setScanFailed] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Scan/Rescan button alongside its existing toast on a failed scan.
+  const [shakeScan, setShakeScan] = useState(0);
 
   // GlimStone follow-up pass (v8.0.0): the scan-failed inline error is now a
   // toast — a Scan/Rescan click is a one-shot action like every other migrated
@@ -796,11 +864,13 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
         setSuggestions([]);
         setScanFailed(true);
         push(r.error ?? t("excludes.assistScanFailed"), "fail");
+        setShakeScan((n) => n + 1);
       }
     } catch (err) {
       setSuggestions([]);
       setScanFailed(true);
       push(err instanceof Error ? err.message : t("excludes.assistScanFailed"), "fail");
+      setShakeScan((n) => n + 1);
     }
     setScanning(false);
   }
@@ -886,9 +956,12 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
           )}
           <div className="flex items-center gap-3 pt-0.5">
             <button
+              key={shakeSave}
               onClick={() => void save()}
               disabled={state === "saving"}
-              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                shakeSave ? " glim-shake" : ""
+              }`}
             >
               {state === "saving" ? "…" : t("excludes.save")}
             </button>
@@ -910,9 +983,12 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
                 <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
                 <div className="flex items-center gap-3">
                   <button
+                    key={shakeScan}
                     onClick={() => void scan()}
                     disabled={scanning}
-                    className="rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+                    className={`rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)${
+                      shakeScan ? " glim-shake" : ""
+                    }`}
                   >
                     {scanning
                       ? t("excludes.assistScanning")
@@ -1177,15 +1253,24 @@ function ScheduleIncludeAllControl({
 }) {
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // whichever of the two buttons was actually clicked — a separate nonce per
+  // direction, mirroring VMs.tsx's identical ScheduleIncludeAllControl.
+  const [shakeInclude, setShakeInclude] = useState(0);
+  const [shakeExclude, setShakeExclude] = useState(0);
 
   async function run(include: boolean) {
     setBusy(true);
     try {
       const res = await setIncludeAll(include);
       if (res.ok) onChanged();
-      else push(res.error ?? t("settings.error"), "fail");
+      else {
+        push(res.error ?? t("settings.error"), "fail");
+        (include ? setShakeInclude : setShakeExclude)((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      (include ? setShakeInclude : setShakeExclude)((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -1194,16 +1279,22 @@ function ScheduleIncludeAllControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <button
+        key={shakeInclude}
         onClick={() => void run(true)}
         disabled={busy}
-        className="inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          shakeInclude ? " glim-shake" : ""
+        }`}
       >
         {t("schedule.includeAll")}
       </button>
       <button
+        key={shakeExclude}
         onClick={() => void run(false)}
         disabled={busy}
-        className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+        className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+          shakeExclude ? " glim-shake" : ""
+        }`}
       >
         {t("schedule.excludeAll")}
       </button>
@@ -1264,6 +1355,11 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   const [startInOrder, setStartInOrder] = useState(true);
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Restore button when the restore fails to even START (see run()'s own
+  // comment for why a started-then-running restore stays a durable inline
+  // status instead — the shake, like the toast, only covers the click itself).
+  const [shake, setShake] = useState(0);
   const [started, setStarted] = useState(false);
   // Terminal state for the stack restore: since StackCard drives no fire-and-
   // watch of its own, we derive "finished" from the members' progress below.
@@ -1320,9 +1416,11 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
         // background job with a Cancel button attached), not a one-shot ping;
         // see the render below for the same reasoning applied to `finished`.
         push(res.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -1374,9 +1472,12 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
           </label>
           <div className="flex items-center gap-3 pt-0.5">
             <button
+              key={shake}
               onClick={() => void run()}
               disabled={busy}
-              className="rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                shake ? " glim-shake" : ""
+              }`}
             >
               {busy ? t("stack.restoring") : t("stack.restore")}
             </button>
@@ -1448,6 +1549,11 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // whichever button triggered the failed persist() — Save or Reset — kept as
+  // two separate nonces, mirroring VMs.tsx's identical VMBackupOrderPanel.
+  const [shakeSave, setShakeSave] = useState(0);
+  const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
   // #124: collapse the whole card (persisted per browser) and reorder rows by
   // native drag-and-drop (live reorder via the shared useDragReorder hook below).
@@ -1533,8 +1639,9 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
     });
   }
 
-  async function persist(order: string[]) {
+  async function persist(order: string[], via: "save" | "reset") {
     setSaveState("saving");
+    const bumpShake = via === "save" ? setShakeSave : setShakeReset;
     try {
       const res = await setBackupOrder(order);
       if (res.ok) {
@@ -1542,9 +1649,11 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
         push(t("backupOrder.saved"), "success");
       } else {
         push(res.error ?? t("backupOrder.saveError"), "fail");
+        bumpShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("backupOrder.saveError"), "fail");
+      bumpShake((n) => n + 1);
     } finally {
       setSaveState("idle");
     }
@@ -1555,7 +1664,7 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
       a.localeCompare(b, undefined, { sensitivity: "base" })
     );
     setNames(sorted);
-    void persist([]);
+    void persist([], "reset");
   }
 
   if (savedOrder === null) return null;
@@ -1653,16 +1762,22 @@ function BackupOrderPanel({ containers, t }: { containers: Container[]; t: T }) 
             </ol>
             <div className="flex items-center gap-3 flex-wrap">
               <button
-                onClick={() => void persist(names)}
+                key={shakeSave}
+                onClick={() => void persist(names, "save")}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                  shakeSave ? " glim-shake" : ""
+                }`}
               >
                 {t("backupOrder.save")}
               </button>
               <button
+                key={shakeReset}
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+                className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+                  shakeReset ? " glim-shake" : ""
+                }`}
               >
                 {t("backupOrder.reset")}
               </button>
@@ -1701,6 +1816,10 @@ export function Containers() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [discovering, setDiscovering] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Discover / "Backup selected" buttons alongside their existing toasts.
+  const [shakeDiscover, setShakeDiscover] = useState(0);
+  const [shakeBackupSelected, setShakeBackupSelected] = useState(0);
   // Overall server-side batch-backup progress (independent of this browser).
   const progress = useProgress();
   const batch = progress["batch:containers"];
@@ -1850,6 +1969,7 @@ export function Containers() {
       const res = await backupAll(names);
       if (!res.ok) {
         push(res.error ?? "Failed to start backup", "fail");
+        setShakeBackupSelected((n) => n + 1);
         return;
       }
       setSelected(new Set());
@@ -1859,6 +1979,7 @@ export function Containers() {
         push(t("containers.batchAlreadyRunning"), "warn");
       } else {
         push(e instanceof Error ? e.message : "Failed to start backup", "fail");
+        setShakeBackupSelected((n) => n + 1);
       }
     } finally {
       setBulkBusy(false);
@@ -1893,9 +2014,11 @@ export function Containers() {
         await loadContainers();
       } else {
         push(res.error ?? "Discover failed", "fail");
+        setShakeDiscover((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : "Discover failed", "fail");
+      setShakeDiscover((n) => n + 1);
     } finally {
       setDiscovering(false);
     }
@@ -1916,10 +2039,13 @@ export function Containers() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
+            key={shakeDiscover}
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("containers.discoverHint")}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shakeDiscover ? " glim-shake" : ""
+            }`}
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -2023,9 +2149,12 @@ export function Containers() {
             {selected.size} {t("containers.selectedCount")}
           </span>
           <button
+            key={shakeBackupSelected}
             onClick={() => void backupSelected()}
             disabled={bulkBusy || batchActive || running.active}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shakeBackupSelected ? " glim-shake" : ""
+            }`}
           >
             {t("containers.backupSelected")}
           </button>

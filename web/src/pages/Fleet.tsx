@@ -53,6 +53,9 @@ type T = ReturnType<typeof useT>["t"];
 // this was the one remaining call site still bypassing it (#112).
 function CopyBlock({ text, t }: { text: string; t: T }) {
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Copy button alongside its existing toast on a failed copy.
+  const [shake, setShake] = useState(0);
   async function copy() {
     if (await copyText(text)) {
       push(t("vm.ssh.copied"), "success");
@@ -62,6 +65,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
       // fallback failed, so this is a real, user-actionable failure, not
       // routine noise a quiet-mode user would want suppressed.
       push(t("vm.ssh.copyFailed"), "fail");
+      setShake((n) => n + 1);
     }
   }
   return (
@@ -70,9 +74,12 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
         {text}
       </pre>
       <button
+        key={shake}
         type="button"
         onClick={() => void copy()}
-        className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+        className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${
+          shake ? " glim-shake" : ""
+        }`}
       >
         {t("vm.ssh.copy")}
       </button>
@@ -183,15 +190,24 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // whichever button was actually clicked — separate nonces since Accept/
+  // Decline are two different failable actions.
+  const [shakeAccept, setShakeAccept] = useState(0);
+  const [shakeDecline, setShakeDecline] = useState(0);
 
   async function handleAccept() {
     setBusy(true);
     try {
       const res = await acceptMeshOffer(offer.id, domain);
       if (res.ok) onChanged();
-      else push(res.error ?? t("fleet.mesh.saveError"), "fail");
+      else {
+        push(res.error ?? t("fleet.mesh.saveError"), "fail");
+        setShakeAccept((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
+      setShakeAccept((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -202,9 +218,13 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
     try {
       const res = await declineMeshOffer(offer.id);
       if (res.ok) onChanged();
-      else push(res.error ?? t("fleet.mesh.saveError"), "fail");
+      else {
+        push(res.error ?? t("fleet.mesh.saveError"), "fail");
+        setShakeDecline((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
+      setShakeDecline((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -235,16 +255,22 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             </select>
           </label>
           <button
+            key={shakeAccept}
             onClick={() => void handleAccept()}
             disabled={busy}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shakeAccept ? " glim-shake" : ""
+            }`}
           >
             {t("fleet.mesh.accept")}
           </button>
           <button
+            key={shakeDecline}
             onClick={() => void handleDecline()}
             disabled={busy}
-            className="inline-flex items-center rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+              shakeDecline ? " glim-shake" : ""
+            }`}
           >
             {t("fleet.mesh.decline")}
           </button>
@@ -264,6 +290,9 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   const [sending, setSending] = useState(false);
   const { push } = useToast();
   const [snippet, setSnippet] = useState<(DeploySnippetData & { repo: string }) | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Send button alongside the toast on a failed send.
+  const [shake, setShake] = useState(0);
 
   // GlimStone follow-up pass (v8.0.0): the form-stage "error" flash below is
   // now a toast (matches this file's already-migrated CopyBlock/MeshOfferRow
@@ -276,15 +305,20 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   async function handleSend() {
     if (baseUrl.trim() === "") {
       push(t("fleet.mesh.baseUrlRequired"), "fail");
+      setShake((n) => n + 1);
       return;
     }
     setSending(true);
     try {
       const res = await proposeMeshOffer(peer.id, domain, baseUrl.trim());
       if (res.ok && res.snippet) setSnippet(res.snippet);
-      else push(res.error ?? t("fleet.mesh.saveError"), "fail");
+      else {
+        push(res.error ?? t("fleet.mesh.saveError"), "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.mesh.saveError"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setSending(false);
     }
@@ -344,9 +378,12 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
                 {t("files.cancel")}
               </button>
               <button
+                key={shake}
                 onClick={() => void handleSend()}
                 disabled={sending}
-                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                  shake ? " glim-shake" : ""
+                }`}
               >
                 {sending ? t("fleet.mesh.sending") : t("fleet.mesh.send")}
               </button>
@@ -409,6 +446,10 @@ function FleetPeerCard({
   // pattern exactly, not a full window.confirm()/ConfirmDialog (form-engine
   // Task 7).
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Poll/Remove buttons alongside their existing toasts on failure.
+  const [shakePoll, setShakePoll] = useState(0);
+  const [shakeRemove, setShakeRemove] = useState(0);
 
   // BUG FIX (found alongside this card's handleRemove migration below,
   // GlimStone follow-up pass v8.0.0): this never checked pollFleetPeer's
@@ -423,10 +464,14 @@ function FleetPeerCard({
     setPolling(true);
     try {
       const res = await pollFleetPeer(peer.id);
-      if (!res.ok) push(res.error ?? t("fleet.saveError"), "fail");
+      if (!res.ok) {
+        push(res.error ?? t("fleet.saveError"), "fail");
+        setShakePoll((n) => n + 1);
+      }
       onRefresh();
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
+      setShakePoll((n) => n + 1);
     } finally {
       setPolling(false);
     }
@@ -436,13 +481,22 @@ function FleetPeerCard({
     setRemoving(true);
     try {
       const res = await deleteFleetPeer(peer.id);
-      if (res.ok) onRefresh();
-      else push(res.error ?? t("fleet.saveError"), "fail");
+      if (res.ok) {
+        onRefresh();
+        setConfirmRemove(false);
+      } else {
+        // Keep the two-click confirm UP on failure (don't reset to "Remove") —
+        // otherwise the shake below would fire on a button that unmounts in
+        // the same tick, and the user would lose their confirm click for a
+        // failure that wasn't their mistake.
+        push(res.error ?? t("fleet.saveError"), "fail");
+        setShakeRemove((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
+      setShakeRemove((n) => n + 1);
     } finally {
       setRemoving(false);
-      setConfirmRemove(false);
     }
   }
 
@@ -479,9 +533,12 @@ function FleetPeerCard({
 
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          key={shakePoll}
           onClick={() => void handlePoll()}
           disabled={polling}
-          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shakePoll ? " glim-shake" : ""
+          }`}
         >
           {polling ? (
             <>
@@ -526,9 +583,12 @@ function FleetPeerCard({
           </button>
           {confirmRemove ? (
             <button
+              key={shakeRemove}
               onClick={() => void handleRemove()}
               disabled={removing}
-              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+              className={`inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+                shakeRemove ? " glim-shake" : ""
+              }`}
             >
               {removing ? t("fleet.removing") : t("fleet.confirmRemove")}
             </button>
@@ -577,6 +637,9 @@ function FleetDialog({
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
   const revealToken = useReveal();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button alongside the toast on a failed save.
+  const [shake, setShake] = useState(0);
 
   const editing = initial !== null;
   const canSave = name.trim() !== "" && url.trim() !== "" && (token.trim() !== "" || editing) && !saving;
@@ -591,10 +654,12 @@ function FleetDialog({
   async function handleSave() {
     if (name.trim() === "") {
       push(t("fleet.nameRequired"), "fail");
+      setShake((n) => n + 1);
       return;
     }
     if (url.trim() === "") {
       push(t("fleet.urlRequired"), "fail");
+      setShake((n) => n + 1);
       return;
     }
     setSaving(true);
@@ -612,9 +677,11 @@ function FleetDialog({
         onSaved();
       } else {
         push(res.error ?? t("fleet.saveError"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setSaving(false);
     }
@@ -706,9 +773,12 @@ function FleetDialog({
             {t("files.cancel")}
           </button>
           <button
+            key={shake}
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shake ? " glim-shake" : ""
+            }`}
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>

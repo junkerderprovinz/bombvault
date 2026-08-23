@@ -157,6 +157,10 @@ function ReceivedRepoCard({
   // OffsiteTargetsSection's `confirmRemove` pattern exactly, not a full
   // window.confirm()/ConfirmDialog (form-engine Task 7).
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Check/Remove buttons alongside their existing toasts on failure.
+  const [shakeCheck, setShakeCheck] = useState(0);
+  const [shakeRemove, setShakeRemove] = useState(0);
 
   // GlimStone follow-up pass (v8.0.0): the ok/fail checkMsg result below moved
   // to a toast — found alongside this card's handleRemove migration (same
@@ -172,13 +176,18 @@ function ReceivedRepoCard({
       const res = await checkReceivedRepo(repo.id, deepCheck);
       if (res.ok && res.result) {
         if (res.result.ok) push(t("receiver.checkOk"), "success");
-        else push(res.result.error || t("receiver.checkFailed"), "fail");
+        else {
+          push(res.result.error || t("receiver.checkFailed"), "fail");
+          setShakeCheck((n) => n + 1);
+        }
       } else {
         push(res.error ?? t("receiver.checkFailed"), "fail");
+        setShakeCheck((n) => n + 1);
       }
       onRefresh();
     } catch (err) {
       push(err instanceof Error ? err.message : t("receiver.checkFailed"), "fail");
+      setShakeCheck((n) => n + 1);
     } finally {
       setChecking(false);
     }
@@ -188,13 +197,20 @@ function ReceivedRepoCard({
     setRemoving(true);
     try {
       const res = await deleteReceivedRepo(repo.id);
-      if (res.ok) onRefresh();
-      else push(res.error ?? t("receiver.saveError"), "fail");
+      if (res.ok) {
+        onRefresh();
+        setConfirmRemove(false);
+      } else {
+        // Keep the two-click confirm UP on failure (don't reset to "Remove")
+        // — see FleetPeerCard's identical handleRemove for the fuller reason.
+        push(res.error ?? t("receiver.saveError"), "fail");
+        setShakeRemove((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : t("receiver.saveError"), "fail");
+      setShakeRemove((n) => n + 1);
     } finally {
       setRemoving(false);
-      setConfirmRemove(false);
     }
   }
 
@@ -249,9 +265,12 @@ function ReceivedRepoCard({
       {/* Actions row */}
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          key={shakeCheck}
           onClick={() => void handleCheck()}
           disabled={checking}
-          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shakeCheck ? " glim-shake" : ""
+          }`}
         >
           {checking ? (
             <>
@@ -301,9 +320,12 @@ function ReceivedRepoCard({
           </button>
           {confirmRemove ? (
             <button
+              key={shakeRemove}
               onClick={() => void handleRemove()}
               disabled={removing}
-              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+              className={`inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+                shakeRemove ? " glim-shake" : ""
+              }`}
             >
               {removing ? t("receiver.removing") : t("receiver.confirmRemove")}
             </button>
@@ -355,6 +377,9 @@ function ReceiverDialog({
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button alongside the toast on a failed save.
+  const [shake, setShake] = useState(0);
 
   const editing = initial !== null;
   // On edit an empty key keeps the stored one; on create a key is required.
@@ -374,14 +399,17 @@ function ReceiverDialog({
   async function handleSave() {
     if (name.trim() === "") {
       push(t("receiver.nameRequired"), "fail");
+      setShake((n) => n + 1);
       return;
     }
     if (repo.trim() === "") {
       push(t("receiver.repoRequired"), "fail");
+      setShake((n) => n + 1);
       return;
     }
     if (!keyOk) {
       push(t("receiver.appKeyInvalid"), "fail");
+      setShake((n) => n + 1);
       return;
     }
     setSaving(true);
@@ -404,9 +432,11 @@ function ReceiverDialog({
         onSaved();
       } else {
         push(res.error ?? t("receiver.saveError"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("receiver.saveError"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setSaving(false);
     }
@@ -554,9 +584,12 @@ function ReceiverDialog({
             {t("files.cancel")}
           </button>
           <button
+            key={shake}
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shake ? " glim-shake" : ""
+            }`}
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>

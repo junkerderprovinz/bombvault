@@ -71,6 +71,9 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
   const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed toggle toasts AND shakes, same mechanism as ToggleRow's shakeNonce.
+  const [shake, setShake] = useState(0);
 
   // Re-seed when the parent passes a fresh value (rows are keyed by id and do
   // not remount, so a list reload must reach the toggle).
@@ -84,9 +87,11 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
         setEnabled(next);
       } else {
         push(res.error ?? t("schedule.updateFailed"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -95,11 +100,13 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
   return (
     <div className="flex flex-col items-end gap-1">
       <Toggle
+        key={shake}
         hideLabel
         label={t("containers.includeInSchedule")}
         checked={enabled}
         onChange={(next) => void handleChange(next)}
         disabled={busy}
+        className={shake ? "glim-shake" : undefined}
       />
     </div>
   );
@@ -520,6 +527,9 @@ function FileSetSnapshotRow({
   const [deleting, setDeleting] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed delete toasts AND shakes the delete button.
+  const [shake, setShake] = useState(0);
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
@@ -527,9 +537,13 @@ function FileSetSnapshotRow({
     try {
       const res = await deleteSnapshot("files", snap.id, source);
       if (res.ok) onDeleted();
-      else push(res.error ?? "Delete failed", "fail");
+      else {
+        push(res.error ?? "Delete failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Delete failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setDeleting(false);
     }
@@ -550,10 +564,13 @@ function FileSetSnapshotRow({
           </span>
         )}
         <button
+          key={shake}
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -606,6 +623,9 @@ function FileSetRestorePanel({
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the "Delete all" control on a failed delete, alongside the toast below.
+  const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -643,6 +663,7 @@ function FileSetRestorePanel({
       .then((res) => {
         if (!res.ok) {
           push(res.error ?? "Failed to delete backups", "fail");
+          setShakeDeleteAll((n) => n + 1);
           setReloadTick((n) => n + 1);
           return;
         }
@@ -652,6 +673,7 @@ function FileSetRestorePanel({
       })
       .catch(() => {
         push("Failed to delete backups", "fail");
+        setShakeDeleteAll((n) => n + 1);
         setReloadTick((n) => n + 1);
       })
       .finally(() => setDeletingAll(false));
@@ -697,12 +719,13 @@ function FileSetRestorePanel({
                 // button; already correctly fault-red per "the destructive
                 // control is always the fault colour" (Destructive actions).
                 <Badge
+                  key={shakeDeleteAll}
                   as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
                   tone="fail"
                   size="small"
-                  className="ms-auto"
+                  className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </Badge>
@@ -771,6 +794,9 @@ function FileSetDialog({
   );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button alongside the toast on a failed save.
+  const [shake, setShake] = useState(0);
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
 
@@ -794,9 +820,11 @@ function FileSetDialog({
         onSaved();
       } else {
         push(res.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setSaving(false);
     }
@@ -884,9 +912,12 @@ function FileSetDialog({
             {t("files.cancel")}
           </button>
           <button
+            key={shake}
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shake ? " glim-shake" : ""
+            }`}
           >
             {saving ? t("common.saving") : t("settings.save")}
           </button>
@@ -928,6 +959,9 @@ function FileSetRow({
   const [removing, setRemoving] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button.
+  const [shake, setShake] = useState(0);
 
   const noPath = set.path === "";
   const pathMissing = !noPath && !set.pathExists;
@@ -938,9 +972,13 @@ function FileSetRow({
     try {
       const res = await deleteFileSet(set.id);
       if (res.ok) onRefresh();
-      else push(res.error ?? "Remove failed", "fail");
+      else {
+        push(res.error ?? "Remove failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Remove failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setRemoving(false);
     }
@@ -1021,9 +1059,12 @@ function FileSetRow({
             {t("files.editSet")}
           </button>
           <button
+            key={shake}
             onClick={() => void handleRemove()}
             disabled={removing}
-            className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+              shake ? " glim-shake" : ""
+            }`}
           >
             {removing ? t("dashboard.checking") : t("files.deleteSet")}
           </button>
