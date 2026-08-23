@@ -1149,7 +1149,16 @@ function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?
   const [host, setHost] = useState("");
   const [pub, setPub] = useState("");
   const [testState, setTestState] = useState<"idle" | "testing" | "ok" | "fail">("idle");
-  const [testMsg, setTestMsg] = useState<string | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
+  // action shows its message via a TOAST, never as permanent page text, and
+  // the button that triggered it replays `.glim-shake` once — the exact
+  // pattern this component's own handleCopy/handleCopyCmd a few lines below
+  // already use, and IntegrityCard's own run()/runTamperFor() established
+  // for the file (see its `bumpShake` doc comment). Replaces the old
+  // permanent `testMsg` paragraph next to the Test button with `shake` (a
+  // bumped nonce — see ToggleRow's own shakeNonce doc comment for why).
+  const [shake, setShake] = useState(0);
 
   // Ready-to-paste command that authorizes this key on the Unraid host, both for
   // the live session and persistently (Unraid restores root.pubkeys on boot).
@@ -1172,18 +1181,19 @@ chmod 600 /root/.ssh/authorized_keys`
 
   async function handleTest() {
     setTestState("testing");
-    setTestMsg(null);
     try {
       const r = await testVMSSH();
       if (r.ok) {
         setTestState("ok");
       } else {
         setTestState("fail");
-        setTestMsg(r.error ?? t("vm.ssh.testFail"));
+        push(r.error ?? t("vm.ssh.testFail"), "fail");
+        setShake((n) => n + 1);
       }
     } catch {
       setTestState("fail");
-      setTestMsg(t("vm.ssh.testFail"));
+      push(t("vm.ssh.testFail"), "fail");
+      setShake((n) => n + 1);
     }
   }
 
@@ -1273,17 +1283,23 @@ chmod 600 /root/.ssh/authorized_keys`
 
         <div className="flex items-center gap-3">
           <button
+            key={shake || 0}
             onClick={handleTest}
             disabled={testState === "testing"}
-            className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+            className={`rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+              shake ? " glim-shake" : ""
+            }`}
           >
             {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
           </button>
           {testState === "ok" && (
             <span className="text-sm text-statusOk">{t("vm.ssh.testOk")}</span>
           )}
+          {/* Minimal fixed glyph, matching IntegrityCard's own "ok"/"fail"
+              indicator weight — the actual error text now lives in the toast
+              the failure just pushed above, not a permanent inline sentence. */}
           {testState === "fail" && (
-            <span className="text-sm text-statusFail">{testMsg ?? t("vm.ssh.testFail")}</span>
+            <span className="text-sm text-statusFail">{t("vm.ssh.testFail")}</span>
           )}
         </div>
       </div>
@@ -1315,14 +1331,28 @@ const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
 };
 
 function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+  const { push } = useToast();
   const [includeCreds, setIncludeCreds] = useState(true);
   const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
+  // action shows its message via a TOAST, never as permanent page text, and
+  // the button that triggered it replays `.glim-shake` once — the exact same
+  // migration IntegrityCard/FleetSettingsCard/DashboardWidgetCard already
+  // made elsewhere in this file (their own comments: "the persistent ✗
+  // {error} banner... is now a toast"). Replaces the old permanent
+  // exportError/importError paragraphs below each button. Export/Choose-
+  // file/Import each get their own shake key so a failure in one never
+  // shakes an unrelated button (same per-key nonce shape as IntegrityCard's
+  // own `shake` state — see its `bumpShake` doc comment).
+  const [shake, setShake] = useState<Record<string, number>>({});
+  function bumpShake(key: string) {
+    setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+  }
 
   // Import is a two-step flow: pick a file → preview summary + confirm → apply.
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importBusy, setImportBusy] = useState<"idle" | "reading" | "applying">("idle");
-  const [importError, setImportError] = useState<string | null>(null);
   const [importDone, setImportDone] = useState(false);
   // The parsed preview and the raw file text held for the confirmed apply.
   const [preview, setPreview] = useState<ImportSettingsSummary | null>(null);
@@ -1331,25 +1361,25 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
   function resetImport() {
     setPreview(null);
     setPendingText(null);
-    setImportError(null);
     setImportDone(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function handleExport() {
-    setExportError(null);
     setExporting(true);
     // Backend-provided error text (if any) is shown verbatim BY DESIGN — the API
     // answers English and is not translated client-side.
     const err = await exportSettings(includeCreds);
-    setExportError(err);
     setExporting(false);
+    if (err) {
+      push(err, "fail");
+      bumpShake("export");
+    }
   }
 
   async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImportError(null);
     setImportDone(false);
     setPreview(null);
     setImportBusy("reading");
@@ -1360,10 +1390,12 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
         setPendingText(text);
         setPreview(res.summary);
       } else {
-        setImportError(res.error ?? t("settingsIO.importFailed"));
+        push(res.error ?? t("settingsIO.importFailed"), "fail");
+        bumpShake("chooseFile");
       }
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : String(err));
+      push(err instanceof Error ? err.message : String(err), "fail");
+      bumpShake("chooseFile");
     } finally {
       setImportBusy("idle");
     }
@@ -1371,7 +1403,6 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
 
   async function handleConfirmImport() {
     if (!pendingText) return;
-    setImportError(null);
     setImportBusy("applying");
     try {
       const res = await importSettingsApply(pendingText);
@@ -1381,10 +1412,12 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
         setPendingText(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
-        setImportError(res.error ?? t("settingsIO.importFailed"));
+        push(res.error ?? t("settingsIO.importFailed"), "fail");
+        bumpShake("import");
       }
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : String(err));
+      push(err instanceof Error ? err.message : String(err), "fail");
+      bumpShake("import");
     } finally {
       setImportBusy("idle");
     }
@@ -1399,15 +1432,23 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
         <h3 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("settingsIO.exportHeading")}
         </h3>
-        <label className="flex items-start gap-2.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={includeCreds}
-            onChange={(e) => setIncludeCreds(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 accent-accent"
-          />
-          <span className="text-sm text-carbon-text">{t("settingsIO.includeCreds")}</span>
-        </label>
+        {/* Was a raw hand-rolled <input type="checkbox"> + <label> — the last
+            remaining one in this file (every earlier instance of the same
+            anti-pattern was already converted to ToggleRow elsewhere on this
+            page, e.g. NotifyCard's scheduledSummary/notifyOnUpdate/unraid
+            rows above): a native checkbox never picks up the shape engine's
+            --radius-control/--radius-pill tokens (stays the browser's native
+            box shape in every round/soft/square mode) and never gets
+            ToggleRow's shake/hue plumbing. Converted to the shared
+            ToggleRow, matching every other toggle on this page. No
+            `hueIndex` — this is a genuinely LONE toggle in this Card with no
+            siblings of its own kind (ToggleRow's own hueIndex doc comment
+            carves out exactly this case). */}
+        <ToggleRow
+          label={t("settingsIO.includeCreds")}
+          checked={includeCreds}
+          onChange={setIncludeCreds}
+        />
         {includeCreds && (
           <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
             {t("settingsIO.credsWarning")}
@@ -1415,16 +1456,15 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
         )}
         <button
           type="button"
+          key={shake.export || 0}
           onClick={() => void handleExport()}
           disabled={busy}
-          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+          className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${
+            shake.export ? " glim-shake" : ""
+          }`}
         >
           {exporting ? t("settingsIO.exporting") : t("settingsIO.exportButton")}
         </button>
-        {exportError && (
-          // Backend error text shown verbatim BY DESIGN (English, not translated).
-          <span className="text-xs text-statusFail wrap-break-word">✗ {exportError}</span>
-        )}
       </div>
 
       {/* IMPORT ---------------------------------------------------------- */}
@@ -1443,9 +1483,12 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
         />
         <button
           type="button"
+          key={shake.chooseFile || 0}
           onClick={() => fileInputRef.current?.click()}
           disabled={busy}
-          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+          className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${
+            shake.chooseFile ? " glim-shake" : ""
+          }`}
         >
           {importBusy === "reading" ? t("settingsIO.reading") : t("settingsIO.chooseFile")}
         </button>
@@ -1494,9 +1537,12 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
             <div className="flex items-center gap-3">
               <button
                 type="button"
+                key={shake.import || 0}
                 onClick={() => void handleConfirmImport()}
                 disabled={busy}
-                className="rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className={`rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                  shake.import ? " glim-shake" : ""
+                }`}
               >
                 {importBusy === "applying" ? t("settingsIO.importing") : t("settingsIO.confirmButton")}
               </button>
@@ -1515,10 +1561,6 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
         {importDone && (
           <span className="text-xs text-statusOk">✓ {t("settingsIO.importSuccess")}</span>
         )}
-        {importError && (
-          // Backend error text shown verbatim BY DESIGN (English, not translated).
-          <span className="text-xs text-statusFail wrap-break-word">✗ {importError}</span>
-        )}
       </div>
     </Card>
   );
@@ -1536,7 +1578,12 @@ type DashPluginStatus =
   | { kind: "noSsh" }
   | { kind: "absent" }
   | { kind: "installed"; version: string }
-  | { kind: "error"; message: string; output?: string };
+  // `output` moved to UnraidTileSection's own local `runErr` (see its doc
+  // comment): this "error" kind now means only "the status CHECK itself
+  // failed" (refresh()'s own catch), which never carried command output —
+  // only a failed install/remove action ever did, and that no longer flows
+  // through `status` at all.
+  | { kind: "error"; message: string };
 
 // UnraidTileSection — the "Unraid dashboard tile" block inside the Dashboard
 // widget card: one-click install/remove of the companion bombvaultwidget plugin
@@ -1559,6 +1606,29 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
   // multi-line command `output` a toast has no room for.
   const [status, setStatus] = useState<DashPluginStatus>({ kind: "loading" });
   const [busy, setBusy] = useState<"idle" | "install" | "remove">("idle");
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): run()
+  // below already pushed a fail toast (per this file's own comment above),
+  // but never bumped a shake nonce. Naively bumping one alongside the
+  // EXISTING `setStatus({kind:"error", ...})` call would be a no-op live —
+  // that call switches the whole section to the dedicated "error" branch
+  // (a plain Retry button, not Install/Remove) in the SAME React commit as
+  // the shake, so the Install/Remove button the shake targets would never
+  // actually paint with the class on it (caught live: a code-read alone
+  // missed this, a real Playwright render against the deployed container
+  // did not). `runErr` decouples "the install/remove ACTION just failed"
+  // (we already know the install/absent state — that didn't change, the
+  // button should stay put, shake, and show a companion error line) from
+  // `status`'s own "error" kind, which now means only "the status CHECK
+  // itself failed" (refresh()'s own catch, below — we genuinely don't know
+  // if it's installed, hence the full-section takeover + Retry). Same
+  // "keep the message off the toast's own persistent multi-line output"
+  // shape this component already established for `status.output`.
+  const [runErr, setRunErr] = useState<{ message: string; output?: string } | null>(null);
+  const [shake, setShake] = useState<Record<string, number>>({});
+  function bumpShake(key: string) {
+    setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+  }
 
   function refresh() {
     getDashboardPlugin()
@@ -1585,6 +1655,7 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   async function run(op: "install" | "remove") {
     setBusy(op);
+    setRunErr(null);
     try {
       const r = await (op === "install" ? installDashboardPlugin() : removeDashboardPlugin());
       if (r.ok) {
@@ -1592,13 +1663,15 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
         refresh();
       } else {
         const message = r.error ?? t("settings.error");
-        setStatus({ kind: "error", message, output: r.output });
+        setRunErr({ message, output: r.output });
         push(message, "fail");
+        bumpShake(op);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : t("settings.error");
-      setStatus({ kind: "error", message });
+      setRunErr({ message });
       push(message, "fail");
+      bumpShake(op);
     } finally {
       setBusy("idle");
     }
@@ -1663,12 +1736,25 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
           </Badge>
           <button
             type="button"
+            key={shake.install || 0}
             onClick={() => void run("install")}
             disabled={busy !== "idle"}
-            className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shake.install ? " glim-shake" : ""
+            }`}
           >
             {busy === "install" ? t("settings.dashTileInstalling") : t("settings.dashTileInstall")}
           </button>
+          {/* A failed install stays right here (the button never disappears —
+              see this component's own `runErr` doc comment above for why) —
+              the toast already carries the one-line message; only the
+              possibly multi-line command output, when present, needs a
+              spot that outlives the toast's few seconds. */}
+          {runErr?.output && (
+            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre-wrap">
+              {runErr.output}
+            </pre>
+          )}
         </div>
       )}
 
@@ -1683,23 +1769,28 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileInstalledHint")}</p>
           <button
             type="button"
+            key={shake.remove || 0}
             onClick={() => void run("remove")}
             disabled={busy !== "idle"}
-            className="self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
+              shake.remove ? " glim-shake" : ""
+            }`}
           >
             {busy === "remove" ? t("settings.dashTileRemoving") : t("settings.dashTileRemove")}
           </button>
+          {/* Same "stays put, shows the multi-line output only" treatment as
+              the install button above. */}
+          {runErr?.output && (
+            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre-wrap">
+              {runErr.output}
+            </pre>
+          )}
         </div>
       )}
 
       {status.kind === "error" && (
         <div className="flex flex-col gap-2">
           <span className="text-xs text-statusFail wrap-break-word">✗ {status.message}</span>
-          {status.output && (
-            <pre className="overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre-wrap">
-              {status.output}
-            </pre>
-          )}
           <button
             type="button"
             onClick={() => {
@@ -1736,6 +1827,19 @@ function DashboardWidgetCard({
   const { push } = useToast();
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): the
+  // toast below already fired on every failure, but nothing ever bumped a
+  // shake nonce, so the Generate/Regenerate/Disable buttons never played
+  // `.glim-shake` — same per-key nonce shape as IntegrityCard's own `shake`
+  // state (see its `bumpShake` doc comment). Generate and Disable render as
+  // mutually-exclusive buttons (tokenSet ? ... : ...), so one shared key per
+  // action is enough — whichever of Generate/Regenerate is on screen when
+  // `generate` fails is the one that shakes.
+  const [shake, setShake] = useState<Record<string, number>>({});
+  function bumpShake(key: string) {
+    setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+  }
   const reveal = useReveal();
 
   const widgetUrl = token ? `${window.location.origin}/widget?token=${token}` : null;
@@ -1751,9 +1855,11 @@ function DashboardWidgetCard({
         onTokenSet(true);
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        bumpShake("generate");
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      bumpShake("generate");
     } finally {
       setBusy(false);
     }
@@ -1768,9 +1874,11 @@ function DashboardWidgetCard({
         onTokenSet(false);
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        bumpShake("disable");
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      bumpShake("disable");
     } finally {
       setBusy(false);
     }
@@ -1813,17 +1921,23 @@ function DashboardWidgetCard({
           <div className="flex items-center gap-2">
             <button
               type="button"
+              key={shake.generate || 0}
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+                shake.generate ? " glim-shake" : ""
+              }`}
             >
               {t("settings.widgetRegenerate")}
             </button>
             <button
               type="button"
+              key={shake.disable || 0}
               onClick={() => void handleDisable()}
               disabled={busy}
-              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
+                shake.disable ? " glim-shake" : ""
+              }`}
             >
               {t("settings.widgetDisable")}
             </button>
@@ -1832,9 +1946,12 @@ function DashboardWidgetCard({
       ) : (
         <button
           type="button"
+          key={shake.generate || 0}
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake.generate ? " glim-shake" : ""
+          }`}
         >
           {t("settings.widgetGenerate")}
         </button>
@@ -1912,6 +2029,17 @@ function FleetSettingsCard({
   const [, setNameSaveError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): the
+  // toast below already fired on every failure, but nothing ever bumped a
+  // shake nonce, so the Generate/Regenerate/Disable buttons never played
+  // `.glim-shake` — same gap, same fix, as the sibling DashboardWidgetCard
+  // above (see its own comment for the "mutually-exclusive buttons share one
+  // key" reasoning, identical here).
+  const [shake, setShake] = useState<Record<string, number>>({});
+  function bumpShake(key: string) {
+    setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+  }
   const reveal = useReveal();
   // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
   // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
@@ -1943,9 +2071,11 @@ function FleetSettingsCard({
         onTokenSet(true);
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        bumpShake("generate");
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      bumpShake("generate");
     } finally {
       setBusy(false);
     }
@@ -1960,9 +2090,11 @@ function FleetSettingsCard({
         onTokenSet(false);
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        bumpShake("disable");
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      bumpShake("disable");
     } finally {
       setBusy(false);
     }
@@ -2023,17 +2155,23 @@ function FleetSettingsCard({
           <div className="flex items-center gap-2">
             <button
               type="button"
+              key={shake.generate || 0}
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+                shake.generate ? " glim-shake" : ""
+              }`}
             >
               {t("settings.fleetRegenerate")}
             </button>
             <button
               type="button"
+              key={shake.disable || 0}
               onClick={() => void handleDisable()}
               disabled={busy}
-              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50"
+              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
+                shake.disable ? " glim-shake" : ""
+              }`}
             >
               {t("settings.fleetDisable")}
             </button>
@@ -2042,9 +2180,12 @@ function FleetSettingsCard({
       ) : (
         <button
           type="button"
+          key={shake.generate || 0}
           onClick={() => void handleGenerate()}
           disabled={busy}
-          className="self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake.generate ? " glim-shake" : ""
+          }`}
         >
           {t("settings.fleetGenerate")}
         </button>
@@ -2105,6 +2246,14 @@ export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; h
   const [remotes, setRemotes] = useState<string[]>([]);
   const [conf, setConf] = useState("");
   const [state, setState] = useState<SaveState>("idle");
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"), found by
+  // this same pass's own proactive sweep (not on the original finding list):
+  // this is one of the FOUR documented genuine hold-outs on manual Save (this
+  // Card's own file-header comment), the identical shape as CloudCredSetsCard's
+  // save() — a fail toast already fired here, but nothing ever bumped a shake
+  // nonce for the Save button. Same fix, same mechanism.
+  const [shake, setShake] = useState(0);
 
   function refresh() {
     getRclone()
@@ -2131,10 +2280,12 @@ export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; h
       } else {
         setState("idle");
         push(r.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       setState("idle");
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShake((n) => n + 1);
     }
   }
 
@@ -2165,9 +2316,12 @@ export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; h
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
         <button
+          key={shake || 0}
           onClick={() => void handleSave()}
           disabled={state === "saving" || conf.trim() === ""}
-          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {state === "saving" ? t("auth.saving") : t("rclone.save")}
         </button>
@@ -2365,6 +2519,23 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
   const [state, setState] = useState<SaveState>("idle");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): save()
+  // and remove() below already push a fail toast but never bumped a shake
+  // nonce, leaving the failure feedback toast-only instead of the toast+
+  // shake pairing this session's own system-wide shake sweep (commit
+  // b48fe30) established everywhere else — that commit's own file list did
+  // not include Settings.tsx. Same per-key nonce shape as IntegrityCard's
+  // own `shake` state (see its `bumpShake` doc comment); "save" for the
+  // single shared editor panel, and `remove:${id}` per row (there can be
+  // MULTIPLE saved cred sets rendered at once, unlike the single-editor
+  // Save button, so a shared "remove" key would incorrectly shake every
+  // row's button when only one row's delete actually failed — same
+  // per-row-id keying IntegrityCard's own domain actions use).
+  const [shake, setShake] = useState<Record<string, number>>({});
+  function bumpShake(key: string) {
+    setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
+  }
   const revealS3Secret = useReveal();
   const revealRestPassword = useReveal();
 
@@ -2417,10 +2588,12 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
       } else {
         setState("idle");
         push(r.error ?? t("settings.error"), "fail");
+        bumpShake("save");
       }
     } catch (err) {
       setState("idle");
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      bumpShake("save");
     }
   }
 
@@ -2433,9 +2606,11 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         refresh();
       } else {
         push(r.error ?? t("settings.error"), "fail");
+        bumpShake(`remove:${id}`);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      bumpShake(`remove:${id}`);
     } finally {
       setRemovingId(null);
       setConfirmRemove(null);
@@ -2472,17 +2647,23 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
             {confirmRemove === s.id ? (
               <button
                 type="button"
+                key={shake[`remove:${s.id}`] || 0}
                 onClick={() => void remove(s.id)}
                 disabled={removingId === s.id}
-                className="rounded-control bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50"
+                className={`rounded-control bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50${
+                  shake[`remove:${s.id}`] ? " glim-shake" : ""
+                }`}
               >
                 {removingId === s.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
               </button>
             ) : (
               <button
                 type="button"
+                key={shake[`remove:${s.id}`] || 0}
                 onClick={() => setConfirmRemove(s.id)}
-                className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover"
+                className={`rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover${
+                  shake[`remove:${s.id}`] ? " glim-shake" : ""
+                }`}
               >
                 {t("offsite.targets.remove")}
               </button>
@@ -2495,7 +2676,18 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         <div className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
           <label className={fieldCls}>{t("cloud.credSets.name")}
             <input value={editing.name} onChange={(e) => setField("name", e.target.value)} className={inputCls} /></label>
-          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
+          {/* `bg-carbon-surface3` — was `bg-carbon-surface3/40`, a 40%-alpha
+              wash of the surface3 token and the ONLY place in web/src that
+              ever used it (every other nested panel on this page, e.g. this
+              same Card's own outer `bg-carbon-surface2` a moment ago, uses a
+              plain solid surface token). A translucent wash over the Card's
+              own solid surface2 background just reads as a slightly darker
+              grey, not as "surface3" in any theme — the exact "translucent
+              wash reads as darkened, not as the intended colour" failure
+              this app's own design language already flags elsewhere. Solid
+              surface3 is the correct next step up from this panel's
+              surface2 parent, same nesting depth as every sibling panel. */}
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">Amazon S3</span>
             <label className={fieldCls}>AWS_ACCESS_KEY_ID
               <input value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
@@ -2514,7 +2706,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
                 <option value="GLACIER_IR">GLACIER_IR</option>
               </select></label>
           </div>
-          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3/40 p-3">
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>
             <label className={fieldCls}>RESTIC_REST_USERNAME
               <input value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${inputCls} text-start`} /></label>
@@ -2524,9 +2716,12 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
           </div>
           <div className="flex items-center gap-3">
             <button
+              key={shake.save || 0}
               onClick={() => void save()}
               disabled={state === "saving"}
-              className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                shake.save ? " glim-shake" : ""
+              }`}
             >
               {state === "saving" ? t("auth.saving") : t("settings.save")}
             </button>
@@ -4588,6 +4783,15 @@ export function SettingsPage() {
   const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
   const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"), found by
+  // this same pass's own proactive sweep (not on the original finding list):
+  // handleSetPassword is one of the FOUR documented genuine hold-outs on
+  // manual Save (this function's own header comment) — its post-save failure
+  // already pushes a toast, but nothing ever bumped a shake nonce for the
+  // Save button. Same per-nonce mechanism as every other shake state on this
+  // page (see ToggleRow's own shakeNonce doc comment).
+  const [pwSaveShake, setPwSaveShake] = useState(0);
   const revealPwNew = useReveal();
   const revealPwConfirm = useReveal();
   const revealMetricsToken = useReveal();
@@ -5377,10 +5581,12 @@ export function SettingsPage() {
       } else {
         setPwSaveState("idle");
         push(res.error ?? t("auth.saveError"), "fail");
+        setPwSaveShake((n) => n + 1);
       }
     } catch {
       setPwSaveState("idle");
       push(t("auth.saveError"), "fail");
+      setPwSaveShake((n) => n + 1);
     }
   }
 
@@ -7251,9 +7457,12 @@ export function SettingsPage() {
           {/* Save / status row */}
           <div className="flex items-center gap-3 pt-1">
             <button
+              key={pwSaveShake || 0}
               onClick={() => void handleSetPassword()}
               disabled={pwSaveState === "saving"}
-              className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+              className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                pwSaveShake ? " glim-shake" : ""
+              }`}
             >
               {pwSaveState === "saving" ? (
                 <>

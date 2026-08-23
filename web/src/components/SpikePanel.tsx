@@ -3,6 +3,7 @@ import { runSpike } from "../lib/api";
 import type { SpikeCheck } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -23,21 +24,31 @@ interface SpikePanelProps {
 }
 
 export function SpikePanel({ t }: SpikePanelProps) {
+  const { push } = useToast();
   const [checks, setChecks] = useState<SpikeCheck[] | null>(null);
   const [allOk, setAllOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
+  // action shows its message via a TOAST, never as permanent page text, and
+  // the button that triggered it replays `.glim-shake` once — the same fix
+  // IntegrityCard's own run()/runTamperFor() already established elsewhere in
+  // Settings.tsx (commit 108cc93). This replaces the old permanent inline
+  // `error` paragraph below the button with `shake` (a bumped nonce, same
+  // shape as IntegrityCard's own, so a repeated identical failure still
+  // replays the animation — see ToggleRow's own shakeNonce doc comment).
+  const [shake, setShake] = useState(0);
 
   async function handleCheck() {
     setLoading(true);
-    setError(null);
     try {
       const res = await runSpike();
       setChecks(res.checks ?? []);
       setAllOk(res.allOk);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Check failed";
-      setError(msg);
+      push(msg, "fail");
+      setShake((n) => n + 1);
       setChecks(null);
       setAllOk(false);
     } finally {
@@ -63,9 +74,12 @@ export function SpikePanel({ t }: SpikePanelProps) {
 
       <div className="flex items-center gap-3">
         <button
+          key={shake || 0}
           onClick={() => void handleCheck()}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {loading ? (
             <>
@@ -90,10 +104,6 @@ export function SpikePanel({ t }: SpikePanelProps) {
           </span>
         )}
       </div>
-
-      {error && (
-        <p className="text-xs text-statusFail">{error}</p>
-      )}
 
       {checks && checks.length > 0 && (
         <div className="rounded-card overflow-hidden">
