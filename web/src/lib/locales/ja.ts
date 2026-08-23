@@ -414,7 +414,7 @@ const ja: Partial<Translations> = {
   "integrity.hint": "restic check を実行して、リポジトリの構造とメタデータが正常か検証します。",
   "integrity.verify": "検証",
   "integrity.checking": "確認中…",
-  "integrity.ok": "✓ 正常",
+  "integrity.ok": "正常",
   "integrity.failed": "チェックに失敗しました",
   "integrity.failedShort": "✗ 失敗",
   "integrity.unlock": "ロック解除",

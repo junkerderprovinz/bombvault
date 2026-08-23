@@ -2,6 +2,7 @@ import { backupNow } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
 import { busyPhraseKey } from "../lib/progress";
 import type { useT } from "../lib/i18n";
+import { CheckDraw } from "./CheckDraw";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -56,8 +57,9 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
 
       {state.phase === "success" &&
         (state.snapshotId ? (
-          <span className="text-xs text-statusOk">
-            ✓ {t("common.done")}
+          <span className="inline-flex items-center gap-1 text-xs text-statusOk">
+            <CheckDraw />
+            {t("common.done")}
             <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
             </span>
@@ -66,8 +68,9 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
           // No snapshot id ⇒ a stateless container with no data folders. The
           // definition/template is still captured for recreate, but no restic
           // snapshot was made — say so instead of an opaque "Done".
-          <span className="text-xs text-carbon-textSub max-w-[18rem] wrap-break-word">
-            ✓ {t("backup.configOnly")}
+          <span className="inline-flex items-center gap-1 text-xs text-carbon-textSub max-w-[18rem] wrap-break-word">
+            <CheckDraw />
+            {t("backup.configOnly")}
           </span>
         ))}
 

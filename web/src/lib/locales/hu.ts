@@ -419,7 +419,7 @@ const hu: Partial<Translations> = {
   "integrity.hint": "Futtassa a restic check parancsot, hogy ellenőrizze egy adattár szerkezetének és metaadatainak épségét.",
   "integrity.verify": "Ellenőrzés",
   "integrity.checking": "Ellenőrzés…",
-  "integrity.ok": "✓ Ép",
+  "integrity.ok": "Ép",
   "integrity.failed": "Az ellenőrzés sikertelen",
   "integrity.failedShort": "✗ Sikertelen",
   "integrity.unlock": "Feloldás",

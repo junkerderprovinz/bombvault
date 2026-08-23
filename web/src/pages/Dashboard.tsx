@@ -660,7 +660,7 @@ function ProtectionCard({
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && domains.length > 0 && (
-        <div className="@container divide-y divide-carbon-border">
+        <div className="@container divide-y divide-carbon-border bv-content-fade">
           {domains.map((d) => {
             const off = d.status === "off";
             // Only containers, flash + files ever run an off-site DR drill
@@ -972,8 +972,9 @@ function RansomwareCard({
   return (
     <Card title={t("ransomware.title")} hueIndex={hueIndex}>
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
-      {!loading &&
-        shown.map((d) => {
+      {!loading && (
+      <div className="bv-content-fade">
+      {shown.map((d) => {
           // Each row: label, state, and an optional age stamp. A "bad" row is a red
           // gap the user should fix — it deep-links into Settings. Every state comes
           // from the backend so it cannot diverge from the chip above.
@@ -1072,6 +1073,8 @@ function RansomwareCard({
             </div>
           );
         })}
+      </div>
+      )}
     </Card>
   );
 }
@@ -1116,7 +1119,7 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noRuns")}</p>
       )}
       {runs.length > 0 && (
-        <>
+        <div className="bv-content-fade">
           {/* Day filter */}
           <div className="flex items-center gap-2 mb-2">
             <label className="text-xs text-carbon-textMuted">{t("run.filterDay")}</label>
@@ -1172,7 +1175,7 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
               );
             })}
           </div>
-        </>
+        </div>
       )}
     </Card>
   );
@@ -1214,7 +1217,7 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
       )}
 
       {withBackups.length > 0 && (
-        <div className="divide-y divide-carbon-border">
+        <div className="divide-y divide-carbon-border bv-content-fade">
           {withBackups.map((c) => {
             // Older data (or a run before the start time was recorded) has no
             // lastBackupStarted — fall back to just the finish time, never a
@@ -1410,7 +1413,7 @@ function HealthHeatmapCard({
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && days.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 bv-content-fade">
           <div className="flex gap-1 overflow-x-auto">
             {weeks.map((week, wi) => (
               <div key={wi} className="flex flex-col gap-1">
@@ -1599,7 +1602,7 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noStats")}</p>
       )}
       {!loading && anyData && data && (
-        <div className="divide-y divide-carbon-border">
+        <div className="divide-y divide-carbon-border bv-content-fade">
           {data.map((d) => {
             const has = d.latest != null;
             const dedup =

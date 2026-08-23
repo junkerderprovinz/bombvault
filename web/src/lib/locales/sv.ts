@@ -419,7 +419,7 @@ const sv: Partial<Translations> = {
   "integrity.hint": "Kör restic check för att verifiera att ett arkivs struktur och metadata är intakta.",
   "integrity.verify": "Verifiera",
   "integrity.checking": "Kontrollerar…",
-  "integrity.ok": "✓ Frisk",
+  "integrity.ok": "Frisk",
   "integrity.failed": "Kontrollen misslyckades",
   "integrity.failedShort": "✗ Misslyckades",
   "integrity.unlock": "Lås upp",

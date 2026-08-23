@@ -419,7 +419,7 @@ const fr: Partial<Translations> = {
   "integrity.hint": "Lancez restic check pour vérifier que la structure et les métadonnées d'un dépôt sont intactes.",
   "integrity.verify": "Vérifier",
   "integrity.checking": "Vérification…",
-  "integrity.ok": "✓ Sain",
+  "integrity.ok": "Sain",
   "integrity.failed": "Vérification échouée",
   "integrity.failedShort": "✗ Échoué",
   "integrity.unlock": "Déverrouiller",

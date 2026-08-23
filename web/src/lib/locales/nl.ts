@@ -413,7 +413,7 @@ const nl: Partial<Translations> = {
   "integrity.hint": "Voer restic check uit om te verifiëren dat de structuur en metadata van een repository intact zijn.",
   "integrity.verify": "Verifiëren",
   "integrity.checking": "Controleren…",
-  "integrity.ok": "✓ Gezond",
+  "integrity.ok": "Gezond",
   "integrity.failed": "Controle mislukt",
   "integrity.failedShort": "✗ Mislukt",
   "integrity.unlock": "Ontgrendelen",

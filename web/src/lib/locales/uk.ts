@@ -414,7 +414,7 @@ const uk: Partial<Translations> = {
   "integrity.hint": "Запустіть restic check, щоб перевірити, що структура й метадані репозиторію не пошкоджені.",
   "integrity.verify": "Перевірити",
   "integrity.checking": "Перевірка…",
-  "integrity.ok": "✓ Справний",
+  "integrity.ok": "Справний",
   "integrity.failed": "Перевірка не пройдена",
   "integrity.failedShort": "✗ Не пройдено",
   "integrity.unlock": "Розблокувати",

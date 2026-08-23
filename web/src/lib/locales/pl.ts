@@ -411,7 +411,7 @@ const pl: Partial<Translations> = {
   "integrity.hint": "Uruchom restic check, aby zweryfikować, że struktura i metadane repozytorium są nienaruszone.",
   "integrity.verify": "Zweryfikuj",
   "integrity.checking": "Sprawdzanie…",
-  "integrity.ok": "✓ Sprawne",
+  "integrity.ok": "Sprawne",
   "integrity.failed": "Weryfikacja nieudana",
   "integrity.failedShort": "✗ Nieudane",
   "integrity.unlock": "Odblokuj",

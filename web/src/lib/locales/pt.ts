@@ -416,7 +416,7 @@ const pt: Partial<Translations> = {
   "integrity.hint": "Execute restic check para verificar que a estrutura e os metadados de um repositório estão intactos.",
   "integrity.verify": "Verificar",
   "integrity.checking": "A verificar…",
-  "integrity.ok": "✓ Saudável",
+  "integrity.ok": "Saudável",
   "integrity.failed": "Verificação falhou",
   "integrity.failedShort": "✗ Falhou",
   "integrity.unlock": "Desbloquear",

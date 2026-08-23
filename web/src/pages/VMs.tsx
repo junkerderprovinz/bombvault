@@ -14,6 +14,7 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM } from "../components/Sidebar";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Toggle } from "../components/Toggle";
+import { CheckDraw } from "../components/CheckDraw";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
@@ -399,8 +400,9 @@ function VMBackupButton({
       {/* Plain export is an advanced-only extra. */}
       <Advanced><VMExportButton name={name} t={t} /></Advanced>
       {state.phase === "success" && (
-        <span className="text-xs text-statusOk">
-          ✓ {t("common.done")}
+        <span className="inline-flex items-center gap-1 text-xs text-statusOk">
+          <CheckDraw />
+          {t("common.done")}
           {state.phase === "success" && state.snapshotId && (
             <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
@@ -741,12 +743,14 @@ export function VMRow({
   const running = anyActive(progressMap);
   return (
     <div
-      style={hueVars(rainbowAt(index)) as CSSProperties}
+      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
       // glim-tint washes the card (trap #2 — without it this card shows
       // almost no colour at rest); glim-active while THIS row's own
       // backup/restore is actively running, so reactive mode shows the hue
       // without needing hover — mirrors ContainerRow's identical treatment.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+      // bv-stagger-row (GlimStone motion-engine animation 3) — see
+      // ContainerRow's identical comment.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -1644,7 +1648,7 @@ export function VMs() {
 
       {/* Live VMs */}
       {!loading && live.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bv-content-fade">
           {live.map((v, i) => (
             <VMRow
               key={v.libvirtName}
@@ -1661,7 +1665,7 @@ export function VMs() {
 
       {/* Orphan VMs — no longer defined on the host but still have backups */}
       {!loading && orphans.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bv-content-fade">
           <div>
             {/* GlimStone follow-up pass ("half-overlap card notch"):
                 `relative` directly on this <h2> — no padding wraps it, so

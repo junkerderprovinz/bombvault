@@ -49,6 +49,7 @@ import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
 import { Toggle } from "../components/Toggle";
+import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
@@ -175,8 +176,9 @@ function FileSetBackupButton({
         <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
       )}
       {state.phase === "success" && (
-        <span className="text-xs text-statusOk">
-          ✓ {t("common.done")}
+        <span className="inline-flex items-center gap-1 text-xs text-statusOk">
+          <CheckDraw />
+          {t("common.done")}
           {state.snapshotId && (
             <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
               {state.snapshotId.slice(0, 8)}
@@ -986,11 +988,13 @@ function FileSetRow({
 
   return (
     <div
-      style={hueVars(rainbowAt(index)) as CSSProperties}
+      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
       // glim-tint washes the card (trap #2 — without it this card shows
       // almost no colour at rest); glim-active while THIS set's own
       // backup/restore is actively running — mirrors ContainerRow/VMRow.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+      // bv-stagger-row (GlimStone motion-engine animation 3) — see
+      // ContainerRow's identical comment.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -1337,7 +1341,7 @@ export function Files() {
 
       {/* File-set cards */}
       {!loading && sets.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bv-content-fade">
           {sets.map((s, i) => (
             <FileSetRow
               key={s.id}

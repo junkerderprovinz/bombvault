@@ -516,7 +516,7 @@ function FleetPeerCard({
 
   return (
     <div
-      style={hueVars(rainbowAt(index)) as CSSProperties}
+      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the WHOLE card with it
       // (trap #2, design-language.md's "Rainbow" section) — same
       // relative/overflow-hidden/glim-hue/glim-tint shell as
@@ -525,7 +525,9 @@ function FleetPeerCard({
       // glim-active here: unlike those three, a peer card has no
       // progressMap-tracked backup/restore job of its own to key it off —
       // Poll/Propose are quick request/response actions, not a tracked job.
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint"
+      // bv-stagger-row (GlimStone motion-engine animation 3) — see
+      // ContainerRow's identical comment.
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row"
     >
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -914,7 +916,7 @@ export function Fleet() {
       )}
 
       {!loading && peers.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bv-content-fade">
           {peers.map((p, i) => (
             <FleetPeerCard
               key={p.id}

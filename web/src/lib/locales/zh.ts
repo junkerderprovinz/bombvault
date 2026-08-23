@@ -414,7 +414,7 @@ const zh: Partial<Translations> = {
   "integrity.hint": "运行 restic check 以验证仓库的结构和元数据是否完好。",
   "integrity.verify": "验证",
   "integrity.checking": "检查中…",
-  "integrity.ok": "✓ 健康",
+  "integrity.ok": "健康",
   "integrity.failed": "检查失败",
   "integrity.failedShort": "✗ 失败",
   "integrity.unlock": "解锁",

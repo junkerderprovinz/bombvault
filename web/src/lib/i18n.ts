@@ -597,7 +597,7 @@ export const en = {
   "integrity.hint": "Verify a repository's structure (restic check), clear stale locks left by an interrupted run, or prune to reclaim space from deleted backups.",
   "integrity.verify": "Verify",
   "integrity.checking": "Checking…",
-  "integrity.ok": "✓ Healthy",
+  "integrity.ok": "Healthy",
   "integrity.failed": "Check failed",
   // Minimal per-button fail glyph (GlimStone standing rule: failures toast,
   // the button itself only shows a brief fixed indicator matching
@@ -2084,7 +2084,7 @@ export const de: Translations = {
   "integrity.hint": "Struktur eines Repos verifizieren (restic check), verwaiste Locks eines abgebrochenen Laufs entfernen oder per Prune Speicher gelöschter Backups freigeben.",
   "integrity.verify": "Prüfen",
   "integrity.checking": "Prüfe…",
-  "integrity.ok": "✓ Intakt",
+  "integrity.ok": "Intakt",
   "integrity.failed": "Prüfung fehlgeschlagen",
   "integrity.failedShort": "✗ Fehlgeschlagen",
   "integrity.unlock": "Entsperren",

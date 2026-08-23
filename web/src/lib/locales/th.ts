@@ -419,7 +419,7 @@ const th: Partial<Translations> = {
   "integrity.hint": "เรียกใช้ restic check เพื่อยืนยันว่าโครงสร้างและเมตาดาตาของรีพอสิทอรีสมบูรณ์",
   "integrity.verify": "ยืนยัน",
   "integrity.checking": "กำลังตรวจสอบ…",
-  "integrity.ok": "✓ สมบูรณ์",
+  "integrity.ok": "สมบูรณ์",
   "integrity.failed": "การตรวจสอบล้มเหลว",
   "integrity.failedShort": "✗ ล้มเหลว",
   "integrity.unlock": "ปลดล็อก",

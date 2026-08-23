@@ -235,7 +235,7 @@ function ReceivedRepoCard({
 
   return (
     <div
-      style={hueVars(rainbowAt(index)) as CSSProperties}
+      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the WHOLE card with it
       // (trap #2, design-language.md's "Rainbow" section) — same
       // relative/overflow-hidden/glim-hue/glim-tint shell as
@@ -245,7 +245,9 @@ function ReceivedRepoCard({
       // a received-repo card has no progressMap-tracked backup/restore job of
       // its own to key it off — Check is a quick request/response action,
       // not a tracked job.
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint"
+      // bv-stagger-row (GlimStone motion-engine animation 3) — see
+      // ContainerRow's identical comment.
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row"
     >
       {/* Header: name + badges */}
       <div className="flex items-start gap-3 flex-wrap">
@@ -693,7 +695,7 @@ export function Receiver() {
 
       {/* Repo cards */}
       {!loading && repos.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bv-content-fade">
           {repos.map((r, i) => (
             <ReceivedRepoCard
               key={r.id}
