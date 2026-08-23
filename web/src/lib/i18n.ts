@@ -745,6 +745,16 @@ export const en = {
   "settings.shape.round": "Round",
   "settings.shape.soft": "Soft",
   "settings.shape.square": "Square",
+  // Motion intensity (GlimStone motion-engine) — a deliberate reversal of
+  // design-language.md's own prior "OS-controlled only, no fifth user
+  // switch" decision; see that doc's Motion Intensity section and
+  // lib/motion.ts's own header for the full course-correction note. Same
+  // "one product, every language" reasoning as the shape keys right above.
+  "settings.motion": "Motion",
+  "settings.motionHint": "How much every animation in the app moves — a manual dial that sits alongside your system's reduced-motion setting, never overrides it.",
+  "settings.motion.off": "Off",
+  "settings.motion.subtle": "Subtle",
+  "settings.motion.full": "Full",
   // Rainbow (GlimStone form-engine Phase 2, Task 1) — the accent, plural:
   // an eight-colour palette handed out by list position instead of one
   // accent everywhere. Originally matched the same keys in KnightLoader (the
@@ -2191,6 +2201,11 @@ export const de: Translations = {
   "settings.shape.round": "Rund",
   "settings.shape.soft": "Leicht",
   "settings.shape.square": "Eckig",
+  "settings.motion": "Bewegung",
+  "settings.motionHint": "Wie stark sich alle Animationen der App bewegen — ein manueller Regler neben der Systemeinstellung für reduzierte Bewegung, der sie nie überschreibt.",
+  "settings.motion.off": "Aus",
+  "settings.motion.subtle": "Dezent",
+  "settings.motion.full": "Voll",
   "settings.rainbow": "Regenbogen-Modus",
   "settings.rainbowHint": "Jede Zeile in einer Liste bekommt eine eigene Farbe aus einer festen Auswahl von acht, statt dass alles dieselbe Akzentfarbe hat — das macht lange Listen auf einen Blick leichter unterscheidbar.",
   "settings.rainbowOn": "Palette verwenden",
