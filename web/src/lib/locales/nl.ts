@@ -166,7 +166,7 @@ const nl: Partial<Translations> = {
   "source.hint": "Herstellen en verwijderen werken alleen op de geselecteerde bron — een lokale back-up verwijderen raakt nooit de off-site kopie, en omgekeerd.",
   "offsite.schedulePlaceholder": "leeg = na elke back-up · bijv. weekly Sun 03:00",
   "offsite.replicateNow": "Nu repliceren",
-  "offsite.sectionTitle": "Offsite-bescherming",
+  "offsite.copyDomainTitle": "Offsite-kopie {domain}",
   "offsite.replicating": "Repliceren…",
   "offsite.replicatingWithDuration": "Repliceren… ({duration})",
   "offsite.replicatingSnapshotPercent": "Repliceren: snapshot {index} van {total} ({percent}%)",

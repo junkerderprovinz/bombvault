@@ -167,7 +167,7 @@ const uk: Partial<Translations> = {
   "source.hint": "Відновлення та видалення діють лише на вибране джерело — видалення локальної копії ніколи не зачіпає зовнішню, і навпаки.",
   "offsite.schedulePlaceholder": "порожньо = після кожного бекапу · напр. weekly Sun 03:00",
   "offsite.replicateNow": "Реплікувати зараз",
-  "offsite.sectionTitle": "Зовнішній захист",
+  "offsite.copyDomainTitle": "Зовнішня копія {domain}",
   "offsite.replicating": "Реплікація…",
   "offsite.replicatingWithDuration": "Реплікація… ({duration})",
   "offsite.replicatingSnapshotPercent": "Реплікація знімка {index} з {total} ({percent}%)",

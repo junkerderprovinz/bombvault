@@ -169,7 +169,7 @@ const hu: Partial<Translations> = {
   "source.hint": "A visszaállítás és a törlés csak a kiválasztott forrásra hat — egy helyi mentés törlése soha nem érinti a telephelyen kívüli másolatot, és fordítva.",
   "offsite.schedulePlaceholder": "üres = minden mentés után · pl. weekly Sun 03:00",
   "offsite.replicateNow": "Replikálás most",
-  "offsite.sectionTitle": "Telephelyen kívüli védelem",
+  "offsite.copyDomainTitle": "Telephelyen kívüli másolat {domain}",
   "offsite.replicating": "Replikálás…",
   "offsite.replicatingWithDuration": "Replikálás… ({duration})",
   "offsite.replicatingSnapshotPercent": "Pillanatkép replikálása: {index}/{total} ({percent}%)",

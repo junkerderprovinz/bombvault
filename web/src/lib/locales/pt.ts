@@ -168,7 +168,7 @@ const pt: Partial<Translations> = {
   "source.hint": "Restaurar e excluir agem apenas na origem selecionada — excluir um backup local nunca toca na cópia externa, e vice-versa.",
   "offsite.schedulePlaceholder": "vazio = após cada backup · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replicar agora",
-  "offsite.sectionTitle": "Proteção externa",
+  "offsite.copyDomainTitle": "Cópia externa {domain}",
   "offsite.replicating": "Replicando…",
   "offsite.replicatingWithDuration": "Replicando… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replicando snapshot {index} de {total} ({percent}%)",

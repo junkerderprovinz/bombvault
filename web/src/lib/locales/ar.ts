@@ -169,7 +169,7 @@ const ar: Partial<Translations> = {
   "source.hint": "الاستعادة والحذف يؤثران فقط على المصدر المحدد — حذف نسخة محلية لا يمس النسخة خارج الموقع أبدًا، والعكس صحيح.",
   "offsite.schedulePlaceholder": "فارغ = بعد كل نسخة احتياطية · مثل weekly Sun 03:00",
   "offsite.replicateNow": "نسخ الآن",
-  "offsite.sectionTitle": "الحماية خارج الموقع",
+  "offsite.copyDomainTitle": "نسخة خارج الموقع {domain}",
   "offsite.replicating": "جارٍ النسخ…",
   "offsite.replicatingWithDuration": "جارٍ النسخ… ({duration})",
   "offsite.replicatingSnapshotPercent": "جارٍ نسخ اللقطة {index} من {total} ({percent}%)",

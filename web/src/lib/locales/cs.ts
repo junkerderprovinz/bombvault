@@ -169,7 +169,7 @@ const cs: Partial<Translations> = {
   "source.hint": "Obnovení a mazání se týkají jen vybraného zdroje — smazání místní zálohy se nikdy nedotkne kopie mimo lokalitu a naopak.",
   "offsite.schedulePlaceholder": "prázdné = po každé záloze · např. weekly Sun 03:00",
   "offsite.replicateNow": "Replikovat nyní",
-  "offsite.sectionTitle": "Ochrana mimo lokalitu",
+  "offsite.copyDomainTitle": "Kopie mimo lokalitu {domain}",
   "offsite.replicating": "Replikace…",
   "offsite.replicatingWithDuration": "Replikace… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replikace snímku {index} z {total} ({percent} %)",

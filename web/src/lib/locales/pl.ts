@@ -166,7 +166,7 @@ const pl: Partial<Translations> = {
   "source.hint": "Przywracanie i usuwanie działają tylko na wybranym źródle — usunięcie kopii lokalnej nigdy nie narusza kopii poza siedzibą i odwrotnie.",
   "offsite.schedulePlaceholder": "puste = po każdej kopii · np. weekly Sun 03:00",
   "offsite.replicateNow": "Replikuj teraz",
-  "offsite.sectionTitle": "Ochrona poza siedzibą",
+  "offsite.copyDomainTitle": "Kopia poza siedzibą {domain}",
   "offsite.replicating": "Replikowanie…",
   "offsite.replicatingWithDuration": "Replikowanie… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replikowanie migawki {index} z {total} ({percent}%)",

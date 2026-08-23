@@ -169,7 +169,7 @@ const it: Partial<Translations> = {
   "source.hint": "Ripristino ed eliminazione agiscono solo sulla sorgente selezionata — eliminare un backup locale non tocca mai la copia off-site, e viceversa.",
   "offsite.schedulePlaceholder": "vuoto = dopo ogni backup · es. weekly Sun 03:00",
   "offsite.replicateNow": "Replica ora",
-  "offsite.sectionTitle": "Protezione off-site",
+  "offsite.copyDomainTitle": "Copia off-site {domain}",
   "offsite.replicating": "Replica in corso…",
   "offsite.replicatingWithDuration": "Replica in corso… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replica snapshot {index} di {total} in corso ({percent}%)",

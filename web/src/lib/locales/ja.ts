@@ -169,7 +169,7 @@ const ja: Partial<Translations> = {
   "source.hint": "復元と削除は選択中のソースにのみ作用します。ローカルバックアップを削除してもオフサイトのコピーには影響せず、その逆も同様です。",
   "offsite.schedulePlaceholder": "空欄 = 毎回のバックアップ後 · 例: weekly Sun 03:00",
   "offsite.replicateNow": "今すぐ複製",
-  "offsite.sectionTitle": "オフサイト保護",
+  "offsite.copyDomainTitle": "オフサイトコピー {domain}",
   "offsite.replicating": "複製中…",
   "offsite.replicatingWithDuration": "複製中…（{duration}）",
   "offsite.replicatingSnapshotPercent": "スナップショット {index}/{total} を複製中…（{percent}%）",

@@ -169,7 +169,7 @@ const th: Partial<Translations> = {
   "source.hint": "การกู้คืนและการลบจะมีผลเฉพาะกับแหล่งที่เลือกเท่านั้น — การลบข้อมูลสำรองในเครื่องจะไม่แตะต้องสำเนานอกสถานที่ และในทางกลับกัน",
   "offsite.schedulePlaceholder": "ว่าง = หลังการสำรองทุกครั้ง · เช่น weekly Sun 03:00",
   "offsite.replicateNow": "จำลองตอนนี้",
-  "offsite.sectionTitle": "การป้องกันนอกสถานที่",
+  "offsite.copyDomainTitle": "สำเนานอกสถานที่ {domain}",
   "offsite.replicating": "กำลังจำลอง…",
   "offsite.replicatingWithDuration": "กำลังจำลอง… ({duration})",
   "offsite.replicatingSnapshotPercent": "กำลังจำลองสแนปช็อต {index} จาก {total} ({percent}%)",

@@ -169,7 +169,7 @@ const ko: Partial<Translations> = {
   "source.hint": "복원과 삭제는 선택한 소스에만 적용됩니다. 로컬 백업을 삭제해도 오프사이트 사본은 건드리지 않으며 그 반대도 마찬가지입니다.",
   "offsite.schedulePlaceholder": "비움 = 매 백업 후 · 예: weekly Sun 03:00",
   "offsite.replicateNow": "지금 복제",
-  "offsite.sectionTitle": "오프사이트 보호",
+  "offsite.copyDomainTitle": "오프사이트 복사 {domain}",
   "offsite.replicating": "복제 중…",
   "offsite.replicatingWithDuration": "복제 중… ({duration})",
   "offsite.replicatingSnapshotPercent": "스냅샷 {index}/{total} 복제 중… ({percent}%)",
