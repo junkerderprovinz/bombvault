@@ -2632,6 +2632,7 @@ function NotifyCard({
   platformKind,
   hueIndex,
   channelsHueIndex,
+  healthchecksHueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
   // The detected/overridden platform.Kind ("unraid" | "generic" | "truenas"),
@@ -2641,15 +2642,19 @@ function NotifyCard({
   // no UI trace — see unraidGate's doc comment in internal/api/service.go for
   // why the backend gate itself stays hard rather than trusting the toggle).
   platformKind: string;
-  // This function now returns TWO Cards (jdp, live-review: "Können wir die
+  // This function now returns THREE Cards (jdp, live-review: "Können wir die
   // Einstellungen für die Benachrichtigungen und die Kanäle für
   // Benachrichtigungen (Matrix, Apprise, Email) in zwei eigene Cards
-  // auftrennen?") — the settings Card (trigger condition, the three toggles,
-  // the platform-mismatch banner, Test) and the channels Card (webhook/
-  // Apprise/Matrix/Healthchecks/SMTP). One shared cfg/persistNotify/debounce
-  // underneath (both Cards edit the same NotifyConfig object), so this stays
-  // ONE component/one set of hooks — only the JSX splits, hence two distinct
-  // hueIndex props rather than two components each taking their own.
+  // auftrennen?", then a FOLLOW-UP round splitting Healthchecks out again:
+  // "Sollen wir Healthchecks.io-Ping-URL und Prüfungen pro Domäne (erweitert)
+  // nicht in eine eigene Card machen?") — the settings Card (trigger
+  // condition, the three toggles, the platform-mismatch banner, Test), the
+  // channels Card (webhook/Apprise/Matrix/Email), and the Healthchecks Card
+  // (global ping URL + per-domain overrides). One shared cfg/persistNotify/
+  // debounce underneath (all three Cards edit the same NotifyConfig object),
+  // so this stays ONE component/one set of hooks — only the JSX splits,
+  // hence three distinct hueIndex props rather than three components each
+  // taking their own.
   hueIndex?: number;
   // The channels Card only renders while `advanced` is true, so THIS value
   // must come from a `nextHue()` call made INSIDE the same `tab ===
@@ -2661,6 +2666,11 @@ function NotifyCard({
   // bug this guards against: an eager `nextHue()` at the call site burns a
   // slot even with Advanced off, shifting every later tab heading by one.
   channelsHueIndex?: number;
+  // The Healthchecks Card (card-split follow-up) is gated identically to the
+  // channels Card above (`advanced` only) — same "must come from a nextHue()
+  // call made INSIDE the advanced gate" rule, same reasoning, its own
+  // independent slot.
+  healthchecksHueIndex?: number;
 }) {
   const { push } = useToast();
   // Simple mode still gets notify-on-failure via Unraid; the extra channels
@@ -2891,12 +2901,17 @@ function NotifyCard({
           Email/SMTP's own smtpEnabled further below: a persisted
           `webhookEnabled` boolean that ALSO gates the backend send
           (internal/notify.Config's WebhookEnabled + its own webhookReady(),
-          mirroring smtpReady()'s enabled-AND-fields-set gate exactly). No
-          hueIndex: the sole toggle in its own single-purpose Webhook
-          subsection, no sibling toggle of its own kind here — the same
-          reasoning SMTP's own toggle documents below, applied identically to
-          this channel (and to Matrix/Apprise below it). Fields hide while
-          off, matching SMTP's own established pattern.
+          mirroring smtpReady()'s enabled-AND-fields-set gate exactly).
+          `hueIndex={0}` (GlimStone follow-up round, jdp's live review of the
+          just-hued Webhook/Matrix/Apprise toggles, explicitly OVERRIDING
+          this section's prior "sole toggle in its own single-purpose
+          subsection" reasoning: "Ebenso sind die Toggles bei Apprise etc.
+          nicht im Regenbogenmodus") - treat Webhook/Apprise/Matrix/SMTP as
+          one related GROUP (own local 0-based index per group, ToggleRow's
+          own hueIndex doc), the same shape as the Rainbow Card's own three
+          toggles (master/Reactive/Rotate - individually hueIndex'd despite
+          sitting in visually separate blocks too). Fields hide while off,
+          matching SMTP's own established pattern.
             notify.webhookChannel ("Webhook") is a NEW key distinct from
           notify.webhook ("Webhook URL", kept unchanged below on the URL
           field itself) — Matrix and Apprise already had their own
@@ -2908,6 +2923,7 @@ function NotifyCard({
           label={t("notify.webhookChannel")}
           checked={cfg.webhookEnabled}
           onChange={(v) => setImmediate("webhookEnabled", v)}
+          hueIndex={0}
         />
         {cfg.webhookEnabled && (
           <>
@@ -2941,14 +2957,16 @@ function NotifyCard({
           notify.unraidHint's own override already uses (see this function's
           header comment) — rather than showing "Apprise" twice (once as a
           plain caption, once as the toggle's own required visible label).
-          No hueIndex, same "sole toggle in its own single-purpose
-          subsection" reasoning as Webhook above and SMTP below. */}
+          `hueIndex={1}` - see Webhook's own comment above for jdp's
+          explicit override of the old "sole toggle in its own subsection"
+          reasoning; same Webhook/Apprise/Matrix/SMTP group, next slot. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <ToggleRow
           label={t("notify.apprise")}
           hint={t("notify.appriseHint")}
           checked={cfg.appriseEnabled}
           onChange={(v) => setImmediate("appriseEnabled", v)}
+          hueIndex={1}
         />
         {cfg.appriseEnabled && (
           <>
@@ -2971,13 +2989,15 @@ function NotifyCard({
           folded into matrixReady()'s existing homeserver/token/room gate).
           The section's former plain `<span>` header is gone, replaced by
           this ToggleRow's own required visible label (no hint text existed
-          for Matrix to fold in, unlike Apprise above). No hueIndex, same
-          "sole toggle in its own single-purpose subsection" reasoning. */}
+          for Matrix to fold in, unlike Apprise above). `hueIndex={2}` - see
+          Webhook's own comment above for jdp's explicit override; same
+          Webhook/Apprise/Matrix/SMTP group, next slot. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <ToggleRow
           label={t("notify.matrix")}
           checked={cfg.matrixEnabled}
           onChange={(v) => setImmediate("matrixEnabled", v)}
+          hueIndex={2}
         />
         {cfg.matrixEnabled && (
           <>
@@ -3005,25 +3025,25 @@ function NotifyCard({
           settings-Card toggles converted in an earlier round (standing rule:
           fix every existing caller of the gap being fixed, not just the
           reported instance) — this was still a hand-rolled
-          <input type="checkbox">, the fourth one in this Card. No hueIndex:
-          the sole toggle in its own single-purpose SMTP subsection, with no
-          sibling toggle of its own kind here — ToggleRow's own doc calls
-          this out by name as the one case that correctly omits it (e.g.
-          "Leise Benachrichtigungen"), not a list to walk. The SAME reasoning
-          is now applied to Webhook/Apprise/Matrix above (jdp, live-review:
-          "Matrix, Apprise, Webhook-URL sollen alle ein Toggle bekommen wie
-          E-Mail") — four independent channel subsections, four independent
-          lone toggles, none of them a list of siblings.
+          <input type="checkbox">, the fourth one in this Card.
+          `hueIndex={3}` (GlimStone follow-up round, jdp's explicit override of
+          the "sole toggle in its own subsection" reasoning that used to sit
+          here — see Webhook's own comment above for the full history):
+          Webhook/Apprise/Matrix/SMTP are one related GROUP now, four
+          independent channel subsections each getting their own stable
+          rainbow position (0/1/2/3), not four un-hued singletons.
             MOVED directly above Healthchecks below (jdp, live-review: "E-Mail
           soll über Healthchecks-Ping-URL verschoben werden") — was the LAST
           section in this Card; the new order is Webhook/Apprise/Matrix/
-          Email/Healthchecks(-global+per-domain). Nothing in this section's
-          own JSX changed, only its position. */}
+          Email, with Healthchecks(-global+per-domain) now its OWN separate
+          Card below (card-split follow-up) rather than a trailing section
+          here. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <ToggleRow
           label={t("notify.smtp")}
           checked={cfg.smtpEnabled}
           onChange={(v) => setImmediate("smtpEnabled", v)}
+          hueIndex={3}
         />
         {cfg.smtpEnabled && (
           <>
@@ -3068,9 +3088,23 @@ function NotifyCard({
           </>
         )}
       </div>
+      </Card>
+    )}
 
-      {/* Healthchecks global ping URL. MOVED below Email/SMTP above (see that
-          section's own comment) — was directly after Matrix.
+    {/* Healthchecks Card (card-split follow-up, jdp: "Sollen wir
+        Healthchecks.io-Ping-URL und Prüfungen pro Domäne (erweitert) nicht in
+        eine eigene Card machen?") — SPLIT OUT of the channels Card above into
+        its own standalone Card, own heading, own hueIndex, matching this
+        file's established per-topic Card-splitting pattern (the same move
+        NotifyCard's own header comment documents for the settings/channels
+        split one round earlier). Same `advanced &&` gate as the channels
+        Card (Healthchecks is itself an advanced-only feature, same as
+        Webhook/Matrix/Apprise/SMTP above it), same shared cfg/persistNotify.
+          Neither section's own JSX changed beyond the wrapping Card — global
+        URL + per-domain overrides render exactly as before. */}
+    {advanced && (
+      <Card title={t("notify.healthchecksTitle")} hueIndex={healthchecksHueIndex}>
+      {/* Healthchecks global ping URL.
             notify.healthchecksLifecycle moved from a permanent <p> into an
           InfoBubble attached to this label (jdp, live-review, explicit and
           unconditional: "der Infotext dort in eine Infobubble" — overriding
@@ -3156,12 +3190,16 @@ function NotifyCard({
 // reuse of another context's own token). The old busy/idle text swap survives
 // as the tooltip's own content instead of the button's visible label — same
 // two i18n keys, same swap condition, just read by `tip` instead of
-// `children` now. The `hueIndex`-driven background wash is UNCHANGED (jdp's
-// own framing was specifically about the coloured TEXT, not the colour-engine
-// wiring itself) — Badge.tsx's own `isIconOnly && tone==="active"` branch
-// swaps only the glyph's ink to a neutral `text-carbon-textSub`, matching
-// every other icon-only badge in the app ("icons carry no colour of their
-// own, only the badge does").
+// `children` now. GlimStone follow-up round (jdp's next live review, on
+// this same badge: "die sind falsch eingefaerbt, so halb abgedunkelt")
+// replaced the `hueIndex`-driven background from a 14%-alpha wash to a full
+// solid hue-derived fill — Badge.tsx's own `isIconOnly && tone==="active"`
+// branch now swaps the glyph's ink to the computed-contrast
+// `text-accentContrast` riding on that solid fill: still a neutral
+// (hue-of-its-own-free) ink per "icons carry no colour of their own, only
+// the badge does", just no longer the flat `text-carbon-textSub` token that
+// was only safe against the old pale wash. See Badge.tsx's own `toneClasses`
+// comment for the full before/after and the measured contrast numbers.
 function ReplicateNowButton({
   domain,
   t,
@@ -3221,7 +3259,7 @@ function ReplicateNowButton({
 // configured location before relying on it.
 // GlimStone follow-up round: converted to a square icon-only badge (IconCheckCircle)
 // the same way as ReplicateNowButton above — see that function's own comment for
-// the full "coloured text → neutral glyph on the unchanged hued wash" writeup;
+// the full "coloured text -> neutral glyph, wash -> solid fill" writeup;
 // the multiTarget-dependent "Test connection"/"Test PRIMARY connection" swap
 // survives unchanged, just as `tip` content instead of visible text.
 function TestConnectionButton({
@@ -6768,7 +6806,7 @@ export function SettingsPage() {
                     "Einrichten…"/"Schließen". Both strings survive unchanged
                     as the `tip` tooltip's content instead — see
                     ReplicateNowButton's own comment above for the full
-                    "coloured text → neutral glyph on the unchanged hued wash"
+                    "coloured text -> neutral glyph, wash -> solid fill"
                     writeup this shares. */}
                 <Badge
                   as="button"
@@ -7024,32 +7062,35 @@ export function SettingsPage() {
       {tab === "offsite" && <CloudCredSetsCard t={t} hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
-      {/* NOTIFICATIONS — NotifyCard now renders TWO Cards internally: its    */}
-      {/* settings Card (always) and its channels Card (advanced only) — see */}
-      {/* NotifyCard's own header comment. `channelsHueIndex` MUST be its    */}
-      {/* own `nextHue()` call made INSIDE `tab === "notifications" &&       */}
-      {/* advanced &&`, not an eager call at the unconditional site above:   */}
-      {/* the channels Card only paints while Advanced is on, and this file  */}
-      {/* already has one documented live-Playwright-caught bug from doing  */}
-      {/* it the eager way — see the SYSTEM tab's Spike Card comment ("fires */}
-      {/* every render regardless") for the exact silent-hue-shift failure   */}
-      {/* mode this avoids: a slot burned on a Card that never painted,      */}
-      {/* shifting every later heading on this tab by one position while     */}
-      {/* Advanced was off. Plain `&&` short-circuits correctly, so with     */}
-      {/* Advanced off `channelsHue` is simply never computed and the        */}
-      {/* prop below evaluates to `undefined` — NotifyCard never renders     */}
-      {/* the channels Card in that case anyway, so the unused value never   */}
-      {/* matters, and no hue slot is spent.                                 */}
+      {/* NOTIFICATIONS — NotifyCard now renders THREE Cards internally: its  */}
+      {/* settings Card (always), its channels Card (advanced only), and its  */}
+      {/* Healthchecks Card (advanced only, card-split follow-up) — see       */}
+      {/* NotifyCard's own header comment. `channelsHueIndex`/                */}
+      {/* `healthchecksHueIndex` MUST each be their own `nextHue()` call made  */}
+      {/* INSIDE `tab === "notifications" && advanced &&`, not an eager call   */}
+      {/* at the unconditional site above: both Cards only paint while         */}
+      {/* Advanced is on, and this file already has one documented            */}
+      {/* live-Playwright-caught bug from doing it the eager way — see the     */}
+      {/* SYSTEM tab's Spike Card comment ("fires every render regardless")    */}
+      {/* for the exact silent-hue-shift failure mode this avoids: a slot      */}
+      {/* burned on a Card that never painted, shifting every later heading    */}
+      {/* on this tab by one position while Advanced was off. Plain `&&`       */}
+      {/* short-circuits correctly, so with Advanced off both values are       */}
+      {/* simply never computed and the props below evaluate to `undefined` —  */}
+      {/* NotifyCard never renders either Card in that case anyway, so the     */}
+      {/* unused values never matter, and no hue slot is spent.                */}
       {/* ------------------------------------------------------------------ */}
       {tab === "notifications" && (() => {
         const settingsHue = nextHue();
         const channelsHue = advanced ? nextHue() : undefined;
+        const healthchecksHue = advanced ? nextHue() : undefined;
         return (
           <NotifyCard
             t={t}
             platformKind={platformKind}
             hueIndex={settingsHue}
             channelsHueIndex={channelsHue}
+            healthchecksHueIndex={healthchecksHue}
           />
         );
       })()}
