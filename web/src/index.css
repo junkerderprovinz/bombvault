@@ -2284,9 +2284,31 @@ body {
      channel a hued element could be transitioning (background, text,
      border, the hue-ring's box-shadow, and SVG fill/stroke for icon glyphs)
      gets the same duration so nothing visibly lags behind the rest of the
-     wipe. */
+     wipe.
+
+     `.bv-colour-wipe.bv-colour-wipe *` — the doubled class is a deliberate
+     specificity bump (two class selectors, (0,2,0), not the plain one
+     class's (0,1,0)), NOT a typo. Caught LIVE, not by a code read: almost
+     every real element this rule needs to reach (buttons, badges, Selector
+     segments) is ALSO `.rounded-control`/`.rounded-pill` — item 1's own
+     `.bv-shape-transitions .rounded-control` rule is a two-class selector
+     at (0,2,0), and `transition` is a SHORTHAND: the cascade doesn't merge
+     two rules' property lists for the same longhands, the higher-specificity
+     rule wins the entire shorthand outright. At equal (0,1,0) this rule was
+     silently losing every one of its six transition-property entries on any
+     hued button, leaving [data-rainbow]'s colour flip to snap instantly
+     instead of wipe — verified live via getComputedStyle().transitionProperty
+     showing only "border-radius" on a hued button during an active wipe,
+     with NO gradual colour interpolation across ~50 sampled animation
+     frames. The bump ties item 1's own specificity; being declared LATER in
+     this same file/media block settles the tie in this rule's favour. The
+     one remaining trade-off (accepted, not fixed further): a shape change
+     landing inside the same ~500ms window as an active colour-wipe would
+     have its OWN border-radius transition pre-empted on a doubly-matched
+     element — two independent user actions inside one half-second of each
+     other, judged not worth the added complexity a real merge would need. */
   .bv-colour-wipe,
-  .bv-colour-wipe * {
+  .bv-colour-wipe.bv-colour-wipe * {
     transition:
       background-color var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
       color var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
