@@ -2554,8 +2554,10 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
 // emptyNotify is the default notification config shown before the saved one loads.
 const emptyNotify: NotifyConfig = {
   on: "never",
+  webhookEnabled: false,
   webhookUrl: "",
   webhookFormat: "generic",
+  matrixEnabled: false,
   matrixHomeserver: "",
   matrixToken: "",
   matrixRoom: "",
@@ -2569,6 +2571,7 @@ const emptyNotify: NotifyConfig = {
   smtpFrom: "",
   smtpTo: "",
   smtpTls: "starttls",
+  appriseEnabled: false,
   appriseUrl: "",
   appriseTags: "",
   scheduledSummary: false,
@@ -2592,17 +2595,22 @@ const emptyNotify: NotifyConfig = {
 // update" checkbox captions, the Apprise section intro, and the
 // per-domain-Healthchecks section intro.
 //
-// Two hints in THIS card were deliberately left as permanent text, not
-// bubbled, because they read as reference a user consults again later
-// rather than a one-time "what does this do" explainer (the spec's own
-// test): notify.unraidHint names the EXACT error string ("libvirt not
-// reachable") to ignore when VMs aren't backed up — someone hitting that
-// message while debugging needs it findable on the page, not behind a hover
-// target they have to already know exists; notify.healthchecksLifecycle
+// Two hints in THIS card were ORIGINALLY left as permanent text, not
+// bubbled, reasoned as reference a user consults again later rather than a
+// one-time "what does this do" explainer (the spec's own test):
+// notify.unraidHint names the EXACT error string ("libvirt not reachable")
+// to ignore when VMs aren't backed up; notify.healthchecksLifecycle
 // documents a non-obvious cross-setting interaction (Healthchecks pings
-// regardless of the "notify on" policy above it) that's exactly the kind of
-// "why is this behaving unexpectedly" answer someone comes back to, not
-// something read once and never needed again. Both stay as-is below.
+// regardless of the "notify on" policy above it). BOTH are now InfoBubbles —
+// jdp's live-review ask, "Info-Texte immer in eine Infobubble," is explicit
+// and unconditional, and supersedes both per-instance carve-outs the same
+// way: notify.unraidHint moved in an earlier round (see its own ToggleRow
+// call site's comment below for that override's full reasoning);
+// notify.healthchecksLifecycle moved in the round that also added the
+// per-channel enable toggles (see the Healthchecks label's own call site
+// below) — each override is a one-line revert back to permanent text if the
+// debugging-findability concern turns out to matter once live, not a
+// redesign.
 //
 // GlimStone follow-up pass (v8.0.0): closed out the rest of the file's
 // remainder Task 4 flagged above — every other tab's Card-level and
@@ -2610,7 +2618,8 @@ const emptyNotify: NotifyConfig = {
 // mechanism (Card's `hint` prop; FolderBrowser gained the identical optional
 // `hint` prop for its two Settings.tsx call sites that had one). A small
 // family of sites earned the SAME "reference, not a one-time explainer"
-// carve-out as this card's own two: RcloneCard's pathHint and CloudCard's
+// carve-out THIS card's own two originally did (both later overridden — see
+// the paragraph above): RcloneCard's pathHint and CloudCard's
 // own hint (both name exact Backup Path URL-prefix syntax used on a
 // different tab), settings.metricsHint (names the exact /metrics path +
 // Authorization header — see its own call site's comment), and
@@ -2747,24 +2756,50 @@ function NotifyCard({
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
   const selectCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
-  // Card-level sibling of selectCls: same styling, but this one sits directly on
-  // the Card (bg-carbon-surface), so its fill is surface2 — the panel-level
-  // fields above use surface3 because they sit ON a surface2 panel.
-  const selectCardCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus";
+  // selectCardCls (the Card-level sibling of selectCls above, for a select
+  // sitting directly on the Card rather than a surface2 panel) was REMOVED
+  // here — its one call site, the "on" select, became a Selector (task 1 of
+  // this round; see that call site's own comment). No other field in this
+  // Card sits directly on the Card surface rather than inside one of the
+  // rounded-card bg-carbon-surface2 panels below, so nothing else needs it.
   const labelCls = "flex flex-col gap-1 text-xs text-carbon-textSub";
 
   return (
     <>
     <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
-      <label className={labelCls}>
-        {t("notify.on")}
-        <select value={cfg.on} onChange={(e) => setImmediate("on", e.target.value)} className={selectCardCls}>
-          <option value="never">{t("notify.onNever")}</option>
-          <option value="failure">{t("notify.onFailure")}</option>
-          <option value="always">{t("notify.onAlways")}</option>
-        </select>
-      </label>
+      {/* "on" select → Selector (jdp, live-review: "Benachrichtigen: nie, nur
+          bei Fehler, bei Fehler und Erfolg soll bitte ein horizontaler
+          Selektor sein"). Plain `variant="chip"` default, no `size`/
+          `equalWidth` — this is a small 3-item control inside a settings
+          form, the SAME scale as the Integrity Card's own drill-kind
+          Selector (search "drill.kindLabel" in this file), not the page's
+          bigger "well"-variant pickers (the Theme Card's light/dark toggle)
+          that get the standardized MIN_PINNED_WIDTH treatment — see
+          Selector.tsx's own file header for why that width standardization
+          is scoped to those larger pickers only.
+            A plain `<span>` caption OUTSIDE the Selector, NOT the `<label>`
+          this field used to be (Selector.tsx's own header is explicit: a
+          `<label>` wrapping a multi-segment control hands its click to the
+          first segment and announces that segment's name as the label's own
+          name to a screen reader — the same trap the drill-kind Selector
+          below in this file already avoids). Kept the same `flex flex-col
+          gap-1` shape as `labelCls` (now on a `<div>`, not a `<label>`) so
+          this field still stacks caption-above-control like every sibling
+          field in this Card. */}
+      <div className={labelCls}>
+        <span>{t("notify.on")}</span>
+        <Selector
+          items={[
+            { id: "never", label: t("notify.onNever") },
+            { id: "failure", label: t("notify.onFailure") },
+            { id: "always", label: t("notify.onAlways") },
+          ]}
+          label={t("notify.on")}
+          select="one"
+          active={cfg.on}
+          onChange={(id) => setImmediate("on", id)}
+        />
+      </div>
 
       {/* #56/#106 toggle sweep (jdp, live-review: "Geplante Läufe
           zusammenfassen, Bei Container-Update benachrichtigen, Unraid-
@@ -2850,119 +2885,140 @@ function NotifyCard({
 
     {advanced && (
       <Card title={t("notify.channelsTitle")} hint={t("notify.channelsHint")} hueIndex={channelsHueIndex}>
+      {/* Webhook (generic JSON / Discord / Slack / Gotify / ntfy). Gets a real
+          enable/disable toggle (jdp, live-review: "Matrix, Apprise, Webhook-
+          URL sollen alle ein Toggle bekommen wie E-Mail") — same shape as
+          Email/SMTP's own smtpEnabled further below: a persisted
+          `webhookEnabled` boolean that ALSO gates the backend send
+          (internal/notify.Config's WebhookEnabled + its own webhookReady(),
+          mirroring smtpReady()'s enabled-AND-fields-set gate exactly). No
+          hueIndex: the sole toggle in its own single-purpose Webhook
+          subsection, no sibling toggle of its own kind here — the same
+          reasoning SMTP's own toggle documents below, applied identically to
+          this channel (and to Matrix/Apprise below it). Fields hide while
+          off, matching SMTP's own established pattern.
+            notify.webhookChannel ("Webhook") is a NEW key distinct from
+          notify.webhook ("Webhook URL", kept unchanged below on the URL
+          field itself) — Matrix and Apprise already had their own
+          channel-identity label (notify.matrix/notify.apprise) separate from
+          their field labels; Webhook never did before this toggle needed
+          one. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <label className={labelCls}>
-          {t("notify.webhook")}
-          <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
-            placeholder="https://discord.com/api/webhooks/..." dir="ltr" className={`${inputCls} text-start`} />
-        </label>
-        <label className={labelCls}>
-          {t("notify.webhookFormat")}
-          <select value={cfg.webhookFormat} onChange={(e) => setImmediate("webhookFormat", e.target.value)} className={selectCls}>
-            <option value="generic">Generic JSON</option>
-            <option value="discord">Discord</option>
-            <option value="slack">Slack</option>
-            <option value="gotify">Gotify</option>
-            <option value="ntfy">ntfy</option>
-          </select>
-        </label>
+        <ToggleRow
+          label={t("notify.webhookChannel")}
+          checked={cfg.webhookEnabled}
+          onChange={(v) => setImmediate("webhookEnabled", v)}
+        />
+        {cfg.webhookEnabled && (
+          <>
+            <label className={labelCls}>
+              {t("notify.webhook")}
+              <input value={cfg.webhookUrl} onChange={(e) => set("webhookUrl", e.target.value)} spellCheck={false}
+                placeholder="https://discord.com/api/webhooks/..." dir="ltr" className={`${inputCls} text-start`} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.webhookFormat")}
+              <select value={cfg.webhookFormat} onChange={(e) => setImmediate("webhookFormat", e.target.value)} className={selectCls}>
+                <option value="generic">Generic JSON</option>
+                <option value="discord">Discord</option>
+                <option value="slack">Slack</option>
+                <option value="gotify">Gotify</option>
+                <option value="ntfy">ntfy</option>
+              </select>
+            </label>
+          </>
+        )}
       </div>
 
       {/* Apprise API: posts to a user-run apprise-api server, unlocking Apprise's
           100+ services without bundling Python. Auto-saves + shares the card's
           Test button like the other channels (full-page Speichern-Button
-          sweep — see this Card's own header comment). */}
+          sweep — see this Card's own header comment).
+            Same real enable/disable toggle as Webhook above (`appriseEnabled`
+          — internal/notify.Config's AppriseEnabled + appriseReady()). The
+          section's own former header `<span>` + InfoBubble is GONE, folded
+          into this ToggleRow's own `hint` prop instead — the exact mechanism
+          notify.unraidHint's own override already uses (see this function's
+          header comment) — rather than showing "Apprise" twice (once as a
+          plain caption, once as the toggle's own required visible label).
+          No hueIndex, same "sole toggle in its own single-purpose
+          subsection" reasoning as Webhook above and SMTP below. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
-          {t("notify.apprise")}
-          <InfoBubble tip={t("notify.appriseHint")} />
-        </span>
-        <label className={labelCls}>
-          {t("notify.appriseUrl")}
-          <input value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
-            placeholder="http://apprise:8000/notify/bombvault" dir="ltr" className={`${inputCls} text-start`} />
-        </label>
-        <label className={labelCls}>
-          {t("notify.appriseTags")}
-          <input value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
-            placeholder="backups,homelab" className={inputCls} />
-        </label>
+        <ToggleRow
+          label={t("notify.apprise")}
+          hint={t("notify.appriseHint")}
+          checked={cfg.appriseEnabled}
+          onChange={(v) => setImmediate("appriseEnabled", v)}
+        />
+        {cfg.appriseEnabled && (
+          <>
+            <label className={labelCls}>
+              {t("notify.appriseUrl")}
+              <input value={cfg.appriseUrl} onChange={(e) => set("appriseUrl", e.target.value)} spellCheck={false}
+                placeholder="http://apprise:8000/notify/bombvault" dir="ltr" className={`${inputCls} text-start`} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.appriseTags")}
+              <input value={cfg.appriseTags} onChange={(e) => set("appriseTags", e.target.value)} spellCheck={false}
+                placeholder="backups,homelab" className={inputCls} />
+            </label>
+          </>
+        )}
       </div>
 
+      {/* Matrix room push. Same real enable/disable toggle as Webhook/Apprise
+          above (`matrixEnabled` — internal/notify.Config's MatrixEnabled,
+          folded into matrixReady()'s existing homeserver/token/room gate).
+          The section's former plain `<span>` header is gone, replaced by
+          this ToggleRow's own required visible label (no hint text existed
+          for Matrix to fold in, unlike Apprise above). No hueIndex, same
+          "sole toggle in its own single-purpose subsection" reasoning. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-medium text-carbon-textSub">{t("notify.matrix")}</span>
-        <label className={labelCls}>
-          {t("notify.matrixHomeserver")}
-          <input value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
-            placeholder="https://matrix.org" dir="ltr" className={`${inputCls} text-start`} />
-        </label>
-        <label className={labelCls}>
-          {t("notify.matrixToken")}
-          <RevealInput {...revealMatrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
-            placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
-        </label>
-        <label className={labelCls}>
-          {t("notify.matrixRoom")}
-          <input value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
-            placeholder="!abcdef:matrix.org" dir="ltr" className={`${inputCls} text-start`} />
-        </label>
-      </div>
-
-      <label className={labelCls}>
-        {t("notify.healthchecks")}
-        <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
-          placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
-      </label>
-      {/* notify.healthchecksLifecycle stays permanent text, NOT a bubble —
-          see this Card's own header comment above for why (it documents a
-          non-obvious cross-setting interaction someone comes back to when
-          debugging an unexpected check status, not a one-time explainer). */}
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("notify.healthchecksLifecycle")}</p>
-
-      {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
-          {t("notify.hcPerDomain")}
-          <InfoBubble tip={t("notify.hcPerDomainHint")} />
-        </span>
-        {(
-          [
-            ["container", t("nav.containers")],
-            ["VM", t("nav.vms")],
-            ["flash", t("nav.flash")],
-            ["config", t("nav.config")],
-            ["files", t("nav.files")],
-          ] as const
-        ).map(([key, label]) => (
-          <label key={key} className={labelCls}>
-            {label}
-            <input
-              value={cfg.healthchecksByDomain?.[key] ?? ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                const nextMap = { ...cfg.healthchecksByDomain, [key]: v };
-                setCfg((c) => ({ ...c, healthchecksByDomain: nextMap }));
-                debounced(`hc-${key}`, () => void persistNotify({ healthchecksByDomain: nextMap }));
-              }}
-              spellCheck={false}
-              placeholder="https://hc-ping.com/your-uuid"
-              dir="ltr"
-              className={`${inputCls} text-start`}
-            />
-          </label>
-        ))}
+        <ToggleRow
+          label={t("notify.matrix")}
+          checked={cfg.matrixEnabled}
+          onChange={(v) => setImmediate("matrixEnabled", v)}
+        />
+        {cfg.matrixEnabled && (
+          <>
+            <label className={labelCls}>
+              {t("notify.matrixHomeserver")}
+              <input value={cfg.matrixHomeserver} onChange={(e) => set("matrixHomeserver", e.target.value)} spellCheck={false}
+                placeholder="https://matrix.org" dir="ltr" className={`${inputCls} text-start`} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.matrixToken")}
+              <RevealInput {...revealMatrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
+                placeholder={secretSet.matrix ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} />
+            </label>
+            <label className={labelCls}>
+              {t("notify.matrixRoom")}
+              <input value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
+                placeholder="!abcdef:matrix.org" dir="ltr" className={`${inputCls} text-start`} />
+            </label>
+          </>
+        )}
       </div>
 
       {/* Email (SMTP), sent via the configured mail server. Same "same
           component/area, same raw-checkbox anti-pattern" gap as the three
-          settings-Card toggles converted above (standing rule: fix every
-          existing caller of the gap being fixed, not just the reported
-          instance) — this was still a hand-rolled <input type="checkbox">,
-          the fourth one in this Card. No hueIndex: the sole toggle in its
-          own single-purpose SMTP subsection, with no sibling toggle of its
-          own kind here — ToggleRow's own doc calls this out by name as the
-          one case that correctly omits it (e.g. "Leise Benachrichtigungen"),
-          not a list to walk. */}
+          settings-Card toggles converted in an earlier round (standing rule:
+          fix every existing caller of the gap being fixed, not just the
+          reported instance) — this was still a hand-rolled
+          <input type="checkbox">, the fourth one in this Card. No hueIndex:
+          the sole toggle in its own single-purpose SMTP subsection, with no
+          sibling toggle of its own kind here — ToggleRow's own doc calls
+          this out by name as the one case that correctly omits it (e.g.
+          "Leise Benachrichtigungen"), not a list to walk. The SAME reasoning
+          is now applied to Webhook/Apprise/Matrix above (jdp, live-review:
+          "Matrix, Apprise, Webhook-URL sollen alle ein Toggle bekommen wie
+          E-Mail") — four independent channel subsections, four independent
+          lone toggles, none of them a list of siblings.
+            MOVED directly above Healthchecks below (jdp, live-review: "E-Mail
+          soll über Healthchecks-Ping-URL verschoben werden") — was the LAST
+          section in this Card; the new order is Webhook/Apprise/Matrix/
+          Email/Healthchecks(-global+per-domain). Nothing in this section's
+          own JSX changed, only its position. */}
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <ToggleRow
           label={t("notify.smtp")}
@@ -3011,6 +3067,66 @@ function NotifyCard({
             </label>
           </>
         )}
+      </div>
+
+      {/* Healthchecks global ping URL. MOVED below Email/SMTP above (see that
+          section's own comment) — was directly after Matrix.
+            notify.healthchecksLifecycle moved from a permanent <p> into an
+          InfoBubble attached to this label (jdp, live-review, explicit and
+          unconditional: "der Infotext dort in eine Infobubble" — overriding
+          the prior "must stay findable on-page for someone debugging an
+          unexpected check status" reasoning this Card's own header comment
+          used to document verbatim; see that comment for the full
+          before/after). One-line revert back to a permanent `<p>` if that
+          debugging-findability concern turns out to matter once live.
+            InfoBubble nested INSIDE the `<label>`, wrapped in its own
+          `<span className="flex items-center gap-1">` — the SAME established
+          pattern this file already uses at "cloud.storageClass.label" and
+          "flash.zipExport.keepN" (an InfoBubble is a real interactive
+          `<button>`, so clicking it activates the bubble, not the label's
+          associated `<input>` — verified live against those existing call
+          sites, not a new mechanism invented for this one). */}
+      <label className={labelCls}>
+        <span className="flex items-center gap-1">
+          {t("notify.healthchecks")}
+          <InfoBubble tip={t("notify.healthchecksLifecycle")} />
+        </span>
+        <input value={cfg.healthchecksUrl} onChange={(e) => set("healthchecksUrl", e.target.value)} spellCheck={false}
+          placeholder="https://hc-ping.com/your-uuid" className={inputCls} />
+      </label>
+
+      {/* Per-domain Healthchecks overrides (advanced). A blank field falls back to the global URL above. */}
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
+        <span className="flex items-center gap-1 text-xs font-medium text-carbon-textSub">
+          {t("notify.hcPerDomain")}
+          <InfoBubble tip={t("notify.hcPerDomainHint")} />
+        </span>
+        {(
+          [
+            ["container", t("nav.containers")],
+            ["VM", t("nav.vms")],
+            ["flash", t("nav.flash")],
+            ["config", t("nav.config")],
+            ["files", t("nav.files")],
+          ] as const
+        ).map(([key, label]) => (
+          <label key={key} className={labelCls}>
+            {label}
+            <input
+              value={cfg.healthchecksByDomain?.[key] ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                const nextMap = { ...cfg.healthchecksByDomain, [key]: v };
+                setCfg((c) => ({ ...c, healthchecksByDomain: nextMap }));
+                debounced(`hc-${key}`, () => void persistNotify({ healthchecksByDomain: nextMap }));
+              }}
+              spellCheck={false}
+              placeholder="https://hc-ping.com/your-uuid"
+              dir="ltr"
+              className={`${inputCls} text-start`}
+            />
+          </label>
+        ))}
       </div>
       </Card>
     )}

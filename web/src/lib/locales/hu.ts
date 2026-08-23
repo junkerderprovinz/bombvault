@@ -522,6 +522,7 @@ const hu: Partial<Translations> = {
   "notify.channelsTitle": "Értesítési csatornák",
   "notify.channelsHint": "Állítsd be a webhook-, Matrix-, Healthchecks- és e-mail-csatornákat, amelyeken a fent beállított értesítések kimennek.",
   "notify.webhook": "Webhook URL",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Webhook formátum",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "Apprise API URL",

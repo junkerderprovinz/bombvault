@@ -514,6 +514,7 @@ const zh: Partial<Translations> = {
   "notify.channelsTitle": "通知渠道",
   "notify.channelsHint": "配置上方所设通知使用的 Webhook、Matrix、Healthchecks 和邮件渠道。",
   "notify.webhook": "Webhook 网址",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Webhook 格式",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "Apprise API URL",

@@ -514,6 +514,7 @@ const vi: Partial<Translations> = {
   "notify.channelsTitle": "Kênh thông báo",
   "notify.channelsHint": "Cấu hình các kênh webhook, Matrix, Healthchecks và email dùng để gửi các thông báo đã cấu hình ở trên.",
   "notify.webhook": "URL Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Định dạng Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "URL API Apprise",

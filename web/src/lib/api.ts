@@ -799,8 +799,13 @@ export function setBackupPaths(name: string, backupPaths: string[]): Promise<OkE
 /** Notification config (webhook / Matrix / Healthchecks / Unraid / email). */
 export interface NotifyConfig {
   on: string; // "never" | "failure" | "always"
+  // webhookEnabled/matrixEnabled/appriseEnabled gate their respective channels —
+  // same enable/disable shape as smtpEnabled below, mirrored on the Go side
+  // (internal/notify.Config's WebhookEnabled/MatrixEnabled/AppriseEnabled).
+  webhookEnabled: boolean;
   webhookUrl: string;
   webhookFormat: string; // generic | discord | slack | gotify | ntfy
+  matrixEnabled: boolean;
   matrixHomeserver: string;
   matrixToken: string;
   matrixRoom: string;
@@ -818,6 +823,7 @@ export interface NotifyConfig {
   smtpFrom: string;
   smtpTo: string;
   smtpTls: string; // "starttls" | "tls" | "none"
+  appriseEnabled: boolean;
   // Full notify endpoint of a user-run Apprise API server (caronc/apprise-api),
   // typically http://host:8000/notify/<key> — fans out to Apprise's 100+ services.
   appriseUrl: string;

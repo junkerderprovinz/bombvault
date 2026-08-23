@@ -514,6 +514,7 @@ const ja: Partial<Translations> = {
   "notify.channelsTitle": "通知チャンネル",
   "notify.channelsHint": "上記で設定した通知を配信するWebhook、Matrix、Healthchecks、メールの各チャンネルを設定します。",
   "notify.webhook": "Webhook URL",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Webhook 形式",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "Apprise API の URL",

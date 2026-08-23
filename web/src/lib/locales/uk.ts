@@ -517,6 +517,7 @@ const uk: Partial<Translations> = {
   "notify.channelsTitle": "Канали сповіщень",
   "notify.channelsHint": "Налаштуйте канали webhook, Matrix, Healthchecks та електронної пошти, якими надсилаються налаштовані вище сповіщення.",
   "notify.webhook": "URL Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Формат Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "URL API Apprise",

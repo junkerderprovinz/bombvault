@@ -522,6 +522,7 @@ const tr: Partial<Translations> = {
   "notify.channelsTitle": "Bildirim kanalları",
   "notify.channelsHint": "Yukarıda yapılandırılan bildirimlerin iletildiği webhook, Matrix, Healthchecks ve e-posta kanallarını yapılandırın.",
   "notify.webhook": "Webhook URL'si",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "Webhook biçimi",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "Apprise API URL'si",

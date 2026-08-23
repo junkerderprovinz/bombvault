@@ -522,6 +522,7 @@ const ar: Partial<Translations> = {
   "notify.channelsTitle": "قنوات الإشعارات",
   "notify.channelsHint": "أعدّ قنوات الويب هوك وMatrix وHealthchecks والبريد الإلكتروني التي تُرسَل عبرها الإشعارات المُهيَّأة أعلاه.",
   "notify.webhook": "رابط Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "تنسيق Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "عنوان URL لواجهة Apprise API",

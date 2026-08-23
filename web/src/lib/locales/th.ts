@@ -522,6 +522,7 @@ const th: Partial<Translations> = {
   "notify.channelsTitle": "ช่องทางการแจ้งเตือน",
   "notify.channelsHint": "ตั้งค่าช่องทาง webhook, Matrix, Healthchecks และอีเมลที่ใช้ส่งการแจ้งเตือนที่ตั้งค่าไว้ด้านบน",
   "notify.webhook": "URL ของ Webhook",
+  "notify.webhookChannel": "Webhook",
   "notify.webhookFormat": "รูปแบบ Webhook",
   "notify.apprise": "Apprise",
   "notify.appriseUrl": "URL ของ Apprise API",
