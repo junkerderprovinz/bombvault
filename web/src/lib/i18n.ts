@@ -876,6 +876,13 @@ export const en = {
   "cadence.cronExWeekdays": "weekdays at 02:30",
   "cadence.cronExMonthly": "on the 1st of each month",
   "cadence.fmtCron": "cron: {expr}",
+  // TimePicker (GlimStone form-engine — new shared component, design-language.md
+  // "The time picker"): aria-labels for the popover's two scrollable listbox
+  // columns. The trigger's own accessible name reuses whatever `label` the
+  // caller already passes (e.g. cadence.time), so no separate key is needed
+  // for that half.
+  "timePicker.hour": "Hour",
+  "timePicker.minute": "Minute",
   "time.justNow": "just now",
   "time.minuteAgo": "1 minute ago",
   "time.minutesAgo": "{n} minutes ago",
@@ -2291,6 +2298,8 @@ export const de: Translations = {
   "cadence.cronExWeekdays": "werktags um 02:30",
   "cadence.cronExMonthly": "am 1. jedes Monats",
   "cadence.fmtCron": "Cron: {expr}",
+  "timePicker.hour": "Stunde",
+  "timePicker.minute": "Minute",
   "time.justNow": "gerade eben",
   "time.minuteAgo": "vor 1 Minute",
   "time.minutesAgo": "vor {n} Minuten",
