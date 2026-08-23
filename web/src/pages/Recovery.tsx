@@ -148,6 +148,11 @@ function FileSetRecoveryRow({
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
+  // action toasts AND shakes its button — a bumped nonce keyed onto the Restore
+  // button replays `.glim-shake` once per failure, same mechanism as
+  // VMExportButton/ExportButton's shakeNonce in the Containers/VMs tabs.
+  const [shake, setShake] = useState(0);
 
   const snapLabel = set.lastBackup ? new Date(set.lastBackup * 1000).toLocaleString() : "";
 
@@ -166,6 +171,7 @@ function FileSetRecoveryRow({
       const list = snaps.ok ? snaps.snapshots ?? [] : [];
       if (list.length === 0) {
         push(snaps.error ?? t("snapshots.none"), "fail");
+        setShake((n) => n + 1);
         return;
       }
       const latest = list.reduce((a, b) => (new Date(a.time) > new Date(b.time) ? a : b));
@@ -178,9 +184,11 @@ function FileSetRecoveryRow({
         push(t("common.done"), "success");
       } else {
         push(res.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : String(err), "fail");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -202,9 +210,12 @@ function FileSetRecoveryRow({
       />
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          key={shake}
           onClick={() => void handleRestore()}
           disabled={busy || otherActive || target.trim() === ""}
-          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {busy && (
             <span
@@ -287,6 +298,11 @@ function ForeignItemRow({
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
+  // action toasts AND shakes its button — a bumped nonce keyed onto the
+  // Restore button replays `.glim-shake` once per failure, same mechanism as
+  // VMExportButton/ExportButton's shakeNonce in the Containers/VMs tabs.
+  const [shake, setShake] = useState(0);
 
   // Files domain only: restore the WHOLE set (default) or PICK a subfolder/file
   // subset of it (#123 — pull one stack out of a whole-appdata set). The subset
@@ -424,10 +440,12 @@ function ForeignItemRow({
         push(t("common.done"), "success");
       } else {
         push(res.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
         if (isForeignSessionGone(res.error)) onSessionGone();
       }
     } catch (err) {
       push(err instanceof Error ? err.message : String(err), "fail");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
       onBusyChange(false);
@@ -563,6 +581,7 @@ function ForeignItemRow({
       )}
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          key={shake}
           onClick={() => void handleRestore()}
           disabled={
             busy ||
@@ -570,7 +589,9 @@ function ForeignItemRow({
             (needsTarget && target.trim() === "") ||
             (subsetActive && selected.size === 0)
           }
-          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {busy && (
             <span
@@ -628,6 +649,14 @@ function ForeignRestoreCard({
   // skipping it (fail safe: confirm when unknown, never overwrite silently).
   const [localKnown, setLocalKnown] = useState(true);
   const [busyRows, setBusyRows] = useState(0);
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
+  // action toasts AND shakes its button, layered ON TOP of this card's own
+  // pre-existing sticky inline connectError box (kept — the scrubbed backend
+  // message is worth reading, not just a toast ping). A bumped nonce keyed onto
+  // the Connect button replays `.glim-shake` once per failure, same mechanism
+  // as VMExportButton/ExportButton's shakeNonce.
+  const [shake, setShake] = useState(0);
 
   // Ref-mirror of the session id so the unmount cleanup closes the CURRENT
   // session (an effect capturing `session` directly would close stale ids on
@@ -662,8 +691,11 @@ function ForeignRestoreCard({
     try {
       const res = await foreignOpen(location, key.trim());
       if (!res.ok || !res.session) {
-        setConnectError(res.error ?? t("settings.error"));
+        const message = res.error ?? t("settings.error");
+        setConnectError(message);
         setPhase("error");
+        push(message, "fail");
+        setShake((n) => n + 1);
         return;
       }
       // Read the LOCAL inventory BEFORE enabling the restore rows: which foreign
@@ -701,10 +733,13 @@ function ForeignRestoreCard({
       setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [] });
       setPhase("connected");
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      setConnectError(message);
       setPhase("error");
+      push(message, "fail");
+      setShake((n) => n + 1);
     }
-  }, [location, key, t]);
+  }, [location, key, t, push]);
 
   const disconnect = useCallback(() => {
     if (sessionRef.current) {
@@ -781,9 +816,12 @@ function ForeignRestoreCard({
 
         <div className="flex items-center gap-3 pt-1 flex-wrap">
           <button
+            key={shake}
             onClick={() => void connect()}
             disabled={!canConnect}
-            className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shake ? " glim-shake" : ""
+            }`}
           >
             {phase === "connecting" && (
               <span
@@ -900,6 +938,11 @@ export default function Recovery() {
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [attachState, setAttachState] = useState<"idle" | "saving">("idle");
   const [previewed, setPreviewed] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
+  // action toasts AND shakes its button — a bumped nonce keyed onto the
+  // "Connect & preview" button replays `.glim-shake` once per failure, same
+  // mechanism as VMExportButton/ExportButton's shakeNonce.
+  const [connectPreviewShake, setConnectPreviewShake] = useState(0);
 
   // Config-restore step (runs BEFORE attach/discover): restore BombVault's OWN
   // settings first so the attach + discover steps come pre-filled. Optional and
@@ -911,6 +954,13 @@ export default function Recovery() {
   const [configPhase, setConfigPhase] = useState<ConfigPhase>("idle");
   const [configError, setConfigError] = useState<string | null>(null);
   const [configSkipped, setConfigSkipped] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
+  // action toasts AND shakes its button. This CTA can restart the container, so
+  // it gets the exact same treatment as every other primary action in this
+  // file — a bumped nonce keyed onto the "Restore my settings" button replays
+  // `.glim-shake` once per failure, same mechanism as
+  // VMExportButton/ExportButton's shakeNonce.
+  const [configShake, setConfigShake] = useState(0);
 
   useEffect(() => {
     getSettings()
@@ -1015,9 +1065,11 @@ export default function Recovery() {
         if (state === "ok") push(t("recovery.readable"), "success");
       } else {
         push(res.error ?? t("settings.error"), "fail");
+        setConnectPreviewShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setConnectPreviewShake((n) => n + 1);
     } finally {
       setAttachState("idle");
     }
@@ -1042,8 +1094,11 @@ export default function Recovery() {
     try {
       const saveRes = await putSettings(updated);
       if (!saveRes.ok) {
-        setConfigError(saveRes.error ?? t("settings.error"));
+        const message = saveRes.error ?? t("settings.error");
+        setConfigError(message);
         setConfigPhase("error");
+        push(message, "fail");
+        setConfigShake((n) => n + 1);
         return;
       }
       setSavedSettings(updated);
@@ -1051,15 +1106,21 @@ export default function Recovery() {
       const res = await restoreConfig("latest", configSource === "offsite" ? "offsite" : undefined);
       if (!res.ok) {
         // e.g. an APP_KEY / encryption mismatch — show the mapped remedy.
-        setConfigError(isKeyMismatch(res.error) ? t("recovery.appKeyRemedy") : res.error ?? t("settings.error"));
+        const message = isKeyMismatch(res.error) ? t("recovery.appKeyRemedy") : res.error ?? t("settings.error");
+        setConfigError(message);
         setConfigPhase("error");
+        push(message, "fail");
+        setConfigShake((n) => n + 1);
         return;
       }
       if (!res.staged) {
         // Contract drift guard: ok:true but the snapshot was NOT staged — don't drive
         // the restart/reload flow (nothing would be applied). Surface it as an error.
-        setConfigError(res.error ?? t("settings.error"));
+        const message = res.error ?? t("settings.error");
+        setConfigError(message);
         setConfigPhase("error");
+        push(message, "fail");
+        setConfigShake((n) => n + 1);
         return;
       }
       if (res.autoRestart) {
@@ -1081,10 +1142,13 @@ export default function Recovery() {
         setConfigPhase("manual");
       }
     } catch (err) {
-      setConfigError(err instanceof Error ? err.message : t("settings.error"));
+      const message = err instanceof Error ? err.message : t("settings.error");
+      setConfigError(message);
       setConfigPhase("error");
+      push(message, "fail");
+      setConfigShake((n) => n + 1);
     }
-  }, [savedSettings, settings, configSource, t]);
+  }, [savedSettings, settings, configSource, t, push]);
 
   const configStepState: StepState =
     configPhase === "error"
@@ -1164,6 +1228,12 @@ export default function Recovery() {
   // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
   // answer when auth is off) — surfaced next to the Step 6 download button.
   const [kitError, setKitError] = useState<string | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
+  // action toasts AND shakes its button, layered ON TOP of this button's own
+  // pre-existing sticky inline error above (kept — same "reference-value error
+  // kept inline" pattern as VMExportButton/ExportButton, both of which layer
+  // the same fail toast + button shake on top of their own sticky inline msg).
+  const [kitShake, setKitShake] = useState(0);
 
   // Is the libvirt SSH link set up? VM restore needs it. VMSSHInfo() errors
   // (ok:false) precisely when SSH is not wired, so this is the settings check.
@@ -1338,9 +1408,12 @@ export default function Recovery() {
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                   <button
+                    key={configShake}
                     onClick={() => void restoreOwnConfig()}
                     disabled={configPhase === "saving" || configPhase === "restarting"}
-                    className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                      configShake ? " glim-shake" : ""
+                    }`}
                   >
                     {(configPhase === "saving" || configPhase === "restarting") && (
                       <span
@@ -1498,9 +1571,12 @@ export default function Recovery() {
             {/* Connect & preview — save paths/off-site/encryption, then re-check. */}
             <div className="flex items-center gap-3 pt-1">
               <button
+                key={connectPreviewShake}
                 onClick={() => void connectPreview()}
                 disabled={attachState === "saving"}
-                className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                  connectPreviewShake ? " glim-shake" : ""
+                }`}
               >
                 {attachState === "saving" && (
                   <span
@@ -1671,11 +1747,20 @@ export default function Recovery() {
         <p className="max-w-2xl">{t("recovery.kitHint")}</p>
         <button
           type="button"
+          key={kitShake}
           onClick={() => {
             setKitError(null);
-            void downloadRecoveryKit().then(setKitError);
+            void downloadRecoveryKit().then((err) => {
+              setKitError(err);
+              if (err) {
+                push(err, "fail");
+                setKitShake((n) => n + 1);
+              }
+            });
           }}
-          className="self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
+          className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors${
+            kitShake ? " glim-shake" : ""
+          }`}
         >
           {t("recovery.kitDownload")}
         </button>
