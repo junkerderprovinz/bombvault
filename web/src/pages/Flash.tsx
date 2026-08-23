@@ -110,6 +110,9 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
   const [preparing, setPreparing] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed delete toasts AND shakes the delete button.
+  const [shake, setShake] = useState(0);
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
@@ -117,9 +120,13 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
     try {
       const res = await deleteSnapshot("flash", snap.id, source);
       if (res.ok) onDeleted();
-      else push(res.error ?? "Delete failed", "fail");
+      else {
+        push(res.error ?? "Delete failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Delete failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setDeleting(false);
     }
@@ -164,10 +171,13 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
           {t("flash.download")}
         </button>
         <button
+          key={shake}
           onClick={() => void handleDelete()}
           disabled={deleting || preparing}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>

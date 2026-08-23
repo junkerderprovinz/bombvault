@@ -398,6 +398,12 @@ function CompareSnapshots({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [diff, setDiff] = useState<SnapshotDiff | null>(null);
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button, layered ON TOP of this
+  // button's own pre-existing sticky inline error (kept deliberately — see
+  // this component's header comment above).
+  const [shake, setShake] = useState(0);
 
   // Re-seed the default pair whenever the snapshot set changes (e.g. toggling the
   // Local/Off-site source reloads a different repo's snapshots). Without this, the
@@ -429,10 +435,19 @@ function CompareSnapshots({
     setDiff(null);
     try {
       const res = await diffSnapshots(containerName, from, to, source);
-      if (res.ok && res.diff) setDiff(res.diff);
-      else setError(res.error ?? "Compare failed");
+      if (res.ok && res.diff) {
+        setDiff(res.diff);
+      } else {
+        const message = res.error ?? "Compare failed";
+        setError(message);
+        push(message, "fail");
+        setShake((n) => n + 1);
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      const message = e instanceof Error ? e.message : "Network error";
+      setError(message);
+      push(message, "fail");
+      setShake((n) => n + 1);
     } finally {
       setLoading(false);
     }
@@ -480,9 +495,12 @@ function CompareSnapshots({
               ))}
             </select>
             <button
+              key={shake}
               onClick={() => void run()}
               disabled={loading || !from || !to || from === to}
-              className="inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed${
+                shake ? " glim-shake" : ""
+              }`}
             >
               {loading ? "…" : t("snapshot.compare")}
             </button>
@@ -523,6 +541,15 @@ function SnapshotTags({
   const { push } = useToast();
   const tags = displayTags(snap, containerName);
 
+  // NOTE (Task 2 audit, GlimStone standing rule sweep): deliberately NOT given
+  // a `.glim-shake` here, unlike this file's other fixes — there is no
+  // dedicated submit button, only this input's onBlur, and the established
+  // shake mechanism replays by giving the element a fresh `key` (forcing an
+  // unmount+remount). Unmounting a FOCUSED input fires a native blur first,
+  // which would re-invoke submit() with the same still-bad value — a
+  // shake-triggered infinite retry loop. The toast (below, pre-existing)
+  // still fires; the animation is the one piece left as a follow-up pending a
+  // non-remount replay mechanism (e.g. a rAF class-remove-then-readd).
   async function submit() {
     const tag = value.trim();
     if (!tag) {
@@ -630,6 +657,9 @@ function SnapshotRow({
   const [deleting, setDeleting] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed delete toasts AND shakes the delete button.
+  const [shake, setShake] = useState(0);
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
@@ -637,9 +667,13 @@ function SnapshotRow({
     try {
       const res = await deleteSnapshot("containers", snap.id, source);
       if (res.ok) onDeleted();
-      else push(res.error ?? "Delete failed", "fail");
+      else {
+        push(res.error ?? "Delete failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Delete failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setDeleting(false);
     }
@@ -678,10 +712,13 @@ function SnapshotRow({
 
         {/* Delete this backup (restic forget) */}
         <button
+          key={shake}
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>

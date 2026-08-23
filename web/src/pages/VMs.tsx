@@ -228,6 +228,12 @@ function VMIncludeToggle({
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
+  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a bumped
+  // nonce, keyed onto the Toggle exactly like ToggleRow's own shakeNonce
+  // prop, replays `.glim-shake` once per failure — see Settings.tsx's
+  // ToggleRow for the fuller "why a nonce, not a boolean" reasoning.
+  const [shake, setShake] = useState(0);
 
   // Re-seed when the parent passes a fresh value (e.g. after "Include all in
   // schedule" reloads the list). Rows are keyed by name and do not remount, so
@@ -242,9 +248,11 @@ function VMIncludeToggle({
         setEnabled(next);
       } else {
         push(res.error ?? t("schedule.updateFailed"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("schedule.updateFailed"), "fail");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -253,11 +261,13 @@ function VMIncludeToggle({
   return (
     <div className="flex flex-col items-end gap-1">
       <Toggle
+        key={shake}
         hideLabel
         label={t("containers.includeInSchedule")}
         checked={enabled}
         onChange={(next) => void handleChange(next)}
         disabled={busy}
+        className={shake ? "glim-shake" : undefined}
       />
     </div>
   );
@@ -275,6 +285,14 @@ function VMIncludeToggle({
 function VMExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button, layered ON TOP of this
+  // button's own pre-existing sticky inline error (kept deliberately — see
+  // this component's header comment: the error text sits right next to the
+  // success path's copyable destination, both a "reference value", not a
+  // one-shot ping the toast alone would replace).
+  const [shake, setShake] = useState(0);
   async function run() {
     setState("pending");
     setMsg(null);
@@ -285,19 +303,28 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
         setMsg(r.path ?? null);
       } else {
         setState("error");
-        setMsg(r.error ?? t("settings.error"));
+        const message = r.error ?? t("settings.error");
+        setMsg(message);
+        push(message, "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       setState("error");
-      setMsg(err instanceof Error ? err.message : t("settings.error"));
+      const message = err instanceof Error ? err.message : t("settings.error");
+      setMsg(message);
+      push(message, "fail");
+      setShake((n) => n + 1);
     }
   }
   return (
     <div className="flex flex-col items-start gap-1">
       <button
+        key={shake}
         onClick={() => void run()}
         disabled={state === "pending"}
-        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
+        className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
+          shake ? " glim-shake" : ""
+        }`}
       >
         {state === "pending" ? "…" : t("export.button")}
       </button>
@@ -422,6 +449,10 @@ function VMSnapshotRow({
   const busy = progressMap[`vm:${vmName}`]?.active ?? false;
   const [deleting, setDeleting] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed delete toasts AND shakes the delete button (bumped nonce → fresh
+  // key → `.glim-shake` replays, same mechanism as ToggleRow's shakeNonce).
+  const [shake, setShake] = useState(0);
   // Collapsed by default so the list stays compact (mirrors Containers'
   // SnapshotRow) — the restore controls (confirm + leave-stopped + progress
   // banner) only render once the user opts in.
@@ -434,9 +465,13 @@ function VMSnapshotRow({
     try {
       const res = await deleteSnapshot("vms", snap.id, source);
       if (res.ok) onDeleted();
-      else push(res.error ?? "Delete failed", "fail");
+      else {
+        push(res.error ?? "Delete failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Delete failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setDeleting(false);
     }
@@ -467,10 +502,13 @@ function VMSnapshotRow({
           {t("restore.open")}
         </button>
         <button
+          key={shake}
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
@@ -527,6 +565,9 @@ function VMRestorePanel({
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the "Delete all" control on a failed delete, alongside the toast below.
+  const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -558,9 +599,15 @@ function VMRestorePanel({
     setDeletingAll(true);
     deleteBackupsVM(name, source)
       .then((res) => {
-        if (!res.ok) push(res.error ?? "Failed to delete backups", "fail");
+        if (!res.ok) {
+          push(res.error ?? "Failed to delete backups", "fail");
+          setShakeDeleteAll((n) => n + 1);
+        }
       })
-      .catch(() => push("Failed to delete backups", "fail"))
+      .catch(() => {
+        push("Failed to delete backups", "fail");
+        setShakeDeleteAll((n) => n + 1);
+      })
       .finally(() => {
         setDeletingAll(false);
         setReloadTick((n) => n + 1);
@@ -616,12 +663,13 @@ function VMRestorePanel({
                 // button; already correctly fault-red per "the destructive
                 // control is always the fault colour" (Destructive actions).
                 <Badge
+                  key={shakeDeleteAll}
                   as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
                   tone="fail"
                   size="small"
-                  className="ms-auto"
+                  className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
                 >
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </Badge>
@@ -797,6 +845,9 @@ function VMForgetButton({
   const [pending, setPending] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button.
+  const [shake, setShake] = useState(0);
 
   async function handleForget() {
     if (!(await confirm(t("vms.removeEntryConfirm")))) return;
@@ -804,9 +855,13 @@ function VMForgetButton({
     try {
       const res = await forgetVM(name);
       if (res.ok) onForgotten();
-      else push(res.error ?? "Remove failed", "fail");
+      else {
+        push(res.error ?? "Remove failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Remove failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setPending(false);
     }
@@ -815,9 +870,12 @@ function VMForgetButton({
   return (
     <div className="flex flex-col items-end gap-1">
       <button
+        key={shake}
         onClick={() => void handleForget()}
         disabled={pending}
-        className="inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+        className={`inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+          shake ? " glim-shake" : ""
+        }`}
       >
         {pending ? t("dashboard.checking") : t("vms.removeEntry")}
       </button>
@@ -838,15 +896,25 @@ function ScheduleIncludeAllControl({
 }) {
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // whichever of the two buttons was actually clicked — a separate nonce per
+  // direction rather than one shared one, since only run()'s own `include`
+  // argument tells us which.
+  const [shakeInclude, setShakeInclude] = useState(0);
+  const [shakeExclude, setShakeExclude] = useState(0);
 
   async function run(include: boolean) {
     setBusy(true);
     try {
       const res = await setVMIncludeAll(include);
       if (res.ok) onChanged();
-      else push(res.error ?? t("settings.error"), "fail");
+      else {
+        push(res.error ?? t("settings.error"), "fail");
+        (include ? setShakeInclude : setShakeExclude)((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      (include ? setShakeInclude : setShakeExclude)((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -855,16 +923,22 @@ function ScheduleIncludeAllControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <button
+        key={shakeInclude}
         onClick={() => void run(true)}
         disabled={busy}
-        className="inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+        className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          shakeInclude ? " glim-shake" : ""
+        }`}
       >
         {t("schedule.includeAll")}
       </button>
       <button
+        key={shakeExclude}
         onClick={() => void run(false)}
         disabled={busy}
-        className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+        className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+          shakeExclude ? " glim-shake" : ""
+        }`}
       >
         {t("schedule.excludeAll")}
       </button>
@@ -897,6 +971,12 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // whichever button triggered the failed persist() — Save or Reset — kept as
+  // two separate nonces since persist() alone can't tell them apart (both can
+  // call it with an empty order in principle).
+  const [shakeSave, setShakeSave] = useState(0);
+  const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -980,8 +1060,9 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
     });
   }
 
-  async function persist(order: string[]) {
+  async function persist(order: string[], via: "save" | "reset") {
     setSaveState("saving");
+    const bumpShake = via === "save" ? setShakeSave : setShakeReset;
     try {
       const res = await setVmBackupOrder(order);
       if (res.ok) {
@@ -989,9 +1070,11 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
         push(t("backupOrder.saved"), "success");
       } else {
         push(res.error ?? t("backupOrder.saveError"), "fail");
+        bumpShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("backupOrder.saveError"), "fail");
+      bumpShake((n) => n + 1);
     } finally {
       setSaveState("idle");
     }
@@ -1004,7 +1087,7 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
       })
     );
     setNames(sorted);
-    void persist([]);
+    void persist([], "reset");
   }
 
   if (savedOrder === null) return null;
@@ -1100,16 +1183,22 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
             </ol>
             <div className="flex items-center gap-3 flex-wrap">
               <button
-                onClick={() => void persist(names)}
+                key={shakeSave}
+                onClick={() => void persist(names, "save")}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+                className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+                  shakeSave ? " glim-shake" : ""
+                }`}
               >
                 {t("backupOrder.save")}
               </button>
               <button
+                key={shakeReset}
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+                className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+                  shakeReset ? " glim-shake" : ""
+                }`}
               >
                 {t("backupOrder.reset")}
               </button>
@@ -1148,6 +1237,9 @@ export function VMs() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [discovering, setDiscovering] = useState(false);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Discover button on a failed discover, alongside its existing toast.
+  const [shakeDiscover, setShakeDiscover] = useState(0);
 
   // GlimStone follow-up pass (v8.0.0): the "+N" / error note never
   // auto-cleared (stuck next to the Discover button until the next click) —
@@ -1161,9 +1253,11 @@ export function VMs() {
         await loadVMs();
       } else {
         push(res.error ?? "Discover failed", "fail");
+        setShakeDiscover((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : "Discover failed", "fail");
+      setShakeDiscover((n) => n + 1);
     } finally {
       setDiscovering(false);
     }
@@ -1323,10 +1417,13 @@ export function VMs() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
+            key={shakeDiscover}
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("vms.discoverHint")}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shakeDiscover ? " glim-shake" : ""
+            }`}
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>

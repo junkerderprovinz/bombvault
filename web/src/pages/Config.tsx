@@ -154,6 +154,9 @@ function ConfigSettingsCard({
   // inline-text flash; that completion notice is now a toast instead (push
   // below), so there's no lingering render state left to revert from.
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Save button alongside the toast on a failed save.
+  const [shake, setShake] = useState(0);
 
   async function handleSave() {
     setSaveState("saving");
@@ -172,6 +175,7 @@ function ConfigSettingsCard({
       if (!latest.ok) {
         setSaveState("idle");
         push(latest.error ?? "Could not load current settings", "fail");
+        setShake((n) => n + 1);
         return;
       }
       const merged: Settings = {
@@ -190,10 +194,12 @@ function ConfigSettingsCard({
       } else {
         setSaveState("idle");
         push(res.error ?? "Save failed", "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       setSaveState("idle");
       push(err instanceof Error ? err.message : "Save failed", "fail");
+      setShake((n) => n + 1);
     }
   }
 
@@ -245,9 +251,12 @@ function ConfigSettingsCard({
 
       <div className="flex items-center gap-3 pt-1">
         <button
+          key={shake}
           onClick={() => void handleSave()}
           disabled={saveState === "saving"}
-          className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {saveState === "saving" ? (
             <>
@@ -287,6 +296,9 @@ function ConfigSnapshotRow({
   const [deleting, setDeleting] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed delete toasts AND shakes the delete button.
+  const [shake, setShake] = useState(0);
 
   async function handleDelete() {
     if (!(await confirm(t("snapshots.deleteConfirm")))) return;
@@ -294,9 +306,13 @@ function ConfigSnapshotRow({
     try {
       const res = await deleteSnapshot("config", snap.id, source);
       if (res.ok) onDeleted();
-      else push(res.error ?? "Delete failed", "fail");
+      else {
+        push(res.error ?? "Delete failed", "fail");
+        setShake((n) => n + 1);
+      }
     } catch (err) {
       push(err instanceof Error ? err.message : "Delete failed", "fail");
+      setShake((n) => n + 1);
     } finally {
       setDeleting(false);
     }
@@ -310,10 +326,13 @@ function ConfigSnapshotRow({
           {new Date(snap.time).toLocaleString()}
         </span>
         <button
+          key={shake}
           onClick={() => void handleDelete()}
           disabled={deleting}
           title={t("snapshots.delete")}
-          className="shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50"
+          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
         >
           {deleting ? "…" : t("snapshots.delete")}
         </button>
