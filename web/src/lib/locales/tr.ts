@@ -151,7 +151,6 @@ const tr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ayarlar",
-  "settings.encryption": "Şifreleme",
   "settings.encryptionOn": "Etkin (parola APP_KEY'den türetildi)",
   "settings.encryptionOff": "Devre dışı (parola yok)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const tr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Anlık görüntü saklama",
   "settings.retentionHint": "Öğe başına kaç yedek tutulacağı. Her yedeklemeden sonra restic, eski anlık görüntüleri bu ilkeye göre budar. Tümü sıfır = her şeyi tut (kapalı).",
-  "settings.imageMaintenanceTitle": "Image Temizliği & Registry'ler",
-  "settings.imageMaintenanceHint": "Yedekleme sonrası konteyner güncellemesi etrafındaki bakım: yerini alınan image'ı temizler, Unraid'in kendi önbelleğe alınmış güncelleme durumunu yeniler ve güncelleme çekmenin ihtiyaç duyduğu özel registry'ler için kimlik bilgilerini saklar.",
+  "settings.imageMaintenanceTitle": "Image Temizliği & Güncelleme Durumu",
+  "settings.imageMaintenanceHint": "Yedekleme sonrası konteyner güncellemesi etrafındaki bakım: yerini alınan image'ı temizler ve Unraid'in kendi önbelleğe alınmış güncelleme durumunu yeniler.",
   "settings.retentionLast": "Son yedekleri tut",
   "settings.retentionDaily": "Günlük tut",
   "settings.retentionWeekly": "Haftalık tut",
@@ -400,7 +399,6 @@ const tr: Partial<Translations> = {
   "cloud.credSets.add": "Kimlik bilgisi kümesi ekle",
   "cloud.credSets.name": "Ad",
   "cloud.credSets.none": "Henüz ek kimlik bilgisi kümesi yok.",
-  "export.encrypt.title": "Düz metin dışa aktarmalarını şifrele",
   "export.encrypt.hint": "restic depoları zaten şifrelidir. Bu, düz metin dışa aktarma yapıtlarını (konteyner ve VM tar.gz dosyaları ile xml'leri ve flash zip) isteğe bağlı olarak age ile şifreler; böylece sunucu dışında güvenle saklanabilir veya taşınabilirler.",
   "export.encrypt.ageInfo": "age (age-encryption.org), küçük ve modern bir dosya şifreleme aracıdır — bir dosyayı bir veya daha fazla alıcı için mühürlemek üzere GPG'ye göre daha basit bir alternatiftir.",
   "export.encrypt.enable": "Dışa aktarmaları age ile şifrele",

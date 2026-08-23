@@ -151,7 +151,6 @@ const hu: Partial<Translations> = {
 
   // Settings
   "settings.title": "Beállítások",
-  "settings.encryption": "Titkosítás",
   "settings.encryptionOn": "Engedélyezett (jelszó az APP_KEY-ből)",
   "settings.encryptionOff": "Letiltott (nincs jelszó)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const hu: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pillanatképek megőrzése",
   "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
-  "settings.imageMaintenanceTitle": "Image-takarítás és registryk",
-  "settings.imageMaintenanceHint": "Karbantartás a backup utáni konténerfrissítés körül: a lecserélt image törlése, Unraid saját gyorsítótárazott frissítési állapotának frissítése, és a frissítéshez szükséges privát registryk hitelesítő adatainak tárolása.",
+  "settings.imageMaintenanceTitle": "Image-takarítás és frissítési állapot",
+  "settings.imageMaintenanceHint": "Karbantartás a backup utáni konténerfrissítés körül: a lecserélt image törlése és Unraid saját gyorsítótárazott frissítési állapotának frissítése.",
   "settings.retentionLast": "Utolsók megtartása",
   "settings.retentionDaily": "Napi megtartása",
   "settings.retentionWeekly": "Heti megtartása",
@@ -400,7 +399,6 @@ const hu: Partial<Translations> = {
   "cloud.credSets.add": "Hitelesítő adatkészlet hozzáadása",
   "cloud.credSets.name": "Név",
   "cloud.credSets.none": "Még nincs további hitelesítő adatkészlet.",
-  "export.encrypt.title": "Sima exportok titkosítása",
   "export.encrypt.hint": "A restic tárolók már titkosítottak. Ez opcionálisan titkosítja a sima exportált fájlokat (konténer és VM tar.gz az xml fájljaikkal, valamint a flash zip) age segítségével, hogy biztonságosan tárolhatók vagy mozgathatók legyenek a szerveren kívülre.",
   "export.encrypt.ageInfo": "Az age (age-encryption.org) egy kicsi, modern fájltitkosító eszköz — egyszerűbb alternatíva a GPG-nek egy fájl egy vagy több címzett számára történő lezárásához.",
   "export.encrypt.enable": "Exportok titkosítása age-dzsel",

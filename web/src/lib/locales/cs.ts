@@ -151,7 +151,6 @@ const cs: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavení",
-  "settings.encryption": "Šifrování",
   "settings.encryptionOn": "Povoleno (heslo odvozeno z APP_KEY)",
   "settings.encryptionOff": "Vypnuto (bez hesla)",
   "settings.encryptionHint":
@@ -365,8 +364,8 @@ const cs: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Uchovávání snímků",
   "settings.retentionHint": "Kolik záloh ponechat pro každou položku. Po každé záloze restic prořeže starší snímky podle této zásady. Vše nula = ponechat vše (vypnuto).",
-  "settings.imageMaintenanceTitle": "Úklid images a registry",
-  "settings.imageMaintenanceHint": "Údržba kolem aktualizace kontejneru po zálohování: odstranění nahrazeného image, obnovení vlastního uloženého stavu aktualizace Unraid a uložení přihlašovacích údajů pro soukromé registry, které aktualizace potřebuje.",
+  "settings.imageMaintenanceTitle": "Úklid images a stav aktualizace",
+  "settings.imageMaintenanceHint": "Údržba kolem aktualizace kontejneru po zálohování: odstranění nahrazeného image a obnovení vlastního uloženého stavu aktualizace Unraid.",
   "settings.retentionLast": "Ponechat poslední",
   "settings.retentionDaily": "Ponechat denní",
   "settings.retentionWeekly": "Ponechat týdenní",
@@ -398,7 +397,6 @@ const cs: Partial<Translations> = {
   "cloud.credSets.add": "Přidat sadu přihlašovacích údajů",
   "cloud.credSets.name": "Název",
   "cloud.credSets.none": "Zatím žádné další sady přihlašovacích údajů.",
-  "export.encrypt.title": "Šifrovat prosté exporty",
   "export.encrypt.hint": "Repozitáře restic jsou už šifrované. Toto volitelně šifruje prosté artefakty exportu (tar.gz kontejneru a VM spolu s jejich xml a flash zip) pomocí age, aby je bylo možné bezpečně uložit nebo přesunout mimo server.",
   "export.encrypt.ageInfo": "age (age-encryption.org) je malý, moderní nástroj pro šifrování souborů — jednodušší alternativa k GPG pro zapečetění souboru pro jednoho nebo více příjemců.",
   "export.encrypt.enable": "Šifrovat exporty pomocí age",

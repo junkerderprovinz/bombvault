@@ -151,7 +151,6 @@ const ko: Partial<Translations> = {
 
   // Settings
   "settings.title": "설정",
-  "settings.encryption": "암호화",
   "settings.encryptionOn": "활성화됨 (APP_KEY에서 파생된 비밀번호)",
   "settings.encryptionOff": "비활성화됨 (비밀번호 없음)",
   "settings.encryptionHint":
@@ -364,8 +363,8 @@ const ko: Partial<Translations> = {
 
   "settings.retentionTitle": "스냅샷 보존",
   "settings.retentionHint": "항목별로 유지할 백업 수입니다. 백업할 때마다 restic이 이 정책에 따라 오래된 스냅샷을 정리합니다. 모두 0 = 전부 보존(끔).",
-  "settings.imageMaintenanceTitle": "이미지 정리 및 레지스트리",
-  "settings.imageMaintenanceHint": "백업 후 컨테이너 업데이트 관련 유지 관리: 교체된 이미지 정리, Unraid 자체의 캐시된 업데이트 상태 갱신, 업데이트 풀에 필요한 프라이빗 레지스트리 자격 증명 저장.",
+  "settings.imageMaintenanceTitle": "이미지 정리 및 업데이트 상태",
+  "settings.imageMaintenanceHint": "백업 후 컨테이너 업데이트 관련 유지 관리: 교체된 이미지 정리 및 Unraid 자체의 캐시된 업데이트 상태 갱신.",
   "settings.retentionLast": "최근 보존",
   "settings.retentionDaily": "일별 보존",
   "settings.retentionWeekly": "주별 보존",
@@ -396,7 +395,6 @@ const ko: Partial<Translations> = {
   "cloud.credSets.add": "자격 증명 세트 추가",
   "cloud.credSets.name": "이름",
   "cloud.credSets.none": "아직 추가 자격 증명 세트가 없습니다.",
-  "export.encrypt.title": "평문 내보내기 암호화",
   "export.encrypt.hint": "restic 리포지토리는 이미 암호화되어 있습니다. 이것은 평문 내보내기 산출물 (컨테이너 및 VM 의 tar.gz 와 그 xml, 그리고 플래시 zip) 을 age 로 선택적으로 암호화하여 서버 밖에 안전하게 저장하거나 옮길 수 있게 합니다.",
   "export.encrypt.ageInfo": "age (age-encryption.org) 는 작고 현대적인 파일 암호화 도구입니다 — 하나 이상의 수신자를 위해 파일을 봉인하는, GPG보다 더 간단한 대안입니다.",
   "export.encrypt.enable": "age 로 내보내기 암호화",

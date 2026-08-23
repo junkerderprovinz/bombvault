@@ -150,7 +150,6 @@ const uk: Partial<Translations> = {
 
   // Settings
   "settings.title": "Налаштування",
-  "settings.encryption": "Шифрування",
   "settings.encryptionOn": "Увімкнено (пароль на основі APP_KEY)",
   "settings.encryptionOff": "Вимкнено (без пароля)",
   "settings.encryptionHint": "Шифрування задається одноразово під час ініціалізації репозиторію. Для зміни потрібен новий порожній шлях.",
@@ -362,8 +361,8 @@ const uk: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Зберігання знімків",
   "settings.retentionHint": "Скільки резервних копій зберігати для кожного елемента. Після кожної копії restic видаляє старіші знімки згідно з цією політикою. Усі нулі = зберігати все (вимкнено).",
-  "settings.imageMaintenanceTitle": "Очищення образів і реєстри",
-  "settings.imageMaintenanceHint": "Обслуговування навколо оновлення контейнера після резервного копіювання: видалення застарілого образу, оновлення власного кешованого статусу оновлення Unraid і зберігання облікових даних для приватних реєстрів, потрібних для отримання оновлення.",
+  "settings.imageMaintenanceTitle": "Очищення образів і статус оновлень",
+  "settings.imageMaintenanceHint": "Обслуговування навколо оновлення контейнера після резервного копіювання: видалення застарілого образу та оновлення власного кешованого статусу оновлення Unraid.",
   "settings.retentionLast": "Зберігати останні",
   "settings.retentionDaily": "Зберігати щоденні",
   "settings.retentionWeekly": "Зберігати щотижневі",
@@ -395,7 +394,6 @@ const uk: Partial<Translations> = {
   "cloud.credSets.add": "Додати набір облікових даних",
   "cloud.credSets.name": "Назва",
   "cloud.credSets.none": "Додаткових наборів облікових даних поки немає.",
-  "export.encrypt.title": "Шифрувати звичайні експорти",
   "export.encrypt.hint": "Репозиторії restic вже зашифровані. Це за бажанням шифрує звичайні артефакти експорту (tar.gz контейнера та ВМ разом із їхніми xml, і flash-zip) за допомогою age, щоб їх можна було безпечно зберігати чи переміщувати за межі сервера.",
   "export.encrypt.ageInfo": "age (age-encryption.org) — невеликий сучасний інструмент шифрування файлів, простіша альтернатива GPG для шифрування файлу для одного чи кількох отримувачів.",
   "export.encrypt.enable": "Шифрувати експорти за допомогою age",

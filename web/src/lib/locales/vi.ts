@@ -151,7 +151,6 @@ const vi: Partial<Translations> = {
 
   // Settings
   "settings.title": "Cài đặt",
-  "settings.encryption": "Mã hóa",
   "settings.encryptionOn": "Bật (mật khẩu lấy từ APP_KEY)",
   "settings.encryptionOff": "Tắt (không có mật khẩu)",
   "settings.encryptionHint":
@@ -364,8 +363,8 @@ const vi: Partial<Translations> = {
 
   "settings.retentionTitle": "Lưu giữ ảnh chụp nhanh",
   "settings.retentionHint": "Số bản sao lưu cần giữ cho mỗi mục. Sau mỗi lần sao lưu, restic sẽ dọn các snapshot cũ theo chính sách này. Tất cả bằng 0 = giữ tất cả (tắt).",
-  "settings.imageMaintenanceTitle": "Dọn dẹp Image & Registry",
-  "settings.imageMaintenanceHint": "Bảo trì xoay quanh việc cập nhật container sau khi sao lưu: dọn dẹp image đã bị thay thế, làm mới trạng thái cập nhật được lưu đệm của chính Unraid, và lưu thông tin đăng nhập cho các registry riêng tư mà việc kéo cập nhật cần.",
+  "settings.imageMaintenanceTitle": "Dọn dẹp Image & Trạng thái cập nhật",
+  "settings.imageMaintenanceHint": "Bảo trì xoay quanh việc cập nhật container sau khi sao lưu: dọn dẹp image đã bị thay thế và làm mới trạng thái cập nhật được lưu đệm của chính Unraid.",
   "settings.retentionLast": "Giữ gần nhất",
   "settings.retentionDaily": "Giữ theo ngày",
   "settings.retentionWeekly": "Giữ theo tuần",
@@ -396,7 +395,6 @@ const vi: Partial<Translations> = {
   "cloud.credSets.add": "Thêm bộ thông tin xác thực",
   "cloud.credSets.name": "Tên",
   "cloud.credSets.none": "Chưa có bộ thông tin xác thực bổ sung nào.",
-  "export.encrypt.title": "Mã hóa các bản xuất dạng thô",
   "export.encrypt.hint": "Các kho restic đã được mã hóa. Tùy chọn này mã hóa các thành phần xuất dạng thô (tar.gz của container và VM cùng với xml của chúng, và zip flash) bằng age, để có thể lưu trữ hoặc di chuyển ra ngoài máy chủ một cách an toàn.",
   "export.encrypt.ageInfo": "age (age-encryption.org) là một công cụ mã hóa tệp nhỏ gọn, hiện đại — một lựa chọn thay thế đơn giản hơn GPG để niêm phong một tệp cho một hoặc nhiều người nhận.",
   "export.encrypt.enable": "Mã hóa bản xuất bằng age",

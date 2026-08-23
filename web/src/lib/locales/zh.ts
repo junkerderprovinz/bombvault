@@ -151,7 +151,6 @@ const zh: Partial<Translations> = {
 
   // Settings
   "settings.title": "设置",
-  "settings.encryption": "加密",
   "settings.encryptionOn": "已启用（密码来自 APP_KEY）",
   "settings.encryptionOff": "已禁用（无密码）",
   "settings.encryptionHint":
@@ -364,8 +363,8 @@ const zh: Partial<Translations> = {
 
   "settings.retentionTitle": "快照保留",
   "settings.retentionHint": "每个项目保留的备份数量。每次备份后，restic 会按此策略清理较旧的快照。全部为 0 = 全部保留（关闭）。",
-  "settings.imageMaintenanceTitle": "镜像清理与 Registry",
-  "settings.imageMaintenanceHint": "备份后容器更新相关的维护：清理被替换的镜像、刷新 Unraid 自身缓存的更新状态，并存储更新拉取所需的私有 registry 凭据。",
+  "settings.imageMaintenanceTitle": "镜像清理与更新状态",
+  "settings.imageMaintenanceHint": "备份后容器更新相关的维护：清理被替换的镜像，并刷新 Unraid 自身缓存的更新状态。",
   "settings.retentionLast": "保留最近",
   "settings.retentionDaily": "保留每日",
   "settings.retentionWeekly": "保留每周",
@@ -396,7 +395,6 @@ const zh: Partial<Translations> = {
   "cloud.credSets.add": "添加凭据集",
   "cloud.credSets.name": "名称",
   "cloud.credSets.none": "尚无附加凭据集。",
-  "export.encrypt.title": "加密明文导出",
   "export.encrypt.hint": "restic 仓库已经加密。此项可选地使用 age 加密明文导出产物 (容器和虚拟机的 tar.gz 及其 xml，以及闪存 zip)，以便安全地在服务器外存储或移动。",
   "export.encrypt.ageInfo": "age (age-encryption.org) 是一个小巧的现代文件加密工具——为一个或多个接收者封装文件时，比 GPG 更简单的替代方案。",
   "export.encrypt.enable": "使用 age 加密导出",

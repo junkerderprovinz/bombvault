@@ -151,7 +151,6 @@ const it: Partial<Translations> = {
 
   // Settings
   "settings.title": "Impostazioni",
-  "settings.encryption": "Crittografia",
   "settings.encryptionOn": "Abilitata (password derivata da APP_KEY)",
   "settings.encryptionOff": "Disabilitata (nessuna password)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const it: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Conservazione degli snapshot",
   "settings.retentionHint": "Quanti backup conservare per elemento. Dopo ogni backup, restic elimina gli snapshot più vecchi secondo questa regola. Tutto a zero = conserva tutto (disattivato).",
-  "settings.imageMaintenanceTitle": "Pulizia immagini e registry",
-  "settings.imageMaintenanceHint": "Manutenzione per l'aggiornamento dei container dopo il backup: elimina l'immagine sostituita, aggiorna lo stato di aggiornamento memorizzato da Unraid e salva le credenziali per i registry privati necessari al pull dell'aggiornamento.",
+  "settings.imageMaintenanceTitle": "Pulizia immagini e stato aggiornamenti",
+  "settings.imageMaintenanceHint": "Manutenzione per l'aggiornamento dei container dopo il backup: elimina l'immagine sostituita e aggiorna lo stato di aggiornamento memorizzato da Unraid.",
   "settings.retentionLast": "Conserva ultimi",
   "settings.retentionDaily": "Conserva giornalieri",
   "settings.retentionWeekly": "Conserva settimanali",
@@ -400,7 +399,6 @@ const it: Partial<Translations> = {
   "cloud.credSets.add": "Aggiungi set di credenziali",
   "cloud.credSets.name": "Nome",
   "cloud.credSets.none": "Nessun set di credenziali aggiuntivo ancora.",
-  "export.encrypt.title": "Cifra le esportazioni in chiaro",
   "export.encrypt.hint": "I repository restic sono già cifrati. Questo cifra facoltativamente gli artefatti di esportazione in chiaro (tar.gz di container e VM con i relativi xml, e lo zip flash) con age, così da poterli archiviare o spostare fuori dal server in sicurezza.",
   "export.encrypt.ageInfo": "age (age-encryption.org) è uno strumento di cifratura file piccolo e moderno — un'alternativa più semplice a GPG per sigillare un file per uno o più destinatari.",
   "export.encrypt.enable": "Cifra le esportazioni con age",

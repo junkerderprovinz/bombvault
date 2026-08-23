@@ -151,7 +151,6 @@ const da: Partial<Translations> = {
 
   // Settings
   "settings.title": "Indstillinger",
-  "settings.encryption": "Kryptering",
   "settings.encryptionOn": "Aktiveret (adgangskode afledt fra APP_KEY)",
   "settings.encryptionOff": "Deaktiveret (ingen adgangskode)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const da: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Opbevaring af snapshots",
   "settings.retentionHint": "Hvor mange sikkerhedskopier der beholdes pr. element. Efter hver sikkerhedskopiering renser restic ældre øjebliksbilleder efter denne politik. Alt 0 = behold alt (fra).",
-  "settings.imageMaintenanceTitle": "Oprydning af images & registries",
-  "settings.imageMaintenanceHint": "Vedligeholdelse omkring container-opdateringen efter backup: ryd op i det overflødiggjorte image, opdater Unraids egen cachede opdateringsstatus, og gem legitimationsoplysninger til private registries, som opdateringen har brug for.",
+  "settings.imageMaintenanceTitle": "Oprydning af images & opdateringsstatus",
+  "settings.imageMaintenanceHint": "Vedligeholdelse omkring container-opdateringen efter backup: ryd op i det overflødiggjorte image og opdater Unraids egen cachede opdateringsstatus.",
   "settings.retentionLast": "Behold seneste",
   "settings.retentionDaily": "Behold daglige",
   "settings.retentionWeekly": "Behold ugentlige",
@@ -400,7 +399,6 @@ const da: Partial<Translations> = {
   "cloud.credSets.add": "Tilføj legitimationssæt",
   "cloud.credSets.name": "Navn",
   "cloud.credSets.none": "Ingen ekstra legitimationssæt endnu.",
-  "export.encrypt.title": "Krypter almindelige eksporter",
   "export.encrypt.hint": "restic-repositorierne er allerede krypterede. Dette krypterer valgfrit de almindelige eksportartefakter (container- og VM-tar.gz med deres xml, og flash-zip) med age, så de trygt kan gemmes eller flyttes væk fra serveren.",
   "export.encrypt.ageInfo": "age (age-encryption.org) er et lille, moderne filkrypteringsværktøj — et enklere alternativ til GPG til at forsegle en fil til en eller flere modtagere.",
   "export.encrypt.enable": "Krypter eksporter med age",

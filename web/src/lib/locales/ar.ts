@@ -151,7 +151,6 @@ const ar: Partial<Translations> = {
 
   // Settings
   "settings.title": "الإعدادات",
-  "settings.encryption": "التشفير",
   "settings.encryptionOn": "مفعّل (كلمة المرور مشتقة من APP_KEY)",
   "settings.encryptionOff": "معطّل (بدون كلمة مرور)",
   "settings.encryptionHint":
@@ -367,8 +366,8 @@ const ar: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "الاحتفاظ باللقطات",
   "settings.retentionHint": "عدد النسخ الاحتياطية المحتفظ بها لكل عنصر. بعد كل نسخة احتياطية، يقلّم restic اللقطات الأقدم وفق هذه السياسة. الكل صفر = الاحتفاظ بكل شيء (معطّل).",
-  "settings.imageMaintenanceTitle": "تنظيف الصور والسجلات",
-  "settings.imageMaintenanceHint": "صيانة لتحديث الحاوية بعد النسخ الاحتياطي: حذف الصورة القديمة، وتحديث حالة تحديث Unraid المخزّنة مؤقتًا، وتخزين بيانات اعتماد السجلات الخاصة التي يحتاجها سحب التحديث.",
+  "settings.imageMaintenanceTitle": "تنظيف الصور وحالة التحديث",
+  "settings.imageMaintenanceHint": "صيانة لتحديث الحاوية بعد النسخ الاحتياطي: حذف الصورة القديمة وتحديث حالة تحديث Unraid المخزّنة مؤقتًا.",
   "settings.retentionLast": "الاحتفاظ بالأخيرة",
   "settings.retentionDaily": "الاحتفاظ اليومي",
   "settings.retentionWeekly": "الاحتفاظ الأسبوعي",
@@ -400,7 +399,6 @@ const ar: Partial<Translations> = {
   "cloud.credSets.add": "إضافة مجموعة بيانات اعتماد",
   "cloud.credSets.name": "الاسم",
   "cloud.credSets.none": "لا توجد مجموعات بيانات اعتماد إضافية بعد.",
-  "export.encrypt.title": "تشفير عمليات التصدير النصية",
   "export.encrypt.hint": "مستودعات restic مشفّرة بالفعل. هذا يشفّر اختياريًا مخرجات التصدير النصية (ملفات tar.gz للحاوية والجهاز الافتراضي مع ملفات xml الخاصة بها، وملف flash المضغوط) باستخدام age، لتخزينها أو نقلها خارج الخادم بأمان.",
   "export.encrypt.ageInfo": "age (age-encryption.org) هي أداة تشفير ملفات صغيرة وحديثة — بديل أبسط لـ GPG لتشفير ملف لمستلم واحد أو أكثر.",
   "export.encrypt.enable": "تشفير عمليات التصدير باستخدام age",

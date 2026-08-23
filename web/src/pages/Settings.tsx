@@ -37,7 +37,7 @@ import { RAINBOW, getRainbow, setRainbow, hueVars, rainbowAt, type RainbowState 
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
-import { Flag, IconAdd, IconDownload } from "../components/Sidebar";
+import { Flag, IconAdd, IconDownload, IconTrash } from "../components/Sidebar";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -5384,17 +5384,24 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* STORAGE — Image cleanup, Unraid's own update-status reconciliation,  */}
-      {/* and private container registries, merged into one card (GlimStone    */}
-      {/* follow-up round, merge A): all three feed the SAME post-backup       */}
-      {/* container-update pipeline (#56, #116, #106). Every field here now    */}
-      {/* auto-saves instead of batching into a Speichern button — mirrors     */}
-      {/* the Domains card's own auto-save mechanism (#142): the two toggles   */}
-      {/* use the exact optimistic-flip + persist + revert-on-failure shape    */}
-      {/* toggleDomainEnabled established (see autoSaveField below); the       */}
-      {/* registry text fields debounce instead (typing on every keystroke     */}
-      {/* would be wasteful for a free-text host/username/token), while        */}
-      {/* removing a row still saves immediately, same as before.              */}
+      {/* STORAGE — Image cleanup and Unraid's own update-status               */}
+      {/* reconciliation (GlimStone follow-up round, merge A): both feed the   */}
+      {/* SAME post-backup container-update pipeline (#56, #116). Every field  */}
+      {/* here auto-saves instead of batching into a Speichern button —        */}
+      {/* mirrors the Domains card's own auto-save mechanism (#142): both      */}
+      {/* toggles use the exact optimistic-flip + persist + revert-on-failure  */}
+      {/* shape toggleDomainEnabled established (see autoSaveField below).     */}
+      {/*   Private container registries (#106) USED to be a third             */}
+      {/* sub-section merged into this same card. SPLIT BACK OUT into its own  */}
+      {/* standalone Card below (jdp, live-review: "Registries: wir machen     */}
+      {/* eine eigene Card daraus") — a registry credential is consulted BY    */}
+      {/* the update-pull, but isn't itself image cleanup or Unraid's own      */}
+      {/* status reconciliation, so the merge was really "three things on the  */}
+      {/* same Storage tab," not three parts of one coherent decision; this    */}
+      {/* undoes exactly that, not a mechanical revert of merge A as a whole.  */}
+      {/* This card's own title/hint (settings.imageMaintenanceTitle/-Hint,    */}
+      {/* same keys, retitled values) dropped every registries mention         */}
+      {/* accordingly.                                                        */}
       {/* ------------------------------------------------------------------ */}
       {tab === "storage" && (
       <Card title={t("settings.imageMaintenanceTitle")} hint={t("settings.imageMaintenanceHint")} hueIndex={nextHue()}>
@@ -5414,12 +5421,26 @@ export function SettingsPage() {
           disabled={mergedFieldBusy.reconcileUnraidUpdateStatus}
           shakeNonce={mergedFieldShake.reconcileUnraidUpdateStatus}
         />
-        {/* Private container registries (#106) ---------------------------- */}
-        <div className="flex flex-col gap-3 border-t border-carbon-border pt-4">
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-            {t("settings.registriesTitle")}
-            <InfoBubble tip={t("settings.registriesHint")} />
-          </h3>
+      </Card>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* STORAGE — private container registries (#106), its own standalone    */}
+      {/* Card again — see the Image Cleanup card's own comment above for why  */}
+      {/* it split out. `hint` now carries what used to be a separate          */}
+      {/* <h3>+InfoBubble pair right inside the merged card                    */}
+      {/* (settings.registriesTitle/-Hint, unchanged keys/values, just         */}
+      {/* promoted to the Card's own title/hint slot) — the exact same         */}
+      {/* content, through the ONE heading+bubble mechanism every other Card   */}
+      {/* on this page already uses instead of a second, bespoke one. No       */}
+      {/* `border-t` divider carried over either — that only ever separated    */}
+      {/* this sub-section from its two former siblings; a standalone Card     */}
+      {/* already has its own surface/edge doing that job, same as every       */}
+      {/* other single-purpose Card in this file.                              */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "storage" && (
+      <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")} hueIndex={nextHue()}>
+        <div className="flex flex-col gap-3">
           {settings.registryAuths.length === 0 && (
             <p className="text-sm text-carbon-textMuted">
               {t("settings.registriesEmpty")}
@@ -5503,8 +5524,31 @@ export function SettingsPage() {
                   className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
                 />
               </label>
-              <button
-                type="button"
+              {/* Square icon-only remove button with a trash-can glyph (jdp,
+                  live-review: "Wenn man eine Registry hinzufügt, soll der
+                  Entfernen-Button quadratisch sein mit Mülleimer-Icon") — was
+                  a bare text `<button>` ("Entfernen"/"Remove"). IconTipButton
+                  (components/IconTipButton.tsx) for the same real
+                  `.glim-bubble` hover tooltip every other icon-only control on
+                  this page already gets, not a native `title=`;
+                  `settings.registryRemove`'s existing value moves from
+                  visible button text to this tooltip's own content unchanged
+                  — same "text moves onto the tip, key stays" move the
+                  Registry-add button below already made. Same `h-8 w-8`/
+                  `rounded-control`/`bg-carbon-surface3` icon-badge footprint
+                  as that Registry-add button and FolderBrowser's own Browse
+                  button, not a fresh guess: this row's own three text fields
+                  are `text-sm px-3 py-1.5` — the SAME classes already
+                  measured live to render at 32px for those other controls
+                  (see Selector.tsx's own `iconOnly` doc for that
+                  measurement's full writeup) — so 32px is this row's real
+                  control height too, confirmed, not assumed from a token
+                  used elsewhere. IconTrash (components/Sidebar.tsx) drawn
+                  fresh for this — no trash glyph existed in this codebase
+                  yet — filled/`currentColor`-only, no `stroke`, matching
+                  every other icon in that file's icon-only-badge set. */}
+              <IconTipButton
+                tip={t("settings.registryRemove")}
                 onClick={() => {
                   // Removing a row is a discrete action, not a text edit — it
                   // saves IMMEDIATELY (no debounce), and cancels any pending
@@ -5526,10 +5570,10 @@ export function SettingsPage() {
                   cancelDebounce("registryAuths");
                   saveRegistries(nextAuths, nextRowIds);
                 }}
-                className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+                className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
               >
-                {t("settings.registryRemove")}
-              </button>
+                <IconTrash />
+              </IconTipButton>
             </div>
             );
           })}
@@ -5663,28 +5707,31 @@ export function SettingsPage() {
             THIRD sub-section, Flash-ZIP-Export, used to sit above this one —
             see this Card's own header comment for where it moved.) */}
         <div className="flex flex-col gap-3">
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-            {t("export.encrypt.title")}
-            {/* "(age)" dropped from the visible title (design-language.md's
-                "explanations live in a bubble" rule) — what age IS moves here,
-                concatenated onto the existing hint the same way
-                settings.retentionHint + settings.retentionCombineInfo already
-                fold two sentences into one bubble above.
-                  jdp, live-review (fresh screenshot proved a prior round's
-                claim wrong): the master ToggleRow's own visible "Exporte mit
-                age verschlüsseln" label directly under this heading is gone
-                too now (see `hideLabel` below) — export.encrypt.enableHint
-                folds in here alongside it, fixing a stale claim in this
-                file's own history: the recipientsHint comment a little further
-                down already asserted "that half is already covered by
-                export.encrypt.enableHint, now folded into the sub-heading's
-                own InfoBubble above," but the actual code never did — this is
-                that fold, made real. */}
-            <InfoBubble tip={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")}`} />
-          </h3>
+          {/* No more standalone <h3> sub-heading (jdp, live-review: "Export
+              und Verschlüsselung: Texte normal formatieren, es sind keine
+              Überschriften mehr") — this sub-section is now JUST a single
+              ToggleRow with an optional conditional block beneath it, not a
+              heading introducing its own block of content, so it shouldn't
+              LOOK like one either. `hideLabel` is gone below: the row's own
+              native `label` (ToggleRow's plain `text-sm text-carbon-text`
+              span, the same normal weight every other row's own caption in
+              this app already uses, not the bold/uppercase/tracking-widest
+              heading treatment the removed `<h3>` had) is now this
+              sub-section's only visible caption. `export.encrypt.title` (the
+              old heading's own text, "Encrypt plain exports"/"Plain-Exporte
+              verschlüsseln") is retired — the ToggleRow's own
+              `export.encrypt.enable` label already names the same action
+              ("Encrypt exports with age"/"Exporte mit age verschlüsseln")
+              and is the one text a screen reader announces for this switch
+              either way, so keeping both would be two competing captions for
+              one control. The old heading's own three-sentence InfoBubble
+              tip (what age is, what enabling it does) moves onto the
+              ToggleRow's own `hint` unchanged — the same content, now
+              anchored to the control it actually describes instead of a
+              heading standing in front of it. */}
           <ToggleRow
             label={t("export.encrypt.enable")}
-            hideLabel
+            hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")}`}
             checked={settings.exportEncryptEnabled}
             onChange={(v) => void autoSaveField("exportEncryptEnabled", v, setExportEncSaveState, setExportEncSaveError)}
             disabled={mergedFieldBusy.exportEncryptEnabled}
@@ -5761,19 +5808,31 @@ export function SettingsPage() {
             feature in the abstract. The switch's own filled/unfilled track
             still shows on/off at a glance without hovering anything. */}
         <div className="flex flex-col gap-3">
-          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-            {t("settings.encryption")}
-            <InfoBubble
-              tip={`${settings.encryptionEnabled ? t("settings.encryptionOn") : t("settings.encryptionOff")} ${t("settings.encryptionHint")}`}
-            />
-          </h3>
+          {/* No more standalone <h3> sub-heading here either — same fix, same
+              reasoning, as the Plain-export block above (jdp, live-review:
+              "Export und Verschlüsselung: Texte normal formatieren, es sind
+              keine Überschriften mehr"). `hideLabel` is gone: the ToggleRow's
+              own DYNAMIC on/off label ("Enabled (password derived from
+              APP_KEY)"/"Disabled (no password)") is now this sub-section's
+              only visible caption, at ToggleRow's normal `text-sm
+              text-carbon-text` weight, not the retired heading's bold/
+              uppercase/tracking-widest treatment. `settings.encryption` (the
+              old heading's own generic "Encryption"/"Verschlüsselung" text)
+              is retired — the row's own live on/off label already says more
+              than that static word did. The bubble's own tip drops the
+              on/off-state PREFIX it used to carry (`settings.encryptionOn`/
+              `Off` concatenated in front of `settings.encryptionHint`): that
+              existed only because the label sitting above it was hidden and
+              had nowhere else to show the current state — now that the
+              state IS the visible label, repeating it inside the bubble too
+              would just be the same sentence twice. */}
           <ToggleRow
             label={
               settings.encryptionEnabled
                 ? t("settings.encryptionOn")
                 : t("settings.encryptionOff")
             }
-            hideLabel
+            hint={t("settings.encryptionHint")}
             checked={settings.encryptionEnabled}
             onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
             disabled={mergedFieldBusy.encryptionEnabled}
