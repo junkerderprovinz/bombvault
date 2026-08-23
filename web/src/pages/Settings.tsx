@@ -3518,12 +3518,17 @@ function ContainersSection({
         />
       </div>
 
-      {/* Editable cadence builder */}
+      {/* Editable cadence builder. `hueIndex` passed straight through — the
+          SAME position this Card's own heading notch already got above, not
+          a second independent value — so the TimePicker inside picks up this
+          Card's own stable rainbow colour (Task 3, jdp: "Der Zeitpicker ist
+          nicht im Regenbogenmodus"; see CadenceBuilder's own hueIndex doc). */}
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.containersSection")}
           value={schedule}
           onChange={onChange}
+          hueIndex={hueIndex}
         />
       </div>
 
@@ -3611,6 +3616,7 @@ function VMsSection({
           value={schedule}
           disabled={syncSchedules}
           onChange={onChange}
+          hueIndex={hueIndex}
         />
       </div>
 
@@ -3690,6 +3696,7 @@ function FlashSection({
           value={schedule}
           disabled={syncSchedules}
           onChange={onChange}
+          hueIndex={hueIndex}
         />
         {/* GlimStone follow-up pass: stays permanent text, NOT bubbled — a
             behavioural caveat ("this control looks live but silently does
@@ -3791,6 +3798,7 @@ function FilesSection({
           value={schedule}
           disabled={syncSchedules}
           onChange={onChange}
+          hueIndex={hueIndex}
         />
       </div>
 
@@ -3875,12 +3883,15 @@ function RestoreChecksSection({
         onChange={(v) => update({ offsiteDrillsEnabled: v })}
         shakeNonce={shake?.offsiteDrillsEnabled}
       />
+      {/* `hueIndex` passed straight through to the TimePicker inside (Task 3
+          fix) — the SAME position as this Card's own heading notch above. */}
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("settings.schedule")}
           value={settings.drillsSchedule}
           disabled={!settings.drillsEnabled}
           onChange={(v) => update({ drillsSchedule: v })}
+          hueIndex={hueIndex}
         />
       </div>
       <label className="flex flex-col gap-1 max-w-40">
@@ -5311,23 +5322,41 @@ export function SettingsPage() {
           </Card>
 
           {/* Restore-check schedule (schedulesChecks): the scheduled off-site
-              append-only tamper test. Previously had no UI editor at all. */}
-          <Card title={t("settings.schedulesChecks")} hueIndex={nextHue()}>
-            <div className="rounded-card bg-carbon-surface2 p-4">
-              <CadenceBuilder
-                label={t("settings.tamperTestSchedule")}
-                value={settings.tamperTestSchedule}
-                onChange={(v) => scheduleField("tamperTestSchedule", v)}
-              />
-              {/* #109: the scheduler stays inert without a qualifying domain — this
-                  is the only place that told manilx why Sun 08:00 never ran. */}
-              {!tamperScheduleActive && (
-                <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-                  {t("settings.tamperScheduleInactive")}
+              append-only tamper test. Previously had no UI editor at all.
+                `hueIdx` captured once in this IIFE and reused for both the
+              Card's own heading notch and the CadenceBuilder's TimePicker
+              inside it (Task 3, jdp: "Der Zeitpicker ist nicht im
+              Regenbogenmodus") — a bare inline `<Card hueIndex={nextHue()}>`
+              here has no local variable to also hand the CadenceBuilder
+              below, and calling `nextHue()` a second time would consume a
+              SECOND, different position for one visually-grouped Card
+              (exactly the trap SaveBar's own header comment already warns
+              about for the identical "one Card, two hue-aware children"
+              shape). The IIFE is the smallest change that captures the
+              single call's result without lifting this ad-hoc Card block
+              into its own named component purely to receive a prop. */}
+          {(() => {
+            const hueIdx = nextHue();
+            return (
+              <Card title={t("settings.schedulesChecks")} hueIndex={hueIdx}>
+                <div className="rounded-card bg-carbon-surface2 p-4">
+                  <CadenceBuilder
+                    label={t("settings.tamperTestSchedule")}
+                    value={settings.tamperTestSchedule}
+                    onChange={(v) => scheduleField("tamperTestSchedule", v)}
+                    hueIndex={hueIdx}
+                  />
+                  {/* #109: the scheduler stays inert without a qualifying domain — this
+                      is the only place that told manilx why Sun 08:00 never ran. */}
+                  {!tamperScheduleActive && (
+                    <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                      {t("settings.tamperScheduleInactive")}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </Card>
+              </Card>
+            );
+          })()}
         </>
       )}
 
@@ -6457,44 +6486,53 @@ export function SettingsPage() {
       {/* NOTIFICATIONS — Weekly digest: one summary message per week through
           the channels configured above. Schedule input mirrors the drills/
           tamper cadence editors (CadenceBuilder's own <fieldset disabled>
-          handles the dimming — no opacity gate on the wrapping container). */}
-      {tab === "notifications" && (
-        <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")} hueIndex={nextHue()}>
-          <ToggleRow
-            hideLabel
-            label={t("settings.digestToggle")}
-            checked={settings.digestEnabled}
-            onChange={(v) =>
-              setSettings((prev) => (prev ? { ...prev, digestEnabled: v } : prev))
-            }
-          />
-          <div className="rounded-card bg-carbon-surface2 p-4">
-            <CadenceBuilder
-              label={t("settings.schedule")}
-              value={settings.digestSchedule}
-              disabled={!settings.digestEnabled}
+          handles the dimming — no opacity gate on the wrapping container).
+            IIFE for the same reason as the tamper-test schedule Card above
+          (Task 3): `hueIdx` is captured once and handed to BOTH this Card's
+          own heading notch and the CadenceBuilder's TimePicker inside it,
+          instead of two independent `nextHue()` calls landing on different
+          colours for one visually-grouped Card. */}
+      {tab === "notifications" && (() => {
+        const hueIdx = nextHue();
+        return (
+          <Card title={t("settings.digestTitle")} hint={t("settings.digestHint")} hueIndex={hueIdx}>
+            <ToggleRow
+              hideLabel
+              label={t("settings.digestToggle")}
+              checked={settings.digestEnabled}
               onChange={(v) =>
-                setSettings((prev) => (prev ? { ...prev, digestSchedule: v } : prev))
+                setSettings((prev) => (prev ? { ...prev, digestEnabled: v } : prev))
               }
             />
-          </div>
-          <SaveBar
-            state={digestSaveState}
-            error={digestSaveError}
-            onSave={() =>
-              void save(
-                {
-                  digestEnabled: settings.digestEnabled,
-                  digestSchedule: settings.digestSchedule,
-                },
-                setDigestSaveState,
-                setDigestSaveError
-              )
-            }
-            t={t}
-          />
-        </Card>
-      )}
+            <div className="rounded-card bg-carbon-surface2 p-4">
+              <CadenceBuilder
+                label={t("settings.schedule")}
+                value={settings.digestSchedule}
+                disabled={!settings.digestEnabled}
+                onChange={(v) =>
+                  setSettings((prev) => (prev ? { ...prev, digestSchedule: v } : prev))
+                }
+                hueIndex={hueIdx}
+              />
+            </div>
+            <SaveBar
+              state={digestSaveState}
+              error={digestSaveError}
+              onSave={() =>
+                void save(
+                  {
+                    digestEnabled: settings.digestEnabled,
+                    digestSchedule: settings.digestSchedule,
+                  },
+                  setDigestSaveState,
+                  setDigestSaveError
+                )
+              }
+              t={t}
+            />
+          </Card>
+        );
+      })()}
 
       {/* NOTIFICATIONS — Overdue-backup watchdog: a fixed daily check (09:00)
           that pushes ONE notification per overdue episode through the channels

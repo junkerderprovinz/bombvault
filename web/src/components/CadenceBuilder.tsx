@@ -170,11 +170,24 @@ export function CadenceBuilder({
   value,
   disabled,
   onChange,
+  hueIndex,
 }: {
   label: string;
   value: string;
   disabled?: boolean;
   onChange: (v: string) => void;
+  /** Rainbow position for the TimePicker rendered inside (Task 3, jdp
+   *  live-review: "Der Zeitpicker ist nicht im Regenbogenmodus" — the
+   *  TimePicker always accepted an optional `hueIndex` but this, its one
+   *  real call site, never actually passed one through, so the popover's
+   *  selected-hour/-minute highlight always fell back to the flat accent
+   *  even in rainbow mode). Every caller of THIS component passes the SAME
+   *  `hueIndex` its own enclosing `<Card hueIndex={...}>` already receives
+   *  (see each call site in Settings.tsx), so the TimePicker inside reads
+   *  as part of the same coloured group as the Card around it — the exact
+   *  "a card and its own action button read as one coloured group" pattern
+   *  SaveBar's own `hueIndex` doc already established for this file. */
+  hueIndex?: number;
 }) {
   const { t, lang } = useT();
   const [state, setState] = useState<CadenceState>(() => parseCadenceString(value));
@@ -324,6 +337,7 @@ export function CadenceBuilder({
             value={state.time}
             onChange={(time) => update({ time })}
             label={t("cadence.time")}
+            hueIndex={hueIndex}
           />
         </div>
       )}
