@@ -950,7 +950,6 @@ const cs: Partial<Translations> = {
   "settings.tab.notifications": "Oznámení",
   "settings.tab.integrity": "Integrita",
   "settings.tab.system": "Systém",
-  "settings.schedulesBackup": "Plány zálohování",
   "settings.schedulesOptions": "Možnosti plánu",
   "settings.schedulesOffsite": "Plány replikace mimo lokalitu",
   "settings.schedulesSelfBackup": "Plán vlastního zálohování",

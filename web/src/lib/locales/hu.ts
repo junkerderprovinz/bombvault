@@ -955,7 +955,6 @@ const hu: Partial<Translations> = {
   "settings.tab.notifications": "Értesítések",
   "settings.tab.integrity": "Integritás",
   "settings.tab.system": "Rendszer",
-  "settings.schedulesBackup": "Biztonsági mentési ütemezések",
   "settings.schedulesOptions": "Ütemezési beállítások",
   "settings.schedulesOffsite": "Telephelyen kívüli replikációs ütemezések",
   "settings.schedulesSelfBackup": "Önmentési ütemezés",

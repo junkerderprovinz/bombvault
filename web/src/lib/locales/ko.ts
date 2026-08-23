@@ -944,7 +944,6 @@ const ko: Partial<Translations> = {
   "settings.tab.notifications": "알림",
   "settings.tab.integrity": "무결성",
   "settings.tab.system": "시스템",
-  "settings.schedulesBackup": "백업 일정",
   "settings.schedulesOptions": "일정 옵션",
   "settings.schedulesOffsite": "오프사이트 복제 일정",
   "settings.schedulesSelfBackup": "자체 백업 일정",

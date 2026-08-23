@@ -5351,32 +5351,23 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {tab === "schedules" && (
         <>
-          {/* Backup schedules (schedulesBackup): Containers + sync + VMs + Flash.
-              A group heading (Card-title style) labels the three domain cards,
-              matching the single-Card off-site / self-backup / checks groups.
-              Task 5 (rule 11): same Badge treatment as Card's own <h2> above,
-              since this IS a Card-title-equivalent heading, just labelling
-              three sibling Cards instead of sitting inside one.
-              GlimStone follow-up pass ("half-overlap card notch"): `relative`
-              added directly on this <h2> (no wrapping div otherwise exists
-              here) — there's no padding between the heading and the edge it
-              straddles, so the h2 itself is the right anchor; see
-              Badge.tsx's badgeClassName comment for the positioning math. */}
-          <h2 className="relative flex items-center">
-            <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("settings.schedulesBackup")}</Badge>
-          </h2>
           {/* Schedule options (jdp, live-review — "Die beiden Toggle sollen in
               eine eigene Card"): perItemSchedules (#121) and the Containers-
               sync toggle used to be two raw <input type="checkbox"> rows
               sitting directly in this tab, outside any Card. Both are now the
-              shared ToggleRow component, grouped in their own Card between
-              the schedulesBackup heading and ContainersSection — perItem
-              first, sync directly below it, per jdp's own ordering. A genuine
-              two-member list, so each ToggleRow gets its own LOCAL hueIndex
-              (0/1, independent of this Card's own nextHue() notch), the same
-              "own local 0-based index per group" rule the Domains card's
-              seven rows and the merged Colors Card's three rainbow toggles
-              already follow. */}
+              shared ToggleRow component, grouped in their own Card, first on
+              this tab, directly above ContainersSection — perItem first, sync
+              directly below it, per jdp's own ordering. (The group-level
+              "Backup-Zeitpläne" Badge heading that used to sit above this
+              Card was removed on jdp's live-review ask — the four domain
+              schedule Cards below already carry their own clear headings, so
+              the group label was redundant; nextHue()'s sequence starts
+              directly with this Card now, one call short of before.) A
+              genuine two-member list, so each ToggleRow gets its own LOCAL
+              hueIndex (0/1, independent of this Card's own nextHue() notch),
+              the same "own local 0-based index per group" rule the Domains
+              card's seven rows and the merged Colors Card's three rainbow
+              toggles already follow. */}
           <Card title={t("settings.schedulesOptions")} hueIndex={nextHue()}>
             <ToggleRow
               label={t("settings.perItemSchedules")}
@@ -6417,7 +6408,7 @@ export function SettingsPage() {
       <div id="offsite">
       {/* GlimStone follow-up pass ("half-overlap card notch"): `relative`
           added directly on this <h2> — same bare-heading, no-padding case as
-          settings.schedulesBackup above; see Badge.tsx's badgeClassName
+          Recovery.tsx's foreignTitle heading; see Badge.tsx's badgeClassName
           comment. */}
       <h2 className="relative flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("offsite.sectionTitle")}</Badge>

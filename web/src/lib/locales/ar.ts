@@ -955,7 +955,6 @@ const ar: Partial<Translations> = {
   "settings.tab.notifications": "الإشعارات",
   "settings.tab.integrity": "السلامة",
   "settings.tab.system": "النظام",
-  "settings.schedulesBackup": "جداول النسخ الاحتياطي",
   "settings.schedulesOptions": "خيارات الجدولة",
   "settings.schedulesOffsite": "جداول النسخ المتماثل خارج الموقع",
   "settings.schedulesSelfBackup": "جدول النسخ الاحتياطي الذاتي",

@@ -952,7 +952,6 @@ const tr: Partial<Translations> = {
   "settings.tab.notifications": "Bildirimler",
   "settings.tab.integrity": "Bütünlük",
   "settings.tab.system": "Sistem",
-  "settings.schedulesBackup": "Yedekleme zamanlamaları",
   "settings.schedulesOptions": "Zamanlama seçenekleri",
   "settings.schedulesOffsite": "Site dışı çoğaltma zamanlamaları",
   "settings.schedulesSelfBackup": "Kendi kendine yedekleme zamanlaması",

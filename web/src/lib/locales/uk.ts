@@ -947,7 +947,6 @@ const uk: Partial<Translations> = {
   "settings.tab.notifications": "Сповіщення",
   "settings.tab.integrity": "Цілісність",
   "settings.tab.system": "Система",
-  "settings.schedulesBackup": "Розклади резервного копіювання",
   "settings.schedulesOptions": "Параметри розкладу",
   "settings.schedulesOffsite": "Розклади зовнішньої реплікації",
   "settings.schedulesSelfBackup": "Розклад самокопіювання",

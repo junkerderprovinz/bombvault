@@ -944,7 +944,6 @@ const ja: Partial<Translations> = {
   "settings.tab.notifications": "通知",
   "settings.tab.integrity": "整合性",
   "settings.tab.system": "システム",
-  "settings.schedulesBackup": "バックアップスケジュール",
   "settings.schedulesOptions": "スケジュールオプション",
   "settings.schedulesOffsite": "オフサイトレプリケーションスケジュール",
   "settings.schedulesSelfBackup": "セルフバックアップスケジュール",

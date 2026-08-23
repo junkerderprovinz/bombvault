@@ -950,7 +950,6 @@ const es: Partial<Translations> = {
   "settings.tab.notifications": "Notificaciones",
   "settings.tab.integrity": "Integridad",
   "settings.tab.system": "Sistema",
-  "settings.schedulesBackup": "Programaciones de copia de seguridad",
   "settings.schedulesOptions": "Opciones de programación",
   "settings.schedulesOffsite": "Programaciones de replicación externa",
   "settings.schedulesSelfBackup": "Programación de autocopia",

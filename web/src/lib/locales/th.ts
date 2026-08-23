@@ -955,7 +955,6 @@ const th: Partial<Translations> = {
   "settings.tab.notifications": "การแจ้งเตือน",
   "settings.tab.integrity": "ความสมบูรณ์",
   "settings.tab.system": "ระบบ",
-  "settings.schedulesBackup": "กำหนดการสำรองข้อมูล",
   "settings.schedulesOptions": "ตัวเลือกกำหนดการ",
   "settings.schedulesOffsite": "กำหนดการจำลองข้อมูลนอกสถานที่",
   "settings.schedulesSelfBackup": "กำหนดการสำรองข้อมูลตัวเอง",
