@@ -42,9 +42,18 @@ export interface ToggleProps {
   onChange: (next: boolean) => void;
   /** Always used as the accessible name; shown as visible text unless hideLabel. */
   label: string;
-  /** Suppress the visible caption — text survives as aria-label. Use when a
-   *  caller already renders this same text elsewhere (a Card title, a row's
-   *  own label block), so the caption never appears twice. */
+  /** Suppress the visible caption — text survives as aria-label. Use ONLY
+   *  when the CALLER, right there in its own layout, already draws this
+   *  exact text as real visible content next to this switch (e.g. a
+   *  hand-rolled row like Containers.tsx's UpdateAfterBackupRow, or a
+   *  wrapping `<label>` + sibling `<span>` like VMs.tsx's VMIncludeToggle) —
+   *  never to rely on a Card's title/hint further up the page to justify an
+   *  otherwise-blank row. That specific reasoning ("the Card title already
+   *  says it") is the exact anti-pattern jdp ruled out categorically after
+   *  it got built and reversed three times on ToggleRow (design-language.md
+   *  Toggles/Switches section) — ToggleRow has no `hideLabel` prop at all
+   *  anymore as a result. This lower-level prop stays only for the genuinely
+   *  different "the caller itself already prints the same text" shape. */
   hideLabel?: boolean;
   disabled?: boolean;
   /** Extra classes for the outer wrapper (e.g. row-alignment nudges). */
