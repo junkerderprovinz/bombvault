@@ -37,7 +37,7 @@ import { RAINBOW, getRainbow, setRainbow, hueVars, rainbowAt, type RainbowState 
 import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
-import { Flag, IconAdd, IconDownload, IconTrash } from "../components/Sidebar";
+import { Flag, IconAdd, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -3143,6 +3143,25 @@ function NotifyCard({
 // instead of a settings PUT. Each is a single shared component instantiated
 // per domain (containers/vms/flash/files), so this migrates every one of
 // those call sites at once, the same leverage as the save() helper.
+//
+// GlimStone follow-up round (jdp, live review of the just-hued text badges:
+// "Die Buttons Verbindung testen, Jetzt replizieren, Einrichten, Ziel
+// hinzufügen haben farbige Schrift. Können wir die Buttons in quadratische
+// Badges mit Glyphen umwandeln?"): the visible "Jetzt replizieren…"/
+// "Replizierend…" text is gone, replaced by IconSync (Sidebar.tsx) inside a
+// square (`shape="square"`), icon-only (`tip` set — see Badge.tsx's own `tip`
+// doc) Badge sized to this row's own real measured control height
+// (`size="field"`, 36px — see Badge.tsx's SIZE_TOKENS.field comment for the
+// live getComputedStyle measurement this number comes from, NOT a guessed
+// reuse of another context's own token). The old busy/idle text swap survives
+// as the tooltip's own content instead of the button's visible label — same
+// two i18n keys, same swap condition, just read by `tip` instead of
+// `children` now. The `hueIndex`-driven background wash is UNCHANGED (jdp's
+// own framing was specifically about the coloured TEXT, not the colour-engine
+// wiring itself) — Badge.tsx's own `isIconOnly && tone==="active"` branch
+// swaps only the glyph's ink to a neutral `text-carbon-textSub`, matching
+// every other icon-only badge in the app ("icons carry no colour of their
+// own, only the badge does").
 function ReplicateNowButton({
   domain,
   t,
@@ -3159,7 +3178,9 @@ function ReplicateNowButton({
    *  ContainersSection's CadenceBuilder). `tone="active"` below (not
    *  "neutral", this button's old plain-grey identity) is what makes a
    *  passed hueIndex actually visible — see Badge.tsx's own `hueOn` comment
-   *  for why "active" is the one non-heading tone `hueIndex` drives. */
+   *  for why "active" is the one non-heading tone `hueIndex` drives. Still
+   *  true after the icon-badge conversion above: `tone` only ever governed
+   *  the background wash, never the (now-neutral) glyph ink. */
   hueIndex?: number;
 }) {
   const { push } = useToast();
@@ -3180,8 +3201,17 @@ function ReplicateNowButton({
     }
   }
   return (
-    <Badge as="button" tone="active" hueIndex={hueIndex} onClick={() => void go()} disabled={busy}>
-      {busy ? t("offsite.replicating") : t("offsite.replicateNow")}
+    <Badge
+      as="button"
+      tone="active"
+      shape="square"
+      size="field"
+      hueIndex={hueIndex}
+      onClick={() => void go()}
+      disabled={busy}
+      tip={busy ? t("offsite.replicating") : t("offsite.replicateNow")}
+    >
+      <IconSync />
     </Badge>
   );
 }
@@ -3189,6 +3219,11 @@ function ReplicateNowButton({
 // TestConnectionButton probes a domain's off-site repo (reachable / initialised)
 // without modifying it, showing the verdict inline — so the user can verify the
 // configured location before relying on it.
+// GlimStone follow-up round: converted to a square icon-only badge (IconCheckCircle)
+// the same way as ReplicateNowButton above — see that function's own comment for
+// the full "coloured text → neutral glyph on the unchanged hued wash" writeup;
+// the multiTarget-dependent "Test connection"/"Test PRIMARY connection" swap
+// survives unchanged, just as `tip` content instead of visible text.
 function TestConnectionButton({
   domain,
   t,
@@ -3226,8 +3261,17 @@ function TestConnectionButton({
     }
   }
   return (
-    <Badge as="button" tone="active" hueIndex={hueIndex} onClick={() => void go()} disabled={busy}>
-      {multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
+    <Badge
+      as="button"
+      tone="active"
+      shape="square"
+      size="field"
+      hueIndex={hueIndex}
+      onClick={() => void go()}
+      disabled={busy}
+      tip={multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
+    >
+      <IconCheckCircle />
     </Badge>
   );
 }
@@ -6666,13 +6710,27 @@ export function SettingsPage() {
                     <ReplicateNowButton domain={domain} t={t} hueIndex={hueIdx} />
                   </>
                 )}
+                {/* GlimStone follow-up round (jdp, live review: "Können wir die
+                    Buttons in quadratische Badges mit Glyphen umwandeln?") — a
+                    square icon-only badge, IconGear when the wizard is closed
+                    (offering to open setup) swapping to IconClose when it's
+                    open, the exact same open/closed condition that used to
+                    swap the button's own visible text between
+                    "Einrichten…"/"Schließen". Both strings survive unchanged
+                    as the `tip` tooltip's content instead — see
+                    ReplicateNowButton's own comment above for the full
+                    "coloured text → neutral glyph on the unchanged hued wash"
+                    writeup this shares. */}
                 <Badge
                   as="button"
                   tone="active"
+                  shape="square"
+                  size="field"
                   hueIndex={hueIdx}
                   onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
+                  tip={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
                 >
-                  {wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
+                  {wizardOpen ? <IconClose /> : <IconGear />}
                 </Badge>
               </span>
             </div>

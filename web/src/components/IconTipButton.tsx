@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { computeBubblePosition } from "../lib/bubblePosition";
 
@@ -38,6 +38,7 @@ export function IconTipButton({
   onClick,
   disabled,
   className,
+  style,
   children,
   type = "button",
 }: {
@@ -48,6 +49,15 @@ export function IconTipButton({
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
+  /** Inline style, added for Badge.tsx's own `tip` branch (GlimStone
+   *  follow-up round — the off-site tab's four action buttons converting
+   *  from text badges to icon-only ones): a hue-enabled Badge needs its
+   *  `--item-hue*` custom properties set inline (the same mechanism its own
+   *  plain `<button>`/`<a>` branches already use via `style={hueStyle}`),
+   *  and this plain-`<button>` wrapper had no way to carry that until now —
+   *  every other consumer of this component today has no hue, so this is
+   *  additive and optional, not a behaviour change for them. */
+  style?: CSSProperties;
   children: ReactNode;
   type?: "button" | "submit";
 }) {
@@ -114,6 +124,7 @@ export function IconTipButton({
         onFocus={show}
         onBlur={hide}
         className={className}
+        style={style}
       >
         {children}
       </button>

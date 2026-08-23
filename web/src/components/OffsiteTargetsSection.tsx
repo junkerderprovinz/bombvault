@@ -11,6 +11,7 @@ import {
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
 import { Badge, type BadgeSize } from "./Badge";
+import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 
@@ -515,17 +516,39 @@ export function OffsiteTargetsSection({
           (`bg-carbon-surface`, no hue), the one control jdp's ask named that
           hadn't even been converted to the shared Badge yet — matches
           TestConnectionButton/ReplicateNowButton/the Einrichten toggle's own
-          identical conversion in Settings.tsx. */}
+          identical conversion in Settings.tsx.
+          GlimStone follow-up round (jdp, live review of the just-hued text
+          badges: "Können wir die Buttons in quadratische Badges mit Glyphen
+          umwandeln?") — a square icon-only badge reusing IconAdd
+          (Sidebar.tsx) verbatim, the exact glyph the task named this button
+          could reuse ("Ziel hinzufügen"/"Add target" is the same add-a-new-
+          row action IconAdd already draws for the Registries card's own
+          add button). `size="field"` (36px, Badge.tsx's own SIZE_TOKENS.field
+          comment) rather than this section's own `ROW_BADGE_SIZE` ("medium",
+          20px, the existing text-chip/Edit/Remove/Test row weight): this
+          button has no literal sibling control visible at the same moment
+          (the section's own `inputCls` fields only render once the draft
+          editor is OPEN, i.e. exactly when this button is hidden) — so
+          "this row's own real control height" instead means the SAME 36px
+          the other three buttons named in the identical jdp request already
+          measure to, in the SAME per-domain Card this section is nested
+          inside (Settings.tsx's repo-url `<input>`); giving this one button a
+          different footprint than its three named siblings would defeat the
+          very unification jdp's single request was asking for. The visible
+          "Ziel hinzufügen" text survives unchanged as the `tip` tooltip
+          content. */}
       {!draft && (
         <Badge
           as="button"
           tone="active"
-          size={ROW_BADGE_SIZE}
+          shape="square"
+          size="field"
           hueIndex={hueIndex}
           onClick={openNew}
           className="self-start"
+          tip={t("offsite.targets.add")}
         >
-          {t("offsite.targets.add")}
+          <IconAdd />
         </Badge>
       )}
     </div>
