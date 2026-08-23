@@ -332,6 +332,104 @@ export function IconTrash() {
   );
 }
 
+// Check-in-circle glyph — "Verbindung testen" (Settings.tsx's off-site
+// TestConnectionButton, GlimStone follow-up round: "Können wir die Buttons in
+// quadratische Badges mit Glyphen umwandeln?", jdp explicitly named this
+// exact fallback — "ein Plug/Verbindungs-Icon (oder ein simples Häkchen im
+// Kreis, falls ein Stecker bei kleiner Größe schwer sauber zu zeichnen ist)":
+// a plug drawn at this file's own 16×16 icon-only-badge scale reads as an
+// ambiguous blob (tried first, discarded — see this round's own icon-preview
+// scratch check), while a filled check-in-a-circle reads unambiguously as
+// "verified / test passed" at the same size, so this takes the named
+// fallback rather than forcing the harder glyph. A proven, widely-used
+// silhouette (Heroicons v1 solid `check-circle`, ported at this file's own
+// 16×16 icon-only-badge scale — scaled ×0.8 from its native 20×20 grid,
+// arithmetic re-derived and re-checked by rendering it standalone before
+// wiring it in, not hand-guessed), not a fresh invention: a solid ring plus a
+// checkmark cut as a true hole through it, which needs `fillRule="evenodd"`
+// (NOT the file's usual plain default nonzero winding every other glyph here
+// uses) — the ring subpath and the checkmark subpath wind the same direction
+// in this source path, so nonzero fill unions them into one solid disc with
+// no visible check at all (this exact failure was caught by the same
+// render-before-wiring-in check, not left to be found live). One filled
+// `currentColor` path, no `stroke` — the ring's "outline" look comes from
+// carving an inner circle out of an outer one via evenodd, still real filled
+// geometry per design-language.md's icon-glyph rule, not a stroke.
+export function IconCheckCircle() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8 14.4a6.4 6.4 0 1 0 0-12.8a6.4 6.4 0 0 0 0 12.8z m2.9656-7.4344a0.8 0.8 0 0 0-1.1312-1.1312L7.2 8.4688 6.1656 7.4344a0.8 0.8 0 0 0-1.1312 1.1312l1.6 1.6a0.8 0.8 0 0 0 1.1312 0l3.2-3.2z"
+      />
+    </svg>
+  );
+}
+
+// Circular sync/refresh-arrows glyph — "Jetzt replizieren" (Settings.tsx's
+// off-site ReplicateNowButton, same GlimStone follow-up round as
+// IconCheckCircle above: "einen Sync-/Refresh-Pfeile-Glyph"). Ported from the
+// conventional two-arrow circular-refresh silhouette (Material Design Icons'
+// baseline "refresh" glyph, a single filled path — no stroke arcs, matching
+// this file's icon-glyph rule the same way IconCheckCircle's ring does) at
+// this file's own 16×16 icon-only-badge scale — scaled ×2/3 from its native
+// 24×24 grid, every coordinate (including the Bézier control points, which
+// scale linearly the same as plain line endpoints under uniform scaling)
+// re-derived by hand and rendered standalone before wiring it in, same
+// verification pass as IconCheckCircle above.
+export function IconSync() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M11.77 4.23C10.8 3.27 9.47 2.67 8 2.67C5.05 2.67 2.67 5.05 2.67 8C2.67 10.95 5.05 13.33 8 13.33C10.49 13.33 12.56 11.63 13.15 9.33L11.77 9.33C11.22 10.89 9.74 12 8 12C5.79 12 4 10.21 4 8C4 5.79 5.79 4 8 4C9.11 4 10.09 4.46 10.81 5.19L8.67 7.33H13.33V2.67L11.77 4.23Z" />
+    </svg>
+  );
+}
+
+// Cog/gear glyph — "Einrichten" (Settings.tsx's off-site per-domain wizard
+// toggle, same GlimStone follow-up round: "ein Zahnrad/Schraubenschlüssel-
+// Glyph, wenn geschlossen"). NOT a fresh glyph: IconSettings above (this same
+// file) already draws exactly this "conventional settings symbol", filled/
+// currentColor/no-stroke already, the identical shape this task independently
+// asked for — reused verbatim rather than inventing a second, visually
+// competing cog, the same "shrink an existing path's own width/height attrs,
+// keep its viewBox untouched" technique IconFolder/IconCloud above already
+// established for reusing a bigger nav-rail glyph at this file's smaller
+// icon-only-badge scale. IconSettings itself stays module-private (only used
+// by the nav rail's own icon map) — this is a second, exported, small-scale
+// instantiation of its path data, not a change to IconSettings or its call site.
+export function IconGear() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 0 1-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 0 1 .947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 0 1 2.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 0 1 2.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 0 1 .947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 0 1-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 0 1-2.287-.947zM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+      />
+    </svg>
+  );
+}
+
+// Close/X glyph — "Schließen", the SAME toggle's open-state icon (swapping
+// with IconGear above the same way the button's own text used to swap
+// between "Einrichten…"/"Schließen"). Built from IconAdd's own exact two-rect
+// geometry above, just rotated ±45° instead of left axis-aligned: same
+// `rx`/width/height/thickness as the plus, so Add's "+" and this "×" read as
+// the same weight/family the way IconFolder/IconCloud's own fix made solid
+// icon-badge siblings match each other — appropriate here too, since this
+// glyph is literally the "cancel/undo the add-a-new-thing-below action"
+// counterpart in the same row family (design-language.md's icon-glyph rule:
+// a line-like shape "needs real geometry, not a thicker stroke... two
+// overlapping filled rects", the exact technique IconAdd already uses).
+export function IconClose() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" transform="rotate(45 8 8)" />
+      <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" transform="rotate(-45 8 8)" />
+    </svg>
+  );
+}
+
 // Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
 // controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
 function IconLayers() {

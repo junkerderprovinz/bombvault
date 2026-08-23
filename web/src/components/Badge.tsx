@@ -301,9 +301,10 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
+import { IconTipButton } from "./IconTipButton";
 
 export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading";
-export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon";
+export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon" | "field";
 // Four shapes per the design language's Badges section: pill (fully round,
 // standalone chips/count badges), rounded (small fixed radius, compact
 // inline badges — the default, matching every predecessor's rounded-control),
@@ -417,6 +418,26 @@ const SIZE_TOKENS: Record<BadgeSize, { height: string; minHeight: string; text: 
   // always overrides to px-0, and there is no visible text), but are filled
   // in anyway for interface completeness / a future non-circle "icon" call.
   icon: { height: "h-7", minHeight: "min-h-7", text: "text-dense", padding: "px-1" },
+  // GlimStone follow-up round (jdp, live review of the off-site tab: "Können
+  // wir die Buttons in quadratische Badges mit Glyphen umwandeln?" — Test
+  // connection/Replicate now/Setup/Add-target's four `tone="active"` text
+  // badges become square icon-only glyph badges). NOT a reuse of the existing
+  // `icon` stage above (28px) — that value is pinned to a DIFFERENT sibling's
+  // own footprint (the rainbow palette editor's PaletteSwatch, h-7 w-7) and
+  // this session's own documented cautionary lesson (Selector.tsx's own
+  // `iconOnly` doc, the `--badge-md` mismatch history) is explicit that
+  // reusing a token from a DIFFERENT context without re-measuring is exactly
+  // how a visible height mismatch slips in. Measured live instead, via
+  // getComputedStyle against THIS row's own real control — the off-site
+  // repo-url `<input>` (`px-3 py-2 text-sm`, Settings.tsx) — which renders at
+  // 36px, not the 32px FolderBrowser/Registries' OWN `px-3 py-1.5` fields
+  // measure to (a different padding value, a different real number; see
+  // Selector.tsx's own `iconOnly` doc for that other, already-correct 32px
+  // case — the two are neighbours, not the same stage). h-9 is Tailwind's
+  // plain default spacing scale, step 9 = 2.25rem = 36px, not a new bracket
+  // invented for this call site, the same "plain scale step, not an
+  // arbitrary value" discipline FolderBrowser's own h-8 used for its number.
+  field: { height: "h-9", minHeight: "min-h-9", text: "text-dense", padding: "px-3" },
 };
 
 interface BadgeStyleOptions {
@@ -425,6 +446,18 @@ interface BadgeStyleOptions {
   shape?: BadgeShape;
   wrap?: boolean;
   className?: string;
+  /** Zero horizontal padding + locked 1:1 aspect ratio, the same treatment
+   *  `shape="circle"` has always applied below (see `isIconOnly`) — generalised
+   *  here (GlimStone follow-up round, the off-site tab's four icon-only
+   *  conversions) so a `shape="square"` glyph badge gets the identical
+   *  padding/aspect fix a `shape="circle"` one already had, rather than
+   *  leaving `square` to render as a wide rectangle sized for TEXT it no
+   *  longer has. Not exposed on the public `BadgeProps` — Badge()'s own body
+   *  derives it FROM `tip` being set (an icon-only glyph is exactly what a
+   *  `tip`-carrying Badge always is; see that prop's own doc), so this stays
+   *  a private plumbing detail of badgeClassName rather than a second public
+   *  toggle a caller could set inconsistently with `tip`. */
+  iconOnly?: boolean;
 }
 
 /**
@@ -440,12 +473,18 @@ function badgeClassName({
   shape = "rounded",
   wrap,
   className,
+  iconOnly,
 }: BadgeStyleOptions = {}): string {
   const { height, minHeight, text, padding } = SIZE_TOKENS[size];
   // circle is icon/glyph-only: zero horizontal padding + a locked 1:1 aspect
   // ratio against the stage's own height turns it into a true circle rather
-  // than an oval widened by the stage's normal text padding.
-  const isCircle = shape === "circle";
+  // than an oval widened by the stage's normal text padding. `iconOnly`
+  // (GlimStone follow-up round — see BadgeStyleOptions' own doc) extends the
+  // identical fix to a `shape="square"` glyph badge: same zero-padding/
+  // locked-aspect need, a different final silhouette (the shape's own
+  // RADIUS_CLASSES below still decides square vs. circle vs. pill/rounded —
+  // this only ever governs padding/aspect, never the corner radius).
+  const isIconOnly = shape === "circle" || iconOnly === true;
   // wrap swaps the fixed one-line `h-*`+`leading-none`+`min-h-0` sizing for a
   // `min-h-*` floor + real vertical padding + normal line-height, so a
   // second wrapped line grows the box instead of overflowing it — see the
@@ -546,13 +585,33 @@ function badgeClassName({
   // latest live review replaced both with the plain, full-strength
   // TONE_CLASSES.heading fill below). A heading-toned badge renders the
   // identical solid accent fill whether or not it's also the notch size.
-  const toneClasses = TONE_CLASSES[tone];
+  //
+  // isIconOnly && tone==="active" is the one exception to reusing
+  // TONE_CLASSES verbatim (GlimStone follow-up round, jdp's live review of
+  // the converted off-site buttons, emphatic and specific: "Die Buttons ...
+  // haben farbige Schrift" — the coloured TEXT itself, not the tinted
+  // background wash, was the complaint; the wash stays, per the same
+  // request's own "hueIndex/Farbengine... war schon richtig" framing). A
+  // text badge's `text-accentText` ink is only legible BECAUSE it carries the
+  // hue — there is no text left to read once the content is a bare glyph, so
+  // that reasoning no longer applies, and design-language's own established
+  // "icons carry no colour of their own, only the badge does" rule (already
+  // the reason IconAdd/IconTrash render `currentColor` inside a plain
+  // `text-carbon-textSub` button, Settings.tsx's Registries card) takes over
+  // instead: `text-carbon-textSub`, the same neutral ink every other
+  // icon-only badge in the app already reads its glyph colour from, riding
+  // on the UNCHANGED hued `bg-accentSoft` wash underneath it. Every other
+  // tone/isIconOnly combination (a text chip, or an icon-only badge of any
+  // OTHER tone — none exist live today, but nothing here assumes otherwise)
+  // keeps the plain TONE_CLASSES lookup untouched.
+  const toneClasses =
+    isIconOnly && tone === "active" ? "bg-accentSoft text-carbon-textSub" : TONE_CLASSES[tone];
 
   return [
     "inline-flex box-border items-center justify-center gap-1 font-medium",
     sizing,
     text,
-    isCircle ? "px-0 aspect-square" : padding,
+    isIconOnly ? "px-0 aspect-square" : padding,
     isHeadingNotch ? "rounded-pill" : RADIUS_CLASSES[shape],
     toneClasses,
     notchPositioning,
@@ -614,6 +673,27 @@ export interface BadgeProps {
    *  design-language's own "the only one of its kind on the page keeps the
    *  single accent" exclusion. */
   hueIndex?: number;
+  /** `as="button"` only. Real hover/focus `.glim-bubble` tooltip AND the
+   *  button's accessible name, rendered through IconTipButton instead of a
+   *  plain `<button>` — GlimStone follow-up round, the off-site tab's four
+   *  action buttons converting from short-text badges to icon-only glyph
+   *  badges (jdp: "Können wir die Buttons in quadratische Badges mit Glyphen
+   *  umwandeln?" — the text is gone, so an icon-only trigger needs the same
+   *  real tooltip every other icon-only control in this app already gets,
+   *  not the `title`/`ariaLabel` pair above, which is only a native OS
+   *  balloon + a silent accessible name with no visible hover affordance —
+   *  IconTipButton.tsx's own header comment is explicit that a stray native
+   *  `title=` on an icon-only trigger is exactly the anti-pattern that file
+   *  exists to replace). Presence of `tip` is ALSO what marks this Badge as
+   *  icon-only for sizing purposes — see badgeClassName's own `iconOnly`
+   *  option: a `tip`-carrying Badge has no visible text by definition (an
+   *  icon-only trigger has nothing else a name/tooltip could come from), so
+   *  there is no real case where a caller would want `tip` set AND the
+   *  normal text-chip padding at the same time. When set, supersedes
+   *  `title`/`ariaLabel` for accessible-naming purposes (IconTipButton sets
+   *  its own `aria-label`); `title`/`ariaLabel` stay meaningful on every
+   *  OTHER `as` value and every button call site that doesn't pass `tip`. */
+  tip?: string;
 }
 
 export function Badge({
@@ -632,6 +712,7 @@ export function Badge({
   wrap,
   className,
   hueIndex,
+  tip,
 }: BadgeProps) {
   // Deliberately NO useRainbow() subscription here, unlike Selector's own
   // identical-looking hue support: Badge (like Toggle) is a pure, hookless
@@ -691,11 +772,28 @@ export function Badge({
   // future call site that ever passed `hueIndex` without `size="heading"`
   // must NOT silently pick up that card-wide reveal too.
   const isNotchHue = hueOn && size === "heading";
-  const shared = badgeClassName({ tone, size, shape, wrap, className });
+  // `tip !== undefined` marks this Badge icon-only for sizing purposes too —
+  // see badgeClassName's own `iconOnly` doc and BadgeProps' own `tip` doc for
+  // why the two are the same condition rather than two props a caller could
+  // set inconsistently.
+  const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined });
   const merged = hueOn ? `glim-hue ${isNotchHue ? "glim-notch-hue " : ""}${shared}` : shared;
   const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
 
   if (as === "button") {
+    const buttonClassName = `appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${merged}`;
+    // `tip` renders through IconTipButton instead of a plain <button> — see
+    // BadgeProps' own `tip` doc for why (a real hover/focus tooltip an
+    // icon-only trigger needs, not the title/aria-label pair below, which
+    // stays the plain-button path's own accessible-naming mechanism for
+    // every call site that doesn't pass `tip`).
+    if (tip !== undefined) {
+      return (
+        <IconTipButton tip={tip} onClick={onClick} disabled={disabled} style={hueStyle} className={buttonClassName}>
+          {children}
+        </IconTipButton>
+      );
+    }
     return (
       <button
         type="button"
@@ -704,7 +802,7 @@ export function Badge({
         title={title}
         aria-label={ariaLabel}
         style={hueStyle}
-        className={`appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${merged}`}
+        className={buttonClassName}
       >
         {children}
       </button>
