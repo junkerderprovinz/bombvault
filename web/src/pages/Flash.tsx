@@ -11,6 +11,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
 import { useToast } from "../lib/toast";
 import { FlashZipExportCard } from "./Settings";
+import { CheckDraw } from "../components/CheckDraw";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -77,8 +78,9 @@ function FlashBackupButton({
         </span>
       )}
       {state.phase === "success" && (
-        <span className="text-xs text-statusOk">
-          ✓ {t("settings.saved")}
+        <span className="inline-flex items-center gap-1 text-xs text-statusOk">
+          <CheckDraw />
+          {t("settings.saved")}
           {state.snapshotId && (
             <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
           )}

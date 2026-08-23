@@ -416,7 +416,7 @@ const ro: Partial<Translations> = {
   "integrity.hint": "Rulați restic check pentru a verifica dacă structura și metadatele unui depozit sunt intacte.",
   "integrity.verify": "Verifică",
   "integrity.checking": "Verificare…",
-  "integrity.ok": "✓ Sănătos",
+  "integrity.ok": "Sănătos",
   "integrity.failed": "Verificare eșuată",
   "integrity.failedShort": "✗ Eșuat",
   "integrity.unlock": "Deblochează",

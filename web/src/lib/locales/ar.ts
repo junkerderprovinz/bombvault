@@ -419,7 +419,7 @@ const ar: Partial<Translations> = {
   "integrity.hint": "شغّل restic check للتحقق من سلامة بنية المستودع وبياناته الوصفية.",
   "integrity.verify": "تحقّق",
   "integrity.checking": "جارٍ الفحص…",
-  "integrity.ok": "✓ سليم",
+  "integrity.ok": "سليم",
   "integrity.failed": "فشل الفحص",
   "integrity.failedShort": "✗ فشل",
   "integrity.unlock": "إلغاء القفل",

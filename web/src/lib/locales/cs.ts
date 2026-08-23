@@ -417,7 +417,7 @@ const cs: Partial<Translations> = {
   "integrity.hint": "Spusťte restic check k ověření, že struktura a metadata repozitáře jsou neporušené.",
   "integrity.verify": "Ověřit",
   "integrity.checking": "Kontroluji…",
-  "integrity.ok": "✓ V pořádku",
+  "integrity.ok": "V pořádku",
   "integrity.failed": "Kontrola selhala",
   "integrity.failedShort": "✗ Selhalo",
   "integrity.unlock": "Odemknout",

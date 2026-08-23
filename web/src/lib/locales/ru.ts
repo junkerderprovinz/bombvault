@@ -411,7 +411,7 @@ const ru: Partial<Translations> = {
   "integrity.hint": "Запустите restic check, чтобы проверить, что структура и метаданные репозитория не повреждены.",
   "integrity.verify": "Проверить",
   "integrity.checking": "Проверка…",
-  "integrity.ok": "✓ Исправен",
+  "integrity.ok": "Исправен",
   "integrity.failed": "Проверка не пройдена",
   "integrity.failedShort": "✗ Не пройдено",
   "integrity.unlock": "Разблокировать",

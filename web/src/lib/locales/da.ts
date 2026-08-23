@@ -419,7 +419,7 @@ const da: Partial<Translations> = {
   "integrity.hint": "Kør restic check for at verificere, at et arkivs struktur og metadata er intakte.",
   "integrity.verify": "Verificer",
   "integrity.checking": "Tjekker…",
-  "integrity.ok": "✓ Sund",
+  "integrity.ok": "Sund",
   "integrity.failed": "Tjek mislykkedes",
   "integrity.failedShort": "✗ Mislykkedes",
   "integrity.unlock": "Lås op",

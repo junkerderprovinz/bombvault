@@ -419,7 +419,7 @@ const fi: Partial<Translations> = {
   "integrity.hint": "Suorita restic check tarkistaaksesi, että arkiston rakenne ja metatiedot ovat ehjät.",
   "integrity.verify": "Tarkista",
   "integrity.checking": "Tarkistetaan…",
-  "integrity.ok": "✓ Kunnossa",
+  "integrity.ok": "Kunnossa",
   "integrity.failed": "Tarkistus epäonnistui",
   "integrity.failedShort": "✗ Epäonnistui",
   "integrity.unlock": "Avaa lukitus",

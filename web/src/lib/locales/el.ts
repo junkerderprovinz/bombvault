@@ -419,7 +419,7 @@ const el: Partial<Translations> = {
   "integrity.hint": "Εκτελέστε restic check για επαλήθευση ότι η δομή και τα μεταδεδομένα ενός αποθετηρίου είναι άθικτα.",
   "integrity.verify": "Επαλήθευση",
   "integrity.checking": "Έλεγχος…",
-  "integrity.ok": "✓ Υγιές",
+  "integrity.ok": "Υγιές",
   "integrity.failed": "Ο έλεγχος απέτυχε",
   "integrity.failedShort": "✗ Απέτυχε",
   "integrity.unlock": "Ξεκλείδωμα",

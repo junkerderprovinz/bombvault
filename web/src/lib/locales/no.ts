@@ -416,7 +416,7 @@ const no: Partial<Translations> = {
   "integrity.hint": "Kjør restic check for å verifisere at strukturen og metadataene til et repository er intakte.",
   "integrity.verify": "Verifiser",
   "integrity.checking": "Sjekker…",
-  "integrity.ok": "✓ Sunt",
+  "integrity.ok": "Sunt",
   "integrity.failed": "Sjekk mislyktes",
   "integrity.failedShort": "✗ Mislyktes",
   "integrity.unlock": "Lås opp",

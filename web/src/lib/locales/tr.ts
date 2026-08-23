@@ -419,7 +419,7 @@ const tr: Partial<Translations> = {
   "integrity.hint": "Bir deponun yapısının ve meta verisinin sağlam olduğunu doğrulamak için restic check çalıştırın.",
   "integrity.verify": "Doğrula",
   "integrity.checking": "Denetleniyor…",
-  "integrity.ok": "✓ Sağlıklı",
+  "integrity.ok": "Sağlıklı",
   "integrity.failed": "Denetim başarısız",
   "integrity.failedShort": "✗ Başarısız",
   "integrity.unlock": "Kilidi aç",

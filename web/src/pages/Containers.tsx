@@ -1115,7 +1115,7 @@ function ContainerRow({
   const running = anyActive(progressMap);
   return (
     <div
-      style={hueVars(rainbowAt(index)) as CSSProperties}
+      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the WHOLE card with it
       // (trap #2, design-language.md's "Rainbow" section) — without the wash
       // this card shows almost no colour at rest, since nothing else on it
@@ -1123,7 +1123,10 @@ function ContainerRow({
       // button. glim-active while a backup/restore is actively running on
       // THIS row: reactive mode then shows the hue without needing hover,
       // same as knightloader's TaskRow keying off task.status === 'running'.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint ${
+      // bv-stagger-row (GlimStone motion-engine animation 3) reuses this
+      // SAME `index` (via --row-i) the colour engine already threads through
+      // every call site — see that class's own keyframe comment in index.css.
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -2346,7 +2349,7 @@ export function Containers() {
       )}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bv-content-fade">
           {live.map((c, i) => (
             <ContainerRow
               key={c.name}
@@ -2363,7 +2366,7 @@ export function Containers() {
 
       {/* Not-installed containers that still have backups. */}
       {!loading && filterKey !== "installed" && orphans.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 bv-content-fade">
           <div>
             {/* GlimStone follow-up pass ("half-overlap card notch"):
                 `relative` directly on this <h2> — same bare-heading case as

@@ -419,7 +419,7 @@ const he: Partial<Translations> = {
   "integrity.hint": "הרץ restic check כדי לאמת שהמבנה והמטא-נתונים של המאגר תקינים.",
   "integrity.verify": "אמת",
   "integrity.checking": "בודק…",
-  "integrity.ok": "✓ תקין",
+  "integrity.ok": "תקין",
   "integrity.failed": "הבדיקה נכשלה",
   "integrity.failedShort": "✗ נכשל",
   "integrity.unlock": "ביטול נעילה",
