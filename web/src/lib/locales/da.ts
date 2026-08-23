@@ -514,11 +514,13 @@ const da: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Notifikationer",
-  "notify.hint": "Bliv underrettet, når en sikkerhedskopi er færdig. Opsæt en hvilken som helst af kanalerne nedenfor; de udløses alle i henhold til reglen.",
+  "notify.hint": "Bliv underrettet, når en sikkerhedskopi er færdig, og vælg nedenfor hvilke hændelser der udløser det. Unraid-notifikationer virker allerede i Enkel tilstand; flere leveringskanaler (webhook, Matrix, Healthchecks, e-mail) findes under Avanceret.",
   "notify.on": "Underret",
   "notify.onNever": "Aldrig",
   "notify.onFailure": "Kun ved fejl",
   "notify.onAlways": "Ved succes og fejl",
+  "notify.channelsTitle": "Notifikationskanaler",
+  "notify.channelsHint": "Konfigurer webhook-, Matrix-, Healthchecks- og e-mailkanalerne, der leverer notifikationerne konfigureret ovenfor.",
   "notify.webhook": "Webhook-URL",
   "notify.webhookFormat": "Webhook-format",
   "notify.apprise": "Apprise",

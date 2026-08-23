@@ -506,11 +506,13 @@ const ru: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Уведомления",
-  "notify.hint": "Получайте уведомление по завершении резервного копирования. Настройте любой из каналов ниже; все они срабатывают согласно правилу.",
+  "notify.hint": "Получайте уведомление по завершении резервного копирования и выберите ниже, какие события его вызывают. Уведомления Unraid уже работают в простом режиме; больше каналов доставки (webhook, Matrix, Healthchecks, email) находится в разделе «Расширенные».",
   "notify.on": "Уведомлять",
   "notify.onNever": "Никогда",
   "notify.onFailure": "Только при сбое",
   "notify.onAlways": "При успехе и сбое",
+  "notify.channelsTitle": "Каналы уведомлений",
+  "notify.channelsHint": "Настройте каналы webhook, Matrix, Healthchecks и электронной почты, по которым доставляются настроенные выше уведомления.",
   "notify.webhook": "URL Webhook",
   "notify.webhookFormat": "Формат Webhook",
   "notify.apprise": "Apprise",

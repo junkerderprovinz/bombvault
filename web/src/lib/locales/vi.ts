@@ -506,11 +506,13 @@ const vi: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Thông báo",
-  "notify.hint": "Nhận thông báo khi một bản sao lưu hoàn tất. Thiết lập bất kỳ kênh nào dưới đây; tất cả đều kích hoạt theo chính sách.",
+  "notify.hint": "Nhận thông báo khi một bản sao lưu hoàn tất, và chọn bên dưới sự kiện nào sẽ kích hoạt nó. Thông báo Unraid đã hoạt động ở chế độ Đơn giản; thêm các kênh gửi (webhook, Matrix, Healthchecks, email) có trong phần Nâng cao.",
   "notify.on": "Thông báo",
   "notify.onNever": "Không bao giờ",
   "notify.onFailure": "Chỉ khi thất bại",
   "notify.onAlways": "Khi thành công và thất bại",
+  "notify.channelsTitle": "Kênh thông báo",
+  "notify.channelsHint": "Cấu hình các kênh webhook, Matrix, Healthchecks và email dùng để gửi các thông báo đã cấu hình ở trên.",
   "notify.webhook": "URL Webhook",
   "notify.webhookFormat": "Định dạng Webhook",
   "notify.apprise": "Apprise",

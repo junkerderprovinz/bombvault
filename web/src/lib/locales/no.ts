@@ -511,11 +511,13 @@ const no: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Varsler",
-  "notify.hint": "Få varsel når en sikkerhetskopi er ferdig. Sett opp hvilke som helst av kanalene nedenfor; de utløses alle i henhold til regelen.",
+  "notify.hint": "Få varsel når en sikkerhetskopi er ferdig, og velg nedenfor hvilke hendelser som utløser det. Unraid-varsler fungerer allerede i enkel modus; flere leveringskanaler (webhook, Matrix, Healthchecks, e-post) finner du under Avansert.",
   "notify.on": "Varsle",
   "notify.onNever": "Aldri",
   "notify.onFailure": "Kun ved feil",
   "notify.onAlways": "Ved suksess og feil",
+  "notify.channelsTitle": "Varslingskanaler",
+  "notify.channelsHint": "Konfigurer webhook-, Matrix-, Healthchecks- og e-postkanalene som leverer varslene konfigurert ovenfor.",
   "notify.webhook": "Webhook-URL",
   "notify.webhookFormat": "Webhook-format",
   "notify.apprise": "Apprise",

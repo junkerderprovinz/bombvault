@@ -511,11 +511,13 @@ const pt: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Notificações",
-  "notify.hint": "Seja notificado quando uma cópia terminar. Configure qualquer um dos canais abaixo; todos disparam de acordo com a política.",
+  "notify.hint": "Seja notificado quando uma cópia terminar e escolha abaixo quais eventos a acionam. As notificações do Unraid já funcionam no modo Simples; mais canais de entrega (webhook, Matrix, Healthchecks, e-mail) estão em Avançado.",
   "notify.on": "Notificar",
   "notify.onNever": "Nunca",
   "notify.onFailure": "Apenas em caso de falha",
   "notify.onAlways": "Em sucesso e falha",
+  "notify.channelsTitle": "Canais de notificação",
+  "notify.channelsHint": "Configure os canais de webhook, Matrix, Healthchecks e e-mail pelos quais as notificações configuradas acima são enviadas.",
   "notify.webhook": "URL do Webhook",
   "notify.webhookFormat": "Formato do Webhook",
   "notify.apprise": "Apprise",

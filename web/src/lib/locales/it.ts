@@ -514,11 +514,13 @@ const it: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Notifiche",
-  "notify.hint": "Ricevi una notifica al termine di un backup. Configura uno qualsiasi dei canali qui sotto; si attivano tutti secondo la regola.",
+  "notify.hint": "Ricevi una notifica al termine di un backup e scegli qui sotto quali eventi la attivano. Le notifiche Unraid funzionano già in modalità Semplice; altri canali di consegna (webhook, Matrix, Healthchecks, email) si trovano in Avanzate.",
   "notify.on": "Notifica",
   "notify.onNever": "Mai",
   "notify.onFailure": "Solo in caso di errore",
   "notify.onAlways": "In caso di successo ed errore",
+  "notify.channelsTitle": "Canali di notifica",
+  "notify.channelsHint": "Configura i canali webhook, Matrix, Healthchecks ed email attraverso cui vengono inviate le notifiche configurate sopra.",
   "notify.webhook": "URL del Webhook",
   "notify.webhookFormat": "Formato del Webhook",
   "notify.apprise": "Apprise",

@@ -514,11 +514,13 @@ const el: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Ειδοποιήσεις",
-  "notify.hint": "Λάβετε ειδοποίηση όταν ολοκληρωθεί ένα αντίγραφο. Ρυθμίστε οποιοδήποτε από τα παρακάτω κανάλια· όλα ενεργοποιούνται σύμφωνα με την πολιτική.",
+  "notify.hint": "Λάβετε ειδοποίηση όταν ολοκληρωθεί ένα αντίγραφο και επιλέξτε παρακάτω ποια συμβάντα την ενεργοποιούν. Οι ειδοποιήσεις Unraid λειτουργούν ήδη σε απλή λειτουργία· περισσότερα κανάλια παράδοσης (webhook, Matrix, Healthchecks, email) βρίσκονται στις Ρυθμίσεις για προχωρημένους.",
   "notify.on": "Ειδοποίηση",
   "notify.onNever": "Ποτέ",
   "notify.onFailure": "Μόνο σε αποτυχία",
   "notify.onAlways": "Σε επιτυχία και αποτυχία",
+  "notify.channelsTitle": "Κανάλια ειδοποιήσεων",
+  "notify.channelsHint": "Ρυθμίστε τα κανάλια webhook, Matrix, Healthchecks και email μέσω των οποίων παραδίδονται οι παραπάνω ρυθμισμένες ειδοποιήσεις.",
   "notify.webhook": "URL Webhook",
   "notify.webhookFormat": "Μορφή Webhook",
   "notify.apprise": "Apprise",

@@ -514,11 +514,13 @@ const sv: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Aviseringar",
-  "notify.hint": "Få en avisering när en säkerhetskopiering är klar. Ställ in någon av kanalerna nedan; de utlöses alla enligt regeln.",
+  "notify.hint": "Få en avisering när en säkerhetskopiering är klar, och välj nedan vilka händelser som utlöser den. Unraid-aviseringar fungerar redan i enkelt läge; fler leveranskanaler (webhook, Matrix, Healthchecks, e-post) finns under Avancerat.",
   "notify.on": "Avisera",
   "notify.onNever": "Aldrig",
   "notify.onFailure": "Endast vid fel",
   "notify.onAlways": "Vid lyckat och fel",
+  "notify.channelsTitle": "Aviseringskanaler",
+  "notify.channelsHint": "Konfigurera webhook-, Matrix-, Healthchecks- och e-postkanalerna som levererar aviseringarna som konfigurerats ovan.",
   "notify.webhook": "Webhook-URL",
   "notify.webhookFormat": "Webhook-format",
   "notify.apprise": "Apprise",

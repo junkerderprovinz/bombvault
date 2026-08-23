@@ -514,11 +514,13 @@ const fr: Partial<Translations> = {
 
   // Notifications
   "notify.title": "Notifications",
-  "notify.hint": "Soyez averti à la fin d'une sauvegarde. Configurez l'un des canaux ci-dessous ; ils se déclenchent tous selon la règle.",
+  "notify.hint": "Soyez averti à la fin d'une sauvegarde, et choisissez ci-dessous les événements qui le déclenchent. Les notifications Unraid fonctionnent déjà en mode Simple ; d'autres canaux de diffusion (webhook, Matrix, Healthchecks, e-mail) se trouvent dans Avancé.",
   "notify.on": "Notifier",
   "notify.onNever": "Jamais",
   "notify.onFailure": "Uniquement en cas d'échec",
   "notify.onAlways": "En cas de succès et d'échec",
+  "notify.channelsTitle": "Canaux de notification",
+  "notify.channelsHint": "Configurez les canaux webhook, Matrix, Healthchecks et e-mail par lesquels sont envoyées les notifications configurées ci-dessus.",
   "notify.webhook": "URL du Webhook",
   "notify.webhookFormat": "Format du Webhook",
   "notify.apprise": "Apprise",
