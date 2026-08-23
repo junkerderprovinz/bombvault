@@ -59,19 +59,40 @@ import { useT } from "../lib/i18n";
 // `bv-field-focus-well`'s inset focus ring), so it fits into the existing
 // well without a visual seam. The popover's selected-hour/selected-minute
 // highlight reads `var(--accent)`/`var(--accent-contrast)` directly (see
-// index.css's `.glim-time-option[aria-selected="true"]`) — this is a
-// standalone field-replacing control, not a row in an enumerable list, the
-// same reasoning ColorPickerSwatch's own trigger/popover use the flat accent
-// rather than a rainbow position. An optional `hueIndex` prop is still wired
-// through the SAME `hueVars(rainbowAt(i))`/`.glim-hue` mechanism
-// Selector.tsx's segments use, for a future call site that DOES sit in a
-// hue-indexed list (e.g. a per-row schedule override) — `[data-rainbow]
-// .glim-hue` (index.css) already redefines the plain `--accent`/
-// `--accent-contrast` custom properties for any element carrying that class,
-// so the same selected-state rule above resolves to the item's own hue
-// automatically the moment it's used; no second CSS rule was needed for that
-// composition (this is the "wire it in as it's built" standing rule, not an
-// afterthought — see the memory this pass is explicitly answering).
+// index.css's `.glim-time-option[aria-selected="true"]`), redefined per-item
+// by the SAME `hueVars(rainbowAt(i))`/`.glim-hue` mechanism Selector.tsx's
+// segments use whenever `hueIndex` is passed.
+//   CORRECTED (live-review round 5, jdp: "Der Zeitpicker ist nicht im
+// Regenbogenmodus" — a real, third-time-emphatic instance of the standing
+// "capability exists but isn't wired up" failure): `hueIndex` was optional
+// "for a future call site" through the prior round, and CadenceBuilder — the
+// one real call site — never actually passed one. Fixed by threading a real
+// `hueIndex` down from every CadenceBuilder caller in Settings.tsx (each
+// passing the SAME position its own enclosing `<Card hueIndex={...}>`
+// already has) through CadenceBuilder's own new `hueIndex` prop into here.
+//   That alone was NOT enough, caught live: the trigger button correctly
+// picked up its hue (it sets `--item-hue`/etc. via `hueStyle` directly on
+// itself), but the POPOVER's hour/minute options stayed flat-accent even
+// with a real `hueIndex` passed in. Root cause — `createPortal(..., document.
+// body)` renders the popover into a completely separate DOM subtree from the
+// trigger button; `--item-hue` is set as an INLINE custom property (via
+// `style`) on whichever element calls hueVars(), and inline custom
+// properties only inherit down the REAL DOM tree, which a portal detaches
+// from. The option buttons carried `.glim-hue` (so `[data-rainbow] .glim-hue
+// { --accent: var(--item-hue); ... }` matched them) but had no ANCESTOR in
+// their own portalled subtree ever declaring `--item-hue`, so `var(--item-
+// hue)` there resolved to nothing — a custom property invalid at computed-
+// value time falls back to the INHERITED value for whatever reads it, not to
+// the flat accent as one might expect, and since `.glim-time-option[aria-
+// selected="true"]`'s `background-color` isn't itself inherited, an invalid
+// `--accent` there computed to fully transparent, not merely "the wrong
+// colour." Fixed by also spreading `hueStyle` onto the portalled panel
+// (`role="dialog"`) div below — an ordinary DOM ancestor of both listbox
+// columns once mounted, portal or not, so `--item-hue` now inherits down to
+// every option exactly as it would from any non-portalled ancestor. Verified
+// live with Playwright + getComputedStyle at two different Card hue
+// positions: the selected-hour pill's actual computed `background-color`
+// matches that Card's own `RAINBOW[i]` value, not the flat `--accent`.
 //
 // RTL: forced `dir="ltr"` on both the trigger and the popover, matching
 // CronEditor's own `dir="ltr"` on its raw cron-expression input a few lines
@@ -421,7 +442,18 @@ export function TimePicker({
             aria-label={label}
             dir="ltr"
             className="glim-time-popover glim-fade"
-            style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
+            // `...hueStyle` (Task 3 portal-inheritance fix — see this file's
+            // own header comment for the full root-cause writeup): this
+            // panel is portalled to document.body, a separate DOM subtree
+            // from the trigger button above, so the trigger's own inline
+            // `--item-hue`/etc. custom properties never reach the option
+            // buttons inside via inheritance unless this panel — a REAL
+            // ancestor of both listbox columns, portal notwithstanding —
+            // declares them itself. Spread rather than replacing `left`/
+            // `top`: hueStyle is `undefined` when `hueIndex` is undefined,
+            // and spreading `undefined` into an object literal is a no-op,
+            // so a non-hued TimePicker's positioning is unaffected.
+            style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, ...hueStyle }}
           >
             <div
               role="listbox"
