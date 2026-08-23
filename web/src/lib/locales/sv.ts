@@ -416,6 +416,7 @@ const sv: Partial<Translations> = {
   "integrity.checking": "Kontrollerar…",
   "integrity.ok": "✓ Frisk",
   "integrity.failed": "Kontrollen misslyckades",
+  "integrity.failedShort": "✗ Misslyckades",
   "integrity.unlock": "Lås upp",
   "integrity.prune": "Rensa",
   "integrity.verifyHint": "Kör restic check för att verifiera struktur och metadata.",

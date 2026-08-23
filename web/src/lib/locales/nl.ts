@@ -410,6 +410,7 @@ const nl: Partial<Translations> = {
   "integrity.checking": "Controleren…",
   "integrity.ok": "✓ Gezond",
   "integrity.failed": "Controle mislukt",
+  "integrity.failedShort": "✗ Mislukt",
   "integrity.unlock": "Ontgrendelen",
   "integrity.prune": "Opschonen",
   "integrity.verifyHint": "Voer restic check uit om structuur en metadata te verifiëren.",

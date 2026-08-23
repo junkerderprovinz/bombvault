@@ -416,6 +416,7 @@ const tr: Partial<Translations> = {
   "integrity.checking": "Denetleniyor…",
   "integrity.ok": "✓ Sağlıklı",
   "integrity.failed": "Denetim başarısız",
+  "integrity.failedShort": "✗ Başarısız",
   "integrity.unlock": "Kilidi aç",
   "integrity.prune": "Buda",
   "integrity.verifyHint": "Yapı ve meta verileri doğrulamak için restic check çalıştırın.",

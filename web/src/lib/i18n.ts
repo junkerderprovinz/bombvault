@@ -598,6 +598,10 @@ export const en = {
   "integrity.checking": "Checking…",
   "integrity.ok": "✓ Healthy",
   "integrity.failed": "Check failed",
+  // Minimal per-button fail glyph (GlimStone standing rule: failures toast,
+  // the button itself only shows a brief fixed indicator matching
+  // integrity.ok's own visual weight — see IntegrityCard's run()).
+  "integrity.failedShort": "✗ Failed",
   "integrity.unlock": "Unlock",
   "integrity.prune": "Prune",
   "integrity.verifyHint": "Run restic check to verify structure and metadata are intact.",
@@ -2070,6 +2074,7 @@ export const de: Translations = {
   "integrity.checking": "Prüfe…",
   "integrity.ok": "✓ Intakt",
   "integrity.failed": "Prüfung fehlgeschlagen",
+  "integrity.failedShort": "✗ Fehlgeschlagen",
   "integrity.unlock": "Entsperren",
   "integrity.prune": "Aufräumen",
   "integrity.verifyHint": "restic check ausführen, um Struktur und Metadaten zu verifizieren.",

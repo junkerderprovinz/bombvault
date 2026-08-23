@@ -416,6 +416,7 @@ const he: Partial<Translations> = {
   "integrity.checking": "בודק…",
   "integrity.ok": "✓ תקין",
   "integrity.failed": "הבדיקה נכשלה",
+  "integrity.failedShort": "✗ נכשל",
   "integrity.unlock": "ביטול נעילה",
   "integrity.prune": "גיזום",
   "integrity.verifyHint": "הרצת restic check לאימות המבנה והמטא-נתונים.",

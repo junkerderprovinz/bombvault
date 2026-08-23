@@ -411,6 +411,7 @@ const uk: Partial<Translations> = {
   "integrity.checking": "Перевірка…",
   "integrity.ok": "✓ Справний",
   "integrity.failed": "Перевірка не пройдена",
+  "integrity.failedShort": "✗ Не пройдено",
   "integrity.unlock": "Розблокувати",
   "integrity.prune": "Очистити",
   "integrity.verifyHint": "Запустіть restic check для перевірки структури та метаданих.",

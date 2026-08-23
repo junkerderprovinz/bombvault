@@ -416,6 +416,7 @@ const ar: Partial<Translations> = {
   "integrity.checking": "جارٍ الفحص…",
   "integrity.ok": "✓ سليم",
   "integrity.failed": "فشل الفحص",
+  "integrity.failedShort": "✗ فشل",
   "integrity.unlock": "إلغاء القفل",
   "integrity.prune": "تقليم",
   "integrity.verifyHint": "تشغيل restic check للتحقق من سلامة البنية والبيانات الوصفية.",
