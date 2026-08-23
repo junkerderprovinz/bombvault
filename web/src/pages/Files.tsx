@@ -1102,6 +1102,7 @@ function FileSetRow({
 
 export function Files() {
   const { t } = useT();
+  const { push } = useToast();
   // One subscription for the whole list rather than one per row — see
   // Containers.tsx's identical call for the same reasoning.
   useRainbow();
@@ -1129,9 +1130,14 @@ export function Files() {
   // half-working affordance.
   const [preset, setPreset] = useState<FileSetPresetResponse | null>(null);
   const [discovering, setDiscovering] = useState(false);
-  const [discoverMsg, setDiscoverMsg] = useState<string | null>(null);
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
+  // the Discover button on a failed discover, alongside its existing toast —
+  // same mechanism as Containers.tsx's/VMs.tsx's identical shakeDiscover.
+  const [shakeDiscover, setShakeDiscover] = useState(0);
   const [backupAllBusy, setBackupAllBusy] = useState(false);
-  const [backupAllMsg, setBackupAllMsg] = useState<string | null>(null);
+  // Same shake-on-failure treatment for the "back up all" batch start — mirrors
+  // Containers.tsx's backupSelected/shakeBackupSelected.
+  const [shakeBackupAll, setShakeBackupAll] = useState(0);
 
   function loadSets() {
     return listFileSets()
@@ -1188,19 +1194,24 @@ export function Files() {
     setDialog("new");
   }
 
+  // GlimStone follow-up pass (v8.0.0): the "+N" / error note never
+  // auto-cleared (it stuck around next to the Discover button until the next
+  // click) — now a toast, mirroring Containers.tsx's/VMs.tsx's identical
+  // handleDiscover.
   async function handleDiscover() {
     setDiscovering(true);
-    setDiscoverMsg(null);
     try {
       const res = await discoverFiles();
       if (res.ok) {
-        setDiscoverMsg(`+${res.discovered ?? 0}`);
+        push(`+${res.discovered ?? 0}`, "success");
         await loadSets();
       } else {
-        setDiscoverMsg(res.error ?? "Discover failed");
+        push(res.error ?? "Discover failed", "fail");
+        setShakeDiscover((n) => n + 1);
       }
     } catch (err) {
-      setDiscoverMsg(err instanceof Error ? err.message : "Discover failed");
+      push(err instanceof Error ? err.message : "Discover failed", "fail");
+      setShakeDiscover((n) => n + 1);
     } finally {
       setDiscovering(false);
     }
@@ -1210,14 +1221,22 @@ export function Files() {
   // enabled set that has a source folder; per-set progress shows on the cards.
   const backupableIds = sets.filter((s) => s.enabled && s.path !== "").map((s) => s.id);
 
+  // GlimStone follow-up pass (v8.0.0): same "+N"/error note migrated off a
+  // stuck local span onto a toast — mirrors Containers.tsx's backupSelected
+  // (push + shakeBackupSelected).
   async function handleBackupAll() {
     setBackupAllBusy(true);
-    setBackupAllMsg(null);
     try {
       const res = await backupFilesAll(backupableIds);
-      setBackupAllMsg(res.ok ? t("containers.batchStarted") : res.error ?? t("settings.error"));
+      if (res.ok) {
+        push(t("containers.batchStarted"), "success");
+      } else {
+        push(res.error ?? t("settings.error"), "fail");
+        setShakeBackupAll((n) => n + 1);
+      }
     } catch (err) {
-      setBackupAllMsg(err instanceof Error ? err.message : t("settings.error"));
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      setShakeBackupAll((n) => n + 1);
     } finally {
       setBackupAllBusy(false);
     }
@@ -1233,14 +1252,14 @@ export function Files() {
           <div className="mt-2"><OffsiteIndicator domain="files" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          {discoverMsg && (
-            <span className="text-xs text-carbon-textSub">{discoverMsg}</span>
-          )}
           <button
+            key={shakeDiscover}
             onClick={() => void handleDiscover()}
             disabled={discovering}
             title={t("files.discoverHint")}
-            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+              shakeDiscover ? " glim-shake" : ""
+            }`}
           >
             {discovering ? t("containers.discovering") : t("containers.discover")}
           </button>
@@ -1299,9 +1318,12 @@ export function Files() {
       {!loading && sets.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
           <button
+            key={shakeBackupAll}
             onClick={() => void handleBackupAll()}
             disabled={backupAllBusy || running.active || backupableIds.length === 0}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              shakeBackupAll ? " glim-shake" : ""
+            }`}
           >
             {t("files.backupAll")}
           </button>
@@ -1309,9 +1331,6 @@ export function Files() {
             <span className="text-xs text-carbon-textMuted">
               {t(busyPhraseKey(running.phase))}
             </span>
-          )}
-          {backupAllMsg && (
-            <span className="text-xs text-carbon-textSub">{backupAllMsg}</span>
           )}
         </div>
       )}
