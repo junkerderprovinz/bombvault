@@ -541,19 +541,41 @@ function badgeClassName({
   // own comments for why a shared Card component doesn't exist here to
   // carry that in one place).
   //
-  // top: -11px is exactly HALF of this stage's own real height — 22px
-  // (`h-[22px]` in SIZE_TOKENS.heading above) — not CC's own 26px/13px pair,
-  // which belongs to a differently-sized badge on a different app. Assumes a
-  // single text line: `wrap` (used defensively at every heading call site,
-  // see the file header) lets a badge grow past 22px for a genuinely long
-  // string, and a badge that actually wraps to two lines pokes out more than
-  // exactly half — accepted as a known, rare-in-practice tradeoff (checked
-  // against this app's longest heading strings across all 26 locales: short
-  // section-title phrases that fit on one line at this stage's roomy px-3
-  // padding, except the one narrow sm:grid-cols-3 cell that already
-  // documents wrapping as expected in the DEFAULT locale too) rather than a
-  // JS-measured dynamic offset for what a fixed CSS value already covers in
-  // the overwhelming common case.
+  // top-0 + -translate-y-1/2 (NOT a fixed `-top-[11px]`, see the REGRESSION
+  // note below): `top: 0` anchors the badge's own top edge to the card's top
+  // edge, then `transform: translateY(-50%)` — a percentage that CSS always
+  // resolves against the TRANSFORMED ELEMENT's OWN border-box height, never
+  // the containing block's — shifts it up by exactly half of WHATEVER height
+  // it actually rendered at. Net effect: the badge's vertical CENTER always
+  // sits exactly on the card's top edge, so it always straddles precisely
+  // half-above/half-below regardless of how tall it grows — the single-line
+  // 22px case (`h-[22px]` in SIZE_TOKENS.heading above) resolves to the
+  // identical -11px this used to hard-code, so nothing changes there.
+  //
+  // REGRESSION this replaces (live-review round, jdp: "Im Dashboard sind
+  // viele Cardtitelbadges nicht richtig platziert" — Dashboard.tsx's
+  // SummaryTier, the one narrow sm:grid-cols-3 cell already flagged below as
+  // wrapping "in the DEFAULT locale too"): the previous fixed `-top-[11px]`
+  // was ALWAYS exactly half of the SINGLE-LINE 22px case, never recomputed
+  // for a wrapped badge's real (taller) height. That was fine the day it
+  // shipped — checked against this app's longest heading strings across all
+  // 26 locales, "short section-title phrases that fit on one line... except
+  // the one narrow sm:grid-cols-3 cell" — but "fits at 1440px" quietly became
+  // "wraps to 2 lines" at any ordinary laptop/half-screen width once that one
+  // cell's own 3-way split narrows enough (measured live: ~640-850px, three
+  // SummaryCells sharing a row, German "NÄCHSTES BACKUP"/"LETZTES ERGEBNIS"
+  // — not a locale/string-length edge case, an ordinary browser width one).
+  // A wrapped badge is ~34px tall, not 22px; poking from a FIXED -11px then
+  // put its far edge at +23px into the card (double the intended overlap)
+  // instead of the intended +17px half — enough to visually bury the card's
+  // own first content line (confirmed live: "OK Ordner" nearly fully hidden
+  // under "LETZTES ERGEBNIS"). This is the SAME failure family Settings.tsx's
+  // own offsite-tab history already hit once from the opposite direction (a
+  // zero-height heading + a fixed gap, two 22px notches landing on top of
+  // each other, see that file's own comment) — a fixed pixel offset derived
+  // from ONE assumed height, silently wrong the moment the real height
+  // isn't that one value. `-translate-y-1/2` is the general fix for the
+  // whole family: it needs no assumed height at all, single-line or wrapped.
   //
   // Deliberately no explicit left/right/start/end offset: with both left and
   // right left `auto`, an absolutely positioned box falls back to its CSS
@@ -604,7 +626,7 @@ function badgeClassName({
   // heading badge is furniture riding on the card, not a card boundary of
   // its own).
   const isHeadingNotch = tone === "heading" && size === "heading";
-  const notchPositioning = isHeadingNotch ? "absolute -top-[11px] z-10 shadow-[var(--elevation)]" : "";
+  const notchPositioning = isHeadingNotch ? "absolute top-0 -translate-y-1/2 z-10 shadow-[var(--elevation)]" : "";
 
   // No per-notch colour override anymore (see the file header's tone=heading
   // section for the two earlier rounds this went through — a translucent
