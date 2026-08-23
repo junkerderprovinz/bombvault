@@ -6,7 +6,7 @@ import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot, VmOrder } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
 import { useDragReorder } from "../lib/useDragReorder";
-import { Advanced } from "../lib/advanced";
+import { Advanced, useAdvanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
@@ -966,7 +966,31 @@ const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
 // display vm.name. `displayByLibvirtName` resolves a row's libvirtName back
 // to its friendly name for rendering and for the tiebreak sort, so a TrueNAS
 // user still sees and alphabetizes by the readable name.
-function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
+function VMBackupOrderPanel({
+  vms,
+  t,
+  hueIndex,
+}: {
+  vms: VM[];
+  t: T;
+  /** Rainbow position for THIS panel's own heading notch — GlimStone
+   *  follow-up pass (jdp, live review, emphatic, system-wide standing rule
+   *  after a fifth escalation: "Warum muss ich dich immer wieder extra dran
+   *  erinnern?"): this panel's collapsible-header title was still a plain
+   *  `<span>`, never routed through Badge's tone="heading"/hueIndex the way
+   *  every other static Card heading in the app now is (Dashboard.tsx's
+   *  Card(), Config.tsx's Card, Settings.tsx's Card/ToggleRow) — grepping
+   *  this whole file found zero `hueIndex` usages before this fix. Resolved
+   *  by the caller's own `nextHue()` counter, called DIRECTLY at the JSX
+   *  call site (never handed down as a function for this component to call
+   *  from its own body — that exact shape is what caused the SummaryTier
+   *  regression a commit ago: React doesn't invoke a child component's body
+   *  until after the parent's own render pass has already returned, so a
+   *  `nextHue` prop called from inside a child lands strictly after every
+   *  sibling's own direct call already consumed its slot). Omit for a
+   *  genuine singleton — same rule as every other `hueIndex` call site. */
+  hueIndex?: number;
+}) {
   const [savedOrder, setSavedOrder] = useState<VmOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
@@ -1093,11 +1117,50 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
   if (savedOrder === null) return null;
 
   return (
-    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    // relative + glim-notch-card: same "half-overlap card notch" pattern
+    // every other real Card in this app uses (Config.tsx's Card() is the
+    // closest twin — a single div carrying both the visible surface AND the
+    // notch's positioned ancestor, no separate outer wrapper needed since
+    // this box has no overflow-hidden to clip the badge's own -11px poke
+    // above it). glim-notch-card is the hook index.css's card-wide
+    // reactive-hover rule keys off, so hovering anywhere on this panel (not
+    // just the tiny badge glyph) reveals its hue in reactive rainbow mode.
+    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+      {/* Title notch, always visible regardless of collapse state (matches
+          the PRE-fix behaviour, where title+count stayed visible collapsed
+          and only the hint hid) — moved OUT of the disclosure <button> below:
+          every real tone="heading" call site in this app keeps the Badge as
+          its <h2>'s SOLE child (Dashboard.tsx's Card()/SummaryCell,
+          Config.tsx's Card, this file's own notInstalledTitle below) because
+          size="heading" makes the badge `position: absolute` — a flex-row
+          sibling next to it would render at the badge's own now-vacated
+          in-flow slot instead of after it. The count folds INSIDE the
+          badge's own children instead (Badge's span is `inline-flex gap-1`,
+          built to hold more than one child), same visual "title (N)"
+          pairing as before, just now inheriting the badge's own solid
+          accent-fill/accentContrast ink. */}
+      <h2 className="flex items-center">
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
+          {t("vmBackupOrder.title")}
+          {names.length > 0 && (
+            <span className="ms-1.5 font-normal normal-case tracking-normal tabular-nums opacity-80">
+              ({names.length})
+            </span>
+          )}
+        </Badge>
+      </h2>
+      {/* Disclosure toggle, now chevron(+hint)-only: the title text that used
+          to double as this button's accessible name moved into the h2 notch
+          above, so `aria-label` keeps this control genuinely named rather
+          than falling back to nothing once its only other content
+          (`aria-hidden` chevron, hint text hidden while collapsed) has none
+          to offer. `w-full` (unchanged) keeps the full row clickable even
+          though the visible content is now just the chevron while collapsed. */}
       <button
         type="button"
         onClick={toggleCollapsed}
         aria-expanded={!collapsed}
+        aria-label={t("vmBackupOrder.title")}
         className="flex w-full items-start gap-2 text-start"
       >
         <svg
@@ -1114,19 +1177,9 @@ function VMBackupOrderPanel({ vms, t }: { vms: VM[]; t: T }) {
         >
           <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="min-w-0 flex-1">
-          <span className="font-semibold text-carbon-text text-sm">
-            {t("vmBackupOrder.title")}
-            {names.length > 0 && (
-              <span className="ms-1.5 text-xs font-normal text-carbon-textMuted tabular-nums">
-                ({names.length})
-              </span>
-            )}
-          </span>
-          {!collapsed && (
-            <span className="mt-0.5 block text-xs text-carbon-textMuted">{t("vmBackupOrder.hint")}</span>
-          )}
-        </span>
+        {!collapsed && (
+          <span className="min-w-0 flex-1 text-xs text-carbon-textMuted">{t("vmBackupOrder.hint")}</span>
+        )}
       </button>
       {!collapsed &&
         (names.length === 0 ? (
@@ -1218,6 +1271,14 @@ export function VMs() {
   // One subscription for the whole list rather than one per row — see
   // Containers.tsx's identical call for the same reasoning.
   useRainbow();
+  // Advanced-mode flag read directly (not just via the <Advanced> wrapper
+  // below): VMBackupOrderPanel's own hueIndex must only be resolved via
+  // `nextHue()` when the panel will ACTUALLY render — see this function's
+  // own `nextHue()` comment below for why a JSX child's props (including a
+  // `hueIndex={nextHue()}` expression) evaluate eagerly as part of building
+  // the <Advanced> element, regardless of whether <Advanced> itself goes on
+  // to render null.
+  const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   // Broader "something is running" signal: any backup/restore/replication in
@@ -1402,6 +1463,24 @@ export function VMs() {
     );
   }
 
+  // hueSeq/nextHue (GlimStone follow-up pass — see Settings.tsx's own
+  // identical hueSeq/nextHue comment for the full reasoning): a plain,
+  // freshly-reset-every-render counter assigning 0,1,2,... to this page's
+  // heading notches in the exact order the JSX below actually evaluates each
+  // `hueIndex={nextHue()}` call, which for a `cond && (<Badge hueIndex=
+  // {nextHue()} />)` short-circuit is also exactly the order those notches
+  // are, or would be, painted. Two heading notches exist on this page today:
+  // VMBackupOrderPanel's own (advanced-only, gated on `advanced` directly
+  // rather than trusting <Advanced> below — see this component's own
+  // `advanced` doc above) and the not-installed section's (gated on
+  // `orphans.length > 0`, naturally short-circuited by the `&&` chain around
+  // it). Both calls are made DIRECTLY at their JSX call site as a plain
+  // number, never handed down as a function for a child to call from its own
+  // body later — see SummaryTier's own regression, fixed a commit ago in
+  // Dashboard.tsx, for exactly why that shape breaks the ordering.
+  let hueSeq = 0;
+  const nextHue = () => hueSeq++;
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
       {/* Page heading + Discover (disaster-recovery) action */}
@@ -1449,10 +1528,21 @@ export function VMs() {
       )}
 
       {/* VM backup-order panel (#119, VMs) — advanced: arrange the scheduled VM
-          run sequence. Above the list, like the container backup-order card. */}
+          run sequence. Above the list, like the container backup-order card.
+          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
+          <Advanced>: a JSX child's own props (this `hueIndex` expression
+          included) evaluate eagerly as part of building the <Advanced>
+          element itself, before <Advanced> ever runs its own `advanced &&
+          when` check — so an unconditional `nextHue()` here would burn a
+          slot every render regardless of whether the panel actually paints,
+          landing the not-installed section's own notch below one index late
+          whenever Advanced mode is off. Gating on the same `advanced` flag
+          read directly above keeps the counter honest: only increment for a
+          notch that will actually render, exactly like Dashboard.tsx's own
+          advancedOnly blocks pre-filtering before ever calling nextHue(). */}
       {!loading && !error && (
         <Advanced>
-          <VMBackupOrderPanel vms={vms} t={t} />
+          <VMBackupOrderPanel vms={vms} t={t} hueIndex={advanced ? nextHue() : undefined} />
         </Advanced>
       )}
 
@@ -1577,9 +1667,22 @@ export function VMs() {
                 `relative` directly on this <h2> — no padding wraps it, so
                 the h2 itself is the right anchor; see Badge.tsx's
                 badgeClassName comment and Containers.tsx's identical
-                notInstalled section. */}
+                notInstalled section.
+                `hueIndex={nextHue()}` (GlimStone follow-up pass, proactive
+                sweep of this same file): this badge used to be the ONLY
+                tone="heading" notch anywhere in VMs.tsx, so it always read
+                as a "genuine singleton" and correctly kept the flat,
+                un-rainbowed default — but VMBackupOrderPanel's own notch
+                above can render on the very same page now, which makes this
+                one no longer a singleton whenever both are visible at once
+                (Advanced mode on + at least one orphaned VM). Threaded
+                through the same page-wide `nextHue()` counter, in render
+                order after VMBackupOrderPanel's own call, so the two never
+                collide on the same rainbow position. */}
             <h2 className="relative flex items-center">
-              <Badge tone="heading" size="heading" wrap>{t("containers.notInstalledTitle")}</Badge>
+              <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>
+                {t("containers.notInstalledTitle")}
+              </Badge>
             </h2>
             <p className="mt-1 text-xs text-carbon-textMuted">
               {t("vms.notInstalledHint")}
