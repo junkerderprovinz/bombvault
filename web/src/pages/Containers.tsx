@@ -1352,7 +1352,35 @@ const STACK_DONE_GRACE_MS = 8000;
 // only acks {started:true} and carries no member results), so on start the card
 // shows a sticky "restore started" hint; per-member outcomes land in the run
 // history. Synchronous validation errors (empty stack, busy, …) show inline.
-function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: () => void; t: T }) {
+function StackCard({
+  group,
+  onRestored,
+  t,
+  index,
+}: {
+  group: StackGroup;
+  onRestored: () => void;
+  t: T;
+  /** Rainbow position for THIS card — GlimStone standing colour-engine rule
+   *  (jdp, live review, emphatic, five escalations deep: "Es soll immer
+   *  alles in die Farb- und Formengine integriert werden!! IMMER!!"). A gap
+   *  that survived even the fifth escalation's own sweep of this file (see
+   *  StacksPanel's own `hueIndex` doc comment above, which hued the panel's
+   *  HEADING but left every card underneath it flat): StackCard is the exact
+   *  same "row card in a list" shape as ContainerRow right above it in this
+   *  file (and Files.tsx/Fleet.tsx/Receiver.tsx/VMs.tsx's own list-row
+   *  cards) — glim-hue/glim-tint/bv-stagger-row + `hueVars(rainbowAt(index))`
+   *  — yet was the one card shape in this file with NO colour-engine wiring
+   *  at all. By LIST INDEX among the stacks rendered together (StacksPanel's
+   *  own `stacks.map`), a separate local 0-based sequence from
+   *  ContainerRow's own `live`/`orphans` index (a different list, own local
+   *  index per group — the same rule ToggleRow's own `hueIndex` doc
+   *  documents) and from the page-wide `nextHue()` counter the panel's own
+   *  heading badge uses (a heading notch and its list's row cards are two
+   *  independent sequences, same split as every other headed list on this
+   *  page). */
+  index: number;
+}) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [startInOrder, setStartInOrder] = useState(true);
@@ -1430,7 +1458,14 @@ function StackCard({ group, onRestored, t }: { group: StackGroup; onRestored: ()
   }
 
   return (
-    <div className="bg-carbon-surface rounded-card p-4 flex flex-col gap-2">
+    <div
+      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
+      // glim-hue owns the position; glim-tint washes the whole card with it,
+      // bv-stagger-row reuses the same `index` for the entrance stagger — the
+      // identical trio ContainerRow's own outer <div> carries above (see this
+      // function's own `index` doc comment).
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-2 glim-hue glim-tint bv-stagger-row"
+    >
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <span className="font-semibold text-carbon-text text-sm wrap-break-word">{group.project}</span>
@@ -1549,8 +1584,8 @@ function StacksPanel({
           {t("stack.title")}
         </Badge>
       </h2>
-      {stacks.map((g) => (
-        <StackCard key={g.project} group={g} onRestored={onRestored} t={t} />
+      {stacks.map((g, i) => (
+        <StackCard key={g.project} group={g} onRestored={onRestored} t={t} index={i} />
       ))}
     </div>
   );
