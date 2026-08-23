@@ -193,12 +193,28 @@ describe("TimePicker — dismissal", () => {
     expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 
-  it("scrolling closes the open popover (a fixed popover would otherwise de-anchor from its trigger)", () => {
+  it("scrolling the page closes the open popover (a fixed popover would otherwise de-anchor from its trigger)", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
     expect(screen.queryByRole("dialog")).not.toBeNull();
     fireEvent.scroll(window);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("scrolling INSIDE one of the popover's own listbox columns does not close it", () => {
+    // Regression test for a live bug: the dismissal scroll listener is
+    // capture-phase on window, so it also receives scroll events from the
+    // popover's own two internal `.glim-time-col` columns — and this
+    // component's own scrollIntoView calls (bringing the current hour/minute
+    // into view) fire exactly such an event. Confirmed live against the real
+    // container: the popover opened and closed again ~2ms later on every
+    // single open, before this guard existed. A scroll INSIDE the popover
+    // never de-anchors it from its trigger, unlike a page/ancestor scroll.
+    render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
+    fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
+    const hourBox = screen.getByRole("listbox", { name: "Hour" });
+    fireEvent.scroll(hourBox);
+    expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 
   it("only one TimePicker popover is ever open at once — opening a second closes the first", () => {

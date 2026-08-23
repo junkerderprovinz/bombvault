@@ -287,6 +287,23 @@ export function TimePicker({
   // Dismissal: outside pointerdown, Escape, or scroll/resize — the exact
   // same set ColorPickerSwatch documents and relies on (a fixed popover
   // de-anchored from its trigger reads as broken either way).
+  //
+  // The scroll listener is capture-phase on `window`, so it also receives
+  // scroll events from the popover's OWN two `.glim-time-col` listbox
+  // columns (a genuinely NEW wrinkle ColorPickerSwatch never had to handle —
+  // it has no internal scrollable region at all). Caught live: this
+  // component's own `scrollIntoView` calls (bringing the current hour/
+  // minute into view on open, and after every arrow-key step) fire a
+  // 'scroll' event on the column div itself, which — before this guard —
+  // reached this same capture-phase listener and closed the popover the
+  // instant it opened (confirmed via a live MutationObserver: aria-expanded
+  // flipped true then false again ~2ms apart, with the scroll event's own
+  // target being the internal column, not window, `window.scrollY` staying
+  // 0 throughout). A scroll INSIDE the popover never de-anchors it from its
+  // trigger — only a scroll of an ANCESTOR (the page, or a scrollable card)
+  // does — so scroll events whose target lives inside `panelRef` are
+  // ignored here, while every other scroll still closes the popover exactly
+  // as before.
   useEffect(() => {
     if (!open) return;
     function onPointerDown(e: MouseEvent) {
@@ -298,14 +315,19 @@ export function TimePicker({
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") closeSelf();
     }
+    function onScroll(e: Event) {
+      const target = e.target;
+      if (target instanceof Node && panelRef.current?.contains(target)) return;
+      closeSelf();
+    }
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("scroll", closeSelf, true);
+    window.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", closeSelf);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("scroll", closeSelf, true);
+      window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", closeSelf);
     };
   }, [open, closeSelf]);
