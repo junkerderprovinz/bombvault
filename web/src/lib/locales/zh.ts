@@ -212,6 +212,7 @@ const zh: Partial<Translations> = {
   "settings.rainbowRotate": "颜色轮换",
   "settings.rainbowRotateHint": "改变调色板中哪种颜色算作位置0，这样每次开启彩虹模式或刷新页面时，同一个列表就不会总是从完全相同的颜色开始。",
   "settings.rainbowPalette": "调色板颜色",
+  "settings.rainbowPaletteLabel": "调色板",
   "settings.quietToasts": "安静通知",
   "settings.quietToastsHint": "仅在失败时显示弹出通知。常规的保存和复制确认将保持静默。",
 

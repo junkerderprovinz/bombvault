@@ -207,6 +207,7 @@ const pl: Partial<Translations> = {
   "settings.rainbowRotate": "Rotacja kolorów",
   "settings.rainbowRotateHint": "Przesuwa, który kolor palety liczy się jako pozycja 0, dzięki czemu ta sama lista nie zaczyna się zawsze dokładnie od tego samego koloru przy każdym włączeniu Trybu tęczy lub przeładowaniu strony.",
   "settings.rainbowPalette": "Kolor palety",
+  "settings.rainbowPaletteLabel": "Paleta kolorów",
   "settings.quietToasts": "Ciche powiadomienia",
   "settings.quietToastsHint": "Pokazuj powiadomienia tylko przy błędach. Rutynowe potwierdzenia zapisu i kopiowania pozostają wyciszone.",
 

@@ -212,6 +212,7 @@ const tr: Partial<Translations> = {
   "settings.rainbowRotate": "Renk döngüsü",
   "settings.rainbowRotateHint": "Palette hangi rengin 0 konumu sayıldığını kaydırır, böylece Gökkuşağı Modunu her açtığında ya da sayfayı her yenilediğinde aynı liste tam olarak aynı renkle başlamaz.",
   "settings.rainbowPalette": "Palet rengi",
+  "settings.rainbowPaletteLabel": "Renk paleti",
   "settings.quietToasts": "Sessiz bildirimler",
   "settings.quietToastsHint": "Açılır bildirimleri yalnızca hatalarda göster. Rutin kaydetme ve kopyalama onayları sessiz kalır.",
 

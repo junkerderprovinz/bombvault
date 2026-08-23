@@ -212,6 +212,7 @@ const ko: Partial<Translations> = {
   "settings.rainbowRotate": "색상 순환",
   "settings.rainbowRotateHint": "팔레트에서 어떤 색을 위치 0으로 셀지 이동시켜서, 레인보우 모드를 켜거나 페이지를 새로고침할 때마다 같은 목록이 매번 정확히 같은 색으로 시작하지 않도록 합니다.",
   "settings.rainbowPalette": "팔레트 색",
+  "settings.rainbowPaletteLabel": "색상 팔레트",
   "settings.quietToasts": "알림 최소화",
   "settings.quietToastsHint": "실패 시에만 팝업 알림을 표시합니다. 저장 및 복사에 대한 일반적인 확인 알림은 표시되지 않습니다.",
 

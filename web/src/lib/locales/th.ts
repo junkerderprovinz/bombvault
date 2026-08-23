@@ -212,6 +212,7 @@ const th: Partial<Translations> = {
   "settings.rainbowRotate": "การหมุนสี",
   "settings.rainbowRotateHint": "เปลี่ยนว่าสีใดในจานสีถูกนับเป็นตำแหน่งที่ 0 เพื่อไม่ให้รายการเดียวกันเริ่มต้นด้วยสีเดิมทุกครั้งที่เปิดโหมดสายรุ้งหรือโหลดหน้าใหม่",
   "settings.rainbowPalette": "สีในจานสี",
+  "settings.rainbowPaletteLabel": "จานสี",
   "settings.quietToasts": "การแจ้งเตือนแบบเงียบ",
   "settings.quietToastsHint": "แสดงการแจ้งเตือนแบบป๊อปอัปเฉพาะเมื่อล้มเหลวเท่านั้น การยืนยันการบันทึกและคัดลอกตามปกติจะไม่แสดง",
 

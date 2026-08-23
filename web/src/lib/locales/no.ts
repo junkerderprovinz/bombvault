@@ -209,6 +209,7 @@ const no: Partial<Translations> = {
   "settings.rainbowRotate": "Fargerotasjon",
   "settings.rainbowRotateHint": "Flytter hvilken palettfarge som telles som posisjon 0, slik at den samme listen ikke alltid starter med nøyaktig samme farge hver gang du slår på Regnbuemodus eller laster inn siden på nytt.",
   "settings.rainbowPalette": "Palettfarge",
+  "settings.rainbowPaletteLabel": "Fargepalett",
   "settings.quietToasts": "Stille varsler",
   "settings.quietToastsHint": "Vis kun sprettoppvarsler ved feil. Rutinemessige lagre- og kopieringsbekreftelser forblir stille.",
 

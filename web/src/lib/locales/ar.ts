@@ -212,6 +212,7 @@ const ar: Partial<Translations> = {
   "settings.rainbowRotate": "تدوير الألوان",
   "settings.rainbowRotateHint": "يغيّر أي لون في اللوحة يُحتسب كموضع 0، بحيث لا تبدأ نفس القائمة دائمًا بنفس اللون بالضبط في كل مرة تُفعّل فيها وضع قوس قزح أو تُعيد تحميل الصفحة.",
   "settings.rainbowPalette": "لون اللوحة",
+  "settings.rainbowPaletteLabel": "لوحة الألوان",
   "settings.quietToasts": "إشعارات هادئة",
   "settings.quietToastsHint": "إظهار الإشعارات المنبثقة عند حدوث أخطاء فقط. تبقى تأكيدات الحفظ والنسخ الروتينية صامتة.",
 

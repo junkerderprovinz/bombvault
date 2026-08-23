@@ -592,6 +592,20 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
+      {/* Row label (jdp, live-review: "Bei der Akzentfarben-Zeile soll
+          'Akzentfarbe' stehen und dann der Farbpicker kommen, dann die
+          Voreinstellungen") — reuses settings.accentColor rather than a new
+          key: that string already exists (it was ONLY the swatch's
+          aria-label/title below, never visible text), and "Accent colour" /
+          "Akzentfarbe" is exactly the row-opening label jdp asked for, so a
+          second key with the same text would just be a parity-test-passing
+          duplicate. Same "muted label + trailing colon" look the
+          "Voreinstellungen:" caption a few pixels to its right already uses
+          in this very row (and settings.schedule elsewhere in this file) —
+          the colon is appended here, not baked into the shared key, because
+          settings.accentColor is ALSO read bare (no colon) as that caption's
+          own aria-label/title. */}
+      <span className="text-xs text-carbon-textMuted">{t("settings.accentColor")}:</span>
       {/* Custom-colour trigger — a flat swatch, same size/shape as the
           preset swatches beside it (design-language.md, "The user-owned
           axes" > Accent: every custom colour value gets the SAME
@@ -6694,8 +6708,21 @@ export function SettingsPage() {
               settings.rainbowPalette itself is NOT orphaned: PaletteSwatch
               still reads it (see that component's own `label` line above)
               for each swatch's title/aria-label ("Palette colour 1", "...2",
-              …), so the key stays in every locale unchanged. */}
+              …), so the key stays in every locale unchanged.
+                Live-review round 4 REVERSES the point above (jdp: "Bei der
+              Rainbow-Farbpalette soll 'Farbpalette' stehen und dann die
+              Farbfelder kommen") — a caption is back after all, just a
+              different string than the one removed: settings.rainbowPalette
+              ("Palette colour") stays a per-swatch aria-label only, unchanged;
+              this new settings.rainbowPaletteLabel ("Colour palette") is a
+              standalone row-opening label, matching how the Accent row right
+              above it now opens with its own "Akzentfarbe:" caption before
+              its controls — same muted-text-plus-colon look, same "label
+              first" ordering, so the two rows in this merged Card read as one
+              consistent pair rather than the swatch row being the odd one
+              out again. */}
           <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-carbon-textMuted">{t("settings.rainbowPaletteLabel")}:</span>
             {rainbow.palette.map((hex, i) => (
               <PaletteSwatch
                 key={i}

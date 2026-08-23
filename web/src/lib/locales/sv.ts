@@ -212,6 +212,7 @@ const sv: Partial<Translations> = {
   "settings.rainbowRotate": "Färgrotation",
   "settings.rainbowRotateHint": "Flyttar vilken palettfärg som räknas som position 0, så att samma lista inte alltid börjar med exakt samma färg varje gång du aktiverar regnbågsläge eller laddar om sidan.",
   "settings.rainbowPalette": "Palettfärg",
+  "settings.rainbowPaletteLabel": "Färgpalett",
   "settings.quietToasts": "Tysta aviseringar",
   "settings.quietToastsHint": "Visa popup-aviseringar endast vid fel. Rutinmässiga bekräftelser för sparande och kopiering förblir tysta.",
 

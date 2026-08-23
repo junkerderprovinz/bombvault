@@ -212,6 +212,7 @@ const it: Partial<Translations> = {
   "settings.rainbowRotate": "Rotazione dei colori",
   "settings.rainbowRotateHint": "Cambia quale colore della tavolozza conta come posizione 0, così la stessa lista non inizia sempre esattamente con lo stesso colore ogni volta che attivi la modalità arcobaleno o ricarichi la pagina.",
   "settings.rainbowPalette": "Colore della tavolozza",
+  "settings.rainbowPaletteLabel": "Tavolozza dei colori",
   "settings.quietToasts": "Notifiche silenziose",
   "settings.quietToastsHint": "Mostra gli avvisi pop-up solo per gli errori. Le conferme di routine di salvataggio e copia restano silenziose.",
 
