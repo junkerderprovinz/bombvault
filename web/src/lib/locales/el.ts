@@ -169,7 +169,7 @@ const el: Partial<Translations> = {
   "source.hint": "Η επαναφορά και η διαγραφή επενεργούν μόνο στην επιλεγμένη πηγή — η διαγραφή τοπικού αντιγράφου δεν αγγίζει ποτέ το αντίγραφο εκτός τόπου, και αντίστροφα.",
   "offsite.schedulePlaceholder": "κενό = μετά από κάθε αντίγραφο · π.χ. weekly Sun 03:00",
   "offsite.replicateNow": "Αναπαραγωγή τώρα",
-  "offsite.sectionTitle": "Προστασία εκτός τόπου",
+  "offsite.copyDomainTitle": "Αντίγραφο εκτός τόπου {domain}",
   "offsite.replicating": "Αναπαραγωγή…",
   "offsite.replicatingWithDuration": "Αναπαραγωγή… ({duration})",
   "offsite.replicatingSnapshotPercent": "Αναπαραγωγή στιγμιότυπου {index} από {total} ({percent}%)",

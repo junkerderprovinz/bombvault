@@ -169,7 +169,7 @@ const es: Partial<Translations> = {
   "source.hint": "Restaurar y eliminar solo afectan a la fuente seleccionada — eliminar una copia local nunca toca la copia externa, y viceversa.",
   "offsite.schedulePlaceholder": "vacío = tras cada copia · p. ej. weekly Sun 03:00",
   "offsite.replicateNow": "Replicar ahora",
-  "offsite.sectionTitle": "Protección externa",
+  "offsite.copyDomainTitle": "Copia externa {domain}",
   "offsite.replicating": "Replicando…",
   "offsite.replicatingWithDuration": "Replicando… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replicando snapshot {index} de {total} ({percent}%)",

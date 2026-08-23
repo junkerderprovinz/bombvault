@@ -169,7 +169,7 @@ const tr: Partial<Translations> = {
   "source.hint": "Geri yükleme ve silme yalnızca seçili kaynağı etkiler — yerel bir yedeği silmek site dışı kopyaya asla dokunmaz ve tersi de geçerlidir.",
   "offsite.schedulePlaceholder": "boş = her yedeklemeden sonra · örn. weekly Sun 03:00",
   "offsite.replicateNow": "Şimdi çoğalt",
-  "offsite.sectionTitle": "Site dışı koruma",
+  "offsite.copyDomainTitle": "Site dışı kopya {domain}",
   "offsite.replicating": "Çoğaltılıyor…",
   "offsite.replicatingWithDuration": "Çoğaltılıyor… ({duration})",
   "offsite.replicatingSnapshotPercent": "Anlık görüntü {index}/{total} çoğaltılıyor (%{percent})",

@@ -2992,9 +2992,21 @@ function NotifyCard({
 function ReplicateNowButton({
   domain,
   t,
+  hueIndex,
 }: {
   domain: "containers" | "vms" | "flash" | "files";
   t: ReturnType<typeof useT>["t"];
+  /** Offsite-tab card-split follow-up (jdp: "Die Buttons Verbindung testen,
+   *  Jetzt replizieren, Einrichten, Ziel hinzufügen in die Farbengine
+   *  aufnehmen"): this button's own enclosing per-domain offsite Card's hue
+   *  position, the SAME value that Card's own `hueIndex` already got — not a
+   *  second independent value, matching every other "thread the enclosing
+   *  Card's own hueIndex straight through" call site in this file (e.g.
+   *  ContainersSection's CadenceBuilder). `tone="active"` below (not
+   *  "neutral", this button's old plain-grey identity) is what makes a
+   *  passed hueIndex actually visible — see Badge.tsx's own `hueOn` comment
+   *  for why "active" is the one non-heading tone `hueIndex` drives. */
+  hueIndex?: number;
 }) {
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
@@ -3014,14 +3026,9 @@ function ReplicateNowButton({
     }
   }
   return (
-    <button
-      type="button"
-      onClick={() => void go()}
-      disabled={busy}
-      className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-    >
+    <Badge as="button" tone="active" hueIndex={hueIndex} onClick={() => void go()} disabled={busy}>
       {busy ? t("offsite.replicating") : t("offsite.replicateNow")}
-    </button>
+    </Badge>
   );
 }
 
@@ -3031,9 +3038,14 @@ function ReplicateNowButton({
 function TestConnectionButton({
   domain,
   t,
+  hueIndex,
 }: {
   domain: "containers" | "vms" | "flash" | "files";
   t: ReturnType<typeof useT>["t"];
+  /** See ReplicateNowButton's own doc above — identical offsite-tab
+   *  card-split follow-up, same enclosing Card's hueIndex threaded through,
+   *  same tone="active" reasoning. */
+  hueIndex?: number;
 }) {
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
@@ -3060,14 +3072,9 @@ function TestConnectionButton({
     }
   }
   return (
-    <button
-      type="button"
-      onClick={() => void go()}
-      disabled={busy}
-      className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-    >
+    <Badge as="button" tone="active" hueIndex={hueIndex} onClick={() => void go()} disabled={busy}>
       {multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
-    </button>
+    </Badge>
   );
 }
 
@@ -6405,53 +6412,95 @@ export function SettingsPage() {
       {/* selects this tab (id kept for back-compat).                          */}
       {/* ------------------------------------------------------------------ */}
       {tab === "offsite" && (
-      <div id="offsite">
-      {/* GlimStone follow-up pass ("half-overlap card notch"): `relative`
-          added directly on this <h2> — same bare-heading, no-padding case as
-          Recovery.tsx's foreignTitle heading; see Badge.tsx's badgeClassName
-          comment. */}
-      <h2 className="relative flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("offsite.sectionTitle")}</Badge>
-      </h2>
-      <Card title={t("settings.offsiteTitle")} hueIndex={nextHue()}>
-        {/* GlimStone follow-up pass: the one genuine toss-up in this pass —
-            left as permanent text rather than force a call. It names three
-            backend URL prefixes (rest:/s3:/b2:), but that's only PARTIALLY
-            unique reference: the field's own placeholder already shows a
-            rest: example, and offsite.repoLocalHint right below each field
-            already documents the relative-path option. What it adds beyond
-            those is s3: and b2: as valid prefixes here specifically — real
-            but thinner value than RcloneCard's/CloudCard's own hints above
-            (the sole documentation of their syntax anywhere). Whether that
-            remainder is enough to justify a permanent paragraph, or should
-            fold into the placeholder/caption instead, is a real design call,
-            not a mechanical one — flagged rather than decided here. */}
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
-        {([
-          ["containersOffsite", "nav.containers", "containers"],
-          ["vmsOffsite", "nav.vms", "vms"],
-          ["flashOffsite", "nav.flash", "flash"],
-          ["filesOffsite", "nav.files", "files"],
-        ] as const).map(([repoKey, label, domain]) => {
-          const wizardOpen = offsiteWizard === domain;
-          return (
-          <div key={repoKey} className="flex flex-col gap-1 border-b border-carbon-border pb-3 last:border-0">
+      <div id="offsite" className="flex flex-col gap-6">
+      {/* Live-review round ("Bei der ersten Card überlappen sich zwei
+          Cardtitelbadges. Können wir für Container, VMs, Flash, Ordner
+          jeweils eine eigene Card machen?"): this used to be a group-heading
+          `<h2>` badge (offsite.sectionTitle) immediately followed by ONE
+          shared Card whose body looped over all four domains — the group
+          badge's own `-top-[11px]` notch and the Card's own `-top-[11px]`
+          notch, only `gap-6` (24px) apart with the group heading rendering
+          at ZERO height (its only child is `position: absolute`, so it
+          contributes nothing to flow height — see Card's own comment on why
+          the badge straddles the card's top edge this way), landed the two
+          22px-tall badges overlapping by several px. Splitting into four
+          per-domain Cards does NOT fix that geometry on its own — the FIRST
+          new Card would sit exactly `gap-6` below the same zero-height group
+          heading, reproducing the identical overlap (verified against the
+          live math before shipping this, not just assumed). The actual fix
+          is the one this file's own Schedules tab already took this same
+          round for the identical shape (see that tab's own history: its
+          "Backup-Zeitpläne" group heading was removed because "these Cards
+          already carry their own clear headings, so the group label was
+          redundant") — dropping the group heading entirely, now that each
+          of the four Cards below carries an unambiguous
+          "OFFSITE-KOPIE <DOMAIN>" title of its own. offsite.sectionTitle
+          had no other call site, so it's gone from i18n.ts (en/de) and all
+          24 locale files, the same mechanical removal as
+          settings.schedulesBackup got.
+          `gap-6` on this wrapper: Card's own outer `<div>` no longer needs
+          `relative` here (there is no sibling group-heading badge left to
+          coexist with), and the four per-domain Cards need the SAME
+          vertical rhythm every other multi-Card tab in this file already
+          gets from the shared `<div className="flex flex-col gap-6">`
+          wrapping the whole tab body two levels up — this nested wrapper
+          exists only because `id="offsite"` (the deep-link anchor,
+          `/settings#offsite`) needs a real element to attach to, not a
+          Fragment. */}
+      {([
+        ["containersOffsite", "nav.containers", "containers"],
+        ["vmsOffsite", "nav.vms", "vms"],
+        ["flashOffsite", "nav.flash", "flash"],
+        ["filesOffsite", "nav.files", "files"],
+      ] as const).map(([repoKey, label, domain]) => {
+        const wizardOpen = offsiteWizard === domain;
+        // This domain's OWN rainbow position — the SAME value fed to this
+        // Card's own heading notch below AND to every clickable control
+        // inside it (TestConnectionButton/ReplicateNowButton/the Einrichten
+        // toggle/OffsiteTargetsSection's own "Ziel hinzufügen" button), per
+        // jdp's explicit ask ("Die Buttons ... in die Farbengine
+        // aufnehmen") — not four independent nextHue() calls, which would
+        // desync a domain's own action buttons from its own Card's colour.
+        const hueIdx = nextHue();
+        return (
+        <Card key={repoKey} title={t("offsite.copyDomainTitle").replace("{domain}", t(label))} hueIndex={hueIdx}>
+          {/* GlimStone follow-up pass: the one genuine toss-up in this pass —
+              left as permanent text rather than force a call. It names three
+              backend URL prefixes (rest:/s3:/b2:), but that's only PARTIALLY
+              unique reference: the field's own placeholder already shows a
+              rest: example, and offsite.repoLocalHint right below each field
+              already documents the relative-path option. What it adds beyond
+              those is s3: and b2: as valid prefixes here specifically — real
+              but thinner value than RcloneCard's/CloudCard's own hints above
+              (the sole documentation of their syntax anywhere). Whether that
+              remainder is enough to justify a permanent paragraph, or should
+              fold into the placeholder/caption instead, is a real design call,
+              not a mechanical one — flagged rather than decided here.
+              CARD-SPLIT FOLLOW-UP: this text applies identically to all four
+              domains (it's about repo URL syntax, not domain-specific), so it
+              stays a ONE-TIME read rather than repeating verbatim in every
+              new Card — shown once, in the first (Containers) Card only. */}
+          {domain === "containers" && (
+            <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
+          )}
+          <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
               <span className="text-xs text-carbon-textSub">{t(label)}</span>
               <span className="inline-flex items-center gap-2">
                 {settings[repoKey] && !wizardOpen && (
                   <>
-                    <TestConnectionButton domain={domain} t={t} />
-                    <ReplicateNowButton domain={domain} t={t} />
+                    <TestConnectionButton domain={domain} t={t} hueIndex={hueIdx} />
+                    <ReplicateNowButton domain={domain} t={t} hueIndex={hueIdx} />
                   </>
                 )}
-                <button
-                  type="button"
+                <Badge
+                  as="button"
+                  tone="active"
+                  hueIndex={hueIdx}
                   onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
-                  className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
                 >
                   {wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
-                </button>
+                </Badge>
               </span>
             </div>
             {wizardOpen ? (
@@ -6491,12 +6540,14 @@ export function SettingsPage() {
               </>
             )}
             {/* Additional off-site targets (multi-off-site): extra copies of this
-                domain beyond the primary editor above, managed via the CRUD API. */}
-            <OffsiteTargetsSection domain={domain} t={t} />
+                domain beyond the primary editor above, managed via the CRUD API.
+                hueIndex threaded through for the same "Ziel hinzufügen" button —
+                see that component's own comment. */}
+            <OffsiteTargetsSection domain={domain} t={t} hueIndex={hueIdx} />
           </div>
-          );
-        })}
-      </Card>
+        </Card>
+        );
+      })}
       </div>
       )}
 

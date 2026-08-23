@@ -169,7 +169,7 @@ const fr: Partial<Translations> = {
   "source.hint": "La restauration et la suppression n'agissent que sur la source sélectionnée — supprimer une sauvegarde locale ne touche jamais la copie hors site, et inversement.",
   "offsite.schedulePlaceholder": "vide = après chaque sauvegarde · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Répliquer maintenant",
-  "offsite.sectionTitle": "Protection hors site",
+  "offsite.copyDomainTitle": "Copie hors site {domain}",
   "offsite.replicating": "Réplication…",
   "offsite.replicatingWithDuration": "Réplication… ({duration})",
   "offsite.replicatingSnapshotPercent": "Réplication du snapshot {index} sur {total} ({percent} %)",

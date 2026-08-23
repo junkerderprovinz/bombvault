@@ -169,7 +169,7 @@ const sv: Partial<Translations> = {
   "source.hint": "Återställning och radering påverkar bara den valda källan — att radera en lokal säkerhetskopia rör aldrig kopian utanför platsen, och tvärtom.",
   "offsite.schedulePlaceholder": "tomt = efter varje säkerhetskopia · t.ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replikera nu",
-  "offsite.sectionTitle": "Skydd utanför platsen",
+  "offsite.copyDomainTitle": "Kopia utanför platsen {domain}",
   "offsite.replicating": "Replikerar…",
   "offsite.replicatingWithDuration": "Replikerar… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replikerar snapshot {index} av {total} ({percent} %)",

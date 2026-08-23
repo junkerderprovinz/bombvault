@@ -160,6 +160,11 @@
 //     Deliberately restricted to `tone === "heading"` only (see the Badge()
 //     body below): every other tone is one of rule 4's four state hues, a
 //     load-bearing status signal a stray `hueIndex` must never overwrite.
+//     EXTENDED (offsite-tab card-split follow-up): `tone === "active"` now
+//     qualifies too — see the `hueOn` computation in Badge()'s own body for
+//     the full reasoning (it was never one of rule 4's four state hues to
+//     begin with, the same reason this section's own history above gives
+//     for why "active" replaced "info").
 //   - Every heading gets a SOLID fill (not a translucent wash) either way —
 //     flat accent when no `hueIndex` is given, its own rainbow position's
 //     colour when one is. This does mean rule 3's "at most one solid accent
@@ -598,14 +603,16 @@ export interface BadgeProps {
    *  the heading badges visible at once on the same page/tab — jdp's
    *  live-review override of this file's original "every heading gets the
    *  same flat fill" stance, see the file header's tone="heading" section
-   *  for the full history. ONLY meaningful when `tone === "heading"`:
-   *  every other tone is one of rule 4's four state hues (ok/fail/warn/
-   *  active's soft accent), a semantic signal `hueIndex` must never
-   *  overwrite, so it is silently ignored for any other tone. Omit for a
-   *  genuine singleton heading (the only Card on its page/tab) — that one
-   *  keeps the flat, un-rainbowed accent, per design-language's own
-   *  "the only one of its kind on the page keeps the single accent"
-   *  exclusion. */
+   *  for the full history. Meaningful on `tone === "heading"` AND
+   *  `tone === "active"` (offsite-tab card-split follow-up — see the
+   *  `hueOn` computation below for why "active" qualifies: it is the one
+   *  other tone that is accent-derived rather than one of rule 4's four
+   *  state hues). ok/fail/warn/neutral are load-bearing status signals
+   *  `hueIndex` must never overwrite, so it is silently ignored for those.
+   *  Omit for a genuine singleton (the only hue-eligible badge on its
+   *  page/tab) — that one keeps the flat, un-rainbowed accent, per
+   *  design-language's own "the only one of its kind on the page keeps the
+   *  single accent" exclusion. */
   hueIndex?: number;
 }
 
@@ -644,7 +651,36 @@ export function Badge({
   // flipping the mode there already re-renders every Card/ToggleRow hueIndex
   // call site on the page — no separate subscription needed for the one real
   // place this value can change while the page showing it is mounted.
-  const hueOn = hueIndex !== undefined && tone === "heading";
+  // EXTENDED (offsite-tab card-split follow-up, jdp: "Die Buttons Verbindung
+  // testen, Jetzt replizieren, Einrichten, Ziel hinzufügen in die Farbengine
+  // aufnehmen" — wire those four per-domain action buttons into the colour
+  // engine too): `tone === "active"` now qualifies alongside `"heading"`.
+  // This does NOT weaken the "never overwrite a load-bearing status signal"
+  // rule the comment above `hueIndex` explains — "active" was never one of
+  // rule 4's four state hues in the first place (see this file's own
+  // TONE_CLASSES/file-header history: it replaced the old "info" tone
+  // specifically BECAUSE blue "info" was a de-facto FIFTH hue, not a real
+  // state — "active" already means "accent-derived, no real status", the
+  // exact shape a rainbow position is allowed to colour). ok/fail/warn/
+  // neutral are untouched by this gate and stay hue-immune. A real per-
+  // domain call site (Settings.tsx's TestConnectionButton/ReplicateNowButton/
+  // offsite-wizard-toggle, OffsiteTargetsSection's "Ziel hinzufügen") passes
+  // a genuine hueIndex on tone="active" buttons and was verified live with
+  // getComputedStyle: each domain's own background-color matches that
+  // domain's own RAINBOW[i], not a flat accent.
+  //   KNOWN LIMITATION carried over from index.css's own --accent-text
+  // comment, not newly introduced here: LIGHT theme's --accent-text is a
+  // STATIC #7a5c00 (not `var(--accent)`, unlike dark theme), and the
+  // [data-rainbow] .glim-hue rebind block never redeclares --accent-text —
+  // only --accent/--accent-soft/--color-accent* — so a hued tone="active"
+  // badge's BACKGROUND (bg-accentSoft -> --item-hue-soft) shifts per position
+  // in both themes, but its TEXT stays the flat, gold-calibrated
+  // --accent-text colour in light theme specifically. Real, but the same
+  // already-accepted class of gap index.css's own "warn/active read as the
+  // same amber" comment documents for this exact token — not a new hole this
+  // change opens, and background-colour alone is enough for the position to
+  // read as genuinely different per domain (verified live).
+  const hueOn = hueIndex !== undefined && (tone === "heading" || tone === "active");
   // A hue-enabled heading badge is always the notch treatment (badgeClassName's
   // own isHeadingNotch above gates the SAME tone==="heading" && size==="heading"
   // pair — every real call site already pairs them, see that comment) — but

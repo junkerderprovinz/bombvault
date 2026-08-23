@@ -168,7 +168,7 @@ const ro: Partial<Translations> = {
   "source.hint": "Restaurarea și ștergerea acționează doar asupra sursei selectate — ștergerea unui backup local nu atinge niciodată copia externă și invers.",
   "offsite.schedulePlaceholder": "gol = după fiecare backup · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replică acum",
-  "offsite.sectionTitle": "Protecție externă",
+  "offsite.copyDomainTitle": "Copie externă {domain}",
   "offsite.replicating": "Se replică…",
   "offsite.replicatingWithDuration": "Se replică… ({duration})",
   "offsite.replicatingSnapshotPercent": "Se replică instantaneul {index} din {total} ({percent}%)",

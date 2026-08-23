@@ -169,7 +169,7 @@ const fi: Partial<Translations> = {
   "source.hint": "Palautus ja poisto kohdistuvat vain valittuun lähteeseen — paikallisen varmuuskopion poisto ei koskaan vaikuta etäkopioon ja päinvastoin.",
   "offsite.schedulePlaceholder": "tyhjä = jokaisen varmuuskopion jälkeen · esim. weekly Sun 03:00",
   "offsite.replicateNow": "Replikoi nyt",
-  "offsite.sectionTitle": "Etäsuojaus",
+  "offsite.copyDomainTitle": "Etäkopio {domain}",
   "offsite.replicating": "Replikoidaan…",
   "offsite.replicatingWithDuration": "Replikoidaan… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replikoidaan snapshotia {index}/{total} ({percent} %)",

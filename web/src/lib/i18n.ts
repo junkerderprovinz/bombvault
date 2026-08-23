@@ -314,7 +314,18 @@ export const en = {
   // WHICH off-site copy to browse/restore from.
   "source.offsiteTarget": "Off-site target",
   "source.hint": "Restore and delete act on the selected source only — deleting a local backup never touches the off-site copy, and vice versa.",
-  "offsite.sectionTitle": "Off-site protection",
+  // jdp (live-review, offsite tab card split): "Können wir für Container, VMs,
+  // Flash, Ordner jeweils eine eigene Card machen? ... Titel dann jeweils
+  // OFFSITE-KOPIE CONTAINER, OFFSITE-KOPIE VMS, etc." — one templated key
+  // (not four discrete ones) reused across all four new per-domain Cards,
+  // {domain} filled in via .replace() at each call site with the SAME
+  // nav.containers/vms/flash/files label the row already showed before the
+  // split (see Settings.tsx's offsite-tab map) — matching this file's own
+  // `.replace("{x}", ...)` convention (settings.pathsHint, jobs.cadenceDaily,
+  // etc.) rather than translating "Containers"/"VMs"/"Flash"/"Folders" a
+  // second time across 26 locales. The group heading (offsite.sectionTitle)
+  // this replaces is now gone — see that call site's own comment for why.
+  "offsite.copyDomainTitle": "Off-site copy {domain}",
   "offsite.schedulePlaceholder": "blank = after each backup · e.g. weekly Sun 03:00",
   "offsite.replicateNow": "Replicate now",
   "offsite.replicateStarted": "Replication started - it runs in the background; the running indicator shows progress.",
@@ -1803,7 +1814,7 @@ export const de: Translations = {
   "source.offsite": "Offsite",
   "source.offsiteTarget": "Offsite-Ziel",
   "source.hint": "Restore und Löschen wirken nur auf die gewählte Quelle — ein lokales Backup zu löschen rührt die Offsite-Kopie nie an und umgekehrt.",
-  "offsite.sectionTitle": "Offsite-Schutz",
+  "offsite.copyDomainTitle": "Offsite-Kopie {domain}",
   "offsite.schedulePlaceholder": "leer = nach jedem Backup · z.B. weekly Sun 03:00",
   "offsite.replicateNow": "Jetzt replizieren",
   "offsite.replicateStarted": "Replikation gestartet - sie läuft im Hintergrund; der Laufindikator zeigt den Fortschritt.",

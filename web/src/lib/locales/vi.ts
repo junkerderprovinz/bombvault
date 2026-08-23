@@ -169,7 +169,7 @@ const vi: Partial<Translations> = {
   "source.hint": "Khôi phục và xóa chỉ tác động đến nguồn đã chọn — xóa bản sao lưu cục bộ không bao giờ ảnh hưởng đến bản sao ngoài site, và ngược lại.",
   "offsite.schedulePlaceholder": "trống = sau mỗi lần sao lưu · vd. weekly Sun 03:00",
   "offsite.replicateNow": "Sao chép ngay",
-  "offsite.sectionTitle": "Bảo vệ ngoài site",
+  "offsite.copyDomainTitle": "Bản sao ngoài site {domain}",
   "offsite.replicating": "Đang sao chép…",
   "offsite.replicatingWithDuration": "Đang sao chép… ({duration})",
   "offsite.replicatingSnapshotPercent": "Đang sao chép ảnh chụp nhanh {index}/{total} ({percent}%)",

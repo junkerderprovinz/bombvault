@@ -141,7 +141,27 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
   );
 }
 
-export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
+export function OffsiteTargetsSection({
+  domain,
+  t,
+  hueIndex,
+}: {
+  domain: Domain;
+  t: T;
+  /** Offsite-tab card-split follow-up (Settings.tsx, jdp: "Die Buttons
+   *  Verbindung testen, Jetzt replizieren, Einrichten, Ziel hinzufügen in
+   *  die Farbengine aufnehmen"): this section's own enclosing per-domain
+   *  offsite Card's hue position, threaded straight through to the "Ziel
+   *  hinzufügen" add-target button below — the SAME value that Card's own
+   *  heading notch already got, not a second independent one. Only that ONE
+   *  button qualifies: Edit/Remove/Test above operate on an EXISTING
+   *  target row and correctly keep their pre-existing neutral/fail tones
+   *  (rule 4 state-adjacent semantics — Remove is destructive, Test's
+   *  verdict is a toast, not the button's own colour), same as
+   *  TestConnectionButton/ReplicateNowButton stay `tone="active"` rather
+   *  than gaining a NEW status meaning. */
+  hueIndex?: number;
+}) {
   const { push } = useToast();
   const [targets, setTargets] = useState<OffsiteTarget[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -489,15 +509,24 @@ export function OffsiteTargetsSection({ domain, t }: { domain: Domain; t: T }) {
         </div>
       )}
 
-      {/* Add button (hidden while the editor is open) */}
+      {/* Add button (hidden while the editor is open). `tone="active"` +
+          `hueIndex` (offsite-tab card-split follow-up, see this component's
+          own hueIndex doc above): this used to be a plain raw <button>
+          (`bg-carbon-surface`, no hue), the one control jdp's ask named that
+          hadn't even been converted to the shared Badge yet — matches
+          TestConnectionButton/ReplicateNowButton/the Einrichten toggle's own
+          identical conversion in Settings.tsx. */}
       {!draft && (
-        <button
-          type="button"
+        <Badge
+          as="button"
+          tone="active"
+          size={ROW_BADGE_SIZE}
+          hueIndex={hueIndex}
           onClick={openNew}
-          className="self-start rounded-control bg-carbon-surface px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
+          className="self-start"
         >
           {t("offsite.targets.add")}
-        </button>
+        </Badge>
       )}
     </div>
   );

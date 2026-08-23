@@ -169,7 +169,7 @@ const da: Partial<Translations> = {
   "source.hint": "Gendannelse og sletning gælder kun den valgte kilde — at slette en lokal sikkerhedskopi rører aldrig den eksterne kopi, og omvendt.",
   "offsite.schedulePlaceholder": "tom = efter hver sikkerhedskopi · f.eks. weekly Sun 03:00",
   "offsite.replicateNow": "Replikér nu",
-  "offsite.sectionTitle": "Ekstern beskyttelse",
+  "offsite.copyDomainTitle": "Ekstern kopi {domain}",
   "offsite.replicating": "Replikerer…",
   "offsite.replicatingWithDuration": "Replikerer… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replikerer snapshot {index} af {total} ({percent}%)",

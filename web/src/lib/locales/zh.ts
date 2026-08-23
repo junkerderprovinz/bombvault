@@ -169,7 +169,7 @@ const zh: Partial<Translations> = {
   "source.hint": "恢复和删除仅作用于所选来源——删除本地备份绝不会影响异地副本，反之亦然。",
   "offsite.schedulePlaceholder": "留空 = 每次备份后 · 例：weekly Sun 03:00",
   "offsite.replicateNow": "立即复制",
-  "offsite.sectionTitle": "异地保护",
+  "offsite.copyDomainTitle": "异地副本 {domain}",
   "offsite.replicating": "复制中…",
   "offsite.replicatingWithDuration": "复制中…（{duration}）",
   "offsite.replicatingSnapshotPercent": "正在复制快照 {index}/{total}（{percent}%）",

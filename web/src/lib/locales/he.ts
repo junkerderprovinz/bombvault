@@ -169,7 +169,7 @@ const he: Partial<Translations> = {
   "source.hint": "שחזור ומחיקה פועלים רק על המקור הנבחר — מחיקת גיבוי מקומי לעולם לא נוגעת בעותק מחוץ לאתר, ולהפך.",
   "offsite.schedulePlaceholder": "ריק = אחרי כל גיבוי · לדוגמה weekly Sun 03:00",
   "offsite.replicateNow": "שכפל עכשיו",
-  "offsite.sectionTitle": "הגנה מחוץ לאתר",
+  "offsite.copyDomainTitle": "עותק מחוץ לאתר {domain}",
   "offsite.replicating": "משכפל…",
   "offsite.replicatingWithDuration": "משכפל… ({duration})",
   "offsite.replicatingSnapshotPercent": "משכפל תמונת מצב {index} מתוך {total} ({percent}%)",

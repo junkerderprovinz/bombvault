@@ -168,7 +168,7 @@ const no: Partial<Translations> = {
   "source.hint": "Gjenoppretting og sletting gjelder kun den valgte kilden — å slette en lokal sikkerhetskopi rører aldri den eksterne kopien, og omvendt.",
   "offsite.schedulePlaceholder": "tom = etter hver sikkerhetskopi · f.eks. weekly Sun 03:00",
   "offsite.replicateNow": "Replikér nå",
-  "offsite.sectionTitle": "Ekstern beskyttelse",
+  "offsite.copyDomainTitle": "Ekstern kopi {domain}",
   "offsite.replicating": "Replikerer…",
   "offsite.replicatingWithDuration": "Replikerer… ({duration})",
   "offsite.replicatingSnapshotPercent": "Replikerer snapshot {index} av {total} ({percent} %)",

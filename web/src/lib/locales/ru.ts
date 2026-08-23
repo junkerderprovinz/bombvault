@@ -166,7 +166,7 @@ const ru: Partial<Translations> = {
   "source.hint": "Восстановление и удаление действуют только на выбранный источник — удаление локального бэкапа никогда не затрагивает внешнюю копию, и наоборот.",
   "offsite.schedulePlaceholder": "пусто = после каждого бэкапа · напр. weekly Sun 03:00",
   "offsite.replicateNow": "Реплицировать сейчас",
-  "offsite.sectionTitle": "Внешняя защита",
+  "offsite.copyDomainTitle": "Внешняя копия {domain}",
   "offsite.replicating": "Репликация…",
   "offsite.replicatingWithDuration": "Репликация… ({duration})",
   "offsite.replicatingSnapshotPercent": "Репликация снимка {index} из {total} ({percent}%)",

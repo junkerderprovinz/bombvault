@@ -380,11 +380,36 @@ describe("Badge — hueIndex (rainbow position) and the card-wide reactive-hover
     expect(cls).not.toContain("glim-notch-hue");
   });
 
-  it("hueIndex is silently ignored for any non-heading tone — no glim-hue, no glim-notch-hue", () => {
-    const el = root(Badge({ children: "x", tone: "ok", size: "medium", hueIndex: 2 }));
+  it("hueIndex is silently ignored for any real state tone (ok/fail/warn/neutral) — no glim-hue, no glim-notch-hue", () => {
+    for (const tone of ["ok", "fail", "warn", "neutral"] as BadgeTone[]) {
+      const cls = root(Badge({ children: "x", tone, size: "medium", hueIndex: 2 })).props!.className as string;
+      expect(cls).not.toContain("glim-hue");
+      expect(cls).not.toContain("glim-notch-hue");
+    }
+  });
+
+  // offsite-tab card-split follow-up (jdp: "Die Buttons Verbindung testen,
+  // Jetzt replizieren, Einrichten, Ziel hinzufügen in die Farbengine
+  // aufnehmen"): tone="active" is accent-derived (bg-accentSoft/
+  // text-accentText), never one of rule 4's four state hues, so it is the
+  // one other tone `hueIndex` is allowed to drive — see Badge()'s own
+  // `hueOn` comment for the full reasoning.
+  it("hueIndex DOES drive tone=\"active\" — the one other accent-derived (non-state) tone", () => {
+    const el = root(Badge({ children: "x", tone: "active", size: "medium", hueIndex: 3 }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("glim-hue");
+  });
+
+  it("a hueIndex'd tone=\"active\" badge never picks up the card-notch-only glim-notch-hue marker (only a real heading NOTCH gets that)", () => {
+    const el = root(Badge({ children: "x", tone: "active", size: "medium", hueIndex: 3 }));
+    const cls = el.props!.className as string;
+    expect(cls).not.toContain("glim-notch-hue");
+  });
+
+  it("omitting hueIndex on tone=\"active\" renders the flat, un-rainbowed accent-soft wash (no glim-hue)", () => {
+    const el = root(Badge({ children: "x", tone: "active", size: "medium" }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("glim-hue");
-    expect(cls).not.toContain("glim-notch-hue");
   });
 
   it("a hueIndex'd heading badge at a non-heading size gets the general glim-hue but NOT the card-wide glim-notch-hue marker (it isn't the notch treatment, so it must not opt into the card-wide reveal)", () => {

@@ -741,7 +741,7 @@ function ForeignRestoreCard({
     <div className="flex flex-col gap-5 border-t border-carbon-border pt-5 mt-2">
       <div>
         {/* Task 5 (rule 11): page-level group heading, same Badge-in-<h2>
-            treatment as Settings.tsx's offsite.sectionTitle heading.
+            treatment as Containers.tsx's StacksPanel `stack.title` heading.
             GlimStone follow-up pass ("half-overlap card notch"): `relative`
             added directly on this <h2> — no padding wraps it, so the h2
             itself is the right anchor; see Badge.tsx's badgeClassName
