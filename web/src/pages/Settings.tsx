@@ -4787,47 +4787,94 @@ const TAB_ORDER: TabKey[] = [
 // IconTabOffsite's cloud), a line glyph becomes a filled polygon (rule 219,
 // the shield's checkmark), and a structural detail that has to stay thin
 // (a switch track, a clock's hand, a slider's track) becomes a thin filled
-// shape instead of a stroke (rule 220) — several already used the
-// `var(--carbon-surface, ...)` cutout-circle trick for a knob and keep it,
-// since that part was never a stroke to begin with.
+// shape instead of a stroke (rule 220).
+//
+// REGRESSION FIX (jdp, live review — "die Icons der Einstellungstabs sind,
+// wenn sie ausgewählt sind, bei manchen nicht mehr erkennbar"): that first
+// redraw pass gave the "knob"/"hand"/"checkmark" detail on four of these
+// seven (General, Schedules, Integrity, System) a SECOND colour —
+// `fill="var(--carbon-surface, transparent)"` painted on top of the
+// silhouette, standing in for what used to be a stroke's own natural gap.
+// Verified live (Playwright, both themes, idle+selected, real running
+// container build): that second colour is a fixed, THEME-scoped token,
+// while the badge's own ink when SELECTED is `text-accentContrast` — a
+// value derived from the accent colour alone, constant across both themes.
+// In light theme the pairing (near-black ink, white surface) contrasts
+// fine; in dark theme `--carbon-surface` is `#262626`, which sits right
+// next to that same near-black `#161616` ink (measured contrast ratio
+// ≈1.16:1 — nowhere near WCAG's 3:1 floor for a graphical detail) — the
+// knob/hand/checkmark all but disappear into the icon's own fill the
+// instant one of these four tabs is SELECTED in dark theme. Confirmed this
+// never regressed Offsite/Notifications: neither ever used a second fill at
+// all (a closed silhouette and a small solid tab, respectively).
+//
+// FIXED at the geometry level, not by picking a new hardcoded colour (a
+// different literal would just move the same coincidence to some other
+// accent/theme pairing later): each detail is now cut as REAL negative
+// space — one compound `<path fill-rule="evenodd">` per icon, silhouette
+// subpath plus detail subpath, so the "hole" is true transparency showing
+// whatever the badge's own live background actually is. That background is
+// by construction already the one thing this icon's `currentColor` ink is
+// chosen to contrast against (bg-accent + text-accentContrast when
+// selected, bg-carbon-surface2 + text-carbon-textSub when idle), so the cut
+// reads clearly in every theme/state/hue this control can ever carry —
+// including every rainbow-mode accent, not just the yellow default — with
+// no second token to fall out of sync again.
 function IconTabGeneral() {
   // Two stacked switches — the domain on/off toggles this tab actually holds.
-  // The rounded track is now a solid filled pill (was a stroked outline);
-  // the knob keeps its existing surface-colour cutout circle, now punched
-  // into a filled track instead of a hollow one, same toggle-switch reading.
+  // Each pill + its knob is one evenodd path: the knob is a real cut-out,
+  // not a second painted colour (see the fix note above this section).
   return (
     <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <rect x="1" y="3" width="10" height="4" rx="2" />
-      <circle cx="8" cy="5" r="1.15" fill="var(--carbon-surface, transparent)" />
-      <rect x="5" y="9" width="10" height="4" rx="2" />
-      <circle cx="8" cy="11" r="1.15" fill="var(--carbon-surface, transparent)" />
+      <path
+        fillRule="evenodd"
+        d="M3,3 H9 A2,2 0 0 1 9,7 H3 A2,2 0 0 1 3,3 Z M9.15,5 A1.15,1.15 0 1 0 6.85,5 A1.15,1.15 0 1 0 9.15,5 Z M7,9 H13 A2,2 0 0 1 13,13 H7 A2,2 0 0 1 7,9 Z M9.15,11 A1.15,1.15 0 1 0 6.85,11 A1.15,1.15 0 1 0 9.15,11 Z"
+      />
     </svg>
   );
 }
 
 function IconTabStorage() {
-  // A drive/disk stack — backup storage paths. One filled cylinder silhouette
-  // (top ellipse arced straight into a rounded-bottom body) — the old middle
-  // divider line is dropped rather than faked as a cutout, same "don't cram
-  // in every decorative stroke line" call as Sidebar.tsx's own IconReceiver.
+  // A drive/disk stack — backup storage paths. REDESIGNED (jdp, live review,
+  // same "unrecognizable when selected" report — this one was the odd one
+  // out: unlike the other four, it never used a second colour at all, and
+  // was still illegible in EVERY theme/state, selected or not). The a8eaa40
+  // redraw flipped the old stroke's ellipse-top + two-line-body directly to
+  // a single filled silhouette (a top semi-ellipse arced straight into a
+  // bottom semi-ellipse, no seam) — as a flat, single-colour fill that
+  // reads as a plain rounded blob with no internal structure at all, the
+  // one visual cue that actually says "disk/cylinder" (a visible rim
+  // separating the cap from the body) was lost entirely once the stroke's
+  // own line-work disappeared. Rebuilt as two shapes: a plain filled body
+  // (straight sides, curved visible-front bottom) UNDER a full top ellipse
+  // that carries its own thin evenodd cut across its middle — a real seam,
+  // not a second colour — so the cap reads as a distinct disk lid instead
+  // of merging into one shapeless silhouette, in every theme/state/hue.
   return (
     <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M2 4a6 2.2 0 1 0 12 0v7a6 2.2 0 0 1 -12 0Z" />
+      <path d="M2,4 V11 A6,2.2 0 0 0 14,11 V4 Z" />
+      <path
+        fillRule="evenodd"
+        d="M8,1.8 A6,2.2 0 0 1 14,4 A6,2.2 0 0 1 8,6.2 A6,2.2 0 0 1 2,4 A6,2.2 0 0 1 8,1.8 Z M2.6,3.5 H13.4 V3.9 H2.6 Z"
+      />
     </svg>
   );
 }
 
 function IconTabSchedules() {
-  // A clock — cadence/timing. Solid dial + the hands punched out in the
-  // surface colour (rule 220's own named example — "a clock's hands...
-  // renders as a thin filled shape", here a thin surface-coloured cutout
-  // rather than a second currentColor fill, same knob technique as
-  // IconTabGeneral/IconTabSystem's own cutouts above/below).
+  // A clock — cadence/timing. Dial + both hands as one evenodd path — the
+  // hands are a real cut-out, not a second painted colour (see the fix note
+  // above this section). Sharp-edged (not rounded-cap) hands: a deliberate
+  // simplification over the old cutout's rounded rects, made so the
+  // diagonal hour hand's four corners are exact rotated points instead of
+  // needing rotated arc math — verified live, reads identically at this
+  // icon's actual 15px size.
   return (
     <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <circle cx="8" cy="8" r="6.2" />
-      <rect x="7.35" y="4.5" width="1.3" height="3.6" rx="0.6" fill="var(--carbon-surface, transparent)" />
-      <rect x="7.55" y="8.25" width="3.9" height="1.3" rx="0.6" fill="var(--carbon-surface, transparent)" transform="rotate(31 9.5 8.9)" />
+      <path
+        fillRule="evenodd"
+        d="M14.2,8 A6.2,6.2 0 1 0 1.8,8 A6.2,6.2 0 1 0 14.2,8 Z M7.35,4.5 H8.65 V8.1 H7.35 Z M8.163,7.339 L11.506,9.347 L10.837,10.462 L7.494,8.453 Z"
+      />
     </svg>
   );
 }
@@ -4856,18 +4903,15 @@ function IconTabNotifications() {
 }
 
 function IconTabIntegrity() {
-  // A checked shield — repo/backup integrity checks. The shield body was
-  // already a closed silhouette (rule 218 — direct flip). The checkmark
-  // inside it was an open stroke line (rule 219) — redrawn as a filled
-  // check polygon, cut out of the shield in the surface colour so it reads
-  // against the solid shield the same way the old stroke read against the
-  // outline.
+  // A checked shield — repo/backup integrity checks. Shield + checkmark as
+  // one evenodd path — the checkmark is a real cut-out, not a second
+  // painted colour (see the fix note above this section); same check
+  // polygon coordinates as before, now subtracted instead of painted over.
   return (
     <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z" />
       <path
-        d="M5.2 7.85 6.9 9.55 10.55 5.6 11.65 6.6 7.15 11.5 4.15 8.5Z"
-        fill="var(--carbon-surface, transparent)"
+        fillRule="evenodd"
+        d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z M5.2 7.85 6.9 9.55 10.55 5.6 11.65 6.6 7.15 11.5 4.15 8.5Z"
       />
     </svg>
   );
@@ -4877,16 +4921,15 @@ function IconTabSystem() {
   // Sliders — system/advanced/SSH knobs. Distinct from IconTabGeneral's
   // rounded toggle switches (a discrete on/off pair) — these are inline
   // continuous sliders, matching Sidebar.tsx's own IconConfig-vs-IconSettings
-  // "deliberately distinct so the two never read alike" precedent. Same
-  // filled-track-with-cutout-knob technique as Sidebar.tsx's own IconConfig
-  // (and this file's own IconTabGeneral above) — each track is now one solid
-  // filled bar instead of two stroked segments broken around the knob.
+  // "deliberately distinct so the two never read alike" precedent. Each
+  // track + its knob is one evenodd path — the knob is a real cut-out, not
+  // a second painted colour (see the fix note above this section).
   return (
     <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <rect x="2" y="4.35" width="12" height="1.3" rx="0.65" />
-      <rect x="2" y="10.35" width="12" height="1.3" rx="0.65" />
-      <circle cx="8.5" cy="5" r="1.4" fill="var(--carbon-surface, transparent)" />
-      <circle cx="5" cy="11" r="1.4" fill="var(--carbon-surface, transparent)" />
+      <path
+        fillRule="evenodd"
+        d="M2.65,4.35 H13.35 A0.65,0.65 0 0 1 13.35,5.65 H2.65 A0.65,0.65 0 0 1 2.65,4.35 Z M9.9,5 A1.4,1.4 0 1 0 7.1,5 A1.4,1.4 0 1 0 9.9,5 Z M2.65,10.35 H13.35 A0.65,0.65 0 0 1 13.35,11.65 H2.65 A0.65,0.65 0 0 1 2.65,10.35 Z M6.4,11 A1.4,1.4 0 1 0 3.6,11 A1.4,1.4 0 1 0 6.4,11 Z"
+      />
     </svg>
   );
 }
