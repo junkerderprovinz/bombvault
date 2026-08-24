@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// i18n — React Context-based, 26 locales, flag switcher support
+// i18n — React Context-based, 42 locales, flag switcher support
 // ---------------------------------------------------------------------------
 
 import { createContext, useContext, useState, useCallback } from "react";
@@ -31,6 +31,22 @@ import ar from "./locales/ar";
 import he from "./locales/he";
 import th from "./locales/th";
 import vi from "./locales/vi";
+import bg from "./locales/bg";
+import sk from "./locales/sk";
+import sl from "./locales/sl";
+import hr from "./locales/hr";
+import sr from "./locales/sr";
+import lt from "./locales/lt";
+import lv from "./locales/lv";
+import et from "./locales/et";
+import is from "./locales/is";
+import ca from "./locales/ca";
+import gl from "./locales/gl";
+import eu from "./locales/eu";
+import id from "./locales/id";
+import ms from "./locales/ms";
+import hi from "./locales/hi";
+import fa from "./locales/fa";
 
 // ---------------------------------------------------------------------------
 // Translation key set — en is the source of truth
@@ -2963,8 +2979,8 @@ export const de: Translations = {
 };
 
 // ---------------------------------------------------------------------------
-// Locale registry — 26 languages. Only en + de are fully translated;
-// all others stub to English (full translations are a separate backlog item).
+// Locale registry — 42 languages, all fully translated (en is the source of
+// truth; every other table is checked against it by i18n.parity.test.ts).
 // ---------------------------------------------------------------------------
 
 export interface Language {
@@ -3005,6 +3021,24 @@ export const LANGUAGES: Language[] = [
   { code: "he", label: "עברית",         flag: "il", rtl: true },
   { code: "th", label: "ไทย",           flag: "th" },
   { code: "vi", label: "Tiếng Việt",   flag: "vn" },
+  { code: "bg", label: "Български",    flag: "bg" },
+  { code: "sk", label: "Slovenčina",   flag: "sk" },
+  { code: "sl", label: "Slovenščina",  flag: "si" },
+  { code: "hr", label: "Hrvatski",     flag: "hr" },
+  { code: "sr", label: "Српски",       flag: "rs" },
+  { code: "lt", label: "Lietuvių",     flag: "lt" },
+  { code: "lv", label: "Latviešu",     flag: "lv" },
+  { code: "et", label: "Eesti",        flag: "ee" },
+  { code: "is", label: "Íslenska",     flag: "is" },
+  // The three languages of Spain get their own regional flags rather than three
+  // identical Spanish ones, which would make the menu unreadable at a glance.
+  { code: "ca", label: "Català",       flag: "es-ct" },
+  { code: "gl", label: "Galego",       flag: "es-ga" },
+  { code: "eu", label: "Euskara",      flag: "es-pv" },
+  { code: "id", label: "Bahasa Indonesia", flag: "id" },
+  { code: "ms", label: "Bahasa Melayu",flag: "my" },
+  { code: "hi", label: "हिन्दी",         flag: "in" },
+  { code: "fa", label: "فارسی",         flag: "ir", rtl: true },
 ];
 
 export const SUPPORTED = LANGUAGES.map((l) => l.code);
@@ -3020,10 +3054,10 @@ const STORAGE_KEY = "bv-lang";
 export const isRtl = (code: string): boolean =>
   LANGUAGES.find((l) => l.code === code)?.rtl ?? false;
 
-// Translated locales. en + de live inline above; the other 24 are imported from
+// Translated locales. en + de live inline above; the other 40 are imported from
 // ./locales/<code>.ts (each typed as Translations, so a missing/renamed key
 // fails the build). Any locale still absent from this map falls back to English.
-// en + de are the complete source of truth; the other 24 are Partial and fall
+// en + de are the complete source of truth; the other 40 are Partial and fall
 // back to en at runtime for any missing key (see the t() lookup).
 // (exported so the locale-parity test can iterate the full registry)
 export const locales: Record<string, Partial<Translations>> = {
@@ -3053,6 +3087,22 @@ export const locales: Record<string, Partial<Translations>> = {
   he,
   th,
   vi,
+  bg,
+  sk,
+  sl,
+  hr,
+  sr,
+  lt,
+  lv,
+  et,
+  is,
+  ca,
+  gl,
+  eu,
+  id,
+  ms,
+  hi,
+  fa,
 };
 
 /** Resolve a raw locale code to one offered in the switcher (else the default). */

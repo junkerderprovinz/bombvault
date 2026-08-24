@@ -88,4 +88,4 @@ BombVault is simple by default and deep when you need it. The interface shows on
 - **What's new after an update.** Release notes pop up once per new version, served from notes embedded in the binary, so the dialog works offline.
 - **HTTPS out of the box** (self-signed, or bring your own cert behind a reverse proxy).
 - **Docker healthcheck.** The container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool can restart it if the engine ever wedges.
-- **Dark/light UI in 26 languages** with a flag picker.
+- **Dark/light UI in 42 languages** with a flag picker.
