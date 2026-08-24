@@ -689,15 +689,37 @@ function AccentPresetSwatch({
 // Akzentfarbe und Regenbogenmodus in eine mergen. Gehört ja zusammen") —
 // this now returns just its own body content, composed inside the shared
 // "settings.colors" Card alongside the Rainbow controls at that Card's own
-// call site in SettingsPage. `hueIndex` is gone from the signature too: it
+// call site in SettingsPage. `hueIndex` LEFT the signature at that merge (it
 // used to be threaded straight through to this component's own Card, which
-// no longer exists here — the merged Card's single heading notch owns that
-// position now. Settings.accentCard.dom.test.tsx renders this standalone
-// (`<AccentCard t={t} />`, no wrapping Card) and only ever asserted against
-// the preset buttons/dialogs inside, never the old Card chrome, so it keeps
-// passing unchanged.
+// no longer exists here) and CAME BACK in the icon-badge convention round:
+// the merged Card's single heading notch still owns the notch position, but
+// this component's own preset-reset Badge now needs that SAME Card's hue too
+// (see this function's own `hueIndex` param doc below), so the prop is
+// required again — for a different reason than before, not a straight
+// revert. Settings.accentCard.dom.test.tsx renders this standalone
+// (`<AccentCard t={t} hueIndex={0} />`, no wrapping Card) and only ever
+// asserted against the preset buttons/dialogs inside, never the old Card
+// chrome or the hue value itself, so it keeps passing unchanged with any
+// fixed hueIndex.
 // ---------------------------------------------------------------------------
-export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
+export function AccentCard({
+  t,
+  hueIndex,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  /** The enclosing merged "settings.colors" Card's own `nextHue()` value —
+   *  threaded straight through from that Card's call site (an IIFE-captured
+   *  `hueIdx`, the same one-call-feeds-several-children shape the
+   *  schedulesSelfBackup Card above already uses for its own Card+child
+   *  pair) so the preset-reset Badge below can carry a genuine hueIndex that
+   *  MATCHES its enclosing Card's own hue, per icon-badge convention (every
+   *  icon-only badge conversion gets real colour-engine integration, not
+   *  just a shape change) — rather than either inventing its own separate
+   *  `nextHue()` position (which would burn a hue slot never spent on any
+   *  visible Card notch) or staying hue-immune (the exact "self-authored
+   *  aesthetic exception" jdp's standing rainbow rule forbids). */
+  hueIndex: number;
+}) {
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
   const [presets, setPresets] = useState<string[]>(() => getAccentPresets());
 
@@ -720,54 +742,41 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      {/* Row label (jdp, live-review: "Bei der Akzentfarben-Zeile soll
-          'Akzentfarbe' stehen und dann der Farbpicker kommen, dann die
-          Voreinstellungen") — reuses settings.accentColor rather than a new
-          key: that string already exists (it was ONLY the swatch's
-          aria-label/title below, never visible text), and "Accent colour" /
-          "Akzentfarbe" is exactly the row-opening label jdp asked for, so a
-          second key with the same text would just be a parity-test-passing
-          duplicate. Same "muted label + trailing colon" look the
-          "Voreinstellungen:" caption a few pixels to its right already uses
-          in this very row (and settings.schedule elsewhere in this file) —
-          the colon is appended here, not baked into the shared key, because
-          settings.accentColor is ALSO read bare (no colon) as that caption's
-          own aria-label/title. */}
-      {/* Live-review round 5 (jdp: "Akzentfarbe und Farbpalette bitte normal
-          formatieren, wie der Text von Regenbogen-Modus") — this caption used
-          to borrow the small/muted "Voreinstellungen:" look from the preset
-          label beside it (see this block's own header comment above), but
-          jdp compared it against the master "Regenbogen-Modus" ToggleRow's
-          plain label right below in the same merged Card and wants the same
-          plain look here too. Copies that label's own literal classes
-          (`text-sm text-carbon-text`, see ToggleRow's render above) instead
-          of inventing a third style — same font-size/weight/colour token as
-          every other row-opening label in this Card now. */}
-      <span className="text-sm text-carbon-text">{t("settings.accentColor")}:</span>
-      {/* Custom-colour trigger — a flat swatch, same size/shape as the
-          preset swatches beside it (design-language.md, "The user-owned
-          axes" > Accent: every custom colour value gets the SAME
-          trigger). Opens the shared GlimStone picker popover instead of
-          a native <input type="color"> — see ColorPickerPopover.tsx's
-          own header comment for why (jdp: "kein eigenes Fenster welches
-          sich öffnet" — no separate window opening). */}
-      <ColorPickerSwatch
-        value={accentHex}
-        onChange={selectAccent}
-        label={t("settings.accentColor")}
-        className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
-      />
-      {/* Preset swatches — `ms-auto` (jdp, live-review: "Die Farbfelder
-          sollen in der Card ganz rechts sein, also rechtsbündig") pushes
-          this whole label+swatches+reset group to the row's own far right,
-          flush with the outer Card's own end edge, leaving the
-          "Akzentfarbe:" caption + custom-colour swatch at the row's start.
-          Same idiom this app already uses everywhere else for "push this
-          to the far right of its flex row" (e.g. Containers.tsx/Fleet.tsx's
-          own trailing metadata, and this file's own rainbow-reset-badge
-          history a few hundred lines below) — no new positioning mechanism
-          invented for this one row. */}
+      {/* Row label — bare now, no trailing colon (jdp, live-review: "Der
+          Doppelpunkt nach Akzentfarbe und Farbpalette weg"). The colon was
+          only ever appended here in JSX, never baked into the
+          settings.accentColor string itself (that string is ALSO read bare,
+          with no colon, as the swatch's own aria-label/title below — see
+          this key's history a few rounds back) — checked across all 42
+          locales, none bakes a colon into the translated text either, so
+          dropping the literal ":" here is the complete, single-source fix. */}
+      <span className="text-sm text-carbon-text">{t("settings.accentColor")}</span>
+      {/* EVERYTHING else on this row — custom-colour swatch, presets, both
+          resets — is now ONE right-aligned group (jdp, live-review: "Das
+          Akzentfarbeauswahlfeld auch nach rechts"). A prior round's `ms-auto`
+          only wrapped the presets+reset sub-group, leaving this
+          ColorPickerSwatch behind at the row's start next to the label; jdp
+          reviewed that live and wants the swatch pulled into the same
+          right-aligned cluster, not left as the one holdout. Same `ms-auto`
+          idiom this app already uses everywhere else for "push this to the
+          row's own far right" (Containers.tsx/Fleet.tsx's own trailing
+          metadata, and the rainbow-reset-badge row a few hundred lines
+          below) — the wrapper just moved up to include one more child,
+          nothing new invented. */}
       <div className="flex items-center gap-2 flex-wrap ms-auto">
+        {/* Custom-colour trigger — a flat swatch, same size/shape as the
+            preset swatches beside it (design-language.md, "The user-owned
+            axes" > Accent: every custom colour value gets the SAME
+            trigger). Opens the shared GlimStone picker popover instead of
+            a native <input type="color"> — see ColorPickerPopover.tsx's
+            own header comment for why (jdp: "kein eigenes Fenster welches
+            sich öffnet" — no separate window opening). */}
+        <ColorPickerSwatch
+          value={accentHex}
+          onChange={selectAccent}
+          label={t("settings.accentColor")}
+          className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
+        />
         <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
         {presets.map((hex, i) => (
           <AccentPresetSwatch
@@ -785,33 +794,40 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             below (that one resets accentHex to DEFAULT_ACCENT; this one
             resets the presets array to DEFAULT_ACCENT_PRESETS). Row-level,
             not per-preset — see this component's own header comment.
-              RE-VERIFIED (jdp, live-review: "Das Zurücksetzen der
-            Akzentfarben-Voreinstellungen soll auch ein quadratischer Badge
-            mit Glyph sein wie bei der Regenbogenfarbpalette") — jdp's own
-            wording called the reference "quadratisch" (square), but the
-            actual live Rainbow-palette reset a few hundred lines below
-            (same file, "settings.colors" Card) measures as a genuine CIRCLE
-            today (getComputedStyle against the deployed container:
-            28×28px, border-radius 9999px — Badge's own `shape="circle"` +
-            `size="icon"`), not a square — verified live rather than trusted
-            from jdp's description or this comment's own prior wording, per
-            this round's explicit instruction to check the real rendered
-            shape before treating it as the reference. This Badge already
-            uses that exact same `shape="circle" size="icon"` pairing (and
-            the identical `IconResetSwirl` glyph) — confirmed live to
-            already be pixel-identical to the Rainbow reset (same 28×28
-            footprint, same border-radius, same class list) — so no shape
-            change was needed here; this note exists so a future reader
-            sees that the match was checked and holds, not skipped. */}
+              SQUARE now, not circle (jdp, live-review, overriding a prior
+            round's explicit "verified pixel-identical circle, no change
+            needed" conclusion: "Die Zurücksetzen-Option soll ein
+            quadratischer Badge mit Glyph sein" — a deliberate departure
+            from the established circular reset treatment, not a
+            correction of a bug). `shape="square"` still resolves through
+            `rounded-control` (the shape engine's own live token — see
+            Badge.tsx's BadgeShape doc), so this genuinely reads
+            round/soft/square per the user's own shape-engine choice, not a
+            hardcoded corner.
+              tone="active" + hueIndex (icon-badge convention, jdp's newest
+            standing rule: every icon-only badge conversion/touch
+            automatically gets real colour-engine integration, never left
+            hue-immune) — hueIndex is this component's own enclosing
+            "settings.colors" Card's hue, threaded in via the `hueIndex`
+            prop above, so this reset badge's fill matches the very Card
+            it lives in rather than either a flat neutral grey or an
+            invented hue of its own.
+              tip (not title/ariaLabel) — same convention: an icon-only
+            trigger gets IconTipButton's real hover/focus bubble, not a
+            silent native title balloon. Carries the exact text this button
+            showed before it became icon-only (settings.accentPresetsReset,
+            unchanged). Kept identical to the rainbow-palette reset badge
+            below in shape/tone/size/glyph — the established "these two
+            mirror each other" pairing, now sharing the same hue too. */}
         {!presetsAreDefault && (
           <Badge
             as="button"
-            shape="circle"
+            shape="square"
             size="icon"
-            tone="neutral"
+            tone="active"
+            hueIndex={hueIndex}
             onClick={() => setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS))}
-            title={t("settings.accentPresetsReset")}
-            ariaLabel={t("settings.accentPresetsReset")}
+            tip={t("settings.accentPresetsReset")}
           >
             <IconResetSwirl />
           </Badge>
@@ -8342,10 +8358,24 @@ export function SettingsPage() {
           deliberately NOT a consumer (Sidebar.tsx carries the reasoning), so
           flipping this switch never changes the rail's own colours.
             The master toggle's own hueIndex/hint fixes are documented right
-          on that ToggleRow below — see its own comment for both. */}
-      {tab === "general" && (
-      <Card title={t("settings.colors")} hueIndex={nextHue()}>
-        <AccentCard t={t} />
+          on that ToggleRow below — see its own comment for both.
+            IIFE-captured `hueIdx` (icon-badge convention follow-up round):
+          this Card's own two reset Badges (the accent-preset reset inside
+          AccentCard below, and the rainbow-palette reset further down) now
+          need a genuine hueIndex of their own — a bare inline
+          `hueIndex={nextHue()}` on the Card can't also feed those two
+          children the SAME value without burning two extra hue positions
+          nothing else would ever render, the identical reason the
+          schedulesSelfBackup Card (Card+CadenceBuilder) and every offsite
+          per-domain Card (Card+TestConnectionButton+ReplicateNowButton+
+          Einrichten-Badge) above already capture their own `hueIdx` once
+          and thread it to every hue-aware child instead of calling
+          `nextHue()` again per child. */}
+      {tab === "general" && (() => {
+      const hueIdx = nextHue();
+      return (
+      <Card title={t("settings.colors")} hueIndex={hueIdx}>
+        <AccentCard t={t} hueIndex={hueIdx} />
         <div className="flex flex-col gap-3">
           {/* hueIndex 0/1/2 (jdp, live-review, extremely emphatic — "auch
               nicht die Toggles der Regenbogen-Card! ... Es soll immer alles
@@ -8431,19 +8461,22 @@ export function SettingsPage() {
               ("Palette colour") stays a per-swatch aria-label only, unchanged;
               this new settings.rainbowPaletteLabel ("Colour palette") is a
               standalone row-opening label, matching how the Accent row right
-              above it now opens with its own "Akzentfarbe:" caption before
-              its controls — same muted-text-plus-colon look, same "label
-              first" ordering, so the two rows in this merged Card read as one
-              consistent pair rather than the swatch row being the odd one
-              out again. */}
+              above it now opens with its own "Akzentfarbe" caption before
+              its controls — same "label first" ordering, so the two rows in
+              this merged Card read as one consistent pair rather than the
+              swatch row being the odd one out again.
+                Label now bare, no trailing colon (jdp, live-review: "Der
+              Doppelpunkt nach Akzentfarbe und Farbpalette weg") — the colon
+              was appended in JSX only, never in the translated string (all
+              42 locales checked), so removing it here is the whole fix.
+                Swatches+reset now right-aligned as their own `ms-auto` group
+              (jdp, live-review: "Die Farbfelder der Farbpalette auch ganz
+              nach rechts verschieben"), matching the Accent row's own
+              identical right-alignment right above — the label stays at the
+              row's start, everything clickable moves to the row's end. */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Live-review round 5, same correction as the Accent Card's own
-                caption above (jdp: "Akzentfarbe und Farbpalette bitte normal
-                formatieren, wie der Text von Regenbogen-Modus") — was the
-                muted/small "Voreinstellungen:"-style caption, now the same
-                plain `text-sm text-carbon-text` the master Regenbogen-Modus
-                ToggleRow's own label renders with. */}
-            <span className="text-sm text-carbon-text">{t("settings.rainbowPaletteLabel")}:</span>
+            <span className="text-sm text-carbon-text">{t("settings.rainbowPaletteLabel")}</span>
+            <div className="flex items-center gap-2 flex-wrap ms-auto">
             {rainbow.palette.map((hex, i) => (
               <PaletteSwatch
                 key={i}
@@ -8460,46 +8493,48 @@ export function SettingsPage() {
             ))}
             {/* Live-review round 3, point 3: was a plain text "Reset" button.
                 Now a Badge, matching this row's own established "everything
-                clickable is a badge" convention (Task 5 rule 13) — the first
-                live use of shape="circle" (previously type-only; see
-                Badge.tsx's BadgeShape comment), sized via the new `icon`
-                stage to land on the exact same 28px (h-7 w-7) footprint as
-                the PaletteSwatch circles it sits beside, so it reads as part
-                of the same row of controls rather than a mismatched
-                afterthought.
-                  `ms-auto` (pushing it to the row's own far right, flush
-                with the ToggleRow switches above) is GONE again — a later
-                live-review round (this one) asked it back next to swatch 8
-                instead: jdp reviewed the far-right placement live and wants
-                the reset control reading as "the next control in the same
-                row of colours," not stranded at the row's opposite edge with
-                a gap nothing else explains. With no `ms-auto` (and no other
-                margin/justify override), this Badge is just the next child
-                in the same `flex items-center gap-2` row as the 8 swatches
-                above, so the shared `gap-2` places it immediately after the
-                8th swatch — the same spacing every swatch already keeps from
-                its own neighbour, no special-cased gap needed. Icon-only, so
-                `title`+`ariaLabel` both carry common.reset ("Reset"/
-                "Zurücksetzen"/…) as the accessible name and native hover
-                tooltip — same generic reset wording the Accent Card's own
-                (text) reset button above already uses for the identical
-                action on a sibling swatch row. */}
+                clickable is a badge" convention (Task 5 rule 13), sized via
+                the `icon` stage to land on the exact same 28px (h-7 w-7)
+                footprint as the PaletteSwatch circles it sits beside, so it
+                reads as part of the same row of controls rather than a
+                mismatched afterthought.
+                  SQUARE now, not circle (jdp, live-review, overriding a
+                prior round's "verified pixel-identical circle, correct as
+                is" conclusion on this Badge's own AccentCard mirror: "Die
+                Zurücksetzen-Option soll ein quadratischer Badge mit Glyph
+                sein" — deliberate, not a bugfix) — `shape="square"` still
+                resolves through `rounded-control`, the shape engine's own
+                live token, so this genuinely tracks round/soft/square.
+                  tone="active" + hueIndex={hueIdx} (icon-badge convention:
+                every icon-only badge conversion/touch gets real
+                colour-engine integration) — the SAME hueIdx this Card's own
+                heading notch and AccentCard's mirror reset badge both carry,
+                so all three read as one coherent hue, not three independent
+                positions.
+                  tip (not title/ariaLabel) — IconTipButton's real hover/
+                focus bubble, carrying the exact common.reset text this badge
+                showed as a plain button before Task 5 rule 13 converted it.
+                Kept shape/tone/size/glyph/hue identical to the AccentCard
+                mirror above — the established "these two mirror each
+                other" pairing. */}
             <Badge
               as="button"
-              shape="circle"
+              shape="square"
               size="icon"
-              tone="neutral"
+              tone="active"
+              hueIndex={hueIdx}
               disabled={!rainbow.on}
               onClick={() => updateRainbow({ palette: RAINBOW })}
-              title={t("common.reset")}
-              ariaLabel={t("common.reset")}
+              tip={t("common.reset")}
             >
               <IconResetSwirl />
             </Badge>
+            </div>
           </div>
         </div>
       </Card>
-      )}
+      );
+      })()}
 
       {/* Quiet toasts (GlimStone form-engine Task 9) — the toast system's
           severity-based quiet mode. Its own Card now (previously the last,
