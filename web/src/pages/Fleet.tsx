@@ -894,7 +894,15 @@ export function Fleet() {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
+    // GlimStone follow-up pass (jdp, live-review: "Im Fleet Tab ist die Card
+    // zu weit oben" — same fix as Receiver.tsx's identical heading-to-first-
+    // Card gap, measured live at gap-6 (24px) against the app's established
+    // gap-10 (40px) rhythm — see Config.tsx's own comment for the full
+    // measurement history behind that value ("systemweit gleich machen").
+    // This page's heading is a single bare h1+p row (no tab-strip/indicator
+    // content needing the tighter 24px), so — like Config.tsx and
+    // Receiver.tsx — it's a flat gap-6→gap-10 bump on the one outer wrapper.
+    <div className="flex flex-col gap-10 max-w-5xl">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>

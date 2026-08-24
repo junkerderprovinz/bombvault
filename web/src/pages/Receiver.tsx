@@ -673,7 +673,17 @@ export function Receiver() {
   const showEmptyState = !loading && !error && repos.length === 0;
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
+    // GlimStone follow-up pass (jdp, live-review: "Im Empfänger Tab ist die
+    // Card zu weit oben" — measured live, this page's own heading-to-first-
+    // Card gap was gap-6 (24px), while Settings.tsx/Config.tsx/Dashboard.tsx
+    // all settled on gap-10 (40px) as the app's one Card-rhythm value
+    // ("systemweit gleich machen", recurring instruction — see Config.tsx's
+    // own identical fix for the full measurement history). This page's
+    // heading is a single bare h1+p row with no tab-strip/indicator content
+    // that needs to stay at the tighter 24px (same shape as Config.tsx's
+    // heading), so — like that page — this is a flat gap-6→gap-10 bump on
+    // the one outer wrapper, no nested gap-6 sub-wrapper needed.
+    <div className="flex flex-col gap-10 max-w-5xl">
       {/* Heading + Add */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
