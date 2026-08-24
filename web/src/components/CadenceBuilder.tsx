@@ -288,16 +288,21 @@ export function CadenceBuilder({
           <fieldset disabled> above, not a prop here: Selector renders real
           <button> elements, which a native fieldset already disables
           regardless of the wrapping <div> between them.
-          `raised` (jdp, live-review: "Aus, Täglich, ... sollen auch im nicht
-          ausgewählten Zustand als Badge erkennbar sein") — every call site
-          of THIS component wraps it in its own `bg-carbon-surface2` well
-          (see each Settings.tsx caller), which is the exact same token the
-          default "chip" idle fill uses, so an unselected pill was blending
-          straight into its own ambient card instead of reading as a chip —
-          see Selector.tsx's own `raised` doc for the full root-cause
-          writeup. Bumping to `bg-carbon-surface3` here (not at each of the
-          8 wrapping `<div>`s) fixes every call site of this shared
-          component at once. */}
+          `variant="track"` (round 7 escalation, jdp: "Du hast keinen
+          richtigen horizontalen Selektor gemacht!" — the plain-chip-plus-
+          `raised` treatment this used to carry, even with its idle fill
+          bumped a shade deeper, still read as loose separate buttons next to
+          the page's "well"-variant pickers, not as one real Selector
+          control). Every call site of THIS component wraps it in its own
+          `rounded-card bg-carbon-surface2 p-4` well (see each Settings.tsx
+          caller) — `variant="track"` now supplies its OWN enclosing track
+          surface at the SAME token, so the mode row reads as a real nested
+          control inside that card rather than leaning on the card's own
+          background for contrast. See Selector.tsx's own file header item 6
+          for the full root-cause writeup and why this is deliberately NOT
+          "well" (that variant's pinned width/fixed height are sized for a
+          handful of page-level pickers, not a control repeated on every
+          schedule card across two tabs). */}
       <Selector
         items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[]).map((m) => ({
           id: m,
@@ -316,7 +321,7 @@ export function CadenceBuilder({
         select="one"
         active={state.mode}
         onChange={(id) => update({ mode: id as CadenceMode })}
-        raised
+        variant="track"
       />
 
       {/* Time picker — shown for all non-off modes except cron (the expression
@@ -344,7 +349,11 @@ export function CadenceBuilder({
 
       {/* Weekly: weekday multi-select — select="many" (toggling a day never
           replaces the others, "at least one" is still enforced by
-          toggleWeekday itself, unchanged). */}
+          toggleWeekday itself, unchanged). `variant="track"`, not `raised`,
+          for the same round-7 reason as the mode pills above — kept on the
+          same variant so the two Selector rows inside one CadenceBuilder
+          instance read as one family, not one "track" control sitting
+          directly above a leftover plain-raised-chip one. */}
       {state.mode === "weekly" && (
         <div className="flex items-center gap-2 flex-wrap">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.days")}</label>
@@ -355,7 +364,7 @@ export function CadenceBuilder({
             active={new Set(state.weekdays)}
             onChange={toggleWeekday}
             size="sm"
-            raised
+            variant="track"
           />
         </div>
       )}

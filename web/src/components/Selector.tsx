@@ -169,6 +169,63 @@
 //      one control, generalize later if it lands well" pattern — so the
 //      other eleven migrated call sites keep rendering byte-identical
 //      "chip" output; nothing about this addition changes their classes.
+//   6. `variant="track"` (round 7, live-review escalation — jdp: "Du hast
+//      keinen richtigen horizontalen Selektor gemacht! ... Sollen wir dafür
+//      einen zweiten, kleineren horizontalen Selektor etablieren?"). The
+//      complaint was aimed at NotifyCard's "on" (never/failure/always) pill
+//      row — plain `variant="chip"` default, which task 5's own `raised`
+//      escape hatch could at best bump one shade deeper. Compared live,
+//      side by side, against "well" (the Shape/Theme picker): "well" reads
+//      unmistakably as ONE physical control because the ROW ITSELF is a
+//      visible enclosing surface (`bg-carbon-surface2` track + padding) —
+//      individual idle segments inside it are actually `bg-transparent`
+//      (see the "well" branch below), the ENCLOSURE carries all the visual
+//      weight, not the segments. Bare "chip" (with or without `raised`) has
+//      no such enclosure at all — just loose individually-tinted buttons
+//      floating in a plain gap — which is exactly what read as "not a real
+//      Selector" once seen next to "well".
+//        "well" itself is the wrong fix to reach for here: its
+//      MIN_PINNED_WIDTH floor (200px per segment) and fixed `--badge-md`
+//      height are sized for a handful of page-level, singular pickers
+//      (Shape/Theme/the Settings tab strip) — NOT for a control that repeats
+//      many times on one screen (every CadenceBuilder mode-picker across
+//      both the Schedules and Integrity tabs, easily 8+ instances rendered
+//      simultaneously). Pinning every one of those to a 200px-per-segment
+//      floor would be pure wasted width at that multiplicity, not "bold".
+//        `variant="track"` is the deliberately smaller sibling this
+//      question asks for: it borrows "well"'s core signature — the row
+//      itself becomes a real enclosing surface (`bg-carbon-surface2 p-
+//      [0.15rem]`, the SAME track background token "well" uses, just
+//      tighter padding at this scale) — but does NOT borrow "well"'s idle-
+//      transparent segments, its fixed pinned width, or its fixed height.
+//      Instead every idle segment gets its OWN visible fill one step deeper
+//      than the track (`bg-carbon-surface3` — literally the same token
+//      `raised` already used, just always-on rather than a caller-toggled
+//      escape hatch): track (surface2) holding filled segments (surface3)
+//      holding the accent-filled active one is a plain three-step Carbon
+//      layering, the same "each nested surface gets one step deeper" rule
+//      the rest of this app's cards/wells/inputs already follow — see
+//      CadenceBuilder.tsx's own `inputCls`, which sits its text/number
+//      fields at that exact same surface3-inside-a-surface2-well depth.
+//      Content-hugging widths (SIZE[size].padding, no `pinWidth`) and
+//      per-stage height (padding + line-height, not a fixed track height)
+//      keep it cheap to repeat many times on one screen — the opposite of
+//      "well"'s "one prominent, singular choice per page" footprint. `plain`
+//      and `raised` are both meaningless under `variant="track"` (each
+//      answers the same "does an idle segment carry fill" question this
+//      variant already answers unconditionally) and are ignored whenever
+//      given alongside it, the same way both are already ignored under
+//      `variant="well"`.
+//        Applied to every repeated, compact, in-card selector in the app:
+//      NotifyCard's "on" pill row, the Integrity Card's drill-kind toggle
+//      (the file's own prior comment there already called out "the SAME
+//      scale" as NotifyCard's "on" — now literally the same variant, not
+//      just an eyeballed match), and CadenceBuilder's own mode-picker AND
+//      weekday pills (both of that component's two Selector call sites,
+//      so the two controls inside one instance still read as one family
+//      rather than one "track" and one leftover "raised chip" sitting
+//      directly beside it). See design-language.md's "The one horizontal
+//      selector" section for the documented when-to-use-which rule.
 //
 // No wrapping container (design-language.md: "the container is gone
 // entirely, the gap alone carries the separation") — this renders a bare
@@ -222,8 +279,13 @@ export type SelectorSize = "sm" | "md" | "lg";
  *  `plain` doc below for the two flavours of it. "well" is TrickWork's
  *  shared padded track with flush, crossfade-only segments; see the file
  *  header's item 5 for the full rationale and exactly what is/isn't ported
- *  from TrickWork's version. */
-export type SelectorVariant = "chip" | "well";
+ *  from TrickWork's version. "track" is the smaller, repeatable sibling of
+ *  "well" for compact in-card selectors (NotifyCard's "on" row, every
+ *  CadenceBuilder mode/weekday picker) — a real enclosing track like "well",
+ *  but with always-visible filled segments and content-hugging width instead
+ *  of "well"'s idle-transparent segments and fixed pinned width; see the
+ *  file header's item 6. */
+export type SelectorVariant = "chip" | "well" | "track";
 
 interface SelectorCommon {
   items: SelectorItem[];
@@ -242,39 +304,45 @@ interface SelectorCommon {
   /** Page-tab treatment (no idle background) instead of the default
    *  toolbar-chip treatment (idle `bg-carbon-surface2` pill). See the file
    *  header for which of the twelve call sites uses which. Ignored under
-   *  `variant="well"` — see that prop's own doc. */
+   *  `variant="well"` and `variant="track"` — see each variant's own doc. */
   plain?: boolean;
-  /** "chip" (default) vs "well" — see the file header's item 5. */
+  /** "chip" (default) vs "well" vs "track" — see the file header's items 5
+   *  and 6. */
   variant?: SelectorVariant;
   /** Pin every "chip" segment to the widest one's own MEASURED content
    *  width, instead of each hugging its own label width — see the file
    *  header's item 5b (a real DOM measurement, not a `flex-1` share; that
    *  was the first cut's own bug, corrected there). Ignored under
    *  `variant="well"` (already always equal-width — via the SAME
-   *  measurement mechanism, see `pinWidth` in the component body).
-   *  Default false: every pre-existing "chip" call site keeps its own
-   *  content-hugging width. */
+   *  measurement mechanism, see `pinWidth` in the component body) and under
+   *  `variant="track"` (deliberately content-hugging even at rest — see the
+   *  file header's item 6 for why a repeated-per-page control shouldn't pay
+   *  "well"'s pinned-width cost). Default false: every pre-existing "chip"
+   *  call site keeps its own content-hugging width. */
   equalWidth?: boolean;
   /** Bumps the idle "chip" fill one step deeper — `bg-carbon-surface3`
    *  instead of the default `bg-carbon-surface2` (jdp, live-review: "Aus,
    *  Täglich, Wöchentlich, Alle N Tage, Cron sollen auch im nicht
-   *  ausgewählten Zustand als Badge erkennbar sein"). CadenceBuilder's own
-   *  mode/weekday pills are the one real consumer: every one of its 8 call
-   *  sites in Settings.tsx wraps the whole builder in its own
-   *  `rounded-card bg-carbon-surface2 p-4` well, so the default idle chip
-   *  fill is the literal SAME token as its own ambient background —
-   *  confirmed live against the running container, an idle pill was
-   *  genuinely indistinguishable from the card behind it until hovered or
-   *  selected, not merely a faint-but-adequate chip. Mirrors the EXACT
-   *  convention CadenceBuilder's own sibling controls (the time/cron/
-   *  everyN `<input>`s, `inputCls`) already use inside that identical well:
-   *  `bg-carbon-surface3`, one step deeper than the surrounding surface2
-   *  box. Ignored under `variant="well"` (that variant's idle segments are
-   *  transparent against their own track, not surface2 — nothing to bump).
-   *  Default false: every other "chip" call site (the Settings tab strip,
-   *  ten toolbar chips) sits directly on a plain page/card background, not
-   *  inside a surface2 well, so their existing idle fill already
-   *  contrasts correctly and stays unchanged. */
+   *  ausgewählten Zustand als Badge erkennbar sein"). Originally
+   *  CadenceBuilder's own mode/weekday pills' fix for sitting inside their
+   *  own `rounded-card bg-carbon-surface2 p-4` well (the default idle chip
+   *  fill is the literal SAME token as that ambient background — an idle
+   *  pill was genuinely indistinguishable from the card behind it until
+   *  hovered or selected). SUPERSEDED at both of those call sites by
+   *  `variant="track"` (file header item 6), which bakes this exact
+   *  surface3-on-surface2 layering in unconditionally instead of needing a
+   *  caller to opt in — `raised` has no live consumer as of that round, same
+   *  status as the `hue` prop's own documented zero-consumer state above.
+   *  Kept as a lighter escape hatch for a future PLAIN "chip" call site that
+   *  wants deeper idle contrast without paying for `variant="track"`'s full
+   *  enclosing box. Ignored under `variant="well"` and `variant="track"`
+   *  (both already answer this same question unconditionally, differently —
+   *  "well"'s idle segments are transparent against their own track, not
+   *  surface2, nothing to bump; "track"'s idle segments already sit at
+   *  surface3 by construction). Default false: every other "chip" call site
+   *  (the Settings tab strip, ten toolbar chips) sits directly on a plain
+   *  page/card background, not inside a surface2 well, so their existing
+   *  idle fill already contrasts correctly and stays unchanged. */
   raised?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
@@ -527,9 +595,21 @@ export function Selector(props: SelectorProps) {
     className = "",
   } = props;
   const well = variant === "well";
+  // "track" (file header item 6) — "well"'s smaller, repeatable sibling: a
+  // real enclosing track like "well", but content-hugging and always-filled
+  // instead of pinned-width and idle-transparent. See every className branch
+  // below for the concrete differences from both "chip" and "well".
+  const track = variant === "track";
   // Only meaningful on "chip" — "well" gets its own equal-width treatment via
-  // `pinWidth` below regardless of this flag.
-  const stretch = equalWidth && !well;
+  // `pinWidth` below regardless of this flag, and "track" is deliberately
+  // never pinned at all (see `equalWidth`'s own doc) — `variant === "chip"`
+  // rather than `!well` so a stray `equalWidth` passed alongside
+  // `variant="track"` can't accidentally engage "chip"'s pinning math on a
+  // track-styled segment; no such combination exists at any current call
+  // site, but the two concepts (a track's always-on fill vs. a pinned-width
+  // measurement) are independent enough that silently combining them was
+  // never actually intended by either prop's own doc.
+  const stretch = equalWidth && variant === "chip";
 
   // `pinWidth` — which segment styles get pinned to a real MEASURED width
   // instead of a pure-CSS sizing trick. Used to read `stretch` alone (the
@@ -705,11 +785,22 @@ export function Selector(props: SelectorProps) {
       // whichever is smaller: the sum of its now-fixed-width children (if
       // they all fit on one line), or the available row width (once they
       // don't and a second line is needed).
+      // "track" (file header item 6): the SAME enclosing surface as "well"
+      // (`rounded-control bg-carbon-surface2`, so it reshapes with the shape
+      // engine identically), but tighter `[0.15rem]` gap/padding — this is
+      // the compact, repeated-per-page sibling, not the page-level one — and
+      // `flex-wrap`, NOT "well"'s `flex-nowrap`: a "track" strip's segments
+      // are content-hugging, not pinned to a mutually-agreed sum the way
+      // "well"'s own row always is by construction, so (like plain "chip"
+      // and `stretch` above) it can genuinely need a second line on a narrow
+      // card.
       className={[
         "flex items-center",
         well
           ? "flex-nowrap gap-[0.2rem] rounded-control bg-carbon-surface2 p-[0.2rem]"
-          : "flex-wrap gap-1",
+          : track
+            ? "flex-wrap gap-[0.15rem] rounded-control bg-carbon-surface2 p-[0.15rem]"
+            : "flex-wrap gap-1",
         className,
       ]
         .filter(Boolean)
@@ -746,8 +837,12 @@ export function Selector(props: SelectorProps) {
           // properties at Tailwind's own default 150ms — fine for a chip's
           // idle-background swap, not what this track's spec asks for);
           // border-radius was never part of either transition list, so this
-          // addition doesn't newly animate anything.
-          well ? "rounded-control [transition:background-color_120ms_ease]" : "rounded-control transition-colors",
+          // addition doesn't newly animate anything. "track" gets the SAME
+          // crossfade-only transition as "well" — both variants exist so a
+          // strip reads as one coherent physical control, and a sliding-pill
+          // illusion belongs to that reading exactly as much at the small
+          // scale as the large one.
+          well || track ? "rounded-control [transition:background-color_120ms_ease]" : "rounded-control transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           // `.glim-hue-icon` (index.css) additionally tints the glyph itself
           // with the item's own hue while idle — right for a tab-strip icon
@@ -769,11 +864,21 @@ export function Selector(props: SelectorProps) {
             ? "glim-active bg-accent text-accentContrast"
             : well
               ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              : plain
-                ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                : raised
-                  ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                  : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
+              // "track" (file header item 6): unconditionally filled even at
+              // rest — the whole point of this variant vs. "well" above —
+              // one step deeper (`bg-carbon-surface3`) than the track's own
+              // `bg-carbon-surface2` enclosure, the same Carbon "each nested
+              // surface one step deeper" rule CadenceBuilder's own `inputCls`
+              // already follows inside that identical well. `plain`/`raised`
+              // are both meaningless here (see each prop's own doc) so
+              // neither is read in this branch.
+              : track
+                ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                : plain
+                  ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                  : raised
+                    ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
           SIZE[size].gap,
           SIZE[size].text,
           // "chip" keeps its own per-stage padding (the box comes from
@@ -838,6 +943,12 @@ export function Selector(props: SelectorProps) {
           // consumer, PathModeSwitch) so a future combination degrades to
           // this fixed square rather than silently falling through to a
           // per-stage padding class that was never sized for a bare glyph.
+          // "track" (file header item 6) falls straight through to the plain
+          // per-stage `SIZE[size].padding` branch below, on purpose — no
+          // `flex-none`/fixed height/pinned width of its own: height comes
+          // from padding + line-height exactly like "chip", which is what
+          // keeps a repeated-per-card control cheap next to "well"'s
+          // deliberately larger, pinned footprint.
           well
             ? `flex-none justify-center text-center h-[var(--badge-md)] ${SIZE[size].padding}`
             : stretch

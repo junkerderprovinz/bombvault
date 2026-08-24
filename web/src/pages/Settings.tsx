@@ -3345,14 +3345,22 @@ function NotifyCard({
     <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
       {/* "on" select → Selector (jdp, live-review: "Benachrichtigen: nie, nur
           bei Fehler, bei Fehler und Erfolg soll bitte ein horizontaler
-          Selektor sein"). Plain `variant="chip"` default, no `size`/
-          `equalWidth` — this is a small 3-item control inside a settings
-          form, the SAME scale as the Integrity Card's own drill-kind
-          Selector (search "drill.kindLabel" in this file), not the page's
-          bigger "well"-variant pickers (the Theme Card's light/dark toggle)
-          that get the standardized MIN_PINNED_WIDTH treatment — see
-          Selector.tsx's own file header for why that width standardization
-          is scoped to those larger pickers only.
+          Selektor sein"). `variant="track"` (round 7 escalation, jdp,
+          live-review: "Du hast keinen richtigen horizontalen Selektor
+          gemacht!" — compared live, side by side, against the page's
+          "well"-variant pickers, the earlier plain `variant="chip"` default
+          read as three loose separate buttons, not one real Selector
+          control; see Selector.tsx's own file header item 6 for the full
+          root-cause writeup and why the fix is this new compact "track"
+          variant rather than the bigger, page-level "well" itself). Same
+          `size="md"` scale as before — this stays a small 3-item control
+          inside a settings form, now literally the SAME variant+scale as the
+          Integrity Card's own drill-kind Selector (search "drill.kindLabel"
+          in this file, converted alongside this one in the same round), not
+          the page's bigger "well"-variant pickers (the Theme Card's
+          light/dark toggle) that get the standardized MIN_PINNED_WIDTH
+          treatment — see Selector.tsx's own file header for why that width
+          standardization is scoped to those larger pickers only.
             A plain `<span>` caption OUTSIDE the Selector, NOT the `<label>`
           this field used to be (Selector.tsx's own header is explicit: a
           `<label>` wrapping a multi-segment control hands its click to the
@@ -3396,6 +3404,7 @@ function NotifyCard({
           select="one"
           active={cfg.on}
           onChange={(id) => setImmediate("on", id)}
+          variant="track"
           className={fieldShake.on ? "glim-shake" : undefined}
         />
       </div>
@@ -4243,7 +4252,12 @@ function IntegrityCard({
       {/* Drill-type toggle: subset integrity check vs a real off-site DR
           restore — on the shared Selector component (GlimStone form-engine
           Phase 2, Task 3; found only by re-grepping the current codebase,
-          not on the original Phase 1 audit's own 11-site list). */}
+          not on the original Phase 1 audit's own 11-site list).
+          `variant="track"` (round 7 escalation) — converted alongside
+          NotifyCard's "on" Selector in the same round; see that call site's
+          own comment for the full root-cause writeup. Both are the same
+          "small in-card single-choice" role at the same scale, so both now
+          share the literal same variant, not just an eyeballed match. */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
         <Selector
@@ -4260,6 +4274,7 @@ function IntegrityCard({
             setKind(val as DrillKind);
             setState({});
           }}
+          variant="track"
           disabled={Object.values(state).some((v) => v === "busy")}
         />
       </div>
