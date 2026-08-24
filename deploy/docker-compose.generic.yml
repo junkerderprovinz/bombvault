@@ -24,7 +24,7 @@ services:
   bombvault:
     # Same image the Unraid CA template installs (templates/my-BombVault.xml's
     # <Repository>) — Docker Hub is the canonical tag; GHCR mirrors it 1:1.
-    image: junkerderprovinz/bombvault:latest
+    image: junkerderprovinz/bombvault:latest@sha256:53ff79d8ecee4b71bf945decc47bc7368ba1b22e41830119660eef67acceaf69
     restart: unless-stopped
 
     # Pinned, not left at Docker's random per-container default, for stable
