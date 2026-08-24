@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
@@ -42,8 +43,60 @@ import { relativeTime } from "../lib/reltime";
 import { Flag, IconAdd, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose, IconCopy } from "../components/Sidebar";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
 
-// AboutFooter shows the running version (linking to the releases page) and a
-// "Report a bug" link at the very bottom of Settings, so the sidebar stays clean.
+// GlimStone version this UI is built against — bump by hand whenever
+// index.css / lib/appearance.ts / lib/shape.ts / lib/motion.ts are re-copied
+// from a newer github.com/junkerderprovinz/glimstone release (same
+// convention KnightLoader's own Settings.tsx uses for its GLIMSTONE_VERSION
+// constant — see that file for the precedent). Check that repo's
+// CHANGELOG.md for the current number before bumping this by hand.
+const GLIMSTONE_VERSION = "1.2.0";
+
+// AboutFooter shows the running BombVault version (+ the GlimStone version
+// this UI targets, both linking to BombVault's releases page) and a
+// "Report a bug" link, fixed to the actual browser window so it reads on
+// every Settings tab without being wired into each tab body individually
+// (jdp, live review: "Die Versionsnummer soll in allen Tabs ganz unten
+// stehen, auch die GlimStone-Version soll da stehen" — moved here from a
+// single Card on the System tab, which only ever showed it on that one tab).
+// See GlimStone's own docs/design-language.md, "The version footer", for
+// the full cross-app rationale (first built for KnightLoader).
+//
+// `fixed`, not `sticky` or in-flow: it pins to the real browser window
+// rather than to Settings' own tab-content area, so it neither scrolls away
+// nor shifts vertically as different tabs render different amounts of
+// content above it — the ONE unconditional render call below (at the
+// SettingsPage return's own top level, outside the `key={tab}` tab-panels
+// wrapper) is genuinely all that's needed for every tab; no per-tab
+// duplication, no wrapping-Fragment gymnastics.
+//
+// Rendered through a portal straight onto document.body rather than in
+// place, for a real, previously-hit reason, not defensive copy-paste: the
+// tab-panels wrapper this used to live inside animates `transform` on every
+// tab switch (`.bv-tab-slide`, index.css's Settings-tab-slide keyframes) —
+// and per the CSS spec, an ancestor with an active `transform` (animated or
+// not) becomes the containing block for any `position: fixed` descendant
+// for as long as that's true, not the viewport. Simply hoisting this footer
+// to `position: fixed` and rendering it in place — even OUTSIDE every
+// `{tab === "x" && ...}` conditional, still inside that same `.bv-tab-slide`
+// ancestor during each tab-switch animation — would reproduce exactly the
+// bug KnightLoader's own VersionFooter comment documents hitting first
+// (that footer briefly sliding along with the page-transition wrapper
+// instead of staying pinned to the window) before it was ported to a
+// portal for the same reason. A portal sidesteps the whole ancestor chain
+// from the start, so this stays immune to that regardless of what other
+// animated wrapper Settings (or a future shared page shell) gains later.
+//
+// `pointer-events-none` on the fixed positioning wrapper keeps it out of
+// the way of any real control that happens to render near the bottom of the
+// window; unlike KnightLoader's own plain-text VersionFooter, this footer's
+// content is two real links (see the `as="a"` comment below), so the inner
+// row opts back INTO pointer events with `pointer-events-auto` — a bare
+// `pointer-events-none` ancestor is inherited by default and would silently
+// make both links unclickable otherwise. That inner row is also
+// deliberately NOT `aria-hidden`, unlike KnightLoader's: hiding it would
+// remove the one working keyboard/screen-reader route to "Report a bug"
+// from the accessibility tree entirely, which the plain decorative text
+// KnightLoader hides has no equivalent cost for.
 function AboutFooter() {
   const { t } = useT();
   const [version, setVersion] = useState<string | null>(null);
@@ -54,45 +107,57 @@ function AboutFooter() {
       .catch(() => { /* version is best-effort; ignore */ });
     return () => { active = false; };
   }, []);
-  return (
-    // Task 5 (rule 13, "everything clickable is a badge — including links"):
-    // both footer links were plain underline-on-hover text. `as="a"` (not
-    // "button") keeps real anchor semantics — right-click "copy link",
-    // middle-click to open in a new tab, the browser's own status-bar URL
-    // preview — none of which a synthetic onClick reproduces.
-    <div className="pt-6 pb-4 flex flex-col items-center gap-1.5 text-xs text-carbon-textMuted">
-      {version && (
-        // tone="muted" (GlimStone follow-up round, jdp's live review: "Die
-        // Versionsnummern sollen keinen hellen Hintergrund haben" — this was
-        // tone="neutral", i.e. a bg-carbon-surface2 pill, a visibly pale
-        // #e8e8e8 chip against the near-white page ground in light theme.
-        // See Badge.tsx's own `muted` tone comment for the full reasoning —
-        // a version number is a plain metadata caption, the same register
-        // as Fleet.tsx's peer-version text or this Card's own Import-preview
-        // `<dd>` rows, not a status chip that needs a tinted surface.
+  return createPortal(
+    <div className="pointer-events-none fixed inset-x-0 bottom-1.5 z-0 flex justify-center">
+      {/* Task 5 (rule 13, "everything clickable is a badge — including
+          links"): both footer links are real anchors (as="a", not "button")
+          — right-click "copy link", middle-click to open in a new tab, the
+          browser's own status-bar URL preview — none of which a synthetic
+          onClick reproduces. `pointer-events-auto` re-enables clicks for
+          just this row; the fixed wrapper around it stays pass-through. */}
+      <div className="pointer-events-auto flex items-center gap-1.5 text-xs text-carbon-textMuted">
+        {version && (
+          // tone="muted" (GlimStone follow-up round, jdp's live review: "Die
+          // Versionsnummern sollen keinen hellen Hintergrund haben" — this was
+          // tone="neutral", i.e. a bg-carbon-surface2 pill, a visibly pale
+          // #e8e8e8 chip against the near-white page ground in light theme.
+          // See Badge.tsx's own `muted` tone comment for the full reasoning —
+          // a version number is a plain metadata caption, the same register
+          // as Fleet.tsx's peer-version text or this Card's own Import-preview
+          // `<dd>` rows, not a status chip that needs a tinted surface.
+          //
+          // GlimStone version appended to the SAME badge/link, "BombVault
+          // {v} · GlimStone {v}" (KnightLoader's own VersionFooter separator
+          // — see that file's precedent — over jdp's other suggested comma;
+          // picked for cross-app consistency with the actual shipped
+          // reference implementation, not a new delimiter invented here):
+          // one quiet line, not a second badge competing for the same
+          // corner of the window.
+          <Badge
+            as="a"
+            href="https://github.com/junkerderprovinz/bombvault/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            tone="muted"
+            size="small"
+            title={`BombVault ${version} · GlimStone ${GLIMSTONE_VERSION}`}
+          >
+            BombVault {version} · GlimStone {GLIMSTONE_VERSION}
+          </Badge>
+        )}
         <Badge
           as="a"
-          href="https://github.com/junkerderprovinz/bombvault/releases"
+          href="https://github.com/junkerderprovinz/bombvault/issues"
           target="_blank"
           rel="noopener noreferrer"
-          tone="muted"
+          tone="neutral"
           size="small"
-          title={`BombVault ${version}`}
         >
-          BombVault {version}
+          {t("nav.reportBug")}
         </Badge>
-      )}
-      <Badge
-        as="a"
-        href="https://github.com/junkerderprovinz/bombvault/issues"
-        target="_blank"
-        rel="noopener noreferrer"
-        tone="neutral"
-        size="small"
-      >
-        {t("nav.reportBug")}
-      </Badge>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -8006,8 +8071,10 @@ export function SettingsPage() {
       {/* removed from every locale rather than kept as a dead key. Same      */}
       {/* "general" tab condition repeated per Card — the pattern every OTHER */}
       {/* multi-Card tab on this page already uses (e.g. the "system" tab's   */}
-      {/* Settings Portability Card + AboutFooter further down), not a        */}
-      {/* wrapping Fragment introduced just for this section.                 */}
+      {/* Security Card + Settings Portability Card further down — AboutFooter, */}
+      {/* the system tab's old THIRD tab-conditioned element, has since moved  */}
+      {/* out of this repeated-per-Card condition entirely; see its own header */}
+      {/* comment), not a wrapping Fragment introduced just for this section.  */}
       {/* ------------------------------------------------------------------ */}
 
       {/* Shape (GlimStone form-engine — shape engine; design-language.md's
@@ -8384,10 +8451,17 @@ export function SettingsPage() {
       {/* snapshots and history are never touched.                            */}
       {/* ------------------------------------------------------------------ */}
       {tab === "system" && <SettingsPortabilityCard t={t} hueIndex={nextHue()} />}
-
-      {/* SYSTEM — Version + report-a-bug (kept out of the sidebar for a clean UI). */}
-      {tab === "system" && <AboutFooter />}
       </div>
+
+      {/* Version + report-a-bug footer. Rendered ONCE, unconditionally, here
+          — outside the `key={tab}` tab-panels wrapper above (so it doesn't
+          remount, and re-fetch the version, on every tab switch) and outside
+          every `{tab === "x" && ...}` conditional (so it's not tied to any
+          one tab at all). It portals itself onto document.body and pins to
+          the actual browser window, not this position in the tree — see
+          AboutFooter's own header comment for why that's a portal and not
+          just `position: fixed` rendered in place. */}
+      <AboutFooter />
     </div>
   );
 }
