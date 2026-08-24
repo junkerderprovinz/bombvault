@@ -25,7 +25,12 @@ const PRESETS_KEY = "bv-accent-presets";
 
 function Harness() {
   const { t } = useT();
-  return <AccentCard t={t} />;
+  // hueIndex: AccentCard now threads its enclosing "settings.colors" Card's
+  // own hue through to its preset-reset Badge (icon-badge convention — see
+  // AccentCard's own header comment in Settings.tsx). Any fixed number
+  // exercises that wiring identically for this standalone-harness suite,
+  // which never asserts colour, only interaction/persistence behaviour.
+  return <AccentCard t={t} hueIndex={0} />;
 }
 
 function renderCard() {
