@@ -443,41 +443,63 @@ export function IconAdd() {
   );
 }
 
-// Download glyph — a downward arrow over a tray, the conventional "save this
-// to disk" symbol (Settings.tsx's own "Recovery-Kit herunterladen" icon-only
-// button, same GlimStone follow-up round point as IconAdd above). One closed
-// filled silhouette for the shaft+arrowhead (design-language.md: "a line
-// glyph... needs real geometry" — no `stroke` anywhere), plus a separate
-// filled bar for the tray, matching this file's own 16×16 icon-only-badge
-// scale.
+// Download glyph — REDRAWN (Containers.tsx Task 1, jdp live-review: "Der
+// Downloadglyph soll nie einen waagrechten Strich haben. Nur der Pfeil.").
+// Used to be a downward arrow over a separate filled tray bar (the
+// conventional "arrow + tray" download silhouette); jdp flagged that
+// horizontal bar itself as unwanted, at every one of this glyph's call sites
+// (Settings.tsx's "Recovery-Kit herunterladen", Containers.tsx's Export
+// button) — not a request to swap in a DIFFERENT tray shape, an explicit
+// "never a horizontal bar under the arrow" rule. Fixed by deleting the tray
+// `<rect>` outright and keeping only the shaft+arrowhead silhouette that
+// already existed above it — one closed filled path (design-language.md: "a
+// line glyph... needs real geometry" — no `stroke`), matching this file's own
+// 16×16 icon-only-badge scale.
 export function IconDownload() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path d="M6.9 2.4h2.2v4.9h2.45L8 11.1 4.45 7.3H6.9V2.4Z" />
-      <rect x="2.6" y="12.6" width="10.8" height="1.6" rx="0.6" />
     </svg>
   );
 }
 
-// Upload glyph — an upward arrow over the SAME tray as IconDownload above
-// (Containers.tsx Task 2, GlimStone follow-up round: "Jetzt sichern... soll
-// ein quadratischer Badge mit Glyph sein" — BackupButton's icon). The
-// conventional counterpart to a download arrow: this app already draws
-// "send to the vault" (Export, a plain unencrypted copy OUT) as a downward
-// arrow via IconDownload, so "back this up" (send it INTO the vault) is
-// the same silhouette mirrored vertically, not a fresh invention — the pair
-// reads as an obvious up/down opposite at a glance, exactly like
-// IconAdd/IconClose already share one rotated geometry above. Built by
-// reflecting IconDownload's own arrow path within its own vertical span
-// (y2.4↔y11.1, arithmetic re-derived and re-checked by rendering it
-// standalone before wiring it in, same verification pass as this file's
-// other ported glyphs) and keeping the tray rect byte-identical — only the
-// arrow's direction changes, the "lands on a surface" tray stays put.
-export function IconUpload() {
+// Backup-now glyph — REPLACES the old IconUpload (an upward arrow over a
+// tray, the mirror of IconDownload's pre-fix shape above) as BackupButton's
+// own icon (Containers.tsx Task 1, jdp live-review: "Für den Jetzt-sichern-
+// Button bitte einen treffenderen Glyph" — an arrow mirroring the download
+// glyph read as "the opposite of download," not specifically "an immediate,
+// on-demand backup," and it shared the exact tray bar jdp separately flagged
+// on IconDownload). A shield motif was considered and rejected — IconConfig
+// above already carries this app's one padlock for a different "this
+// instance's own state, kept secure" concept, and this file's own history
+// (see IconConfig's comment) already ruled out reusing a shield/lock
+// silhouette for a second, unrelated meaning nearby. Drawn instead as a
+// floppy disk — the conventional, universally-recognised "save state"
+// glyph (Material Symbols' filled `save`, and virtually every desktop app's
+// own Save icon draw the identical two-piece shape: a wide top shutter band
+// sitting above a larger body, real gap between them like IconTrash's own
+// handle/lid/body triad above) — with its label window cut as a downward
+// arrow instead of a plain rectangle, a real hole via `fillRule="evenodd"`
+// (the same true-punched-hole technique IconCheckCircle's ring uses; the
+// hole shows whatever sits behind the glyph, not a colour-matching
+// approximation). The arrow reads as "data landing in the vault, happening
+// right now" layered onto an unmistakable save-disk silhouette, rather than
+// a bare arrow that could mean any directional action — genuinely distinct
+// from IconDownload (a lone arrow, no disk), IconRecovery (a circular
+// restore sweep) and IconConfig (a padlock) at a glance. Verified standalone
+// at both 16px (this file's badge scale) and BackupButton's real 28px
+// `size="icon"` render before wiring it in, same check this file's other
+// ported/redrawn glyphs already get.
+export function IconBackupNow() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M6.9 11.1h2.2v-4.9h2.45L8 2.4 4.45 6.2H6.9V11.1Z" />
-      <rect x="2.6" y="12.6" width="10.8" height="1.6" rx="0.6" />
+      <rect x="3.2" y="1.6" width="9.6" height="2.3" rx="0.7" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2.8 4.6h10.4v9.2a1.3 1.3 0 0 1-1.3 1.3H4.1a1.3 1.3 0 0 1-1.3-1.3Z
+           M7.05 8.6h1.9v2.7h1.55L8 13.6 5.5 11.3h1.55Z"
+      />
     </svg>
   );
 }
