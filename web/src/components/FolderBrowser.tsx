@@ -168,8 +168,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             exactly that height — the same fixed size Selector.tsx now gives
             every `iconOnly` segment for the identical reason (see that
             file's own comment on the `item.iconOnly` branch). `rounded-control`
-            (not Badge's shape="circle" convention the two colour-reset
-            buttons elsewhere in Settings.tsx use) — this button sits flush
+            (not a fixed pill radius — the two colour-reset Badges elsewhere
+            in Settings.tsx are shape="square" now too, but still their OWN
+            "icon" size stage measured against a different neighbour, see
+            those call sites) — this button sits flush
             beside the path input's own shape-engine-reactive `rounded-control`
             corner, and a permanently-circular neighbour would visibly break
             from it under the square/soft shape settings.
