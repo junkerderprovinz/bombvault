@@ -205,7 +205,7 @@ const ja: Partial<Translations> = {
   "settings.shape.round": "丸め",
   "settings.shape.soft": "やや丸め",
   "settings.shape.square": "角ばった",
-  "settings.motion": "モーション",
+  "settings.motion": "アニメーション",
   "settings.motionHint": "アプリ内のすべてのアニメーションがどれだけ動くかを決めます — システムの「動きを減らす」設定と並んで存在する手動の調整項目で、その設定を上書きすることはありません。",
   "settings.motion.off": "オフ",
   "settings.motion.subtle": "控えめ",

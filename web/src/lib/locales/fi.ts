@@ -205,7 +205,7 @@ const fi: Partial<Translations> = {
   "settings.shape.round": "Pyöreät",
   "settings.shape.soft": "Pehmeät",
   "settings.shape.square": "Suorakulmaiset",
-  "settings.motion": "Liike",
+  "settings.motion": "Animaatiot",
   "settings.motionHint": "Määrittää, kuinka paljon sovelluksen animaatiot liikkuvat — manuaalinen säädin järjestelmän vähennetyn liikkeen asetuksen rinnalla, joka ei koskaan ohita sitä.",
   "settings.motion.off": "Pois",
   "settings.motion.subtle": "Hillitty",

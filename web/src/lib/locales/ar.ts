@@ -205,7 +205,7 @@ const ar: Partial<Translations> = {
   "settings.shape.round": "دائرية",
   "settings.shape.soft": "ناعمة",
   "settings.shape.square": "مربعة",
-  "settings.motion": "الحركة",
+  "settings.motion": "الرسوم المتحركة",
   "settings.motionHint": "يحدّد مدى حركة كل تأثير متحرك في التطبيق — إعداد يدوي يعمل جنبًا إلى جنب مع إعداد تقليل الحركة في النظام، ولا يتجاوزه أبدًا.",
   "settings.motion.off": "إيقاف",
   "settings.motion.subtle": "خفيفة",

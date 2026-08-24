@@ -623,7 +623,7 @@ const hi: Partial<Translations> = {
   "settings.shape.round": "गोल",
   "settings.shape.soft": "हल्का गोल",
   "settings.shape.square": "चौकोर",
-  "settings.motion": "मोशन",
+  "settings.motion": "एनिमेशन",
   "settings.motionHint": "ऐप में सभी एनिमेशन कितना हिलते हैं — सिस्टम की रिड्यूस्ड-मोशन सेटिंग के साथ मौजूद एक मैनुअल डायल, जो इसे कभी ओवरराइड नहीं करता।",
   "settings.motion.off": "बंद",
   "settings.motion.subtle": "हल्का",

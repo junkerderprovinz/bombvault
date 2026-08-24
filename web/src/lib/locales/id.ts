@@ -623,7 +623,7 @@ const id: Partial<Translations> = {
   "settings.shape.round": "Bulat",
   "settings.shape.soft": "Lembut",
   "settings.shape.square": "Persegi",
-  "settings.motion": "Gerakan",
+  "settings.motion": "Animasi",
   "settings.motionHint": "Seberapa banyak setiap animasi di aplikasi bergerak — kenop manual di samping pengaturan sistem untuk gerakan berkurang, yang tidak pernah menggantikannya.",
   "settings.motion.off": "Mati",
   "settings.motion.subtle": "Halus",

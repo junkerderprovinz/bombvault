@@ -205,7 +205,7 @@ const tr: Partial<Translations> = {
   "settings.shape.round": "Yuvarlak",
   "settings.shape.soft": "Yumuşak",
   "settings.shape.square": "Köşeli",
-  "settings.motion": "Hareket",
+  "settings.motion": "Animasyonlar",
   "settings.motionHint": "Uygulamadaki her animasyonun ne kadar hareket ettiğini belirler — sistemin azaltılmış hareket ayarının yanında duran, onu asla geçersiz kılmayan manuel bir ayar.",
   "settings.motion.off": "Kapalı",
   "settings.motion.subtle": "Hafif",

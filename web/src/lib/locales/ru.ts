@@ -200,7 +200,7 @@ const ru: Partial<Translations> = {
   "settings.shape.round": "Скруглённые",
   "settings.shape.soft": "Мягкие",
   "settings.shape.square": "Прямые",
-  "settings.motion": "Движение",
+  "settings.motion": "Анимации",
   "settings.motionHint": "Определяет, насколько сильно двигаются анимации в приложении — ручная настройка рядом с системным параметром уменьшенного движения, которая никогда его не отменяет.",
   "settings.motion.off": "Выключено",
   "settings.motion.subtle": "Слабое",

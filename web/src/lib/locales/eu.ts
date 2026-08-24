@@ -623,7 +623,7 @@ const eu: Partial<Translations> = {
   "settings.shape.round": "Biribilak",
   "settings.shape.soft": "Leunak",
   "settings.shape.square": "Angeluzuzenak",
-  "settings.motion": "Mugimendua",
+  "settings.motion": "Animazioak",
   "settings.motionHint": "Aplikazioko animazio guztiak zenbat mugitzen diren — mugimendu murriztuko sistema-ezarpenaren ondoko eskuzko kontrol bat, hura inoiz gainidazten ez duena.",
   "settings.motion.off": "Itzalita",
   "settings.motion.subtle": "Leuna",

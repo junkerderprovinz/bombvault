@@ -205,7 +205,7 @@ const cs: Partial<Translations> = {
   "settings.shape.round": "Kulaté",
   "settings.shape.soft": "Jemné",
   "settings.shape.square": "Hranaté",
-  "settings.motion": "Pohyb",
+  "settings.motion": "Animace",
   "settings.motionHint": "Určuje, jak moc se pohybují animace v aplikaci — ruční nastavení vedle systémového nastavení omezeného pohybu, které jej nikdy nepřepisuje.",
   "settings.motion.off": "Vypnuto",
   "settings.motion.subtle": "Jemné",

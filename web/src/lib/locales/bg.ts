@@ -623,7 +623,7 @@ const bg: Partial<Translations> = {
   "settings.shape.round": "Кръгли",
   "settings.shape.soft": "Меки",
   "settings.shape.square": "Квадратни",
-  "settings.motion": "Движение",
+  "settings.motion": "Анимации",
   "settings.motionHint": "Колко силно се движат всички анимации в приложението — ръчен регулатор до настройката на системата за намалено движение, който никога не я презаписва.",
   "settings.motion.off": "Изключено",
   "settings.motion.subtle": "Леко",

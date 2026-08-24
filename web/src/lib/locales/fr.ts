@@ -205,7 +205,7 @@ const fr: Partial<Translations> = {
   "settings.shape.round": "Arrondis",
   "settings.shape.soft": "Légers",
   "settings.shape.square": "Droits",
-  "settings.motion": "Mouvement",
+  "settings.motion": "Animations",
   "settings.motionHint": "Détermine à quel point les animations de l'application bougent — un réglage manuel qui s'ajoute au réglage système de mouvement réduit, sans jamais le remplacer.",
   "settings.motion.off": "Désactivé",
   "settings.motion.subtle": "Léger",

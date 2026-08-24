@@ -205,7 +205,7 @@ const ko: Partial<Translations> = {
   "settings.shape.round": "둥글게",
   "settings.shape.soft": "살짝 둥글게",
   "settings.shape.square": "각지게",
-  "settings.motion": "모션",
+  "settings.motion": "애니메이션",
   "settings.motionHint": "앱의 모든 애니메이션이 얼마나 움직이는지를 결정합니다 — 시스템의 동작 감소 설정과 나란히 존재하는 수동 조절 항목으로, 그 설정을 절대 덮어쓰지 않습니다.",
   "settings.motion.off": "끄기",
   "settings.motion.subtle": "은은하게",

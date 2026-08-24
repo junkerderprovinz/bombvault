@@ -623,7 +623,7 @@ const hr: Partial<Translations> = {
   "settings.shape.round": "Zaobljeni",
   "settings.shape.soft": "Meki",
   "settings.shape.square": "Uglasti",
-  "settings.motion": "Pokret",
+  "settings.motion": "Animacije",
   "settings.motionHint": "Koliko se sve animacije u aplikaciji pomiču — ručni kontrolnik uz sustavsku postavku za smanjeni pokret, koju nikada ne prepisuje.",
   "settings.motion.off": "Isključeno",
   "settings.motion.subtle": "Suptilno",

@@ -623,7 +623,7 @@ const fa: Partial<Translations> = {
   "settings.shape.round": "گرد",
   "settings.shape.soft": "نرم",
   "settings.shape.square": "تیز",
-  "settings.motion": "حرکت",
+  "settings.motion": "انیمیشن‌ها",
   "settings.motionHint": "میزان حرکت همه انیمیشن‌های برنامه — یک دکمه تنظیم دستی در کنار تنظیم سیستم برای حرکت کاهش‌یافته، که هرگز آن را بازنویسی نمی‌کند.",
   "settings.motion.off": "خاموش",
   "settings.motion.subtle": "ملایم",

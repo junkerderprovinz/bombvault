@@ -202,7 +202,7 @@ const no: Partial<Translations> = {
   "settings.shape.round": "Runde",
   "settings.shape.soft": "Myke",
   "settings.shape.square": "Firkantede",
-  "settings.motion": "Bevegelse",
+  "settings.motion": "Animasjoner",
   "settings.motionHint": "Bestemmer hvor mye hver animasjon i appen beveger seg — en manuell innstilling ved siden av systemets innstilling for redusert bevegelse, som aldri overstyrer den.",
   "settings.motion.off": "Av",
   "settings.motion.subtle": "Diskret",
