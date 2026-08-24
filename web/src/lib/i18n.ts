@@ -1622,7 +1622,7 @@ export const de: Translations = {
   "nav.flash": "Flash",
   "nav.config": "Selbst-Backup",
   "nav.receiver": "Empfänger",
-  "nav.fleet": "Fleet",
+  "nav.fleet": "Flotte",
   "nav.settings": "Einstellungen",
   "nav.reportBug": "Fehler melden",
 
