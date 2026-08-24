@@ -13,10 +13,10 @@ import { RestorePanel } from "../components/RestorePanel";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconContainers } from "../components/Sidebar";
+import { IconContainers, IconDownload } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
-import { Toggle } from "../components/Toggle";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { ToggleRow } from "./Settings";
 import { ProgressBar } from "../components/ProgressBar";
 import { withLtrFragments, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -313,7 +313,12 @@ function DeleteBackupsButton({
 // neither of which auto-dismissed even before this pass. Like
 // SettingsPortabilityCard's export/import banners, this is a reference value the
 // user needs to actually copy down or read, not a one-shot "it worked" ping a 4s
-// toast would cut off mid-read.
+// toast would cut off mid-read. STILL TRUE after the Task 2 icon-badge
+// conversion below — only the TRIGGER became a square glyph badge (jdp:
+// "Export soll ein quadratischer Badge mit Glyph sein... rechts oben in der
+// Ecke"); this sticky result column renders in the exact same place right
+// below it, unchanged, so the copyable path is still there to read once the
+// export finishes.
 function ExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
@@ -351,23 +356,33 @@ function ExportButton({ name, t }: { name: string; t: T }) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
+      <Badge
         key={shake}
+        as="button"
+        shape="square"
+        tone="neutral"
+        size="icon"
+        tip={t("export.button")}
         onClick={() => void run()}
         disabled={state === "pending"}
-        className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
-          shake ? " glim-shake" : ""
-        }`}
+        className={shake ? "glim-shake" : undefined}
       >
-        {state === "pending" ? "…" : t("export.button")}
-      </button>
+        {state === "pending" ? (
+          <span
+            className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+            style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+          />
+        ) : (
+          <IconDownload />
+        )}
+      </Badge>
       {state === "done" && msg && (
-        <span className="text-xs text-statusOk break-all text-end">
+        <span className="text-xs text-statusOk break-all text-end max-w-[18rem]">
           {t("export.exportedTo")} <span dir="ltr" className="text-start">{msg}</span>
         </span>
       )}
       {state === "error" && msg && (
-        <span dir="ltr" className="text-xs text-statusFail wrap-break-word text-start">{msg}</span>
+        <span dir="ltr" className="text-xs text-statusFail wrap-break-word text-start max-w-[18rem]">{msg}</span>
       )}
     </div>
   );
@@ -463,7 +478,31 @@ function HooksEditor({
 // opt-in (#52): after a backup, BombVault pulls the image and recreates the
 // container only when a newer image is available (the fresh backup is the safety
 // net). Off by default; advanced-only.
-function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boolean; t: T }) {
+//
+// Containers.tsx Task 5 (jdp, live-review): the explanation used to sit as a
+// permanently-visible caption under the label — moved into a real "(i)"
+// InfoBubble instead, via the SAME shared `ToggleRow` Settings.tsx/Config.tsx/
+// Recovery.tsx already use for every other "label + hint bubble + flush-right
+// switch" row in this app (its own `hint` prop wires an InfoBubble internally
+// — see ToggleRow's own doc), rather than hand-rolling a second, bespoke
+// bubble treatment here. This row also grew the post-backup update-check
+// RESULT line (moved here from the top-right corner, where it used to sit
+// under "Letztes Backup" — see ContainerRow's own comment on that move): it
+// is live status data about THIS toggle's own last run, not static
+// explanatory text, so it stays visible prose, not a second bubble.
+function UpdateAfterBackupRow({
+  name,
+  initial,
+  lastUpdateCheck,
+  lastUpdateResult,
+  t,
+}: {
+  name: string;
+  initial: boolean;
+  lastUpdateCheck: number;
+  lastUpdateResult: string;
+  t: T;
+}) {
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
@@ -490,20 +529,23 @@ function UpdateAfterBackupRow({ name, initial, t }: { name: string; initial: boo
   }
 
   return (
-    <div className="mt-1 flex items-start justify-between gap-3">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs text-carbon-textSub">{t("update.afterBackup")}</span>
-        <span className="text-caption text-carbon-textMuted">{t("update.afterBackupHint")}</span>
-      </div>
-      <Toggle
-        key={shake}
-        hideLabel
+    <div className="flex flex-col items-end gap-1">
+      <ToggleRow
         label={t("update.afterBackup")}
+        hint={t("update.afterBackupHint")}
         checked={enabled}
         onChange={(next) => void handle(next)}
         disabled={busy}
-        className={shake ? "glim-shake" : undefined}
+        shakeNonce={shake}
       />
+      {/* Post-backup update-check signal (G4): only meaningful when the
+          opt-in is on and a check has actually completed. An up-to-date
+          check records no run, so this line is its only surface. */}
+      {enabled && lastUpdateCheck > 0 && (
+        <p className="text-xs text-carbon-textMuted text-end">
+          {t("containers.updateCheckLabel")}: {relativeTime(t, lastUpdateCheck)} — {updateCheckResultText(t, lastUpdateResult)}
+        </p>
+      )}
     </div>
   );
 }
@@ -1163,51 +1205,63 @@ function ContainerRow({
           )}
         </div>
 
-        {/* Last backup */}
-        <div className="text-end shrink-0">
-          <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
-          <p className="text-xs text-carbon-textSub">
-            {container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}
-          </p>
-          {/* Post-backup update-check signal (G4): only meaningful when the
-              opt-in is on and a check has actually completed. An up-to-date
-              check records no run, so this line is its only surface. */}
-          {container.updateAfterBackup && container.lastUpdateCheck > 0 && (
-            <p className="text-xs text-carbon-textMuted">
-              {t("containers.updateCheckLabel")}: {relativeTime(t, container.lastUpdateCheck)} — {updateCheckResultText(t, container.lastUpdateResult)}
-            </p>
-          )}
-        </div>
+        {/* Action badges (Task 2, jdp live-review: "Jetzt sichern und Export
+            sollen quadratische Badges mit Glyph sein, die sollen rechts oben
+            in der Ecke sein wo jetzt Letztes Backup steht") — the row's
+            top-right corner, the exact spot "Letztes Backup" used to occupy.
+            That text moved OUT of this slot into the disclosure row below
+            instead (see RestorePanel's own `lastBackupText`, and its call
+            site's comment a few lines down) — showing the same fact in both
+            places would just duplicate it. BombVault's own container has no
+            backup action at all (backing it up would stop itself), so this
+            slot is empty for it — same self-gating the pre-existing
+            `selfNote` text already had at its old position in the Actions
+            row below. */}
+        {installed && (
+          <div className="ms-auto flex items-start gap-1.5 shrink-0">
+            {container.self ? (
+              <span className="text-xs text-carbon-textMuted max-w-[18rem] text-end">
+                {t("containers.selfNote")}
+              </span>
+            ) : (
+              <>
+                <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} />
+                {/* Plain tar+xml export is an advanced-only extra. */}
+                <Advanced><ExportButton name={container.name} t={t} /></Advanced>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Actions row — include toggle on the left, backup button on the right. */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      {/* Actions row — schedule-include + update-after-backup, both flush
+          right (Task 4/5, jdp live-review: "Im Zeitplan einschließen: Toggle
+          ganz nach rechts. Darunter der Toggle für Update nach Backup"). Both
+          toggles used to live at opposite ends of this row (include on the
+          left) / scattered among the advanced editors below (update-after-
+          backup) — "Jetzt sichern"/Export moving to the top-right icon-badge
+          corner above (Task 2) freed this row up to become a single flush-
+          right stack instead. DeleteBackupsButton (not-installed branch) is
+          unrelated to either toggle and stays at the row's own start. */}
+      <div className="flex items-start">
         {installed ? (
-          <>
-            {/* Include toggle */}
+          <div className="ms-auto flex flex-col items-end gap-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <IncludeToggle name={container.name} initial={container.includeInSchedule} />
               <span className="text-xs text-carbon-textSub">
                 {t("containers.includeInSchedule")}
               </span>
             </label>
-
-            {/* Backup + plain export (right) — backup refreshes the list so "last backup" updates.
-                BombVault's own container has no backup action: backing it up would stop itself. */}
-            <div className="ms-auto flex flex-col items-end gap-2">
-              {container.self ? (
-                <span className="text-xs text-carbon-textMuted max-w-[18rem] text-end">
-                  {t("containers.selfNote")}
-                </span>
-              ) : (
-                <>
-                  <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} />
-                  {/* Plain tar+xml export is an advanced-only extra. */}
-                  <Advanced><ExportButton name={container.name} t={t} /></Advanced>
-                </>
-              )}
-            </div>
-          </>
+            <Advanced>
+              <UpdateAfterBackupRow
+                name={container.name}
+                initial={container.updateAfterBackup ?? false}
+                lastUpdateCheck={container.lastUpdateCheck}
+                lastUpdateResult={container.lastUpdateResult}
+                t={t}
+              />
+            </Advanced>
+          </div>
         ) : (
           /* Not installed: can't back up; offer delete-all-backups instead. */
           <DeleteBackupsButton name={container.name} t={t} onDeleted={onDeleted} />
@@ -1226,11 +1280,23 @@ function ContainerRow({
           initialPost={container.postHook}
           t={t}
         />
-        <UpdateAfterBackupRow name={container.name} initial={container.updateAfterBackup ?? false} t={t} />
       </Advanced>
 
-      {/* Backups / Restore disclosure (works even when not installed) */}
-      <RestorePanel name={container.name} t={t} installed={installed} />
+      {/* Backups / Restore disclosure (works even when not installed).
+          Task 3 (jdp live-review: "Letztes Backup soll in der Zeile wo man
+          die Backups ausklappen kann ganz rechts stehen, es soll nur eine
+          Zeile sein, nicht zwei"): the old top-right corner rendered the
+          label and the date as two separate stacked lines by construction
+          (two sibling <p>s); merged into one string here, RestorePanel's own
+          disclosure row renders it flush right on the SAME line as the
+          chevron+"Backups" toggle (see that component's own `lastBackupText`
+          prop) instead of stacking a second line under it. */}
+      <RestorePanel
+        name={container.name}
+        t={t}
+        installed={installed}
+        lastBackupText={`${t("containers.lastBackup")}: ${container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}`}
+      />
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (
@@ -1768,7 +1834,25 @@ function BackupOrderPanel({
     // index.css's card-wide reactive-hover rule keys off, so hovering
     // anywhere on this panel (not just the tiny badge glyph) reveals its hue
     // in reactive rainbow mode.
-    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
+    //   mt-4 (Task 1, jdp live-review: "Backup-Reihenfolge Card ist zu weit
+    // oben, der Abstand nach oben ist zu klein"): the page's own outer
+    // `flex flex-col gap-6` already puts a flat, uniform 24px between every
+    // top-level section — measured live, byte-identical both above AND below
+    // this panel (the controls row's own bottom edge to this div's own CSS
+    // box top, and this div's bottom to the next card's top, both exactly
+    // 24px). What actually reads as "too little" is this panel's OWN notch
+    // badge poking `-translate-y-1/2` ABOVE that box — measured live at 11px
+    // — which eats into the gap from the TOP side only (nothing pokes
+    // downward below the panel, so its own bottom gap is unaffected): the
+    // real visible whitespace between the controls row and the first
+    // painted pixel of this card (the badge) measured only 13px, barely
+    // half the page's other gaps. `mt-4` adds 16px on top of the existing
+    // 24px flex gap (margin and `gap` are independent and stack, they don't
+    // collapse into each other), landing the visible gap at ~29px —
+    // deliberately a bit MORE than the page's plain 24px rhythm, not just
+    // parity with it, matching jdp's own framing ("increase", not merely
+    // "restore").
+    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-4 mt-4 flex flex-col gap-3">
       {/* Title notch, always visible regardless of collapse state (matches
           the PRE-fix behaviour, where title+count stayed visible collapsed
           and only the hint hid) — moved OUT of the disclosure <button>

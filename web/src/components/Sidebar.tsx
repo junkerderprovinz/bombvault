@@ -459,6 +459,29 @@ export function IconDownload() {
   );
 }
 
+// Upload glyph — an upward arrow over the SAME tray as IconDownload above
+// (Containers.tsx Task 2, GlimStone follow-up round: "Jetzt sichern... soll
+// ein quadratischer Badge mit Glyph sein" — BackupButton's icon). The
+// conventional counterpart to a download arrow: this app already draws
+// "send to the vault" (Export, a plain unencrypted copy OUT) as a downward
+// arrow via IconDownload, so "back this up" (send it INTO the vault) is
+// the same silhouette mirrored vertically, not a fresh invention — the pair
+// reads as an obvious up/down opposite at a glance, exactly like
+// IconAdd/IconClose already share one rotated geometry above. Built by
+// reflecting IconDownload's own arrow path within its own vertical span
+// (y2.4↔y11.1, arithmetic re-derived and re-checked by rendering it
+// standalone before wiring it in, same verification pass as this file's
+// other ported glyphs) and keeping the tray rect byte-identical — only the
+// arrow's direction changes, the "lands on a surface" tray stays put.
+export function IconUpload() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M6.9 11.1h2.2v-4.9h2.45L8 2.4 4.45 6.2H6.9V11.1Z" />
+      <rect x="2.6" y="12.6" width="10.8" height="1.6" rx="0.6" />
+    </svg>
+  );
+}
+
 // Trash-can glyph — the conventional "remove this row" symbol (Settings.tsx's
 // own standalone Registries Card, GlimStone follow-up round: "Wenn man eine
 // Registry hinzufügt, soll der Entfernen-Button quadratisch sein mit
