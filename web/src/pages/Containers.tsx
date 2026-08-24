@@ -1242,16 +1242,18 @@ function ContainerRow({
           backup) — "Jetzt sichern"/Export moving to the top-right icon-badge
           corner above (Task 2) freed this row up to become a single flush-
           right stack instead. DeleteBackupsButton (not-installed branch) is
-          unrelated to either toggle and stays at the row's own start. */}
+          unrelated to either toggle and stays at the row's own start.
+          IncludeToggle no longer needs a wrapping `<label>`/`<span>` here
+          (Task 2 follow-up, jdp live-review — "gleich anordnen ... Text ...
+          ganz links ... Toggle ganz rechts"): it now renders the full
+          ToggleRow itself, the identical shape UpdateAfterBackupRow already
+          renders right below it, so both toggles share one markup instead of
+          two independently hand-matched ones — see IncludeToggle.tsx's own
+          comment. */}
       <div className="flex items-start">
         {installed ? (
           <div className="ms-auto flex flex-col items-end gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <IncludeToggle name={container.name} initial={container.includeInSchedule} />
-              <span className="text-xs text-carbon-textSub">
-                {t("containers.includeInSchedule")}
-              </span>
-            </label>
+            <IncludeToggle name={container.name} initial={container.includeInSchedule} />
             <Advanced>
               <UpdateAfterBackupRow
                 name={container.name}
