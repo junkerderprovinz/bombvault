@@ -1,8 +1,10 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
+import { hueVars, rainbowAt } from "../lib/appearance";
+import { useRainbow } from "../lib/useRainbow";
 
 interface SidebarProps {
   settings: Settings | null;
@@ -12,12 +14,63 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ReactNode;
+  /** This item's own stable rainbow position — see this file's own header
+   *  comment (the rainbow-reversal round) and NavItem's own doc comment
+   *  below for how the CALLER resolves this via `nextHue()`. */
+  hueIndex: number;
 }
 
-// Deliberately NOT rainbowed (GlimStone form-engine Phase 2, Task 2 — decided
-// in the spec-compliance review of the first attempt, which had wired every
-// NavItem to a palette position). Task 2's brief is explicitly "decide which
-// candidates genuinely benefit"; the nav rail does not, on two counts:
+// Rainbow-hued nav rail (GlimStone follow-up round, REVERSING the decision
+// below — jdp, live-review: "Die ganzen Tabs in der Sidebar sind wieder
+// nicht im Regenbogenmodus bzw in der Farbengine."). jdp is this design
+// exception's own owner (five escalations deep, this app's own standing
+// convention for a self-authored aesthetic call) and has now explicitly
+// overridden it: every visible destination below — including Settings in
+// the footer group — gets its own stable rainbow-hue position, via the
+// EXACT `hueVars(rainbowAt(index))` / `.glim-hue`/`.glim-hue-icon`
+// mechanism the Settings tab strip's own Selector segments already use
+// (Selector.tsx) — not a second, bespoke nav-only mechanism.
+//
+// The two objections the original decision raised (preserved below,
+// unedited) are answered, not ignored:
+//
+//  1. "Colour buys nothing here" — overridden outright by jdp's explicit
+//     ask; colour is no longer optional-because-unneeded, it's requested.
+//  2. "Colour could not be stable here" — true only against a STATIC,
+//     hand-written literal index (0 for Dashboard, 1 for Recovery, ...),
+//     which really would drift the moment a domain toggle hid one of the
+//     conditional tabs (VMs/Flash/Files/Config/Receiver/Fleet). The fix is
+//     the SAME nextHue()-during-actual-render approach Dashboard.tsx's own
+//     `visibleBlocks`/`hueSeq` counter and Settings.tsx's own per-tab
+//     `hueSeq`/`nextHue()` Card sequence already use for THEIR OWN
+//     conditionally-rendered sets (see either file's own `hueSeq`/`nextHue`
+//     comment): a plain `let hueSeq = 0`, reset fresh on every render,
+//     incremented once per NavItem call made DIRECTLY in the order this
+//     file's own JSX below actually evaluates it. A
+//     `{vmsEnabled && <NavItem hueIndex={nextHue()} .../>}` gate
+//     SHORT-CIRCUITS before ever calling `nextHue()` when the domain is
+//     off, so a hidden tab never burns a slot — every VISIBLE item's
+//     position (and with it its colour) is exactly its own rank among the
+//     tabs actually on screen that render, immune to which OTHER
+//     conditional tabs happen to be hidden or shown around it. The wrap
+//     past RAINBOW's 8 colours (lib/appearance.ts) at full config (10
+//     entries, Settings included) is the same accepted tradeoff
+//     Containers.tsx/VMs.tsx's own row lists already make past their own
+//     8th row — see the ORIGINAL comment below, which raised the wrap on
+//     its own but never called it disqualifying by itself either.
+//
+// KnightLoader's Sidebar.tsx (hued nav off 6 hard-coded destinations) is now
+// a real precedent this file actually follows, not one it distinguishes
+// itself from: the "off a FIXED destination count" gap the original comment
+// drew between the two apps closes the moment this file's own hue position
+// is read off the VISIBLE list's own render-time rank instead of a
+// hard-coded literal.
+//
+// ORIGINAL DECISION (GlimStone form-engine Phase 2, Task 2 — decided in the
+// spec-compliance review of the first attempt, which had wired every
+// NavItem to a palette position; reaffirmed once more in a later live-review
+// round below before THIS round reversed it), preserved verbatim for
+// history:
 //
 //  1. Colour buys nothing here. Every destination already carries a
 //     permanent, always-visible identity in its label + icon, so rainbow's
@@ -43,13 +96,12 @@ interface NavItem {
 //
 // STILL not rainbowed (GlimStone follow-up round, live-review — the
 // tab-strip 3-state colour rule, jdp: "...Hauptabs in der Sidebar..."): this
-// decision and its two counts above stand unchanged. The nav rail's own
-// idle-colourless/hover-tints-icon/selected-fills-badge behaviour (see
-// `navInactive`'s own `bv-nav-idle` marker and index.css's matching rule)
-// reads the single FLAT --accent token, never .glim-hue/hueVars() — the flat
-// accent is the same one colour for every destination regardless of how many
-// are visible or in what order, so point 2 above (no stable position) never
-// gets a chance to apply in the first place.
+// decision and its two counts above stood unchanged for that round too — see
+// `navInactive`'s own comment below for the flat-accent, single-token
+// mechanism that round built, since REPLACED by this round's
+// `.glim-hue`/`.glim-hue-icon` (still true of SidebarControls' own
+// Simple/Advanced toggle, which stays on the old flat-accent mechanism — see
+// `navInactive`'s own comment below for why that one control is different).
 
 // Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
 type EggState = "idle" | "wobble" | "boom";
@@ -517,27 +569,50 @@ const navActive =
 // sidebar sits on the right. `!` beats the base rule regardless of Tailwind's
 // generated declaration order, same reasoning as the Toggle thumb fix.
 //
-// `bv-nav-idle` (GlimStone follow-up round, live-review — the tab-strip
-// 3-state colour rule, jdp: "Beim Mouseover soll das Icon eingefärbt
-// werden..."): a plain marker class, no styling of its own here — index.css's
-// matching `.bv-nav-idle:hover svg`/`:focus-within svg` rule reads it to tint
-// just the glyph with the flat `--accent` token on hover/focus, while idle
-// (no marker match) and active (a different class entirely, navActive below,
-// never carries this marker) both stay as they already were. See that CSS
-// rule's own comment for why this reads the single flat accent rather than
-// .glim-hue/hueVars() the way the Settings tab strip's icons do — this
-// file's own header comment already explains why the nav rail can't own a
-// stable rainbow position.
+// `bv-nav-idle` DROPPED from this shared string (GlimStone follow-up round,
+// rainbow reversal — see this file's own header comment): NavItem below no
+// longer reads the bespoke flat-accent `.bv-nav-idle svg` CSS rule at all —
+// it now carries `.glim-hue`/`.glim-hue-icon` instead, the exact classes any
+// other hue-enabled Selector segment carries (Selector.tsx), so it picks up
+// index.css's EXISTING generic `.glim-hue-icon` rule (no new CSS needed for
+// NavItem itself) — the identical idle/hover/selected 3-state machine this
+// rail always had, just reading this item's own `--item-hue` instead of the
+// single flat `--accent`.
+//   `bv-nav-idle` itself is NOT deleted from index.css — SidebarControls'
+// own Simple/Advanced view toggle below is a genuine set-of-ONE, not a list
+// of same-type destinations competing for a stable rainbow position (the
+// colour engine's own "anything that is the only one of its kind on the
+// page keeps the single accent" exclusion, glimstone/docs/design-language.md
+// "Rainbow — the accent, plural") — it keeps the marker directly on its own
+// call site below instead of inheriting it from this shared string.
 const navInactive =
-  "bv-nav-idle text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
+  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
 
-function NavItem({ to, label, icon }: NavItem) {
+// hueIndex (GlimStone follow-up round, rainbow reversal — see this file's
+// own header comment): resolved by the CALLER's `nextHue()` counter at the
+// exact synchronous point each NavItem below is actually rendered — never
+// computed inside this component itself, the same "caller resolves the
+// position, callee just paints it" split Settings.tsx's own `hueIndex` Card
+// prop and Dashboard.tsx's own per-block `hueIndex` props already use.
+// `glim-hue`/`glim-hue-icon` ride unconditionally on every NavItem
+// regardless of active state (exactly Selector.tsx's own SelectorTab
+// convention, `hue ? "glim-hue glim-hue-icon" : ""` applied to every
+// segment) — `glim-active` is the one extra marker that differs between the
+// two branches, added only alongside `navActive` on the active route, so
+// index.css's existing `.glim-hue-icon:not(.glim-active)` guard correctly
+// excludes the filled/selected item: it already gets its icon colour for
+// free via `text-accentContrast` currentColor inheritance off navActive's
+// own `bg-accent text-accentContrast`, not from `.glim-hue-icon`'s own
+// colour declaration, so painting this item's hue on top of a badge already
+// filled with that same hue never happens.
+function NavItem({ to, label, icon, hueIndex }: NavItem) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `${navBase} ${isActive ? navActive : navInactive}`
+        `${navBase} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
       }
+      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
     >
       {icon}
       <span>{label}</span>
@@ -590,7 +665,13 @@ function SidebarControls() {
         onClick={() => setAdvanced(!advanced)}
         title={advanced ? t("mode.advancedView") : t("mode.simpleView")}
         aria-pressed={advanced}
-        className={`${navBase} ${navInactive} w-full`}
+        // `bv-nav-idle` stated explicitly here, not inherited from
+        // `navInactive` any more (GlimStone follow-up round, rainbow
+        // reversal — see `navInactive`'s own comment above): this toggle is
+        // a genuine set-of-one, not a member of the now-hued nav-destination
+        // list, so it keeps the old flat-accent hover-reveal marker on its
+        // own call site.
+        className={`${navBase} bv-nav-idle ${navInactive} w-full`}
       >
         <IconLayers />
         <span>{advanced ? t("mode.advancedView") : t("mode.simpleView")}</span>
@@ -608,6 +689,15 @@ export function Sidebar({ settings }: SidebarProps) {
   const filesEnabled = settings?.filesEnabled ?? false;
   const receiverEnabled = settings?.receiverEnabled ?? false;
   const fleetEnabled = settings?.fleetEnabled ?? false;
+
+  // Subscribed, not read (GlimStone follow-up round, rainbow reversal — see
+  // this file's own header comment): registers this component for a
+  // re-render on any rainbow change (on/off/reactive/rotate/palette edit),
+  // the same lib/useRainbow.ts contract every other hue-enabled consumer
+  // (Selector.tsx, ContainerRow/VMRow/FileSetRow) already subscribes
+  // through — called once here, not once per NavItem, matching that hook's
+  // own "once per list, not once per row" doc.
+  useRainbow();
 
   // Easter egg (Item 6): press-and-hold the logo → it wobbles, then explodes,
   // then reappears. A short click still navigates to the Dashboard; once the
@@ -753,59 +843,94 @@ export function Sidebar({ settings }: SidebarProps) {
         </span>
       </button>
 
-      {/* Navigation */}
-      <nav className="flex flex-col gap-1 p-3 flex-1">
-        <NavItem
-          to="/dashboard"
-          label={t("nav.dashboard")}
-          icon={<IconDashboard />}
-        />
-        {/* Always visible: disaster recovery is a core, non-expert flow. */}
-        <NavItem
-          to="/recovery"
-          label={t("nav.recovery")}
-          icon={<IconRecovery />}
-        />
-        <NavItem
-          to="/containers"
-          label={t("nav.containers")}
-          icon={<IconContainers />}
-        />
-        {/* VMs / Flash / Files tabs appear only once their domain is enabled. */}
-        {vmsEnabled && (
-          <NavItem to="/vms" label={t("nav.vms")} icon={<IconVM />} />
-        )}
-        {flashEnabled && (
-          <NavItem to="/flash" label={t("nav.flash")} icon={<IconFlash />} />
-        )}
-        {filesEnabled && (
-          <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} />
-        )}
-        {/* Config self-backup tab appears only once its domain is enabled. */}
-        {configEnabled && (
-          <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} />
-        )}
-        {/* Receiver dashboard appears only once its domain is enabled. */}
-        {receiverEnabled && (
-          <NavItem to="/receiver" label={t("nav.receiver")} icon={<IconReceiver />} />
-        )}
-        {/* Fleet view appears only once its domain is enabled. */}
-        {fleetEnabled && (
-          <NavItem to="/fleet" label={t("nav.fleet")} icon={<IconFleet />} />
-        )}
-      </nav>
+      {/* hueSeq/nextHue (GlimStone follow-up round, rainbow reversal — see
+          this file's own header comment): the SAME page-wide running-counter
+          pattern as Dashboard.tsx's own `visibleBlocks`/`hueSeq` and
+          Settings.tsx's own per-tab `hueSeq`/`nextHue()` — a plain `let`,
+          reset to 0 fresh on every render (nothing here needs to survive
+          between renders), incremented once per NavItem call made DIRECTLY
+          in the order the JSX below actually evaluates it, spanning BOTH
+          groups (the main <nav> list AND the Settings NavItem in the footer
+          group further down) — jdp's own ask was "die ganzen Tabs in der
+          Sidebar," ALL of them, and Settings is the same NavItem component
+          rendering the same kind of destination, just placed in its own
+          flex group below the Simple/Advanced spacer for LAYOUT reasons
+          only, not a different species of nav element. A
+          `{flag && <NavItem hueIndex={nextHue()} .../>}` gate
+          short-circuits BEFORE evaluating `nextHue()` when the domain is
+          off, so a hidden conditional tab never burns a slot — hiding or
+          showing VMs/Flash/Files/Config/Receiver/Fleet only ever
+          shifts the POSITIONS of tabs after it in this list, never the
+          identity-to-position mapping of the ones before it, and never
+          leaves a gap in the sequence. */}
+      {(() => {
+        let hueSeq = 0;
+        const nextHue = () => hueSeq++;
+        return (
+          <>
+            {/* Navigation */}
+            <nav className="flex flex-col gap-1 p-3 flex-1">
+              <NavItem
+                to="/dashboard"
+                label={t("nav.dashboard")}
+                icon={<IconDashboard />}
+                hueIndex={nextHue()}
+              />
+              {/* Always visible: disaster recovery is a core, non-expert flow. */}
+              <NavItem
+                to="/recovery"
+                label={t("nav.recovery")}
+                icon={<IconRecovery />}
+                hueIndex={nextHue()}
+              />
+              <NavItem
+                to="/containers"
+                label={t("nav.containers")}
+                icon={<IconContainers />}
+                hueIndex={nextHue()}
+              />
+              {/* VMs / Flash / Files tabs appear only once their domain is enabled. */}
+              {vmsEnabled && (
+                <NavItem to="/vms" label={t("nav.vms")} icon={<IconVM />} hueIndex={nextHue()} />
+              )}
+              {flashEnabled && (
+                <NavItem to="/flash" label={t("nav.flash")} icon={<IconFlash />} hueIndex={nextHue()} />
+              )}
+              {filesEnabled && (
+                <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} hueIndex={nextHue()} />
+              )}
+              {/* Config self-backup tab appears only once its domain is enabled. */}
+              {configEnabled && (
+                <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />
+              )}
+              {/* Receiver dashboard appears only once its domain is enabled. */}
+              {receiverEnabled && (
+                <NavItem to="/receiver" label={t("nav.receiver")} icon={<IconReceiver />} hueIndex={nextHue()} />
+              )}
+              {/* Fleet view appears only once its domain is enabled. */}
+              {fleetEnabled && (
+                <NavItem to="/fleet" label={t("nav.fleet")} icon={<IconFleet />} hueIndex={nextHue()} />
+              )}
+            </nav>
 
-      {/* Bottom group: the Simple/Advanced view toggle (SidebarControls),
-          then Settings. Language and theme both moved out — see
-          SidebarControls' own header comment. */}
-      <div className="flex flex-col gap-1 p-3">
-        <SidebarControls />
-        <NavItem
-          to="/settings"
-          label={t("nav.settings")}
-          icon={<IconSettings />}
-        />
-      </div>
+            {/* Bottom group: the Simple/Advanced view toggle (SidebarControls,
+                its own set-of-one, never hued — see its own call site's
+                comment), then Settings. Language and theme both moved out —
+                see SidebarControls' own header comment. Settings continues
+                THIS SAME nextHue() sequence rather than starting its own —
+                see this block's own opening comment. */}
+            <div className="flex flex-col gap-1 p-3">
+              <SidebarControls />
+              <NavItem
+                to="/settings"
+                label={t("nav.settings")}
+                icon={<IconSettings />}
+                hueIndex={nextHue()}
+              />
+            </div>
+          </>
+        );
+      })()}
     </aside>
   );
 }
