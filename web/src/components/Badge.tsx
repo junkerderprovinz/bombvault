@@ -14,14 +14,18 @@
 // few lines of local switch/lookup) — the same separation Toggle.tsx draws
 // between "how a switch renders" and "what a caller's label says".
 //
-// Sizing is three named stages (small/medium/large per the design language's
-// "however many an app genuinely needs — small/medium/large is usually
-// enough"), each pinning height + horizontal padding + font-size together as
-// one canonical source, read verbatim from the stage table below rather than
-// left for a call site to repeat as its own literals — that repetition is
-// exactly how the five duplicates this file replaces drifted apart in the
-// first place (px-2/px-1.5/no-size-class/text-[10px] all coexisting for what
-// was supposed to be one visual weight).
+// Sizing started as three named stages (small/medium/large per the design
+// language's "however many an app genuinely needs — small/medium/large is
+// usually enough") and has since grown to six (heading/icon/field/compact
+// joined as real, distinct roles turned up — see each stage's own history
+// below and the full ROLE → SIZE AUDIT block further down for why six
+// stages is "as many as genuinely needed", not scope creep), each pinning
+// height + horizontal padding + font-size together as one canonical source,
+// read verbatim from the stage table below rather than left for a call site
+// to repeat as its own literals — that repetition is exactly how the five
+// duplicates this file replaces drifted apart in the first place
+// (px-2/px-1.5/no-size-class/text-[10px] all coexisting for what was
+// supposed to be one visual weight).
 //   - small  = 18px tall, 11px text  (--text-caption) — the OffsiteTargets-
 //     Section storage-class/immutable weight, previously the "no size class"
 //     bug (padding with no font-size utility of its own, height at the mercy
@@ -30,6 +34,91 @@
 //     used by every StatusChip/Badge/StateChip predecessor.
 //   - large  = 24px tall, 12px text (--text-dense) — the ErrorDetailPanel
 //     count-badge + "Resolve"-button weight (see `as="button"` below).
+//
+// ---------------------------------------------------------------------------
+// ROLE → SIZE AUDIT (GlimStone full-app size-token pass, jdp emphatic:
+// "Die quadratischen Badges sollen die gleiche Größe haben. Die sind
+// teilweise unterschiedlich. Wir haben doch alle Größen standardisiert!
+// Immer alle Badges, Buttons etc. in das Größensystem aufnehmen."). Every
+// icon-only square/circle badge and IconTipButton call site in the app was
+// grepped and LIVE-measured (getBoundingClientRect against the real
+// deployed container, not read off the size prop or box-model arithmetic —
+// a size prop can be wrong, a custom className can override it, and two
+// controls with superficially "the same" padding can still render at
+// different heights if their font-size/line-height differs, which is
+// exactly how the one real defect this pass found happened: see `icon` vs
+// `compact` below). Grouped by ROLE — not by which literal glyph/tone a
+// call site happens to use — because role, not glyph, is what determines
+// which real neighbouring control a badge must match:
+//
+//   ROLE                                                    → SIZE   STAGE
+//   Icon-only badge beside a py-1.5/text-sm 32px field,      → 32px  compact
+//   OR a p-2/text-xs code/pre block sibling (verified live,
+//   getComputedStyle, both render 32px): FolderBrowser's own
+//   "Durchsuchen" button, Settings.tsx's Registry add/remove
+//   (IconTipButton, h-8 w-8), VMSSHCard's two "Kopieren"
+//   badges, the widget-URL copy badge, the Recovery-Kit
+//   download badge, PLUS every Selector `iconOnly` segment
+//   (Selector.tsx's own h-8 w-8, used by PathModeSwitch's
+//   Local/Remote pair AND SourceToggle's Local/Off-site pair,
+//   8 call sites) — these last ones don't go through Badge's
+//   own `size` prop at all (Selector has its own component),
+//   but they are THE SAME role and THE SAME 32px, confirmed
+//   live, and are exactly why 32px is this role's canonical
+//   number rather than a fresh guess.
+//   Row-level reset control matching a same-row swatch's own  → 28px  icon
+//   real h-7 w-7 footprint: the rainbow-palette reset badge
+//   (next to 8 PaletteSwatch circles) and the accent-presets
+//   reset badge (next to 8 AccentPresetSwatch rings) — both
+//   verified live at 28px, matching their own row's swatches.
+//   Standalone icon-only corner-badge pair with no adjacent    → 28px  icon
+//   field, matching ITS OWN prior self / its sibling badge:
+//   ContainerRow's "Jetzt sichern" (BackupButton) + "Export"
+//   (ExportButton), always rendered side by side, top-right
+//   corner of an installed container's row.
+//   Icon-only badge beside a py-2/text-sm 36px field (the      → 36px  field
+//   off-site repo-url `<input>`): TestConnectionButton,
+//   ReplicateNowButton, the Einrichten/Schließen wizard-toggle
+//   badge (×4 domains each), OffsiteTargetsSection's "Ziel
+//   hinzufügen" — all verified live at 36px, matching that
+//   input's own real height.
+//   Standalone icon-only save/submit badge inside a            → 24px  large
+//   disclosure-panel form row with no adjacent field (matches
+//   ITS OWN prior text-button self, `py-1 text-xs` ≈ 24px), OR
+//   a delete/restore-toggle badge inside a compact list row
+//   with text-xs siblings: Containers.tsx's Folders/Hooks/
+//   Excludes "speichern" badges, Config.tsx's snapshot-row
+//   delete badge, RestorePanel's restore-toggle + delete
+//   badges — all verified live at 24px.
+//
+// THE ONE REAL DEFECT this audit found (fixed by adding `compact` below):
+// Containers.tsx's FoldersEditor "Hinzufügen" badge sat directly beside a
+// FolderBrowser field (same row, `items-end`) and was `size="icon"` (28px)
+// — its own OWN comment claimed this matched "the FolderBrowser-field
+// neighbour", but that neighbour is a `text-sm px-3 py-1.5` input, which
+// (per FolderBrowser's own already-measured-live doc) renders at 32px, not
+// 28px. The 28px number was real, but it was this button's OWN pre-
+// conversion self-height (`text-xs px-3 py-1.5` ≈ 28px) — a DIFFERENT
+// control's box-model, coincidentally equal to Badge's existing `icon`
+// stage, silently re-derived instead of matching the actual neighbour
+// pixel-for-pixel. Exactly the mistake the standing rule now names: "each
+// individually well-fitted to its own [former] neighbour" is not the same
+// contract as "identical measured size within the role" once the row
+// alignment (`items-end`) makes the mismatch visible as two different
+// heights sitting side by side. Migrated to the new `compact` stage (32px),
+// matching every other member of its role.
+//
+// THE RULE THIS AUDIT ENFORCES GOING FORWARD: before sizing a new icon-only
+// badge/button, find its role in the table above and reuse that stage
+// verbatim. Do NOT independently re-measure "this button's own footprint"
+// or "this button's own former self" as a substitute for checking whether
+// an established role/token already covers it — that is precisely how the
+// `compact` vs `icon` defect above happened. Only measure fresh when the
+// role is genuinely new (no row in the table above fits) — and when you do,
+// add the result as a new row here, not just inline at the one call site,
+// so the next contributor finds it by reading this table instead of
+// re-measuring their own local context from scratch.
+// ---------------------------------------------------------------------------
 //
 // `as="button"` renders a real <button> instead of a <span> but resolves to
 // the EXACT SAME box at a given stage: same height, same padding, same font,
@@ -304,7 +393,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { IconTipButton } from "./IconTipButton";
 
 export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading" | "muted";
-export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon" | "field";
+export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon" | "field" | "compact";
 // Four shapes per the design language's Badges section: pill (fully round,
 // standalone chips/count badges), rounded (small fixed radius, compact
 // inline badges — the default, matching every predecessor's rounded-control),
@@ -545,6 +634,25 @@ const SIZE_TOKENS: Record<BadgeSize, { height: string; minHeight: string; text: 
   // invented for this call site, the same "plain scale step, not an
   // arbitrary value" discipline FolderBrowser's own h-8 used for its number.
   field: { height: "h-9", minHeight: "min-h-9", text: "text-dense", padding: "px-3" },
+  // GlimStone full-app size-token audit (see the ROLE → SIZE AUDIT block in
+  // this file's own header for the full writeup): 32px (h-8), the canonical
+  // "icon-only badge beside a py-1.5/text-sm field or a p-2/text-xs code
+  // block sibling" role — already established, live-verified, at six
+  // separate non-Badge IconTipButton/Selector call sites (FolderBrowser's
+  // "Durchsuchen", Settings.tsx's Registry add/remove, VMSSHCard's two
+  // "Kopieren" badges, the widget-URL copy badge, the Recovery-Kit download
+  // badge, and every Selector `iconOnly` segment) before this stage existed
+  // — added here so a Badge-based call site in this exact role (today: only
+  // Containers.tsx's FoldersEditor "Hinzufügen", migrated off the WRONG
+  // `icon` 28px stage it was previously guessed onto) has a real token to
+  // reach for instead of re-deriving 32px, or worse, re-guessing a
+  // different number, independently. Not a reuse of `icon` (28px, a
+  // DIFFERENT role — see that stage's own doc) or `field` (36px, a
+  // DIFFERENT field's own py-2 padding) — three genuinely different
+  // measured field heights exist in this app today (32/36px inputs, plus
+  // the swatch-matched 28px `icon` role), and `compact` names the one this
+  // stage had no token for yet.
+  compact: { height: "h-8", minHeight: "min-h-8", text: "text-dense", padding: "px-2" },
 };
 
 interface BadgeStyleOptions {
