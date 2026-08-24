@@ -14,6 +14,8 @@ import { SnapshotFileTree } from "./SnapshotFileTree";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
+import { Badge } from "./Badge";
+import { IconRestore, IconTrash } from "./Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -716,28 +718,71 @@ function SnapshotRow({
           </div>
         </Advanced>
 
-        {/* Consolidated restore toggle: opens the inline panel with 3 modes */}
-        <button
+        {/* Consolidated restore toggle: opens the inline panel with 3 modes.
+            Square icon badge (icon-badge round, standing rule: every icon
+            badge gets real hue integration + a hover tooltip carrying its
+            old label) — was a plain text `<button>` reading "Wiederherstellen…".
+            `tone="active"` (icon-only → solid `bg-accent`/`text-accentContrast`,
+            Badge.tsx's own `isIconOnly && tone==="active"` branch), no
+            `hueIndex` needed: this row lives inside ContainerRow's own
+            `.glim-hue` element (RestorePanel is one of that row's own
+            disclosure panes), so the ambient CSS custom-property cascade
+            already resolves `--accent`/`--accent-contrast` to the row's own
+            rainbow position — the exact same already-verified mechanism
+            FoldersEditor's own Save/Add badges use (see Containers.tsx).
+            IconRestore reuses the app's existing circular-sweep "restore"
+            glyph family (Sidebar.tsx's own IconRecovery/IconResetSwirl —
+            see that icon's own doc comment). `size="large"` (24px) matches
+            this button's own pre-existing `py-1` footprint — measured live,
+            same as Config.tsx's own delete-badge conversion below used for
+            its sibling. The old "highlighted while open" `bg-carbon-surface3`
+            swap is dropped rather than layered onto a second, competing
+            background utility class (Tailwind utilities of equal specificity
+            resolve by generated-stylesheet order, not by className list
+            order — not a safe way to override Badge's own tone fill):
+            `aria-expanded` now carries that state instead, matching every
+            other disclosure trigger in this app (StackCard's own chevron
+            toggle, ExcludesEditor's assistant toggle) that doesn't
+            recolour itself when open either — the panel appearing below is
+            already the visible feedback. (Badge/IconTipButton don't carry an
+            `aria-expanded` passthrough today, same as the plain `<button>`
+            this replaces, which never set one either — no regression.) */}
+        <Badge
+          as="button"
+          shape="square"
+          size="large"
+          tone="active"
+          tip={t("restore.open")}
           onClick={() => setShowRestore((p) => !p)}
-          className={`shrink-0 rounded-control px-2.5 py-1 text-xs transition-colors ${
-            showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
         >
-          {t("restore.open")}
-        </button>
+          <IconRestore />
+        </Badge>
 
-        {/* Delete this backup (restic forget) */}
-        <button
-          key={shake}
+        {/* Delete this backup (restic forget) — square icon badge, same
+            shape/tone precedent Config.tsx's ConfigSnapshotRow already
+            established for its own identical delete button (that file's own
+            comment is explicit this RestorePanel call site is "the next
+            conversion" it left for): `tone="neutral"` (quiet at rest,
+            `hover:bg-statusFailBg hover:text-statusFail` reveals the
+            destructive red on hover only) rather than a permanent state hue —
+            Badge's own contract exempts ok/fail/warn/neutral from rainbow
+            `hueIndex` (they are load-bearing status signals, never
+            repainted by list position), so this stays neutral regardless of
+            the row's own hue, exactly like every other delete affordance in
+            this app. IconTrash reused verbatim (Sidebar.tsx). */}
+        <Badge
+          as="button"
+          shape="square"
+          size="large"
+          tone="neutral"
+          tip={t("snapshots.delete")}
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
-          title={t("snapshots.delete")}
-          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
+          className={`hover:bg-statusFailBg hover:text-statusFail${shake ? " glim-shake" : ""}`}
+          key={shake}
         >
-          {deleting ? "…" : t("snapshots.delete")}
-        </button>
+          <IconTrash />
+        </Badge>
       </div>
 
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}

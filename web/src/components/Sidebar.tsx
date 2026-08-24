@@ -504,6 +504,50 @@ export function IconBackupNow() {
   );
 }
 
+// Plain save-disk glyph — deliberately NOT a reuse of IconBackupNow above
+// (Containers.tsx icon-badge round, standing rule: "IconBackupNow is a
+// distinct 'backup now' concept, not 'save this form'" — the arrow cut into
+// IconBackupNow's disk reads as "data landing in the vault right now", which
+// is wrong for a plain form-save action like "Ordner speichern"/"Andere
+// Container stoppen speichern"/"Ausschlüsse speichern"/"Backup-Hooks
+// speichern"). Shares IconBackupNow's outer disk silhouette (the same top
+// shutter band + rounded-bottom body, so the two read as the same "floppy
+// disk" family at a glance) but punches a plain rectangular label window
+// instead of an arrow — the conventional, motif-free "save" glyph. Same
+// evenodd true-hole technique IconBackupNow/IconCheckCircle already use, at
+// this file's own 16×16 icon-only-badge scale.
+export function IconSave() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="3.2" y="1.6" width="9.6" height="2.3" rx="0.7" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2.8 4.6h10.4v9.2a1.3 1.3 0 0 1-1.3 1.3H4.1a1.3 1.3 0 0 1-1.3-1.3Z
+           M6.1 8.6h3.8v3.9H6.1Z"
+      />
+    </svg>
+  );
+}
+
+// Circular "restore" arrow, at this file's own 16×16 icon-only-badge scale —
+// the SAME filled-ring-segment + arrowhead construction as this file's own
+// IconRecovery above (the Recovery nav-tab, 22×22) and Settings.tsx's private
+// IconResetSwirl (its Accent/Rainbow "reset to default" buttons, 16×16) —
+// extending that already-established "revert/restore" visual family to a
+// THIRD, exported call site (RestorePanel.tsx's per-snapshot "Wiederherstellen…"
+// trigger, Containers.tsx icon-badge round) rather than inventing a fourth,
+// visually-competing "restore" glyph. Identical path data to IconResetSwirl —
+// deliberately not re-derived — so all three read as one family at a glance.
+export function IconRestore() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M14 8A6 6 0 1 1 8 2L8 3.8A4.2 4.2 0 1 0 12.2 8Z" />
+      <path d="M8 1.1 4.3 3 8 4.9Z" />
+    </svg>
+  );
+}
+
 // Trash-can glyph — the conventional "remove this row" symbol (Settings.tsx's
 // own standalone Registries Card, GlimStone follow-up round: "Wenn man eine
 // Registry hinzufügt, soll der Entfernen-Button quadratisch sein mit

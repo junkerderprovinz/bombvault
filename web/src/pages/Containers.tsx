@@ -13,7 +13,7 @@ import { RestorePanel } from "../components/RestorePanel";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconContainers, IconDownload } from "../components/Sidebar";
+import { IconContainers, IconDownload, IconAdd, IconSave } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { ToggleRow } from "./Settings";
@@ -453,12 +453,29 @@ function HooksEditor({
           placeholder="curl -fsS https://hooks.example/done" className={inputCls} />
       </label>
       <div className="flex items-center gap-3 pt-0.5">
-        <button key={shake} onClick={() => void save()} disabled={state === "saving"}
-          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}>
-          {state === "saving" ? "…" : t("settings.save")}
-        </button>
+        {/* Icon-badge conversion (icon-badge round) — see FoldersEditor's own
+            "Ordner speichern" comment above for the full hue/size reasoning
+            (identical `py-1`/`text-xs` footprint here). */}
+        <Badge
+          key={shake}
+          as="button"
+          shape="square"
+          size="large"
+          tone="active"
+          tip={t("settings.save")}
+          onClick={() => void save()}
+          disabled={state === "saving"}
+          className={shake ? "glim-shake" : undefined}
+        >
+          {state === "saving" ? (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+            />
+          ) : (
+            <IconSave />
+          )}
+        </Badge>
       </div>
     </div>
   );
@@ -678,62 +695,142 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
             onChange={setBrowseValue}
           />
         </div>
-        {/* Colour-engine integration (Task 3, jdp live-review: "Die
-            ganzen Buttons in den Aufklappbereichen ... sind nicht in die
-            Farbengine und den Regenbogenmodus integriert"): this was the
-            one plain `bg-carbon-surface2` grey button in this panel next
-            to a `bg-accent` "Ordner speichern" sibling doing the exact
-            same weight of job (a primary action inside this disclosure).
-            No hueIndex needed to fix it — this panel already lives
-            inside ContainerRow's own `.glim-hue` element (see that
-            component's own comment), so `bg-accent` alone already
-            resolves to the row's own rainbow position via the ordinary
-            CSS custom-property cascade, verified live via
-            getComputedStyle against the real deployed container: the
-            sibling Save button already measured the row's exact hue
-            before this fix, this button now matches it byte-for-byte. */}
-        <button
+        {/* Square icon badge (icon-badge round, standing rule: every icon
+            badge gets real hue integration + a hover tooltip carrying its
+            old label). Colour-engine integration is the SAME already-
+            verified mechanism the prior text-button version of this control
+            used (Task 3, jdp live-review): no `hueIndex` needed — this
+            panel already lives inside ContainerRow's own `.glim-hue`
+            element, so Badge's `tone="active"` (icon-only → solid
+            `bg-accent`/`text-accentContrast`, see Badge.tsx's own
+            `isIconOnly && tone==="active"` branch) resolves to the row's
+            own rainbow position via the ordinary CSS custom-property
+            cascade, verified live via getComputedStyle against the real
+            deployed container. `size="icon"` (28px) matches this button's
+            own pre-existing `py-1.5` footprint, measured live against its
+            real FolderBrowser-field neighbour. `tip` carries the exact
+            text this button showed before becoming icon-only. */}
+        <Badge
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={t("folders.add")}
           onClick={addCustom}
-          className="rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
         >
-          {t("folders.add")}
-        </button>
+          <IconAdd />
+        </Badge>
       </div>
       <div className="flex items-center gap-3 pt-0.5">
-        <button
+        {/* Same icon-badge conversion as "Hinzufügen" above, `size="large"`
+            (24px) matching this button's own pre-existing `py-1` footprint —
+            a plain save glyph (IconSave), not IconBackupNow: this is "save
+            this form", not "back up now", two distinct concepts this app
+            already keeps visually separate (see IconSave's own doc comment,
+            components/Sidebar.tsx). */}
+        <Badge
           key={shake}
+          as="button"
+          shape="square"
+          size="large"
+          tone="active"
+          tip={t("folders.save")}
           onClick={() => void save()}
           disabled={state === "saving" || loading}
-          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
+          className={shake ? "glim-shake" : undefined}
         >
-          {state === "saving" ? "…" : t("folders.save")}
-        </button>
+          {state === "saving" ? (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+            />
+          ) : (
+            <IconSave />
+          )}
+        </Badge>
       </div>
     </div>
   );
 }
 
 // StopContainersEditor edits the list of OTHER containers to stop during this
-// container's backup (e.g. a database), one name per line. Collapsible; `open`
-// is controlled by the caller — see HooksEditor's own comment.
-function StopContainersEditor({ name, initial, open, t }: { name: string; initial: string[]; open: boolean; t: T }) {
-  const [text, setText] = useState(initial.join("\n"));
+// container's backup (e.g. a database). Collapsible; `open` is controlled by
+// the caller — see HooksEditor's own comment.
+//
+// REWORKED (jdp, live review: "Können wir da nicht eine Dropdownliste aller
+// installierten Container machen? Also dass es automatisch alle installierten
+// Container auflistet, die man dann auswählen kann."): this used to be a
+// free-text `<textarea>`, one hand-typed container name per line — no
+// validation against what is actually installed, a typo just silently never
+// matched anything at backup time. Replaced with a proper multi-select: a
+// dropdown/listbox populated from `installedContainers`, the SAME container
+// list ContainerRow's own caller (Containers()) already fetches to render
+// every row on this page — no second API call. Custom listbox, not a native
+// `<select multiple>` (illegible checkbox-free multi-select UI, no per-row
+// icon/status room) — same "escape hatch" precedent as Settings.tsx's
+// LanguageCard dropdown (role="listbox", outside-click/Escape-to-close), here
+// extended to `aria-multiselectable="true"` with a real checkbox per row
+// instead of LanguageCard's single-select radio-like rows.
+function StopContainersEditor({
+  name,
+  initial,
+  installedContainers,
+  open,
+  t,
+}: {
+  name: string;
+  initial: string[];
+  /** Every INSTALLED container on this BombVault instance, as already
+   *  fetched once by Containers() for rendering the row list — threaded
+   *  through ContainerRow rather than a second `listContainers()` call here. */
+  installedContainers: Container[];
+  open: boolean;
+  t: T;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(initial));
   const [state, setState] = useState<"idle" | "saving">("idle");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
   const { push } = useToast();
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the Save button alongside the toast on a failed save.
   const [shake, setShake] = useState(0);
 
+  // Re-seed whenever the SAVED value changes underneath this editor (e.g. a
+  // fresh `listContainers()` reload after Discover) — the same "derived from
+  // props but independently editable until the next save" shape
+  // UpdateAfterBackupRow's own `initial`-seeded toggle already uses.
+  useEffect(() => setSelected(new Set(initial)), [initial]);
+
+  // Candidates: every OTHER installed container — excludes this row's own
+  // container (a container can't stop itself) and BombVault's own container
+  // (the established "BombVault's own container never appears in
+  // schedule-member lists" rule, Settings.tsx's ContainersSection).
+  const candidates = installedContainers
+    .filter((c) => c.name !== name && !c.self)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+
+  // A previously-saved name that no longer matches an installed container
+  // (uninstalled since, renamed, or a leftover from the old free-text field)
+  // still needs to stay visible and removable — silently dropping it on the
+  // next save would be data loss the user never asked for. Marked inline
+  // with the existing `containers.notInstalled` badge text rather than a
+  // second bespoke "stale" label.
+  const candidateNames = new Set(candidates.map((c) => c.name));
+
+  function toggle(n: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(n)) next.delete(n);
+      else next.add(n);
+      return next;
+    });
+  }
+
   async function save() {
     setState("saving");
-    const list = text
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
     try {
-      const r = await setStopContainers(name, list);
+      const r = await setStopContainers(name, [...selected]);
       if (r.ok) {
         push(t("settings.saved"), "success");
       } else {
@@ -748,34 +845,140 @@ function StopContainersEditor({ name, initial, open, t }: { name: string; initia
     }
   }
 
-  const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
+  // Close on outside click / Escape — same mechanism Settings.tsx's own
+  // LanguageCard dropdown listbox uses.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false);
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setPickerOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [pickerOpen]);
 
   if (!open) return null;
+
+  const sortedSelected = [...selected].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
   return (
     <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
       <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        spellCheck={false}
-        rows={3}
-        placeholder={"mariadb\nredis"}
-        dir="ltr"
-        className={`${inputCls} text-start`}
-      />
-      <div className="flex items-center gap-3 pt-0.5">
+      {/* Picker trigger deliberately stays plain `bg-carbon-surface2` (not
+          rainbow-hued): every other VALUE picker in this app (this same
+          file's own offsite-target `<select>`, the Language/Theme card
+          dropdowns, FolderBrowser's text field) is plain neutral chrome —
+          rainbow hue in this app marks a genuine ACTION control (the Save
+          badge below), never a value-holding input/picker. */}
+      <div className="relative inline-block" ref={pickerRef}>
         <button
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={pickerOpen}
+          onClick={() => setPickerOpen((v) => !v)}
+          className="flex items-center gap-2 w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover transition-colors text-start"
+        >
+          <span className="min-w-0 flex-1 truncate">{t("stophook.title")}</span>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`shrink-0 transition-transform ${pickerOpen ? "rotate-90" : "rtl:rotate-180"}`}>
+            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+          </svg>
+        </button>
+        {pickerOpen && (
+          <div
+            role="listbox"
+            aria-multiselectable="true"
+            aria-label={t("stophook.title")}
+            className="absolute start-0 top-full mt-1 z-50 w-64 max-w-full max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
+            style={{ scrollbarColor: "var(--carbon-border) transparent" }}
+          >
+            {candidates.length === 0 && sortedSelected.length === 0 && (
+              <p className="px-3 py-2 text-xs text-carbon-textMuted">{t("stophook.noCandidates")}</p>
+            )}
+            {candidates.map((c) => {
+              const checked = selected.has(c.name);
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  role="option"
+                  aria-selected={checked}
+                  onClick={() => toggle(c.name)}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start transition-colors ${
+                    checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                  }`}
+                >
+                  <input type="checkbox" checked={checked} readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
+                  <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                </button>
+              );
+            })}
+            {/* Stale entries: a previously-saved name no longer among the
+                installed candidates above — still listed (so it stays
+                removable) but marked with the existing notInstalled label. */}
+            {sortedSelected.filter((n) => !candidateNames.has(n)).map((n) => (
+              <button
+                key={n}
+                type="button"
+                role="option"
+                aria-selected
+                onClick={() => toggle(n)}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+              >
+                <input type="checkbox" checked readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
+                <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-start">{n}</span>
+                <span className="shrink-0 text-caption text-statusFail">{t("containers.notInstalled")}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {sortedSelected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {sortedSelected.map((n) => (
+            <span key={n} className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub">
+              {n}
+              <button
+                onClick={() => toggle(n)}
+                className="text-carbon-textMuted hover:text-carbon-text transition-colors"
+                aria-label={t("stophook.remove").replace("{name}", n)}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-3 pt-0.5">
+        {/* Same icon-badge conversion as every other "speichern" button this
+            round — see FoldersEditor's own "Ordner speichern" comment above
+            for the full hue/size reasoning (identical `py-1`/`text-xs`
+            footprint here, so the same `size="large"` measurement applies). */}
+        <Badge
           key={shake}
+          as="button"
+          shape="square"
+          size="large"
+          tone="active"
+          tip={t("settings.save")}
           onClick={() => void save()}
           disabled={state === "saving"}
-          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
+          className={shake ? "glim-shake" : undefined}
         >
-          {state === "saving" ? "…" : t("settings.save")}
-        </button>
+          {state === "saving" ? (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+            />
+          ) : (
+            <IconSave />
+          )}
+        </Badge>
       </div>
     </div>
   );
@@ -973,16 +1176,29 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
         </div>
       )}
       <div className="flex items-center gap-3 pt-0.5">
-        <button
+        {/* Icon-badge conversion (icon-badge round) — see FoldersEditor's own
+            "Ordner speichern" comment above for the full hue/size reasoning
+            (identical `py-1`/`text-xs` footprint here). */}
+        <Badge
           key={shakeSave}
+          as="button"
+          shape="square"
+          size="large"
+          tone="active"
+          tip={t("excludes.save")}
           onClick={() => void save()}
           disabled={state === "saving"}
-          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shakeSave ? " glim-shake" : ""
-          }`}
+          className={shakeSave ? "glim-shake" : undefined}
         >
-          {state === "saving" ? "…" : t("excludes.save")}
-        </button>
+          {state === "saving" ? (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+            />
+          ) : (
+            <IconSave />
+          )}
+        </Badge>
       </div>
 
       {/* Exclusion assistant */}
@@ -1112,6 +1328,7 @@ function updateCheckResultText(t: T, result: string): string {
 
 function ContainerRow({
   container,
+  installedContainers,
   t,
   onDeleted,
   selected,
@@ -1119,6 +1336,14 @@ function ContainerRow({
   index,
 }: {
   container: Container;
+  /** Every installed container on this BombVault instance — threaded down
+   *  to StopContainersEditor's own multi-select picker (icon-badge round,
+   *  jdp: "eine Dropdownliste aller installierten Container"), reusing this
+   *  page's own already-fetched `containers` list rather than a second
+   *  `listContainers()` call inside the editor. See Containers()'s own call
+   *  sites below for why this is the FULL unfiltered installed set, not the
+   *  page's search/filter-narrowed `live`. */
+  installedContainers: Container[];
   t: T;
   onDeleted: () => void;
   selected?: boolean;
@@ -1363,6 +1588,7 @@ function ContainerRow({
           <StopContainersEditor
             name={container.name}
             initial={container.stopContainers ?? []}
+            installedContainers={installedContainers}
             open={openSections.has("stop")}
             t={t}
           />
@@ -2182,6 +2408,12 @@ export function Containers() {
   const live = sorted.filter((c) => c.installed);
   const orphans = sorted.filter((c) => !c.installed);
 
+  // The FULL installed-container set, unaffected by the search/schedule/
+  // backup/installed filters above — StopContainersEditor's own multi-select
+  // picker (each ContainerRow below) needs every real candidate to stop, not
+  // just whatever this page's own view happens to have filtered down to.
+  const installedContainers = containers.filter((c) => c.installed);
+
   // Precomputed here (against the UNFILTERED containers, matching
   // StacksPanel's own internal groupStacks() call below) so its own
   // emptiness can gate the heading's `nextHue()` call at the JSX render
@@ -2558,6 +2790,7 @@ export function Containers() {
             <ContainerRow
               key={c.name}
               container={c}
+              installedContainers={installedContainers}
               t={t}
               onDeleted={() => void loadContainers()}
               selected={selected.has(c.name)}
@@ -2608,7 +2841,7 @@ export function Containers() {
               i % palette.length); that is intended, because a repeat then
               lands a full palette apart rather than adjacent. */}
           {orphans.map((c, i) => (
-            <ContainerRow key={c.name} container={c} t={t} onDeleted={() => void loadContainers()} index={live.length + i} />
+            <ContainerRow key={c.name} container={c} installedContainers={installedContainers} t={t} onDeleted={() => void loadContainers()} index={live.length + i} />
           ))}
         </div>
       )}
