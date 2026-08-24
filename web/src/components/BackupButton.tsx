@@ -4,7 +4,7 @@ import { useBackupWatch } from "../lib/backupWatch";
 import { busyPhraseKey } from "../lib/progress";
 import type { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
-import { IconUpload } from "./Sidebar";
+import { IconBackupNow } from "./Sidebar";
 import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
@@ -110,7 +110,7 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
           style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
         />
       ) : (
-        <IconUpload />
+        <IconBackupNow />
       )}
     </Badge>
   );
