@@ -90,6 +90,7 @@ const fi: Partial<Translations> = {
   "containers.deleteBackups": "Poista kaikki varmuuskopiot",
   "containers.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kontin varmuuskopiot? Tilannekuvat poistetaan pysyvästi arkistosta, eikä toimintoa voi peruuttaa.",
   "containers.filter": "Suodatin:",
+  "containers.sectionsLabel": "Osiot",
   "containers.filterAll": "Kaikki",
   "containers.filterInstalled": "Asennetut",
   "containers.selectAll": "Valitse kaikki",

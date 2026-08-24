@@ -90,6 +90,7 @@ const sv: Partial<Translations> = {
   "containers.deleteBackups": "Ta bort alla säkerhetskopior",
   "containers.deleteBackupsConfirm": "Ta bort ALLA säkerhetskopior för den här containern? Ögonblicksbilderna tas bort permanent från arkivet och kan inte ångras.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Avsnitt",
   "containers.filterAll": "Alla",
   "containers.filterInstalled": "Installerade",
   "containers.selectAll": "Markera alla",

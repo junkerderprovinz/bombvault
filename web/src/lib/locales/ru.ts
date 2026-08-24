@@ -89,6 +89,7 @@ const ru: Partial<Translations> = {
   "containers.deleteBackups": "Удалить все резервные копии",
   "containers.deleteBackupsConfirm": "Удалить ВСЕ резервные копии этого контейнера? Снимки будут безвозвратно удалены из репозитория.",
   "containers.filter": "Фильтр:",
+  "containers.sectionsLabel": "Разделы",
   "containers.filterAll": "Все",
   "containers.filterInstalled": "Установленные",
   "containers.selectAll": "Выбрать все",

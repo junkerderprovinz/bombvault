@@ -89,6 +89,7 @@ const pt: Partial<Translations> = {
   "containers.deleteBackups": "Eliminar todos os backups",
   "containers.deleteBackupsConfirm": "Eliminar TODOS os backups deste container? Os instantâneos são removidos permanentemente do repositório e a ação não pode ser revertida.",
   "containers.filter": "Filtro:",
+  "containers.sectionsLabel": "Seções",
   "containers.filterAll": "Todos",
   "containers.filterInstalled": "Instalados",
   "containers.selectAll": "Selecionar tudo",

@@ -94,6 +94,7 @@ const is: Partial<Translations> = {
   "containers.deleteBackups": "Eyða öllum afritum",
   "containers.deleteBackupsConfirm": "Eyða ÖLLUM afritum þessa gáms? Snapshottin eru fjarlægð varanlega úr geymslusafninu og verður ekki afturkallað.",
   "containers.filter": "Sía:",
+  "containers.sectionsLabel": "Hlutar",
   "containers.filterAll": "Allir",
   "containers.filterInstalled": "Uppsettir",
   "containers.selectAll": "Velja allt",

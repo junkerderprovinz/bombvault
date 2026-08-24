@@ -94,6 +94,7 @@ const lt: Partial<Translations> = {
   "containers.deleteBackups": "Ištrinti visas kopijas",
   "containers.deleteBackupsConfirm": "Ištrinti VISAS šio konteinerio atsargines kopijas? Momentinės kopijos negrįžtamai pašalinamos iš saugyklos ir jų nebus galima atkurti.",
   "containers.filter": "Filtras:",
+  "containers.sectionsLabel": "Skyriai",
   "containers.filterAll": "Visi",
   "containers.filterInstalled": "Įdiegti",
   "containers.selectAll": "Pažymėti visus",

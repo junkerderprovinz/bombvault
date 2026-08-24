@@ -90,6 +90,7 @@ const he: Partial<Translations> = {
   "containers.deleteBackups": "מחק את כל הגיבויים",
   "containers.deleteBackupsConfirm": "למחוק את כל הגיבויים של ה-container הזה? ה-snapshots יוסרו לצמיתות מהמאגר ולא ניתן לבטל פעולה זו.",
   "containers.filter": "סינון:",
+  "containers.sectionsLabel": "קטעים",
   "containers.filterAll": "הכל",
   "containers.filterInstalled": "מותקנים",
   "containers.selectAll": "בחר הכל",

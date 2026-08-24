@@ -228,24 +228,22 @@ interface RestorePanelProps {
   // installed=false marks a not-installed (orphan) container: when it has a
   // config-only backup (no snapshots) it can be recreated from the saved config.
   installed?: boolean;
-  /** Already-formatted "Letztes Backup: <date>" (or "…: Nie") string, rendered
-   *  flush right on the SAME line as this panel's own disclosure toggle
-   *  (Containers.tsx Task 3, jdp live-review: "Letztes Backup soll in der
-   *  Zeile wo man die Backups ausklappen kann ganz rechts stehen, es soll nur
-   *  eine Zeile sein, nicht zwei"). It used to live in ContainerRow's own top
-   *  row as two separately-stacked <p> lines (a label line, then a date
-   *  line); merged into one string by the CALLER (which owns the
-   *  lastBackup/formatTs/"never" formatting — this component has no business
-   *  knowing any of that, same separation Badge.tsx's own doc draws between
-   *  "how a control renders" and "what a caller's data says") and rendered
-   *  here, on the SAME line as the "Backups" toggle, via plain flexbox rather
-   *  than a second stacked line. Optional and omitted by every OTHER caller
-   *  today — this component has exactly one real call site (Containers.tsx;
-   *  every other file only imports its `DEFAULT_RESTORE_FOLDER` constant or
-   *  keeps its own independent twin, e.g. VMs.tsx's VMRestorePanel), so this
-   *  is not a multi-caller compatibility concern, just an optional prop left
-   *  off when there is no last-backup fact to show. */
-  lastBackupText?: string;
+  /** Whether the panel's content is expanded. GlimStone follow-up round (jdp,
+   *  live-review: "Können wir hier Buttons machen die alle in einer Zeile
+   *  stehen?" — Containers.tsx's five stacked disclosure triggers, this one
+   *  included, became one shared row of chip buttons): the trigger row (the
+   *  chevron button + the "Backups" label, formerly rendered by this
+   *  component itself) moved up into ContainerRow's own shared Selector strip
+   *  — see that call site's own comment. This component no longer owns an
+   *  `open` boolean or renders a trigger of its own; it is purely the content
+   *  pane, shown or hidden by the CALLER's own state, the same "controlled,
+   *  not self-toggling" shape FoldersEditor/StopContainersEditor/
+   *  ExcludesEditor/HooksEditor (Containers.tsx) all took on in the same
+   *  pass. `lastBackupText` (the flush-right "Letztes Backup: …" fact that
+   *  used to share the trigger's own line) moved with the trigger — the
+   *  caller renders it directly next to the shared button row instead, since
+   *  it is always-visible summary data, not part of this expandable content. */
+  open: boolean;
 }
 
 // RecreateButton recreates a not-installed container from its saved definition
@@ -838,8 +836,7 @@ function SnapshotRow({
 // sets in Files.tsx) shares the exact same fallback instead of drifting apart.
 export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
-export function RestorePanel({ name, t, installed = true, lastBackupText }: RestorePanelProps) {
-  const [open, setOpen] = useState(false);
+export function RestorePanel({ name, t, installed = true, open }: RestorePanelProps) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -851,10 +848,6 @@ export function RestorePanel({ name, t, installed = true, lastBackupText }: Rest
   // FolderBrowser. Fetched once the panel is opened (not on mount).
   const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
-
-  function toggle() {
-    setOpen((prev) => !prev);
-  }
 
   const [reloadTick, setReloadTick] = useState(0);
 
@@ -885,86 +878,56 @@ export function RestorePanel({ name, t, installed = true, lastBackupText }: Rest
       .finally(() => setLoading(false));
   }, [open, name, source, reloadTick]);
 
-  return (
-    <div className="mt-1">
-      {/* Single-line disclosure row (Task 3 — see this component's own
-          `lastBackupText` doc above): the toggle button and the last-backup
-          fact now sit on ONE flex line, the date pushed to the far end via
-          `ms-auto` rather than living underneath as a second stacked line. */}
-      <div className="flex items-center gap-1.5">
-        <button
-          onClick={toggle}
-          aria-expanded={open}
-          className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
-          >
-            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-          </svg>
-          {t("snapshots.title")}
-        </button>
-        {lastBackupText && (
-          <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">
-            {lastBackupText}
-          </span>
-        )}
-      </div>
+  if (!open) return null;
 
-      {open && (
-        <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-          {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
-          <Advanced>
-            <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="containers" />
-              </div>
-              <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
-            </div>
-          </Advanced>
-          <RecentRunsList name={name} domain="container" t={t} />
-          {loading && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
+  return (
+    <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
+      {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
+      <Advanced>
+        <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+            <SourceToggle source={source} onChange={setSource} disabled={loading} domain="containers" />
+          </div>
+          <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
+        </div>
+      </Advanced>
+      <RecentRunsList name={name} domain="container" t={t} />
+      {loading && (
+        <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
+      )}
+      {error && (
+        <p className="py-3 text-xs text-statusFail">{error}</p>
+      )}
+      {!loading && !error && snapshots.length === 0 && (
+        <div className="py-3 flex flex-col gap-1">
+          <p className="text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
+          {/* A config-only backup (stateless container, no data snapshot) has
+              no restic snapshot. If the container is gone, offer to recreate
+              it from the saved definition; if it's installed, just explain. */}
+          {installed ? (
+            <p className="text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>
+          ) : (
+            <RecreateButton name={name} source={source} t={t} />
           )}
-          {error && (
-            <p className="py-3 text-xs text-statusFail">{error}</p>
-          )}
-          {!loading && !error && snapshots.length === 0 && (
-            <div className="py-3 flex flex-col gap-1">
-              <p className="text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
-              {/* A config-only backup (stateless container, no data snapshot) has
-                  no restic snapshot. If the container is gone, offer to recreate
-                  it from the saved definition; if it's installed, just explain. */}
-              {installed ? (
-                <p className="text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>
-              ) : (
-                <RecreateButton name={name} source={source} t={t} />
-              )}
-            </div>
-          )}
-          <Advanced when={!loading && !error && snapshots.length >= 2}>
-            <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
-          </Advanced>
-          {!loading && snapshots.map((snap) => (
-            <SnapshotRow
-              key={snap.id}
-              snap={snap}
-              containerName={name}
-              source={source}
-              hostMountRoot={hostMountRoot}
-              defaultFolder={restoreFolder}
-              onDeleted={() => setReloadTick((n) => n + 1)}
-              onTagged={() => setReloadTick((n) => n + 1)}
-              t={t}
-            />
-          ))}
         </div>
       )}
+      <Advanced when={!loading && !error && snapshots.length >= 2}>
+        <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
+      </Advanced>
+      {!loading && snapshots.map((snap) => (
+        <SnapshotRow
+          key={snap.id}
+          snap={snap}
+          containerName={name}
+          source={source}
+          hostMountRoot={hostMountRoot}
+          defaultFolder={restoreFolder}
+          onDeleted={() => setReloadTick((n) => n + 1)}
+          onTagged={() => setReloadTick((n) => n + 1)}
+          t={t}
+        />
+      ))}
     </div>
   );
 }

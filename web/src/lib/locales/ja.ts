@@ -90,6 +90,7 @@ const ja: Partial<Translations> = {
   "containers.deleteBackups": "バックアップをすべて削除",
   "containers.deleteBackupsConfirm": "このコンテナのバックアップをすべて削除しますか？スナップショットはリポジトリから完全に削除され、元に戻せません。",
   "containers.filter": "フィルター:",
+  "containers.sectionsLabel": "セクション",
   "containers.filterAll": "すべて",
   "containers.filterInstalled": "インストール済み",
   "containers.selectAll": "すべて選択",

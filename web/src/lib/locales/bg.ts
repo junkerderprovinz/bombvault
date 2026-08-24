@@ -94,6 +94,7 @@ const bg: Partial<Translations> = {
   "containers.deleteBackups": "Изтрий всички архивирания",
   "containers.deleteBackupsConfirm": "Да изтрия ли ВСИЧКИ архивирания на този контейнер? Снапшотите се премахват завинаги от хранилището и не могат да бъдат възстановени.",
   "containers.filter": "Филтър:",
+  "containers.sectionsLabel": "Раздели",
   "containers.filterAll": "Всички",
   "containers.filterInstalled": "Инсталирани",
   "containers.selectAll": "Избери всички",

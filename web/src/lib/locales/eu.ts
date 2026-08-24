@@ -94,6 +94,7 @@ const eu: Partial<Translations> = {
   "containers.deleteBackups": "Ezabatu babeskopia guztiak",
   "containers.deleteBackupsConfirm": "Edukiontzi honen babeskopia GUZTIAK ezabatu nahi dituzu? Argazkiak betiko ezabatzen dira biltegitik eta ezin dira berreskuratu.",
   "containers.filter": "Iragazkia:",
+  "containers.sectionsLabel": "Atalak",
   "containers.filterAll": "Denak",
   "containers.filterInstalled": "Instalatuta",
   "containers.selectAll": "Hautatu denak",

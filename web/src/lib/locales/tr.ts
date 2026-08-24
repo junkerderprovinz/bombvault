@@ -90,6 +90,7 @@ const tr: Partial<Translations> = {
   "containers.deleteBackups": "Tüm yedekleri sil",
   "containers.deleteBackupsConfirm": "Bu konteynerin TÜM yedekleri silinsin mi? Anlık görüntüler depodan kalıcı olarak kaldırılır ve geri alınamaz.",
   "containers.filter": "Filtre:",
+  "containers.sectionsLabel": "Bölümler",
   "containers.filterAll": "Tümü",
   "containers.filterInstalled": "Kurulu",
   "containers.selectAll": "Tümünü seç",

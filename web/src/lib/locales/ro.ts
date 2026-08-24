@@ -89,6 +89,7 @@ const ro: Partial<Translations> = {
   "containers.deleteBackups": "Șterge toate copiile de rezervă",
   "containers.deleteBackupsConfirm": "Ștergeți TOATE copiile de rezervă ale acestui container? Instantaneele sunt eliminate permanent din depozit și nu pot fi anulate.",
   "containers.filter": "Filtrare:",
+  "containers.sectionsLabel": "Secțiuni",
   "containers.filterAll": "Toate",
   "containers.filterInstalled": "Instalate",
   "containers.selectAll": "Selectează tot",

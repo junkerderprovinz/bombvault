@@ -90,6 +90,7 @@ const hu: Partial<Translations> = {
   "containers.deleteBackups": "Összes mentés törlése",
   "containers.deleteBackupsConfirm": "Törli a konténer ÖSSZES biztonsági mentését? A pillanatképek véglegesen eltávolításra kerülnek a tárolóból, és nem lehet visszavonni.",
   "containers.filter": "Szűrő:",
+  "containers.sectionsLabel": "Szakaszok",
   "containers.filterAll": "Összes",
   "containers.filterInstalled": "Telepített",
   "containers.selectAll": "Összes kijelölése",

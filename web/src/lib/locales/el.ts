@@ -90,6 +90,7 @@ const el: Partial<Translations> = {
   "containers.deleteBackups": "Διαγραφή όλων των αντιγράφων",
   "containers.deleteBackupsConfirm": "Διαγραφή ΟΛΩΝ των αντιγράφων αυτού του container; Τα στιγμιότυπα αφαιρούνται μόνιμα από το αποθετήριο και δεν μπορούν να ανακτηθούν.",
   "containers.filter": "Φίλτρο:",
+  "containers.sectionsLabel": "Ενότητες",
   "containers.filterAll": "Όλα",
   "containers.filterInstalled": "Εγκατεστημένα",
   "containers.selectAll": "Επιλογή όλων",

@@ -90,6 +90,7 @@ const fr: Partial<Translations> = {
   "containers.deleteBackups": "Supprimer toutes les sauvegardes",
   "containers.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de ce conteneur ? Les instantanés sont supprimés définitivement du dépôt et cette action est irréversible.",
   "containers.filter": "Filtre :",
+  "containers.sectionsLabel": "Sections",
   "containers.filterAll": "Tous",
   "containers.filterInstalled": "Installés",
   "containers.selectAll": "Tout sélectionner",

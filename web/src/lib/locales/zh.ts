@@ -90,6 +90,7 @@ const zh: Partial<Translations> = {
   "containers.deleteBackups": "删除所有备份",
   "containers.deleteBackupsConfirm": "删除此容器的所有备份？快照将从仓库中永久移除且无法撤销。",
   "containers.filter": "筛选:",
+  "containers.sectionsLabel": "部分",
   "containers.filterAll": "全部",
   "containers.filterInstalled": "已安装",
   "containers.selectAll": "全选",

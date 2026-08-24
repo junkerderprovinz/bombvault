@@ -94,6 +94,7 @@ const sl: Partial<Translations> = {
   "containers.deleteBackups": "Izbriši vse varnostne kopije",
   "containers.deleteBackupsConfirm": "Izbrišem VSE varnostne kopije tega vsebnika? Posnetki se trajno odstranijo iz repozitorija in tega ni mogoče razveljaviti.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Razdelki",
   "containers.filterAll": "Vsi",
   "containers.filterInstalled": "Nameščeni",
   "containers.selectAll": "Izberi vse",

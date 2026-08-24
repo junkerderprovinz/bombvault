@@ -94,6 +94,7 @@ const fa: Partial<Translations> = {
   "containers.deleteBackups": "حذف همه پشتیبان‌ها",
   "containers.deleteBackupsConfirm": "همه پشتیبان‌های این کانتینر حذف شوند؟ اسنپ‌شات‌ها برای همیشه از مخزن حذف می‌شوند و قابل بازگردانی نیستند.",
   "containers.filter": "فیلتر:",
+  "containers.sectionsLabel": "بخش‌ها",
   "containers.filterAll": "همه",
   "containers.filterInstalled": "نصب‌شده",
   "containers.selectAll": "انتخاب همه",

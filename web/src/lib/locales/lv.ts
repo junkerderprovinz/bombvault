@@ -94,6 +94,7 @@ const lv: Partial<Translations> = {
   "containers.deleteBackups": "Dzēst visas rezerves kopijas",
   "containers.deleteBackupsConfirm": "Dzēst VISAS šī konteinera rezerves kopijas? Momentuzņēmumi tiek neatgriezeniski noņemti no repozitorija, un tos nevarēs atjaunot.",
   "containers.filter": "Filtrs:",
+  "containers.sectionsLabel": "Sadaļas",
   "containers.filterAll": "Visi",
   "containers.filterInstalled": "Instalēti",
   "containers.selectAll": "Atlasīt visus",
