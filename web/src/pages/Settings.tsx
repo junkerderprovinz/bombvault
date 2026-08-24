@@ -674,8 +674,10 @@ function AccentPresetSwatch({
 // fixed-size set of individually editable swatches, resettable," and it
 // ships exactly ONE reset for its whole row of 8
 // (`updateRainbow({ palette: RAINBOW })`), not eight individual ones —
-// matched here for the same granularity, the same Badge shape="circle" icon,
-// the same SVG glyph. Unlike the rainbow reset (always shown while its
+// matched here for the same granularity, the same Badge shape (now
+// shape="square", see this Card's own hueIndex-param doc below for the
+// square-conversion round), the same SVG glyph. Unlike the rainbow reset
+// (always shown while its
 // master switch is on), this one only renders once at least one preset has
 // actually drifted from ITS OWN shipped default — matching the pre-existing
 // "Reset to default" text button a few pixels to its right in THIS SAME
