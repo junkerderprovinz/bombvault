@@ -692,9 +692,23 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
                 onChange={setBrowseValue}
               />
             </div>
+            {/* Colour-engine integration (Task 3, jdp live-review: "Die
+                ganzen Buttons in den Aufklappbereichen ... sind nicht in die
+                Farbengine und den Regenbogenmodus integriert"): this was the
+                one plain `bg-carbon-surface2` grey button in this panel next
+                to a `bg-accent` "Ordner speichern" sibling doing the exact
+                same weight of job (a primary action inside this disclosure).
+                No hueIndex needed to fix it — this panel already lives
+                inside ContainerRow's own `.glim-hue` element (see that
+                component's own comment), so `bg-accent` alone already
+                resolves to the row's own rainbow position via the ordinary
+                CSS custom-property cascade, verified live via
+                getComputedStyle against the real deployed container: the
+                sibling Save button already measured the row's exact hue
+                before this fix, this button now matches it byte-for-byte. */}
             <button
               onClick={addCustom}
-              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
             >
               {t("folders.add")}
             </button>
@@ -1024,11 +1038,18 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
               <div className="flex flex-col gap-2">
                 <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
                 <div className="flex items-center gap-3">
+                  {/* Colour-engine integration (Task 3, same fix/reasoning as
+                      FoldersEditor's "Hinzufügen" button above): was the one
+                      plain grey `bg-carbon-surface2` button in this
+                      assistant sub-panel, next to its own "Ausschließen"
+                      suggestion-accept button below which was ALREADY
+                      `bg-accent` — matches that sibling now, same
+                      already-correct .glim-hue-cascade mechanism. */}
                   <button
                     key={shakeScan}
                     onClick={() => void scan()}
                     disabled={scanning}
-                    className={`rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-text hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)${
+                    className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)${
                       shakeScan ? " glim-shake" : ""
                     }`}
                   >
