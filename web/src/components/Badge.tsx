@@ -303,7 +303,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { IconTipButton } from "./IconTipButton";
 
-export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading";
+export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading" | "muted";
 export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon" | "field";
 // Four shapes per the design language's Badges section: pill (fully round,
 // standalone chips/count badges), rounded (small fixed radius, compact
@@ -395,6 +395,34 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   // branch below no longer swaps in a different fill for the notch
   // specifically; this single entry now covers both cases identically.
   heading: "bg-accent text-accentContrast",
+  // GlimStone follow-up round (jdp, live review of Settings' System-tab
+  // footer, live-measured: "Die Versionsnummern sollen keinen hellen
+  // Hintergrund haben" — the version link was `tone="neutral"`, i.e.
+  // `bg-carbon-surface2`, which resolves to a pale #e8e8e8 pill in light
+  // theme, plainly visible against the near-white page ground it sits on
+  // (confirmed live via screenshot — see this round's PR/commit
+  // description). `neutral` itself is untouched here (it stays the correct
+  // choice for every OTHER "no real status" chip that genuinely wants a
+  // visual grouping surface — see this file's own Task 7 comment on that
+  // tone) — a bare version string next to a genuine action link isn't a
+  // status chip or a grouped surface at all, it is exactly the same kind of
+  // small metadata caption Settings.tsx's own Export/Import preview `<dd>`
+  // rows already render as (`text-carbon-textMuted` label + plain-text
+  // value, zero background — see SettingsPortabilityCard's preview `<dl>`)
+  // and Fleet.tsx's own peer-version caption already renders as
+  // (`text-xs text-carbon-textMuted`, also zero background). `muted` gives
+  // that exact same plain-caption treatment through Badge instead of a
+  // second, parallel non-Badge span: no background utility at all (so
+  // nothing paints behind the text, in either theme, by simply never
+  // emitting one — not a transparent-cutout trick), `text-carbon-textMuted`
+  // ink matching those two existing captions verbatim. Kept as `as="a"`
+  // at its one live call site (AboutFooter's version link) rather than
+  // reverting to a bare `<span>`/`<a>` outside Badge — rule 13 ("everything
+  // clickable is a badge, including links") never required a badge to carry
+  // a tinted fill, only the shared height/padding/radius/hover-opacity box;
+  // this tone proves that box can be genuinely transparent when the content
+  // it wraps is a quiet caption, not a status signal.
+  muted: "text-carbon-textMuted",
 };
 
 const RADIUS_CLASSES: Record<BadgeShape, string> = {

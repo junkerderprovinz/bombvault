@@ -266,6 +266,21 @@ describe("Badge — tone/status-color mapping", () => {
     expect(cls).toContain("bg-carbon-surface2");
     expect(cls).toContain("text-carbon-textSub");
   });
+
+  // GlimStone follow-up round (jdp, live review: "Die Versionsnummern sollen
+  // keinen hellen Hintergrund haben" — see this tone's own file-header
+  // comment for the live-measured #e8e8e8 pill this replaces). Not part of
+  // the `cases` loop above: every OTHER tone there asserts a real `bg-*`
+  // class is present, so `muted`'s whole point — NO background utility at
+  // all, not even a transparent one — needs its own negative assertion
+  // rather than a `bg` string that would make `toContain("")` trivially
+  // pass.
+  it("muted renders plain caption text with no background utility at all", () => {
+    const el = root(Badge({ children: "x", tone: "muted" }));
+    const cls = (el.props!.className as string).split(/\s+/);
+    expect(cls).toContain("text-carbon-textMuted");
+    expect(cls.some((c) => c.startsWith("bg-"))).toBe(false);
+  });
 });
 
 describe("Badge — heading notch (tone=heading + size=heading straddles the card's top edge)", () => {
