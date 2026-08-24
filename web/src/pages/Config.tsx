@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { hueVars, rainbowAt } from "../lib/appearance";
 import {
   backupConfigNow,
   listConfigSnapshots,
@@ -223,7 +224,21 @@ function ConfigSettingsCard({
     // full reasoning): lets this card's own hueIndex'd heading notch reveal
     // its colour in reactive rainbow mode on hover/focus anywhere in the
     // card, not just its own tiny badge glyph.
-    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+    //
+    // `.glim-hue` ALSO added (rainbow-mode completeness sweep, jdp live
+    // review: "Es sind nicht alle Buttons in den Regenbogen-Modus
+    // eingepflegt"): `glim-notch-card` alone never redefines
+    // --accent/--focus-ring, only the reactive-mode hover reveal — so the
+    // Save button below stayed the flat theme accent regardless of rainbow.
+    // Same hueIndex prop the Badge already uses (StepCard.tsx's/
+    // Dashboard.tsx Card()'s own identical fix, same mechanism: custom
+    // properties cascade to every descendant once redefined once here).
+    <div
+      className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4${
+        hueIndex !== undefined ? " glim-hue" : ""
+      }`}
+      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+    >
       {/* Task 5 (rule 11): same Badge-in-<h2> pattern as Settings.tsx's own
           Card component — this hand-rolled Card equivalent never shared
           Card's component, so it needed its own copy of the conversion.
@@ -514,7 +529,14 @@ export function Config() {
           Also folds the permanent backupHint <p> into an InfoBubble on the
           Badge (same "Infotexte in Infobubbles" fix as Flash.tsx's sibling
           backup Card, same content, same onAccent). */}
-      <div className="relative glim-notch-card">
+      {/* `.glim-hue` added (rainbow-mode completeness sweep, jdp live review:
+          "Es sind nicht alle Buttons in den Regenbogen-Modus eingepflegt"):
+          `glim-notch-card` alone never redefines --accent/--focus-ring, only
+          the reactive-mode hover reveal — so ConfigBackupButton's own
+          bg-accent button below stayed flat regardless of rainbow. Same
+          hueIndex={1} the Badge already uses; the inner overflow-hidden box
+          inherits it too via ordinary CSS custom-property cascade. */}
+      <div className="relative glim-notch-card glim-hue" style={hueVars(rainbowAt(1)) as CSSProperties}>
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={1} insetStart={5}>
             {t("config.backupTitle")}
@@ -537,8 +559,15 @@ export function Config() {
       </div>
 
       {/* Snapshots card — list + delete; restoring settings lives in Recovery.
-          `glim-notch-card`: see Settings.tsx's Card() for the reasoning. */}
-      <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+          `glim-notch-card`: see Settings.tsx's Card() for the reasoning.
+          `.glim-hue` added (rainbow-mode completeness sweep, jdp live
+          review): same hueIndex={2} the Badge already uses — ConfigSnapshotRow's
+          own delete button inherits it via the ordinary custom-property
+          cascade, no per-row change needed. */}
+      <div
+        className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-5 flex flex-col gap-4"
+        style={hueVars(rainbowAt(2)) as CSSProperties}
+      >
         {/* jdp live-review ("Infotexte in i Infobubbles"): this used to be a
             permanent bg-statusNeutralBg banner (Task 7 had already folded
             its COLOUR from the old fifth "info" hue into neutral, but kept

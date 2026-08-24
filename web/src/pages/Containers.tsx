@@ -2146,6 +2146,15 @@ function BackupOrderPanel({
   if (savedOrder === null) return null;
 
   return (
+    // Rainbow-mode completeness sweep (jdp, live review, sixth escalation of
+    // this same standing rule on this exact panel: "Es sind nicht alle
+    // Buttons in den Regenbogen-Modus eingepflegt"): `.glim-hue` added below
+    // — `glim-notch-card` alone only wires the reactive-mode hover reveal on
+    // the heading Badge's own notch, it never redefines --accent/
+    // --focus-ring, so the "Save" button further down stayed the flat theme
+    // accent regardless of rainbow even after the title notch itself was
+    // fixed. Same hueIndex prop the Badge already uses.
+    //
     // relative + glim-notch-card: same "half-overlap card notch" pattern
     // every other real Card in this app uses (VMs.tsx's own
     // VMBackupOrderPanel is the closest twin — a single div carrying both
@@ -2173,7 +2182,12 @@ function BackupOrderPanel({
     // deliberately a bit MORE than the page's plain 24px rhythm, not just
     // parity with it, matching jdp's own framing ("increase", not merely
     // "restore").
-    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-4 mt-4 flex flex-col gap-3">
+    <div
+      className={`relative glim-notch-card bg-carbon-surface rounded-card p-4 mt-4 flex flex-col gap-3${
+        hueIndex !== undefined ? " glim-hue" : ""
+      }`}
+      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+    >
       {/* Title notch, always visible regardless of collapse state (matches
           the PRE-fix behaviour, where title+count stayed visible collapsed
           and only the hint hid) — moved OUT of the disclosure <button>
