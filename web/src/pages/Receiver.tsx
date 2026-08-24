@@ -32,6 +32,7 @@ import { humanBytes } from "../lib/forecast";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
+import { InfoBubble } from "../components/InfoBubble";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { useToast } from "../lib/toast";
@@ -660,6 +661,17 @@ export function Receiver() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // jdp live review ("Empfänger Tab: Button rechts oben ist redundant"): the
+  // empty-state Card below already carries its own prominent "Add received
+  // repo" CTA, so showing the identical button a second time in the
+  // top-right actions bar was pure duplication — confirmed both call the
+  // exact same handler (`() => setDialog("new")`). Gate the top-right button
+  // on NOT being in that empty state — mirrors Files.tsx's own
+  // showEmptyState fix for the identical pattern. Once a repo exists the
+  // empty-state Card stops rendering and the top-right button is the page's
+  // only entry point again, so "Add" is never unreachable.
+  const showEmptyState = !loading && !error && repos.length === 0;
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
       {/* Heading + Add */}
@@ -668,22 +680,45 @@ export function Receiver() {
           <h1 className="text-2xl font-semibold text-carbon-text">{t("receiver.title")}</h1>
           <p className="mt-1 text-sm text-carbon-textSub">{t("receiver.subtitle")}</p>
         </div>
-        <button
-          onClick={() => setDialog("new")}
-          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
-        >
-          {t("receiver.addRepo")}
-        </button>
+        {!showEmptyState && (
+          <button
+            onClick={() => setDialog("new")}
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+          >
+            {t("receiver.addRepo")}
+          </button>
+        )}
       </div>
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
 
-      {/* Empty state */}
-      {!loading && !error && repos.length === 0 && (
-        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+      {/* Empty state — GlimStone follow-up pass (jdp live review: "Card hat
+          keinen Cardtitelbadge mit dem Infotext der in der Card steht"): this
+          card had no heading at all — just the icon, the permanent pitch
+          paragraph, and the Add button — the one Card-shaped box on this page
+          that never got the tone="heading" notch every other Card in the app
+          carries. `relative glim-notch-card` (Files.tsx's own setsTitle Card
+          precedent — no separate inner overflow-hidden box needed, this card
+          was never overflow-hidden to begin with). The old permanent
+          `<p>{t("receiver.empty")}</p>` reads once and then costs vertical
+          space forever — moved verbatim onto the new heading Badge as an
+          `onAccent` InfoBubble instead, zero new i18n keys for the body, only
+          the new title key. hueIndex={0}: the only tone="heading" notch on
+          this page's own body (ReceiverDialog's own h2 badge deliberately
+          carries no hueIndex, same as every other dialog title in the app),
+          and mutually exclusive with ReceivedRepoCard's OWN rainbowAt(index)
+          tint (this card only renders while the list is empty), so there is
+          no position to collide with. */}
+      {showEmptyState && (
+        <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <h2 className="flex items-center">
+            <Badge tone="heading" size="heading" wrap hueIndex={0}>
+              {t("receiver.emptyTitle")}
+              <InfoBubble tip={t("receiver.empty")} onAccent />
+            </Badge>
+          </h2>
           <EmptyStateIcon icon={IconReceiver} />
-          <p className="text-sm text-carbon-textMuted max-w-xl">{t("receiver.empty")}</p>
           <button
             onClick={() => setDialog("new")}
             className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"

@@ -1102,6 +1102,10 @@ export const en = {
   "receiver.title": "Receiver",
   "receiver.subtitle": "Monitor the off-site copies other BombVault instances push to this box, read-only.",
   "receiver.addRepo": "Add received repo",
+  // Card-title Badge headline for the empty-state list card (GlimStone
+  // follow-up pass, "half-overlap card notch") — distinct from receiver.title
+  // (the page's own h1) since the two sit right on top of each other.
+  "receiver.emptyTitle": "Received repos",
   "receiver.empty": "No received repositories yet. Add the repo another BombVault pushes its off-site copies to, and BombVault watches it read-only: what arrived, when the last backup came in, and an independent integrity check on this hardware.",
   "receiver.loadError": "Could not load received repositories.",
   "receiver.reachable": "Reachable",
@@ -1157,6 +1161,10 @@ export const en = {
   "fleet.title": "Fleet",
   "fleet.subtitle": "Watch the protection status of peer BombVault instances, read-only.",
   "fleet.addPeer": "Add peer",
+  // Card-title Badge headline for the empty-state list card (GlimStone
+  // follow-up pass, "half-overlap card notch") — distinct from fleet.title
+  // (the page's own h1) since the two sit right on top of each other.
+  "fleet.emptyTitle": "Fleet peers",
   "fleet.empty": "No fleet peers yet. Add another BombVault instance's URL and fleet token, and this box polls it read-only for its protection scorecard — nothing more.",
   "fleet.loadError": "Could not load fleet peers.",
   "fleet.monitoringOff": "Monitoring off",
@@ -2503,6 +2511,7 @@ export const de: Translations = {
   "receiver.title": "Empfänger",
   "receiver.subtitle": "Überwache die Off-site-Kopien, die andere BombVault-Instanzen auf diese Box schieben, rein lesend.",
   "receiver.addRepo": "Empfangenes Repo hinzufügen",
+  "receiver.emptyTitle": "Empfangene Repos",
   "receiver.empty": "Noch keine empfangenen Repositories. Füge das Repo hinzu, in das ein anderes BombVault seine Off-site-Kopien schiebt, und BombVault überwacht es nur lesend: was angekommen ist, wann das letzte Backup eintraf und eine unabhängige Integritätsprüfung auf dieser Hardware.",
   "receiver.loadError": "Empfangene Repositories konnten nicht geladen werden.",
   "receiver.reachable": "Erreichbar",
@@ -2554,6 +2563,7 @@ export const de: Translations = {
   "fleet.title": "Flotte",
   "fleet.subtitle": "Den Schutzstatus verbundener BombVault-Instanzen einsehen, rein lesend.",
   "fleet.addPeer": "Instanz hinzufügen",
+  "fleet.emptyTitle": "Verbundene Instanzen",
   "fleet.empty": "Noch keine verbundenen Instanzen. Füge die URL und den Fleet-Token einer anderen BombVault-Instanz hinzu, und diese Box fragt nur lesend ihre Schutz-Scorecard ab — nicht mehr.",
   "fleet.loadError": "Verbundene Instanzen konnten nicht geladen werden.",
   "fleet.monitoringOff": "Überwachung aus",
