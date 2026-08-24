@@ -482,6 +482,92 @@ describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's 
   });
 });
 
+describe("Selector — variant=\"track\" (round 7 escalation: NotifyCard's \"on\" row, CadenceBuilder's mode/weekday pickers)", () => {
+  it("default variant (\"chip\") renders none of the track's wrapper/segment classes", () => {
+    render(<OneOfThree />);
+    expect(screen.getByRole("tablist").className).not.toContain("gap-[0.15rem]");
+    const tab = screen.getByRole("tab", { name: "Alpha" });
+    expect(tab.className).not.toContain("bg-carbon-surface3");
+  });
+
+  it("the strip itself becomes an enclosing track — same background token as \"well\", tighter gap/padding, and flex-wrap (unlike well's flex-nowrap, since track segments are content-hugging, not mutually pinned)", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
+    const list = screen.getByRole("tablist");
+    expect(list.className).toContain("bg-carbon-surface2");
+    expect(list.className).toContain("rounded-control");
+    expect(list.className).toContain("gap-[0.15rem]");
+    expect(list.className).toContain("p-[0.15rem]");
+    expect(list.className).toContain("flex-wrap");
+    expect(list.className).not.toContain("flex-nowrap");
+  });
+
+  it("idle segments are VISIBLY filled at rest (bg-carbon-surface3, one step deeper than the track), unlike well's idle-transparent segments; the active segment still fills with the accent", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
+    const active = screen.getByRole("tab", { name: "Alpha" });
+    const idle = screen.getByRole("tab", { name: "Beta" });
+    expect(active.className).toContain("bg-accent");
+    expect(active.className).toContain("text-accentContrast");
+    expect(idle.className).toContain("bg-carbon-surface3");
+    expect(idle.className).not.toContain("bg-transparent");
+    expect(idle.className).toContain("rounded-control");
+  });
+
+  it("segments are content-hugging, NOT pinned to a matched width or a fixed well height — the deliberate difference from \"well\" that keeps this variant cheap to repeat many times per page", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
+    const tab = screen.getByRole("tab", { name: "Alpha" });
+    expect(tab.className).not.toContain("flex-none");
+    expect(tab.className).not.toContain("h-[var(--badge-md)]");
+    expect(tab.style.width).toBe("");
+    // Still the same crossfade-only transition as "well" — both read as one
+    // coherent control, not a sliding-pill illusion.
+    expect(tab.className).toContain("[transition:background-color_120ms_ease]");
+  });
+
+  it("`plain` and `raised` are both ignored under variant=\"track\" — idle fill stays the track's own bg-carbon-surface3 either way", () => {
+    render(
+      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" plain raised />
+    );
+    const idle = screen.getByRole("tab", { name: "Beta" });
+    expect(idle.className).toContain("bg-carbon-surface3");
+  });
+
+  it("keyboard navigation is unregressed under variant=\"track\"", () => {
+    const spy = vi.fn();
+    function TrackThree() {
+      const [active, setActive] = useState("a");
+      return (
+        <Selector
+          items={ITEMS}
+          label="Test strip"
+          select="one"
+          active={active}
+          onChange={(id) => {
+            setActive(id);
+            spy(id);
+          }}
+          variant="track"
+        />
+      );
+    }
+    render(<TrackThree />);
+    screen.getByRole("tab", { name: "Alpha" }).focus();
+    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Beta" }));
+    expect(spy).toHaveBeenCalledWith("b");
+    expect((screen.getByRole("tab", { name: "Beta" }) as HTMLElement).tabIndex).toBe(0);
+    expect((screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).tabIndex).toBe(-1);
+  });
+
+  it("equalWidth is ignored under variant=\"track\" (deliberately never pinned) — no pinned width, no crash", () => {
+    render(
+      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" equalWidth />
+    );
+    const tab = screen.getByRole("tab", { name: "Alpha" });
+    expect(tab.className).not.toContain("flex-none");
+    expect(tab.style.width).toBe("");
+  });
+});
+
 describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimStone follow-up round)", () => {
   const ICON_ITEMS: SelectorItem[] = [
     { id: "local", label: "Local", icon: <span data-testid="icon-local" />, iconOnly: true, tip: "Local path on this host" },
