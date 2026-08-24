@@ -66,10 +66,9 @@ describe("LanguageCard", () => {
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: /English/ }));
     const listbox = screen.getByRole("listbox");
-    // 26 offered locales (lib/i18n.ts's LANGUAGES) — sanity count, not a
-    // hard-coded enumeration, so this doesn't need updating every time a
-    // locale is added.
-    expect(within(listbox).getAllByRole("option").length).toBe(26);
+    // 42 offered locales (lib/i18n.ts's LANGUAGES) — sanity count, kept in
+    // sync with LANGUAGES.length whenever a locale is added.
+    expect(within(listbox).getAllByRole("option").length).toBe(42);
     expect(within(listbox).getByRole("option", { name: /Deutsch/ })).toBeTruthy();
   });
 

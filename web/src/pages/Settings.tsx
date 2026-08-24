@@ -812,7 +812,7 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
 // UI-language switcher, MOVED here out of Sidebar.tsx's own footer, not
 // duplicated (jdp: "verschieb den Sprachschalter... auch als eigene card ins
 // allgemein setting"). Same picker mechanism as before: useT()'s
-// lang/setLanguage/languages (lib/i18n.ts — a flat 26-locale list, persisted
+// lang/setLanguage/languages (lib/i18n.ts — a flat 42-locale list, persisted
 // to localStorage's "bv-lang" key, applied to <html lang>/[dir] immediately,
 // no Save step) and Sidebar.tsx's own exported `Flag` glyph for each entry.
 // Only the TRIGGER's styling changed, from the sidebar's nav-rail look
@@ -865,7 +865,7 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
             the exact footprint of the menu it opens, rather than a narrower
             button popping open a visibly wider list. `truncate`/`min-w-0` on
             the label span below keeps a genuinely long locale name (this
-            list has 26) from overflowing the now-fixed width instead of
+            list has 42) from overflowing the now-fixed width instead of
             just growing the button the way it used to. */}
         <button
           type="button"
@@ -5129,7 +5129,7 @@ export function SettingsPage() {
   // explicit width to track now that the strip is no longer full-width.
   // This width is measured, not guessed at, because the actual pixel value
   // depends on the active locale's longest label ("Benachrichtigungen" in
-  // German is not the same width in every one of the 26 shipped locales) and
+  // German is not the same width in every one of the 42 shipped locales) and
   // on the live font/zoom the browser is actually rendering with — nothing
   // about that is a fixed, hard-codable constant.
   //
@@ -6213,7 +6213,7 @@ export function SettingsPage() {
       {/* same low-cost fallback Files.tsx's destChip already uses for its own */}
       {/* disabled-hint case — cheap insurance for the one truncation case     */}
       {/* this specific change can newly introduce, at any label length in     */}
-      {/* any of the 26 locales, not just the one word measured live today.    */}
+      {/* any of the 42 locales, not just the one word measured live today.    */}
       {/* ------------------------------------------------------------------ */}
       {/* self-start (verified live — first pass shipped WITHOUT this and      */}
       {/* silently under-measured): this wrapper's own parent is itself a      */}

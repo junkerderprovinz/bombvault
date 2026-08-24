@@ -240,7 +240,7 @@ Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifre
 - **Quiet toasts** (Settings → Appearance) — mute the browser's own pop-up confirmations so only failures still interrupt you; routine save/copy confirmations stay silent. Purely client-side and per-browser — separate from the **Notifications** system above, which keeps sending webhook/email/etc. alerts on its own policy either way.
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
-- Dark/light UI in **26 languages** with a flag picker.
+- Dark/light UI in **42 languages** with a flag picker.
 
 </details>
 
