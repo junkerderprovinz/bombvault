@@ -1353,6 +1353,10 @@ export const en = {
   "nav.files": "Folders",
   "files.title": "Folders",
   "files.subtitle": "Back up any folders on this server — with schedules, off-site copies and restores.",
+  // Card-title Badge headline for the empty-state list card (GlimStone
+  // follow-up pass, "half-overlap card notch") — distinct from files.title
+  // (the page's own h1) since the two sit right on top of each other.
+  "files.setsTitle": "Folder sets",
   "files.empty": "No folder sets yet. Add a folder — shares, documents, photos, anything under your mounts — and BombVault protects it like everything else: schedules, off-site copies, integrity checks and restores. No separate file-backup tool needed.",
   "files.addSet": "Add folder set",
   "files.editSet": "Edit folder set",
@@ -2741,6 +2745,7 @@ export const de: Translations = {
   "nav.files": "Ordner",
   "files.title": "Ordner",
   "files.subtitle": "Beliebige Ordner dieses Servers sichern — mit Zeitplänen, Off-site-Kopien und Wiederherstellungen.",
+  "files.setsTitle": "Ordner-Sets",
   "files.empty": "Noch keine Ordner-Sets. Füge einen Ordner hinzu — Shares, Dokumente, Fotos, alles unter deinen Mounts — und BombVault schützt ihn wie alles andere: Zeitpläne, Off-site-Kopien, Integritätsprüfungen und Wiederherstellungen. Kein separates Datei-Backup-Tool nötig.",
   "files.addSet": "Ordner-Set hinzufügen",
   "files.editSet": "Ordner-Set bearbeiten",

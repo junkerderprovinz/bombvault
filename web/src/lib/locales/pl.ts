@@ -993,6 +993,7 @@ const pl: Partial<Translations> = {
   "nav.files": "Foldery",
   "files.title": "Foldery",
   "files.subtitle": "Twórz kopie zapasowe dowolnych folderów na tym serwerze — z harmonogramami, kopiami poza siedzibą i przywracaniem.",
+  "files.setsTitle": "Zestawy folderów",
   "files.empty": "Nie ma jeszcze zestawów folderów. Dodaj folder — udziały, dokumenty, zdjęcia, cokolwiek pod Twoimi punktami montowania — a BombVault ochroni go jak wszystko inne: harmonogramy, kopie poza siedzibą, kontrole integralności i przywracanie. Osobne narzędzie do kopii plików nie jest potrzebne.",
   "files.addSet": "Dodaj zestaw folderów",
   "files.editSet": "Edytuj zestaw folderów",

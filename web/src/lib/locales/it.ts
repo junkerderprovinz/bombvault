@@ -998,6 +998,7 @@ const it: Partial<Translations> = {
   "nav.files": "Cartelle",
   "files.title": "Cartelle",
   "files.subtitle": "Esegui il backup di qualsiasi cartella di questo server — con calendari, copie off-site e ripristini.",
+  "files.setsTitle": "Set di cartelle",
   "files.empty": "Ancora nessun set di cartelle. Aggiungi una cartella — share, documenti, foto, qualsiasi cosa sotto i tuoi mount — e BombVault la protegge come tutto il resto: calendari, copie off-site, controlli d'integrità e ripristini. Nessuno strumento separato di backup dei file necessario.",
   "files.addSet": "Aggiungi set di cartelle",
   "files.editSet": "Modifica set di cartelle",

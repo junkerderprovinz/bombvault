@@ -998,6 +998,7 @@ const fi: Partial<Translations> = {
   "nav.files": "Kansiot",
   "files.title": "Kansiot",
   "files.subtitle": "Varmuuskopioi mitä tahansa tämän palvelimen kansioita — aikatauluilla, etäkopioilla ja palautuksilla.",
+  "files.setsTitle": "Kansiojoukot",
   "files.empty": "Ei vielä kansiojoukkoja. Lisää kansio — jaot, dokumentit, valokuvat, mikä tahansa liitostesi alla — ja BombVault suojaa sen kuten kaiken muunkin: aikataulut, etäkopiot, eheystarkistukset ja palautukset. Erillistä tiedostovarmuuskopiointityökalua ei tarvita.",
   "files.addSet": "Lisää kansiojoukko",
   "files.editSet": "Muokkaa kansiojoukkoa",

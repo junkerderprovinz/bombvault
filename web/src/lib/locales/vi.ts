@@ -990,6 +990,7 @@ const vi: Partial<Translations> = {
   "nav.files": "Thư mục",
   "files.title": "Thư mục",
   "files.subtitle": "Sao lưu bất kỳ thư mục nào trên máy chủ này — với lịch trình, bản sao off-site và khôi phục.",
+  "files.setsTitle": "Bộ thư mục",
   "files.empty": "Chưa có bộ thư mục nào. Thêm một thư mục — chia sẻ, tài liệu, ảnh, bất cứ thứ gì dưới các điểm gắn kết của bạn — và BombVault sẽ bảo vệ nó như mọi thứ khác: lịch trình, bản sao off-site, kiểm tra tính toàn vẹn và khôi phục. Không cần công cụ sao lưu tập tin riêng.",
   "files.addSet": "Thêm bộ thư mục",
   "files.editSet": "Sửa bộ thư mục",

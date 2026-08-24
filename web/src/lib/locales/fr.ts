@@ -998,6 +998,7 @@ const fr: Partial<Translations> = {
   "nav.files": "Dossiers",
   "files.title": "Dossiers",
   "files.subtitle": "Sauvegardez n'importe quels dossiers de ce serveur — avec plannings, copies hors site et restaurations.",
+  "files.setsTitle": "Jeux de dossiers",
   "files.empty": "Aucun jeu de dossiers pour l'instant. Ajoutez un dossier — partages, documents, photos, tout ce qui se trouve sous vos montages — et BombVault le protège comme tout le reste : plannings, copies hors site, contrôles d'intégrité et restaurations. Aucun outil de sauvegarde de fichiers séparé n'est nécessaire.",
   "files.addSet": "Ajouter un jeu de dossiers",
   "files.editSet": "Modifier le jeu de dossiers",

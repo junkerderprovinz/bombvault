@@ -996,6 +996,7 @@ const cs: Partial<Translations> = {
   "nav.files": "Složky",
   "files.title": "Složky",
   "files.subtitle": "Zálohujte libovolné složky na tomto serveru — s plány, kopiemi mimo lokalitu a obnovami.",
+  "files.setsTitle": "Sady složek",
   "files.empty": "Zatím žádné sady složek. Přidejte složku — sdílení, dokumenty, fotky, cokoli pod vašimi připojeními — a BombVault ji ochrání jako všechno ostatní: plány, kopie mimo lokalitu, kontroly integrity a obnovy. Samostatný nástroj na zálohování souborů není potřeba.",
   "files.addSet": "Přidat sadu složek",
   "files.editSet": "Upravit sadu složek",
