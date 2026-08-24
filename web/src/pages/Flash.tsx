@@ -245,32 +245,23 @@ export function Flash() {
           above), so this is the element that has to be the hover/focus zone
           for index.css's card-wide reactive-hover rule — see Settings.tsx's
           Card() for the full reasoning. */}
-      {/* jdp live-review fix ("Cardtitelbadge nicht richtig platziert"): the
+      {/* GlimStone follow-up pass (jdp, live review, root-mechanism fix
+          replacing this file's own earlier `ps-5`-on-the-h2 patch): the
           outer div is deliberately UNPADDED (that's what makes its top edge
           pixel-identical to the inner box's, for the badge's `top-0`
-          reference — see the split comment above), but that left the badge's
-          own horizontal placement unpadded too, since Badge.tsx's `absolute`
-          badge with no left/right set falls back to its own element's
-          "static position" (see badgeClassName's own comment on that
-          fallback) — which for this bare `<h2>` is flush with the OUTER
-          div's edge, not the inner p-5 box's content edge. Measured live:
-          badge left = 248px, the "Sichert den kompletten…" hint paragraph
-          directly under it left = 268px — a real, visible 20px gap, the
-          badge floating over the card's bare corner instead of sitting above
-          the text it titles, unlike this page's OTHER two Cards (Backups/
-          Flash-ZIP-Export) whose single-div structure gives their `<h2>` the
-          surrounding p-5 for free, so their badges land flush with their own
-          body text already. `ps-5` here reproduces that exact 20px inset on
-          the h2 alone (logical, RTL-safe, matching the app's own convention
-          elsewhere) — it only shifts the badge's horizontal static-position
-          fallback, since `top: 0` is an explicit value, not static-derived,
-          so the vertical half-overlap math above is completely unaffected.
-          Verified live: badge left now 268px, exactly flush with the hint
-          paragraph below it. NOTE: Config.tsx's Backup card, Dashboard.tsx's
-          shared Card(), and ActivityLog.tsx's Card() use this exact same
-          split recipe and inherit the identical unindented-badge
-          characteristic — out of scope for this Flash-tab-scoped fix, but
-          flagged here for a future consistency pass across all four. */}
+          reference — see the split comment above), which leaves Badge.tsx's
+          own CSS static-position fallback (no left/right set) measuring the
+          badge's horizontal position against THIS outer div's bare edge, not
+          the inner p-5 box's content edge — the same bug this page ONCE
+          fixed by adding `ps-5` to the `<h2>` alone (a real fix, but a
+          per-call-site padding patch a future edit to this div could
+          silently un-fix again). Replaced with `insetStart={5}` on the Badge
+          itself: an explicit, self-documenting override at the ONE place
+          that actually knows the inner box's own padding number, rather than
+          a second h2-level class faking the same value — see Badge.tsx's own
+          `insetStart` doc for the full mechanism and its other real call
+          sites (Config.tsx's identical Backup Card, Dashboard.tsx's Card()
+          and SummaryCell(), all independently hit the identical mismatch). */}
       <div className="relative glim-notch-card">
         {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text.
             jdp live-review ("Infotexte in eine i Infobubble"): the permanent
@@ -281,8 +272,8 @@ export function Flash() {
             (`onAccent`: this badge is a full solid accent fill, same reasoning
             as Settings.tsx's Card() own hint bubble), same content
             (`flash.backupHint`), zero new i18n keys. */}
-        <h2 className="flex items-center ps-5">
-          <Badge tone="heading" size="heading" wrap hueIndex={0}>
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={5}>
             {t("flash.backupTitle")}
             <InfoBubble tip={t("flash.backupHint")} onAccent />
           </Badge>

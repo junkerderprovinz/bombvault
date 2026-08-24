@@ -442,9 +442,22 @@ function Card({
     // the SAME gap jdp is naming here, not a new one invented for this
     // fix — a hued heading on this page would have lit up on hovering only
     // its own ~22px glyph, not this card's whole body, in reactive mode.
+    //
+    // insetStart={5} (GlimStone follow-up pass, jdp emphatic: "Dashboard-
+    // Badges sind immer noch falsch platziert, links buendig mit der Card")
+    // — the outer div above is deliberately unpadded (that's the whole point
+    // of this split, see above), which left the badge's horizontal position
+    // — the CSS static-position fallback Badge.tsx uses by default — flush
+    // with THIS outer div's bare edge instead of the inner p-5 box's content
+    // edge below. `insetStart={5}` states the inner box's own p-5 explicitly
+    // on the Badge instead of leaving it to be re-derived from ambient DOM
+    // shape — see Badge.tsx's own `insetStart` doc for the full mechanism
+    // and the four OTHER call sites (SummaryCell below, ActivityLog.tsx,
+    // Flash.tsx's and Config.tsx's backup Cards) that independently hit the
+    // identical mismatch.
     <div className="relative glim-notch-card">
       <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{title}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex} insetStart={5}>{title}</Badge>
       </h2>
       <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-4 overflow-hidden">
         {/* action used to share a `justify-between` row with the <h2> above,
@@ -1885,6 +1898,17 @@ function SummaryCell({
     // whatever box IS the direct grid child, which is now this outer div.
     // `glim-notch-card` — same rainbow-hue hover-reveal gap as Card() above,
     // never carried here either.
+    //
+    // insetStart={5} — the EXACT same bare-outer-div/padded-inner-div split
+    // as Card() above, so the EXACT same bug: the badge's own -11px poke
+    // needed to escape this cell's inner overflow-hidden box (see the
+    // comment above), leaving its horizontal static position measured
+    // against this now-unpadded OUTER div instead of the inner p-5 box's own
+    // content edge — this specific cell (Gesamtzustand/Nächstes Backup/
+    // Letztes Ergebnis) is the one jdp measured live and flagged by name
+    // ("Dashboard-Badges... links buendig mit der Card"). See Badge.tsx's
+    // own `insetStart` doc for the mechanism this fixes at the source
+    // instead of re-patching per Card.
     <div className="relative glim-notch-card min-w-0">
       {/* Task 5 (rule 11): each SummaryCell is its own standalone
           bg-carbon-surface rounded-card box — not nested inside an
@@ -1893,7 +1917,7 @@ function SummaryCell({
           Card just above and Badge.tsx's file header). `wrap` + max-w-full
           because this sits in a narrow sm:grid-cols-3 cell. */}
       <h2 className="flex items-center min-w-0">
-        <Badge tone="heading" size="heading" wrap className="max-w-full" hueIndex={hueIndex}>{label}</Badge>
+        <Badge tone="heading" size="heading" wrap className="max-w-full" hueIndex={hueIndex} insetStart={5}>{label}</Badge>
       </h2>
       {/* p-5 (was px-4 py-3, GlimStone follow-up pass, jdp emphatic: "Die
           Cards von Gesamtzustand, Nächstes Backup, Letztes Ergebnis größer
