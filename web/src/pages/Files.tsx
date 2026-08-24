@@ -1344,11 +1344,32 @@ export function Files() {
           and mutually exclusive with FileSetRow's OWN rainbowAt(index) tint
           (this card only renders while the list is empty, i.e. never
           alongside a single FileSetRow), so there is no position to collide
-          with. */}
+          with.
+          insetStart={6} (GlimStone follow-up pass, jdp: "Files/Ordner-Tab:
+          Cardtitelbadge falsch platziert" — a SECOND, distinct root-cause
+          mechanism from the split-notch one Badge.tsx's own `insetStart` doc
+          otherwise documents: this card's `relative` ancestor and its p-6
+          padded content ARE the same single div (no structural split), so
+          the static-position fallback should already be correct here — but
+          this parent is ALSO `text-center flex flex-col items-center`
+          (centering the icon/button below), and the `<h2>` above them has NO
+          in-flow content of its own once its only child (the notch Badge)
+          becomes `position: absolute` — an h2 with nothing left in flow
+          collapses to a 0×0 box, which `items-center` then centers
+          horizontally in the card rather than stretching to the padding
+          edge. The static position then resolves against that zero-width,
+          CENTERED h2, landing the badge at the card's horizontal centre
+          (measured live: 488px right of the p-6 content edge) instead of
+          flush with it — confirmed identical on Fleet.tsx's and
+          Receiver.tsx's own empty-state Cards, which share this exact
+          `text-center items-center` recipe. `insetStart={6}` sidesteps the
+          collapsed-h2 quirk entirely: it's a real `start-6` CSS offset
+          resolved against the outer `relative` box directly, so it doesn't
+          care what the h2 collapsed to. */}
       {showEmptyState && (
         <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
           <h2 className="flex items-center">
-            <Badge tone="heading" size="heading" wrap hueIndex={0}>
+            <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>
               {t("files.setsTitle")}
               <InfoBubble tip={t("files.empty")} onAccent />
             </Badge>

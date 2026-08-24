@@ -680,34 +680,54 @@ function badgeClassName({
   // reason — the static-position fallback is direction-aware by definition.
   // CORRECT precisely when the `<h2>` is a normal-flow child of the SAME
   // padded box that holds the card's visible content — every single-merged-
-  // div Card in this app (Settings.tsx's Card(), Config.tsx's own two Cards,
-  // Files.tsx/Fleet.tsx/Receiver.tsx's empty-state cards, Containers.tsx/
-  // VMs.tsx's panels, and more) has exactly that shape, so this fallback is
-  // still the right, self-maintaining mechanism for all of those — no
-  // insetStart needed, and none should be added.
+  // div Card in this app that ALSO stretches its `<h2>` full-width (Settings.tsx's
+  // Card(), Config.tsx's own two Cards, Containers.tsx/VMs.tsx's panels, and
+  // more) has exactly that shape, so this fallback is still the right,
+  // self-maintaining mechanism for all of those — no insetStart needed, and
+  // none should be added.
   //
-  // WRONG — silently — the moment a card's `relative` positioned ancestor and
-  // its padded content box are two DIFFERENT elements: the static position
-  // then measures against the OUTER (unpadded) box instead of the content
-  // box's own padding, landing the badge flush with the card's bare edge
-  // instead of its content. That split shape is sometimes structurally
-  // required (a content box that is ALSO `overflow-hidden`, to clip
-  // ProgressBar's square-ended bar to the card's rounded corners, would clip
-  // the badge's own -11px poke above it if the badge lived inside that same
-  // box — so the badge has to move to an outer, unclipped ancestor instead).
-  // This exact mismatch independently bit Dashboard.tsx's Card() AND
-  // SummaryCell(), ActivityLog.tsx, Flash.tsx's and Config.tsx's backup
-  // Cards — five separate discoveries, in five separate live-review rounds,
-  // of the identical defect, because nothing about "no offset = inherit
-  // ambient padding" made the dependency on DOM shape visible at the call
-  // site. `insetStart` (NotchInset, above) is the fix: an EXPLICIT step on
-  // the Tailwind spacing scale, matching the split content box's own p-N
-  // padding literally, passed by any call site whose structural recipe
-  // can't share the static-position fallback's assumption. Once passed, it
-  // renders as a real `start-N` class below — a real CSS offset, still
-  // logical/RTL-safe like the fallback it replaces, that no longer depends
-  // on which of the two recipes the card happens to use. See each of those
-  // five files' own call sites for where this is actually set today.
+  // WRONG — silently — in (at least) two distinct ways, neither visible from
+  // reading the call site's own JSX in isolation:
+  //
+  // (1) The card's `relative` positioned ancestor and its padded content box
+  // are two DIFFERENT elements: the static position then measures against the
+  // OUTER (unpadded) box instead of the content box's own padding, landing
+  // the badge flush with the card's bare edge instead of its content. That
+  // split shape is sometimes structurally required (a content box that is
+  // ALSO `overflow-hidden`, to clip ProgressBar's square-ended bar to the
+  // card's rounded corners, would clip the badge's own -11px poke above it if
+  // the badge lived inside that same box — so the badge has to move to an
+  // outer, unclipped ancestor instead). This exact mismatch independently bit
+  // Dashboard.tsx's Card() AND SummaryCell(), ActivityLog.tsx, Flash.tsx's
+  // and Config.tsx's backup Cards.
+  //
+  // (2) The card IS a single merged div (no split), but its OWN layout
+  // recipe centers its body content (`text-center flex flex-col
+  // items-center` — an empty-state pitch: icon, paragraph, button, all
+  // centered). Once the notch Badge inside the `<h2>` becomes
+  // `position: absolute`, it stops contributing to the h2's own intrinsic
+  // size — an h2 with nothing else in flow collapses to a 0×0 box, which the
+  // parent's `items-center` then centers horizontally in the card instead of
+  // stretching it to the padding edge. The static position resolves against
+  // that zero-width, CENTERED h2, landing the badge at the card's horizontal
+  // MIDDLE, not its content edge. Bit Files.tsx's, Fleet.tsx's and
+  // Receiver.tsx's identical empty-state Cards identically.
+  //
+  // Eight separate discoveries total, across eight separate live-review
+  // rounds, of two different defects with the identical SYMPTOM (badge not
+  // flush with content) and the identical ROOT CAUSE SHAPE (the notch's
+  // horizontal position is a function of ambient DOM/CSS structure the call
+  // site never states explicitly) — because nothing about "no offset =
+  // inherit ambient padding" made that dependency visible at the call site,
+  // for either variant. `insetStart` (NotchInset, above) is the fix for BOTH:
+  // an EXPLICIT step on the Tailwind spacing scale, matching the card's own
+  // content-box padding literally, passed by any call site whose structural
+  // recipe can't rely on the static-position fallback's assumptions (whichever
+  // of the two ways it can't). Once passed, it renders as a real `start-N`
+  // class below — a real CSS offset resolved directly against the `relative`
+  // containing block, so it is unaffected by what the h2 collapsed to or
+  // which of the two recipes the card happens to use. See each of those eight
+  // call sites for where this is actually set today.
   //
   // z-10: only needs to draw above this SAME card's own in-flow content
   // immediately below it (default z-index:auto siblings don't establish
@@ -897,25 +917,33 @@ export interface BadgeProps {
    *  `size="heading"` together — see badgeClassName's own `isHeadingNotch`).
    *  An explicit override for the notch's horizontal position, replacing the
    *  CSS static-position fallback badgeClassName otherwise relies on (see
-   *  that function's own long comment for the full mechanism). Pass the
-   *  SAME Tailwind spacing step as the ancestor card's own content-box
-   *  padding (e.g. `insetStart={5}` for a `p-5` box) whenever — and ONLY
-   *  whenever — that card's structural recipe puts the badge's `relative`
+   *  that function's own long comment for the full mechanism and its TWO
+   *  known trigger shapes). Pass the SAME Tailwind spacing step as the
+   *  ancestor card's own content-box padding (e.g. `insetStart={5}` for a
+   *  `p-5` box) whenever — and ONLY whenever — one of those two shapes
+   *  applies: (1) the card's structural recipe puts the badge's `relative`
    *  positioned ancestor and its padded content box on two DIFFERENT
    *  elements (typically because the content box is ALSO `overflow-hidden`,
    *  which would otherwise clip the badge's own -11px poke above it — see
    *  Dashboard.tsx's Card() for the canonical example of why that split
-   *  exists). Omit for every OTHER Card shape in this app (the large
-   *  majority: a single merged div carries both the `relative` anchor and
-   *  the padding) — those are already correct via the static-position
-   *  fallback, and adding an unneeded `insetStart` there would be a second,
-   *  redundant source of truth for the same number that could itself drift
-   *  out of sync with the real padding later. This is the fix for a defect
-   *  class that independently recurred five times (Dashboard.tsx's Card()
-   *  AND SummaryCell(), ActivityLog.tsx, Flash.tsx's and Config.tsx's own
-   *  backup Cards, all discovered in separate live-review rounds) precisely
-   *  BECAUSE the old mechanism gave no call site any explicit signal that
-   *  its own DOM shape controlled the badge's position at all. */
+   *  exists), or (2) the card is a single merged div but its own body
+   *  content is centered (`text-center items-center`), which collapses the
+   *  now-childless `<h2>` to a zero-width box that gets CENTERED instead of
+   *  stretched to the padding edge — see Files.tsx's/Fleet.tsx's/
+   *  Receiver.tsx's empty-state Cards for the canonical example. Omit for
+   *  every OTHER Card shape in this app (the large majority: a single merged
+   *  div that ALSO stretches its `<h2>` full-width) — those are already
+   *  correct via the static-position fallback, and adding an unneeded
+   *  `insetStart` there would be a second, redundant source of truth for the
+   *  same number that could itself drift out of sync with the real padding
+   *  later. This is the fix for a defect class that independently recurred
+   *  eight times across these two distinct trigger shapes (Dashboard.tsx's
+   *  Card() AND SummaryCell(), ActivityLog.tsx, Flash.tsx's and Config.tsx's
+   *  own backup Cards, Files.tsx's, Fleet.tsx's and Receiver.tsx's own
+   *  empty-state Cards, all discovered in separate live-review rounds)
+   *  precisely BECAUSE the old mechanism gave no call site any explicit
+   *  signal that its own DOM/CSS shape controlled the badge's position at
+   *  all. */
   insetStart?: NotchInset;
 }
 
