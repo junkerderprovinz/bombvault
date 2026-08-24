@@ -456,24 +456,27 @@ export function Config() {
           Card() for the full reasoning. Its own bounding box is still
           exactly the visible card (h2 + the inner box beneath it), so this
           doesn't change what "hovering the card" looks like. */}
-      {/* jdp live-review ("Cardtitelbadge nicht richtig platziert"): the
+      {/* GlimStone follow-up pass (jdp, live review, root-mechanism fix
+          replacing this file's own earlier `ps-5`-on-the-h2 patch): the
           outer div is deliberately unpadded (see the split comment above),
-          which left the badge's horizontal "static position" fallback flush
-          with the OUTER div's bare edge instead of the inner p-5 box's
-          content edge — measured live, badge left 248px vs. this card's own
-          body content at 268px, a visible 20px gap. Identical bug, identical
-          fix, to the one just found and fixed on Flash.tsx's own backup Card
-          (same split-recipe structure): `ps-5` on the h2 alone reproduces
-          the 20px inset logically/RTL-safely, only shifting the badge's
-          horizontal fallback (`top-0` is explicit, so the vertical
-          half-overlap math is unaffected). Verified live: badge left now
-          268px, flush with the card body below it.
+          which leaves Badge.tsx's own CSS static-position fallback measuring
+          the badge's horizontal position against THIS outer div's bare edge
+          instead of the inner p-5 box's content edge — the same bug this
+          page ONCE fixed by adding `ps-5` to the `<h2>` alone (a real fix,
+          but a per-call-site padding patch a future edit to this div could
+          silently un-fix again). Replaced with `insetStart={5}` on the Badge
+          itself: an explicit, self-documenting override at the ONE place
+          that actually knows the inner box's own padding number — see
+          Badge.tsx's own `insetStart` doc for the full mechanism and its
+          other real call sites (Flash.tsx's identical Backup Card,
+          Dashboard.tsx's Card() and SummaryCell(), all independently hit the
+          identical mismatch).
           Also folds the permanent backupHint <p> into an InfoBubble on the
           Badge (same "Infotexte in Infobubbles" fix as Flash.tsx's sibling
           backup Card, same content, same onAccent). */}
       <div className="relative glim-notch-card">
-        <h2 className="flex items-center ps-5">
-          <Badge tone="heading" size="heading" wrap hueIndex={1}>
+        <h2 className="flex items-center">
+          <Badge tone="heading" size="heading" wrap hueIndex={1} insetStart={5}>
             {t("config.backupTitle")}
             <InfoBubble tip={t("config.backupHint")} onAccent />
           </Badge>

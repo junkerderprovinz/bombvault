@@ -315,7 +315,7 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     expect(cls).not.toContain("hairline");
   });
 
-  it("sets no explicit left/right/start/end offset — relies on the CSS static-position fallback so the notch inherits each call site's own padding and flips correctly under RTL for free", () => {
+  it("with insetStart omitted, sets no explicit left/right/start/end offset — relies on the CSS static-position fallback so the notch inherits each call site's own padding and flips correctly under RTL for free (correct for a single-merged-div Card)", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
@@ -376,6 +376,39 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     expect(tokens).toContain("bg-accent");
     expect(tokens).not.toContain("bg-accentSoft");
     expect(tokens).not.toContain("bg-accentSoftSolid");
+  });
+});
+
+describe("Badge — insetStart (explicit override for a split-recipe Card's notch position)", () => {
+  // Root-mechanism fix for a defect class that independently recurred on
+  // Dashboard.tsx's Card() AND SummaryCell(), ActivityLog.tsx, Flash.tsx's
+  // and Config.tsx's backup Cards — see Badge.tsx's own `insetStart` doc and
+  // the long "Deliberately no explicit..."/NotchInset comments inside
+  // badgeClassName for the full mechanism this replaces.
+  it.each<[4 | 5 | 6, string]>([
+    [4, "start-4"],
+    [5, "start-5"],
+    [6, "start-6"],
+  ])("insetStart=%s renders the matching %s class on the notch", (insetStart, expected) => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading", insetStart }));
+    const cls = (el.props!.className as string).split(/\s+/);
+    expect(cls).toContain(expected);
+  });
+
+  it("insetStart is silently ignored on a non-notch badge (not tone=heading+size=heading together) — it never renders a stray start-N class outside the notch", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "medium", insetStart: 5 }));
+    const cls = (el.props!.className as string).split(/\s+/);
+    expect(cls.some((c) => /^start-[456]$/.test(c))).toBe(false);
+  });
+
+  it("insetStart coexists with the notch's other fixed positioning classes (top-0/-translate-y-1/2/z-10) rather than replacing them — only the horizontal axis is overridden", () => {
+    const el = root(Badge({ children: "x", tone: "heading", size: "heading", insetStart: 5 }));
+    const cls = (el.props!.className as string).split(/\s+/);
+    expect(cls).toContain("absolute");
+    expect(cls).toContain("top-0");
+    expect(cls).toContain("-translate-y-1/2");
+    expect(cls).toContain("z-10");
+    expect(cls).toContain("start-5");
   });
 });
 
