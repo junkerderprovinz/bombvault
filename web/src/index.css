@@ -1469,39 +1469,38 @@ body {
   color: var(--accent);
 }
 
-/* Sidebar main-nav icon — the SAME 3-state tab-strip rule as .glim-hue-icon
-   above (idle colourless only in Reactive mode / hover tints the icon in
-   Reactive mode / selected fills the badge and reverts the icon to contrast
-   ink), applied to Sidebar.tsx's own nav rail. CORRECTED in the same
-   live-review round and for the same reason as .glim-hue-icon above — see
-   that rule's own comment for the full "what was wrong, what changed"
-   account (short version: the prior round's unconditional-hover-only design
-   left idle nav icons colourless in "off" AND "on" mode, not just Reactive;
-   rule 9 only ever meant Reactive to hide colour until hover).
-     `.bv-nav-idle` is deliberately NOT wired into .glim-hue/hueVars() the
-   way the Settings tab strip is: Sidebar.tsx's own header comment explains
-   at length why the rail stays out of the rainbow engine entirely — the
-   visible destination set is user-configured (4 to 10 entries depending on
-   which domains are enabled) and its length/order can change on any render,
-   so no destination's rainbow POSITION could ever stay stable the way a
-   fixed-membership set (the Settings tab strip's 7 tabs) can. That also
-   means, unlike .glim-hue-icon, there is no .glim-hue-driven --accent
-   redefinition riding on this same element for any mode to lean on —
-   --accent here is always the single flat theme token in "off" AND "on"
-   alike (there is no per-item hue to show in the first place, hence no
-   separate "on" case the way the tab strip has one). Reading it
-   unconditionally is still exactly right for "immer farbig": both
-   non-Reactive modes show the same flat accent, always, no hover gate.
-   Reactive is the one mode that DOES need its own explicit rest/hover pair
-   restated here (mirroring [data-rainbow="reactive"] .glim-hue below),
-   since this element carries no .glim-hue of its own for that block to
-   redefine --accent on.
-     `.bv-nav-idle` (Sidebar.tsx's own navInactive constant) marks the
-   not-yet-selected state; navActive carries no marker and needs no extra
-   rule here, since its own `bg-accent text-accentContrast` already fills
-   the badge and reverts the icon to contrast ink via the exact same
-   currentColor inheritance .glim-hue-icon's own selected state already
-   rides for free, unaffected by any of this in every mode. */
+/* Sidebar's Simple/Advanced view toggle (SidebarControls, its own
+   call-site marker, NOT Sidebar.tsx's main-nav NavItem any more) — the SAME
+   3-state tab-strip rule as .glim-hue-icon above (idle colourless only in
+   Reactive mode / hover tints the icon in Reactive mode / selected fills
+   the badge and reverts the icon to contrast ink), but for a control that
+   stays on the flat single accent rather than a rainbow position.
+     NARROWED SCOPE (GlimStone follow-up round, rainbow REVERSAL — jdp:
+   "Die ganzen Tabs in der Sidebar sind wieder nicht im Regenbogenmodus bzw
+   in der Farbengine."): this rule used to also cover every NavItem in
+   Sidebar.tsx's main nav rail (Dashboard/Recovery/Containers/.../Settings) —
+   see Sidebar.tsx's own header comment for the full history of that
+   decision and why jdp has now reversed it. NavItem no longer carries the
+   `.bv-nav-idle` marker at all; it carries `.glim-hue`/`.glim-hue-icon`
+   instead (via hueVars(rainbowAt(index)), the SAME mechanism any other
+   hue-enabled Selector segment uses), which the GENERIC `.glim-hue-icon`
+   rule above already implements correctly with NO changes needed here —
+   Sidebar.tsx's own nav items simply became one more consumer of that
+   existing rule, the same way the Settings tab strip's own Selector
+   segments always were. `.bv-nav-idle` survives, scoped down to its one
+   remaining real consumer: SidebarControls' Simple/Advanced button, a
+   genuine set-of-ONE with no sibling of the same type to hold a stable
+   rainbow POSITION against (the colour engine's own "anything that is the
+   only one of its kind on the page keeps the single accent" exclusion) —
+   see that button's own call-site comment in Sidebar.tsx.
+     Everything below this comment is otherwise UNCHANGED from the original
+   rule: --accent here is always the single flat theme token (there is no
+   per-item hue on this element, hence no separate rainbow-"on" case the way
+   .glim-hue-icon has one), so reading it unconditionally is still exactly
+   right for "immer farbig" in both non-Reactive modes; Reactive is the one
+   mode that needs its own explicit rest/hover pair restated here (mirroring
+   [data-rainbow="reactive"] .glim-hue below), since this element carries no
+   .glim-hue of its own for that block to redefine --accent on. */
 .bv-nav-idle svg {
   transition: color 150ms ease;
   color: var(--accent);
