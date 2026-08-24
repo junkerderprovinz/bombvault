@@ -12,6 +12,7 @@ import { Badge } from "../components/Badge";
 import { useToast } from "../lib/toast";
 import { FlashZipExportCard } from "./Settings";
 import { CheckDraw } from "../components/CheckDraw";
+import { InfoBubble } from "../components/InfoBubble";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -244,13 +245,49 @@ export function Flash() {
           above), so this is the element that has to be the hover/focus zone
           for index.css's card-wide reactive-hover rule — see Settings.tsx's
           Card() for the full reasoning. */}
+      {/* jdp live-review fix ("Cardtitelbadge nicht richtig platziert"): the
+          outer div is deliberately UNPADDED (that's what makes its top edge
+          pixel-identical to the inner box's, for the badge's `top-0`
+          reference — see the split comment above), but that left the badge's
+          own horizontal placement unpadded too, since Badge.tsx's `absolute`
+          badge with no left/right set falls back to its own element's
+          "static position" (see badgeClassName's own comment on that
+          fallback) — which for this bare `<h2>` is flush with the OUTER
+          div's edge, not the inner p-5 box's content edge. Measured live:
+          badge left = 248px, the "Sichert den kompletten…" hint paragraph
+          directly under it left = 268px — a real, visible 20px gap, the
+          badge floating over the card's bare corner instead of sitting above
+          the text it titles, unlike this page's OTHER two Cards (Backups/
+          Flash-ZIP-Export) whose single-div structure gives their `<h2>` the
+          surrounding p-5 for free, so their badges land flush with their own
+          body text already. `ps-5` here reproduces that exact 20px inset on
+          the h2 alone (logical, RTL-safe, matching the app's own convention
+          elsewhere) — it only shifts the badge's horizontal static-position
+          fallback, since `top: 0` is an explicit value, not static-derived,
+          so the vertical half-overlap math above is completely unaffected.
+          Verified live: badge left now 268px, exactly flush with the hint
+          paragraph below it. NOTE: Config.tsx's Backup card, Dashboard.tsx's
+          shared Card(), and ActivityLog.tsx's Card() use this exact same
+          split recipe and inherit the identical unindented-badge
+          characteristic — out of scope for this Flash-tab-scoped fix, but
+          flagged here for a future consistency pass across all four. */}
       <div className="relative glim-notch-card">
-        {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text. */}
-        <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap hueIndex={0}>{t("flash.backupTitle")}</Badge>
+        {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text.
+            jdp live-review ("Infotexte in eine i Infobubble"): the permanent
+            `<p>` explaining what this backup captures used to sit under the
+            heading, read once and then costing vertical space forever — the
+            exact "Fließtext unter jedem Bedienelement" rule 8 exists to fold
+            away. Moved onto the heading Badge itself as an InfoBubble
+            (`onAccent`: this badge is a full solid accent fill, same reasoning
+            as Settings.tsx's Card() own hint bubble), same content
+            (`flash.backupHint`), zero new i18n keys. */}
+        <h2 className="flex items-center ps-5">
+          <Badge tone="heading" size="heading" wrap hueIndex={0}>
+            {t("flash.backupTitle")}
+            <InfoBubble tip={t("flash.backupHint")} onAccent />
+          </Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-          <p className="text-xs text-carbon-textMuted -mt-1">{t("flash.backupHint")}</p>
           <FlashBackupButton
             t={t}
             onBackedUp={() => void load()}
@@ -268,16 +305,21 @@ export function Flash() {
       {/* Restore card. `glim-notch-card`: see Settings.tsx's Card() for the
           reasoning. */}
       <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+        {/* Safe-restore explainer — jdp live-review ("Infotexte in eine i
+            Infobubble"): this used to be a permanent bg-statusNeutralBg
+            banner (Task 7 had already folded its COLOUR from the old fifth
+            "info" hue into neutral, but kept the banner FORM — pure
+            informational prose, not a live status/state readout, so it's
+            exactly rule 8's "read once, costs vertical space forever" case).
+            Same content (`flash.restoreNote`), now an InfoBubble on the
+            heading Badge instead, matching FlashZipExportCard's own
+            already-bubbled hint below on this same page. */}
         <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap hueIndex={1}>{t("snapshots.title")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={1}>
+            {t("snapshots.title")}
+            <InfoBubble tip={t("flash.restoreNote")} onAccent />
+          </Badge>
         </h2>
-        {/* Safe-restore explainer */}
-        {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
-            same reasoning as Config.tsx's snapshotsHint banner: pure
-            informational prose, folds into --status-neutral-*. */}
-        <div className="rounded-card bg-statusNeutralBg px-3 py-2.5 text-xs text-statusNeutral leading-relaxed">
-          {t("flash.restoreNote")}
-        </div>
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
