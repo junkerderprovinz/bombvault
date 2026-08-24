@@ -34,6 +34,7 @@ import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFleet } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
+import { InfoBubble } from "../components/InfoBubble";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { copyText } from "../lib/clipboard";
@@ -859,6 +860,39 @@ export function Fleet() {
 
   const pendingOffers = offers.filter((o) => o.status === "pending");
 
+  // jdp live review ("Fleet Tab: Button rechts oben ist redundant"): the
+  // empty-state Card below already carries its own prominent "Add peer" CTA,
+  // so showing the identical button a second time in the top-right actions
+  // bar was pure duplication — confirmed both call the exact same handler
+  // (`() => setDialog("new")`). Mirrors Files.tsx's/Receiver.tsx's own
+  // showEmptyState fix for the identical pattern. Once a peer exists the
+  // empty-state Card stops rendering and the top-right button is the page's
+  // only entry point again, so "Add" is never unreachable.
+  const showEmptyState = !loading && !error && peers.length === 0;
+
+  // hueSeq/nextHue (GlimStone follow-up pass — see VMs.tsx's/Settings.tsx's
+  // own identical hueSeq/nextHue comment for the full reasoning): a plain,
+  // freshly-reset-every-render counter assigning 0,1,2,... to this page's
+  // heading notches in the exact order the JSX below actually evaluates each
+  // `hueIndex={nextHue()}` call — safe here because both call sites below are
+  // plain `cond && (<div>…)` blocks evaluated directly in this component's
+  // own JSX (never handed down as a prop into a child that might itself
+  // decide not to render, the one shape that would evaluate a hueIndex
+  // expression before its own gate — see VMs.tsx's <Advanced> caution).
+  //   Two heading notches can exist on this page at once: the mesh-offers
+  // Card (offers a PEER sent TO this instance, independent of whether this
+  // instance is itself watching that peer) and the new empty-state Card
+  // below (zero watched peers) — genuinely independent conditions, so both
+  // CAN render together (a peer proposed storage here while this instance
+  // watches no peers of its own yet). The mesh-offers badge used to be this
+  // page's only heading notch and correctly rendered flat/un-rainbowed as a
+  // genuine singleton (proactive sweep, memory always-integrate-new-
+  // elements-into-color-modes: found live while adding the empty-state
+  // Card's own badge) — neither is a singleton anymore once both can be
+  // visible together, so both are threaded through this one counter instead.
+  let hueSeq = 0;
+  const nextHue = () => hueSeq++;
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -866,12 +900,14 @@ export function Fleet() {
           <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>
           <p className="mt-1 text-sm text-carbon-textSub">{t("fleet.subtitle")}</p>
         </div>
-        <button
-          onClick={() => setDialog("new")}
-          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
-        >
-          {t("fleet.addPeer")}
-        </button>
+        {!showEmptyState && (
+          <button
+            onClick={() => setDialog("new")}
+            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
+          >
+            {t("fleet.addPeer")}
+          </button>
+        )}
       </div>
 
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
@@ -888,9 +924,12 @@ export function Fleet() {
                 this bare inner div) — the heading Badge is now
                 `position: absolute` and needs to straddle the padded card's
                 real edge, not just this inner div's own (padding-less)
-                position within it. */}
+                position within it. hueIndex={nextHue()} (proactive
+                rainbow-hue sweep, this round) — see this page's own
+                hueSeq/nextHue comment above for why this is no longer a
+                genuine singleton. */}
             <h2 className="flex items-center">
-              <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.offersTitle")}</Badge>
+              <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("fleet.mesh.offersTitle")}</Badge>
             </h2>
             <p className="text-xs text-carbon-textMuted">{t("fleet.mesh.offersHint")}</p>
           </div>
@@ -902,10 +941,30 @@ export function Fleet() {
         </div>
       )}
 
-      {!loading && !error && peers.length === 0 && (
-        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+      {/* Empty state — GlimStone follow-up pass (jdp live review: "Card hat
+          keinen Cardtitelbadge mit dem Infotext der in der Card steht"): this
+          card had no heading at all — just the icon, the permanent pitch
+          paragraph, and the Add button — the one Card-shaped box on this page
+          that never got the tone="heading" notch every other Card in the app
+          carries. `relative glim-notch-card` (Files.tsx's own setsTitle Card
+          precedent). The old permanent `<p>{t("fleet.empty")}</p>` reads once
+          and then costs vertical space forever — moved verbatim onto the new
+          heading Badge as an `onAccent` InfoBubble instead, zero new i18n
+          keys for the body, only the new title key.
+          hueIndex={nextHue()}, not a fixed 0: see this page's own
+          hueSeq/nextHue comment above — the mesh-offers Card can render
+          simultaneously with this one, so this can't assume it is always the
+          sole heading notch on the page the way Receiver.tsx's identical
+          empty-state Card can. */}
+      {showEmptyState && (
+        <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <h2 className="flex items-center">
+            <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>
+              {t("fleet.emptyTitle")}
+              <InfoBubble tip={t("fleet.empty")} onAccent />
+            </Badge>
+          </h2>
           <EmptyStateIcon icon={IconFleet} />
-          <p className="text-sm text-carbon-textMuted max-w-xl">{t("fleet.empty")}</p>
           <button
             onClick={() => setDialog("new")}
             className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
