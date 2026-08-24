@@ -757,8 +757,17 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
         label={t("settings.accentColor")}
         className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
       />
-      {/* Preset swatches */}
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* Preset swatches — `ms-auto` (jdp, live-review: "Die Farbfelder
+          sollen in der Card ganz rechts sein, also rechtsbündig") pushes
+          this whole label+swatches+reset group to the row's own far right,
+          flush with the outer Card's own end edge, leaving the
+          "Akzentfarbe:" caption + custom-colour swatch at the row's start.
+          Same idiom this app already uses everywhere else for "push this
+          to the far right of its flex row" (e.g. Containers.tsx/Fleet.tsx's
+          own trailing metadata, and this file's own rainbow-reset-badge
+          history a few hundred lines below) — no new positioning mechanism
+          invented for this one row. */}
+      <div className="flex items-center gap-2 flex-wrap ms-auto">
         <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
         {presets.map((hex, i) => (
           <AccentPresetSwatch
@@ -775,7 +784,25 @@ export function AccentCard({ t }: { t: ReturnType<typeof useT>["t"] }) {
             separate concern from the "reset the active accent" button
             below (that one resets accentHex to DEFAULT_ACCENT; this one
             resets the presets array to DEFAULT_ACCENT_PRESETS). Row-level,
-            not per-preset — see this component's own header comment. */}
+            not per-preset — see this component's own header comment.
+              RE-VERIFIED (jdp, live-review: "Das Zurücksetzen der
+            Akzentfarben-Voreinstellungen soll auch ein quadratischer Badge
+            mit Glyph sein wie bei der Regenbogenfarbpalette") — jdp's own
+            wording called the reference "quadratisch" (square), but the
+            actual live Rainbow-palette reset a few hundred lines below
+            (same file, "settings.colors" Card) measures as a genuine CIRCLE
+            today (getComputedStyle against the deployed container:
+            28×28px, border-radius 9999px — Badge's own `shape="circle"` +
+            `size="icon"`), not a square — verified live rather than trusted
+            from jdp's description or this comment's own prior wording, per
+            this round's explicit instruction to check the real rendered
+            shape before treating it as the reference. This Badge already
+            uses that exact same `shape="circle" size="icon"` pairing (and
+            the identical `IconResetSwirl` glyph) — confirmed live to
+            already be pixel-identical to the Rainbow reset (same 28×28
+            footprint, same border-radius, same class list) — so no shape
+            change was needed here; this note exists so a future reader
+            sees that the match was checked and holds, not skipped. */}
         {!presetsAreDefault && (
           <Badge
             as="button"
