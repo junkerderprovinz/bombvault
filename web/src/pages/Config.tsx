@@ -18,6 +18,7 @@ import { useToast } from "../lib/toast";
 import { Badge } from "../components/Badge";
 import { CheckDraw } from "../components/CheckDraw";
 import { InfoBubble } from "../components/InfoBubble";
+import { IconTrash } from "../components/Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -347,17 +348,56 @@ function ConfigSnapshotRow({
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
-        <button
-          key={shake}
+        {/* Square icon-only delete badge (jdp, live review: "Der
+            Loeschen-Button bei Einstellungsbackups soll ein quadratischer
+            Badge mit Glyph sein") — was a bare text `<button>` reading
+            "Löschen", native `title=` tooltip. Routed through the shared
+            Badge component (shape="square", `tip`) rather than a hand-rolled
+            IconTipButton: Badge.tsx's own file header is explicit this is
+            meant to be the ONE shared mechanism a square icon-only glyph
+            badge renders through (its `tip` branch already wraps
+            IconTipButton internally, see Badge()'s own `as==="button"`
+            case) — OffsiteTargetsSection's "Ziel hinzufügen" button is the
+            reference call site for that exact shape/tip pairing. Every
+            OTHER snapshot-row delete button in this app (Flash/Files/VMs/
+            RestorePanel's own FlashSnapshotRow etc.) is still the identical
+            unconverted plain-text button; only this one call site (the one
+            jdp's ask named) is converted here, but through the shared
+            component so the next conversion has one real place to copy
+            from instead of a second bespoke implementation.
+            IconTrash (components/Sidebar.tsx) reused verbatim — already
+            drawn filled/`currentColor`-only for exactly this "remove a row"
+            role in Settings.tsx's Registries card, no new glyph needed.
+            size="large" (Badge.tsx's own SIZE_TOKENS.large, h-6 = 24px), NOT
+            guessed: measured live via getBoundingClientRect against this
+            row's own real adjacent control — the previous text button
+            itself, `text-xs`(16px line-height)/`py-1`(4px+4px) — which
+            rendered at exactly 24px tall on the live container, the same
+            number this stage already names, so the row's total height is
+            unchanged by this swap (verified live, before/after: 44px).
+            tone="neutral" (Badge's own default: `bg-carbon-surface2
+            text-carbon-textSub`) rather than tone="fail", to preserve this
+            button's own pre-existing "quiet tile, hover reveals red" GlimStone
+            signal (`hover:bg-statusFailBg hover:text-statusFail`, appended via
+            `className` — the identical two classes the old text button
+            already carried, just moved onto the new element) instead of
+            making it permanently red, which would repaint a passive list row
+            as if something were already wrong. `glim-shake` (the existing
+            system-wide "failed delete shakes the delete button" rule) and
+            `shrink-0` survive unchanged via that same `className` passthrough. */}
+        <Badge
+          as="button"
+          shape="square"
+          size="large"
+          tone="neutral"
+          tip={t("snapshots.delete")}
           onClick={() => void handleDelete()}
           disabled={deleting}
-          title={t("snapshots.delete")}
-          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
+          className={`shrink-0 hover:bg-statusFailBg hover:text-statusFail${shake ? " glim-shake" : ""}`}
+          key={shake}
         >
-          {deleting ? "…" : t("snapshots.delete")}
-        </button>
+          <IconTrash />
+        </Badge>
       </div>
       {confirmDialog}
     </div>
