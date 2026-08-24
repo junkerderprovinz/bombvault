@@ -2249,7 +2249,7 @@ function DashboardWidgetCard({
               key={shake.disable || 0}
               onClick={() => void handleDisable()}
               disabled={busy}
-              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
+              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               style={hueStyle}
@@ -2522,7 +2522,7 @@ function FleetSettingsCard({
               key={shake.disable || 0}
               onClick={() => void handleDisable()}
               disabled={busy}
-              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
+              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               style={hueStyle}
