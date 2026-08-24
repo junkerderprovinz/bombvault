@@ -709,11 +709,17 @@ export function Receiver() {
           carries no hueIndex, same as every other dialog title in the app),
           and mutually exclusive with ReceivedRepoCard's OWN rainbowAt(index)
           tint (this card only renders while the list is empty), so there is
-          no position to collide with. */}
+          no position to collide with.
+          insetStart={6} (GlimStone follow-up pass, jdp: "Empfaenger/Fleet-
+          Tab: Cardtitelbadge falsch platziert" — the SAME `text-center
+          items-center` collapsed-h2 mismatch as Files.tsx's own setsTitle
+          Card and Fleet.tsx's identical empty-state Card; see Files.tsx's
+          own call site for the full "why a single-merged-div Card can still
+          get this wrong" mechanism and Badge.tsx's `insetStart` doc). */}
       {showEmptyState && (
         <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
           <h2 className="flex items-center">
-            <Badge tone="heading" size="heading" wrap hueIndex={0}>
+            <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>
               {t("receiver.emptyTitle")}
               <InfoBubble tip={t("receiver.empty")} onAccent />
             </Badge>

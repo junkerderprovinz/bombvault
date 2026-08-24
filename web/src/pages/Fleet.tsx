@@ -955,11 +955,17 @@ export function Fleet() {
           hueSeq/nextHue comment above — the mesh-offers Card can render
           simultaneously with this one, so this can't assume it is always the
           sole heading notch on the page the way Receiver.tsx's identical
-          empty-state Card can. */}
+          empty-state Card can.
+          insetStart={6} (GlimStone follow-up pass, jdp: "Empfaenger/Fleet-
+          Tab: Cardtitelbadge falsch platziert" — the SAME `text-center
+          items-center` collapsed-h2 mismatch as Files.tsx's own setsTitle
+          Card and Receiver.tsx's identical empty-state Card; see Files.tsx's
+          own call site for the full "why a single-merged-div Card can still
+          get this wrong" mechanism and Badge.tsx's `insetStart` doc). */}
       {showEmptyState && (
         <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
           <h2 className="flex items-center">
-            <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>
+            <Badge tone="heading" size="heading" wrap hueIndex={nextHue()} insetStart={6}>
               {t("fleet.emptyTitle")}
               <InfoBubble tip={t("fleet.empty")} onAccent />
             </Badge>
