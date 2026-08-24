@@ -1,8 +1,11 @@
+import { useEffect, useRef, useState } from "react";
 import { backupNow } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
 import { busyPhraseKey } from "../lib/progress";
 import type { useT } from "../lib/i18n";
-import { CheckDraw } from "./CheckDraw";
+import { Badge } from "./Badge";
+import { IconUpload } from "./Sidebar";
+import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -17,6 +20,28 @@ interface BackupButtonProps {
   running?: { active: boolean; phase?: string };
 }
 
+// Square icon-only badge (Containers.tsx Task 2, jdp live-review: "Jetzt
+// sichern und Export sollen quadratische Badges mit Glyph sein... rechts
+// oben in der Ecke"). Was a full-width text button with FOUR different
+// permanently-inline states living below it (pending spinner+label,
+// success checkmark+snapshot id, a stateless-container "config only" note,
+// a red error message, a neutral "skipped" note) — there is no room for any
+// of that next to a small square glyph in the row's top-right corner, so
+// every TERMINAL state (success/error/skipped) now surfaces as a toast
+// instead, matching the "failed action toasts AND shakes its button"
+// standing rule this exact file's ExportButton/HooksEditor save() already
+// follow. Only the PENDING state stays genuinely inline — swapped for the
+// glyph itself (a spinner replacing the icon while running), since a badge
+// has no separate space to put a spinner NEXT TO its own glyph.
+// `size="icon"` (Badge.tsx, h-7/w-7 = 28px): measured LIVE against this
+// exact button before conversion (getBoundingClientRect on the real
+// deployed "Jetzt sichern" button, `px-3 py-1.5 text-xs` — 28px, not the
+// naive box-model arithmetic), per the standing icon-badge convention
+// ("sized to match the adjacent control's real measured height, don't
+// guess/reuse a token without measuring") — it happens to equal Badge's
+// existing `icon` stage, a genuinely re-verified match for THIS control,
+// not a blind reuse of a token pinned to a different sibling (see that
+// stage's own doc in Badge.tsx for the token it actually belongs to).
 export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps) {
   // Fire-and-watch: the server runs the backup detached and answers immediately,
   // so we watch the "container:<name>" progress + recorded run for the outcome
@@ -29,64 +54,64 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
     onDone: onBackedUp,
   });
   const blockedByOther = !!running?.active && !isPending;
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button.
+  const [shake, setShake] = useState(0);
+  // Tracks the last phase already reported, so this effect toasts exactly
+  // once per NEW terminal transition — state.phase can only ever start at
+  // "idle" (useBackupWatch never begins mid-run), so this never fires on
+  // mount, only on a real fire()-driven change.
+  const seenPhase = useRef(state.phase);
+
+  useEffect(() => {
+    if (state.phase === seenPhase.current) return;
+    seenPhase.current = state.phase;
+    if (state.phase === "success") {
+      // No snapshot id ⇒ a stateless container with no data folders (the
+      // definition/template is still captured for recreate) — say so
+      // instead of a bare, opaque "Done".
+      push(
+        state.snapshotId ? `${t("common.done")} · ${state.snapshotId.slice(0, 8)}` : t("backup.configOnly"),
+        "success"
+      );
+    } else if (state.phase === "error") {
+      push(state.message, "fail");
+      setShake((n) => n + 1);
+    } else if (state.phase === "skipped") {
+      // Neutral terminal: the container is gone, so the backup was skipped
+      // (not failed) — "warn" severity, the same neutral-not-red tone this
+      // file's own batch actions already use for a partial/non-failure result.
+      push(`↷ ${t("containers.notInstalledTitle")}`, "warn");
+    }
+  }, [state, push, t]);
+
+  const tip = isPending
+    ? t("common.backingUp")
+    : blockedByOther
+      ? t(busyPhraseKey(running?.phase))
+      : t("containers.backupNow");
 
   return (
-    <div className="flex flex-col gap-1 items-start">
-      <button
-        onClick={() => void fire()}
-        disabled={isPending || blockedByOther}
-        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isPending ? (
-          <>
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-            {t("common.backingUp")}
-          </>
-        ) : (
-          t("containers.backupNow")
-        )}
-      </button>
-
-      {/* A backup/restore/replication elsewhere blocks a new backup — say why. */}
-      {blockedByOther && (
-        <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
+    <Badge
+      key={shake}
+      as="button"
+      shape="square"
+      tone="active"
+      size="icon"
+      tip={tip}
+      onClick={() => void fire()}
+      disabled={isPending || blockedByOther}
+      className={shake ? "glim-shake" : undefined}
+    >
+      {isPending ? (
+        <span
+          className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+          style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+        />
+      ) : (
+        <IconUpload />
       )}
-
-      {state.phase === "success" &&
-        (state.snapshotId ? (
-          <span className="inline-flex items-center gap-1 text-xs text-statusOk">
-            <CheckDraw />
-            {t("common.done")}
-            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
-              {state.snapshotId.slice(0, 8)}
-            </span>
-          </span>
-        ) : (
-          // No snapshot id ⇒ a stateless container with no data folders. The
-          // definition/template is still captured for recreate, but no restic
-          // snapshot was made — say so instead of an opaque "Done".
-          <span className="inline-flex items-center gap-1 text-xs text-carbon-textSub max-w-[18rem] wrap-break-word">
-            <CheckDraw />
-            {t("backup.configOnly")}
-          </span>
-        ))}
-
-      {state.phase === "error" && (
-        <span className="text-xs text-statusFail max-w-[18rem] wrap-break-word">
-          {state.message}
-        </span>
-      )}
-
-      {/* Neutral terminal: the container is gone, so the backup was skipped (not
-          failed). Reuses the existing "Not installed (backups only)" wording. */}
-      {state.phase === "skipped" && (
-        <span className="text-xs text-carbon-textMuted max-w-[18rem] wrap-break-word">
-          ↷ {t("containers.notInstalledTitle")}
-        </span>
-      )}
-    </div>
+    </Badge>
   );
 }
