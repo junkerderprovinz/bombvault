@@ -706,14 +706,24 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
             `isIconOnly && tone==="active"` branch) resolves to the row's
             own rainbow position via the ordinary CSS custom-property
             cascade, verified live via getComputedStyle against the real
-            deployed container. `size="icon"` (28px) matches this button's
-            own pre-existing `py-1.5` footprint, measured live against its
-            real FolderBrowser-field neighbour. `tip` carries the exact
-            text this button showed before becoming icon-only. */}
+            deployed container.
+              `size="compact"` (32px), NOT `size="icon"` (28px, GlimStone
+            full-app size-token audit fix — see Badge.tsx's own ROLE → SIZE
+            AUDIT header comment for the full writeup): this badge sits
+            directly beside a real FolderBrowser field (`items-end` row), and
+            that field renders at 32px live (`text-sm px-3 py-1.5`,
+            FolderBrowser's own already-measured "Durchsuchen" button doc) —
+            NOT 28px. The previous `size="icon"` measurement matched this
+            BUTTON's own pre-conversion self (`text-xs px-3 py-1.5` ≈ 28px),
+            a different control's box-model that only coincidentally equalled
+            an existing stage; it never actually matched the neighbour it
+            claimed to, a 4px mismatch confirmed live (getBoundingClientRect:
+            input 32px, badge 28px, same `items-end` row). `tip` carries the
+            exact text this button showed before becoming icon-only. */}
         <Badge
           as="button"
           shape="square"
-          size="icon"
+          size="compact"
           tone="active"
           tip={t("folders.add")}
           onClick={addCustom}
