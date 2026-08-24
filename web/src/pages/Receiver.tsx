@@ -727,7 +727,17 @@ export function Receiver() {
           own call site for the full "why a single-merged-div Card can still
           get this wrong" mechanism and Badge.tsx's `insetStart` doc). */}
       {showEmptyState && (
-        <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+        // `.glim-hue` added (rainbow-mode completeness sweep, jdp live
+        // review: "Es sind nicht alle Buttons in den Regenbogen-Modus
+        // eingepflegt"): `glim-notch-card` alone only wires the reactive-mode
+        // hover reveal on the Badge's own notch, never --accent/--focus-ring
+        // itself, so the "Add" button below stayed flat regardless of
+        // rainbow. Same hueIndex={0} the Badge already uses (Fleet.tsx's own
+        // identical fix for the same reasoning).
+        <div
+          className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
+          style={hueVars(rainbowAt(0)) as CSSProperties}
+        >
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>
               {t("receiver.emptyTitle")}

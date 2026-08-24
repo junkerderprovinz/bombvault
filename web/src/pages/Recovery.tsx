@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useT } from "../lib/i18n";
+import { hueVars, rainbowAt } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { withLtrFragments, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -78,6 +80,7 @@ function RestoreRow({
   lastBackup,
   t,
   otherActive,
+  hueIndex,
 }: {
   domain: "container" | "vm";
   /** Raw identifier — the ONLY value the restore action below may send to the
@@ -90,6 +93,14 @@ function RestoreRow({
   lastBackup: number | null;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
+  /** Rainbow position for this row — same `.glim-hue`-on-the-row-wrapper
+   *  mechanism as ContainerRow/VMRow (see StepCard.tsx's own comment for the
+   *  cascade reasoning): the shared RestoreAction's plain bg-accent button
+   *  needs no changes of its own, it just inherits --accent/--focus-ring
+   *  from this row once the wrapper below carries the class. Assigned from
+   *  Recovery()'s page-flat `nextHue()` counter at the call site, one call
+   *  per row, in render order. */
+  hueIndex: number;
 }) {
   // Latest-backup label — DISPLAY ONLY, read straight from the target list's own
   // lastBackup field (unix seconds). No per-row snapshot fetch: a discovered list
@@ -98,7 +109,10 @@ function RestoreRow({
   const snapLabel = lastBackup ? new Date(lastBackup * 1000).toLocaleString() : "";
 
   return (
-    <div className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0">
+    <div
+      className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0 glim-hue"
+      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+    >
       <div className="flex items-center gap-3 text-sm">
         <span className="text-carbon-text font-medium flex-1 truncate">{displayName ?? name}</span>
         <span className="text-carbon-textMuted text-xs shrink-0">
@@ -139,11 +153,16 @@ function FileSetRecoveryRow({
   hostMountRoot,
   t,
   otherActive,
+  hueIndex,
 }: {
   set: FileSetView;
   hostMountRoot: string;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
+  /** Same `.glim-hue`-on-the-row-wrapper mechanism as RestoreRow above (see
+   *  its own comment) — this row's inline bg-accent Restore button inherits
+   *  --accent/--focus-ring from the wrapper with no button-level change. */
+  hueIndex: number;
 }) {
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
@@ -195,7 +214,10 @@ function FileSetRecoveryRow({
   }
 
   return (
-    <div className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0">
+    <div
+      className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
+      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+    >
       <div className="flex items-center gap-3 text-sm">
         <span className="text-carbon-text font-medium flex-1 min-w-0 truncate">{set.name}</span>
         <span className="text-carbon-textMuted text-xs shrink-0">
@@ -273,6 +295,7 @@ function ForeignItemRow({
   blocked,
   onBusyChange,
   onSessionGone,
+  hueIndex,
 }: {
   domain: "containers" | "vms" | "files";
   item: ForeignItem;
@@ -287,6 +310,12 @@ function ForeignItemRow({
   blocked: boolean;
   onBusyChange: (busy: boolean) => void;
   onSessionGone: () => void;
+  /** Same `.glim-hue`-on-the-row-wrapper mechanism as RestoreRow/
+   *  FileSetRecoveryRow above — this row's own inline bg-accent Restore
+   *  button inherits --accent/--focus-ring from the wrapper. Assigned from
+   *  ForeignRestoreCard's own `nextHue()` (the SAME counter passed down from
+   *  Recovery(), continuing that one page-flat sequence). */
+  hueIndex: number;
 }) {
   const [snapshot, setSnapshot] = useState("latest");
   // VMs default the destination to the local VM domains path (subpath under the
@@ -453,7 +482,10 @@ function ForeignItemRow({
   }
 
   return (
-    <div className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0">
+    <div
+      className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
+      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+    >
       <div className="flex items-center gap-3 text-sm flex-wrap">
         <span className="text-carbon-text font-medium flex-1 truncate">{item.name}</span>
         <select
@@ -907,6 +939,7 @@ function ForeignRestoreCard({
                       blocked={rowBlocked}
                       onBusyChange={onBusyChange}
                       onSessionGone={() => setSessionGone(true)}
+                      hueIndex={nextHue()}
                     />
                   ))}
                 </div>
@@ -1694,6 +1727,7 @@ export default function Recovery() {
                     lastBackup={c.lastBackup}
                     t={t}
                     otherActive={rowOtherActive}
+                    hueIndex={nextHue()}
                   />
                 ))}
               </div>
@@ -1712,6 +1746,7 @@ export default function Recovery() {
                     lastBackup={v.lastBackup}
                     t={t}
                     otherActive={rowOtherActive}
+                    hueIndex={nextHue()}
                   />
                 ))}
               </div>
@@ -1734,6 +1769,7 @@ export default function Recovery() {
                     hostMountRoot={hostMountRoot}
                     t={t}
                     otherActive={rowOtherActive}
+                    hueIndex={nextHue()}
                   />
                 ))}
               </div>

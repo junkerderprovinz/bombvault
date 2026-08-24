@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { hueVars, rainbowAt } from "../lib/appearance";
 import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } from "../lib/api";
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -262,7 +263,14 @@ export function Flash() {
           `insetStart` doc for the full mechanism and its other real call
           sites (Config.tsx's identical Backup Card, Dashboard.tsx's Card()
           and SummaryCell(), all independently hit the identical mismatch). */}
-      <div className="relative glim-notch-card">
+      {/* `.glim-hue` added (rainbow-mode completeness sweep, jdp live review:
+          "Es sind nicht alle Buttons in den Regenbogen-Modus eingepflegt"):
+          `glim-notch-card` alone never redefines --accent/--focus-ring, only
+          the reactive-mode hover reveal — so FlashBackupButton's own
+          bg-accent button below stayed flat regardless of rainbow. Same
+          hueIndex={0} the Badge already uses; the inner box inherits it via
+          ordinary CSS custom-property cascade. */}
+      <div className="relative glim-notch-card glim-hue" style={hueVars(rainbowAt(0)) as CSSProperties}>
         {/* Task 5 (rule 11): heading is now a filled Badge, not bare eyebrow text.
             jdp live-review ("Infotexte in eine i Infobubble"): the permanent
             `<p>` explaining what this backup captures used to sit under the
@@ -294,8 +302,14 @@ export function Flash() {
       </div>
 
       {/* Restore card. `glim-notch-card`: see Settings.tsx's Card() for the
-          reasoning. */}
-      <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+          reasoning. `.glim-hue` added (rainbow-mode completeness sweep, jdp
+          live review): same hueIndex={1} the Badge already uses —
+          FlashSnapshotRow's own Download/Delete buttons inherit it via the
+          ordinary custom-property cascade, no per-row change needed. */}
+      <div
+        className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-5 flex flex-col gap-4"
+        style={hueVars(rainbowAt(1)) as CSSProperties}
+      >
         {/* Safe-restore explainer — jdp live-review ("Infotexte in eine i
             Infobubble"): this used to be a permanent bg-statusNeutralBg
             banner (Task 7 had already folded its COLOUR from the old fifth

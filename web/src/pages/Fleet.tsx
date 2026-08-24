@@ -970,23 +970,40 @@ export function Fleet() {
           Card and Receiver.tsx's identical empty-state Card; see Files.tsx's
           own call site for the full "why a single-merged-div Card can still
           get this wrong" mechanism and Badge.tsx's `insetStart` doc). */}
-      {showEmptyState && (
-        <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
-          <h2 className="flex items-center">
-            <Badge tone="heading" size="heading" wrap hueIndex={nextHue()} insetStart={6}>
-              {t("fleet.emptyTitle")}
-              <InfoBubble tip={t("fleet.empty")} onAccent />
-            </Badge>
-          </h2>
-          <EmptyStateIcon icon={IconFleet} />
-          <button
-            onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+      {showEmptyState && (() => {
+        // Single nextHue() call (unchanged sequence position — see this
+        // page's own hueSeq/nextHue comment above) reused for BOTH the
+        // heading Badge and this card's own wrapper: rainbow-mode
+        // completeness sweep (jdp, live review: "Es sind nicht alle Buttons
+        // in den Regenbogen-Modus eingepflegt"). `glim-notch-card` alone only
+        // wires the reactive-mode hover reveal on the Badge's own notch — it
+        // never redefines --accent/--focus-ring, so the "Add" button below
+        // stayed the flat theme accent regardless of rainbow. Adding
+        // `.glim-hue` here too (same mechanism as StepCard.tsx/Dashboard.tsx
+        // Card()'s own identical fix) makes it inherit the SAME hue via
+        // ordinary CSS custom-property cascade, no button-level change.
+        const emptyHue = nextHue();
+        return (
+          <div
+            className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
+            style={hueVars(rainbowAt(emptyHue)) as CSSProperties}
           >
-            {t("fleet.addPeer")}
-          </button>
-        </div>
-      )}
+            <h2 className="flex items-center">
+              <Badge tone="heading" size="heading" wrap hueIndex={emptyHue} insetStart={6}>
+                {t("fleet.emptyTitle")}
+                <InfoBubble tip={t("fleet.empty")} onAccent />
+              </Badge>
+            </h2>
+            <EmptyStateIcon icon={IconFleet} />
+            <button
+              onClick={() => setDialog("new")}
+              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            >
+              {t("fleet.addPeer")}
+            </button>
+          </div>
+        );
+      })()}
 
       {!loading && peers.length > 0 && (
         <div className="flex flex-col gap-3 bv-content-fade">

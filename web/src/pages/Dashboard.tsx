@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
+import { hueVars, rainbowAt } from "../lib/appearance";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
@@ -455,7 +457,22 @@ function Card({
     // and the four OTHER call sites (SummaryCell below, ActivityLog.tsx,
     // Flash.tsx's and Config.tsx's backup Cards) that independently hit the
     // identical mismatch.
-    <div className="relative glim-notch-card">
+    //
+    // `.glim-hue` ALSO added (rainbow-mode completeness sweep, jdp live
+    // review: "Es sind nicht alle Buttons in den Regenbogen-Modus
+    // eingepflegt"): `glim-notch-card` alone never redefines
+    // --accent/--focus-ring, only the reactive-mode hover reveal, so every
+    // action button/control rendered as this Card's `children` (e.g.
+    // RansomwareCard's "Run off-site DR check" button) stayed the flat theme
+    // accent regardless of rainbow, even though this SAME Card's own
+    // heading notch was already correctly hued. Same hueIndex prop the
+    // Badge already uses — custom properties cascade to every descendant
+    // once redefined here, no per-button change needed at any of this
+    // Card's many call sites.
+    <div
+      className={`relative glim-notch-card${hueIndex !== undefined ? " glim-hue" : ""}`}
+      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+    >
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex} insetStart={5}>{title}</Badge>
       </h2>
@@ -1909,7 +1926,17 @@ function SummaryCell({
     // ("Dashboard-Badges... links buendig mit der Card"). See Badge.tsx's
     // own `insetStart` doc for the mechanism this fixes at the source
     // instead of re-patching per Card.
-    <div className="relative glim-notch-card min-w-0">
+    //
+    // `.glim-hue` ALSO added, same rainbow-mode completeness fix as Card()
+    // above (jdp live review): this cell's own status Badges read
+    // tone={statusTone(...)} — load-bearing status signals that read
+    // --status-* tokens, never --accent — so they stay untouched; this only
+    // matters for anything focusable/accent-coloured a future SummaryCell
+    // child might add.
+    <div
+      className={`relative glim-notch-card min-w-0${hueIndex !== undefined ? " glim-hue" : ""}`}
+      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+    >
       {/* Task 5 (rule 11): each SummaryCell is its own standalone
           bg-carbon-surface rounded-card box — not nested inside an
           already-badged heading — so it gets the same Badge-in-<h2>

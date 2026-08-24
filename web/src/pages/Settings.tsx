@@ -238,7 +238,30 @@ function Card({
     // colour on hover/focus anywhere in this card, not just its own ~22px
     // glyph. See that rule's own comment in index.css for why it's a
     // dedicated class rather than the general `rounded-card` utility.
-    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+    //
+    // `.glim-hue` ALSO added directly on this shared wrapper (rainbow-mode
+    // completeness sweep, jdp live review, repeated escalation: "Es sind
+    // nicht alle Buttons in den Regenbogen-Modus eingepflegt"):
+    // `glim-notch-card` alone never redefines --accent/--focus-ring, only
+    // the reactive-mode hover reveal. Every individual button inside a Card
+    // was until now expected to re-derive its OWN `hueOn`/`hueStyle` from
+    // the SAME `hueIndex` this component already receives and re-apply
+    // `.glim-hue` + that style by hand (see e.g. the widget/fleet token
+    // Disable buttons above) — correct where every call site actually did
+    // it, but a manual, easy-to-miss-once-per-button convention across ~50
+    // Card() call sites is exactly the shape of gap this sweep exists to
+    // close for good. Redefining --accent/--focus-ring ONCE here instead
+    // means every descendant inherits it via ordinary CSS custom-property
+    // cascade whether or not its own call site remembered the manual tag —
+    // harmless where a button already carries its own identical `.glim-hue`
+    // (same hueIndex, same computed colour, purely redundant), a genuine fix
+    // wherever one didn't.
+    <div
+      className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4${
+        hueIndex !== undefined ? " glim-hue" : ""
+      }`}
+      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+    >
       {/* Task 5 (design-language.md rule 11, "every heading is a filled
           section badge") resolution, for whoever finds this next: the <h2>
           tag stays (screen readers still get a real heading, e.g. "heading

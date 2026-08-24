@@ -10,7 +10,8 @@
 // in as `<ActivityLog />` with no further changes.
 // ---------------------------------------------------------------------------
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { hueVars, rainbowAt } from "../lib/appearance";
 import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
@@ -281,7 +282,19 @@ export function ActivityLog({
     // ProgressBar's square-ended bar, to the card's rounded corners) in the
     // first place; the split was only ever copied over by visual analogy to
     // Dashboard's OTHER cards, which is what let the wrong reference bug in.
-    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
+    <div
+      className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-3${
+        hueIndex !== undefined ? " glim-hue" : ""
+      }`}
+      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+    >
+      {/* `.glim-hue` above (rainbow-mode completeness sweep, jdp live review:
+          "Es sind nicht alle Buttons in den Regenbogen-Modus eingepflegt"):
+          `glim-notch-card` alone never redefines --accent/--focus-ring, only
+          the reactive-mode hover reveal — so the filter inputs' focus ring
+          and the heatmap day-filter chip further down (bg-accent) stayed
+          flat regardless of rainbow. Same hueIndex prop the heading Badge
+          already uses. */}
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{t("activityLog.title")}</Badge>
       </h2>
