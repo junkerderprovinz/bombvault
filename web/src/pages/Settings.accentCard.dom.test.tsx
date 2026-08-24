@@ -25,12 +25,12 @@ const PRESETS_KEY = "bv-accent-presets";
 
 function Harness() {
   const { t } = useT();
-  // hueIndex: AccentCard now threads its enclosing "settings.colors" Card's
-  // own hue through to its preset-reset Badge (icon-badge convention — see
-  // AccentCard's own header comment in Settings.tsx). Any fixed number
-  // exercises that wiring identically for this standalone-harness suite,
-  // which never asserts colour, only interaction/persistence behaviour.
-  return <AccentCard t={t} hueIndex={0} />;
+  // No hueIndex prop any more (GlimStone follow-up round, jdp's
+  // neutral-reset-badge fix): AccentCard's preset-reset Badge is now
+  // deliberately `tone="neutral"`, never hue-tinted — see that Badge's own
+  // call-site comment in Settings.tsx — so AccentCard has no remaining
+  // reader for a hue value and the prop was removed from its signature.
+  return <AccentCard t={t} />;
 }
 
 function renderCard() {
@@ -149,26 +149,46 @@ describe("AccentCard — editing a preset", () => {
 });
 
 describe("AccentCard — reset presets (row-level, not per-preset)", () => {
-  it("the reset control is hidden while every preset still matches its shipped default", () => {
+  // ALWAYS rendered, disabled (not hidden) while nothing has drifted —
+  // GlimStone follow-up round, jdp re-reporting after a prior round's fix
+  // didn't hold up live: "Bei der Akzentfarbe ist das Zurücksetzen immer
+  // noch kein Badge mit Glyph." Fresh live inspection found the DEFAULT
+  // state rendered no badge AT ALL (the previous `{!presetsAreDefault && ()}`
+  // conditional unmounted it entirely), which is exactly what a reviewer
+  // who never happened to edit a preset's own colour would see. Switched to
+  // `disabled={presetsAreDefault}` on an unconditionally-rendered Badge —
+  // the same pattern the rainbow-palette reset badge already used — so the
+  // control is a real, present, measurable badge at all times; only its
+  // enabled/disabled state changes. See AccentCard's own header comment in
+  // Settings.tsx for the full root-cause writeup.
+  it("the reset control is present but disabled while every preset still matches its shipped default", () => {
     renderCard();
-    expect(screen.queryByRole("button", { name: "Reset presets" })).toBeNull();
+    // Plain DOM property access, not toBeDisabled() — no @testing-library/
+    // jest-dom in this repo, see ColorPickerPopover.dom.test.tsx's own header
+    // comment; `.disabled` mirrors the native `disabled` attribute React's
+    // `disabled={...}` prop sets on a real <button>.
+    const resetButton = screen.getByRole("button", { name: "Reset presets" }) as HTMLButtonElement;
+    expect(resetButton).toBeTruthy();
+    expect(resetButton.disabled).toBe(true);
   });
 
-  it("appears once a preset has drifted, and restores the ORIGINAL shipped defaults on click", () => {
+  it("becomes enabled once a preset has drifted, and restores the ORIGINAL shipped defaults on click", () => {
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: "Preset 4" }));
     const hexField = screen.getByLabelText("Hex") as HTMLInputElement;
     fireEvent.change(hexField, { target: { value: "#ABCDEF" } });
 
-    const resetButton = screen.getByRole("button", { name: "Reset presets" });
+    const resetButton = screen.getByRole("button", { name: "Reset presets" }) as HTMLButtonElement;
+    expect(resetButton.disabled).toBe(false);
     fireEvent.click(resetButton);
 
     expect(JSON.parse(localStorage.getItem(PRESETS_KEY)!)).toEqual(DEFAULT_ACCENT_PRESETS);
     // Row-level: resetting the PRESETS never touches the currently active
     // accent — that is the separate "Reset" text button's own job.
     expect(localStorage.getItem(ACCENT_KEY)).toBe("#abcdef");
-    // The control disappears again once nothing is left to reset.
-    expect(screen.queryByRole("button", { name: "Reset presets" })).toBeNull();
+    // The control stays present, just becomes disabled again once nothing
+    // is left to reset — it never disappears.
+    expect((screen.getByRole("button", { name: "Reset presets" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("is a SINGLE row-level control, not one reset per preset", () => {

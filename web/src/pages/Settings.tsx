@@ -675,52 +675,54 @@ function AccentPresetSwatch({
 // ships exactly ONE reset for its whole row of 8
 // (`updateRainbow({ palette: RAINBOW })`), not eight individual ones —
 // matched here for the same granularity, the same Badge shape (now
-// shape="square", see this Card's own hueIndex-param doc below for the
-// square-conversion round), the same SVG glyph. Unlike the rainbow reset
-// (always shown while its
-// master switch is on), this one only renders once at least one preset has
-// actually drifted from ITS OWN shipped default — matching the pre-existing
-// "Reset to default" text button a few pixels to its right in THIS SAME
-// Card (which already only shows once accentHex has drifted from
-// DEFAULT_ACCENT), rather than the separate Rainbow Card's own
-// always-visible convention: two reset affordances sharing one Card read
-// more coherently following EACH OTHER's rule than each independently
-// matching a different sibling Card.
+// shape="square"), the same SVG glyph.
+//
+// ALWAYS RENDERED now, disabled (not hidden) once nothing is left to reset
+// (jdp, live-review, re-reporting after a prior round claimed this was
+// already fixed: "Bei der Akzentfarbe ist das Zurücksetzen immer noch kein
+// Badge mit Glyph" — fresh live inspection of the DEFAULT/untouched state,
+// the one nearly every real visitor and every prior review actually sees,
+// found this control was NOT a badge with a glyph at all — because it wasn't
+// rendered AT ALL: the previous `{!presetsAreDefault && (...)}` conditional
+// unmounts the entire Badge the moment every preset matches its shipped
+// default, which is true for anyone who has only ever clicked a preset to
+// select it, without also editing one via the popover — the far MORE common
+// path than the rarer "edit a preset's own colour" one this condition
+// actually tracks. A conditionally-UNMOUNTED control cannot be measured,
+// screenshotted, or recognised as "a badge" by a reviewer who hasn't first
+// performed the one specific drift-inducing action — exactly how a
+// genuinely-fixed badge kept getting re-reported as broken. Switched to the
+// SAME pattern the rainbow-palette reset (a few hundred lines below) already
+// used — `disabled={presetsAreDefault}` on an unconditionally-rendered
+// Badge, dimmed via Badge's own built-in `disabled:opacity-50` exactly like
+// every other disabled control in this app, never truly gone — which also
+// makes the "these two mirror each other" pairing this file already claimed
+// in prose (see below) actually TRUE for visibility too, not just for shape/
+// tone/size/glyph.
 //
 // No own `<Card>` wrapper any more (jdp, live-review: "Die card von
 // Akzentfarbe und Regenbogenmodus in eine mergen. Gehört ja zusammen") —
 // this now returns just its own body content, composed inside the shared
 // "settings.colors" Card alongside the Rainbow controls at that Card's own
-// call site in SettingsPage. `hueIndex` LEFT the signature at that merge (it
-// used to be threaded straight through to this component's own Card, which
-// no longer exists here) and CAME BACK in the icon-badge convention round:
-// the merged Card's single heading notch still owns the notch position, but
-// this component's own preset-reset Badge now needs that SAME Card's hue too
-// (see this function's own `hueIndex` param doc below), so the prop is
-// required again — for a different reason than before, not a straight
-// revert. Settings.accentCard.dom.test.tsx renders this standalone
-// (`<AccentCard t={t} hueIndex={0} />`, no wrapping Card) and only ever
-// asserted against the preset buttons/dialogs inside, never the old Card
-// chrome or the hue value itself, so it keeps passing unchanged with any
-// fixed hueIndex.
+// call site in SettingsPage.
+//
+// `hueIndex` REMOVED from the signature again (GlimStone follow-up round,
+// jdp's neutral-reset-badge fix below): it existed for exactly one reason —
+// feeding the preset-reset Badge's own `hueIndex` so its fill matched the
+// enclosing Card's rainbow position — and that Badge is now deliberately
+// `tone="neutral"` (see its own comment below for the full "why a reset
+// control must NOT join the rainbow" reasoning), so the prop had no
+// remaining reader anywhere in this component. Left in place it would be
+// dead plumbing that `noUnusedParameters` would flag outright. The Card's
+// own heading notch keeps its hue independently at its own call site (it
+// was never threaded through here — see that call site's own `hueIdx`
+// comment). Settings.accentCard.dom.test.tsx's own harness dropped the now-
+// nonexistent prop in the same round.
 // ---------------------------------------------------------------------------
 export function AccentCard({
   t,
-  hueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
-  /** The enclosing merged "settings.colors" Card's own `nextHue()` value —
-   *  threaded straight through from that Card's call site (an IIFE-captured
-   *  `hueIdx`, the same one-call-feeds-several-children shape the
-   *  schedulesSelfBackup Card above already uses for its own Card+child
-   *  pair) so the preset-reset Badge below can carry a genuine hueIndex that
-   *  MATCHES its enclosing Card's own hue, per icon-badge convention (every
-   *  icon-only badge conversion gets real colour-engine integration, not
-   *  just a shape change) — rather than either inventing its own separate
-   *  `nextHue()` position (which would burn a hue slot never spent on any
-   *  visible Card notch) or staying hue-immune (the exact "self-authored
-   *  aesthetic exception" jdp's standing rainbow rule forbids). */
-  hueIndex: number;
 }) {
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
   const [presets, setPresets] = useState<string[]>(() => getAccentPresets());
@@ -796,44 +798,69 @@ export function AccentCard({
             below (that one resets accentHex to DEFAULT_ACCENT; this one
             resets the presets array to DEFAULT_ACCENT_PRESETS). Row-level,
             not per-preset — see this component's own header comment.
-              SQUARE now, not circle (jdp, live-review, overriding a prior
-            round's explicit "verified pixel-identical circle, no change
-            needed" conclusion: "Die Zurücksetzen-Option soll ein
-            quadratischer Badge mit Glyph sein" — a deliberate departure
-            from the established circular reset treatment, not a
-            correction of a bug). `shape="square"` still resolves through
-            `rounded-control` (the shape engine's own live token — see
-            Badge.tsx's BadgeShape doc), so this genuinely reads
+              SQUARE (jdp, live-review: "Die Zurücksetzen-Option soll ein
+            quadratischer Badge mit Glyph sein"). `shape="square"` still
+            resolves through `rounded-control` (the shape engine's own live
+            token — see Badge.tsx's BadgeShape doc), so this genuinely reads
             round/soft/square per the user's own shape-engine choice, not a
-            hardcoded corner.
-              tone="active" + hueIndex (icon-badge convention, jdp's newest
-            standing rule: every icon-only badge conversion/touch
-            automatically gets real colour-engine integration, never left
-            hue-immune) — hueIndex is this component's own enclosing
-            "settings.colors" Card's hue, threaded in via the `hueIndex`
-            prop above, so this reset badge's fill matches the very Card
-            it lives in rather than either a flat neutral grey or an
-            invented hue of its own.
+            hardcoded corner — under the "Rund" shape-engine setting this
+            renders as a full circle, same as every other square badge in
+            the app, which is expected, not a regression.
+              NEUTRAL now, not hue-tinted (jdp, re-reporting: "Der
+            Reset-Badge soll ... nicht farbig sein, damit er sich besser von
+            den Farbflächen abhebt" — it must NOT blend in as one more colour
+            option in a row whose entire job is presenting colour options).
+            DELIBERATE EXCEPTION to this app's standing "every icon-only
+            badge gets real colour-engine integration" rule: a reset control
+            sitting directly beside the very colour swatches it resets is
+            the one role where taking a rainbow/accent hue is actively
+            counter-productive — a coloured reset button reads as just
+            another swatch to click through, not as a distinct utility
+            action set apart from the row it acts on. `tone="neutral"`
+            (Badge's own default, spelled out explicitly here so this
+            exception is visible at the call site, not an accident of
+            omission) resolves to `bg-carbon-surface2 text-carbon-textSub` —
+            the same flat, hue-immune grey chip every other "no real status"
+            badge in the app already uses. `border-2 border-carbon-border`
+            (NEW) matches AccentPresetSwatch's own wrapping border exactly
+            (see that component's own JSX a few dozen lines up) — without
+            it, this Badge's solid fill reaches the full 28×28 box edge to
+            edge while every neighbouring swatch's visible colour disc is
+            actually only 24×24 (28px border-box minus its own 2px ring),
+            so even at an IDENTICAL measured bounding box the reset control
+            read as visibly BIGGER (jdp: "der Reset-Badge ist größer als die
+            Farbfelder") — an optical-weight mismatch a bounding-box
+            measurement alone can't catch. The border closes that gap: same
+            28×28 outer box, same 24×24 inner content area as every swatch
+            beside it.
+              IconResetArrow (redesigned — see that icon's own header
+            comment for why the old thinner ring/arrowhead is gone) — the
+            established "counter-clockwise arrow = reset" convention already
+            used by Sidebar.tsx's IconRecovery/IconRestore, redrawn bolder
+            specifically for this small-badge-in-a-busy-row role.
+              ALWAYS rendered, `disabled={presetsAreDefault}` instead of
+            conditionally unmounted — see this component's own header
+            comment for the full "isn't a badge at all" root cause this
+            fixes.
               tip (not title/ariaLabel) — same convention: an icon-only
             trigger gets IconTipButton's real hover/focus bubble, not a
             silent native title balloon. Carries the exact text this button
             showed before it became icon-only (settings.accentPresetsReset,
             unchanged). Kept identical to the rainbow-palette reset badge
-            below in shape/tone/size/glyph — the established "these two
-            mirror each other" pairing, now sharing the same hue too. */}
-        {!presetsAreDefault && (
-          <Badge
-            as="button"
-            shape="square"
-            size="icon"
-            tone="active"
-            hueIndex={hueIndex}
-            onClick={() => setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS))}
-            tip={t("settings.accentPresetsReset")}
-          >
-            <IconResetSwirl />
-          </Badge>
-        )}
+            below in shape/tone/size/glyph/border — the established "these
+            two mirror each other" pairing. */}
+        <Badge
+          as="button"
+          shape="square"
+          size="icon"
+          tone="neutral"
+          className="border-2 border-carbon-border"
+          disabled={presetsAreDefault}
+          onClick={() => setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS))}
+          tip={t("settings.accentPresetsReset")}
+        >
+          <IconResetArrow />
+        </Badge>
         {/* Reset to default — the ACTIVE accent, not the presets above. */}
         {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
           <button
@@ -5240,21 +5267,43 @@ function IconTabSystem() {
   );
 }
 
-// "Reset to default" swirl — the Accent Card's preset-row reset button and the
-// Off-site tab's rainbow-palette reset button (two separate call sites, same
-// icon-only circle badge, GlimStone follow-up round: full-area icon sweep).
-// FILLED (design-language.md "Icon glyphs"): the old glyph was an open stroke
-// (an L-shaped corner + a big circular arc — a "line glyph" per rule 219).
-// Redrawn once here and shared by both call sites (rather than duplicating
-// the path twice) as a filled ring segment + a solid triangular arrowhead —
-// the exact same construction as Sidebar.tsx's own IconRecovery, just at
-// this file's smaller 16×16 icon-only-badge scale, so the app's two
-// "revert/restore" concepts read as one visual family.
-function IconResetSwirl() {
+// "Reset to default" arrow — the Accent Card's preset-row reset button and
+// the Off-site tab's rainbow-palette reset button (two separate call sites,
+// same icon-only square/circle badge). FILLED (design-language.md "Icon
+// glyphs"): a filled ring segment + a solid triangular arrowhead, not a
+// `stroke`-width line — same construction family as Sidebar.tsx's own
+// IconRecovery/IconRestore.
+//
+// REDRAWN, BOLDER (GlimStone follow-up round, jdp re-reporting after a prior
+// round's fix didn't hold up: "Der Reset-Badge soll einen besseren Glyph
+// bekommen" — the previous thinner ring, at this file's 16×16 icon-only-
+// badge scale sitting directly inside a busy row of 8 bright colour
+// swatches, read as an ambiguous "C" rather than an unambiguous reset arrow).
+// Thickened the ring from a 1.8px band (outer r=6 / inner r=4.2) to a 3.0px
+// band (outer r=6 / inner r=3.3) and enlarged the arrowhead proportionally —
+// verified live at actual 28×28 badge size, on both a dark and a light
+// neutral chip background (this glyph's own two real call sites are now
+// both `tone="neutral"`, never a bright fill), reading unambiguously as a
+// counter-clockwise "undo/reset" arrow at that size where the old thinner
+// version did not.
+//
+// DELIBERATELY DIVERGES from IconRecovery/IconRestore now (previously
+// identical path data to both — see each of THEIR OWN header comments,
+// which this round leaves untouched about EACH OTHER but corrects about
+// this icon): those two live in contexts with no adjacent competing colour
+// (a full-page nav-tab icon; a plain single badge in a list row) and keep
+// the original, slightly finer proportions that already read clearly there.
+// This icon's one specific job — reading as "reset," at 16px, positioned
+// directly beside 8 saturated colour swatches actively competing for the
+// eye — is a strictly harder legibility case that earns its own bolder
+// tuning rather than inheriting a ratio measured for an easier one. Renamed
+// from IconResetSwirl to IconResetArrow to make that split explicit: this is
+// no longer "the same glyph, reused," it is a purpose-built sibling.
+function IconResetArrow() {
   return (
     <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
-      <path d="M14 8A6 6 0 1 1 8 2L8 3.8A4.2 4.2 0 1 0 12.2 8Z" />
-      <path d="M8 1.1 4.3 3 8 4.9Z" />
+      <path d="M14 8A6 6 0 1 1 8 2L8 4.7A3.3 3.3 0 1 0 11.3 8Z" />
+      <path d="M8 1 3.5 3 8 5Z" />
     </svg>
   );
 }
@@ -8555,23 +8604,23 @@ export function SettingsPage() {
           flipping this switch never changes the rail's own colours.
             The master toggle's own hueIndex/hint fixes are documented right
           on that ToggleRow below — see its own comment for both.
-            IIFE-captured `hueIdx` (icon-badge convention follow-up round):
-          this Card's own two reset Badges (the accent-preset reset inside
-          AccentCard below, and the rainbow-palette reset further down) now
-          need a genuine hueIndex of their own — a bare inline
-          `hueIndex={nextHue()}` on the Card can't also feed those two
-          children the SAME value without burning two extra hue positions
-          nothing else would ever render, the identical reason the
-          schedulesSelfBackup Card (Card+CadenceBuilder) and every offsite
-          per-domain Card (Card+TestConnectionButton+ReplicateNowButton+
-          Einrichten-Badge) above already capture their own `hueIdx` once
-          and thread it to every hue-aware child instead of calling
-          `nextHue()` again per child. */}
+            IIFE-captured `hueIdx` feeds this Card's own heading notch plus
+          the three rainbow ToggleRows below (hueIndex 0/1/2) — the same
+          one-call-feeds-several-children shape the schedulesSelfBackup Card
+          (Card+CadenceBuilder) and every offsite per-domain Card above
+          already use, so a bare inline `hueIndex={nextHue()}` on the Card
+          alone doesn't also have to be re-derived at each child call site.
+            This Card's own two reset Badges (the accent-preset reset inside
+          AccentCard below, and the rainbow-palette reset further down) are
+          DELIBERATELY NOT among hueIdx's consumers — both are `tone="neutral"`,
+          not hue-tinted, on purpose (see each Badge's own call-site comment
+          for the full "a reset control must not blend into the very colours
+          it resets" reasoning), so neither reads `hueIdx` at all. */}
       {tab === "general" && (() => {
       const hueIdx = nextHue();
       return (
       <Card title={t("settings.colors")} hueIndex={hueIdx}>
-        <AccentCard t={t} hueIndex={hueIdx} />
+        <AccentCard t={t} />
         <div className="flex flex-col gap-3">
           {/* hueIndex 0/1/2 (jdp, live-review, extremely emphatic — "auch
               nicht die Toggles der Regenbogen-Card! ... Es soll immer alles
@@ -8694,36 +8743,58 @@ export function SettingsPage() {
                 footprint as the PaletteSwatch circles it sits beside, so it
                 reads as part of the same row of controls rather than a
                 mismatched afterthought.
-                  SQUARE now, not circle (jdp, live-review, overriding a
-                prior round's "verified pixel-identical circle, correct as
-                is" conclusion on this Badge's own AccentCard mirror: "Die
-                Zurücksetzen-Option soll ein quadratischer Badge mit Glyph
-                sein" — deliberate, not a bugfix) — `shape="square"` still
+                  SQUARE (jdp, live-review: "Die Zurücksetzen-Option soll ein
+                quadratischer Badge mit Glyph sein") — `shape="square"` still
                 resolves through `rounded-control`, the shape engine's own
-                live token, so this genuinely tracks round/soft/square.
-                  tone="active" + hueIndex={hueIdx} (icon-badge convention:
-                every icon-only badge conversion/touch gets real
-                colour-engine integration) — the SAME hueIdx this Card's own
-                heading notch and AccentCard's mirror reset badge both carry,
-                so all three read as one coherent hue, not three independent
-                positions.
+                live token, so this genuinely tracks round/soft/square (under
+                "Rund" it renders as a full circle, same as every other
+                square badge in the app).
+                  NEUTRAL now, not hue-tinted (jdp, re-reporting: "Der
+                Reset-Badge soll ... nicht farbig sein, damit er sich besser
+                von den Farbflächen abhebt" — measured live, this Badge's
+                `tone="active"` fill was rendering the literal flat accent
+                gold, `rgb(252,196,25)` — the EXACT SAME value as one of the
+                eight palette swatches sitting right beside it, making the
+                reset control indistinguishable from an actual colour choice
+                at a glance). DELIBERATE EXCEPTION to this app's standing
+                "every icon-only badge gets real colour-engine integration"
+                rule — see AccentCard's mirror reset Badge (Settings.tsx,
+                same file, a few hundred lines up) for the full "a reset
+                control sitting beside the very colours it resets must not
+                itself be one of those colours" reasoning, which applies
+                here identically. `border-2 border-carbon-border` (NEW)
+                matches PaletteSwatch's own border exactly (`h-7 w-7 ...
+                border-2 border-carbon-border` a few dozen lines up) — without
+                it this Badge's solid fill filled the full 28×28 box edge to
+                edge while each PaletteSwatch's own visible colour disc is
+                actually only 24×24 (28px border-box minus its own 2px
+                ring), which is what actually made this control read as
+                BIGGER than its neighbours (jdp: "der Reset-Badge ist größer
+                als die Farbfelder") despite an IDENTICAL measured 28×28
+                bounding box — a real optical-weight defect a bounding-box
+                check alone never catches, now closed by giving this Badge
+                the exact same border every swatch beside it already has.
+                  IconResetArrow (redesigned — see that icon's own header
+                comment) — the established counter-clockwise "reset" arrow
+                convention, redrawn bolder for legibility at this small
+                badge-in-a-busy-row size.
                   tip (not title/ariaLabel) — IconTipButton's real hover/
                 focus bubble, carrying the exact common.reset text this badge
                 showed as a plain button before Task 5 rule 13 converted it.
-                Kept shape/tone/size/glyph/hue identical to the AccentCard
+                Kept shape/tone/size/glyph/border identical to the AccentCard
                 mirror above — the established "these two mirror each
                 other" pairing. */}
             <Badge
               as="button"
               shape="square"
               size="icon"
-              tone="active"
-              hueIndex={hueIdx}
+              tone="neutral"
+              className="border-2 border-carbon-border"
               disabled={!rainbow.on}
               onClick={() => updateRainbow({ palette: RAINBOW })}
               tip={t("common.reset")}
             >
-              <IconResetSwirl />
+              <IconResetArrow />
             </Badge>
             </div>
           </div>
