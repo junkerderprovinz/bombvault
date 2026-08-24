@@ -255,107 +255,135 @@ export function ActivityLog({
   };
 
   return (
-    // `glim-notch-card` — same rainbow-hue hover-reveal marker Settings.tsx's
-    // own Card already carries (index.css's `[data-rainbow="reactive"]
-    // .glim-notch-card:hover .glim-notch-hue` rule); this component never had
-    // it, the same gap Dashboard.tsx's own Card() component had.
-    <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
+    // GlimStone follow-up pass (live-review round 2, jdp still frustrated
+    // after 0ee1e17: "die Cardtitelbadges sind nicht richtig platziert"):
+    // that fix only covered the wrapped-badge STRADDLE (vertical) case. This
+    // card had a SEPARATE, un-touched bug — measured live via
+    // getBoundingClientRect: every OTHER Dashboard card's notch sits flush
+    // with its card's own left edge (badge left === card left), but THIS
+    // card's notch sat 20px to the right of it, exactly this div's own `p-5`
+    // (20px). Cause: `relative` and `p-5` lived on the SAME div (below,
+    // pre-fix), unlike Card()/SummaryCell() in Dashboard.tsx, which put
+    // `relative` on a separate, purely structural OUTER div with NO padding
+    // of its own — see Card()'s own comment for why. Badge.tsx deliberately
+    // sets no explicit left/right offset on the notch (see its own header):
+    // it falls back to its CSS "static position", which is the offset it
+    // would have had in normal flow — i.e. wherever its `<h2>` parent's own
+    // padding puts it. On the split outer/inner cards that's 0 (the outer
+    // wrapper has zero padding); on this card, pre-fix, the `<h2>` was a
+    // flow child of the SAME p-5 box the badge measures against, so the
+    // static position landed 20px in, not flush. This does NOT explain
+    // Settings.tsx/Containers.tsx/VMs.tsx's own Card() helpers, which use the
+    // identical merged single-div shape — but those pages are each
+    // internally consistent (EVERY card on that page indents the same way),
+    // so there is no within-page mismatch to see; here, on Dashboard, half
+    // the cards were flush and one was indented, sitting in the same visual
+    // column — the exact "badges positioned relative to the WRONG element"
+    // class of defect, confirmed live, not a re-run of the wrapping bug.
+    // `glim-notch-card` moves to the new outer div for the same reason Card()
+    // documents: it's the box whose top/left edges ARE the card's own visual
+    // edges, which is what the reactive-mode hover rule (index.css's
+    // `[data-rainbow="reactive"] .glim-notch-card:hover .glim-notch-hue`)
+    // needs to key off — this component never carried the marker before
+    // either (the same gap Dashboard.tsx's own Card() component once had).
+    <div className="relative glim-notch-card">
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{t("activityLog.title")}</Badge>
       </h2>
+      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-3">
+        {/* Filter bar — narrows the ONE list below; never a second zone. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            placeholder={t("activityLog.filterPlaceholder")}
+            aria-label={t("activityLog.filterPlaceholder")}
+            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted bv-field-focus"
+          />
+          <select
+            value={filterDomain}
+            onChange={(e) => setFilterDomain(e.target.value as LogFilterDomain)}
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
+          >
+            <option value="all">{t("activityLog.filterAllDomains")}</option>
+            <option value="containers">{t("activityLog.domainContainers")}</option>
+            <option value="vms">{t("activityLog.domainVMs")}</option>
+            <option value="flash">{t("activityLog.domainFlash")}</option>
+            <option value="config">{t("activityLog.domainConfig")}</option>
+            <option value="files">{t("activityLog.domainFiles")}</option>
+          </select>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as LogFilterKind)}
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
+          >
+            <option value="all">{t("activityLog.filterAllTypes")}</option>
+            <option value="backup">{t("activityLog.typeBackup")}</option>
+            <option value="restore">{t("activityLog.typeRestore")}</option>
+            <option value="prune">{t("activityLog.typePrune")}</option>
+            <option value="verify">{t("activityLog.typeVerify")}</option>
+            <option value="offsite">{t("activityLog.typeOffsite")}</option>
+            {/* Persisted kinds since the everything-in-the-log wave. Drill/tamper
+                reuse the existing job-label keys; the off-site DR check ("drdrill")
+                is its own kind and reuses Run History's kind label. */}
+            <option value="drill">{t("activityLog.jobDrill")}</option>
+            <option value="drdrill">{t("run.kindDRDrill")}</option>
+            <option value="tamper">{t("activityLog.jobTamper")}</option>
+            <option value="export">{t("activityLog.typeExport")}</option>
+          </select>
+          {/* Heatmap day-filter chip — a filled pill (accent, no border, same
+              language as the heatmap's active domain toggle) showing which day
+              the Dashboard heatmap narrowed the log to; its × hands the clear
+              back to the owner. The ISO day is parsed as LOCAL midnight so the
+              label always names the same calendar day the cell was. */}
+          {dayFilter && (
+            <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
+              {resolveName("activityLog.dayFilterChip", {
+                date: new Date(dayFilter + "T00:00:00").toLocaleDateString(),
+              })}
+              <button
+                type="button"
+                onClick={onClearDayFilter}
+                aria-label={t("activityLog.clearDayFilter")}
+                title={t("activityLog.clearDayFilter")}
+                className="cursor-pointer rounded-control px-1 leading-none hover:bg-black/10"
+              >
+                ×
+              </button>
+            </span>
+          )}
+        </div>
 
-      {/* Filter bar — narrows the ONE list below; never a second zone. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="text"
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          placeholder={t("activityLog.filterPlaceholder")}
-          aria-label={t("activityLog.filterPlaceholder")}
-          className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted bv-field-focus"
-        />
-        <select
-          value={filterDomain}
-          onChange={(e) => setFilterDomain(e.target.value as LogFilterDomain)}
-          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
-        >
-          <option value="all">{t("activityLog.filterAllDomains")}</option>
-          <option value="containers">{t("activityLog.domainContainers")}</option>
-          <option value="vms">{t("activityLog.domainVMs")}</option>
-          <option value="flash">{t("activityLog.domainFlash")}</option>
-          <option value="config">{t("activityLog.domainConfig")}</option>
-          <option value="files">{t("activityLog.domainFiles")}</option>
-        </select>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value as LogFilterKind)}
-          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
-        >
-          <option value="all">{t("activityLog.filterAllTypes")}</option>
-          <option value="backup">{t("activityLog.typeBackup")}</option>
-          <option value="restore">{t("activityLog.typeRestore")}</option>
-          <option value="prune">{t("activityLog.typePrune")}</option>
-          <option value="verify">{t("activityLog.typeVerify")}</option>
-          <option value="offsite">{t("activityLog.typeOffsite")}</option>
-          {/* Persisted kinds since the everything-in-the-log wave. Drill/tamper
-              reuse the existing job-label keys; the off-site DR check ("drdrill")
-              is its own kind and reuses Run History's kind label. */}
-          <option value="drill">{t("activityLog.jobDrill")}</option>
-          <option value="drdrill">{t("run.kindDRDrill")}</option>
-          <option value="tamper">{t("activityLog.jobTamper")}</option>
-          <option value="export">{t("activityLog.typeExport")}</option>
-        </select>
-        {/* Heatmap day-filter chip — a filled pill (accent, no border, same
-            language as the heatmap's active domain toggle) showing which day
-            the Dashboard heatmap narrowed the log to; its × hands the clear
-            back to the owner. The ISO day is parsed as LOCAL midnight so the
-            label always names the same calendar day the cell was. */}
-        {dayFilter && (
-          <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
-            {resolveName("activityLog.dayFilterChip", {
-              date: new Date(dayFilter + "T00:00:00").toLocaleDateString(),
-            })}
+        {/* The log itself — a single scrollable, monospace, newest-at-bottom list. */}
+        <div className="relative">
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
+          >
+            {filteredLines.map((l) => (
+              <div key={l.id} className="flex items-start gap-2">
+                <span className="text-carbon-textMuted shrink-0 tabular-nums">
+                  {formatLogDate(l.atMs)} {formatClockTime(l.atMs / 1000, true)}
+                </span>
+                <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
+                  {glyphFor(l.status)}
+                </span>
+                <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
+              </div>
+            ))}
+          </div>
+          {!autoFollow && (
             <button
               type="button"
-              onClick={onClearDayFilter}
-              aria-label={t("activityLog.clearDayFilter")}
-              title={t("activityLog.clearDayFilter")}
-              className="cursor-pointer rounded-control px-1 leading-none hover:bg-black/10"
+              onClick={jumpToLatest}
+              className="absolute bottom-3 end-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
             >
-              ×
+              ↓ {t("activityLog.jumpToLatest")}
             </button>
-          </span>
-        )}
-      </div>
-
-      {/* The log itself — a single scrollable, monospace, newest-at-bottom list. */}
-      <div className="relative">
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
-        >
-          {filteredLines.map((l) => (
-            <div key={l.id} className="flex items-start gap-2">
-              <span className="text-carbon-textMuted shrink-0 tabular-nums">
-                {formatLogDate(l.atMs)} {formatClockTime(l.atMs / 1000, true)}
-              </span>
-              <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
-                {glyphFor(l.status)}
-              </span>
-              <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
-            </div>
-          ))}
+          )}
         </div>
-        {!autoFollow && (
-          <button
-            type="button"
-            onClick={jumpToLatest}
-            className="absolute bottom-3 end-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
-          >
-            ↓ {t("activityLog.jumpToLatest")}
-          </button>
-        )}
       </div>
     </div>
   );
