@@ -731,8 +731,11 @@ function SnapshotRow({
             rainbow position — the exact same already-verified mechanism
             FoldersEditor's own Save/Add badges use (see Containers.tsx).
             IconRestore reuses the app's existing circular-sweep "restore"
-            glyph family (Sidebar.tsx's own IconRecovery/IconResetSwirl —
-            see that icon's own doc comment). `size="large"` (24px) matches
+            glyph family (Sidebar.tsx's own IconRecovery — see that icon's
+            own doc comment; Settings.tsx's separate reset glyph,
+            IconResetArrow, deliberately diverged from this family for its
+            own harder small-badge-beside-colour-swatches legibility case).
+            `size="large"` (24px) matches
             this button's own pre-existing `py-1` footprint — measured live,
             same as Config.tsx's own delete-badge conversion below used for
             its sibling. The old "highlighted while open" `bg-carbon-surface3`

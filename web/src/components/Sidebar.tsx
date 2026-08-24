@@ -295,9 +295,14 @@ function IconSettings() {
 // solid filled triangular arrowhead capping the top end and pointing back
 // along the sweep — same "mostly a circle, gap + arrowhead at one end"
 // reading as the old stroke version, just filled. Same construction reused
-// at the smaller 16×16 icon-only-badge scale for Settings.tsx's own
-// "reset to default" swirl (IconResetSwirl) — this app's other "revert"
-// concept — so the two read as the same visual family.
+// at the smaller 16×16 icon-only-badge scale for this file's own IconRestore
+// below — the two read as the same visual family.
+//   NOT shared any more with Settings.tsx's "reset to default" glyph
+// (IconResetArrow, formerly IconResetSwirl): that one deliberately diverged
+// to a bolder ring/arrowhead ratio for its own harder legibility case (16px,
+// beside 8 competing colour swatches) — see IconResetArrow's own header
+// comment in Settings.tsx. This icon and IconRestore below are unaffected
+// and keep their original, already-correct-for-their-own-context proportions.
 function IconRecovery() {
   return (
     <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
@@ -532,13 +537,18 @@ export function IconSave() {
 
 // Circular "restore" arrow, at this file's own 16×16 icon-only-badge scale —
 // the SAME filled-ring-segment + arrowhead construction as this file's own
-// IconRecovery above (the Recovery nav-tab, 22×22) and Settings.tsx's private
-// IconResetSwirl (its Accent/Rainbow "reset to default" buttons, 16×16) —
-// extending that already-established "revert/restore" visual family to a
-// THIRD, exported call site (RestorePanel.tsx's per-snapshot "Wiederherstellen…"
-// trigger, Containers.tsx icon-badge round) rather than inventing a fourth,
-// visually-competing "restore" glyph. Identical path data to IconResetSwirl —
-// deliberately not re-derived — so all three read as one family at a glance.
+// IconRecovery above (the Recovery nav-tab, 22×22) — extending that
+// already-established "revert/restore" visual family to a second, exported
+// call site (RestorePanel.tsx's per-snapshot "Wiederherstellen…" trigger,
+// Containers.tsx icon-badge round) rather than inventing a competing
+// "restore" glyph.
+//   NOT shared any more with Settings.tsx's "reset to default" glyph
+// (IconResetArrow, formerly IconResetSwirl, formerly identical path data to
+// this icon): that one deliberately diverged to a bolder ring/arrowhead
+// ratio for its own harder legibility case (16px, beside 8 competing colour
+// swatches) — see IconResetArrow's own header comment in Settings.tsx. This
+// icon keeps its original proportions, already correct for a plain single
+// badge with no adjacent colour to compete against.
 export function IconRestore() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
