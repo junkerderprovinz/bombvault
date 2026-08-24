@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
@@ -53,7 +52,7 @@ const GLIMSTONE_VERSION = "1.2.0";
 
 // AboutFooter shows the running BombVault version (+ the GlimStone version
 // this UI targets, both linking to BombVault's releases page) and a
-// "Report a bug" link, fixed to the actual browser window so it reads on
+// "Report a bug" link, at the bottom of the Settings page so it reads on
 // every Settings tab without being wired into each tab body individually
 // (jdp, live review: "Die Versionsnummer soll in allen Tabs ganz unten
 // stehen, auch die GlimStone-Version soll da stehen" — moved here from a
@@ -61,42 +60,38 @@ const GLIMSTONE_VERSION = "1.2.0";
 // See GlimStone's own docs/design-language.md, "The version footer", for
 // the full cross-app rationale (first built for KnightLoader).
 //
-// `fixed`, not `sticky` or in-flow: it pins to the real browser window
-// rather than to Settings' own tab-content area, so it neither scrolls away
-// nor shifts vertically as different tabs render different amounts of
-// content above it — the ONE unconditional render call below (at the
-// SettingsPage return's own top level, outside the `key={tab}` tab-panels
-// wrapper) is genuinely all that's needed for every tab; no per-tab
-// duplication, no wrapping-Fragment gymnastics.
+// A genuine sticky FOOTER now (jdp, live review, follow-up round — "Die
+// Versionsnummer soll ganz unten auf der Seite stehen, unterhalb der
+// untersten Card, oder am unteren Fensterrand wenn die Cards nicht bis
+// ganz nach unten reichen — jetzt fahren die Cards hinten durch"): a
+// PRIOR pass made this `position: fixed` (rendered through a portal onto
+// document.body — see git history) specifically to dodge the tab-slide
+// wrapper's `transform` animation, which per the CSS spec briefly turns an
+// animated ancestor into the containing block for any `fixed` descendant
+// (exactly the bug KnightLoader's own VersionFooter comment documents
+// hitting first). That fix traded one bug for another: pinned to the
+// viewport regardless of scroll position, it made every Settings tab long
+// enough to scroll (Storage, Schedules) scroll its OWN Cards visually
+// behind/through the footer instead of the footer sitting after them.
 //
-// Rendered through a portal straight onto document.body rather than in
-// place, for a real, previously-hit reason, not defensive copy-paste: the
-// tab-panels wrapper this used to live inside animates `transform` on every
-// tab switch (`.bv-tab-slide`, index.css's Settings-tab-slide keyframes) —
-// and per the CSS spec, an ancestor with an active `transform` (animated or
-// not) becomes the containing block for any `position: fixed` descendant
-// for as long as that's true, not the viewport. Simply hoisting this footer
-// to `position: fixed` and rendering it in place — even OUTSIDE every
-// `{tab === "x" && ...}` conditional, still inside that same `.bv-tab-slide`
-// ancestor during each tab-switch animation — would reproduce exactly the
-// bug KnightLoader's own VersionFooter comment documents hitting first
-// (that footer briefly sliding along with the page-transition wrapper
-// instead of staying pinned to the window) before it was ported to a
-// portal for the same reason. A portal sidesteps the whole ancestor chain
-// from the start, so this stays immune to that regardless of what other
-// animated wrapper Settings (or a future shared page shell) gains later.
-//
-// `pointer-events-none` on the fixed positioning wrapper keeps it out of
-// the way of any real control that happens to render near the bottom of the
-// window; unlike KnightLoader's own plain-text VersionFooter, this footer's
-// content is two real links (see the `as="a"` comment below), so the inner
-// row opts back INTO pointer events with `pointer-events-auto` — a bare
-// `pointer-events-none` ancestor is inherited by default and would silently
-// make both links unclickable otherwise. That inner row is also
-// deliberately NOT `aria-hidden`, unlike KnightLoader's: hiding it would
-// remove the one working keyboard/screen-reader route to "Report a bug"
-// from the accessibility tree entirely, which the plain decorative text
-// KnightLoader hides has no equivalent cost for.
+// The actual fix is the classic flexbox "sticky footer" page shell, not a
+// fixed overlay: SettingsPage's own root (below, its return's top-level
+// div) is now itself a flex column that FILLS the scrollable viewport
+// (`main` in app/Layout.tsx, whose own child chain was given `flex-1 flex
+// flex-col` for exactly this — see that file's own comments), and the one
+// `key={tab}` tab-panels wrapper between the heading and this footer is
+// `flex-1` (SettingsPage's return, that wrapper's own className) — it
+// absorbs whatever spare height is left over, pushing THIS footer, a
+// perfectly ordinary last child with no special positioning, down to the
+// bottom of that column: right after the last Card when there are enough
+// of them to fill (or exceed, and scroll) the window, or flush with the
+// window's bottom edge when there are only a few. No portal, no `fixed`,
+// no transform-containing-block edge case to dodge in the first place —
+// the tab-slide wrapper's animated `transform` only ever mattered for a
+// `position: fixed` descendant; a normal-flow sibling rendered AFTER that
+// wrapper (never inside it) was never subject to that rule to begin with,
+// confirmed live by switching tabs rapidly: the footer holds still at the
+// bottom of the window while only the tab content slides.
 function AboutFooter() {
   const { t } = useT();
   const [version, setVersion] = useState<string | null>(null);
@@ -107,15 +102,17 @@ function AboutFooter() {
       .catch(() => { /* version is best-effort; ignore */ });
     return () => { active = false; };
   }, []);
-  return createPortal(
-    <div className="pointer-events-none fixed inset-x-0 bottom-1.5 z-0 flex justify-center">
+  return (
+    <div className="flex justify-center">
       {/* Task 5 (rule 13, "everything clickable is a badge — including
           links"): both footer links are real anchors (as="a", not "button")
           — right-click "copy link", middle-click to open in a new tab, the
           browser's own status-bar URL preview — none of which a synthetic
-          onClick reproduces. `pointer-events-auto` re-enables clicks for
-          just this row; the fixed wrapper around it stays pass-through. */}
-      <div className="pointer-events-auto flex items-center gap-1.5 text-xs text-carbon-textMuted">
+          onClick reproduces. No `pointer-events-none`/`-auto` split needed
+          any more (unlike the old fixed-overlay version): a normal-flow row
+          only ever occupies its own content box, so there is nothing behind
+          it for stray pointer-events to accidentally block. */}
+      <div className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
         {version && (
           // tone="muted" (GlimStone follow-up round, jdp's live review: "Die
           // Versionsnummern sollen keinen hellen Hintergrund haben" — this was
@@ -156,8 +153,7 @@ function AboutFooter() {
           {t("nav.reportBug")}
         </Badge>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
 
@@ -6102,14 +6098,34 @@ export function SettingsPage() {
     // gap-10 (live-review round — "gap between the tab strip and the first
     // card is too small"): was gap-6 (24px), same value the tab-panels
     // wrapper further down used to use for the SAME job before its own
-    // gap-10 bump (see that wrapper's own comment). This outer wrapper now
-    // has exactly two children — the heading+tab-strip block immediately
-    // below, and the tab-panels wrapper — so bumping ITS gap to gap-10 is
-    // what actually widens the space between the tab strip and the first
-    // Card's top edge to the same 40px rhythm every Card-to-Card gap already
-    // uses, without touching the (unrelated, still gap-6) space between the
-    // heading and the tab strip itself.
-    <div className="flex flex-col gap-10">
+    // gap-10 bump (see that wrapper's own comment). This outer wrapper had
+    // exactly two children when that bump landed — the heading+tab-strip
+    // block immediately below, and the tab-panels wrapper — so bumping ITS
+    // gap to gap-10 is what actually widens the space between the tab strip
+    // and the first Card's top edge to the same 40px rhythm every
+    // Card-to-Card gap already uses, without touching the (unrelated, still
+    // gap-6) space between the heading and the tab strip itself. AboutFooter
+    // (sticky-footer round, see its own header comment) is now a third
+    // child, after the tab-panels wrapper — the same gap-10 rhythm applies
+    // there too, for free, with no extra spacing utility needed on the
+    // footer itself.
+    //
+    // `flex-1` (sticky-footer round): makes this whole page root grow to
+    // fill the scrollable viewport's available height (app/Layout.tsx's
+    // `main` → its `bv-page-enter` child, both given a matching `flex-1 flex
+    // flex-col` for exactly this — see that file's own comments) instead of
+    // shrink-wrapping to its own content height. On its own this would just
+    // make the ROOT taller with blank space at the bottom (flex columns
+    // don't redistribute leftover space to children unless a child asks for
+    // it) — the tab-panels wrapper further down carries the matching
+    // `flex-1` that actually consumes that space, which is what pushes
+    // AboutFooter down to this column's bottom edge. Content taller than the
+    // available height still simply grows this element (and `main`'s
+    // scrollHeight with it) past that floor, which is what lets `main`
+    // scroll normally instead of clipping anything — see the tab-panels
+    // wrapper's own comment for why `flex-1` produces exactly that
+    // fill-or-grow behaviour with no separate min-height override needed.
+    <div className="flex flex-col gap-10 flex-1">
       {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
           follow-up pass, live-review round — the width-mismatch fix below
           needed a wrapper here to isolate this pair's own 24px gap from the
@@ -6337,10 +6353,25 @@ export function SettingsPage() {
           changed `tab` (the Selector's onChange below, or the hashchange
           effect above) in the SAME synchronous handler that called setTab —
           see either call site's own comment for the exact "old index vs new
-          index" math. */}
+          index" math.
+            `flex-1` (sticky-footer round, jdp live review — see AboutFooter's
+          own header comment for the full before/after): this is the ONE
+          child of the page root (above) that should absorb whatever extra
+          height that root has beyond its own natural content size — the
+          heading+tab-strip block above it is a fixed-content block that
+          should never stretch, and AboutFooter below it is the thing being
+          pushed down, not the thing doing the pushing. flex-basis 0 + grow 1
+          (Tailwind's `flex-1`) means this wrapper fills the ROOT's leftover
+          vertical space when its own Cards don't need all of it (short tabs
+          like General), while its automatic minimum height still floors at
+          whatever its own content actually needs — so on a long tab
+          (Storage, Schedules) it simply renders at full content height
+          exactly as before, growing `main` past the viewport and letting it
+          scroll normally, with AboutFooter still following right after it
+          rather than sitting fixed over top of it. */}
       <div
         key={tab}
-        className="flex flex-col gap-10 bv-tab-slide"
+        className="flex flex-col gap-10 bv-tab-slide flex-1"
         style={{ maxWidth: tabStripWidth ?? undefined, "--tab-dir": tabDir } as CSSProperties}
       >
 
@@ -8457,10 +8488,12 @@ export function SettingsPage() {
           — outside the `key={tab}` tab-panels wrapper above (so it doesn't
           remount, and re-fetch the version, on every tab switch) and outside
           every `{tab === "x" && ...}` conditional (so it's not tied to any
-          one tab at all). It portals itself onto document.body and pins to
-          the actual browser window, not this position in the tree — see
-          AboutFooter's own header comment for why that's a portal and not
-          just `position: fixed` rendered in place. */}
+          one tab at all). A perfectly ordinary last child of the page root
+          now, in normal document flow — no portal, no `position: fixed` —
+          the tab-panels wrapper's own `flex-1` (its comment above) is what
+          pushes it down to the bottom of the column; see AboutFooter's own
+          header comment for the full sticky-footer mechanism and why that
+          replaces the earlier fixed+portal version. */}
       <AboutFooter />
     </div>
   );

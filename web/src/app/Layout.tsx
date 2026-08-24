@@ -141,10 +141,29 @@ export function Layout() {
   return (
     <div className="flex h-screen overflow-hidden bg-carbon-background">
       <Sidebar settings={settings} />
-      <main className="flex-1 overflow-y-auto p-6 min-w-0">
-        {/* Keyed on the route so the content re-mounts and plays a short
-            fade-in-up on every navigation (Item 7c). */}
-        <div key={location.pathname} className="bv-page-enter">
+      {/* `flex flex-col` added here (sticky-footer page-shell fix, jdp live
+          review — "die Versionsnummer soll unterhalb der untersten Card
+          stehen, nicht die Cards durchfahren lassen"): `main` is the actual
+          scrollable viewport (overflow-y-auto, sized to exactly 100vh minus
+          its own p-6 padding via the h-screen row's flex-stretch above) — a
+          page that wants its own footer to sit flush with the BOTTOM of this
+          box when its content is short, while still scrolling normally
+          underneath it when content is tall, needs `main`'s direct child to
+          become a flex item it can measure/fill against. Harmless for every
+          OTHER route: a page that doesn't opt into filling that height (see
+          `bv-page-enter` below) just renders at its own natural height with
+          invisible blank flex space below it — no visible change. */}
+      <main className="flex-1 flex flex-col overflow-y-auto p-6 min-w-0">
+        {/* `flex-1 flex flex-col` added (same fix as above): makes this
+            per-route wrapper fill `main`'s available height (a definite size,
+            since it's now a flex item of a sized flex column) AND pass a flex
+            column context down to whichever page Outlet renders — Settings.tsx
+            is the one page that currently uses this to push its own
+            AboutFooter to the bottom of the column instead of leaving it
+            fixed to the viewport (see AboutFooter's own header comment for
+            the full before/after). Every other page ignores the extra
+            height exactly as described above. */}
+        <div key={location.pathname} className="bv-page-enter flex-1 flex flex-col">
           <Outlet />
         </div>
       </main>
