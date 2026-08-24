@@ -94,6 +94,7 @@ const et: Partial<Translations> = {
   "containers.deleteBackups": "Kustuta kõik varundused",
   "containers.deleteBackupsConfirm": "Kas kustutada selle konteineri KÕIK varundused? Hetktõmmised eemaldatakse hoidlast jäädavalt ja neid ei saa taastada.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Jaotised",
   "containers.filterAll": "Kõik",
   "containers.filterInstalled": "Paigaldatud",
   "containers.selectAll": "Vali kõik",

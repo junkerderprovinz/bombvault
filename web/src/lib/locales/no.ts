@@ -89,6 +89,7 @@ const no: Partial<Translations> = {
   "containers.deleteBackups": "Slett alle sikkerhetskopier",
   "containers.deleteBackupsConfirm": "Slette ALLE sikkerhetskopier av denne kontaineren? Snapshotene fjernes permanent fra repositoriet og kan ikke angres.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Seksjoner",
   "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installert",
   "containers.selectAll": "Velg alle",

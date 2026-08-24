@@ -89,6 +89,7 @@ const pl: Partial<Translations> = {
   "containers.deleteBackups": "Usuń wszystkie kopie zapasowe",
   "containers.deleteBackupsConfirm": "Usunąć WSZYSTKIE kopie zapasowe tego kontenera? Migawki zostaną trwale usunięte z repozytorium i nie można tego cofnąć.",
   "containers.filter": "Filtr:",
+  "containers.sectionsLabel": "Sekcje",
   "containers.filterAll": "Wszystkie",
   "containers.filterInstalled": "Zainstalowane",
   "containers.selectAll": "Zaznacz wszystkie",

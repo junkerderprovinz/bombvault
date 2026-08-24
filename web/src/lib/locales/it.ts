@@ -90,6 +90,7 @@ const it: Partial<Translations> = {
   "containers.deleteBackups": "Elimina tutti i backup",
   "containers.deleteBackupsConfirm": "Eliminare TUTTI i backup di questo container? Gli snapshot verranno rimossi definitivamente dal repository e l'operazione non è reversibile.",
   "containers.filter": "Filtro:",
+  "containers.sectionsLabel": "Sezioni",
   "containers.filterAll": "Tutti",
   "containers.filterInstalled": "Installati",
   "containers.selectAll": "Seleziona tutto",

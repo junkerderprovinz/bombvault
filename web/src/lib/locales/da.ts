@@ -90,6 +90,7 @@ const da: Partial<Translations> = {
   "containers.deleteBackups": "Slet alle sikkerhedskopier",
   "containers.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af denne container? Øjebliksbillederne fjernes permanent fra arkivet og kan ikke fortrydes.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Afsnit",
   "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installerede",
   "containers.selectAll": "Vælg alle",

@@ -90,6 +90,7 @@ const ar: Partial<Translations> = {
   "containers.deleteBackups": "حذف جميع النسخ الاحتياطية",
   "containers.deleteBackupsConfirm": "حذف جميع النسخ الاحتياطية لهذا الـ container؟ ستُزال اللقطات نهائياً من المستودع ولا يمكن التراجع عن ذلك.",
   "containers.filter": "تصفية:",
+  "containers.sectionsLabel": "أقسام",
   "containers.filterAll": "الكل",
   "containers.filterInstalled": "المثبّتة",
   "containers.selectAll": "تحديد الكل",

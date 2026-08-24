@@ -94,6 +94,7 @@ const id: Partial<Translations> = {
   "containers.deleteBackups": "Hapus semua cadangan",
   "containers.deleteBackupsConfirm": "Hapus SEMUA cadangan container ini? Snapshot dihapus secara permanen dari repositori dan tidak dapat dipulihkan.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Bagian",
   "containers.filterAll": "Semua",
   "containers.filterInstalled": "Terpasang",
   "containers.selectAll": "Pilih semua",

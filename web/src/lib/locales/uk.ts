@@ -90,6 +90,7 @@ const uk: Partial<Translations> = {
   "containers.deleteBackups": "Видалити всі резервні копії",
   "containers.deleteBackupsConfirm": "Видалити ВСІ резервні копії цього контейнера? Знімки будуть безповоротно видалені з репозиторію.",
   "containers.filter": "Фільтр:",
+  "containers.sectionsLabel": "Розділи",
   "containers.filterAll": "Всі",
   "containers.filterInstalled": "Встановлені",
   "containers.selectAll": "Вибрати всі",

@@ -94,6 +94,7 @@ const ms: Partial<Translations> = {
   "containers.deleteBackups": "Padam semua sandaran",
   "containers.deleteBackupsConfirm": "Padam SEMUA sandaran bekas ini? Snapshot dipadamkan secara kekal daripada repositori dan tidak boleh dipulihkan.",
   "containers.filter": "Penapis:",
+  "containers.sectionsLabel": "Bahagian",
   "containers.filterAll": "Semua",
   "containers.filterInstalled": "Dipasang",
   "containers.selectAll": "Pilih semua",

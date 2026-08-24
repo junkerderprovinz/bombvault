@@ -94,6 +94,7 @@ const gl: Partial<Translations> = {
   "containers.deleteBackups": "Eliminar todas as copias",
   "containers.deleteBackupsConfirm": "Eliminar TODAS as copias deste contedor? As instantáneas elimínanse do repositorio para sempre e non se poden recuperar.",
   "containers.filter": "Filtro:",
+  "containers.sectionsLabel": "Seccións",
   "containers.filterAll": "Todos",
   "containers.filterInstalled": "Instalados",
   "containers.selectAll": "Seleccionar todos",

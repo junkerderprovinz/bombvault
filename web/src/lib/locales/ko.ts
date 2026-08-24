@@ -90,6 +90,7 @@ const ko: Partial<Translations> = {
   "containers.deleteBackups": "모든 백업 삭제",
   "containers.deleteBackupsConfirm": "이 컨테이너의 모든 백업을 삭제하시겠습니까? 스냅샷이 리포지토리에서 영구적으로 제거되며 되돌릴 수 없습니다.",
   "containers.filter": "필터:",
+  "containers.sectionsLabel": "섹션",
   "containers.filterAll": "전체",
   "containers.filterInstalled": "설치됨",
   "containers.selectAll": "모두 선택",

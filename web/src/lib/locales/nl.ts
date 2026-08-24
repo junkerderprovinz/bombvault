@@ -89,6 +89,7 @@ const nl: Partial<Translations> = {
   "containers.deleteBackups": "Alle back-ups verwijderen",
   "containers.deleteBackupsConfirm": "ALLE back-ups van deze container verwijderen? De snapshots worden permanent uit de repository verwijderd en kunnen niet ongedaan worden gemaakt.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Secties",
   "containers.filterAll": "Alle",
   "containers.filterInstalled": "Geïnstalleerd",
   "containers.selectAll": "Alles selecteren",

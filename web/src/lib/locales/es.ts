@@ -90,6 +90,7 @@ const es: Partial<Translations> = {
   "containers.deleteBackups": "Eliminar todas las copias",
   "containers.deleteBackupsConfirm": "¿Eliminar TODAS las copias de este contenedor? Las instantáneas se eliminan permanentemente del repositorio y no se puede deshacer.",
   "containers.filter": "Filtro:",
+  "containers.sectionsLabel": "Secciones",
   "containers.filterAll": "Todos",
   "containers.filterInstalled": "Instalados",
   "containers.selectAll": "Seleccionar todo",

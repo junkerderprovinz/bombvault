@@ -90,6 +90,7 @@ const th: Partial<Translations> = {
   "containers.deleteBackups": "ลบการสำรองข้อมูลทั้งหมด",
   "containers.deleteBackupsConfirm": "ลบการสำรองข้อมูลทั้งหมดของ container นี้? สแนปช็อตจะถูกลบออกจากรีพอสิทอรีอย่างถาวรและไม่สามารถยกเลิกได้",
   "containers.filter": "กรอง:",
+  "containers.sectionsLabel": "ส่วนต่าง ๆ",
   "containers.filterAll": "ทั้งหมด",
   "containers.filterInstalled": "ที่ติดตั้งแล้ว",
   "containers.selectAll": "เลือกทั้งหมด",

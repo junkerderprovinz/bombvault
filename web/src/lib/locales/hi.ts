@@ -94,6 +94,7 @@ const hi: Partial<Translations> = {
   "containers.deleteBackups": "सभी बैकअप हटाएँ",
   "containers.deleteBackupsConfirm": "इस कंटेनर के सभी बैकअप हटाएँ? स्नैपशॉट रिपॉज़िटरी से स्थायी रूप से हटा दिए जाते हैं और इन्हें वापस नहीं लाया जा सकता।",
   "containers.filter": "फ़िल्टर:",
+  "containers.sectionsLabel": "अनुभाग",
   "containers.filterAll": "सभी",
   "containers.filterInstalled": "इंस्टॉल किए गए",
   "containers.selectAll": "सभी चुनें",

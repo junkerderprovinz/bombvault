@@ -94,6 +94,7 @@ const sr: Partial<Translations> = {
   "containers.deleteBackups": "Избриши све резервне копије",
   "containers.deleteBackupsConfirm": "Избришем СВЕ резервне копије овог контејнера? Снимци се трајно уклањају из репозиторијума и то се не може поништити.",
   "containers.filter": "Филтер:",
+  "containers.sectionsLabel": "Одељци",
   "containers.filterAll": "Сви",
   "containers.filterInstalled": "Инсталирани",
   "containers.selectAll": "Изабери све",

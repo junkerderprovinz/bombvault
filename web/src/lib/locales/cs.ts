@@ -90,6 +90,7 @@ const cs: Partial<Translations> = {
   "containers.deleteBackups": "Smazat všechny zálohy",
   "containers.deleteBackupsConfirm": "Smazat VŠECHNY zálohy tohoto kontejneru? Snímky budou trvale odstraněny z repozitáře a tuto akci nelze vrátit zpět.",
   "containers.filter": "Filtr:",
+  "containers.sectionsLabel": "Sekce",
   "containers.filterAll": "Vše",
   "containers.filterInstalled": "Nainstalované",
   "containers.selectAll": "Vybrat vše",

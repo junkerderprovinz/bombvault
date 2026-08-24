@@ -90,6 +90,7 @@ const vi: Partial<Translations> = {
   "containers.deleteBackups": "Xóa tất cả bản sao lưu",
   "containers.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu của container này? Các snapshot sẽ bị xóa vĩnh viễn khỏi kho và không thể hoàn tác.",
   "containers.filter": "Lọc:",
+  "containers.sectionsLabel": "Các phần",
   "containers.filterAll": "Tất cả",
   "containers.filterInstalled": "Đã cài đặt",
   "containers.selectAll": "Chọn tất cả",

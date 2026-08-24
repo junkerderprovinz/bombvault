@@ -25,7 +25,7 @@ import { useDragReorder } from "../lib/useDragReorder";
 import { useConfirm } from "../lib/useConfirm";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
-import { Selector } from "../components/Selector";
+import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
@@ -389,18 +389,23 @@ function ExportButton({ name, t }: { name: string; t: T }) {
 }
 
 // HooksEditor edits the per-container pre/post-backup commands (collapsible).
+// `open` is now controlled by the caller (Containers.tsx's ContainerRow, via
+// its own shared five-chip Selector strip — see that call site's own comment)
+// rather than an internal useState: this component no longer renders its own
+// trigger button, only the content pane, shown or hidden by the prop.
 function HooksEditor({
   name,
   initialPre,
   initialPost,
+  open,
   t,
 }: {
   name: string;
   initialPre: string;
   initialPost: string;
+  open: boolean;
   t: T;
 }) {
-  const [open, setOpen] = useState(false);
   const [pre, setPre] = useState(initialPre);
   const [post, setPost] = useState(initialPost);
   const [state, setState] = useState<"idle" | "saving">("idle");
@@ -432,41 +437,29 @@ function HooksEditor({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
+  if (!open) return null;
+
   return (
-    <div className="mt-1">
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {t("hooks.title")}
-        {(initialPre || initialPost) && <span className="text-statusOk">●</span>}
-      </button>
-      {open && (
-        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-          <p className="text-xs text-carbon-textMuted">{t("hooks.hint")}</p>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
-            <input value={pre} onChange={(e) => setPre(e.target.value)} spellCheck={false}
-              placeholder="mysqldump -uroot -p$PW db > /config/dump.sql" className={inputCls} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
-            <input value={post} onChange={(e) => setPost(e.target.value)} spellCheck={false}
-              placeholder="curl -fsS https://hooks.example/done" className={inputCls} />
-          </label>
-          <div className="flex items-center gap-3 pt-0.5">
-            <button key={shake} onClick={() => void save()} disabled={state === "saving"}
-              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                shake ? " glim-shake" : ""
-              }`}>
-              {state === "saving" ? "…" : t("settings.save")}
-            </button>
-          </div>
-        </div>
-      )}
+    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+      <p className="text-xs text-carbon-textMuted">{t("hooks.hint")}</p>
+      <label className="flex flex-col gap-1">
+        <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
+        <input value={pre} onChange={(e) => setPre(e.target.value)} spellCheck={false}
+          placeholder="mysqldump -uroot -p$PW db > /config/dump.sql" className={inputCls} />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
+        <input value={post} onChange={(e) => setPost(e.target.value)} spellCheck={false}
+          placeholder="curl -fsS https://hooks.example/done" className={inputCls} />
+      </label>
+      <div className="flex items-center gap-3 pt-0.5">
+        <button key={shake} onClick={() => void save()} disabled={state === "saving"}
+          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}>
+          {state === "saving" ? "…" : t("settings.save")}
+        </button>
+      </div>
     </div>
   );
 }
@@ -550,8 +543,10 @@ function UpdateAfterBackupRow({
   );
 }
 
-function FoldersEditor({ name, t }: { name: string; t: T }) {
-  const [open, setOpen] = useState(false);
+// `open` is controlled by the caller (ContainerRow's shared five-chip
+// Selector strip) — see HooksEditor's own comment for the full "why" this and
+// its three siblings dropped their own internal useState.
+function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T }) {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounts, setMounts] = useState<MountInfo[]>([]);
@@ -630,111 +625,100 @@ function FoldersEditor({ name, t }: { name: string; t: T }) {
     }
   }
 
+  if (!open) return null;
+
   return (
-    <div className="mt-1">
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {t("folders.title")}
-      </button>
-      {open && (
-        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-          <p className="text-xs text-carbon-textMuted">{t("folders.hint")}</p>
-          {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
-          {!loading && mounts.length === 0 && custom.length === 0 && (
-            <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
-          )}
-          {mounts.map((m) => (
-            <label
-              key={m.source}
-              className={`flex items-start gap-2 text-xs ${m.reachable ? "text-carbon-text" : "text-carbon-textMuted"}`}
-            >
-              <input
-                type="checkbox"
-                disabled={!m.reachable}
-                checked={m.reachable && checked.has(m.source)}
-                onChange={() => toggle(m.source)}
-                className="mt-0.5 accent-(--accent)"
-              />
-              <span className="flex flex-col">
-                <span dir="ltr" className="font-mono break-all text-start">{m.dest} ← {m.source}</span>
-                {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
-                {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
-              </span>
-            </label>
-          ))}
-          {custom.map((cp) => (
-            <div key={cp.path} className="flex items-start gap-2 text-xs text-carbon-text">
-              <input type="checkbox" checked readOnly className="mt-0.5 accent-(--accent)" />
-              <span className="flex flex-col flex-1 min-w-0">
-                <span dir="ltr" className="font-mono break-all text-start">{cp.path}</span>
-                {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
-              </span>
-              <button
-                onClick={() => setCustom((c) => c.filter((x) => x.path !== cp.path))}
-                className="text-carbon-textMuted hover:text-statusFail px-1"
-                aria-label="remove"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-          <div className="flex items-end gap-2 pt-1">
-            <div className="flex-1 min-w-0">
-              <FolderBrowser
-                label={t("folders.addCustom")}
-                value={browseValue}
-                hostMountRoot={hostMountRoot}
-                onChange={setBrowseValue}
-              />
-            </div>
-            {/* Colour-engine integration (Task 3, jdp live-review: "Die
-                ganzen Buttons in den Aufklappbereichen ... sind nicht in die
-                Farbengine und den Regenbogenmodus integriert"): this was the
-                one plain `bg-carbon-surface2` grey button in this panel next
-                to a `bg-accent` "Ordner speichern" sibling doing the exact
-                same weight of job (a primary action inside this disclosure).
-                No hueIndex needed to fix it — this panel already lives
-                inside ContainerRow's own `.glim-hue` element (see that
-                component's own comment), so `bg-accent` alone already
-                resolves to the row's own rainbow position via the ordinary
-                CSS custom-property cascade, verified live via
-                getComputedStyle against the real deployed container: the
-                sibling Save button already measured the row's exact hue
-                before this fix, this button now matches it byte-for-byte. */}
-            <button
-              onClick={addCustom}
-              className="rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
-            >
-              {t("folders.add")}
-            </button>
-          </div>
-          <div className="flex items-center gap-3 pt-0.5">
-            <button
-              key={shake}
-              onClick={() => void save()}
-              disabled={state === "saving" || loading}
-              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                shake ? " glim-shake" : ""
-              }`}
-            >
-              {state === "saving" ? "…" : t("folders.save")}
-            </button>
-          </div>
-        </div>
+    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+      <p className="text-xs text-carbon-textMuted">{t("folders.hint")}</p>
+      {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
+      {!loading && mounts.length === 0 && custom.length === 0 && (
+        <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
       )}
+      {mounts.map((m) => (
+        <label
+          key={m.source}
+          className={`flex items-start gap-2 text-xs ${m.reachable ? "text-carbon-text" : "text-carbon-textMuted"}`}
+        >
+          <input
+            type="checkbox"
+            disabled={!m.reachable}
+            checked={m.reachable && checked.has(m.source)}
+            onChange={() => toggle(m.source)}
+            className="mt-0.5 accent-(--accent)"
+          />
+          <span className="flex flex-col">
+            <span dir="ltr" className="font-mono break-all text-start">{m.dest} ← {m.source}</span>
+            {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
+            {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
+          </span>
+        </label>
+      ))}
+      {custom.map((cp) => (
+        <div key={cp.path} className="flex items-start gap-2 text-xs text-carbon-text">
+          <input type="checkbox" checked readOnly className="mt-0.5 accent-(--accent)" />
+          <span className="flex flex-col flex-1 min-w-0">
+            <span dir="ltr" className="font-mono break-all text-start">{cp.path}</span>
+            {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
+          </span>
+          <button
+            onClick={() => setCustom((c) => c.filter((x) => x.path !== cp.path))}
+            className="text-carbon-textMuted hover:text-statusFail px-1"
+            aria-label="remove"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+      <div className="flex items-end gap-2 pt-1">
+        <div className="flex-1 min-w-0">
+          <FolderBrowser
+            label={t("folders.addCustom")}
+            value={browseValue}
+            hostMountRoot={hostMountRoot}
+            onChange={setBrowseValue}
+          />
+        </div>
+        {/* Colour-engine integration (Task 3, jdp live-review: "Die
+            ganzen Buttons in den Aufklappbereichen ... sind nicht in die
+            Farbengine und den Regenbogenmodus integriert"): this was the
+            one plain `bg-carbon-surface2` grey button in this panel next
+            to a `bg-accent` "Ordner speichern" sibling doing the exact
+            same weight of job (a primary action inside this disclosure).
+            No hueIndex needed to fix it — this panel already lives
+            inside ContainerRow's own `.glim-hue` element (see that
+            component's own comment), so `bg-accent` alone already
+            resolves to the row's own rainbow position via the ordinary
+            CSS custom-property cascade, verified live via
+            getComputedStyle against the real deployed container: the
+            sibling Save button already measured the row's exact hue
+            before this fix, this button now matches it byte-for-byte. */}
+        <button
+          onClick={addCustom}
+          className="rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+        >
+          {t("folders.add")}
+        </button>
+      </div>
+      <div className="flex items-center gap-3 pt-0.5">
+        <button
+          key={shake}
+          onClick={() => void save()}
+          disabled={state === "saving" || loading}
+          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
+        >
+          {state === "saving" ? "…" : t("folders.save")}
+        </button>
+      </div>
     </div>
   );
 }
 
 // StopContainersEditor edits the list of OTHER containers to stop during this
-// container's backup (e.g. a database), one name per line. Collapsible.
-function StopContainersEditor({ name, initial, t }: { name: string; initial: string[]; t: T }) {
-  const [open, setOpen] = useState(false);
+// container's backup (e.g. a database), one name per line. Collapsible; `open`
+// is controlled by the caller — see HooksEditor's own comment.
+function StopContainersEditor({ name, initial, open, t }: { name: string; initial: string[]; open: boolean; t: T }) {
   const [text, setText] = useState(initial.join("\n"));
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
@@ -767,44 +751,32 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
+  if (!open) return null;
+
   return (
-    <div className="mt-1">
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {t("stophook.title")}
-        {initial.length > 0 && <span className="text-statusOk">●</span>}
-      </button>
-      {open && (
-        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-          <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            spellCheck={false}
-            rows={3}
-            placeholder={"mariadb\nredis"}
-            dir="ltr"
-            className={`${inputCls} text-start`}
-          />
-          <div className="flex items-center gap-3 pt-0.5">
-            <button
-              key={shake}
-              onClick={() => void save()}
-              disabled={state === "saving"}
-              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                shake ? " glim-shake" : ""
-              }`}
-            >
-              {state === "saving" ? "…" : t("settings.save")}
-            </button>
-          </div>
-        </div>
-      )}
+    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+      <p className="text-xs text-carbon-textMuted">{t("stophook.hint")}</p>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        spellCheck={false}
+        rows={3}
+        placeholder={"mariadb\nredis"}
+        dir="ltr"
+        className={`${inputCls} text-start`}
+      />
+      <div className="flex items-center gap-3 pt-0.5">
+        <button
+          key={shake}
+          onClick={() => void save()}
+          disabled={state === "saving"}
+          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shake ? " glim-shake" : ""
+          }`}
+        >
+          {state === "saving" ? "…" : t("settings.save")}
+        </button>
+      </div>
     </div>
   );
 }
@@ -816,8 +788,8 @@ function StopContainersEditor({ name, initial, t }: { name: string; initial: str
 // would exclude nothing is warned. Clones StopContainersEditor + a preview pane.
 type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean };
 
-function ExcludesEditor({ name, initial, t }: { name: string; initial: string[]; t: T }) {
-  const [open, setOpen] = useState(false);
+// `open` is controlled by the caller — see HooksEditor's own comment.
+function ExcludesEditor({ name, initial, open, t }: { name: string; initial: string[]; open: boolean; t: T }) {
   const [text, setText] = useState(initial.join("\n"));
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
@@ -953,184 +925,172 @@ function ExcludesEditor({ name, initial, t }: { name: string; initial: string[];
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
 
-  return (
-    <div className="mt-1">
-      <button
-        onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {t("excludes.title")}
-        {initial.length > 0 && <span className="text-statusOk">●</span>}
-      </button>
-      {open && (
-        <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
-          <p className="text-xs text-carbon-textMuted">
-            {withLtrFragments(t("excludes.hint"), EXCLUDES_HINT_LTR_FRAGMENTS)}
-          </p>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            spellCheck={false}
-            rows={3}
-            placeholder={t("excludes.placeholder")}
-            dir="ltr"
-            className={`${inputCls} text-start`}
-          />
-          {preview.length > 0 && (
-            <div className="flex flex-col gap-1">
-              {preview.map((row, i) => {
-                // Show a plain, reassuring confirmation — NOT the raw internal
-                // restic path (BombVault's rebased host-mount view, e.g.
-                // /host/user/user/appdata/…), which looked like an invalid path
-                // and confused users (#38). The exact pattern is still available
-                // on hover (title) for the curious.
-                const good = row.matches;
-                const msg = good
-                  ? row.status === "basename"
-                    ? t("excludes.matchesAnywhere")
-                    : t("excludes.willExclude")
-                  : row.status === "passthrough"
-                    ? t("excludes.noMatch")
-                    : t("excludes.excludesNothing");
-                return (
-                  <div
-                    key={i}
-                    className="text-xs wrap-break-word leading-snug flex items-baseline gap-1.5"
-                    title={row.status === "translated" ? row.resolved : undefined}
-                  >
-                    <span dir="ltr" className="font-mono text-carbon-textSub text-start">{row.raw}</span>
-                    <span className={good ? "text-statusOk" : "text-statusFail"}>
-                      {good ? "✓" : "⚠"} {msg}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <div className="flex items-center gap-3 pt-0.5">
-            <button
-              key={shakeSave}
-              onClick={() => void save()}
-              disabled={state === "saving"}
-              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                shakeSave ? " glim-shake" : ""
-              }`}
-            >
-              {state === "saving" ? "…" : t("excludes.save")}
-            </button>
-          </div>
+  if (!open) return null;
 
-          {/* Exclusion assistant */}
-          <div className="mt-1 flex flex-col gap-2">
-            <button
-              onClick={toggleAssistant}
-              className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
-                <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-              </svg>
-              {t("excludes.assistTitle")}
-            </button>
-            {assistOpen && (
-              <div className="flex flex-col gap-2">
-                <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
-                <div className="flex items-center gap-3">
-                  {/* Colour-engine integration (Task 3, same fix/reasoning as
-                      FoldersEditor's "Hinzufügen" button above): was the one
-                      plain grey `bg-carbon-surface2` button in this
-                      assistant sub-panel, next to its own "Ausschließen"
-                      suggestion-accept button below which was ALREADY
-                      `bg-accent` — matches that sibling now, same
-                      already-correct .glim-hue-cascade mechanism. */}
-                  <button
-                    key={shakeScan}
-                    onClick={() => void scan()}
-                    disabled={scanning}
-                    className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)${
-                      shakeScan ? " glim-shake" : ""
-                    }`}
+  return (
+    <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+      <p className="text-xs text-carbon-textMuted">
+        {withLtrFragments(t("excludes.hint"), EXCLUDES_HINT_LTR_FRAGMENTS)}
+      </p>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        spellCheck={false}
+        rows={3}
+        placeholder={t("excludes.placeholder")}
+        dir="ltr"
+        className={`${inputCls} text-start`}
+      />
+      {preview.length > 0 && (
+        <div className="flex flex-col gap-1">
+          {preview.map((row, i) => {
+            // Show a plain, reassuring confirmation — NOT the raw internal
+            // restic path (BombVault's rebased host-mount view, e.g.
+            // /host/user/user/appdata/…), which looked like an invalid path
+            // and confused users (#38). The exact pattern is still available
+            // on hover (title) for the curious.
+            const good = row.matches;
+            const msg = good
+              ? row.status === "basename"
+                ? t("excludes.matchesAnywhere")
+                : t("excludes.willExclude")
+              : row.status === "passthrough"
+                ? t("excludes.noMatch")
+                : t("excludes.excludesNothing");
+            return (
+              <div
+                key={i}
+                className="text-xs wrap-break-word leading-snug flex items-baseline gap-1.5"
+                title={row.status === "translated" ? row.resolved : undefined}
+              >
+                <span dir="ltr" className="font-mono text-carbon-textSub text-start">{row.raw}</span>
+                <span className={good ? "text-statusOk" : "text-statusFail"}>
+                  {good ? "✓" : "⚠"} {msg}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div className="flex items-center gap-3 pt-0.5">
+        <button
+          key={shakeSave}
+          onClick={() => void save()}
+          disabled={state === "saving"}
+          className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+            shakeSave ? " glim-shake" : ""
+          }`}
+        >
+          {state === "saving" ? "…" : t("excludes.save")}
+        </button>
+      </div>
+
+      {/* Exclusion assistant */}
+      <div className="mt-1 flex flex-col gap-2">
+        <button
+          onClick={toggleAssistant}
+          className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
+            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+          </svg>
+          {t("excludes.assistTitle")}
+        </button>
+        {assistOpen && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
+            <div className="flex items-center gap-3">
+              {/* Colour-engine integration (Task 3, same fix/reasoning as
+                  FoldersEditor's "Hinzufügen" button above): was the one
+                  plain grey `bg-carbon-surface2` button in this
+                  assistant sub-panel, next to its own "Ausschließen"
+                  suggestion-accept button below which was ALREADY
+                  `bg-accent` — matches that sibling now, same
+                  already-correct .glim-hue-cascade mechanism. */}
+              <button
+                key={shakeScan}
+                onClick={() => void scan()}
+                disabled={scanning}
+                className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)${
+                  shakeScan ? " glim-shake" : ""
+                }`}
+              >
+                {scanning
+                  ? t("excludes.assistScanning")
+                  : suggestions === null
+                    ? t("excludes.assistScan")
+                    : t("excludes.assistRescan")}
+              </button>
+              {truncated && !scanning && (
+                <span className="text-xs text-statusWarn">{t("excludes.assistTruncated")}</span>
+              )}
+            </div>
+            {!scanning && suggestions !== null && !scanFailed && openSuggestions.length === 0 && (
+              <p className="text-xs text-carbon-textMuted">{t("excludes.assistNothingFound")}</p>
+            )}
+            {!scanning && openSuggestions.length > 0 && (
+              <div className="flex flex-col gap-1">
+                {openSuggestions.map((sg) => (
+                  <div
+                    key={sg.line}
+                    title={sg.line}
+                    className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5"
                   >
-                    {scanning
-                      ? t("excludes.assistScanning")
-                      : suggestions === null
-                        ? t("excludes.assistScan")
-                        : t("excludes.assistRescan")}
-                  </button>
-                  {truncated && !scanning && (
-                    <span className="text-xs text-statusWarn">{t("excludes.assistTruncated")}</span>
-                  )}
-                </div>
-                {!scanning && suggestions !== null && !scanFailed && openSuggestions.length === 0 && (
-                  <p className="text-xs text-carbon-textMuted">{t("excludes.assistNothingFound")}</p>
-                )}
-                {!scanning && openSuggestions.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    {openSuggestions.map((sg) => (
-                      <div
-                        key={sg.line}
-                        title={sg.line}
-                        className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5"
-                      >
-                        <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text text-start">{sg.path}</span>
-                        <span
-                          // Task 7: "cache" was bg-statusInfoBg/text-statusInfo (the
-                          // old fifth hue). This is a categorisation label — "this
-                          // looks like a cache dir" — not activity and not a
-                          // pass/fail/warn outcome, so it folds into --status-neutral-*
-                          // (already documented in index.css as "skipped/neutral
-                          // chip", the same broad "not a real state" bucket this
-                          // chip belongs in, sitting next to its "large" sibling
-                          // which keeps its own real warn meaning unchanged).
-                          className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
-                            sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusNeutralBg text-statusNeutral"
-                          }`}
-                        >
-                          {sg.reason === "large" ? t("excludes.assistReasonLarge") : t("excludes.assistReasonCache")}
-                        </span>
-                        <span className="text-xs text-carbon-textSub whitespace-nowrap">{humanBytes(sg.sizeBytes)}</span>
-                        <button
-                          onClick={() => void addExclude(sg.line)}
-                          disabled={state === "saving"}
-                          className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
-                        >
-                          {t("excludes.assistExclude")}
-                        </button>
-                      </div>
-                    ))}
+                    <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text text-start">{sg.path}</span>
+                    <span
+                      // Task 7: "cache" was bg-statusInfoBg/text-statusInfo (the
+                      // old fifth hue). This is a categorisation label — "this
+                      // looks like a cache dir" — not activity and not a
+                      // pass/fail/warn outcome, so it folds into --status-neutral-*
+                      // (already documented in index.css as "skipped/neutral
+                      // chip", the same broad "not a real state" bucket this
+                      // chip belongs in, sitting next to its "large" sibling
+                      // which keeps its own real warn meaning unchanged).
+                      className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${
+                        sg.reason === "large" ? "bg-statusWarnBgStrong text-statusWarn" : "bg-statusNeutralBg text-statusNeutral"
+                      }`}
+                    >
+                      {sg.reason === "large" ? t("excludes.assistReasonLarge") : t("excludes.assistReasonCache")}
+                    </span>
+                    <span className="text-xs text-carbon-textSub whitespace-nowrap">{humanBytes(sg.sizeBytes)}</span>
+                    <button
+                      onClick={() => void addExclude(sg.line)}
+                      disabled={state === "saving"}
+                      className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+                    >
+                      {t("excludes.assistExclude")}
+                    </button>
                   </div>
-                )}
-                <p className="text-xs text-carbon-textSub">{t("excludes.assistCurrent")}</p>
-                {currentLines.length === 0 ? (
-                  <p className="text-xs text-carbon-textMuted">{t("excludes.assistNoneYet")}</p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentLines.map((line) => (
-                      <span
-                        key={line}
-                        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
-                      >
-                        {line}
-                        <button
-                          onClick={() => void removeExclude(line)}
-                          disabled={state === "saving"}
-                          aria-label={t("excludes.assistRemoveLine").replace("{line}", line)}
-                          title={t("excludes.assistRemove")}
-                          className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-carbon-textSub">{t("excludes.assistCurrent")}</p>
+            {currentLines.length === 0 ? (
+              <p className="text-xs text-carbon-textMuted">{t("excludes.assistNoneYet")}</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {currentLines.map((line) => (
+                  <span
+                    key={line}
+                    className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
+                  >
+                    {line}
+                    <button
+                      onClick={() => void removeExclude(line)}
+                      disabled={state === "saving"}
+                      aria-label={t("excludes.assistRemoveLine").replace("{line}", line)}
+                      title={t("excludes.assistRemove")}
+                      className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -1176,6 +1136,59 @@ function ContainerRow({
   // "Something is running" across any domain — used to busy-guard this row's
   // own backup button (its OWN in-flight backup is handled by isPending inside).
   const running = anyActive(progressMap);
+  const { advanced } = useAdvanced();
+
+  // GlimStone follow-up round (jdp, live-review, screenshot of this exact
+  // row's five stacked disclosure triggers: "Können wir hier Buttons machen
+  // die alle in einer Zeile stehen?") — ONE state bag for all five sections
+  // (Gesicherte Ordner/Andere Container stoppen/Ausschlussmuster/Backup-
+  // Hooks/Backups), replacing the five separate internal `useState` booleans
+  // each editor used to own. Confirmed against the PRE-existing code before
+  // touching any of it: every one of the five toggled independently already
+  // (five separate `useState(false)`s, none of them ever closing a sibling),
+  // so this is a `Set`, not a single active id — the shared row below uses
+  // Selector's `select="many"` mode for exactly that shape (the SAME
+  // independent-toggle-chips pattern CadenceBuilder's own weekday multi-
+  // select already established on this codebase, not a tablist/accordion).
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  function toggleSection(id: string) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // "Has data configured" indicator — the same three facts
+  // StopContainersEditor/ExcludesEditor/HooksEditor used to check internally
+  // to decide whether to render their own green dot next to their own label.
+  // Computed once here instead, since the dot now lives on the SHARED chip
+  // (see `sectionItems` below), not on each editor's own now-removed trigger.
+  const stopHasData = (container.stopContainers ?? []).length > 0;
+  const excludesHasData = (container.excludes ?? []).length > 0;
+  const hooksHasData = !!(container.preHook || container.postHook);
+  const configuredDot = (
+    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-statusOk shrink-0" />
+  );
+
+  // Folders/Stop/Excludes/Hooks are advanced+installed-only, mirroring the
+  // exact `advanced && installed` gate `<Advanced when={installed}>` always
+  // enforced for them (see the render below) — so their chips simply don't
+  // exist otherwise, rather than existing disabled. Backups is unconditional.
+  const sectionItems: SelectorItem[] = [];
+  if (advanced && installed) {
+    sectionItems.push(
+      { id: "folders", label: t("folders.title") },
+      { id: "stop", label: t("stophook.title"), icon: stopHasData ? configuredDot : undefined },
+      { id: "excludes", label: t("excludes.title"), icon: excludesHasData ? configuredDot : undefined },
+      { id: "hooks", label: t("hooks.title"), icon: hooksHasData ? configuredDot : undefined }
+    );
+  }
+  sectionItems.push({ id: "backups", label: t("snapshots.title") });
+
+  const lastBackupText = `${t("containers.lastBackup")}: ${container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}`;
+
   return (
     <div
       style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
@@ -1231,9 +1244,10 @@ function ContainerRow({
             in der Ecke sein wo jetzt Letztes Backup steht") — the row's
             top-right corner, the exact spot "Letztes Backup" used to occupy.
             That text moved OUT of this slot into the disclosure row below
-            instead (see RestorePanel's own `lastBackupText`, and its call
-            site's comment a few lines down) — showing the same fact in both
-            places would just duplicate it. BombVault's own container has no
+            instead (`lastBackupText`, computed above and rendered next to
+            the shared section-trigger row — see that row's own comment) —
+            showing the same fact in both places would just duplicate it.
+            BombVault's own container has no
             backup action at all (backing it up would stop itself), so this
             slot is empty for it — same self-gating the pre-existing
             `selfNote` text already had at its old position in the Actions
@@ -1291,35 +1305,83 @@ function ContainerRow({
         )}
       </div>
 
-      {/* Backup-folder selection + stop-other-containers + pre/post hooks
-          (installed only). These expert editors are advanced-only. */}
-      <Advanced when={installed}>
-        <FoldersEditor name={container.name} t={t} />
-        <StopContainersEditor name={container.name} initial={container.stopContainers ?? []} t={t} />
-        <ExcludesEditor name={container.name} initial={container.excludes ?? []} t={t} />
-        <HooksEditor
-          name={container.name}
-          initialPre={container.preHook}
-          initialPost={container.postHook}
-          t={t}
-        />
-      </Advanced>
+      {/* Disclosure-section trigger row (GlimStone follow-up round, jdp
+          live-review, screenshot of the five stacked full-width triggers
+          below: "Können wir hier Buttons machen die alle in einer Zeile
+          stehen?") — Gesicherte Ordner/Andere Container stoppen/
+          Ausschlussmuster/Backup-Hooks are advanced+installed-only (the same
+          `advanced && installed` gate `<Advanced when={installed}>` always
+          enforced); Backups is always offered (works even when not
+          installed, same as before). One shared `Selector` in `select="many"`
+          mode — the established "several independent toggle chips in one
+          row" pattern (CadenceBuilder's own weekday multi-select is the
+          precedent), NOT a tablist/accordion: `openSections` is a `Set`
+          precisely because these stay independently openable, never
+          mutually exclusive. Each chip's own rainbow position comes from
+          Selector's own default per-item hueing (list index 0..4), the same
+          mechanism every other Selector row on this page already uses — nesting
+          it inside this already-hued ContainerRow doesn't fight that; it's the
+          same "a row of several items gets its own hue sequence" rule
+          CadenceBuilder's weekday pills already apply inside their own
+          (also-hued) Settings card.
+          The small green dot HooksEditor/StopContainersEditor/ExcludesEditor
+          used to render next to their own label ("has data configured")
+          survives as the chip's own leading `icon` slot — a plain
+          `bg-statusOk` dot, not an `<svg>`, so Selector's `.glim-hue-icon`
+          rule (which only ever touches an `<svg>` descendant — checked
+          against index.css) never tints it; it stays the same fixed status
+          colour regardless of the chip's own hue or open/closed state.
+          `lastBackupText` (used to share the "Backups" trigger's own line,
+          Task 3's "eine Zeile, nicht zwei") is rendered next to the row
+          instead — always-visible summary data, not part of the expandable
+          content, wrapping onto its own line at narrow widths via the same
+          `flex-wrap` this row already needs for the chips themselves. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Selector
+            items={sectionItems}
+            label={t("containers.sectionsLabel")}
+            select="many"
+            active={openSections}
+            onChange={toggleSection}
+          />
+          <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">
+            {lastBackupText}
+          </span>
+        </div>
 
-      {/* Backups / Restore disclosure (works even when not installed).
-          Task 3 (jdp live-review: "Letztes Backup soll in der Zeile wo man
-          die Backups ausklappen kann ganz rechts stehen, es soll nur eine
-          Zeile sein, nicht zwei"): the old top-right corner rendered the
-          label and the date as two separate stacked lines by construction
-          (two sibling <p>s); merged into one string here, RestorePanel's own
-          disclosure row renders it flush right on the SAME line as the
-          chevron+"Backups" toggle (see that component's own `lastBackupText`
-          prop) instead of stacking a second line under it. */}
-      <RestorePanel
-        name={container.name}
-        t={t}
-        installed={installed}
-        lastBackupText={`${t("containers.lastBackup")}: ${container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}`}
-      />
+        {/* Content panes, in a fixed, predictable order regardless of which
+            chip was clicked last — each editor now takes `open` as a PROP
+            (from the shared `openSections` above) instead of owning its own
+            internal useState; see each editor's own comment. Still gated by
+            the same `<Advanced when={installed}>` the trigger row's own
+            `sectionItems` construction mirrors, so these stay entirely
+            unmounted (no wasted fetches/effects) whenever their chip
+            couldn't have been clicked in the first place. */}
+        <Advanced when={installed}>
+          <FoldersEditor name={container.name} open={openSections.has("folders")} t={t} />
+          <StopContainersEditor
+            name={container.name}
+            initial={container.stopContainers ?? []}
+            open={openSections.has("stop")}
+            t={t}
+          />
+          <ExcludesEditor
+            name={container.name}
+            initial={container.excludes ?? []}
+            open={openSections.has("excludes")}
+            t={t}
+          />
+          <HooksEditor
+            name={container.name}
+            initialPre={container.preHook}
+            initialPost={container.postHook}
+            open={openSections.has("hooks")}
+            t={t}
+          />
+        </Advanced>
+        <RestorePanel name={container.name} t={t} installed={installed} open={openSections.has("backups")} />
+      </div>
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (

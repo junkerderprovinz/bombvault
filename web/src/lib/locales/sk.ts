@@ -94,6 +94,7 @@ const sk: Partial<Translations> = {
   "containers.deleteBackups": "Odstrániť všetky zálohy",
   "containers.deleteBackupsConfirm": "Odstrániť VŠETKY zálohy tohto kontajnera? Snímky sa natrvalo odstránia z repozitára a nebude ich možné obnoviť.",
   "containers.filter": "Filter:",
+  "containers.sectionsLabel": "Sekcie",
   "containers.filterAll": "Všetky",
   "containers.filterInstalled": "Nainštalované",
   "containers.selectAll": "Vybrať všetky",

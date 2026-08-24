@@ -94,6 +94,7 @@ const ca: Partial<Translations> = {
   "containers.deleteBackups": "Elimina totes les còpies",
   "containers.deleteBackupsConfirm": "Vols eliminar TOTES les còpies d'aquest contenidor? Els instantanis s'eliminen permanentment del repositori i no es poden recuperar.",
   "containers.filter": "Filtre:",
+  "containers.sectionsLabel": "Seccions",
   "containers.filterAll": "Tots",
   "containers.filterInstalled": "Instal·lats",
   "containers.selectAll": "Selecciona tot",
