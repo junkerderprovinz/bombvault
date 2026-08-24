@@ -3402,7 +3402,27 @@ function NotifyCard({
           ]}
           label={t("notify.on")}
           select="one"
-          active={cfg.on}
+          // `cfg.on || "never"`, NOT bare `cfg.on` (caught live while
+          // verifying the `variant="track"` change above, on the running
+          // test container — a stored config predating this field's
+          // introduction round-trips as the empty string, not "never").
+          // The backend's own Config.shouldSend (internal/notify/notify.go)
+          // already documents "" as functionally identical to "never" (its
+          // switch's `default:` case is literally commented "// 'never' or
+          // unset") — this was purely a DISPLAY gap: the Selector had no
+          // segment to light up for that legacy empty value, so all three
+          // read as unselected even though the backend was correctly
+          // behaving as "never" the whole time. Now that idle "track"
+          // segments are visibly filled at rest (this round's own change),
+          // "nothing selected" reads far more like a broken control than it
+          // did under the old faint plain-chip idle fill, so this is worth
+          // fixing alongside rather than shipping the more visible
+          // regression. Display-only: does not touch the stored `cfg.on`
+          // value or `persistNotify`'s own merge — a genuine explicit
+          // "never" click still round-trips as the literal string "never",
+          // this only supplies a fallback for RENDERING an already-legacy
+          // empty value, never for anything this session itself writes.
+          active={cfg.on || "never"}
           onChange={(id) => setImmediate("on", id)}
           variant="track"
           className={fieldShake.on ? "glim-shake" : undefined}
