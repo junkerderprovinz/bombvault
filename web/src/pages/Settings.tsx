@@ -6558,16 +6558,16 @@ export function SettingsPage() {
             );
           })()}
 
-          {/* Restore-check drills (RestoreChecksSection renders its own Card). */}
-          <RestoreChecksSection
-            settings={settings}
-            update={scheduleUpdate}
-            busy={schedFieldBusy}
-            shake={schedFieldShake}
-            pulse={fieldPulse}
-            t={t}
-            hueIndex={nextHue()}
-          />
+          {/* Restore-check drills (RestoreChecksSection) moved to the Integrity
+              tab (jdp, live-review: "Gehört die 'Automatische Restore-
+              Prüfungen' Card nicht in den Integritäts-Tab?") — it configures
+              WHAT gets verified and how often, which fits that tab's existing
+              verify/unlock/prune/drill actions better than this tab's own
+              "when do backup jobs run" focus. See the `tab === "integrity"`
+              block below for its new call site; removing it here also frees
+              up one `nextHue()` notch, automatically renumbering every Card
+              still below on this tab (see that counter's own doc comment for
+              why no manual re-numbering is needed). */}
 
           {/* Missed schedules: anacron-style catch-up after start. Backend runs
               the missed domain job ~2 minutes after boot (see internal/schedule
@@ -6639,42 +6639,11 @@ export function SettingsPage() {
             )}
           </Card>
 
-          {/* Restore-check schedule (schedulesChecks): the scheduled off-site
-              append-only tamper test. Previously had no UI editor at all.
-                `hueIdx` captured once in this IIFE and reused for both the
-              Card's own heading notch and the CadenceBuilder's TimePicker
-              inside it (Task 3, jdp: "Der Zeitpicker ist nicht im
-              Regenbogenmodus") — a bare inline `<Card hueIndex={nextHue()}>`
-              here has no local variable to also hand the CadenceBuilder
-              below, and calling `nextHue()` a second time would consume a
-              SECOND, different position for one visually-grouped Card
-              (exactly the trap SaveBar's own header comment already warns
-              about for the identical "one Card, two hue-aware children"
-              shape). The IIFE is the smallest change that captures the
-              single call's result without lifting this ad-hoc Card block
-              into its own named component purely to receive a prop. */}
-          {(() => {
-            const hueIdx = nextHue();
-            return (
-              <Card title={t("settings.schedulesChecks")} hueIndex={hueIdx}>
-                <div className="rounded-card bg-carbon-surface2 p-4">
-                  <CadenceBuilder
-                    label={t("settings.tamperTestSchedule")}
-                    value={settings.tamperTestSchedule}
-                    onChange={(v) => scheduleField("tamperTestSchedule", v)}
-                    hueIndex={hueIdx}
-                  />
-                  {/* #109: the scheduler stays inert without a qualifying domain — this
-                      is the only place that told manilx why Sun 08:00 never ran. */}
-                  {!tamperScheduleActive && (
-                    <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-                      {t("settings.tamperScheduleInactive")}
-                    </div>
-                  )}
-                </div>
-              </Card>
-            );
-          })()}
+          {/* Restore-check schedule (schedulesChecks) moved to the Integrity
+              tab alongside RestoreChecksSection above (jdp, live-review —
+              same "belongs with WHAT/how-often gets verified, not WHEN
+              backup jobs run" reasoning). See the `tab === "integrity"`
+              block below for its new call site. */}
         </>
       )}
 
@@ -7950,15 +7919,73 @@ export function SettingsPage() {
       {/* flow, alongside the un-gated off-site + retention cards above.       */}
       {/* ------------------------------------------------------------------ */}
       {tab === "integrity" && (
-      // No hueIndex: this is the ONLY Card the Integrity tab ever renders
-      // (unlike every other tab, nothing here is conditional) — a genuine
-      // singleton per design-language's own exclusion ("the only one of its
-      // kind on the page keeps the single accent"), not an oversight. A
-      // stray nextHue() call was caught live (Playwright against the real
-      // container: this heading rendered rainbow position 0 instead of the
-      // flat accent) — removed rather than "fixed" by consuming a slot, so
-      // no other tab's numbering shifts either.
-      <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} />
+      <>
+        {/* IntegrityCard used to be documented here as the ONLY Card this tab
+            ever rendered — a genuine singleton per design-language's own
+            exclusion ("the only one of its kind on the page keeps the single
+            accent"), so it deliberately took no `hueIndex` at all. That
+            exemption no longer applies (jdp, live-review — "Gehört die
+            'Automatische Restore-Prüfungen' Card nicht in den
+            Integritäts-Tab?"): RestoreChecksSection and the schedulesChecks
+            Card below moved here from the Schedules tab, both configuring
+            WHAT gets verified and how often — a natural fit next to this
+            Card's own verify/unlock/prune/drill actions. With three Cards
+            now genuinely on this tab, IntegrityCard gets a real `nextHue()`
+            call like everything else, first in visual order since it's the
+            tab's primary/pre-existing content. */}
+        <IntegrityCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={nextHue()} />
+
+        {/* Restore-check drills (RestoreChecksSection renders its own Card) —
+            moved from the Schedules tab (see that tab's own comment at its
+            old call site). */}
+        <RestoreChecksSection
+          settings={settings}
+          update={scheduleUpdate}
+          busy={schedFieldBusy}
+          shake={schedFieldShake}
+          pulse={fieldPulse}
+          t={t}
+          hueIndex={nextHue()}
+        />
+
+        {/* Restore-check schedule (schedulesChecks): the scheduled off-site
+            append-only tamper test — moved from the Schedules tab (see that
+            tab's own comment at its old call site).
+              `hueIdx` captured once in this IIFE and reused for both the
+            Card's own heading notch and the CadenceBuilder's TimePicker
+            inside it (Task 3, jdp: "Der Zeitpicker ist nicht im
+            Regenbogenmodus") — a bare inline `<Card hueIndex={nextHue()}>`
+            here has no local variable to also hand the CadenceBuilder below,
+            and calling `nextHue()` a second time would consume a SECOND,
+            different position for one visually-grouped Card (exactly the
+            trap SaveBar's own header comment already warns about for the
+            identical "one Card, two hue-aware children" shape). The IIFE is
+            the smallest change that captures the single call's result
+            without lifting this ad-hoc Card block into its own named
+            component purely to receive a prop. */}
+        {(() => {
+          const hueIdx = nextHue();
+          return (
+            <Card title={t("settings.schedulesChecks")} hueIndex={hueIdx}>
+              <div className="rounded-card bg-carbon-surface2 p-4">
+                <CadenceBuilder
+                  label={t("settings.tamperTestSchedule")}
+                  value={settings.tamperTestSchedule}
+                  onChange={(v) => scheduleField("tamperTestSchedule", v)}
+                  hueIndex={hueIdx}
+                />
+                {/* #109: the scheduler stays inert without a qualifying domain — this
+                    is the only place that told manilx why Sun 08:00 never ran. */}
+                {!tamperScheduleActive && (
+                  <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+                    {t("settings.tamperScheduleInactive")}
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })()}
+      </>
       )}
 
       {/* ------------------------------------------------------------------ */}
