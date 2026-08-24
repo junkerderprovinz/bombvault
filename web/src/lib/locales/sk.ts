@@ -252,6 +252,8 @@ const sk: Partial<Translations> = {
   "source.label": "Zdroj:",
   "source.local": "Lokálny",
   "source.offsite": "Externý",
+  "source.localTip": "Lokálny repozitár na tomto hostiteľovi",
+  "source.offsiteTip": "Externá kópia",
   "source.offsiteTarget": "Externý cieľ",
   "source.hint": "Obnovenie a odstránenie pôsobia iba na vybraný zdroj — odstránenie lokálnej zálohy sa nikdy nedotkne externej kópie a naopak.",
   "offsite.copyDomainTitle": "Externá kópia {domain}",

@@ -163,6 +163,8 @@ const ru: Partial<Translations> = {
   "source.label": "Источник:",
   "source.local": "Локально",
   "source.offsite": "Внешнее",
+  "source.localTip": "Локальный репозиторий на этом хосте",
+  "source.offsiteTip": "Внешняя копия",
   "source.offsiteTarget": "Внешнее назначение",
   "source.hint": "Восстановление и удаление действуют только на выбранный источник — удаление локального бэкапа никогда не затрагивает внешнюю копию, и наоборот.",
   "offsite.schedulePlaceholder": "пусто = после каждого бэкапа · напр. weekly Sun 03:00",

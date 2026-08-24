@@ -166,6 +166,8 @@ const es: Partial<Translations> = {
   "source.label": "Origen:",
   "source.local": "Local",
   "source.offsite": "Externo",
+  "source.localTip": "Repositorio local en este host",
+  "source.offsiteTip": "Copia externa",
   "source.offsiteTarget": "Destino externo",
   "source.hint": "Restaurar y eliminar solo afectan a la fuente seleccionada — eliminar una copia local nunca toca la copia externa, y viceversa.",
   "offsite.schedulePlaceholder": "vacío = tras cada copia · p. ej. weekly Sun 03:00",

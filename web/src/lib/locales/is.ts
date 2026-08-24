@@ -252,6 +252,8 @@ const is: Partial<Translations> = {
   "source.label": "Uppruni:",
   "source.local": "Staðbundið",
   "source.offsite": "Fjarlægt",
+  "source.localTip": "Staðbundið geymslusafn á þessum hýsli",
+  "source.offsiteTip": "Fjarlægt afrit",
   "source.offsiteTarget": "Fjarlægur áfangastaður",
   "source.hint": "Endurheimt og eyðing hafa aðeins áhrif á valinn uppruna — að eyða staðbundnu afriti snertir aldrei fjarlæga afritið, og öfugt.",
   "offsite.copyDomainTitle": "Fjarlægt afrit {domain}",

@@ -165,6 +165,8 @@ const ro: Partial<Translations> = {
   "source.label": "Sursă:",
   "source.local": "Local",
   "source.offsite": "Extern",
+  "source.localTip": "Repozitoriu local pe această gazdă",
+  "source.offsiteTip": "Copie externă",
   "source.offsiteTarget": "Destinație externă",
   "source.hint": "Restaurarea și ștergerea acționează doar asupra sursei selectate — ștergerea unui backup local nu atinge niciodată copia externă și invers.",
   "offsite.schedulePlaceholder": "gol = după fiecare backup · ex. weekly Sun 03:00",

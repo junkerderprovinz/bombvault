@@ -252,6 +252,8 @@ const bg: Partial<Translations> = {
   "source.label": "Източник:",
   "source.local": "Локално",
   "source.offsite": "Извън обекта",
+  "source.localTip": "Локално хранилище на този хост",
+  "source.offsiteTip": "Копие извън обекта",
   "source.offsiteTarget": "Цел извън обекта",
   "source.hint": "Възстановяването и изтриването действат само на избрания източник — изтриването на локално архивиране никога не засяга копието извън обекта и обратно.",
   "offsite.copyDomainTitle": "Копие извън обекта {domain}",

@@ -252,6 +252,8 @@ const id: Partial<Translations> = {
   "source.label": "Sumber:",
   "source.local": "Lokal",
   "source.offsite": "Off-site",
+  "source.localTip": "Repositori lokal di host ini",
+  "source.offsiteTip": "Salinan off-site",
   "source.offsiteTarget": "Target off-site",
   "source.hint": "Pemulihan dan penghapusan hanya bertindak pada sumber yang dipilih — menghapus cadangan lokal tidak pernah menyentuh salinan off-site, dan sebaliknya.",
   "offsite.copyDomainTitle": "Salinan off-site {domain}",

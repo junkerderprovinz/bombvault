@@ -252,6 +252,8 @@ const ca: Partial<Translations> = {
   "source.label": "Origen:",
   "source.local": "Local",
   "source.offsite": "Extern",
+  "source.localTip": "Repositori local en aquest amfitrió",
+  "source.offsiteTip": "Còpia externa",
   "source.offsiteTarget": "Destí extern",
   "source.hint": "Restaurar i eliminar només afecten l'origen seleccionat — eliminar una còpia local mai toca la còpia externa, i viceversa.",
   "offsite.copyDomainTitle": "Còpia externa {domain}",

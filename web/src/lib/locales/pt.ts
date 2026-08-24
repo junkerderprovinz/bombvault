@@ -165,6 +165,8 @@ const pt: Partial<Translations> = {
   "source.label": "Origem:",
   "source.local": "Local",
   "source.offsite": "Externo",
+  "source.localTip": "Repositório local neste host",
+  "source.offsiteTip": "Cópia externa",
   "source.offsiteTarget": "Destino externo",
   "source.hint": "Restaurar e excluir agem apenas na origem selecionada — excluir um backup local nunca toca na cópia externa, e vice-versa.",
   "offsite.schedulePlaceholder": "vazio = após cada backup · ex. weekly Sun 03:00",

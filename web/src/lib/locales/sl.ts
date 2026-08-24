@@ -252,6 +252,8 @@ const sl: Partial<Translations> = {
   "source.label": "Vir:",
   "source.local": "Lokalno",
   "source.offsite": "Zunanje",
+  "source.localTip": "Lokalni repozitorij na tem gostitelju",
+  "source.offsiteTip": "Zunanja kopija",
   "source.offsiteTarget": "Zunanji cilj",
   "source.hint": "Obnovitev in brisanje delujeta samo na izbranem viru — brisanje lokalne varnostne kopije nikoli ne vpliva na zunanjo kopijo in obratno.",
   "offsite.copyDomainTitle": "Zunanja kopija {domain}",

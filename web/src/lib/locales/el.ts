@@ -166,6 +166,8 @@ const el: Partial<Translations> = {
   "source.label": "Πηγή:",
   "source.local": "Τοπικό",
   "source.offsite": "Εκτός τόπου",
+  "source.localTip": "Τοπικό αποθετήριο σε αυτόν τον υπολογιστή",
+  "source.offsiteTip": "Αντίγραφο εκτός τόπου",
   "source.offsiteTarget": "Προορισμός εκτός τόπου",
   "source.hint": "Η επαναφορά και η διαγραφή επενεργούν μόνο στην επιλεγμένη πηγή — η διαγραφή τοπικού αντιγράφου δεν αγγίζει ποτέ το αντίγραφο εκτός τόπου, και αντίστροφα.",
   "offsite.schedulePlaceholder": "κενό = μετά από κάθε αντίγραφο · π.χ. weekly Sun 03:00",

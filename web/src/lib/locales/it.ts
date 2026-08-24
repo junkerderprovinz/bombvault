@@ -166,6 +166,8 @@ const it: Partial<Translations> = {
   "source.label": "Origine:",
   "source.local": "Locale",
   "source.offsite": "Off-site",
+  "source.localTip": "Repository locale su questo host",
+  "source.offsiteTip": "Copia off-site",
   "source.offsiteTarget": "Destinazione off-site",
   "source.hint": "Ripristino ed eliminazione agiscono solo sulla sorgente selezionata — eliminare un backup locale non tocca mai la copia off-site, e viceversa.",
   "offsite.schedulePlaceholder": "vuoto = dopo ogni backup · es. weekly Sun 03:00",

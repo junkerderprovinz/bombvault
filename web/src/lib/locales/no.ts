@@ -165,6 +165,8 @@ const no: Partial<Translations> = {
   "source.label": "Kilde:",
   "source.local": "Lokal",
   "source.offsite": "Ekstern",
+  "source.localTip": "Lokalt repo på denne verten",
+  "source.offsiteTip": "Ekstern kopi",
   "source.offsiteTarget": "Eksternt mål",
   "source.hint": "Gjenoppretting og sletting gjelder kun den valgte kilden — å slette en lokal sikkerhetskopi rører aldri den eksterne kopien, og omvendt.",
   "offsite.schedulePlaceholder": "tom = etter hver sikkerhetskopi · f.eks. weekly Sun 03:00",

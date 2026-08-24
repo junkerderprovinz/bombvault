@@ -166,6 +166,8 @@ const he: Partial<Translations> = {
   "source.label": "מקור:",
   "source.local": "מקומי",
   "source.offsite": "מחוץ לאתר",
+  "source.localTip": "מאגר מקומי במארח הזה",
+  "source.offsiteTip": "עותק מחוץ לאתר",
   "source.offsiteTarget": "יעד מחוץ לאתר",
   "source.hint": "שחזור ומחיקה פועלים רק על המקור הנבחר — מחיקת גיבוי מקומי לעולם לא נוגעת בעותק מחוץ לאתר, ולהפך.",
   "offsite.schedulePlaceholder": "ריק = אחרי כל גיבוי · לדוגמה weekly Sun 03:00",

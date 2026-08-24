@@ -166,6 +166,8 @@ const sv: Partial<Translations> = {
   "source.label": "Källa:",
   "source.local": "Lokal",
   "source.offsite": "Utanför platsen",
+  "source.localTip": "Lokalt repo på denna värd",
+  "source.offsiteTip": "Kopia utanför platsen",
   "source.offsiteTarget": "Mål utanför platsen",
   "source.hint": "Återställning och radering påverkar bara den valda källan — att radera en lokal säkerhetskopia rör aldrig kopian utanför platsen, och tvärtom.",
   "offsite.schedulePlaceholder": "tomt = efter varje säkerhetskopia · t.ex. weekly Sun 03:00",

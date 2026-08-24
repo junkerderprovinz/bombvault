@@ -166,6 +166,8 @@ const ja: Partial<Translations> = {
   "source.label": "ソース:",
   "source.local": "ローカル",
   "source.offsite": "オフサイト",
+  "source.localTip": "このホスト上のローカルリポジトリ",
+  "source.offsiteTip": "オフサイトコピー",
   "source.offsiteTarget": "オフサイトの宛先",
   "source.hint": "復元と削除は選択中のソースにのみ作用します。ローカルバックアップを削除してもオフサイトのコピーには影響せず、その逆も同様です。",
   "offsite.schedulePlaceholder": "空欄 = 毎回のバックアップ後 · 例: weekly Sun 03:00",
