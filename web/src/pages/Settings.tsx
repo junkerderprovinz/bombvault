@@ -1386,6 +1386,25 @@ chmod 600 /root/.ssh/authorized_keys`
     }
   }
 
+  // GlimStone follow-up round (jdp, live review, five-escalations-deep
+  // standing rule — "IMMER alles in die Farb- und Formengine integrieren"):
+  // this Card's own two copy badges and its Test button were plain
+  // `bg-carbon-surface2/3` controls with zero tie to this Card's own
+  // `hueIndex` — flat regardless of rainbow mode, exactly the gap rule 1
+  // exists to close. Same mechanism ToggleRow/Selector/TimePicker/Badge
+  // already use: `.glim-hue` + `hueVars(rainbowAt(hueIndex))` inline,
+  // computed once here and reused by every control below rather than three
+  // separate near-identical blocks. On a neutral `bg-carbon-surface*`
+  // control this doesn't repaint the fill (design-language.md's own
+  // "icons/neutral surfaces carry no colour of their own" rule, restated at
+  // [data-rainbow] .glim-hue-icon's own header in index.css) — it wires the
+  // one thing that DOES apply to a neutral control, the same `--focus-ring`
+  // redefinition every other `.glim-hue` element already gets, a real,
+  // live-verifiable per-item colour a keyboard user actually sees on
+  // Tab/click.
+  const hueOn = hueIndex !== undefined;
+  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+
   return (
     <Card title={t("vm.ssh.title")} hint={t("vm.ssh.desc")} hueIndex={hueIndex}>
       <div className="flex flex-col gap-3">
@@ -1416,7 +1435,8 @@ chmod 600 /root/.ssh/authorized_keys`
               onClick={handleCopy}
               disabled={!pub}
               tip={t("vm.ssh.copy")}
-              className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+              className={`shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               <IconCopy />
             </IconTipButton>
@@ -1445,7 +1465,8 @@ chmod 600 /root/.ssh/authorized_keys`
               onClick={handleCopyCmd}
               disabled={!pub}
               tip={t("vm.ssh.copyCmd")}
-              className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+              className={`shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               <IconCopy />
             </IconTipButton>
@@ -1469,13 +1490,22 @@ chmod 600 /root/.ssh/authorized_keys`
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Button-size sweep (jdp, live review: "Die vielen Buttons sind
+              unterschiedlich groß"): was `px-3 py-2` — measured live at 36px,
+              taller than every sibling secondary button on this tab (Export/
+              Choose file/Cancel/Logout, all `px-4 py-1.5` = 32px, the
+              dominant control height this whole page already standardizes
+              on — see SettingsPortabilityCard's own Export button for the
+              same 32px recipe). Now matches that convention exactly, plus
+              `.glim-hue` per this Card's own hueOn/hueStyle above. */}
           <button
             key={shake || 0}
             onClick={handleTest}
             disabled={testState === "testing"}
-            className={`rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+            className={`rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
               shake ? " glim-shake" : ""
-            }`}
+            }${hueOn ? " glim-hue" : ""}`}
+            style={hueStyle}
           >
             {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
           </button>
@@ -1612,6 +1642,14 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
 
   const busy = importBusy !== "idle" || exporting;
 
+  // Button-size/colour-engine sweep (jdp, live review — see VMSSHCard's own
+  // identical comment for the full reasoning): Export/Choose file/Confirm/
+  // Cancel were already at this page's dominant 32px control height, but
+  // none of the four carried this Card's own `hueIndex` — flat regardless of
+  // rainbow mode. Same `.glim-hue` + `hueVars(rainbowAt(hueIndex))` fix.
+  const hueOn = hueIndex !== undefined;
+  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+
   return (
     <Card title={t("settingsIO.title")} hint={t("settingsIO.desc")} hueIndex={hueIndex}>
       {/* EXPORT ---------------------------------------------------------- */}
@@ -1648,7 +1686,8 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
           disabled={busy}
           className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${
             shake.export ? " glim-shake" : ""
-          }`}
+          }${hueOn ? " glim-hue" : ""}`}
+          style={hueStyle}
         >
           {exporting ? t("settingsIO.exporting") : t("settingsIO.exportButton")}
         </button>
@@ -1675,7 +1714,8 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
           disabled={busy}
           className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${
             shake.chooseFile ? " glim-shake" : ""
-          }`}
+          }${hueOn ? " glim-hue" : ""}`}
+          style={hueStyle}
         >
           {importBusy === "reading" ? t("settingsIO.reading") : t("settingsIO.chooseFile")}
         </button>
@@ -1729,7 +1769,8 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
                 disabled={busy}
                 className={`rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
                   shake.import ? " glim-shake" : ""
-                }`}
+                }${hueOn ? " glim-hue" : ""}`}
+                style={hueStyle}
               >
                 {importBusy === "applying" ? t("settingsIO.importing") : t("settingsIO.confirmButton")}
               </button>
@@ -1737,7 +1778,8 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
                 type="button"
                 onClick={resetImport}
                 disabled={busy}
-                className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50"
+                className={`rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+                style={hueStyle}
               >
                 {t("settingsIO.cancel")}
               </button>
@@ -1779,8 +1821,25 @@ type DashPluginStatus =
 // widget card: one-click install/remove of the companion bombvaultwidget plugin
 // over the existing host SSH connection. Without SSH it degrades to manual
 // instructions (the copyable .plg URL + a CA hint).
-function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
+function UnraidTileSection({
+  t,
+  hueIndex,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  /** GlimStone follow-up round (jdp, live review, five-escalations-deep
+   *  standing rule): this section's own Install/Remove/Retry/copy-URL
+   *  buttons had no tie to the enclosing DashboardWidgetCard's hue at all —
+   *  threaded straight through from that Card's own single `nextHue()` call
+   *  (see its own call site below), the same "one Card, several hue-aware
+   *  children share the SAME position" shape CadenceBuilder/TimePicker pairs
+   *  elsewhere in this file already use, not a second independent
+   *  `nextHue()` call that would land a different position for one visually-
+   *  grouped Card. */
+  hueIndex?: number;
+}) {
   const { push } = useToast();
+  const hueOn = hueIndex !== undefined;
+  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
   // `status` stays exactly as it was — GlimStone follow-up pass (v8.0.0)
   // audit note: this is a PERSISTENT "is the tile currently installed" fact
   // (plus, on failure, a possibly multi-line command `output` block), not a
@@ -1896,7 +1955,8 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
             <button
               type="button"
               onClick={() => void handleCopyUrl()}
-              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               {t("vm.ssh.copy")}
             </button>
@@ -1931,7 +1991,8 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
             disabled={busy !== "idle"}
             className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
               shake.install ? " glim-shake" : ""
-            }`}
+            }${hueOn ? " glim-hue" : ""}`}
+            style={hueStyle}
           >
             {busy === "install" ? t("settings.dashTileInstalling") : t("settings.dashTileInstall")}
           </button>
@@ -1964,7 +2025,8 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
             disabled={busy !== "idle"}
             className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
               shake.remove ? " glim-shake" : ""
-            }`}
+            }${hueOn ? " glim-hue" : ""}`}
+            style={hueStyle}
           >
             {busy === "remove" ? t("settings.dashTileRemoving") : t("settings.dashTileRemove")}
           </button>
@@ -1987,7 +2049,8 @@ function UnraidTileSection({ t }: { t: ReturnType<typeof useT>["t"] }) {
               setStatus({ kind: "loading" });
               refresh();
             }}
-            className="self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
+            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${hueOn ? " glim-hue" : ""}`}
+            style={hueStyle}
           >
             {t("whatsnew.retry")}
           </button>
@@ -2083,6 +2146,16 @@ function DashboardWidgetCard({
     }
   }
 
+  // Button-size/colour-engine sweep (jdp, live review — see VMSSHCard's own
+  // identical comment for the full reasoning): Generate/Regenerate/Disable
+  // were already at this page's dominant 32px control height but had no tie
+  // to this Card's own hueIndex. Computed once, reused below AND threaded
+  // into UnraidTileSection (its own children live inside THIS SAME Card, so
+  // they share this Card's one rainbow position, not a second independent
+  // `nextHue()` call).
+  const hueOn = hueIndex !== undefined;
+  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+
   return (
     <Card title={t("settings.widget")} hint={t("settings.widgetHint")} hueIndex={hueIndex}>
 
@@ -2116,7 +2189,8 @@ function DashboardWidgetCard({
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
                 shake.generate ? " glim-shake" : ""
-              }`}
+              }${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               {t("settings.widgetRegenerate")}
             </button>
@@ -2127,7 +2201,8 @@ function DashboardWidgetCard({
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
-              }`}
+              }${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               {t("settings.widgetDisable")}
             </button>
@@ -2141,7 +2216,8 @@ function DashboardWidgetCard({
           disabled={busy}
           className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
             shake.generate ? " glim-shake" : ""
-          }`}
+          }${hueOn ? " glim-hue" : ""}`}
+          style={hueStyle}
         >
           {t("settings.widgetGenerate")}
         </button>
@@ -2158,13 +2234,39 @@ function DashboardWidgetCard({
               <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
                 {widgetUrl}
               </code>
-              <button
-                type="button"
+              {/* GlimStone follow-up round (jdp, live review: "Der Widget-
+                  URL-kopieren-Button soll ein quadratischer Badge mit Glyph
+                  sein"): was a short-text `bg-accent` button — reuses
+                  IconCopy (Sidebar.tsx) verbatim, the same glyph VMSSHCard's
+                  own two copy badges in this file already use for the
+                  identical "copy this value" role. Standing rule (icon
+                  badges get engine+tooltip automatically): `.glim-hue` +
+                  this Card's own hueStyle wires real colour-engine
+                  integration, `tip` carries the exact text the button used
+                  to show (`vm.ssh.copy`, unchanged key — the same generic
+                  "Kopieren" action every other copy control in this file
+                  already uses, not a new one-off string). h-8 w-8 (32px),
+                  NOT guessed: this row's own `<code>` sibling is
+                  byte-identical markup (`p-2 text-xs`) to VMSSHCard's own
+                  already-measured-live 32px case above in this file — same
+                  neighbour shape, same verified number, not Badge's
+                  `size="field"` (36px, pinned to a DIFFERENT neighbour, the
+                  off-site repo-url `<input>`) or `size="icon"` (28px, pinned
+                  to the rainbow palette swatch) — neither actually matches
+                  THIS row's real neighbour. bg-accent/text-accentContrast
+                  preserved from the button it replaces (this control read as
+                  a primary action, unlike VMSSHCard's neutral grey copy
+                  badges) — `.glim-hue` recolours that fill to this Card's
+                  own rainbow position exactly like every other bg-accent
+                  control in this file. */}
+              <IconTipButton
                 onClick={() => void handleCopy()}
-                className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+                tip={t("vm.ssh.copy")}
+                className={`shrink-0 inline-flex items-center justify-center rounded-control bg-accent h-8 w-8 text-accentContrast hover:opacity-90 transition-opacity${hueOn ? " glim-hue" : ""}`}
+                style={hueStyle}
               >
-                {t("vm.ssh.copy")}
-              </button>
+                <IconCopy />
+              </IconTipButton>
             </div>
           </div>
           <div className="flex flex-col gap-1">
@@ -2178,8 +2280,11 @@ function DashboardWidgetCard({
         </>
       )}
 
-      {/* Companion Unraid dashboard-tile plugin (one-click install over SSH). */}
-      <UnraidTileSection t={t} />
+      {/* Companion Unraid dashboard-tile plugin (one-click install over SSH).
+          hueIndex threaded straight through — its own buttons live inside
+          THIS SAME Card, so they share this Card's one rainbow position, not
+          a second independent nextHue() call (see its own prop doc). */}
+      <UnraidTileSection t={t} hueIndex={hueIndex} />
     </Card>
   );
 }
@@ -2302,6 +2407,13 @@ function FleetSettingsCard({
     }
   }
 
+  // Button-size/colour-engine sweep (jdp, live review — see VMSSHCard's own
+  // identical comment for the full reasoning): Generate/Regenerate/Disable/
+  // copy were already at this page's dominant 32px control height but had no
+  // tie to this Card's own hueIndex.
+  const hueOn = hueIndex !== undefined;
+  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+
   return (
     <Card title={t("settings.fleet")} hint={t("settings.fleetHint")} hueIndex={hueIndex}>
 
@@ -2350,7 +2462,8 @@ function FleetSettingsCard({
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
                 shake.generate ? " glim-shake" : ""
-              }`}
+              }${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               {t("settings.fleetRegenerate")}
             </button>
@@ -2361,7 +2474,8 @@ function FleetSettingsCard({
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
-              }`}
+              }${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               {t("settings.fleetDisable")}
             </button>
@@ -2375,7 +2489,8 @@ function FleetSettingsCard({
           disabled={busy}
           className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
             shake.generate ? " glim-shake" : ""
-          }`}
+          }${hueOn ? " glim-hue" : ""}`}
+          style={hueStyle}
         >
           {t("settings.fleetGenerate")}
         </button>
@@ -2394,7 +2509,8 @@ function FleetSettingsCard({
             <button
               type="button"
               onClick={() => void handleCopy()}
-              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast"
+              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
+              style={hueStyle}
             >
               {t("vm.ssh.copy")}
             </button>
@@ -7722,25 +7838,27 @@ export function SettingsPage() {
           the Storage tab's cacheTitle Card above. */}
       {tab === "system" && advanced && (
       <Card title={t("settings.metrics")} hueIndex={nextHue()}>
-        {/* GlimStone follow-up pass: stays permanent text, NOT bubbled — it
-            names the exact /metrics path AND the exact
-            "Authorization: Bearer <token>" scrape syntax someone pastes into
-            Grafana/Uptime Kuma config verbatim, the same "exact syntax to
-            copy correctly" carve-out as RcloneCard's/CloudCard's own hints.
-            The comment below also documents that the ToggleRow beneath
-            deliberately has NO description of its own because THIS paragraph
-            already covers it — hiding it behind a hover target would silently
-            break that reasoning too. */}
-        <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.metricsHint")}</p>
-        {/* No `description` here: the Card's own hint paragraph above already
-            states the /metrics path — a hardcoded "GET /metrics" description
-            would just duplicate it. (No-empty-toggles audit, jdp: this row
-            used to ALSO `hideLabel`, on the same now-banned "Card already
-            says it" reasoning as three other rows in this file — the label
-            stays visible; only the redundant `description` is still
-            deliberately omitted.) */}
+        {/* GlimStone follow-up round (jdp, live review: "Prometheus-Metriken
+            unter /metrics ... in eine InfoBubble" — design-language.md rule 8,
+            "explanations live in a bubble, not on the page"): this used to be
+            a permanent `<p>` under the Card title, reasoned at the time as an
+            "exact syntax to copy correctly" carve-out (the same one RcloneCard's/
+            CloudCard's own hints still use). jdp's live review overruled that
+            specifically for this text — unlike rclone.pathHint's own
+            "rclone:<remote>:<bucket>/path" syntax (which someone fills into a
+            DIFFERENT tab's Backup Path field from memory, so it needs to stay
+            findable without already hovering an icon here), this hint is
+            self-contained: /metrics and the Bearer-token syntax are both used
+            right here, on the same toggle, so a hover bubble is not hiding
+            anything a reader would need on a different screen. Moved onto the
+            ToggleRow's own `hint` prop below (the same "(i) beside the label"
+            mechanism as every other bubbled explanation in this file) — no
+            `description` here for the same "the Card's own hint already
+            covers it" reasoning this row's OLD comment gave, just now living
+            on the toggle's `hint` instead of a Card-level paragraph. */}
         <ToggleRow
           label={t("settings.metricsEnable")}
+          hint={t("settings.metricsHint")}
           checked={settings.metricsEnabled}
           onChange={(v) => void autoSaveToggle("metricsEnabled", v, setMetricsSaveState, setMetricsSaveError)}
           disabled={fieldBusy.metricsEnabled}
@@ -7951,11 +8069,23 @@ export function SettingsPage() {
           while Advanced was off). Plain `&&` short-circuits correctly,
           exactly like every other conditional Card on this page — this was
           the one call site that still used the wrapper component instead. */}
-      {tab === "system" && advanced && (
-        <Card title={t("spike.title")} hueIndex={nextHue()}>
-          <SpikePanel t={t} />
-        </Card>
-      )}
+      {tab === "system" && advanced && (() => {
+        // Button-size/colour-engine sweep (jdp, live review — "Die vielen
+        // Buttons sind unterschiedlich groß und nicht alle im
+        // Regenbogenmodus"): the Check Now button inside SpikePanel had no
+        // tie to this Card's own hueIndex at all. `hueIdx` captured once in
+        // this IIFE and threaded into BOTH the Card's own heading notch and
+        // SpikePanel's new `hueIndex` prop — the same "one Card, two
+        // hue-aware children share ONE position" shape the schedulesChecks
+        // Card's own IIFE below already uses for its Card+CadenceBuilder
+        // pair, not a second independent `nextHue()` call.
+        const hueIdx = nextHue();
+        return (
+          <Card title={t("spike.title")} hueIndex={hueIdx}>
+            <SpikePanel t={t} hueIndex={hueIdx} />
+          </Card>
+        );
+      })()}
 
       {/* ------------------------------------------------------------------ */}
       {/* INTEGRITY — Integrity, maintenance & restore drills                 */}
@@ -8036,8 +8166,19 @@ export function SettingsPage() {
       {/* ------------------------------------------------------------------ */}
       {/* SYSTEM — Security                                                  */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (
-      <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={nextHue()}>
+      {/* Button-size/colour-engine sweep (jdp, live review — "Die vielen
+          Buttons sind unterschiedlich groß und nicht alle im
+          Regenbogenmodus"): the Save/Logout/Logout-everywhere buttons below
+          had no tie to this Card's own hue at all. IIFE captures `hueIdx`
+          once and reuses it for both the Card's own heading notch and every
+          button inside it — the same "one Card, several hue-aware children
+          share ONE position" shape the schedulesChecks/Spike Cards above
+          already use, not several independent `nextHue()` calls. */}
+      {tab === "system" && (() => {
+        const hueIdx = nextHue();
+        const hueStyle = hueVars(rainbowAt(hueIdx)) as CSSProperties;
+        return (
+      <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={hueIdx}>
         {/* Status badge */}
         <div className="flex items-center gap-2">
           <span
@@ -8085,9 +8226,10 @@ export function SettingsPage() {
               key={pwSaveShake || 0}
               onClick={() => void handleSetPassword()}
               disabled={pwSaveState === "saving"}
-              className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+              className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 glim-hue${
                 pwSaveShake ? " glim-shake" : ""
               }`}
+              style={hueStyle}
             >
               {pwSaveState === "saving" ? (
                 <>
@@ -8117,20 +8259,23 @@ export function SettingsPage() {
           <div className="pt-2 border-t border-carbon-border flex items-center gap-3">
             <button
               onClick={() => void handleLogout()}
-              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors glim-hue"
+              style={hueStyle}
             >
               {t("auth.logout")}
             </button>
             <button
               onClick={() => void handleLogoutAll()}
-              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors glim-hue"
+              style={hueStyle}
             >
               {t("settings.logoutAll")}
             </button>
           </div>
         )}
       </Card>
-      )}
+        );
+      })()}
 
       {/* ------------------------------------------------------------------ */}
       {/* GENERAL — Language (GlimStone follow-up pass, live-review point 9). */}

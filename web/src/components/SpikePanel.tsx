@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { runSpike } from "../lib/api";
 import type { SpikeCheck } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
 import { useToast } from "../lib/toast";
+import { hueVars, rainbowAt } from "../lib/appearance";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -21,13 +22,23 @@ function StatusChip({ ok, bestEffort, t }: { ok: boolean; bestEffort?: boolean; 
 
 interface SpikePanelProps {
   t: T;
+  /** GlimStone follow-up round (jdp, live review, five-escalations-deep
+   *  standing rule — "IMMER alles in die Farb- und Formengine
+   *  integrieren"): the "Check Now" button had no tie to the enclosing
+   *  Card's own hue. Threaded straight through from Settings.tsx's own
+   *  single `nextHue()` call for this Card — see that call site's own IIFE
+   *  comment for why it shares ONE position with the Card's heading notch
+   *  rather than a second independent `nextHue()` call. */
+  hueIndex?: number;
 }
 
-export function SpikePanel({ t }: SpikePanelProps) {
+export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
   const { push } = useToast();
   const [checks, setChecks] = useState<SpikeCheck[] | null>(null);
   const [allOk, setAllOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const hueOn = hueIndex !== undefined;
+  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
   // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
   // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
   // action shows its message via a TOAST, never as permanent page text, and
@@ -73,13 +84,21 @@ export function SpikePanel({ t }: SpikePanelProps) {
       </p>
 
       <div className="flex items-center gap-3">
+        {/* Button-size sweep (jdp, live review: "Die vielen Buttons sind
+            unterschiedlich groß"): was `px-4 py-2` — measured live at 36px,
+            taller than every sibling primary button on this tab (Generate/
+            Install/Confirm, all `px-4 py-1.5` = 32px, the dominant control
+            height this whole Settings page already standardizes on). Now
+            matches that convention exactly, plus `.glim-hue` per this Card's
+            own hueOn/hueStyle above. */}
         <button
           key={shake || 0}
           onClick={() => void handleCheck()}
           disabled={loading}
-          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
+          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
             shake ? " glim-shake" : ""
-          }`}
+          }${hueOn ? " glim-hue" : ""}`}
+          style={hueStyle}
         >
           {loading ? (
             <>
