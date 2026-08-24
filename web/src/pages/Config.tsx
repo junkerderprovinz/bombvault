@@ -17,6 +17,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { Badge } from "../components/Badge";
 import { CheckDraw } from "../components/CheckDraw";
+import { InfoBubble } from "../components/InfoBubble";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -110,6 +111,15 @@ function ConfigBackupButton({
 // sets "idle"/"saving" — see the comment on the state declaration itself.
 type SaveState = "idle" | "saving";
 
+// jdp live-review ("Infotexte in i Infobubbles"): `hint` used to render as a
+// permanent grey <p> under the field — the same "read once, costs vertical
+// space forever" case design-language.md rule 8 exists to fold away. Moved
+// onto the label itself as an InfoBubble instead, the exact idiom Settings.tsx
+// already uses for a labelled field (see e.g. its cloud.storageClass.label
+// `<span className="flex items-center gap-1">{label}<InfoBubble .../></span>`
+// pair) — reused here rather than inventing a second one for this file's own
+// hand-rolled field helper. Zero i18n changes: same keys (config.pathHint/
+// config.offsiteHint), only where they render.
 function labelledInput(
   label: string,
   value: string,
@@ -119,7 +129,10 @@ function labelledInput(
 ) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs text-carbon-textSub">{label}</span>
+      <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+        {label}
+        {hint && <InfoBubble tip={hint} />}
+      </span>
       <input
         value={value}
         spellCheck={false}
@@ -128,7 +141,6 @@ function labelledInput(
         dir="ltr"
         className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
       />
-      {hint && <p className="text-xs text-carbon-textMuted">{hint}</p>}
     </div>
   );
 }
@@ -213,11 +225,19 @@ function ConfigSettingsCard({
     <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
       {/* Task 5 (rule 11): same Badge-in-<h2> pattern as Settings.tsx's own
           Card component — this hand-rolled Card equivalent never shared
-          Card's component, so it needed its own copy of the conversion. */}
+          Card's component, so it needed its own copy of the conversion.
+          jdp live-review ("Infotexte in i Infobubbles"): the permanent <p>
+          under the heading (what this whole Card protects) is exactly
+          Card's own `hint` case — folded into an InfoBubble on the Badge
+          itself, same content (`config.settingsHint`), same `onAccent` this
+          badge's solid accent fill needs (see Settings.tsx's Card() and
+          Flash.tsx's identical backup-Card fix for the reasoning). */}
       <h2 className="flex items-center">
-        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{t("config.settingsTitle")}</Badge>
+        <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
+          {t("config.settingsTitle")}
+          <InfoBubble tip={t("config.settingsHint")} onAccent />
+        </Badge>
       </h2>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("config.settingsHint")}</p>
 
       <ToggleRow
         label={t("config.enabled")}
@@ -390,7 +410,25 @@ export function Config() {
   }, [source]);
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
+    // gap-10 (jdp live-review: "Abstände zwischen den Cards zu klein und
+    // erste Card zu weit oben, systemweit gleich machen"): was gap-6 (24px)
+    // for EVERY gap on this page, including heading-to-first-card — measured
+    // live, that's only 24px, and with the heading-badge's own half-overlap
+    // poking 11px into it (Badge.tsx's `-translate-y-1/2` notch), the actual
+    // VISIBLE whitespace above each Card was just 13px, on this page only.
+    // The rest of the app already settled on gap-10 (40px) as the one
+    // Card-to-Card (and heading-to-first-card) rhythm — see Dashboard.tsx's
+    // own identical live-review fix ("Die Abstände der Cards passen nicht.
+    // Bitte systemweit anpassen!") and Settings.tsx's tab-panels wrapper,
+    // both of which measured every OTHER page's gap at 40px before bumping
+    // to match. Unlike those two pages, this page's heading is a single bare
+    // `<h1>+<p>` div with no tab-strip/indicator row that needs to stay at
+    // the tighter 24px — so there's nothing here that needs splitting into a
+    // nested gap-6 wrapper the way Dashboard/Settings needed; one flat
+    // gap-10 on this single wrapper already gives every gap (heading→Card 1,
+    // Card 1→2, Card 2→3) the same corrected 40px DOM gap (29px visible,
+    // after the same 11px badge overlap every other gap-10 page also has).
+    <div className="flex flex-col gap-10 max-w-3xl">
       {/* Page heading */}
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>
@@ -418,12 +456,29 @@ export function Config() {
           Card() for the full reasoning. Its own bounding box is still
           exactly the visible card (h2 + the inner box beneath it), so this
           doesn't change what "hovering the card" looks like. */}
+      {/* jdp live-review ("Cardtitelbadge nicht richtig platziert"): the
+          outer div is deliberately unpadded (see the split comment above),
+          which left the badge's horizontal "static position" fallback flush
+          with the OUTER div's bare edge instead of the inner p-5 box's
+          content edge — measured live, badge left 248px vs. this card's own
+          body content at 268px, a visible 20px gap. Identical bug, identical
+          fix, to the one just found and fixed on Flash.tsx's own backup Card
+          (same split-recipe structure): `ps-5` on the h2 alone reproduces
+          the 20px inset logically/RTL-safely, only shifting the badge's
+          horizontal fallback (`top-0` is explicit, so the vertical
+          half-overlap math is unaffected). Verified live: badge left now
+          268px, flush with the card body below it.
+          Also folds the permanent backupHint <p> into an InfoBubble on the
+          Badge (same "Infotexte in Infobubbles" fix as Flash.tsx's sibling
+          backup Card, same content, same onAccent). */}
       <div className="relative glim-notch-card">
-        <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap hueIndex={1}>{t("config.backupTitle")}</Badge>
+        <h2 className="flex items-center ps-5">
+          <Badge tone="heading" size="heading" wrap hueIndex={1}>
+            {t("config.backupTitle")}
+            <InfoBubble tip={t("config.backupHint")} onAccent />
+          </Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-          <p className="text-xs text-carbon-textMuted -mt-1">{t("config.backupHint")}</p>
           <ConfigBackupButton
             t={t}
             onBackedUp={() => void load()}
@@ -441,15 +496,21 @@ export function Config() {
       {/* Snapshots card — list + delete; restoring settings lives in Recovery.
           `glim-notch-card`: see Settings.tsx's Card() for the reasoning. */}
       <div className="relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
+        {/* jdp live-review ("Infotexte in i Infobubbles"): this used to be a
+            permanent bg-statusNeutralBg banner (Task 7 had already folded
+            its COLOUR from the old fifth "info" hue into neutral, but kept
+            the banner FORM — pure informational prose, not a live status
+            readout, exactly rule 8's "read once, costs vertical space
+            forever" case). Same content (`config.snapshotsHint`), now an
+            InfoBubble on the heading Badge instead — the identical fix
+            Flash.tsx's own Restore card (this page's direct sibling) just
+            got for its own restoreNote banner. */}
         <h2 className="flex items-center">
-          <Badge tone="heading" size="heading" wrap hueIndex={2}>{t("config.snapshotsTitle")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={2}>
+            {t("config.snapshotsTitle")}
+            <InfoBubble tip={t("config.snapshotsHint")} onAccent />
+          </Badge>
         </h2>
-        {/* Task 7: was bg-statusInfoBg/text-statusInfo (the old fifth hue) —
-            pure informational prose about how the feature works, no activity
-            or pass/fail/warn meaning, so it folds into --status-neutral-*. */}
-        <div className="rounded-card bg-statusNeutralBg px-3 py-2.5 text-xs text-statusNeutral leading-relaxed">
-          {t("config.snapshotsHint")}
-        </div>
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
