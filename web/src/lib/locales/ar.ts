@@ -166,6 +166,8 @@ const ar: Partial<Translations> = {
   "source.label": "المصدر:",
   "source.local": "محلي",
   "source.offsite": "خارج الموقع",
+  "source.localTip": "مستودع محلي على هذا المضيف",
+  "source.offsiteTip": "نسخة خارج الموقع",
   "source.offsiteTarget": "الوجهة خارج الموقع",
   "source.hint": "الاستعادة والحذف يؤثران فقط على المصدر المحدد — حذف نسخة محلية لا يمس النسخة خارج الموقع أبدًا، والعكس صحيح.",
   "offsite.schedulePlaceholder": "فارغ = بعد كل نسخة احتياطية · مثل weekly Sun 03:00",

@@ -252,6 +252,8 @@ const ms: Partial<Translations> = {
   "source.label": "Sumber:",
   "source.local": "Setempat",
   "source.offsite": "Luar tapak",
+  "source.localTip": "Repositori setempat pada hos ini",
+  "source.offsiteTip": "Salinan luar tapak",
   "source.offsiteTarget": "Sasaran luar tapak",
   "source.hint": "Pemulihan dan pemadaman hanya bertindak ke atas sumber yang dipilih — memadam sandaran setempat tidak sekali-kali menyentuh salinan luar tapak, dan sebaliknya.",
   "offsite.copyDomainTitle": "Salinan luar tapak {domain}",

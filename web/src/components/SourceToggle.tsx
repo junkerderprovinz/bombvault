@@ -6,6 +6,7 @@ import {
   useOffsiteTargets,
 } from "../lib/useOffsiteTargets";
 import { Selector } from "./Selector";
+import { IconFolder, IconCloud } from "./Sidebar";
 
 /**
  * A repo source: the local repo, the domain's PRIMARY off-site target ("offsite"),
@@ -68,11 +69,55 @@ export function SourceToggle({
         default `plain={false}` chip treatment puts that same background on
         each segment individually instead, so removing the shared box
         doesn't wash the pair out to plain unstyled text.
+
+        UPDATED (jdp, live-review, Flash tab: "Lokal und Offsite Button
+        sollen quadratische Badges mit Glyphen sein" — icon-badge standing
+        rule): icon-only, same conversion PathModeSwitch.tsx's own
+        Local/Remote pair already went through (that file's own "GlimStone
+        follow-up round, Paths & Storage tab rework, points 2/5" comment).
+        This is the ONE shared component behind EVERY "Local/Off-site"
+        source picker in the app (Flash.tsx, RestorePanel.tsx,
+        Containers.tsx, Config.tsx, Files.tsx, VMs.tsx, Recovery.tsx,
+        Settings.tsx's integrity Card) — fixing it here once, rather than
+        forking a second icon-only copy for Flash alone, covers every one of
+        those call sites in the same pass (verified: all eight sit their own
+        `t("source.label")`/`t("recovery.configSourceLabel")` caption
+        directly beside this component already, so losing the segments' own
+        text loses nothing — the caption still names the control for a
+        sighted user, `SelectorItem.label` still becomes each segment's
+        `aria-label` for everyone else). IconFolder/IconCloud reused
+        verbatim from Sidebar.tsx's shared icon set — the SAME "local
+        disk" vs "remote/off-site" glyph pair PathModeSwitch's own
+        Local/Remote segments already draw, so a user learns the glyphs
+        once and reads them the same way in both places. Engine + tooltip
+        pairing (standing rule, icon-badges-need-engine-and-tooltip) comes
+        free from Selector itself, not bolted on here: `hue` defaults to
+        `true` (this file never opts out), so each segment already resolves
+        its own rainbow position via `hueVars(rainbowAt(i))` — the same
+        mechanism that already painted the OLD text chips before this
+        change, now painting the icon-only squares instead; `tip` is
+        Selector's own hover/focus InfoBubble-style bubble (SelectorTab),
+        carrying each segment's PRE-iconOnly text ("Local"/"Off-site") so
+        the meaning that used to sit in the visible label survives as a
+        tooltip. Square footprint (`h-8 w-8`) is `iconOnly`'s own existing
+        Selector styling, not new here.
       */}
       <Selector
         items={[
-          { id: "local", label: t("source.local") },
-          { id: "offsite", label: t("source.offsite") },
+          {
+            id: "local",
+            label: t("source.local"),
+            icon: <IconFolder />,
+            iconOnly: true,
+            tip: t("source.localTip"),
+          },
+          {
+            id: "offsite",
+            label: t("source.offsite"),
+            icon: <IconCloud />,
+            iconOnly: true,
+            tip: t("source.offsiteTip"),
+          },
         ]}
         label={t("source.label")}
         select="one"

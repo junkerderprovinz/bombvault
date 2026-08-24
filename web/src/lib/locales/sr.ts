@@ -252,6 +252,8 @@ const sr: Partial<Translations> = {
   "source.label": "Извор:",
   "source.local": "Локално",
   "source.offsite": "Спољно",
+  "source.localTip": "Локални репозиторијум на овом хосту",
+  "source.offsiteTip": "Спољна копија",
   "source.offsiteTarget": "Спољни циљ",
   "source.hint": "Враћање и брисање делују само на изабраном извору — брисање локалне резервне копије никада не утиче на спољну копију, и обрнуто.",
   "offsite.copyDomainTitle": "Спољна копија {domain}",

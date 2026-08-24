@@ -252,6 +252,8 @@ const et: Partial<Translations> = {
   "source.label": "Allikas:",
   "source.local": "Kohalik",
   "source.offsite": "Väline",
+  "source.localTip": "Kohalik hoidla sellel hostil",
+  "source.offsiteTip": "Väline koopia",
   "source.offsiteTarget": "Väline sihtkoht",
   "source.hint": "Taastamine ja kustutamine mõjutavad ainult valitud allikat — kohaliku varunduse kustutamine ei puuduta kunagi välist koopiat ja vastupidi.",
   "offsite.copyDomainTitle": "Väline koopia {domain}",

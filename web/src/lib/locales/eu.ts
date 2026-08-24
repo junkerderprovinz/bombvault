@@ -252,6 +252,8 @@ const eu: Partial<Translations> = {
   "source.label": "Iturria:",
   "source.local": "Lokala",
   "source.offsite": "Kanpokoa",
+  "source.localTip": "Biltegi lokala ostalari honetan",
+  "source.offsiteTip": "Kanpoko kopia",
   "source.offsiteTarget": "Kanpoko helmuga",
   "source.hint": "Berrezarpenak eta ezabatzeak hautatutako iturrian bakarrik eragiten dute — babeskopia lokal bat ezabatzeak ez du inoiz kanpoko kopia ukitzen, eta alderantziz.",
   "offsite.copyDomainTitle": "Kanpoko kopia {domain}",

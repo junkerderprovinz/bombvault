@@ -166,6 +166,8 @@ const vi: Partial<Translations> = {
   "source.label": "Nguồn:",
   "source.local": "Cục bộ",
   "source.offsite": "Ngoài site",
+  "source.localTip": "Kho lưu trữ cục bộ trên máy chủ này",
+  "source.offsiteTip": "Bản sao ngoài site",
   "source.offsiteTarget": "Đích ngoài site",
   "source.hint": "Khôi phục và xóa chỉ tác động đến nguồn đã chọn — xóa bản sao lưu cục bộ không bao giờ ảnh hưởng đến bản sao ngoài site, và ngược lại.",
   "offsite.schedulePlaceholder": "trống = sau mỗi lần sao lưu · vd. weekly Sun 03:00",

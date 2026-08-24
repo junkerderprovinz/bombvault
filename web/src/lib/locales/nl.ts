@@ -163,6 +163,8 @@ const nl: Partial<Translations> = {
   "source.label": "Bron:",
   "source.local": "Lokaal",
   "source.offsite": "Off-site",
+  "source.localTip": "Lokale repository op deze host",
+  "source.offsiteTip": "Offsite-kopie",
   "source.offsiteTarget": "Off-site-doel",
   "source.hint": "Herstellen en verwijderen werken alleen op de geselecteerde bron — een lokale back-up verwijderen raakt nooit de off-site kopie, en omgekeerd.",
   "offsite.schedulePlaceholder": "leeg = na elke back-up · bijv. weekly Sun 03:00",

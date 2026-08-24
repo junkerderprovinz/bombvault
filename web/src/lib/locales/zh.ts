@@ -166,6 +166,8 @@ const zh: Partial<Translations> = {
   "source.label": "来源：",
   "source.local": "本地",
   "source.offsite": "异地",
+  "source.localTip": "此主机上的本地仓库",
+  "source.offsiteTip": "异地副本",
   "source.offsiteTarget": "异地目标",
   "source.hint": "恢复和删除仅作用于所选来源——删除本地备份绝不会影响异地副本，反之亦然。",
   "offsite.schedulePlaceholder": "留空 = 每次备份后 · 例：weekly Sun 03:00",

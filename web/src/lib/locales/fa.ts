@@ -252,6 +252,8 @@ const fa: Partial<Translations> = {
   "source.label": "منبع:",
   "source.local": "محلی",
   "source.offsite": "خارج از محل",
+  "source.localTip": "مخزن محلی روی این میزبان",
+  "source.offsiteTip": "نسخه خارج از محل",
   "source.offsiteTarget": "مقصد خارج از محل",
   "source.hint": "بازیابی و حذف فقط روی منبع انتخاب‌شده اثر می‌گذارند — حذف یک پشتیبان محلی هرگز نسخه خارج از محل را دست نمی‌زند و برعکس.",
   "offsite.copyDomainTitle": "نسخه خارج از محل {domain}",

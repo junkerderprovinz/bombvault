@@ -163,6 +163,8 @@ const pl: Partial<Translations> = {
   "source.label": "Źródło:",
   "source.local": "Lokalne",
   "source.offsite": "Poza siedzibą",
+  "source.localTip": "Lokalne repozytorium na tym hoście",
+  "source.offsiteTip": "Kopia poza siedzibą",
   "source.offsiteTarget": "Cel poza siedzibą",
   "source.hint": "Przywracanie i usuwanie działają tylko na wybranym źródle — usunięcie kopii lokalnej nigdy nie narusza kopii poza siedzibą i odwrotnie.",
   "offsite.schedulePlaceholder": "puste = po każdej kopii · np. weekly Sun 03:00",

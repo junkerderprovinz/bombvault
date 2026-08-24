@@ -166,6 +166,8 @@ const fr: Partial<Translations> = {
   "source.label": "Source :",
   "source.local": "Local",
   "source.offsite": "Hors site",
+  "source.localTip": "Dépôt local sur cet hôte",
+  "source.offsiteTip": "Copie hors site",
   "source.offsiteTarget": "Cible hors site",
   "source.hint": "La restauration et la suppression n'agissent que sur la source sélectionnée — supprimer une sauvegarde locale ne touche jamais la copie hors site, et inversement.",
   "offsite.schedulePlaceholder": "vide = après chaque sauvegarde · ex. weekly Sun 03:00",

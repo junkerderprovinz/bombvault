@@ -252,6 +252,8 @@ const gl: Partial<Translations> = {
   "source.label": "Orixe:",
   "source.local": "Local",
   "source.offsite": "Externa",
+  "source.localTip": "Repositorio local neste host",
+  "source.offsiteTip": "Copia externa",
   "source.offsiteTarget": "Destino externo",
   "source.hint": "Restaurar e eliminar só afectan á orixe seleccionada — eliminar unha copia local nunca toca a copia externa, e viceversa.",
   "offsite.copyDomainTitle": "Copia externa {domain}",

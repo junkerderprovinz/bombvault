@@ -252,6 +252,8 @@ const lt: Partial<Translations> = {
   "source.label": "Šaltinis:",
   "source.local": "Vietinis",
   "source.offsite": "Nuotolinis",
+  "source.localTip": "Vietinė saugykla šiame pagrindiniame kompiuteryje",
+  "source.offsiteTip": "Nuotolinė kopija",
   "source.offsiteTarget": "Nuotolinė paskirtis",
   "source.hint": "Atkūrimas ir trynimas veikia tik pasirinktą šaltinį — ištrynus vietinę kopiją niekada nepaliečiama nuotolinė kopija, ir atvirkščiai.",
   "offsite.copyDomainTitle": "Nuotolinė kopija {domain}",

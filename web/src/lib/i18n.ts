@@ -327,6 +327,12 @@ export const en = {
   "source.label": "Source:",
   "source.local": "Local",
   "source.offsite": "Off-site",
+  // Hover/focus explanation for SourceToggle's icon-only Local/Off-site
+  // segments (jdp, live-review, icon-badge standing rule) — same reasoning
+  // as settings.pathMode.localTip/remoteTip above: losing the visible text
+  // label needs a fuller tooltip to carry the same meaning.
+  "source.localTip": "Local repository on this host",
+  "source.offsiteTip": "Off-site replica",
   // Only rendered when a domain has 2+ off-site targets: the picker choosing
   // WHICH off-site copy to browse/restore from.
   "source.offsiteTarget": "Off-site target",
@@ -1862,6 +1868,8 @@ export const de: Translations = {
   "source.label": "Quelle:",
   "source.local": "Lokal",
   "source.offsite": "Offsite",
+  "source.localTip": "Lokales Repository auf diesem Host",
+  "source.offsiteTip": "Offsite-Kopie",
   "source.offsiteTarget": "Offsite-Ziel",
   "source.hint": "Restore und Löschen wirken nur auf die gewählte Quelle — ein lokales Backup zu löschen rührt die Offsite-Kopie nie an und umgekehrt.",
   "offsite.copyDomainTitle": "Offsite-Kopie {domain}",

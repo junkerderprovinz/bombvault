@@ -166,6 +166,8 @@ const ko: Partial<Translations> = {
   "source.label": "소스:",
   "source.local": "로컬",
   "source.offsite": "오프사이트",
+  "source.localTip": "이 호스트의 로컬 저장소",
+  "source.offsiteTip": "오프사이트 복사",
   "source.offsiteTarget": "오프사이트 대상",
   "source.hint": "복원과 삭제는 선택한 소스에만 적용됩니다. 로컬 백업을 삭제해도 오프사이트 사본은 건드리지 않으며 그 반대도 마찬가지입니다.",
   "offsite.schedulePlaceholder": "비움 = 매 백업 후 · 예: weekly Sun 03:00",

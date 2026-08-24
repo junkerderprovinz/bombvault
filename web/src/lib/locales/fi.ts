@@ -166,6 +166,8 @@ const fi: Partial<Translations> = {
   "source.label": "Lähde:",
   "source.local": "Paikallinen",
   "source.offsite": "Etä",
+  "source.localTip": "Paikallinen tietovarasto tällä isännällä",
+  "source.offsiteTip": "Etäkopio",
   "source.offsiteTarget": "Etäkohde",
   "source.hint": "Palautus ja poisto kohdistuvat vain valittuun lähteeseen — paikallisen varmuuskopion poisto ei koskaan vaikuta etäkopioon ja päinvastoin.",
   "offsite.schedulePlaceholder": "tyhjä = jokaisen varmuuskopion jälkeen · esim. weekly Sun 03:00",

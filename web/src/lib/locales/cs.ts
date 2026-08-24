@@ -166,6 +166,8 @@ const cs: Partial<Translations> = {
   "source.label": "Zdroj:",
   "source.local": "Místní",
   "source.offsite": "Mimo lokalitu",
+  "source.localTip": "Místní repozitář na tomto hostiteli",
+  "source.offsiteTip": "Kopie mimo lokalitu",
   "source.offsiteTarget": "Cíl mimo lokalitu",
   "source.hint": "Obnovení a mazání se týkají jen vybraného zdroje — smazání místní zálohy se nikdy nedotkne kopie mimo lokalitu a naopak.",
   "offsite.schedulePlaceholder": "prázdné = po každé záloze · např. weekly Sun 03:00",

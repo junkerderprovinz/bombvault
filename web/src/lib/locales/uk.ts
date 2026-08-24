@@ -164,6 +164,8 @@ const uk: Partial<Translations> = {
   "source.label": "Джерело:",
   "source.local": "Локально",
   "source.offsite": "Зовнішнє",
+  "source.localTip": "Локальний репозиторій на цьому хості",
+  "source.offsiteTip": "Зовнішня копія",
   "source.offsiteTarget": "Зовнішнє призначення",
   "source.hint": "Відновлення та видалення діють лише на вибране джерело — видалення локальної копії ніколи не зачіпає зовнішню, і навпаки.",
   "offsite.schedulePlaceholder": "порожньо = після кожного бекапу · напр. weekly Sun 03:00",

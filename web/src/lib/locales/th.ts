@@ -166,6 +166,8 @@ const th: Partial<Translations> = {
   "source.label": "แหล่งที่มา:",
   "source.local": "ในเครื่อง",
   "source.offsite": "นอกสถานที่",
+  "source.localTip": "ที่เก็บในเครื่องบนโฮสต์นี้",
+  "source.offsiteTip": "สำเนานอกสถานที่",
   "source.offsiteTarget": "ปลายทางนอกสถานที่",
   "source.hint": "การกู้คืนและการลบจะมีผลเฉพาะกับแหล่งที่เลือกเท่านั้น — การลบข้อมูลสำรองในเครื่องจะไม่แตะต้องสำเนานอกสถานที่ และในทางกลับกัน",
   "offsite.schedulePlaceholder": "ว่าง = หลังการสำรองทุกครั้ง · เช่น weekly Sun 03:00",

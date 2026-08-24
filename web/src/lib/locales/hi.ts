@@ -252,6 +252,8 @@ const hi: Partial<Translations> = {
   "source.label": "स्रोत:",
   "source.local": "लोकल",
   "source.offsite": "ऑफ़-साइट",
+  "source.localTip": "इस होस्ट पर लोकल रिपॉज़िटरी",
+  "source.offsiteTip": "ऑफ़-साइट कॉपी",
   "source.offsiteTarget": "ऑफ़-साइट गंतव्य",
   "source.hint": "रीस्टोर और हटाना केवल चुने गए स्रोत पर असर करते हैं — लोकल बैकअप हटाना कभी ऑफ़-साइट कॉपी को नहीं छूता, और इसका उल्टा भी सही है।",
   "offsite.copyDomainTitle": "ऑफ़-साइट कॉपी {domain}",

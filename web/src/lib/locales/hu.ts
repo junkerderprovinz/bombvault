@@ -166,6 +166,8 @@ const hu: Partial<Translations> = {
   "source.label": "Forrás:",
   "source.local": "Helyi",
   "source.offsite": "Telephelyen kívüli",
+  "source.localTip": "Helyi tároló ezen a hoszton",
+  "source.offsiteTip": "Telephelyen kívüli másolat",
   "source.offsiteTarget": "Telephelyen kívüli cél",
   "source.hint": "A visszaállítás és a törlés csak a kiválasztott forrásra hat — egy helyi mentés törlése soha nem érinti a telephelyen kívüli másolatot, és fordítva.",
   "offsite.schedulePlaceholder": "üres = minden mentés után · pl. weekly Sun 03:00",

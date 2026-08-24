@@ -252,6 +252,8 @@ const lv: Partial<Translations> = {
   "source.label": "Avots:",
   "source.local": "Vietējs",
   "source.offsite": "Attālināts",
+  "source.localTip": "Vietējs repozitorijs šajā saimniekdatorā",
+  "source.offsiteTip": "Attālinātā kopija",
   "source.offsiteTarget": "Attālinātais mērķis",
   "source.hint": "Atjaunošana un dzēšana ietekmē tikai izvēlēto avotu — vietējās rezerves kopijas dzēšana nekad neskar attālināto kopiju, un otrādi.",
   "offsite.copyDomainTitle": "Attālinātā kopija {domain}",
