@@ -767,7 +767,7 @@ export const en = {
   // switch" decision; see that doc's Motion Intensity section and
   // lib/motion.ts's own header for the full course-correction note. Same
   // "one product, every language" reasoning as the shape keys right above.
-  "settings.motion": "Motion",
+  "settings.motion": "Animations",
   "settings.motionHint": "How much every animation in the app moves — a manual dial that sits alongside your system's reduced-motion setting, never overrides it.",
   "settings.motion.off": "Off",
   "settings.motion.subtle": "Subtle",
@@ -2231,7 +2231,7 @@ export const de: Translations = {
   "settings.shape.round": "Rund",
   "settings.shape.soft": "Leicht",
   "settings.shape.square": "Eckig",
-  "settings.motion": "Bewegung",
+  "settings.motion": "Animationen",
   "settings.motionHint": "Wie stark sich alle Animationen der App bewegen — ein manueller Regler neben der Systemeinstellung für reduzierte Bewegung, der sie nie überschreibt.",
   "settings.motion.off": "Aus",
   "settings.motion.subtle": "Dezent",

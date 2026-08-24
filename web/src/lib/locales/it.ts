@@ -205,7 +205,7 @@ const it: Partial<Translations> = {
   "settings.shape.round": "Arrotondati",
   "settings.shape.soft": "Morbidi",
   "settings.shape.square": "Squadrati",
-  "settings.motion": "Movimento",
+  "settings.motion": "Animazioni",
   "settings.motionHint": "Determina quanto si muovono le animazioni dell'app — un regolatore manuale che si affianca all'impostazione di sistema per la riduzione del movimento, senza mai sostituirla.",
   "settings.motion.off": "Disattivato",
   "settings.motion.subtle": "Sobrio",

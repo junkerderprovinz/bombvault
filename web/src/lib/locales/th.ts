@@ -205,7 +205,7 @@ const th: Partial<Translations> = {
   "settings.shape.round": "โค้งมน",
   "settings.shape.soft": "โค้งเล็กน้อย",
   "settings.shape.square": "เหลี่ยม",
-  "settings.motion": "การเคลื่อนไหว",
+  "settings.motion": "แอนิเมชัน",
   "settings.motionHint": "กำหนดว่าแอนิเมชันทุกอย่างในแอปเคลื่อนไหวมากแค่ไหน — เป็นตัวปรับด้วยตนเองที่อยู่ควบคู่กับการตั้งค่าลดการเคลื่อนไหวของระบบ และจะไม่มีวันแทนที่การตั้งค่านั้น",
   "settings.motion.off": "ปิด",
   "settings.motion.subtle": "นุ่มนวล",

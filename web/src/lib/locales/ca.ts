@@ -623,7 +623,7 @@ const ca: Partial<Translations> = {
   "settings.shape.round": "Rodones",
   "settings.shape.soft": "Suaus",
   "settings.shape.square": "Quadrades",
-  "settings.motion": "Moviment",
+  "settings.motion": "Animacions",
   "settings.motionHint": "Com de fort es mouen totes les animacions de l'app — un control manual al costat de la configuració del sistema de moviment reduït, que mai la sobreescriu.",
   "settings.motion.off": "Desactivat",
   "settings.motion.subtle": "Subtil",

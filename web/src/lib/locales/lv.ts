@@ -623,7 +623,7 @@ const lv: Partial<Translations> = {
   "settings.shape.round": "Apaļi",
   "settings.shape.soft": "Mīksti",
   "settings.shape.square": "Taisnstūra",
-  "settings.motion": "Kustība",
+  "settings.motion": "Animācijas",
   "settings.motionHint": "Cik daudz kustas visas lietotnes animācijas — manuāla regulēšana blakus sistēmas samazinātas kustības iestatījumam, ko tā nekad nepārraksta.",
   "settings.motion.off": "Izslēgta",
   "settings.motion.subtle": "Neliela",

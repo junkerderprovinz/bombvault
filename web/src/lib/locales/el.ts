@@ -205,7 +205,7 @@ const el: Partial<Translations> = {
   "settings.shape.round": "Στρογγυλές",
   "settings.shape.soft": "Απαλές",
   "settings.shape.square": "Τετράγωνες",
-  "settings.motion": "Κίνηση",
+  "settings.motion": "Κινούμενα γραφικά",
   "settings.motionHint": "Καθορίζει πόσο κινούνται τα κινούμενα στοιχεία της εφαρμογής — μια χειροκίνητη ρύθμιση δίπλα στη ρύθμιση μειωμένης κίνησης του συστήματος, που ποτέ δεν την παρακάμπτει.",
   "settings.motion.off": "Απενεργοποιημένη",
   "settings.motion.subtle": "Διακριτική",

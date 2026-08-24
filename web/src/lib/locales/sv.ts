@@ -205,7 +205,7 @@ const sv: Partial<Translations> = {
   "settings.shape.round": "Runda",
   "settings.shape.soft": "Mjuka",
   "settings.shape.square": "Fyrkantiga",
-  "settings.motion": "Rörelse",
+  "settings.motion": "Animationer",
   "settings.motionHint": "Avgör hur mycket varje animation i appen rör sig — en manuell inställning vid sidan av systemets inställning för minskad rörelse, som aldrig åsidosätter den.",
   "settings.motion.off": "Av",
   "settings.motion.subtle": "Subtil",

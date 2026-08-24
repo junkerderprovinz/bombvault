@@ -205,7 +205,7 @@ const da: Partial<Translations> = {
   "settings.shape.round": "Runde",
   "settings.shape.soft": "Bløde",
   "settings.shape.square": "Firkantede",
-  "settings.motion": "Bevægelse",
+  "settings.motion": "Animationer",
   "settings.motionHint": "Bestemmer, hvor meget hver animation i appen bevæger sig — en manuel indstilling ved siden af systemets indstilling for reduceret bevægelse, som aldrig tilsidesætter den.",
   "settings.motion.off": "Fra",
   "settings.motion.subtle": "Diskret",

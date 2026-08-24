@@ -205,7 +205,7 @@ const zh: Partial<Translations> = {
   "settings.shape.round": "圆润",
   "settings.shape.soft": "微圆",
   "settings.shape.square": "直角",
-  "settings.motion": "动效",
+  "settings.motion": "动画",
   "settings.motionHint": "决定应用中每个动画的移动幅度——与系统的减弱动态效果设置并存的手动调节项，绝不会覆盖该设置。",
   "settings.motion.off": "关闭",
   "settings.motion.subtle": "轻微",

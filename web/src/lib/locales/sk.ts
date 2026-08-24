@@ -623,7 +623,7 @@ const sk: Partial<Translations> = {
   "settings.shape.round": "Zaoblené",
   "settings.shape.soft": "Jemné",
   "settings.shape.square": "Hranaté",
-  "settings.motion": "Pohyb",
+  "settings.motion": "Animácie",
   "settings.motionHint": "Do akej miery sa hýbu všetky animácie v aplikácii — manuálny ovládač popri systémovom nastavení obmedzeného pohybu, ktorý nikdy nepreváži.",
   "settings.motion.off": "Vypnuté",
   "settings.motion.subtle": "Jemný",

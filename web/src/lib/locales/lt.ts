@@ -623,7 +623,7 @@ const lt: Partial<Translations> = {
   "settings.shape.round": "Apvalūs",
   "settings.shape.soft": "Švelnūs",
   "settings.shape.square": "Kampuoti",
-  "settings.motion": "Judėjimas",
+  "settings.motion": "Animacijos",
   "settings.motionHint": "Kiek juda visos programos animacijos — rankinis reguliatorius šalia sistemos sumažinto judėjimo nustatymo, kurio jis niekada neperrašo.",
   "settings.motion.off": "Išjungta",
   "settings.motion.subtle": "Subtilus",

@@ -200,7 +200,7 @@ const pl: Partial<Translations> = {
   "settings.shape.round": "Zaokrąglone",
   "settings.shape.soft": "Łagodne",
   "settings.shape.square": "Kwadratowe",
-  "settings.motion": "Ruch",
+  "settings.motion": "Animacje",
   "settings.motionHint": "Określa, jak bardzo poruszają się animacje w aplikacji — ręczne ustawienie obok systemowego ustawienia ograniczonego ruchu, którego nigdy nie zastępuje.",
   "settings.motion.off": "Wyłączony",
   "settings.motion.subtle": "Subtelny",
