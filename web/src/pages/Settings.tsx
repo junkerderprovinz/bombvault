@@ -39,7 +39,7 @@ import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, type MotionIntensity } from "../lib/motion";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
-import { Flag, IconAdd, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose } from "../components/Sidebar";
+import { Flag, IconAdd, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose, IconCopy } from "../components/Sidebar";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
 
 // AboutFooter shows the running version (linking to the releases page) and a
@@ -62,12 +62,20 @@ function AboutFooter() {
     // preview — none of which a synthetic onClick reproduces.
     <div className="pt-6 pb-4 flex flex-col items-center gap-1.5 text-xs text-carbon-textMuted">
       {version && (
+        // tone="muted" (GlimStone follow-up round, jdp's live review: "Die
+        // Versionsnummern sollen keinen hellen Hintergrund haben" — this was
+        // tone="neutral", i.e. a bg-carbon-surface2 pill, a visibly pale
+        // #e8e8e8 chip against the near-white page ground in light theme.
+        // See Badge.tsx's own `muted` tone comment for the full reasoning —
+        // a version number is a plain metadata caption, the same register
+        // as Fleet.tsx's peer-version text or this Card's own Import-preview
+        // `<dd>` rows, not a status chip that needs a tinted surface.
         <Badge
           as="a"
           href="https://github.com/junkerderprovinz/bombvault/releases"
           target="_blank"
           rel="noopener noreferrer"
-          tone="neutral"
+          tone="muted"
           size="small"
           title={`BombVault ${version}`}
         >
@@ -1284,13 +1292,28 @@ chmod 600 /root/.ssh/authorized_keys`
             <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {pub || "—"}
             </code>
-            <button
+            {/* GlimStone follow-up round (jdp, live review: "beide
+                Kopieren-Buttons sollen ein quadratischer Badge mit Glyph
+                sein"): was a short-text button (`px-3 py-2 text-xs`) — the
+                text is gone, an icon-only trigger needs the real
+                `.glim-bubble` tooltip IconTipButton gives, not a bare
+                `title=`. h-8 w-8 (32px), NOT guessed: verified live via
+                getComputedStyle against this exact row's own `<code>`
+                sibling (`p-2 text-xs`, renders 32px tall) — the same
+                measured-not-reused discipline, and the identical 32px
+                result, FolderBrowser.tsx's own "Durchsuchen" icon button
+                already established for its own `px-3 py-1.5` field
+                neighbour (see that file's own comment); `rounded-control`
+                for the same reason given there, this button sits flush
+                beside a `rounded-control` sibling. */}
+            <IconTipButton
               onClick={handleCopy}
               disabled={!pub}
-              className="shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast disabled:opacity-50"
+              tip={t("vm.ssh.copy")}
+              className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
             >
-              {t("vm.ssh.copy")}
-            </button>
+              <IconCopy />
+            </IconTipButton>
           </div>
         </div>
 
@@ -1306,13 +1329,20 @@ chmod 600 /root/.ssh/authorized_keys`
           </ol>
           <div className="flex items-start gap-2">
             <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
-            <button
+            {/* Same conversion, same measured 32px square — see the pub-key
+                copy button above for the full reasoning. This `<pre>`
+                sibling wraps to several lines (unlike the `<code>` above),
+                but the row stays `items-start` so the button never stretches
+                to match it — it keeps its own fixed 32px regardless, exactly
+                as it already did as a plain button before this round. */}
+            <IconTipButton
               onClick={handleCopyCmd}
               disabled={!pub}
-              className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
+              tip={t("vm.ssh.copyCmd")}
+              className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
             >
-              {t("vm.ssh.copyCmd")}
-            </button>
+              <IconCopy />
+            </IconTipButton>
           </div>
           {/* Task 5 (rule 13): was a plain underline-on-hover text link. Task 7:
               tone was "info" (the old fifth hue) only because it was the
@@ -4920,8 +4950,13 @@ function IconTabIntegrity() {
 function IconTabSystem() {
   // Sliders — system/advanced/SSH knobs. Distinct from IconTabGeneral's
   // rounded toggle switches (a discrete on/off pair) — these are inline
-  // continuous sliders, matching Sidebar.tsx's own IconConfig-vs-IconSettings
-  // "deliberately distinct so the two never read alike" precedent. Each
+  // continuous sliders instead. (Sidebar.tsx's own nav-rail IconConfig used
+  // to be this same sliders motif too — GlimStone follow-up round replaced
+  // THAT one with a padlock, jdp's live review: "sieht nicht gut aus" — see
+  // that file's own IconConfig comment; this tab-strip glyph is a separate,
+  // smaller-scale icon with its own real evenodd cut-out knobs, untouched by
+  // that round, so the "distinct from a toggle switch" reasoning below still
+  // holds on its own merits without needing that now-gone precedent.) Each
   // track + its knob is one evenodd path — the knob is a real cut-out, not
   // a second painted colour (see the fix note above this section).
   return (

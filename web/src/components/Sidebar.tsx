@@ -221,23 +221,53 @@ export function IconFiles() {
   );
 }
 
-// Sliders/tuner glyph for the Config self-backup tab — settings-like, but
-// deliberately distinct from the Settings cog below so the two never read alike.
-// FILLED (design-language.md "Icon glyphs", rule 220 — "a structural detail
-// that has to stay a thin line (a lock's shackle, a slider's track...)
-// renders as a thin filled shape, never stroke"): each track is now a thin
-// filled bar instead of a stroked line; the knob keeps the exact same
-// `var(--sidebar-surface, ...)` cutout-circle technique this glyph already
-// used for its two knobs (that part never was a stroke), just sitting on a
-// filled track now instead of a stroked one — same real slider silhouette
-// (a filled bar with a punched-out knob), no stroke render model left.
+// Padlock glyph for the Config self-backup tab — REDRAWN (GlimStone
+// follow-up round, jdp's live review, emphatic: "Selbstbackup-Tab: bitte ein
+// anderes Glyph verwenden, das sieht nicht gut aus"). The old sliders/tuner
+// glyph (two tracks + two knobs) is what actually looked wrong, and the
+// live screenshot this round pulled from the real deployed container showed
+// exactly why: its "knobs" were `fill="var(--sidebar-surface, transparent)"`
+// cutout circles, and `--sidebar-surface` is never actually DEFINED anywhere
+// in index.css — the fallback `transparent` is all it ever resolved to, in
+// EVERY theme and EVERY nav state (idle sidebar ground, hovered, and the
+// solid `bg-accent` selected background alike). A cutout that always shows
+// literally nothing is, by construction, invisible against any background
+// whatsoever — confirmed live: the two knobs never rendered at all, in
+// either state, leaving only the two flat bars, which read as a plain "="
+// sign, not "sliders." This wasn't a tuning problem the same shape could be
+// nudged out of; the whole "knob" concept needed dropping, not adjusting —
+// hence a full redesign rather than a path-data patch, per this round's own
+// instructions.
+//
+// New concept: "Selbst-Backup" is BombVault backing up its OWN settings/
+// config, not a domain it protects — a padlock ("this instance's own state,
+// kept secure") reads unambiguously at a glance and needs no internal detail
+// at all to be recognisable, sidestepping the whole "small internal feature
+// disappears at 16px" failure class above. Deliberately NOT a shield: this
+// app's own Settings-page tab strip already has a shield+checkmark glyph
+// for "Integrität" (IconTabIntegrity, Settings.tsx) — reusing that
+// silhouette for a DIFFERENT concept elsewhere in the same app would be a
+// fresh legibility problem of exactly the kind this round exists to fix, not
+// a solution to it. Deliberately NOT a gear-with-arrow either, per this
+// glyph's own long-standing "distinct from the Settings cog below" rule —
+// even a small secondary gear risks reading as "a second settings icon" two
+// rows away from the real one.
+//
+// Two plain filled shapes, no stroke, no cutout, no colour-on-colour overlap
+// (this file's own IconCopy comment names the exact two failure modes this
+// avoids): a ring-band shackle (the SAME two-concentric-arcs "thin filled
+// shape" technique IconRecovery below already uses for its own circular
+// arrow, just closed into a full loop instead of an open sweep) sitting
+// directly above a solid rounded-rect body — the shackle's own two straight
+// legs run flush into the body's top edge with zero gap, so the two pieces
+// read as one continuous padlock silhouette (exactly how a plain-colour
+// emoji/icon padlock always draws this — the outline alone carries the
+// whole shape, no internal keyhole needed or attempted).
 function IconConfig() {
   return (
     <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <rect x="3" y="5.35" width="14" height="1.3" rx="0.65" />
-      <rect x="3" y="13.35" width="14" height="1.3" rx="0.65" />
-      <circle cx="13.5" cy="6" r="2" fill="var(--sidebar-surface, transparent)" />
-      <circle cx="6.5" cy="14" r="2" fill="var(--sidebar-surface, transparent)" />
+      <path d="M6.6 9V6.4a3.4 3.4 0 1 1 6.8 0V9h-1.8V6.4a1.6 1.6 0 1 0-3.2 0V9Z" />
+      <rect x="4.2" y="9" width="11.6" height="8.6" rx="1.8" />
     </svg>
   );
 }
@@ -277,25 +307,39 @@ function IconRecovery() {
   );
 }
 
-// Inbox / tray-with-down-arrow glyph for the Receiver tab — "off-site copies
-// land here". FILLED (design-language.md "Icon glyphs"): the tray's outer
-// silhouette was ALREADY a closed shape under its old stroke, so per rule 218
-// it flips directly to `fill="currentColor"` with the same path data, no
-// redraw needed. The old inner "lip" curve (a purely decorative structural
-// line across the middle) is dropped rather than faked as a cutout — a
-// solid tray silhouette alone already reads clearly as "inbox/tray" at this
-// glyph's actual rendered size, and a groove cutout there would compete with
-// the arrow above it for the same small amount of negative space (this
-// file's own icon-legibility rule: appropriate negative space over cramming
-// in every original decorative line). The down-arrow above the tray (a
-// genuine line glyph per rule 219) is redrawn as a solid filled shaft +
-// triangular arrowhead, same silhouette a viewer already reads as "arrow".
+// Basket-with-down-arrow glyph for the Receiver tab — REDRAWN (GlimStone
+// follow-up round, jdp's live review, alongside IconConfig above:
+// "Der Glyph des Empfänger-Tabs ist auch nicht erkennbar was es sein soll").
+// The old inbox/tray attempt already had the right IDEA (an arrow dropping
+// into a tray — jdp's own task brief later independently suggested the same
+// motif back) but the geometry didn't execute it: pulling the live-rendered
+// coordinates, the arrow's shaft+arrowhead (y 5.75–12.2) sat almost entirely
+// INSIDE the tray silhouette's own bounding box (y 3.75–15.25+), both filled
+// with the identical `currentColor` — two same-colour opaque shapes with no
+// gap between them simply fuse into one solid region (this file's own
+// IconCopy comment names this same failure mode), which is exactly what the
+// live screenshot confirmed: a single indistinct rounded blob, no visible
+// arrow, no visible tray opening.
+//
+// Fix: the SAME two ingredients (arrow above, receptacle below), but with a
+// real, deliberate vertical GAP between the arrowhead's tip and the
+// receptacle's own top edge — nothing drawn in that band at all, so it
+// reads as true empty space above whatever sits behind the icon (idle
+// sidebar ground or the selected `bg-accent` fill alike), needing no CSS
+// variable or cutout trick to stay correct in every state. The receptacle
+// itself is now an open-top basket (a wider top edge tapering to a
+// rounded-corner bottom, a genuine trapezoid) rather than the old fully
+// closed tray outline — a plainer silhouette than "closed box", and visibly
+// distinct from IconDownload's own arrow-over-a-flat-bar glyph
+// (components/Sidebar.tsx, 16×16 icon-only-badge scale) so the two don't
+// read as the same symbol at a glance despite sharing the same "arrow +
+// receptacle" grammar.
 export function IconReceiver() {
   return (
     <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M3 12.5 4.4 5.2A1.75 1.75 0 0 1 6.1 3.75h7.8a1.75 1.75 0 0 1 1.7 1.45L17 12.5v2.75a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 15.25V12.5Z" />
-      <rect x="9.3" y="5.75" width="1.4" height="3.6" rx="0.5" />
-      <path d="M7.7 9.2h4.6L10 12.2Z" />
+      <rect x="9.2" y="3" width="1.6" height="5.2" rx="0.6" />
+      <path d="M6.8 8.2h6.4L10 11.8Z" />
+      <path d="M4.2 13.5 15.8 13.5 14.2 17.8 5.8 17.8Z" />
     </svg>
   );
 }
@@ -531,6 +575,44 @@ export function IconClose() {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
       <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" transform="rotate(45 8 8)" />
       <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" transform="rotate(-45 8 8)" />
+    </svg>
+  );
+}
+
+// Copy/clipboard glyph — "Kopieren" (Settings.tsx's own VMSSHCard, GlimStone
+// follow-up round: "beide Kopieren-Buttons sollen ein quadratischer Badge mit
+// Glyph sein" — both the public-key copy and the authorize-command copy
+// button convert from a short-text button to this icon-only glyph). The
+// conventional "two overlapping sheets" copy silhouette, built the SAME way
+// IconAdd's "+" and IconClose's "×" already are — two plain filled
+// `<rect>`s, nothing hollowed out or colour-cut. Deliberately NOT the
+// evenodd "picture-frame ring behind a solid sheet" construction most icon
+// sets actually use for this glyph (Material Symbols' filled `content_copy`,
+// for one): that needs a real inner-rect subtraction, and this file's own
+// IconConfig/IconReceiver history (the sliders' punched "knobs" and the
+// tray's overlapping arrow, both GlimStone follow-up round, both fixed at
+// their own call sites) already proved what goes wrong the moment a detail
+// meant to read as a distinct shape ends up either (a) a `var(--sidebar-
+// surface, transparent)` cutout with no real surface value behind it to
+// show, invisible against ANY background by construction, or (b) painted in
+// the exact same `currentColor` as a shape already sitting under it, so the
+// two silhouettes fuse into one solid blob with no visible seam. Two plain
+// overlapping RECTS sidesteps both failure modes entirely: the LATER rect
+// (paint order, not z-index — SVG has none) simply covers whatever the
+// earlier one drew underneath it, so the exposed L-shaped sliver of the back
+// rect's own top-left corner is real, uncovered space with nothing special
+// needed to keep it visible — no CSS variable, no evenodd, no assumption
+// about what sits behind the icon at any given moment (idle sidebar ground
+// vs. the solid `bg-accent` this row's own background becomes once selected
+// — see NavItem's own `navActive`/`glim-hue-icon` comments for that same
+// idle/selected split, which this glyph never has to reason about at all
+// because it paints itself, not a hole into whatever the row's background
+// happens to be).
+export function IconCopy() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <rect x="2" y="2" width="9" height="9" rx="1.6" />
+      <rect x="5" y="5" width="9" height="9" rx="1.6" />
     </svg>
   );
 }
