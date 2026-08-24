@@ -990,6 +990,7 @@ const ko: Partial<Translations> = {
   "nav.files": "폴더",
   "files.title": "폴더",
   "files.subtitle": "이 서버의 어떤 폴더든 백업 — 일정, 오프사이트 복사본, 복원 지원.",
+  "files.setsTitle": "폴더 세트",
   "files.empty": "아직 폴더 세트가 없습니다. 폴더를 추가하세요 — 공유 폴더, 문서, 사진 등 마운트 아래의 모든 것 — BombVault가 다른 모든 것과 똑같이 보호합니다: 일정, 오프사이트 복사본, 무결성 검사, 복원. 별도의 파일 백업 도구가 필요 없습니다.",
   "files.addSet": "폴더 세트 추가",
   "files.editSet": "폴더 세트 편집",

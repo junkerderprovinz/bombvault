@@ -998,6 +998,7 @@ const da: Partial<Translations> = {
   "nav.files": "Mapper",
   "files.title": "Mapper",
   "files.subtitle": "Sikkerhedskopiér vilkårlige mapper på denne server — med tidsplaner, off-site-kopier og gendannelser.",
+  "files.setsTitle": "Mappesæt",
   "files.empty": "Ingen mappesæt endnu. Tilføj en mappe — shares, dokumenter, fotos, hvad som helst under dine monteringer — og BombVault beskytter den som alt andet: tidsplaner, off-site-kopier, integritetstjek og gendannelser. Intet separat filbackupværktøj nødvendigt.",
   "files.addSet": "Tilføj mappesæt",
   "files.editSet": "Redigér mappesæt",

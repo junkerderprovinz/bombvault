@@ -996,6 +996,7 @@ const es: Partial<Translations> = {
   "nav.files": "Carpetas",
   "files.title": "Carpetas",
   "files.subtitle": "Haz copias de cualquier carpeta de este servidor — con calendarios, copias externas y restauraciones.",
+  "files.setsTitle": "Conjuntos de carpetas",
   "files.empty": "Aún no hay conjuntos de carpetas. Añade una carpeta — shares, documentos, fotos, cualquier cosa bajo tus montajes — y BombVault la protege como todo lo demás: calendarios, copias externas, comprobaciones de integridad y restauraciones. No necesitas una herramienta de copias de archivos aparte.",
   "files.addSet": "Añadir conjunto de carpetas",
   "files.editSet": "Editar conjunto de carpetas",

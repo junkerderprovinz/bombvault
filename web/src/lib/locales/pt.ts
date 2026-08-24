@@ -998,6 +998,7 @@ const pt: Partial<Translations> = {
   "nav.files": "Pastas",
   "files.title": "Pastas",
   "files.subtitle": "Faça backup de quaisquer pastas deste servidor — com agendamentos, cópias externas e restauro.",
+  "files.setsTitle": "Conjuntos de pastas",
   "files.empty": "Ainda não há conjuntos de pastas. Adicione uma pasta — shares, documentos, fotos, qualquer coisa sob os seus mounts — e o BombVault protege-a como tudo o resto: agendamentos, cópias externas, verificações de integridade e restauro. Não é necessária uma ferramenta separada de backup de ficheiros.",
   "files.addSet": "Adicionar conjunto de pastas",
   "files.editSet": "Editar conjunto de pastas",

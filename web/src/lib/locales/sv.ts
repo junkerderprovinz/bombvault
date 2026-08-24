@@ -998,6 +998,7 @@ const sv: Partial<Translations> = {
   "nav.files": "Mappar",
   "files.title": "Mappar",
   "files.subtitle": "Säkerhetskopiera valfria mappar på den här servern — med scheman, off-site-kopior och återställningar.",
+  "files.setsTitle": "Mappuppsättningar",
   "files.empty": "Inga mappuppsättningar ännu. Lägg till en mapp — utdelningar, dokument, foton, vad som helst under dina monteringar — så skyddar BombVault den som allt annat: scheman, off-site-kopior, integritetskontroller och återställningar. Inget separat filbackupverktyg behövs.",
   "files.addSet": "Lägg till mappuppsättning",
   "files.editSet": "Redigera mappuppsättning",

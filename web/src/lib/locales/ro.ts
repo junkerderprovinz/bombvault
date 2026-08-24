@@ -1001,6 +1001,7 @@ const ro: Partial<Translations> = {
   "nav.files": "Foldere",
   "files.title": "Foldere",
   "files.subtitle": "Faceți backup oricăror foldere de pe acest server — cu programări, copii externe și restaurări.",
+  "files.setsTitle": "Seturi de foldere",
   "files.empty": "Încă nu există seturi de foldere. Adăugați un folder — partajări, documente, fotografii, orice se află sub montările dvs. — iar BombVault îl protejează ca pe orice altceva: programări, copii externe, verificări de integritate și restaurări. Nu este nevoie de un instrument separat de backup pentru fișiere.",
   "files.addSet": "Adaugă set de foldere",
   "files.editSet": "Editează setul de foldere",

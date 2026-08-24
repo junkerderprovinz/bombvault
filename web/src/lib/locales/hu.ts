@@ -1001,6 +1001,7 @@ const hu: Partial<Translations> = {
   "nav.files": "Mappák",
   "files.title": "Mappák",
   "files.subtitle": "Mentsd a szerver bármely mappáját — ütemezésekkel, telephelyen kívüli másolatokkal és visszaállításokkal.",
+  "files.setsTitle": "Mappakészletek",
   "files.empty": "Még nincsenek mappakészletek. Adj hozzá egy mappát — megosztások, dokumentumok, fotók, bármi a csatolásaid alatt — és a BombVault ugyanúgy védi, mint minden mást: ütemezések, telephelyen kívüli másolatok, integritás-ellenőrzések és visszaállítások. Nincs szükség külön fájlmentő eszközre.",
   "files.addSet": "Mappakészlet hozzáadása",
   "files.editSet": "Mappakészlet szerkesztése",

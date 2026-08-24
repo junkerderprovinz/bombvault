@@ -998,6 +998,7 @@ const tr: Partial<Translations> = {
   "nav.files": "Klasörler",
   "files.title": "Klasörler",
   "files.subtitle": "Bu sunucudaki herhangi bir klasörü yedekleyin — zamanlamalar, site dışı kopyalar ve geri yüklemelerle.",
+  "files.setsTitle": "Klasör setleri",
   "files.empty": "Henüz klasör seti yok. Bir klasör ekleyin — paylaşımlar, belgeler, fotoğraflar, bağlama noktalarınızın altındaki her şey — BombVault onu diğer her şey gibi korur: zamanlamalar, site dışı kopyalar, bütünlük denetimleri ve geri yüklemeler. Ayrı bir dosya yedekleme aracına gerek yok.",
   "files.addSet": "Klasör seti ekle",
   "files.editSet": "Klasör setini düzenle",

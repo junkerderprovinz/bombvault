@@ -995,6 +995,7 @@ const nl: Partial<Translations> = {
   "nav.files": "Mappen",
   "files.title": "Mappen",
   "files.subtitle": "Maak een back-up van willekeurige mappen op deze server — met planningen, off-site kopieën en herstel.",
+  "files.setsTitle": "Mappensets",
   "files.empty": "Nog geen mappensets. Voeg een map toe — shares, documenten, foto's, alles onder je mounts — en BombVault beschermt hem zoals al het andere: planningen, off-site kopieën, integriteitscontroles en herstel. Geen aparte tool voor bestandsback-ups nodig.",
   "files.addSet": "Mappenset toevoegen",
   "files.editSet": "Mappenset bewerken",

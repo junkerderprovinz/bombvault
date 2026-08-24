@@ -48,6 +48,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
+import { InfoBubble } from "../components/InfoBubble";
 import { Toggle } from "../components/Toggle";
 import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
@@ -828,9 +829,29 @@ function FileSetDialog({
 
   // Portal to <body> so the fixed overlay can never be trapped by an ancestor's
   // CSS transform (belt-and-braces with the bv-page-in keyframe fix, #62).
+  //
+  // GlimStone follow-up pass (jdp live review: "wird das Fenster zu weit oben
+  // eingeblendet, dort sitzt der Cardtitelbadge nicht richtig"): was
+  // `items-start` (top-anchored, only the backdrop's own `p-4` = 16px above
+  // the relative shell) — for THIS dialog's actual short, single-screen
+  // content that left the heading Badge's own -11px notch poking up to just
+  // ~5px below the literal browser-viewport edge (measured live), reading as
+  // a flat rectangle jammed into the corner rather than a notch with any
+  // breathing room. `items-center` is the same fix ConfirmDialog.tsx/
+  // WhatsNewDialog.tsx/ErrorDetailPanel.tsx already use for their own
+  // tone="heading" notch — safe here for the identical reason theirs is
+  // safe: the visible box below is capped at `max-h-[90vh]`, strictly under
+  // the 100vh flex container, so a centred item's top offset is always
+  // positive (never negative/off-screen) regardless of content height —
+  // short content (like this one) gets comfortable margin on all sides,
+  // and content that grows toward the 90vh cap still centres safely with
+  // `overflow-y-auto` on the backdrop covering the rest. Same family, same
+  // fix still owed to Receiver.tsx's ReceiverDialog and Fleet.tsx's own two
+  // `items-start` dialogs (identical copy-pasted shell) — flagged, not
+  // touched here (scoped to the Ordner tab this review round covered).
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
     >
       {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
@@ -1219,6 +1240,18 @@ export function Files() {
   // enabled set that has a source folder; per-set progress shows on the cards.
   const backupableIds = sets.filter((s) => s.enabled && s.path !== "").map((s) => s.id);
 
+  // jdp live review ("Ordnerset hinzufügen Button rechts oben kann weg, der
+  // ist redundant"): the empty-state Card below already carries its own
+  // prominent "Add folder set" (+ "Add preset", where offered) CTA, so
+  // showing the identical pair a second time in the top-right actions bar
+  // was pure duplication — confirmed both call the exact same handlers
+  // (handleAddPreset/handleAddBlank). Gate the top-right pair on NOT being in
+  // that empty state; once a set exists the empty-state Card stops rendering
+  // and the top-right pair is the page's only entry point again, so "Add" is
+  // never unreachable. Mirrors the loading/error/empty guard already used
+  // for the empty-state block itself below.
+  const showEmptyState = !loading && !error && sets.length === 0;
+
   // GlimStone follow-up pass (v8.0.0): same "+N"/error note migrated off a
   // stuck local span onto a toast — mirrors Containers.tsx's backupSelected
   // (push + shakeBackupSelected).
@@ -1263,8 +1296,9 @@ export function Files() {
           </button>
           {/* Generic/TrueNAS-only one-click starting point (#134): Unraid
               already has the dedicated flash domain for host-level config, so
-              preset stays null (never offered) there. */}
-          {preset?.offered && (
+              preset stays null (never offered) there. Also hidden in the
+              empty state — see showEmptyState's own comment above. */}
+          {!showEmptyState && preset?.offered && (
             <button
               onClick={handleAddPreset}
               title={t("files.addPresetHint")}
@@ -1273,12 +1307,14 @@ export function Files() {
               {t("files.addPreset")}
             </button>
           )}
-          <button
-            onClick={handleAddBlank}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
-          >
-            {t("files.addSet")}
-          </button>
+          {!showEmptyState && (
+            <button
+              onClick={handleAddBlank}
+              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
+            >
+              {t("files.addSet")}
+            </button>
+          )}
         </div>
       </div>
 
@@ -1287,11 +1323,37 @@ export function Files() {
       )}
       {error && <p className="text-sm text-statusFail">{error}</p>}
 
-      {/* Empty state — the "no separate file-backup tool needed" pitch */}
-      {!loading && !error && sets.length === 0 && (
-        <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+      {/* Empty state — the "no separate file-backup tool needed" pitch.
+          GlimStone follow-up pass (jdp live review: "Die Card im Ordner-Tab
+          hat keine Cardtitelbadge mit dem Infotext der in der Card steht"):
+          this card had no heading at all — just the icon, the permanent
+          pitch paragraph, and the buttons — the one Card-shaped box on this
+          page that never got the tone="heading" notch every other Card in
+          the app carries. `relative glim-notch-card` (no separate inner
+          overflow-hidden box needed — unlike Config.tsx's backupTitle split,
+          this card was never `overflow-hidden` to begin with, so a single
+          div can host both the badge's positioned ancestor and the visible
+          surface, matching Config.tsx's own snapshotsTitle card). The old
+          permanent `<p>{t("files.empty")}</p>` reads once and then costs
+          vertical space forever (rule 8) — moved verbatim onto the new
+          heading Badge as an `onAccent` InfoBubble instead, same content,
+          zero new i18n keys for the body (mirrors Flash.tsx's
+          backupTitle/restoreNote pass). hueIndex={0}: the only tone="heading"
+          notch on this page's own body (the dialog's h2 badge deliberately
+          carries no hueIndex, same as every other dialog title in the app),
+          and mutually exclusive with FileSetRow's OWN rainbowAt(index) tint
+          (this card only renders while the list is empty, i.e. never
+          alongside a single FileSetRow), so there is no position to collide
+          with. */}
+      {showEmptyState && (
+        <div className="relative glim-notch-card bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
+          <h2 className="flex items-center">
+            <Badge tone="heading" size="heading" wrap hueIndex={0}>
+              {t("files.setsTitle")}
+              <InfoBubble tip={t("files.empty")} onAccent />
+            </Badge>
+          </h2>
           <EmptyStateIcon icon={IconFiles} />
-          <p className="text-sm text-carbon-textMuted max-w-xl">{t("files.empty")}</p>
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {preset?.offered && (
               <button

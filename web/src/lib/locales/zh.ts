@@ -990,6 +990,7 @@ const zh: Partial<Translations> = {
   "nav.files": "文件夹",
   "files.title": "文件夹",
   "files.subtitle": "备份此服务器上的任意文件夹 — 支持计划任务、异地副本和恢复。",
+  "files.setsTitle": "文件夹集",
   "files.empty": "还没有文件夹集。添加一个文件夹 — 共享、文档、照片，挂载点下的任何内容 — BombVault 会像保护其他内容一样保护它：计划任务、异地副本、完整性检查和恢复。无需单独的文件备份工具。",
   "files.addSet": "添加文件夹集",
   "files.editSet": "编辑文件夹集",
