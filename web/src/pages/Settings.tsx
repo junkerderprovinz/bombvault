@@ -3358,12 +3358,26 @@ function NotifyCard({
           `<label>` wrapping a multi-segment control hands its click to the
           first segment and announces that segment's name as the label's own
           name to a screen reader — the same trap the drill-kind Selector
-          below in this file already avoids). Kept the same `flex flex-col
-          gap-1` shape as `labelCls` (now on a `<div>`, not a `<label>`) so
-          this field still stacks caption-above-control like every sibling
-          field in this Card. */}
-      <div className={labelCls}>
-        <span>{t("notify.on")}</span>
+          below in this file already avoids).
+            Follow-up (jdp, live-review: "Benachrichtigen bei nie, Fehler,
+          Erfolg und Fehler soll ein horizontaler Selektor sein (in gleicher
+          Zeile wie 'Benachrichtigung')"): the Selector itself was already
+          horizontal (the `select="one"` chip row above), but the wrapping
+          div still used `labelCls`'s `flex flex-col gap-1` — that stacks the
+          caption ABOVE the control, not beside it, which is a different ask
+          than jdp meant. Swapped the wrapper to the exact
+          `flex items-center gap-2 flex-wrap` shape the drill-kind Selector
+          above already uses for the identical label-then-Selector-in-one-row
+          layout (same file, search "drill.kindLabel") — label and Selector
+          now sit on one line, wrapping only if the viewport is too narrow to
+          fit both. Not `labelCls` anymore, so `text-carbon-textSub` is
+          spelled out explicitly on the span to keep this field's caption the
+          same color it always had (the drill-kind precedent uses
+          `text-carbon-textMuted` instead, a difference already present
+          between those two Cards before this change — not something to
+          unify here as a drive-by). */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-carbon-textSub">{t("notify.on")}</span>
         {/* key + conditional .glim-shake (revert+shake sweep, this Card's own
             `set`/`setImmediate` doc comment above): the same remount-to-
             replay mechanism every other failing control in this session
