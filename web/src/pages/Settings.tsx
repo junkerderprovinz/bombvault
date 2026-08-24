@@ -8489,13 +8489,26 @@ export function SettingsPage() {
           Restore-Prüfungen" toggle already had reversed, and this one was
           the leftover fourth instance the full-app grep in this pass caught.
           `hideLabel` is gone from ToggleRow entirely now (see its own header
-          comment) — the label is visible again, with `description` still
-          rendering under it exactly as before. */}
+          comment) — the label is visible again.
+            "Explanations belong in a bubble" pass (jdp): what explains this
+          toggle was a permanent `description` caption printed under the row
+          on every load, not an explanation gated behind the (i) affordance
+          the rest of this page already uses — the exact anti-pattern
+          Apprise's own ToggleRow comment above documents fixing the same way.
+          Moved verbatim into `hint` instead (ToggleRow's own InfoBubble prop,
+          same content contract as Card's `title`/`hint` pair): no wording
+          change needed on either the EN source string or its DE translation
+          — both were already a single compact two-sentence explanation, well
+          within the register settings.offsiteDrillsHelp's own much longer
+          hint text already establishes as normal for this bubble, so only
+          the display mechanism moved, not the copy. Only this call site's
+          own prop changed; the shared `settings.quietToastsHint` key and its
+          text are untouched in i18n.ts and all 40 satellite locale files. */}
       {tab === "general" && (
       <Card title={t("settings.quietToasts")} hueIndex={nextHue()}>
         <ToggleRow
           label={t("settings.quietToasts")}
-          description={t("settings.quietToastsHint")}
+          hint={t("settings.quietToastsHint")}
           checked={quiet}
           onChange={setQuiet}
         />
