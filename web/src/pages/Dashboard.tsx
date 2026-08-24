@@ -1895,7 +1895,24 @@ function SummaryCell({
       <h2 className="flex items-center min-w-0">
         <Badge tone="heading" size="heading" wrap className="max-w-full" hueIndex={hueIndex}>{label}</Badge>
       </h2>
-      <div className="bg-carbon-surface rounded-card px-4 py-3 flex flex-col gap-2 min-w-0 overflow-hidden">
+      {/* p-5 (was px-4 py-3, GlimStone follow-up pass, jdp emphatic: "Die
+          Cards von Gesamtzustand, Nächstes Backup, Letztes Ergebnis größer
+          machen damit der Inhalt nicht so knapp unter dem Cardtitelbadge
+          klebt" — make these 3 cards bigger, the content sticks too close
+          under the badge). The badge's own -50%-translate overlap always
+          pokes exactly 11px into whatever box sits below it (half of the
+          22px heading stage — see Badge.tsx's badgeClassName comment), so
+          the CLEARANCE between the badge's bottom edge and the first line of
+          real content is simply this box's own top padding minus that fixed
+          11px. py-3's 12px top padding left only ~1px of clearance — the "OK
+          Aktuell" text visibly touching the badge, confirmed live via
+          getBoundingClientRect (11px overlap vs. 12px padding). Card()
+          above uses p-5 (20px) for the exact same badge, giving it ~9px of
+          breathing room — the "comfortable" feel every other Dashboard card
+          already has. Matching that value here (rather than inventing a new
+          number) makes these three cells read as the same weight of card as
+          their neighbours, not a cramped miniature of one. */}
+      <div className="bg-carbon-surface rounded-card p-5 flex flex-col gap-2 min-w-0 overflow-hidden">
         {/* flex-wrap so a value that cannot fit on one line (e.g. status chip + a
             relative time in a narrow half-width cell) drops to a second line and stays
             fully readable, instead of being hard-clipped by overflow-hidden (#98). */}
@@ -2303,7 +2320,24 @@ export function Dashboard() {
   });
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl">
+    // GlimStone follow-up pass (live-review round, jdp emphatic: "Die
+    // Abstände der Cards passen nicht. Bitte systemweit anpassen!"): this
+    // page's own block-to-block rhythm was gap-6 (24px) — measured live via
+    // getBoundingClientRect, every adjacent pair of stacked cards sat exactly
+    // 24px apart, so it wasn't a mix of ad-hoc values WITHIN this page. The
+    // actual drift is against the rest of the app: Settings.tsx's own
+    // tab-panels wrapper already settled on gap-10 (40px) as "the same 40px
+    // rhythm every Card-to-Card gap already uses" (see that file's own
+    // comment, live-review round) and even bumped its heading-to-first-card
+    // gap to match it for the identical reason this pass now applies here —
+    // a smaller gap right before the first card read as visually mismatched
+    // next to the wider rhythm below it. Splitting this outer wrapper into
+    // its own gap-6 header/banner group plus an outer gap-10 mirrors that
+    // exact two-level structure (Settings' `hueSeq` comment calls out the
+    // same shared-counter pattern this page already reuses, for the same
+    // reason: matching an established convention beats reinventing one).
+    <div className="flex flex-col gap-10 max-w-6xl">
+      <div className="flex flex-col gap-6">
       {/* Page heading — fixed (contextual, not customizable). The pencil in the
           top-right corner toggles the customize/edit mode. */}
       <div className="flex items-start justify-between gap-4">
@@ -2377,6 +2411,7 @@ export function Dashboard() {
           <p className="text-xs text-carbon-textMuted">{t("dashboard.customizeHint")}</p>
         </div>
       )}
+      </div>
 
       {/* Ordered, visible blocks in a responsive grid: full-width cards span
           both columns, half-width cards flow two-per-row (request B). Below
@@ -2413,7 +2448,7 @@ export function Dashboard() {
           SummaryTier's own `healthHueIndex` doc for the exact live numbers)
           and fixed by resolving all three of its indices to plain numbers
           right here, the same way every other block already does. */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
         {(() => {
           let hueSeq = 0;
           const nextHue = () => hueSeq++;
