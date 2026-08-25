@@ -93,7 +93,7 @@ func mkrepo(t *testing.T, s *Service, sub string) string {
 	if err != nil {
 		t.Fatalf("resolve %q: %v", sub, err)
 	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // G301: test temp dir
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "config"), []byte("x"), 0o600); err != nil {
@@ -393,7 +393,7 @@ func TestClassifyClosedRepoVanishedMountIsUnreachable(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, root := newDetectSvc(t, eng)
 	repo := filepath.Join(root, "remotes", "nas", "containers")
-	if err := os.MkdirAll(repo, 0o755); err != nil {
+	if err := os.MkdirAll(repo, 0o755); err != nil { //nolint:gosec // G301: test temp dir
 		t.Fatal(err)
 	}
 	if err := st.MarkRepoEstablished(repo); err != nil {
