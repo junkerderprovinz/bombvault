@@ -4,9 +4,10 @@ import { useT } from "../lib/i18n";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
-import { withLtrFragments, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
+import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
@@ -517,6 +518,13 @@ function ForeignItemRow({
               />
               <span className="text-carbon-text">{t("recovery.foreignWholeSet")}</span>
             </label>
+            {/* jdp live-review ("Info-Texte in i Infobubbles"): the
+                foreignSubfolderHint <p> that appeared under this pair once
+                "pick a subfolder" was selected explained what the subset mode
+                DOES — permanent prose about this exact control, so it belongs
+                on this control's own label. On the label rather than the mode
+                block below because it is then readable BEFORE choosing the
+                mode, which is when the explanation is actually useful. */}
             <label className="inline-flex items-center gap-1.5 cursor-pointer">
               <input
                 type="radio"
@@ -527,11 +535,11 @@ function ForeignItemRow({
                 className="accent-accent"
               />
               <span className="text-carbon-text">{t("recovery.foreignPickSubfolder")}</span>
+              <InfoBubble tip={t("recovery.foreignSubfolderHint")} />
             </label>
           </div>
           {subsetActive && (
             <>
-              <p className="text-caption text-carbon-textMuted">{t("recovery.foreignSubfolderHint")}</p>
               <SnapshotFileTree
                 files={foreignFiles}
                 loading={filesLoading}
@@ -554,30 +562,41 @@ function ForeignItemRow({
       )}
       {domain === "vms" && (
         <div className="flex flex-col gap-1.5">
+          {/* jdp live-review ("Info-Texte in i Infobubbles"): the destination
+              hint under this picker moves onto the picker's own label bubble,
+              same as the connect step's location field above. */}
           <FolderBrowser
             label={t("recovery.foreignVMDest")}
             value={target}
             hostMountRoot={hostMountRoot}
             onChange={setTarget}
             placeholder="user/domains"
+            hint={t("recovery.foreignVMDestHint")}
           />
-          <p className="text-xs text-carbon-textMuted max-w-2xl">
-            {t("recovery.foreignVMDestHint")}
-          </p>
         </div>
       )}
       {domain === "containers" && (
         <div className="flex flex-col gap-1.5">
+          {/* Same move as the VM destination above, with one extra step: this
+              hint names a literal `/mnt/zfs` pool path INSIDE the translated
+              sentence, which needs bidi isolation or its leading `/` migrates
+              to the wrong end of the path under RTL (see ltrFragments.tsx).
+              An InfoBubble tip is a plain string that is ALSO the trigger's
+              aria-label, so the `<span dir="ltr">` form withLtrFragments emits
+              has nowhere to live here — `withLtrIsolates` applies the identical
+              isolation with the U+2066/U+2069 characters instead, off the SAME
+              fragment list, so the locale-parity guard still covers it. */}
           <FolderBrowser
             label={t("recovery.foreignAppdataDest")}
             value={target}
             hostMountRoot={hostMountRoot}
             onChange={setTarget}
             placeholder="user/appdata"
+            hint={withLtrIsolates(
+              t("recovery.foreignAppdataDestHint"),
+              FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS
+            )}
           />
-          <p className="text-xs text-carbon-textMuted max-w-2xl">
-            {withLtrFragments(t("recovery.foreignAppdataDestHint"), FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS)}
-          </p>
           <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer">
             <input
               type="checkbox"
@@ -805,18 +824,31 @@ function ForeignRestoreCard({
       : [];
 
   return (
-    <div className="flex flex-col gap-5 border-t border-carbon-border pt-5 mt-2">
+    // gap-10 + pt-10, matching the page rhythm the parent wrapper now uses
+    // (jdp: "Bitte machen wie sonst überall") — this section's two StepCards
+    // are cards on the same page and can't sit at half the gap the six above
+    // them use. `mt-2` is gone with it: the parent's own gap-10 already sets
+    // the distance to the divider, and pt-10 sets the same 40px below it, so
+    // the rule sits centred in one consistent break instead of 40px above /
+    // 28px below.
+    <div className="flex flex-col gap-10 border-t border-carbon-border pt-10">
       <div>
         {/* Task 5 (rule 11): page-level group heading, same Badge-in-<h2>
             treatment as Containers.tsx's StacksPanel `stack.title` heading.
             GlimStone follow-up pass ("half-overlap card notch"): `relative`
             added directly on this <h2> — no padding wraps it, so the h2
             itself is the right anchor; see Badge.tsx's badgeClassName
-            comment. */}
+            comment.
+            jdp live-review ("Info-Texte in i Infobubbles"): foreignIntro —
+            this section's whole pitch, a permanent paragraph under the
+            heading — is now the badge's own `onAccent` (i), the same fix
+            Flash.tsx's and Config.tsx's card headings already carry. */}
         <h2 className="relative flex items-center">
-          <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("recovery.foreignTitle")}</Badge>
+          <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>
+            {t("recovery.foreignTitle")}
+            <InfoBubble tip={t("recovery.foreignIntro")} onAccent />
+          </Badge>
         </h2>
-        <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.foreignIntro")}</p>
       </div>
 
       {/* Foreign step 1 — connect (read-only; nothing is saved). */}
@@ -824,16 +856,27 @@ function ForeignRestoreCard({
         {/* Local mounted path only — the backend never opens a remote/off-site
             repo here, so the other server's backup share must be mounted on this
             host and pointed at below. */}
+        {/* jdp live-review ("Info-Texte in i Infobubbles"): the standing hint
+            under this picker is now the picker's OWN label bubble —
+            FolderBrowser has carried a `hint` prop for exactly this since the
+            same convention landed on Settings/Config, so this is a move, not
+            new machinery. */}
         <FolderBrowser
           label={t("recovery.foreignLocation")}
           value={localPath}
           hostMountRoot={hostMountRoot}
           onChange={setLocalPath}
+          hint={t("recovery.foreignLocationHint")}
         />
-        <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.foreignLocationHint")}</p>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-carbon-textSub">{t("recovery.foreignKey")}</label>
+          {/* Same fix one level down: the key field's own permanent hint <p>
+              becomes the (i) on its label, matching how every labelled field
+              in Settings.tsx/Config.tsx already carries its explanation. */}
+          <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+            {t("recovery.foreignKey")}
+            <InfoBubble tip={t("recovery.foreignKeyHint")} />
+          </label>
           <RevealInput
             {...revealKey}
             value={key}
@@ -843,7 +886,6 @@ function ForeignRestoreCard({
             wrapperClassName="w-full"
             className={offsiteInput}
           />
-          <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.foreignKeyHint")}</p>
         </div>
 
         <div className="flex items-center gap-3 pt-1 flex-wrap">
@@ -1346,17 +1388,40 @@ export default function Recovery() {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className="flex flex-col gap-5 p-1">
+    // gap-10, not the gap-5 this page shipped with, and no `p-1`: jdp, live
+    // review — "Die Abstände zwischen den Cards sind zu klein. Die oberste
+    // Card ist auch zu weit oben. Bitte machen wie sonst überall."
+    //   40px (gap-10) is this app's settled page-level rhythm, already the
+    // value on Settings.tsx, Config.tsx, Dashboard.tsx, Receiver.tsx and
+    // Fleet.tsx — measured on Config.tsx before changing anything here, whose
+    // own wrapper comment states it as "the same corrected 40px DOM gap (29px
+    // visible, after the same 11px badge overlap every other gap-10 page also
+    // has)". Recovery was the last page still on the pre-correction 20px, so
+    // this is that one flat bump, governing BOTH complaints at once: the same
+    // wrapper gap sets heading→first-card and card→card.
+    //   The `p-1` went with it. It dated from this page's original scaffold
+    // (eddbb2e), no other page has one, and <main> already provides the
+    // page's own p-6 inset — it was 4px of extra ground on one page only,
+    // which is exactly the "wie sonst überall" this round is about.
+    <div className="flex flex-col gap-10">
       <div>
+        {/* The page's <h1> + subtitle pair, kept as-is: every page in this app
+            renders a plain `<p>` subtitle under its own heading (Config's
+            config.subtitle, Fleet's, Receiver's, Dashboard's), so this one is
+            the page's own standing description, not a per-control
+            explanation the "Infotexte in i Infobubbles" round is about. Folding
+            it into a bubble would make Recovery the one page whose heading
+            reads differently from all the others. */}
         <h1 className="text-lg font-semibold text-carbon-text">{t("recovery.pageTitle")}</h1>
         <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.intro")}</p>
       </div>
 
-      {/* Step 1 — Can BombVault read your backups? (repo-readable / APP_KEY) */}
-      <StepCard n={1} title={t("recovery.step1")} state={readableState} hueIndex={nextHue()}>
-        <p className="max-w-2xl">{t("recovery.appKeyExplain")}</p>
-
-        <div className="flex items-center gap-3 pt-1">
+      {/* Step 1 — Can BombVault read your backups? (repo-readable / APP_KEY)
+          jdp live-review ("Info-Texte in i Infobubbles"): the permanent
+          appKeyExplain <p> is now the heading badge's own (i), same treatment
+          Flash.tsx/Config.tsx/Settings.tsx's Cards already give theirs. */}
+      <StepCard n={1} title={t("recovery.step1")} hint={t("recovery.appKeyExplain")} state={readableState} hueIndex={nextHue()}>
+        <div className="flex items-center gap-3">
           <button
             onClick={() => void checkReadable()}
             disabled={checking}
@@ -1396,14 +1461,26 @@ export default function Recovery() {
           On a rebuilt box this pre-fills the attach + discover steps below; it
           ends with a self-restart, so it lives here rather than on the Config
           page. Skippable — a user without a settings backup attaches manually. */}
-      <StepCard n={2} title={t("recovery.stepConfig")} state={configStepState} hueIndex={nextHue()}>
+      {/* jdp live-review ("Info-Texte in i Infobubbles"): configHint and
+          configAppKeyReminder were two stacked permanent <p>s — one bubble on
+          the heading now carries both. They are one explanation split across
+          two sentences (what this step does, and the precondition it needs),
+          not two separate topics, so a second bubble on the same heading would
+          just be two (i) glyphs a reader has to hover in turn.
+          `recovery.configSkipped` below is NOT folded in: it is what the card
+          says once the step has been skipped — a state readout, and the card's
+          only content in that state. */}
+      <StepCard
+        n={2}
+        title={t("recovery.stepConfig")}
+        hint={`${t("recovery.configHint")} ${t("recovery.configAppKeyReminder")}`}
+        state={configStepState}
+        hueIndex={nextHue()}
+      >
         {configSkipped ? (
           <p className="text-sm text-carbon-textMuted">{t("recovery.configSkipped")}</p>
         ) : (
           <>
-            <p className="max-w-2xl">{t("recovery.configHint")}</p>
-            <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.configAppKeyReminder")}</p>
-
             {settings ? (
               <>
                 {/* Where the config backup lives: a local path or an off-site URL. */}
@@ -1523,9 +1600,19 @@ export default function Recovery() {
       </StepCard>
 
       {/* Step 3 — Attach your backups (consolidated; cloud creds un-gated here) */}
-      <StepCard n={3} title={t("recovery.step2")} state={previewed ? readableState : "idle"} hueIndex={nextHue()}>
-        <p className="max-w-2xl">{t("recovery.attachHint")}</p>
-
+      {/* jdp live-review ("Info-Texte in i Infobubbles"): attachHint (a
+          permanent <p> at the top of the card) and credsSaveHint (another one
+          buried between the credential cards and the Connect button) are both
+          "how this step works" prose with no live value in them, so both fold
+          into the heading's own (i) — same single-bubble reasoning as Step 2
+          above. */}
+      <StepCard
+        n={3}
+        title={t("recovery.step2")}
+        hint={`${t("recovery.attachHint")} ${t("recovery.credsSaveHint")}`}
+        state={previewed ? readableState : "idle"}
+        hueIndex={nextHue()}
+      >
         {settings ? (
           <>
             {/* Local backup paths (relative to the host mount). */}
@@ -1597,11 +1684,10 @@ export default function Recovery() {
             <CloudCard t={t} hueIndex={nextHue()} />
             <RcloneCard t={t} hueIndex={nextHue()} />
 
-            {/* Credentials save via each card's OWN Save button, not "Connect &
-                preview" below — flag it so the user saves creds first. */}
-            <p className="text-xs text-carbon-textMuted max-w-2xl">{t("recovery.credsSaveHint")}</p>
-
-            {/* Connect & preview — save paths/off-site/encryption, then re-check. */}
+            {/* Connect & preview — save paths/off-site/encryption, then re-check.
+                (The "credentials save via each card's own Save button" note that
+                used to sit here is now part of this step's heading bubble — see
+                the StepCard's own `hint` above.) */}
             <div className="flex items-center gap-3 pt-1">
               <button
                 key={connectPreviewShake}
@@ -1677,20 +1763,22 @@ export default function Recovery() {
                 sets carry no original path, so they're restored per-row (below)
                 into a chosen folder and restoreAll() deliberately skips them. */}
             {(containers.length > 0 || vms.length > 0) && (
+            /* jdp live-review: "Card 5: Der Wiederherstellen-Button der ganzen
+               Container soll ganz nach rechts." The button used to LEAD this
+               row, with the busy phrase and the ok/fail result trailing it.
+               Both readouts now come first and the button is pushed to the
+               row's far edge with `ms-auto` — this app's established
+               flush-right idiom for a control that shares its row with a
+               leading sibling (Containers.tsx's BackupButton/ExportButton
+               row; Flash.tsx's own comment spells out the same pair of
+               options and why `justify-end` is the one to use only when there
+               is nothing to push away from). `ms-auto`, not `ml-auto`: under
+               dir="rtl" the row's far edge is its left one, and the button
+               has to follow it.
+                 It still lands flush right when NEITHER readout is present —
+               a lone flex child with `margin-inline-start: auto` absorbs all
+               the free space on its start side. Verified live in both states. */
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => void restoreAll()}
-                disabled={restoreAllBusy || running.active}
-                className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {restoreAllBusy && (
-                  <span
-                    className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                    style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                  />
-                )}
-                {t("recovery.restoreAll")}
-              </button>
               {running.active && !restoreAllBusy && (
                 <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
               )}
@@ -1703,6 +1791,19 @@ export default function Recovery() {
                     .replace("{fail}", String(restoreAllResult.fail))}
                 </span>
               )}
+              <button
+                onClick={() => void restoreAll()}
+                disabled={restoreAllBusy || running.active}
+                className="ms-auto inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {restoreAllBusy && (
+                  <span
+                    className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+                    style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+                  />
+                )}
+                {t("recovery.restoreAll")}
+              </button>
             </div>
             )}
 
@@ -1756,12 +1857,17 @@ export default function Recovery() {
                 so each row needs its own target folder). */}
             {fileSets.length > 0 && (
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-carbon-textSub pt-2 pb-1">
+                {/* jdp live-review ("Info-Texte in i Infobubbles"): the
+                    filesRestoreHint <p> under this group label explained why
+                    each set needs its own target folder — permanent prose about
+                    a group of controls, so it moves onto the group's own label
+                    as the plain (neutral) InfoBubble, not the `onAccent` one:
+                    this is a bare eyebrow label on the card surface, not a
+                    solid-accent heading badge. */}
+                <span className="inline-flex items-center gap-1 self-start text-xs font-medium text-carbon-textSub pt-2 pb-1">
                   {t("nav.files")}
+                  <InfoBubble tip={t("recovery.filesRestoreHint")} />
                 </span>
-                <p className="text-xs text-carbon-textMuted pb-1">
-                  {t("recovery.filesRestoreHint")}
-                </p>
                 {fileSets.map((s) => (
                   <FileSetRecoveryRow
                     key={`files:${s.id}`}
@@ -1778,9 +1884,12 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 6 — Your recovery kit (safety net for next time) */}
-      <StepCard n={6} title={t("recovery.step5")} state="idle" hueIndex={nextHue()}>
-        <p className="max-w-2xl">{t("recovery.kitHint")}</p>
+      {/* Step 6 — Your recovery kit (safety net for next time)
+          jdp live-review ("Info-Texte in i Infobubbles"): kitHint was the
+          card's whole body apart from the download button — now the heading's
+          own (i). The `kitError` span below stays: it is the backend's own
+          refusal text, shown only when a download is actually refused. */}
+      <StepCard n={6} title={t("recovery.step5")} hint={t("recovery.kitHint")} state="idle" hueIndex={nextHue()}>
         <button
           type="button"
           key={kitShake}
