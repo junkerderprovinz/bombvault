@@ -410,6 +410,76 @@ func TestClassifyClosedRepoVanishedMountIsUnreachable(t *testing.T) {
 	}
 }
 
+// TestDeadRemoteHostIsUnreachableNotAbsent is a LIVE-CAUGHT regression. Pointed
+// at a host with nothing listening, restic answers with a message that contains
+// BOTH "unable to open config file" and the dial failure — so isRepoUninitialized
+// matches and a naive classification called a dead network "absent". That is the
+// one wrong answer this feature must never give: "absent" means "nothing exists,
+// your choice decides", which would license creating an empty repository beside
+// backups that were there all along.
+//
+// The message below is the verbatim text observed against the test container.
+func TestDeadRemoteHostIsUnreachableNotAbsent(t *testing.T) {
+	eng := &modeStubEngine{encrypted: map[string]bool{}}
+	s, _, _ := newDetectSvc(t, eng)
+
+	dead := errors.New(`Fatal: unable to open config file: Head "http://:***@192.168.20.199:8000/norepo/config": dial tcp 192.168.20.199:8000: connect: no route to host
+Is there a repository at the following location?
+rest:http://192.168.20.199:8000/norepo/`)
+
+	if isRepoUninitialized(dead) != true {
+		t.Fatal("precondition: the loose helper is expected to match this message — that is the trap being guarded")
+	}
+	if isRepoDefinitelyAbsent(dead) {
+		t.Fatal("a dial failure must never count as a definitely-absent repository")
+	}
+	state, msg := s.classifyClosedRepo("rest:http://192.168.20.199:8000/norepo", dead)
+	if state != RepoUnreachable {
+		t.Fatalf("state = %q, want unreachable for a dead remote host", state)
+	}
+	if msg == "" {
+		t.Fatal("expected the transport failure to be reported")
+	}
+}
+
+// TestReachableRemoteWithNoRepoIsAbsent is the other half: a REACHABLE backend
+// that simply holds no repository yet must still classify as absent, so the
+// stricter check above did not just turn every remote into "unknown".
+func TestReachableRemoteWithNoRepoIsAbsent(t *testing.T) {
+	eng := &modeStubEngine{encrypted: map[string]bool{}}
+	s, _, _ := newDetectSvc(t, eng)
+
+	empty := errors.New("Fatal: unable to open config file: repository does not exist\nIs there a repository at the following location?")
+	if !isRepoDefinitelyAbsent(empty) {
+		t.Fatal("a clean not-a-repository answer must still count as absent")
+	}
+	state, _ := s.classifyClosedRepo("rest:http://offsite:8000/repo", empty)
+	if state != RepoAbsent {
+		t.Fatalf("state = %q, want absent", state)
+	}
+}
+
+// TestTransportMarkersRejectAbsent walks the failure shapes a remote backend
+// realistically produces, each of which must read as "cannot tell".
+func TestTransportMarkersRejectAbsent(t *testing.T) {
+	cases := map[string]string{
+		"refused":     "Fatal: unable to open config file: dial tcp 10.0.0.5:8000: connect: connection refused",
+		"dns":         "Fatal: unable to open config file: dial tcp: lookup backup.example: no such host",
+		"timeout":     "Fatal: unable to open config file: Head \"https://x/config\": context deadline exceeded",
+		"auth":        "Fatal: unable to open config file: server response unexpected: 401 Unauthorized",
+		"forbidden":   "Fatal: unable to open config file: server response unexpected: 403 Forbidden",
+		"tls":         "Fatal: unable to open config file: x509: certificate signed by unknown authority",
+		"permissions": "Fatal: unable to open config file: open /mnt/x/config: permission denied",
+	}
+	for name, msg := range cases {
+		t.Run(name, func(t *testing.T) {
+			if isRepoDefinitelyAbsent(errors.New(msg)) {
+				t.Fatalf("%q must not be read as an absent repository", msg)
+			}
+		})
+	}
+}
+
 // TestDetectProbeNeverLocks proves the probe stays read-only in the one way that
 // can damage someone else's repository: every probe carries NoLock, so asking
 // what mode a repo is in never writes a lock file into it.
