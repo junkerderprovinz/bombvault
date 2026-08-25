@@ -42,6 +42,7 @@ export function IconTipButton({
   children,
   type = "button",
   ariaPressed,
+  ariaExpanded,
 }: {
   /** Hover/focus-revealed explanation AND the button's accessible name
    *  (`aria-label`) — an icon-only trigger has no other visible text a name
@@ -53,12 +54,24 @@ export function IconTipButton({
   /** `aria-pressed` for an icon-only trigger that is a TOGGLE rather than a
    *  one-shot action — it stays visibly "on" between clicks, so assistive tech
    *  needs the pressed state as well as the name. Added for Dashboard's
-   *  customize pencil (whole-app sweep: it was the last icon-only control in
-   *  the app still explaining itself with a native `title=` balloon, which is
-   *  exactly the anti-pattern this file's header says it exists to replace).
+   *  customize pencil, which was one of the icon-only controls still
+   *  explaining itself with a native `title=` balloon — exactly the
+   *  anti-pattern this file's header says it exists to replace.
+   *    (That change's own note called the pencil "the LAST" such control. It
+   *  was not: nine more survived it, in dashboardLayout's four card controls
+   *  and the Containers/VMs reorder arrows, and they only came to light when
+   *  bombvault/icon-badge-needs-tooltip started failing the build on them.
+   *  They are converted now, and the rule is what keeps the count at zero.)
    *  Omitted — the default — renders no attribute at all, so every existing
    *  one-shot action button is unchanged. */
   ariaPressed?: boolean;
+  /** `aria-expanded` for an icon-only trigger that OPENS something — a
+   *  disclosure chevron whose panel appears below it. Same contract as
+   *  `ariaPressed` above (omitted renders no attribute), added for
+   *  Containers' stack-restore disclosure toggle, which carried
+   *  `aria-expanded` on the plain `<button>` it replaced and must not lose
+   *  it on the way to a real tooltip. */
+  ariaExpanded?: boolean;
   /** Inline style, added for Badge.tsx's own `tip` branch (GlimStone
    *  follow-up round — the off-site tab's four action buttons converting
    *  from text badges to icon-only ones): a hue-enabled Badge needs its
@@ -129,6 +142,7 @@ export function IconTipButton({
         disabled={disabled}
         aria-label={tip}
         aria-pressed={ariaPressed}
+        aria-expanded={ariaExpanded}
         aria-describedby={open ? tooltipId : undefined}
         onMouseEnter={show}
         onMouseLeave={hide}

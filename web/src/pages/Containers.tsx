@@ -4,6 +4,7 @@ import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrde
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
+import { IconTipButton } from "../components/IconTipButton";
 import { DropdownListbox } from "../components/DropdownListbox";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
@@ -1941,18 +1942,23 @@ function StackCard({
           </p>
         </div>
         {/* Disclosure toggle (icon only) so the sole "Restore stack" label is the
-            action button inside the panel. */}
-        <button
+            action button inside the panel.
+              IconTipButton, not a plain <button> + `title`: it carried both
+            an `aria-label` and a duplicate native `title` of the same string,
+            the OS-balloon pairing IconTipButton.tsx exists to replace. Same
+            tip, same handler, same chrome — and `ariaExpanded` (added to
+            IconTipButton for exactly this call site) keeps the disclosure
+            state this trigger has always exposed. */}
+        <IconTipButton
+          tip={t("stack.restore")}
           onClick={() => setOpen((p) => !p)}
-          aria-expanded={open}
-          aria-label={t("stack.restore")}
-          title={t("stack.restore")}
+          ariaExpanded={open}
           className="shrink-0 inline-flex items-center rounded-control p-1.5 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
             <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
           </svg>
-        </button>
+        </IconTipButton>
       </div>
 
       {open && (
@@ -2348,28 +2354,32 @@ function BackupOrderPanel({
                   <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">
                     {name}
                   </span>
-                  <button
+                  {/* IconTipButton, not plain <button> + `title` (whole-app
+                      sweep — VMs.tsx's identical reorder pair converted in
+                      the same pass). Both carried an `aria-label` plus a
+                      duplicate native `title`, i.e. the OS balloon
+                      IconTipButton.tsx exists to replace. Same tips, same
+                      handlers, same disabled chrome. */}
+                  <IconTipButton
+                    tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
                     disabled={i === 0 || saveState === "saving"}
-                    aria-label={t("backupOrder.moveUp")}
-                    title={t("backupOrder.moveUp")}
                     className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 8.7 6 3.3 10.7 8.7Z" />
                     </svg>
-                  </button>
-                  <button
+                  </IconTipButton>
+                  <IconTipButton
+                    tip={t("backupOrder.moveDown")}
                     onClick={() => move(i, 1)}
                     disabled={i === names.length - 1 || saveState === "saving"}
-                    aria-label={t("backupOrder.moveDown")}
-                    title={t("backupOrder.moveDown")}
                     className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 3.3 6 8.7 10.7 3.3Z" />
                     </svg>
-                  </button>
+                  </IconTipButton>
                 </li>
               ))}
             </ol>
