@@ -285,6 +285,16 @@ export function hueVars(hex: string | undefined): Record<string, string> {
   return {
     "--item-hue": hex,
     "--item-hue-ink": contrastOn(hex),
+    // The OTHER end of contrastOn()'s own binary choice — always exactly the
+    // one of #161616/#FFFFFF that --item-hue-ink is not. Needed by any
+    // treatment that has to shade a hued fill AWAY from its own ink instead
+    // of toward it (Badge's split heading badge, see `.glim-badge-prefix` in
+    // index.css and Badge.tsx's `prefix` prop). Deriving it here, from the
+    // same contrastOn() call the ink itself comes from, is what keeps the
+    // pair guaranteed-opposite for EVERY hue including a user's own custom
+    // palette entry — a call site that tried to guess "the inverse is
+    // probably white" would be wrong for every dark hue.
+    "--item-hue-ink-inv": contrastOn(hex) === "#FFFFFF" ? "#161616" : "#FFFFFF",
     "--item-hue-soft": `rgba(${r}, ${g}, ${b}, 0.14)`,
     // The wash covers a whole row, so it sits far below the soft tint: at
     // 14% eight rows of eight hues stop being a list and start being a

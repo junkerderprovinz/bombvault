@@ -638,3 +638,99 @@ describe("Badge — wrap (grow-to-fit instead of clipping)", () => {
     expect(cls).toContain("text-caption");
   });
 });
+
+// ---------------------------------------------------------------------------
+// prefix — the split heading badge (Recovery's step numbers). See Badge.tsx's
+// `prefix` prop doc and index.css's `.glim-badge-prefix` for the reasoning;
+// these lock in the parts a later edit could silently undo.
+// ---------------------------------------------------------------------------
+describe("Badge — prefix (split heading badge)", () => {
+  function cells(node: unknown): ElementNode[] {
+    const el = root(node);
+    const kids = el.props!.children as { props?: { children?: unknown } };
+    const inner = (kids as ElementNode).props!.children as unknown[];
+    return inner.map(root);
+  }
+
+  it("renders two cells, prefix first, label second", () => {
+    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 3 }));
+    const [pre, label] = cells(el);
+    expect(visibleText(pre)).toBe("3");
+    expect(visibleText(label)).toBe("Attach");
+    expect(pre.props!.className as string).toContain("glim-badge-prefix");
+  });
+
+  it("hands the pill's own horizontal padding and gap to the cells", () => {
+    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 3 }));
+    const cls = el.props!.className as string;
+    // The pill keeps NO horizontal padding of its own — otherwise the shaded
+    // cell would start a stage-padding's width inside the badge.
+    expect(cls).toContain("px-0");
+    expect(cls.split(/\s+/)).not.toContain("px-3");
+    expect(cls).not.toContain("gap-1");
+    // overflow-hidden is what clips the leading cell's square start corners to
+    // the badge's real radius — in every shape-engine mode.
+    expect(cls).toContain("overflow-hidden");
+    // items-stretch, not items-center: the shaded cell has to reach the pill's
+    // top and bottom edges.
+    expect(cls).toContain("items-stretch");
+    expect(cls.split(/\s+/)).not.toContain("items-center");
+    const [, label] = cells(el);
+    const labelCls = label.props!.className as string;
+    expect(labelCls).toContain("px-3");
+    expect(labelCls).toContain("gap-1");
+  });
+
+  it("keeps the notch treatment intact — position, radius and elevation", () => {
+    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 1, insetStart: 5 }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("absolute");
+    expect(cls).toContain("top-0");
+    expect(cls).toContain("-translate-y-1/2");
+    expect(cls).toContain("rounded-pill");
+    expect(cls).toContain("start-5");
+    expect(cls).toContain("bg-accent");
+  });
+
+  it("keeps the colour engine wired — hueIndex still produces the notch hue hooks", () => {
+    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 1, hueIndex: 2 }));
+    const cls = el.props!.className as string;
+    expect(cls).toContain("glim-hue");
+    expect(cls).toContain("glim-notch-hue");
+  });
+
+  it("wrap moves the vertical padding onto the cells so the shaded cell reaches both edges", () => {
+    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 1, wrap: true }));
+    const cls = el.props!.className as string;
+    expect(cls.split(/\s+/)).not.toContain("py-0.5");
+    expect(cls).toContain("min-h-[22px]");
+    for (const cell of cells(el)) {
+      expect(cell.props!.className as string).toContain("py-0.5");
+    }
+  });
+
+  it("is ignored for every non-heading tone — a status chip never grows a second cell", () => {
+    for (const tone of ["ok", "fail", "warn", "active", "neutral", "muted"] as BadgeTone[]) {
+      const el = root(Badge({ children: "x", tone, prefix: 9 }));
+      const cls = el.props!.className as string;
+      expect(cls).not.toContain("overflow-hidden");
+      expect(visibleText(el)).toBe("x");
+    }
+  });
+
+  it("leaves an unsplit badge byte-identical to before", () => {
+    const withoutPrefix = root(Badge({ children: "Attach", tone: "heading", size: "heading" }));
+    const cls = withoutPrefix.props!.className as string;
+    expect(cls).toContain("items-center");
+    expect(cls).toContain("gap-1");
+    expect(cls).toContain("px-3");
+    expect(cls).not.toContain("overflow-hidden");
+  });
+
+  it("carries through the button and anchor variants too", () => {
+    for (const as of ["button", "a"] as const) {
+      const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 4, as }));
+      expect(visibleText(el)).toBe("4Attach");
+    }
+  });
+});
