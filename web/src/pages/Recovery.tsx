@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { useT } from "../lib/i18n";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
@@ -40,6 +40,10 @@ import {
   foreignRestore,
   listForeignFiles,
   foreignContainerWarnings,
+  detectEncryption,
+  type EncryptionDetection,
+  type EncryptionVerdict,
+  type RepoEncryption,
   type ForeignBindWarning,
   type Settings,
   type Container,
@@ -1193,6 +1197,173 @@ function CloudCredsDisclosure({
   );
 }
 
+// ---------------------------------------------------------------------------
+// EncryptionStatus — step 3's encryption block.
+//
+// jdp, live review: "Wieso brauchen wir da ein Passwort-Toggle? Muss ich selber
+// wissen ob ich verschluesselte Backups wiederherstelle...? Kann es das nicht
+// automatisch erkennen?" — it can, and now does.
+//
+// Settings.encryptionEnabled is not a preference, it is a FACT about the
+// repository: restic opens it either with the APP_KEY-derived password or with
+// --insecure-no-password, fixed at init time (see internal/api's ModeFor and
+// encryption_detect.go). So the backend PROBES the configured repos and the
+// setting follows what it finds. This component only renders the outcome.
+//
+// WHY THE SWITCH SURVIVES IN SOME STATES rather than being deleted outright:
+// detection can only report a fact when a repository actually exists. On a
+// genuine first-time setup nothing exists yet, and the user's choice really
+// does decide how the repos get created — deleting the control would leave that
+// case unanswerable on the page that needs it (Settings has its own copy, but
+// sending the user away mid-attach to set something this step depends on is
+// worse than showing one switch here). So:
+//
+//   detected (encrypted/plain) -> a plain status line, NO control. The common
+//                                 path — restoring an existing repo — asks the
+//                                 user for nothing at all, which is the point.
+//   absent / unconfigured      -> the real control: nothing to detect yet.
+//   unknown / conflict         -> the control as an OVERRIDE, next to a visible
+//                                 "couldn't tell"/"they disagree" line and the
+//                                 per-repo detail. Never a silent wrong guess.
+//
+// A disabled-looking switch is deliberately NOT used for the detected states: a
+// greyed switch still reads as "a thing you were supposed to set", which is
+// exactly the impression this change removes.
+//
+// Status colours (ok/warn/fail) stay OUTSIDE the accent/rainbow engine, same as
+// step 1's own readable/not-reachable line right above.
+// ---------------------------------------------------------------------------
+
+/** The tone each verdict is rendered in. `undecided` verdicts also show the
+ *  override switch and the per-repo breakdown. */
+const ENC_VERDICT_TONE: Record<EncryptionVerdict, string> = {
+  encrypted: "text-statusOk",
+  plain: "text-statusOk",
+  absent: "text-carbon-textMuted",
+  unconfigured: "text-carbon-textMuted",
+  unknown: "text-statusWarn",
+  conflict: "text-statusFail",
+};
+
+const ENC_VERDICT_MESSAGE: Record<EncryptionVerdict, TranslationKey> = {
+  encrypted: "recovery.encEncrypted",
+  plain: "recovery.encPlain",
+  absent: "recovery.encAbsent",
+  unconfigured: "recovery.encUnconfigured",
+  unknown: "recovery.encUnknown",
+  conflict: "recovery.encConflict",
+};
+
+/** Verdicts where the mode is NOT established, so the user still decides (or
+ *  overrides). Everything else is detected and needs no control. */
+const ENC_NEEDS_CONTROL: ReadonlySet<EncryptionVerdict> = new Set<EncryptionVerdict>([
+  "absent",
+  "unconfigured",
+  "unknown",
+  "conflict",
+]);
+
+/** Verdicts where naming the individual repositories actually helps: "they
+ *  disagree" is useless without knowing WHICH, and "couldn't tell" is useless
+ *  without knowing which one failed and why. */
+const ENC_SHOWS_REPOS: ReadonlySet<EncryptionVerdict> = new Set<EncryptionVerdict>([
+  "unknown",
+  "conflict",
+]);
+
+const ENC_STATE_KEY: Record<RepoEncryption["state"], TranslationKey> = {
+  encrypted: "recovery.encStateEncrypted",
+  plain: "recovery.encStatePlain",
+  absent: "recovery.encStateAbsent",
+  unreachable: "recovery.encStateUnreachable",
+};
+
+const ENC_DOMAIN_KEY: Record<string, TranslationKey> = {
+  containers: "nav.containers",
+  vms: "nav.vms",
+  flash: "nav.flash",
+  files: "nav.files",
+  config: "nav.config",
+};
+
+function EncryptionStatus({
+  t,
+  detection,
+  detecting,
+  encryptionEnabled,
+  onOverride,
+}: {
+  t: (k: TranslationKey) => string;
+  detection: EncryptionDetection | null;
+  detecting: boolean;
+  encryptionEnabled: boolean;
+  onOverride: (v: boolean) => void;
+}) {
+  // First run: say what is happening rather than flashing a control the probe
+  // is about to make unnecessary.
+  if (detecting && !detection) {
+    return (
+      <div className="flex items-center gap-2 pb-1">
+        <span
+          className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+        />
+        <span className="text-sm text-carbon-textMuted">{t("recovery.encChecking")}</span>
+      </div>
+    );
+  }
+
+  // The probe itself failed (network/HTTP, not a repo verdict). Treat it exactly
+  // like "unknown": undecided, control shown, never a guess.
+  const verdict: EncryptionVerdict = detection?.ok ? detection.verdict ?? "unknown" : "unknown";
+  const repos = detection?.repos ?? [];
+
+  return (
+    <div className="flex flex-col gap-2 pb-1">
+      <div className="flex items-start gap-1.5">
+        <p className={`text-sm leading-relaxed ${ENC_VERDICT_TONE[verdict]}`}>
+          {t(ENC_VERDICT_MESSAGE[verdict])}
+        </p>
+        {/* The MECHANISM is the explanation and belongs in the bubble; the line
+            above is a live status readout, which stays on the page. */}
+        <InfoBubble tip={t("recovery.encDetectHint")} />
+      </div>
+
+      {ENC_SHOWS_REPOS.has(verdict) && repos.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {repos.map((r, i) => (
+            <li
+              key={`${r.domain}-${r.source}-${r.name ?? ""}-${i}`}
+              className="text-xs text-carbon-textMuted leading-relaxed"
+            >
+              <span className="text-carbon-textSub">
+                {t(ENC_DOMAIN_KEY[r.domain] ?? "nav.containers")}
+                {" · "}
+                {t(r.source === "offsite" ? "recovery.encSourceOffsite" : "recovery.encSourceLocal")}
+                {r.name ? ` (${r.name})` : ""}
+              </span>
+              {": "}
+              {t(ENC_STATE_KEY[r.state])}
+              {r.error && (
+                <span dir="ltr" className="font-mono break-all"> — {r.error}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {ENC_NEEDS_CONTROL.has(verdict) && (
+        <ToggleRow
+          label={t("settings.encryptionLabel")}
+          hint={encryptionEnabled ? t("settings.encryptionOn") : t("settings.encryptionOff")}
+          checked={encryptionEnabled}
+          onChange={onOverride}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function Recovery() {
   const { t } = useT();
   const { confirm, confirmDialog } = useConfirm();
@@ -1217,6 +1388,47 @@ export default function Recovery() {
   // "Connect & preview" button replays `.glim-shake` once per failure, same
   // mechanism as VMExportButton/ExportButton's shakeNonce.
   const [connectPreviewShake, setConnectPreviewShake] = useState(0);
+
+  // Encryption mode — DETECTED from the repositories, not asserted by the user
+  // (see EncryptionStatus above for the whole rationale). `detecting` starts
+  // true because the probe runs on mount: the common path must be answered
+  // before the user could even reach for a control.
+  const [encDetection, setEncDetection] = useState<EncryptionDetection | null>(null);
+  const [encDetecting, setEncDetecting] = useState(true);
+
+  // runEncryptionDetect probes the configured repos and folds the result back
+  // into the local settings copy, so the step's own `settings.encryptionEnabled`
+  // matches what the backend just applied. Without that write-back the next
+  // connectPreview would PUT the stale local value straight back over the
+  // detected one.
+  //
+  // Returns the detection so connectPreview can use the fresh result without
+  // reading `encDetection` through a stale closure.
+  const runEncryptionDetect = useCallback(async (): Promise<EncryptionDetection | null> => {
+    setEncDetecting(true);
+    try {
+      const res = await detectEncryption();
+      setEncDetection(res);
+      if (res.ok && typeof res.encryptionEnabled === "boolean") {
+        const detected = res.encryptionEnabled;
+        setSettings((prev) => (prev ? { ...prev, encryptionEnabled: detected } : prev));
+        setSavedSettings((prev) => (prev ? { ...prev, encryptionEnabled: detected } : prev));
+      }
+      return res;
+    } catch (err) {
+      // A transport failure is NOT evidence about encryption. Surface it as the
+      // undecided state (EncryptionStatus renders a failed envelope as
+      // "unknown") rather than letting the page imply anything about the mode.
+      const failed: EncryptionDetection = {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+      setEncDetection(failed);
+      return failed;
+    } finally {
+      setEncDetecting(false);
+    }
+  }, []);
 
   // Config-restore step (runs BEFORE attach/discover): restore BombVault's OWN
   // settings first so the attach + discover steps come pre-filled. Optional and
@@ -1245,8 +1457,15 @@ export default function Recovery() {
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
         }
       })
-      .catch(() => undefined);
-  }, []);
+      .catch(() => undefined)
+      // Detect the encryption mode as soon as the settings (and therefore the
+      // repo locations) are loaded — AFTER, not in parallel, so the write-back
+      // into the local settings copy can't be overwritten by the getSettings
+      // response landing second. On a box that is already attached this is what
+      // makes the common path decision-free: by the time the user reads step 3,
+      // the mode is already established and shown.
+      .finally(() => void runEncryptionDetect());
+  }, [runEncryptionDetect]);
 
   // checkReadable runs the discover probe and classifies the outcome. Shared by
   // Step 1's "Re-check" and Step 2's "Connect & preview". It uses the READ-ONLY
@@ -1335,6 +1554,19 @@ export default function Recovery() {
         setFileSets([]);
         setDiscovered(null);
         setRestoreAllResult(null);
+        // Re-detect the encryption mode BEFORE the readability check, and only
+        // now that the new paths are persisted — detection probes the CONFIGURED
+        // locations, so running it any earlier would answer about the old ones.
+        // This is the moment the common path actually resolves: on a fresh box
+        // the mount-time probe had nothing configured to look at, and this run
+        // is the first that can see the repository the user just pointed at.
+        //
+        // The patch above deliberately still carries encryptionEnabled: for the
+        // undecidable cases (a brand-new empty location) that value IS the
+        // user's own choice and must be saved. When the mode is instead
+        // detectable, this call overwrites it with the truth a moment later and
+        // writes the result back into the local copy, so the two can't drift.
+        await runEncryptionDetect();
         const state = await checkReadable();
         if (state === "ok") push(t("recovery.readable"), "success");
       } else {
@@ -1347,7 +1579,7 @@ export default function Recovery() {
     } finally {
       setAttachState("idle");
     }
-  }, [savedSettings, settings, checkReadable, push, t]);
+  }, [savedSettings, settings, checkReadable, runEncryptionDetect, push, t]);
 
   // restoreOwnConfig stages a restore of BombVault's OWN settings and drives the
   // self-restart that applies it. It first persists the chosen config-repo
@@ -1836,6 +2068,25 @@ export default function Recovery() {
       >
         {settings ? (
           <>
+            {/* Encryption mode, FIRST in the card (jdp: "Card 3: kannst du den
+                Passwort-Toggle ganz nach oben in der Card verschieben?").
+                  Top placement is also what the block now earns: it stopped
+                being a field the user fills in and became this step's own
+                outcome line — "here is what your backups actually are". On
+                load it reads unconfigured/absent, and the moment "Connect &
+                preview" persists the paths below it turns into the detected
+                verdict. See EncryptionStatus for why a control still appears
+                in the undecidable cases and never in the detected ones. */}
+            <EncryptionStatus
+              t={t}
+              detection={encDetection}
+              detecting={encDetecting}
+              encryptionEnabled={settings.encryptionEnabled}
+              onOverride={(v) =>
+                setSettings((prev) => (prev ? { ...prev, encryptionEnabled: v } : prev))
+              }
+            />
+
             {/* Local backup paths (relative to the host mount). */}
             <FolderBrowser
               label={t("settings.containersPath")}
@@ -1906,36 +2157,19 @@ export default function Recovery() {
               ))}
             </StepDisclosure>
 
-            {/* Encryption on/off (reuses the Settings ToggleRow).
-                jdp, live review: "Card 3: Passworttoggle soll 'Passwort'
-                heissen und 'Passwort aus APP_KEY' soll in eine i Infobubble."
-                The row used to render settings.encryptionOn/Off as its LABEL,
-                so the caption itself changed text with the switch ("Aktiviert
-                (Passwort aus APP_KEY)" / "Deaktiviert (kein Passwort)") —
-                the one ToggleRow in the app whose label was a status readout
-                rather than a name. It is now a plain static caption like every
-                other row's, with the switch carrying on/off on its own.
-                  NOTHING IS LOST by that, which is the reason the state string
-                moved into the bubble instead of being dropped: those two
-                strings say more than "on"/"off" (WHERE the password comes
-                from when on, that there is none when off), and that extra
-                sentence is exactly bubble content. Read per render off the
-                live `settings.encryptionEnabled`, so the (i) still answers "is
-                it on right now, and what does that mean" concretely — the same
-                shape Settings.tsx's own copy of this row already uses for the
-                same value. */}
-            <div className="pt-1">
-              <ToggleRow
-                label={t("settings.encryptionLabel")}
-                hint={
-                  settings.encryptionEnabled
-                    ? t("settings.encryptionOn")
-                    : t("settings.encryptionOff")
-                }
-                checked={settings.encryptionEnabled}
-                onChange={(v) => setSettings((prev) => (prev ? { ...prev, encryptionEnabled: v } : prev))}
-              />
-            </div>
+            {/* The encryption ToggleRow used to sit HERE, between the off-site
+                disclosure and the credential cards. It moved to the TOP of this
+                card and became EncryptionStatus (jdp: "kannst du den
+                Passwort-Toggle ganz nach oben in der Card verschieben? Wieso
+                brauchen wir da ein Passwort-Toggle? ... Kann es das nicht
+                automatisch erkennen?"). It can: the mode is now probed off the
+                repositories themselves, so on the common path there is no
+                control here at all. See EncryptionStatus above.
+                  The old spacing fix this position needed (jdp: "Der darunter
+                folgende Badge ist zu nah am Passworttoggle-Text") is gone with
+                it — nothing sits between the disclosure and the credential
+                cards anymore, so the notch-badge gap described below is now
+                measured against the off-site disclosure's own bottom edge. */}
 
             {/* Cloud + rclone credential cards — the exact Settings components,
                 self-persisting via setCloud/setRclone (no duplicate persistence)
