@@ -628,12 +628,34 @@ function FleetPeerCard({
           >
             {t("fleet.edit")}
           </button>
+          {/* NO bespoke red on either state (whole-app sweep): both were
+              `bg-statusFailBg`/`text-statusFail`. The standing rule is that a
+              destructive action gets no special red treatment (jdp: "Keine
+              Sonderfarbe fuer den Entfernen-Badge"; RestorePanel's own delete
+              badge records the same reversal). Now the identical neutral
+              secondary chrome as the "Bearbeiten"/"Details"/"Speicher
+              anbieten" buttons it shares this row with, so the whole action
+              group reads as one set instead of one odd red member.
+                DELIBERATELY STILL A TEXT BUTTON, not the square icon badge
+              the Ordner/Flash/Container row actions became — do not "fix"
+              this to a glyph. The two-click inline confirm is a considered,
+              documented decision (i18n.ts, fleet.confirmRemove: "Downgraded
+              from window.confirm() to the two-click inline-confirm pattern
+              (form-engine Task 7) — removing a monitoring entry is
+              reversible"), and the LABEL is what carries the confirm state:
+              it flips "Entfernen" → "Entfernen bestätigen" → "Wird
+              entfernt…". An icon-only badge has no label to flip, so
+              converting it would silently delete the confirm affordance and
+              leave a trash glyph that appears to do nothing on first click.
+              The converted sites (Files' set remove, RestorePanel's delete)
+              could take a glyph precisely because they route through a
+              useConfirm DIALOG instead. */}
           {confirmRemove ? (
             <button
               key={shakeRemove}
               onClick={() => void handleRemove()}
               disabled={removing}
-              className={`inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+              className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
                 shakeRemove ? " glim-shake" : ""
               }`}
             >
@@ -642,7 +664,7 @@ function FleetPeerCard({
           ) : (
             <button
               onClick={() => setConfirmRemove(true)}
-              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+              className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
             >
               {t("fleet.remove")}
             </button>

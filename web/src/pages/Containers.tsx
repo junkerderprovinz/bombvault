@@ -290,11 +290,28 @@ function DeleteBackupsButton({
 
   return (
     <div className="flex flex-col gap-1">
+      {/* NO bespoke red (whole-app sweep). This was `bg-statusFailBg`/
+          `text-statusFail`, the last of that treatment on this page. The
+          standing rule is explicit — status colours stay OUT of the accent
+          engine AND a destructive action gets no special red of its own
+          either (jdp: "Keine Sonderfarbe fuer den Entfernen-Badge", and
+          RestorePanel's own delete badge records the same reversal: "Der
+          Löschen-Badge ist auch anders eingefärbt, soll nicht so sein").
+          Plain neutral secondary chrome now, identical to every other
+          secondary text button in the app.
+            Nothing about the action becomes ambiguous: the label says
+          "Alle Backups löschen" verbatim, and handleDelete still routes
+          through the shared useConfirm dialog
+          (t("containers.deleteBackupsConfirm")) before anything is deleted —
+          that confirmation is untouched. `glim-shake` on failure survives:
+          behaviour, not colour. Stays a TEXT button (not an icon badge) —
+          it is a labelled action that also carries an in-flight label, not
+          a row-action glyph pair. */}
       <button
         key={shake}
         onClick={() => void handleDelete()}
         disabled={pending}
-        className={`inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+        className={`inline-flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
           shake ? " glim-shake" : ""
         }`}
       >
@@ -763,10 +780,23 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
             <span dir="ltr" className="font-mono break-all text-start">{cp.path}</span>
             {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
           </span>
+          {/* NO bespoke red hover (whole-app sweep): this carried
+              `hover:text-statusFail`, the same "a destructive control paints
+              itself red" treatment removed everywhere else in this pass. It
+              is a bare `×` glyph with no resting fill, so it is NOT a square
+              icon badge and does not take the 32px badge treatment (see
+              Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block, which
+              carves out exactly this shape of affordance alongside the
+              backup-order reorder arrows).
+                `aria-label` was the hard-coded, untranslated English string
+              "remove" — the only one left in web/src, and invisible to the
+              i18n parity test because it never went through t(). Now
+              t("offsite.targets.remove"), an existing key already translated
+              in all 42 locales, so this adds no new key. */}
           <button
             onClick={() => removeCustomPath(cp.path)}
-            className="text-carbon-textMuted hover:text-statusFail px-1"
-            aria-label="remove"
+            className="text-carbon-textMuted hover:text-carbon-text px-1"
+            aria-label={t("offsite.targets.remove")}
           >
             ×
           </button>

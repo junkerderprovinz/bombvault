@@ -2197,12 +2197,19 @@ function UnraidTileSection({
               : t("settings.dashTileInstalledNoV")}
           </span>
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileInstalledHint")}</p>
+          {/* NO bespoke red ink (whole-app sweep): this was
+              `text-statusFail` on a neutral fill — the same "a destructive
+              control paints itself red" treatment removed from every other
+              such control in this pass. Neutral secondary ink now; the label
+              ("Kachel entfernen") and the in-flight label are what name the
+              action. `glim-shake`/`glim-hue`/hueStyle all survive unchanged —
+              behaviour and colour-engine membership, not a bespoke colour. */}
           <button
             type="button"
             key={shake.remove || 0}
             onClick={() => void run("remove")}
             disabled={busy !== "idle"}
-            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-statusFail hover:bg-carbon-hover disabled:opacity-50${
+            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
               shake.remove ? " glim-shake" : ""
             }${hueOn ? " glim-hue" : ""}`}
             style={hueStyle}
@@ -3147,13 +3154,25 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
             >
               {t("offsite.targets.edit")}
             </button>
+            {/* NO bespoke red on either state (whole-app sweep). The confirm
+                state was `bg-statusFailBg`/`text-statusFail` and the resting
+                state carried `text-statusFail` ink on a neutral fill — the
+                one control in this Card with a colour of its own. Standing
+                rule: a destructive action gets no special red treatment (jdp:
+                "Keine Sonderfarbe fuer den Entfernen-Badge"). Both states now
+                use the same neutral secondary chrome as the "Bearbeiten"
+                button beside them.
+                  Stays a TEXT button for the same reason Fleet's and
+                Receiver's remove pairs do: the two-click inline confirm needs
+                a label to flip ("Entfernen" → "Entfernen bestätigen" → "Wird
+                entfernt…"), which an icon-only badge has nowhere to put. */}
             {confirmRemove === s.id ? (
               <button
                 type="button"
                 key={shake[`remove:${s.id}`] || 0}
                 onClick={() => void remove(s.id)}
                 disabled={removingId === s.id}
-                className={`rounded-control bg-statusFailBg px-2.5 py-1 text-xs font-medium text-statusFail hover:bg-statusFailBgHover disabled:opacity-50${
+                className={`rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs font-medium text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
                   shake[`remove:${s.id}`] ? " glim-shake" : ""
                 }`}
               >
@@ -3164,7 +3183,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
                 type="button"
                 key={shake[`remove:${s.id}`] || 0}
                 onClick={() => setConfirmRemove(s.id)}
-                className={`rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-statusFail hover:bg-carbon-hover${
+                className={`rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover${
                   shake[`remove:${s.id}`] ? " glim-shake" : ""
                 }`}
               >

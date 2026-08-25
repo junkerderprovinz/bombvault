@@ -69,11 +69,26 @@ export function RestoreCancelButton({
 
   return (
     <>
+      {/* NO bespoke red hover (whole-app sweep). This carried
+          `hover:bg-statusFailBg hover:text-statusFail` — a colourless button
+          at rest that flashed red under the cursor. That is the SAME
+          treatment already removed from RestorePanel's delete badge,
+          Config's snapshot rows, Files' per-snapshot delete and Flash's and
+          VMs' own row actions (each of those call sites names it verbatim as
+          the defect: "a plain text button whose only colour was a bespoke
+          hover:bg-statusFailBg hover:text-statusFail red flash"). This was
+          the last surviving copy — grepped across web/src to confirm.
+            Nothing is lost by dropping it: the destructive weight of
+          cancelling a restore is carried by the confirm dialog handle()
+          already opens, which itself still uses the hard/light tone split
+          (fail for an in-place restore, warn for a restore-to-a-folder) —
+          that dialog tone is a STATUS surface and stays exactly as it was.
+          Only this trigger's own bespoke hover colour goes. */}
       <button
         type="button"
         onClick={() => void handle()}
         disabled={cancelling}
-        className="self-start inline-flex items-center rounded-control px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="self-start inline-flex items-center rounded-control px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {cancelling ? t("restore.cancelling") : t("restore.cancel")}
       </button>
