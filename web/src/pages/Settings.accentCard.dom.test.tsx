@@ -148,68 +148,98 @@ describe("AccentCard — editing a preset", () => {
   });
 });
 
-describe("AccentCard — reset presets (row-level, not per-preset)", () => {
-  // ALWAYS rendered, disabled (not hidden) while nothing has drifted —
-  // GlimStone follow-up round, jdp re-reporting after a prior round's fix
-  // didn't hold up live: "Bei der Akzentfarbe ist das Zurücksetzen immer
-  // noch kein Badge mit Glyph." Fresh live inspection found the DEFAULT
-  // state rendered no badge AT ALL (the previous `{!presetsAreDefault && ()}`
-  // conditional unmounted it entirely), which is exactly what a reviewer
-  // who never happened to edit a preset's own colour would see. Switched to
-  // `disabled={presetsAreDefault}` on an unconditionally-rendered Badge —
-  // the same pattern the rainbow-palette reset badge already used — so the
-  // control is a real, present, measurable badge at all times; only its
-  // enabled/disabled state changes. See AccentCard's own header comment in
-  // Settings.tsx for the full root-cause writeup.
-  it("the reset control is present but disabled while every preset still matches its shipped default", () => {
+// ---------------------------------------------------------------------------
+// ONE reset for the whole row (jdp, live-review, third re-report: "Der
+// Resetbutton ist da, hat aber keine Funktion und der Zurücksetzen-Text ist
+// immer noch da"). The row used to ship two competing controls — a preset-only
+// icon badge gated `disabled={presetsAreDefault}`, and an accent-only "Reset"
+// TEXT button gated `accentHex !== DEFAULT_ACCENT`. Because presets sit at
+// their shipped defaults for anyone who never opened a preset's editor
+// popover, the badge was permanently greyed out in every ordinary session
+// while the text link appeared right beside it. See AccentCard's own header
+// comment in Settings.tsx for the full root cause.
+//
+// What these tests deliberately exercise, rather than merely assert the
+// existence of: the control's ENABLED/DISABLED transitions in both drift
+// directions, and that clicking it actually changes stored state. Every prior
+// round's check ("the badge exists / has the right classes") passed against a
+// badge that could not be clicked, which is exactly how this shipped broken
+// three times.
+// ---------------------------------------------------------------------------
+const RESET_NAME = "Reset accent color and presets";
+
+describe("AccentCard — one row-level reset for BOTH the accent and the presets", () => {
+  it("is present but disabled while the accent AND every preset are at their shipped defaults", () => {
     renderCard();
     // Plain DOM property access, not toBeDisabled() — no @testing-library/
     // jest-dom in this repo, see ColorPickerPopover.dom.test.tsx's own header
     // comment; `.disabled` mirrors the native `disabled` attribute React's
     // `disabled={...}` prop sets on a real <button>.
-    const resetButton = screen.getByRole("button", { name: "Reset presets" }) as HTMLButtonElement;
+    const resetButton = screen.getByRole("button", { name: RESET_NAME }) as HTMLButtonElement;
     expect(resetButton).toBeTruthy();
     expect(resetButton.disabled).toBe(true);
   });
 
-  it("becomes enabled once a preset has drifted, and restores the ORIGINAL shipped defaults on click", () => {
+  // THE regression this round exists for: picking any non-default accent is
+  // the single most common thing a user does in this row, and it used to
+  // leave the badge dead.
+  it("becomes ENABLED as soon as only the ACTIVE ACCENT has drifted (presets untouched)", () => {
     renderCard();
-    fireEvent.click(screen.getByRole("button", { name: "Preset 4" }));
-    const hexField = screen.getByLabelText("Hex") as HTMLInputElement;
-    fireEvent.change(hexField, { target: { value: "#ABCDEF" } });
+    fireEvent.click(screen.getByRole("button", { name: "Preset 2" })); // Blue
+    expect(localStorage.getItem(ACCENT_KEY)).toBe(DEFAULT_ACCENT_PRESETS[1]);
+    // Presets are still byte-identical to their defaults here — under the old
+    // `disabled={presetsAreDefault}` gate this assertion would read `true`.
+    expect((screen.getByRole("button", { name: RESET_NAME }) as HTMLButtonElement).disabled).toBe(false);
+  });
 
-    const resetButton = screen.getByRole("button", { name: "Reset presets" }) as HTMLButtonElement;
+  it("becomes ENABLED as soon as only a PRESET has drifted", () => {
+    renderCard();
+    fireEvent.click(screen.getByRole("button", { name: "Preset 1" })); // already the default accent
+    fireEvent.change(screen.getByLabelText("Hex"), { target: { value: "#ABCDEF" } });
+    expect((screen.getByRole("button", { name: RESET_NAME }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("one click restores BOTH the active accent and the presets, then disables itself again", () => {
+    renderCard();
+    fireEvent.click(screen.getByRole("button", { name: "Preset 4" })); // Red, and opens its editor
+    fireEvent.change(screen.getByLabelText("Hex"), { target: { value: "#ABCDEF" } });
+    expect(localStorage.getItem(ACCENT_KEY)).toBe("#abcdef");
+
+    const resetButton = screen.getByRole("button", { name: RESET_NAME }) as HTMLButtonElement;
     expect(resetButton.disabled).toBe(false);
     fireEvent.click(resetButton);
 
     expect(JSON.parse(localStorage.getItem(PRESETS_KEY)!)).toEqual(DEFAULT_ACCENT_PRESETS);
-    // Row-level: resetting the PRESETS never touches the currently active
-    // accent — that is the separate "Reset" text button's own job.
-    expect(localStorage.getItem(ACCENT_KEY)).toBe("#abcdef");
-    // The control stays present, just becomes disabled again once nothing
-    // is left to reset — it never disappears.
-    expect((screen.getByRole("button", { name: "Reset presets" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(localStorage.getItem(ACCENT_KEY)).toBe(DEFAULT_ACCENT);
+    expect(document.documentElement.style.getPropertyValue("--accent")).toBe(DEFAULT_ACCENT);
+    // The control stays present, just becomes disabled again once nothing is
+    // left to reset — it never disappears.
+    expect((screen.getByRole("button", { name: RESET_NAME }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("is a SINGLE row-level control, not one reset per preset", () => {
+  it("is a SINGLE control — not one per preset, and not one per concern", () => {
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: "Preset 4" }));
     fireEvent.change(screen.getByLabelText("Hex"), { target: { value: "#ABCDEF" } });
-    expect(screen.getAllByRole("button", { name: "Reset presets" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: RESET_NAME })).toHaveLength(1);
   });
 });
 
-describe("AccentCard — the pre-existing active-accent reset is unaffected", () => {
-  it("still resets accentHex to DEFAULT_ACCENT, independent of the presets reset", () => {
+describe("AccentCard — the leftover 'Reset' TEXT button is gone", () => {
+  // Asserted in the exact state that used to render it: a non-default active
+  // accent. A check run only in the default state would have passed against
+  // the broken build too, since the old text button was itself conditional.
+  it("renders no bare 'Reset' text control while the accent is non-default", () => {
     renderCard();
-    fireEvent.click(screen.getByRole("button", { name: "Preset 4" }));
-    expect(localStorage.getItem(ACCENT_KEY)).toBe(DEFAULT_ACCENT_PRESETS[3]);
+    fireEvent.click(screen.getByRole("button", { name: "Preset 2" }));
+    expect(localStorage.getItem(ACCENT_KEY)).not.toBe(DEFAULT_ACCENT);
 
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(localStorage.getItem(ACCENT_KEY)).toBe(DEFAULT_ACCENT);
-    // The preset itself is untouched by the ACCENT reset.
-    expect(JSON.parse(localStorage.getItem(PRESETS_KEY) ?? "null") ?? DEFAULT_ACCENT_PRESETS).toEqual(
-      DEFAULT_ACCENT_PRESETS
-    );
+    expect(screen.queryByRole("button", { name: "Reset" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reset presets" })).toBeNull();
+    // Nothing anywhere in the card renders the word on its own as visible
+    // text — the surviving control is icon-only, its wording lives in the
+    // tooltip bubble/accessible name instead.
+    const texts = Array.from(document.querySelectorAll("button")).map((b) => b.textContent?.trim());
+    expect(texts).not.toContain("Reset");
   });
 });
