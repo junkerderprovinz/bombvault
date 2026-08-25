@@ -310,7 +310,9 @@ func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeT
 //
 // A REMOTE backend that answers restic's "repository does not exist" is the
 // established "reachable, just not created yet" signal (#117/#130) — the same
-// one listSnapshots and probeOffsiteRepo already treat as non-fatal.
+// one listSnapshots and probeOffsiteRepo already treat as non-fatal. Detection
+// needs a STRICTER reading of it than those callers do, see
+// isRepoDefinitelyAbsent.
 //
 // A LOCAL path needs more care, and reuses EnsureRepo's own three-way
 // distinction (#55/#120): a missing `config` at a location BombVault previously
@@ -320,7 +322,7 @@ func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeT
 // is simply missing its `config` is a genuine fresh location.
 func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptionState, string) {
 	if restic.IsRemoteRepo(repo) {
-		if isRepoUninitialized(probeErr) {
+		if isRepoDefinitelyAbsent(probeErr) {
 			return RepoAbsent, ""
 		}
 		return RepoUnreachable, scrubError(probeErr)
@@ -334,6 +336,55 @@ func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptio
 		return RepoUnreachable, scrubError(ErrBackupPathNotMounted)
 	}
 	return RepoAbsent, ""
+}
+
+// transportFailureMarkers are substrings that prove a probe failed to REACH the
+// backend, rather than reaching it and finding no repository. Caught on the live
+// test box: pointing an off-site repo at a host with nothing listening makes
+// restic answer
+//
+//	Fatal: unable to open config file: Head "http://…/config":
+//	dial tcp 192.168.20.199:8000: connect: no route to host
+//	Is there a repository at the following location?
+//
+// — which contains "unable to open config file", so isRepoUninitialized (and
+// therefore a naive "absent") matches a dead network. For listSnapshots and
+// probeOffsiteRepo that loose reading is harmless and deliberate (#117/#130:
+// report "empty, not fatal"). For THIS feature it is the exact wrong answer:
+// "absent" means "nothing exists, your choice decides", so a dead REST server
+// would license the user to pick a mode and have BombVault create a second,
+// empty repository beside backups that were there all along.
+var transportFailureMarkers = []string{
+	"dial tcp", "no route to host", "connection refused", "connection reset",
+	"network is unreachable", "no such host", "i/o timeout", "timeout",
+	"context deadline exceeded", "temporary failure in name resolution",
+	"server misbehaving", "broken pipe", "unexpected eof",
+	"tls", "certificate", "x509",
+	"401", "403", "unauthorized", "forbidden", "access denied",
+	"permission denied", "operation not permitted",
+}
+
+// isRepoDefinitelyAbsent reports whether err means "this location is reachable
+// and holds no repository" — and nothing else. It is deliberately STRICTER than
+// isRepoUninitialized: the uninitialized signal must be present AND no transport
+// failure may be named alongside it.
+//
+// The asymmetry is intentional. Guessing "unreachable" when a repo is merely
+// absent costs the user one visible "can't tell" line and a switch they set
+// themselves. Guessing "absent" when a repo is merely unreachable can silently
+// create an empty repository next to real backups. So anything ambiguous
+// resolves to unreachable.
+func isRepoDefinitelyAbsent(err error) bool {
+	if !isRepoUninitialized(err) {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	for _, marker := range transportFailureMarkers {
+		if strings.Contains(msg, marker) {
+			return false
+		}
+	}
+	return true
 }
 
 // foldEncryption folds the per-repository states into one verdict.
