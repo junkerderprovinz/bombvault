@@ -24,6 +24,7 @@ import { createRequire, registerHooks } from "node:module";
 import { pathToFileURL } from "node:url";
 import js from "@eslint/js";
 import reactHooks from "eslint-plugin-react-hooks";
+import bombvault from "./lint-rules/index.js";
 
 // The anchor file does not need to exist — it only pins module resolution to
 // the lint-ts/ directory, so `typescript` resolves to lint-ts/node_modules.
@@ -84,6 +85,44 @@ export default [
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // The settled UI conventions (lint-rules/, and its README for the full
+  // reasoning). These are house rules, not correctness rules, and they are
+  // errors on purpose: each one has already been broken, reported by jdp,
+  // fixed, and then broken again by a later round, because until now they
+  // lived only in prose and in a reviewer's memory.
+  // -------------------------------------------------------------------------
+  {
+    files: SRC,
+    plugins: { bombvault },
+    rules: {
+      "bombvault/icon-badge-needs-tooltip": "error",
+      "bombvault/one-icon-badge-size": "error",
+      "bombvault/no-status-color-on-control": "error",
+      "bombvault/control-reads-engine-tokens": "error",
+      "bombvault/page-uses-page-shell": [
+        "error",
+        {
+          // The page-shell exceptions, stated here rather than inferred, so
+          // that "Settings is allowed to differ" is a decision someone can
+          // read back — not a hole a future page falls through. Both are
+          // documented at length in src/lib/pageShell.ts.
+          exceptions: {
+            // Its 7-tab `size="lg" equalWidth` Selector strip measures 1424px
+            // in de; capping the root at PAGE_SHELL's 1152px breaks the strip
+            // onto two rows. Same 40px rhythm, no width cap.
+            "Settings.tsx": "PAGE_SHELL_TABBED",
+            // Not a routed page at all: Layout.tsx returns it BEFORE the
+            // sidebar/<main> shell when auth is blocked, so it never sits
+            // under <Outlet />. Its `w-full max-w-sm` is a centred
+            // full-screen auth card, a different layout primitive.
+            "Login.tsx": null,
+          },
         },
       ],
     },

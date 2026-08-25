@@ -1,7 +1,19 @@
 # .github/workflows/lint.yml
-name: Lint
+#
+# The web job is where the settled UI conventions are enforced: `npm run lint`
+# runs web/lint-rules/ (an icon badge without a tooltip, a square icon badge at
+# the wrong size, a page off the shared shell, a destructive control painting
+# itself red, a control hardcoding a radius or an accent), and `npm test` runs
+# those rules' own tests plus the routed-page coverage guard. Both were already
+# steps here, so the conventions need no job of their own.
+#
+# `experiment/**` is in the push triggers on purpose. Every UI round of this
+# project happens on an experiment branch and merges from there, so a gate that
+# only ran on main would not be seen until after the work it was meant to catch
+# — which is the same "it lived somewhere nobody ran it" failure the lint rules
+# themselves exist to fix. Public repo, so the extra runs cost nothing.
 on:
-  push: { branches: [main, feat/v4] }
+  push: { branches: [main, feat/v4, "experiment/**"] }
   pull_request: { branches: [main] }
 jobs:
   go:

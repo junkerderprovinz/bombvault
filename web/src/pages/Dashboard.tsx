@@ -1462,6 +1462,14 @@ function HealthHeatmapCard({
                   // chrome, so only the cell's own size/fill classes remain.
                   // The tooltip stays the plain "<date>: N ok, N failed" data
                   // line (it doubles as the accessible name).
+                  //
+                  // bv-convention-exception: control-reads-engine-tokens --
+                  // an 11px heat-map cell, not a control with chrome. The
+                  // shape engine's control radius is 10px in `round`, which
+                  // on an 11px box is a disc, and the grid stops reading as
+                  // a grid. `rounded-xs` (2px) is also exactly what the four
+                  // legend swatches below already use, so the cells and
+                  // their legend stay one shape instead of drifting apart.
                   return (
                     <button
                       key={cell.key}
