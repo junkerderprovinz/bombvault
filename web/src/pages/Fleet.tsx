@@ -29,6 +29,8 @@ import {
   proposeMeshOffer,
 } from "../lib/api";
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
+import { credSetsChanged } from "../lib/useCloudCredSets";
+import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
@@ -204,8 +206,15 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
     setBusy(true);
     try {
       const res = await acceptMeshOffer(offer.id, domain);
-      if (res.ok) onChanged();
-      else {
+      if (res.ok) {
+        // Accepting mints BOTH a named credential set (holding the peer's REST
+        // credentials) and an off-site target — announce both so any mounted
+        // reader of either list is current, not just this page's offer rows
+        // (#173's invalidation contract; see useCloudCredSets).
+        credSetsChanged();
+        offsiteTargetsChanged();
+        onChanged();
+      } else {
         push(res.error ?? t("fleet.mesh.saveError"), "fail");
         setShakeAccept((n) => n + 1);
       }

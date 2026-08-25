@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import type { OffsiteTarget, CloudCredSetInfo } from "../lib/api";
+import type { OffsiteTarget } from "../lib/api";
 import {
   listOffsiteTargets,
   createOffsiteTarget,
   updateOffsiteTarget,
   deleteOffsiteTarget,
   testOffsiteTarget,
-  getCloudCredSets,
 } from "../lib/api";
+import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { offsiteTargetsChanged, subscribeOffsiteTargets } from "../lib/useOffsiteTargets";
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
 import { Badge, type BadgeSize } from "./Badge";
@@ -201,14 +202,12 @@ export function OffsiteTargetsSection({
   const [saveShake, setSaveShake] = useState(0);
   const [removeShake, setRemoveShake] = useState(0);
   // Additional named credential sets (#141 stage 2) this target's CredsRef can
-  // pick from — loaded once, shared across every domain's section instance
-  // isn't needed here since each mount is cheap and the list rarely changes.
-  const [credSets, setCredSets] = useState<CloudCredSetInfo[]>([]);
-  useEffect(() => {
-    getCloudCredSets()
-      .then((r) => { if (r.ok) setCredSets(r.sets ?? []); })
-      .catch(() => undefined);
-  }, []);
+  // pick from. Read through the shared hook, NOT a fetched-once local copy:
+  // the card that creates these sets sits on this very page (Settings' own
+  // Off-site tab renders one of these sections per domain AND
+  // CloudCredSetsCard), so a private copy went stale the moment a set was
+  // added and the new set stayed unselectable until a reload — issue #173.
+  const credSets = useCloudCredSets();
 
   function refresh() {
     listOffsiteTargets(domain)
@@ -226,8 +225,15 @@ export function OffsiteTargetsSection({
       .catch(() => setLoadErr(t("offsite.targets.loadError")));
   }
   // domain is fixed for a mounted instance (one per off-site domain block).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(refresh, [domain]);
+  // Also re-read on the shared broadcast, so a write from ANY section (or from
+  // accepting a fleet mesh offer, which mints a target for its domain) lands
+  // here without a reload — the write paths below announce instead of
+  // refreshing only themselves.
+  useEffect(() => {
+    refresh();
+    return subscribeOffsiteTargets(refresh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domain]);
 
   function openNew() {
     setDraft(emptyDraft(domain));
@@ -294,7 +300,7 @@ export function OffsiteTargetsSection({
       }
       push(t("settings.saved"), "success");
       closeEditor();
-      refresh();
+      offsiteTargetsChanged();
     } catch (e) {
       setSaveState("idle");
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
@@ -319,7 +325,7 @@ export function OffsiteTargetsSection({
         return;
       }
       setConfirmRemove(null);
-      refresh();
+      offsiteTargetsChanged();
     } catch (e) {
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
       setRemoveShake((n) => n + 1);
