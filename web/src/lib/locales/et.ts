@@ -220,6 +220,7 @@ const et: Partial<Translations> = {
 
   // Settings
   "settings.title": "Seaded",
+  "settings.encryptionLabel": "Parool",
   "settings.encryptionOn": "Lubatud (parool tuletatud APP_KEY-st)",
   "settings.encryptionOff": "Keelatud (parooli pole)",
   "settings.encryptionHint": "Krüpteering määratakse hoidla kohta lähtestamisel. Selle muutmine nõuab uut tühja rada.",
@@ -1098,6 +1099,8 @@ const et: Partial<Translations> = {
   "recovery.configSkipped": "Vahele jäetud. Lisa oma varundused allpool käsitsi.",
   // Step 3
   "recovery.step2": "Lisa oma varundused",
+  "recovery.cloudCreds": "Pilve mandaadid (valikuline)",
+  "recovery.cloudCredsHint": "Vajalikud ainult siis, kui varunduse asukoht osutab S3-le, restic REST serverile või rclone kaugsihtkohale. Kohalik tee või ühendatud jagatud kaust ei vaja siin midagi.",
   "recovery.attachHint": "Suuna BombVault oma olemasolevate varunduste juurde: kohalik rada hosti haakepunkti all või väline hoidla (rest / S3 / B2 / sftp / rclone) koos selle mandaatidega. Ühendu seejärel kinnitamiseks.",
   "recovery.credsSaveHint": "Välised mandaadid salvestatakse iga kaardi enda Salvesta nupuga — salvesta need enne, kui klõpsad „Ühenda ja vaata eelvaadet”.",
   "recovery.connectPreview": "Ühenda ja vaata eelvaadet",

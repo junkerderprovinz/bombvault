@@ -151,6 +151,7 @@ const no: Partial<Translations> = {
 
   // Settings
   "settings.title": "Innstillinger",
+  "settings.encryptionLabel": "Passord",
   "settings.encryptionOn": "Aktivert (passord utledet fra APP_KEY)",
   "settings.encryptionOff": "Deaktivert (intet passord)",
   "settings.encryptionHint":
@@ -595,6 +596,8 @@ const no: Partial<Translations> = {
   "recovery.notReachable": "Kunne ikke nå sikkerhetskopiene ennå — koble til plasseringen nedenfor, og sjekk på nytt.",
   "recovery.recheck": "Sjekk på nytt",
   "recovery.step2": "Koble til sikkerhetskopiene dine",
+  "recovery.cloudCreds": "Sky-legitimasjon (valgfritt)",
+  "recovery.cloudCredsHint": "Trengs bare når en sikkerhetskopisti peker mot S3, en restic REST-server eller et rclone-fjernlager. En lokal sti eller en montert deling trenger ingenting her.",
   "recovery.attachHint": "Pek BombVault mot dine eksisterende sikkerhetskopier: en lokal sti under host-monteringen, eller et off-site-repo (rest / S3 / B2 / sftp / rclone) med legitimasjon. Koble deretter til for å bekrefte.",
   "recovery.credsSaveHint": "Off-site-legitimasjon lagres med hvert korts egen Lagre-knapp — lagre den før du kobler til og forhåndsviser.",
   "recovery.connectPreview": "Koble til og forhåndsvis",

@@ -152,6 +152,7 @@ const fr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Paramètres",
+  "settings.encryptionLabel": "Mot de passe",
   "settings.encryptionOn": "Activé (mot de passe dérivé de APP_KEY)",
   "settings.encryptionOff": "Désactivé (sans mot de passe)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const fr: Partial<Translations> = {
   "recovery.notReachable": "Impossible d'atteindre vos sauvegardes pour l'instant — attachez l'emplacement ci-dessous, puis relancez la vérification.",
   "recovery.recheck": "Revérifier",
   "recovery.step2": "Attacher vos sauvegardes",
+  "recovery.cloudCreds": "Identifiants cloud (facultatif)",
+  "recovery.cloudCredsHint": "Nécessaires uniquement lorsqu'un chemin de sauvegarde pointe vers S3, un serveur restic REST ou un distant rclone. Un chemin local ou un partage monté n'a besoin de rien ici.",
   "recovery.attachHint": "Pointez BombVault vers vos sauvegardes existantes : un chemin local sous le montage de l'hôte, ou un dépôt hors site (rest / S3 / B2 / sftp / rclone) avec ses identifiants. Puis connectez-vous pour confirmer.",
   "recovery.credsSaveHint": "Les identifiants hors site s'enregistrent avec le bouton Enregistrer propre à chaque carte — enregistrez-les avant de vous connecter et prévisualiser.",
   "recovery.connectPreview": "Connexion et aperçu",

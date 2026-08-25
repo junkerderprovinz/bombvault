@@ -220,6 +220,7 @@ const ca: Partial<Translations> = {
 
   // Settings
   "settings.title": "Configuració",
+  "settings.encryptionLabel": "Contrasenya",
   "settings.encryptionOn": "Activat (contrasenya derivada de APP_KEY)",
   "settings.encryptionOff": "Desactivat (sense contrasenya)",
   "settings.encryptionHint": "El xifratge es fixa per repositori en inicialitzar-lo. Canviar-ho requereix un camí buit nou.",
@@ -1098,6 +1099,8 @@ const ca: Partial<Translations> = {
   "recovery.configSkipped": "Saltat. Adjunta les teves còpies manualment a sota.",
   // Step 3
   "recovery.step2": "Adjunta les teves còpies",
+  "recovery.cloudCreds": "Credencials de núvol (opcional)",
+  "recovery.cloudCredsHint": "Només calen quan una ruta de còpia apunta a S3, a un servidor restic REST o a un remot d'rclone. Una ruta local o un recurs compartit muntat no necessiten res aquí.",
   "recovery.attachHint": "Apunta BombVault a les teves còpies existents: un camí local sota el muntatge de l'amfitrió, o un repositori extern (rest / S3 / B2 / sftp / rclone) amb les seves credencials. Després connecta't per confirmar-ho.",
   "recovery.credsSaveHint": "Les credencials externes es desen amb el botó Desa propi de cada targeta — desa-les abans de fer clic a «Connecta i previsualitza».",
   "recovery.connectPreview": "Connecta i previsualitza",

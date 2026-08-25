@@ -220,6 +220,7 @@ const lt: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nustatymai",
+  "settings.encryptionLabel": "Slaptažodis",
   "settings.encryptionOn": "Įjungta (slaptažodis gaunamas iš APP_KEY)",
   "settings.encryptionOff": "Išjungta (be slaptažodžio)",
   "settings.encryptionHint": "Šifravimas nustatomas kiekvienai saugyklai inicijavimo metu. Norint jį pakeisti reikia naujo tuščio kelio.",
@@ -1098,6 +1099,8 @@ const lt: Partial<Translations> = {
   "recovery.configSkipped": "Praleista. Žemiau rankiniu būdu pridėkite savo atsargines kopijas.",
   // Step 3
   "recovery.step2": "Pridėti savo atsargines kopijas",
+  "recovery.cloudCreds": "Debesijos prisijungimo duomenys (neprivaloma)",
+  "recovery.cloudCredsHint": "Reikalingi tik tada, kai atsarginės kopijos kelias nurodo į S3, restic REST serverį arba nuotolinį rclone saugyklą. Vietiniam keliui ar prijungtam bendrinamam aplankui čia nieko nereikia.",
   "recovery.attachHint": "Nukreipkite BombVault į savo esamas atsargines kopijas: vietinį kelią po pagrindinio kompiuterio prijungimu arba nuotolinę saugyklą (rest / S3 / B2 / sftp / rclone) su jos prisijungimo duomenimis. Tada prisijunkite, kad patvirtintumėte.",
   "recovery.credsSaveHint": "Nuotoliniai prisijungimo duomenys išsaugomi kiekvienos kortelės pačiu Išsaugoti mygtuku — išsaugokite juos prieš spustelėdami „Prisijungti ir peržiūrėti“.",
   "recovery.connectPreview": "Prisijungti ir peržiūrėti",

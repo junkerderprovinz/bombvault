@@ -152,6 +152,7 @@ const tr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ayarlar",
+  "settings.encryptionLabel": "Parola",
   "settings.encryptionOn": "Etkin (parola APP_KEY'den türetildi)",
   "settings.encryptionOff": "Devre dışı (parola yok)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const tr: Partial<Translations> = {
   "recovery.notReachable": "Yedeklerinize henüz ulaşılamadı — aşağıdaki konumu ekleyin, ardından yeniden denetleyin.",
   "recovery.recheck": "Yeniden denetle",
   "recovery.step2": "Yedeklerinizi ekleyin",
+  "recovery.cloudCreds": "Bulut kimlik bilgileri (isteğe bağlı)",
+  "recovery.cloudCredsHint": "Yalnızca bir yedek yolu S3'e, bir restic REST sunucusuna veya bir rclone uzak konumuna işaret ettiğinde gerekir. Yerel bir yol veya bağlanmış bir paylaşım için burada hiçbir şey gerekmez.",
   "recovery.attachHint": "BombVault'u mevcut yedeklerinize yönlendirin: host bağlama noktası altında yerel bir yol ya da kimlik bilgileriyle bir site dışı depo (rest / S3 / B2 / sftp / rclone). Ardından onaylamak için bağlanın.",
   "recovery.credsSaveHint": "Site dışı kimlik bilgileri her kartın kendi Kaydet düğmesiyle kaydedilir — bağlanıp önizlemeden önce onları kaydedin.",
   "recovery.connectPreview": "Bağlan ve önizle",

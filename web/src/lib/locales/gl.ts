@@ -220,6 +220,7 @@ const gl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Configuración",
+  "settings.encryptionLabel": "Contrasinal",
   "settings.encryptionOn": "Activado (contrasinal derivado de APP_KEY)",
   "settings.encryptionOff": "Desactivado (sen contrasinal)",
   "settings.encryptionHint": "O cifrado fíxase por repositorio ao inicializalo. Cambialo require un camiño baleiro novo.",
@@ -1098,6 +1099,8 @@ const gl: Partial<Translations> = {
   "recovery.configSkipped": "Saltado. Engade as túas copias manualmente abaixo.",
   // Step 3
   "recovery.step2": "Engadir as túas copias",
+  "recovery.cloudCreds": "Credenciais de nube (opcional)",
+  "recovery.cloudCredsHint": "Só fan falla cando unha ruta de copia apunta a S3, a un servidor restic REST ou a un remoto de rclone. Unha ruta local ou un recurso compartido montado non precisan nada aquí.",
   "recovery.attachHint": "Apunta BombVault ás túas copias existentes: un camiño local baixo a montaxe do host, ou un repositorio externo (rest / S3 / B2 / sftp / rclone) coas súas credenciais. Despois conéctate para confirmalo.",
   "recovery.credsSaveHint": "As credenciais externas gárdanse co propio botón Gardar de cada tarxeta — gárdaas antes de premer «Conectar e previsualizar».",
   "recovery.connectPreview": "Conectar e previsualizar",

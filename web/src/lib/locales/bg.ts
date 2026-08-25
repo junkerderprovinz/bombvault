@@ -220,6 +220,7 @@ const bg: Partial<Translations> = {
 
   // Settings
   "settings.title": "Настройки",
+  "settings.encryptionLabel": "Парола",
   "settings.encryptionOn": "Активирано (парола, извлечена от APP_KEY)",
   "settings.encryptionOff": "Деактивирано (без парола)",
   "settings.encryptionHint": "Криптирането се задава веднъж за хранилището при инициализация. Промяната изисква нов празен път.",
@@ -1098,6 +1099,8 @@ const bg: Partial<Translations> = {
   "recovery.configSkipped": "Пропуснато. Прикачи архивиранията си ръчно по-долу.",
   // Step 3
   "recovery.step2": "Прикачи архивиранията си",
+  "recovery.cloudCreds": "Данни за облака (по избор)",
+  "recovery.cloudCredsHint": "Нужни са само когато път за резервно копие сочи към S3, сървър restic REST или отдалечено rclone хранилище. Локален път или монтирана споделена папка не изискват нищо тук.",
   "recovery.attachHint": "Насочи BombVault към съществуващите си архивирания: локален път под монтирането на хоста, или хранилище извън обекта (rest / S3 / B2 / sftp / rclone) с данните му за достъп. После се свържи, за да потвърдиш.",
   "recovery.credsSaveHint": "Данните за достъп извън обекта се запазват със собствения бутон Запази на всяка карта — запази ги преди да натиснеш „Свържи и прегледай“.",
   "recovery.connectPreview": "Свържи и прегледай",

@@ -220,6 +220,7 @@ const id: Partial<Translations> = {
 
   // Settings
   "settings.title": "Pengaturan",
+  "settings.encryptionLabel": "Kata sandi",
   "settings.encryptionOn": "Diaktifkan (kata sandi diturunkan dari APP_KEY)",
   "settings.encryptionOff": "Dinonaktifkan (tanpa kata sandi)",
   "settings.encryptionHint": "Enkripsi ditetapkan per repositori saat inisialisasi. Mengubahnya memerlukan jalur kosong yang baru.",
@@ -1098,6 +1099,8 @@ const id: Partial<Translations> = {
   "recovery.configSkipped": "Dilewati. Lampirkan cadangan Anda secara manual di bawah.",
   // Step 3
   "recovery.step2": "Lampirkan cadangan Anda",
+  "recovery.cloudCreds": "Kredensial cloud (opsional)",
+  "recovery.cloudCredsHint": "Hanya diperlukan bila jalur cadangan mengarah ke S3, server restic REST, atau remote rclone. Jalur lokal atau share yang dipasang tidak memerlukan apa pun di sini.",
   "recovery.attachHint": "Arahkan BombVault ke cadangan Anda yang sudah ada: jalur lokal di bawah mount host, atau repositori off-site (rest / S3 / B2 / sftp / rclone) dengan kredensialnya. Lalu hubungkan untuk mengonfirmasi.",
   "recovery.credsSaveHint": "Kredensial off-site disimpan dengan tombol Simpan milik masing-masing kartu — simpan sebelum menekan \"Hubungkan & pratinjau\".",
   "recovery.connectPreview": "Hubungkan & pratinjau",

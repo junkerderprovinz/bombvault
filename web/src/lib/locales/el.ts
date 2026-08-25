@@ -152,6 +152,7 @@ const el: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ρυθμίσεις",
+  "settings.encryptionLabel": "Κωδικός πρόσβασης",
   "settings.encryptionOn": "Ενεργό (κωδικός από APP_KEY)",
   "settings.encryptionOff": "Ανενεργό (χωρίς κωδικό)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const el: Partial<Translations> = {
   "recovery.notReachable": "Δεν ήταν δυνατή η πρόσβαση στα αντίγραφά σας ακόμα — επισυνάψτε την τοποθεσία παρακάτω και μετά ελέγξτε ξανά.",
   "recovery.recheck": "Έλεγχος ξανά",
   "recovery.step2": "Επισυνάψτε τα αντίγραφά σας",
+  "recovery.cloudCreds": "Διαπιστευτήρια cloud (προαιρετικό)",
+  "recovery.cloudCredsHint": "Χρειάζονται μόνο όταν μια διαδρομή αντιγράφου δείχνει σε S3, σε διακομιστή restic REST ή σε απομακρυσμένο rclone. Μια τοπική διαδρομή ή ένας προσαρτημένος κοινόχρηστος φάκελος δεν χρειάζονται τίποτα εδώ.",
   "recovery.attachHint": "Κατευθύνετε το BombVault στα υπάρχοντα αντίγραφά σας: μια τοπική διαδρομή εντός της προσάρτησης του host ή ένα απομακρυσμένο repo (rest / S3 / B2 / sftp / rclone) με τα διαπιστευτήριά του. Έπειτα συνδεθείτε για επιβεβαίωση.",
   "recovery.credsSaveHint": "Τα διαπιστευτήρια εκτός τόπου αποθηκεύονται με το δικό του κουμπί Αποθήκευση κάθε κάρτας — αποθηκεύστε τα πριν συνδεθείτε και δείτε προεπισκόπηση.",
   "recovery.connectPreview": "Σύνδεση & προεπισκόπηση",

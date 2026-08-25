@@ -150,6 +150,7 @@ const pl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ustawienia",
+  "settings.encryptionLabel": "Hasło",
   "settings.encryptionOn": "Włączone (hasło pochodzi z APP_KEY)",
   "settings.encryptionOff": "Wyłączone (bez hasła)",
   "settings.encryptionHint": "Szyfrowanie jest ustawiane raz podczas inicjalizacji repozytorium. Zmiana wymaga nowej, pustej ścieżki.",
@@ -590,6 +591,8 @@ const pl: Partial<Translations> = {
   "recovery.notReachable": "Nie udało się jeszcze dotrzeć do kopii zapasowych — podłącz lokalizację poniżej, a następnie sprawdź ponownie.",
   "recovery.recheck": "Sprawdź ponownie",
   "recovery.step2": "Podłącz swoje kopie zapasowe",
+  "recovery.cloudCreds": "Poświadczenia chmury (opcjonalnie)",
+  "recovery.cloudCredsHint": "Potrzebne tylko wtedy, gdy ścieżka kopii wskazuje na S3, serwer restic REST lub zdalne repozytorium rclone. Ścieżka lokalna ani zamontowany udział nie wymagają tu niczego.",
   "recovery.attachHint": "Wskaż BombVault swoje istniejące kopie zapasowe: lokalną ścieżkę w obrębie montowania hosta lub zdalne repo (rest / S3 / B2 / sftp / rclone) wraz z poświadczeniami. Następnie połącz się, aby potwierdzić.",
   "recovery.credsSaveHint": "Poświadczenia zdalne zapisuje się osobnym przyciskiem Zapisz każdej karty — zapisz je przed połączeniem i podglądem.",
   "recovery.connectPreview": "Połącz i wyświetl podgląd",

@@ -220,6 +220,7 @@ const lv: Partial<Translations> = {
 
   // Settings
   "settings.title": "Iestatījumi",
+  "settings.encryptionLabel": "Parole",
   "settings.encryptionOn": "Iespējota (parole iegūta no APP_KEY)",
   "settings.encryptionOff": "Atspējota (bez paroles)",
   "settings.encryptionHint": "Šifrēšana tiek noteikta katram repozitorijam tā inicializācijas brīdī. Lai to mainītu, nepieciešams jauns tukšs ceļš.",
@@ -1098,6 +1099,8 @@ const lv: Partial<Translations> = {
   "recovery.configSkipped": "Izlaists. Zemāk manuāli pievienojiet savas rezerves kopijas.",
   // Step 3
   "recovery.step2": "Pievienot savas rezerves kopijas",
+  "recovery.cloudCreds": "Mākoņa akreditācijas dati (neobligāti)",
+  "recovery.cloudCredsHint": "Nepieciešami tikai tad, ja dublējuma ceļš norāda uz S3, restic REST serveri vai rclone attālo krātuvi. Vietējam ceļam vai pievienotai koplietotnei šeit nekas nav vajadzīgs.",
   "recovery.attachHint": "Norādiet BombVault uz savām esošajām rezerves kopijām: vietēju ceļu zem saimniekdatora piesaistes vai attālinātu repozitoriju (rest / S3 / B2 / sftp / rclone) ar tā akreditācijas datiem. Tad izveidojiet savienojumu, lai to apstiprinātu.",
   "recovery.credsSaveHint": "Attālinātie akreditācijas dati tiek saglabāti ar katras kartes pašas Saglabāt pogu — saglabājiet tos, pirms noklikšķināt „Izveidot savienojumu un priekšskatīt”.",
   "recovery.connectPreview": "Izveidot savienojumu un priekšskatīt",

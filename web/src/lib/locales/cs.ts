@@ -152,6 +152,7 @@ const cs: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavení",
+  "settings.encryptionLabel": "Heslo",
   "settings.encryptionOn": "Povoleno (heslo odvozeno z APP_KEY)",
   "settings.encryptionOff": "Vypnuto (bez hesla)",
   "settings.encryptionHint":
@@ -596,6 +597,8 @@ const cs: Partial<Translations> = {
   "recovery.notReachable": "Zálohy zatím nelze dosáhnout — připojte umístění níže a poté proveďte opětovnou kontrolu.",
   "recovery.recheck": "Zkontrolovat znovu",
   "recovery.step2": "Připojte své zálohy",
+  "recovery.cloudCreds": "Přihlašovací údaje cloudu (volitelné)",
+  "recovery.cloudCredsHint": "Potřebné jen tehdy, když cesta zálohy míří na S3, server restic REST nebo vzdálené úložiště rclone. Místní cesta ani připojené sdílení zde nic nepotřebují.",
   "recovery.attachHint": "Nasměrujte BombVault na své existující zálohy: místní cestu pod připojením hostitele nebo vzdálené repo (rest / S3 / B2 / sftp / rclone) s jeho přihlašovacími údaji. Poté se připojte pro potvrzení.",
   "recovery.credsSaveHint": "Vzdálené přihlašovací údaje se ukládají vlastním tlačítkem Uložit u každé karty — uložte je před připojením a náhledem.",
   "recovery.connectPreview": "Připojit a zobrazit náhled",

@@ -152,6 +152,7 @@ const fi: Partial<Translations> = {
 
   // Settings
   "settings.title": "Asetukset",
+  "settings.encryptionLabel": "Salasana",
   "settings.encryptionOn": "Käytössä (salasana johdettu APP_KEY:stä)",
   "settings.encryptionOff": "Ei käytössä (ei salasanaa)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const fi: Partial<Translations> = {
   "recovery.notReachable": "Varmuuskopioihisi ei vielä saatu yhteyttä — liitä sijainti alla ja tarkista sitten uudelleen.",
   "recovery.recheck": "Tarkista uudelleen",
   "recovery.step2": "Liitä varmuuskopiosi",
+  "recovery.cloudCreds": "Pilvitunnukset (valinnainen)",
+  "recovery.cloudCredsHint": "Tarvitaan vain, kun varmuuskopion polku osoittaa S3:een, restic REST -palvelimeen tai rclone-etäkohteeseen. Paikallinen polku tai liitetty jako ei tarvitse tässä mitään.",
   "recovery.attachHint": "Osoita BombVault olemassa oleviin varmuuskopioihisi: paikallinen polku host-liitoksen alla tai etärepo (rest / S3 / B2 / sftp / rclone) tunnuksineen. Yhdistä sitten vahvistaaksesi.",
   "recovery.credsSaveHint": "Etätunnukset tallennetaan kunkin kortin omalla Tallenna-painikkeella — tallenna ne ennen yhdistämistä ja esikatselua.",
   "recovery.connectPreview": "Yhdistä ja esikatsele",

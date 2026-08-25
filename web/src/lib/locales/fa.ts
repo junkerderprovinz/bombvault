@@ -220,6 +220,7 @@ const fa: Partial<Translations> = {
 
   // Settings
   "settings.title": "تنظیمات",
+  "settings.encryptionLabel": "رمز عبور",
   "settings.encryptionOn": "فعال (رمز عبور برگرفته از APP_KEY)",
   "settings.encryptionOff": "غیرفعال (بدون رمز عبور)",
   "settings.encryptionHint": "رمزنگاری هنگام مقداردهی اولیه برای هر مخزن ثابت می‌شود. تغییر آن به مسیر خالی جدیدی نیاز دارد.",
@@ -1098,6 +1099,8 @@ const fa: Partial<Translations> = {
   "recovery.configSkipped": "رد شد. پشتیبان‌های خود را در زیر به‌صورت دستی پیوست کنید.",
   // Step 3
   "recovery.step2": "پیوست پشتیبان‌های خود",
+  "recovery.cloudCreds": "اطلاعات ورود ابری (اختیاری)",
+  "recovery.cloudCredsHint": "فقط زمانی لازم است که مسیر پشتیبان به S3، یک سرور restic REST یا یک ریموت rclone اشاره کند. مسیر محلی یا اشتراک متصل‌شده به چیزی در اینجا نیاز ندارد.",
   "recovery.attachHint": "BombVault را به پشتیبان‌های موجود خود اشاره دهید: یک مسیر محلی زیر اتصال میزبان، یا یک مخزن خارج از محل (rest / S3 / B2 / sftp / rclone) همراه با اطلاعات ورودش. سپس برای تأیید متصل شوید.",
   "recovery.credsSaveHint": "اطلاعات ورود خارج از محل با دکمه ذخیره خودِ هر کارت ذخیره می‌شود — پیش از کلیک روی «اتصال و پیش‌نمایش» آن‌ها را ذخیره کنید.",
   "recovery.connectPreview": "اتصال و پیش‌نمایش",

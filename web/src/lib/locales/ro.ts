@@ -151,6 +151,7 @@ const ro: Partial<Translations> = {
 
   // Settings
   "settings.title": "Setări",
+  "settings.encryptionLabel": "Parolă",
   "settings.encryptionOn": "Activată (parolă derivată din APP_KEY)",
   "settings.encryptionOff": "Dezactivată (fără parolă)",
   "settings.encryptionHint":
@@ -576,6 +577,8 @@ const ro: Partial<Translations> = {
   "recovery.notReachable": "Copiile de rezervă nu au putut fi accesate încă — atașează locația mai jos, apoi verifică din nou.",
   "recovery.recheck": "Verifică din nou",
   "recovery.step2": "Atașează copiile de rezervă",
+  "recovery.cloudCreds": "Credențiale cloud (opțional)",
+  "recovery.cloudCredsHint": "Sunt necesare doar când o cale de backup indică spre S3, un server restic REST sau o destinație rclone. O cale locală sau un share montat nu au nevoie de nimic aici.",
   "recovery.attachHint": "Îndreaptă BombVault către copiile tale de rezervă existente: o cale locală sub montarea gazdei sau un repo extern (rest / S3 / B2 / sftp / rclone) cu credențialele sale. Apoi conectează-te pentru a confirma.",
   "recovery.credsSaveHint": "Credențialele externe se salvează cu butonul Salvează propriu al fiecărui card — salvează-le înainte de a te conecta și previzualiza.",
   "recovery.connectPreview": "Conectează și previzualizează",

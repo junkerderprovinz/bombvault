@@ -220,6 +220,7 @@ const sl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavitve",
+  "settings.encryptionLabel": "Geslo",
   "settings.encryptionOn": "Omogočeno (geslo izpeljano iz APP_KEY)",
   "settings.encryptionOff": "Onemogočeno (brez gesla)",
   "settings.encryptionHint": "Šifriranje je določeno za posamezen repozitorij ob inicializaciji. Za spremembo te nastavitve je potrebna nova prazna pot.",
@@ -1089,6 +1090,8 @@ const sl: Partial<Translations> = {
   "recovery.configSkip": "Preskoči — nimam varnostne kopije nastavitev",
   "recovery.configSkipped": "Preskočeno. Spodaj ročno priklopi svoje varnostne kopije.",
   "recovery.step2": "Priklopi svoje varnostne kopije",
+  "recovery.cloudCreds": "Poverilnice za oblak (neobvezno)",
+  "recovery.cloudCredsHint": "Potrebne so samo, kadar pot varnostne kopije kaže na S3, strežnik restic REST ali oddaljeno mesto rclone. Lokalna pot ali priklopljena souporaba tu ne potrebujeta ničesar.",
   "recovery.attachHint": "Usmeri BombVault na svoje obstoječe varnostne kopije: lokalno pot pod priklopno točko gostitelja ali zunanji repozitorij (rest / S3 / B2 / sftp / rclone) z njegovimi poverilnicami. Nato se poveži za potrditev.",
   "recovery.credsSaveHint": "Poverilnice za zunanjo kopijo se shranijo z lastnim gumbom Shrani vsake kartice — shrani jih, preden se povežeš in prikažeš predogled.",
   "recovery.connectPreview": "Poveži se in prikaži predogled",

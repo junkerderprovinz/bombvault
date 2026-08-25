@@ -152,6 +152,7 @@ const it: Partial<Translations> = {
 
   // Settings
   "settings.title": "Impostazioni",
+  "settings.encryptionLabel": "Password",
   "settings.encryptionOn": "Abilitata (password derivata da APP_KEY)",
   "settings.encryptionOff": "Disabilitata (nessuna password)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const it: Partial<Translations> = {
   "recovery.notReachable": "Non è stato ancora possibile raggiungere i tuoi backup — collega la posizione qui sotto, poi riverifica.",
   "recovery.recheck": "Riverifica",
   "recovery.step2": "Collega i tuoi backup",
+  "recovery.cloudCreds": "Credenziali cloud (facoltative)",
+  "recovery.cloudCredsHint": "Servono solo quando un percorso di backup punta a S3, a un server restic REST o a un remoto rclone. Un percorso locale o una condivisione montata non richiedono nulla qui.",
   "recovery.attachHint": "Punta BombVault ai tuoi backup esistenti: un percorso locale sotto il mount dell'host, oppure un repository off-site (rest / S3 / B2 / sftp / rclone) con le sue credenziali. Poi connettiti per confermare.",
   "recovery.credsSaveHint": "Le credenziali off-site si salvano con il pulsante Salva di ciascuna scheda — salvale prima di connetterti e visualizzare l'anteprima.",
   "recovery.connectPreview": "Connetti e anteprima",

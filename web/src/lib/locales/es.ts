@@ -152,6 +152,7 @@ const es: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ajustes",
+  "settings.encryptionLabel": "Contraseña",
   "settings.encryptionOn": "Habilitado (contraseña derivada de APP_KEY)",
   "settings.encryptionOff": "Deshabilitado (sin contraseña)",
   "settings.encryptionHint":
@@ -606,6 +607,8 @@ const es: Partial<Translations> = {
   "recovery.notReachable": "Aún no se pudo acceder a tus copias — adjunta la ubicación abajo y vuelve a comprobar.",
   "recovery.recheck": "Volver a comprobar",
   "recovery.step2": "Adjunta tus copias",
+  "recovery.cloudCreds": "Credenciales de la nube (opcional)",
+  "recovery.cloudCredsHint": "Solo hacen falta cuando una ruta de copia apunta a S3, a un servidor restic REST o a un remoto de rclone. Una ruta local o un recurso compartido montado no necesitan nada aquí.",
   "recovery.attachHint": "Apunta BombVault a tus copias existentes: una ruta local dentro del montaje del host, o un repo externo (rest / S3 / B2 / sftp / rclone) con sus credenciales. Luego conéctate para confirmar.",
   "recovery.credsSaveHint": "Las credenciales externas se guardan con el propio botón Guardar de cada tarjeta — guárdalas antes de conectar y previsualizar.",
   "recovery.connectPreview": "Conectar y previsualizar",
