@@ -1081,7 +1081,7 @@ const hr: Partial<Translations> = {
   "recovery.appKeyRemedy": "Ključ za enkripciju ne odgovara ovim sigurnosnim kopijama. Postavite izvorni APP_KEY (iz vašeg kompleta za oporavak) u predlošku kontejnera, zatim ponovno provjerite.",
   "recovery.readable": "Vaše sigurnosne kopije su čitljive.",
   "recovery.notReachable": "Vaše sigurnosne kopije još nisu bile dostupne — dodajte lokaciju ispod, zatim ponovno provjerite.",
-  "recovery.recheck": "Ponovno provjeri",
+  "recovery.recheck": "Provjeri",
   // Step 2
   "recovery.stepConfig": "Vrati vlastite postavke BombVaulta",
   "recovery.configHint": "Na ponovno izgrađenom poslužitelju, prvo vratite vlastite postavke BombVaulta — njegove putanje sigurnosne kopije, izvanmrežna odredišta i vjerodajnice — kako bi koraci ispod bili unaprijed popunjeni. Usmjerite ga na sigurnosnu kopiju postavki koju ste ranije postavili. Nemate sigurnosnu kopiju postavki? Preskočite ovo i ručno dodajte svoje sigurnosne kopije ispod.",
@@ -1089,7 +1089,7 @@ const hr: Partial<Translations> = {
   "recovery.configSourceLabel": "Gdje je sigurnosna kopija postavki?",
   "recovery.configLocalPath": "Lokalna putanja",
   "recovery.configOffsiteUrl": "URL izvanmrežnog repozitorija",
-  "recovery.configRestore": "Vrati postavke BombVaulta",
+  "recovery.configRestore": "Vrati",
   "recovery.configRestoring": "Vraćanje…",
   "recovery.configRestarting": "BombVault se ponovno pokreće kako bi primijenio vaše postavke… ova se stranica automatski ponovno učitava kad se ponovno pokrene.",
   "recovery.configManualRestart": "Vaše postavke su pripremljene. Ponovno pokrenite BombVault kontejner u Unraidu, zatim nastavite — primjenjuju se pri sljedećem pokretanju.",

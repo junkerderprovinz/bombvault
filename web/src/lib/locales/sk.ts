@@ -1081,7 +1081,7 @@ const sk: Partial<Translations> = {
   "recovery.appKeyRemedy": "Šifrovací kľúč sa nezhoduje s týmito zálohami. Nastavte pôvodný APP_KEY (zo súpravy na obnovenie) v šablóne kontajnera, potom znova skontrolujte.",
   "recovery.readable": "Vaše zálohy sú čitateľné.",
   "recovery.notReachable": "Vaše zálohy zatiaľ neboli dostupné — pripojte umiestnenie nižšie, potom znova skontrolujte.",
-  "recovery.recheck": "Skontrolovať znova",
+  "recovery.recheck": "Skontrolovať",
   // Step 2
   "recovery.stepConfig": "Obnoviť vlastné nastavenia BombVault",
   "recovery.configHint": "Na znova zostavenom serveri najprv obnovte vlastné nastavenia BombVault — jeho cesty zálohovania, externé ciele a poverenia — aby boli kroky nižšie už vopred vyplnené. Nasmerujte to na zálohu nastavení, ktorú ste nastavili skôr. Nemáte zálohu nastavení? Preskočte toto a pripojte svoje zálohy manuálne nižšie.",
@@ -1089,7 +1089,7 @@ const sk: Partial<Translations> = {
   "recovery.configSourceLabel": "Kde je záloha nastavení?",
   "recovery.configLocalPath": "Lokálna cesta",
   "recovery.configOffsiteUrl": "URL externého repozitára",
-  "recovery.configRestore": "Obnoviť nastavenia BombVault",
+  "recovery.configRestore": "Obnoviť",
   "recovery.configRestoring": "Obnovuje sa…",
   "recovery.configRestarting": "BombVault sa reštartuje, aby uplatnil vaše nastavenia… táto stránka sa automaticky znova načíta, keď bude opäť dostupná.",
   "recovery.configManualRestart": "Vaše nastavenia sú pripravené. Reštartujte kontajner BombVault v Unraid, potom pokračujte — uplatnia sa pri ďalšom spustení.",

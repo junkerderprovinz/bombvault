@@ -1081,7 +1081,7 @@ const is: Partial<Translations> = {
   "recovery.appKeyRemedy": "Dulkóðunarlykillinn passar ekki við þessi afrit. Stilltu upprunalega APP_KEY (úr endurheimtarpakkanum þínum) í gámasniðmátinu, athugaðu svo aftur.",
   "recovery.readable": "Afritin þín eru læsileg.",
   "recovery.notReachable": "Afritin þín voru ekki aðgengileg ennþá — bættu staðsetningunni hér að neðan við, athugaðu svo aftur.",
-  "recovery.recheck": "Athuga aftur",
+  "recovery.recheck": "Athuga",
   // Step 2
   "recovery.stepConfig": "Endurheimta eigin stillingar BombVault",
   "recovery.configHint": "Á endurbyggðum netþjóni skaltu fyrst endurheimta eigin stillingar BombVault — afritunarslóðir þess, fjarlæga áfangastaði og aðgangsgögn — svo skrefin hér að neðan séu þegar útfyllt. Beindu því á stillingaafritið sem þú settir upp áður. Ekkert stillingaafrit? Slepptu þessu og bættu afritunum þínum handvirkt við hér að neðan.",
@@ -1089,7 +1089,7 @@ const is: Partial<Translations> = {
   "recovery.configSourceLabel": "Hvar er stillingaafritið?",
   "recovery.configLocalPath": "Staðbundin slóð",
   "recovery.configOffsiteUrl": "Slóð fjarlægs geymslusafns",
-  "recovery.configRestore": "Endurheimta stillingar BombVault",
+  "recovery.configRestore": "Endurheimta",
   "recovery.configRestoring": "Endurheimti…",
   "recovery.configRestarting": "BombVault er að endurræsa til að beita stillingunum þínum… þessi síða hleðst sjálfkrafa aftur þegar hann er kominn í gang aftur.",
   "recovery.configManualRestart": "Stillingar þínar eru tilbúnar. Endurræstu BombVault-gáminn í Unraid, haltu svo áfram — þær taka gildi við næstu ræsingu.",

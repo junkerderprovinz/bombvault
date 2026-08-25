@@ -1081,7 +1081,7 @@ const gl: Partial<Translations> = {
   "recovery.appKeyRemedy": "A clave de cifrado non coincide con estas copias. Configura o APP_KEY orixinal (do teu kit de recuperación) no modelo do contedor, e volve comprobar.",
   "recovery.readable": "As túas copias son lexibles.",
   "recovery.notReachable": "As túas copias aínda non eran accesibles — engade a localización de abaixo, e volve comprobar.",
-  "recovery.recheck": "Volver comprobar",
+  "recovery.recheck": "Comprobar",
   // Step 2
   "recovery.stepConfig": "Restaurar a propia configuración de BombVault",
   "recovery.configHint": "Nun servidor reconstruído, restaura primeiro a propia configuración de BombVault — os seus camiños de copia, destinos externos e credenciais — para que os pasos de abaixo xa estean preenchidos. Apúntao á copia de configuración que configuraches antes. Non tes copia de configuración? Salta isto e engade as túas copias manualmente abaixo.",
@@ -1089,7 +1089,7 @@ const gl: Partial<Translations> = {
   "recovery.configSourceLabel": "Onde está a copia de configuración?",
   "recovery.configLocalPath": "Camiño local",
   "recovery.configOffsiteUrl": "URL do repositorio externo",
-  "recovery.configRestore": "Restaurar a configuración de BombVault",
+  "recovery.configRestore": "Restaurar",
   "recovery.configRestoring": "Restaurando…",
   "recovery.configRestarting": "BombVault estase a reiniciar para aplicar a túa configuración… esta páxina recárgase automaticamente cando volva estar dispoñible.",
   "recovery.configManualRestart": "A túa configuración está preparada. Reinicia o contedor BombVault en Unraid, e despois continúa — aplícanse no seguinte arranque.",

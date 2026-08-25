@@ -1081,7 +1081,7 @@ const lt: Partial<Translations> = {
   "recovery.appKeyRemedy": "Šifravimo raktas neatitinka šių atsarginių kopijų. Nustatykite originalų APP_KEY (iš jūsų atkūrimo rinkinio) konteinerio šablone, tada patikrinkite dar kartą.",
   "recovery.readable": "Jūsų atsarginės kopijos yra skaitomos.",
   "recovery.notReachable": "Jūsų atsarginės kopijos dar nebuvo pasiekiamos — pridėkite vietą žemiau, tada patikrinkite dar kartą.",
-  "recovery.recheck": "Patikrinti dar kartą",
+  "recovery.recheck": "Patikrinti",
   // Step 2
   "recovery.stepConfig": "Atkurti paties BombVault nustatymus",
   "recovery.configHint": "Atkurtame serveryje pirmiausia atkurkite paties BombVault nustatymus — jo atsarginio kopijavimo kelius, nuotolines paskirties vietas ir prisijungimo duomenis — kad žemiau esantys žingsniai jau būtų iš anksto užpildyti. Nukreipkite jį į anksčiau nustatytą nustatymų atsarginę kopiją. Neturite nustatymų atsarginės kopijos? Praleiskite tai ir žemiau rankiniu būdu pridėkite savo atsargines kopijas.",
@@ -1089,7 +1089,7 @@ const lt: Partial<Translations> = {
   "recovery.configSourceLabel": "Kur yra nustatymų atsarginė kopija?",
   "recovery.configLocalPath": "Vietinis kelias",
   "recovery.configOffsiteUrl": "Nuotolinės saugyklos URL",
-  "recovery.configRestore": "Atkurti BombVault nustatymus",
+  "recovery.configRestore": "Atkurti",
   "recovery.configRestoring": "Atkuriama…",
   "recovery.configRestarting": "BombVault paleidžiamas iš naujo, kad pritaikytų jūsų nustatymus… šis puslapis automatiškai įkeliamas iš naujo, kai jis vėl veiks.",
   "recovery.configManualRestart": "Jūsų nustatymai paruošti. Iš naujo paleiskite BombVault konteinerį Unraid, tada tęskite — jie bus pritaikyti kito paleidimo metu.",

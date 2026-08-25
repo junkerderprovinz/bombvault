@@ -1081,7 +1081,7 @@ const ca: Partial<Translations> = {
   "recovery.appKeyRemedy": "La clau de xifratge no coincideix amb aquestes còpies. Configura la APP_KEY original (del teu kit de recuperació) a la plantilla del contenidor, i torna a comprovar.",
   "recovery.readable": "Les teves còpies són llegibles.",
   "recovery.notReachable": "Les teves còpies encara no eren accessibles — adjunta la ubicació de sota, i torna a comprovar.",
-  "recovery.recheck": "Torna a comprovar",
+  "recovery.recheck": "Comprova",
   // Step 2
   "recovery.stepConfig": "Restaura la configuració pròpia de BombVault",
   "recovery.configHint": "En un servidor reconstruït, restaura primer la configuració pròpia de BombVault — els seus camins de còpia, destins externs i credencials — perquè els passos de sota ja estiguin emplenats. Apunta-ho a la còpia de configuració que vas configurar abans. No tens cap còpia de configuració? Salta això i adjunta les teves còpies manualment a sota.",
@@ -1089,7 +1089,7 @@ const ca: Partial<Translations> = {
   "recovery.configSourceLabel": "On és la còpia de configuració?",
   "recovery.configLocalPath": "Camí local",
   "recovery.configOffsiteUrl": "URL del repositori extern",
-  "recovery.configRestore": "Restaura la configuració de BombVault",
+  "recovery.configRestore": "Restaura",
   "recovery.configRestoring": "Restaurant…",
   "recovery.configRestarting": "BombVault s'està reiniciant per aplicar la teva configuració… aquesta pàgina es recarrega automàticament quan torni a estar disponible.",
   "recovery.configManualRestart": "La teva configuració està preparada. Reinicia el contenidor BombVault a Unraid, i després continua — s'apliquen a l'engegada següent.",

@@ -1081,7 +1081,7 @@ const hi: Partial<Translations> = {
   "recovery.appKeyRemedy": "एन्क्रिप्शन कुंजी इन बैकअप से मेल नहीं खाती। कंटेनर टेम्पलेट में मूल APP_KEY (आपकी रिकवरी किट से) सेट करें, फिर फिर से जाँचें।",
   "recovery.readable": "आपके बैकअप पढ़े जा सकते हैं।",
   "recovery.notReachable": "आपके बैकअप अभी तक पहुँच योग्य नहीं थे — नीचे स्थान जोड़ें, फिर फिर से जाँचें।",
-  "recovery.recheck": "फिर से जाँचें",
+  "recovery.recheck": "जाँचें",
   // Step 2
   "recovery.stepConfig": "BombVault की अपनी सेटिंग्स रीस्टोर करें",
   "recovery.configHint": "फिर से बनाए गए सर्वर पर, पहले BombVault की अपनी सेटिंग्स रीस्टोर करें — इसके बैकअप पथ, ऑफ़-साइट गंतव्य और क्रेडेंशियल्स — ताकि नीचे दिए चरण पहले से भरे हों। इसे पहले सेट की गई सेटिंग्स के बैकअप की ओर इंगित करें। कोई सेटिंग्स बैकअप नहीं है? इसे छोड़ें और नीचे अपने बैकअप खुद जोड़ें।",
@@ -1089,7 +1089,7 @@ const hi: Partial<Translations> = {
   "recovery.configSourceLabel": "सेटिंग्स बैकअप कहाँ है?",
   "recovery.configLocalPath": "लोकल पथ",
   "recovery.configOffsiteUrl": "ऑफ़-साइट रिपॉज़िटरी URL",
-  "recovery.configRestore": "BombVault की सेटिंग्स रीस्टोर करें",
+  "recovery.configRestore": "रीस्टोर करें",
   "recovery.configRestoring": "रीस्टोर हो रहा है…",
   "recovery.configRestarting": "BombVault आपकी सेटिंग्स लागू करने के लिए फिर से शुरू हो रहा है… यह पेज इसके वापस आने पर स्वचालित रूप से फिर से लोड हो जाता है।",
   "recovery.configManualRestart": "आपकी सेटिंग्स तैयार हैं। Unraid में BombVault कंटेनर को फिर से शुरू करें, फिर आगे बढ़ें — ये अगले बूट पर लागू हो जाएँगी।",
