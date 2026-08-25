@@ -701,7 +701,15 @@ function SnapshotRow({
   const radioName = `restore-mode-${snap.id}`;
 
   return (
-    <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
+    // py-1.5, not the py-2.5 this row used to carry: the two square icon
+    // badges in it grew 24px → 32px when every square icon badge in the app
+    // was unified on one size, and trimming the row's own vertical padding by
+    // the matching 4px per side keeps the collapsed row at exactly the 44px
+    // it measured before (verified live, before and after). A bigger badge in
+    // a list of unchanged density, rather than a list that grew — see
+    // Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block. Config.tsx's
+    // ConfigSnapshotRow carries the identical pairing for the same reason.
+    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
         {/* Snapshot ID */}
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
@@ -735,10 +743,15 @@ function SnapshotRow({
             own doc comment; Settings.tsx's separate reset glyph,
             IconResetArrow, deliberately diverged from this family for its
             own harder small-badge-beside-colour-swatches legibility case).
-            `size="large"` (24px) matches
-            this button's own pre-existing `py-1` footprint — measured live,
-            same as Config.tsx's own delete-badge conversion below used for
-            its sibling. The old "highlighted while open" `bg-carbon-surface3`
+            `size="icon"` — the app's one square-icon-badge size (32px). This
+            badge was `size="large"` (24px), measured against its own
+            pre-conversion `py-1` text-button self: correct for this control
+            in isolation, and wrong in the card, where it sat beside the 32px
+            Lokal/Offsite pair and the (then) 28px Jetzt-sichern/Export pair.
+            The row's own padding dropped `py-2.5` → `py-1.5` in the same
+            change, so the snapshot row still measures the 44px it always did
+            with a larger badge inside it — see Badge.tsx's "ONE SIZE FOR
+            SQUARE ICON BADGES" block. The old "highlighted while open" `bg-carbon-surface3`
             swap is dropped rather than layered onto a second, competing
             background utility class (Tailwind utilities of equal specificity
             resolve by generated-stylesheet order, not by className list
@@ -753,7 +766,7 @@ function SnapshotRow({
         <Badge
           as="button"
           shape="square"
-          size="large"
+          size="icon"
           tone="active"
           tip={t("restore.open")}
           onClick={() => setShowRestore((p) => !p)}
@@ -761,27 +774,45 @@ function SnapshotRow({
           <IconRestore />
         </Badge>
 
-        {/* Delete this backup (restic forget) — square icon badge, same
-            shape/tone precedent Config.tsx's ConfigSnapshotRow already
-            established for its own identical delete button (that file's own
-            comment is explicit this RestorePanel call site is "the next
-            conversion" it left for): `tone="neutral"` (quiet at rest,
-            `hover:bg-statusFailBg hover:text-statusFail` reveals the
-            destructive red on hover only) rather than a permanent state hue —
-            Badge's own contract exempts ok/fail/warn/neutral from rainbow
-            `hueIndex` (they are load-bearing status signals, never
-            repainted by list position), so this stays neutral regardless of
-            the row's own hue, exactly like every other delete affordance in
-            this app. IconTrash reused verbatim (Sidebar.tsx). */}
+        {/* Delete this backup (restic forget) — square icon badge, styled
+            EXACTLY like the restore badge beside it and like every other
+            icon badge in this card.
+              jdp, live review: "Der Löschen-Badge ist auch anders eingefärbt,
+            soll nicht so sein, ganz normal in die Farbmodi integrieren." He
+            is right, and the previous reasoning was the problem. This badge
+            was `tone="neutral"` plus `hover:bg-statusFailBg
+            hover:text-statusFail` — a flat grey tile at rest that flashed red
+            on hover. Two things were wrong with that: `neutral` is one of the
+            tones Badge deliberately exempts from rainbow `hueIndex` (they are
+            load-bearing STATUS signals), so this badge took no colour-engine
+            position at all and stayed grey in every rainbow palette while its
+            siblings picked up the row's hue; and the red hover made it the
+            one badge in the card with a bespoke colour treatment.
+              Now `tone="active"` with no colour override, identical to the
+            restore badge it sits next to: icon-only + active resolves to the
+            solid `bg-accent`/`text-accentContrast` pair, and this row lives
+            inside ContainerRow's own `.glim-hue` element, so the ordinary CSS
+            custom-property cascade paints it in the row's own rainbow
+            position — no `hueIndex` needed, the same mechanism the restore
+            badge and FoldersEditor's badges already use.
+              Nothing about the action becomes ambiguous by dropping the red:
+            the destructive meaning is carried by the IconTrash glyph and by
+            the `tip` bubble (t("snapshots.delete") — "Löschen"), and the
+            action still routes through the existing confirm dialog before
+            anything is forgotten. This mirrors the already-shipped decision
+            that "Deaktivieren" buttons must not be red either.
+              `glim-shake` (the system-wide "failed delete shakes its button"
+            rule) survives on `className` — that is behaviour, not colour.
+            IconTrash reused verbatim (Sidebar.tsx). */}
         <Badge
           as="button"
           shape="square"
-          size="large"
-          tone="neutral"
+          size="icon"
+          tone="active"
           tip={t("snapshots.delete")}
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
-          className={`hover:bg-statusFailBg hover:text-statusFail${shake ? " glim-shake" : ""}`}
+          className={shake ? "glim-shake" : undefined}
           key={shake}
         >
           <IconTrash />

@@ -1025,7 +1025,17 @@ export function Selector(props: SelectorProps) {
           // height mismatch. FolderBrowser's own Browse button below is sized
           // the identical `h-8 w-8` for exactly this reason — one fixed
           // square footprint, shared by both controls in this row, matching
-          // the one real field height that's actually next to them. Checked
+          // the one real field height that's actually next to them.
+          //   32px is now the app-wide constant for EVERY square icon-only
+          // control, not just this row's: Badge.tsx's `size="icon"` stage
+          // resolves to the same h-8, and its "ONE SIZE FOR SQUARE ICON
+          // BADGES" block is the authority. This literal stays a literal only
+          // because Selector is its own component and never renders through
+          // Badge; if the app-wide number ever moves, it moves here too, in
+          // lockstep. Do NOT re-derive it from whatever field happens to sit
+          // beside a given Selector — the per-neighbour reasoning that made
+          // this comment's own measurement necessary is exactly the split jdp
+          // rejected. Checked
           // ahead of `stretch`/`well` (both unused by today's one iconOnly
           // consumer, PathModeSwitch) so a future combination degrades to
           // this fixed square rather than silently falling through to a

@@ -33,15 +33,15 @@ interface BackupButtonProps {
 // follow. Only the PENDING state stays genuinely inline — swapped for the
 // glyph itself (a spinner replacing the icon while running), since a badge
 // has no separate space to put a spinner NEXT TO its own glyph.
-// `size="icon"` (Badge.tsx, h-7/w-7 = 28px): measured LIVE against this
-// exact button before conversion (getBoundingClientRect on the real
-// deployed "Jetzt sichern" button, `px-3 py-1.5 text-xs` — 28px, not the
-// naive box-model arithmetic), per the standing icon-badge convention
-// ("sized to match the adjacent control's real measured height, don't
-// guess/reuse a token without measuring") — it happens to equal Badge's
-// existing `icon` stage, a genuinely re-verified match for THIS control,
-// not a blind reuse of a token pinned to a different sibling (see that
-// stage's own doc in Badge.tsx for the token it actually belongs to).
+// `size="icon"` (Badge.tsx, h-8/w-8 = 32px) — the app's ONE square-icon-badge
+// size, not a number derived here. This badge used to be 28px, measured
+// against its own pre-conversion self, which was correct per-control and
+// wrong per-card: sitting in the same Container card as the 32px Lokal/
+// Offsite pair and the (then) 24px restore/delete pair, it was one of three
+// badge sizes a user saw at once. jdp reported that twice; the fix was to
+// delete the per-role sizes entirely. Do not re-measure this button against
+// its neighbours and "improve" the number — see Badge.tsx's own "ONE SIZE
+// FOR SQUARE ICON BADGES" block for why that reasoning is the defect.
 export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps) {
   // Fire-and-watch: the server runs the backup detached and answers immediately,
   // so we watch the "container:<name>" progress + recorded run for the outcome

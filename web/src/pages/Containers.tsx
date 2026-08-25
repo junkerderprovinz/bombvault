@@ -357,11 +357,27 @@ function ExportButton({ name, t }: { name: string; t: T }) {
 
   return (
     <div className="flex flex-col items-end gap-1">
+      {/* `size="icon"` — the app's one square-icon-badge size (32px); see
+          Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block.
+            `tone="active"`, NOT the `tone="neutral"` this badge shipped with:
+          neutral resolves to a flat `bg-carbon-surface2` grey that takes no
+          colour-engine position at all, which left Export as the single grey
+          tile in a Container card whose every other badge (Jetzt sichern,
+          Lokal/Offsite, Wiederherstellen, Löschen) is hue-integrated — the
+          same "anders eingefärbt" defect jdp reported one badge over, on
+          RestorePanel's delete. The standing icon-badge rule is that a square
+          icon badge gets colour-engine integration and a tooltip
+          automatically; neutral here was an unexamined default, not a
+          decision. `active` + icon-only resolves to the solid `bg-accent`/
+          `text-accentContrast` pair (Badge's own `isIconOnly && tone==="active"`
+          branch) and inherits this row's own rainbow position from the
+          ambient `.glim-hue` cascade, exactly like BackupButton beside it —
+          no `hueIndex` needed. */}
       <Badge
         key={shake}
         as="button"
         shape="square"
-        tone="neutral"
+        tone="active"
         size="icon"
         tip={t("export.button")}
         onClick={() => void run()}
@@ -776,23 +792,21 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
             own rainbow position via the ordinary CSS custom-property
             cascade, verified live via getComputedStyle against the real
             deployed container.
-              `size="compact"` (32px), NOT `size="icon"` (28px, GlimStone
-            full-app size-token audit fix — see Badge.tsx's own ROLE → SIZE
-            AUDIT header comment for the full writeup): this badge sits
-            directly beside a real FolderBrowser field (`items-end` row), and
-            that field renders at 32px live (`text-sm px-3 py-1.5`,
-            FolderBrowser's own already-measured "Durchsuchen" button doc) —
-            NOT 28px. The previous `size="icon"` measurement matched this
-            BUTTON's own pre-conversion self (`text-xs px-3 py-1.5` ≈ 28px),
-            a different control's box-model that only coincidentally equalled
-            an existing stage; it never actually matched the neighbour it
-            claimed to, a 4px mismatch confirmed live (getBoundingClientRect:
-            input 32px, badge 28px, same `items-end` row). `tip` carries the
-            exact text this button showed before becoming icon-only. */}
+              `size="icon"` — the app's one square-icon-badge size (32px). The
+            old `size="compact"` stage was 32px too, so this badge's rendered
+            box is unchanged; only the token name moved, because `compact`
+            existed solely to hold one arm of the role-based 28/32/36px split
+            that jdp rejected (see Badge.tsx's "ONE SIZE FOR SQUARE ICON
+            BADGES" block). The 32px value is still exactly right here for the
+            reason it always was — this badge shares an `items-end` row with a
+            FolderBrowser field that measures 32px live (`text-sm px-3 py-1.5`)
+            — it is simply no longer a number this call site owns. `tip`
+            carries the exact text this button showed before becoming
+            icon-only. */}
         <Badge
           as="button"
           shape="square"
-          size="compact"
+          size="icon"
           tone="active"
           tip={t("folders.add")}
           onClick={addCustom}

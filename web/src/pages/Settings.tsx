@@ -593,13 +593,20 @@ function PaletteSwatch({
   t: ReturnType<typeof useT>["t"];
 }) {
   const label = `${t("settings.rainbowPalette")} ${index + 1}`;
+  // h-8 w-8 (32px outer, 28px visible disc inside the 2px ring), not the
+  // h-7 w-7 this swatch used to be: the reset badge sharing this row is a
+  // square icon badge, and every square icon badge in the app is 32px
+  // (Badge.tsx, "ONE SIZE FOR SQUARE ICON BADGES"). The swatch follows the
+  // badge, not the other way round — jdp has twice reported this row when the
+  // two disagreed ("der Reset-Badge ist größer als die Farbfelder"), so they
+  // are kept equal by moving whichever side is NOT bound by the app-wide rule.
   return (
     <ColorPickerSwatch
       value={hex}
       onChange={onChange}
       label={label}
       disabled={disabled}
-      className="h-7 w-7 shrink-0 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+      className="h-8 w-8 shrink-0 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
     />
   );
 }
@@ -657,6 +664,12 @@ function AccentPresetSwatch({
   t: ReturnType<typeof useT>["t"];
 }) {
   const label = `${t("settings.accentPreset")} ${index + 1}`;
+  // Inner disc w-7 h-7 (28px) inside the wrapper's own 2px ring = a 32px outer
+  // box, matching PaletteSwatch above and, more to the point, matching the
+  // square reset badge that shares this row: every square icon badge in the
+  // app is 32px (Badge.tsx, "ONE SIZE FOR SQUARE ICON BADGES") and the
+  // swatches follow it. Was w-6 h-6 (24px disc, 28px outer) back when the
+  // reset badge was 28px.
   return (
     <span
       onClick={() => onSelect(hex)}
@@ -670,7 +683,7 @@ function AccentPresetSwatch({
           onSelect(v);
         }}
         label={label}
-        className="w-6 h-6 rounded-pill"
+        className="w-7 h-7 rounded-pill"
       />
     </span>
   );
@@ -828,12 +841,20 @@ export function AccentCard({
             trigger). Opens the shared GlimStone picker popover instead of
             a native <input type="color"> — see ColorPickerPopover.tsx's
             own header comment for why (jdp: "kein eigenes Fenster welches
-            sich öffnet" — no separate window opening). */}
+            sich öffnet" — no separate window opening).
+              w-8 h-8 (32px outer, 28px disc inside the 2px ring): the doc
+            above says "same size as the preset swatches beside it", but the
+            code did not deliver that — this was `w-6 h-6`, which with
+            border-box sizing is a 24px OUTER box against the presets' own 28px
+            (measured live: "Akzentfarbe" 24x24, "Voreinstellung 1..8" 28x28).
+            A pre-existing 4px mismatch, now closed on the 32px the whole row
+            moved to when every square icon badge in the app was unified — see
+            Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES". */}
         <ColorPickerSwatch
           value={accentHex}
           onChange={selectAccent}
           label={t("settings.accentColor")}
-          className="w-6 h-6 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
+          className="w-8 h-8 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
         />
         <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
         {presets.map((hex, i) => (
@@ -905,11 +926,16 @@ export function AccentCard({
               ALWAYS rendered, disabled (never conditionally unmounted) — see
             this component's own header comment for the earlier "isn't a badge
             at all" root cause that established this pattern.
-              size="icon" (28px) is NOT re-derived here: it is the size token
-            Badge.tsx's own ROLE → SIZE AUDIT already assigns to the role
-            "row-level reset control matching a same-row swatch's own real
-            h-7 w-7 footprint" — the very role this control fills, shared with
-            the rainbow-palette reset below.
+              size="icon" — the app's ONE square-icon-badge size (32px), not
+            a number this control derives from its own row. It used to be
+            28px, chosen to match the swatches beside it; when every square
+            icon badge in the app was unified on 32px, the swatch row moved
+            WITH the badge (AccentPresetSwatch's inner disc w-6 → w-7, so its
+            bordered wrapper measures 32px, and the custom-accent swatch
+            w-6 → w-8, which also closes a stray 24-vs-28px gap it had against
+            its own presets). Badges set the size, swatches follow — a swatch
+            is a colour disc, not an icon badge, so it is the free variable
+            here. Same treatment on the rainbow-palette reset below.
               tip (not title/ariaLabel) — same convention: an icon-only
             trigger gets IconTipButton's real hover/focus bubble, not a silent
             native title balloon. Text is settings.accentReset, which NAMES
@@ -2336,15 +2362,16 @@ function DashboardWidgetCard({
                   integration, `tip` carries the exact text the button used
                   to show (`vm.ssh.copy`, unchanged key — the same generic
                   "Kopieren" action every other copy control in this file
-                  already uses, not a new one-off string). h-8 w-8 (32px),
-                  NOT guessed: this row's own `<code>` sibling is
-                  byte-identical markup (`p-2 text-xs`) to VMSSHCard's own
-                  already-measured-live 32px case above in this file — same
-                  neighbour shape, same verified number, not Badge's
-                  `size="field"` (36px, pinned to a DIFFERENT neighbour, the
-                  off-site repo-url `<input>`) or `size="icon"` (28px, pinned
-                  to the rainbow palette swatch) — neither actually matches
-                  THIS row's real neighbour. bg-accent/text-accentContrast
+                  already uses, not a new one-off string). h-8 w-8 (32px) —
+                  the app's ONE square-icon-badge size, identical to Badge's
+                  own `size="icon"` stage and to every other square icon
+                  control in the app. (This literal predates that stage and
+                  happens to already be the right number; it is kept as a
+                  literal only because this call site renders IconTipButton
+                  directly rather than through Badge. Do not re-derive it from
+                  this row's own `<code>` sibling — per-neighbour sizing is the
+                  rejected split, see Badge.tsx's "ONE SIZE FOR SQUARE ICON
+                  BADGES" block.) bg-accent/text-accentContrast
                   preserved from the button it replaces (this control read as
                   a primary action, unlike VMSSHCard's neutral grey copy
                   badges) — `.glim-hue` recolours that fill to this Card's
@@ -3930,10 +3957,12 @@ function NotifyCard({
 // Badges mit Glyphen umwandeln?"): the visible "Jetzt replizieren…"/
 // "Replizierend…" text is gone, replaced by IconSync (Sidebar.tsx) inside a
 // square (`shape="square"`), icon-only (`tip` set — see Badge.tsx's own `tip`
-// doc) Badge sized to this row's own real measured control height
-// (`size="field"`, 36px — see Badge.tsx's SIZE_TOKENS.field comment for the
-// live getComputedStyle measurement this number comes from, NOT a guessed
-// reuse of another context's own token). The old busy/idle text swap survives
+// doc) Badge at `size="icon"` — the app's ONE square-icon-badge size (32px).
+// These four off-site badges were `size="field"` (36px), pinned to the
+// repo-url `<input>`'s own measured height; sizing each icon badge to its own
+// nearest neighbour is exactly the role-based split jdp rejected, so the
+// per-neighbour number is gone (see Badge.tsx's "ONE SIZE FOR SQUARE ICON
+// BADGES" block). The old busy/idle text swap survives
 // as the tooltip's own content instead of the button's visible label — same
 // two i18n keys, same swap condition, just read by `tip` instead of
 // `children` now. GlimStone follow-up round (jdp's next live review, on
@@ -3989,7 +4018,7 @@ function ReplicateNowButton({
       as="button"
       tone="active"
       shape="square"
-      size="field"
+      size="icon"
       hueIndex={hueIndex}
       onClick={() => void go()}
       disabled={busy}
@@ -4049,7 +4078,7 @@ function TestConnectionButton({
       as="button"
       tone="active"
       shape="square"
-      size="field"
+      size="icon"
       hueIndex={hueIndex}
       onClick={() => void go()}
       disabled={busy}
@@ -7860,7 +7889,7 @@ export function SettingsPage() {
                   as="button"
                   tone="active"
                   shape="square"
-                  size="field"
+                  size="icon"
                   hueIndex={hueIdx}
                   onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
                   tip={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
@@ -8866,11 +8895,12 @@ export function SettingsPage() {
                 together, which reads as "this section is off" rather than as
                 one arbitrarily dead control among live ones (the very
                 confusion that made AccentCard's badge unreadable).
-                  size="icon" (28px) is the size token Badge.tsx's own ROLE →
-                SIZE AUDIT names for this exact role — it literally cites "the
-                rainbow-palette reset badge" as the role's reference case, so
-                it is reused verbatim here and by the AccentCard mirror, never
-                re-derived from the swatch box model.
+                  size="icon" — the app's ONE square-icon-badge size (32px),
+                never re-derived from the swatch box model. It was 28px, sized
+                to this row's swatches; the app-wide unification moved the
+                swatches instead (PaletteSwatch h-7 w-7 → h-8 w-8), so this
+                badge and its eight neighbours still share one measured
+                footprint and one 28px inner disc inside their `border-2`.
                   tip (not title/ariaLabel) — IconTipButton's real hover/focus
                 bubble. Now settings.rainbowPaletteReset ("Reset color
                 palette"), not the generic common.reset it carried before:
