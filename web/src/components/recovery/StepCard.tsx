@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Badge } from "../Badge";
+import { InfoBubble } from "../InfoBubble";
 import { hueVars, rainbowAt } from "../../lib/appearance";
 
 export type StepState = "idle" | "ok" | "warn" | "bad";
@@ -7,12 +8,22 @@ export type StepState = "idle" | "ok" | "warn" | "bad";
 export function StepCard({
   n,
   title,
+  hint,
   state,
   children,
   hueIndex,
 }: {
   n: number;
   title: string;
+  /** The step's own explanatory prose, folded into an `onAccent` InfoBubble
+   *  on the heading badge instead of a permanent `<p>` in the card body —
+   *  the same `hint` shape (and the same house convention, "explanations
+   *  belong behind an inline (i)") Settings.tsx's Card(), Config.tsx's own
+   *  Cards and FolderBrowser already use. jdp, live review of this tab:
+   *  "Info-Texte in i Infobubbles." Optional: a step whose body is nothing
+   *  but controls and live results (Discover) has no standing explanation to
+   *  fold away and passes nothing. */
+  hint?: string;
   state: StepState;
   children: ReactNode;
   /** Rainbow position for this step's own heading notch — same mechanism as
@@ -52,24 +63,48 @@ export function StepCard({
   const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
   return (
     <div
-      className={`relative rounded-card bg-carbon-surface p-4${hueOn ? " glim-hue" : ""}`}
+      className={`relative glim-notch-card rounded-card bg-carbon-surface p-4${hueOn ? " glim-hue" : ""}`}
       style={hueStyle}
     >
       <div className="flex items-center gap-2.5 mb-2">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-carbon-surface2 text-xs font-semibold text-carbon-textSub">{n}</span>
         {/* Task 5 (rule 11): structurally identical to every other converted
             Card heading — a rounded-card bg-carbon-surface panel with its
             own <h2> title, not nested inside anything already badged.
             GlimStone follow-up pass ("half-overlap card notch"): `relative`
             added on the outer p-4 card above — the heading Badge is now
             `position: absolute` and straddles that card's real edge (the
-            step-number circle and status dot either side of the <h2> keep
-            their own positions untouched: this row's <h2> already carries
-            `flex-1`, which claims its share of the row's width regardless of
-            whether its content renders in normal flow, so removing the
-            badge from flow doesn't collapse the gap between them). */}
+            status dot to the right of the <h2> keeps its own position
+            untouched: this row's <h2> already carries `flex-1`, which claims
+            its share of the row's width regardless of whether its content
+            renders in normal flow, so removing the badge from flow doesn't
+            collapse the gap between them).
+              jdp, live review of this tab ("In diesem Tab haben wir eine
+            Besonderheit: Die Nummerierung der Cards soll auch ein
+            Cardtitelbadge sein... erst die Nummer und dann der Name der
+            Card"): the step number used to be its OWN 24px `bg-carbon-surface2`
+            circle, sitting in this row to the LEFT of the badge — a second,
+            separately-coloured piece of chrome that never joined the colour
+            engine and, now that the badge floats free of the row, didn't even
+            share a baseline with it. It is now the heading badge's own
+            leading cell (Badge's `prefix`), so number and name are one pill
+            that carries one hue.
+              `glim-notch-card` on the card above is the other half of that:
+            index.css keys the reactive-mode card-wide hover zone off exactly
+            that class, so a Recovery step now reveals its hue from anywhere
+            in the card like every Settings/Config/Flash card already did,
+            instead of only from the 22px pill itself. */}
         <h2 className="flex items-center min-w-0 flex-1">
-          <Badge tone="heading" size="heading" wrap className="max-w-full" hueIndex={hueIndex}>{title}</Badge>
+          <Badge
+            tone="heading"
+            size="heading"
+            wrap
+            className="max-w-full"
+            hueIndex={hueIndex}
+            prefix={n}
+          >
+            {title}
+            {hint && <InfoBubble tip={hint} onAccent />}
+          </Badge>
         </h2>
         <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
       </div>
