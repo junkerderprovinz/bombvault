@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
-import { IconTipButton } from "./IconTipButton";
+import { Badge } from "./Badge";
 import { IconFolder } from "./Sidebar";
 import { useToast } from "../lib/toast";
 
@@ -190,13 +190,51 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             Selector segment. `folder.browseTitle` (already translated in
             every locale — it was this button's native `title` a moment ago)
             becomes the tip text and the button's `aria-label` unchanged. */}
-        <IconTipButton
+        {/* COLOUR-ENGINE ROUND (jdp's standing rule, five escalations deep,
+            "IMMER alles in die Farb- und Formengine integrieren"): this button
+            was still a flat `bg-carbon-surface3` grey — one of six square icon
+            badges left outside the engine after the delete badge's own grey
+            special-casing was removed for exactly this reason. It is a real
+            `Badge` now (`as="button" tone="active" shape="square"
+            size="icon"`), the identical construction Settings.tsx's
+            ReplicateNowButton/TestConnectionButton already use: `tone="active"`
+            is the one non-heading tone the hue engine is allowed to drive, and
+            for an icon-only badge Badge resolves it to a full solid
+            `bg-accent`/`text-accentContrast` fill rather than the pale wash jdp
+            rejected as "halb abgedunkelt" (see Badge.tsx's own `toneClasses`
+            ROUND 2 comment). The glyph itself stays neutral `currentColor` —
+            "die icons sollen nicht eingefaerbt werden, nur die badges also der
+            hintergrund".
+              NO `hueIndex` prop, deliberately, and no new prop threaded
+            through this component's 19 call sites: `[data-rainbow] .glim-hue`
+            (index.css) redefines `--color-accent` for its whole SUBTREE, and
+            every one of those call sites already sits inside an ancestor that
+            carries it — Settings.tsx's Card(), recovery/StepCard.tsx,
+            Recovery.tsx's Restore/Cloud/Rclone rows, Containers.tsx's
+            ContainerRow, Files.tsx's FileSetRow. So `bg-accent` here resolves
+            to the enclosing card's OWN rainbow position by ordinary custom-
+            property inheritance, with no per-call-site wiring to forget. That
+            is the same already-established mechanism Containers.tsx's own
+            folder-add badge documents ("no `hueIndex` needed — this panel
+            already lives inside ContainerRow's own `.glim-hue` element").
+            Verified live with getComputedStyle, not assumed.
+              `size="icon"` is the app's ONE square-icon-badge size (32px) and
+            is the exact `h-8 w-8` this call site already had, so the footprint
+            is unchanged; `shrink-0` survives as `className` because it is
+            layout, not appearance. `tip` still carries `folder.browseTitle`
+            and still routes through IconTipButton — Badge renders its own
+            `tip` branch through that very component. */}
+        <Badge
+          as="button"
+          tone="active"
+          shape="square"
+          size="icon"
+          className="shrink-0"
           onClick={handleOpen}
           tip={t("folder.browseTitle")}
-          className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
         >
           <IconFolder />
-        </IconTipButton>
+        </Badge>
       </div>
 
       {/* Absolute path preview */}

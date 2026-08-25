@@ -1551,16 +1551,40 @@ chmod 600 /root/.ssh/authorized_keys`
                 already established for its own `px-3 py-1.5` field
                 neighbour (see that file's own comment); `rounded-control`
                 for the same reason given there, this button sits flush
-                beside a `rounded-control` sibling. */}
-            <IconTipButton
-              onClick={handleCopy}
+                beside a `rounded-control` sibling.
+                  COLOUR-ENGINE ROUND: both copy badges were still flat
+                `bg-carbon-surface3` grey with only `.glim-hue`'s focus-ring
+                redefinition tying them to this Card's position — the fill
+                itself never moved, which is precisely the gap jdp's standing
+                rule exists to close, and the reason the delete badge's own
+                grey special-casing was removed a round earlier. Both are real
+                `Badge`s now (`as="button" tone="active" shape="square"
+                size="icon"`), the same construction ReplicateNowButton/
+                TestConnectionButton in this file already use — an icon-only
+                `tone="active"` Badge resolves to the full solid
+                `bg-accent`/`text-accentContrast` fill, not the pale wash jdp
+                rejected as "halb abgedunkelt". `hueIndex` is passed
+                explicitly here (rather than left to inherit from the Card's
+                own `.glim-hue` subtree, which would compute the identical
+                colour) purely because this component already HAS the value in
+                scope, matching every other hue-aware control in it. The
+                hand-rolled `hueOn`/`hueStyle` pair stays — the Test button
+                below still uses it. `size="icon"` is the app's one square-
+                icon-badge size and is the same 32px these buttons already
+                measured to, so the footprint is unchanged. */}
+            <Badge
+              as="button"
+              tone="active"
+              shape="square"
+              size="icon"
+              hueIndex={hueIndex}
+              className="shrink-0"
+              onClick={() => void handleCopy()}
               disabled={!pub}
               tip={t("vm.ssh.copy")}
-              className={`shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
             >
               <IconCopy />
-            </IconTipButton>
+            </Badge>
           </div>
         </div>
 
@@ -1576,21 +1600,26 @@ chmod 600 /root/.ssh/authorized_keys`
           </ol>
           <div className="flex items-start gap-2">
             <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">{authorizeCmd || "—"}</pre>
-            {/* Same conversion, same measured 32px square — see the pub-key
-                copy button above for the full reasoning. This `<pre>`
-                sibling wraps to several lines (unlike the `<code>` above),
-                but the row stays `items-start` so the button never stretches
-                to match it — it keeps its own fixed 32px regardless, exactly
-                as it already did as a plain button before this round. */}
-            <IconTipButton
-              onClick={handleCopyCmd}
+            {/* Same conversion, same measured 32px square, and the same
+                colour-engine round — see the pub-key copy button above for the
+                full reasoning on both. This `<pre>` sibling wraps to several
+                lines (unlike the `<code>` above), but the row stays
+                `items-start` so the badge never stretches to match it — it
+                keeps its own fixed 32px regardless, exactly as it already did
+                as a plain button before either round. */}
+            <Badge
+              as="button"
+              tone="active"
+              shape="square"
+              size="icon"
+              hueIndex={hueIndex}
+              className="shrink-0"
+              onClick={() => void handleCopyCmd()}
               disabled={!pub}
               tip={t("vm.ssh.copyCmd")}
-              className={`shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
             >
               <IconCopy />
-            </IconTipButton>
+            </Badge>
           </div>
           {/* Task 5 (rule 13): was a plain underline-on-hover text link. Task 7:
               tone was "info" (the old fifth hue) only because it was the
@@ -7346,10 +7375,34 @@ export function SettingsPage() {
                   `settings.registryRemove`'s existing value moves from
                   visible button text to this tooltip's own content unchanged
                   — same "text moves onto the tip, key stays" move the
-                  Registry-add button below already made. Same `h-8 w-8`/
-                  `rounded-control`/`bg-carbon-surface3` icon-badge footprint
-                  as that Registry-add button and FolderBrowser's own Browse
-                  button, not a fresh guess: this row's own three text fields
+                  Registry-add button below already made.
+                    COLOUR-ENGINE ROUND (jdp's standing rule, five escalations
+                  deep): this badge and the Registry-add one below were still
+                  flat `bg-carbon-surface3` grey with no tie to this Card's own
+                  hue at all, the same gap that got the delete badge's grey
+                  special-casing removed a round earlier. Both are real
+                  `Badge`s now (`as="button" tone="active" shape="square"
+                  size="icon"`), which for an icon-only badge resolves to the
+                  full solid `bg-accent`/`text-accentContrast` fill, NOT the
+                  pale wash jdp rejected as "halb abgedunkelt" (see Badge.tsx's
+                  own `toneClasses` ROUND 2 comment).
+                    No `hueIndex` prop, and none needed: this Card is
+                  `<Card ... hueIndex={nextHue()}>` with no local variable to
+                  hand down, but Card's own wrapper carries `.glim-hue`, and
+                  `[data-rainbow] .glim-hue` (index.css) redefines
+                  `--color-accent` for its whole subtree, so `bg-accent` here
+                  already computes to THIS Card's rainbow position by ordinary
+                  custom-property inheritance. Same mechanism Containers.tsx's
+                  own folder-add badge documents; wrapping this Card in an IIFE
+                  purely to capture `nextHue()` would add a second source of
+                  truth for a colour that already resolves correctly. Verified
+                  live with getComputedStyle against the Card's own
+                  `--item-hue`.
+                    `size="icon"` is the app's ONE square-icon-badge size and
+                  is the same 32px this call site already had, so the footprint
+                  is unchanged; `shrink-0` survives as `className` because it
+                  is layout, not appearance. Not a fresh guess either: this
+                  row's own three text fields
                   are `text-sm px-3 py-1.5` — the SAME classes already
                   measured live to render at 32px for those other controls
                   (see Selector.tsx's own `iconOnly` doc for that
@@ -7359,7 +7412,12 @@ export function SettingsPage() {
                   fresh for this — no trash glyph existed in this codebase
                   yet — filled/`currentColor`-only, no `stroke`, matching
                   every other icon in that file's icon-only-badge set. */}
-              <IconTipButton
+              <Badge
+                as="button"
+                tone="active"
+                shape="square"
+                size="icon"
+                className="shrink-0"
                 tip={t("settings.registryRemove")}
                 onClick={() => {
                   // Removing a row is a discrete action, not a text edit — it
@@ -7382,10 +7440,9 @@ export function SettingsPage() {
                   cancelDebounce("registryAuths");
                   saveRegistries(nextAuths, nextRowIds);
                 }}
-                className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
               >
                 <IconTrash />
-              </IconTipButton>
+              </Badge>
             </div>
             );
           })}
@@ -7398,13 +7455,22 @@ export function SettingsPage() {
               justify-end">` wrapper for a lone action). The row's own text
               label moves onto the button's `IconTipButton` tip instead of
               disappearing — an icon-only trigger has no other way to say
-              what it does. Same `h-8 w-8`/`rounded-control`/
-              `bg-carbon-surface3` footprint as FolderBrowser's own
-              "Durchsuchen" icon button (that fix's own comment: the one
-              real field/control height already established on this page,
-              32px, not a new bracket invented for this call site). */}
+              what it does. Same 32px square-icon-badge footprint as
+              FolderBrowser's own "Durchsuchen" badge (the one real field/
+              control height already established on this page), expressed as
+              Badge's `size="icon"` stage now rather than a hand-written
+              `h-8 w-8`. Converted from flat `bg-carbon-surface3` grey to a
+              hue-carrying Badge in the same colour-engine round as the
+              Registry-remove badge above: see that call site's own comment
+              for the full reasoning, including why neither needs an explicit
+              `hueIndex`. */}
           <div className="flex justify-end">
-            <IconTipButton
+            <Badge
+              as="button"
+              tone="active"
+              shape="square"
+              size="icon"
+              className="shrink-0"
               tip={t("settings.registryAdd")}
               onClick={() => {
                 setSettings((prev) => {
@@ -7426,10 +7492,9 @@ export function SettingsPage() {
                 // again anyway if it's abandoned blank).
                 setRegistryRowIds((prev) => [...prev, randomId()]);
               }}
-              className="shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
             >
               <IconAdd />
-            </IconTipButton>
+            </Badge>
           </div>
         </div>
       </Card>
@@ -7685,20 +7750,30 @@ export function SettingsPage() {
                   button is already a direct child of the section's own
                   `flex flex-col` above) flips this from the row's start edge
                   to its end edge, RTL-safe, same as every other logical
-                  start/end pairing on this page. Same `h-8 w-8`/
-                  `rounded-control`/`bg-carbon-surface3` icon-button footprint
-                  as FolderBrowser's own Browse button and the Registry-add
-                  button above. */}
-              <IconTipButton
+                  start/end pairing on this page. `size="icon"` is the app's
+                  ONE square-icon-badge size (32px), the same footprint
+                  FolderBrowser's own Browse badge and the Registry-add badge
+                  above use, expressed as Badge's own size stage rather than a
+                  hand-written `h-8 w-8`. Converted from flat
+                  `bg-carbon-surface3` grey to a hue-carrying Badge in the same
+                  colour-engine round as those two: see the Registry-remove
+                  badge's own comment for the full reasoning, including why the
+                  enclosing Card's `.glim-hue` makes an explicit `hueIndex`
+                  unnecessary here. */}
+              <Badge
+                as="button"
+                tone="active"
+                shape="square"
+                size="icon"
+                className="self-end shrink-0"
                 tip={t("recovery.download")}
                 onClick={() => {
                   setKitError(null);
                   void downloadRecoveryKit().then(setKitError);
                 }}
-                className="self-end shrink-0 inline-flex items-center justify-center rounded-control bg-carbon-surface3 h-8 w-8 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
               >
                 <IconDownload />
-              </IconTipButton>
+              </Badge>
               {kitError && (
                 // Backend-provided error text shown verbatim BY DESIGN (e.g. the
                 // fail-closed "set a login password" refusal when auth is off) —
