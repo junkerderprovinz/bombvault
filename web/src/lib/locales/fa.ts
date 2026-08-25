@@ -1081,7 +1081,7 @@ const fa: Partial<Translations> = {
   "recovery.appKeyRemedy": "کلید رمزنگاری با این پشتیبان‌ها مطابقت ندارد. APP_KEY اصلی (از کیت بازیابی‌تان) را در قالب کانتینر تنظیم کنید، سپس دوباره بررسی کنید.",
   "recovery.readable": "پشتیبان‌های شما قابل خواندن هستند.",
   "recovery.notReachable": "پشتیبان‌های شما هنوز در دسترس نبودند — مکان را در زیر پیوست کنید، سپس دوباره بررسی کنید.",
-  "recovery.recheck": "بررسی دوباره",
+  "recovery.recheck": "بررسی",
   // Step 2
   "recovery.stepConfig": "بازیابی تنظیمات خود BombVault",
   "recovery.configHint": "روی سروری بازسازی‌شده، ابتدا تنظیمات خود BombVault را بازیابی کنید — مسیرهای پشتیبان‌گیری، مقصدهای خارج از محل و اطلاعات ورودش — تا مراحل زیر از قبل پر شده باشند. آن را به پشتیبان تنظیماتی که قبلاً تنظیم کرده‌اید اشاره دهید. پشتیبان تنظیماتی ندارید؟ این را رد کنید و پشتیبان‌های خود را در زیر به‌صورت دستی پیوست کنید.",
@@ -1089,7 +1089,7 @@ const fa: Partial<Translations> = {
   "recovery.configSourceLabel": "پشتیبان تنظیمات کجاست؟",
   "recovery.configLocalPath": "مسیر محلی",
   "recovery.configOffsiteUrl": "نشانی مخزن خارج از محل",
-  "recovery.configRestore": "بازیابی تنظیمات BombVault",
+  "recovery.configRestore": "بازیابی",
   "recovery.configRestoring": "در حال بازیابی…",
   "recovery.configRestarting": "BombVault در حال راه‌اندازی مجدد است تا تنظیمات شما را اعمال کند… این صفحه پس از بازگشت، به‌طور خودکار دوباره بارگذاری می‌شود.",
   "recovery.configManualRestart": "تنظیمات شما آماده شده است. کانتینر BombVault را در Unraid دوباره راه‌اندازی کنید، سپس ادامه دهید — در راه‌اندازی بعدی اعمال می‌شوند.",

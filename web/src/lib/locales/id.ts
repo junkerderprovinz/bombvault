@@ -1081,7 +1081,7 @@ const id: Partial<Translations> = {
   "recovery.appKeyRemedy": "Kunci enkripsi tidak cocok dengan cadangan ini. Atur APP_KEY asli (dari kit pemulihan Anda) di template container, lalu periksa ulang.",
   "recovery.readable": "Cadangan Anda dapat dibaca.",
   "recovery.notReachable": "Cadangan Anda belum dapat dijangkau — lampirkan lokasi di bawah, lalu periksa ulang.",
-  "recovery.recheck": "Periksa ulang",
+  "recovery.recheck": "Periksa",
   // Step 2
   "recovery.stepConfig": "Pulihkan pengaturan BombVault sendiri",
   "recovery.configHint": "Di server yang dibangun ulang, pulihkan dulu pengaturan BombVault sendiri — jalur pencadangan, target off-site, dan kredensialnya — sehingga langkah-langkah di bawah sudah terisi terlebih dahulu. Arahkan ke cadangan pengaturan yang Anda siapkan sebelumnya. Tidak punya cadangan pengaturan? Lewati ini dan lampirkan cadangan Anda secara manual di bawah.",
@@ -1089,7 +1089,7 @@ const id: Partial<Translations> = {
   "recovery.configSourceLabel": "Di mana cadangan pengaturan?",
   "recovery.configLocalPath": "Jalur lokal",
   "recovery.configOffsiteUrl": "URL repositori off-site",
-  "recovery.configRestore": "Pulihkan pengaturan BombVault",
+  "recovery.configRestore": "Pulihkan",
   "recovery.configRestoring": "Memulihkan…",
   "recovery.configRestarting": "BombVault sedang memulai ulang untuk menerapkan pengaturan Anda… halaman ini akan dimuat ulang secara otomatis saat kembali aktif.",
   "recovery.configManualRestart": "Pengaturan Anda sudah disiapkan. Mulai ulang container BombVault di Unraid, lalu lanjutkan — pengaturan diterapkan pada boot berikutnya.",

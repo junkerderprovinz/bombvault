@@ -1081,7 +1081,7 @@ const lv: Partial<Translations> = {
   "recovery.appKeyRemedy": "Šifrēšanas atslēga neatbilst šīm rezerves kopijām. Iestatiet oriģinālo APP_KEY (no jūsu atkopšanas komplekta) konteinera veidnē un pēc tam pārbaudiet vēlreiz.",
   "recovery.readable": "Jūsu rezerves kopijas ir nolasāmas.",
   "recovery.notReachable": "Jūsu rezerves kopijas vēl nebija sasniedzamas — pievienojiet atrašanās vietu zemāk un pēc tam pārbaudiet vēlreiz.",
-  "recovery.recheck": "Pārbaudīt vēlreiz",
+  "recovery.recheck": "Pārbaudīt",
   // Step 2
   "recovery.stepConfig": "Atjaunot paša BombVault iestatījumus",
   "recovery.configHint": "Atjaunotā serverī vispirms atjaunojiet paša BombVault iestatījumus — tā rezerves kopēšanas ceļus, attālinātos mērķus un akreditācijas datus — lai zemāk esošie soļi jau būtu iepriekš aizpildīti. Norādiet to uz iepriekš iestatīto iestatījumu rezerves kopiju. Nav iestatījumu rezerves kopijas? Izlaidiet šo un zemāk manuāli pievienojiet savas rezerves kopijas.",
@@ -1089,7 +1089,7 @@ const lv: Partial<Translations> = {
   "recovery.configSourceLabel": "Kur atrodas iestatījumu rezerves kopija?",
   "recovery.configLocalPath": "Vietējs ceļš",
   "recovery.configOffsiteUrl": "Attālinātā repozitorija URL",
-  "recovery.configRestore": "Atjaunot BombVault iestatījumus",
+  "recovery.configRestore": "Atjaunot",
   "recovery.configRestoring": "Atjauno…",
   "recovery.configRestarting": "BombVault tiek restartēts, lai piemērotu jūsu iestatījumus… šī lapa tiks automātiski atkārtoti ielādēta, kad tas atkal darbosies.",
   "recovery.configManualRestart": "Jūsu iestatījumi ir sagatavoti. Restartējiet BombVault konteineru Unraid, tad turpiniet — tie tiks piemēroti nākamajā palaišanā.",

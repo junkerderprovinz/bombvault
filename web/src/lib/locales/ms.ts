@@ -1081,7 +1081,7 @@ const ms: Partial<Translations> = {
   "recovery.appKeyRemedy": "Kunci penyulitan tidak sepadan dengan sandaran ini. Tetapkan APP_KEY asal (daripada kit pemulihan anda) dalam templat bekas, kemudian semak semula.",
   "recovery.readable": "Sandaran anda boleh dibaca.",
   "recovery.notReachable": "Sandaran anda belum boleh dicapai — lampirkan lokasi di bawah, kemudian semak semula.",
-  "recovery.recheck": "Semak semula",
+  "recovery.recheck": "Semak",
   // Step 2
   "recovery.stepConfig": "Pulihkan tetapan BombVault sendiri",
   "recovery.configHint": "Pada pelayan yang dibina semula, pulihkan dahulu tetapan BombVault sendiri — laluan sandarannya, sasaran luar tapak dan kelayakan — supaya langkah-langkah di bawah sudah diisi terlebih dahulu. Arahkannya kepada sandaran tetapan yang anda sediakan sebelum ini. Tiada sandaran tetapan? Langkau ini dan lampirkan sandaran anda secara manual di bawah.",
@@ -1089,7 +1089,7 @@ const ms: Partial<Translations> = {
   "recovery.configSourceLabel": "Di manakah sandaran tetapan?",
   "recovery.configLocalPath": "Laluan setempat",
   "recovery.configOffsiteUrl": "URL repositori luar tapak",
-  "recovery.configRestore": "Pulihkan tetapan BombVault",
+  "recovery.configRestore": "Pulihkan",
   "recovery.configRestoring": "Memulihkan…",
   "recovery.configRestarting": "BombVault sedang dimulakan semula untuk menerapkan tetapan anda… halaman ini akan dimuat semula secara automatik apabila ia kembali beroperasi.",
   "recovery.configManualRestart": "Tetapan anda telah disediakan. Mulakan semula bekas BombVault dalam Unraid, kemudian teruskan — ia akan diterapkan pada but seterusnya.",

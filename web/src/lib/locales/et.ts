@@ -1081,7 +1081,7 @@ const et: Partial<Translations> = {
   "recovery.appKeyRemedy": "Krüpteeringu võti ei sobi nende varundustega. Määra algne APP_KEY (sinu taastekomplektist) konteineri mallis ja kontrolli uuesti.",
   "recovery.readable": "Sinu varundused on loetavad.",
   "recovery.notReachable": "Sinu varundused polnud veel kättesaadavad — lisa allpool asukoht ja kontrolli uuesti.",
-  "recovery.recheck": "Kontrolli uuesti",
+  "recovery.recheck": "Kontrolli",
   // Step 2
   "recovery.stepConfig": "Taasta BombVaulti enda seaded",
   "recovery.configHint": "Ülesehitatud serveril taasta esmalt BombVaulti enda seaded — tema varunduse rajad, välised sihtkohad ja mandaadid —, et allolevad sammud oleksid juba eelnevalt täidetud. Suuna see varem seadistatud seadete varundusele. Seadete varundust pole? Jäta see vahele ja lisa oma varundused allpool käsitsi.",
@@ -1089,7 +1089,7 @@ const et: Partial<Translations> = {
   "recovery.configSourceLabel": "Kus asub seadete varundus?",
   "recovery.configLocalPath": "Kohalik rada",
   "recovery.configOffsiteUrl": "Välise hoidla URL",
-  "recovery.configRestore": "Taasta BombVaulti seaded",
+  "recovery.configRestore": "Taasta",
   "recovery.configRestoring": "Taastamine…",
   "recovery.configRestarting": "BombVault käivitub uuesti sinu seadete rakendamiseks… see leht laaditakse automaatselt uuesti, kui see taas kättesaadav on.",
   "recovery.configManualRestart": "Sinu seaded on ette valmistatud. Käivita BombVaulti konteiner Unraidis uuesti ja jätka seejärel — need rakenduvad järgmisel käivitusel.",

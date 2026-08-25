@@ -1081,7 +1081,7 @@ const eu: Partial<Translations> = {
   "recovery.appKeyRemedy": "Zifratze-gakoa ez dator bat babeskopia hauekin. Ezarri jatorrizko APP_KEY-a (zure berreskuratze-kitatik) edukiontziaren txantiloian, eta egiaztatu berriz.",
   "recovery.readable": "Zure babeskopiak irakurgarriak dira.",
   "recovery.notReachable": "Zure babeskopiak oraindik ez zeuden eskuragarri — erantsi beheko kokapena, eta egiaztatu berriz.",
-  "recovery.recheck": "Egiaztatu berriz",
+  "recovery.recheck": "Egiaztatu",
   // Step 2
   "recovery.stepConfig": "Berrezarri BombVaulten bere ezarpenak",
   "recovery.configHint": "Berreraikitako zerbitzari batean, berrezarri lehenik BombVaulten bere ezarpenak — bere babeskopia-bideak, kanpoko helmugak eta kredentzialak — beheko urratsak jada beteta egon daitezen. Zuzendu aurretik konfiguratu zenuen ezarpenen babeskopiara. Ezarpen-babeskopiarik ez? Saltatu hau eta erantsi zure babeskopiak eskuz behean.",
@@ -1089,7 +1089,7 @@ const eu: Partial<Translations> = {
   "recovery.configSourceLabel": "Non dago ezarpenen babeskopia?",
   "recovery.configLocalPath": "Bide lokala",
   "recovery.configOffsiteUrl": "Kanpoko biltegiaren URLa",
-  "recovery.configRestore": "Berrezarri BombVaulten ezarpenak",
+  "recovery.configRestore": "Berrezarri",
   "recovery.configRestoring": "Berrezartzen…",
   "recovery.configRestarting": "BombVault berrabiarazten ari da zure ezarpenak aplikatzeko… orri hau automatikoki berriz kargatzen da berriz eskuragarri dagoenean.",
   "recovery.configManualRestart": "Zure ezarpenak prestatuta daude. Berrabiarazi BombVault edukiontzia Unraid-en, eta jarraitu ondoren — hurrengo abioan aplikatuko dira.",
