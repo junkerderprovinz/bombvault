@@ -13,7 +13,7 @@ import { RestorePanel } from "../components/RestorePanel";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconContainers, IconDownload, IconAdd, IconSave } from "../components/Sidebar";
+import { IconContainers, IconDownload, IconAdd } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { ToggleRow } from "./Settings";
@@ -388,11 +388,61 @@ function ExportButton({ name, t }: { name: string; t: T }) {
   );
 }
 
+// useDebouncedSave — a small per-instance "call `run` DELAY_MS after the last
+// invocation, cancel the pending one if called again first" hook: the exact
+// same shape/delay as Settings.tsx's own page-level debouncedSave/DEBOUNCE_MS
+// (which every remaining free-text field in this app — registry host/user/
+// token, the age-recipients list, cron/schedule strings — already auto-saves
+// through), just scoped to ONE component instance instead of a shared
+// page-level timer map keyed by field name. HooksEditor/ExcludesEditor below
+// are each their own instance (one per container row), so unlike
+// SettingsPage — which can have several unrelated debounced fields live at
+// once and needs a string key to keep their timers apart — each of these only
+// ever has ONE outstanding timer of its own, so no key is needed here.
+const AUTOSAVE_DEBOUNCE_MS = 800;
+
+function useDebouncedSave(delayMs: number = AUTOSAVE_DEBOUNCE_MS) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // A pending debounce must not fire after this component has unmounted (the
+  // user edits a field then closes/navigates away within the delay window) —
+  // same "capture the ref, clear on unmount" guard Settings.tsx's own
+  // debounce-cleanup effect uses.
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+  return function debouncedSave(run: () => void) {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(run, delayMs);
+  };
+}
+
 // HooksEditor edits the per-container pre/post-backup commands (collapsible).
 // `open` is now controlled by the caller (Containers.tsx's ContainerRow, via
 // its own shared five-chip Selector strip — see that call site's own comment)
 // rather than an internal useState: this component no longer renders its own
 // trigger button, only the content pane, shown or hidden by the prop.
+//
+// Live-save conversion (jdp, live review: "Brauchen wir die Speichern-Buttons
+// in den Aufklappcards überhaupt? Es soll doch immer live speichern."): the
+// explicit Save button is GONE — both fields now debounce-auto-save via
+// useDebouncedSave above, 800ms after the last keystroke, combined into ONE
+// setContainerHooks(pre, post) call (the same "compute the next value
+// locally, pass it straight into the debounced closure" shape Settings.tsx's
+// own registryAuths row edits use for their own multi-field-into-one-PATCH
+// save). No revert-on-failure and no `.glim-shake` here — matching
+// Settings.tsx's OWN debouncedSave text-field convention exactly (see e.g.
+// pathSaveState's "only the setters are needed" comment): a shell command is
+// free text like a cron string or a registry token, already saved this exact
+// way elsewhere in this app with zero exception, and reverting a field the
+// user might still be actively typing into would be jarring rather than
+// helpful — the toast alone reports a failure, and the value simply stays as
+// typed for the next edit (or a reload) to pick up. Discrete boolean/
+// selection saves (FoldersEditor's mount checkboxes, StopContainersEditor's
+// picker rows) are the other half of this conversion and DO keep revert +
+// shake, since those really are one-click toggles, not continuous typing —
+// see FoldersEditor's own `toggle()` comment for that half's reasoning.
 function HooksEditor({
   name,
   initialPre,
@@ -408,29 +458,16 @@ function HooksEditor({
 }) {
   const [pre, setPre] = useState(initialPre);
   const [post, setPost] = useState(initialPost);
-  const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
-  const [shake, setShake] = useState(0);
+  const debouncedSave = useDebouncedSave();
 
-  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 2500ms inline flash
-  // is now a toast, same shape as Settings.tsx's shared save() helper.
-  async function save() {
-    setState("saving");
+  async function saveHooks(nextPre: string, nextPost: string) {
     try {
-      const r = await setContainerHooks(name, pre, post);
-      if (r.ok) {
-        push(t("settings.saved"), "success");
-      } else {
-        push(r.error ?? t("settings.error"), "fail");
-        setShake((n) => n + 1);
-      }
+      const r = await setContainerHooks(name, nextPre, nextPost);
+      if (r.ok) push(t("settings.saved"), "success");
+      else push(r.error ?? t("settings.error"), "fail");
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setState("idle");
     }
   }
 
@@ -444,39 +481,22 @@ function HooksEditor({
       <p className="text-xs text-carbon-textMuted">{t("hooks.hint")}</p>
       <label className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
-        <input value={pre} onChange={(e) => setPre(e.target.value)} spellCheck={false}
+        <input value={pre} onChange={(e) => {
+          const nextPre = e.target.value;
+          setPre(nextPre);
+          debouncedSave(() => void saveHooks(nextPre, post));
+        }} spellCheck={false}
           placeholder="mysqldump -uroot -p$PW db > /config/dump.sql" className={inputCls} />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
-        <input value={post} onChange={(e) => setPost(e.target.value)} spellCheck={false}
+        <input value={post} onChange={(e) => {
+          const nextPost = e.target.value;
+          setPost(nextPost);
+          debouncedSave(() => void saveHooks(pre, nextPost));
+        }} spellCheck={false}
           placeholder="curl -fsS https://hooks.example/done" className={inputCls} />
       </label>
-      <div className="flex items-center gap-3 pt-0.5">
-        {/* Icon-badge conversion (icon-badge round) — see FoldersEditor's own
-            "Ordner speichern" comment above for the full hue/size reasoning
-            (identical `py-1`/`text-xs` footprint here). */}
-        <Badge
-          key={shake}
-          as="button"
-          shape="square"
-          size="large"
-          tone="active"
-          tip={t("settings.save")}
-          onClick={() => void save()}
-          disabled={state === "saving"}
-          className={shake ? "glim-shake" : undefined}
-        >
-          {state === "saving" ? (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconSave />
-          )}
-        </Badge>
-      </div>
     </div>
   );
 }
@@ -574,11 +594,19 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
   const [browseValue, setBrowseValue] = useState("");
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [hostSourceRoot, setHostSourceRoot] = useState("/mnt");
-  const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
-  const [shake, setShake] = useState(0);
+  // Live-save conversion (jdp, live review — see HooksEditor's own header
+  // comment for the full "why" across all four editors): a mount checkbox is
+  // a discrete boolean pick, the SAME shape SettingsPage's toggleDomainEnabled
+  // already established for "flip one boolean, persist immediately, revert +
+  // `.glim-shake` on failure" — checkRowBusy/checkRowShake below are that
+  // same per-key busy/shake map, just keyed by mount `source` instead of a
+  // domain name. Adding/removing a CUSTOM path is a structural list edit
+  // instead (closer to Settings.tsx's registryAuths row add/remove), so it
+  // saves immediately too but withOUT revert/shake — see addCustom/
+  // removeCustomPath's own comments below.
+  const [checkRowBusy, setCheckRowBusy] = useState<Record<string, boolean>>({});
+  const [checkRowShake, setCheckRowShake] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -605,14 +633,56 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
       });
   }, [open, loaded, name, t, push]);
 
-  function toggle(source: string) {
-    setChecked((prev) => {
-      const next = new Set(prev);
-      if (next.has(source)) next.delete(source);
-      else next.add(source);
-      return next;
-    });
+  // persistPaths is the single call every mutation below funnels through —
+  // toggling a mount checkbox or adding/removing a custom path all resolve to
+  // the same setBackupPaths(name, fullList) PATCH, just with different
+  // revert/shake behaviour on failure (see toggle/addCustom/removeCustomPath's
+  // own comments for which half of the live-save conversion each belongs to).
+  async function persistPaths(paths: string[]): Promise<boolean> {
+    try {
+      const r = await setBackupPaths(name, paths);
+      if (r.ok) {
+        push(t("folders.saved"), "success");
+        return true;
+      }
+      push(r.error ?? t("settings.error"), "fail");
+      return false;
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      return false;
+    }
   }
+
+  // Discrete boolean toggle — optimistic flip, immediate save, revert +
+  // `.glim-shake` (keyed by mount `source`) on failure. Same shape as
+  // SettingsPage's toggleDomainEnabled; see this component's own top-level
+  // comment for the full "why this half of the conversion reverts and the
+  // other half doesn't" reasoning.
+  async function toggle(source: string) {
+    const wasChecked = checked.has(source);
+    const next = new Set(checked);
+    if (wasChecked) next.delete(source);
+    else next.add(source);
+    setChecked(next);
+    setCheckRowBusy((b) => ({ ...b, [source]: true }));
+    const ok = await persistPaths([...next, ...custom.map((c) => c.path)]);
+    setCheckRowBusy((b) => ({ ...b, [source]: false }));
+    if (!ok) {
+      setChecked((prev) => {
+        const reverted = new Set(prev);
+        if (wasChecked) reverted.add(source);
+        else reverted.delete(source);
+        return reverted;
+      });
+      setCheckRowShake((s) => ({ ...s, [source]: (s[source] ?? 0) + 1 }));
+    }
+  }
+
+  // Structural list add — immediate save, no revert/shake (same shape as
+  // Settings.tsx's registryAuths row add/remove: the path stays in the list
+  // either way, a failed save just gets picked up by the next edit or a
+  // reload — see debouncedSave's own "no revert" comment for the identical
+  // reasoning applied to a structural edit instead of a text edit).
   function addCustom() {
     const raw = browseValue.trim();
     if (!raw) return;
@@ -620,26 +690,19 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
     // the host path SetBackupPaths expects. An already-absolute path (manual
     // fallback) is used as-is.
     const p = raw.startsWith("/") ? raw : `${hostSourceRoot}/${raw}`;
-    if (!custom.some((c) => c.path === p)) setCustom((c) => [...c, { path: p, exists: true }]);
     setBrowseValue("");
+    if (custom.some((c) => c.path === p)) return;
+    const nextCustom = [...custom, { path: p, exists: true }];
+    setCustom(nextCustom);
+    void persistPaths([...checked, ...nextCustom.map((c) => c.path)]);
   }
-  async function save() {
-    setState("saving");
-    const paths = [...checked, ...custom.map((c) => c.path)];
-    try {
-      const r = await setBackupPaths(name, paths);
-      if (r.ok) {
-        push(t("folders.saved"), "success");
-      } else {
-        push(r.error ?? t("settings.error"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setState("idle");
-    }
+
+  // Structural list remove — same immediate-save-no-revert shape as addCustom
+  // above.
+  function removeCustomPath(path: string) {
+    const nextCustom = custom.filter((x) => x.path !== path);
+    setCustom(nextCustom);
+    void persistPaths([...checked, ...nextCustom.map((c) => c.path)]);
   }
 
   if (!open) return null;
@@ -653,14 +716,19 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
       )}
       {mounts.map((m) => (
         <label
-          key={m.source}
-          className={`flex items-start gap-2 text-xs ${m.reachable ? "text-carbon-text" : "text-carbon-textMuted"}`}
+          // Keyed by source PLUS its own shake nonce (not just source) — a
+          // genuinely new key remounts this one row so `.glim-shake` replays
+          // on a rejected save, the same "key = nonce" technique this app's
+          // shake-capable controls already use (ToggleRow's own
+          // `shakeNonce`-keyed Toggle is the precedent).
+          key={`${m.source}-${checkRowShake[m.source] ?? 0}`}
+          className={`flex items-start gap-2 text-xs ${m.reachable ? "text-carbon-text" : "text-carbon-textMuted"}${checkRowShake[m.source] ? " glim-shake" : ""}`}
         >
           <input
             type="checkbox"
-            disabled={!m.reachable}
+            disabled={!m.reachable || !!checkRowBusy[m.source]}
             checked={m.reachable && checked.has(m.source)}
-            onChange={() => toggle(m.source)}
+            onChange={() => void toggle(m.source)}
             className="mt-0.5 accent-(--accent)"
           />
           <span className="flex flex-col">
@@ -678,7 +746,7 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
             {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
           </span>
           <button
-            onClick={() => setCustom((c) => c.filter((x) => x.path !== cp.path))}
+            onClick={() => removeCustomPath(cp.path)}
             className="text-carbon-textMuted hover:text-statusFail px-1"
             aria-label="remove"
           >
@@ -731,34 +799,6 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
           <IconAdd />
         </Badge>
       </div>
-      <div className="flex items-center gap-3 pt-0.5">
-        {/* Same icon-badge conversion as "Hinzufügen" above, `size="large"`
-            (24px) matching this button's own pre-existing `py-1` footprint —
-            a plain save glyph (IconSave), not IconBackupNow: this is "save
-            this form", not "back up now", two distinct concepts this app
-            already keeps visually separate (see IconSave's own doc comment,
-            components/Sidebar.tsx). */}
-        <Badge
-          key={shake}
-          as="button"
-          shape="square"
-          size="large"
-          tone="active"
-          tip={t("folders.save")}
-          onClick={() => void save()}
-          disabled={state === "saving" || loading}
-          className={shake ? "glim-shake" : undefined}
-        >
-          {state === "saving" ? (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconSave />
-          )}
-        </Badge>
-      </div>
     </div>
   );
 }
@@ -798,13 +838,16 @@ function StopContainersEditor({
   t: T;
 }) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initial));
-  const [state, setState] = useState<"idle" | "saving">("idle");
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
-  const [shake, setShake] = useState(0);
+  // Live-save conversion (jdp, live review — see HooksEditor's own header
+  // comment for the full "why" across all four editors): each listbox row is
+  // a discrete boolean pick (same shape as FoldersEditor's mount checkboxes),
+  // so rowBusy/rowShake below are that identical per-key busy/shake map, keyed
+  // by candidate container name instead of mount source.
+  const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
+  const [rowShake, setRowShake] = useState<Record<string, number>>({});
 
   // Re-seed whenever the SAVED value changes underneath this editor (e.g. a
   // fresh `listContainers()` reload after Discover) — the same "derived from
@@ -828,30 +871,42 @@ function StopContainersEditor({
   // second bespoke "stale" label.
   const candidateNames = new Set(candidates.map((c) => c.name));
 
-  function toggle(n: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(n)) next.delete(n);
-      else next.add(n);
-      return next;
-    });
-  }
-
-  async function save() {
-    setState("saving");
+  // Discrete boolean toggle — optimistic flip, immediate save, revert +
+  // `.glim-shake` (keyed by container name) on failure. Same shape as
+  // SettingsPage's toggleDomainEnabled/FoldersEditor's own mount-checkbox
+  // `toggle` — see this component's own top-level comment.
+  async function toggle(n: string) {
+    const wasSelected = selected.has(n);
+    const next = new Set(selected);
+    if (wasSelected) next.delete(n);
+    else next.add(n);
+    setSelected(next);
+    setRowBusy((b) => ({ ...b, [n]: true }));
     try {
-      const r = await setStopContainers(name, [...selected]);
+      const r = await setStopContainers(name, [...next]);
       if (r.ok) {
         push(t("settings.saved"), "success");
       } else {
         push(r.error ?? t("settings.error"), "fail");
-        setShake((n) => n + 1);
+        setSelected((prev) => {
+          const reverted = new Set(prev);
+          if (wasSelected) reverted.add(n);
+          else reverted.delete(n);
+          return reverted;
+        });
+        setRowShake((s) => ({ ...s, [n]: (s[n] ?? 0) + 1 }));
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      setShake((n) => n + 1);
+      setSelected((prev) => {
+        const reverted = new Set(prev);
+        if (wasSelected) reverted.add(n);
+        else reverted.delete(n);
+        return reverted;
+      });
+      setRowShake((s) => ({ ...s, [n]: (s[n] ?? 0) + 1 }));
     } finally {
-      setState("idle");
+      setRowBusy((b) => ({ ...b, [n]: false }));
     }
   }
 
@@ -884,8 +939,11 @@ function StopContainersEditor({
           rainbow-hued): every other VALUE picker in this app (this same
           file's own offsite-target `<select>`, the Language/Theme card
           dropdowns, FolderBrowser's text field) is plain neutral chrome —
-          rainbow hue in this app marks a genuine ACTION control (the Save
-          badge below), never a value-holding input/picker. */}
+          rainbow hue in this app marks a genuine ACTION control (FoldersEditor's
+          own "Hinzufügen" icon badge is that pattern's live example), never a
+          value-holding input/picker. This editor's own former Save badge is
+          gone entirely (live-save conversion, see this component's own
+          top-level comment) — every row below now persists itself. */}
       <div className="relative inline-block" ref={pickerRef}>
         <button
           type="button"
@@ -914,14 +972,17 @@ function StopContainersEditor({
               const checked = selected.has(c.name);
               return (
                 <button
-                  key={c.name}
+                  // Keyed by name PLUS its own shake nonce — see
+                  // FoldersEditor's identical mount-row key comment.
+                  key={`${c.name}-${rowShake[c.name] ?? 0}`}
                   type="button"
                   role="option"
                   aria-selected={checked}
-                  onClick={() => toggle(c.name)}
-                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start transition-colors ${
+                  onClick={() => void toggle(c.name)}
+                  disabled={!!rowBusy[c.name]}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start transition-colors disabled:opacity-60 ${
                     checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                  }`}
+                  }${rowShake[c.name] ? " glim-shake" : ""}`}
                 >
                   <input type="checkbox" checked={checked} readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
                   <span className="min-w-0 flex-1 truncate">{c.name}</span>
@@ -933,12 +994,13 @@ function StopContainersEditor({
                 removable) but marked with the existing notInstalled label. */}
             {sortedSelected.filter((n) => !candidateNames.has(n)).map((n) => (
               <button
-                key={n}
+                key={`${n}-${rowShake[n] ?? 0}`}
                 type="button"
                 role="option"
                 aria-selected
-                onClick={() => toggle(n)}
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
+                onClick={() => void toggle(n)}
+                disabled={!!rowBusy[n]}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-60${rowShake[n] ? " glim-shake" : ""}`}
               >
                 <input type="checkbox" checked readOnly tabIndex={-1} className="pointer-events-none" style={{ accentColor: "var(--accent)" }} />
                 <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-start">{n}</span>
@@ -951,11 +1013,15 @@ function StopContainersEditor({
       {sortedSelected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {sortedSelected.map((n) => (
-            <span key={n} className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub">
+            <span
+              key={`${n}-${rowShake[n] ?? 0}`}
+              className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
+            >
               {n}
               <button
-                onClick={() => toggle(n)}
-                className="text-carbon-textMuted hover:text-carbon-text transition-colors"
+                onClick={() => void toggle(n)}
+                disabled={!!rowBusy[n]}
+                className="text-carbon-textMuted hover:text-carbon-text transition-colors disabled:opacity-60"
                 aria-label={t("stophook.remove").replace("{name}", n)}
               >
                 ×
@@ -964,32 +1030,6 @@ function StopContainersEditor({
           ))}
         </div>
       )}
-      <div className="flex items-center gap-3 pt-0.5">
-        {/* Same icon-badge conversion as every other "speichern" button this
-            round — see FoldersEditor's own "Ordner speichern" comment above
-            for the full hue/size reasoning (identical `py-1`/`text-xs`
-            footprint here, so the same `size="large"` measurement applies). */}
-        <Badge
-          key={shake}
-          as="button"
-          shape="square"
-          size="large"
-          tone="active"
-          tip={t("settings.save")}
-          onClick={() => void save()}
-          disabled={state === "saving"}
-          className={shake ? "glim-shake" : undefined}
-        >
-          {state === "saving" ? (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconSave />
-          )}
-        </Badge>
-      </div>
     </div>
   );
 }
@@ -1007,11 +1047,16 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
   const [preview, setPreview] = useState<ExcludePreviewRow[]>([]);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button on a failed save() — addExclude/removeExclude (the
-  // assistant's per-suggestion chips) share the same saveLines() but are not
-  // wired to this nonce; their own toast still fires either way.
-  const [shakeSave, setShakeSave] = useState(0);
+  // Live-save conversion (jdp, live review — see HooksEditor's own header
+  // comment for the full "why" across all four editors): the manual Save
+  // button + its own `shakeSave` nonce are GONE — the textarea below now
+  // debounce-auto-saves itself the same way HooksEditor's two inputs do (see
+  // that component's own comment for why no shake/revert applies to free
+  // text). `state`/`saveLines` stay exactly as they were: the assistant's
+  // one-click suggestion chips (addExclude/removeExclude below) already
+  // saved immediately, no button involved, before this conversion — that
+  // half of this editor was ALREADY live-save and needed no change.
+  const debouncedSave = useDebouncedSave();
 
   // Debounced live preview: whenever the editor is open and the textarea holds at
   // least one non-blank line, resolve the candidate lines against the container's
@@ -1049,8 +1094,9 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
     .filter(Boolean);
 
   // saveLines persists an explicit line list and mirrors it back into the
-  // textarea, sharing the editor's save state machine. The save button passes
-  // the parsed textarea; the assistant passes the list ± one line.
+  // textarea, sharing the editor's save state machine. The debounced textarea
+  // auto-save below passes the freshly-typed lines; the assistant passes the
+  // list ± one line.
   async function saveLines(list: string[]) {
     setState("saving");
     try {
@@ -1060,18 +1106,12 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
         push(t("excludes.saved"), "success");
       } else {
         push(r.error ?? t("excludes.error"), "fail");
-        setShakeSave((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("excludes.error"), "fail");
-      setShakeSave((n) => n + 1);
     } finally {
       setState("idle");
     }
-  }
-
-  async function save() {
-    await saveLines(currentLines);
   }
 
   // --- Exclusion assistant: server-side scan for junk/large folders with
@@ -1147,7 +1187,17 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
       </p>
       <textarea
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          const nextText = e.target.value;
+          setText(nextText);
+          // Debounced auto-save (800ms after the last keystroke) — see this
+          // component's own top-level comment. Lines are parsed from
+          // `nextText` right here, not re-read from `text` when the timer
+          // fires, matching Settings.tsx's own "compute the next value
+          // locally, pass it straight into the debounced closure" shape.
+          const nextLines = nextText.split("\n").map((s) => s.trim()).filter(Boolean);
+          debouncedSave(() => void saveLines(nextLines));
+        }}
         spellCheck={false}
         rows={3}
         placeholder={t("excludes.placeholder")}
@@ -1185,31 +1235,6 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
           })}
         </div>
       )}
-      <div className="flex items-center gap-3 pt-0.5">
-        {/* Icon-badge conversion (icon-badge round) — see FoldersEditor's own
-            "Ordner speichern" comment above for the full hue/size reasoning
-            (identical `py-1`/`text-xs` footprint here). */}
-        <Badge
-          key={shakeSave}
-          as="button"
-          shape="square"
-          size="large"
-          tone="active"
-          tip={t("excludes.save")}
-          onClick={() => void save()}
-          disabled={state === "saving"}
-          className={shakeSave ? "glim-shake" : undefined}
-        >
-          {state === "saving" ? (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconSave />
-          )}
-        </Badge>
-      </div>
 
       {/* Exclusion assistant */}
       <div className="mt-1 flex flex-col gap-2">
