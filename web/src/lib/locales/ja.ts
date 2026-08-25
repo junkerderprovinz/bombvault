@@ -152,6 +152,7 @@ const ja: Partial<Translations> = {
 
   // Settings
   "settings.title": "設定",
+  "settings.encryptionLabel": "パスワード",
   "settings.encryptionOn": "有効（APP_KEY からパスワードを導出）",
   "settings.encryptionOff": "無効（パスワードなし）",
   "settings.encryptionHint":
@@ -590,6 +591,8 @@ const ja: Partial<Translations> = {
   "recovery.notReachable": "まだバックアップに到達できませんでした — 下で保存先を接続し、再確認してください。",
   "recovery.recheck": "再確認",
   "recovery.step2": "バックアップを接続",
+  "recovery.cloudCreds": "クラウド認証情報（任意）",
+  "recovery.cloudCredsHint": "バックアップパスが S3、restic REST サーバー、rclone リモートを指している場合にのみ必要です。ローカルパスやマウント済み共有では何も入力する必要はありません。",
   "recovery.attachHint": "BombVault を既存のバックアップに向けます：ホストマウント配下のローカルパス、または認証情報付きのオフサイトリポジトリ（rest / S3 / B2 / sftp / rclone）。その後、接続して確認します。",
   "recovery.credsSaveHint": "オフサイトの認証情報は各カードの保存ボタンで保存されます — 接続してプレビューする前に保存してください。",
   "recovery.connectPreview": "接続してプレビュー",

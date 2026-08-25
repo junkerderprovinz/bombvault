@@ -152,6 +152,7 @@ const th: Partial<Translations> = {
 
   // Settings
   "settings.title": "การตั้งค่า",
+  "settings.encryptionLabel": "รหัสผ่าน",
   "settings.encryptionOn": "เปิดใช้งาน (รหัสผ่านนำมาจาก APP_KEY)",
   "settings.encryptionOff": "ปิดใช้งาน (ไม่มีรหัสผ่าน)",
   "settings.encryptionHint":
@@ -601,6 +602,8 @@ const th: Partial<Translations> = {
   "recovery.notReachable": "ยังเข้าถึงการสำรองข้อมูลของคุณไม่ได้ — แนบตำแหน่งด้านล่าง แล้วตรวจสอบอีกครั้ง",
   "recovery.recheck": "ตรวจสอบอีกครั้ง",
   "recovery.step2": "แนบการสำรองข้อมูลของคุณ",
+  "recovery.cloudCreds": "ข้อมูลรับรองคลาวด์ (ไม่บังคับ)",
+  "recovery.cloudCredsHint": "จำเป็นเฉพาะเมื่อเส้นทางสำรองข้อมูลชี้ไปที่ S3, เซิร์ฟเวอร์ restic REST หรือรีโมต rclone เท่านั้น เส้นทางในเครื่องหรือแชร์ที่เมาต์ไว้ไม่ต้องใช้อะไรตรงนี้",
   "recovery.attachHint": "ชี้ BombVault ไปยังการสำรองข้อมูลที่มีอยู่: พาธในเครื่องภายใต้จุดเมานต์ของโฮสต์ หรือรีพอสิทอรีนอกสถานที่ (rest / S3 / B2 / sftp / rclone) พร้อมข้อมูลรับรอง จากนั้นเชื่อมต่อเพื่อยืนยัน",
   "recovery.credsSaveHint": "ข้อมูลรับรองนอกสถานที่จะบันทึกด้วยปุ่มบันทึกของแต่ละการ์ดเอง — บันทึกก่อนที่คุณจะเชื่อมต่อและดูตัวอย่าง",
   "recovery.connectPreview": "เชื่อมต่อและดูตัวอย่าง",

@@ -220,6 +220,7 @@ const sk: Partial<Translations> = {
 
   // Settings
   "settings.title": "Nastavenia",
+  "settings.encryptionLabel": "Heslo",
   "settings.encryptionOn": "Zapnuté (heslo odvodené z APP_KEY)",
   "settings.encryptionOff": "Vypnuté (bez hesla)",
   "settings.encryptionHint": "Šifrovanie sa nastavuje pre každý repozitár pri inicializácii. Zmena vyžaduje novú prázdnu cestu.",
@@ -1098,6 +1099,8 @@ const sk: Partial<Translations> = {
   "recovery.configSkipped": "Preskočené. Pripojte svoje zálohy manuálne nižšie.",
   // Step 3
   "recovery.step2": "Pripojiť svoje zálohy",
+  "recovery.cloudCreds": "Poverenia pre cloud (voliteľné)",
+  "recovery.cloudCredsHint": "Potrebné len vtedy, keď cesta zálohy smeruje na S3, server restic REST alebo vzdialené úložisko rclone. Miestna cesta ani pripojené zdieľanie tu nič nepotrebujú.",
   "recovery.attachHint": "Nasmerujte BombVault na svoje existujúce zálohy: lokálnu cestu pod pripojením hostiteľa alebo externý repozitár (rest / S3 / B2 / sftp / rclone) s jeho poverením. Potom sa pripojte, aby ste to potvrdili.",
   "recovery.credsSaveHint": "Externé poverenia sa ukladajú vlastným tlačidlom Uložiť na každej karte — uložte ich pred kliknutím na „Pripojiť a zobraziť náhľad“.",
   "recovery.connectPreview": "Pripojiť a zobraziť náhľad",

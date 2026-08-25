@@ -286,6 +286,7 @@ export const en = {
   // own dynamic on/off label directly (settings.encryptionOn/Off), which
   // already says more than the static generic word this key held, so a
   // second, now-unused heading string would just be dead weight.
+  "settings.encryptionLabel": "Password",
   "settings.encryptionOn": "Enabled (password derived from APP_KEY)",
   "settings.encryptionOff": "Disabled (no password)",
   "settings.encryptionHint":
@@ -1336,6 +1337,8 @@ export const en = {
   "recovery.configSkipped": "Skipped. Attach your backups manually below.",
   // Step 3 — attach your backups
   "recovery.step2": "Attach your backups",
+  "recovery.cloudCreds": "Cloud credentials (optional)",
+  "recovery.cloudCredsHint": "Only needed when a backup path points at S3, a restic REST server or an rclone remote. A local path or a mounted share needs nothing here.",
   "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
   "recovery.credsSaveHint": "Off-site credentials save with each card's own Save button — save them before you connect & preview.",
   "recovery.connectPreview": "Connect & preview",
@@ -1853,6 +1856,7 @@ export const de: Translations = {
   "run.colContainer": "Container",
 
   "settings.title": "Einstellungen",
+  "settings.encryptionLabel": "Passwort",
   "settings.encryptionOn": "Aktiviert (Passwort aus APP_KEY)",
   "settings.encryptionOff": "Deaktiviert (kein Passwort)",
   "settings.encryptionHint":
@@ -2736,6 +2740,8 @@ export const de: Translations = {
   "recovery.configSkipped": "Übersprungen. Hänge deine Backups unten manuell an.",
   // Schritt 3 — Backups anhängen
   "recovery.step2": "Backups anhängen",
+  "recovery.cloudCreds": "Cloud-Zugangsdaten (optional)",
+  "recovery.cloudCredsHint": "Nur nötig, wenn ein Backup-Pfad auf S3, einen restic-REST-Server oder ein rclone-Remote zeigt. Für einen lokalen Pfad oder eine eingebundene Freigabe brauchst du hier nichts.",
   "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
   "recovery.credsSaveHint": "Off-site-Zugangsdaten werden über den eigenen Speichern-Button der jeweiligen Karte gespeichert — speichere sie, bevor du „Verbinden & prüfen“ klickst.",
   "recovery.connectPreview": "Verbinden & prüfen",

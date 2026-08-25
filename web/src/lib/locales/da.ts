@@ -152,6 +152,7 @@ const da: Partial<Translations> = {
 
   // Settings
   "settings.title": "Indstillinger",
+  "settings.encryptionLabel": "Adgangskode",
   "settings.encryptionOn": "Aktiveret (adgangskode afledt fra APP_KEY)",
   "settings.encryptionOff": "Deaktiveret (ingen adgangskode)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const da: Partial<Translations> = {
   "recovery.notReachable": "Kunne ikke nå dine sikkerhedskopier endnu — tilknyt placeringen nedenfor, og tjek så igen.",
   "recovery.recheck": "Tjek igen",
   "recovery.step2": "Tilknyt dine sikkerhedskopier",
+  "recovery.cloudCreds": "Cloud-legitimationsoplysninger (valgfrit)",
+  "recovery.cloudCredsHint": "Kun nødvendige, når en backup-sti peger på S3, en restic REST-server eller en rclone-fjernplacering. En lokal sti eller et monteret share kræver intet her.",
   "recovery.attachHint": "Peg BombVault mod dine eksisterende sikkerhedskopier: en lokal sti under host-monteringen eller et off-site-repo (rest / S3 / B2 / sftp / rclone) med dets legitimationsoplysninger. Opret så forbindelse for at bekræfte.",
   "recovery.credsSaveHint": "Off-site-legitimationsoplysninger gemmes med hvert korts egen Gem-knap — gem dem, før du opretter forbindelse og forhåndsviser.",
   "recovery.connectPreview": "Opret forbindelse & forhåndsvis",

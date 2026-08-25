@@ -220,6 +220,7 @@ const eu: Partial<Translations> = {
 
   // Settings
   "settings.title": "Ezarpenak",
+  "settings.encryptionLabel": "Pasahitza",
   "settings.encryptionOn": "Gaituta (APP_KEY-tik eratorritako pasahitza)",
   "settings.encryptionOff": "Desgaituta (pasahitzik gabe)",
   "settings.encryptionHint": "Zifratzea biltegi bakoitzean finkatzen da hasieratzean. Hau aldatzeko bide huts berria behar da.",
@@ -1098,6 +1099,8 @@ const eu: Partial<Translations> = {
   "recovery.configSkipped": "Saltatuta. Erantsi zure babeskopiak eskuz behean.",
   // Step 3
   "recovery.step2": "Erantsi zure babeskopiak",
+  "recovery.cloudCreds": "Hodeiko kredentzialak (aukerakoa)",
+  "recovery.cloudCredsHint": "Babeskopiaren bide batek S3, restic REST zerbitzari bat edo rclone urruneko bat seinalatzen duenean bakarrik behar dira. Bide lokal batek edo muntatutako partekatze batek ez du ezer behar hemen.",
   "recovery.attachHint": "Zuzendu BombVault zure dauden babeskopietara: ostalariaren muntaketaren azpiko bide lokal bat, edo kanpoko biltegi bat (rest / S3 / B2 / sftp / rclone) bere kredentzialekin. Konektatu ondoren berresteko.",
   "recovery.credsSaveHint": "Kanpoko kredentzialak txartel bakoitzaren bere Gorde botoiarekin gordetzen dira — gorde itzazu «Konektatu eta aurreikusi» klikatu aurretik.",
   "recovery.connectPreview": "Konektatu eta aurreikusi",

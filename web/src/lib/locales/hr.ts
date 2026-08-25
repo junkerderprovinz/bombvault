@@ -220,6 +220,7 @@ const hr: Partial<Translations> = {
 
   // Settings
   "settings.title": "Postavke",
+  "settings.encryptionLabel": "Lozinka",
   "settings.encryptionOn": "Omogućeno (lozinka izvedena iz APP_KEY)",
   "settings.encryptionOff": "Onemogućeno (bez lozinke)",
   "settings.encryptionHint": "Enkripcija se određuje po repozitoriju prilikom inicijalizacije. Promjena zahtijeva novu praznu putanju.",
@@ -1098,6 +1099,8 @@ const hr: Partial<Translations> = {
   "recovery.configSkipped": "Preskočeno. Ručno dodajte svoje sigurnosne kopije ispod.",
   // Step 3
   "recovery.step2": "Dodaj svoje sigurnosne kopije",
+  "recovery.cloudCreds": "Vjerodajnice u oblaku (neobavezno)",
+  "recovery.cloudCredsHint": "Potrebne su samo kada putanja sigurnosne kopije upućuje na S3, poslužitelj restic REST ili udaljeno rclone odredište. Lokalna putanja ili montirani dijeljeni resurs ovdje ne trebaju ništa.",
   "recovery.attachHint": "Usmjerite BombVault na svoje postojeće sigurnosne kopije: lokalnu putanju ispod montiranja hosta, ili izvanmrežni repozitorij (rest / S3 / B2 / sftp / rclone) s njegovim vjerodajnicama. Zatim se povežite radi potvrde.",
   "recovery.credsSaveHint": "Izvanmrežne vjerodajnice spremaju se vlastitim gumbom Spremi svake kartice — spremite ih prije klikanja na „Poveži se i pregledaj”.",
   "recovery.connectPreview": "Poveži se i pregledaj",

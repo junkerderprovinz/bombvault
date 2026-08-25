@@ -220,6 +220,7 @@ const hi: Partial<Translations> = {
 
   // Settings
   "settings.title": "सेटिंग्स",
+  "settings.encryptionLabel": "पासवर्ड",
   "settings.encryptionOn": "सक्षम (APP_KEY से बना पासवर्ड)",
   "settings.encryptionOff": "अक्षम (कोई पासवर्ड नहीं)",
   "settings.encryptionHint": "एन्क्रिप्शन प्रति रिपॉज़िटरी इनिशियलाइज़ेशन के समय तय होता है। इसे बदलने के लिए नया खाली पथ चाहिए।",
@@ -1098,6 +1099,8 @@ const hi: Partial<Translations> = {
   "recovery.configSkipped": "छोड़ दिया गया। नीचे अपने बैकअप खुद जोड़ें।",
   // Step 3
   "recovery.step2": "अपने बैकअप जोड़ें",
+  "recovery.cloudCreds": "क्लाउड क्रेडेंशियल्स (वैकल्पिक)",
+  "recovery.cloudCredsHint": "इनकी ज़रूरत तभी है जब कोई बैकअप पथ S3, किसी restic REST सर्वर या किसी rclone रिमोट की ओर इशारा करता हो। स्थानीय पथ या माउंट किए गए शेयर को यहाँ कुछ नहीं चाहिए।",
   "recovery.attachHint": "BombVault को अपने मौजूदा बैकअप की ओर इंगित करें: होस्ट माउंट के अंतर्गत लोकल पथ, या क्रेडेंशियल्स सहित ऑफ़-साइट रिपॉज़िटरी (rest / S3 / B2 / sftp / rclone)। फिर पुष्टि के लिए कनेक्ट करें।",
   "recovery.credsSaveHint": "ऑफ़-साइट क्रेडेंशियल्स हर कार्ड के अपने Save बटन से सहेजे जाते हैं — \"Connect & preview\" दबाने से पहले इन्हें सहेजें।",
   "recovery.connectPreview": "कनेक्ट करें और पूर्वावलोकन करें",

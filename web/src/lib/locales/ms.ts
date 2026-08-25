@@ -220,6 +220,7 @@ const ms: Partial<Translations> = {
 
   // Settings
   "settings.title": "Tetapan",
+  "settings.encryptionLabel": "Kata laluan",
   "settings.encryptionOn": "Diaktifkan (kata laluan diperoleh daripada APP_KEY)",
   "settings.encryptionOff": "Dinyahaktifkan (tiada kata laluan)",
   "settings.encryptionHint": "Penyulitan ditetapkan mengikut repositori semasa permulaan. Menukarnya memerlukan laluan kosong yang baharu.",
@@ -1098,6 +1099,8 @@ const ms: Partial<Translations> = {
   "recovery.configSkipped": "Dilangkau. Lampirkan sandaran anda secara manual di bawah.",
   // Step 3
   "recovery.step2": "Lampirkan sandaran anda",
+  "recovery.cloudCreds": "Kelayakan awan (pilihan)",
+  "recovery.cloudCredsHint": "Hanya diperlukan apabila laluan sandaran menunjuk ke S3, pelayan restic REST atau remote rclone. Laluan setempat atau perkongsian yang dilekapkan tidak memerlukan apa-apa di sini.",
   "recovery.attachHint": "Arahkan BombVault kepada sandaran sedia ada anda: laluan setempat di bawah mount hos, atau repositori luar tapak (rest / S3 / B2 / sftp / rclone) beserta kelayakannya. Kemudian sambung untuk mengesahkan.",
   "recovery.credsSaveHint": "Kelayakan luar tapak disimpan dengan butang Simpan sendiri setiap kad — simpan sebelum menekan \"Sambung & pratonton\".",
   "recovery.connectPreview": "Sambung & pratonton",

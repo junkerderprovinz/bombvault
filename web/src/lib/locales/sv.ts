@@ -152,6 +152,7 @@ const sv: Partial<Translations> = {
 
   // Settings
   "settings.title": "Inställningar",
+  "settings.encryptionLabel": "Lösenord",
   "settings.encryptionOn": "Aktiverad (lösenord härlett från APP_KEY)",
   "settings.encryptionOff": "Inaktiverad (inget lösenord)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const sv: Partial<Translations> = {
   "recovery.notReachable": "Kunde inte nå dina säkerhetskopior än — anslut platsen nedan och kontrollera sedan igen.",
   "recovery.recheck": "Kontrollera igen",
   "recovery.step2": "Anslut dina säkerhetskopior",
+  "recovery.cloudCreds": "Molnuppgifter (valfritt)",
+  "recovery.cloudCredsHint": "Behövs bara när en säkerhetskopieringssökväg pekar mot S3, en restic REST-server eller en rclone-fjärrplats. En lokal sökväg eller en monterad utdelning behöver inget här.",
   "recovery.attachHint": "Peka BombVault mot dina befintliga säkerhetskopior: en lokal sökväg under host-monteringen, eller ett off-site-arkiv (rest / S3 / B2 / sftp / rclone) med dess uppgifter. Anslut sedan för att bekräfta.",
   "recovery.credsSaveHint": "Off-site-uppgifter sparas med varje korts egen Spara-knapp — spara dem innan du ansluter och förhandsgranskar.",
   "recovery.connectPreview": "Anslut och förhandsgranska",

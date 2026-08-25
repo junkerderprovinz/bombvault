@@ -152,6 +152,7 @@ const vi: Partial<Translations> = {
 
   // Settings
   "settings.title": "Cài đặt",
+  "settings.encryptionLabel": "Mật khẩu",
   "settings.encryptionOn": "Bật (mật khẩu lấy từ APP_KEY)",
   "settings.encryptionOff": "Tắt (không có mật khẩu)",
   "settings.encryptionHint":
@@ -590,6 +591,8 @@ const vi: Partial<Translations> = {
   "recovery.notReachable": "Chưa thể truy cập các bản sao lưu của bạn — đính kèm vị trí bên dưới, rồi kiểm tra lại.",
   "recovery.recheck": "Kiểm tra lại",
   "recovery.step2": "Đính kèm các bản sao lưu của bạn",
+  "recovery.cloudCreds": "Thông tin đăng nhập đám mây (tùy chọn)",
+  "recovery.cloudCredsHint": "Chỉ cần khi một đường dẫn sao lưu trỏ tới S3, máy chủ restic REST hoặc một remote rclone. Đường dẫn cục bộ hay chia sẻ đã gắn kết không cần gì ở đây.",
   "recovery.attachHint": "Trỏ BombVault tới các bản sao lưu hiện có của bạn: một đường dẫn cục bộ trong điểm gắn kết của host, hoặc một kho off-site (rest / S3 / B2 / sftp / rclone) kèm thông tin đăng nhập. Sau đó kết nối để xác nhận.",
   "recovery.credsSaveHint": "Thông tin đăng nhập off-site được lưu bằng nút Lưu riêng của từng thẻ — hãy lưu chúng trước khi bạn kết nối và xem trước.",
   "recovery.connectPreview": "Kết nối và xem trước",

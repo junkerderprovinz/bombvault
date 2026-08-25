@@ -150,6 +150,7 @@ const nl: Partial<Translations> = {
 
   // Settings
   "settings.title": "Instellingen",
+  "settings.encryptionLabel": "Wachtwoord",
   "settings.encryptionOn": "Ingeschakeld (wachtwoord afgeleid van APP_KEY)",
   "settings.encryptionOff": "Uitgeschakeld (geen wachtwoord)",
   "settings.encryptionHint": "Versleuteling wordt eenmalig vastgelegd bij het initialiseren van de repository. Een wijziging vereist een nieuw leeg pad.",
@@ -571,6 +572,8 @@ const nl: Partial<Translations> = {
   "recovery.notReachable": "Je back-ups zijn nog niet bereikbaar — koppel de locatie hieronder en controleer opnieuw.",
   "recovery.recheck": "Opnieuw controleren",
   "recovery.step2": "Koppel je back-ups",
+  "recovery.cloudCreds": "Cloud-inloggegevens (optioneel)",
+  "recovery.cloudCredsHint": "Alleen nodig wanneer een back-uppad naar S3, een restic REST-server of een rclone-remote wijst. Een lokaal pad of een gekoppelde share heeft hier niets nodig.",
   "recovery.attachHint": "Wijs BombVault naar je bestaande back-ups: een lokaal pad onder de host-mount, of een off-site repo (rest / S3 / B2 / sftp / rclone) met inloggegevens. Maak daarna verbinding om te bevestigen.",
   "recovery.credsSaveHint": "Off-site inloggegevens worden opgeslagen met de eigen Opslaan-knop van elke kaart — sla ze op voordat je verbindt & een voorbeeld bekijkt.",
   "recovery.connectPreview": "Verbinden & voorbeeld",

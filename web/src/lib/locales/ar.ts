@@ -152,6 +152,7 @@ const ar: Partial<Translations> = {
 
   // Settings
   "settings.title": "الإعدادات",
+  "settings.encryptionLabel": "كلمة المرور",
   "settings.encryptionOn": "مفعّل (كلمة المرور مشتقة من APP_KEY)",
   "settings.encryptionOff": "معطّل (بدون كلمة مرور)",
   "settings.encryptionHint":
@@ -601,6 +602,8 @@ const ar: Partial<Translations> = {
   "recovery.notReachable": "تعذّر الوصول إلى نسخك الاحتياطية بعد — أرفق الموقع أدناه، ثم أعد الفحص.",
   "recovery.recheck": "إعادة الفحص",
   "recovery.step2": "أرفق نسخك الاحتياطية",
+  "recovery.cloudCreds": "بيانات اعتماد السحابة (اختياري)",
+  "recovery.cloudCredsHint": "مطلوبة فقط عندما يشير مسار النسخ الاحتياطي إلى S3 أو خادم restic REST أو وحدة rclone بعيدة. المسار المحلي أو المشاركة المُركّبة لا يحتاجان إلى شيء هنا.",
   "recovery.attachHint": "وجّه BombVault إلى نسخك الاحتياطية الموجودة: مسار محلي ضمن نقطة تركيب المضيف، أو مستودع خارج الموقع (rest / S3 / B2 / sftp / rclone) مع بيانات اعتماده. ثم اتصل للتأكيد.",
   "recovery.credsSaveHint": "تُحفَظ بيانات الاعتماد خارج الموقع بزر الحفظ الخاص بكل بطاقة — احفظها قبل الاتصال والمعاينة.",
   "recovery.connectPreview": "اتصال ومعاينة",

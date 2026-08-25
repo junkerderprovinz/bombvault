@@ -152,6 +152,7 @@ const zh: Partial<Translations> = {
 
   // Settings
   "settings.title": "设置",
+  "settings.encryptionLabel": "密码",
   "settings.encryptionOn": "已启用（密码来自 APP_KEY）",
   "settings.encryptionOff": "已禁用（无密码）",
   "settings.encryptionHint":
@@ -590,6 +591,8 @@ const zh: Partial<Translations> = {
   "recovery.notReachable": "暂时无法访问你的备份——请在下方附加位置，然后重新检查。",
   "recovery.recheck": "重新检查",
   "recovery.step2": "附加你的备份",
+  "recovery.cloudCreds": "云凭据（可选）",
+  "recovery.cloudCredsHint": "仅当备份路径指向 S3、restic REST 服务器或 rclone 远端时才需要。本地路径或已挂载的共享在这里无需填写任何内容。",
   "recovery.attachHint": "让 BombVault 指向你现有的备份：主机挂载下的本地路径，或带凭据的异地仓库（rest / S3 / B2 / sftp / rclone）。然后连接以确认。",
   "recovery.credsSaveHint": "异地凭据通过每张卡片各自的保存按钮保存——请在连接并预览之前保存它们。",
   "recovery.connectPreview": "连接并预览",

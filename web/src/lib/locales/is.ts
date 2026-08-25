@@ -220,6 +220,7 @@ const is: Partial<Translations> = {
 
   // Settings
   "settings.title": "Stillingar",
+  "settings.encryptionLabel": "Lykilorð",
   "settings.encryptionOn": "Virkt (lykilorð fengið úr APP_KEY)",
   "settings.encryptionOff": "Óvirkt (ekkert lykilorð)",
   "settings.encryptionHint": "Dulkóðun er ákveðin fyrir hvert geymslusafn þegar það er frumstillt. Að breyta þessu krefst nýrrar tómrar slóðar.",
@@ -1098,6 +1099,8 @@ const is: Partial<Translations> = {
   "recovery.configSkipped": "Sleppt. Bættu afritunum þínum handvirkt við hér að neðan.",
   // Step 3
   "recovery.step2": "Bæta afritunum þínum við",
+  "recovery.cloudCreds": "Skýjaaðgangsgögn (valfrjálst)",
+  "recovery.cloudCredsHint": "Aðeins nauðsynleg þegar afritsslóð vísar á S3, restic REST þjón eða rclone fjartengingu. Staðbundin slóð eða tengd sameign þarf ekkert hér.",
   "recovery.attachHint": "Beindu BombVault á fyrirliggjandi afritin þín: staðbundna slóð undir tengipunkti hýsilsins, eða fjarlægt geymslusafn (rest / S3 / B2 / sftp / rclone) með aðgangsgögnum þess. Tengdu svo til að staðfesta.",
   "recovery.credsSaveHint": "Fjarlæg aðgangsgögn eru vistuð með eigin Vista-hnappi hvers spjalds — vistaðu þau áður en þú smellir á „Tengja og forskoða“.",
   "recovery.connectPreview": "Tengja og forskoða",

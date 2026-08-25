@@ -152,6 +152,7 @@ const he: Partial<Translations> = {
 
   // Settings
   "settings.title": "הגדרות",
+  "settings.encryptionLabel": "סיסמה",
   "settings.encryptionOn": "מופעל (סיסמה נגזרת מ-APP_KEY)",
   "settings.encryptionOff": "מושבת (ללא סיסמה)",
   "settings.encryptionHint":
@@ -598,6 +599,8 @@ const he: Partial<Translations> = {
   "recovery.notReachable": "לא ניתן היה להגיע לגיבויים שלך עדיין — צרף את המיקום למטה, ואז בדוק שוב.",
   "recovery.recheck": "בדוק שוב",
   "recovery.step2": "צרף את הגיבויים שלך",
+  "recovery.cloudCreds": "פרטי התחברות לענן (אופציונלי)",
+  "recovery.cloudCredsHint": "נדרשים רק כאשר נתיב גיבוי מצביע על S3, על שרת restic REST או על יעד rclone מרוחק. נתיב מקומי או שיתוף מחובר אינם זקוקים לכלום כאן.",
   "recovery.attachHint": "הפנה את BombVault אל הגיבויים הקיימים שלך: נתיב מקומי תחת נקודת העיגון של המארח, או מאגר מחוץ לאתר (rest / S3 / B2 / sftp / rclone) עם פרטי ההתחברות שלו. ואז התחבר לאישור.",
   "recovery.credsSaveHint": "פרטי ההתחברות מחוץ לאתר נשמרים בעזרת כפתור השמירה של כל כרטיס — שמור אותם לפני שתתחבר ותציג תצוגה מקדימה.",
   "recovery.connectPreview": "התחבר והצג תצוגה מקדימה",

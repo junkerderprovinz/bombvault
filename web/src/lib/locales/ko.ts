@@ -152,6 +152,7 @@ const ko: Partial<Translations> = {
 
   // Settings
   "settings.title": "설정",
+  "settings.encryptionLabel": "비밀번호",
   "settings.encryptionOn": "활성화됨 (APP_KEY에서 파생된 비밀번호)",
   "settings.encryptionOff": "비활성화됨 (비밀번호 없음)",
   "settings.encryptionHint":
@@ -590,6 +591,8 @@ const ko: Partial<Translations> = {
   "recovery.notReachable": "아직 백업에 연결할 수 없습니다 — 아래에서 위치를 연결한 뒤 다시 확인하세요.",
   "recovery.recheck": "다시 확인",
   "recovery.step2": "백업 연결",
+  "recovery.cloudCreds": "클라우드 자격 증명 (선택)",
+  "recovery.cloudCredsHint": "백업 경로가 S3, restic REST 서버 또는 rclone 원격을 가리킬 때만 필요합니다. 로컬 경로나 마운트된 공유에는 여기서 아무것도 필요하지 않습니다.",
   "recovery.attachHint": "BombVault를 기존 백업에 연결하세요: 호스트 마운트 아래의 로컬 경로, 또는 자격 증명이 포함된 오프사이트 저장소(rest / S3 / B2 / sftp / rclone). 그런 다음 연결하여 확인하세요.",
   "recovery.credsSaveHint": "오프사이트 자격 증명은 각 카드의 저장 버튼으로 저장됩니다 — 연결하여 미리 보기 전에 저장하세요.",
   "recovery.connectPreview": "연결 및 미리 보기",

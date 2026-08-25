@@ -152,6 +152,7 @@ const hu: Partial<Translations> = {
 
   // Settings
   "settings.title": "Beállítások",
+  "settings.encryptionLabel": "Jelszó",
   "settings.encryptionOn": "Engedélyezett (jelszó az APP_KEY-ből)",
   "settings.encryptionOff": "Letiltott (nincs jelszó)",
   "settings.encryptionHint":
@@ -601,6 +602,8 @@ const hu: Partial<Translations> = {
   "recovery.notReachable": "A mentéseid még nem érhetők el — csatold a helyet alább, majd ellenőrizd újra.",
   "recovery.recheck": "Újraellenőrzés",
   "recovery.step2": "Csatold a mentéseidet",
+  "recovery.cloudCreds": "Felhő hitelesítő adatok (opcionális)",
+  "recovery.cloudCredsHint": "Csak akkor kellenek, ha egy mentési útvonal S3-ra, restic REST kiszolgálóra vagy rclone távoli tárolóra mutat. Helyi útvonalhoz vagy csatolt megosztáshoz itt nem kell semmi.",
   "recovery.attachHint": "Irányítsd a BombVaultot a meglévő mentéseidre: egy helyi útvonal a gazdagép csatolása alatt, vagy egy telephelyen kívüli tároló (rest / S3 / B2 / sftp / rclone) a hitelesítő adataival. Majd csatlakozz a megerősítéshez.",
   "recovery.credsSaveHint": "A telephelyen kívüli hitelesítő adatok az egyes kártyák saját Mentés gombjával mentődnek — mentsd el őket, mielőtt csatlakozol és előnézetet kérsz.",
   "recovery.connectPreview": "Csatlakozás és előnézet",
