@@ -640,97 +640,83 @@ describe("Badge — wrap (grow-to-fit instead of clipping)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// prefix — the split heading badge (Recovery's step numbers). See Badge.tsx's
-// `prefix` prop doc and index.css's `.glim-badge-prefix` for the reasoning;
-// these lock in the parts a later edit could silently undo.
+// inFlow — the notch's LOOK without its own POSITIONING, so a caller can place
+// a GROUP of heading badges as one unit (StepCard's number + name pair). See
+// Badge.tsx's `inFlow` prop doc and file header for the full reasoning,
+// including the split-badge machinery this replaced.
+//
+// The point of these is the SPLIT of the notch treatment into two halves: what
+// the badge still keeps (fill, radius, lift, hue hooks) and the one thing it
+// gives up (placement). A later edit that folded the lift back in with the
+// positioning, or that quietly restored `absolute`, would break the pair
+// silently — both badges would stack on the same static position again.
 // ---------------------------------------------------------------------------
-describe("Badge — prefix (split heading badge)", () => {
-  function cells(node: unknown): ElementNode[] {
-    const el = root(node);
-    const kids = el.props!.children as { props?: { children?: unknown } };
-    const inner = (kids as ElementNode).props!.children as unknown[];
-    return inner.map(root);
-  }
+describe("Badge — inFlow (caller-positioned heading notch)", () => {
+  const notch = { children: "Attach", tone: "heading", size: "heading" } as const;
 
-  it("renders two cells, prefix first, label second", () => {
-    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 3 }));
-    const [pre, label] = cells(el);
-    expect(visibleText(pre)).toBe("3");
-    expect(visibleText(label)).toBe("Attach");
-    expect(pre.props!.className as string).toContain("glim-badge-prefix");
+  it("drops every placement class so the caller's own wrapper positions it", () => {
+    const cls = root(Badge({ ...notch, inFlow: true })).props!.className as string;
+    const tokens = cls.split(/\s+/);
+    expect(tokens).not.toContain("absolute");
+    expect(tokens).not.toContain("top-0");
+    expect(tokens).not.toContain("-translate-y-1/2");
+    expect(tokens).not.toContain("z-10");
   });
 
-  it("hands the pill's own horizontal padding and gap to the cells", () => {
-    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 3 }));
-    const cls = el.props!.className as string;
-    // The pill keeps NO horizontal padding of its own — otherwise the shaded
-    // cell would start a stage-padding's width inside the badge.
-    expect(cls).toContain("px-0");
-    expect(cls.split(/\s+/)).not.toContain("px-3");
-    expect(cls).not.toContain("gap-1");
-    // overflow-hidden is what clips the leading cell's square start corners to
-    // the badge's real radius — in every shape-engine mode.
-    expect(cls).toContain("overflow-hidden");
-    // items-stretch, not items-center: the shaded cell has to reach the pill's
-    // top and bottom edges.
-    expect(cls).toContain("items-stretch");
-    expect(cls.split(/\s+/)).not.toContain("items-center");
-    const [, label] = cells(el);
-    const labelCls = label.props!.className as string;
-    expect(labelCls).toContain("px-3");
-    expect(labelCls).toContain("gap-1");
-  });
-
-  it("keeps the notch treatment intact — position, radius and elevation", () => {
-    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 1, insetStart: 5 }));
-    const cls = el.props!.className as string;
-    expect(cls).toContain("absolute");
-    expect(cls).toContain("top-0");
-    expect(cls).toContain("-translate-y-1/2");
-    expect(cls).toContain("rounded-pill");
-    expect(cls).toContain("start-5");
+  it("keeps the notch's look — solid fill, fixed pill radius and the elevation lift", () => {
+    const cls = root(Badge({ ...notch, inFlow: true })).props!.className as string;
     expect(cls).toContain("bg-accent");
+    expect(cls).toContain("text-accentContrast");
+    expect(cls).toContain("rounded-pill");
+    expect(cls).toContain("shadow-[var(--elevation)]");
   });
 
-  it("keeps the colour engine wired — hueIndex still produces the notch hue hooks", () => {
-    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 1, hueIndex: 2 }));
-    const cls = el.props!.className as string;
+  it("keeps the colour engine wired, including the card-wide reactive hover hook", () => {
+    const cls = root(Badge({ ...notch, inFlow: true, hueIndex: 2 })).props!.className as string;
     expect(cls).toContain("glim-hue");
     expect(cls).toContain("glim-notch-hue");
   });
 
-  it("wrap moves the vertical padding onto the cells so the shaded cell reaches both edges", () => {
-    const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 1, wrap: true }));
-    const cls = el.props!.className as string;
-    expect(cls.split(/\s+/)).not.toContain("py-0.5");
+  it("ignores insetStart — the caller owns the horizontal position now", () => {
+    const cls = root(Badge({ ...notch, inFlow: true, insetStart: 5 })).props!.className as string;
+    expect(cls.split(/\s+/)).not.toContain("start-5");
+  });
+
+  it("leaves a self-positioning notch untouched when the flag is absent", () => {
+    const cls = root(Badge({ ...notch, insetStart: 5 })).props!.className as string;
+    expect(cls).toContain("absolute");
+    expect(cls).toContain("top-0");
+    expect(cls).toContain("-translate-y-1/2");
+    expect(cls).toContain("z-10");
+    expect(cls).toContain("start-5");
+    expect(cls).toContain("shadow-[var(--elevation)]");
+  });
+
+  it("still wraps and still keeps the stage's own padding, like any heading badge", () => {
+    const cls = root(Badge({ ...notch, inFlow: true, wrap: true })).props!.className as string;
     expect(cls).toContain("min-h-[22px]");
-    for (const cell of cells(el)) {
-      expect(cell.props!.className as string).toContain("py-0.5");
-    }
-  });
-
-  it("is ignored for every non-heading tone — a status chip never grows a second cell", () => {
-    for (const tone of ["ok", "fail", "warn", "active", "neutral", "muted"] as BadgeTone[]) {
-      const el = root(Badge({ children: "x", tone, prefix: 9 }));
-      const cls = el.props!.className as string;
-      expect(cls).not.toContain("overflow-hidden");
-      expect(visibleText(el)).toBe("x");
-    }
-  });
-
-  it("leaves an unsplit badge byte-identical to before", () => {
-    const withoutPrefix = root(Badge({ children: "Attach", tone: "heading", size: "heading" }));
-    const cls = withoutPrefix.props!.className as string;
+    expect(cls).toContain("py-0.5");
+    expect(cls).toContain("px-3");
     expect(cls).toContain("items-center");
     expect(cls).toContain("gap-1");
-    expect(cls).toContain("px-3");
-    expect(cls).not.toContain("overflow-hidden");
+  });
+
+  it("is inert on a badge that was never the notch in the first place", () => {
+    for (const tone of ["ok", "fail", "warn", "active", "neutral", "muted"] as BadgeTone[]) {
+      const withFlag = root(Badge({ children: "x", tone, inFlow: true })).props!.className as string;
+      const without = root(Badge({ children: "x", tone })).props!.className as string;
+      expect(withFlag).toBe(without);
+    }
+    // …and on a heading-TONED badge that isn't at the heading SIZE either.
+    const small = root(Badge({ children: "x", tone: "heading", size: "small", inFlow: true })).props!.className as string;
+    expect(small).toBe(root(Badge({ children: "x", tone: "heading", size: "small" })).props!.className as string);
   });
 
   it("carries through the button and anchor variants too", () => {
     for (const as of ["button", "a"] as const) {
-      const el = root(Badge({ children: "Attach", tone: "heading", size: "heading", prefix: 4, as }));
-      expect(visibleText(el)).toBe("4Attach");
+      const el = root(Badge({ ...notch, inFlow: true, as }));
+      expect(visibleText(el)).toBe("Attach");
+      expect(el.props!.className as string).not.toContain("absolute");
     }
   });
 });

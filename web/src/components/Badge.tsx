@@ -182,21 +182,57 @@
 // grows), but a new call site that wants a short wrap badge to stay short next
 // to a tall one needs `className="self-start"`.
 //
-// `prefix` — a SPLIT heading badge: one pill, two visibly distinct cells, the
-// leading one shaded and cut off from the label by a hard seam. Added for the
-// Recovery tab's step numbers (jdp: "der Cardtitelbadge soll zweigeteilt
-// sein: erst die Nummer und dann der Name der Card"), kept general because
-// nothing about a number-then-name pill is Recovery-specific. Layout lives in
-// `badgeClassName`'s `split` option (the pill hands its padding and gap to
-// the cells and gains `overflow-hidden`, so the leading cell's corners are
-// clipped to whatever radius the badge really has — which is what makes the
-// split correct in all three shape-engine modes without this file naming any
-// of them); the COLOUR lives in `.glim-badge-prefix` (index.css), whose own
-// comment carries the measured contrast figures and the reasoning for why the
-// shaded cell flips to --accent-contrast-inv instead of keeping the label's
-// ink. Read that comment before changing either half's colour: shading a hued
-// fill toward its own ink is the exact trap this file's tone="heading" and
-// isIconOnly histories below already document walking into twice.
+// `inFlow` — the notch's LOOK without the notch's own POSITIONING, so a
+// CALLER can position a whole GROUP of heading badges as one unit.
+//
+// History, because this replaced a much larger piece of machinery and the
+// reasoning matters more than the diff: an earlier round built a SPLIT
+// heading badge for the Recovery tab's step numbers — one pill, two cells,
+// the leading one shaded and cut off from the label by a hard seam, driven by
+// a `prefix` prop here, a `split` layout branch in badgeClassName, a
+// `.glim-badge-prefix` rule in index.css and a whole
+// --accent-contrast-inv/--item-hue-ink-inv token pair in accent.ts/
+// appearance.ts whose only job was giving that shaded cell an ink to flip to.
+// jdp reviewed it live and reversed it: "Die Cardtitelbadges mit Nummer
+// sollen zwei getrennte Badges sein. Der Badge der Nummer nicht abgedunkelt."
+// Two visually separate badges side by side, the number one taking the SAME
+// plain fill as the name one — no seam, no shaded cell, no second colour.
+// All of that machinery is therefore gone, not left dormant: `prefix`,
+// `split`, `.glim-badge-prefix`, `--accent-contrast-inv` and
+// `--item-hue-ink-inv` had exactly one consumer between them and it no longer
+// exists. (Nothing else referenced the inv tokens — checked across src/ and
+// index.css before deleting; the only reads were `.glim-badge-prefix`'s own
+// `color:` and the four rainbow rebind blocks that fed it.)
+//
+// What the two-badge shape actually needs from this component is one thing:
+// permission to NOT position itself. A heading notch normally carries its own
+// `absolute top-0 -translate-y-1/2`, which is exactly right for the one-badge
+// case and exactly wrong for two — two absolutely-positioned boxes with the
+// same static position land on top of each other, and the obvious "just offset
+// the second one" fix is a FIXED PIXEL OFFSET for this notch, which this
+// codebase has already shipped and had to remove twice (see the REGRESSION
+// note in badgeClassName below, and Settings.tsx's own offsite-tab history).
+//
+// `inFlow` moves the positioning up one level instead: the caller makes its
+// `<h2>` the absolutely-positioned element and lays the badges out inside it
+// with ordinary flexbox, so the pair's alignment to each other and to the
+// card edge is solved by layout rather than by arithmetic. `-translate-y-1/2`
+// on that h2 resolves against the H2's own rendered height — the tallest badge
+// in the row — so the pair's vertical centre sits on the card edge at ANY
+// badge height, and `items-center` puts both badges' own centres there too.
+// A one-line pair and a pair whose name wrapped to two lines both straddle
+// correctly with no height assumed anywhere. See StepCard.tsx, the one call
+// site, for the concrete markup.
+//
+// Everything else the notch treatment gives a heading badge is UNCHANGED by
+// this flag — the fixed `rounded-pill` radius, the `var(--elevation)` lift,
+// `.glim-notch-hue` (so reactive mode's card-wide hover still reveals both
+// badges), and `hueIndex`'s ordinary colour-engine participation. It removes
+// the four positioning classes and nothing else. `insetStart` becomes
+// meaningless alongside it (it is an override for the very offset that is no
+// longer being emitted) and is ignored — the CALLER owns the horizontal
+// position now, and the same static-position fallback that used to serve the
+// badge serves the caller's h2 instead, RTL-correctly, for the same reason.
 //
 // `tone="heading"` / `size="heading"` (Task 5, rule 11 — "every heading is a
 // filled section badge, never bare text... always coloured: it is a heading,
@@ -653,16 +689,9 @@ interface BadgeStyleOptions {
    *  a private plumbing detail of badgeClassName rather than a second public
    *  toggle a caller could set inconsistently with `tip`. */
   iconOnly?: boolean;
-  /** Two-cell layout: the badge's own horizontal padding and inter-child gap
-   *  move INTO the two cells Badge() renders (see its `prefix` branch), and
-   *  the pill gains `overflow-hidden` so the leading cell's square start
-   *  corners are clipped to the badge's real radius instead of poking out of
-   *  it. `items-stretch` replaces `items-center` for the same reason: the
-   *  shaded cell has to reach the pill's top and bottom edges, which it can
-   *  only do if the flex line stretches it. Not exposed on `BadgeProps` —
-   *  Badge()'s own body derives it from `prefix` being set, so the layout and
-   *  the content that needs it can't be set inconsistently. */
-  split?: boolean;
+  /** Threaded straight from `BadgeProps.inFlow` — see that prop's doc and the
+   *  file header for what it does and why it exists. */
+  inFlow?: boolean;
   /** Explicit horizontal offset for the heading notch, overriding the static-
    *  position fallback — see BadgeProps' own `insetStart` doc (the public
    *  prop this is threaded straight from) for the full "why this exists"
@@ -684,7 +713,7 @@ function badgeClassName({
   wrap,
   className,
   iconOnly,
-  split,
+  inFlow,
   insetStart,
 }: BadgeStyleOptions = {}): string {
   const { height, minHeight, text, padding } = SIZE_TOKENS[size];
@@ -703,14 +732,8 @@ function badgeClassName({
   // file header. Never emit both `height` and `minHeight` (same CSS
   // property, same specificity — exactly the two-conflicting-utilities
   // hazard the padding/circle split above already guards against).
-  //   split mode drops the OUTER vertical padding in the wrap case and hands
-  // it to the two cells instead (Badge()'s own `prefix` branch re-applies the
-  // identical `py-0.5`). Leaving it here would paint a 2px strip of the plain
-  // label fill above and below the shaded leading cell, so the cell would
-  // stop short of the pill's top and bottom edges and read as a floating
-  // inner chip rather than one half of a split badge.
   const sizing = wrap
-    ? `${minHeight} ${split ? "" : "py-0.5 "}leading-tight wrap-break-word`
+    ? `${minHeight} py-0.5 leading-tight wrap-break-word`
     : `${height} min-h-0 leading-none`;
 
   // tone="heading" + size="heading" (GlimStone follow-up pass, live-review
@@ -865,19 +888,28 @@ function badgeClassName({
   // heading badge is furniture riding on the card, not a card boundary of
   // its own).
   const isHeadingNotch = tone === "heading" && size === "heading";
-  // insetStart only ever applies to the notch — a non-notch badge is never
-  // position:absolute in the first place, so an explicit start-N on it would
-  // be a dead, unused class (or worse, a real visual bug on a badge sitting
-  // inline in normal flow). Silently ignored outside the notch case, the same
-  // "only meaningful on the notch" contract hueIndex already documents above.
-  const notchPositioning = isHeadingNotch
-    ? [
-        "absolute top-0 -translate-y-1/2 z-10 shadow-[var(--elevation)]",
-        insetStart !== undefined ? INSET_START_CLASSES[insetStart] : "",
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : "";
+  // The notch's LOOK (the elevation lift) is separate from the notch's own
+  // POSITIONING (the four absolute-placement classes below), because `inFlow`
+  // takes exactly one of the two away — see the file header. A badge whose
+  // caller positions it is still a notch: it still rides above the card
+  // surface, so it still gets the lift.
+  const notchChrome = isHeadingNotch ? "shadow-[var(--elevation)]" : "";
+  // insetStart only ever applies to a SELF-positioned notch — a non-notch
+  // badge is never position:absolute in the first place, and an `inFlow` one
+  // has handed the whole horizontal question to its caller, so in both cases
+  // an explicit start-N would be a dead, unused class (or worse, a real visual
+  // bug on a badge sitting inline in normal flow). Silently ignored outside
+  // that case, the same "only meaningful where it makes sense" contract
+  // hueIndex already documents above.
+  const notchPositioning =
+    isHeadingNotch && !inFlow
+      ? [
+          "absolute top-0 -translate-y-1/2 z-10",
+          insetStart !== undefined ? INSET_START_CLASSES[insetStart] : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "";
 
   // No per-notch colour override anymore (see the file header's tone=heading
   // section for the two earlier rounds this went through — a translucent
@@ -932,18 +964,13 @@ function badgeClassName({
     isIconOnly && tone === "active" ? "bg-accent text-accentContrast" : TONE_CLASSES[tone];
 
   return [
-    split
-      ? "inline-flex box-border items-stretch justify-center font-medium overflow-hidden"
-      : "inline-flex box-border items-center justify-center gap-1 font-medium",
+    "inline-flex box-border items-center justify-center gap-1 font-medium",
     sizing,
     text,
-    // split hands the stage's horizontal padding to the two cells (Badge()'s
-    // `prefix` branch applies it there) — the pill itself must have none, or
-    // the shaded leading cell would start a stage-padding's width inside the
-    // badge instead of at its own edge.
-    isIconOnly ? "px-0 aspect-square" : split ? "px-0" : padding,
+    isIconOnly ? "px-0 aspect-square" : padding,
     isHeadingNotch ? "rounded-pill" : RADIUS_CLASSES[shape],
     toneClasses,
+    notchChrome,
     notchPositioning,
     className,
   ]
@@ -1059,36 +1086,33 @@ export interface BadgeProps {
    *  signal that its own DOM/CSS shape controlled the badge's position at
    *  all. */
   insetStart?: NotchInset;
-  /** A leading segment INSIDE the same pill, shaded differently from the
-   *  label and separated from it by a hard seam — one badge, visibly two
-   *  parts. Meaningful on `tone="heading"` ONLY (the accent-filled heading
-   *  badge, notch or not); silently ignored for every other tone, the same
-   *  "only meaningful where it makes sense" contract `hueIndex` and
-   *  `insetStart` already document. The gate is not decoration: the seam and
-   *  the shaded cell are both derived from --accent/--accent-contrast/
-   *  --accent-contrast-inv (see `.glim-badge-prefix` in index.css), which only
-   *  describe an accent-filled badge — a status-toned chip (ok/fail/warn) is
-   *  painted from rule 4's own state hues, and re-deriving a leading cell from
-   *  those would be inventing a second, unmeasured colour pair on top of a
-   *  load-bearing status signal.
+  /** Meaningful ONLY on the heading notch (`tone="heading"` AND
+   *  `size="heading"`), like `insetStart` above. Renders the notch's full
+   *  LOOK — the fixed pill radius, the `var(--elevation)` lift,
+   *  `.glim-notch-hue`, the solid accent fill — but drops the four classes
+   *  that place it (`absolute top-0 -translate-y-1/2 z-10`), leaving the badge
+   *  an ordinary in-flow inline-flex box its CALLER positions.
    *
-   *  Introduced for the Recovery tab, where jdp asked for the step number to
-   *  stop being a separate circle beside the heading and become the heading
-   *  badge's own first cell: "Die Nummerierung der Cards soll auch ein
-   *  Cardtitelbadge sein. Also der Cardtitelbadge soll zweigeteilt sein: erst
-   *  die Nummer und dann der Name der Card." Kept as a general Badge
-   *  capability rather than a Recovery-local hack — nothing about a
-   *  number-then-name pill is specific to that page, and the alternative
-   *  (hand-rolling the two cells at the call site) is exactly how the five
-   *  duplicate chip implementations this component replaced came about.
+   *  For exactly one shape of call site: SEVERAL heading badges that have to
+   *  straddle one card edge together as a group (today, StepCard.tsx's
+   *  number + name pair — jdp: "Die Cardtitelbadges mit Nummer sollen zwei
+   *  getrennte Badges sein"). Two self-positioning notches would stack on the
+   *  same static position, and nudging one of them apart with a fixed pixel
+   *  offset is the precise mistake this component's own history records
+   *  twice (see badgeClassName's REGRESSION note). The caller instead makes
+   *  its `<h2>` the positioned element — `absolute top-0 -translate-y-1/2`
+   *  resolving against the H2's own height, so the group straddles correctly
+   *  whatever the tallest badge in it turns out to be — and lays the badges
+   *  out inside it with plain flexbox.
    *
-   *  Everything else about the badge is untouched by this: the notch's
-   *  half-overlap position (`top-0 -translate-y-1/2`), `hueIndex`'s
-   *  colour-engine participation, `insetStart`, `wrap`, and any InfoBubble
-   *  passed as part of `children` all behave identically — the bubble simply
-   *  rides in the LABEL cell, which is where its (i) belongs (it explains the
-   *  card, not the number). */
-  prefix?: ReactNode;
+   *  Do NOT reach for this to render a heading badge inline in normal flow
+   *  somewhere: a heading that isn't a notch is a `tone="heading"` badge at a
+   *  non-heading size, which already renders in flow without this flag. This
+   *  is specifically "the notch, positioned by its parent instead of itself."
+   *  `insetStart` is ignored alongside it (the caller owns the horizontal
+   *  position now); everything else — `hueIndex`, `wrap`, an InfoBubble in
+   *  `children` — behaves identically. */
+  inFlow?: boolean;
 }
 
 export function Badge({
@@ -1109,7 +1133,7 @@ export function Badge({
   hueIndex,
   tip,
   insetStart,
-  prefix,
+  inFlow,
 }: BadgeProps) {
   // Deliberately NO useRainbow() subscription here, unlike Selector's own
   // identical-looking hue support: Badge (like Toggle) is a pure, hookless
@@ -1173,39 +1197,9 @@ export function Badge({
   // see badgeClassName's own `iconOnly` doc and BadgeProps' own `tip` doc for
   // why the two are the same condition rather than two props a caller could
   // set inconsistently.
-  // See BadgeProps' own `prefix` doc for why the split is gated to
-  // tone="heading" rather than offered on every tone.
-  const isSplit = prefix !== undefined && tone === "heading";
-  const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined, split: isSplit, insetStart });
+  const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined, inFlow, insetStart });
   const merged = hueOn ? `glim-hue ${isNotchHue ? "glim-notch-hue " : ""}${shared}` : shared;
   const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
-
-  // The two cells. `content` is what every branch below renders INSIDE the
-  // badge — identical to `children` unless the split is active, so nothing
-  // about the span/button/anchor branches has to know this feature exists.
-  //   The shaded cell's own padding is one step tighter than the stage's
-  // (px-2.5 against heading's px-3): its content is a short ordinal, and
-  // reusing the label's padding — sized for a title's worth of text — would
-  // make a one-digit cell wider than it is tall. `tracking-normal` undoes the
-  // heading stage's `tracking-widest` for this cell only: letter-spacing is
-  // applied AFTER the last character too, so a widely-tracked single digit
-  // sits visibly left of its own cell's centre.
-  //   The label cell restores the `gap-1` the split pulled off the pill, so a
-  // trailing InfoBubble keeps the exact spacing from the title it has in an
-  // unsplit heading badge.
-  const cellPadY = wrap ? " py-0.5" : "";
-  const content = isSplit ? (
-    <>
-      <span className={`glim-badge-prefix inline-flex items-center justify-center px-2.5 tracking-normal tabular-nums${cellPadY}`}>
-        {prefix}
-      </span>
-      <span className={`inline-flex items-center justify-center gap-1 min-w-0 ${SIZE_TOKENS[size].padding}${cellPadY}`}>
-        {children}
-      </span>
-    </>
-  ) : (
-    children
-  );
 
   if (as === "button") {
     const buttonClassName = `appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${merged}`;
@@ -1217,7 +1211,7 @@ export function Badge({
     if (tip !== undefined) {
       return (
         <IconTipButton tip={tip} onClick={onClick} disabled={disabled} style={hueStyle} className={buttonClassName}>
-          {content}
+          {children}
         </IconTipButton>
       );
     }
@@ -1231,7 +1225,7 @@ export function Badge({
         style={hueStyle}
         className={buttonClassName}
       >
-        {content}
+        {children}
       </button>
     );
   }
@@ -1239,14 +1233,14 @@ export function Badge({
   if (as === "a") {
     return (
       <a href={href} target={target} rel={rel} title={title} aria-label={ariaLabel} style={hueStyle} className={`transition-opacity hover:opacity-80 ${merged}`}>
-        {content}
+        {children}
       </a>
     );
   }
 
   return (
     <span title={title} aria-label={ariaLabel} style={hueStyle} className={merged}>
-      {content}
+      {children}
     </span>
   );
 }
