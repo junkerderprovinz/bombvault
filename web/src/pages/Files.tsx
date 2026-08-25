@@ -814,15 +814,31 @@ function FileSetRestorePanel({
               {/* Delete-all acts on the LOCAL repo (and forgets the set), so it
                   is only offered while the local source is shown. */}
               {source === "local" && snapshots.length > 0 && (
-                // Task 5 (rule 13): was a plain underline-on-hover text
-                // button; already correctly fault-red per "the destructive
-                // control is always the fault colour" (Destructive actions).
+                // NO bespoke red. The comment that used to sit here claimed
+                // this badge was "already correctly fault-red per 'the
+                // destructive control is always the fault colour'" — that
+                // rule was REVERSED, and this call site never heard about it.
+                // The standing rule is the opposite (jdp: "Der Löschen-Badge
+                // ist auch anders eingefärbt, soll nicht so sein"; "Keine
+                // Sonderfarbe für den Entfernen-Badge"), and commit d336e532
+                // swept eight controls onto it — but it found them by
+                // grepping for `statusFail` CLASSES, so this badge, carrying
+                // the identical red through Badge's own `tone` prop, was
+                // invisible to that sweep and kept it.
+                //   `tone="neutral"` now: the same secondary chip its
+                // siblings use, and the same neutral chrome Containers.tsx's
+                // own "Alle Backups löschen" took in that sweep. Nothing
+                // becomes ambiguous — the label still says "Alle löschen"
+                // verbatim and handleDeleteAll still routes through the
+                // shared confirm dialog. `glim-shake` survives: behaviour,
+                // not colour. bombvault/no-status-color-on-control now fails
+                // the build if this comes back.
                 <Badge
                   key={shakeDeleteAll}
                   as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  tone="fail"
+                  tone="neutral"
                   size="small"
                   className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
                 >

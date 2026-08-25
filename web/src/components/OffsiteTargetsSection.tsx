@@ -389,11 +389,25 @@ export function OffsiteTargetsSection({
             <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)}>
               {t("offsite.targets.edit")}
             </Badge>
+            {/* NO bespoke red on either state (both were `tone="fail"`).
+                jdp's wording for this exact control: "Keine Sonderfarbe für
+                den Entfernen-Badge." Commit d336e532 applied that to eight
+                controls but found them by grepping for `statusFail` CLASSES,
+                so this pair — carrying the same red through Badge's own
+                `tone` prop — was invisible to it and stayed red while the
+                Fleet / Receiver / Settings remove buttons beside it all went
+                neutral.
+                  `tone="neutral"` is what the Edit badge one line up already
+                uses, so the row is now one chip family. The two-click inline
+                confirm is untouched and is what actually protects the
+                action: the LABEL flips Entfernen -> Entfernen bestätigen ->
+                Wird entfernt, which is the affordance, not the colour.
+                `glim-shake` on a failed remove survives — behaviour. */}
             {confirmRemove === tgt.id ? (
               <Badge
                 key={removeShake}
                 as="button"
-                tone="fail"
+                tone="neutral"
                 size={ROW_BADGE_SIZE}
                 onClick={() => void remove(tgt.id)}
                 disabled={removingId === tgt.id}
@@ -404,7 +418,7 @@ export function OffsiteTargetsSection({
             ) : (
               <Badge
                 as="button"
-                tone="fail"
+                tone="neutral"
                 size={ROW_BADGE_SIZE}
                 onClick={() => setConfirmRemove(tgt.id)}
               >

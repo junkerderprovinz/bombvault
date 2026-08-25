@@ -782,15 +782,24 @@ function VMRestorePanel({
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" />
               </Advanced>
               {snapshots.length > 0 && (
-                // Task 5 (rule 13): was a plain underline-on-hover text
-                // button; already correctly fault-red per "the destructive
-                // control is always the fault colour" (Destructive actions).
+                // NO bespoke red — byte-identical case to Files.tsx's own
+                // delete-all badge (see that call site for the full history).
+                // The comment here made the same superseded claim, that a
+                // destructive control "is always the fault colour". It is
+                // not: jdp reversed that ("Keine Sonderfarbe für den
+                // Entfernen-Badge"), and d336e532's sweep missed this badge
+                // because that sweep grepped for `statusFail` classes and
+                // this red arrived through Badge's `tone` prop instead.
+                //   `tone="neutral"` matches the neutral secondary chrome
+                // VMs' own "Eintrag entfernen" button took in that sweep.
+                // The label and the confirm dialog carry the meaning;
+                // `glim-shake` survives untouched.
                 <Badge
                   key={shakeDeleteAll}
                   as="button"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  tone="fail"
+                  tone="neutral"
                   size="small"
                   className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
                 >
