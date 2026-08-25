@@ -30,14 +30,15 @@ export function applyAccent(hex?: string): void {
   root.setProperty("--accent", color);
   const ink = contrastOn(color);
   root.setProperty("--accent-contrast", ink);
-  // The OTHER end of contrastOn()'s binary choice — always exactly the one of
-  // #161616/#FFFFFF that --accent-contrast is not. Same reasoning as
-  // appearance.ts's --item-hue-ink-inv (the rainbow-position counterpart): a
-  // treatment that has to shade the accent fill AWAY from its own ink can't
-  // hard-code the direction, because it flips with the accent's luminance —
-  // a light custom accent needs to go lighter, a dark one darker. Consumed by
-  // `.glim-badge-prefix` (index.css), Badge's split heading badge.
-  root.setProperty("--accent-contrast-inv", ink === "#FFFFFF" ? "#161616" : "#FFFFFF");
+  // No --accent-contrast-inv here (REMOVED, not overlooked): it was the OTHER
+  // end of contrastOn()'s binary choice, and its only consumer anywhere in the
+  // app was index.css's `.glim-badge-prefix` — the shaded leading cell of
+  // Badge's split heading badge, which jdp reversed in favour of two separate,
+  // equally-filled badges ("Der Badge der Nummer nicht abgedunkelt"). With
+  // nothing left that has to shade a fill AWAY from its own ink, the token,
+  // its four rainbow rebinds in index.css and appearance.ts's
+  // --item-hue-ink-inv counterpart all went with it instead of staying behind
+  // as dead machinery. See Badge.tsx's `inFlow` header section.
   root.setProperty("--accent-soft", softTint(color));
 }
 
