@@ -74,11 +74,52 @@ describe("Badge — size stages", () => {
     expect(cls).toContain("px-3");
   });
 
-  it("icon stage is a 28px-tall chip, matching Settings.tsx's PaletteSwatch (h-7 w-7) for a same-row icon-only badge", () => {
+  it("icon stage is 32px — THE one size every square icon-only badge in the app renders at", () => {
     const el = root(Badge({ children: "x", size: "icon" }));
     const cls = el.props!.className as string;
-    expect(cls).toContain("h-7");
+    expect(cls).toContain("h-8");
   });
+
+  // Regression guard for the defect jdp reported twice: a previous round split
+  // square icon badges into three role-based stages (icon 28px / compact 32px /
+  // field 36px) that each matched their own nearest neighbour — and all three
+  // then appeared side by side inside a single Container card. The split is
+  // gone; this fails if anyone reintroduces a second icon-badge stage.
+  // `BadgeSize` is a closed union, so a new member must be added there first,
+  // and this list has to be updated in the same edit — which is exactly the
+  // moment to read Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block.
+  it("has exactly ONE size stage for square icon badges — no role-based split", () => {
+    const allSizes: BadgeSize[] = ["small", "medium", "large", "heading", "icon"];
+    const heights = allSizes.map((size) => {
+      const cls = root(Badge({ children: "x", size })).props!.className as string;
+      return [size, cls.split(/\s+/).find((c) => /^h-/.test(c))] as const;
+    });
+    expect(heights.filter(([, h]) => h === "h-8").map(([s]) => s)).toEqual(["icon"]);
+  });
+
+  // The user-visible contract jdp actually asked for ("alle gleich groß"),
+  // checked across every shape/tone combination a call site can produce: an
+  // icon-only badge is the same 32px square whatever else it carries.
+  it.each<BadgeShape>(["pill", "rounded", "square", "circle"])(
+    "an icon-only badge at shape=%s is 32px square",
+    (shape) => {
+      const cls = root(Badge({ children: "x", shape, size: "icon", tip: "t" })).props!
+        .className as string;
+      expect(cls).toContain("h-8");
+      expect(cls).toContain("aspect-square");
+      expect(cls).toContain("px-0");
+    }
+  );
+
+  it.each<BadgeTone>(["ok", "fail", "warn", "active", "neutral"])(
+    "an icon-only badge at tone=%s is 32px square",
+    (tone) => {
+      const cls = root(Badge({ children: "x", shape: "square", size: "icon", tone, tip: "t" }))
+        .props!.className as string;
+      expect(cls).toContain("h-8");
+      expect(cls).toContain("aspect-square");
+    }
+  );
 
   it("heading stage is a distinct height from every status-chip stage, so a heading never has the exact footprint of a real status/activity chip", () => {
     const heading = root(Badge({ children: "x", size: "heading" })).props!.className as string;
@@ -209,10 +250,10 @@ describe("Badge — shape", () => {
     }
   );
 
-  it("circle + icon stage locks the same 28px footprint as PaletteSwatch, for an icon-only badge sitting beside it", () => {
+  it("circle + icon stage locks the app-wide 32px icon-badge footprint, zero padding, 1:1 aspect", () => {
     const el = root(Badge({ children: "!", shape: "circle", size: "icon" }));
     const cls = el.props!.className as string;
-    expect(cls).toContain("h-7");
+    expect(cls).toContain("h-8");
     expect(cls).toContain("aspect-square");
     expect(cls).toContain("px-0");
   });
