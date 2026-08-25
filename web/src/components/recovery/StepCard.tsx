@@ -108,16 +108,26 @@ export function StepCard({
               card's own content edge (the h2 is a normal-flow child of it) —
               the same self-maintaining, automatically RTL-correct mechanism
               the single badge used to rely on, just applied one level up.
-          `max-w` keeps the pair inside the card's other padding edge so a long
-          title wraps rather than running under the status dot, and `min-w-0`
-          on the name badge is what lets it actually shrink to allow that.
+          `max-w` keeps the pair clear of the status dot so a long title wraps
+          instead of running under it, and `min-w-0` on the name badge is what
+          lets it actually shrink to allow that. The 3.25rem is not a guess: an
+          absolutely-positioned box's percentage resolves against the CARD'S
+          PADDING BOX, so the subtraction has to pay for this card's own two
+          p-4 edges (2rem) PLUS the dot's own 10px column and the 10px gap
+          before it (the `gap-2.5` the dot used to get from the shared row).
+          Measured live at 760px — the width where step 2's German title
+          genuinely wraps — the first cut, which only subtracted the padding,
+          put the wrapped badge's right edge at x=705, the exact pixel the
+          dot's right edge sits on: a 1px-tall overlap the badge's own z-10
+          would have painted straight over. With the dot's column paid for it
+          lands at x=685, a clean 10px short of the dot.
             `glim-notch-card` on the card above is the other half of the
           colour wiring: index.css keys the reactive-mode card-wide hover zone
           off exactly that class, so a Recovery step reveals its hue from
           anywhere in the card like every Settings/Config/Flash card does,
           instead of only from a 22px pill. Both badges carry the same
           `hueIndex`, so they light up together as one heading. */}
-      <h2 className="absolute top-0 -translate-y-1/2 z-10 flex items-center gap-1.5 max-w-[calc(100%-2rem)]">
+      <h2 className="absolute top-0 -translate-y-1/2 z-10 flex items-center gap-1.5 max-w-[calc(100%-3.25rem)]">
         <Badge tone="heading" size="heading" inFlow hueIndex={hueIndex} className="shrink-0">
           {/* `tracking-normal` on an inner span, not on the Badge's own
               className: the heading stage's `tracking-widest` is the same CSS
