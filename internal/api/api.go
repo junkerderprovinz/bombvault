@@ -225,6 +225,10 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/spike", h.handleSpikeCached)
 	mux.HandleFunc("POST /api/spike", h.handleSpikeFresh)
 	mux.HandleFunc("POST /api/discover", h.handleDiscover)
+	// Read-only probe of the configured repos that ALSO applies a DEFINITE
+	// result to Settings.EncryptionEnabled — POST, not GET, because of that
+	// write. Behind authGate like every other settings-mutating route.
+	mux.HandleFunc("POST /api/encryption/detect", h.handleDetectEncryption)
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("POST /api/runs/ack", h.handleAckRuns)
 	mux.HandleFunc("GET /api/status", h.handleStatus)
