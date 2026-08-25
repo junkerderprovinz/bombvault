@@ -66,47 +66,83 @@ export function StepCard({
       className={`relative glim-notch-card rounded-card bg-carbon-surface p-4${hueOn ? " glim-hue" : ""}`}
       style={hueStyle}
     >
-      <div className="flex items-center gap-2.5 mb-2">
-        {/* Task 5 (rule 11): structurally identical to every other converted
-            Card heading — a rounded-card bg-carbon-surface panel with its
-            own <h2> title, not nested inside anything already badged.
-            GlimStone follow-up pass ("half-overlap card notch"): `relative`
-            added on the outer p-4 card above — the heading Badge is now
-            `position: absolute` and straddles that card's real edge (the
-            status dot to the right of the <h2> keeps its own position
-            untouched: this row's <h2> already carries `flex-1`, which claims
-            its share of the row's width regardless of whether its content
-            renders in normal flow, so removing the badge from flow doesn't
-            collapse the gap between them).
-              jdp, live review of this tab ("In diesem Tab haben wir eine
-            Besonderheit: Die Nummerierung der Cards soll auch ein
-            Cardtitelbadge sein... erst die Nummer und dann der Name der
-            Card"): the step number used to be its OWN 24px `bg-carbon-surface2`
-            circle, sitting in this row to the LEFT of the badge — a second,
-            separately-coloured piece of chrome that never joined the colour
-            engine and, now that the badge floats free of the row, didn't even
-            share a baseline with it. It is now the heading badge's own
-            leading cell (Badge's `prefix`), so number and name are one pill
-            that carries one hue.
-              `glim-notch-card` on the card above is the other half of that:
-            index.css keys the reactive-mode card-wide hover zone off exactly
-            that class, so a Recovery step now reveals its hue from anywhere
-            in the card like every Settings/Config/Flash card already did,
-            instead of only from the 22px pill itself. */}
-        <h2 className="flex items-center min-w-0 flex-1">
-          <Badge
-            tone="heading"
-            size="heading"
-            wrap
-            className="max-w-full"
-            hueIndex={hueIndex}
-            prefix={n}
-          >
-            {title}
-            {hint && <InfoBubble tip={hint} onAccent />}
-          </Badge>
-        </h2>
-        <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
+      {/* Task 5 (rule 11): structurally identical to every other converted
+          Card heading — a rounded-card bg-carbon-surface panel with its own
+          <h2> title, not nested inside anything already badged.
+            THE NUMBER, three rounds of it, because the shape keeps mattering:
+          it began as its own 24px `bg-carbon-surface2` circle sitting to the
+          LEFT of the heading badge — a second, separately-coloured piece of
+          chrome that never joined the colour engine. jdp then asked for it to
+          become part of the title badge ("erst die Nummer und dann der Name
+          der Card"), which shipped as a SPLIT pill: one badge, a shaded
+          leading cell, a hard seam. He has now reversed that in turn: "Die
+          Cardtitelbadges mit Nummer sollen zwei getrennte Badges sein. Der
+          Badge der Nummer nicht abgedunkelt." So: two genuinely separate
+          badges, side by side, BOTH taking the plain heading fill — the
+          number badge is not shaded, tinted or dimmed in any way; it is the
+          same `tone="heading"` badge the name is, at the same hue.
+            POSITIONING, and why it moved up here rather than onto the badges:
+          a heading notch normally positions ITSELF (`absolute top-0
+          -translate-y-1/2`, see Badge.tsx). Two self-positioning notches
+          would resolve to the same static position and land on top of each
+          other, and the obvious fix — nudge the second one across by a fixed
+          number of pixels — is exactly the mistake this codebase has already
+          made and removed twice for this very notch (Badge.tsx's own
+          REGRESSION note, and Settings.tsx's offsite-tab history). Both are
+          the same defect shape: an offset derived from ONE assumed height or
+          width, silently wrong the moment the real one differs — and the name
+          badge's height genuinely varies here, since a long step title wraps
+          to two lines at ordinary browser widths.
+            So the <h2> is the positioned element and the badges ride inside
+          it in ordinary flow (`inFlow`, Badge.tsx). Three consequences, all
+          of them the point:
+            - `-translate-y-1/2` resolves against the H2's OWN border-box
+              height — the tallest badge in the row — so the PAIR's vertical
+              centre sits exactly on the card's top edge at any height, wrapped
+              name or not, with no number assumed anywhere.
+            - `items-center` centres both badges on that same line, so the
+              short number badge and a one- OR two-line name badge stay
+              mutually centred instead of one drifting off the other's axis.
+            - no `start-*`/`insetStart`: with left and right both `auto` the
+              h2 falls back to its CSS static position, which is this p-4
+              card's own content edge (the h2 is a normal-flow child of it) —
+              the same self-maintaining, automatically RTL-correct mechanism
+              the single badge used to rely on, just applied one level up.
+          `max-w` keeps the pair inside the card's other padding edge so a long
+          title wraps rather than running under the status dot, and `min-w-0`
+          on the name badge is what lets it actually shrink to allow that.
+            `glim-notch-card` on the card above is the other half of the
+          colour wiring: index.css keys the reactive-mode card-wide hover zone
+          off exactly that class, so a Recovery step reveals its hue from
+          anywhere in the card like every Settings/Config/Flash card does,
+          instead of only from a 22px pill. Both badges carry the same
+          `hueIndex`, so they light up together as one heading. */}
+      <h2 className="absolute top-0 -translate-y-1/2 z-10 flex items-center gap-1.5 max-w-[calc(100%-2rem)]">
+        <Badge tone="heading" size="heading" inFlow hueIndex={hueIndex} className="shrink-0">
+          {/* `tracking-normal` on an inner span, not on the Badge's own
+              className: the heading stage's `tracking-widest` is the same CSS
+              property at the same specificity, so two utilities on ONE element
+              would be decided by Tailwind's generated source order (widest
+              wins) rather than by what this call site asked for. On a child it
+              simply overrides the inherited value. Letter-spacing is applied
+              after the LAST character too, so a tracked single digit sits
+              visibly left of its own badge's centre without this. */}
+          <span className="tracking-normal tabular-nums">{n}</span>
+        </Badge>
+        <Badge tone="heading" size="heading" inFlow wrap hueIndex={hueIndex} className="min-w-0">
+          {title}
+          {hint && <InfoBubble tip={hint} onAccent />}
+        </Badge>
+      </h2>
+      {/* The status dot keeps its own row and its own right-hand position. It
+          used to share a `flex items-center gap-2.5` row with the <h2>, which
+          claimed the leftover width via `flex-1` — now that the h2 is
+          absolutely positioned it is no longer a flex item at all, so `ms-auto`
+          on the dot does that job instead. The row's measured height is
+          unchanged either way (the h2's absolute content never contributed to
+          it), so nothing below moves. */}
+      <div className="flex mb-2">
+        <span className={`ms-auto h-2.5 w-2.5 rounded-full ${dot}`} />
       </div>
       <div className="text-sm text-carbon-textMuted flex flex-col gap-2">{children}</div>
     </div>
