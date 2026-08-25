@@ -79,9 +79,33 @@ describe("hueVars", () => {
     const vars = hueVars("#1D99F3");
     expect(vars["--item-hue"]).toBe("#1D99F3");
     expect(vars["--item-hue-ink"]).toBe(contrastOn("#1D99F3"));
+    expect(vars["--item-hue-ink-inv"]).toBe("#FFFFFF");
     expect(vars["--item-hue-soft"]).toBe("rgba(29, 153, 243, 0.14)");
     expect(vars["--item-hue-wash"]).toBe("rgba(29, 153, 243, 0.07)");
     expect(vars["--item-hue-ring"]).toBe("rgba(29, 153, 243, 0.55)");
+  });
+
+  // --item-hue-ink-inv exists so a treatment that must shade a hued fill AWAY
+  // from its own ink has a direction to move in (index.css's
+  // `.glim-badge-prefix`, Badge's split heading badge). Its whole contract is
+  // that it is ALWAYS the other end of contrastOn's binary choice — a call
+  // site that guessed "the inverse is probably white" would be wrong for every
+  // dark hue, which is exactly the mistake this token removes, so the pairing
+  // is asserted across the real palette rather than for one sample colour.
+  it.each(RAINBOW)("is always the exact opposite of --item-hue-ink for %s", (hex) => {
+    const vars = hueVars(hex);
+    const ink = vars["--item-hue-ink"];
+    const inv = vars["--item-hue-ink-inv"];
+    expect([ink, inv].sort()).toEqual(["#161616", "#FFFFFF"]);
+    expect(inv).not.toBe(ink);
+  });
+
+  it("inverts a DARK hue's white ink back to the dark end, not blindly to white", () => {
+    // A dark custom accent/palette entry gets white ink, so its inverse must be
+    // the dark one — the case a hard-coded "#FFFFFF" would silently break.
+    const vars = hueVars("#0F1B33");
+    expect(vars["--item-hue-ink"]).toBe("#FFFFFF");
+    expect(vars["--item-hue-ink-inv"]).toBe("#161616");
   });
 
   it("returns an empty object for an invalid hex, never a partial/garbage set", () => {

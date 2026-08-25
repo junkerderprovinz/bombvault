@@ -28,7 +28,16 @@ export function applyAccent(hex?: string): void {
   const color = hex ?? getAccent();
   const root = document.documentElement.style;
   root.setProperty("--accent", color);
-  root.setProperty("--accent-contrast", contrastOn(color));
+  const ink = contrastOn(color);
+  root.setProperty("--accent-contrast", ink);
+  // The OTHER end of contrastOn()'s binary choice — always exactly the one of
+  // #161616/#FFFFFF that --accent-contrast is not. Same reasoning as
+  // appearance.ts's --item-hue-ink-inv (the rainbow-position counterpart): a
+  // treatment that has to shade the accent fill AWAY from its own ink can't
+  // hard-code the direction, because it flips with the accent's luminance —
+  // a light custom accent needs to go lighter, a dark one darker. Consumed by
+  // `.glim-badge-prefix` (index.css), Badge's split heading badge.
+  root.setProperty("--accent-contrast-inv", ink === "#FFFFFF" ? "#161616" : "#FFFFFF");
   root.setProperty("--accent-soft", softTint(color));
 }
 

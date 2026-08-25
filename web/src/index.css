@@ -210,6 +210,14 @@
      its own theme-specific #8E6A00 default). */
   --accent:           #FCC419;
   --accent-contrast:  #161616;
+  /* The OTHER end of contrastOn()'s binary choice — always exactly the one of
+     #161616/#FFFFFF that --accent-contrast is not, so a treatment that has to
+     shade the accent fill AWAY from its own ink has a direction to move in
+     (`.glim-badge-prefix` below, Badge's split heading badge). Static here
+     purely as the pre-JS fallback for the DEFAULT accent, exactly like
+     --accent-contrast above; accent.ts's applyAccent() overwrites both as an
+     inline style the moment a real accent is applied. */
+  --accent-contrast-inv: #FFFFFF;
   --accent-soft:      rgba(252, 196, 25, 0.14);
 
   /* accent-text (spec-compliance fix, GlimStone form-engine Phase 2 Task 7
@@ -502,6 +510,11 @@
      dark block, not reference's light-specific #8E6A00-based numbers —
      see that comment for why. */
   --accent-contrast:  #161616;
+  /* Same value as the dark block's, for the same reason as --accent-contrast
+     right above it — see the bare :root declaration for what this token is
+     for. Restated here so this block stays a complete accent set rather than
+     half-inheriting one. */
+  --accent-contrast-inv: #FFFFFF;
   --accent-soft:      rgba(252, 196, 25, 0.14);
 
   /* accent-text — spec-compliance fix (spec review of GlimStone form-engine
@@ -1254,6 +1267,7 @@ body {
 [data-rainbow] .glim-hue {
   --accent: var(--item-hue);
   --accent-contrast: var(--item-hue-ink);
+  --accent-contrast-inv: var(--item-hue-ink-inv);
   --accent-soft: var(--item-hue-soft);
   --color-accent: var(--item-hue);
   --color-accentContrast: var(--item-hue-ink);
@@ -1538,6 +1552,12 @@ body {
 [data-rainbow="reactive"] .glim-hue {
   --accent: var(--carbon-text-muted);
   --accent-contrast: var(--carbon-bg);
+  /* The resting state swaps the hue pair for a theme pair, so the inverse
+     ink has to follow the SAME swap rather than staying an item-hue value:
+     --carbon-text is exactly --carbon-bg's opposite end in both themes
+     (#f4f4f4 vs #161616 dark, #161616 vs #f4f4f4 light), which is what keeps
+     `.glim-badge-prefix` shading away from the ink here too. */
+  --accent-contrast-inv: var(--carbon-text);
   --accent-soft: transparent;
   --color-accent: var(--carbon-text-muted);
   --color-accentContrast: var(--carbon-bg);
@@ -1548,6 +1568,7 @@ body {
 [data-rainbow="reactive"] .glim-hue.glim-active {
   --accent: var(--item-hue);
   --accent-contrast: var(--item-hue-ink);
+  --accent-contrast-inv: var(--item-hue-ink-inv);
   --accent-soft: var(--item-hue-soft);
   --color-accent: var(--item-hue);
   --color-accentContrast: var(--item-hue-ink);
@@ -1591,10 +1612,72 @@ body {
 [data-rainbow="reactive"] .glim-notch-card:focus-within .glim-notch-hue {
   --accent: var(--item-hue);
   --accent-contrast: var(--item-hue-ink);
+  --accent-contrast-inv: var(--item-hue-ink-inv);
   --accent-soft: var(--item-hue-soft);
   --color-accent: var(--item-hue);
   --color-accentContrast: var(--item-hue-ink);
   --color-accentSoft: var(--item-hue-soft);
+}
+
+/* Split heading badge — the leading PREFIX cell (Badge.tsx's `prefix` prop).
+   One pill, visibly two parts: a shaded leading cell, then the label, with a
+   hard seam between them. Introduced for the Recovery tab, where jdp asked
+   for each step's NUMBER to become part of its heading badge rather than a
+   separate circle beside it ("Der Cardtitelbadge soll zweigeteilt sein: erst
+   die Nummer und dann der Name der Card").
+
+   THE CONTRAST TRAP THIS AVOIDS, stated plainly because this codebase has
+   now walked into it twice (see Badge.tsx's tone="heading" history and its
+   isIconOnly ROUND 2 note — both are the same mistake: a fill was changed
+   without re-deriving the ink that has to survive on top of it):
+
+   The obvious way to shade a leading cell is to mix the fill TOWARD its own
+   ink (`color-mix(… var(--accent-contrast))`) and keep the same ink on top.
+   That is exactly wrong, and measurably so. --accent-contrast is already the
+   BETTER of black/white for this fill (accent.ts's contrastOn picks the
+   higher of the two ratios), so every step toward it spends contrast that
+   was never in surplus. Measured against the real RAINBOW palette: a mere
+   20% mix toward the ink drops position 5 (#1D99F3) from 5.95:1 to 4.23:1 —
+   already under the 4.5:1 text minimum — and an arbitrary CUSTOM accent
+   sitting at contrastOn's own crossover starts at 4.5:1, so ANY mix toward
+   its ink fails on the first percent. There is no safe amount.
+
+   So this shades toward --accent-contrast (deliberately: it is the only
+   direction with room, since the fill starts at maximum distance from it)
+   and FLIPS THE INK to --accent-contrast-inv, the other end of that same
+   binary choice. The cell is therefore the badge's own two colours swapped
+   and softened — one badge, two parts, no third colour invented. Because the
+   background moves toward the ink it is leaving, contrast against the NEW
+   ink only ever increases as the mix gets deeper; 35% accent is far enough
+   past the crossover to be safe for every hue AND for a pathological pure
+   white or pure black custom accent.
+
+   Live-measured (getComputedStyle on the deployed container, both themes,
+   all 8 rainbow positions) — prefix cell vs its own ink, then the two
+   halves against each other:
+     #FF8389  9.11:1   sep 3.84    #3DDBD9  7.72:1   sep 4.54
+     #FF832B  9.32:1   sep 3.79    #1D99F3 10.26:1   sep 3.37
+     #FCC419  7.46:1   sep 4.64    #BE95FF  9.02:1   sep 3.84
+     #6FDC8C  7.72:1   sep 4.52    #FF7EB6  9.12:1   sep 3.87
+   Worst prefix-ink contrast across the palette 7.46:1 (vs 4.5:1 required);
+   worst half-to-half separation 3.37:1, well past the ~1.5:1 where a shade
+   step stops being arguable. The same formula on a pure-white custom accent
+   — the worst case the whole colour space can produce — still measures
+   5.57:1.
+
+   `border-inline-end`, not border-right: the seam has to sit between the two
+   cells under dir="rtl" too, where the prefix cell is the pill's RIGHT cap.
+   The seam is drawn in --accent-contrast (the LABEL half's ink) at 45%, so
+   it reads as a cut in the badge rather than a border of its own colour.
+
+   No radius of its own: the parent pill carries `overflow-hidden`, so this
+   cell's square start corners are clipped to whatever radius the badge
+   actually has — which is what makes the split render correctly in all three
+   shape-engine modes without this rule knowing which one is active. */
+.glim-badge-prefix {
+  background-color: color-mix(in srgb, var(--accent) 35%, var(--accent-contrast));
+  color: var(--accent-contrast-inv);
+  border-inline-end: 1px solid color-mix(in srgb, var(--accent-contrast) 45%, transparent);
 }
 
 /* Sidebar brand logo — two theme-specific marks that auto-switch via the `dark:`

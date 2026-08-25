@@ -182,6 +182,22 @@
 // grows), but a new call site that wants a short wrap badge to stay short next
 // to a tall one needs `className="self-start"`.
 //
+// `prefix` — a SPLIT heading badge: one pill, two visibly distinct cells, the
+// leading one shaded and cut off from the label by a hard seam. Added for the
+// Recovery tab's step numbers (jdp: "der Cardtitelbadge soll zweigeteilt
+// sein: erst die Nummer und dann der Name der Card"), kept general because
+// nothing about a number-then-name pill is Recovery-specific. Layout lives in
+// `badgeClassName`'s `split` option (the pill hands its padding and gap to
+// the cells and gains `overflow-hidden`, so the leading cell's corners are
+// clipped to whatever radius the badge really has — which is what makes the
+// split correct in all three shape-engine modes without this file naming any
+// of them); the COLOUR lives in `.glim-badge-prefix` (index.css), whose own
+// comment carries the measured contrast figures and the reasoning for why the
+// shaded cell flips to --accent-contrast-inv instead of keeping the label's
+// ink. Read that comment before changing either half's colour: shading a hued
+// fill toward its own ink is the exact trap this file's tone="heading" and
+// isIconOnly histories below already document walking into twice.
+//
 // `tone="heading"` / `size="heading"` (Task 5, rule 11 — "every heading is a
 // filled section badge, never bare text... always coloured: it is a heading,
 // not a control, so rule 9 [the three-way reactive colour mode] does not
@@ -637,6 +653,16 @@ interface BadgeStyleOptions {
    *  a private plumbing detail of badgeClassName rather than a second public
    *  toggle a caller could set inconsistently with `tip`. */
   iconOnly?: boolean;
+  /** Two-cell layout: the badge's own horizontal padding and inter-child gap
+   *  move INTO the two cells Badge() renders (see its `prefix` branch), and
+   *  the pill gains `overflow-hidden` so the leading cell's square start
+   *  corners are clipped to the badge's real radius instead of poking out of
+   *  it. `items-stretch` replaces `items-center` for the same reason: the
+   *  shaded cell has to reach the pill's top and bottom edges, which it can
+   *  only do if the flex line stretches it. Not exposed on `BadgeProps` —
+   *  Badge()'s own body derives it from `prefix` being set, so the layout and
+   *  the content that needs it can't be set inconsistently. */
+  split?: boolean;
   /** Explicit horizontal offset for the heading notch, overriding the static-
    *  position fallback — see BadgeProps' own `insetStart` doc (the public
    *  prop this is threaded straight from) for the full "why this exists"
@@ -658,6 +684,7 @@ function badgeClassName({
   wrap,
   className,
   iconOnly,
+  split,
   insetStart,
 }: BadgeStyleOptions = {}): string {
   const { height, minHeight, text, padding } = SIZE_TOKENS[size];
@@ -676,8 +703,14 @@ function badgeClassName({
   // file header. Never emit both `height` and `minHeight` (same CSS
   // property, same specificity — exactly the two-conflicting-utilities
   // hazard the padding/circle split above already guards against).
+  //   split mode drops the OUTER vertical padding in the wrap case and hands
+  // it to the two cells instead (Badge()'s own `prefix` branch re-applies the
+  // identical `py-0.5`). Leaving it here would paint a 2px strip of the plain
+  // label fill above and below the shaded leading cell, so the cell would
+  // stop short of the pill's top and bottom edges and read as a floating
+  // inner chip rather than one half of a split badge.
   const sizing = wrap
-    ? `${minHeight} py-0.5 leading-tight wrap-break-word`
+    ? `${minHeight} ${split ? "" : "py-0.5 "}leading-tight wrap-break-word`
     : `${height} min-h-0 leading-none`;
 
   // tone="heading" + size="heading" (GlimStone follow-up pass, live-review
@@ -899,10 +932,16 @@ function badgeClassName({
     isIconOnly && tone === "active" ? "bg-accent text-accentContrast" : TONE_CLASSES[tone];
 
   return [
-    "inline-flex box-border items-center justify-center gap-1 font-medium",
+    split
+      ? "inline-flex box-border items-stretch justify-center font-medium overflow-hidden"
+      : "inline-flex box-border items-center justify-center gap-1 font-medium",
     sizing,
     text,
-    isIconOnly ? "px-0 aspect-square" : padding,
+    // split hands the stage's horizontal padding to the two cells (Badge()'s
+    // `prefix` branch applies it there) — the pill itself must have none, or
+    // the shaded leading cell would start a stage-padding's width inside the
+    // badge instead of at its own edge.
+    isIconOnly ? "px-0 aspect-square" : split ? "px-0" : padding,
     isHeadingNotch ? "rounded-pill" : RADIUS_CLASSES[shape],
     toneClasses,
     notchPositioning,
@@ -1020,6 +1059,36 @@ export interface BadgeProps {
    *  signal that its own DOM/CSS shape controlled the badge's position at
    *  all. */
   insetStart?: NotchInset;
+  /** A leading segment INSIDE the same pill, shaded differently from the
+   *  label and separated from it by a hard seam — one badge, visibly two
+   *  parts. Meaningful on `tone="heading"` ONLY (the accent-filled heading
+   *  badge, notch or not); silently ignored for every other tone, the same
+   *  "only meaningful where it makes sense" contract `hueIndex` and
+   *  `insetStart` already document. The gate is not decoration: the seam and
+   *  the shaded cell are both derived from --accent/--accent-contrast/
+   *  --accent-contrast-inv (see `.glim-badge-prefix` in index.css), which only
+   *  describe an accent-filled badge — a status-toned chip (ok/fail/warn) is
+   *  painted from rule 4's own state hues, and re-deriving a leading cell from
+   *  those would be inventing a second, unmeasured colour pair on top of a
+   *  load-bearing status signal.
+   *
+   *  Introduced for the Recovery tab, where jdp asked for the step number to
+   *  stop being a separate circle beside the heading and become the heading
+   *  badge's own first cell: "Die Nummerierung der Cards soll auch ein
+   *  Cardtitelbadge sein. Also der Cardtitelbadge soll zweigeteilt sein: erst
+   *  die Nummer und dann der Name der Card." Kept as a general Badge
+   *  capability rather than a Recovery-local hack — nothing about a
+   *  number-then-name pill is specific to that page, and the alternative
+   *  (hand-rolling the two cells at the call site) is exactly how the five
+   *  duplicate chip implementations this component replaced came about.
+   *
+   *  Everything else about the badge is untouched by this: the notch's
+   *  half-overlap position (`top-0 -translate-y-1/2`), `hueIndex`'s
+   *  colour-engine participation, `insetStart`, `wrap`, and any InfoBubble
+   *  passed as part of `children` all behave identically — the bubble simply
+   *  rides in the LABEL cell, which is where its (i) belongs (it explains the
+   *  card, not the number). */
+  prefix?: ReactNode;
 }
 
 export function Badge({
@@ -1040,6 +1109,7 @@ export function Badge({
   hueIndex,
   tip,
   insetStart,
+  prefix,
 }: BadgeProps) {
   // Deliberately NO useRainbow() subscription here, unlike Selector's own
   // identical-looking hue support: Badge (like Toggle) is a pure, hookless
@@ -1103,9 +1173,39 @@ export function Badge({
   // see badgeClassName's own `iconOnly` doc and BadgeProps' own `tip` doc for
   // why the two are the same condition rather than two props a caller could
   // set inconsistently.
-  const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined, insetStart });
+  // See BadgeProps' own `prefix` doc for why the split is gated to
+  // tone="heading" rather than offered on every tone.
+  const isSplit = prefix !== undefined && tone === "heading";
+  const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined, split: isSplit, insetStart });
   const merged = hueOn ? `glim-hue ${isNotchHue ? "glim-notch-hue " : ""}${shared}` : shared;
   const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+
+  // The two cells. `content` is what every branch below renders INSIDE the
+  // badge — identical to `children` unless the split is active, so nothing
+  // about the span/button/anchor branches has to know this feature exists.
+  //   The shaded cell's own padding is one step tighter than the stage's
+  // (px-2.5 against heading's px-3): its content is a short ordinal, and
+  // reusing the label's padding — sized for a title's worth of text — would
+  // make a one-digit cell wider than it is tall. `tracking-normal` undoes the
+  // heading stage's `tracking-widest` for this cell only: letter-spacing is
+  // applied AFTER the last character too, so a widely-tracked single digit
+  // sits visibly left of its own cell's centre.
+  //   The label cell restores the `gap-1` the split pulled off the pill, so a
+  // trailing InfoBubble keeps the exact spacing from the title it has in an
+  // unsplit heading badge.
+  const cellPadY = wrap ? " py-0.5" : "";
+  const content = isSplit ? (
+    <>
+      <span className={`glim-badge-prefix inline-flex items-center justify-center px-2.5 tracking-normal tabular-nums${cellPadY}`}>
+        {prefix}
+      </span>
+      <span className={`inline-flex items-center justify-center gap-1 min-w-0 ${SIZE_TOKENS[size].padding}${cellPadY}`}>
+        {children}
+      </span>
+    </>
+  ) : (
+    children
+  );
 
   if (as === "button") {
     const buttonClassName = `appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${merged}`;
@@ -1117,7 +1217,7 @@ export function Badge({
     if (tip !== undefined) {
       return (
         <IconTipButton tip={tip} onClick={onClick} disabled={disabled} style={hueStyle} className={buttonClassName}>
-          {children}
+          {content}
         </IconTipButton>
       );
     }
@@ -1131,7 +1231,7 @@ export function Badge({
         style={hueStyle}
         className={buttonClassName}
       >
-        {children}
+        {content}
       </button>
     );
   }
@@ -1139,14 +1239,14 @@ export function Badge({
   if (as === "a") {
     return (
       <a href={href} target={target} rel={rel} title={title} aria-label={ariaLabel} style={hueStyle} className={`transition-opacity hover:opacity-80 ${merged}`}>
-        {children}
+        {content}
       </a>
     );
   }
 
   return (
     <span title={title} aria-label={ariaLabel} style={hueStyle} className={merged}>
-      {children}
+      {content}
     </span>
   );
 }
