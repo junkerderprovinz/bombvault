@@ -560,26 +560,20 @@ export function OffsiteTargetsSection({
           (Sidebar.tsx) verbatim, the exact glyph the task named this button
           could reuse ("Ziel hinzufügen"/"Add target" is the same add-a-new-
           row action IconAdd already draws for the Registries card's own
-          add button). `size="field"` (36px, Badge.tsx's own SIZE_TOKENS.field
-          comment) rather than this section's own `ROW_BADGE_SIZE` ("medium",
-          20px, the existing text-chip/Edit/Remove/Test row weight): this
-          button has no literal sibling control visible at the same moment
-          (the section's own `inputCls` fields only render once the draft
-          editor is OPEN, i.e. exactly when this button is hidden) — so
-          "this row's own real control height" instead means the SAME 36px
-          the other three buttons named in the identical jdp request already
-          measure to, in the SAME per-domain Card this section is nested
-          inside (Settings.tsx's repo-url `<input>`); giving this one button a
-          different footprint than its three named siblings would defeat the
-          very unification jdp's single request was asking for. The visible
-          "Ziel hinzufügen" text survives unchanged as the `tip` tooltip
-          content. */}
+          add button). `size="icon"` — the app's one square-icon-badge size
+          (32px), not this section's own `ROW_BADGE_SIZE` ("medium", 20px, the
+          text-chip/Edit/Remove/Test row weight, which is a TEXT chip stage,
+          not an icon-badge one). Was `size="field"` (36px), pinned to the
+          off-site repo-url `<input>`'s own measured height; that per-neighbour
+          pinning is exactly the role-based split jdp rejected — see Badge.tsx's
+          "ONE SIZE FOR SQUARE ICON BADGES" block. The visible "Ziel
+          hinzufügen" text survives unchanged as the `tip` tooltip content. */}
       {!draft && (
         <Badge
           as="button"
           tone="active"
           shape="square"
-          size="field"
+          size="icon"
           hueIndex={hueIndex}
           onClick={openNew}
           className="self-start"

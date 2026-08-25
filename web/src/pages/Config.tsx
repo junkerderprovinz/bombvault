@@ -357,7 +357,11 @@ function ConfigSnapshotRow({
   }
 
   return (
-    <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
+    // py-1.5, not py-2.5: this row's delete badge grew 24px → 32px with the
+    // app-wide square-icon-badge unification, and trimming 4px of padding per
+    // side keeps the row at exactly the 44px it measured before. Same pairing
+    // as RestorePanel's SnapshotRow, for the same reason.
+    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
@@ -383,32 +387,44 @@ function ConfigSnapshotRow({
             IconTrash (components/Sidebar.tsx) reused verbatim — already
             drawn filled/`currentColor`-only for exactly this "remove a row"
             role in Settings.tsx's Registries card, no new glyph needed.
-            size="large" (Badge.tsx's own SIZE_TOKENS.large, h-6 = 24px), NOT
-            guessed: measured live via getBoundingClientRect against this
-            row's own real adjacent control — the previous text button
-            itself, `text-xs`(16px line-height)/`py-1`(4px+4px) — which
-            rendered at exactly 24px tall on the live container, the same
-            number this stage already names, so the row's total height is
-            unchanged by this swap (verified live, before/after: 44px).
-            tone="neutral" (Badge's own default: `bg-carbon-surface2
-            text-carbon-textSub`) rather than tone="fail", to preserve this
-            button's own pre-existing "quiet tile, hover reveals red" GlimStone
-            signal (`hover:bg-statusFailBg hover:text-statusFail`, appended via
-            `className` — the identical two classes the old text button
-            already carried, just moved onto the new element) instead of
-            making it permanently red, which would repaint a passive list row
-            as if something were already wrong. `glim-shake` (the existing
-            system-wide "failed delete shakes the delete button" rule) and
-            `shrink-0` survive unchanged via that same `className` passthrough. */}
+              size="icon" — the app's one square-icon-badge size (32px). This
+            was `size="large"` (24px), measured against its own pre-conversion
+            text button; RestorePanel's delete badge copied that number from
+            here, which is how one call site's local measurement became a
+            second badge size elsewhere in the app. Both are now on the single
+            shared stage — see Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES"
+            block. This row's padding moved py-2.5 → py-1.5 in the same
+            change, so the row still measures the 44px it did before.
+              tone="active", NOT the tone="neutral" + `hover:bg-statusFailBg
+            hover:text-statusFail` pair this badge shipped with. jdp, live
+            review of the sibling badge RestorePanel copied from this one:
+            "Der Löschen-Badge ist auch anders eingefärbt, soll nicht so sein,
+            ganz normal in die Farbmodi integrieren." `neutral` is one of the
+            tones Badge deliberately exempts from rainbow `hueIndex` (they are
+            load-bearing STATUS signals), so a neutral badge takes no
+            colour-engine position at all — this control stayed flat grey in
+            every palette while every other icon badge in the app followed the
+            engine, and the red hover made it the only badge with a bespoke
+            colour treatment. `active` + icon-only resolves to the solid
+            `bg-accent`/`text-accentContrast` pair and follows the accent/
+            rainbow engine like every sibling.
+              The action stays unambiguous without the red: the IconTrash
+            glyph and the `tip` bubble (t("snapshots.delete")) both name it,
+            and the click still routes through the confirm dialog below.
+            Mirrors the already-shipped decision that "Deaktivieren" buttons
+            must not be red either.
+              `glim-shake` (the system-wide "failed delete shakes the delete
+            button" rule) and `shrink-0` survive via `className` — behaviour
+            and layout, not colour. */}
         <Badge
           as="button"
           shape="square"
-          size="large"
-          tone="neutral"
+          size="icon"
+          tone="active"
           tip={t("snapshots.delete")}
           onClick={() => void handleDelete()}
           disabled={deleting}
-          className={`shrink-0 hover:bg-statusFailBg hover:text-statusFail${shake ? " glim-shake" : ""}`}
+          className={`shrink-0${shake ? " glim-shake" : ""}`}
           key={shake}
         >
           <IconTrash />
