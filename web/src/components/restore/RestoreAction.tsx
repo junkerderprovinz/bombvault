@@ -3,10 +3,18 @@
 //
 // Containers, VMs, and Recovery each hand-rolled the SAME in-place restore
 // mechanics: a useBackupWatch(kind:'restore') fire-and-watch cycle, an optional
-// confirm gate, an optional "leave stopped" toggle, the accent restore button
+// confirm gate, an optional "leave stopped" toggle, the accent restore trigger
 // (spinner while pending + a busy hint when another op blocks it), and the
 // <RestoreProgress> banner underneath. This owns that one control so the three
 // call sites stop diverging.
+//
+// The trigger has TWO shapes and exactly one behaviour: a text button (the
+// default — a restore FORM's submit, under a destination picker and a confirm)
+// or, with `iconBadge`, the app's square 32px icon badge flush at the row's far
+// edge (a per-item LIST ROW action). Both are built from the same
+// `triggerDisabled` expression and the same `handleRestore`, a few lines above
+// where they are rendered, so the two shapes cannot drift into two different
+// notions of "can this restore run" — see `iconBadge`'s own doc below.
 //
 // It is deliberately delete-agnostic and list-agnostic: the caller owns the row
 // chrome (snapshot id / time / tags), the snapshot list + Source toggle, and the
@@ -21,13 +29,15 @@
 // successful cancel). They must all share one ref.
 // ---------------------------------------------------------------------------
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { restore, restoreVM } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { useProgress, busyPhraseKey } from "../../lib/progress";
 import { RestoreProgress } from "./RestoreProgress";
 import type { RepoSource } from "../SourceToggle";
+import { Badge } from "../Badge";
+import { IconRestore } from "../Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -71,8 +81,39 @@ interface RestoreActionProps {
   /** Forwarded to RestoreProgress — gates the started / bgHint lines. Default
    *  true; Recovery passes false. */
   showStartedHint?: boolean;
-  /** Button label when idle. Default t("snapshots.restore"). */
+  /** Button label when idle. Default t("snapshots.restore"). In `iconBadge`
+   *  mode the glyph replaces this text on screen and it becomes the badge's
+   *  hover tooltip + accessible name instead — it is never dropped. */
   label?: string;
+  /** Render the trigger as this app's square 32px icon badge (IconRestore
+   *  glyph, `tip` carrying `label`) pushed flush to the row's far edge, instead
+   *  of a text button sitting at the row's start.
+   *
+   *  jdp, live review: "Card 5: die ganzen Wiederherstellen-Buttons sollen
+   *  quadratische Badges mit Glyphen sein und ganz rechts platziert sein." The
+   *  recipe is the app's standard one, copied from the already-converted
+   *  RestorePanel/VMs/Flash/Config row actions rather than re-derived:
+   *  shape="square" size="icon" (32px, Badge.tsx's ONE square-icon-badge
+   *  stage), tone="active", and NO hueIndex — every list row that renders one
+   *  of these already carries `.glim-hue` with its own rainbow position, so the
+   *  custom-property cascade paints the badge in that row's colour. Passing a
+   *  hueIndex here would override the row and break the sequence.
+   *
+   *  `ms-auto`, not `ml-auto`: under dir="rtl" the row's far edge is its left
+   *  one and the badge has to follow it. Same idiom, and the same resulting
+   *  right edge, as the "Restore all" button an earlier round pushed to the far
+   *  edge of this same card.
+   *
+   *  Left OFF for the two call sites that submit a restore FORM (RestorePanel's
+   *  and VMs' expanded panels, where this control sits under a destination
+   *  picker and a confirm): those are not per-item row actions, and both are
+   *  already reached through an icon badge of their own. */
+  iconBadge?: boolean;
+  /** Row content rendered at the START of the trigger's own flex row. Lets a
+   *  list row put its name/timestamp on the SAME line as an `iconBadge`
+   *  trigger, which is what "flush right in its row" requires — without this
+   *  the badge lands on a line of its own under the row it belongs to. */
+  leading?: ReactNode;
   t: T;
 }
 
@@ -90,6 +131,8 @@ export function RestoreAction({
   showBusyHint = true,
   showStartedHint = true,
   label,
+  iconBadge = false,
+  leading,
   t,
 }: RestoreActionProps) {
   const [confirmed, setConfirmed] = useState(false);
@@ -122,9 +165,66 @@ export function RestoreAction({
     void fire();
   }
 
+  // ONE disabled expression and ONE click handler for both trigger shapes
+  // below — the whole point of `iconBadge` is that a row action and a form
+  // submit reach the identical fire()/useBackupWatch cycle, so nothing that
+  // decides WHETHER a restore runs may be written twice.
+  const triggerDisabled = (requireConfirm && !confirmed) || isPending || blockedByOther || done;
+  // Rendered once, placed differently: in `iconBadge` mode the badge is the
+  // row's last child (that is what `ms-auto` pushes to the far edge), so the
+  // busy phrase has to come BEFORE it rather than trailing it.
+  const busyHint =
+    showBusyHint && blockedByOther ? (
+      <span className="text-caption text-carbon-textMuted shrink-0">{t(busyPhraseKey(otherActive.phase))}</span>
+    ) : null;
+
+  const trigger = iconBadge ? (
+    <Badge
+      as="button"
+      shape="square"
+      size="icon"
+      tone="active"
+      tip={label ?? t("snapshots.restore")}
+      onClick={handleRestore}
+      disabled={triggerDisabled}
+      className="ms-auto shrink-0"
+    >
+      {isPending ? (
+        // The text button's spinner at glyph scale, same two tokens: the badge
+        // paints bg-accent/text-accentContrast (Badge's isIconOnly + tone
+        // "active" branch), so --accent-contrast is the ink that reads on it.
+        <span
+          className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+          style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+        />
+      ) : (
+        <IconRestore />
+      )}
+    </Badge>
+  ) : (
+    <button
+      onClick={handleRestore}
+      disabled={triggerDisabled}
+      className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+    >
+      {isPending ? (
+        <>
+          <span
+            className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+            style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+          />
+          {t("common.restoring")}
+        </>
+      ) : (
+        label ?? t("snapshots.restore")
+      )}
+    </button>
+  );
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-3 flex-wrap">
+        {leading}
         {requireConfirm && (
           <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer shrink-0">
             <input
@@ -138,25 +238,16 @@ export function RestoreAction({
             {t("common.confirm")}
           </label>
         )}
-        <button
-          onClick={handleRestore}
-          disabled={(requireConfirm && !confirmed) || isPending || blockedByOther || done}
-          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-        >
-          {isPending ? (
-            <>
-              <span
-                className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("common.restoring")}
-            </>
-          ) : (
-            label ?? t("snapshots.restore")
-          )}
-        </button>
-        {showBusyHint && blockedByOther && (
-          <span className="text-caption text-carbon-textMuted shrink-0">{t(busyPhraseKey(otherActive.phase))}</span>
+        {iconBadge ? (
+          <>
+            {busyHint}
+            {trigger}
+          </>
+        ) : (
+          <>
+            {trigger}
+            {busyHint}
+          </>
         )}
       </div>
       {/* Leave stopped: recreate/restore but don't start (rebuild a stack in order). */}
