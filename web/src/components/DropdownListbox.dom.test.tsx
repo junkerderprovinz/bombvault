@@ -39,11 +39,13 @@ function Harness({
   multiselectable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  // On the BUTTON, exactly as both real call sites attach it — see the width
+  // test below for the live bug that pinned this down.
+  const ref = useRef<HTMLButtonElement>(null);
   return (
     <div data-testid="card" className="relative overflow-hidden bg-carbon-surface rounded-card p-4">
-      <div className="relative inline-block" ref={ref}>
-        <button type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <div className="inline-block">
+        <button ref={ref} type="button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
           Trigger
         </button>
         <DropdownListbox
@@ -96,6 +98,22 @@ describe("DropdownListbox — escaping the clipping ancestor", () => {
   it("is not in the DOM at all while closed", () => {
     render(<Harness />);
     expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("sizes itself to the width of the element the triggerRef points at", () => {
+    // Caught live and only live: the ref used to sit on the trigger's
+    // `inline-block` WRAPPER, which — being a flex item of the editor's
+    // `flex flex-col` box — is blockified and stretched to the card's full
+    // content width. The panel dutifully took that width and opened ~970px
+    // wide instead of the button's 256px. jsdom reports 0 for every layout
+    // read, so the width has to be stubbed for this to mean anything; what is
+    // being pinned down is "the panel measures exactly what it was handed".
+    render(<Harness />);
+    const trigger = screen.getByRole("button", { name: "Trigger" });
+    trigger.getBoundingClientRect = () =>
+      ({ left: 100, right: 356, top: 40, bottom: 68, width: 256, height: 28, x: 100, y: 40, toJSON: () => ({}) }) as DOMRect;
+    fireEvent.click(trigger);
+    expect(screen.getByRole("listbox").style.width).toBe("256px");
   });
 });
 

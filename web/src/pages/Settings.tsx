@@ -960,7 +960,11 @@ export function AccentCard({
 export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { lang, setLanguage, languages } = useT();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  // The BUTTON itself, not its wrapper — DropdownListbox sizes the portalled
+  // panel to what this ref measures, and an `inline-block` wrapper inside a
+  // flex column is blockified and stretched to the Card's full width. See
+  // StopContainersEditor's own copy of this note in Containers.tsx.
+  const ref = useRef<HTMLButtonElement>(null);
 
   const current = languages.find((l) => l.code === lang) ?? languages[0];
 
@@ -980,7 +984,7 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
 
   return (
     <Card title={t("settings.language")} hueIndex={hueIndex}>
-      <div className="relative inline-block" ref={ref}>
+      <div className="inline-block">
         {/* w-48 (GlimStone follow-up pass, live-review round — "widen the
             Language button, then match the Theme button to it"): was
             content-hugging (only as wide as the current flag+label pair),
@@ -997,6 +1001,7 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
             list has 42) from overflowing the now-fixed width instead of
             just growing the button the way it used to. */}
         <button
+          ref={ref}
           type="button"
           aria-label={`${t("language.label")}: ${current.label}`}
           title={`${t("language.label")}: ${current.label}`}
