@@ -1530,11 +1530,19 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// Off-site, drills, tamper-test and digest schedules can't use "everyN":
-	// those jobs have no per-domain last-run gate, so an everyN cadence would
-	// silently fire daily. Restrict them to off / daily / weekly / cron, which
-	// all fire on an exact schedule.
-	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule, v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule} {
+	// The five OFF-SITE replication schedules still can't use "everyN". An everyN
+	// cadence is a daily cron trigger plus a "has the interval elapsed?" gate, and
+	// a replication job has no last-run fact to answer that with, so its interval
+	// could not be enforced. Restrict them to off / daily / weekly / cron, which
+	// all fire on an exact schedule. The scheduler now refuses to REGISTER an
+	// unenforceable everyN as well, so a legacy or imported value cannot fire
+	// daily either — this is the friendly save-time half of that same rule.
+	//
+	// The drills, tamper-test and digest schedules used to be in this list and no
+	// longer are (#166): each records when its scheduled pass last ran
+	// (store.RecordScheduleJobRun) and hands that back to the due-gate through
+	// SetJobRunStore, so their interval is genuinely enforced now.
+	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok": false, "error": "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
