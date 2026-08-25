@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, getCloudCredSets, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
 import { useOffsiteTargets } from "../lib/useOffsiteTargets";
+import { useCloudCredSets, credSetsChanged } from "../lib/useCloudCredSets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
@@ -3019,7 +3020,11 @@ function toDraft(s: CloudCredSetInfo): CloudCredSet {
 // scratch-draft form keeps a manual commit step.
 export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const { push } = useToast();
-  const [sets, setSets] = useState<CloudCredSetInfo[]>([]);
+  // Shared with every off-site target's credential picker (#173) — see
+  // useCloudCredSets. This card is the only editor of the list, so it is also
+  // the only thing that announces a change, and it reads the result back
+  // through the same hook: its own rows and the pickers can no longer disagree.
+  const sets = useCloudCredSets();
   const [editing, setEditing] = useState<CloudCredSet | null>(null);
   const [state, setState] = useState<SaveState>("idle");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -3043,13 +3048,6 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
   }
   const revealS3Secret = useReveal();
   const revealRestPassword = useReveal();
-
-  function refresh() {
-    getCloudCredSets()
-      .then((r) => { if (r.ok) setSets(r.sets ?? []); })
-      .catch(() => undefined);
-  }
-  useEffect(refresh, []);
 
   function openNew() {
     // randomId(), not crypto.randomUUID() — the latter is secure-context-only
@@ -3088,7 +3086,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
       if (r.ok) {
         setState("idle");
         closeEditor();
-        refresh();
+        credSetsChanged();
         push(t("settings.saved"), "success");
       } else {
         setState("idle");
@@ -3108,7 +3106,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
       const next = sets.filter((s) => s.id !== id).map(toDraft);
       const r = await setCloudCredSets(next);
       if (r.ok) {
-        refresh();
+        credSetsChanged();
       } else {
         push(r.error ?? t("settings.error"), "fail");
         bumpShake(`remove:${id}`);
@@ -5151,6 +5149,9 @@ function RestoreChecksSection({
           disabled={!settings.drillsEnabled}
           onChange={(v) => update({ drillsSchedule: v })}
           hueIndex={hueIndex}
+          // The backend rejects everyN for the drill schedule (#166) — see
+          // CadenceBuilder's own `allowEveryN` doc.
+          allowEveryN={false}
         />
       </div>
       <label className="flex flex-col gap-1 max-w-40">
@@ -8297,6 +8298,9 @@ export function SettingsPage() {
                   );
                 }}
                 hueIndex={hueIdx}
+                // The backend rejects everyN for the digest schedule (#166) —
+                // see CadenceBuilder's own `allowEveryN` doc.
+                allowEveryN={false}
               />
             </div>
           </Card>
@@ -8430,6 +8434,9 @@ export function SettingsPage() {
                   value={settings.tamperTestSchedule}
                   onChange={(v) => scheduleField("tamperTestSchedule", v)}
                   hueIndex={hueIdx}
+                  // The backend rejects everyN for the tamper-test schedule
+                  // (#166) — see CadenceBuilder's own `allowEveryN` doc.
+                  allowEveryN={false}
                 />
                 {/* #109: the scheduler stays inert without a qualifying domain — this
                     is the only place that told manilx why Sun 08:00 never ran. */}
