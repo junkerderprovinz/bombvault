@@ -12,10 +12,10 @@ import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconVM } from "../components/Sidebar";
+import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload } from "../components/Sidebar";
+import { InfoBubble } from "../components/InfoBubble";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Toggle } from "../components/Toggle";
-import { CheckDraw } from "../components/CheckDraw";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
@@ -319,35 +319,87 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
     }
   }
   return (
-    <div className="flex flex-col items-start gap-1">
-      <button
+    <div className="flex flex-col items-end gap-1">
+      {/* WHOLE-TREE SWEEP FINDING — square icon badge, mirroring
+          Containers.tsx's ExportButton verbatim (same role, same glyph, same
+          tone). This was the LAST plain-text Export button in the app: its
+          Containers twin was converted with `tone="active"` specifically
+          because the `bg-carbon-surface2` grey it used to carry (identical to
+          this one's) takes NO colour-engine position at all, leaving it the
+          single flat grey control in a card whose every other badge follows
+          the accent/rainbow engine. Leaving this copy would have reproduced
+          that exact "anders eingefärbt" report on the VM tab, one tab over.
+            size="icon" = 32px, the app's ONE square-icon-badge stage — not
+          re-measured against this button's own former text footprint.
+          IconDownload reused verbatim. `tip` carries the label the glyph
+          replaced. No hueIndex: VMRow's card already carries `.glim-hue` with
+          this VM's list position.
+            The sticky inline done/error text below is KEPT deliberately,
+          exactly as Containers' ExportButton keeps its own: it holds a
+          copyable destination path (a reference value the user reads off the
+          screen), not a one-shot ping a toast would replace. The column flips
+          items-start → items-end so the tile lines up with the card edge and
+          the text hangs beneath it. */}
+      <Badge
         key={shake}
+        as="button"
+        shape="square"
+        size="icon"
+        tone="active"
+        tip={t("export.button")}
         onClick={() => void run()}
         disabled={state === "pending"}
-        className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
-          shake ? " glim-shake" : ""
-        }`}
+        className={shake ? "glim-shake" : undefined}
       >
-        {state === "pending" ? "…" : t("export.button")}
-      </button>
+        {state === "pending" ? (
+          <span
+            className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+            style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+          />
+        ) : (
+          <IconDownload />
+        )}
+      </Badge>
       {state === "done" && (
-        <span className="text-xs text-statusOk break-all">{t("export.exportedTo")} {msg}</span>
+        <span className="text-xs text-statusOk break-all text-end max-w-[18rem]">{t("export.exportedTo")} {msg}</span>
       )}
-      {state === "error" && <span className="text-xs text-statusFail break-all">{msg}</span>}
+      {state === "error" && <span className="text-xs text-statusFail break-all text-end max-w-[18rem]">{msg}</span>}
     </div>
   );
 }
 
-// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
-// "error" result below is deliberately NOT migrated to a toast, unlike this
-// file's other flash sites. It's driven by the SHARED lib/backupWatch.ts
-// useBackupWatch hook (the same one components/BackupButton.tsx uses for
-// Containers.tsx), whose header comment documents a deliberate asymmetry: a
-// BACKUP success already self-clears after 4s (SUCCESS_CLEAR_MS, effectively
-// already toast-like), but the identical state shape also backs RESTORE
-// outcomes elsewhere (RestoreAction.tsx), which are explicitly STICKY BY
-// DESIGN — "a restore is a rare, destructive action whose outcome the user
-// must actually see" — and reset only via reset(), not a timer. Splitting
+// WHOLE-TREE SWEEP FINDING — square icon badge, mirroring components/
+// BackupButton.tsx (the Containers twin) verbatim: same role, same
+// IconBackupNow glyph, same `shape="square" size="icon" tone="active"`
+// recipe, same `tip` priority order (pending → blocked-by-other → label),
+// same terminal-states-become-toasts trade.
+//
+// This was the LAST plain-text "Jetzt sichern" button in the app. Containers'
+// was converted first, then Flash's, then Files' FileSetBackupButton (also as
+// a sweep finding, not a named ask), then Config's in this same pass — which
+// left this one alone rendering as text. It sits in the top-right corner of
+// the VMRow card, the same card whose snapshot rows this pass just converted
+// to 32px badges, so leaving it would have put text buttons and icon badges
+// side by side in one card: exactly the "a user sees one card" contract
+// Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block spells out, and exactly
+// the report ("Jetzt sichern ist auf dem VM-Tab noch ein Text-Button") this
+// round exists to pre-empt rather than collect for a fifth time.
+//
+// The inline states are gone with the text button that had room for them:
+// success/error now toast (an error also shakes the badge), and the
+// blocked-by-other hint moves into the `tip`, which is where the other four
+// already put it. The nested `<Advanced><VMExportButton/></Advanced>` moved
+// OUT to the call site, so the two badges sit side by side in the corner the
+// way Containers.tsx's own BackupButton/ExportButton pair does, rather than
+// one badge being stacked underneath the other inside its sibling's column.
+//
+// This supersedes the v8.0.0 audit note that used to sit here, which deferred
+// the toast migration on the grounds that useBackupWatch's state shape also
+// backs RESTORE outcomes (sticky by design, RestoreAction.tsx). That reasoning
+// still correctly blocks changing the HOOK — untouched here — but rendering
+// state.phase as a toast is a per-component decision, which
+// components/BackupButton.tsx, Flash.tsx and Config.tsx have each now proved
+// with zero hook changes. The old note read, for reference: splitting
 // that shared, cross-file state machine's rendering by kind (backup vs.
 // restore) is a hook-level architecture change, not the local flash-swap this
 // pass does everywhere else, so it's left as its own deliberate follow-up.
@@ -374,49 +426,57 @@ function VMBackupButton({
     onDone: onBackedUp,
   });
   const blockedByOther = !!running?.active && !isPending;
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button.
+  const [shake, setShake] = useState(0);
+  // Tracks the last phase already reported, so this effect toasts exactly
+  // once per NEW terminal transition — same guard as components/
+  // BackupButton.tsx (state.phase can only ever start at "idle", so this
+  // never fires on mount, only on a real fire()-driven change).
+  const seenPhase = useRef(state.phase);
+
+  useEffect(() => {
+    if (state.phase === seenPhase.current) return;
+    seenPhase.current = state.phase;
+    if (state.phase === "success") {
+      push(
+        state.snapshotId ? `${t("common.done")} · ${state.snapshotId.slice(0, 8)}` : t("common.done"),
+        "success"
+      );
+    } else if (state.phase === "error") {
+      push(state.message, "fail");
+      setShake((n) => n + 1);
+    }
+  }, [state, push, t]);
+
+  const tip = isPending
+    ? t("common.backingUp")
+    : blockedByOther
+      ? t(busyPhraseKey(running?.phase))
+      : t("containers.backupNow");
 
   return (
-    <div className="flex flex-col gap-1 items-start">
-      <button
-        onClick={() => void fire()}
-        disabled={isPending || blockedByOther}
-        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isPending ? (
-          <>
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-            {t("common.backingUp")}
-          </>
-        ) : (
-          t("containers.backupNow")
-        )}
-      </button>
-      {/* A backup/restore/replication elsewhere blocks a new VM backup — say why. */}
-      {blockedByOther && (
-        <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
+    <Badge
+      key={shake}
+      as="button"
+      shape="square"
+      tone="active"
+      size="icon"
+      tip={tip}
+      onClick={() => void fire()}
+      disabled={isPending || blockedByOther}
+      className={shake ? "glim-shake" : undefined}
+    >
+      {isPending ? (
+        <span
+          className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+          style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+        />
+      ) : (
+        <IconBackupNow />
       )}
-      {/* Plain export is an advanced-only extra. */}
-      <Advanced><VMExportButton name={name} t={t} /></Advanced>
-      {state.phase === "success" && (
-        <span className="inline-flex items-center gap-1 text-xs text-statusOk">
-          <CheckDraw />
-          {t("common.done")}
-          {state.phase === "success" && state.snapshotId && (
-            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">
-              {state.snapshotId.slice(0, 8)}
-            </span>
-          )}
-        </span>
-      )}
-      {state.phase === "error" && (
-        <span className="text-xs text-statusFail max-w-[18rem] wrap-break-word">
-          {state.message}
-        </span>
-      )}
-    </div>
+    </Badge>
   );
 }
 
@@ -481,7 +541,14 @@ function VMSnapshotRow({
   }
 
   return (
-    <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
+    // py-1.5, not the py-2.5 this row used to carry — the identical trade
+    // components/RestorePanel.tsx's SnapshotRow, pages/Config.tsx's
+    // ConfigSnapshotRow, pages/Files.tsx's FileSetSnapshotRow and
+    // pages/Flash.tsx's FlashSnapshotRow each already made: the controls grew
+    // from ~24px text buttons to the app's one 32px square icon badge, and
+    // trimming 4px of padding per side keeps the row at exactly the 44px it
+    // measured before.
+    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
@@ -494,27 +561,62 @@ function VMSnapshotRow({
             {snap.tags.join(", ")}
           </span>
         )}
-        {/* Compact restore toggle: opens the inline RestoreAction panel below
-            (mirrors Containers' SnapshotRow) instead of always rendering it. */}
-        <button
+        {/* WHOLE-TREE SWEEP FINDING — this row was NOT in the brief.
+            This round was scoped as "Flash's FlashSnapshotRow is the FOURTH
+            and last copy of the row-action pattern already converted in
+            RestorePanel, Config and Files". Grepping the tree for the
+            pattern's own signature (`hover:bg-statusFailBg
+            hover:text-statusFail` on a row-action text button) instead of
+            trusting that count turned up a FIFTH: this one. Its own comment
+            below says it "mirrors Containers' SnapshotRow" — it is a direct
+            copy of the very row that was converted first, so it carried the
+            identical defect the whole time and would have been reported as
+            "the same bug, again" on the next VM-tab review.
+              Both controls take the same recipe as all four siblings:
+            shape="square" size="icon" (32px, Badge.tsx's ONE square-icon-badge
+            stage), tone="active", NO hueIndex — VMRow's own card carries
+            `.glim-hue` with this VM's list position, so the custom-property
+            cascade paints both badges in that row's rainbow position. Glyphs
+            are IconRestore and IconTrash, reused verbatim from RestorePanel's
+            already-converted pair, and each badge carries a `tip` with the
+            label its glyph replaced.
+              The delete badge gets NO special colour: not the
+            `hover:bg-statusFailBg hover:text-statusFail` red it carried, and
+            not a grey neutral (neutral is exempt from the rainbow and would
+            leave it flat beside a hued sibling). Meaning is carried by
+            IconTrash, its tip, and the untouched confirm dialog. Its "…"
+            in-flight label shows as `disabled` instead, exactly like the
+            other four.
+              The restore toggle's "highlighted while open"
+            `bg-carbon-surface3` swap is dropped rather than layered onto
+            Badge's own tone fill — equal-specificity Tailwind utilities
+            resolve by stylesheet order, not className order, so that was
+            never a safe override. The panel appearing below is the visible
+            feedback, the same call RestorePanel's converted toggle made. */}
+        <Badge
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={t("restore.open")}
           onClick={() => setShowRestore((p) => !p)}
-          className={`shrink-0 rounded-control px-2.5 py-1 text-xs transition-colors ${
-            showRestore ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-          }`}
+          className="shrink-0"
         >
-          {t("restore.open")}
-        </button>
-        <button
+          <IconRestore />
+        </Badge>
+        <Badge
           key={shake}
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={t("snapshots.delete")}
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
-          title={t("snapshots.delete")}
-          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
+          className={`shrink-0${shake ? " glim-shake" : ""}`}
         >
-          {deleting ? "…" : t("snapshots.delete")}
-        </button>
+          <IconTrash />
+        </Badge>
       </div>
       {/* Restore control (confirm + leave-stopped + progress banner), indented
           under the id column (ps-24, LOGICAL — the row's content column sits
@@ -648,11 +750,27 @@ function VMRestorePanel({
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-          <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
-            <div className="flex items-center gap-2">
+          {/* `source.hint` moved from a permanent `text-caption` <p> under
+              this row onto the "Quelle" label as an InfoBubble — rule 8's
+              "read once, costs vertical space forever" case, the same
+              conversion Flash.tsx got in 63f53d5 and the other three copies
+              (components/RestorePanel.tsx, pages/Config.tsx, pages/Files.tsx)
+              get in this same pass.
+                Moving it also fixes a latent mismatch this row had: the
+              label + SourceToggle are wrapped in <Advanced>, but the <p>
+              explaining what choosing a source DOES sat outside it, so basic
+              mode rendered a hint about a control it wasn't showing. As part
+              of the label it now appears exactly when the toggle does.
+                The old outer `flex flex-col gap-1` wrapper is gone with the
+              <p> (one child left); its `py-2 border-b` moves onto this row,
+              so the row's own box is unchanged. */}
+          <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
               <Advanced>
-                <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+                <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
+                  {t("source.label")}
+                  <InfoBubble tip={t("source.hint")} />
+                </span>
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" />
               </Advanced>
               {snapshots.length > 0 && (
@@ -671,8 +789,6 @@ function VMRestorePanel({
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </Badge>
               )}
-            </div>
-            <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
           </div>
           <RecentRunsList name={name} domain="vm" t={t} />
           {loading && (
@@ -801,8 +917,16 @@ export function VMRow({
               <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
             </label>
           </div>
-          <div className="ms-auto flex flex-col items-end">
+          {/* The corner action pair, laid out exactly like Containers.tsx's
+              own BackupButton/ExportButton corner: two 32px badges side by
+              side (`items-start gap-1.5 shrink-0`), not one stacked inside
+              the other's column. VMExportButton used to be rendered from
+              INSIDE VMBackupButton — fine while both were text buttons in a
+              vertical stack, wrong once they became square tiles. */}
+          <div className="ms-auto flex items-start gap-1.5 shrink-0">
             <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
+            {/* Plain export is an advanced-only extra. */}
+            <Advanced><VMExportButton name={vm.libvirtName} t={t} /></Advanced>
           </div>
         </div>
       )}
