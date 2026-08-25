@@ -18,6 +18,7 @@ import type { ReactNode } from "react";
 import * as ltrFragmentsModule from "./ltrFragments";
 import {
   withLtrFragments,
+  withLtrIsolates,
   LTR_FRAGMENTS_BY_KEY,
   REPO_LOCAL_HINT_LTR_FRAGMENTS,
   EXCLUDES_HINT_LTR_FRAGMENTS,
@@ -215,4 +216,67 @@ describe("declared fragments vs. the real locale tables", () => {
       );
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// withLtrIsolates — the plain-string counterpart, for the same sentences once
+// they move into an InfoBubble tip (a text node that is ALSO the trigger's
+// aria-label, so the `<span dir="ltr">` form above has nowhere to live).
+// Same fragment lists, same guard below, U+2066/U+2069 instead of markup.
+// ---------------------------------------------------------------------------
+describe("withLtrIsolates", () => {
+  const LRI = "\u2066";
+  const PDI = "\u2069";
+
+  it("wraps the fragment in a bidi isolate pair and leaves the rest untouched", () => {
+    const out = withLtrIsolates("pool such as /mnt/zfs is remapped", ["/mnt/zfs"]);
+    expect(out).toBe(`pool such as ${LRI}/mnt/zfs${PDI} is remapped`);
+  });
+
+  it("keeps the visible text identical once the two zero-width controls are stripped", () => {
+    const src = "a /mnt/zfs b /mnt/zfs c";
+    const out = withLtrIsolates(src, ["/mnt/zfs"]);
+    expect(out.replaceAll(LRI, "").replaceAll(PDI, "")).toBe(src);
+  });
+
+  it("wraps every occurrence, not just the first", () => {
+    const out = withLtrIsolates("x /mnt/zfs y /mnt/zfs", ["/mnt/zfs"]);
+    expect(out.split(LRI)).toHaveLength(3);
+    expect(out.split(PDI)).toHaveLength(3);
+  });
+
+  it("honours list order: a longer fragment consumes the shorter one inside it", () => {
+    // Same left-to-right precedence withLtrFragments documents — the inner
+    // "/mnt" must NOT be wrapped a second time inside the already-wrapped path.
+    const out = withLtrIsolates("see /mnt/remotes/nas/bombvault or /mnt", [
+      "/mnt/remotes/nas/bombvault",
+      "/mnt",
+    ]);
+    expect(out).toBe(`see ${LRI}/mnt/remotes/nas/bombvault${PDI} or ${LRI}/mnt${PDI}`);
+    expect(out).not.toContain(`${LRI}/mnt${PDI}/remotes`);
+  });
+
+  it("is a no-op when the fragment is absent (a locale that retyped the path)", () => {
+    expect(withLtrIsolates("no path here", ["/mnt/zfs"])).toBe("no path here");
+  });
+
+  it("is a no-op for an empty fragment list", () => {
+    expect(withLtrIsolates("unchanged", [])).toBe("unchanged");
+  });
+
+  // Read from the LIVE registry, not a pasted copy: this is the string the
+  // Recovery tab's appdata-destination bubble actually renders, in the two
+  // RTL locales the leading-`/` bug was originally confirmed in.
+  it.each(["ar", "he"])(
+    "protects the real recovery.foreignAppdataDestHint the bubble renders, in %s",
+    (code) => {
+      const source = locales[code as keyof typeof locales][
+        "recovery.foreignAppdataDestHint" as TranslationKey
+      ] as string;
+      expect(typeof source).toBe("string");
+      const out = withLtrIsolates(source, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS);
+      expect(out).toContain(`${LRI}/mnt/zfs${PDI}`);
+      expect(out.replaceAll(LRI, "").replaceAll(PDI, "")).toBe(source);
+    }
+  );
 });
