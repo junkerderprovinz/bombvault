@@ -171,11 +171,29 @@ export function CadenceBuilder({
   disabled,
   onChange,
   hueIndex,
+  allowEveryN = true,
 }: {
   label: string;
   value: string;
   disabled?: boolean;
   onChange: (v: string) => void;
+  /**
+   * Whether to offer the "every N days" mode (default: yes).
+   *
+   * Pass false for the schedules the BACKEND refuses everyN on — the DR-drill,
+   * tamper-test and weekly-digest cadences, which handlers.go rejects with
+   * "this schedule does not support 'everyN'". Those three jobs have no
+   * per-job last-run gate, so an everyN cadence would degrade into firing
+   * DAILY: the scheduler only enforces the interval for a domain that supplies
+   * a lastRun query, and these three supply none.
+   *
+   * Offering the pill regardless is what issue #166's follow-up reported — the
+   * mode was selectable, the save then failed and the value snapped back, so
+   * the schedule "can't be saved", indistinguishable from the original bug it
+   * was filed for. Per-domain and per-item BACKUP schedules keep everyN: they
+   * are gated properly and are unaffected.
+   */
+  allowEveryN?: boolean;
   /** Rainbow position for the TimePicker rendered inside (Task 3, jdp
    *  live-review: "Der Zeitpicker ist nicht im Regenbogenmodus" — the
    *  TimePicker always accepted an optional `hueIndex` but this, its one
@@ -318,7 +336,15 @@ export function CadenceBuilder({
           `equalWidth`, which this call site simply does not pass. See
           Selector.tsx's own file header item 6 for the full writeup. */}
       <Selector
-        items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[]).map((m) => ({
+        items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[])
+          // Drop everyN where the backend rejects it (see `allowEveryN`), but
+          // never hide the mode the CURRENT value is already in: a stored
+          // "everyN …" (written before that restriction existed, or restored
+          // from an imported settings file) must stay visible and selected,
+          // otherwise the pill row would show nothing active and the user
+          // could not see what they are changing away from.
+          .filter((m) => m !== "everyN" || allowEveryN || state.mode === "everyN")
+          .map((m) => ({
           id: m,
           label:
             m === "off"
