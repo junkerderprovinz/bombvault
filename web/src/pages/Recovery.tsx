@@ -8,6 +8,7 @@ import { useReveal } from "../lib/useReveal";
 import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
+import { IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
@@ -116,15 +117,19 @@ function RestoreRow({
       className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0 glim-hue"
       style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
     >
-      <div className="flex items-center gap-3 text-sm">
-        <span className="text-carbon-text font-medium flex-1 truncate">{displayName ?? name}</span>
-        <span className="text-carbon-textMuted text-xs shrink-0">
-          {snapLabel || t("containers.never")}
-        </span>
-      </div>
       {/* In-place restore, LEFT STOPPED (forceLeaveStopped): the recovery flow
           restores everything first, then you start them from the Containers/VMs
-          tabs. source omitted => the backend-default repo. */}
+          tabs. source omitted => the backend-default repo.
+            jdp live-review: "Card 5: die ganzen Wiederherstellen-Buttons sollen
+          quadratische Badges mit Glyphen sein und ganz rechts platziert sein."
+          `iconBadge` does the conversion (see RestoreAction's own doc for the
+          32px/tone/tooltip recipe and why the hue comes from THIS row's
+          wrapper rather than from a hueIndex prop). `leading` is what makes it
+          "in its row": this row's name and timestamp move INTO the trigger's
+          own flex line, so the badge's `ms-auto` pushes it to the far edge of
+          the same line they sit on — the row's own separate header <div> is
+          gone, not left behind above it. `label` still names the action; in
+          badge mode it becomes the hover tooltip and the accessible name. */}
       <RestoreAction
         domain={domain}
         name={name}
@@ -138,6 +143,17 @@ function RestoreRow({
         showBusyHint={false}
         showStartedHint={false}
         label={t("snapshots.restore")}
+        iconBadge
+        leading={
+          <>
+            <span className="text-sm text-carbon-text font-medium flex-1 min-w-0 truncate">
+              {displayName ?? name}
+            </span>
+            <span className="text-carbon-textMuted text-xs shrink-0">
+              {snapLabel || t("containers.never")}
+            </span>
+          </>
+        }
         t={t}
       />
     </div>
@@ -221,11 +237,41 @@ function FileSetRecoveryRow({
       className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
       style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
     >
+      {/* Same conversion as RestoreRow above (jdp: square glyph badges, flush
+          right), done inline here because this row drives fireAndWaitRun
+          directly rather than through RestoreAction. The badge moves UP into
+          this row's own name/timestamp line — that line is the row, and
+          `ms-auto` puts the badge at its far edge, on the same right edge as
+          every other restore badge and as the card's "Restore all" button.
+            It stays disabled until a target folder is picked, exactly as the
+          text button did; the folder picker it depends on is the very next
+          thing below it, and the tooltip carries the label the glyph replaced.
+          `shake`-keyed for the one-shot failure shake, unchanged. */}
       <div className="flex items-center gap-3 text-sm">
         <span className="text-carbon-text font-medium flex-1 min-w-0 truncate">{set.name}</span>
         <span className="text-carbon-textMuted text-xs shrink-0">
           {snapLabel || t("containers.never")}
         </span>
+        <Badge
+          key={shake}
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={t("snapshots.restore")}
+          onClick={() => void handleRestore()}
+          disabled={busy || otherActive || target.trim() === ""}
+          className={`ms-auto shrink-0${shake ? " glim-shake" : ""}`}
+        >
+          {busy ? (
+            <span
+              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
+          ) : (
+            <IconRestore />
+          )}
+        </Badge>
       </div>
       <FolderBrowser
         label={t("restore.targetPath")}
@@ -233,24 +279,6 @@ function FileSetRecoveryRow({
         hostMountRoot={hostMountRoot}
         onChange={setTarget}
       />
-      <div className="flex items-center gap-3 flex-wrap">
-        <button
-          key={shake}
-          onClick={() => void handleRestore()}
-          disabled={busy || otherActive || target.trim() === ""}
-          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed${
-            shake ? " glim-shake" : ""
-          }`}
-        >
-          {busy && (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-          )}
-          {busy ? t("common.restoring") : t("snapshots.restore")}
-        </button>
-      </div>
     </div>
   );
 }
@@ -489,8 +517,18 @@ function ForeignItemRow({
       className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
       style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
     >
+      {/* Standing rule "fix the pattern, not the page jdp named": this is the
+          THIRD per-item restore button on this page and the same pattern as
+          Card 5's two, so it takes the same square-badge conversion in the same
+          pass even though jdp only named Card 5. (The other restore buttons in
+          the app are NOT this pattern — RestorePanel's, VMs' and Files' are the
+          submit control of a restore FORM, sitting under a destination picker
+          inside a panel that is itself already opened by an icon badge — so
+          they stay text buttons.)
+            Badge last in the row + `ms-auto` = flush right, same as the two in
+          Card 5. */}
       <div className="flex items-center gap-3 text-sm flex-wrap">
-        <span className="text-carbon-text font-medium flex-1 truncate">{item.name}</span>
+        <span className="text-carbon-text font-medium flex-1 min-w-0 truncate">{item.name}</span>
         <select
           value={snapshot}
           onChange={(e) => setSnapshot(e.target.value)}
@@ -504,6 +542,31 @@ function ForeignItemRow({
             </option>
           ))}
         </select>
+        <Badge
+          key={shake}
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={t("recovery.foreignRestore")}
+          onClick={() => void handleRestore()}
+          disabled={
+            busy ||
+            blocked ||
+            (needsTarget && target.trim() === "") ||
+            (subsetActive && selected.size === 0)
+          }
+          className={`ms-auto shrink-0${shake ? " glim-shake" : ""}`}
+        >
+          {busy ? (
+            <span
+              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
+          ) : (
+            <IconRestore />
+          )}
+        </Badge>
       </div>
       {domain === "files" && (
         <div className="flex flex-col gap-2">
@@ -632,29 +695,6 @@ function ForeignItemRow({
           )}
         </div>
       )}
-      <div className="flex items-center gap-3 flex-wrap">
-        <button
-          key={shake}
-          onClick={() => void handleRestore()}
-          disabled={
-            busy ||
-            blocked ||
-            (needsTarget && target.trim() === "") ||
-            (subsetActive && selected.size === 0)
-          }
-          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed${
-            shake ? " glim-shake" : ""
-          }`}
-        >
-          {busy && (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-          )}
-          {busy ? t("common.restoring") : t("recovery.foreignRestore")}
-        </button>
-      </div>
       {confirmDialog}
     </div>
   );
