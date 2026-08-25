@@ -67,6 +67,59 @@ export function withLtrFragments(text: string, fragments: readonly string[]): Re
   return parts;
 }
 
+/**
+ * withLtrIsolates — the PLAIN-STRING counterpart of withLtrFragments above,
+ * for the same sentences when they land somewhere that can only hold text.
+ * An InfoBubble tip is exactly that place: it renders as a text node and is
+ * ALSO the trigger's `aria-label`, so a `<span dir="ltr">` has nowhere to go.
+ *
+ * The isolation is expressed instead with the two Unicode characters the
+ * bidi algorithm defines for this job: U+2066 LEFT-TO-RIGHT ISOLATE opens a
+ * run whose direction is forced LTR and whose resolved direction cannot leak
+ * into the surrounding text, U+2069 POP DIRECTIONAL ISOLATE closes it. This
+ * is the same mechanism `dir="ltr"` uses — HTML's dir attribute is specified
+ * in terms of these isolates — so a leading `/` stays at the fragment's
+ * leading edge in Arabic and Hebrew instead of migrating to the other end,
+ * which is the entire bug this module exists for.
+ *
+ * Both characters are zero-width, invisible to sighted readers and ignored
+ * by screen readers, so the accessible name a bubble exposes is unchanged.
+ *
+ * Same matching rules, same fragment lists and the same single silent
+ * failure mode as withLtrFragments (a translator retyping the path in one
+ * locale quietly un-protects that locale) — guarded by the same
+ * LTR_FRAGMENTS_BY_KEY parity test, which is why this deliberately shares
+ * those lists instead of growing a parallel set of its own.
+ */
+export function withLtrIsolates(text: string, fragments: readonly string[]): string {
+  // Written as escapes on purpose: both characters are zero-width, so a
+  // literal one in source is invisible in every editor and diff — the exact
+  // kind of thing a later edit deletes by accident without anything looking
+  // wrong.
+  const LRI = "\u2066";
+  const PDI = "\u2069";
+  // Mirrors withLtrFragments' own left-to-right precedence: a piece already
+  // consumed into an isolate by an earlier (longer) fragment is no longer
+  // eligible for a later, shorter match, so listing a full path before a
+  // directory name that also occurs inside it behaves identically in both
+  // functions.
+  let parts: { text: string; wrapped: boolean }[] = [{ text, wrapped: false }];
+  for (const frag of fragments) {
+    if (!frag) continue;
+    parts = parts.flatMap((part) => {
+      if (part.wrapped || !part.text.includes(frag)) return [part];
+      const pieces = part.text.split(frag);
+      const out: { text: string; wrapped: boolean }[] = [];
+      pieces.forEach((piece, i) => {
+        if (piece) out.push({ text: piece, wrapped: false });
+        if (i < pieces.length - 1) out.push({ text: frag, wrapped: true });
+      });
+      return out;
+    });
+  }
+  return parts.map((p) => (p.wrapped ? `${LRI}${p.text}${PDI}` : p.text)).join("");
+}
+
 /** offsite.repoLocalHint's two leading-`/` fragments: the standalone `/mnt`
  *  reference and the full example path. The relative counterpart it also
  *  names ("remotes/nas/bombvault") starts with a letter and needs no
