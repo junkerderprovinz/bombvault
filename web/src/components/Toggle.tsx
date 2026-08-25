@@ -71,7 +71,24 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
         aria-label={label}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        title={label}
+        // NO native `title=` (whole-app sweep). This carried `title={label}`,
+        // which popped the OS's own balloon repeating text the user could
+        // already read: a switch ALWAYS has that text visible next to it —
+        // either this component renders it (the `!hideLabel` span above) or,
+        // in the one permitted `hideLabel` case, the caller draws the exact
+        // same string itself (see that prop's own doc). So the balloon was
+        // never the only way to know what the switch does, which is the sole
+        // condition design-language's tooltip section makes a tooltip
+        // mandatory for.
+        //   It was also the app's last stray native `title=` on a control
+        // (the Dashboard customize pencil, converted in the same sweep, was
+        // the other). IconTipButton.tsx's header is explicit that a stray
+        // native title is the anti-pattern the shared `.glim-bubble` exists
+        // to replace — a labelled control's answer to that is no tooltip at
+        // all, not a second mechanism.
+        //   `aria-label` above is untouched and still set unconditionally, so
+        // the accessible name is byte-identical; only the duplicate visual
+        // balloon goes.
         className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
           checked ? "bg-accent" : "bg-carbon-surface3"
         }`}
