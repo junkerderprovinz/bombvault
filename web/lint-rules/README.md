@@ -106,6 +106,19 @@ These are the shapes that made a first draft noisy, and are now pinned as
   dot — genuinely circles, not controls whose corners should follow a
   preference — and none of them is flagged.
 
+### Known limits
+
+Every rule reads only values it can *see* in the AST, and treats "cannot read
+it" as "not a violation". A prop written as a variable is therefore not
+checked: `<Badge shape="square" size={SOME_CONST}>` is skipped rather than
+guessed at. This costs nothing today — the only such constant,
+`OffsiteTargetsSection`'s `ROW_BADGE_SIZE`, is `"medium"` and is used solely on
+text badges — and the alternative (following identifiers across modules) would
+mean type-aware linting, which `eslint.config.js` deliberately avoids.
+
+The same applies to `className={someVariable}`: literals inside a template or a
+ternary *are* read, a bare identifier is not.
+
 ## What is *not* checked, and why
 
 **"A permanent explanatory paragraph where an InfoBubble belongs."** No rule
