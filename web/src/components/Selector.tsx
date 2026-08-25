@@ -100,21 +100,24 @@
 //      tab-strip call site wraps this in its own `inline-flex` measuring
 //      container for exactly that reason; see its own comment).
 //
-//      Kept inside the "chip" branch specifically (own prop, not folded into
-//      `variant="well"`): the chip look this strip already has — each tab
-//      its own individually filled/outlined badge, not a shared padded
-//      track — is what round 6 specifically built ("idle badge fill" for
-//      unselected tabs); switching to `well` would trade that identity away
-//      to solve a width problem `well` doesn't uniquely solve.
+//      The Settings tab strip stays "chip" while taking this prop (it is
+//      not a grooved "well" strip): the chip look it already has — each tab
+//      its own individually filled/outlined badge, not segments inside a
+//      shared padded groove — is what round 6 specifically built ("idle
+//      badge fill" for unselected tabs); switching it to `well` would trade
+//      that identity away to solve a width problem `well` doesn't uniquely
+//      solve. `equalWidth` is orthogonal to `variant` for exactly that
+//      reason, and round 8 (item 6) made that literal — it is now the
+//      pinning knob for BOTH variants.
 //
 //      `flex-wrap`, NOT `flex-nowrap` (caught live, not in the harness —
 //      the first cut of this correction shipped `flex-nowrap`, copying
 //      `well`'s reasoning verbatim without re-checking whether it still
-//      applied). `well`'s own row IS the sum of its segments' pinned widths
-//      by construction (see `pinWidth` in the component body below) — it can
-//      never overflow itself, so forcing one row there is free. `stretch`
-//      segments are now a FIXED
-//      pixel width (the widest label's own measured content size), a number
+//      applied; round 8 then found the same reasoning was never sound for
+//      `well` either and dropped `flex-nowrap` there too). A pinned segment
+//      set is a FIXED
+//      pixel width (the widest label's own measured content size, floored at
+//      MIN_PINNED_WIDTH), a number
 //      with NO relationship to whatever width happens to be available — 7
 //      German labels at this stage's own padding sum to ~1243px, which
 //      genuinely does not fit inside every real viewport (measured live:
@@ -122,18 +125,14 @@
 //      "System" straight past the page's right edge and forcing a page-wide
 //      horizontal scrollbar — a real, visible regression, not a theoretical
 //      one). `flex-wrap` here is simply Selector's own general "wraps,
-//      never scrolls" rule (this file's header) applying to `stretch` the
-//      same way it already applies to every plain "chip" call site — a
+//      never scrolls" rule (this file's header) applying to a pinned strip
+//      the same way it already applies to every plain "chip" call site — a
 //      6-tabs-then-1 wrap is a plainer fallback than jdp's ideal, but a
 //      wrapped SECOND ROW beats spilling content off the edge of the page.
-//      Scoped to exactly one call site (the Settings tab strip) for now,
-//      same "try it on one control" pattern `variant="well"` already set —
-//      every other "chip" call site keeps its own content-hugging width,
-//      unchanged.
 //   5c. MIN_PINNED_WIDTH (round 3, live-review refinement on top of 5b/5):
 //      "Die horizontalen Selektoren bitte breiter und möglichst gleich
-//      breit." Every `pinWidth` strip (both "well" and "chip"'s own
-//      `equalWidth`) used to pin ONLY to its own widest label's own natural
+//      breit." Every pinned strip (`equalWidth`, either variant — see item
+//      6) used to pin ONLY to its own widest label's own natural
 //      width — correct per-strip, but with nothing shared ACROSS strips, so
 //      the tab strip (174px, driven by "Benachrichtigungen"), the Theme
 //      Card's well track (97px, "Dunkel" + icon) and the Shape Card's well
@@ -164,121 +163,95 @@
 //      `variant="well"` (the well track answers the same "does an idle
 //      segment carry its own background" question `plain` answers for
 //      "chip", just differently — transparent-until-hover either way) and
-//      is ignored whenever both are given. Scoped to exactly one call site
-//      for now (Settings.tsx's shape picker) — GlimStone's own "try it on
-//      one control, generalize later if it lands well" pattern — so the
-//      other eleven migrated call sites keep rendering byte-identical
-//      "chip" output; nothing about this addition changes their classes.
-//   6. `variant="track"` (round 7, live-review escalation — jdp: "Du hast
-//      keinen richtigen horizontalen Selektor gemacht! ... Sollen wir dafür
-//      einen zweiten, kleineren horizontalen Selektor etablieren?"). The
-//      complaint was aimed at NotifyCard's "on" (never/failure/always) pill
-//      row — plain `variant="chip"` default, which task 5's own `raised`
-//      escape hatch could at best bump one shade deeper. Compared live,
-//      side by side, against "well" (the Shape/Theme picker): "well" reads
-//      unmistakably as ONE physical control because the ROW ITSELF is a
-//      visible enclosing surface (`bg-carbon-surface2` track + padding) —
-//      individual idle segments inside it are actually `bg-transparent`
-//      (see the "well" branch below), the ENCLOSURE carries all the visual
-//      weight, not the segments. Bare "chip" (with or without `raised`) has
-//      no such enclosure at all — just loose individually-tinted buttons
-//      floating in a plain gap — which is exactly what read as "not a real
-//      Selector" once seen next to "well".
-//        "well" itself is the wrong fix to reach for here: its
-//      MIN_PINNED_WIDTH floor (200px per segment) and fixed `--badge-md`
-//      height are sized for a handful of page-level, singular pickers
-//      (Shape/Theme/the Settings tab strip) — NOT for a control that repeats
-//      many times on one screen (every CadenceBuilder mode-picker across
-//      both the Schedules and Integrity tabs, easily 8+ instances rendered
-//      simultaneously). Pinning every one of those to a 200px-per-segment
-//      floor would be pure wasted width at that multiplicity, not "bold".
-//        `variant="track"` is the deliberately smaller sibling this
-//      question asks for: it borrows "well"'s core signature — the row
-//      itself becomes a real enclosing surface — but does NOT borrow
-//      "well"'s idle-transparent segments, its fixed pinned width, or its
-//      fixed height. Instead every idle segment keeps its OWN visible fill,
-//      so the strip reads as a groove holding keys rather than as one solid
-//      slab with a single accent pill floating in it.
-//        ROUND-7 FOLLOW-UP, and the reason this variant's two tones are what
-//      they are today (jdp, live-review: "Ich sehe nirgends die neuen
-//      horizontalen Selektoren."). The first cut of this variant copied
-//      "well"'s track token literally — track `bg-carbon-surface2`, idle
-//      segments `bg-carbon-surface3`. That is correct three-step Carbon
-//      layering ONLY when the strip sits directly on a Card
-//      (`bg-carbon-surface`), which is true at NotifyCard's "on" row and the
-//      Integrity drill-kind toggle. It is flatly wrong at the OTHER six of
-//      this variant's eight call sites: every CadenceBuilder instance is
-//      wrapped by its caller in a `rounded-card bg-carbon-surface2 p-4` well
-//      (Settings.tsx x8, ItemScheduleOverride.tsx x1), so a surface2 track
-//      landed on a surface2 parent — measured live on the running container,
-//      every schedule card on both the Schedules and Integrity tabs read
-//      `rgb(232,232,232)` for the track AND `rgb(232,232,232)` for its
-//      enclosing well. A zero-delta enclosure is not an enclosure: the one
-//      thing this variant exists to add was invisible exactly where it
-//      repeats most, and idle segments at surface3 rendered identically to
-//      the `raised` chips this variant replaced — literally nothing changed
-//      on screen, which is what jdp was reporting.
-//        Fixed at the variant, not per call site (a `className` override at
-//      each of the nine callers would drift the moment any of them moves to
-//      a different parent surface, and would leave the next new call site
-//      broken by default): the track's own tones now step so that BOTH
-//      parent surfaces this variant can legally sit on — `surface` (a Card)
-//      and `surface2` (a CadenceBuilder well) — stay distinct from it.
-//        - track  = `bg-carbon-surface3`, the one surface token that differs
-//          from both possible parents. It is also exactly the depth every
-//          OTHER nested control in a surface2 well already sits at — see
-//          CadenceBuilder.tsx's own `inputCls` (`bg-carbon-surface3`), whose
-//          time/number/cron fields sit directly beside these strips, so the
-//          Selector row now reads as the same material as its sibling
-//          fields instead of as a hole in the well.
-//        - idle segments = `bg-carbon-surface`, the app's own raised-control
-//          fill (Card/Toast/popover surface, and already a plain <button>
-//          fill at OffsiteWizard's own in-card controls), so the keys read
-//          as objects sitting IN the groove rather than as another shade of
-//          it. Chosen over stepping the segments deeper still: there is no
-//          surface4 token, and the obvious ad-hoc candidate (Carbon Gray 60
-//          #6f6f6f) drops `text-carbon-textSub` on an idle segment to 2.94:1
-//          — a WCAG failure this variant would have shipped app-wide.
-//          Measured contrast of what actually shipped instead: idle-segment
-//          label 8.85:1 (dark) / 7.82:1 (light), up from 4.58:1 on both.
-//        Both A/B candidates were rendered live on the running container
-//      before this was committed (idle segments at surface2 vs. at surface,
-//      screenshotted in both themes on the Container schedule card) — the
-//      surface keys read as one grouped control at a glance, the surface2
-//      keys still washed into the well around them.
-//        `w-fit max-w-full` on the track (added in the same pass): a second
-//      defect that only BECAME visible once the track had any contrast at
-//      all. CadenceBuilder renders its mode strip as a direct child of a
-//      `flex flex-col` fieldset, so the track — a plain block-level flex row
-//      — stretched to the well's full width and rendered as a ~1170px grey
-//      bar with five chips huddled at one end. `width: fit-content` makes
-//      the enclosure hug its own segments (and, not being `auto`, it also
-//      opts the strip out of a flex column's default `align-items: stretch`,
-//      so no `self-start` is needed and no row-parent call site gets its
-//      vertical centring disturbed); `max-w-full` keeps a genuinely narrow
-//      viewport wrapping instead of overflowing. This is the same
-//      shrink-to-fit the "well" call sites already get by hand from their
-//      own `inline-flex self-start max-w-full` wrappers in Settings.tsx —
-//      folded into the variant here so no "track" caller has to know.
-//      Content-hugging widths (SIZE[size].padding, no `pinWidth`) and
-//      per-stage height (padding + line-height, not a fixed track height)
-//      keep it cheap to repeat many times on one screen — the opposite of
-//      "well"'s "one prominent, singular choice per page" footprint. `plain`
-//      and `raised` are both meaningless under `variant="track"` (each
-//      answers the same "does an idle segment carry fill" question this
-//      variant already answers unconditionally) and are ignored whenever
-//      given alongside it, the same way both are already ignored under
-//      `variant="well"`.
-//        Applied to every repeated, compact, in-card selector in the app:
-//      NotifyCard's "on" pill row, the Integrity Card's drill-kind toggle
-//      (the file's own prior comment there already called out "the SAME
-//      scale" as NotifyCard's "on" — now literally the same variant, not
-//      just an eyeballed match), and CadenceBuilder's own mode-picker AND
-//      weekday pills (both of that component's two Selector call sites,
-//      so the two controls inside one instance still read as one family
-//      rather than one "track" and one leftover "raised chip" sitting
-//      directly beside it). See design-language.md's "The one horizontal
-//      selector" section for the documented when-to-use-which rule.
+//      is ignored whenever both are given. Started scoped to exactly one
+//      call site (Settings.tsx's shape picker) — GlimStone's own "try it on
+//      one control, generalize later if it lands well" pattern — and item 6
+//      below is that generalization: it now carries every grooved selector
+//      in the app, at both scales.
+//   6. `variant="track"` — ADDED in round 7, REMOVED again in round 8. Round
+//      7 added a third variant for the compact, repeated-per-card selectors
+//      (NotifyCard's "on" row, the Integrity Card's drill-kind toggle, every
+//      CadenceBuilder mode picker and weekday strip, ItemScheduleOverride).
+//      It borrowed "well"'s enclosing groove but deliberately did NOT borrow
+//      its idle-transparent segments: every idle segment kept its own
+//      `bg-carbon-surface` fill, so the strip read as a groove holding keys
+//      rather than as one slab with a single accent pill floating in it.
+//        REVERSED (jdp, live-review round 8, explicit): "Die kleinen
+//      Selektoren sollen so aussehen wie die grossen! Die nicht
+//      ausgewaehlten Optionen sollen kein Badge sein." An individually
+//      filled idle segment reads as its own badge, which is exactly what a
+//      selector's UNSELECTED options must not do — in a selector only the
+//      chosen one is a badge. So the small selector adopts the big one's
+//      fill logic verbatim: idle segments `bg-transparent` against the
+//      groove, only the active segment filled.
+//        Once that landed, "track" and "well" differed in exactly two
+//      things, and only one of them was a real concept:
+//        (a) The pinning bundle — a measured, MIN_PINNED_WIDTH-floored width
+//            on every segment, a fixed `--badge-md` height, centred content,
+//            no wrapping. That is ONE idea ("every segment gets the same
+//            standardized box"), and this file already had a prop for it:
+//            `equalWidth`, driving the very same `pinWidth` measurement
+//            pipeline for "chip" (item 5b).
+//        (b) The groove token — `surface2` ("well") vs `surface3` ("track").
+//            That was never a style choice: it answers "which surface token
+//            is distinct from the parent I sit on", and only ONE token is
+//            distinct from BOTH parents this control legally sits on (a Card
+//            at `surface`, a CadenceBuilder well at `surface2`). Measured on
+//            the running container, `surface3` is also the BETTER groove at
+//            the Card parent "well" already had: groove-vs-parent 1.94:1
+//            dark / 1.53:1 light at surface3 against 1.31:1 / 1.21:1 at the
+//            old surface2 — unifying STRENGTHENS the big picker's own
+//            enclosure rather than weakening it.
+//        Two variants whose only remaining difference is a prop that already
+//      exists are two chances to drift apart, and drifting apart is the
+//      literal complaint this round is fixing ("die kleinen sollen so
+//      aussehen wie die grossen"). So "track" is gone, there are two
+//      variants again — "chip" and "well" — and `equalWidth` is promoted
+//      from a "chip"-only knob to THE pinning knob for both:
+//        - `variant="well"` alone = the SMALL selector: content-hugging
+//          segments, height from padding + line-height, wraps, cheap to
+//          repeat many times on one page. Every ex-"track" call site.
+//        - `variant="well" equalWidth size="lg"` = the BIG selector: every
+//          segment pinned to the widest one's own measured width or
+//          MIN_PINNED_WIDTH, whichever is larger, at a fixed `--badge-md`
+//          height. Settings.tsx's Theme, Shape and Motion pickers.
+//      They cannot drift apart now: same branch, same groove token, same
+//      idle/active fill, same crossfade transition, same radius. The only
+//      difference left is the one the prop's own name states.
+//        `w-fit max-w-full` moved onto the "well" row itself (it was
+//      "track"-only): the groove hugs its own segments instead of stretching
+//      to a block parent's full width. `width: fit-content` is not `auto`,
+//      so it ALSO opts the row out of a flex column's default
+//      `align-items: stretch` — which is exactly what the three big call
+//      sites used to hand-roll as their own `inline-flex self-start
+//      max-w-full` wrapper div. Those three wrappers are removed in the same
+//      pass: one mechanism inside the component beats the same mechanism
+//      re-typed at three call sites, for the same reason this whole item
+//      exists.
+//        `flex-wrap`, not the old "well"-only `flex-nowrap`: a pinned
+//      strip's width is the sum of N x max(widest label, 200px), a number
+//      with no guaranteed relationship to the available width — the same
+//      overflow "chip"'s own `equalWidth` already wraps for (item 5b, where
+//      `flex-nowrap` really did spill a 7-tab strip past the page edge).
+//      Wrapping to a second row beats spilling off the edge.
+//        Idle-label contrast is what pays for the groove move, and it is the
+//      one real cost of this unification — stated here rather than buried:
+//      an idle segment's `text-carbon-textSub` now sits on the surface3
+//      groove instead of on a `bg-carbon-surface` key (ex-"track") or a
+//      surface2 groove (ex-"well"), measuring 4.58:1 dark / 5.12:1 light,
+//      down from 8.85:1 / 7.82:1 and 6.76:1 / 6.44:1 respectively. Both
+//      still clear WCAG AA for normal text (4.5:1), but the dark figure
+//      clears it by 0.08 — this is the floor, not somewhere to spend any
+//      further contrast, so a future "let's deepen the groove one more step"
+//      needs a text-token change in the same commit. Hover is the other side
+//      of that same trade and gets markedly BETTER: `hover:bg-carbon-hover`
+//      against the groove goes from a near-invisible 1.06:1 dark / 1.08:1
+//      light on surface2 to 1.57:1 / 1.17:1 on surface3.
+//        Applied to every call site both variants had: Settings.tsx's Theme,
+//      Shape and Motion pickers (`equalWidth size="lg"`), NotifyCard's "on"
+//      row, the Integrity Card's drill-kind toggle, and CadenceBuilder's own
+//      mode picker AND weekday strip. See design-language.md's "The one
+//      horizontal selector" section for the when-to-use-which rule.
 //
 // No wrapping container (design-language.md: "the container is gone
 // entirely, the gap alone carries the separation") — this renders a bare
@@ -329,18 +302,18 @@ export interface SelectorItem {
 export type SelectorSize = "sm" | "md" | "lg";
 
 /** "chip" (default) is every existing call site's own treatment — see the
- *  `plain` doc below for the two flavours of it. "well" is TrickWork's
- *  shared padded track with flush, crossfade-only segments; see the file
- *  header's item 5 for the full rationale and exactly what is/isn't ported
- *  from TrickWork's version. "track" is the smaller, repeatable sibling of
- *  "well" for compact in-card selectors (NotifyCard's "on" row, every
- *  CadenceBuilder mode/weekday picker) — a real enclosing track like "well",
- *  but with always-visible filled segments and content-hugging width instead
- *  of "well"'s idle-transparent segments and fixed pinned width, and one
- *  surface step deeper (`surface3` groove, `surface` keys) so it stays
- *  visible inside a `bg-carbon-surface2` well as well as on a bare Card; see
- *  the file header's item 6. */
-export type SelectorVariant = "chip" | "well" | "track";
+ *  `plain` doc below for the two flavours of it. "well" is the app's ONE
+ *  grooved horizontal selector, at either scale: a shared padded track
+ *  (`surface3` groove) holding flush, crossfade-only segments that are
+ *  TRANSPARENT while idle and filled only when chosen. Small by default
+ *  (content-hugging, height from padding — NotifyCard's "on" row, the
+ *  drill-kind toggle, every CadenceBuilder mode/weekday picker); add
+ *  `equalWidth` for the big page-level scale (every segment pinned to the
+ *  widest one's measured width or MIN_PINNED_WIDTH, at a fixed `--badge-md`
+ *  height — Settings.tsx's Theme/Shape/Motion pickers). See the file
+ *  header's item 5 for what is/isn't ported from TrickWork, and item 6 for
+ *  why the round-7 "track" variant folded back into this one. */
+export type SelectorVariant = "chip" | "well";
 
 interface SelectorCommon {
   items: SelectorItem[];
@@ -359,21 +332,26 @@ interface SelectorCommon {
   /** Page-tab treatment (no idle background) instead of the default
    *  toolbar-chip treatment (idle `bg-carbon-surface2` pill). See the file
    *  header for which of the twelve call sites uses which. Ignored under
-   *  `variant="well"` and `variant="track"` — see each variant's own doc. */
+   *  `variant="well"` — that variant's own groove answers the same "does an
+   *  idle segment carry a background" question unconditionally (it does
+   *  not; the groove carries the weight). */
   plain?: boolean;
-  /** "chip" (default) vs "well" vs "track" — see the file header's items 5
-   *  and 6. */
+  /** "chip" (default) vs "well" — see the file header's items 5 and 6. */
   variant?: SelectorVariant;
-  /** Pin every "chip" segment to the widest one's own MEASURED content
-   *  width, instead of each hugging its own label width — see the file
-   *  header's item 5b (a real DOM measurement, not a `flex-1` share; that
-   *  was the first cut's own bug, corrected there). Ignored under
-   *  `variant="well"` (already always equal-width — via the SAME
-   *  measurement mechanism, see `pinWidth` in the component body) and under
-   *  `variant="track"` (deliberately content-hugging even at rest — see the
-   *  file header's item 6 for why a repeated-per-page control shouldn't pay
-   *  "well"'s pinned-width cost). Default false: every pre-existing "chip"
-   *  call site keeps its own content-hugging width. */
+  /** THE pinning knob, for BOTH variants (promoted from "chip"-only in
+   *  round 8, file header item 6): pin every segment to the widest one's own
+   *  MEASURED content width — floored at MIN_PINNED_WIDTH — instead of each
+   *  hugging its own label width. See the file header's item 5b for why this
+   *  is a real DOM measurement and not a `flex-1` share (that was the first
+   *  cut's own bug, corrected there).
+   *    Under `variant="well"` this is what separates the BIG page-level
+   *  selector from the small repeated one, and it additionally pins every
+   *  segment to the fixed `--badge-md` height with centred content — a
+   *  uniform box needs a uniform height, not just a uniform width. Without
+   *  it a "well" strip is content-hugging, exactly like the round-7 "track"
+   *  variant it replaces.
+   *    Default false: every pre-existing "chip" call site, and every small
+   *  "well" call site, keeps its own content-hugging width. */
   equalWidth?: boolean;
   /** Bumps the idle "chip" fill one step deeper — `bg-carbon-surface3`
    *  instead of the default `bg-carbon-surface2` (jdp, live-review: "Aus,
@@ -384,17 +362,16 @@ interface SelectorCommon {
    *  fill is the literal SAME token as that ambient background — an idle
    *  pill was genuinely indistinguishable from the card behind it until
    *  hovered or selected). SUPERSEDED at both of those call sites by
-   *  `variant="track"` (file header item 6), which bakes a real enclosing
-   *  track in unconditionally instead of needing a caller to opt in —
+   *  `variant="well"` (file header item 6), which bakes a real enclosing
+   *  groove in unconditionally instead of needing a caller to opt in —
    *  `raised` has no live consumer as of that round, same status as the
    *  `hue` prop's own documented zero-consumer state above.
    *  Kept as a lighter escape hatch for a future PLAIN "chip" call site that
-   *  wants deeper idle contrast without paying for `variant="track"`'s full
-   *  enclosing box. Ignored under `variant="well"` and `variant="track"`
-   *  (both already answer this same question unconditionally, differently —
-   *  "well"'s idle segments are transparent against their own track, not
-   *  surface2, nothing to bump; "track"'s idle segments are always filled at
-   *  `bg-carbon-surface` inside its own surface3 groove). Default false:
+   *  wants deeper idle contrast without paying for `variant="well"`'s full
+   *  enclosing box. Ignored under `variant="well"`, which already answers
+   *  this same question unconditionally and in the opposite direction — its
+   *  idle segments are TRANSPARENT against their own groove, so there is no
+   *  idle fill left to bump a shade deeper. Default false:
    *  every other "chip" call site
    *  (the Settings tab strip, ten toolbar chips) sits directly on a plain
    *  page/card background, not inside a surface2 well, so their existing
@@ -651,24 +628,9 @@ export function Selector(props: SelectorProps) {
     className = "",
   } = props;
   const well = variant === "well";
-  // "track" (file header item 6) — "well"'s smaller, repeatable sibling: a
-  // real enclosing track like "well", but content-hugging and always-filled
-  // instead of pinned-width and idle-transparent. See every className branch
-  // below for the concrete differences from both "chip" and "well".
-  const track = variant === "track";
-  // Only meaningful on "chip" — "well" gets its own equal-width treatment via
-  // `pinWidth` below regardless of this flag, and "track" is deliberately
-  // never pinned at all (see `equalWidth`'s own doc) — `variant === "chip"`
-  // rather than `!well` so a stray `equalWidth` passed alongside
-  // `variant="track"` can't accidentally engage "chip"'s pinning math on a
-  // track-styled segment; no such combination exists at any current call
-  // site, but the two concepts (a track's always-on fill vs. a pinned-width
-  // measurement) are independent enough that silently combining them was
-  // never actually intended by either prop's own doc.
-  const stretch = equalWidth && variant === "chip";
 
-  // `pinWidth` — which segment styles get pinned to a real MEASURED width
-  // instead of a pure-CSS sizing trick. Used to read `stretch` alone (the
+  // `pinWidth` — whether segments get pinned to a real MEASURED width
+  // instead of hugging their own labels. Used to read `stretch` alone (the
   // "chip" `equalWidth` case only); "well" relied on `flex-1` doing the
   // equal-width job on its own, which worked as long as an ANCESTOR forced
   // this whole strip to stretch across a wide container — plenty of leftover
@@ -692,12 +654,18 @@ export function Selector(props: SelectorProps) {
   // `equalWidth`: a real DOM measurement of the widest segment's natural
   // content width, then an explicit pixel `width` on every segment — no
   // flex-basis trick involved, so this particular intrinsic-sizing gap never
-  // applies. "well" now measures unconditionally (it has no `equalWidth` opt-
-  // out to begin with — every "well" strip always wants equal segments), so
-  // `pinWidth` is `stretch || well` rather than `stretch` alone; every effect
-  // and the width style below reads `pinWidth`, not `stretch`, so both cases
-  // share one measurement pipeline instead of two parallel ones.
-  const pinWidth = stretch || well;
+  // applies.
+  //   ROUND 8 (file header item 6): `pinWidth` is now simply `equalWidth`,
+  // for BOTH variants. It briefly read `stretch || well` — "well" pinned
+  // unconditionally, because at the time every "well" strip WAS a big
+  // page-level picker. Folding the round-7 "track" variant back into "well"
+  // makes that untrue: a small, repeated "well" strip is content-hugging, so
+  // the caller has to say which scale it wants, and `equalWidth` is the prop
+  // that already meant exactly that for "chip" — one prop, one measurement
+  // pipeline, three call sites that pass it. No `stretch` alias any more
+  // either: the "chip"-only guard existed to stop `equalWidth` engaging on a
+  // "track" segment, and there is no "track" to protect.
+  const pinWidth = equalWidth;
 
   // Content-width measurement for `pinWidth` (item 5b, corrected — see the
   // file header): every segment gets pinned to the WIDEST segment's own
@@ -816,69 +784,51 @@ export function Selector(props: SelectorProps) {
       // box around the row is one elevation too many (rule 1) and says
       // nothing a plain gap between bare badges doesn't already say. Wraps
       // (flex-wrap), never scrolls.
-      // "well": the one deliberate exception (file header item 5) — this IS
-      // TrickWork's shared track surface (background + 0.2rem padding +
-      // `rounded-control`, so it still reshapes with the shape engine like
-      // every other radius in the app), holding equal-width flush segments —
-      // each pinned to the widest one's own measured content width via
-      // `pinWidth` above (originally `flex: 1` equal-growth alone; see that
-      // constant's own doc for the live truncation bug that fix replaced).
-      // No flex-wrap here: this assumes one row — wrapping equal-width
-      // segments onto a second line is a different, broken-looking layout,
-      // not a smaller version of the same one.
-      // `stretch` (item 5b, corrected — see the file header for the live bug
-      // this fixed): `flex-wrap`, NOT `flex-nowrap` like "well" above — a
-      // fixed-pixel-width segment set has no guaranteed relationship to the
-      // available row width the way "well"'s own measured-and-pinned
-      // segments do (that row's own width IS the sum of its segments by
-      // construction, so it can never overflow itself), so `stretch` can
-      // genuinely need to wrap. No shared track background either way — each
-      // segment keeps its own chip fill, just pinned to the widest segment's
-      // own measured content width (via inline `style.width` below) instead
-      // of hugging its own individually. This wrapper itself is NOT
-      // stretched to fill anything — it's a plain flex row with no
-      // `flex-1`/`w-full` of its own, so its rendered width is simply
-      // whichever is smaller: the sum of its now-fixed-width children (if
-      // they all fit on one line), or the available row width (once they
-      // don't and a second line is needed).
-      // "track" (file header item 6): the same KIND of enclosing surface as
-      // "well" (`rounded-control` + background + padding, so it reshapes with
-      // the shape engine identically), one step deeper at
-      // `bg-carbon-surface3` — see the file header's round-7 follow-up for
-      // why it is NOT "well"'s surface2: six of this variant's nine call
-      // sites sit inside a `bg-carbon-surface2` well, where a surface2 track
-      // measured as literally the same colour as its own parent and could
-      // not be seen at all. surface3 is the one surface token distinct from
-      // BOTH parents this variant legally sits on (a Card's surface, a
-      // CadenceBuilder well's surface2), so the enclosure reads everywhere
-      // without a single per-call-site override.
-      //   Same `[0.2rem]` gap/padding as "well" — the established value for
-      // this exact role (the visible groove ring between the track edge and
-      // its segments); the first cut's own `[0.15rem]` was a re-derived
-      // near-miss that left a 2.4px ring, too thin to read as an enclosure
-      // once the tones were fixed. Scale separation from "well" comes from
-      // the segments (content-hugging, per-stage padding, no pinned width or
-      // fixed height), not from shaving the groove.
-      //   `w-fit max-w-full`: the track hugs its own segments instead of
+      // "well" (file header items 5 and 6): the one deliberate exception —
+      // this IS TrickWork's shared track surface (background + 0.2rem padding
+      // + `rounded-control`, so it still reshapes with the shape engine like
+      // every other radius in the app), holding flush segments that are
+      // transparent until chosen. ONE set of classes for both scales; only
+      // the segments below differ, and only via `equalWidth`.
+      //   `bg-carbon-surface3`, NOT the surface2 this variant shipped with
+      // through round 7 (file header item 6 (b)): the groove has to be
+      // distinct from BOTH parents it legally sits on — a Card
+      // (`bg-carbon-surface`) and a CadenceBuilder well
+      // (`bg-carbon-surface2`) — and surface3 is the only surface token that
+      // is. A surface2 groove inside a surface2 well measured as literally
+      // the same colour as its own parent on the running container, which is
+      // how the small variant shipped invisible in round 7's first cut.
+      // Measured at the Card parent the big pickers sit on, surface3 is also
+      // the stronger enclosure of the two (1.94:1 dark / 1.53:1 light,
+      // against surface2's 1.31:1 / 1.21:1), so unifying on it costs the big
+      // scale nothing.
+      //   `[0.2rem]` gap/padding is the established value for this exact
+      // role (the visible groove ring between the track edge and its
+      // segments); round 7's own re-derived `[0.15rem]` left a 2.4px ring,
+      // too thin to read as an enclosure. Scale separation comes from the
+      // segments, never from shaving the groove.
+      //   `w-fit max-w-full`: the groove hugs its own segments instead of
       // stretching to a block parent's full width (CadenceBuilder's mode
-      // strip is a direct child of a `flex flex-col` fieldset and rendered
-      // as a full-width bar the moment the track became visible). Also opts
-      // the strip out of a flex column's default `align-items: stretch`
-      // without an explicit `self-start` that would have top-aligned it in
-      // the row-shaped parents (NotifyCard's "on" row, the weekday row, the
-      // drill-kind row) that centre their label beside it.
-      //   `flex-wrap`, NOT "well"'s `flex-nowrap`: a "track" strip's segments
-      // are content-hugging, not pinned to a mutually-agreed sum the way
-      // "well"'s own row always is by construction, so (like plain "chip"
-      // and `stretch` above) it can genuinely need a second line on a narrow
-      // card.
+      // strip is a direct child of a `flex flex-col` fieldset and rendered as
+      // a full-width bar the moment the groove became visible). `width:
+      // fit-content` is not `auto`, so it ALSO opts the strip out of a flex
+      // column's default `align-items: stretch` — without an explicit
+      // `self-start`, which would have top-aligned it inside the row-shaped
+      // parents (NotifyCard's "on" row, the weekday row, the drill-kind row)
+      // that centre a label beside it. This is what let Settings.tsx drop its
+      // three hand-rolled `inline-flex self-start max-w-full` wrapper divs.
+      //   `flex-wrap`, NOT the `flex-nowrap` "well" carried before round 8:
+      // an `equalWidth` strip's own width is the sum of N x max(widest label,
+      // MIN_PINNED_WIDTH), a number with no guaranteed relationship to the
+      // available width — the same overflow "chip"'s own `equalWidth` already
+      // wraps for (item 5b, where `flex-nowrap` genuinely spilled a 7-tab
+      // strip past the page's right edge). A content-hugging "well" can
+      // equally need a second line on a narrow card.
       className={[
         "flex items-center",
         well
-          ? "flex-nowrap gap-[0.2rem] rounded-control bg-carbon-surface2 p-[0.2rem]"
-          : track
-            ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-control bg-carbon-surface3 p-[0.2rem]"
-            : "flex-wrap gap-1",
+          ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-control bg-carbon-surface3 p-[0.2rem]"
+          : "flex-wrap gap-1",
         className,
       ]
         .filter(Boolean)
@@ -915,12 +865,11 @@ export function Selector(props: SelectorProps) {
           // properties at Tailwind's own default 150ms — fine for a chip's
           // idle-background swap, not what this track's spec asks for);
           // border-radius was never part of either transition list, so this
-          // addition doesn't newly animate anything. "track" gets the SAME
-          // crossfade-only transition as "well" — both variants exist so a
-          // strip reads as one coherent physical control, and a sliding-pill
-          // illusion belongs to that reading exactly as much at the small
-          // scale as the large one.
-          well || track ? "rounded-control [transition:background-color_120ms_ease]" : "rounded-control transition-colors",
+          // addition doesn't newly animate anything. Both "well" SCALES get
+          // this same crossfade-only transition — the variant exists so a
+          // strip reads as one coherent physical control, and that reading
+          // is worth exactly as much at the small scale as the large one.
+          well ? "rounded-control [transition:background-color_120ms_ease]" : "rounded-control transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           // `.glim-hue-icon` (index.css) additionally tints the glyph itself
           // with the item's own hue while idle — right for a tab-strip icon
@@ -940,67 +889,60 @@ export function Selector(props: SelectorProps) {
           hue ? (item.iconOnly ? "glim-hue" : "glim-hue glim-hue-icon") : "",
           on
             ? "glim-active bg-accent text-accentContrast"
+            // "well", BOTH scales (jdp, live-review round 8: "Die kleinen
+            // Selektoren sollen so aussehen wie die grossen! Die nicht
+            // ausgewaehlten Optionen sollen kein Badge sein"). An idle
+            // segment carries NO fill of its own — the groove behind it is
+            // the whole enclosure, and only the chosen segment is a badge.
+            // Round 7's small variant filled every idle segment at
+            // `bg-carbon-surface` instead ("a groove holding keys"), which is
+            // exactly the per-segment badge this reverses; see file header
+            // item 6 for the full writeup.
+            //   The cost, stated where the class lives: this label now sits
+            // on the surface3 groove rather than on a surface fill, so
+            // `text-carbon-textSub` measures 4.58:1 (dark) / 5.12:1 (light)
+            // instead of 8.85:1 / 7.82:1. Both clear WCAG AA for normal text;
+            // dark clears it by 0.08, so treat that as the floor.
+            //   `hover:bg-carbon-hover` is the other half of that trade and
+            // gets better on the deeper groove: 1.57:1 dark / 1.17:1 light
+            // against surface3, up from a near-invisible 1.06:1 / 1.08:1 when
+            // the groove was surface2.
+            //   `plain`/`raised` are both meaningless here (see each prop's
+            // own doc) so neither is read in this branch.
             : well
               ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              // "track" (file header item 6): unconditionally filled even at
-              // rest — the whole point of this variant vs. "well" above.
-              // `bg-carbon-surface`, the app's own raised-control fill (the
-              // Card/Toast/popover surface, and already a plain <button>
-              // fill at OffsiteWizard's in-card controls), so an idle key
-              // reads as an object sitting IN the surface3 groove above
-              // rather than as another shade of the groove itself. NOT the
-              // original surface3 (that was the track's own colour before
-              // the round-7 follow-up moved the track down to surface3) and
-              // NOT a step deeper still: no surface4 token exists, and the
-              // ad-hoc Carbon Gray 60 candidate would have dropped this
-              // label to 2.94:1. Measured on the shipped pair:
-              // `text-carbon-textSub` on `--carbon-surface` is 8.85:1 (dark)
-              // / 7.82:1 (light). `hover:bg-carbon-hover` is unchanged and
-              // still steps the key toward the groove in both themes.
-              // `plain`/`raised` are both meaningless here (see each prop's
-              // own doc) so neither is read in this branch.
-              : track
-                ? "bg-carbon-surface text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                : plain
-                  ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                  : raised
-                    ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
+              : plain
+                ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                : raised
+                  ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                  : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
           SIZE[size].gap,
           SIZE[size].text,
-          // "chip" keeps its own per-stage padding (the box comes from
-          // padding + line-height, as it always has). "well" and `stretch`
-          // ("chip"'s own `equalWidth`) segments now share the SAME "pin
-          // every segment to the widest one's own MEASURED content width"
-          // mechanism (`pinWidth` above) — see that constant's own doc for
-          // why "well"'s original `flex-1`-only approach (equal width from
-          // flex growth alone, no real measurement) broke the moment task 1's
-          // "don't stretch the whole strip" fix stopped an ancestor from
-          // handing this row more width than either segment's own content
-          // needed.
-          //   "well": centred content (TrickWork's own `justify-content`/
-          // `text-align: center`) within a FIXED height read off --badge-md
-          // (index.css) instead of padding — every segment in the row is the
-          // same height regardless of label length or an icon's own
-          // intrinsic size — PLUS this file's own per-stage horizontal
-          // padding (`SIZE[size].padding`, the same token "chip" always used,
-          // newly added here) so the widest segment's own label isn't
-          // touching the pinned box's edge once `matchedWidth` pins every
-          // segment to exactly that width. `flex-none`, not `flex-1` any
-          // more, so the explicit pixel `width` set below actually wins
-          // instead of competing with a flex-grow share.
-          //   `stretch` (item 5b, corrected): centred content within a FIXED
-          // width (set via inline `style.width` below, not a flex-basis
-          // trick — see `pinWidth`'s own doc for why that was the wrong fix
-          // for "well" too, once it needed the exact same treatment).
-          // `flex-none` pins the segment to exactly that width rather than
-          // letting the default `flex-shrink: 1` compress it back down if
-          // the row's own content ever exceeds its container (matched-width
-          // segments should shrink together with the row wrapping, per
-          // `flex-nowrap` above, not individually). Keeps its own per-stage
-          // padding otherwise — height still comes from padding +
-          // line-height, a "chip" trait this variant doesn't touch, so it
-          // stays visually a chip, just a fixed-width one.
+          // The one place the two SCALES of this control differ, and the
+          // only thing `equalWidth` changes (file header item 6).
+          //   NOT pinned (default, both variants): per-stage padding, height
+          // from padding + line-height. That is "chip"'s own long-standing
+          // box, and it is also what makes a small "well" strip cheap enough
+          // to repeat on every schedule card across two tabs — the role the
+          // round-7 "track" variant used to hold.
+          //   Pinned (`equalWidth`): every segment gets an explicit pixel
+          // `width` (set via inline `style.width` below, from the `pinWidth`
+          // measurement pass — NOT a flex-basis trick; see that constant's
+          // own doc for the live truncation bug `flex-1` caused here) plus
+          // centred content. `flex-none` so the explicit width actually wins
+          // instead of competing with a flex-grow share, and so the default
+          // `flex-shrink: 1` can't compress a matched segment back down —
+          // pinned segments give way together by wrapping the row, never
+          // individually.
+          //   Pinned AND "well" additionally takes the FIXED --badge-md
+          // height (index.css) in place of padding-derived height: a
+          // standardized box needs a standardized height, not just a
+          // standardized width, so every segment matches regardless of label
+          // length or an icon's own intrinsic size. It keeps `SIZE[size]
+          // .padding` alongside that so the widest label isn't touching the
+          // pinned box's edge. Pinned "chip" (the Settings tab strip) does
+          // NOT take that height — it stays visually a chip, just a
+          // fixed-width one.
           //
           // `iconOnly` (GlimStone follow-up round, live-review screenshot —
           // "the Local/Remote badges read as wider/pill-shaped, the separate
@@ -1035,20 +977,15 @@ export function Selector(props: SelectorProps) {
           // lockstep. Do NOT re-derive it from whatever field happens to sit
           // beside a given Selector — the per-neighbour reasoning that made
           // this comment's own measurement necessary is exactly the split jdp
-          // rejected. Checked
-          // ahead of `stretch`/`well` (both unused by today's one iconOnly
-          // consumer, PathModeSwitch) so a future combination degrades to
-          // this fixed square rather than silently falling through to a
-          // per-stage padding class that was never sized for a bare glyph.
-          // "track" (file header item 6) falls straight through to the plain
-          // per-stage `SIZE[size].padding` branch below, on purpose — no
-          // `flex-none`/fixed height/pinned width of its own: height comes
-          // from padding + line-height exactly like "chip", which is what
-          // keeps a repeated-per-card control cheap next to "well"'s
-          // deliberately larger, pinned footprint.
-          well
+          // rejected. Ordered AFTER the two pinned branches (neither is used
+          // by today's one iconOnly consumer, PathModeSwitch) but ahead of
+          // the plain per-stage padding, so an UNPINNED iconOnly segment —
+          // including an unpinned "well" one, which round 8 newly makes
+          // possible — still gets the fixed square rather than a padding
+          // class that was never sized for a bare glyph.
+          well && equalWidth
             ? `flex-none justify-center text-center h-[var(--badge-md)] ${SIZE[size].padding}`
-            : stretch
+            : equalWidth
               ? `flex-none justify-center text-center ${SIZE[size].padding}`
               : item.iconOnly
                 ? "justify-center h-8 w-8 p-0"
