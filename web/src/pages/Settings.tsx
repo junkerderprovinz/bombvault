@@ -974,7 +974,23 @@ export function AccentCard({
             described only half the action and would have been an outright lie
             on a control that also resets the live accent. Kept identical to
             the rainbow-palette reset badge below in shape/tone/size/glyph/
-            border — the established "these two mirror each other" pairing. */}
+            border — the established "these two mirror each other" pairing.
+              tone="neutral" IS A DELIBERATE EXCEPTION to "every icon badge
+            goes in the colour engine", written down here so a later sweep
+            does not helpfully convert it to tone="active" — the round that
+            put "the last six grey icon badges into the colour engine"
+            (FolderBrowser's browse badge, the Registry add/remove pair,
+            VMSSHCard's two copy badges, the Recovery-Kit download badge)
+            left these two behind on purpose and never said why. The reason,
+            measured live: this badge is the LAST child of a row of 32px
+            `border-2` colour SWATCHES, and it is chrome-identical to them —
+            same box, same border, same radius. An accent/rainbow fill would
+            make it read as one more swatch in the row, i.e. as a colour you
+            can PICK, when clicking it instead THROWS AWAY the picked colour.
+            The neutral fill is what distinguishes "reset this row" from "a
+            member of this row"; it is not an un-migrated grey. Same reasoning
+            applies verbatim to the rainbow-palette reset badge below, whose
+            row of eight swatches makes the clash even more literal. */}
         <Badge
           as="button"
           shape="square"
@@ -9023,7 +9039,16 @@ export function SettingsPage() {
                 button was deleted, and was dropped from all 42 locales.)
                 Kept shape/tone/size/glyph/border identical to the AccentCard
                 mirror above — the established "these two mirror each
-                other" pairing. */}
+                other" pairing.
+                  tone="neutral" IS A DELIBERATE EXCEPTION to "every icon
+                badge goes in the colour engine" — see the AccentCard mirror
+                above for the full reasoning, which applies here even more
+                literally: this badge is the ninth 32px `border-2` tile in a
+                row whose other eight ARE the rainbow palette's own colours
+                (measured live: #FF8389 #FF832B #FCC419 #6FDC8C #3DDBD9
+                #1D99F3 #BE95FF #FF7EB6). Giving it a rainbow fill would make
+                the control that RESETS the palette look like a ninth entry
+                IN the palette. Do not "fix" this to tone="active". */}
             <Badge
               as="button"
               shape="square"
