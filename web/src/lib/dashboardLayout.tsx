@@ -24,6 +24,7 @@ import {
   type DragEvent as ReactDragEvent,
   type ReactNode,
 } from "react";
+import { IconTipButton } from "../components/IconTipButton";
 import type { TranslationKey } from "./i18n";
 
 const KEY = "bombvault.dashboardLayout";
@@ -406,45 +407,37 @@ export function CustomizableBlock({
         <span className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wider text-carbon-textSub">
           {label}
         </span>
+        {/* All four are IconTipButton, not plain <button> + `title` (whole-app
+            sweep). Each carried an `aria-label` AND a duplicate native
+            `title` of the same string: a silent accessible name plus the
+            browser's own unstyled OS balloon, on a bar of four glyphs whose
+            meaning is not guessable. That pairing is exactly what
+            IconTipButton.tsx's header says the file exists to replace, and
+            it is what Dashboard's own customize pencil (the trigger that
+            reveals THIS bar) was converted away from one commit earlier —
+            these four sat one component away from it and were missed.
+              Same tip strings, same handlers, same `iconBtn` chrome; the
+            bubble is now the real .glim-bubble, appears on keyboard focus
+            as well as hover, and closes on scroll/Escape like every other
+            tooltip in the app. IconTipButton sets `aria-label` from `tip`
+            itself, so the accessible name is unchanged. */}
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={onMoveUp}
-            disabled={isFirst}
-            aria-label={t("dashboard.moveUp")}
-            title={t("dashboard.moveUp")}
-            className={iconBtn}
-          >
+          <IconTipButton tip={t("dashboard.moveUp")} onClick={onMoveUp} disabled={isFirst} className={iconBtn}>
             <ChevronUpIcon />
-          </button>
-          <button
-            type="button"
-            onClick={onMoveDown}
-            disabled={isLast}
-            aria-label={t("dashboard.moveDown")}
-            title={t("dashboard.moveDown")}
-            className={iconBtn}
-          >
+          </IconTipButton>
+          <IconTipButton tip={t("dashboard.moveDown")} onClick={onMoveDown} disabled={isLast} className={iconBtn}>
             <ChevronDownIcon />
-          </button>
-          <button
-            type="button"
+          </IconTipButton>
+          <IconTipButton
+            tip={width === "full" ? t("dashboard.makeHalfWidth") : t("dashboard.makeFullWidth")}
             onClick={onToggleWidth}
-            aria-label={width === "full" ? t("dashboard.makeHalfWidth") : t("dashboard.makeFullWidth")}
-            title={width === "full" ? t("dashboard.makeHalfWidth") : t("dashboard.makeFullWidth")}
             className={iconBtn}
           >
             <ColumnsIcon />
-          </button>
-          <button
-            type="button"
-            onClick={onHide}
-            aria-label={t("dashboard.hideCard")}
-            title={t("dashboard.hideCard")}
-            className={iconBtn}
-          >
+          </IconTipButton>
+          <IconTipButton tip={t("dashboard.hideCard")} onClick={onHide} className={iconBtn}>
             <EyeOffIcon />
-          </button>
+          </IconTipButton>
         </div>
       </div>
 
