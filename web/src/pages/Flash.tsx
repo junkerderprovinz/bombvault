@@ -14,7 +14,7 @@ import { Badge } from "../components/Badge";
 import { useToast } from "../lib/toast";
 import { FlashZipExportCard } from "./Settings";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconBackupNow } from "../components/Sidebar";
+import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -37,18 +37,21 @@ type T = ReturnType<typeof useT>["t"];
 // the glyph itself (a spinner replacing the icon while running), same as
 // Containers.tsx's BackupButton.
 //
-// `size="icon"` (Badge.tsx, h-7/w-7 = 28px): reused verbatim from
+// `size="icon"` (Badge.tsx, h-8/w-8 = 32px): reused verbatim from
 // Containers.tsx's BackupButton rather than re-measured against THIS
-// button's own prior self (`px-4 py-1.5 text-sm` ≈ 32px) — per the standing
-// size-token rule ("check whether an established token for the EXACT role
-// already exists... rather than independently re-measuring your own local
-// context"), this is the same role: a domain's "back up now" action,
-// icon-only, the same IconBackupNow glyph, no adjacent field to match
-// instead. Re-deriving 32px from the old text button's own footprint here
+// button's own prior self — per the standing size-token rule ("check whether
+// an established token for the EXACT role already exists... rather than
+// independently re-measuring your own local context"), this is the same
+// role: a domain's "back up now" action, icon-only, the same IconBackupNow
+// glyph. Re-deriving a number from the old text button's own footprint here
 // would be exactly the "each individually well-fitted to its own [former]
-// neighbour" trap the standing rule now names — two "Jetzt sichern" badges
-// anywhere in this app render at the identical 28px, not two close-but-
-// different numbers that each looked fine in isolation.
+// neighbour" trap the standing rule names — every square icon badge in this
+// app renders at the identical 32px, not several close-but-different numbers
+// that each looked fine in isolation. (This comment used to read "h-7/w-7 =
+// 28px", written when `icon` was one of THREE icon-badge stages; that
+// role-based split was reported broken by jdp twice and removed, and `icon`
+// is now the app's single 32px stage — see Badge.tsx's "ONE SIZE FOR SQUARE
+// ICON BADGES" block. The prop never changed, only the token behind it.)
 //
 // GlimStone follow-up pass (v8.0.0) audit note, UPDATED: an earlier version
 // of this comment deferred migrating state.phase's success/error rendering
@@ -203,36 +206,87 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
   }
 
   return (
-    <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
+    // py-1.5, not the py-2.5 this row used to carry — the identical trade
+    // components/RestorePanel.tsx's SnapshotRow, pages/Config.tsx's
+    // ConfigSnapshotRow and pages/Files.tsx's FileSetSnapshotRow each already
+    // made, and for the identical reason: this row's controls grew from ~24px
+    // text buttons to the app's one 32px square icon badge, and trimming 4px
+    // of padding per side keeps the row at exactly the 44px it measured
+    // before. A bigger badge in a list of unchanged density, rather than a
+    // list that grew. This was the FOURTH and last copy of that row.
+    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
-        <button
+        {/* Download + Delete as square icon badges (jdp, live review:
+            "Flash-Tab, Backups-Card: die Buttons Download und Löschen sind
+            Text-Buttons, sollen aber quadratische Badges mit Glyphen sein
+            (inkl. Farbmodi, keine extra Färbung für Löschen)"). This row was
+            the LAST unconverted copy of a pattern already fixed in
+            components/RestorePanel.tsx, pages/Config.tsx's ConfigSnapshotRow
+            and pages/Files.tsx's FileSetSnapshotRow — not a regression, a
+            spot those three passes each missed.
+              Both take the same recipe as those three siblings: shape="square"
+            size="icon" (32px, the app's ONE square-icon-badge stage — see
+            Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block), tone="active",
+            and NO hueIndex — the Restore card that owns this list already
+            carries `.glim-hue` with hueIndex={1}, so the ordinary custom-
+            property cascade paints both badges in that card's own rainbow
+            position. Each gets a `tip` carrying the label the glyph replaced,
+            per the standing "an icon-only badge gets colour-engine
+            integration AND a tooltip" rule.
+              Glyphs are reused verbatim, no new drawings: IconDownload (the
+            same glyph Containers.tsx's ExportButton already uses for "hand me
+            this artefact as a file") and IconTrash (Config/Files/Settings'
+            own remove glyph).
+              The delete badge gets NO special colour treatment — not the
+            `hover:bg-statusFailBg hover:text-statusFail` red flash it used to
+            carry, and not a grey-neutral exemption either (neutral is one of
+            the tones Badge keeps OUT of the rainbow, which would leave it flat
+            grey beside a hued sibling — the exact "anders eingefärbt" defect
+            jdp reported on RestorePanel's delete). Its meaning is carried by
+            IconTrash, by its tip, and by the useConfirm dialog handleDelete
+            already opens, which is untouched.
+              Both in-flight labels ("…" for delete, the inline spinner+text
+            for download) have nowhere to live on an icon-only badge: delete
+            shows as `disabled` exactly like its three siblings, and download
+            keeps its spinner by swapping the GLYPH for it, the same trade
+            FlashBackupButton above and Containers' ExportButton already
+            make. */}
+        <Badge
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={t("flash.download")}
           onClick={handleDownload}
           disabled={preparing}
-          className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-60 shrink-0"
+          className="shrink-0"
         >
-          {preparing && (
+          {preparing ? (
             <span
-              className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
             />
+          ) : (
+            <IconDownload />
           )}
-          {t("flash.download")}
-        </button>
-        <button
+        </Badge>
+        <Badge
           key={shake}
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={t("snapshots.delete")}
           onClick={() => void handleDelete()}
           disabled={deleting || preparing}
-          title={t("snapshots.delete")}
-          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
+          className={`shrink-0${shake ? " glim-shake" : ""}`}
         >
-          {deleting ? "…" : t("snapshots.delete")}
-        </button>
+          <IconTrash />
+        </Badge>
       </div>
       {confirmDialog}
     </div>
@@ -368,10 +422,19 @@ export function Flash() {
       </div>
 
       {/* Restore card. `glim-notch-card`: see Settings.tsx's Card() for the
-          reasoning. `.glim-hue` added (rainbow-mode completeness sweep, jdp
-          live review): same hueIndex={1} the Badge already uses —
-          FlashSnapshotRow's own Download/Delete buttons inherit it via the
-          ordinary custom-property cascade, no per-row change needed. */}
+          reasoning. `.glim-hue`: same hueIndex={1} the Badge already uses,
+          which FlashSnapshotRow's Download/Delete badges inherit via the
+          ordinary custom-property cascade — that is why neither passes a
+          hueIndex of its own.
+            This comment used to end "…no per-row change needed", written
+          during the rainbow-completeness sweep and describing the two row
+          controls as though they were already hue-integrated badges. They
+          were not: Download was a hard `bg-accent` text button and Delete a
+          text button whose only colour was a bespoke `hover:bg-statusFailBg`
+          red, so the cascade reached exactly one of the two and the claim
+          read as done work. Corrected here in the same pass that actually
+          converted them — a comment describing an intended end state as
+          fact is how this row survived three earlier sweeps unnoticed. */}
       <div
         className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-5 flex flex-col gap-4"
         style={hueVars(rainbowAt(1)) as CSSProperties}
@@ -400,12 +463,15 @@ export function Flash() {
             <p> caption below the row, precisely the rule-8 pattern an
             InfoBubble exists to replace — and at four other call sites
             app-wide with the identical label+SourceToggle-row-then-<p>
-            shape (Containers.tsx's per-container RestorePanel, Config.tsx,
-            VMs.tsx, Files.tsx). Converted HERE only, per this round's
-            explicit Flash.tsx scope: the other four sites are UNCHANGED,
-            still rendering the old <p>, a real ready-made follow-up for a
-            future round rather than attempted in this one. Zero new i18n
-            keys — `source.hint` is already translated in all 42 locales. */}
+            shape. Those were components/RestorePanel.tsx (the Containers
+            tab's per-container panel — note it lives in components/, not
+            Containers.tsx, which is why grepping pages/ alone missed it),
+            pages/Config.tsx, pages/VMs.tsx and pages/Files.tsx. This comment
+            used to end "the other four sites are UNCHANGED... a follow-up for
+            a future round"; that follow-up has since been done, and all four
+            now render the identical InfoBubble-on-the-label form this call
+            site pioneered. Zero new i18n keys — `source.hint` is already
+            translated in all 42 locales. */}
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
             {t("source.label")}
