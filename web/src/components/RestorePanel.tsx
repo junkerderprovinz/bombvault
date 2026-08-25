@@ -15,6 +15,7 @@ import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { Badge } from "./Badge";
+import { InfoBubble } from "./InfoBubble";
 import { IconRestore, IconTrash } from "./Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
@@ -963,12 +964,24 @@ export function RestorePanel({ name, t, installed = true, open }: RestorePanelPr
     <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
       {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
       <Advanced>
-        <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-            <SourceToggle source={source} onChange={setSource} disabled={loading} domain="containers" />
-          </div>
-          <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
+        {/* `source.hint` as an InfoBubble on the "Quelle" label, not the
+            permanent `text-caption` <p> under the row it used to be — rule
+            8's "read once, costs vertical space forever" case. Same
+            conversion Flash.tsx got in 63f53d5, applied here in the same pass
+            as the three other surviving copies (pages/Config.tsx,
+            pages/VMs.tsx, pages/Files.tsx) rather than one tab at a time.
+            This is the copy that renders on the CONTAINERS tab — it lives in
+            this shared panel rather than in Containers.tsx itself, which is
+            why grepping pages/ alone misses it.
+              The row keeps its own `py-2` and bottom border: nothing here
+            changed height, only the <p> beneath it disappeared. The wrapping
+            `flex flex-col gap-1` goes with the <p>, having one child left. */}
+        <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
+          <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
+            {t("source.label")}
+            <InfoBubble tip={t("source.hint")} />
+          </span>
+          <SourceToggle source={source} onChange={setSource} disabled={loading} domain="containers" />
         </div>
       </Advanced>
       <RecentRunsList name={name} domain="container" t={t} />

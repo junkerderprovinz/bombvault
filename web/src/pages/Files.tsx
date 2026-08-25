@@ -764,11 +764,28 @@ function FileSetRestorePanel({
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-          <div className="flex flex-col gap-1 py-2 border-b border-carbon-border">
-            <div className="flex items-center gap-2">
+          {/* `source.hint` moved from a permanent `text-caption` <p> under
+              this row onto the "Quelle" label as an InfoBubble — rule 8's
+              "read once, costs vertical space forever" case, the same
+              conversion Flash.tsx got in 63f53d5 and the other three copies
+              (components/RestorePanel.tsx, pages/Config.tsx, pages/VMs.tsx)
+              get in this same pass. This was the fourth and last of them.
+                Moving it also fixes the same latent mismatch VMs.tsx's
+              identical row had: the label + SourceToggle are wrapped in
+              <Advanced>, but the <p> explaining what choosing a source DOES
+              sat outside it, so basic mode rendered a hint about a control it
+              wasn't showing. As part of the label it now appears exactly when
+              the toggle does.
+                The old outer `flex flex-col gap-1` wrapper is gone with the
+              <p> (one child left); its `py-2 border-b` moves onto this row,
+              so the row's own box is unchanged. */}
+          <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
               {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
               <Advanced>
-                <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
+                <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
+                  {t("source.label")}
+                  <InfoBubble tip={t("source.hint")} />
+                </span>
                 <SourceToggle source={source} onChange={setSource} disabled={loading} domain="files" />
               </Advanced>
               {/* Delete-all acts on the LOCAL repo (and forgets the set), so it
@@ -789,8 +806,6 @@ function FileSetRestorePanel({
                   {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
                 </Badge>
               )}
-            </div>
-            <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
           </div>
           <RecentRunsList name={set.name} domain="files" t={t} />
           {loading && (
