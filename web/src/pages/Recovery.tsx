@@ -1538,6 +1538,19 @@ export default function Recovery() {
           Flash.tsx/Config.tsx/Settings.tsx's Cards already give theirs. */}
       <StepCard n={1} title={t("recovery.step1")} hint={t("recovery.appKeyExplain")} state={readableState} hueIndex={nextHue()}>
         <div className="flex items-center gap-3">
+          {/* jdp live-review: "Card 1: Button 'Erneut prüfen' soll nur 'Prüfen'
+              heissen." `recovery.recheck` was shortened IN PLACE (its value, in
+              all 42 locales) rather than swapped for another key — it has
+              exactly ONE call site in the whole app, this one, so nothing else
+              could break, and the two near-matches that exist (`integrity.verify`
+              = "Verify"/"Prüfen", the restic-check card's own button;
+              `spike.checkNow` = "Check now") both belong to other domains and
+              would couple this button's wording to theirs. Its KEY still reads
+              `recheck` because that name is what the plan doc and the two
+              remedy strings below ("…then re-check" / "…und prüfe erneut", which
+              are prose about repeating the action, not this label) refer to;
+              the button's own wording is the value, and the value is now plain.
+              Do not re-lengthen it. */}
           <button
             onClick={() => void checkReadable()}
             disabled={checking}
@@ -1633,6 +1646,20 @@ export default function Recovery() {
                 )}
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
+                  {/* jdp live-review: "Card 2: Button 'BV Einstellungen
+                      wiederherstellen' soll nur 'Wiederherstellen' heissen."
+                      Safe because this card's OWN heading already names the
+                      object — verified live on the deployed page before
+                      shortening, not assumed: the step-2 notch reads
+                      "BombVaults eigene Einstellungen wiederherstellen"
+                      (`recovery.stepConfig`) and sits directly above this
+                      button, so "Wiederherstellen" is never read in isolation.
+                      Shortened IN PLACE like step 1's, and for the same reason:
+                      `recovery.configRestore` has exactly one call site. Its new
+                      value in each locale is that locale's OWN existing
+                      `snapshots.restore` string, verbatim, so all 42 use the
+                      wording the app already ships for this verb rather than a
+                      fresh translation of it. */}
                   <button
                     key={configShake}
                     onClick={() => void restoreOwnConfig()}
