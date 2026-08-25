@@ -18,6 +18,7 @@ import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from ".
 import { ActivityLog } from "../components/ActivityLog";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { IconPencil } from "../components/Sidebar";
+import { IconTipButton } from "../components/IconTipButton";
 import { Selector } from "../components/Selector";
 // humanBytes (binary 1024 units, one decimal) moved to lib/forecast so the
 // storage forecast line shares the exact formatter of the size column.
@@ -2430,12 +2431,33 @@ export function Dashboard() {
             <OffsiteIndicator domain="files" withLabel />
           </div>
         </div>
-        <button
-          type="button"
+        {/* Real `.glim-bubble` tooltip, not the OS's native `title=` balloon
+            (whole-app sweep). This was the LAST icon-only control in the app
+            still naming itself with a bare `title=`/`aria-label` pair —
+            measured live on the deployed container: 32px, rounded-control,
+            and `title` present, while every other icon-only trigger (every
+            Badge `tip`, FolderBrowser's browse badge, Settings' registry and
+            copy badges, PathModeSwitch's and SourceToggle's segments) already
+            rendered the shared bubble. IconTipButton.tsx's own header is
+            explicit that a stray native `title=` on an icon-only trigger is
+            precisely the anti-pattern that file exists to replace, and
+            design-language's tooltip section calls the bubble unconditional
+            for a control with no visible text.
+              It stays a hand-rolled `h-8 w-8` button rather than becoming a
+            Badge, for the reason already recorded below: its background
+            legitimately flips between two states, and Badge's icon-only
+            tone="active" is unconditionally accent-filled. IconTipButton
+            takes the className verbatim, so both states survive byte-identical
+            — only the tooltip mechanism changes. `aria-pressed` is threaded
+            through IconTipButton's new optional prop so the toggle state is
+            not lost in the swap (this is a toggle, not a one-shot action).
+              32px and `rounded-control` are unchanged, so it still matches
+            every other square icon control app-wide and still tracks the
+            shape engine. */}
+        <IconTipButton
           onClick={() => setEditing((v) => !v)}
-          aria-label={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
-          aria-pressed={editing}
-          title={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
+          tip={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
+          ariaPressed={editing}
           className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
@@ -2470,7 +2492,7 @@ export function Dashboard() {
               `bg-carbon-surface2` at rest) and Badge's icon-only tone="active"
               is unconditionally accent-filled. */}
           <IconPencil />
-        </button>
+        </IconTipButton>
       </div>
 
       {/* Fresh/rebuilt install nudge to the guided Recovery tab — fixed
