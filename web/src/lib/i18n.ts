@@ -752,14 +752,19 @@ export const en = {
   // individually editable + resettable, and the count grew from 5 to 8):
   // "accentPreset" (singular) numbers each swatch's own accessible name
   // ("Preset 1", "Preset 2", …) the same way "settings.rainbowPalette" does
-  // for the rainbow palette's 8 swatches; "accentPresetsReset" is the new
-  // row-level reset control's own label, deliberately NOT sharing
-  // "common.reset" with the pre-existing "reset the active accent" text
-  // button a few pixels to its right in the same Card — two adjacent
-  // "Reset"-labelled controls doing two different things would be genuinely
-  // ambiguous there.
+  // for the rainbow palette's 8 swatches.
+  //   "settings.accentReset" REPLACES the former "settings.accentPresetsReset"
+  // ("Reset presets") in every locale. That key existed because the accent row
+  // used to carry TWO reset controls — an icon badge for the preset swatches
+  // and a separate "Reset" text button for the active accent — and the two
+  // needed distinguishable labels. The row now has exactly ONE control that
+  // does both jobs (see AccentCard's own header comment in Settings.tsx for
+  // why the split was the defect), so the label has to name both halves;
+  // "Reset presets" on a control that also throws away the user's chosen
+  // accent would be an outright lie. Renamed rather than re-valued so no
+  // reader can keep the old, now-wrong meaning in mind.
   "settings.accentPreset": "Preset",
-  "settings.accentPresetsReset": "Reset presets",
+  "settings.accentReset": "Reset accent color and presets",
   // Shape (GlimStone form-engine — shape engine): round/soft/square corner
   // radius, applied everywhere via one attribute (index.css's [data-shape]
   // rules, lib/shape.ts's applyShape()). Wording matches KnightLoader's own
@@ -804,6 +809,16 @@ export const en = {
   // palette-row JSX's own comment for the "caption removed then reinstated
   // with a different string" history.
   "settings.rainbowPaletteLabel": "Colour palette",
+  // The palette row's own reset badge, which used to borrow the generic
+  // "common.reset". Given its own string in the same round that unified the
+  // accent row's two resets above: that Card now holds TWO identical-looking
+  // neutral square reset badges a few rows apart, and a bare "Reset" bubble on
+  // both would leave the user guessing which one throws away which work.
+  // Each names its own target instead. ("Colour", matching this row's own
+  // settings.rainbowPaletteLabel right above, not the "color" spelling the
+  // accent keys use — the en table's existing, deliberate split, untouched
+  // here rather than half-normalised in passing.)
+  "settings.rainbowPaletteReset": "Reset colour palette",
   // Quiet toasts (form-engine Task 9) — severity-based quiet mode for the
   // toast system; "success" toasts are suppressed, "warn"/"fail" never are
   // (lib/toastEngine.ts's shouldShowToast). Copy reworded (jdp, live review —
@@ -961,7 +976,12 @@ export const en = {
   "folder.creating": "Creating…",
   "folder.createFailed": "Could not create folder",
   "folder.browseFailed": "Browse failed",
-  "common.reset": "Reset",
+  // ("common.reset" lived here until the accent row's leftover "Reset" TEXT
+  // button was deleted and the rainbow palette's badge got its own named
+  // string. Nothing read it afterwards, so it was dropped from all 42 tables
+  // rather than left as a key that looks generic-and-shared but is used
+  // nowhere — the next person to need a reset label would have reached for it
+  // and reintroduced exactly the ambiguity this round removed.)
   "containers.subtitle": "Manage container backups, schedules, and restores.",
   "containers.emptyDocker": "No containers found. Is Docker running?",
   "containers.bulkResult": "{ok} ok, {fail} failed",
@@ -2237,7 +2257,7 @@ export const de: Translations = {
   "settings.accentColor": "Akzentfarbe",
   "settings.accentPresets": "Voreinstellungen",
   "settings.accentPreset": "Voreinstellung",
-  "settings.accentPresetsReset": "Voreinstellungen zurücksetzen",
+  "settings.accentReset": "Akzentfarbe und Voreinstellungen zurücksetzen",
   "settings.shape": "Ecken",
   "settings.shapeHint": "Gilt für Karten, Knöpfe, Reiter, Eingabefelder und Abzeichen zugleich.",
   "settings.shape.round": "Rund",
@@ -2257,6 +2277,7 @@ export const de: Translations = {
   "settings.rainbowRotateHint": "Verschiebt, welche Farbe der Palette als Position 0 gilt, damit dieselbe Liste nicht bei jedem Aktivieren des Regenbogen-Modus oder jedem Neuladen der Seite mit genau derselben Farbe beginnt.",
   "settings.rainbowPalette": "Palettenfarbe",
   "settings.rainbowPaletteLabel": "Farbpalette",
+  "settings.rainbowPaletteReset": "Farbpalette zurücksetzen",
   "settings.quietToasts": "Leise Benachrichtigungen",
   "settings.quietToastsHint": "Blendet Erfolgsmeldungen wie Speicher- und Kopierbestätigungen aus. Fehler und alles andere, das deine Aufmerksamkeit braucht, werden weiterhin angezeigt.",
 
@@ -2399,7 +2420,6 @@ export const de: Translations = {
   "folder.pathHint": "Pfad muss ein relativer Unterpfad sein (kein führendes / oder ..)",
   "folder.couldNotRead": "Verzeichnis konnte nicht gelesen werden",
   "folder.browseFailed": "Durchsuchen fehlgeschlagen",
-  "common.reset": "Zurücksetzen",
   "containers.subtitle": "Container-Backups, Zeitpläne und Wiederherstellungen verwalten.",
   "containers.emptyDocker": "Keine Container gefunden. Läuft Docker?",
   "containers.bulkResult": "{ok} ok, {fail} fehlgeschlagen",

@@ -700,6 +700,30 @@ function AccentPresetSwatch({
 // matched here for the same granularity, the same Badge shape (now
 // shape="square"), the same SVG glyph.
 //
+// ONE reset, not two (jdp, live-review, re-reporting a third time after two
+// prior rounds each declared this fixed: "Der Resetbutton ist da, hat aber
+// keine Funktion und der Zurücksetzen-Text ist immer noch da"). Both halves
+// of that sentence had the same underlying cause — this row was rendering
+// TWO different, competing reset controls side by side:
+//   1. an icon Badge gated `disabled={presetsAreDefault}`, resetting only the
+//      eight PRESET swatches, and
+//   2. a plain TEXT button gated `accentHex !== DEFAULT_ACCENT`, resetting
+//      only the ACTIVE ACCENT.
+// A previous round converted (1) to a badge and simply overlooked (2), so the
+// row ended up with a badge that is dead in the overwhelmingly common case
+// (presets are at their shipped defaults for anyone who has never opened a
+// preset's editor popover — i.e. almost everyone) sitting right next to a
+// text link that appears in exactly the state where the badge is dead. The
+// user-visible result is precisely what jdp reported: a permanently greyed
+// badge plus a stray "Zurücksetzen" text. Neither control was individually
+// broken; the SPLIT was the defect. They are now a single Badge that resets
+// the active accent AND the presets, enabled whenever EITHER has drifted.
+//   The lesson worth keeping: "the element exists and has the right classes"
+// was true for the badge in every prior round's live check, and the control
+// was still useless. A reset control's contract is that it is reachable and
+// does something in the state a real user is actually in — that has to be
+// exercised, not merely rendered.
+//
 // ALWAYS RENDERED now, disabled (not hidden) once nothing is left to reset
 // (jdp, live-review, re-reporting after a prior round claimed this was
 // already fixed: "Bei der Akzentfarbe ist das Zurücksetzen immer noch kein
@@ -763,9 +787,15 @@ export function AccentCard({
     });
   }
 
+  // ONE reset, TWO things reset (see this component's own header comment for
+  // the "two competing resets" root cause). Both halves of the row's state
+  // get their own predicate so the single control can be enabled whenever
+  // EITHER has drifted, and the click can restore both unconditionally.
+  const accentIsDefault = accentHex.toLowerCase() === DEFAULT_ACCENT.toLowerCase();
   const presetsAreDefault = presets.every(
     (hex, i) => hex.toLowerCase() === DEFAULT_ACCENT_PRESETS[i]?.toLowerCase()
   );
+  const nothingToReset = accentIsDefault && presetsAreDefault;
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
@@ -816,11 +846,21 @@ export function AccentCard({
             t={t}
           />
         ))}
-        {/* Reset the PRESET SWATCHES back to their shipped defaults — a
-            separate concern from the "reset the active accent" button
-            below (that one resets accentHex to DEFAULT_ACCENT; this one
-            resets the presets array to DEFAULT_ACCENT_PRESETS). Row-level,
-            not per-preset — see this component's own header comment.
+        {/* THE reset for this whole row — ONE control that restores BOTH the
+            active accent (accentHex → DEFAULT_ACCENT) and the eight preset
+            swatches (presets → DEFAULT_ACCENT_PRESETS). Previously these
+            were two separate, competing controls sitting side by side; see
+            this component's own header comment for the full root cause and
+            why merging them is the fix rather than repairing either one.
+              `disabled={nothingToReset}` — enabled the moment EITHER half has
+            drifted, which is the normal case for anyone who has picked any
+            non-default accent at all (one click on any preset but the first
+            already gets you there). The old `disabled={presetsAreDefault}`
+            tracked only the RARER half — editing a preset's own colour via
+            the popover — so in every ordinary session this badge sat
+            permanently greyed out: present, correctly shaped, and completely
+            inert (jdp: "Der Resetbutton ist da, hat aber keine Funktion").
+            An always-disabled control is not a fixed control.
               SQUARE (jdp, live-review: "Die Zurücksetzen-Option soll ein
             quadratischer Badge mit Glyph sein"). `shape="square"` still
             resolves through `rounded-control` (the shape engine's own live
@@ -861,38 +901,38 @@ export function AccentCard({
             established "counter-clockwise arrow = reset" convention already
             used by Sidebar.tsx's IconRecovery/IconRestore, redrawn bolder
             specifically for this small-badge-in-a-busy-row role.
-              ALWAYS rendered, `disabled={presetsAreDefault}` instead of
-            conditionally unmounted — see this component's own header
-            comment for the full "isn't a badge at all" root cause this
-            fixes.
+              ALWAYS rendered, disabled (never conditionally unmounted) — see
+            this component's own header comment for the earlier "isn't a badge
+            at all" root cause that established this pattern.
+              size="icon" (28px) is NOT re-derived here: it is the size token
+            Badge.tsx's own ROLE → SIZE AUDIT already assigns to the role
+            "row-level reset control matching a same-row swatch's own real
+            h-7 w-7 footprint" — the very role this control fills, shared with
+            the rainbow-palette reset below.
               tip (not title/ariaLabel) — same convention: an icon-only
-            trigger gets IconTipButton's real hover/focus bubble, not a
-            silent native title balloon. Carries the exact text this button
-            showed before it became icon-only (settings.accentPresetsReset,
-            unchanged). Kept identical to the rainbow-palette reset badge
-            below in shape/tone/size/glyph/border — the established "these
-            two mirror each other" pairing. */}
+            trigger gets IconTipButton's real hover/focus bubble, not a silent
+            native title balloon. Text is settings.accentReset, which NAMES
+            BOTH halves of what one click now does ("Reset accent color and
+            presets") — the old settings.accentPresetsReset ("Reset presets")
+            described only half the action and would have been an outright lie
+            on a control that also resets the live accent. Kept identical to
+            the rainbow-palette reset badge below in shape/tone/size/glyph/
+            border — the established "these two mirror each other" pairing. */}
         <Badge
           as="button"
           shape="square"
           size="icon"
           tone="neutral"
           className="border-2 border-carbon-border"
-          disabled={presetsAreDefault}
-          onClick={() => setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS))}
-          tip={t("settings.accentPresetsReset")}
+          disabled={nothingToReset}
+          onClick={() => {
+            selectAccent(DEFAULT_ACCENT);
+            setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS));
+          }}
+          tip={t("settings.accentReset")}
         >
           <IconResetArrow />
         </Badge>
-        {/* Reset to default — the ACTIVE accent, not the presets above. */}
-        {accentHex.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
-          <button
-            onClick={() => selectAccent(DEFAULT_ACCENT)}
-            className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors ms-1"
-          >
-            {t("common.reset")}
-          </button>
-        )}
       </div>
     </div>
   );
@@ -8641,6 +8681,13 @@ export function SettingsPage() {
           it resets" reasoning), so neither reads `hueIdx` at all. */}
       {tab === "general" && (() => {
       const hueIdx = nextHue();
+      // "Is there anything left to reset?" for the palette row below — the
+      // mirror of AccentCard's own `presetsAreDefault`, same case-insensitive
+      // comparison (setRainbow()/isValidPalette() accept either case, so a
+      // palette restored by hand as "#ff8389" must still count as default).
+      const paletteIsDefault =
+        rainbow.palette.length === RAINBOW.length &&
+        rainbow.palette.every((hex, i) => hex.toLowerCase() === RAINBOW[i]?.toLowerCase());
       return (
       <Card title={t("settings.colors")} hueIndex={hueIdx}>
         <AccentCard t={t} />
@@ -8801,9 +8848,38 @@ export function SettingsPage() {
                 comment) — the established counter-clockwise "reset" arrow
                 convention, redrawn bolder for legibility at this small
                 badge-in-a-busy-row size.
-                  tip (not title/ariaLabel) — IconTipButton's real hover/
-                focus bubble, carrying the exact common.reset text this badge
-                showed as a plain button before Task 5 rule 13 converted it.
+                  DISABLED ONLY WHEN THERE IS NOTHING TO RESET — the same
+                dead-control audit that unified AccentCard's two resets above
+                was run against this badge, and it had a milder version of the
+                same defect from the other direction: gated on `!rainbow.on`
+                alone, it sat ENABLED whenever rainbow mode was on even with
+                the palette already byte-identical to RAINBOW, so a click was
+                a silent no-op — a control that looks live and does nothing is
+                the same broken promise as one that is permanently greyed out,
+                just harder to notice. `paletteIsDefault` (computed beside
+                `hueIdx` at this Card's own IIFE head) closes that: the badge
+                is now live exactly when a click would actually change
+                something. The `!rainbow.on` half of the gate STAYS — the
+                eight PaletteSwatches next to it carry the identical
+                `disabled={!rainbow.on}`, so the whole row switches off
+                together, which reads as "this section is off" rather than as
+                one arbitrarily dead control among live ones (the very
+                confusion that made AccentCard's badge unreadable).
+                  size="icon" (28px) is the size token Badge.tsx's own ROLE →
+                SIZE AUDIT names for this exact role — it literally cites "the
+                rainbow-palette reset badge" as the role's reference case, so
+                it is reused verbatim here and by the AccentCard mirror, never
+                re-derived from the swatch box model.
+                  tip (not title/ariaLabel) — IconTipButton's real hover/focus
+                bubble. Now settings.rainbowPaletteReset ("Reset color
+                palette"), not the generic common.reset it carried before:
+                after the merge above, this Card holds TWO neutral square
+                reset badges a few rows apart, and two identical "Reset"
+                bubbles on two controls with different targets is exactly the
+                ambiguity the accentPresetsReset key was originally introduced
+                to avoid. Each bubble now names its own target. (common.reset
+                itself had no other reader left once the accent row's text
+                button was deleted, and was dropped from all 42 locales.)
                 Kept shape/tone/size/glyph/border identical to the AccentCard
                 mirror above — the established "these two mirror each
                 other" pairing. */}
@@ -8813,9 +8889,9 @@ export function SettingsPage() {
               size="icon"
               tone="neutral"
               className="border-2 border-carbon-border"
-              disabled={!rainbow.on}
+              disabled={!rainbow.on || paletteIsDefault}
               onClick={() => updateRainbow({ palette: RAINBOW })}
-              tip={t("common.reset")}
+              tip={t("settings.rainbowPaletteReset")}
             >
               <IconResetArrow />
             </Badge>
