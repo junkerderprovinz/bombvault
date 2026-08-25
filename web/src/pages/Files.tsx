@@ -50,7 +50,11 @@ import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
-import { Toggle } from "../components/Toggle";
+// ToggleRow, not the bare Toggle: FileSetEnabledToggle renders the shared row
+// (label + switch) rather than a naked switch its caller labels by hand — the
+// same import components/IncludeToggle.tsx already uses for the Container
+// tab's copy of that control.
+import { ToggleRow } from "./Settings";
 import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
 
@@ -100,18 +104,37 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
     }
   }
 
+  // Renders through the SAME shared ToggleRow every other row-shaped toggle in
+  // the app already uses — the identical conversion components/IncludeToggle.tsx
+  // (the Container tab's copy of this exact control) already went through after
+  // jdp's live review: "Die Toggles ... bitte gleich anordnen und der Text
+  // gleich formatieren. Der Text soll immer ganz links stehen und der Toggle
+  // ganz rechts sein."
+  //
+  // That round only touched the Container tab, so THIS copy and VMs.tsx's
+  // VMIncludeToggle were left as the mirror image of the shape they were meant
+  // to match: a bare `hideLabel` Toggle whose caller hand-rolled a `<label
+  // className="flex items-center gap-2">` around it — switch FIRST, text
+  // SECOND, `text-xs text-carbon-textSub` — against ToggleRow's own
+  // text-first/switch-last, `text-sm text-carbon-text`. All three tabs render
+  // the SAME string (files.enabled and containers.includeInSchedule are
+  // byte-identical in every locale: "Include in schedule" / "Im Zeitplan
+  // einschließen"), so the drift was visible as the same label laid out two
+  // different ways on two adjacent tabs.
+  //
+  // Fixed at the shared mechanism rather than by hand-matching classes: this
+  // now IS ToggleRow, so it cannot drift from the Container tab's copy again.
+  // The visible label keeps this file's own `files.enabled` key (the string
+  // the call site was already displaying) rather than silently switching to
+  // the containers.* key the bare Toggle happened to use for its aria-label.
   return (
-    <div className="flex flex-col items-end gap-1">
-      <Toggle
-        key={shake}
-        hideLabel
-        label={t("containers.includeInSchedule")}
-        checked={enabled}
-        onChange={(next) => void handleChange(next)}
-        disabled={busy}
-        className={shake ? "glim-shake" : undefined}
-      />
-    </div>
+    <ToggleRow
+      label={t("files.enabled")}
+      checked={enabled}
+      onChange={(next) => void handleChange(next)}
+      disabled={busy}
+      shakeNonce={shake}
+    />
   );
 }
 
@@ -1145,10 +1168,11 @@ function FileSetRow({
       {/* Actions row */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4 flex-wrap">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <FileSetEnabledToggle id={set.id} initial={set.enabled} />
-            <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
-          </label>
+          {/* No wrapping `<label>`/`<span>` anymore: FileSetEnabledToggle now
+              renders the full ToggleRow itself (label included, text-first),
+              the identical shape Containers.tsx's IncludeToggle call site
+              already uses — see that component's own comment. */}
+          <FileSetEnabledToggle id={set.id} initial={set.enabled} />
           {/* Edit + remove, both square icon badges (jdp: "Ordnertab: die
               Buttons 'Ordnerset bearbeiten' und 'Set entfernen' sollen
               quadratische Badges mit Glyphen sein. In die Farbmodi integriert.
