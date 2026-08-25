@@ -290,7 +290,7 @@ export const en = {
   "settings.encryptionOn": "Enabled (password derived from APP_KEY)",
   "settings.encryptionOff": "Disabled (no password)",
   "settings.encryptionHint":
-    "Encryption is fixed per repository at init time. Changing this requires a new empty path.",
+    "Encryption is fixed per repository when it is created, so this only decides how a NEW repository is made. For a repository that already exists BombVault reads the mode off the repository itself — see the Recovery page. Changing this against an existing repository just stops restic from opening it.",
 
   // Encryption-key recovery kit
   "recovery.title": "Recovery kit",
@@ -1342,6 +1342,27 @@ export const en = {
   "recovery.attachHint": "Point BombVault at your existing backups: a local path under the host mount, or an off-site repo (rest / S3 / B2 / sftp / rclone) with its credentials. Then connect to confirm.",
   "recovery.credsSaveHint": "Off-site credentials save with each card's own Save button — save them before you connect & preview.",
   "recovery.connectPreview": "Connect & preview",
+  // Encryption mode — DETECTED, not asserted. The repositories themselves say
+  // whether they need the APP_KEY-derived password, so the common path (attach
+  // an existing repo) asks the user nothing; only the genuinely undecidable
+  // cases still offer the switch. These are live status readouts, not
+  // explanations, so they stay visible page text (the mechanism itself is what
+  // lives in the (i) bubble).
+  "recovery.encChecking": "Checking how your backups are encrypted…",
+  "recovery.encEncrypted": "Detected: your backups are encrypted. BombVault will use the password derived from your APP_KEY.",
+  "recovery.encPlain": "Detected: your backups have no password.",
+  "recovery.encAbsent": "No backup repository exists at these locations yet, so there is nothing to detect — your choice below decides how it gets created.",
+  "recovery.encUnknown": "Can't tell yet: the repositories couldn't be opened, so their encryption mode is unknown. Fix the location above and check again, or set it yourself if you already know.",
+  "recovery.encConflict": "Your repositories disagree: some are encrypted, some are not. One setting can't open both — point the odd one out at a new, empty location, or restore from the matching set only.",
+  "recovery.encUnconfigured": "No backup location configured yet — set the paths below, then connect.",
+  "recovery.encDetectHint":
+    "Encryption isn't a preference: a repository is created either with a password (derived from your APP_KEY) or without one, and that never changes afterwards. BombVault opens the configured repositories to see which it is, so restoring on a fresh box needs no guesswork. A repository that can't be reached is reported as unknown, never as unencrypted.",
+  "recovery.encStateEncrypted": "encrypted",
+  "recovery.encStatePlain": "no password",
+  "recovery.encStateAbsent": "not created yet",
+  "recovery.encStateUnreachable": "couldn't be read",
+  "recovery.encSourceLocal": "local",
+  "recovery.encSourceOffsite": "off-site",
   // Step 3 — discover everything
   "recovery.step3": "Discover what's in your backups",
   "recovery.discover": "Discover backups",
@@ -1860,7 +1881,7 @@ export const de: Translations = {
   "settings.encryptionOn": "Aktiviert (Passwort aus APP_KEY)",
   "settings.encryptionOff": "Deaktiviert (kein Passwort)",
   "settings.encryptionHint":
-    "Die Verschlüsselung ist beim Initialisieren des Repositorys festgelegt. Eine Änderung erfordert einen neuen leeren Pfad.",
+    "Die Verschlüsselung wird beim Anlegen eines Repositorys festgelegt, diese Einstellung entscheidet also nur über NEUE Repositorys. Bei einem bereits vorhandenen Repository liest BombVault den Modus direkt am Repository ab — siehe Seite „Wiederherstellung“. Änderst du das gegen ein bestehendes Repository, kann restic es schlicht nicht mehr öffnen.",
 
   // Encryption-key recovery kit
   "recovery.title": "Wiederherstellungs-Kit",
@@ -2745,6 +2766,25 @@ export const de: Translations = {
   "recovery.attachHint": "Richte BombVault auf deine vorhandenen Backups aus: einen lokalen Pfad unter dem Host-Mount oder ein Off-site-Repo (rest / S3 / B2 / sftp / rclone) mit den zugehörigen Zugangsdaten. Verbinde dich dann, um es zu bestätigen.",
   "recovery.credsSaveHint": "Off-site-Zugangsdaten werden über den eigenen Speichern-Button der jeweiligen Karte gespeichert — speichere sie, bevor du „Verbinden & prüfen“ klickst.",
   "recovery.connectPreview": "Verbinden & prüfen",
+  // Verschlüsselungsmodus — ERKANNT, nicht behauptet. Die Repositories sagen
+  // selbst, ob sie das aus dem APP_KEY abgeleitete Passwort brauchen. Der
+  // Normalfall (vorhandenes Repo anhängen) fragt dich also nichts mehr; nur die
+  // wirklich unentscheidbaren Fälle zeigen den Schalter noch.
+  "recovery.encChecking": "Prüfe, wie deine Backups verschlüsselt sind …",
+  "recovery.encEncrypted": "Erkannt: Deine Backups sind verschlüsselt. BombVault nutzt das aus deinem APP_KEY abgeleitete Passwort.",
+  "recovery.encPlain": "Erkannt: Deine Backups haben kein Passwort.",
+  "recovery.encAbsent": "An diesen Orten liegt noch kein Backup-Repository, es gibt also nichts zu erkennen — deine Wahl unten entscheidet, wie es angelegt wird.",
+  "recovery.encUnknown": "Noch nicht feststellbar: Die Repositories liessen sich nicht öffnen, ihr Verschlüsselungsmodus ist damit unbekannt. Korrigiere den Ort oben und prüfe erneut, oder stelle ihn selbst ein, wenn du ihn kennst.",
+  "recovery.encConflict": "Deine Repositories widersprechen sich: Einige sind verschlüsselt, andere nicht. Eine Einstellung kann nicht beide öffnen — richte den Ausreisser auf einen neuen, leeren Ort aus oder stelle nur aus dem passenden Satz wieder her.",
+  "recovery.encUnconfigured": "Noch kein Backup-Ort eingetragen — trage unten die Pfade ein und verbinde dich dann.",
+  "recovery.encDetectHint":
+    "Verschlüsselung ist keine Vorliebe: Ein Repository wird entweder mit Passwort (aus deinem APP_KEY abgeleitet) oder ohne angelegt, und das ändert sich danach nie mehr. BombVault öffnet die eingetragenen Repositories, um zu sehen, was davon zutrifft — auf einer frischen Kiste musst du also nicht raten. Ein Repository, das nicht erreichbar ist, gilt als unbekannt, niemals als unverschlüsselt.",
+  "recovery.encStateEncrypted": "verschlüsselt",
+  "recovery.encStatePlain": "kein Passwort",
+  "recovery.encStateAbsent": "noch nicht angelegt",
+  "recovery.encStateUnreachable": "nicht lesbar",
+  "recovery.encSourceLocal": "lokal",
+  "recovery.encSourceOffsite": "off-site",
   // Schritt 3 — alles entdecken
   "recovery.step3": "Entdecke, was in deinen Backups steckt",
   "recovery.discover": "Backups entdecken",

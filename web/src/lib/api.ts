@@ -2228,6 +2228,66 @@ export function discoverFiles(probe = false): Promise<OkEnvelope & { discovered?
 }
 
 // ---------------------------------------------------------------------------
+// Encryption-mode auto-detection
+//
+// EncryptionEnabled is a FACT about the repositories, not a preference: restic
+// either opens a repo with the APP_KEY-derived password or with
+// --insecure-no-password, and that is fixed at init time. So the backend probes
+// the configured repos, reports which mode they are actually in, and applies a
+// definite result to the setting — the Recovery flow must never make the user
+// guess. See internal/api/encryption_detect.go for the full contract.
+// ---------------------------------------------------------------------------
+
+/** One repository's detected mode. `unreachable` explicitly means "could not
+ *  tell" (bad path, dead backend, unmounted share) and is NEVER folded in with
+ *  `absent` ("reachable, holds no repository yet"). */
+export type RepoEncryptionState = "encrypted" | "plain" | "absent" | "unreachable";
+
+export interface RepoEncryption {
+  domain: string;
+  /** "local" | "offsite" */
+  source: string;
+  /** Off-site destination name, when the domain has several. */
+  name?: string;
+  state: RepoEncryptionState;
+  /** Scrubbed failure reason; set only for `unreachable`. */
+  error?: string;
+}
+
+/**
+ * The fold of every probed repository into one answer:
+ *  - `encrypted` / `plain` — detected, and APPLIED to the setting.
+ *  - `conflict`     — repos genuinely disagree; one flag cannot open both.
+ *  - `absent`       — nothing exists yet; the user's choice decides.
+ *  - `unknown`      — a repo could not be opened for an unrelated reason.
+ *  - `unconfigured` — no location configured at all.
+ * Only the first two ever write the setting; the rest are honest "undecided".
+ */
+export type EncryptionVerdict =
+  | "encrypted"
+  | "plain"
+  | "conflict"
+  | "absent"
+  | "unknown"
+  | "unconfigured";
+
+export interface EncryptionDetection extends OkEnvelope {
+  verdict?: EncryptionVerdict;
+  /** True when this call changed the stored setting to match what it found. */
+  applied?: boolean;
+  /** The effective stored setting AFTER detection. */
+  encryptionEnabled?: boolean;
+  repos?: RepoEncryption[];
+}
+
+/** Probe the configured repositories and let the stored encryption setting
+ *  follow what was actually found. Read-only against the repositories
+ *  themselves (`restic cat config` — never an init, never a lock). */
+export function detectEncryption(): Promise<EncryptionDetection> {
+  return fetchJSON("/api/encryption/detect", { method: "POST" });
+}
+
+// ---------------------------------------------------------------------------
 // Foreign-repo restore API (#61) — a READ-ONLY session onto ANOTHER BombVault
 // instance's repository. Deliberately unlike the Recovery attach flow: nothing
 // is persisted (no putSettings) — the session lives server-side in memory with
