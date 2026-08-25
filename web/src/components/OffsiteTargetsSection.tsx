@@ -313,8 +313,8 @@ export function OffsiteTargetsSection({
   // rather than throwing on a server-reported failure (e.g. an append-only/
   // immutable target the backend refuses to remove) — this never checked
   // `res.ok`, so a refused delete was silently treated as a success:
-  // confirmRemove closed and refresh() ran, with nothing telling the user why
-  // the target reappeared in the reloaded list. Now checked and surfaced.
+  // confirmRemove closed and the list reloaded, with nothing telling the user
+  // why the target reappeared in it. Now checked and surfaced.
   async function remove(id: string) {
     setRemovingId(id);
     try {
