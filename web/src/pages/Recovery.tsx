@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useT } from "../lib/i18n";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
@@ -1508,22 +1509,17 @@ export default function Recovery() {
   const nextHue = () => hueSeq++;
 
   return (
-    // gap-10, not the gap-5 this page shipped with, and no `p-1`: jdp, live
-    // review — "Die Abstände zwischen den Cards sind zu klein. Die oberste
-    // Card ist auch zu weit oben. Bitte machen wie sonst überall."
-    //   40px (gap-10) is this app's settled page-level rhythm, already the
-    // value on Settings.tsx, Config.tsx, Dashboard.tsx, Receiver.tsx and
-    // Fleet.tsx — measured on Config.tsx before changing anything here, whose
-    // own wrapper comment states it as "the same corrected 40px DOM gap (29px
-    // visible, after the same 11px badge overlap every other gap-10 page also
-    // has)". Recovery was the last page still on the pre-correction 20px, so
-    // this is that one flat bump, governing BOTH complaints at once: the same
-    // wrapper gap sets heading→first-card and card→card.
-    //   The `p-1` went with it. It dated from this page's original scaffold
-    // (eddbb2e), no other page has one, and <main> already provides the
-    // page's own p-6 inset — it was 4px of extra ground on one page only,
-    // which is exactly the "wie sonst überall" this round is about.
-    <div className="flex flex-col gap-10">
+    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
+    // machen?"): the gap here was already the correct 40px from the earlier
+    // "Bitte machen wie sonst überall" round, which also dropped this page's
+    // stray `p-1`. What that round did NOT give it is a max-width — this
+    // wrapper had none at all, so its Cards were simply as wide as the window
+    // let them be: 1633px at a 1920px viewport, the widest surface in the app
+    // and 865px wider than Flash. That was a missing constraint rather than a
+    // deliberate full-bleed choice, so it takes the shared 1152px cap like
+    // every other page. Verified live: nothing on this page clips, reflows or
+    // overflows at 1152px. See lib/pageShell.ts for the table.
+    <div className={PAGE_SHELL}>
       <div>
         {/* The page's <h1> + subtitle pair, kept as-is: every page in this app
             renders a plain `<p>` subtitle under its own heading (Config's

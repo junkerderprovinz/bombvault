@@ -10,6 +10,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 import { CadenceBuilder } from "../components/CadenceBuilder";
+import { PAGE_SHELL_TABBED } from "../lib/pageShell";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
 import { CheckDraw } from "../components/CheckDraw";
@@ -6488,7 +6489,26 @@ export function SettingsPage() {
     // scroll normally instead of clipping anything — see the tab-panels
     // wrapper's own comment for why `flex-1` produces exactly that
     // fill-or-grow behaviour with no separate min-height override needed.
-    <div className="flex flex-col gap-10 flex-1">
+    //
+    // PAGE_SHELL_TABBED — the ONE stated exception to the app-wide page width
+    // (jdp live-review, "Können wir die nicht überall gleich breit machen?").
+    // Every other page now renders at PAGE_SHELL's 1152px; this root keeps the
+    // shared 40px rhythm but deliberately has NO max-width, and that is not an
+    // oversight. Measured live before deciding: capping this root at 1152px
+    // caps the 7-tab Selector strip inside it too, and the strip — `size="lg"`
+    // + `equalWidth`, so 7x its widest segment, 1424px in de — no longer fits
+    // on one line there (strip height 32px → 68px, the 7 tabs falling onto 2
+    // rows). That two-row strip is a bug an earlier round already fixed once,
+    // and the panels below are capped to this strip's MEASURED width per a
+    // standing instruction ("Settings cards should match the tab row's
+    // width"), so capping the root would regress both at once.
+    //   This is a genuine conflict between two of jdp's own asks rather than
+    // something to resolve silently: the honest fix is to make the STRIP
+    // narrower (drop `equalWidth`, whose natural hugged width is ~814px in de,
+    // or step `size` down from "lg"), after which this page could join the
+    // shared cap. That is a change to a deliberate prior decision, so it is
+    // flagged for jdp rather than taken here. See lib/pageShell.ts.
+    <div className={PAGE_SHELL_TABBED}>
       {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
           follow-up pass, live-review round — the width-mismatch fix below
           needed a wrapper here to isolate this pair's own 24px gap from the

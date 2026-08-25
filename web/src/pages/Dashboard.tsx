@@ -6,6 +6,7 @@ import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, ge
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { formatCadence, parseCadenceString } from "../components/CadenceBuilder";
@@ -2388,7 +2389,19 @@ export function Dashboard() {
     // exact two-level structure (Settings' `hueSeq` comment calls out the
     // same shared-counter pattern this page already reuses, for the same
     // reason: matching an established convention beats reinventing one).
-    <div className="flex flex-col gap-10 max-w-6xl">
+    //   PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich
+    // breit machen?"): this page's `gap-10 max-w-6xl` is now that shared
+    // constant, unchanged in value — it is the page the app-wide 1152px was
+    // chosen FROM, because it owns the only content dense enough to have a
+    // measurable opinion about width (a md:grid-cols-2 block grid, 7-column
+    // container-query run rows, and the Advanced 7-across stat tier, whose
+    // longest German label needs exactly 136px of a 136px cell at 1024px —
+    // zero slack). Swapping the literal for the constant is what stops the
+    // other nine pages drifting away from it again. See lib/pageShell.ts.
+    //   The nested gap-6 group below stays: heading + banner are a tight pair
+    // that deliberately sits closer than the 40px Card rhythm, the same
+    // two-level shape Settings.tsx uses for its heading + tab strip.
+    <div className={PAGE_SHELL}>
       <div className="flex flex-col gap-6">
       {/* Page heading — fixed (contextual, not customizable). The pencil in the
           top-right corner toggles the customize/edit mode.

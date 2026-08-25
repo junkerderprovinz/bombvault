@@ -5,6 +5,7 @@ import { FilterPopover } from "../components/FilterPopover";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot, VmOrder } from "../lib/api";
 import { useT, stateLabel } from "../lib/i18n";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { useDragReorder } from "../lib/useDragReorder";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { ProgressBar } from "../components/ProgressBar";
@@ -1494,7 +1495,14 @@ export function VMs() {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
+    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
+    // machen?"): was `gap-6 max-w-5xl`, the same off-standard pair Containers
+    // carried — this page is Containers' structural twin and drifted with it.
+    // jdp did not name this page (it has no sidebar entry on a host without
+    // VMs, so he could not have), which is exactly why it gets swept here in
+    // the same pass rather than surfacing as the same complaint a round later.
+    // See lib/pageShell.ts for the measurement table behind 1152px/40px.
+    <div className={PAGE_SHELL}>
       {/* Page heading + Discover (disaster-recovery) action */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>

@@ -30,6 +30,7 @@ import {
 } from "../lib/api";
 import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFleet } from "../components/Sidebar";
@@ -894,15 +895,13 @@ export function Fleet() {
   const nextHue = () => hueSeq++;
 
   return (
-    // GlimStone follow-up pass (jdp, live-review: "Im Fleet Tab ist die Card
-    // zu weit oben" — same fix as Receiver.tsx's identical heading-to-first-
-    // Card gap, measured live at gap-6 (24px) against the app's established
-    // gap-10 (40px) rhythm — see Config.tsx's own comment for the full
-    // measurement history behind that value ("systemweit gleich machen").
-    // This page's heading is a single bare h1+p row (no tab-strip/indicator
-    // content needing the tighter 24px), so — like Config.tsx and
-    // Receiver.tsx — it's a flat gap-6→gap-10 bump on the one outer wrapper.
-    <div className="flex flex-col gap-10 max-w-5xl">
+    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
+    // machen?"): the gap here was already the correct 40px from the earlier
+    // "Im Fleet Tab ist die Card zu weit oben" round; only the width changes,
+    // max-w-5xl (1024px) → the shared 1152px. This page's heading is a single
+    // bare h1+p row, so the one flat shell gap still governs every gap on it.
+    // See lib/pageShell.ts for the full before/after table.
+    <div className={PAGE_SHELL}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-carbon-text">{t("fleet.title")}</h1>

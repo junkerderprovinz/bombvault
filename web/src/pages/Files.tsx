@@ -29,6 +29,7 @@ import {
 } from "../lib/api";
 import type { FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { DEFAULT_RESTORE_FOLDER } from "../components/RestorePanel";
@@ -1390,7 +1391,12 @@ export function Files() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
+    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
+    // machen?"): was `gap-6 max-w-5xl` — the third page carrying that same
+    // off-standard pair, alongside Containers and VMs. Flat 40px, same
+    // reasoning as Containers: this page's "Alle jetzt sichern" action row is
+    // a sibling of the heading, not part of it. See lib/pageShell.ts.
+    <div className={PAGE_SHELL}>
       {/* Page heading + Discover (disaster-recovery) + Add actions */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
