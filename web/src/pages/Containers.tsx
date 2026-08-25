@@ -840,7 +840,15 @@ function StopContainersEditor({
 }) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initial));
   const [pickerOpen, setPickerOpen] = useState(false);
-  const pickerRef = useRef<HTMLDivElement>(null);
+  // The BUTTON itself, not its wrapper: DropdownListbox sizes the portalled
+  // panel to whatever this ref measures, and the wrapper below is a flex
+  // ITEM of this editor's `flex flex-col` box — `inline-block` gets
+  // blockified and stretched to the card's full content width there, so
+  // measuring the wrapper handed the panel a ~970px width instead of the
+  // button's own 256px (caught by measuring it live, not by reading the
+  // markup). It also keeps the outside-click exemption tight: only the
+  // button is exempt, which is all that needs to be.
+  const pickerRef = useRef<HTMLButtonElement>(null);
   const { push } = useToast();
   // Live-save conversion (jdp, live review — see HooksEditor's own header
   // comment for the full "why" across all four editors): each listbox row is
@@ -936,8 +944,9 @@ function StopContainersEditor({
           value-holding input/picker. This editor's own former Save badge is
           gone entirely (live-save conversion, see this component's own
           top-level comment) — every row below now persists itself. */}
-      <div className="relative inline-block" ref={pickerRef}>
+      <div className="inline-block">
         <button
+          ref={pickerRef}
           type="button"
           aria-haspopup="listbox"
           aria-expanded={pickerOpen}
