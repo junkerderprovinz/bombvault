@@ -11,6 +11,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
+import { Selector } from "../components/Selector";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -21,6 +22,8 @@ import {
   discoverAll,
   getSettings,
   putSettings,
+  getCloud,
+  getRclone,
   listContainers,
   listVMs,
   listFileSets,
@@ -994,6 +997,123 @@ function ForeignRestoreCard({
   );
 }
 
+// ---------------------------------------------------------------------------
+// CloudCredsDisclosure — step 3's optional cloud/rclone credential cards,
+// behind one expander.
+//
+// WHY A DISCLOSURE (jdp: "Der Abschnitt von Cloud-Zugangsdaten (S3 / restic
+// REST) und Off-site (rclone): brauchen wir die immer oder sind die optional?
+// Können wir die in einen Ein-/Aufklapp-Button verstecken wenn sie optional
+// sind?"). They are optional, confirmed against the backend rather than
+// assumed: CloudCard's fields become nothing but env vars for the restic
+// child process (internal/api/service.go's `cloudEnv`, which emits only the
+// non-empty ones — AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/AWS_DEFAULT_REGION
+// /RESTIC_REST_USERNAME/RESTIC_REST_PASSWORD), and restic reads none of them
+// for a repo that is a plain filesystem path. RcloneCard's config is written
+// to DataDir/rclone.conf and only ever consulted for a repo carrying the
+// `rclone:` prefix. So a user whose backups live on a local path under the
+// host mount, or on a share already mounted on Unraid, needs neither card —
+// which is exactly what rclone.hint already tells them in words ("SMB/NFS
+// need no rclone: mount the share on Unraid and set a Backup Path to it").
+// Two large credential forms permanently open in the middle of the step is a
+// lot of screen for something most installs never fill in.
+//
+// THE TRIGGER is a `Selector` in `select="many"` mode — the mechanism this app
+// already uses for disclosure sections (Containers.tsx's per-container
+// Ordner/Stoppen/Ausschlussmuster/Hooks/Backups chip row, whose `openSections`
+// is a Set for the same "these open independently, this is not a tablist"
+// reason). One chip here rather than five, but the same component, the same
+// `aria-pressed` state and the same "chip on = its pane below is open"
+// reading, instead of a second, bespoke expander idiom.
+//   `hue={false}`, deliberately: Selector otherwise gives each item its OWN
+// rainbow position by list index, which for a lone chip means position 0 — a
+// red chip sitting inside step 3's yellow card. Turning its own hueing off
+// does NOT take it out of the colour engine: the chip still paints
+// `bg-accent`/`text-accentContrast` when active, and --accent under it comes
+// from the StepCard's own `.glim-hue`, so it carries THIS STEP's hue exactly
+// like every other button in the step body (Connect & preview, Discover, …)
+// and follows rainbow/reactive mode with them. That is the "genuine singleton
+// keeps its container's accent" case design-language carves out, not an
+// exemption from the engine.
+//
+// OPEN BY DEFAULT WHEN CREDENTIALS ALREADY EXIST: someone who needs these is
+// not made to hunt for them. `configured` probes the same two endpoints the
+// cards themselves read (getCloud/getRclone) — the GETs return set-flags, not
+// secrets, so this can tell "something is stored" without ever handling one.
+// While the probe is in flight `open` stays null and the pane renders closed;
+// it can only open itself once, on the probe's answer, and never fights a
+// user who has clicked in the meantime (`setOpen((o) => (o === null ? … : o))`).
+// ---------------------------------------------------------------------------
+function CloudCredsDisclosure({
+  t,
+  cloudHue,
+  rcloneHue,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  /** The two rainbow positions the cards used to take inline. Passed in (and
+   *  therefore evaluated by the caller's own `nextHue()` at exactly the point
+   *  in the JSX where these cards used to sit) so that COLLAPSING this section
+   *  does not renumber the rest of the page: `nextHue()` is a running counter
+   *  consumed in JSX evaluation order, so calling it inside a `{open && …}`
+   *  branch would shift every heading after step 3 by two positions the moment
+   *  the section closed. Props evaluate unconditionally; the cards they colour
+   *  do not. */
+  cloudHue: number;
+  rcloneHue: number;
+}) {
+  const [open, setOpen] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void Promise.all([
+      getCloud().catch(() => null),
+      getRclone().catch(() => null),
+    ]).then(([cloud, rclone]) => {
+      if (!alive) return;
+      const configured =
+        !!cloud?.ok &&
+          (!!cloud.s3KeyId || !!cloud.s3Region || !!cloud.restUser || !!cloud.s3SecretSet || !!cloud.restPasswordSet)
+        ? true
+        : !!rclone?.ok && (rclone.remotes?.length ?? 0) > 0;
+      setOpen((o) => (o === null ? configured : o));
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const isOpen = open === true;
+  return (
+    // pt-3 on top of the step body's own gap-2, so the chip clears the
+    // encryption toggle above it — see this call site's own comment in step 3.
+    <div className="pt-3 flex flex-col gap-8">
+      <Selector
+        items={[{ id: "creds", label: t("recovery.cloudCreds"), tip: t("recovery.cloudCredsHint") }]}
+        label={t("recovery.cloudCreds")}
+        select="many"
+        hue={false}
+        active={isOpen ? OPEN_CREDS : NO_CREDS}
+        onChange={() => setOpen(!isOpen)}
+      />
+      {isOpen && (
+        <>
+          {/* `nested` — these are the Settings page's own Cards rendered inside
+              a card, so they drop their (identical-to-the-parent) surface and
+              their horizontal padding and line up on the step's own content
+              edge. See Card's `nested` doc in Settings.tsx for the measured
+              20px indent this removes. */}
+          <CloudCard t={t} hueIndex={cloudHue} nested />
+          <RcloneCard t={t} hueIndex={rcloneHue} nested />
+        </>
+      )}
+    </div>
+  );
+}
+// Two frozen Sets rather than a `new Set([...])` per render: Selector takes a
+// ReadonlySet and there are only ever two possible values here.
+const OPEN_CREDS: ReadonlySet<string> = new Set(["creds"]);
+const NO_CREDS: ReadonlySet<string> = new Set<string>();
+
 export default function Recovery() {
   const { t } = useT();
   const { confirm, confirmDialog } = useConfirm();
@@ -1662,10 +1782,28 @@ export default function Recovery() {
               </div>
             ))}
 
-            {/* Encryption on/off (reuses the Settings ToggleRow). */}
+            {/* Encryption on/off (reuses the Settings ToggleRow).
+                jdp, live review: "Card 3: Passworttoggle soll 'Passwort'
+                heissen und 'Passwort aus APP_KEY' soll in eine i Infobubble."
+                The row used to render settings.encryptionOn/Off as its LABEL,
+                so the caption itself changed text with the switch ("Aktiviert
+                (Passwort aus APP_KEY)" / "Deaktiviert (kein Passwort)") —
+                the one ToggleRow in the app whose label was a status readout
+                rather than a name. It is now a plain static caption like every
+                other row's, with the switch carrying on/off on its own.
+                  NOTHING IS LOST by that, which is the reason the state string
+                moved into the bubble instead of being dropped: those two
+                strings say more than "on"/"off" (WHERE the password comes
+                from when on, that there is none when off), and that extra
+                sentence is exactly bubble content. Read per render off the
+                live `settings.encryptionEnabled`, so the (i) still answers "is
+                it on right now, and what does that mean" concretely — the same
+                shape Settings.tsx's own copy of this row already uses for the
+                same value. */}
             <div className="pt-1">
               <ToggleRow
-                label={
+                label={t("settings.encryptionLabel")}
+                hint={
                   settings.encryptionEnabled
                     ? t("settings.encryptionOn")
                     : t("settings.encryptionOff")
@@ -1676,13 +1814,27 @@ export default function Recovery() {
             </div>
 
             {/* Cloud + rclone credential cards — the exact Settings components,
-                self-persisting via setCloud/setRclone (no duplicate persistence).
-                hueIndex={nextHue()} (GlimStone follow-up pass, jdp's standing
-                rule): both already accept the prop — Settings.tsx's offsite
-                tab passes it to these SAME exported components the identical
-                way — so this was a drop-in fix, not new plumbing. */}
-            <CloudCard t={t} hueIndex={nextHue()} />
-            <RcloneCard t={t} hueIndex={nextHue()} />
+                self-persisting via setCloud/setRclone (no duplicate persistence)
+                — now behind one expander, because they are optional for most
+                installs. See CloudCredsDisclosure above for the whole "why a
+                disclosure / why this trigger / why open-when-configured"
+                writeup, and for why the two `nextHue()` calls stay HERE, at
+                this exact point in the JSX, instead of moving inside the
+                collapsed branch (a conditional nextHue() would renumber every
+                heading below step 3 whenever the section is closed).
+                  SPACING (jdp: "Der darunter folgende Badge ist zu nah am
+                Passworttoggle-Text"): measured live before this change, the
+                CloudCard heading notch's top edge sat at y=1189 while the
+                toggle label's bottom sat at y=1190 — a NEGATIVE 1px gap, the
+                badge literally overlapping the text. The DOM gap looked fine
+                (8px, the step body's own gap-2) and that is exactly the trap:
+                a notch badge is centred ON its card's top edge, so it eats
+                half its own height (11px) out of whatever gap precedes it.
+                8 - 11 = -3. The disclosure wrapper adds `pt-3` on top of the
+                body gap, and its own `gap-8` sits between the chip and the
+                first card's edge, so both badge gaps land ~20px clear — see
+                that component. */}
+            <CloudCredsDisclosure t={t} cloudHue={nextHue()} rcloneHue={nextHue()} />
 
             {/* Connect & preview — save paths/off-site/encryption, then re-check.
                 (The "credentials save via each card's own Save button" note that

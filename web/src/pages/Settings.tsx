@@ -168,6 +168,7 @@ function Card({
   hint,
   children,
   hueIndex,
+  nested,
 }: {
   /** GlimStone follow-up pass (live-review, "Bei allen Zeitplanpicker Cards
    *  soll der Name raus... das ist redundant"): optional, not required —
@@ -205,6 +206,32 @@ function Card({
    *  why a shared counter, not per-tab hand-counted literals, is what keeps
    *  ~50 Card call sites across seven tabs correctly numbered. */
   hueIndex?: number;
+  /** This Card is being rendered INSIDE another card that already provides
+   *  the surface and the padding — drop both of mine.
+   *
+   *  Two of this file's exported Cards (CloudCard, RcloneCard) are reused
+   *  verbatim inside Recovery's step 3, where the step is itself a `p-4`
+   *  `bg-carbon-surface` card. Stacked, that produced a card-inside-a-card
+   *  whose background was the LITERAL SAME token as its parent's — invisible
+   *  as a card, but very visible as 20px of unexplained indentation: measured
+   *  live, the step's own heading notch and its FolderBrowser labels sat at
+   *  x=264 while these two cards' notches and fields sat at x=284. jdp, live
+   *  review: "Jetzt ist der ganze Bereich auch zu weit rechts angeordnet."
+   *
+   *  `nested` drops `bg-carbon-surface` (it was painting the parent's own
+   *  colour over the parent) and drops the horizontal padding (it was pure
+   *  indentation with no visible edge to justify it), so everything lines up
+   *  on the parent's content edge. It keeps `pt-5` — the same top padding
+   *  `p-5` gave — because that space is not decoration: the heading notch
+   *  straddles this box's top edge and pokes half its height DOWN into it, so
+   *  removing it would drop the badge straight onto the first field. It keeps
+   *  `relative` (the notch resolves against this box), `glim-notch-card` (the
+   *  reactive card-wide hover zone) and the whole hue wiring untouched.
+   *
+   *  Default false: every one of this file's own ~50 Card call sites is a
+   *  real, top-level card on the page ground and keeps its surface and its
+   *  padding exactly as before. */
+  nested?: boolean;
 }) {
   return (
     // GlimStone follow-up pass (live-review round, "half-overlap card
@@ -259,9 +286,9 @@ function Card({
     // (same hueIndex, same computed colour, purely redundant), a genuine fix
     // wherever one didn't.
     <div
-      className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-4${
-        hueIndex !== undefined ? " glim-hue" : ""
-      }`}
+      className={`relative glim-notch-card flex flex-col gap-4 ${
+        nested ? "pt-5" : "bg-carbon-surface rounded-card p-5"
+      }${hueIndex !== undefined ? " glim-hue" : ""}`}
       style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
     >
       {/* Task 5 (design-language.md rule 11, "every heading is a filled
@@ -2698,7 +2725,17 @@ function FleetSettingsCard({
 // multi-step DRAFT of something not meant to take effect until deliberately
 // applied" exception named in the sweep's own criteria — it's the one
 // genuine case of that shape actually present in this file.
-export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+export function RcloneCard({
+  t,
+  hueIndex,
+  nested,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
+  /** Passed straight through to Card — see its own `nested` doc. Set by
+   *  Recovery's step 3, which renders this Card inside its own step card. */
+  nested?: boolean;
+}) {
   const { push } = useToast();
   const [remotes, setRemotes] = useState<string[]>([]);
   const [conf, setConf] = useState("");
@@ -2747,7 +2784,7 @@ export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; h
   }
 
   return (
-    <Card title={t("rclone.title")} hint={t("rclone.hint")} hueIndex={hueIndex}>
+    <Card title={t("rclone.title")} hint={t("rclone.hint")} hueIndex={hueIndex} nested={nested}>
       <div className="text-sm text-carbon-text">
         {t("rclone.configured")}:{" "}
         <span dir="ltr" className="font-mono text-start">{remotes.length > 0 ? remotes.join(", ") : "—"}</span>
@@ -2790,7 +2827,17 @@ export function RcloneCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; h
 // CloudCard stores credentials for off-site restic backends (S3 + restic REST),
 // kept encrypted. Secrets are write-only: blank on load, blank-on-save keeps the
 // stored value. Field labels are restic's actual env var names (self-documenting).
-export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+export function CloudCard({
+  t,
+  hueIndex,
+  nested,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
+  /** Passed straight through to Card — see its own `nested` doc. Set by
+   *  Recovery's step 3, which renders this Card inside its own step card. */
+  nested?: boolean;
+}) {
   const { push } = useToast();
   const [c, setC] = useState({ s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
   const [secretSet, setSecretSet] = useState(false);
@@ -2889,7 +2936,7 @@ export function CloudCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   const fieldCls = "flex flex-col gap-1 text-xs font-mono text-carbon-textSub";
 
   return (
-    <Card title={t("cloud.title")} hueIndex={hueIndex}>
+    <Card title={t("cloud.title")} hueIndex={hueIndex} nested={nested}>
       {/* GlimStone follow-up pass (Phase 2 Task 4's remainder): stays permanent
           text, NOT bubbled — it is the only complete reference for all four
           remote-URL prefixes this card's credentials unlock (s3:/rest:/b2:/
