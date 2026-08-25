@@ -5184,9 +5184,6 @@ function RestoreChecksSection({
           disabled={!settings.drillsEnabled}
           onChange={(v) => update({ drillsSchedule: v })}
           hueIndex={hueIndex}
-          // The backend rejects everyN for the drill schedule (#166) — see
-          // CadenceBuilder's own `allowEveryN` doc.
-          allowEveryN={false}
         />
       </div>
       <label className="flex flex-col gap-1 max-w-40">
@@ -8333,9 +8330,6 @@ export function SettingsPage() {
                   );
                 }}
                 hueIndex={hueIdx}
-                // The backend rejects everyN for the digest schedule (#166) —
-                // see CadenceBuilder's own `allowEveryN` doc.
-                allowEveryN={false}
               />
             </div>
           </Card>
@@ -8469,9 +8463,6 @@ export function SettingsPage() {
                   value={settings.tamperTestSchedule}
                   onChange={(v) => scheduleField("tamperTestSchedule", v)}
                   hueIndex={hueIdx}
-                  // The backend rejects everyN for the tamper-test schedule
-                  // (#166) — see CadenceBuilder's own `allowEveryN` doc.
-                  allowEveryN={false}
                 />
                 {/* #109: the scheduler stays inert without a qualifying domain — this
                     is the only place that told manilx why Sun 08:00 never ran. */}
