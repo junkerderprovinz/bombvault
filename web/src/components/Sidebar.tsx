@@ -509,31 +509,20 @@ export function IconBackupNow() {
   );
 }
 
-// Plain save-disk glyph — deliberately NOT a reuse of IconBackupNow above
-// (Containers.tsx icon-badge round, standing rule: "IconBackupNow is a
-// distinct 'backup now' concept, not 'save this form'" — the arrow cut into
-// IconBackupNow's disk reads as "data landing in the vault right now", which
-// is wrong for a plain form-save action like "Ordner speichern"/"Andere
-// Container stoppen speichern"/"Ausschlüsse speichern"/"Backup-Hooks
-// speichern"). Shares IconBackupNow's outer disk silhouette (the same top
-// shutter band + rounded-bottom body, so the two read as the same "floppy
-// disk" family at a glance) but punches a plain rectangular label window
-// instead of an arrow — the conventional, motif-free "save" glyph. Same
-// evenodd true-hole technique IconBackupNow/IconCheckCircle already use, at
-// this file's own 16×16 icon-only-badge scale.
-export function IconSave() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <rect x="3.2" y="1.6" width="9.6" height="2.3" rx="0.7" />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M2.8 4.6h10.4v9.2a1.3 1.3 0 0 1-1.3 1.3H4.1a1.3 1.3 0 0 1-1.3-1.3Z
-           M6.1 8.6h3.8v3.9H6.1Z"
-      />
-    </svg>
-  );
-}
+// IconSave (plain save-disk glyph, distinct from IconBackupNow's arrowed
+// disk) REMOVED — its only callers were Containers.tsx's four disclosure-
+// panel editors (FoldersEditor/StopContainersEditor/ExcludesEditor/
+// HooksEditor), each of which used it purely for an explicit "Speichern"
+// icon-badge button. Live-save conversion (jdp, live review: "Brauchen wir
+// die Speichern-Buttons in den Aufklappcards überhaupt? Es soll doch immer
+// live speichern.") removed every one of those buttons — each editor now
+// auto-saves instead (see HooksEditor's own header comment in Containers.tsx
+// for the full writeup) — leaving this glyph with zero remaining call sites,
+// so it goes too rather than lingering as dead code. (It was also the
+// specific glyph jdp flagged as illegible at render size — moot now that
+// nothing renders it, but if a genuine "explicit save/commit" button ever
+// returns to this app, redraw fresh rather than reviving this one: the flat
+// disk-with-rectangular-window silhouette was the reported problem.)
 
 // Circular "restore" arrow, at this file's own 16×16 icon-only-badge scale —
 // the SAME filled-ring-segment + arrowhead construction as this file's own
