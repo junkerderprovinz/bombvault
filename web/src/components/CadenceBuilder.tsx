@@ -416,13 +416,30 @@ export function CadenceBuilder({
         />
       )}
 
-      {/* Preview — human-readable, localized (e.g. "jeden 3. Tag um 4:00 Uhr").
-          Cron renders its own richer preview inside CronEditor. */}
-      {state.mode !== "off" && state.mode !== "cron" && (
-        <p className="text-xs text-carbon-textSub group-disabled:opacity-50">
-          {formatCadence(buildCadenceString(state), t, lang)}
-        </p>
-      )}
+      {/* The plain one-line preview that used to sit here is GONE (jdp,
+          live-review, with a screenshot of a schedule card showing the green
+          badge "Täglich um 02:00" above the card and the line "täglich um
+          2:00 Uhr" inside it: "Bei den ganzen Zeitplänen den Text in der
+          Auswahlcard entfernen. Das wird ja über der Card schon als grüner
+          Badge angezeigt. Ist redundant.").
+            It said the same thing as the resolved-schedule badge above the
+          card, only in the sentence-cased prose grammar (`formatCadence`)
+          instead of the badge's short one (`cadenceLabel`) — two renderings
+          of one value, ~40px apart.
+            Deleting it here is only correct because EVERY call site now has
+          that badge: the four domain Cards and Selbst-Backup already did;
+          Restore-Prüfungen, Wochenbericht and Wiederherstellungs-Prüfplan had
+          nothing above them and got one this round; ItemScheduleOverride's own
+          plain-text summary became the same badge. See ScheduleBadge.tsx
+          (ScheduleRow) — the row is one shared component now precisely so a
+          future cadence editor can't be added without it and quietly lose the
+          only place its resolved schedule was shown.
+            CRON KEEPS ITS OWN PREVIEW, deliberately: CronEditor's "next
+          fires" list below shows upcoming fire TIMES ("24 Jul 2026, 18:00,
+          …"), which no badge anywhere renders — genuinely more information,
+          not a second copy of the same string. That is why this removal was
+          scoped to the non-cron branch's paragraph only, and why `lang` is
+          still threaded down into CronEditor. */}
     </fieldset>
   );
 }

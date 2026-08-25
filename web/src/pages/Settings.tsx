@@ -13,7 +13,8 @@ import { CadenceBuilder } from "../components/CadenceBuilder";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
 import { CheckDraw } from "../components/CheckDraw";
-import { Badge, type BadgeTone } from "../components/Badge";
+import { Badge } from "../components/Badge";
+import { ScheduleRow, scheduleStatus } from "../components/ScheduleBadge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { useConfirm } from "../lib/useConfirm";
@@ -4653,50 +4654,15 @@ function IntegrityCard({
 // ---------------------------------------------------------------------------
 
 /** Convert a cadence string to a human-readable label. */
-function cadenceLabel(raw: string, t: ReturnType<typeof useT>["t"]): string {
-  const s = (raw ?? "").trim();
-  if (!s || s === "off") return t("jobs.notScheduled");
-
-  const dailyM = /^daily\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (dailyM) return t("jobs.cadenceDaily").replace("{time}", dailyM[1]);
-
-  const weeklyM = /^weekly\s+([\w,]+)\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (weeklyM) return t("jobs.cadenceWeekly").replace("{days}", weeklyM[1]).replace("{time}", weeklyM[2]);
-
-  const everyNM = /^everyN\s+(\d+)\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (everyNM) return t("jobs.cadenceEveryN").replace("{n}", everyNM[1]).replace("{time}", everyNM[2]);
-
-  return s;
-}
-
-type ScheduleStatus = "active" | "paused" | "off";
-
-function scheduleStatus(schedule: string): ScheduleStatus {
-  if (!schedule || schedule === "off") return "off";
-  return "active";
-}
-
-// ScheduleBadge → Badge tone mapping (GlimStone form-engine Task 5 follow-up):
-// this was its own hand-rolled `px-2 py-0.5 rounded-control text-xs
-// font-medium` + tone-lookup pair, byte-for-byte the same shape the shared
-// Badge component now owns — a 6th duplicate the migration's audit found
-// alongside the five named in the plan. active/paused/off map onto Badge's
-// ok/warn/neutral tones (the only three a schedule status ever needs).
-const SCHEDULE_BADGE_TONE: Record<ScheduleStatus, BadgeTone> = {
-  active: "ok",
-  paused: "warn",
-  off: "neutral",
-};
-
-function ScheduleBadge({
-  status,
-  label,
-}: {
-  status: ScheduleStatus;
-  label: string;
-}) {
-  return <Badge tone={SCHEDULE_BADGE_TONE[status]}>{label}</Badge>;
-}
+// cadenceLabel / ScheduleStatus / scheduleStatus / SCHEDULE_BADGE_TONE /
+// ScheduleBadge all MOVED to components/ScheduleBadge.tsx this round, verbatim
+// — plus a new `ScheduleRow` that owns the "Zeitplan: [badge]" line the four
+// domain Cards and Selbst-Backup each used to hand-roll below. See that file's
+// own header for why (CadenceBuilder's redundant inline preview could only be
+// deleted once EVERY cadence editor was guaranteed to show its resolved
+// schedule above, and ItemScheduleOverride needed the badge too — which an
+// export from this file could not give it without an import cycle, since this
+// file already imports ItemScheduleOverride).
 
 // Domain section — Containers (editable schedule + included-containers list)
 function ContainersSection({
@@ -4716,7 +4682,6 @@ function ContainersSection({
   hueIndex?: number;
 }) {
   const schedule = settings.containersSchedule;
-  const status = scheduleStatus(schedule);
   // Exclude BombVault's own container: it can never be backed up, so it must
   // never appear as a schedule member even if a stale flag lingers on its row.
   const included = containers.filter((c) => c.installed && c.includeInSchedule && !c.self);
@@ -4733,17 +4698,7 @@ function ContainersSection({
     // every other title+hint Card in this file already composes both.
     <Card title={t("jobs.containersSection")} hint={t("containers.scheduleHint")} hueIndex={hueIndex}>
       {/* Cadence row */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
-        <ScheduleBadge
-          status={status}
-          label={
-            status === "off"
-              ? t("jobs.notScheduled")
-              : cadenceLabel(schedule, t)
-          }
-        />
-      </div>
+      <ScheduleRow schedule={schedule} />
 
       {/* Editable cadence builder. `hueIndex` passed straight through — the
           SAME position this Card's own heading notch already got above, not
@@ -4819,24 +4774,13 @@ function VMsSection({
   hueIndex?: number;
 }) {
   const schedule = syncSchedules ? settings.containersSchedule : settings.vmsSchedule;
-  const status = scheduleStatus(schedule);
   const included = vms.filter((v) => v.includeInSchedule);
 
   return (
     // See ContainersSection's own comment above — `title` restored, same
     // Task 3 `hueIndex` threaded into CadenceBuilder below.
     <Card title={t("jobs.vmsSection")} hint={t("jobs.vmIncludeHint")} hueIndex={hueIndex}>
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
-        <ScheduleBadge
-          status={status}
-          label={
-            status === "off"
-              ? t("jobs.notScheduled")
-              : cadenceLabel(schedule, t)
-          }
-        />
-      </div>
+      <ScheduleRow schedule={schedule} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.vmsSection")}
@@ -4896,7 +4840,6 @@ function FlashSection({
   hueIndex?: number;
 }) {
   const schedule = syncSchedules ? settings.containersSchedule : settings.flashSchedule;
-  const status = scheduleStatus(schedule);
 
   return (
     // See ContainersSection's own comment above — `title` restored
@@ -4906,17 +4849,7 @@ function FlashSection({
     // than explaining a list). Same Task 3 `hueIndex` threaded into
     // CadenceBuilder below.
     <Card title={t("jobs.flashSection")} hint={t("jobs.flashScheduleHint")} hueIndex={hueIndex}>
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
-        <ScheduleBadge
-          status={status}
-          label={
-            status === "off"
-              ? t("jobs.notScheduled")
-              : cadenceLabel(schedule, t)
-          }
-        />
-      </div>
+      <ScheduleRow schedule={schedule} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.flashSection")}
@@ -4984,7 +4917,6 @@ function FilesSection({
 }) {
   const { push } = useToast();
   const schedule = syncSchedules ? settings.containersSchedule : settings.filesSchedule;
-  const status = scheduleStatus(schedule);
   // Per-set toggle busy state, keyed by set id.
   const [busy, setBusy] = useState<Record<string, boolean>>({});
 
@@ -5008,17 +4940,7 @@ function FilesSection({
     // See ContainersSection's own comment above — `title` restored, same
     // Task 3 `hueIndex` threaded into CadenceBuilder below.
     <Card title={t("jobs.filesSection")} hint={t("jobs.filesIncludeHint")} hueIndex={hueIndex}>
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
-        <ScheduleBadge
-          status={status}
-          label={
-            status === "off"
-              ? t("jobs.notScheduled")
-              : cadenceLabel(schedule, t)
-          }
-        />
-      </div>
+      <ScheduleRow schedule={schedule} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("jobs.filesSection")}
@@ -5134,6 +5056,15 @@ function RestoreChecksSection({
         shakeNonce={shake?.offsiteDrillsEnabled}
         pulseNonce={pulse?.offsiteDrillsEnabled}
       />
+      {/* Resolved-schedule badge — NEW this round. This Card was one of the
+          three cadence editors with nothing above it, so CadenceBuilder's own
+          inline preview paragraph was the only place its resolved schedule
+          was shown; deleting that paragraph (see CadenceBuilder.tsx) without
+          adding this row would have lost information rather than removed a
+          duplicate. `enabled` is wired to `drillsEnabled` because THIS card's
+          on/off lives in a separate toggle rather than in the cadence string's
+          own "off" mode — see ScheduleRow's own `enabled` doc. */}
+      <ScheduleRow schedule={settings.drillsSchedule} enabled={settings.drillsEnabled} />
       {/* `hueIndex` passed straight through to the TimePicker inside (Task 3
           fix) — the SAME position as this Card's own heading notch above. */}
       <div className="rounded-card bg-carbon-surface2 p-4">
@@ -6891,17 +6822,7 @@ export function SettingsPage() {
                   shakeNonce={configScheduleToggleShake}
                   pulseNonce={fieldPulse.configSchedule}
                 />
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-xs text-carbon-textMuted">{t("settings.schedule")}:</span>
-                  <ScheduleBadge
-                    status={status}
-                    label={
-                      status === "off"
-                        ? t("jobs.notScheduled")
-                        : cadenceLabel(schedule, t)
-                    }
-                  />
-                </div>
+                <ScheduleRow schedule={schedule} />
                 <div className="rounded-card bg-carbon-surface2 p-4">
                   <CadenceBuilder
                     label={t("settings.schedulesSelfBackup")}
@@ -8214,6 +8135,14 @@ export function SettingsPage() {
               shakeNonce={fieldShake.digestEnabled}
               pulseNonce={fieldPulse.digestEnabled}
             />
+            {/* Resolved-schedule badge — NEW this round, same reason as
+                RestoreChecksSection's (see that call site's own comment):
+                this was the second of the three cadence editors that had no
+                badge above them and relied on CadenceBuilder's own inline
+                preview, now removed. `enabled` wired to `digestEnabled` for
+                the same reason — the on/off is a separate toggle here, not
+                the cadence string's own "off" mode. */}
+            <ScheduleRow schedule={settings.digestSchedule} enabled={settings.digestEnabled} />
             <div className="rounded-card bg-carbon-surface2 p-4">
               <CadenceBuilder
                 label={t("settings.schedule")}
@@ -8337,6 +8266,22 @@ export function SettingsPage() {
           const hueIdx = nextHue();
           return (
             <Card title={t("settings.schedulesChecks")} hueIndex={hueIdx}>
+              {/* Resolved-schedule badge — NEW this round, the third and last
+                  cadence editor that had none (see RestoreChecksSection's own
+                  comment for why CadenceBuilder's inline preview could only be
+                  deleted once all three had one). NO `enabled` prop here,
+                  unlike the other two: this Card has no on/off toggle of its
+                  own — the cadence string's own "off" mode IS the control, the
+                  same shape the four domain Cards use. The separate
+                  `tamperScheduleActive` precondition below is deliberately NOT
+                  folded into the badge: it isn't this card's own on/off but a
+                  cross-cutting "no qualifying domain configured" state, and it
+                  already has its own explicit amber explanation right beneath
+                  (#109 — the one place that told manilx why Sun 08:00 never
+                  ran). Restating it as a grey "Kein Zeitplan" badge would
+                  contradict the cadence the user can plainly see set in the
+                  editor. */}
+              <ScheduleRow schedule={settings.tamperTestSchedule} />
               <div className="rounded-card bg-carbon-surface2 p-4">
                 <CadenceBuilder
                   label={t("settings.tamperTestSchedule")}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
 import { CadenceBuilder, formatCadence } from "./CadenceBuilder";
 import { Badge } from "./Badge";
+import { ScheduleBadge } from "./ScheduleBadge";
 import { useToast } from "../lib/toast";
 
 // ---------------------------------------------------------------------------
@@ -93,9 +94,22 @@ export function ItemScheduleOverride({
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("schedule.overrideTitle")}:</span>
-        <span className={`text-xs ${active ? "text-carbon-textSub" : "text-carbon-textMuted italic"}`}>
-          {summary}
-        </span>
+        {/* The resolved override is a real ScheduleBadge now (jdp, live-review
+            on the schedule cards: the cadence preview inside a CadenceBuilder
+            is redundant with the badge above it — see CadenceBuilder.tsx and
+            ScheduleBadge.tsx). This row already showed the resolved schedule,
+            but as plain text with an italic/muted variant of its own, so it
+            was the one cadence editor in the app whose summary did NOT look
+            like every other cadence editor's summary. Same
+            active-green/off-neutral pair the domain Cards' rows use.
+              The LABEL stays `formatCadence` (CadenceBuilder's prose grammar),
+            NOT the badge grammar `cadenceLabel` the ScheduleRow sites use: the
+            inactive case here is not "Kein Zeitplan" but a specific sentence,
+            "folgt dem Domain-Zeitplan" (schedule.overrideUsesDefault) — a
+            per-item override that is absent means it INHERITS, which is a
+            different statement from "nothing is scheduled", and swapping in
+            the generic label would have destroyed exactly that distinction. */}
+        <ScheduleBadge status={active ? "active" : "off"} label={summary} />
         {/* Task 5 (rule 13): was a plain underlined text button. */}
         <Badge as="button" onClick={() => setOpen((o) => !o)} tone="neutral" size="small">
           {open ? t("common.close") : t("schedule.overrideEdit")}
