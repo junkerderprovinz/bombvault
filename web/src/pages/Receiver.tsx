@@ -471,9 +471,19 @@ function ReceiverDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
 
+  // `items-center` — the third and last of the three sites Files.tsx's own
+  // FileSetDialog comment recorded as "same fix still owed" when that round
+  // scoped itself to the Ordner tab (Fleet.tsx's two dialogs are the other
+  // two, fixed in the same pass as this). Top-anchored, the heading Badge
+  // poked to within a few px of the browser-viewport edge instead of
+  // straddling the card with any breathing room. Safe for the identical
+  // reason it is safe in every other dialog in this app: the box below is
+  // capped at `max-h-[90vh]`, strictly under the 100vh flex container, so a
+  // centred item's top offset is always positive, and this backdrop's own
+  // `overflow-y-auto` still covers content that grows toward the cap.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
     >
       {/* GlimStone follow-up pass ("half-overlap card notch"): the dialog box
