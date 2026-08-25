@@ -347,19 +347,19 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     }
   });
 
-  it("equalWidth is ignored under variant=\"well\" (already always equal-width) — no double-application, no crash", () => {
+  it("equalWidth is what turns a \"well\" strip into the BIG scale — pinned width AND the fixed --badge-md height (round 8: it is no longer ignored there)", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth variant="well" />
     );
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    // Still just the well segment's own single flex-none + fixed well height,
-    // not a second/duplicate class or the chip's per-stage `stretch` classes
-    // leaking in (jdp's live-review correction, task 1 follow-up: "well" now
-    // pins to a MEASURED width via `pinWidth`, same as `equalWidth`'s own
-    // mechanism, not a `flex-1` share — see Selector.tsx's own `pinWidth` doc).
+    // One flex-none + the fixed well height, not a second/duplicate class or
+    // a `flex-1` share (jdp's live-review correction, task 1 follow-up: a
+    // pinned strip pins to a MEASURED width via `pinWidth`, never flex-grow —
+    // see Selector.tsx's own `pinWidth` doc).
     expect(tab.className).toContain("flex-none");
     expect(tab.className).not.toContain("flex-1");
     expect(tab.className).toContain("h-[var(--badge-md)]");
+    expect(tab.className).toContain("justify-center");
   });
 
   it("keyboard navigation is unregressed under equalWidth", () => {
@@ -391,85 +391,175 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
   });
 });
 
-describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's shape picker)", () => {
-  it("default variant (\"chip\") renders none of the well track's wrapper/segment classes", () => {
+// ---------------------------------------------------------------------------
+// variant="well" — the app's ONE grooved horizontal selector, at both scales.
+//
+// Round 7 had shipped a SECOND grooved variant ("track") for the compact,
+// repeated-per-card selectors, whose one deliberate difference was that its
+// idle segments each carried their own visible fill. jdp reversed exactly
+// that in round 8 ("Die kleinen Selektoren sollen so aussehen wie die
+// grossen! Die nicht ausgewaehlten Optionen sollen kein Badge sein"), which
+// left the two variants differing only in the pinned-width/height bundle —
+// i.e. in the `equalWidth` prop that already existed. So "track" is gone and
+// `equalWidth` is now the pinning knob for both variants; these tests cover
+// the two scales of the one variant, and specifically the invariants that
+// stop them drifting apart again.
+// ---------------------------------------------------------------------------
+describe("Selector — variant=\"well\", shared by both scales", () => {
+  it("default variant (\"chip\") renders none of the groove's wrapper/segment classes", () => {
     render(<OneOfThree />);
-    expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface2");
+    expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface3");
+    expect(screen.getByRole("tablist").className).not.toContain("w-fit");
     const tab = screen.getByRole("tab", { name: "Alpha" });
     expect(tab.className).not.toContain("flex-1");
     expect(tab.className).not.toContain("--badge-md");
+    expect(tab.className).not.toContain("bg-transparent");
   });
 
-  it("the strip itself becomes the padded well track: shared background, well gap/padding, no flex-wrap", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
-    const list = screen.getByRole("tablist");
-    expect(list.className).toContain("bg-carbon-surface2");
-    expect(list.className).toContain("rounded-control");
-    expect(list.className).toContain("gap-[0.2rem]");
-    expect(list.className).toContain("p-[0.2rem]");
-    expect(list.className).not.toContain("flex-wrap");
+  // The groove has to differ from BOTH parent surfaces this variant legally
+  // sits on — a Card (`bg-carbon-surface`) and a CadenceBuilder well
+  // (`bg-carbon-surface2`). Round 7's first cut painted it `bg-carbon-surface2`,
+  // which measured literally identical to the well behind it at six of its
+  // nine live call sites, so the one thing the variant exists to add could
+  // not be seen at all. `bg-carbon-surface3` is the only surface token
+  // distinct from both, and round 8 unified BOTH scales onto it.
+  it("the strip itself becomes an enclosing groove at surface3 — never surface2, which is invisible inside a surface2 well", () => {
+    for (const props of [{}, { equalWidth: true }]) {
+      cleanup();
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
+      const list = screen.getByRole("tablist");
+      expect(list.className).toContain("bg-carbon-surface3");
+      expect(list.className).not.toContain("bg-carbon-surface2");
+      expect(list.className).toContain("rounded-control");
+      // The established groove ring for this role, not a re-derived
+      // near-miss (round 7's own 0.15rem left a 2.4px ring, too thin to read
+      // as an enclosure). Scale separation comes from the segments.
+      expect(list.className).toContain("gap-[0.2rem]");
+      expect(list.className).toContain("p-[0.2rem]");
+    }
   });
 
-  it("idle segments are transparent and flush (no idle chip background), but still shape-reactive like every other segment; the active segment still fills with the accent", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
-    const active = screen.getByRole("tab", { name: "Alpha" });
-    const idle = screen.getByRole("tab", { name: "Beta" });
-    expect(active.className).toContain("bg-accent");
-    expect(active.className).toContain("text-accentContrast");
-    // CORRECTED (jdp, live-review — the well track's own segments must reshape
-    // with round/soft/square too, the same as the track itself and every
-    // "chip" segment already do; see Selector.tsx's own comment on this line
-    // for the live getComputedStyle proof of the regression this fixes).
-    expect(active.className).toContain("rounded-control");
-    expect(idle.className).toContain("bg-transparent");
-    expect(idle.className).not.toContain("bg-carbon-surface2");
-    expect(idle.className).toContain("rounded-control");
+  it("the groove hugs its own segments (w-fit max-w-full) at BOTH scales, and never forces one row", () => {
+    for (const props of [{}, { equalWidth: true }]) {
+      cleanup();
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
+      const list = screen.getByRole("tablist");
+      expect(list.className).toContain("w-fit");
+      expect(list.className).toContain("max-w-full");
+      // `flex-wrap`, never `flex-nowrap`: a pinned strip's width is the sum
+      // of N x max(widest label, MIN_PINNED_WIDTH), which has no guaranteed
+      // relationship to the available width — the same overflow "chip"'s own
+      // equalWidth already wraps for. Wrapping beats spilling off the page.
+      expect(list.className).toContain("flex-wrap");
+      expect(list.className).not.toContain("flex-nowrap");
+      // No `self-start`: `width: fit-content` already opts the strip out of a
+      // flex column's default `align-items: stretch`, and `self-start` would
+      // have top-aligned it inside the row-shaped parents (NotifyCard's "on"
+      // row, the weekday row, the drill-kind row) that centre a label beside
+      // it. This is what let Settings.tsx drop three wrapper divs.
+      expect(list.className).not.toContain("self-start");
+    }
   });
 
-  it("segments are equal-width and centered, with the crossfade-only transition and --badge-md height from the exact TrickWork spec — no sliding pill element", () => {
+  // THE round-8 fix, and the invariant that keeps the two scales one control:
+  // an unselected option is not a badge. Round 7's small variant filled every
+  // idle segment at `bg-carbon-surface`; that is what this asserts is gone.
+  it("idle segments are transparent at BOTH scales — no per-segment badge fill — while the active segment still fills with the accent", () => {
+    for (const props of [{}, { equalWidth: true }]) {
+      cleanup();
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
+      const active = screen.getByRole("tab", { name: "Alpha" });
+      const idle = screen.getByRole("tab", { name: "Beta" });
+      expect(active.className).toContain("bg-accent");
+      expect(active.className).toContain("text-accentContrast");
+      expect(idle.className).toContain("bg-transparent");
+      // None of the three idle fills any other treatment could hand it: the
+      // round-7 key fill, the chip default, or `raised`.
+      expect(idle.className).not.toContain("bg-carbon-surface ");
+      expect(idle.className).not.toContain("bg-carbon-surface2");
+      expect(idle.className).not.toContain("bg-carbon-surface3");
+      // CORRECTED (jdp, live-review — a well segment must reshape with
+      // round/soft/square too, the same as the groove itself and every "chip"
+      // segment already do; see Selector.tsx's own comment on this line for
+      // the live getComputedStyle proof of the regression this fixes).
+      expect(active.className).toContain("rounded-control");
+      expect(idle.className).toContain("rounded-control");
+      // TrickWork's own crossfade-only transition, at both scales — no
+      // sliding pill/thumb element, and no second element per segment.
+      expect(active.className).toContain("[transition:background-color_120ms_ease]");
+      expect(screen.getByRole("tablist").querySelectorAll("[data-sel-id]").length).toBe(ITEMS.length);
+    }
+  });
+
+  it("the two scales differ in EXACTLY one thing: whether segments are pinned. Everything else is byte-identical", () => {
+    render(<Selector items={ITEMS} label="Small" active="a" onChange={() => {}} variant="well" />);
+    const smallList = screen.getByRole("tablist").className;
+    const smallTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
+    cleanup();
+    render(<Selector items={ITEMS} label="Big" active="a" onChange={() => {}} variant="well" equalWidth />);
+    const bigList = screen.getByRole("tablist").className;
+    const bigTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
+
+    // The groove itself is literally the same string at both scales — this is
+    // the structural guarantee that replaced "two variants that looked alike."
+    expect(bigList).toBe(smallList);
+
+    // The segment differs only by the pinning classes.
+    const PIN = ["flex-none", "justify-center", "text-center", "h-[var(--badge-md)]"];
+    const strip = (s: string) => s.split(/\s+/).filter((c) => !PIN.includes(c)).join(" ");
+    expect(strip(bigTab)).toBe(strip(smallTab));
+    for (const c of PIN) {
+      expect(bigTab.split(/\s+/)).toContain(c);
+      expect(smallTab.split(/\s+/)).not.toContain(c);
+    }
+  });
+
+  it("without equalWidth a \"well\" strip is content-hugging — no pinned width, no fixed height — which is what makes it cheap to repeat on every schedule card", () => {
     render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    // `flex-none`, not TrickWork's own `flex-1` share (jdp's live-review
-    // correction, task 1 follow-up) — every segment is pinned to the widest
-    // one's own MEASURED content width instead, the same `pinWidth`
-    // mechanism `equalWidth`'s "chip" case already used; see that constant's
-    // own doc in Selector.tsx for the live truncation bug `flex-1` caused
-    // the moment an ancestor stopped stretching this whole strip.
-    expect(tab.className).toContain("flex-none");
-    expect(tab.className).not.toContain("flex-1");
-    expect(tab.className).toContain("justify-center");
-    expect(tab.className).toContain("h-[var(--badge-md)]");
-    expect(tab.className).toContain("[transition:background-color_120ms_ease]");
-    // No pill/thumb: every "on" state lives on the segment's OWN background
-    // colour, there is no extra sibling element carrying position/transform.
-    expect(screen.getByRole("tablist").querySelectorAll("[data-sel-id]").length).toBe(ITEMS.length);
+    expect(tab.className).not.toContain("flex-none");
+    expect(tab.className).not.toContain("h-[var(--badge-md)]");
+    expect(tab.style.width).toBe("");
   });
 
-  it("keyboard navigation is unregressed under variant=\"well\" — arrow keys still move focus and select (TrickWork's own version has no arrow-key support at all)", () => {
-    const spy = vi.fn();
-    function WellThree() {
-      const [active, setActive] = useState("a");
-      return (
-        <Selector
-          items={ITEMS}
-          label="Test strip"
-          select="one"
-          active={active}
-          onChange={(id) => {
-            setActive(id);
-            spy(id);
-          }}
-          variant="well"
-        />
-      );
+  it("`plain` and `raised` are both ignored under variant=\"well\" — an idle segment stays transparent either way", () => {
+    render(
+      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" plain raised />
+    );
+    const idle = screen.getByRole("tab", { name: "Beta" });
+    expect(idle.className).toContain("bg-transparent");
+    expect(idle.className).not.toContain("bg-carbon-surface3");
+  });
+
+  it("keyboard navigation is unregressed under variant=\"well\" at both scales — arrow keys still move focus and select (TrickWork's own version has no arrow-key support at all)", () => {
+    for (const props of [{}, { equalWidth: true }]) {
+      cleanup();
+      const spy = vi.fn();
+      function WellThree() {
+        const [active, setActive] = useState("a");
+        return (
+          <Selector
+            items={ITEMS}
+            label="Test strip"
+            select="one"
+            active={active}
+            onChange={(id) => {
+              setActive(id);
+              spy(id);
+            }}
+            variant="well"
+            {...props}
+          />
+        );
+      }
+      render(<WellThree />);
+      screen.getByRole("tab", { name: "Alpha" }).focus();
+      fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
+      expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Beta" }));
+      expect(spy).toHaveBeenCalledWith("b");
+      expect((screen.getByRole("tab", { name: "Beta" }) as HTMLElement).tabIndex).toBe(0);
+      expect((screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).tabIndex).toBe(-1);
     }
-    render(<WellThree />);
-    screen.getByRole("tab", { name: "Alpha" }).focus();
-    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
-    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Beta" }));
-    expect(spy).toHaveBeenCalledWith("b");
-    expect((screen.getByRole("tab", { name: "Beta" }) as HTMLElement).tabIndex).toBe(0);
-    expect((screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).tabIndex).toBe(-1);
   });
 
   it("RTL still mirrors under variant=\"well\" — ArrowRight moves backward, same as \"chip\" (the direction read is variant-independent)", () => {
@@ -480,133 +570,25 @@ describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's 
     fireEvent.keyDown(list, { key: "ArrowRight" });
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Alpha" }));
   });
-});
 
-describe("Selector — variant=\"track\" (round 7 escalation: NotifyCard's \"on\" row, CadenceBuilder's mode/weekday pickers)", () => {
-  it("default variant (\"chip\") renders none of the track's wrapper/segment classes", () => {
-    render(<OneOfThree />);
-    expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface3");
-    expect(screen.getByRole("tablist").className).not.toContain("w-fit");
-    const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).not.toContain("bg-carbon-surface ");
-  });
-
-  // Round-7 FOLLOW-UP (jdp, live-review: "Ich sehe nirgends die neuen
-  // horizontalen Selektoren."). The track's own surface has to differ from
-  // BOTH parent surfaces this variant legally sits on — a Card
-  // (`bg-carbon-surface`) and a CadenceBuilder well (`bg-carbon-surface2`).
-  // The first cut painted the track `bg-carbon-surface2`, which measured
-  // literally identical to the well behind it at six of the nine live call
-  // sites (every schedule card on the Schedules + Integrity tabs), so the
-  // one thing this variant exists to add could not be seen at all.
-  // `bg-carbon-surface3` is the only surface token distinct from both.
-  it("the strip itself becomes an enclosing track at surface3 — NOT well's surface2, which was invisible inside a surface2 well", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
-    const list = screen.getByRole("tablist");
-    expect(list.className).toContain("bg-carbon-surface3");
-    expect(list.className).not.toContain("bg-carbon-surface2");
-    expect(list.className).toContain("rounded-control");
-    // Same groove width as "well" — the established value for this exact
-    // role, not a re-derived near-miss (the first cut's own 0.15rem left a
-    // 2.4px ring, too thin to read as an enclosure).
-    expect(list.className).toContain("gap-[0.2rem]");
-    expect(list.className).toContain("p-[0.2rem]");
-    expect(list.className).toContain("flex-wrap");
-    expect(list.className).not.toContain("flex-nowrap");
-  });
-
-  it("the track hugs its own segments (w-fit max-w-full) instead of stretching to a block parent's full width — CadenceBuilder renders it as a direct child of a flex-col fieldset", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
-    const list = screen.getByRole("tablist");
-    expect(list.className).toContain("w-fit");
-    expect(list.className).toContain("max-w-full");
-    // No `self-start`: `width: fit-content` already opts the strip out of a
-    // flex column's default `align-items: stretch`, and `self-start` would
-    // have top-aligned it inside the row-shaped parents (NotifyCard's "on"
-    // row, the weekday row, the drill-kind row) that centre a label beside
-    // it.
-    expect(list.className).not.toContain("self-start");
-  });
-
-  it("idle segments are VISIBLY filled at rest with the raised-control fill (bg-carbon-surface), distinct from the surface3 groove holding them, unlike well's idle-transparent segments; the active segment still fills with the accent", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
-    const active = screen.getByRole("tab", { name: "Alpha" });
-    const idle = screen.getByRole("tab", { name: "Beta" });
-    expect(active.className).toContain("bg-accent");
-    expect(active.className).toContain("text-accentContrast");
-    expect(idle.className).toContain("bg-carbon-surface ");
-    expect(idle.className).not.toContain("bg-carbon-surface2");
-    expect(idle.className).not.toContain("bg-carbon-surface3");
-    expect(idle.className).not.toContain("bg-transparent");
-    expect(idle.className).toContain("rounded-control");
-  });
-
-  it("groove and keys resolve to DIFFERENT surface tokens — a zero-delta enclosure is not an enclosure (the exact regression this round fixed)", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
-    const trackBg = /bg-carbon-surface\d?/.exec(screen.getByRole("tablist").className)?.[0];
-    const idleBg = /bg-carbon-surface\d?/.exec(screen.getByRole("tab", { name: "Beta" }).className)?.[0];
-    expect(trackBg).toBeTruthy();
-    expect(idleBg).toBeTruthy();
-    expect(trackBg).not.toBe(idleBg);
-  });
-
-  it("segments are content-hugging, NOT pinned to a matched width or a fixed well height — the deliberate difference from \"well\" that keeps this variant cheap to repeat many times per page", () => {
-    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
-    const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).not.toContain("flex-none");
-    expect(tab.className).not.toContain("h-[var(--badge-md)]");
-    expect(tab.style.width).toBe("");
-    // Still the same crossfade-only transition as "well" — both read as one
-    // coherent control, not a sliding-pill illusion.
-    expect(tab.className).toContain("[transition:background-color_120ms_ease]");
-  });
-
-  it("`plain` and `raised` are both ignored under variant=\"track\" — idle fill stays the track's own bg-carbon-surface either way", () => {
-    render(
-      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" plain raised />
-    );
-    const idle = screen.getByRole("tab", { name: "Beta" });
-    expect(idle.className).toContain("bg-carbon-surface ");
-    expect(idle.className).not.toContain("bg-carbon-surface3");
-  });
-
-  it("keyboard navigation is unregressed under variant=\"track\"", () => {
-    const spy = vi.fn();
-    function TrackThree() {
-      const [active, setActive] = useState("a");
-      return (
-        <Selector
-          items={ITEMS}
-          label="Test strip"
-          select="one"
-          active={active}
-          onChange={(id) => {
-            setActive(id);
-            spy(id);
-          }}
-          variant="track"
-        />
+  it("every segment still carries its own rainbow position at both scales — the active fill reads that position, so switching scale can never shift a hue", () => {
+    for (const props of [{}, { equalWidth: true }]) {
+      cleanup();
+      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
+      const tabs = Array.from(
+        screen.getByRole("tablist").querySelectorAll<HTMLElement>("[data-sel-id]")
       );
+      expect(tabs.length).toBe(ITEMS.length);
+      tabs.forEach((tab) => {
+        expect(tab.className).toContain("glim-hue");
+        // hueVars() lands the position colour on the element as a custom
+        // property; without it the accent fill has nothing to resolve.
+        expect(tab.getAttribute("style") ?? "").toContain("--");
+      });
+      expect(tabs[0].className).toContain("glim-active");
     }
-    render(<TrackThree />);
-    screen.getByRole("tab", { name: "Alpha" }).focus();
-    fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
-    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Beta" }));
-    expect(spy).toHaveBeenCalledWith("b");
-    expect((screen.getByRole("tab", { name: "Beta" }) as HTMLElement).tabIndex).toBe(0);
-    expect((screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).tabIndex).toBe(-1);
-  });
-
-  it("equalWidth is ignored under variant=\"track\" (deliberately never pinned) — no pinned width, no crash", () => {
-    render(
-      <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" equalWidth />
-    );
-    const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).not.toContain("flex-none");
-    expect(tab.style.width).toBe("");
   });
 });
-
 describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimStone follow-up round)", () => {
   const ICON_ITEMS: SelectorItem[] = [
     { id: "local", label: "Local", icon: <span data-testid="icon-local" />, iconOnly: true, tip: "Local path on this host" },

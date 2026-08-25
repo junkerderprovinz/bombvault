@@ -288,32 +288,35 @@ export function CadenceBuilder({
           <fieldset disabled> above, not a prop here: Selector renders real
           <button> elements, which a native fieldset already disables
           regardless of the wrapping <div> between them.
-          `variant="track"` (round 7 escalation, jdp: "Du hast keinen
-          richtigen horizontalen Selektor gemacht!" — the plain-chip-plus-
-          `raised` treatment this used to carry, even with its idle fill
+          `variant="well"` with NO `equalWidth` — the SMALL scale of the app's
+          one grooved horizontal selector (round 7 escalation, jdp: "Du hast
+          keinen richtigen horizontalen Selektor gemacht!" — the plain-chip-
+          plus-`raised` treatment this used to carry, even with its idle fill
           bumped a shade deeper, still read as loose separate buttons next to
-          the page's "well"-variant pickers, not as one real Selector
-          control). Every call site of THIS component wraps it in its own
-          `rounded-card bg-carbon-surface2 p-4` well (see each Settings.tsx
-          caller, and ItemScheduleOverride.tsx's own `p-3` variant of it) —
-          which is exactly why the first cut of `variant="track"` still read
-          as nothing at all here: it painted its track `bg-carbon-surface2`,
-          the literal same token as that wrapper, so the enclosure was
-          invisible on every schedule card. The variant now paints its track
-          `bg-carbon-surface3` (the same depth `inputCls` below already puts
-          this component's own time/number/cron fields at, inside this same
-          well) with `bg-carbon-surface` keys, so the mode row reads as a
-          real nested control regardless of whether it sits in a surface2
-          well like this one or directly on a Card like NotifyCard's "on"
-          row. The wrapper stays — it is what anchors the time picker,
-          weekday row, interval field, cron editor and preview text as one
-          group, and `inputCls`'s own `bv-field-focus-well` focus treatment
-          is specified against a surface2 well — the variant, not the caller,
-          is what moved. See Selector.tsx's own file header item 6
-          for the full root-cause writeup and why this is deliberately NOT
-          "well" (that variant's pinned width/fixed height are sized for a
-          handful of page-level pickers, not a control repeated on every
-          schedule card across two tabs). */}
+          the page's big pickers, not as one real Selector control). Every
+          call site of THIS component wraps it in its own `rounded-card
+          bg-carbon-surface2 p-4` well (see each Settings.tsx caller, and
+          ItemScheduleOverride.tsx's own `p-3` variant of it) — which is
+          exactly why round 7's first cut read as nothing at all here: it
+          painted the groove `bg-carbon-surface2`, the literal same token as
+          that wrapper, so the enclosure was invisible on every schedule
+          card. The groove is `bg-carbon-surface3` now — the same depth
+          `inputCls` below already puts this component's own time/number/cron
+          fields at, inside this same well — so the mode row reads as a real
+          nested control whether it sits in a surface2 well like this one or
+          directly on a Card like NotifyCard's "on" row. The wrapper stays:
+          it is what anchors the time picker, weekday row, interval field,
+          cron editor and preview text as one group, and `inputCls`'s own
+          `bv-field-focus-well` focus treatment is specified against a
+          surface2 well — the variant, not the caller, is what moved.
+            Round 8 (jdp: "Die kleinen Selektoren sollen so aussehen wie die
+          grossen! Die nicht ausgewaehlten Optionen sollen kein Badge sein")
+          then removed the separate "track" variant this used to name: idle
+          segments are transparent against the groove here now, exactly as in
+          the Theme/Shape/Motion pickers, and the only real difference left
+          between the two scales is the pinned width/height — which is
+          `equalWidth`, which this call site simply does not pass. See
+          Selector.tsx's own file header item 6 for the full writeup. */}
       <Selector
         items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[]).map((m) => ({
           id: m,
@@ -332,7 +335,7 @@ export function CadenceBuilder({
         select="one"
         active={state.mode}
         onChange={(id) => update({ mode: id as CadenceMode })}
-        variant="track"
+        variant="well"
       />
 
       {/* Time picker — shown for all non-off modes except cron (the expression
@@ -360,11 +363,13 @@ export function CadenceBuilder({
 
       {/* Weekly: weekday multi-select — select="many" (toggling a day never
           replaces the others, "at least one" is still enforced by
-          toggleWeekday itself, unchanged). `variant="track"`, not `raised`,
+          toggleWeekday itself, unchanged). `variant="well"`, not `raised`,
           for the same round-7 reason as the mode pills above — kept on the
           same variant so the two Selector rows inside one CadenceBuilder
-          instance read as one family, not one "track" control sitting
-          directly above a leftover plain-raised-chip one. */}
+          instance read as one family, not one grooved control sitting
+          directly above a leftover plain-raised-chip one. Unpinned like the
+          mode row (no `equalWidth`); `size="sm"` is the only thing that
+          makes this the tighter of the two. */}
       {state.mode === "weekly" && (
         <div className="flex items-center gap-2 flex-wrap">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.days")}</label>
@@ -375,7 +380,7 @@ export function CadenceBuilder({
             active={new Set(state.weekdays)}
             onChange={toggleWeekday}
             size="sm"
-            variant="track"
+            variant="well"
           />
         </div>
       )}

@@ -1086,9 +1086,10 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
 // own round/soft/square picker right below it already uses. Matched to that
 // picker's OWN exact established treatment (jdp approved that look live for
 // the same kind of control): `size="lg"` (the page's own full Settings-
-// decision register, not a tight toolbar chip) and `variant="well"`
-// (TrickWork's shared padded track, flush crossfade-only segments — see
-// Selector.tsx's file header item 5). No `hue={false}` — see that Card's own
+// decision register, not a tight toolbar chip) and `variant="well"
+// equalWidth` (TrickWork's shared padded groove, flush crossfade-only
+// segments, at the big pinned scale — see Selector.tsx's file header items 5
+// and 6). No `hue={false}` — see that Card's own
 // comment for why an opt-out here would be exactly the self-authored
 // aesthetic exception jdp has ruled out; this Selector uses the plain `true`
 // default like every other hue-enabled one in the app, so its active segment
@@ -1175,24 +1176,21 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
 
   return (
     <Card title={t("settings.theme")} hueIndex={hueIndex}>
-      {/* `inline-flex self-start max-w-full` (jdp, live-review: "Die
-          horizontalen Selektoren sollen nicht auf die ganze Card-Breite
-          gestreckt werden, sondern eine standardisierte Breite bekommen") —
-          this Card's own root is `flex flex-col` (Card's own comment above),
-          whose default `align-items: stretch` blockifies every direct child
-          to the Card's own full content width regardless of what display
-          value the child itself specifies (a `well` Selector's row is
-          `display:flex`, which is ALREADY a block-level box in normal flow —
-          nothing about `variant="well"` opts out of that on its own). Same
-          exact wrapper, same reasoning, as the Settings tab strip's own
-          `tabStripEl` wrapper further down this file (see that div's own,
-          much longer comment for the live-measured proof of why
-          `self-start` — not just `inline-flex` alone — is the part that
-          actually does the work): this is the ONE standardized "don't
-          stretch" mechanism for a horizontal Selector in this app now,
-          reused verbatim rather than inventing a second one for this call
-          site. `max-w-full` still guards a genuinely narrow viewport. */}
-      <div className="inline-flex self-start max-w-full">
+      {/* NO `inline-flex self-start max-w-full` wrapper any more (jdp,
+          live-review: "Die horizontalen Selektoren sollen nicht auf die ganze
+          Card-Breite gestreckt werden, sondern eine standardisierte Breite
+          bekommen"). That ask is still honoured — this Card's own root is
+          `flex flex-col` (Card's own comment above), whose default
+          `align-items: stretch` would otherwise blockify this row to the
+          Card's full content width — but round 8 moved the mechanism INTO
+          the variant: `variant="well"` now carries `w-fit max-w-full` itself,
+          and `width: fit-content` is not `auto`, so a stretch alignment no
+          longer applies to it. Three call sites hand-rolling the identical
+          wrapper div was the same "one control, two mechanisms" drift that
+          round's whole change is about; see Selector.tsx's file header item
+          6. (The Settings tab strip further down this file KEEPS its own
+          `tabStripEl` wrapper — it is `variant="chip"`, not a grooved well,
+          so nothing in the variant hugs for it.) */}
       <Selector
         items={[
           { id: "light", label: t("theme.light"), icon: sunIcon },
@@ -1204,8 +1202,13 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
         onChange={(id) => selectTheme(id as ResolvedTheme)}
         size="lg"
         variant="well"
+        // The BIG scale (Selector.tsx file header item 6): every segment
+        // pinned to the widest one's own measured width, floored at
+        // MIN_PINNED_WIDTH, at the fixed --badge-md height. Round 8 made
+        // this an explicit opt-in — "well" alone is now the small,
+        // content-hugging scale the CadenceBuilder mode pickers use.
+        equalWidth
       />
-      </div>
     </Card>
   );
 }
@@ -3463,22 +3466,22 @@ function NotifyCard({
     <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
       {/* "on" select → Selector (jdp, live-review: "Benachrichtigen: nie, nur
           bei Fehler, bei Fehler und Erfolg soll bitte ein horizontaler
-          Selektor sein"). `variant="track"` (round 7 escalation, jdp,
+          Selektor sein"). `variant="well"` with no `equalWidth` — the SMALL
+          scale of the app's one grooved selector (round 7 escalation, jdp,
           live-review: "Du hast keinen richtigen horizontalen Selektor
-          gemacht!" — compared live, side by side, against the page's
-          "well"-variant pickers, the earlier plain `variant="chip"` default
-          read as three loose separate buttons, not one real Selector
-          control; see Selector.tsx's own file header item 6 for the full
-          root-cause writeup and why the fix is this new compact "track"
-          variant rather than the bigger, page-level "well" itself). Same
-          `size="md"` scale as before — this stays a small 3-item control
-          inside a settings form, now literally the SAME variant+scale as the
-          Integrity Card's own drill-kind Selector (search "drill.kindLabel"
-          in this file, converted alongside this one in the same round), not
-          the page's bigger "well"-variant pickers (the Theme Card's
-          light/dark toggle) that get the standardized MIN_PINNED_WIDTH
-          treatment — see Selector.tsx's own file header for why that width
-          standardization is scoped to those larger pickers only.
+          gemacht!" — compared live, side by side, against the page's big
+          pickers, the earlier plain `variant="chip"` default read as three
+          loose separate buttons, not one real Selector control; round 8 then
+          folded that round's separate "track" variant back into "well", so
+          the two scales cannot drift apart again — see Selector.tsx's own
+          file header item 6). Same `size="md"` scale as before — this stays
+          a small 3-item control inside a settings form, literally the SAME
+          variant+scale as the Integrity Card's own drill-kind Selector
+          (search "drill.kindLabel" in this file, converted alongside this
+          one in the same round). No `equalWidth`, so it does not take the
+          Theme/Shape/Motion pickers' standardized MIN_PINNED_WIDTH box — see
+          Selector.tsx's own file header for why that pinning is scoped to
+          those larger pickers only.
             A plain `<span>` caption OUTSIDE the Selector, NOT the `<label>`
           this field used to be (Selector.tsx's own header is explicit: a
           `<label>` wrapping a multi-segment control hands its click to the
@@ -3521,7 +3524,7 @@ function NotifyCard({
           label={t("notify.on")}
           select="one"
           // `cfg.on || "never"`, NOT bare `cfg.on` (caught live while
-          // verifying the `variant="track"` change above, on the running
+          // verifying the round-7 variant change above, on the running
           // test container — a stored config predating this field's
           // introduction round-trips as the empty string, not "never").
           // The backend's own Config.shouldSend (internal/notify/notify.go)
@@ -3530,10 +3533,10 @@ function NotifyCard({
           // unset") — this was purely a DISPLAY gap: the Selector had no
           // segment to light up for that legacy empty value, so all three
           // read as unselected even though the backend was correctly
-          // behaving as "never" the whole time. Now that idle "track"
-          // segments are visibly filled at rest (this round's own change),
-          // "nothing selected" reads far more like a broken control than it
-          // did under the old faint plain-chip idle fill, so this is worth
+          // behaving as "never" the whole time. Inside a real enclosing
+          // groove, "nothing selected" reads far more like a broken control
+          // than it did under the old faint plain-chip idle fill (an empty
+          // groove with no accent segment anywhere in it), so this was worth
           // fixing alongside rather than shipping the more visible
           // regression. Display-only: does not touch the stored `cfg.on`
           // value or `persistNotify`'s own merge — a genuine explicit
@@ -3542,7 +3545,7 @@ function NotifyCard({
           // empty value, never for anything this session itself writes.
           active={cfg.on || "never"}
           onChange={(id) => setImmediate("on", id)}
-          variant="track"
+          variant="well"
           className={fieldShake.on ? "glim-shake" : undefined}
         />
       </div>
@@ -4393,11 +4396,12 @@ function IntegrityCard({
           restore — on the shared Selector component (GlimStone form-engine
           Phase 2, Task 3; found only by re-grepping the current codebase,
           not on the original Phase 1 audit's own 11-site list).
-          `variant="track"` (round 7 escalation) — converted alongside
+          `variant="well"` with no `equalWidth` — the small scale of the app's
+          one grooved selector (round 7 escalation) — converted alongside
           NotifyCard's "on" Selector in the same round; see that call site's
           own comment for the full root-cause writeup. Both are the same
-          "small in-card single-choice" role at the same scale, so both now
-          share the literal same variant, not just an eyeballed match. */}
+          "small in-card single-choice" role at the same scale, so both share
+          the literal same variant+props, not just an eyeballed match. */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
         <Selector
@@ -4414,7 +4418,7 @@ function IntegrityCard({
             setKind(val as DrillKind);
             setState({});
           }}
-          variant="track"
+          variant="well"
           disabled={Object.values(state).some((v) => v === "busy")}
         />
       </div>
@@ -8561,33 +8565,28 @@ export function SettingsPage() {
           entirely — the real Selector segment the user is looking at IS the
           shape preview, at its own true radius, with no scaled-down stand-in
           competing with it.
-            `variant="well"` (GlimStone follow-up pass, live-review point 7 —
-          "turn the shape picker into a horizontal selector styled like the
-          one in TrickWork"): the one call site exercising Selector's new
-          well track (components/Selector.tsx's own file header, item 5) —
-          TrickWork's shared padded background with flush, crossfade-only
-          segments, no sliding pill. Picked for the FIRST try of this variant
-          specifically because it's already icon-free (no glyph competing
-          with the track's own look) and already the page's most "three
-          mutually exclusive settings, read together as one control"
-          Selector on this page — the shape it suits best. A LATER round
-          gave the Theme Card's own light/dark picker (above) this exact same
-          treatment. Every other Selector on this page (the 7-tab strip
-          above, the drill-type toggle further down) stays on the default
-          `variant="chip"`, unchanged. */}
+            `variant="well" equalWidth` (GlimStone follow-up pass,
+          live-review point 7 — "turn the shape picker into a horizontal
+          selector styled like the one in TrickWork"): the FIRST call site to
+          exercise Selector's grooved variant (components/Selector.tsx's own
+          file header, item 5) — TrickWork's shared padded background with
+          flush, crossfade-only segments, no sliding pill. Picked for that
+          first try specifically because it's already icon-free (no glyph
+          competing with the groove's own look) and already the page's most
+          "three mutually exclusive settings, read together as one control"
+          Selector — the shape it suits best. A LATER round gave the Theme
+          Card's own light/dark picker (above) this exact same treatment, and
+          round 8 spread the variant itself (minus `equalWidth`) to every
+          small in-card selector in the app. The 7-tab strip above stays on
+          `variant="chip"` — it is a tab strip of individual badges, not a
+          grooved segmented control; see Selector.tsx's item 5b. */}
       {tab === "general" && (
       <Card title={t("settings.shape")} hint={t("settings.shapeHint")} hueIndex={nextHue()}>
-        {/* `inline-flex self-start max-w-full` (jdp, live-review: "Die
-            horizontalen Selektoren sollen nicht auf die ganze Card-Breite
-            gestreckt werden, sondern eine standardisierte Breite bekommen")
-            — same standardized "don't stretch" wrapper as the Theme Card's
-            own identical Selector above and the Settings tab strip's
-            `tabStripEl` wrapper further down this file; see either one's
-            own comment for the full root cause (this Card's `flex flex-col`
-            root stretches an un-wrapped direct child to its own full
-            content width by default) and why `self-start`, not just
-            `inline-flex` alone, is the part that actually opts out of it. */}
-        <div className="inline-flex self-start max-w-full">
+        {/* No "don't stretch" wrapper div here any more — `variant="well"`
+            carries `w-fit max-w-full` itself as of round 8, which opts the
+            row out of this Card's `flex flex-col` default
+            `align-items: stretch` without an extra element. See the Theme
+            Card's own Selector above for the full note. */}
         <Selector
           items={SHAPES.map((s) => ({
             id: s,
@@ -8602,8 +8601,8 @@ export function SettingsPage() {
           }}
           size="lg"
           variant="well"
+          equalWidth
         />
-        </div>
       </Card>
       )}
 
@@ -8621,8 +8620,8 @@ export function SettingsPage() {
           blocks mirror `[data-shape="..."]`'s own), so this Card sits
           directly below Shape: same kind of setting (client-only, applied
           at the app root), same "one Selector, no Save step" shape, same
-          `variant="well"`/`size="lg"` treatment already proven live on
-          Theme's and Shape's own pickers right above.
+          `variant="well" equalWidth`/`size="lg"` treatment already proven
+          live on Theme's and Shape's own pickers right above.
             `hue` stays on its plain `true` default (Selector's own
           default) — this repo's standing colour-engine rule is explicit
           that "it's a settings control, not content" is exactly the kind
@@ -8633,10 +8632,8 @@ export function SettingsPage() {
           does. */}
       {tab === "general" && (
       <Card title={t("settings.motion")} hint={t("settings.motionHint")} hueIndex={nextHue()}>
-        {/* Same standardized "don't stretch" wrapper as the Theme/Shape
-            Selectors right above — see either one's own comment for the
-            full root cause. */}
-        <div className="inline-flex self-start max-w-full">
+        {/* No "don't stretch" wrapper div, same as the Theme/Shape Selectors
+            right above — `variant="well"` hugs its own segments now. */}
         <Selector
           items={MOTION_INTENSITIES.map((m) => ({
             id: m,
@@ -8651,8 +8648,8 @@ export function SettingsPage() {
           }}
           size="lg"
           variant="well"
+          equalWidth
         />
-        </div>
       </Card>
       )}
 
