@@ -194,19 +194,72 @@
 //      floor would be pure wasted width at that multiplicity, not "bold".
 //        `variant="track"` is the deliberately smaller sibling this
 //      question asks for: it borrows "well"'s core signature — the row
-//      itself becomes a real enclosing surface (`bg-carbon-surface2 p-
-//      [0.15rem]`, the SAME track background token "well" uses, just
-//      tighter padding at this scale) — but does NOT borrow "well"'s idle-
-//      transparent segments, its fixed pinned width, or its fixed height.
-//      Instead every idle segment gets its OWN visible fill one step deeper
-//      than the track (`bg-carbon-surface3` — literally the same token
-//      `raised` already used, just always-on rather than a caller-toggled
-//      escape hatch): track (surface2) holding filled segments (surface3)
-//      holding the accent-filled active one is a plain three-step Carbon
-//      layering, the same "each nested surface gets one step deeper" rule
-//      the rest of this app's cards/wells/inputs already follow — see
-//      CadenceBuilder.tsx's own `inputCls`, which sits its text/number
-//      fields at that exact same surface3-inside-a-surface2-well depth.
+//      itself becomes a real enclosing surface — but does NOT borrow
+//      "well"'s idle-transparent segments, its fixed pinned width, or its
+//      fixed height. Instead every idle segment keeps its OWN visible fill,
+//      so the strip reads as a groove holding keys rather than as one solid
+//      slab with a single accent pill floating in it.
+//        ROUND-7 FOLLOW-UP, and the reason this variant's two tones are what
+//      they are today (jdp, live-review: "Ich sehe nirgends die neuen
+//      horizontalen Selektoren."). The first cut of this variant copied
+//      "well"'s track token literally — track `bg-carbon-surface2`, idle
+//      segments `bg-carbon-surface3`. That is correct three-step Carbon
+//      layering ONLY when the strip sits directly on a Card
+//      (`bg-carbon-surface`), which is true at NotifyCard's "on" row and the
+//      Integrity drill-kind toggle. It is flatly wrong at the OTHER six of
+//      this variant's eight call sites: every CadenceBuilder instance is
+//      wrapped by its caller in a `rounded-card bg-carbon-surface2 p-4` well
+//      (Settings.tsx x8, ItemScheduleOverride.tsx x1), so a surface2 track
+//      landed on a surface2 parent — measured live on the running container,
+//      every schedule card on both the Schedules and Integrity tabs read
+//      `rgb(232,232,232)` for the track AND `rgb(232,232,232)` for its
+//      enclosing well. A zero-delta enclosure is not an enclosure: the one
+//      thing this variant exists to add was invisible exactly where it
+//      repeats most, and idle segments at surface3 rendered identically to
+//      the `raised` chips this variant replaced — literally nothing changed
+//      on screen, which is what jdp was reporting.
+//        Fixed at the variant, not per call site (a `className` override at
+//      each of the nine callers would drift the moment any of them moves to
+//      a different parent surface, and would leave the next new call site
+//      broken by default): the track's own tones now step so that BOTH
+//      parent surfaces this variant can legally sit on — `surface` (a Card)
+//      and `surface2` (a CadenceBuilder well) — stay distinct from it.
+//        - track  = `bg-carbon-surface3`, the one surface token that differs
+//          from both possible parents. It is also exactly the depth every
+//          OTHER nested control in a surface2 well already sits at — see
+//          CadenceBuilder.tsx's own `inputCls` (`bg-carbon-surface3`), whose
+//          time/number/cron fields sit directly beside these strips, so the
+//          Selector row now reads as the same material as its sibling
+//          fields instead of as a hole in the well.
+//        - idle segments = `bg-carbon-surface`, the app's own raised-control
+//          fill (Card/Toast/popover surface, and already a plain <button>
+//          fill at OffsiteWizard's own in-card controls), so the keys read
+//          as objects sitting IN the groove rather than as another shade of
+//          it. Chosen over stepping the segments deeper still: there is no
+//          surface4 token, and the obvious ad-hoc candidate (Carbon Gray 60
+//          #6f6f6f) drops `text-carbon-textSub` on an idle segment to 2.94:1
+//          — a WCAG failure this variant would have shipped app-wide.
+//          Measured contrast of what actually shipped instead: idle-segment
+//          label 8.85:1 (dark) / 7.82:1 (light), up from 4.58:1 on both.
+//        Both A/B candidates were rendered live on the running container
+//      before this was committed (idle segments at surface2 vs. at surface,
+//      screenshotted in both themes on the Container schedule card) — the
+//      surface keys read as one grouped control at a glance, the surface2
+//      keys still washed into the well around them.
+//        `w-fit max-w-full` on the track (added in the same pass): a second
+//      defect that only BECAME visible once the track had any contrast at
+//      all. CadenceBuilder renders its mode strip as a direct child of a
+//      `flex flex-col` fieldset, so the track — a plain block-level flex row
+//      — stretched to the well's full width and rendered as a ~1170px grey
+//      bar with five chips huddled at one end. `width: fit-content` makes
+//      the enclosure hug its own segments (and, not being `auto`, it also
+//      opts the strip out of a flex column's default `align-items: stretch`,
+//      so no `self-start` is needed and no row-parent call site gets its
+//      vertical centring disturbed); `max-w-full` keeps a genuinely narrow
+//      viewport wrapping instead of overflowing. This is the same
+//      shrink-to-fit the "well" call sites already get by hand from their
+//      own `inline-flex self-start max-w-full` wrappers in Settings.tsx —
+//      folded into the variant here so no "track" caller has to know.
 //      Content-hugging widths (SIZE[size].padding, no `pinWidth`) and
 //      per-stage height (padding + line-height, not a fixed track height)
 //      keep it cheap to repeat many times on one screen — the opposite of
@@ -283,8 +336,10 @@ export type SelectorSize = "sm" | "md" | "lg";
  *  "well" for compact in-card selectors (NotifyCard's "on" row, every
  *  CadenceBuilder mode/weekday picker) — a real enclosing track like "well",
  *  but with always-visible filled segments and content-hugging width instead
- *  of "well"'s idle-transparent segments and fixed pinned width; see the
- *  file header's item 6. */
+ *  of "well"'s idle-transparent segments and fixed pinned width, and one
+ *  surface step deeper (`surface3` groove, `surface` keys) so it stays
+ *  visible inside a `bg-carbon-surface2` well as well as on a bare Card; see
+ *  the file header's item 6. */
 export type SelectorVariant = "chip" | "well" | "track";
 
 interface SelectorCommon {
@@ -329,17 +384,18 @@ interface SelectorCommon {
    *  fill is the literal SAME token as that ambient background — an idle
    *  pill was genuinely indistinguishable from the card behind it until
    *  hovered or selected). SUPERSEDED at both of those call sites by
-   *  `variant="track"` (file header item 6), which bakes this exact
-   *  surface3-on-surface2 layering in unconditionally instead of needing a
-   *  caller to opt in — `raised` has no live consumer as of that round, same
-   *  status as the `hue` prop's own documented zero-consumer state above.
+   *  `variant="track"` (file header item 6), which bakes a real enclosing
+   *  track in unconditionally instead of needing a caller to opt in —
+   *  `raised` has no live consumer as of that round, same status as the
+   *  `hue` prop's own documented zero-consumer state above.
    *  Kept as a lighter escape hatch for a future PLAIN "chip" call site that
    *  wants deeper idle contrast without paying for `variant="track"`'s full
    *  enclosing box. Ignored under `variant="well"` and `variant="track"`
    *  (both already answer this same question unconditionally, differently —
    *  "well"'s idle segments are transparent against their own track, not
-   *  surface2, nothing to bump; "track"'s idle segments already sit at
-   *  surface3 by construction). Default false: every other "chip" call site
+   *  surface2, nothing to bump; "track"'s idle segments are always filled at
+   *  `bg-carbon-surface` inside its own surface3 groove). Default false:
+   *  every other "chip" call site
    *  (the Settings tab strip, ten toolbar chips) sits directly on a plain
    *  page/card background, not inside a surface2 well, so their existing
    *  idle fill already contrasts correctly and stays unchanged. */
@@ -785,11 +841,33 @@ export function Selector(props: SelectorProps) {
       // whichever is smaller: the sum of its now-fixed-width children (if
       // they all fit on one line), or the available row width (once they
       // don't and a second line is needed).
-      // "track" (file header item 6): the SAME enclosing surface as "well"
-      // (`rounded-control bg-carbon-surface2`, so it reshapes with the shape
-      // engine identically), but tighter `[0.15rem]` gap/padding — this is
-      // the compact, repeated-per-page sibling, not the page-level one — and
-      // `flex-wrap`, NOT "well"'s `flex-nowrap`: a "track" strip's segments
+      // "track" (file header item 6): the same KIND of enclosing surface as
+      // "well" (`rounded-control` + background + padding, so it reshapes with
+      // the shape engine identically), one step deeper at
+      // `bg-carbon-surface3` — see the file header's round-7 follow-up for
+      // why it is NOT "well"'s surface2: six of this variant's nine call
+      // sites sit inside a `bg-carbon-surface2` well, where a surface2 track
+      // measured as literally the same colour as its own parent and could
+      // not be seen at all. surface3 is the one surface token distinct from
+      // BOTH parents this variant legally sits on (a Card's surface, a
+      // CadenceBuilder well's surface2), so the enclosure reads everywhere
+      // without a single per-call-site override.
+      //   Same `[0.2rem]` gap/padding as "well" — the established value for
+      // this exact role (the visible groove ring between the track edge and
+      // its segments); the first cut's own `[0.15rem]` was a re-derived
+      // near-miss that left a 2.4px ring, too thin to read as an enclosure
+      // once the tones were fixed. Scale separation from "well" comes from
+      // the segments (content-hugging, per-stage padding, no pinned width or
+      // fixed height), not from shaving the groove.
+      //   `w-fit max-w-full`: the track hugs its own segments instead of
+      // stretching to a block parent's full width (CadenceBuilder's mode
+      // strip is a direct child of a `flex flex-col` fieldset and rendered
+      // as a full-width bar the moment the track became visible). Also opts
+      // the strip out of a flex column's default `align-items: stretch`
+      // without an explicit `self-start` that would have top-aligned it in
+      // the row-shaped parents (NotifyCard's "on" row, the weekday row, the
+      // drill-kind row) that centre their label beside it.
+      //   `flex-wrap`, NOT "well"'s `flex-nowrap`: a "track" strip's segments
       // are content-hugging, not pinned to a mutually-agreed sum the way
       // "well"'s own row always is by construction, so (like plain "chip"
       // and `stretch` above) it can genuinely need a second line on a narrow
@@ -799,7 +877,7 @@ export function Selector(props: SelectorProps) {
         well
           ? "flex-nowrap gap-[0.2rem] rounded-control bg-carbon-surface2 p-[0.2rem]"
           : track
-            ? "flex-wrap gap-[0.15rem] rounded-control bg-carbon-surface2 p-[0.15rem]"
+            ? "w-fit max-w-full flex-wrap gap-[0.2rem] rounded-control bg-carbon-surface3 p-[0.2rem]"
             : "flex-wrap gap-1",
         className,
       ]
@@ -865,15 +943,24 @@ export function Selector(props: SelectorProps) {
             : well
               ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
               // "track" (file header item 6): unconditionally filled even at
-              // rest — the whole point of this variant vs. "well" above —
-              // one step deeper (`bg-carbon-surface3`) than the track's own
-              // `bg-carbon-surface2` enclosure, the same Carbon "each nested
-              // surface one step deeper" rule CadenceBuilder's own `inputCls`
-              // already follows inside that identical well. `plain`/`raised`
-              // are both meaningless here (see each prop's own doc) so
-              // neither is read in this branch.
+              // rest — the whole point of this variant vs. "well" above.
+              // `bg-carbon-surface`, the app's own raised-control fill (the
+              // Card/Toast/popover surface, and already a plain <button>
+              // fill at OffsiteWizard's in-card controls), so an idle key
+              // reads as an object sitting IN the surface3 groove above
+              // rather than as another shade of the groove itself. NOT the
+              // original surface3 (that was the track's own colour before
+              // the round-7 follow-up moved the track down to surface3) and
+              // NOT a step deeper still: no surface4 token exists, and the
+              // ad-hoc Carbon Gray 60 candidate would have dropped this
+              // label to 2.94:1. Measured on the shipped pair:
+              // `text-carbon-textSub` on `--carbon-surface` is 8.85:1 (dark)
+              // / 7.82:1 (light). `hover:bg-carbon-hover` is unchanged and
+              // still steps the key toward the groove in both themes.
+              // `plain`/`raised` are both meaningless here (see each prop's
+              // own doc) so neither is read in this branch.
               : track
-                ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                ? "bg-carbon-surface text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                 : plain
                   ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                   : raised

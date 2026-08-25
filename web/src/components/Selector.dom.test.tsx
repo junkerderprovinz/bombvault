@@ -485,31 +485,69 @@ describe("Selector — variant=\"well\" (TrickWork-styled track, Settings.tsx's 
 describe("Selector — variant=\"track\" (round 7 escalation: NotifyCard's \"on\" row, CadenceBuilder's mode/weekday pickers)", () => {
   it("default variant (\"chip\") renders none of the track's wrapper/segment classes", () => {
     render(<OneOfThree />);
-    expect(screen.getByRole("tablist").className).not.toContain("gap-[0.15rem]");
+    expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface3");
+    expect(screen.getByRole("tablist").className).not.toContain("w-fit");
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    expect(tab.className).not.toContain("bg-carbon-surface3");
+    expect(tab.className).not.toContain("bg-carbon-surface ");
   });
 
-  it("the strip itself becomes an enclosing track — same background token as \"well\", tighter gap/padding, and flex-wrap (unlike well's flex-nowrap, since track segments are content-hugging, not mutually pinned)", () => {
+  // Round-7 FOLLOW-UP (jdp, live-review: "Ich sehe nirgends die neuen
+  // horizontalen Selektoren."). The track's own surface has to differ from
+  // BOTH parent surfaces this variant legally sits on — a Card
+  // (`bg-carbon-surface`) and a CadenceBuilder well (`bg-carbon-surface2`).
+  // The first cut painted the track `bg-carbon-surface2`, which measured
+  // literally identical to the well behind it at six of the nine live call
+  // sites (every schedule card on the Schedules + Integrity tabs), so the
+  // one thing this variant exists to add could not be seen at all.
+  // `bg-carbon-surface3` is the only surface token distinct from both.
+  it("the strip itself becomes an enclosing track at surface3 — NOT well's surface2, which was invisible inside a surface2 well", () => {
     render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
     const list = screen.getByRole("tablist");
-    expect(list.className).toContain("bg-carbon-surface2");
+    expect(list.className).toContain("bg-carbon-surface3");
+    expect(list.className).not.toContain("bg-carbon-surface2");
     expect(list.className).toContain("rounded-control");
-    expect(list.className).toContain("gap-[0.15rem]");
-    expect(list.className).toContain("p-[0.15rem]");
+    // Same groove width as "well" — the established value for this exact
+    // role, not a re-derived near-miss (the first cut's own 0.15rem left a
+    // 2.4px ring, too thin to read as an enclosure).
+    expect(list.className).toContain("gap-[0.2rem]");
+    expect(list.className).toContain("p-[0.2rem]");
     expect(list.className).toContain("flex-wrap");
     expect(list.className).not.toContain("flex-nowrap");
   });
 
-  it("idle segments are VISIBLY filled at rest (bg-carbon-surface3, one step deeper than the track), unlike well's idle-transparent segments; the active segment still fills with the accent", () => {
+  it("the track hugs its own segments (w-fit max-w-full) instead of stretching to a block parent's full width — CadenceBuilder renders it as a direct child of a flex-col fieldset", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
+    const list = screen.getByRole("tablist");
+    expect(list.className).toContain("w-fit");
+    expect(list.className).toContain("max-w-full");
+    // No `self-start`: `width: fit-content` already opts the strip out of a
+    // flex column's default `align-items: stretch`, and `self-start` would
+    // have top-aligned it inside the row-shaped parents (NotifyCard's "on"
+    // row, the weekday row, the drill-kind row) that centre a label beside
+    // it.
+    expect(list.className).not.toContain("self-start");
+  });
+
+  it("idle segments are VISIBLY filled at rest with the raised-control fill (bg-carbon-surface), distinct from the surface3 groove holding them, unlike well's idle-transparent segments; the active segment still fills with the accent", () => {
     render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
     const active = screen.getByRole("tab", { name: "Alpha" });
     const idle = screen.getByRole("tab", { name: "Beta" });
     expect(active.className).toContain("bg-accent");
     expect(active.className).toContain("text-accentContrast");
-    expect(idle.className).toContain("bg-carbon-surface3");
+    expect(idle.className).toContain("bg-carbon-surface ");
+    expect(idle.className).not.toContain("bg-carbon-surface2");
+    expect(idle.className).not.toContain("bg-carbon-surface3");
     expect(idle.className).not.toContain("bg-transparent");
     expect(idle.className).toContain("rounded-control");
+  });
+
+  it("groove and keys resolve to DIFFERENT surface tokens — a zero-delta enclosure is not an enclosure (the exact regression this round fixed)", () => {
+    render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" />);
+    const trackBg = /bg-carbon-surface\d?/.exec(screen.getByRole("tablist").className)?.[0];
+    const idleBg = /bg-carbon-surface\d?/.exec(screen.getByRole("tab", { name: "Beta" }).className)?.[0];
+    expect(trackBg).toBeTruthy();
+    expect(idleBg).toBeTruthy();
+    expect(trackBg).not.toBe(idleBg);
   });
 
   it("segments are content-hugging, NOT pinned to a matched width or a fixed well height — the deliberate difference from \"well\" that keeps this variant cheap to repeat many times per page", () => {
@@ -523,12 +561,13 @@ describe("Selector — variant=\"track\" (round 7 escalation: NotifyCard's \"on\
     expect(tab.className).toContain("[transition:background-color_120ms_ease]");
   });
 
-  it("`plain` and `raised` are both ignored under variant=\"track\" — idle fill stays the track's own bg-carbon-surface3 either way", () => {
+  it("`plain` and `raised` are both ignored under variant=\"track\" — idle fill stays the track's own bg-carbon-surface either way", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="track" plain raised />
     );
     const idle = screen.getByRole("tab", { name: "Beta" });
-    expect(idle.className).toContain("bg-carbon-surface3");
+    expect(idle.className).toContain("bg-carbon-surface ");
+    expect(idle.className).not.toContain("bg-carbon-surface3");
   });
 
   it("keyboard navigation is unregressed under variant=\"track\"", () => {
