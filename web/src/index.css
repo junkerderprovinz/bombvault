@@ -1652,23 +1652,39 @@ body {
    past the crossover to be safe for every hue AND for a pathological pure
    white or pure black custom accent.
 
-   Live-measured (getComputedStyle on the deployed container, both themes,
-   all 8 rainbow positions) — prefix cell vs its own ink, then the two
-   halves against each other:
-     #FF8389  9.11:1   sep 3.84    #3DDBD9  7.72:1   sep 4.54
-     #FF832B  9.32:1   sep 3.79    #1D99F3 10.26:1   sep 3.37
-     #FCC419  7.46:1   sep 4.64    #BE95FF  9.02:1   sep 3.84
-     #6FDC8C  7.72:1   sep 4.52    #FF7EB6  9.12:1   sep 3.87
-   Worst prefix-ink contrast across the palette 7.46:1 (vs 4.5:1 required);
-   worst half-to-half separation 3.37:1, well past the ~1.5:1 where a shade
-   step stops being arguable. The same formula on a pure-white custom accent
-   — the worst case the whole colour space can produce — still measures
-   5.57:1.
+   LIVE-MEASURED with getComputedStyle on the deployed container, light AND
+   dark theme (identical in both: the fill and both inks are derived from the
+   hue, not from the theme), across all 8 rainbow positions. Columns: the
+   prefix cell's resolved fill, that fill against its own ink, and the two
+   halves against each other.
+     #FF8389  #683C3E   9.12:1  sep 3.85     #3DDBD9  #245B5A   7.73:1  sep 4.54
+     #FF832B  #683C1D   9.33:1  sep 3.79     #1D99F3  #184463  10.27:1  sep 3.38
+     #FCC419  #675317   7.45:1  sep 4.63     #BE95FF  #514268   8.99:1  sep 3.82
+     #6FDC8C  #355B3F   7.69:1  sep 4.50     #FF7EB6  #683A4E   9.10:1  sep 3.86
+   Worst prefix-ink contrast across the palette 7.45:1 (vs 4.5:1 required);
+   worst half-to-half separation 3.38:1, well past the ~1.5:1 where a shade
+   step stops being arguable.
+
+   The three worst cases the whole colour space can produce, also measured
+   live by driving --accent/--accent-contrast/--accent-contrast-inv directly:
+   a pure-white accent gives #686868 at 5.61:1, a pure-#161616 accent gives
+   #ADADAD at 8.11:1, and a grey sitting on contrastOn's own crossover
+   (#767676, where the LABEL half is at its 4.54:1 floor) gives #CFCFCF at
+   11.62:1. Nothing in the space drops the prefix cell under 4.5:1.
+
+   Reactive rainbow mode's RESTING state rides along correctly too (its own
+   rebind block swaps --accent-contrast-inv for --carbon-text, see there):
+   measured #C5C5C5 on #161616 = 10.53:1 light, #404040 on #F4F4F4 = 9.48:1
+   dark.
 
    `border-inline-end`, not border-right: the seam has to sit between the two
-   cells under dir="rtl" too, where the prefix cell is the pill's RIGHT cap.
-   The seam is drawn in --accent-contrast (the LABEL half's ink) at 45%, so
-   it reads as a cut in the badge rather than a border of its own colour.
+   cells under dir="rtl" too, where the prefix cell becomes the pill's RIGHT
+   cap (verified live with dir="rtl": the seam moves to the cell's left edge
+   and the label ends exactly where the prefix begins). The seam is drawn in
+   --accent-contrast — the LABEL half's own ink — at 45%, so it reads as a cut
+   in the badge rather than a third colour: measured across the palette it
+   sits at 1.34-1.56:1 against the prefix fill and 2.27-2.69:1 against the
+   label fill, visible on both sides without competing with either half.
 
    No radius of its own: the parent pill carries `overflow-hidden`, so this
    cell's square start corners are clipped to whatever radius the badge
