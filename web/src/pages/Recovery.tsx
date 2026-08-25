@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { hueVars, rainbowAt } from "../lib/appearance";
@@ -23,8 +23,6 @@ import {
   discoverAll,
   getSettings,
   putSettings,
-  getCloud,
-  getRclone,
   listContainers,
   listVMs,
   listFileSets,
@@ -999,52 +997,132 @@ function ForeignRestoreCard({
 }
 
 // ---------------------------------------------------------------------------
-// CloudCredsDisclosure — step 3's optional cloud/rclone credential cards,
-// behind one expander.
+// StepDisclosure — ONE expander shape, used by BOTH of step 3's optional
+// sections (the off-site repo URLs and the cloud/rclone credential cards).
 //
-// WHY A DISCLOSURE (jdp: "Der Abschnitt von Cloud-Zugangsdaten (S3 / restic
-// REST) und Off-site (rclone): brauchen wir die immer oder sind die optional?
-// Können wir die in einen Ein-/Aufklapp-Button verstecken wenn sie optional
-// sind?"). They are optional, confirmed against the backend rather than
-// assumed: CloudCard's fields become nothing but env vars for the restic
-// child process (internal/api/service.go's `cloudEnv`, which emits only the
-// non-empty ones — AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/AWS_DEFAULT_REGION
-// /RESTIC_REST_USERNAME/RESTIC_REST_PASSWORD), and restic reads none of them
-// for a repo that is a plain filesystem path. RcloneCard's config is written
-// to DataDir/rclone.conf and only ever consulted for a repo carrying the
-// `rclone:` prefix. So a user whose backups live on a local path under the
-// host mount, or on a share already mounted on Unraid, needs neither card —
-// which is exactly what rclone.hint already tells them in words ("SMB/NFS
-// need no rclone: mount the share on Unraid and set a Backup Path to it").
-// Two large credential forms permanently open in the middle of the step is a
-// lot of screen for something most installs never fill in.
+// WHY A DISCLOSURE AT ALL (jdp, first round: "Der Abschnitt von
+// Cloud-Zugangsdaten (S3 / restic REST) und Off-site (rclone): brauchen wir
+// die immer oder sind die optional? Können wir die in einen Ein-/Aufklapp-
+// Button verstecken wenn sie optional sind?" — then, this round: "Können wir
+// den Offsite-Abschnitt auch in einen ausklappbaren Button machen?"). Both
+// sections really are optional, confirmed against the backend rather than
+// assumed:
+//   - Credentials: CloudCard's fields become nothing but env vars for the
+//     restic child process (internal/api/service.go's `cloudEnv`, which emits
+//     only the non-empty ones — AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/
+//     AWS_DEFAULT_REGION/RESTIC_REST_USERNAME/RESTIC_REST_PASSWORD), and
+//     restic reads none of them for a repo that is a plain filesystem path.
+//     RcloneCard's config is written to DataDir/rclone.conf and only ever
+//     consulted for a repo carrying the `rclone:` prefix. That is also exactly
+//     what rclone.hint already says in words ("SMB/NFS need no rclone: mount
+//     the share on Unraid and set a Backup Path to it").
+//   - Off-site: the four *Offsite fields are the second-repo `restic copy`
+//     targets. settings.offsiteHint — which is that chip's own tip —
+//     documents them "leave blank to disable", and settings.offsiteTitle,
+//     which is that chip's own label, already ends in "(optional)".
+// So a user whose backups live on a local path under the host mount, or on a
+// share already mounted on Unraid, needs NEITHER section — and until they
+// open one, neither costs them any screen.
 //
 // THE TRIGGER is a `Selector` in `select="many"` mode — the mechanism this app
 // already uses for disclosure sections (Containers.tsx's per-container
 // Ordner/Stoppen/Ausschlussmuster/Hooks/Backups chip row, whose `openSections`
 // is a Set for the same "these open independently, this is not a tablist"
-// reason). One chip here rather than five, but the same component, the same
-// `aria-pressed` state and the same "chip on = its pane below is open"
-// reading, instead of a second, bespoke expander idiom.
+// reason). One chip per section rather than five in a strip, but the same
+// component, the same `aria-pressed` state and the same "chip on = its pane
+// below is open" reading, instead of a bespoke expander idiom.
+//   SIBLINGS BY CONSTRUCTION (jdp's ask is that the two read as one mechanism,
+// not two): both call sites render THIS component, so the trigger's element,
+// size, shape, colour, aria wiring and open-state behaviour are one piece of
+// code rather than two that have to be kept in sync by hand. The only knob a
+// caller gets is `gap` — how far its own revealed content sits from the chip —
+// because a notch-badged Card needs 32px of clearance for the notch and a
+// plain stack of fields does not (see that prop's own doc).
 //   `hue={false}`, deliberately: Selector otherwise gives each item its OWN
 // rainbow position by list index, which for a lone chip means position 0 — a
-// red chip sitting inside step 3's yellow card. Turning its own hueing off
-// does NOT take it out of the colour engine: the chip still paints
-// `bg-accent`/`text-accentContrast` when active, and --accent under it comes
-// from the StepCard's own `.glim-hue`, so it carries THIS STEP's hue exactly
-// like every other button in the step body (Connect & preview, Discover, …)
-// and follows rainbow/reactive mode with them. That is the "genuine singleton
-// keeps its container's accent" case design-language carves out, not an
-// exemption from the engine.
+// red chip sitting inside step 3's yellow card, and, now that there are two of
+// them, BOTH chips red, which would also break the sibling reading. Turning
+// its own hueing off does NOT take it out of the colour engine: a chip still
+// paints `bg-accent`/`text-accentContrast` when active, and --accent under it
+// comes from the StepCard's own `.glim-hue`, so both chips carry THIS STEP's
+// hue exactly like every other button in the step body (Connect & preview,
+// Discover, …) and follow rainbow/reactive mode with them. That is the
+// "genuine singleton keeps its container's accent" case design-language
+// carves out, not an exemption from the engine.
 //
-// OPEN BY DEFAULT WHEN CREDENTIALS ALREADY EXIST: someone who needs these is
-// not made to hunt for them. `configured` probes the same two endpoints the
-// cards themselves read (getCloud/getRclone) — the GETs return set-flags, not
-// secrets, so this can tell "something is stored" without ever handling one.
-// While the probe is in flight `open` stays null and the pane renders closed;
-// it can only open itself once, on the probe's answer, and never fights a
-// user who has clicked in the meantime (`setOpen((o) => (o === null ? … : o))`).
+// `size="lg"` (jdp, this round: "und die Buttons grösser machen"). Measured
+// live before the change: 24px tall, 12px text — Selector's `md` stage, this
+// expander's previous (default) size. After: 32px tall, 14px text, Selector's
+// OWN existing `lg` stage, not a value invented for this one spot. 32px is
+// also the number the rest of this page is already built on: it is Badge's
+// single square-icon-badge stage (see Badge.tsx's "ONE SIZE FOR SQUARE ICON
+// BADGES"), the height of every FolderBrowser path field stacked directly
+// above these chips in this same step, and the height of the step's own
+// "Connect & preview" and "Discover" buttons. So the enlarged chips line up
+// with the controls they sit among instead of introducing a fourth height.
+// `lg` is already this app's choice wherever a Selector is a primary control
+// rather than a dense inline one (Settings' 7-tab strip, its Shape and Motion
+// pickers).
+//
+// ALWAYS CLOSED ON LOAD. This deliberately REVERSES the "open by default when
+// credentials already exist" behaviour the immediately preceding round built
+// for the credentials chip — jdp has now explicitly asked for the opposite
+// ("und diese beiden Ausklappbaren standardmässig zugeklappt lassen"). Gone
+// with it: the `getCloud()`/`getRclone()` probe that decided it, the tri-state
+// `boolean | null` open flag that existed only so the probe's late answer
+// could not overwrite a user's click, and this component's whole `useEffect`.
+// `useState(false)` is the entire story now, for both chips, on every load,
+// configured or not.
 // ---------------------------------------------------------------------------
+function StepDisclosure({
+  label,
+  tip,
+  gap = "gap-8",
+  children,
+}: {
+  label: string;
+  tip: string;
+  /** Vertical gap between the chip and the content it reveals (and between
+   *  that content's own children). Defaults to the credential cards' 32px: a
+   *  Card's heading notch is centred ON its card's top edge, so it eats half
+   *  its own height out of whatever gap precedes it — see the call site in
+   *  step 3 for the measured -1px overlap that number fixes. A section of
+   *  plain fields has no notch to clear and passes the step body's own
+   *  `gap-2` instead. */
+  gap?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    // pt-3 on top of the step body's own gap-2, so the chip clears whatever
+    // sits above it — see each call site's own comment in step 3.
+    <div className={`pt-3 flex flex-col ${gap}`}>
+      <Selector
+        items={[{ id: DISCLOSURE_ID, label, tip }]}
+        label={label}
+        select="many"
+        size="lg"
+        hue={false}
+        active={open ? OPEN_SECTION : NO_SECTION}
+        onChange={() => setOpen((o) => !o)}
+      />
+      {open && children}
+    </div>
+  );
+}
+// One item id for every StepDisclosure: each chip is the only member of its
+// own Selector strip, so the id never has to tell it apart from a sibling —
+// which is what lets the two frozen Sets below serve both chips. Frozen rather
+// than a `new Set([...])` per render: Selector takes a ReadonlySet and there
+// are only ever two possible values.
+const DISCLOSURE_ID = "sec";
+const OPEN_SECTION: ReadonlySet<string> = new Set([DISCLOSURE_ID]);
+const NO_SECTION: ReadonlySet<string> = new Set<string>();
+
+// CloudCredsDisclosure — step 3's credential cards inside a StepDisclosure. It
+// stays its own component for ONE reason: keeping the two `nextHue()` calls
+// unconditional at the call site (see the props below). Everything about the
+// expander itself is StepDisclosure's.
 function CloudCredsDisclosure({
   t,
   cloudHue,
@@ -1062,58 +1140,18 @@ function CloudCredsDisclosure({
   cloudHue: number;
   rcloneHue: number;
 }) {
-  const [open, setOpen] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    void Promise.all([
-      getCloud().catch(() => null),
-      getRclone().catch(() => null),
-    ]).then(([cloud, rclone]) => {
-      if (!alive) return;
-      const configured =
-        !!cloud?.ok &&
-          (!!cloud.s3KeyId || !!cloud.s3Region || !!cloud.restUser || !!cloud.s3SecretSet || !!cloud.restPasswordSet)
-        ? true
-        : !!rclone?.ok && (rclone.remotes?.length ?? 0) > 0;
-      setOpen((o) => (o === null ? configured : o));
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const isOpen = open === true;
   return (
-    // pt-3 on top of the step body's own gap-2, so the chip clears the
-    // encryption toggle above it — see this call site's own comment in step 3.
-    <div className="pt-3 flex flex-col gap-8">
-      <Selector
-        items={[{ id: "creds", label: t("recovery.cloudCreds"), tip: t("recovery.cloudCredsHint") }]}
-        label={t("recovery.cloudCreds")}
-        select="many"
-        hue={false}
-        active={isOpen ? OPEN_CREDS : NO_CREDS}
-        onChange={() => setOpen(!isOpen)}
-      />
-      {isOpen && (
-        <>
-          {/* `nested` — these are the Settings page's own Cards rendered inside
-              a card, so they drop their (identical-to-the-parent) surface and
-              their horizontal padding and line up on the step's own content
-              edge. See Card's `nested` doc in Settings.tsx for the measured
-              20px indent this removes. */}
-          <CloudCard t={t} hueIndex={cloudHue} nested />
-          <RcloneCard t={t} hueIndex={rcloneHue} nested />
-        </>
-      )}
-    </div>
+    <StepDisclosure label={t("recovery.cloudCreds")} tip={t("recovery.cloudCredsHint")}>
+      {/* `nested` — these are the Settings page's own Cards rendered inside
+          a card, so they drop their (identical-to-the-parent) surface and
+          their horizontal padding and line up on the step's own content
+          edge. See Card's `nested` doc in Settings.tsx for the measured
+          20px indent this removes. */}
+      <CloudCard t={t} hueIndex={cloudHue} nested />
+      <RcloneCard t={t} hueIndex={rcloneHue} nested />
+    </StepDisclosure>
   );
 }
-// Two frozen Sets rather than a `new Set([...])` per render: Selector takes a
-// ReadonlySet and there are only ever two possible values here.
-const OPEN_CREDS: ReadonlySet<string> = new Set(["creds"]);
-const NO_CREDS: ReadonlySet<string> = new Set<string>();
 
 export default function Recovery() {
   const { t } = useT();
@@ -1784,26 +1822,49 @@ export default function Recovery() {
               onChange={(v) => setSettings((prev) => (prev ? { ...prev, filesPath: v } : prev))}
             />
 
-            {/* Off-site repo URLs (rest / S3 / B2 / sftp / rclone). */}
-            <span className="text-xs font-medium text-carbon-textSub pt-1">{t("settings.offsiteTitle")}</span>
-            {([
-              ["containersOffsite", "nav.containers"],
-              ["vmsOffsite", "nav.vms"],
-              ["flashOffsite", "nav.flash"],
-              ["filesOffsite", "nav.files"],
-            ] as const).map(([key, label]) => (
-              <div key={key} className="flex flex-col gap-1">
-                <label className="text-xs text-carbon-textSub">{t(label)}</label>
-                <input
-                  value={settings[key]}
-                  spellCheck={false}
-                  onChange={(e) => setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))}
-                  placeholder="rest:http://host:8000/repo"
-                  dir="ltr"
-                  className={`${offsiteInput} text-start`}
-                />
-              </div>
-            ))}
+            {/* Off-site repo URLs (rest / S3 / B2 / sftp / rclone) — the
+                SECOND disclosure (jdp: "Card 3: können wir den Offsite-
+                Abschnitt auch in einen ausklappbaren Button machen?"). Same
+                StepDisclosure component as the credentials one below, so the
+                two are siblings by construction rather than by resemblance —
+                see that component for the trigger's size, its colour-engine
+                wiring, and why BOTH now start closed.
+                  The chip REPLACES the bare `settings.offsiteTitle` eyebrow
+                span this section used to carry: that string is now the chip's
+                own label, so the section is still named exactly as before and
+                the name isn't printed twice. Its tip is settings.offsiteHint,
+                the paragraph the Settings page already shows under the same
+                fields — no new i18n key for either.
+                  `gap-2` rather than the default `gap-8`: this section reveals
+                plain labelled inputs, not notch-badged Cards, so there is no
+                notch poking up out of the first child that needs clearing. It
+                matches the step body's own gap-2 above and below, which is
+                what makes the revealed fields read as part of the step rather
+                than as a floating panel. */}
+            <StepDisclosure
+              label={t("settings.offsiteTitle")}
+              tip={t("settings.offsiteHint")}
+              gap="gap-2"
+            >
+              {([
+                ["containersOffsite", "nav.containers"],
+                ["vmsOffsite", "nav.vms"],
+                ["flashOffsite", "nav.flash"],
+                ["filesOffsite", "nav.files"],
+              ] as const).map(([key, label]) => (
+                <div key={key} className="flex flex-col gap-1">
+                  <label className="text-xs text-carbon-textSub">{t(label)}</label>
+                  <input
+                    value={settings[key]}
+                    spellCheck={false}
+                    onChange={(e) => setSettings((prev) => (prev ? { ...prev, [key]: e.target.value } : prev))}
+                    placeholder="rest:http://host:8000/repo"
+                    dir="ltr"
+                    className={`${offsiteInput} text-start`}
+                  />
+                </div>
+              ))}
+            </StepDisclosure>
 
             {/* Encryption on/off (reuses the Settings ToggleRow).
                 jdp, live review: "Card 3: Passworttoggle soll 'Passwort'
@@ -1838,13 +1899,14 @@ export default function Recovery() {
 
             {/* Cloud + rclone credential cards — the exact Settings components,
                 self-persisting via setCloud/setRclone (no duplicate persistence)
-                — now behind one expander, because they are optional for most
-                installs. See CloudCredsDisclosure above for the whole "why a
-                disclosure / why this trigger / why open-when-configured"
-                writeup, and for why the two `nextHue()` calls stay HERE, at
-                this exact point in the JSX, instead of moving inside the
-                collapsed branch (a conditional nextHue() would renumber every
-                heading below step 3 whenever the section is closed).
+                — behind the SECOND of this step's two identical expanders,
+                because they are optional for most installs. See StepDisclosure
+                above for the whole "why a disclosure / why this trigger / why
+                both start closed" writeup, and CloudCredsDisclosure just below
+                it for why the two `nextHue()` calls stay HERE, at this exact
+                point in the JSX, instead of moving inside the collapsed branch
+                (a conditional nextHue() would renumber every heading below
+                step 3 whenever the section is closed).
                   SPACING (jdp: "Der darunter folgende Badge ist zu nah am
                 Passworttoggle-Text"): measured live before this change, the
                 CloudCard heading notch's top edge sat at y=1189 while the
