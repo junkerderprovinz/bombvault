@@ -478,40 +478,62 @@ export function IconDownload() {
 // above already carries this app's one padlock for a different "this
 // instance's own state, kept secure" concept, and this file's own history
 // (see IconConfig's comment) already ruled out reusing a shield/lock
-// silhouette for a second, unrelated meaning nearby. Drawn instead as a
-// floppy disk — the conventional, universally-recognised "save state"
-// glyph (Material Symbols' filled `save`, and virtually every desktop app's
-// own Save icon draw the identical two-piece shape: a wide top shutter band
-// sitting above a larger body, real gap between them like IconTrash's own
-// handle/lid/body triad above) — with its label window cut as a downward
-// arrow instead of a plain rectangle, a real hole via `fillRule="evenodd"`
-// (the same true-punched-hole technique IconCheckCircle's ring uses; the
-// hole shows whatever sits behind the glyph, not a colour-matching
-// approximation). The arrow reads as "data landing in the vault, happening
-// right now" layered onto an unmistakable save-disk silhouette, rather than
-// a bare arrow that could mean any directional action — genuinely distinct
-// from IconDownload (a lone arrow, no disk), IconRecovery (a circular
-// restore sweep) and IconConfig (a padlock) at a glance. Verified standalone
-// at both 16px (this file's badge scale) and BackupButton's real 28px
-// `size="icon"` render before wiring it in, same check this file's other
-// ported/redrawn glyphs already get.
+// silhouette for a second, unrelated meaning nearby. Drawn as a floppy disk —
+// the conventional, universally-recognised "save state" glyph (Material
+// Symbols' filled `save` and virtually every desktop app's own Save icon draw
+// the identical shape).
+//
+// REDRAWN a second time (jdp, live review: "Bitte ein anderes Symbol für den
+// 'Jetzt sichern'-Badge, ein gut erkennbares Speichern-Symbol"). The previous
+// take was a floppy with its label window cut into the shape of a DOWNWARD
+// ARROW — and that is exactly what failed: at 16px the arrow's shaft and
+// barbs come out around one device pixel wide each, so the punched arrow
+// collapsed into an indistinct smudge inside an already-small body, and the
+// glyph as a whole read as "a dark box with something in it".
+//   Two things changed, both found by rasterising every candidate at its REAL
+// 16×16 and magnifying that raster (not by re-rendering the vector large,
+// which flatters every shape equally and is what let the previous version
+// through):
+//   1. The arrow is gone. jdp asked for a save symbol, not a save symbol plus
+//      a direction; the "now/immediacy" half of the meaning is carried by the
+//      button's own tip ("Jetzt sichern") and by its accent-filled active
+//      badge, not by cramming a second motif into 16 pixels.
+//   2. The body is a CLOSED square again. Intermediate drafts let the label
+//      window run out through the bottom edge (as several stock save icons
+//      do at larger sizes); at 16px that turns the silhouette into an arch
+//      standing on two legs and stops reading as a disk at all. Both windows
+//      are now fully enclosed holes — real ones, punched with
+//      `fillRule="evenodd"` the way IconCheckCircle's ring is, so they show
+//      whatever sits behind the glyph rather than a colour-matching fake —
+//      with ~2px of body left on every side of them and a 2.5px gap between
+//      the two, all landing on whole/half units of the 16-unit viewBox so the
+//      edges stay crisp instead of anti-aliasing to grey.
+// The one remaining flourish is the clipped top-right corner every real
+// floppy has; it survives at 16px because it is a 2.5px diagonal, not a
+// detail.
+//   Still unmistakably distinct from its neighbours at a glance: IconDownload
+// (a lone arrow, no body), IconRestore/IconRecovery (a circular sweep),
+// IconCopy (two offset plain rounded squares, no windows), IconFolder,
+// IconCloud, IconTrash, IconConfig (a padlock). Checked side by side with the
+// Export badge it actually sits next to, at true size, in both themes.
 export function IconBackupNow() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <rect x="3.2" y="1.6" width="9.6" height="2.3" rx="0.7" />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2.8 4.6h10.4v9.2a1.3 1.3 0 0 1-1.3 1.3H4.1a1.3 1.3 0 0 1-1.3-1.3Z
-           M7.05 8.6h1.9v2.7h1.55L8 13.6 5.5 11.3h1.55Z"
+        d="M2 3.2A1.2 1.2 0 0 1 3.2 2h8.3L14 4.5V12.8A1.2 1.2 0 0 1 12.8 14H3.2A1.2 1.2 0 0 1 2 12.8Z
+           M5 3h6v3H5Z
+           M4 8.5h8v4H4Z"
       />
     </svg>
   );
 }
 
-// IconSave (plain save-disk glyph, distinct from IconBackupNow's arrowed
-// disk) REMOVED — its only callers were Containers.tsx's four disclosure-
-// panel editors (FoldersEditor/StopContainersEditor/ExcludesEditor/
+// IconSave (a second, plain save-disk glyph that used to sit beside
+// IconBackupNow's then-arrowed disk) REMOVED — its only callers were
+// Containers.tsx's four disclosure-panel
+// editors (FoldersEditor/StopContainersEditor/ExcludesEditor/
 // HooksEditor), each of which used it purely for an explicit "Speichern"
 // icon-badge button. Live-save conversion (jdp, live review: "Brauchen wir
 // die Speichern-Buttons in den Aufklappcards überhaupt? Es soll doch immer
@@ -521,8 +543,9 @@ export function IconBackupNow() {
 // so it goes too rather than lingering as dead code. (It was also the
 // specific glyph jdp flagged as illegible at render size — moot now that
 // nothing renders it, but if a genuine "explicit save/commit" button ever
-// returns to this app, redraw fresh rather than reviving this one: the flat
-// disk-with-rectangular-window silhouette was the reported problem.)
+// returns to this app, reuse IconBackupNow above rather than reviving this
+// one — that glyph has since been redrawn to the proportions that actually
+// survive 16px, which this one never had.)
 
 // Circular "restore" arrow, at this file's own 16×16 icon-only-badge scale —
 // the SAME filled-ring-segment + arrowhead construction as this file's own
