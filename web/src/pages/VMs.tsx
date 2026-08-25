@@ -15,7 +15,11 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { Badge, type BadgeTone } from "../components/Badge";
-import { Toggle } from "../components/Toggle";
+// ToggleRow, not the bare Toggle: VMIncludeToggle renders the shared row
+// (label + switch) rather than a naked switch its caller labels by hand — the
+// same import components/IncludeToggle.tsx already uses for the Container
+// tab's copy of that control.
+import { ToggleRow } from "./Settings";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
@@ -260,18 +264,21 @@ function VMIncludeToggle({
     }
   }
 
+  // Renders through the SAME shared ToggleRow as components/IncludeToggle.tsx
+  // (the Container tab's copy of this exact control) and Files.tsx's
+  // FileSetEnabledToggle — all three converted together in the whole-app sweep.
+  // See IncludeToggle.tsx for jdp's original ask ("Der Text soll immer ganz
+  // links stehen und der Toggle ganz rechts sein") and Files.tsx's copy for
+  // why this one was still the mirror image of it: a bare `hideLabel` Toggle
+  // with a hand-rolled switch-first/text-second `<label>` at the call site.
   return (
-    <div className="flex flex-col items-end gap-1">
-      <Toggle
-        key={shake}
-        hideLabel
-        label={t("containers.includeInSchedule")}
-        checked={enabled}
-        onChange={(next) => void handleChange(next)}
-        disabled={busy}
-        className={shake ? "glim-shake" : undefined}
-      />
-    </div>
+    <ToggleRow
+      label={t("containers.includeInSchedule")}
+      checked={enabled}
+      onChange={(next) => void handleChange(next)}
+      disabled={busy}
+      shakeNonce={shake}
+    />
   );
 }
 
@@ -905,12 +912,11 @@ export function VMRow({
       {installed && (
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4 flex-wrap">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <VMIncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} />
-              <span className="text-xs text-carbon-textSub">
-                {t("containers.includeInSchedule")}
-              </span>
-            </label>
+            {/* No wrapping `<label>`/`<span>` anymore: VMIncludeToggle now
+                renders the full ToggleRow itself (label included, text-first),
+                the identical shape Containers.tsx's IncludeToggle call site
+                already uses — see that component's own comment. */}
+            <VMIncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} />
             {/* Backup method (graceful / live) — always visible; it decides VM downtime. */}
             <label className="flex items-center gap-2">
               <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
