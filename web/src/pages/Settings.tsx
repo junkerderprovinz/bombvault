@@ -26,6 +26,7 @@ import { randomId } from "../lib/uuid";
 import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
+import { DropdownListbox } from "../components/DropdownListbox";
 import {
   getAccent,
   setAccent,
@@ -963,25 +964,19 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
 
   const current = languages.find((l) => l.code === lang) ?? languages[0];
 
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open]);
+  // Outside-click / Escape / scroll dismissal lives in DropdownListbox now,
+  // together with the panel it dismisses — this card's own two hand-rolled
+  // listener effects are gone. They were also the pattern Containers.tsx's
+  // multi-select copied wholesale, and that copy sat under an
+  // `overflow-hidden` card that hard-clipped the panel (see
+  // DropdownListbox.tsx's header). Fixing the copy and leaving the original
+  // behind as a second, subtly different implementation of the same control
+  // is exactly the sibling drift this repo keeps out; both call sites now
+  // render the one shared, portalled panel.
+  //   Not merely cosmetic here either: this list is 42 locales deep and
+  // always opened straight downward with no viewport awareness at all, so on
+  // a short window it ran off the bottom edge. The shared panel clamps and
+  // flips above the trigger when there is no room below.
 
   return (
     <Card title={t("settings.language")} hueIndex={hueIndex}>
@@ -990,11 +985,14 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
             Language button, then match the Theme button to it"): was
             content-hugging (only as wide as the current flag+label pair),
             which read as too narrow/incidental for a deliberate settings
-            control. w-48 (192px) isn't an arbitrary new number — it's the
-            SAME width this button's own dropdown listbox already uses
-            (`w-48` a few lines below), so the trigger now sits flush above
-            the exact footprint of the menu it opens, rather than a narrower
-            button popping open a visibly wider list. `truncate`/`min-w-0` on
+            control. w-48 (192px) isn't an arbitrary new number — it was the
+            SAME width this button's own dropdown listbox already hard-coded,
+            so the trigger sits flush above the exact footprint of the menu it
+            opens, rather than a narrower button popping open a visibly wider
+            list. That number is no longer restated on the listbox at all:
+            DropdownListbox sizes the portalled panel to THIS trigger's own
+            measured width, so the two can no longer drift apart.
+            `truncate`/`min-w-0` on
             the label span below keeps a genuinely long locale name (this
             list has 42) from overflowing the now-fixed width instead of
             just growing the button the way it used to. */}
@@ -1010,32 +1008,30 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
           <Flag code={current.flag} />
           <span className="min-w-0 truncate text-start">{current.label}</span>
         </button>
-        {open && (
-          <div
-            role="listbox"
-            aria-label={t("language.label")}
-            className="absolute start-0 top-full mt-1 z-50 w-48 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
-            style={{ scrollbarColor: "var(--carbon-border) transparent" }}
-          >
-            {languages.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                role="option"
-                aria-selected={l.code === lang}
-                onClick={() => { setLanguage(l.code); setOpen(false); }}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-start transition-colors ${
-                  l.code === lang
-                    ? "bg-carbon-surface3 text-carbon-text"
-                    : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                }`}
-              >
-                <Flag code={l.flag} />
-                <span>{l.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <DropdownListbox
+          open={open}
+          onClose={() => setOpen(false)}
+          triggerRef={ref}
+          label={t("language.label")}
+        >
+          {languages.map((l) => (
+            <button
+              key={l.code}
+              type="button"
+              role="option"
+              aria-selected={l.code === lang}
+              onClick={() => { setLanguage(l.code); setOpen(false); }}
+              className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm text-start transition-colors ${
+                l.code === lang
+                  ? "bg-carbon-surface3 text-carbon-text"
+                  : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+              }`}
+            >
+              <Flag code={l.flag} />
+              <span>{l.label}</span>
+            </button>
+          ))}
+        </DropdownListbox>
       </div>
     </Card>
   );

@@ -4,6 +4,7 @@ import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrde
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
+import { DropdownListbox } from "../components/DropdownListbox";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
@@ -910,23 +911,14 @@ function StopContainersEditor({
     }
   }
 
-  // Close on outside click / Escape — same mechanism Settings.tsx's own
-  // LanguageCard dropdown listbox uses.
-  useEffect(() => {
-    if (!pickerOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false);
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setPickerOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [pickerOpen]);
+  // Outside-click / Escape / scroll dismissal is deliberately NOT wired up
+  // here any more: it moved into DropdownListbox along with the panel itself
+  // (see that component's header for the clipping bug that forced the panel
+  // out of this card and into a portal). A second copy left behind here would
+  // have been actively wrong — the old handler asked "is the mousedown inside
+  // `pickerRef`", which a portalled option button no longer is, so it would
+  // have unmounted the list on mousedown and the option's own click would
+  // never have landed.
 
   if (!open) return null;
 
@@ -957,14 +949,20 @@ function StopContainersEditor({
             <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
           </svg>
         </button>
-        {pickerOpen && (
-          <div
-            role="listbox"
-            aria-multiselectable="true"
-            aria-label={t("stophook.title")}
-            className="absolute start-0 top-full mt-1 z-50 w-64 max-w-full max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl"
-            style={{ scrollbarColor: "var(--carbon-border) transparent" }}
-          >
+        {/* Portalled, not `absolute` inside this card: ContainerRow's own
+            wrapper is `relative overflow-hidden` (ProgressBar needs that
+            clip), which hard-clipped this panel at the card's bottom edge no
+            matter what z-index it carried — jdp, live review: "Sie soll über
+            die Card hinausgehen und voll angezeigt werden." See
+            DropdownListbox.tsx for the full root cause. */}
+        <DropdownListbox
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          triggerRef={pickerRef}
+          label={t("stophook.title")}
+          multiselectable
+        >
+          <>
             {candidates.length === 0 && sortedSelected.length === 0 && (
               <p className="px-3 py-2 text-xs text-carbon-textMuted">{t("stophook.noCandidates")}</p>
             )}
@@ -1007,8 +1005,8 @@ function StopContainersEditor({
                 <span className="shrink-0 text-caption text-statusFail">{t("containers.notInstalled")}</span>
               </button>
             ))}
-          </div>
-        )}
+          </>
+        </DropdownListbox>
       </div>
       {sortedSelected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
