@@ -295,10 +295,21 @@ export function CadenceBuilder({
           the page's "well"-variant pickers, not as one real Selector
           control). Every call site of THIS component wraps it in its own
           `rounded-card bg-carbon-surface2 p-4` well (see each Settings.tsx
-          caller) — `variant="track"` now supplies its OWN enclosing track
-          surface at the SAME token, so the mode row reads as a real nested
-          control inside that card rather than leaning on the card's own
-          background for contrast. See Selector.tsx's own file header item 6
+          caller, and ItemScheduleOverride.tsx's own `p-3` variant of it) —
+          which is exactly why the first cut of `variant="track"` still read
+          as nothing at all here: it painted its track `bg-carbon-surface2`,
+          the literal same token as that wrapper, so the enclosure was
+          invisible on every schedule card. The variant now paints its track
+          `bg-carbon-surface3` (the same depth `inputCls` below already puts
+          this component's own time/number/cron fields at, inside this same
+          well) with `bg-carbon-surface` keys, so the mode row reads as a
+          real nested control regardless of whether it sits in a surface2
+          well like this one or directly on a Card like NotifyCard's "on"
+          row. The wrapper stays — it is what anchors the time picker,
+          weekday row, interval field, cron editor and preview text as one
+          group, and `inputCls`'s own `bv-field-focus-well` focus treatment
+          is specified against a surface2 well — the variant, not the caller,
+          is what moved. See Selector.tsx's own file header item 6
           for the full root-cause writeup and why this is deliberately NOT
           "well" (that variant's pinned width/fixed height are sized for a
           handful of page-level pickers, not a control repeated on every
