@@ -7,6 +7,7 @@ import { FilterPopover } from "../components/FilterPopover";
 import { DropdownListbox } from "../components/DropdownListbox";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useT, stateLabel } from "../lib/i18n";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
@@ -2652,7 +2653,18 @@ export function Containers() {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
+    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
+    // machen?"): was `gap-6 max-w-5xl` — 1024px wide on a 24px Card rhythm,
+    // i.e. BOTH values off the app-wide standard. The 40px rhythm was settled
+    // several rounds ago and rolled out to Config/Receiver/Fleet/Recovery, but
+    // never reached this page, because each of those rounds only touched the
+    // one page jdp had named that day. See lib/pageShell.ts for the table.
+    //   Flat, not nested: this page's filter/sort toolbar is a sibling of the
+    // heading rather than part of it (it renders conditionally, below the
+    // loading/error/empty branches), so it takes the same 40px as everything
+    // else — verified live at 1152px, where it reads as its own band between
+    // heading and list rather than looking orphaned.
+    <div className={PAGE_SHELL}>
       {/* Page heading + Discover (disaster-recovery) action */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>

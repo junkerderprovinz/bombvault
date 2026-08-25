@@ -9,6 +9,7 @@ import {
 } from "../lib/api";
 import type { Snapshot, Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
@@ -481,25 +482,18 @@ export function Config() {
   }, [source]);
 
   return (
-    // gap-10 (jdp live-review: "Abstände zwischen den Cards zu klein und
-    // erste Card zu weit oben, systemweit gleich machen"): was gap-6 (24px)
-    // for EVERY gap on this page, including heading-to-first-card — measured
-    // live, that's only 24px, and with the heading-badge's own half-overlap
-    // poking 11px into it (Badge.tsx's `-translate-y-1/2` notch), the actual
-    // VISIBLE whitespace above each Card was just 13px, on this page only.
-    // The rest of the app already settled on gap-10 (40px) as the one
-    // Card-to-Card (and heading-to-first-card) rhythm — see Dashboard.tsx's
-    // own identical live-review fix ("Die Abstände der Cards passen nicht.
-    // Bitte systemweit anpassen!") and Settings.tsx's tab-panels wrapper,
-    // both of which measured every OTHER page's gap at 40px before bumping
-    // to match. Unlike those two pages, this page's heading is a single bare
-    // `<h1>+<p>` div with no tab-strip/indicator row that needs to stay at
-    // the tighter 24px — so there's nothing here that needs splitting into a
-    // nested gap-6 wrapper the way Dashboard/Settings needed; one flat
-    // gap-10 on this single wrapper already gives every gap (heading→Card 1,
-    // Card 1→2, Card 2→3) the same corrected 40px DOM gap (29px visible,
-    // after the same 11px badge overlap every other gap-10 page also has).
-    <div className="flex flex-col gap-10 max-w-3xl">
+    // PAGE_SHELL (jdp live-review: "Im Tab Selbst-Backup und Flash sind die
+    // Cards schmaler. Können wir die nicht überall gleich breit machen?").
+    // This page — "Selbst-Backup" — is one of the two he named: it was
+    // max-w-3xl (768px) against 1024px on five pages and 1152px on Dashboard,
+    // the narrowest in the app. The gap here was already the correct 40px
+    // from an earlier round; only the width changes. See lib/pageShell.ts for
+    // the full before/after measurement table and why 1152px won.
+    //   The heading is a single bare `<h1>+<p>` div with no tab-strip or
+    // indicator row that needs a tighter gap of its own, so the one flat
+    // PAGE_SHELL gap governs every gap on the page (heading→Card 1, 1→2,
+    // 2→3) — no nested sub-wrapper needed the way Dashboard/Settings have.
+    <div className={PAGE_SHELL}>
       {/* Page heading */}
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("config.title")}</h1>

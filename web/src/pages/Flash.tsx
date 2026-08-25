@@ -3,6 +3,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } from "../lib/api";
 import type { Snapshot } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
@@ -273,7 +274,15 @@ export function Flash() {
   }, [source]);
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
+    // PAGE_SHELL (jdp live-review: "Im Tab Selbst-Backup und Flash sind die
+    // Cards schmaler. Können wir die nicht überall gleich breit machen?").
+    // This is the second page he named, and it was the worst case in the app:
+    // `gap-6 max-w-3xl`, i.e. the NARROWEST width (768px) on the OLD 24px
+    // rhythm — both values off-standard at once. See lib/pageShell.ts.
+    //   The OffsiteIndicator sits inside the heading div (not as a sibling),
+    // so the flat 40px shell gap governs heading→Card 1 and every Card→Card
+    // gap alike; nothing here needs a nested tighter group.
+    <div className={PAGE_SHELL}>
       {/* Page heading */}
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
