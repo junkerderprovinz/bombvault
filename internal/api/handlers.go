@@ -1738,6 +1738,32 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleDetectEncryption probes the configured repositories and reports which
+// encryption mode they are actually in, applying a DEFINITE result to
+// Settings.EncryptionEnabled so a user restoring on a fresh instance never has
+// to assert it. POST /api/encryption/detect
+//
+// The verdict is the honest part of the contract and the UI branches on it:
+// "encrypted"/"plain" are detected and applied; "conflict", "absent",
+// "unknown" and "unconfigured" all leave the setting untouched and are shown as
+// undecided. A probe failure is NEVER reported as "plain".
+//
+// Per-repo Err values are already scrubbed by the service (scrubError), so no
+// repo path or backend credential reaches the client here.
+func (h *Handler) handleDetectEncryption(w http.ResponseWriter, r *http.Request) {
+	det, err := h.svc.DetectEncryption(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"verdict":           string(det.Verdict),
+		"applied":           det.Applied,
+		"encryptionEnabled": det.EncryptionEnabled,
+		"repos":             det.Repos,
+	}))
+}
+
 // handleRecoveryKit streams the encryption-key recovery kit as a download.
 // GET /api/recovery-kit — BEHIND authGate AND additionally requires auth to be
 // ENABLED: the kit is the master secret (the APP_KEY + the derived restic
