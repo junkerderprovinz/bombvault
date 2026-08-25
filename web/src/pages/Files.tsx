@@ -922,10 +922,11 @@ function FileSetDialog({
   // positive (never negative/off-screen) regardless of content height —
   // short content (like this one) gets comfortable margin on all sides,
   // and content that grows toward the 90vh cap still centres safely with
-  // `overflow-y-auto` on the backdrop covering the rest. Same family, same
-  // fix still owed to Receiver.tsx's ReceiverDialog and Fleet.tsx's own two
-  // `items-start` dialogs (identical copy-pasted shell) — flagged, not
-  // touched here (scoped to the Ordner tab this review round covered).
+  // `overflow-y-auto` on the backdrop covering the rest. The three sites this
+  // comment used to flag as "still owed" — Receiver.tsx's ReceiverDialog and
+  // Fleet.tsx's own two `items-start` dialogs, the identical copy-pasted
+  // shell — are now converted too (whole-app sweep), so every dialog backdrop
+  // in this app is `items-center` and there is no remaining copy to find.
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"

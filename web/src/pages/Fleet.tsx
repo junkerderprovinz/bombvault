@@ -340,8 +340,21 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
 
+  // `items-center`, NOT `items-start` (whole-app sweep — this was one of the
+  // three sites Files.tsx's own FileSetDialog comment explicitly recorded as
+  // "same fix still owed", after that round scoped itself to the Ordner tab).
+  // Top-anchored, this dialog's heading Badge poked to 5px below the literal
+  // browser-viewport edge — measured live on the deployed container at a
+  // 1000px-tall viewport: badge top = 5px — reading as a flat bar jammed into
+  // the screen corner rather than a notch straddling the card. Safe here for
+  // the identical reason it is safe in ConfirmDialog/WhatsNewDialog/
+  // ErrorDetailPanel/FileSetDialog: the visible box below is capped at
+  // `max-h-[90vh]`, strictly under the 100vh flex container, so a centred
+  // item's top offset is always positive and never clips off-screen, while
+  // `overflow-y-auto` on this backdrop still covers content that grows toward
+  // the cap.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4" onClick={onClose}>
       {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
           `relative` shell wraps the scrollable dialog box, same split as
           Receiver.tsx's ReceiverDialog — see that call site's comment. */}
@@ -724,9 +737,12 @@ function FleetDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
 
+  // `items-center` — same whole-app sweep fix, and for the same measured
+  // reason, as this file's own proposeTitle dialog above; see that call site's
+  // comment for the full writeup.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
       onClick={onClose}
     >
       {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
