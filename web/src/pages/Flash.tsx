@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } from "../lib/api";
 import type { Snapshot } from "../lib/api";
@@ -12,8 +12,8 @@ import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
 import { useToast } from "../lib/toast";
 import { FlashZipExportCard } from "./Settings";
-import { CheckDraw } from "../components/CheckDraw";
 import { InfoBubble } from "../components/InfoBubble";
+import { IconBackupNow } from "../components/Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -21,17 +21,50 @@ type T = ReturnType<typeof useT>["t"];
 // Backup button
 // ---------------------------------------------------------------------------
 
-// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
-// "error" result below is deliberately NOT migrated to a toast. Same shared-
-// hook reasoning as Containers.tsx's BackupButton / VMs.tsx's VMBackupButton
-// / Config.tsx's ConfigBackupButton: it's driven by lib/backupWatch.ts's
-// useBackupWatch hook (kind defaults to "backup", which already self-clears
-// after 4s — SUCCESS_CLEAR_MS, effectively already toast-like), but the
-// identical state shape also backs RESTORE outcomes elsewhere, which are
-// explicitly STICKY BY DESIGN. Splitting that shared, cross-file state
-// machine's rendering by kind is a hook-level architecture change, not the
-// local flash-swap this pass does everywhere else — left as its own
-// deliberate follow-up.
+// Square icon-only badge, flush right in the card (jdp live-review: "In der
+// Flash-sichern-Card soll der 'Flash jetzt sichern'-Button ein quadratischer
+// Badge mit Glyph sein, der ganz rechts in der Card platziert ist"). Was a
+// full-width `bg-accent px-4 py-1.5 text-sm` button with THREE permanently-
+// inline states living below it (pending spinner+label, success
+// checkmark+snapshot id, a red error message) — the identical shape
+// Containers.tsx's own BackupButton (that file's per-container "Jetzt
+// sichern" conversion) already solved: there is no room for any of that
+// next to a small square glyph, so every TERMINAL state (success/error) now
+// surfaces as a toast instead, matching the "failed action toasts AND
+// shakes its button" standing rule this same file's FlashSnapshotRow delete
+// button already follows. Only the PENDING state stays inline — swapped for
+// the glyph itself (a spinner replacing the icon while running), same as
+// Containers.tsx's BackupButton.
+//
+// `size="icon"` (Badge.tsx, h-7/w-7 = 28px): reused verbatim from
+// Containers.tsx's BackupButton rather than re-measured against THIS
+// button's own prior self (`px-4 py-1.5 text-sm` ≈ 32px) — per the standing
+// size-token rule ("check whether an established token for the EXACT role
+// already exists... rather than independently re-measuring your own local
+// context"), this is the same role: a domain's "back up now" action,
+// icon-only, the same IconBackupNow glyph, no adjacent field to match
+// instead. Re-deriving 32px from the old text button's own footprint here
+// would be exactly the "each individually well-fitted to its own [former]
+// neighbour" trap the standing rule now names — two "Jetzt sichern" badges
+// anywhere in this app render at the identical 28px, not two close-but-
+// different numbers that each looked fine in isolation.
+//
+// GlimStone follow-up pass (v8.0.0) audit note, UPDATED: an earlier version
+// of this comment deferred migrating state.phase's success/error rendering
+// to a toast, reasoning that useBackupWatch's shared state shape also backs
+// Config.tsx's ConfigBackupButton / VMs.tsx's VMBackupButton / restore
+// outcomes elsewhere (which stay STICKY BY DESIGN, kind="restore" — see the
+// hook's own SUCCESS_CLEAR_MS comment). That reasoning still correctly
+// blocks changing the HOOK itself — untouched here, same as always. But
+// rendering state.phase as a toast instead of inline text is a per-
+// component, per-file decision (Containers.tsx's BackupButton already
+// proved this: same hook, zero hook changes, just a different render for
+// kind="backup"'s already-self-clearing 4s terminal states) — not the
+// hook-level architecture change the old comment worried about. This file
+// now makes that same local rendering choice, for this jdp-requested badge
+// conversion specifically. Config.tsx's ConfigBackupButton and VMs.tsx's
+// VMBackupButton are UNCHANGED, still full-width text buttons — out of
+// scope for this pass, not attempted here.
 function FlashBackupButton({
   t,
   onBackedUp,
@@ -53,45 +86,59 @@ function FlashBackupButton({
     matchRun: (r) => r.domain === "flash",
     onDone: onBackedUp,
   });
+  // A backup/restore/replication elsewhere blocks a new flash backup.
+  const blockedByOther = externallyBusy && !isPending;
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button.
+  const [shake, setShake] = useState(0);
+  // Tracks the last phase already reported, so this effect toasts exactly
+  // once per NEW terminal transition — same guard as Containers.tsx's
+  // BackupButton (state.phase can only ever start at "idle", so this never
+  // fires on mount, only on a real fire()-driven change).
+  const seenPhase = useRef(state.phase);
+
+  useEffect(() => {
+    if (state.phase === seenPhase.current) return;
+    seenPhase.current = state.phase;
+    if (state.phase === "success") {
+      push(
+        state.snapshotId ? `${t("settings.saved")} · ${state.snapshotId.slice(0, 8)}` : t("settings.saved"),
+        "success"
+      );
+    } else if (state.phase === "error") {
+      push(state.message, "fail");
+      setShake((n) => n + 1);
+    }
+  }, [state, push, t]);
+
+  const tip = isPending
+    ? t("flash.backingUp")
+    : blockedByOther
+      ? t(busyPhraseKey(busyPhase))
+      : t("flash.backupNow");
 
   return (
-    <div className="flex flex-col gap-1 items-start">
-      <button
-        onClick={() => void fire()}
-        disabled={isPending || externallyBusy}
-        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-      >
-        {isPending ? (
-          <>
-            <span
-              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-            {t("flash.backingUp")}
-          </>
-        ) : (
-          t("flash.backupNow")
-        )}
-      </button>
-      {/* A backup/restore/replication elsewhere blocks a new flash backup. */}
-      {externallyBusy && !isPending && (
-        <span className="text-xs text-carbon-textMuted">
-          {t(busyPhraseKey(busyPhase))}
-        </span>
+    <Badge
+      key={shake}
+      as="button"
+      shape="square"
+      tone="active"
+      size="icon"
+      tip={tip}
+      onClick={() => void fire()}
+      disabled={isPending || blockedByOther}
+      className={shake ? "glim-shake" : undefined}
+    >
+      {isPending ? (
+        <span
+          className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+          style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+        />
+      ) : (
+        <IconBackupNow />
       )}
-      {state.phase === "success" && (
-        <span className="inline-flex items-center gap-1 text-xs text-statusOk">
-          <CheckDraw />
-          {t("settings.saved")}
-          {state.snapshotId && (
-            <span dir="ltr" className="font-mono ms-1 text-start text-carbon-textMuted">{state.snapshotId.slice(0, 8)}</span>
-          )}
-        </span>
-      )}
-      {state.phase === "error" && (
-        <span className="text-xs text-statusFail max-w-md wrap-break-word">{state.message}</span>
-      )}
-    </div>
+    </Badge>
   );
 }
 
@@ -287,12 +334,22 @@ export function Flash() {
           </Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
-          <FlashBackupButton
-            t={t}
-            onBackedUp={() => void load()}
-            externallyBusy={running.active}
-            busyPhase={running.phase}
-          />
+          {/* jdp live-review: "der Button ganz rechts in der Card platziert"
+              — the badge is the row's only content, right-aligned via
+              justify-end (this app's established "push to the row's far
+              edge" idiom is `ms-auto` on the badge itself when it shares a
+              row with a leading sibling — see Containers.tsx's own
+              BackupButton/ExportButton row — but there is no leading sibling
+              here, so justify-end on the row achieves the identical flush-
+              right result with nothing to push away from). */}
+          <div className="flex justify-end">
+            <FlashBackupButton
+              t={t}
+              onBackedUp={() => void load()}
+              externallyBusy={running.active}
+              busyPhase={running.phase}
+            />
+          </div>
 
           {/* Live backup/restore progress, pinned to the card's bottom edge */}
           {progress && (
@@ -326,12 +383,26 @@ export function Flash() {
           </Badge>
         </h2>
 
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
-            <SourceToggle source={source} onChange={setSource} disabled={loading} domain="flash" />
-          </div>
-          <p className="text-caption text-carbon-textMuted">{t("source.hint")}</p>
+        {/* jdp gave this exact text for an InfoBubble here ("Restore und
+            Löschen wirken nur auf die gewählte Quelle — ein lokales Backup
+            zu löschen rührt die Offsite-Kopie nie an und umgekehrt."). It
+            turns out to be byte-identical to the EXISTING `source.hint`
+            i18n key already used at this same call site — as a permanent
+            <p> caption below the row, precisely the rule-8 pattern an
+            InfoBubble exists to replace — and at four other call sites
+            app-wide with the identical label+SourceToggle-row-then-<p>
+            shape (Containers.tsx's per-container RestorePanel, Config.tsx,
+            VMs.tsx, Files.tsx). Converted HERE only, per this round's
+            explicit Flash.tsx scope: the other four sites are UNCHANGED,
+            still rendering the old <p>, a real ready-made follow-up for a
+            future round rather than attempted in this one. Zero new i18n
+            keys — `source.hint` is already translated in all 42 locales. */}
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
+            {t("source.label")}
+            <InfoBubble tip={t("source.hint")} />
+          </span>
+          <SourceToggle source={source} onChange={setSource} disabled={loading} domain="flash" />
         </div>
 
         {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
