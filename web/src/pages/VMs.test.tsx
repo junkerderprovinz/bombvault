@@ -77,7 +77,13 @@ describe("VMRow action wiring", () => {
   it("sends VM.libvirtName to backupVMNow, never the display VM.name", async () => {
     render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} index={0} />);
 
-    fireEvent.click(screen.getByText("containers.backupNow"));
+    // getByLabelText, not getByText: the backup control is an icon-only
+    // square Badge (converted in the same pass as its Containers/Flash/
+    // Files/Config siblings), so "containers.backupNow" is now its ACCESSIBLE
+    // NAME rather than visible button text. This is the stronger assertion of
+    // the two — it fails if the badge ever loses the aria-label an icon-only
+    // control must carry, which plain getByText could not have caught.
+    fireEvent.click(screen.getByLabelText("containers.backupNow"));
 
     await waitFor(() => expect(backupVMNow).toHaveBeenCalled());
     expect(backupVMNow).toHaveBeenCalledWith(trueNasVM.libvirtName);
