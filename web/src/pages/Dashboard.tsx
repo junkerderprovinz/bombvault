@@ -16,6 +16,7 @@ import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { IconPencil } from "../components/Sidebar";
 import { Selector } from "../components/Selector";
 // humanBytes (binary 1024 units, one decimal) moved to lib/forecast so the
 // storage forecast line shares the exact formatter of the size column.
@@ -2437,10 +2438,25 @@ export function Dashboard() {
               state above), so a cutout hard-coded to one of those two colours
               would show a visible mismatched patch in the other; the plain
               pencil silhouette alone already reads clearly as "edit" without
-              it. */}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M4 20h4L18.5 9.5a2.121 2.121 0 0 0-3-3L5 17v3z" />
-          </svg>
+              it.
+                This used to be an inline `<svg>` right here, and it was the
+              app's ONLY pencil. Files.tsx's own "Ordner-Set bearbeiten" badge
+              needed the same glyph (jdp's icon-badge round for that tab), and
+              the standing instruction there was to reuse this one rather than
+              draw a second — so the path moved verbatim into Sidebar.tsx's
+              shared icon set as IconPencil and this call site now renders that
+              component. Same silhouette; the only difference is that IconPencil
+              crops its viewBox to the ink (see its own comment for the measured
+              numbers and why), so this button's glyph goes from 11.34 × 10.58
+              px of ink at 18px to 12.20 × 11.39 px at the app's standard 16px
+              icon-badge glyph size — sub-pixel-per-axis in practice, and it
+              brings this one in line with every other 16px glyph in a 32px
+              tile. The button itself is untouched: it stays a hand-rolled
+              `h-8 w-8` rather than a Badge, because its background legitimately
+              flips between two states (`bg-accent` while editing,
+              `bg-carbon-surface2` at rest) and Badge's icon-only tone="active"
+              is unconditionally accent-filled. */}
+          <IconPencil />
         </button>
       </div>
 

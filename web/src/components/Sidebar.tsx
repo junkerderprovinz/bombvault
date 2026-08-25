@@ -633,6 +633,49 @@ export function IconTrash() {
   );
 }
 
+// Pencil glyph — the conventional "edit this" symbol (Files.tsx's per-file-set
+// "Ordner-Set bearbeiten" button converting to a square icon badge, jdp:
+// "Ordnertab: die Buttons 'Ordnerset bearbeiten' und 'Set entfernen' sollen
+// quadratische Badges mit Glyphen sein.").
+//
+// NOT a new drawing. This app already had exactly one pencil — Dashboard.tsx's
+// customize toggle, an inline `<svg>` on a 24-unit grid — and its path data is
+// reproduced here VERBATIM, character for character, rather than a second
+// pencil being invented next to it. Dashboard.tsx now renders this component
+// instead of its own inline copy, so there is one pencil in the codebase, not
+// two that can drift.
+//
+// What DID change is the framing, and only because the same defect this
+// round's IconDownload fix is about would otherwise repeat here immediately.
+// The Dashboard pencil's ink covers 63.0% × 58.8% of its own 24-unit viewBox,
+// centred at (48.2%, 53.9%) — measured with getBBox, not estimated. Dropped
+// straight into a 16px icon-badge slot that would render 10.07 × 9.41 px of
+// ink, against a sibling family that measures 11–13 px in both axes
+// (IconBackupNow 12.00 × 12.00, IconTrash 10.80 × 13.10, IconAdd 11.00 ×
+// 11.00, IconCopy 12.00 × 12.00) — i.e. it would arrive as the new smallest
+// glyph in the set, the exact complaint that produced this round.
+//   Fixed WITHOUT touching a single path coordinate, by cropping the viewBox
+// to the ink instead: `1.65 3.02 19.83 19.83` is the smallest square window
+// centred on that measured ink box (centre 11.568, 12.936) that leaves the
+// glyph filling 76.3% of it. Rendered at 16px that is 12.20 × 11.39 px of ink,
+// centred exactly on 50/50 — squarely inside the family. Cropping the window
+// rather than rescaling the path is what keeps the reuse honest: the `d`
+// attribute is still Dashboard's own, and there is no transform stack or
+// re-derived arithmetic to get wrong.
+//   Rendered at true 16px and judged from a ×14 nearest-neighbour magnified
+// RASTER beside IconTrash/IconAdd/IconCopy (the same method this file's
+// IconBackupNow and IconDownload comments describe), and cross-checked against
+// the Dashboard pencil's own pre-change 18px rendering: same silhouette, same
+// optical weight (its ink grows 11.34 × 10.58 → 12.20 × 11.39 px there, a
+// change of well under a pixel per axis).
+export function IconPencil() {
+  return (
+    <svg width="16" height="16" viewBox="1.65 3.02 19.83 19.83" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M4 20h4L18.5 9.5a2.121 2.121 0 0 0-3-3L5 17v3z" />
+    </svg>
+  );
+}
+
 // Check-in-circle glyph — "Verbindung testen" (Settings.tsx's off-site
 // TestConnectionButton, GlimStone follow-up round: "Können wir die Buttons in
 // quadratische Badges mit Glyphen umwandeln?", jdp explicitly named this
