@@ -2390,7 +2390,17 @@ export function Dashboard() {
     <div className="flex flex-col gap-10 max-w-6xl">
       <div className="flex flex-col gap-6">
       {/* Page heading — fixed (contextual, not customizable). The pencil in the
-          top-right corner toggles the customize/edit mode. */}
+          top-right corner toggles the customize/edit mode.
+            That pencil is `h-8 w-8` + centring, not the `p-2` it used to size
+          itself with. It is a square icon-only badge by every other measure
+          (the same rounded-control tile, the same bg-carbon-surface2/hover
+          recipe as Settings' Registry add/remove and FolderBrowser's browse
+          badge), but it derived its own footprint from padding around an 18px
+          glyph and landed on 34px — measured live — where every other square
+          icon badge in the app is 32px. Two pixels, but exactly the drift the
+          one-size rule exists to stop: a call site sizing itself from its own
+          contents instead of taking the shared number. See Badge.tsx's "ONE
+          SIZE FOR SQUARE ICON BADGES" block. */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-carbon-text">
@@ -2412,7 +2422,7 @@ export function Dashboard() {
           aria-label={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
           aria-pressed={editing}
           title={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
-          className={`shrink-0 rounded-control p-2 motion-safe:transition-colors ${
+          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
