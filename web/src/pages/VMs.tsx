@@ -992,11 +992,17 @@ function VMForgetButton({
 
   return (
     <div className="flex flex-col items-end gap-1">
+      {/* NO bespoke red (whole-app sweep) — the exact twin of Containers.tsx's
+          DeleteBackupsButton, converted in the same pass and for the same
+          reason; see that call site for the full writeup. The label names the
+          action, handleForget still routes through the shared useConfirm
+          dialog (t("vms.removeEntryConfirm")), and `glim-shake` survives as
+          behaviour rather than colour. */}
       <button
         key={shake}
         onClick={() => void handleForget()}
         disabled={pending}
-        className={`inline-flex items-center gap-2 rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+        className={`inline-flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
           shake ? " glim-shake" : ""
         }`}
       >

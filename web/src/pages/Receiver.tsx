@@ -344,12 +344,19 @@ function ReceivedRepoCard({
           >
             {t("receiver.edit")}
           </button>
+          {/* NO bespoke red on either state (whole-app sweep) — the exact
+              twin of Fleet.tsx's peer-row remove pair, converted in the same
+              pass; see that call site for the full writeup, including why
+              this DELIBERATELY stays a text button rather than becoming a
+              square icon badge (the two-click inline confirm documented at
+              i18n.ts's receiver.confirmRemove needs a label to flip, which an
+              icon-only badge does not have). */}
           {confirmRemove ? (
             <button
               key={shakeRemove}
               onClick={() => void handleRemove()}
               disabled={removing}
-              className={`inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
+              className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
                 shakeRemove ? " glim-shake" : ""
               }`}
             >
@@ -358,7 +365,7 @@ function ReceivedRepoCard({
           ) : (
             <button
               onClick={() => setConfirmRemove(true)}
-              className="inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50"
+              className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
             >
               {t("receiver.remove")}
             </button>
