@@ -966,6 +966,35 @@ CREATE TABLE IF NOT EXISTS mesh_offers (
 		version: 88, name: "offsite_targets_role",
 		sql: `ALTER TABLE offsite_targets ADD COLUMN role TEXT NOT NULL DEFAULT 'offsite';`,
 	},
+	{
+		// #166, "every N days" for the drills / tamper-test / digest schedules.
+		// The scheduler implements an everyN cadence as a DAILY cron trigger
+		// wrapped in a due-gate that asks "when did this last run?" and returns
+		// early when the interval has not elapsed. The five BACKUP domains answer
+		// that from `runs` (LastSuccessful<Domain>Backup); these three had no
+		// last-run fact at all, so everyN there degraded into firing every day —
+		// which for the drill schedule means a real DR restore nightly. That is
+		// why the API rejected everyN for them rather than shipping it.
+		//
+		// This table is that missing fact: one row per self-recording scheduled
+		// job, holding the unix second its last pass ran. Deliberately NOT derived
+		// from the adjacent per-result tables (restore_drills, tamper_tests): those
+		// also collect MANUAL single-domain runs, so a user clicking "Verify now"
+		// on one domain would suppress the scheduled pass across ALL domains — the
+		// silent-skip failure this feature exists to avoid. Only the scheduled job
+		// writes here, so the gate measures exactly what it claims to measure.
+		//
+		// A missing row reads as "this scheduled job has never run" (a definite
+		// answer, not an unknown) and lets the first trigger after enabling
+		// proceed, matching what the five backup domains already do for a
+		// never-backed-up domain. A failing QUERY is the unknown, and the
+		// scheduler's due-gate skips on it. See store.LastScheduleJobRun.
+		version: 89, name: "schedule_job_runs",
+		sql: `CREATE TABLE IF NOT EXISTS schedule_job_runs (
+  job TEXT    PRIMARY KEY,
+  at  INTEGER NOT NULL DEFAULT 0
+);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
