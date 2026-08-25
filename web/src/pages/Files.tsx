@@ -37,7 +37,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconFiles } from "../components/Sidebar";
+import { IconBackupNow, IconFiles, IconPencil, IconTrash } from "../components/Sidebar";
 import { useT } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -129,6 +129,25 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
 // DESIGN. Splitting that shared, cross-file state machine's rendering by kind
 // is a hook-level architecture change, not the local flash-swap this pass
 // does everywhere else — left as its own deliberate follow-up.
+//
+// WHOLE-AREA SWEEP (icon-badge round for this tab, alongside jdp's two named
+// buttons above): the TRIGGER is now a square icon badge, while everything the
+// audit note above describes stays exactly as it was. This is the same control
+// jdp already had converted on the two other domains that own one —
+// components/BackupButton.tsx (Containers, "Jetzt sichern und Export sollen
+// quadratische Badges mit Glyph sein") and Flash.tsx — and it was the only
+// thing left in a FileSetRow card standing as a text pill beside two 32px glyph
+// tiles. Badge.tsx's own header is explicit about why that matters: a user sees
+// one card, not a set of independently-reasonable controls.
+//   Note this conversion does NOT drag the toast migration with it. Containers'
+// BackupButton had to move its terminal states to toasts because it lives in a
+// card corner with no room beneath it; this one sits in its own
+// `flex flex-col` column with the result lines stacked below the trigger — the
+// exact shape Containers.tsx's ExportButton keeps for its own sticky result —
+// so the deliberate decision recorded above survives untouched. The column
+// flips from `items-start` to `items-end` so the 32px tile lines up with the
+// card's right edge (its parent is already `items-end`) instead of anchoring a
+// wide text block whose left edge it would otherwise inherit.
 function FileSetBackupButton({
   set,
   t,
@@ -153,28 +172,41 @@ function FileSetBackupButton({
   // (the server would refuse anyway) — restore-to-folder still works below.
   const noPath = set.path === "";
 
+  // One tip, resolved in the same priority order BackupButton.tsx uses, plus
+  // this domain's own extra refusal reason (a discovered set with no folder
+  // yet). The label the visible text used to carry is the last fallback — an
+  // icon-only trigger's tooltip has to say what the button DOES when nothing
+  // is blocking it.
+  const tip = noPath
+    ? t("files.noPathHint")
+    : isPending
+      ? t("common.backingUp")
+      : blockedByOther
+        ? t(busyPhraseKey(running?.phase))
+        : t("containers.backupNow");
+
   return (
-    <div className="flex flex-col gap-1 items-start">
-      <button
+    <div className="flex flex-col gap-1 items-end">
+      <Badge
+        as="button"
+        shape="square"
+        size="icon"
+        tone="active"
+        tip={tip}
         onClick={() => void fire()}
         disabled={isPending || blockedByOther || noPath}
-        title={noPath ? t("files.noPathHint") : undefined}
-        className="inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? (
-          <>
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-            {t("common.backingUp")}
-          </>
+          <span
+            className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+            style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+          />
         ) : (
-          t("containers.backupNow")
+          <IconBackupNow />
         )}
-      </button>
+      </Badge>
       {blockedByOther && (
-        <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running?.phase))}</span>
+        <span className="text-xs text-carbon-textMuted text-end">{t(busyPhraseKey(running?.phase))}</span>
       )}
       {state.phase === "success" && (
         <span className="inline-flex items-center gap-1 text-xs text-statusOk">
@@ -188,7 +220,7 @@ function FileSetBackupButton({
         </span>
       )}
       {state.phase === "error" && (
-        <span className="text-xs text-statusFail max-w-[18rem] wrap-break-word">
+        <span className="text-xs text-statusFail max-w-[18rem] wrap-break-word text-end">
           {state.message}
         </span>
       )}
@@ -553,7 +585,14 @@ function FileSetSnapshotRow({
   }
 
   return (
-    <div className="flex flex-col gap-1 py-2.5 border-b border-carbon-border last:border-0">
+    // py-1.5, not the py-2.5 this row used to carry — the identical trade
+    // components/RestorePanel.tsx's own snapshot row already made, and for the
+    // identical reason: its delete control grew from a ~24px text button to the
+    // app's one 32px square icon badge, and trimming 4px of padding per side
+    // keeps the collapsed row at the 44px it measured before. A bigger badge in
+    // a list of unchanged density, rather than a list that grew. Config.tsx's
+    // ConfigSnapshotRow carries the same pairing.
+    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
       <div className="flex items-center gap-3 text-sm">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {snap.id.slice(0, 8)}
@@ -566,17 +605,39 @@ function FileSetSnapshotRow({
             {snap.tags.join(", ")}
           </span>
         )}
-        <button
+        {/* Whole-area sweep finding, not part of jdp's two named buttons: this
+            per-snapshot delete was the LAST surviving copy of the exact defect
+            already fixed in components/RestorePanel.tsx and pages/Config.tsx —
+            a plain text button whose only colour was a bespoke
+            `hover:bg-statusFailBg hover:text-statusFail` red flash, sitting
+            inside a card every other control of which is hue-integrated. jdp's
+            wording when he reported it there ("Der Löschen-Badge ist auch
+            anders eingefärbt, soll nicht so sein, ganz normal in die Farbmodi
+            integrieren") applies here verbatim; leaving this one behind would
+            have meant the Files tab's own remove badge above is hue-integrated
+            while the delete one panel down is not.
+              Same recipe as its two already-corrected siblings and as the
+            remove badge above: square, `size="icon"` (32px), `tone="active"`,
+            no `hueIndex` — this panel renders inside FileSetRow's own
+            `.glim-hue` card, so the cascade paints it in this set's rainbow
+            position. No red, no grey: the meaning is carried by IconTrash, by
+            the tip, and by the confirm dialog handleDelete already opens
+            (t("snapshots.deleteConfirm")), which is untouched. The "…"
+            in-flight label has nowhere to live on an icon-only badge, so
+            `deleting` shows as `disabled`, exactly like RestorePanel's. */}
+        <Badge
           key={shake}
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          className={`shrink-0${shake ? " glim-shake" : ""}`}
+          tip={t("snapshots.delete")}
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
-          title={t("snapshots.delete")}
-          className={`shrink-0 rounded-control px-2 py-1 text-xs text-carbon-textSub hover:bg-statusFailBg hover:text-statusFail transition-colors disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
         >
-          {deleting ? "…" : t("snapshots.delete")}
-        </button>
+          <IconTrash />
+        </Badge>
       </div>
       {/* Restore control, indented under the id column to match the row. */}
       <div className="ps-24">
@@ -1071,22 +1132,77 @@ function FileSetRow({
             <FileSetEnabledToggle id={set.id} initial={set.enabled} />
             <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
           </label>
-          <button
-            onClick={onEdit}
-            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-          >
-            {t("files.editSet")}
-          </button>
-          <button
-            key={shake}
-            onClick={() => void handleRemove()}
-            disabled={removing}
-            className={`inline-flex items-center rounded-control bg-statusFailBg px-3 py-1.5 text-xs font-medium text-statusFail hover:bg-statusFailBgHover transition-colors disabled:opacity-50${
-              shake ? " glim-shake" : ""
-            }`}
-          >
-            {removing ? t("dashboard.checking") : t("files.deleteSet")}
-          </button>
+          {/* Edit + remove, both square icon badges (jdp: "Ordnertab: die
+              Buttons 'Ordnerset bearbeiten' und 'Set entfernen' sollen
+              quadratische Badges mit Glyphen sein. In die Farbmodi integriert.
+              Keine Sonderfarbe fuer den Entfernen-Badge."). Both were plain
+              text `<button>`s: edit a flat `bg-carbon-surface2` grey, remove a
+              `bg-statusFailBg`/`text-statusFail` red.
+                `tone="active"` + `size="icon"` + `shape="square"` + `tip` is
+              the app's whole icon-badge recipe in one line — icon-only +
+              active resolves to the solid `bg-accent`/`text-accentContrast`
+              pair (Badge's own `isIconOnly && tone==="active"` branch), and no
+              `hueIndex` is passed because this card's own root element carries
+              `.glim-hue` with this set's list-position hue: the ordinary CSS
+              custom-property cascade already resolves --accent/--accent-contrast
+              to THIS row's rainbow position, exactly like RestorePanel's
+              restore/delete pair and Containers' Export badge. `size="icon"`
+              is the app's one square-icon-badge size (32px) — see Badge.tsx's
+              "ONE SIZE FOR SQUARE ICON BADGES" block; not a number measured
+              against these two buttons' own old text footprint.
+                The remove badge gets NO special colour treatment — not the red
+              it used to carry, and equally not a grey-neutral exemption
+              (`neutral` is one of the tones Badge deliberately keeps out of the
+              rainbow, so it would have left this badge flat grey beside a hued
+              sibling — the "anders eingefärbt" defect jdp already reported on
+              RestorePanel's delete and Config's snapshot rows). It is the same
+              tone and the same hue as the edit badge next to it. Nothing about
+              the action becomes ambiguous: the destructive meaning is carried
+              by IconTrash and by the tip bubble (t("files.deleteSet") — "Set
+              entfernen"), and handleRemove still routes through the existing
+              useConfirm dialog (t("files.deleteSetConfirm")) before anything is
+              removed — that confirmation is untouched.
+                The `removing` in-flight state used to swap the label to
+              "Prüfe…"; an icon-only badge has no label to swap, so it surfaces
+              as `disabled` alone, matching every other icon badge in the app
+              (RestorePanel's delete does exactly this). `glim-shake` on failure
+              survives on className — behaviour, not colour.
+                Glyphs: IconTrash verbatim (the app's one trash can), and
+              IconPencil — which is Dashboard's own customize pencil, moved into
+              Sidebar.tsx's shared set rather than a second pencil being drawn
+              here; see that component's comment.
+                The pair sits in its own `gap-1.5` wrapper rather than
+              inheriting this row's `gap-4`: 16px between two adjacent 32px
+              glyph tiles reads as two unrelated controls, and every other
+              icon-badge pair in this app already sits at gap-1.5 (Containers.tsx's
+              BackupButton/Export pair in the card's top-right corner is the
+              reference). The row's own gap-4 still separates this pair from the
+              schedule toggle beside it, which is a different kind of control. */}
+          <div className="flex items-center gap-1.5">
+            <Badge
+              as="button"
+              shape="square"
+              size="icon"
+              tone="active"
+              tip={t("files.editSet")}
+              onClick={onEdit}
+            >
+              <IconPencil />
+            </Badge>
+            <Badge
+              key={shake}
+              as="button"
+              shape="square"
+              size="icon"
+              tone="active"
+              tip={t("files.deleteSet")}
+              onClick={() => void handleRemove()}
+              disabled={removing}
+              className={shake ? "glim-shake" : undefined}
+            >
+              <IconTrash />
+            </Badge>
+          </div>
         </div>
         <div className="ms-auto flex flex-col items-end">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
