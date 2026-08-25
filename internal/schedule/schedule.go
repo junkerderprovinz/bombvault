@@ -479,6 +479,13 @@ type Scheduler struct {
 	// injected backup closures (see cmd/bombvault/main.go).
 	hcRunStart  func(domain string)
 	hcRunFinish func(domain string, attempted, failed int, failures []ItemFailure)
+	// jobRuns is the durable "when did this scheduled job last run" record for
+	// the three jobs that have no natural last-run signal of their own — the
+	// drill pass, the tamper sweep and the digest (#166). nil until
+	// SetJobRunStore wires it; an everyN cadence on any of the three then fails
+	// the due-gate CLOSED (the job skips and says so) rather than degrading into
+	// a daily fire. See jobLastRun.
+	jobRuns JobRunStore
 
 	// mu guards entries and catchUps: ReloadWithDueChecks (settings POST
 	// goroutine) mutates them while NextRuns (the /api/schedule/next GET handler
@@ -686,6 +693,65 @@ func (s *Scheduler) SetDigestJob(digestFn func() error) {
 	s.digestFn = digestFn
 }
 
+// JobRunStore is the durable "when did this scheduled job last run" record for
+// the drill, tamper and digest schedules (#166) — the DI seam that keeps this
+// package store-free, exactly like LastRunFunc does for the backup domains.
+//
+// LastScheduleJobRun MUST distinguish its two zero-ish answers: a zero time with
+// a NIL error means "this job has never run" (a definite fact), while an error
+// means "cannot tell". The due-gate treats those oppositely — never-ran lets the
+// first fire through, cannot-tell skips — so an implementation that flattens a
+// query failure into a zero time would silently convert an unknown into a run.
+type JobRunStore interface {
+	LastScheduleJobRun(job string) (time.Time, error)
+	RecordScheduleJobRun(job string, at time.Time) error
+}
+
+// SetJobRunStore wires the last-run record that lets the drill, tamper and
+// digest schedules honour an "every N days" cadence (#166). Until this is
+// called those three still run fine on off/daily/weekly/cron cadences, but an
+// everyN cadence on them SKIPS every fire (loudly logged) rather than firing
+// daily — see jobLastRun. Call before Reload.
+func (s *Scheduler) SetJobRunStore(jobRuns JobRunStore) {
+	s.jobRuns = jobRuns
+}
+
+// jobLastRun is the everyN due-gate query for one self-recording job.
+//
+// It deliberately NEVER returns nil. A nil LastRunFunc is what makes Reload skip
+// wrapping the job in the due-check, which for an everyN cadence means the daily
+// trigger fires the real job EVERY day — a nightly DR restore for the drill
+// schedule. So an unwired store is reported as an ERROR here instead, which the
+// due-gate turns into a skip: the failure mode of forgetting SetJobRunStore is a
+// job that does not run and says why, never a job that runs 14x too often.
+func (s *Scheduler) jobLastRun(job string) LastRunFunc {
+	return func() (time.Time, error) {
+		store := s.jobRuns
+		if store == nil {
+			return time.Time{}, fmt.Errorf("no job-run store wired (SetJobRunStore) for %q", job)
+		}
+		return store.LastScheduleJobRun(job)
+	}
+}
+
+// recordJobRun stamps a self-recording job's last-run time. Call it only after
+// the pass has actually done its work — what counts as "done" is decided per job
+// at the call site, and each of the three call sites documents its own choice.
+//
+// A failure to record is logged, not propagated: the work already happened, and
+// the only consequence is that the next daily trigger sees a stale (or absent)
+// timestamp and runs the pass again. That is the safe direction for a
+// verification job — repeat the check rather than silently drop it.
+func (s *Scheduler) recordJobRun(job string) {
+	store := s.jobRuns
+	if store == nil {
+		return
+	}
+	if err := store.RecordScheduleJobRun(job, time.Now()); err != nil {
+		log.Printf("schedule: %s: recording the last-run time failed (the next trigger will run it again): %v", job, err)
+	}
+}
+
 // SetWatchdogJob wires the daily overdue-backup watchdog so its fixed schedule
 // (WatchdogCadence) actually runs. watchdogFn checks every enabled domain's
 // backup currency and notifies once per overdue episode. Until this is called
@@ -756,16 +822,22 @@ type domainSpec struct {
 // repeatedly (e.g. after a settings change).
 //
 // For everyN domains the lastRunFn is consulted when the daily trigger fires;
-// the job is a no-op when now − lastRun < IntervalDays. Pass nil for lastRunFn
-// to disable the due-gate (used when a domain does not yet have a backing store
-// query, e.g. VMs / flash in Phase 1).
+// the job is a no-op when now − lastRun < IntervalDays. A nil lastRunFn leaves a
+// plain cron cadence (daily/weekly/cron) completely unaffected, but it makes an
+// everyN cadence unenforceable — such a domain is NOT registered at all, since
+// firing it daily would be N times too often (see the loop below).
 func (s *Scheduler) Reload(settings store.Settings) error {
 	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil)
 }
 
 // ReloadWithDueChecks is the full-fidelity Reload that accepts per-domain
-// last-run queries so the everyN due-gate is enforced. Pass nil for any domain
-// that does not need the gate (it is then equivalent to a plain daily trigger).
+// last-run queries so the everyN due-gate is enforced. Pass nil for any BACKUP
+// domain that does not need the gate — that domain then simply cannot use an
+// everyN cadence (see Reload's doc and the registration loop).
+//
+// The drill, tamper and digest schedules are NOT parameters here: their last-run
+// record is a fixed store binding rather than a per-reload input, so it is wired
+// once via SetJobRunStore alongside SetDrillJob / SetTamperJob / SetDigestJob.
 func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
 	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun LastRunFunc,
@@ -945,12 +1017,32 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Print("schedule: drills job skipped — drills not wired (SetDrillJob)")
 					return
 				}
+				if len(tasks) == 0 {
+					// Drills are on but no domain is enabled, so nothing was
+					// attempted. Recording a "run" here would let an empty pass
+					// suppress the first REAL one for a whole everyN interval
+					// after the user enables a domain.
+					return
+				}
 				for _, tk := range tasks {
 					if err := s.drillFn(tk.domain, tk.source, tk.kind); err != nil {
 						log.Printf("schedule: drills job: %s/%s(%s): %v", tk.domain, tk.source, tk.kind, err)
 					}
 				}
+				// The pass counts as a run once every task has been ATTEMPTED,
+				// whatever each one concluded (#166). A drill's cost is paid on
+				// attempt — `restic check --read-data-subset` reads back real pack
+				// data, a "dr" task restores a whole off-site snapshot into a
+				// sandbox — and that cost is identical whether the verdict comes
+				// back good or bad. Gating on success instead would re-run the
+				// full pass, DR restore included, every single night for as long
+				// as one repo stayed broken: maximum expense at exactly the moment
+				// the system is already unhealthy. A failed drill is not lost
+				// either way — drillFn records an ok=false row per task, which is
+				// what the dashboard badge and the notifications read.
+				s.recordJobRun(store.ScheduleJobDrills)
 			},
+			lastRun: s.jobLastRun(store.ScheduleJobDrills),
 		})
 	}
 
@@ -972,7 +1064,19 @@ func (s *Scheduler) ReloadWithDueChecks(
 						log.Printf("schedule: tamper job: %s: %v", dom, err)
 					}
 				}
+				// Same rule as the drill pass: a sweep counts as a run once every
+				// immutable domain has been PROBED, pass or fail (#166). Each probe
+				// is a real round-trip to the off-site backend, so gating on
+				// success would hammer an unreachable destination nightly while
+				// the user's cadence asked for every N days. The verdict itself is
+				// preserved per domain by tamperFn (a tamper_tests row), which is
+				// what the ransomware scorecard reads. tamperDomains is non-empty
+				// by construction — this spec is only registered when at least one
+				// domain is flagged immutable — so there is no empty-pass case to
+				// exclude here.
+				s.recordJobRun(store.ScheduleJobTamper)
 			},
+			lastRun: s.jobLastRun(store.ScheduleJobTamper),
 		})
 	}
 
@@ -988,9 +1092,21 @@ func (s *Scheduler) ReloadWithDueChecks(
 					return
 				}
 				if err := s.digestFn(); err != nil {
+					// The digest is the one of the three that records ONLY on
+					// success (#166). It is a single cheap, idempotent message
+					// with no expensive side effects, so retrying on tomorrow's
+					// trigger costs almost nothing — whereas recording a failed
+					// send would drop that digest entirely and leave the user
+					// silent until the next interval. digestFn returns nil when
+					// notifications are switched off (it is a deliberate no-op
+					// then, not a failure), so a "never" configuration still
+					// records and stays gated instead of retrying daily.
 					log.Printf("schedule: digest job: %v", err)
+					return
 				}
+				s.recordJobRun(store.ScheduleJobDigest)
 			},
+			lastRun: s.jobLastRun(store.ScheduleJobDigest),
 		})
 	}
 
@@ -1065,16 +1181,55 @@ func (s *Scheduler) ReloadWithDueChecks(
 		domainName := d.name
 		jobFn := d.fn
 
+		// An everyN cadence is a DAILY cron trigger plus a due-gate, so a domain
+		// that cannot answer "when did this last run?" cannot enforce the interval
+		// at all — the trigger would just fire the real job every single day, N
+		// times too often, silently. Refuse to register it rather than run it
+		// wrong: an unenforceable everyN is a permanent misconfiguration, and the
+		// honest outcome is a schedule that does not run and says so loudly.
+		//
+		// No supported configuration reaches this: the five backup domains supply
+		// a last-run query, the drill/tamper/digest schedules supply one via
+		// jobLastRun, and handlers.go still rejects everyN at save time for the
+		// off-site schedules — the only remaining specs without one. It catches a
+		// legacy cadence stored before that rejection existed, an imported
+		// settings file carrying one, and any future domain wired up without its
+		// gate.
+		if cad.IntervalDays > 0 && d.lastRun == nil {
+			log.Printf("schedule: %s NOT registered — an 'everyN' cadence needs a last-run query to enforce its interval and this schedule has none; it would fire daily. Use daily/weekly/cron instead.", d.name)
+			continue
+		}
+
 		// For everyN cadences wrap the job with the due-check so the daily
 		// trigger does nothing when the interval has not elapsed yet.
-		if cad.IntervalDays > 0 && d.lastRun != nil {
+		//
+		// The gate has three outcomes, and the difference between the last two is
+		// the whole safety property:
+		//
+		//   - query FAILED       → skip. "Cannot tell" is never treated as due; a
+		//                          broken database must not authorise a run.
+		//   - last run recently  → skip, the interval has not elapsed.
+		//   - zero time, no error → RUN. This is not an unknown, it is a definite
+		//                          "has never run": a fresh install, or a schedule
+		//                          just switched on. Deferring the first pass by a
+		//                          whole interval would mean a user who enables
+		//                          drills every 14 days gets no verification at all
+		//                          for 14 days while the UI says drills are on —
+		//                          and if the record never appeared (a wiped table,
+		//                          a bug) the job would skip FOREVER, silently. The
+		//                          five backup domains already read a
+		//                          never-backed-up domain as due for exactly this
+		//                          reason, so all eight schedules now agree: the
+		//                          first fire after enabling runs, then the
+		//                          interval applies.
+		if cad.IntervalDays > 0 {
 			innerFn := jobFn
 			intervalDays := cad.IntervalDays
 			lastRunFn := d.lastRun
 			jobFn = func() {
 				last, err := lastRunFn()
 				if err != nil {
-					log.Printf("schedule: %s everyN due-check: last-run query failed: %v", domainName, err)
+					log.Printf("schedule: %s everyN due-check: last-run query failed, skipping this fire: %v", domainName, err)
 					return
 				}
 				minAge := time.Duration(intervalDays) * 24 * time.Hour

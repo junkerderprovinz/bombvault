@@ -342,6 +342,12 @@ func run() error {
 	scheduler.SetDigestJob(func() error {
 		return svc.SendDigest(context.Background())
 	})
+	// #166: the durable last-run record behind an "every N days" cadence on the
+	// three schedules above (drills / tamper / digest). Without it those cadences
+	// skip every fire — they can no longer degrade into firing daily — so this
+	// must be wired before Reload, the same ordering rule as the SetXJob calls it
+	// sits with.
+	scheduler.SetJobRunStore(st)
 	// Overdue-backup watchdog: a daily currency check (fixed cadence, gated on
 	// WatchdogEnabled inside Reload) that notifies ONCE per overdue episode via
 	// the same fan-out — the dashboard's red RPO state, pushed.
