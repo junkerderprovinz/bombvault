@@ -335,10 +335,11 @@ function IconRecovery() {
 // itself is now an open-top basket (a wider top edge tapering to a
 // rounded-corner bottom, a genuine trapezoid) rather than the old fully
 // closed tray outline — a plainer silhouette than "closed box", and visibly
-// distinct from IconDownload's own arrow-over-a-flat-bar glyph
-// (components/Sidebar.tsx, 16×16 icon-only-badge scale) so the two don't
-// read as the same symbol at a glance despite sharing the same "arrow +
-// receptacle" grammar.
+// distinct from IconDownload below (16×16 icon-only-badge scale), which is a
+// BARE arrow with no receptacle of any kind under it (jdp: "Der Downloadglyph
+// soll nie einen waagrechten Strich haben. Nur der Pfeil."), so the two never
+// read as the same symbol at a glance: this one is arrow-plus-basket, that one
+// is arrow-only.
 export function IconReceiver() {
   return (
     <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
@@ -460,10 +461,50 @@ export function IconAdd() {
 // already existed above it — one closed filled path (design-language.md: "a
 // line glyph... needs real geometry" — no `stroke`), matching this file's own
 // 16×16 icon-only-badge scale.
+//
+// RESCALED (jdp, live review: "Containertab, Containercard: der Glyph auf dem
+// Downloadbadge (Export plain) ist zu klein."). Deleting the tray bar left the
+// arrow exactly where it had been drawn — in the UPPER portion of a viewBox it
+// used to share with that bar — and nothing re-derived its proportions
+// afterwards, so it kept a footprint sized for "arrow plus tray" while
+// rendering as "arrow alone". Measured (SVG getBBox on the live-rendered
+// glyph, ink extent in the 16-unit viewBox, at this file's own 16px render
+// size), old shape against the siblings it actually sits beside:
+//   IconDownload   7.10 × 8.70 px   (44.4% × 54.4% of the box, centre y 42.2%)
+//   IconBackupNow 12.00 × 12.00 px  (75.0% × 75.0%, centre 50/50)
+//   IconCopy      12.00 × 12.00 px  (75.0% × 75.0%, centre 50/50)
+//   IconRestore   12.00 × 12.90 px  (75.0% × 80.6%)
+//   IconTrash     10.80 × 13.10 px  (67.5% × 81.9%)
+//   IconAdd       11.00 × 11.00 px  (68.8% × 68.8%)
+// So it was not only the smallest glyph in the set by a wide margin (its ink
+// box covered 43% of IconBackupNow's, and its FILLED area roughly 24 px²
+// against that glyph's ~91 px²) but also sat 1.25px high in its own box —
+// which in a 32px badge reads as an arrow floating above centre.
+//
+// Redrawn to the same construction (one closed filled path, shaft + 45°
+// arrowhead, no tray bar, no stroke) at the family's own proportions: ink now
+// 12.00 × 12.00 px, 75% × 75%, centred exactly on 50/50 — the identical
+// footprint IconBackupNow and IconCopy measure, so the Export badge and the
+// Jetzt-sichern badge beside it in a Container card now carry the same optical
+// weight. Every coordinate is a WHOLE unit of the 16-unit viewBox (6/10/2/8/
+// 14/4), so at the 1:1 render size the shaft's long vertical edges land on
+// real pixel boundaries and stay crisp instead of anti-aliasing to grey — the
+// same crispness constraint IconBackupNow's own comment records, and the
+// reason a slightly heavier half-unit variant (shaft 5 units wide, x 5.5→10.5)
+// was rendered alongside this one and rejected: it fringed both shaft edges
+// for no legibility gain.
+//   Judged the way IconBackupNow's redraw was: every candidate rasterised at
+// its TRUE 16×16 and the RASTER magnified ×14 nearest-neighbour, against the
+// same treatment of IconBackupNow/IconTrash/IconRestore/IconCopy/IconAdd —
+// never by re-rendering the vector large, which flatters every shape equally.
+// Both call sites (Containers.tsx's Export badge, Settings.tsx's Recovery-Kit
+// download badge) are `size="icon"` Badges that give the glyph a plain 32px
+// square with no adjacent geometry to clear, so neither depended on the old
+// small footprint.
 export function IconDownload() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M6.9 2.4h2.2v4.9h2.45L8 11.1 4.45 7.3H6.9V2.4Z" />
+      <path d="M6 2h4v6h4l-6 6-6-6h4V2Z" />
     </svg>
   );
 }
