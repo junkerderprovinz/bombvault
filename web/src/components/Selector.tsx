@@ -68,7 +68,8 @@
 //      (arrow-selects-as-it-moves) is hard-wired to `!many`, matching the
 //      reference's own default for select="one" (a JTabbedPane-style tab
 //      strip) without exposing a knob nothing here turns.
-//   5b. `equalWidth` (default false, "chip" only). Live-review follow-up:
+//   5b. `equalWidth` (default false; "chip"-only when introduced, both
+//      variants since round 8 — see item 6). Live-review follow-up:
 //      Settings.tsx's 7-tab strip is content-hugging chips (each badge only
 //      as wide as its own label — "Allgemein" narrower than "Pfade &
 //      Speicher") sitting in a `flex-wrap` row that itself renders at the
@@ -238,7 +239,7 @@
 //      one real cost of this unification — stated here rather than buried:
 //      an idle segment's `text-carbon-textSub` now sits on the surface3
 //      groove instead of on a `bg-carbon-surface` key (ex-"track") or a
-//      surface2 groove (ex-"well"), measuring 4.58:1 dark / 5.12:1 light,
+//      surface2 groove (ex-"well"), measuring 4.57:1 dark / 5.12:1 light,
 //      down from 8.85:1 / 7.82:1 and 6.76:1 / 6.44:1 respectively. Both
 //      still clear WCAG AA for normal text (4.5:1), but the dark figure
 //      clears it by 0.08 — this is the floor, not somewhere to spend any
@@ -246,7 +247,7 @@
 //      needs a text-token change in the same commit. Hover is the other side
 //      of that same trade and gets markedly BETTER: `hover:bg-carbon-hover`
 //      against the groove goes from a near-invisible 1.06:1 dark / 1.08:1
-//      light on surface2 to 1.57:1 / 1.17:1 on surface3.
+//      light on surface2 to 1.57:1 / 1.16:1 on surface3.
 //        Applied to every call site both variants had: Settings.tsx's Theme,
 //      Shape and Motion pickers (`equalWidth size="lg"`), NotifyCard's "on"
 //      row, the Integrity Card's drill-kind toggle, and CadenceBuilder's own
@@ -900,11 +901,11 @@ export function Selector(props: SelectorProps) {
             // item 6 for the full writeup.
             //   The cost, stated where the class lives: this label now sits
             // on the surface3 groove rather than on a surface fill, so
-            // `text-carbon-textSub` measures 4.58:1 (dark) / 5.12:1 (light)
+            // `text-carbon-textSub` measures 4.57:1 (dark) / 5.12:1 (light)
             // instead of 8.85:1 / 7.82:1. Both clear WCAG AA for normal text;
             // dark clears it by 0.08, so treat that as the floor.
             //   `hover:bg-carbon-hover` is the other half of that trade and
-            // gets better on the deeper groove: 1.57:1 dark / 1.17:1 light
+            // gets better on the deeper groove: 1.57:1 dark / 1.16:1 light
             // against surface3, up from a near-invisible 1.06:1 / 1.08:1 when
             // the groove was surface2.
             //   `plain`/`raised` are both meaningless here (see each prop's
