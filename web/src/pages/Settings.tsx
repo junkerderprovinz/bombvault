@@ -27,7 +27,7 @@ import { ScheduleRow, scheduleStatus } from "../components/ScheduleBadge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { useConfirm } from "../lib/useConfirm";
-import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary } from "../lib/api";
+import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, RegistryAuthEntry, ImportSettingsSummary, ImportSettingsResponse } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
@@ -1750,7 +1750,18 @@ const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   exportEncryption: "settingsIO.group.exportEncryption",
 };
 
-function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+function SettingsPortabilityCard({
+  t,
+  hueIndex,
+  applyImport,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
+  // Supplied by SettingsPage rather than called from here: an apply replaces
+  // the whole configuration, so the page that holds the save baseline has to be
+  // the one that performs it and adopts the result. See applyImportedSettings.
+  applyImport: (fileText: string) => Promise<ImportSettingsResponse>;
+}) {
   const { push } = useToast();
   const [includeCreds, setIncludeCreds] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -1825,7 +1836,7 @@ function SettingsPortabilityCard({ t, hueIndex }: { t: ReturnType<typeof useT>["
     if (!pendingText) return;
     setImportBusy("applying");
     try {
-      const res = await importSettingsApply(pendingText);
+      const res = await applyImport(pendingText);
       if (res.ok) {
         setImportDone(true);
         setPreview(null);
@@ -5796,11 +5807,39 @@ export function SettingsPage() {
   }, [tabStripEl]);
 
   const [settings, setSettings] = useState<Settings | null>(null);
-  // savedSettings is the server's last-confirmed state. Each card's Save persists
-  // its own fields merged onto THIS baseline (not the live, possibly-edited
-  // `settings`), so saving one card never silently commits another card's
+  // savedBaseline is the server's last-confirmed state. Every save persists its
+  // own fields merged onto THIS baseline (not the live, possibly-edited
+  // `settings`), so saving one field never silently commits another card's
   // unsaved edits.
-  const [savedSettings, setSavedSettings] = useState<Settings | null>(null);
+  //
+  // A REF, not state, and that is load-bearing rather than an optimisation. The
+  // PUT is a FULL settings object, so a save's correctness depends on reading
+  // the newest confirmed baseline at the moment the request is built. A state
+  // value is frozen into the render that called save(), so two saves issued
+  // inside one request round-trip both built their object from the pre-first
+  // baseline and each overwrote the other's field with a stale value — the
+  // later response winning the whole object. The ref is read at send time, and
+  // queueSettingsWrite below makes sure "send time" is after the previous
+  // write has landed and moved it.
+  const savedBaseline = useRef<Settings | null>(null);
+  // settingsWrites serializes every settings write this page makes: each save
+  // (and the settings import) runs after the previous one has finished, so a
+  // full-object PUT can never be built from a baseline another in-flight PUT is
+  // about to invalidate. It is a promise chain rather than a busy flag because
+  // nothing may be DROPPED — a debounced edit that arrives mid-flight has to
+  // land, just afterwards.
+  const settingsWrites = useRef<Promise<unknown>>(Promise.resolve());
+
+  function queueSettingsWrite<T>(run: () => Promise<T>): Promise<T> {
+    const next = settingsWrites.current.then(run);
+    // The chain itself must never reject, or every later write would be
+    // skipped: a failed save is reported by its own caller, not here.
+    settingsWrites.current = next.then(
+      () => undefined,
+      () => undefined
+    );
+    return next;
+  }
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   // The detected/overridden platform.Kind ("unraid" | "generic" | "truenas",
   // see internal/platform) — read-only host-environment info from GET
@@ -6044,40 +6083,46 @@ export function SettingsPage() {
   const [configScheduleToggleBusy, setConfigScheduleToggleBusy] = useState(false);
   const [configScheduleToggleShake, setConfigScheduleToggleShake] = useState(0);
 
+  // installSettings adopts a settings object the server just handed us as BOTH
+  // the live state and the confirmed baseline, and re-derives the page state
+  // that is computed from it. It is used by the mount load AND by the reload
+  // after a settings import — the import replaces the whole configuration, so
+  // the page has to adopt it exactly the way a fresh load would.
+  function installSettings(s: Settings) {
+    setSettings(s);
+    savedBaseline.current = s;
+    // Give every loaded registry row a stable client-only id (see
+    // registryRowIds' declaration above) — a fresh GET never carries one of
+    // its own, so one is minted here, once, per row. randomId() rather than
+    // crypto.randomUUID(): the latter is secure-context-only and would throw
+    // on BombVault's documented plain-HTTP origin, and a throw inside the
+    // mount load lands in that promise's .catch — killing the whole Settings
+    // page, not just this card (see lib/uuid.ts).
+    setRegistryRowIds(s.registryAuths.map(() => randomId()));
+    // Detect whether the domain schedules are already in sync (Containers ==
+    // VMs == Flash == Folders, and not off), so the Schedules tab's sync
+    // toggle reflects the server state. Reproduced from the retired Plans
+    // page; filesSchedule is part of the comparison alongside Task 2's own
+    // extension of the toggle's live effect to cover Folders too — without it,
+    // a server state where Containers/VMs/Flash already matched but Folders
+    // didn't would show the toggle ON while Folders still quietly held its own
+    // independent value until the next edit.
+    setSyncSchedules(
+      s.vmsSchedule === s.containersSchedule &&
+        s.flashSchedule === s.containersSchedule &&
+        s.filesSchedule === s.containersSchedule &&
+        s.containersSchedule !== "off" &&
+        s.containersSchedule !== ""
+    );
+  }
+
   useEffect(() => {
     getSettings()
       .then((res) => {
         if (res.ok) {
-          setSettings(res.settings);
-          setSavedSettings(res.settings);
-          // Give every loaded registry row a stable client-only id (see
-          // registryRowIds' declaration above) — a fresh GET never carries
-          // one of its own, so one is minted here, once, per row. randomId()
-          // rather than crypto.randomUUID(): the latter is secure-context-only
-          // and would throw on BombVault's documented plain-HTTP origin, and a
-          // throw HERE lands in this promise's .catch below — killing the whole
-          // Settings page, not just this card (see lib/uuid.ts).
-          setRegistryRowIds(res.settings.registryAuths.map(() => randomId()));
+          installSettings(res.settings);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           if (res.platform) setPlatformKind(res.platform);
-          // Detect whether the domain schedules are already in sync (Containers ==
-          // VMs == Flash == Folders, and not off), so the Schedules tab's sync
-          // toggle reflects it on load. Reproduced from the retired Plans page;
-          // filesSchedule added to the comparison alongside Task 2's own
-          // extension of the toggle's live effect to cover Folders too — without
-          // it, a server state where Containers/VMs/Flash already matched but
-          // Folders didn't would show the toggle ON while Folders still quietly
-          // held its own independent value until the next edit.
-          const s = res.settings;
-          if (
-            s.vmsSchedule === s.containersSchedule &&
-            s.flashSchedule === s.containersSchedule &&
-            s.filesSchedule === s.containersSchedule &&
-            s.containersSchedule !== "off" &&
-            s.containersSchedule !== ""
-          ) {
-            setSyncSchedules(true);
-          }
         } else {
           setLoadError("Failed to load settings");
         }
@@ -6227,12 +6272,29 @@ export function SettingsPage() {
   // would touch all ~21 call sites' signatures for zero behavioural gain (it was
   // only ever read by the now-deleted flash), so it stays as a harmless, always-
   // null vestige rather than a wide, risk-for-no-reason signature change.
+  // Every save goes through queueSettingsWrite, so the object below is built
+  // from a baseline no other in-flight write is about to change. Without that,
+  // two saves issued inside one round-trip — which is the NORMAL case now that
+  // every field auto-saves, e.g. editing the Containers cadence while "sync" is
+  // on arms two 800ms debounces one render apart — each sent the other's field
+  // at its pre-edit value, and whichever response landed last won the whole
+  // object. The UI showed both edits; the server kept one.
   async function save(
     patch: Partial<Settings>,
     setSaveState: (s: SaveState) => void,
     setSaveError: (e: string | null) => void
   ): Promise<boolean> {
-    const base = savedSettings ?? settings;
+    return queueSettingsWrite(() => sendSettingsPatch(patch, setSaveState, setSaveError));
+  }
+
+  async function sendSettingsPatch(
+    patch: Partial<Settings>,
+    setSaveState: (s: SaveState) => void,
+    setSaveError: (e: string | null) => void
+  ): Promise<boolean> {
+    // Read at SEND time, not at call time: the previous write in the queue has
+    // already advanced this ref by the time we get here.
+    const base = savedBaseline.current ?? settings;
     if (!base) return false;
     setSaveState("saving");
     setSaveError(null);
@@ -6244,7 +6306,7 @@ export function SettingsPage() {
       if (res.ok) {
         // Advance the baseline; reflect just the saved fields in the live state so
         // other cards' in-progress edits are left untouched.
-        setSavedSettings(updated);
+        savedBaseline.current = updated;
         setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
         setSaveState("idle");
         // Confirmation-pulse (GlimStone motion-engine animation 2) — bump
@@ -6415,6 +6477,53 @@ export function SettingsPage() {
       clearTimeout(existing);
       delete debounceTimers.current[key];
     }
+  }
+
+  // cancelAllDebounces drops every pending edit that has not been sent yet.
+  // The one caller is the settings import: it replaces the whole configuration,
+  // so a debounce armed seconds earlier would land on top of the imported
+  // config with a value the user typed against the OLD one.
+  function cancelAllDebounces() {
+    for (const key of Object.keys(debounceTimers.current)) cancelDebounce(key);
+  }
+
+  // applyImportedSettings is the Import button's actual write. An import is a
+  // settings write like any other, so it joins the SAME queue every save uses
+  // and then re-loads the page from the server.
+  //
+  // Both halves matter. The card used to call the client directly and report
+  // "Settings imported." — while the page kept its pre-import baseline, which
+  // every field on the page merges its own value onto. One click on any toggle
+  // afterwards therefore PUT the whole PRE-import object back and silently
+  // undid the entire import, with the UI reporting a successful save. (On main
+  // that needed a Save-button click; once every field auto-saves, it is one
+  // stray click.) Queueing it stops a save that was already in flight from
+  // landing on top of the fresh configuration, and cancelling the pending
+  // debounces drops edits typed against the configuration that has just been
+  // replaced.
+  //
+  // If the re-load fails, the page refuses to keep working from a baseline it
+  // knows is stale: it shows the load error instead, which unmounts every card
+  // and makes a stale-baseline save impossible. Reloading the browser is then
+  // the honest recovery, and the import itself has already been applied.
+  async function applyImportedSettings(fileText: string) {
+    return queueSettingsWrite(async () => {
+      cancelAllDebounces();
+      const res = await importSettingsApply(fileText);
+      if (!res.ok) return res;
+      const fresh = await getSettings();
+      if (fresh.ok) {
+        installSettings(fresh.settings);
+        if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
+        if (fresh.platform) setPlatformKind(fresh.platform);
+      } else {
+        setLoadError("Settings were imported, but reloading them failed — reload the page.");
+      }
+      // Domains may have been switched on or off by the import: the sidebar and
+      // layout listen for this and refetch, exactly as they do after a save.
+      window.dispatchEvent(new Event("bv:settings-changed"));
+      return res;
+    });
   }
 
   // A pending debounce must not fire (and call setSettings/save with stale
@@ -8441,11 +8550,13 @@ export function SettingsPage() {
           t={t}
           tokenSet={settings.widgetTokenSet}
           onTokenSet={(set) => {
-            // Keep BOTH the live and the saved baseline in sync: the token is
-            // managed by its own endpoints, so a later card save (which merges
-            // onto savedSettings) must not carry a stale widgetTokenSet.
+            // Keep BOTH the live state and the saved baseline in sync: the token
+            // is managed by its own endpoints, so a later save (which merges onto
+            // the baseline) must not carry a stale widgetTokenSet.
             setSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
-            setSavedSettings((prev) => (prev ? { ...prev, widgetTokenSet: set } : prev));
+            if (savedBaseline.current) {
+              savedBaseline.current = { ...savedBaseline.current, widgetTokenSet: set };
+            }
           }}
           hueIndex={nextHue()}
         />
@@ -8457,7 +8568,9 @@ export function SettingsPage() {
           tokenSet={settings.fleetTokenSet}
           onTokenSet={(set) => {
             setSettings((prev) => (prev ? { ...prev, fleetTokenSet: set } : prev));
-            setSavedSettings((prev) => (prev ? { ...prev, fleetTokenSet: set } : prev));
+            if (savedBaseline.current) {
+              savedBaseline.current = { ...savedBaseline.current, fleetTokenSet: set };
+            }
           }}
           hueIndex={nextHue()}
         />
@@ -9348,7 +9461,9 @@ export function SettingsPage() {
       {/* destinations (and, opt-in, credentials) to another install. Backups, */}
       {/* snapshots and history are never touched.                            */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && <SettingsPortabilityCard t={t} hueIndex={nextHue()} />}
+      {tab === "system" && (
+        <SettingsPortabilityCard t={t} hueIndex={nextHue()} applyImport={applyImportedSettings} />
+      )}
       </div>
 
       {/* Version + report-a-bug footer. Rendered ONCE, unconditionally, here
