@@ -611,6 +611,47 @@ export function IconRestore() {
   );
 }
 
+// VM backup-method pair (jdp, live review: "die Methode für den VM-Backup
+// (Live und graceful) bitte in quadratische Badges mit Glyph umformen") — the
+// two glyphs the VMs page's method Selector paints as icon-only segments, at
+// this file's own 16×16 icon-only-badge scale with the same solid,
+// `currentColor`-only, no-`stroke` construction as everything else here
+// (design-language.md's icon-glyph rule).
+//
+// They are a deliberate PAIR and have to stay apart at 16px, because they sit
+// side by side in one 2-segment Selector where only the ACTIVE segment carries
+// a fill — once colour is spent on the badge background rather than the glyph
+// (the icon-only-badge rule), the silhouette is the only thing left telling
+// the two states apart. Hence one round shape against one angular one, rather
+// than two members of the same family: a "play" triangle beside a power ring
+// would read at this size as two variants of one control, not as two
+// different methods.
+
+// Power symbol — "graceful": the VM is shut down cleanly before the snapshot.
+// Built as a true annular sector (ONE subpath: the outer arc taken the long
+// way round, then the inner arc back) plus the interrupt bar, rather than a
+// stroked circle — a `stroke` would not scale with the badge's own font-size
+// and would break this file's fill-only construction.
+export function IconPower() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M10.76 4.19A5.2 5.2 0 1 1 5.24 4.19L6.15 5.63A3.5 3.5 0 1 0 9.85 5.63Z" />
+      <rect x="7.1" y="1.5" width="1.8" height="6.4" rx="0.9" />
+    </svg>
+  );
+}
+
+// Lightning bolt — "live": the VM keeps running and is snapshotted hot. The
+// angular counterpart to IconPower's ring above; a single filled zigzag, the
+// one shape that stays unambiguous at 16px with no internal detail to lose.
+export function IconLive() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+      <path d="M9.7 1.3 4 9h3.3l-.9 5.7L12 6.8H8.8Z" />
+    </svg>
+  );
+}
+
 // Trash-can glyph — the conventional "remove this row" symbol (Settings.tsx's
 // own standalone Registries Card, GlimStone follow-up round: "Wenn man eine
 // Registry hinzufügt, soll der Entfernen-Button quadratisch sein mit

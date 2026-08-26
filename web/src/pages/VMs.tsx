@@ -13,7 +13,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload } from "../components/Sidebar";
+import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { Badge, type BadgeTone } from "../components/Badge";
 // ToggleRow, not the bare Toggle: VMIncludeToggle renders the shared row
@@ -95,6 +95,12 @@ const SORT_KEYS = {
 // actual button rendering, keyboard nav (roving tabindex, arrow keys/Home/
 // End, RTL) and rainbow hueing all live in Selector now, mirroring
 // Containers.tsx's own identical adapter pair.
+//
+// Both render the SMALL horizontal selector (`variant="well"`, no
+// `equalWidth`) — see Containers.tsx's own copy of this comment for the full
+// reasoning; the two files' filter menus have to stay the same control, which
+// is exactly the drift that put them here as a shared-Selector adapter pair in
+// the first place.
 function SortControl({
   value,
   onChange,
@@ -110,6 +116,7 @@ function SortControl({
       <Selector
         items={(["name", "status"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
         label={t("sort.label")}
+        variant="well"
         select="one"
         active={value}
         onChange={(id) => onChange(id as SortKey)}
@@ -162,6 +169,7 @@ function ChipFilter<K extends string>({
       <Selector
         items={options.map((o) => ({ id: o.key, label: o.label }))}
         label={label}
+        variant="well"
         select="one"
         active={value}
         onChange={(id) => onChange(id as K)}
@@ -189,38 +197,74 @@ function VMMethodSelect({
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
 
+  // Re-seed when the parent hands down a fresh value (a list reload after a
+  // bulk action). Rows are keyed by libvirt name and do not remount, so
+  // without this the control would keep painting its stale pre-reload choice —
+  // the same fix VMIncludeToggle below already carries.
+  useEffect(() => setMethod(initial || "graceful"), [initial]);
+
   async function handleChange(next: string) {
+    // Optimistic, then reverted on failure. The old <select> did neither: it
+    // left the failed value showing and only toasted, so a rejected switch to
+    // "live" left the UI claiming no-downtime while the next backup would in
+    // fact shut the VM down — the exact confusion its own comment warned about
+    // while implementing the half of it that causes the confusion.
+    const prev = method;
+    setMethod(next);
     setBusy(true);
     try {
       const res = await setVMMethod(name, next);
-      if (res.ok) {
-        setMethod(next);
-      } else {
-        // Surface the failure instead of silently reverting — a swallowed error
-        // here means the user thinks they switched to live (no downtime) when the
-        // VM will actually be shut down at backup time.
+      if (!res.ok) {
+        setMethod(prev);
         push(res.error ?? t("vm.method.saveFailed"), "fail");
       }
     } catch (err) {
+      setMethod(prev);
       push(err instanceof Error ? err.message : t("vm.method.saveFailed"), "fail");
     } finally {
       setBusy(false);
     }
   }
 
+  // Two square 32px glyph badges instead of a native <select> (jdp, live
+  // review: "die Methode für den VM-Backup (Live und graceful) bitte in
+  // quadratische Badges mit Glyph umformen"), built as Selector's icon-only
+  // segments — the same construction SourceToggle's Lokal/Offsite pair and
+  // PathModeSwitch's Local/Remote pair already use, so it inherits the colour
+  // engine, the shape engine, roving-tabindex keyboard nav and the app's one
+  // icon-badge size for free rather than hand-rolling a second look.
+  //
+  // Both options stay visible with the active one filled, rather than one
+  // badge that cycles: this control decides whether the VM is SHUT DOWN for
+  // its backup, and a cycling badge would make the user infer the alternative
+  // from an icon they cannot see. `tip` carries the method name, which is also
+  // what makes the pair readable — the glyphs alone are the only differentiator
+  // once the fill is spent on the active state (see IconPower/IconLive).
   return (
-    <div className="flex flex-col items-end gap-1">
-      <select
-        value={method}
-        disabled={busy}
-        onChange={(e) => void handleChange(e.target.value)}
-        title={t("vm.method.hint")}
-        className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus disabled:opacity-50"
-      >
-        <option value="graceful">{t("vm.method.graceful")}</option>
-        <option value="live">{t("vm.method.live")}</option>
-      </select>
-    </div>
+    <Selector
+      items={[
+        {
+          id: "graceful",
+          label: t("vm.method.graceful"),
+          icon: <IconPower />,
+          iconOnly: true,
+          tip: t("vm.method.graceful"),
+        },
+        {
+          id: "live",
+          label: t("vm.method.live"),
+          icon: <IconLive />,
+          iconOnly: true,
+          tip: t("vm.method.live"),
+        },
+      ]}
+      label={t("vm.method")}
+      size="sm"
+      select="one"
+      disabled={busy}
+      active={method}
+      onChange={(id) => void handleChange(id)}
+    />
   );
 }
 
@@ -654,6 +698,7 @@ function VMRestorePanel({
   name,
   displayName,
   t,
+  open,
 }: {
   /** Raw libvirt name — every call in this panel (snapshots, delete-all,
    *  recent runs, restore) MUST use this, never displayName. */
@@ -662,8 +707,14 @@ function VMRestorePanel({
    *  name. */
   displayName?: string;
   t: T;
+  /** Owned by VMRow's `openSections`, exactly like components/RestorePanel.tsx
+   *  takes `open` from ContainerRow's (jdp, live review: the VM card's backups
+   *  disclosure must be the container card's). This panel used to own the
+   *  state AND draw its own chevron trigger, which is why the two cards'
+   *  expanders looked nothing alike — one a hued Selector chip in a shared
+   *  row, the other a bare text button with a hand-rotated 12px svg. */
+  open: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -727,37 +778,15 @@ function VMRestorePanel({
       });
   }
 
-  return (
-    <div className="mt-1">
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-      >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          // Disclosure chevron (RTL sweep, form-engine Phase 2 Task 6):
-          // closed points to the reading-direction start — right in LTR
-          // (the base, unrotated path), left in RTL via `rtl:rotate-180`
-          // (Tailwind v4's built-in `:dir(rtl)` variant, no config needed).
-          // Open always rotates to straight-down (`rotate-90`) in BOTH
-          // directions — "there is more below" has no reading direction, so
-          // it never gets the rtl: treatment. This is plain rotation, not
-          // scaleX mirroring: mirroring the closed glyph and then rotating
-          // it 90° lands on "pointing up", not "pointing down" (transform
-          // functions compose right-to-left), so a second rtl:-only rotate
-          // angle is the correct fix, not a mirror.
-          className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
-        >
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {t("snapshots.title")}
-      </button>
+  // Closed renders nothing at all — the trigger lives in VMRow now, so there
+  // is no header left to keep painting. Mirrors components/RestorePanel.tsx's
+  // own `if (!open) return null`. The hooks above run either way, so the
+  // snapshot list still refetches on the render that opens it.
+  if (!open) return null;
 
-      {open && (
-        <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
+  return (
+    <>
+        <div className="rounded-card bg-carbon-background px-3 py-1">
           {/* `source.hint` moved from a permanent `text-caption` <p> under
               this row onto the "Quelle" label as an InfoBubble — rule 8's
               "read once, costs vertical space forever" case, the same
@@ -830,9 +859,8 @@ function VMRestorePanel({
               />
             ))}
         </div>
-      )}
       {confirmDialog}
-    </div>
+    </>
   );
 }
 
@@ -869,6 +897,32 @@ export function VMRow({
   // "Something is running" across any domain — busy-guards this row's own VM
   // backup (its OWN in-flight backup is handled by isPending inside the button).
   const running = anyActive(progressMap);
+
+  // Disclosure state, lifted out of VMRestorePanel (jdp, live review: "Im
+  // Zeitplan einschließen, letztes Backup und Backup-Ausklapp-Button bitte
+  // exakt wie im Container-Tab in der Container-Card darstellen und
+  // platzieren"). ContainerRow owns the identical `openSections` Set and hands
+  // each pane its `open` as a prop; this row now does the same, so the trigger
+  // is a Selector chip in a shared row rather than the bespoke chevron button
+  // VMRestorePanel used to draw for itself. A Set with one member looks like
+  // overkill, but it IS ContainerRow's shape — and it is what keeps the two
+  // rows converging instead of drifting again the moment VMs grow a second
+  // expandable section.
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  function toggleSection(id: string) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // One combined "Letztes Backup: <ts>" string in ONE muted span, exactly like
+  // ContainerRow's — not the two stacked <p>s in two different tones this row
+  // used to render up in its top row.
+  const lastBackupText = `${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`;
+
   return (
     <div
       style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
@@ -909,40 +963,51 @@ export function VMRow({
           </div>
         </div>
 
-        {/* Last backup */}
-        <div className="text-end shrink-0">
-          <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
-          <p className="text-xs text-carbon-textSub">
-            {vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}
-          </p>
-        </div>
-      </div>
-
-      {/* Actions row */}
-      {installed && (
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4 flex-wrap">
-            {/* No wrapping `<label>`/`<span>` anymore: VMIncludeToggle now
-                renders the full ToggleRow itself (label included, text-first),
-                the identical shape Containers.tsx's IncludeToggle call site
-                already uses — see that component's own comment. */}
-            <VMIncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} />
-            {/* Backup method (graceful / live) — always visible; it decides VM downtime. */}
-            <label className="flex items-center gap-2">
-              <span className="text-xs text-carbon-textSub">{t("vm.method")}</span>
-              <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
-            </label>
-          </div>
-          {/* The corner action pair, laid out exactly like Containers.tsx's
-              own BackupButton/ExportButton corner: two 32px badges side by
-              side (`items-start gap-1.5 shrink-0`), not one stacked inside
-              the other's column. VMExportButton used to be rendered from
-              INSIDE VMBackupButton — fine while both were text buttons in a
-              vertical stack, wrong once they became square tiles. */}
+        {/* The corner action pair, laid out exactly like Containers.tsx's
+            own BackupButton/ExportButton corner: two 32px badges side by
+            side (`items-start gap-1.5 shrink-0`), not one stacked inside
+            the other's column. VMExportButton used to be rendered from
+            INSIDE VMBackupButton — fine while both were text buttons in a
+            vertical stack, wrong once they became square tiles.
+            It sits in the TOP row now, the slot ContainerRow puts its own
+            badge pair in — this row had it one row lower, behind the
+            last-backup block that used to occupy this corner. */}
+        {installed && (
           <div className="ms-auto flex items-start gap-1.5 shrink-0">
             <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
             {/* Plain export is an advanced-only extra. */}
             <Advanced><VMExportButton name={vm.libvirtName} t={t} /></Advanced>
+          </div>
+        )}
+      </div>
+
+      {/* Actions row — ContainerRow's exact shape: one right-aligned column
+          (`ms-auto flex flex-col items-end gap-2`) holding the include toggle
+          with the row's second, smaller control stacked under it. There, that
+          second control is UpdateAfterBackupRow; here it is the backup method.
+          Previously the toggle sat on the LEFT of a justify-between row next
+          to the method, which is what made the two pages' cards read
+          differently despite rendering the same ToggleRow. */}
+      {installed && (
+        <div className="flex items-start">
+          <div className="ms-auto flex flex-col items-end gap-2">
+            {/* No wrapping `<label>`/`<span>`: VMIncludeToggle renders the full
+                ToggleRow itself (label included, text-first), the identical
+                shape Containers.tsx's IncludeToggle call site already uses —
+                see that component's own comment. */}
+            <VMIncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} />
+            {/* Backup method (graceful / live) — always visible, never gated
+                behind Advanced: it decides whether the VM is shut down. The
+                hint that explains the two methods rides on the label as an
+                InfoBubble rather than a native `title` on the old <select>,
+                which is where the app puts explanations. */}
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t("vm.method")}
+                <InfoBubble tip={t("vm.method.hint")} />
+              </span>
+              <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
+            </div>
           </div>
         </div>
       )}
@@ -955,8 +1020,34 @@ export function VMRow({
         </div>
       )}
 
-      {/* Backups / Restore disclosure */}
-      <VMRestorePanel name={vm.libvirtName} displayName={vm.name} t={t} />
+      {/* Backups / Restore disclosure — ContainerRow's exact block: a chip row
+          holding the section Selector with the last-backup summary pushed to
+          its trailing edge (`ms-auto`), then the content pane below, driven by
+          the shared `openSections` above rather than by state inside the pane.
+          VMs have only the one section (no Folders/Stop/Excludes/Hooks
+          editors), so the Selector carries a single chip — same control, same
+          row, same place, one item instead of five. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Selector
+            items={[{ id: "backups", label: t("snapshots.title") }]}
+            label={t("containers.sectionsLabel")}
+            select="many"
+            active={openSections}
+            onChange={toggleSection}
+          />
+          <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">
+            {lastBackupText}
+          </span>
+        </div>
+
+        <VMRestorePanel
+          name={vm.libvirtName}
+          displayName={vm.name}
+          t={t}
+          open={openSections.has("backups")}
+        />
+      </div>
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (
