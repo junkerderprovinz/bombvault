@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const es: Partial<Translations> = {
   // General
   "language.label": "Idioma",
-  "theme.toggle": "Cambiar tema",
   "theme.dark": "Oscuro",
   "theme.light": "Claro",
 
@@ -216,7 +215,6 @@ const es: Partial<Translations> = {
   "settings.motion.full": "Completo",
   "settings.rainbow": "Modo arcoíris",
   "settings.rainbowHint": "Cada fila de una lista recibe su propio color de un conjunto de ocho, en lugar de que todo comparta un solo color de acento — así las listas largas se distinguen de un vistazo.",
-  "settings.rainbowOn": "Usar la paleta",
   "settings.rainbowReactive": "Modo reactivo",
   "settings.rainbowReactiveHint": "Activado, una fila o elemento solo muestra su color al pasar el ratón por encima, o mientras se está ejecutando o está seleccionado — el resto del tiempo permanece neutro. Desactivado, todas las filas y elementos coloreados muestran su color todo el tiempo.",
   "settings.rainbowRotate": "Rotación de colores",
@@ -421,7 +419,7 @@ const es: Partial<Translations> = {
   "rclone.save": "Guardar configuración",
 
   // Integrity (restic check)
-  "integrity.title": "Integridad",
+  "integrity.title": "Integridad y mantenimiento",
   "integrity.hint": "Ejecuta restic check para verificar que la estructura y los metadatos de un repositorio están intactos.",
   "integrity.verify": "Verificar",
   "integrity.checking": "Comprobando…",
@@ -1012,8 +1010,6 @@ const es: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Envía UN solo resumen por cada copia de seguridad programada (por ejemplo: 42 de 45 correctas) en lugar de un mensaje aparte por cada contenedor o VM. Healthchecks ya se resume. Las copias manuales siguen notificando por elemento.",
   "notify.notifyOnUpdate": "Notificar al actualizar un contenedor",
   "notify.notifyOnUpdateHint": "Cuando «actualizar tras la copia» actualiza un contenedor a una imagen más reciente, envía un mensaje para que puedas verificar que sigue funcionando. Se activa por cada contenedor actualizado (las actualizaciones son poco frecuentes).",
-  "settings.imageCleanupTitle": "Limpieza de imágenes",
-  "settings.imageCleanupHint": "Mantenimiento para la función opcional de actualizar el contenedor tras la copia.",
   "settings.pruneImageAfterUpdate": "Eliminar la imagen antigua tras una actualización",
   "settings.pruneImageAfterUpdateHint": "Después de actualizar un contenedor a una imagen más reciente, elimina la imagen antigua sustituida. Desactivado por defecto: conservarla hace que revertir sea barato (una instantánea de BombVault restaura los datos, no la imagen antigua). Una imagen base compartida nunca se elimina.",
   "settings.registriesTitle": "Registros de contenedores",
@@ -1374,7 +1370,6 @@ const es: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Cuánto esperar a que un contenedor esté sano antes de que sus dependientes arranquen igualmente. Rango de 5 a 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Estado de actualización de Unraid",
   "settings.reconcileUnraidStatus": "Actualizar el estado de actualización de Unraid tras actualizar un contenedor",
   "settings.reconcileUnraidStatusHint": "Borra el aviso de actualización de Unraid después de que BombVault actualice un contenedor en el paso de actualización posterior a la copia.",
   "recovery.foreignVMDest": "Destino de los discos de la VM",

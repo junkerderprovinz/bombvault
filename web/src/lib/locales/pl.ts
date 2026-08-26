@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const pl: Partial<Translations> = {
   // General
   "language.label": "Język",
-  "theme.toggle": "Przełącz motyw",
   "theme.dark": "Ciemny",
   "theme.light": "Jasny",
 
@@ -211,7 +210,6 @@ const pl: Partial<Translations> = {
   "settings.motion.full": "Pełny",
   "settings.rainbow": "Tryb tęczowy",
   "settings.rainbowHint": "Każdy wiersz na liście otrzymuje własny kolor z zestawu ośmiu, zamiast dzielić jeden wspólny kolor akcentu — dzięki temu długie listy łatwiej odróżnić na pierwszy rzut oka.",
-  "settings.rainbowOn": "Użyj palety",
   "settings.rainbowReactive": "Tryb reaktywny",
   "settings.rainbowReactiveHint": "Gdy włączone, wiersz lub element pokazuje swój kolor tylko po najechaniu kursorem albo gdy działa lub jest zaznaczony — w innym wypadku pozostaje neutralny. Gdy wyłączone, każdy kolorowy wiersz i element pokazuje swój kolor przez cały czas.",
   "settings.rainbowRotate": "Rotacja kolorów",
@@ -413,7 +411,7 @@ const pl: Partial<Translations> = {
   "rclone.save": "Zapisz konfigurację",
 
   // Integrity (restic check)
-  "integrity.title": "Integralność",
+  "integrity.title": "Integralność i konserwacja",
   "integrity.hint": "Uruchom restic check, aby zweryfikować, że struktura i metadane repozytorium są nienaruszone.",
   "integrity.verify": "Zweryfikuj",
   "integrity.checking": "Sprawdzanie…",
@@ -1009,8 +1007,6 @@ const pl: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Wysyłaj JEDNO podsumowanie na zaplanowany przebieg kopii zapasowej (na przykład: 42 z 45 zakończyło się powodzeniem) zamiast osobnej wiadomości dla każdego kontenera lub VM. Healthchecks jest już podsumowywany. Ręczne kopie zapasowe nadal powiadamiają o każdym elemencie.",
   "notify.notifyOnUpdate": "Powiadamiaj o aktualizacji kontenera",
   "notify.notifyOnUpdateHint": "Gdy aktualizacja po kopii zapasowej podniesie kontener do nowszego obrazu, wyślij wiadomość, dzięki której sprawdzisz, czy nadal działa. Wyzwalane dla każdego zaktualizowanego kontenera (aktualizacje są rzadkie).",
-  "settings.imageCleanupTitle": "Czyszczenie obrazów",
-  "settings.imageCleanupHint": "Porządkowanie dla opcjonalnej funkcji aktualizacji kontenera po kopii zapasowej.",
   "settings.pruneImageAfterUpdate": "Usuń stary obraz po aktualizacji",
   "settings.pruneImageAfterUpdateHint": "Po zaktualizowaniu kontenera do nowszego obrazu usuń zastąpiony stary obraz. Domyślnie wyłączone: pozostawienie go sprawia, że wycofanie zmian jest tanie (migawka BombVault przywraca dane, a nie stary obraz). Współdzielony obraz bazowy nigdy nie jest usuwany.",
   "settings.registriesTitle": "Rejestry kontenerów",
@@ -1371,7 +1367,6 @@ const pl: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Jak długo czekać, aż kontener stanie się sprawny, zanim mimo to uruchomią się zależne od niego. Zakres od 5 do 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Status aktualizacji Unraid",
   "settings.reconcileUnraidStatus": "Odśwież status aktualizacji Unraid po zaktualizowaniu kontenera",
   "settings.reconcileUnraidStatusHint": "Usuwa baner aktualizacji Unraid po tym, jak BombVault zaktualizuje kontener w kroku aktualizacji po kopii zapasowej.",
   "recovery.foreignVMDest": "Miejsce docelowe dysków VM",

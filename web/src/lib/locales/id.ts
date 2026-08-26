@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const id: Partial<Translations> = {
   // General
   "language.label": "Bahasa",
-  "theme.toggle": "Ganti tema",
   "theme.dark": "Gelap",
   "theme.light": "Terang",
 
@@ -263,8 +262,8 @@ const id: Partial<Translations> = {
   "offsite.replicateStarted": "Replikasi dimulai - berjalan di latar belakang; indikator berjalan menunjukkan progres.",
   "offsite.replicating": "Mereplikasi…",
   "offsite.replicatingWithDuration": "Mereplikasi… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Mereplikasi snapshot {index} dari {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Mereplikasi snapshot {index} dari {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Mereplikasi… {percent}% keseluruhan (snapshot {index} dari {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Mereplikasi… {percent}% keseluruhan (snapshot {index} dari {total}) · {duration}",
   "offsite.overallPercentHint": "Progres keseluruhan replikasi ini, dihitung dalam snapshot: restic selalu hanya melaporkan progres satu snapshot, tidak pernah untuk seluruh proses penyalinan. Ukuran snapshot berbeda-beda, jadi anggap ini sebagai perkiraan.",
   "offsite.replicateFailed": "Replikasi gagal",
   "offsite.test": "Uji koneksi",
@@ -364,8 +363,6 @@ const id: Partial<Translations> = {
   "settings.retentionHint": "Berapa banyak cadangan yang disimpan per item. Setelah setiap pencadangan, restic melakukan prune snapshot lama sesuai kebijakan ini. Semua nol = simpan semuanya (mati).",
   "settings.imageMaintenanceTitle": "Pembersihan image & status pembaruan",
   "settings.imageMaintenanceHint": "Pemeliharaan seputar pembaruan container setelah pencadangan: membersihkan image yang digantikan dan menyegarkan status pembaruan cache milik Unraid sendiri.",
-  "settings.imageCleanupTitle": "Pembersihan image",
-  "settings.imageCleanupHint": "Pemeliharaan untuk opsi \"perbarui container setelah pencadangan\".",
   "settings.pruneImageAfterUpdate": "Hapus image lama setelah pembaruan",
   "settings.pruneImageAfterUpdateHint": "Setelah container diperbarui ke image yang lebih baru, hapus image lama yang digantikan. Mati secara bawaan — mempertahankannya membuat rollback murah (snapshot BombVault memulihkan data, bukan image lama). Image dasar bersama tidak pernah dihapus.",
   "settings.registriesTitle": "Registri container",
@@ -636,7 +633,6 @@ const id: Partial<Translations> = {
   "settings.motion.full": "Penuh",
   "settings.rainbow": "Mode Pelangi",
   "settings.rainbowHint": "Setiap baris dalam daftar mendapatkan warnanya sendiri dari sekumpulan delapan warna, alih-alih semuanya berbagi satu warna aksen — membuat daftar panjang lebih mudah dibedakan sekilas.",
-  "settings.rainbowOn": "Gunakan palet",
   "settings.rainbowReactive": "Mode reaktif",
   "settings.rainbowReactiveHint": "Saat aktif, warna baris atau item hanya muncul saat Anda mengarahkan kursor ke sana, atau saat sedang berjalan atau dipilih — jika tidak, tetap netral. Saat mati, setiap baris dan item berwarna menampilkan warnanya sepanjang waktu.",
   "settings.rainbowRotate": "Rotasi warna",
@@ -808,7 +804,7 @@ const id: Partial<Translations> = {
   "schedule.overrideTitle": "Penggantian jadwal",
   "schedule.overrideUsesDefault": "Menggunakan jadwal domain",
   "schedule.overrideEdit": "Atur penggantian",
-  "schedule.overrideHint": "Kosong menggunakan jadwal domain. Penggantian per item tidak mendukung mode setiap-N-hari.",
+  "schedule.overrideHint": "Kosong menggunakan jadwal domain.",
   "schedule.overrideSaved": "Penggantian tersimpan",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const id: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Mencadangkan semua {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Unggah off-site — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Unggah off-site — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Unggah off-site — {domain} … snapshot {index} dari {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Unggah off-site — {domain} … snapshot {index} dari {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Unggah off-site — {domain} … {percent}% keseluruhan (snapshot {index} dari {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Unggah off-site — {domain} … {percent}% keseluruhan (snapshot {index} dari {total}) · {duration}",
   "activityLog.linePruneRunning": "Prune — {domain} …",
   "activityLog.lineVerifyRunning": "Memverifikasi — {domain} …",
   "activityLog.lineDrillRunning": "Uji pemulihan sedang berjalan — {domain} …",
@@ -1393,7 +1389,6 @@ const id: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Berapa lama menunggu satu container menjadi sehat sebelum dependennya tetap dimulai. Rentang 5 hingga 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Status pembaruan Unraid",
   "settings.reconcileUnraidStatus": "Segarkan status pembaruan Unraid setelah memperbarui container",
   "settings.reconcileUnraidStatusHint": "Hapus banner pembaruan Unraid setelah BombVault memperbarui container di langkah pembaruan setelah pencadangan.",
 };

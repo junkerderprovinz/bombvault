@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const ja: Partial<Translations> = {
   // General
   "language.label": "言語",
-  "theme.toggle": "テーマ切替",
   "theme.dark": "ダーク",
   "theme.light": "ライト",
 
@@ -216,7 +215,6 @@ const ja: Partial<Translations> = {
   "settings.motion.full": "フル",
   "settings.rainbow": "レインボーモード",
   "settings.rainbowHint": "リストの各行は、単一のアクセントカラーを共有する代わりに、8色のセットから自分専用の色を得ます。これにより長いリストが一目で区別しやすくなります。",
-  "settings.rainbowOn": "パレットを使う",
   "settings.rainbowReactive": "リアクティブモード",
   "settings.rainbowReactiveHint": "オンにすると、行や項目はマウスを重ねたとき、または実行中や選択中だけ自分の色を表示し、それ以外は中立色のままになります。オフにすると、色付きの行や項目は常に自分の色を表示します。",
   "settings.rainbowRotate": "カラーローテーション",
@@ -416,7 +414,7 @@ const ja: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "age の受信者を少なくとも 1 つ追加してください。そうしないと暗号化エクスポートは失敗します。",
   "rclone.save": "設定を保存",
 
-  "integrity.title": "整合性",
+  "integrity.title": "整合性とメンテナンス",
   "integrity.hint": "restic check を実行して、リポジトリの構造とメタデータが正常か検証します。",
   "integrity.verify": "検証",
   "integrity.checking": "確認中…",
@@ -1006,8 +1004,6 @@ const ja: Partial<Translations> = {
   "notify.scheduledSummaryHint": "スケジュールされたバックアップ実行ごとに、コンテナや VM 個別のメッセージではなく、まとめて 1 通の要約を送信します（例: 45 件中 42 件成功）。Healthchecks はすでに要約されています。手動バックアップは引き続き項目ごとに通知します。",
   "notify.notifyOnUpdate": "コンテナ更新時に通知",
   "notify.notifyOnUpdateHint": "バックアップ後の更新でコンテナが新しい image にアップグレードされたら、正常に動作するか確認できるようメッセージを送信します。更新されたコンテナごとに通知します（更新はまれです）。",
-  "settings.imageCleanupTitle": "image のクリーンアップ",
-  "settings.imageCleanupHint": "オプションのバックアップ後コンテナ更新機能のための整理処理です。",
   "settings.pruneImageAfterUpdate": "更新後に古い image を削除",
   "settings.pruneImageAfterUpdateHint": "コンテナが新しい image に更新された後、置き換えられた古い image を削除します。デフォルトはオフです。残しておくとロールバックが容易になります（BombVault のスナップショットが復元するのはデータであり、古い image ではありません）。共有ベース image は削除されません。",
   "settings.registriesTitle": "コンテナレジストリ",
@@ -1368,7 +1364,6 @@ const ja: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "依存するコンテナがとにかく起動する前に、1つのコンテナが正常になるまで待つ時間。範囲は 5 から 3600 です。",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid の更新ステータス",
   "settings.reconcileUnraidStatus": "コンテナの更新後に Unraid の更新ステータスを更新する",
   "settings.reconcileUnraidStatusHint": "バックアップ後の更新ステップで BombVault がコンテナを更新した後、Unraid の更新バナーをクリアします。",
   "recovery.foreignVMDest": "VM ディスクの保存先",

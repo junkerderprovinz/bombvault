@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const lv: Partial<Translations> = {
   // General
   "language.label": "Valoda",
-  "theme.toggle": "Mainīt tēmu",
   "theme.dark": "Tumša",
   "theme.light": "Gaiša",
 
@@ -263,8 +262,8 @@ const lv: Partial<Translations> = {
   "offsite.replicateStarted": "Replicēšana sākta - tā darbojas fonā; izpildījuma indikators rāda progresu.",
   "offsite.replicating": "Replicē…",
   "offsite.replicatingWithDuration": "Replicē… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Replicē momentuzņēmumu {index} no {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replicē momentuzņēmumu {index} no {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Replicē… {percent}% kopā (momentuzņēmums {index} no {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replicē… {percent}% kopā (momentuzņēmums {index} no {total}) · {duration}",
   "offsite.overallPercentHint": "Šīs replicēšanas kopējā gaita, skaitīta momentuzņēmumos: restic ziņo gaitu vienmēr tikai par vienu momentuzņēmumu, nekad par visu kopēšanu. Momentuzņēmumi atšķiras pēc lieluma, tāpēc uztver to kā aptuvenu vērtējumu.",
   "offsite.replicateFailed": "Replicēšana neizdevās",
   "offsite.test": "Pārbaudīt savienojumu",
@@ -364,8 +363,6 @@ const lv: Partial<Translations> = {
   "settings.retentionHint": "Cik rezerves kopiju saglabāt katram vienumam. Pēc katras rezerves kopijas restic pēc šīs politikas iztīra vecākus momentuzņēmumus. Viss uz nulli = saglabāt visu (izslēgts).",
   "settings.imageMaintenanceTitle": "Attēlu tīrīšana un atjaunināšanas statuss",
   "settings.imageMaintenanceHint": "Uzturēšana ap konteinera atjaunināšanu pēc rezerves kopijas: aizstātā attēla tīrīšana un Unraid pašas kešatmiņas atjaunināšanas statusa atsvaidzināšana.",
-  "settings.imageCleanupTitle": "Attēlu tīrīšana",
-  "settings.imageCleanupHint": "Uzturēšana neobligātajai funkcijai „atjaunināt konteineru pēc rezerves kopijas”.",
   "settings.pruneImageAfterUpdate": "Noņemt veco attēlu pēc atjaunināšanas",
   "settings.pruneImageAfterUpdateHint": "Pēc konteinera atjaunināšanas uz jaunāku attēlu izdzēsiet aizstāto veco attēlu. Pēc noklusējuma izslēgts — tā saglabāšana padara atgriešanos lētu (BombVault momentuzņēmums atjauno datus, nevis veco attēlu). Kopīgs bāzes attēls nekad netiek dzēsts.",
   "settings.registriesTitle": "Konteineru reģistri",
@@ -636,7 +633,6 @@ const lv: Partial<Translations> = {
   "settings.motion.full": "Pilna",
   "settings.rainbow": "Varavīksnes režīms",
   "settings.rainbowHint": "Katra saraksta rinda iegūst savu krāsu no astoņu krāsu kopas, nevis visi koplieto vienu akcenta krāsu — tas atvieglo garu sarakstu atšķiršanu vienā skatienā.",
-  "settings.rainbowOn": "Izmantot paleti",
   "settings.rainbowReactive": "Reaktīvais režīms",
   "settings.rainbowReactiveHint": "Kad ieslēgts, rindas vai vienuma krāsa parādās tikai tad, kad novietojat kursoru virs tā vai kad tas darbojas vai ir atlasīts — pretējā gadījumā tā paliek neitrāla. Kad izslēgts, katra krāsainā rinda un vienums visu laiku rāda savu krāsu.",
   "settings.rainbowRotate": "Krāsu rotācija",
@@ -808,7 +804,7 @@ const lv: Partial<Translations> = {
   "schedule.overrideTitle": "Grafika aizstāšana",
   "schedule.overrideUsesDefault": "Izmanto domēna grafiku",
   "schedule.overrideEdit": "Iestatīt aizstāšanu",
-  "schedule.overrideHint": "Tukšs izmanto domēna grafiku. Aizstāšanas katram vienumam neatbalsta ik-N-dienu režīmu.",
+  "schedule.overrideHint": "Tukšs izmanto domēna grafiku.",
   "schedule.overrideSaved": "Aizstāšana saglabāta",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const lv: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Dublē visus {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Attālināta augšupielāde — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Attālināta augšupielāde — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Attālināta augšupielāde — {domain} … momentuzņēmums {index} no {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Attālināta augšupielāde — {domain} … momentuzņēmums {index} no {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Attālināta augšupielāde — {domain} … {percent}% kopā (momentuzņēmums {index} no {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Attālināta augšupielāde — {domain} … {percent}% kopā (momentuzņēmums {index} no {total}) · {duration}",
   "activityLog.linePruneRunning": "Iztīra — {domain} …",
   "activityLog.lineVerifyRunning": "Pārbauda — {domain} …",
   "activityLog.lineDrillRunning": "Atjaunošanas pārbaude notiek — {domain} …",
@@ -1393,7 +1389,6 @@ const lv: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Cik ilgi gaidīt, kamēr konteiners kļūst vesels, pirms no tā atkarīgie tiek palaisti tik un tā. Diapazons no 5 līdz 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Unraid atjaunināšanas statuss",
   "settings.reconcileUnraidStatus": "Atsvaidzināt Unraid atjaunināšanas statusu pēc konteinera atjaunināšanas",
   "settings.reconcileUnraidStatusHint": "Notīrīt Unraid atjaunināšanas paziņojuma joslu pēc tam, kad BombVault atjaunina konteineru pēc-rezerves-kopijas atjaunināšanas solī.",
 };

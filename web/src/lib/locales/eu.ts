@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const eu: Partial<Translations> = {
   // General
   "language.label": "Hizkuntza",
-  "theme.toggle": "Aldatu itxura",
   "theme.dark": "Iluna",
   "theme.light": "Argia",
 
@@ -263,8 +262,8 @@ const eu: Partial<Translations> = {
   "offsite.replicateStarted": "Errepikapena hasi da - atzeko planoan exekutatzen ari da; exekuzio-adierazleak aurrerapena erakusten du.",
   "offsite.replicating": "Errepikatzen…",
   "offsite.replicatingWithDuration": "Errepikatzen… ({duration})",
-  "offsite.replicatingSnapshotPercent": "{index}/{total} argazkia errepikatzen (%{percent})",
-  "offsite.replicatingSnapshotPercentWithDuration": "{index}/{total} argazkia errepikatzen (%{percent}) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Errepikatzen… %{percent} guztira ({index}/{total} argazkia)",
+  "offsite.replicatingSnapshotPercentWithDuration": "Errepikatzen… %{percent} guztira ({index}/{total} argazkia) · {duration}",
   "offsite.overallPercentHint": "Errepikapen honen aurrerapen orokorra, argazkitan zenbatuta: resticek argazki bakar baten aurrerapena jakinarazten du beti, inoiz ez kopia osoarena. Argazkiek tamaina desberdina dute, beraz hartu hau gutxi gorabeherako kalkulu gisa.",
   "offsite.replicateFailed": "Errepikapenak huts egin du",
   "offsite.test": "Probatu konexioa",
@@ -364,8 +363,6 @@ const eu: Partial<Translations> = {
   "settings.retentionHint": "Elementu bakoitzeko zenbat babeskopia gorde. Babeskopia bakoitzaren ondoren, restic-ek argazki zaharrenak politika honen arabera garbitzen ditu. Denak 0 = gorde dena (itzalita).",
   "settings.imageMaintenanceTitle": "Irudien garbiketa eta eguneraketa-egoera",
   "settings.imageMaintenanceHint": "Babeskopiaren ondorengo edukiontzi-eguneraketaren inguruko mantentze-lanak: ordezkatutako irudia garbitu eta Unraid-en cachean gordetako eguneraketa-egoera bera freskatu.",
-  "settings.imageCleanupTitle": "Irudien garbiketa",
-  "settings.imageCleanupHint": "Mantentzea aukerako «eguneratu edukiontzia babeskopiaren ondoren» aukerarentzat.",
   "settings.pruneImageAfterUpdate": "Kendu irudi zaharra eguneraketaren ondoren",
   "settings.pruneImageAfterUpdateHint": "Edukiontzi bat irudi berriago batera eguneratu ondoren, ezabatu ordezkatutako irudi zaharra. Lehenespenez itzalita — hura gordetzeak atzera egitea merke bihurtzen du (BombVaulteko argazki batek datuak berrezartzen ditu, ez irudi zaharra). Oinarrizko irudi partekatu bat ez da inoiz ezabatzen.",
   "settings.registriesTitle": "Edukiontzi-erregistroak",
@@ -636,7 +633,6 @@ const eu: Partial<Translations> = {
   "settings.motion.full": "Osoa",
   "settings.rainbow": "Ostadar modua",
   "settings.rainbowHint": "Zerrenda bateko errenkada bakoitzak zortzikako multzo bateko bere kolorea jasotzen du, guztiek azentu-kolore bakarra partekatu ordez — horrek zerrenda luzeak begirada batean errazago bereizten laguntzen du.",
-  "settings.rainbowOn": "Erabili paleta",
   "settings.rainbowReactive": "Modu erreaktiboa",
   "settings.rainbowReactiveHint": "Piztuta dagoenean, errenkada edo elementu baten kolorea kurtsorearekin gainean zauden bitartean bakarrik agertzen da, edo exekutatzen edo hautatuta dagoen bitartean — bestela neutro geratzen da. Itzalita dagoenean, kolorezko errenkada eta elementu guztiek beren kolorea beti erakusten dute.",
   "settings.rainbowRotate": "Kolore-biraketa",
@@ -808,7 +804,7 @@ const eu: Partial<Translations> = {
   "schedule.overrideTitle": "Egutegi-gainidazketa",
   "schedule.overrideUsesDefault": "Domeinuaren egutegia erabiltzen du",
   "schedule.overrideEdit": "Ezarri gainidazketa",
-  "schedule.overrideHint": "Hutsik badago domeinuaren egutegia erabiltzen du. Elementuko gainidazketek ez dute N-egunero modua onartzen.",
+  "schedule.overrideHint": "Hutsik badago domeinuaren egutegia erabiltzen du.",
   "schedule.overrideSaved": "Gainidazketa gordeta",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const eu: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "{domain} guztiak babesten… %{percent}",
   "activityLog.lineOffsiteRunning": "Kanpoko igoera — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Kanpoko igoera — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Kanpoko igoera — {domain} … {index}/{total} argazkia (%{percent})",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Kanpoko igoera — {domain} … {index}/{total} argazkia (%{percent}) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Kanpoko igoera — {domain} … %{percent} guztira ({index}/{total} argazkia)",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Kanpoko igoera — {domain} … %{percent} guztira ({index}/{total} argazkia) · {duration}",
   "activityLog.linePruneRunning": "Garbitzen — {domain} …",
   "activityLog.lineVerifyRunning": "Egiaztatzen — {domain} …",
   "activityLog.lineDrillRunning": "Berrezarpen-egiaztapena exekutatzen — {domain} …",
@@ -1393,7 +1389,6 @@ const eu: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Zenbat denbora itxaron edukiontzi bat osasuntsu izan arte, bere mendekoak dena den abiarazi aurretik. 5etik 3600era bitarteko tartea.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Unraid-en eguneraketa-egoera",
   "settings.reconcileUnraidStatus": "Freskatu Unraid-en eguneraketa-egoera edukiontzi bat eguneratu ondoren",
   "settings.reconcileUnraidStatusHint": "Garbitu Unraid-en eguneraketa-bandera BombVaultek babeskopiaren ondorengo eguneraketa-urratsean edukiontzi bat eguneratu ondoren.",
 };

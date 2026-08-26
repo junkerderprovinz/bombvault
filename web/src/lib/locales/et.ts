@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const et: Partial<Translations> = {
   // General
   "language.label": "Keel",
-  "theme.toggle": "Vaheta teemat",
   "theme.dark": "Tume",
   "theme.light": "Hele",
 
@@ -263,8 +262,8 @@ const et: Partial<Translations> = {
   "offsite.replicateStarted": "Replitseerimine alustatud - see töötab taustal; käivituse indikaator näitab edenemist.",
   "offsite.replicating": "Replitseerimine…",
   "offsite.replicatingWithDuration": "Replitseerimine… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Replitseeritakse hetktõmmist {index}/{total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replitseeritakse hetktõmmist {index}/{total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Replitseerimine… {percent}% kokku (hetktõmmis {index}/{total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replitseerimine… {percent}% kokku (hetktõmmis {index}/{total}) · {duration}",
   "offsite.overallPercentHint": "Selle replitseerimise üldine edenemine, loetuna hetktõmmistes: restic teatab edenemist alati ainult ühe hetktõmmise kohta, mitte kunagi kogu kopeerimise kohta. Hetktõmmised on eri suurusega, seega võta seda hinnanguna.",
   "offsite.replicateFailed": "Replitseerimine ebaõnnestus",
   "offsite.test": "Testi ühendust",
@@ -364,8 +363,6 @@ const et: Partial<Translations> = {
   "settings.retentionHint": "Mitu varundust iga üksuse kohta säilitatakse. Pärast iga varundust puhastab restic vanemad hetktõmmised selle reegli järgi. Kõik nullid = säilita kõik (väljas).",
   "settings.imageMaintenanceTitle": "Tõmmiste puhastus ja uuenduse olek",
   "settings.imageMaintenanceHint": "Hooldus konteineri varundusjärgse uuenduse ümber: puhasta asendatud tõmmis ja värskenda Unraidi enda vahemällu salvestatud uuenduse olekut.",
-  "settings.imageCleanupTitle": "Tõmmiste puhastus",
-  "settings.imageCleanupHint": "Hooldus valikulisele „uuenda konteinerit pärast varundust”.",
   "settings.pruneImageAfterUpdate": "Eemalda vana tõmmis pärast uuendust",
   "settings.pruneImageAfterUpdateHint": "Pärast konteineri uuendamist uuemale tõmmisele kustuta asendatud vana tõmmis. Vaikimisi väljas — selle säilitamine muudab tagasipöördumise odavaks (BombVaulti hetktõmmis taastab andmeid, mitte vana tõmmist). Jagatud baastõmmist ei kustutata kunagi.",
   "settings.registriesTitle": "Konteinerite registrid",
@@ -636,7 +633,6 @@ const et: Partial<Translations> = {
   "settings.motion.full": "Täielik",
   "settings.rainbow": "Vikerkaarerežiim",
   "settings.rainbowHint": "Iga loendi rida saab oma värvi kaheksast valikust, selle asemel et kõik jagaks üht aktsendivärvi — nii on pikki loendeid ühe pilguga lihtsam eristada.",
-  "settings.rainbowOn": "Kasuta paletti",
   "settings.rainbowReactive": "Reaktiivne režiim",
   "settings.rainbowReactiveHint": "Kui see on sees, ilmub rea või üksuse värv ainult siis, kui hõljutad seda hiirega või kui see töötab või on valitud — muidu jääb see neutraalseks. Kui see on väljas, näitavad kõik värvilised read ja üksused oma värvi kogu aeg.",
   "settings.rainbowRotate": "Värvi pööramine",
@@ -808,7 +804,7 @@ const et: Partial<Translations> = {
   "schedule.overrideTitle": "Ajakava ülekirjutus",
   "schedule.overrideUsesDefault": "Kasutab valdkonna ajakava",
   "schedule.overrideEdit": "Määra ülekirjutus",
-  "schedule.overrideHint": "Tühi kasutab valdkonna ajakava. Üksuse ülekirjutused ei toeta iga-N-päeva režiimi.",
+  "schedule.overrideHint": "Tühi kasutab valdkonna ajakava.",
   "schedule.overrideSaved": "Ülekirjutus salvestatud",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const et: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Varundatakse kõik {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Väline üleslaadimine — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Väline üleslaadimine — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Väline üleslaadimine — {domain} … hetktõmmis {index}/{total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Väline üleslaadimine — {domain} … hetktõmmis {index}/{total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Väline üleslaadimine — {domain} … {percent}% kokku (hetktõmmis {index}/{total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Väline üleslaadimine — {domain} … {percent}% kokku (hetktõmmis {index}/{total}) · {duration}",
   "activityLog.linePruneRunning": "Puhastamine — {domain} …",
   "activityLog.lineVerifyRunning": "Kontrollimine — {domain} …",
   "activityLog.lineDrillRunning": "Taastekontroll töötab — {domain} …",
@@ -1393,7 +1389,6 @@ const et: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Kui kaua oodatakse, et konteiner terveks saaks, enne kui tema sõltuvad ikkagi käivituvad. Vahemik 5 kuni 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Unraidi uuenduse olek",
   "settings.reconcileUnraidStatus": "Värskenda Unraidi uuenduse olekut pärast konteineri uuendamist",
   "settings.reconcileUnraidStatusHint": "Puhasta Unraidi uuenduse bänner pärast seda, kui BombVault uuendab konteinerit varundusjärgses uuendussammus.",
 };

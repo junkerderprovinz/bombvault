@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const no: Partial<Translations> = {
   // General
   "language.label": "Språk",
-  "theme.toggle": "Bytt tema",
   "theme.dark": "Mørkt",
   "theme.light": "Lyst",
 
@@ -213,7 +212,6 @@ const no: Partial<Translations> = {
   "settings.motion.full": "Full",
   "settings.rainbow": "Regnbuemodus",
   "settings.rainbowHint": "Hver rad i en liste får sin egen farge fra et sett med åtte, i stedet for at alt deler én aksentfarge — gjør lange lister lettere å skille fra hverandre på et blikk.",
-  "settings.rainbowOn": "Bruk paletten",
   "settings.rainbowReactive": "Reaktiv modus",
   "settings.rainbowReactiveHint": "Når på viser en rad eller et element kun fargen sin ved hover, eller mens den kjører eller er valgt — ellers forblir den nøytral. Når av viser hver fargede rad og element fargen sin hele tiden.",
   "settings.rainbowRotate": "Fargerotasjon",
@@ -418,7 +416,7 @@ const no: Partial<Translations> = {
   "rclone.save": "Lagre konfigurasjon",
 
   // Integrity (restic check)
-  "integrity.title": "Integritet",
+  "integrity.title": "Integritet og vedlikehold",
   "integrity.hint": "Kjør restic check for å verifisere at strukturen og metadataene til et repository er intakte.",
   "integrity.verify": "Verifiser",
   "integrity.checking": "Sjekker…",
@@ -1014,8 +1012,6 @@ const no: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Send ÉN oppsummering per planlagt sikkerhetskopiering (for eksempel: 42 av 45 lyktes) i stedet for en egen melding for hver container eller VM. Healthchecks er allerede oppsummert. Manuelle sikkerhetskopier varsler fortsatt per element.",
   "notify.notifyOnUpdate": "Varsle ved containeroppdatering",
   "notify.notifyOnUpdateHint": "Når oppdater-etter-sikkerhetskopiering oppgraderer en container til et nyere image, send en melding så du kan bekrefte at den fortsatt fungerer. Utløses per oppdatert container (oppdateringer er sjeldne).",
-  "settings.imageCleanupTitle": "Opprydding av image",
-  "settings.imageCleanupHint": "Vedlikehold for den valgfrie funksjonen oppdater-container-etter-sikkerhetskopiering.",
   "settings.pruneImageAfterUpdate": "Fjern det gamle imaget etter en oppdatering",
   "settings.pruneImageAfterUpdateHint": "Etter at en container er oppdatert til et nyere image, slett det utdaterte gamle imaget. Av som standard: å beholde det gjør tilbakerulling billig (et BombVault-øyeblikksbilde gjenoppretter data, ikke det gamle imaget). Et delt base-image slettes aldri.",
   "settings.registriesTitle": "Container-registre",
@@ -1376,7 +1372,6 @@ const no: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Hvor lenge det ventes på at en container blir frisk før de avhengige containerne starter likevel. Område 5 til 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid-oppdateringsstatus",
   "settings.reconcileUnraidStatus": "Oppdater Unraids oppdateringsstatus etter oppdatering av en container",
   "settings.reconcileUnraidStatusHint": "Fjerner Unraids oppdateringsbanner etter at BombVault har oppdatert en container i oppdateringstrinnet etter sikkerhetskopieringen.",
   "recovery.foreignVMDest": "Destinasjon for VM-disker",

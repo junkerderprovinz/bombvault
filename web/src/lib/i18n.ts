@@ -56,7 +56,6 @@ import fa from "./locales/fa";
 export const en = {
   // General
   "language.label": "Language",
-  "theme.toggle": "Toggle theme",
   "theme.dark": "Dark",
   "theme.light": "Light",
 
@@ -485,8 +484,6 @@ export const en = {
   // post-backup container update pull touches.
   "settings.imageMaintenanceTitle": "Image Cleanup & Update Status",
   "settings.imageMaintenanceHint": "Housekeeping for the post-backup container update: prune the superseded image and refresh Unraid's own cached update status.",
-  "settings.imageCleanupTitle": "Image cleanup",
-  "settings.imageCleanupHint": "Housekeeping for the optional \"update container after backup\".",
   "settings.pruneImageAfterUpdate": "Remove the old image after an update",
   "settings.pruneImageAfterUpdateHint": "After a container is updated to a newer image, delete the superseded old image. Off by default — keeping it makes rolling back cheap (a BombVault snapshot restores data, not the old image). A shared base image is never deleted.",
   "settings.registriesTitle": "Container registries",
@@ -807,7 +804,6 @@ export const en = {
   // divergence from KnightLoader's wording, not an oversight.
   "settings.rainbow": "Rainbow Mode",
   "settings.rainbowHint": "Each row in a list gets its own colour from a set of eight, instead of everything sharing one accent colour — makes long lists easier to tell apart at a glance.",
-  "settings.rainbowOn": "Use the palette",
   "settings.rainbowReactive": "Reactive Mode",
   "settings.rainbowReactiveHint": "When on, a row or item's colour only appears while you're hovering it, or while it's running or selected — otherwise it stays neutral. When off, every coloured row and item shows its colour all the time.",
   "settings.rainbowRotate": "Colour Rotation",
@@ -1672,7 +1668,6 @@ export const en = {
   // Reconcile Unraid update status (#116) — Settings, Storage tab. After the
   // post-backup container update recreates a container, ask Unraid to refresh
   // its own cached update status so the Docker tab's stale banner clears.
-  "settings.reconcileTitle": "Unraid update status",
   "settings.reconcileUnraidStatus": "Refresh Unraid's update status after updating a container",
   "settings.reconcileUnraidStatusHint": "Clear Unraid's update banner after BombVault updates a container in the post-backup update step.",
 } as const;
@@ -1687,7 +1682,6 @@ export type Translations = Record<TranslationKey, string>;
 
 export const de: Translations = {
   "language.label": "Sprache",
-  "theme.toggle": "Design umschalten",
   "theme.dark": "Dunkel",
   "theme.light": "Hell",
 
@@ -2047,8 +2041,6 @@ export const de: Translations = {
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
   "settings.imageMaintenanceTitle": "Image-Bereinigung & Update-Status",
   "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen und Unraids eigenen Update-Status zurücksetzen.",
-  "settings.imageCleanupTitle": "Image-Aufräumen",
-  "settings.imageCleanupHint": "Aufräumen für das optionale Container-Update nach Backup.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
   "settings.pruneImageAfterUpdateHint": "Nachdem ein Container auf ein neueres Image aktualisiert wurde, das abgelöste alte Image löschen. Standardmäßig aus — es zu behalten macht ein Zurückrollen billig (ein BombVault-Snapshot stellt Daten wieder her, nicht das alte Image). Ein geteiltes Basis-Image wird nie gelöscht.",
   "settings.registriesTitle": "Container-Registries",
@@ -2319,7 +2311,6 @@ export const de: Translations = {
   "settings.motion.full": "Voll",
   "settings.rainbow": "Regenbogen-Modus",
   "settings.rainbowHint": "Jede Zeile in einer Liste bekommt eine eigene Farbe aus einer festen Auswahl von acht, statt dass alles dieselbe Akzentfarbe hat — das macht lange Listen auf einen Blick leichter unterscheidbar.",
-  "settings.rainbowOn": "Palette verwenden",
   "settings.rainbowReactive": "Reaktiver Modus",
   "settings.rainbowReactiveHint": "Wenn aktiv, bleiben farbige Zeilen und Elemente neutral, bis du sie mit der Maus berührst oder sie gerade laufen oder ausgewählt sind — die Farbe erscheint also nur bei Bedarf. Wenn deaktiviert, zeigen alle farbigen Zeilen und Elemente ihre Farbe durchgehend.",
   "settings.rainbowRotate": "Farbenrotation",
@@ -3089,7 +3080,6 @@ export const de: Translations = {
   "settings.restartHealthTimeoutHint": "Wie lange auf einen Container gewartet wird, bis er gesund ist, bevor seine Abhängigen trotzdem starten. Bereich 5 bis 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid-Update-Status",
   "settings.reconcileUnraidStatus": "Unraids Update-Status nach dem Aktualisieren eines Containers auffrischen",
   "settings.reconcileUnraidStatusHint": "Unraids Update-Banner zurücksetzen, nachdem BombVault im Update-Schritt nach dem Backup einen Container aktualisiert hat.",
 };

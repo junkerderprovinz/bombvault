@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const sk: Partial<Translations> = {
   // General
   "language.label": "Jazyk",
-  "theme.toggle": "Prepnúť motív",
   "theme.dark": "Tmavý",
   "theme.light": "Svetlý",
 
@@ -263,8 +262,8 @@ const sk: Partial<Translations> = {
   "offsite.replicateStarted": "Replikácia sa spustila - beží na pozadí; indikátor behu zobrazuje priebeh.",
   "offsite.replicating": "Replikuje sa…",
   "offsite.replicatingWithDuration": "Replikuje sa… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Replikuje sa snímka {index} z {total} ({percent} %)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replikuje sa snímka {index} z {total} ({percent} %) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Replikuje sa… {percent} % celkovo (snímka {index} z {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replikuje sa… {percent} % celkovo (snímka {index} z {total}) · {duration}",
   "offsite.overallPercentHint": "Celkový priebeh tejto replikácie, počítaný v snímkach: restic hlási priebeh vždy len pre jednu snímku, nikdy pre celé kopírovanie. Snímky majú rôznu veľkosť, ber to teda ako odhad.",
   "offsite.replicateFailed": "Replikácia zlyhala",
   "offsite.test": "Otestovať pripojenie",
@@ -364,8 +363,6 @@ const sk: Partial<Translations> = {
   "settings.retentionHint": "Koľko záloh sa má uchovávať pre každú položku. Po každej zálohe restic podľa tejto zásady vyčistí staršie snímky. Všetko nula = uchovať všetko (vypnuté).",
   "settings.imageMaintenanceTitle": "Čistenie obrazov a stav aktualizácií",
   "settings.imageMaintenanceHint": "Údržba súvisiaca s aktualizáciou kontajnera po zálohe: vyčistenie nahradeného obrazu a obnovenie vlastného vyrovnávacieho stavu aktualizácií Unraid.",
-  "settings.imageCleanupTitle": "Čistenie obrazov",
-  "settings.imageCleanupHint": "Údržba pre voliteľnú funkciu „aktualizovať kontajner po zálohe“.",
   "settings.pruneImageAfterUpdate": "Odstrániť starý obraz po aktualizácii",
   "settings.pruneImageAfterUpdateHint": "Po aktualizácii kontajnera na novší obraz odstráňte nahradený starý obraz. Predvolene vypnuté — jeho ponechanie robí návrat lacným (snímka BombVault obnovuje dáta, nie starý obraz). Zdieľaný základný obraz sa nikdy neodstráni.",
   "settings.registriesTitle": "Registre kontajnerov",
@@ -636,7 +633,6 @@ const sk: Partial<Translations> = {
   "settings.motion.full": "Plný",
   "settings.rainbow": "Dúhový režim",
   "settings.rainbowHint": "Každý riadok v zozname dostane vlastnú farbu z ôsmich farieb namiesto toho, aby si všetko delilo jednu zvýrazňujúcu farbu — to uľahčuje rozlíšenie dlhých zoznamov na prvý pohľad.",
-  "settings.rainbowOn": "Použiť paletu",
   "settings.rainbowReactive": "Reaktívny režim",
   "settings.rainbowReactiveHint": "Keď je zapnutý, farba riadku alebo položky sa objaví iba počas prechádzania kurzorom nad ňou, alebo počas jej behu či výberu — inak zostáva neutrálna. Keď je vypnutý, každý farebný riadok a položka zobrazuje svoju farbu neustále.",
   "settings.rainbowRotate": "Rotácia farieb",
@@ -808,7 +804,7 @@ const sk: Partial<Translations> = {
   "schedule.overrideTitle": "Prepísanie plánu",
   "schedule.overrideUsesDefault": "Používa plán domény",
   "schedule.overrideEdit": "Nastaviť prepísanie",
-  "schedule.overrideHint": "Prázdne používa plán domény. Prepísania pre jednotlivé položky nepodporujú režim každých-N-dní.",
+  "schedule.overrideHint": "Prázdne používa plán domény.",
   "schedule.overrideSaved": "Prepísanie uložené",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const sk: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Zálohujú sa všetky {domain} … {percent} %",
   "activityLog.lineOffsiteRunning": "Externé nahrávanie — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Externé nahrávanie — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Externé nahrávanie — {domain} … snímka {index} z {total} ({percent} %)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Externé nahrávanie — {domain} … snímka {index} z {total} ({percent} %) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Externé nahrávanie — {domain} … {percent} % celkovo (snímka {index} z {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Externé nahrávanie — {domain} … {percent} % celkovo (snímka {index} z {total}) · {duration}",
   "activityLog.linePruneRunning": "Čistí sa — {domain} …",
   "activityLog.lineVerifyRunning": "Overuje sa — {domain} …",
   "activityLog.lineDrillRunning": "Kontrola obnovenia prebieha — {domain} …",
@@ -1393,7 +1389,6 @@ const sk: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Ako dlho čakať, kým kontajner bude zdravý, skôr ako sa jeho závislosti aj tak spustia. Rozsah 5 až 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Stav aktualizácie Unraid",
   "settings.reconcileUnraidStatus": "Obnoviť stav aktualizácie Unraid po aktualizácii kontajnera",
   "settings.reconcileUnraidStatusHint": "Vyčistiť banner aktualizácie Unraid po tom, čo BombVault aktualizuje kontajner v kroku aktualizácie po zálohe.",
 };

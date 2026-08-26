@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const gl: Partial<Translations> = {
   // General
   "language.label": "Idioma",
-  "theme.toggle": "Cambiar tema",
   "theme.dark": "Escuro",
   "theme.light": "Claro",
 
@@ -263,8 +262,8 @@ const gl: Partial<Translations> = {
   "offsite.replicateStarted": "A replicación comezou - execútase en segundo plano; o indicador de execución mostra o progreso.",
   "offsite.replicating": "Replicando…",
   "offsite.replicatingWithDuration": "Replicando… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Replicando instantánea {index} de {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replicando instantánea {index} de {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Replicando… {percent}% en total (instantánea {index} de {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replicando… {percent}% en total (instantánea {index} de {total}) · {duration}",
   "offsite.overallPercentHint": "Progreso global desta replicación, contado en instantáneas: restic só informa do progreso dunha instantánea de cada vez, nunca dunha copia enteira. As instantáneas teñen tamaños distintos, así que tómao como unha estimación.",
   "offsite.replicateFailed": "A replicación fallou",
   "offsite.test": "Probar conexión",
@@ -364,8 +363,6 @@ const gl: Partial<Translations> = {
   "settings.retentionHint": "Cantas copias conservar por elemento. Despois de cada copia, restic limpa instantáneas máis antigas segundo esta política. Todo a 0 = conservar todo (desactivado).",
   "settings.imageMaintenanceTitle": "Limpeza de imaxes e estado de actualizacións",
   "settings.imageMaintenanceHint": "Mantemento ao redor da actualización de contedor despois da copia: limpar a imaxe substituída e actualizar o estado en caché propio de Unraid.",
-  "settings.imageCleanupTitle": "Limpeza de imaxes",
-  "settings.imageCleanupHint": "Mantemento para a opción «actualizar o contedor despois da copia».",
   "settings.pruneImageAfterUpdate": "Eliminar a imaxe antiga despois de actualizar",
   "settings.pruneImageAfterUpdateHint": "Despois de que un contedor se actualice a unha imaxe máis nova, elimina a imaxe antiga substituída. Desactivado por defecto — conservala fai que volver atrás saia barato (unha instantánea de BombVault restaura datos, non a imaxe antiga). Unha imaxe base compartida nunca se elimina.",
   "settings.registriesTitle": "Rexistros de contedores",
@@ -636,7 +633,6 @@ const gl: Partial<Translations> = {
   "settings.motion.full": "Completo",
   "settings.rainbow": "Modo arco da vella",
   "settings.rainbowHint": "Cada fila dunha lista recibe a súa propia cor dun conxunto de oito, en vez de que todo comparta unha soa cor de acento — isto fai que as listas longas sexan máis fáciles de distinguir dunha ollada.",
-  "settings.rainbowOn": "Usar a paleta",
   "settings.rainbowReactive": "Modo reactivo",
   "settings.rainbowReactiveHint": "Cando está activo, a cor dunha fila ou elemento só aparece mentres o tocas co cursor, ou mentres se está a executar ou está seleccionado — se non, mantense neutro. Cando está desactivado, todas as filas e elementos con cor mostran a súa cor sempre.",
   "settings.rainbowRotate": "Rotación de cor",
@@ -808,7 +804,7 @@ const gl: Partial<Translations> = {
   "schedule.overrideTitle": "Substitución de horario",
   "schedule.overrideUsesDefault": "Usa o horario do dominio",
   "schedule.overrideEdit": "Configurar substitución",
-  "schedule.overrideHint": "Baleiro usa o horario do dominio. As substitucións por elemento non admiten o modo cada-N-días.",
+  "schedule.overrideHint": "Baleiro usa o horario do dominio.",
   "schedule.overrideSaved": "Substitución gardada",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const gl: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Copiando todos os {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Subida externa — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Subida externa — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Subida externa — {domain} … instantánea {index} de {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Subida externa — {domain} … instantánea {index} de {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Subida externa — {domain} … {percent}% en total (instantánea {index} de {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Subida externa — {domain} … {percent}% en total (instantánea {index} de {total}) · {duration}",
   "activityLog.linePruneRunning": "Limpando — {domain} …",
   "activityLog.lineVerifyRunning": "Verificando — {domain} …",
   "activityLog.lineDrillRunning": "A comprobación de restauración está en execución — {domain} …",
@@ -1393,7 +1389,6 @@ const gl: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Canto tempo esperar a que un contedor se poña san antes de que os seus dependentes se inicien igualmente. Intervalo de 5 a 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Estado de actualización de Unraid",
   "settings.reconcileUnraidStatus": "Actualizar o estado de actualización de Unraid despois de actualizar un contedor",
   "settings.reconcileUnraidStatusHint": "Limpa o báner de actualización de Unraid despois de que BombVault actualice un contedor no paso de actualización posterior á copia.",
 };

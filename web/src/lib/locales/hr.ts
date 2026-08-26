@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const hr: Partial<Translations> = {
   // General
   "language.label": "Jezik",
-  "theme.toggle": "Promijeni temu",
   "theme.dark": "Tamna",
   "theme.light": "Svijetla",
 
@@ -263,8 +262,8 @@ const hr: Partial<Translations> = {
   "offsite.replicateStarted": "Repliciranje je pokrenuto - izvršava se u pozadini; indikator izvršavanja prikazuje napredak.",
   "offsite.replicating": "Repliciranje…",
   "offsite.replicatingWithDuration": "Repliciranje… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Repliciranje snimke {index} od {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Repliciranje snimke {index} od {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Repliciranje… {percent}% ukupno (snimka {index} od {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Repliciranje… {percent}% ukupno (snimka {index} od {total}) · {duration}",
   "offsite.overallPercentHint": "Ukupni napredak ovog repliciranja, brojen u snimkama: restic javlja napredak uvijek samo za jednu snimku, nikada za cijelo kopiranje. Snimke su različite veličine pa ovo shvati kao procjenu.",
   "offsite.replicateFailed": "Repliciranje nije uspjelo",
   "offsite.test": "Testiraj vezu",
@@ -364,8 +363,6 @@ const hr: Partial<Translations> = {
   "settings.retentionHint": "Koliko sigurnosnih kopija zadržati po stavci. Nakon svake sigurnosne kopije, restic čisti starije snimke prema ovoj politici. Sve nula = zadrži sve (isključeno).",
   "settings.imageMaintenanceTitle": "Čišćenje slika i status ažuriranja",
   "settings.imageMaintenanceHint": "Održavanje oko ažuriranja kontejnera nakon sigurnosne kopije: čišćenje zamijenjene slike i osvježavanje vlastitog predmemoriranog statusa ažuriranja Unraida.",
-  "settings.imageCleanupTitle": "Čišćenje slika",
-  "settings.imageCleanupHint": "Održavanje za neobaveznu opciju „ažuriraj kontejner nakon sigurnosne kopije”.",
   "settings.pruneImageAfterUpdate": "Ukloni staru sliku nakon ažuriranja",
   "settings.pruneImageAfterUpdateHint": "Nakon što se kontejner ažurira na noviju sliku, izbriši zamijenjenu staru sliku. Zadano isključeno — njezino zadržavanje čini vraćanje unatrag jeftinim (BombVault snimka vraća podatke, a ne staru sliku). Zajednička temeljna slika nikad se ne briše.",
   "settings.registriesTitle": "Registri kontejnera",
@@ -636,7 +633,6 @@ const hr: Partial<Translations> = {
   "settings.motion.full": "Puno",
   "settings.rainbow": "Rainbow način",
   "settings.rainbowHint": "Svaki redak na popisu dobiva vlastitu boju iz skupa od osam, umjesto da svi dijele jednu naglasnu boju — to olakšava razlikovanje dugih popisa na prvi pogled.",
-  "settings.rainbowOn": "Koristi paletu",
   "settings.rainbowReactive": "Reaktivni način",
   "settings.rainbowReactiveHint": "Kad je uključeno, boja retka ili stavke pojavljuje se samo dok je pokazujete mišem, ili dok se izvršava ili je odabrana — inače ostaje neutralna. Kad je isključeno, svaki obojeni redak i stavka stalno prikazuju svoju boju.",
   "settings.rainbowRotate": "Rotacija boje",
@@ -808,7 +804,7 @@ const hr: Partial<Translations> = {
   "schedule.overrideTitle": "Nadjačavanje rasporeda",
   "schedule.overrideUsesDefault": "Koristi raspored domene",
   "schedule.overrideEdit": "Postavi nadjačavanje",
-  "schedule.overrideHint": "Prazno koristi raspored domene. Nadjačavanja po stavci ne podržavaju način svakih-N-dana.",
+  "schedule.overrideHint": "Prazno koristi raspored domene.",
   "schedule.overrideSaved": "Nadjačavanje spremljeno",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const hr: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Izrada sigurnosne kopije svih {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Izvanmrežni prijenos — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Izvanmrežni prijenos — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Izvanmrežni prijenos — {domain} … snimka {index} od {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Izvanmrežni prijenos — {domain} … snimka {index} od {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Izvanmrežni prijenos — {domain} … {percent}% ukupno (snimka {index} od {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Izvanmrežni prijenos — {domain} … {percent}% ukupno (snimka {index} od {total}) · {duration}",
   "activityLog.linePruneRunning": "Čišćenje — {domain} …",
   "activityLog.lineVerifyRunning": "Provjera — {domain} …",
   "activityLog.lineDrillRunning": "Provjera vraćanja u tijeku — {domain} …",
@@ -1393,7 +1389,6 @@ const hr: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Koliko dugo čekati da kontejner postane ispravan prije nego se njegovi ovisni ipak pokrenu. Raspon 5 do 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Status ažuriranja Unraida",
   "settings.reconcileUnraidStatus": "Osvježi status ažuriranja Unraida nakon ažuriranja kontejnera",
   "settings.reconcileUnraidStatusHint": "Ukloni Unraidov transparent ažuriranja nakon što BombVault ažurira kontejner u koraku ažuriranja nakon sigurnosne kopije.",
 };

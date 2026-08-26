@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const tr: Partial<Translations> = {
   // General
   "language.label": "Dil",
-  "theme.toggle": "Tema değiştir",
   "theme.dark": "Koyu",
   "theme.light": "Açık",
 
@@ -216,7 +215,6 @@ const tr: Partial<Translations> = {
   "settings.motion.full": "Tam",
   "settings.rainbow": "Gökkuşağı modu",
   "settings.rainbowHint": "Listedeki her satır, tek bir vurgu rengini paylaşmak yerine sekiz renkten oluşan bir setten kendi rengini alır — bu da uzun listeleri tek bakışta ayırt etmeyi kolaylaştırır.",
-  "settings.rainbowOn": "Paleti kullan",
   "settings.rainbowReactive": "Reaktif mod",
   "settings.rainbowReactiveHint": "Açıkken bir satır veya öge rengini yalnızca üzerine gelindiğinde ya da çalışırken veya seçiliyken gösterir — aksi halde nötr kalır. Kapalıyken renkli her satır ve öge rengini her zaman gösterir.",
   "settings.rainbowRotate": "Renk döngüsü",
@@ -421,7 +419,7 @@ const tr: Partial<Translations> = {
   "rclone.save": "Yapılandırmayı kaydet",
 
   // Integrity (restic check)
-  "integrity.title": "Bütünlük",
+  "integrity.title": "Bütünlük ve bakım",
   "integrity.hint": "Bir deponun yapısının ve meta verisinin sağlam olduğunu doğrulamak için restic check çalıştırın.",
   "integrity.verify": "Doğrula",
   "integrity.checking": "Denetleniyor…",
@@ -1014,8 +1012,6 @@ const tr: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Her container veya VM için ayrı bir mesaj yerine, zamanlanmış her yedekleme çalıştırması için TEK bir özet gönderin (örneğin: 45'ten 42'si başarılı). Healthchecks zaten özetlenir. Manuel yedeklemeler yine öğe başına bildirim gönderir.",
   "notify.notifyOnUpdate": "Container güncellemesinde bildir",
   "notify.notifyOnUpdateHint": "Yedeklemeden sonra güncelleme özelliği bir container'ı daha yeni bir image'e yükselttiğinde, hâlâ çalıştığını doğrulayabilmeniz için bir mesaj gönderir. Güncellenen her container için tetiklenir (güncellemeler nadirdir).",
-  "settings.imageCleanupTitle": "Image temizliği",
-  "settings.imageCleanupHint": "İsteğe bağlı yedeklemeden sonra container güncelleme özelliği için bakım işlemleri.",
   "settings.pruneImageAfterUpdate": "Güncellemeden sonra eski image'i kaldır",
   "settings.pruneImageAfterUpdateHint": "Bir container daha yeni bir image'e güncellendikten sonra, yerini alan eski image'i sil. Varsayılan olarak kapalı: image'i tutmak geri almayı kolay ve ucuz kılar (bir BombVault anlık görüntüsü verileri geri yükler, eski image'i değil). Paylaşılan bir temel image asla silinmez.",
   "settings.registriesTitle": "Container registry'leri",
@@ -1376,7 +1372,6 @@ const tr: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Bağımlıları yine de başlamadan önce bir konteynerin sağlıklı hale gelmesi için ne kadar beklenir. Aralık 5 ile 3600 arası.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid güncelleme durumu",
   "settings.reconcileUnraidStatus": "Bir konteyneri güncelledikten sonra Unraid'in güncelleme durumunu yenile",
   "settings.reconcileUnraidStatusHint": "BombVault, yedeklemeden sonraki güncelleme adımında bir konteyneri güncelledikten sonra Unraid'in güncelleme afişini temizler.",
   "recovery.foreignVMDest": "VM disk hedefi",

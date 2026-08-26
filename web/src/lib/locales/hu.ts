@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const hu: Partial<Translations> = {
   // General
   "language.label": "Nyelv",
-  "theme.toggle": "Téma váltása",
   "theme.dark": "Sötét",
   "theme.light": "Világos",
 
@@ -216,7 +215,6 @@ const hu: Partial<Translations> = {
   "settings.motion.full": "Teljes",
   "settings.rainbow": "Szivárvány mód",
   "settings.rainbowHint": "A lista minden sora saját színt kap egy nyolcból álló készletből, ahelyett hogy minden egy kiemelőszínt osztana meg — így a hosszú listák egy pillantással megkülönböztethetők.",
-  "settings.rainbowOn": "Paletta használata",
   "settings.rainbowReactive": "Reaktív mód",
   "settings.rainbowReactiveHint": "Ha be van kapcsolva, egy sor vagy elem csak rámutatáskor, vagy amíg fut vagy ki van választva mutatja a színét — egyébként semleges marad. Ha ki van kapcsolva, minden színes sor és elem folyamatosan mutatja a színét.",
   "settings.rainbowRotate": "Színforgatás",
@@ -421,7 +419,7 @@ const hu: Partial<Translations> = {
   "rclone.save": "Konfiguráció mentése",
 
   // Integrity (restic check)
-  "integrity.title": "Integritás",
+  "integrity.title": "Integritás és karbantartás",
   "integrity.hint": "Futtassa a restic check parancsot, hogy ellenőrizze egy adattár szerkezetének és metaadatainak épségét.",
   "integrity.verify": "Ellenőrzés",
   "integrity.checking": "Ellenőrzés…",
@@ -1017,8 +1015,6 @@ const hu: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Ütemezett biztonsági mentésenként EGYETLEN összegzést küld (például: 45-ből 42 sikerült) minden egyes container vagy VM külön üzenete helyett. A Healthchecks már összegezve van. A kézi mentések továbbra is elemenként küldenek értesítést.",
   "notify.notifyOnUpdate": "Értesítés container frissítésekor",
   "notify.notifyOnUpdateHint": "Amikor a mentés utáni frissítés egy containert újabb image-re frissít, üzenetet küld, hogy ellenőrizhesd, továbbra is működik-e. Frissített containerenként fut le (a frissítések ritkák).",
-  "settings.imageCleanupTitle": "Image-tisztítás",
-  "settings.imageCleanupHint": "Karbantartás a választható mentés utáni container-frissítés funkcióhoz.",
   "settings.pruneImageAfterUpdate": "A régi image eltávolítása frissítés után",
   "settings.pruneImageAfterUpdateHint": "Miután egy container újabb image-re frissült, törli a lecserélt régi image-et. Alapértelmezetten kikapcsolva: a megtartása olcsóvá teszi a visszagörgetést (a BombVault pillanatkép az adatokat állítja vissza, nem a régi image-et). A megosztott alap-image soha nem törlődik.",
   "settings.registriesTitle": "Container registry-k",
@@ -1379,7 +1375,6 @@ const hu: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Mennyi ideig vár a rendszer, hogy egy konténer egészségessé váljon, mielőtt a függői mégis elindulnak. Tartomány 5 és 3600 között.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid frissítési állapota",
   "settings.reconcileUnraidStatus": "Az Unraid frissítési állapotának frissítése egy konténer frissítése után",
   "settings.reconcileUnraidStatusHint": "Törli az Unraid frissítési szalagcímét, miután a BombVault a mentés utáni frissítési lépésben frissített egy konténert.",
   "recovery.foreignVMDest": "VM lemezek célhelye",
