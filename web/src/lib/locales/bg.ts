@@ -1366,6 +1366,7 @@ const bg: Partial<Translations> = {
   "settingsIO.group.offsite": "Извън обекта",
   "settingsIO.group.drills": "Проверки за възстановяване",
   "settingsIO.group.digest": "Обобщение",
+  "settingsIO.group.everything": "Пълен бекъп",
   "settingsIO.group.monitoring": "Наблюдение",
   "settingsIO.group.language": "Език",
   "settingsIO.group.exportEncryption": "Криптиране на експорта",

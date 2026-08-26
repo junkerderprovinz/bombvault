@@ -1235,6 +1235,7 @@ const hu: Partial<Translations> = {
   "settingsIO.group.offsite": "Külső",
   "settingsIO.group.drills": "Visszaállítási tesztek",
   "settingsIO.group.digest": "Összefoglaló",
+  "settingsIO.group.everything": "Teljes mentés",
   "settingsIO.group.monitoring": "Felügyelet",
   "settingsIO.group.language": "Nyelv",
   "settingsIO.group.exportEncryption": "Exportok titkosítása",

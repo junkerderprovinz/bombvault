@@ -59,6 +59,12 @@ func buildSettingsView(s store.Settings) settingsView {
 	v := toView(s)
 	v.RecoveryKitAck = false // per-instance dashboard-nag state, not portable config
 	v.RegistryAuths = nil    // secret token blobs are out of scope for the portable file
+	// The Backup Everything hook commands are host-local and are never installed
+	// by an import (mergeImportedSettings), so carrying them would only leak what
+	// they contain — typically a dead-man's-switch ping whose URL IS its secret
+	// (https://hc-ping.com/<uuid>) — into a file that gets mailed around.
+	v.EverythingPreHook = ""
+	v.EverythingPostHook = ""
 	return v
 }
 
@@ -312,6 +318,10 @@ func settingsGroups(v settingsView) []string {
 		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "")
 	add("schedules", v.ContainersSchedule != "" || v.VMsSchedule != "" || v.FlashSchedule != "" ||
 		v.ConfigSchedule != "" || v.FilesSchedule != "")
+	// The whole-server pass is its own area, not part of "schedules": it is the
+	// one setting an apply can switch ON for a box that never ran it, so the
+	// preview has to name it.
+	add("everything", v.EverythingSchedule != "")
 	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 ||
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0)
 	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" || v.FilesOffsite != "")
@@ -335,6 +345,17 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// fields are read at write time: an import is a slow request (a 4 MiB body,
 	// a full validation pass), and a password change or credential save landing
 	// in that window must not be reverted by the row this writes back.
+	// A hook command in the file is not installed (see mergeImportedSettings for
+	// why a settings file may not hand this host a command to run). Say so, so an
+	// operator moving to a new box learns that the one part of their Backup
+	// Everything setup that did NOT travel is the hook, instead of discovering it
+	// the night the dead-man's-switch does not ping.
+	if strings.TrimSpace(exp.Settings.EverythingPreHook) != "" || strings.TrimSpace(exp.Settings.EverythingPostHook) != "" {
+		log.Print("api: settings import: the file carries Backup Everything pre/post-hook commands — NOT installed. " +
+			"A hook is a shell command this host runs, so it is set on the instance, never by an imported file. " +
+			"Enter it under Settings > Schedules > Backup Everything if you want it here.")
+	}
+
 	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		*cur = mergeImportedSettings(*cur, exp.Settings)
 		return nil
@@ -423,92 +444,110 @@ func (h *Handler) applyImportedCredentials(c exportCredentials) error {
 // per-instance fields the export omits and clamping numeric fields the same way
 // the settings save does. Secret tokens (metrics/widget) blanked in the view are
 // preserved from the existing row — import never wipes them.
+//
+// It starts from the EXISTING row and overwrites the portable fields, and that
+// direction is the point. It used to build a fresh store.Settings composite
+// literal, which silently wrote a zero value into every column nobody had
+// remembered to list: applying an import cleared everythingSchedule (the
+// whole-server pass, switched off), everythingPostHook (the dead-man's-switch
+// ping that proves the pass completed, deleted), the fleet fields and the
+// instance name — with no error, and nothing in the preview to hint at it. A
+// literal makes forgetting a field a WIPE; starting from the row makes
+// forgetting a field a no-op, which is the harmless direction and the only one
+// that stays safe as columns are added.
+//
+// EverythingPreHook / EverythingPostHook are deliberately NOT taken from the
+// file. They are shell commands this host executes (HostShell, via `sh -c`), so
+// importing them would let a settings file — a thing users mail each other and
+// download from forum threads — install an arbitrary command on the box. They
+// get the treatment the credential fields get: kept from the instance being
+// imported into, never installed by the file. applyImport logs when a file
+// carried them so the operator is not left guessing why a hook did not travel.
 func mergeImportedSettings(existing store.Settings, v settingsView) store.Settings {
-	metricsToken := existing.MetricsToken // view blanks it; blank = keep stored
-	widgetToken := existing.WidgetToken   // same contract
+	out := existing
 
-	return store.Settings{
-		EncryptionEnabled:           v.EncryptionEnabled,
-		ContainersEnabled:           v.ContainersEnabled,
-		VMsEnabled:                  v.VMsEnabled,
-		FlashEnabled:                v.FlashEnabled,
-		ConfigEnabled:               v.ConfigEnabled,
-		FilesEnabled:                v.FilesEnabled,
-		ContainersPath:              v.ContainersPath,
-		VMsPath:                     v.VMsPath,
-		FlashPath:                   v.FlashPath,
-		ConfigPath:                  v.ConfigPath,
-		FilesPath:                   v.FilesPath,
-		RestoreFolder:               v.RestoreFolder,
-		ContainersOffsite:           v.ContainersOffsite,
-		VMsOffsite:                  v.VMsOffsite,
-		FlashOffsite:                v.FlashOffsite,
-		ConfigOffsite:               v.ConfigOffsite,
-		FilesOffsite:                v.FilesOffsite,
-		ContainersOffsiteSchedule:   v.ContainersOffsiteSchedule,
-		VMsOffsiteSchedule:          v.VMsOffsiteSchedule,
-		FlashOffsiteSchedule:        v.FlashOffsiteSchedule,
-		ConfigOffsiteSchedule:       v.ConfigOffsiteSchedule,
-		FilesOffsiteSchedule:        v.FilesOffsiteSchedule,
-		ContainersSchedule:          v.ContainersSchedule,
-		VMsSchedule:                 v.VMsSchedule,
-		FlashSchedule:               v.FlashSchedule,
-		ConfigSchedule:              v.ConfigSchedule,
-		FilesSchedule:               v.FilesSchedule,
-		FlashZipExportEnabled:       v.FlashZipExportEnabled,
-		FlashZipExportPath:          v.FlashZipExportPath,
-		FlashZipExportKeep:          max(0, v.FlashZipExportKeep),
-		DefaultLanguage:             v.DefaultLanguage,
-		RetentionKeepLast:           max(0, v.RetentionKeepLast),
-		RetentionKeepDaily:          max(0, v.RetentionKeepDaily),
-		RetentionKeepWeekly:         max(0, v.RetentionKeepWeekly),
-		RetentionKeepMonthly:        max(0, v.RetentionKeepMonthly),
-		OffsiteRetentionKeepLast:    max(0, v.OffsiteRetentionKeepLast),
-		OffsiteRetentionKeepDaily:   max(0, v.OffsiteRetentionKeepDaily),
-		OffsiteRetentionKeepWeekly:  max(0, v.OffsiteRetentionKeepWeekly),
-		OffsiteRetentionKeepMonthly: max(0, v.OffsiteRetentionKeepMonthly),
-		OffsiteLimitUpload:          max(0, v.OffsiteLimitUpload),
-		OffsiteLimitDownload:        max(0, v.OffsiteLimitDownload),
-		MetricsEnabled:              v.MetricsEnabled,
-		MetricsToken:                metricsToken,
-		WidgetToken:                 widgetToken,
-		DrillsEnabled:               v.DrillsEnabled,
-		DrillsSchedule:              v.DrillsSchedule,
-		DrillsSubsetPct:             max(1, min(100, v.DrillsSubsetPct)),
-		OffsiteDrillsEnabled:        v.OffsiteDrillsEnabled,
-		ContainersOffsiteImmutable:  v.ContainersOffsiteImmutable,
-		VMsOffsiteImmutable:         v.VMsOffsiteImmutable,
-		FlashOffsiteImmutable:       v.FlashOffsiteImmutable,
-		ConfigOffsiteImmutable:      v.ConfigOffsiteImmutable,
-		FilesOffsiteImmutable:       v.FilesOffsiteImmutable,
-		OffsiteGrowthBudgetGB:       max(0, v.OffsiteGrowthBudgetGB),
-		TamperTestSchedule:          v.TamperTestSchedule,
-		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
-		DRDrillTargetVM:             strings.TrimSpace(v.DRDrillTargetVM),
-		PruneImageAfterUpdate:       v.PruneImageAfterUpdate,
-		ResticCacheMaxMB:            max(0, v.ResticCacheMaxMB),
-		DigestEnabled:               v.DigestEnabled,
-		DigestSchedule:              v.DigestSchedule,
-		CatchUpMissed:               v.CatchUpMissed,
-		WatchdogEnabled:             v.WatchdogEnabled,
-		ReconcileUnraidUpdateStatus: v.ReconcileUnraidUpdateStatus,
-		ExportEncryptEnabled:        v.ExportEncryptEnabled,
-		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
-		ReceiverEnabled:             v.ReceiverEnabled,
-		RestartHealthWait:           v.RestartHealthWait,
-		RestartHealthTimeoutSec:     clampHealthTimeoutSec(v.RestartHealthTimeoutSec),
-		PerItemSchedules:            v.PerItemSchedules,
-		// Per-instance / secret-managed fields preserved from the target instance:
-		AuthPasswordHash: existing.AuthPasswordHash,
-		SessionEpoch:     existing.SessionEpoch,
-		RecoveryKitAck:   existing.RecoveryKitAck,
-		RegistryAuths:    existing.RegistryAuths,
-		// Encrypted credential blobs: kept as-is here; updated separately (and only
-		// when the file carries them) by applyImportedCredentials.
-		RcloneConf: existing.RcloneConf,
-		NotifyConf: existing.NotifyConf,
-		CloudConf:  existing.CloudConf,
-	}
+	// Kept from the target instance, and kept by CONSTRUCTION rather than by a
+	// line someone has to remember: the login password hash, the session epoch,
+	// the recovery-kit acknowledgement, the registry-auth blob, the metrics and
+	// widget tokens (the view blanks them, and blank means keep), the fleet
+	// token / fleet switch / instance name, the encrypted credential blobs
+	// (applyImportedCredentials updates those, and only when the file carries
+	// them), and the two Backup Everything hook commands. Every assignment below
+	// is a field the file is allowed to set.
+
+	out.EncryptionEnabled = v.EncryptionEnabled
+	out.ContainersEnabled = v.ContainersEnabled
+	out.VMsEnabled = v.VMsEnabled
+	out.FlashEnabled = v.FlashEnabled
+	out.ConfigEnabled = v.ConfigEnabled
+	out.FilesEnabled = v.FilesEnabled
+	out.ContainersPath = v.ContainersPath
+	out.VMsPath = v.VMsPath
+	out.FlashPath = v.FlashPath
+	out.ConfigPath = v.ConfigPath
+	out.FilesPath = v.FilesPath
+	out.RestoreFolder = v.RestoreFolder
+	out.ContainersOffsite = v.ContainersOffsite
+	out.VMsOffsite = v.VMsOffsite
+	out.FlashOffsite = v.FlashOffsite
+	out.ConfigOffsite = v.ConfigOffsite
+	out.FilesOffsite = v.FilesOffsite
+	out.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
+	out.VMsOffsiteSchedule = v.VMsOffsiteSchedule
+	out.FlashOffsiteSchedule = v.FlashOffsiteSchedule
+	out.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
+	out.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+	out.ContainersSchedule = v.ContainersSchedule
+	out.VMsSchedule = v.VMsSchedule
+	out.FlashSchedule = v.FlashSchedule
+	out.ConfigSchedule = v.ConfigSchedule
+	out.FilesSchedule = v.FilesSchedule
+	// The whole-server pass's cadence. Missing here until now, so an import
+	// switched Backup Everything off on the instance it was applied to.
+	out.EverythingSchedule = v.EverythingSchedule
+	out.FlashZipExportEnabled = v.FlashZipExportEnabled
+	out.FlashZipExportPath = v.FlashZipExportPath
+	out.FlashZipExportKeep = max(0, v.FlashZipExportKeep)
+	out.DefaultLanguage = v.DefaultLanguage
+	out.RetentionKeepLast = max(0, v.RetentionKeepLast)
+	out.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
+	out.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
+	out.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
+	out.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
+	out.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
+	out.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
+	out.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+	out.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
+	out.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
+	out.MetricsEnabled = v.MetricsEnabled
+	out.DrillsEnabled = v.DrillsEnabled
+	out.DrillsSchedule = v.DrillsSchedule
+	out.DrillsSubsetPct = max(1, min(100, v.DrillsSubsetPct))
+	out.OffsiteDrillsEnabled = v.OffsiteDrillsEnabled
+	out.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
+	out.VMsOffsiteImmutable = v.VMsOffsiteImmutable
+	out.FlashOffsiteImmutable = v.FlashOffsiteImmutable
+	out.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
+	out.FilesOffsiteImmutable = v.FilesOffsiteImmutable
+	out.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
+	out.TamperTestSchedule = v.TamperTestSchedule
+	out.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)
+	out.DRDrillTargetVM = strings.TrimSpace(v.DRDrillTargetVM)
+	out.PruneImageAfterUpdate = v.PruneImageAfterUpdate
+	out.ResticCacheMaxMB = max(0, v.ResticCacheMaxMB)
+	out.DigestEnabled = v.DigestEnabled
+	out.DigestSchedule = v.DigestSchedule
+	out.CatchUpMissed = v.CatchUpMissed
+	out.WatchdogEnabled = v.WatchdogEnabled
+	out.ReconcileUnraidUpdateStatus = v.ReconcileUnraidUpdateStatus
+	out.ExportEncryptEnabled = v.ExportEncryptEnabled
+	out.ExportAgeRecipients = strings.TrimSpace(v.ExportAgeRecipients)
+	out.ReceiverEnabled = v.ReceiverEnabled
+	out.RestartHealthWait = v.RestartHealthWait
+	out.RestartHealthTimeoutSec = clampHealthTimeoutSec(v.RestartHealthTimeoutSec)
+	out.PerItemSchedules = v.PerItemSchedules
+
+	return out
 }
 
 // cloudCredsMeaningful reports whether any cloud credential field is set.

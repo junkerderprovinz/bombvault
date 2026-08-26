@@ -1366,6 +1366,7 @@ const hi: Partial<Translations> = {
   "settingsIO.group.offsite": "ऑफ़-साइट",
   "settingsIO.group.drills": "रीस्टोर जाँच",
   "settingsIO.group.digest": "सारांश",
+  "settingsIO.group.everything": "सब कुछ बैकअप",
   "settingsIO.group.monitoring": "निगरानी",
   "settingsIO.group.language": "भाषा",
   "settingsIO.group.exportEncryption": "एक्सपोर्ट एन्क्रिप्शन",

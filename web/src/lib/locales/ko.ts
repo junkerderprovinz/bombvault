@@ -1224,6 +1224,7 @@ const ko: Partial<Translations> = {
   "settingsIO.group.offsite": "오프사이트",
   "settingsIO.group.drills": "복원 테스트",
   "settingsIO.group.digest": "다이제스트",
+  "settingsIO.group.everything": "전체 백업",
   "settingsIO.group.monitoring": "모니터링",
   "settingsIO.group.language": "언어",
   "settingsIO.group.exportEncryption": "내보내기 암호화",

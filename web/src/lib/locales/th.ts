@@ -1235,6 +1235,7 @@ const th: Partial<Translations> = {
   "settingsIO.group.offsite": "นอกสถานที่",
   "settingsIO.group.drills": "การทดสอบกู้คืน",
   "settingsIO.group.digest": "สรุป",
+  "settingsIO.group.everything": "สำรองข้อมูลทั้งหมด",
   "settingsIO.group.monitoring": "การตรวจสอบ",
   "settingsIO.group.language": "ภาษา",
   "settingsIO.group.exportEncryption": "การเข้ารหัสการส่งออก",

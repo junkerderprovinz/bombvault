@@ -1232,6 +1232,7 @@ const da: Partial<Translations> = {
   "settingsIO.group.offsite": "Eksternt",
   "settingsIO.group.drills": "Gendannelsestests",
   "settingsIO.group.digest": "Resumé",
+  "settingsIO.group.everything": "Fuld sikkerhedskopi",
   "settingsIO.group.monitoring": "Overvågning",
   "settingsIO.group.language": "Sprog",
   "settingsIO.group.exportEncryption": "Eksportkryptering",

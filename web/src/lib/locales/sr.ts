@@ -1350,6 +1350,7 @@ const sr: Partial<Translations> = {
   "settingsIO.group.offsite": "Спољна копија",
   "settingsIO.group.drills": "Вежбе враћања",
   "settingsIO.group.digest": "Сажетак",
+  "settingsIO.group.everything": "Потпуна резервна копија",
   "settingsIO.group.monitoring": "Надзор",
   "settingsIO.group.language": "Језик",
   "settingsIO.group.exportEncryption": "Шифровање извоза",

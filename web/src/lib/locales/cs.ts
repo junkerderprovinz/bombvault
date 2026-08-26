@@ -1230,6 +1230,7 @@ const cs: Partial<Translations> = {
   "settingsIO.group.offsite": "Mimo pracoviště",
   "settingsIO.group.drills": "Testy obnovy",
   "settingsIO.group.digest": "Souhrn",
+  "settingsIO.group.everything": "Záloha všeho",
   "settingsIO.group.monitoring": "Monitorování",
   "settingsIO.group.language": "Jazyk",
   "settingsIO.group.exportEncryption": "Šifrování exportů",

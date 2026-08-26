@@ -1230,6 +1230,7 @@ const es: Partial<Translations> = {
   "settingsIO.group.offsite": "Externo",
   "settingsIO.group.drills": "Pruebas de restauración",
   "settingsIO.group.digest": "Resumen",
+  "settingsIO.group.everything": "Copia total",
   "settingsIO.group.monitoring": "Supervisión",
   "settingsIO.group.language": "Idioma",
   "settingsIO.group.exportEncryption": "Cifrado de exportaciones",

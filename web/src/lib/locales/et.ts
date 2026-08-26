@@ -1366,6 +1366,7 @@ const et: Partial<Translations> = {
   "settingsIO.group.offsite": "Väline",
   "settingsIO.group.drills": "Taastekontrollid",
   "settingsIO.group.digest": "Kokkuvõte",
+  "settingsIO.group.everything": "Täisvarundus",
   "settingsIO.group.monitoring": "Jälgimine",
   "settingsIO.group.language": "Keel",
   "settingsIO.group.exportEncryption": "Ekspordi krüpteering",

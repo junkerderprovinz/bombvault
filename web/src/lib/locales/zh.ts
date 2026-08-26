@@ -1224,6 +1224,7 @@ const zh: Partial<Translations> = {
   "settingsIO.group.offsite": "异地",
   "settingsIO.group.drills": "恢复演练",
   "settingsIO.group.digest": "摘要",
+  "settingsIO.group.everything": "全部备份",
   "settingsIO.group.monitoring": "监控",
   "settingsIO.group.language": "语言",
   "settingsIO.group.exportEncryption": "导出加密",

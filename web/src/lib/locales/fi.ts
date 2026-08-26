@@ -1232,6 +1232,7 @@ const fi: Partial<Translations> = {
   "settingsIO.group.offsite": "Etä",
   "settingsIO.group.drills": "Palautustestit",
   "settingsIO.group.digest": "Yhteenveto",
+  "settingsIO.group.everything": "Täysvarmuuskopio",
   "settingsIO.group.monitoring": "Valvonta",
   "settingsIO.group.language": "Kieli",
   "settingsIO.group.exportEncryption": "Vientien salaus",

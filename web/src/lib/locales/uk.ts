@@ -1227,6 +1227,7 @@ const uk: Partial<Translations> = {
   "settingsIO.group.offsite": "Зовнішнє сховище",
   "settingsIO.group.drills": "Перевірки відновлення",
   "settingsIO.group.digest": "Зведення",
+  "settingsIO.group.everything": "Повний бекап",
   "settingsIO.group.monitoring": "Моніторинг",
   "settingsIO.group.language": "Мова",
   "settingsIO.group.exportEncryption": "Шифрування експортів",

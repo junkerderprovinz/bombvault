@@ -1366,6 +1366,7 @@ const lt: Partial<Translations> = {
   "settingsIO.group.offsite": "Nuotolinis",
   "settingsIO.group.drills": "Atkūrimo patikros",
   "settingsIO.group.digest": "Suvestinė",
+  "settingsIO.group.everything": "Pilna atsarginė kopija",
   "settingsIO.group.monitoring": "Stebėjimas",
   "settingsIO.group.language": "Kalba",
   "settingsIO.group.exportEncryption": "Eksporto šifravimas",

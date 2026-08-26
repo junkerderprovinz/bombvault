@@ -1527,9 +1527,10 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 // the same reason: each has a last-run gate that makes everyN meaningful (the
 // multi-item domains through schedule.ContainersDueGate/VMsDueGate/FilesDueGate,
 // the two singletons through LastSuccessfulFlash/ConfigBackup, and the whole-
-// server pass through LastEverythingPass). The scheduler also refuses to REGISTER an unenforceable
-// everyN (internal/schedule), so a legacy value that predates this guard cannot
-// fire daily either — this is the friendly save-time half of that same rule.
+// server pass through LastEverythingPass). The scheduler also refuses to
+// REGISTER an unenforceable everyN (internal/schedule), so a legacy value that
+// predates this guard cannot fire daily either — this is the friendly save-time
+// half of that same rule.
 func rejectEveryNSchedules(v settingsView) string {
 	for _, cad := range []string{
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,

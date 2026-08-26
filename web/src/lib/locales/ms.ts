@@ -1366,6 +1366,7 @@ const ms: Partial<Translations> = {
   "settingsIO.group.offsite": "Luar tapak",
   "settingsIO.group.drills": "Semakan pemulihan",
   "settingsIO.group.digest": "Ringkasan",
+  "settingsIO.group.everything": "Sandar Semua",
   "settingsIO.group.monitoring": "Pemantauan",
   "settingsIO.group.language": "Bahasa",
   "settingsIO.group.exportEncryption": "Penyulitan eksport",

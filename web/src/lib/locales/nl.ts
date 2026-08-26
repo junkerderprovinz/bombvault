@@ -1229,6 +1229,7 @@ const nl: Partial<Translations> = {
   "settingsIO.group.offsite": "Off-site",
   "settingsIO.group.drills": "Hersteltests",
   "settingsIO.group.digest": "Samenvatting",
+  "settingsIO.group.everything": "Volledige back-up",
   "settingsIO.group.monitoring": "Bewaking",
   "settingsIO.group.language": "Taal",
   "settingsIO.group.exportEncryption": "Exportversleuteling",

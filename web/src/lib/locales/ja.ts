@@ -1224,6 +1224,7 @@ const ja: Partial<Translations> = {
   "settingsIO.group.offsite": "オフサイト",
   "settingsIO.group.drills": "復元テスト",
   "settingsIO.group.digest": "ダイジェスト",
+  "settingsIO.group.everything": "全体バックアップ",
   "settingsIO.group.monitoring": "監視",
   "settingsIO.group.language": "言語",
   "settingsIO.group.exportEncryption": "エクスポートの暗号化",

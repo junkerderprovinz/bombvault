@@ -1227,6 +1227,7 @@ const ru: Partial<Translations> = {
   "settingsIO.group.offsite": "Внешнее хранилище",
   "settingsIO.group.drills": "Проверки восстановления",
   "settingsIO.group.digest": "Сводка",
+  "settingsIO.group.everything": "Полный бэкап",
   "settingsIO.group.monitoring": "Мониторинг",
   "settingsIO.group.language": "Язык",
   "settingsIO.group.exportEncryption": "Шифрование экспортов",

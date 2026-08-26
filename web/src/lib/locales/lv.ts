@@ -1366,6 +1366,7 @@ const lv: Partial<Translations> = {
   "settingsIO.group.offsite": "Attālināts",
   "settingsIO.group.drills": "Atjaunošanas pārbaudes",
   "settingsIO.group.digest": "Kopsavilkums",
+  "settingsIO.group.everything": "Pilna rezerves kopija",
   "settingsIO.group.monitoring": "Uzraudzība",
   "settingsIO.group.language": "Valoda",
   "settingsIO.group.exportEncryption": "Eksporta šifrēšana",

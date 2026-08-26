@@ -1366,6 +1366,7 @@ const sk: Partial<Translations> = {
   "settingsIO.group.offsite": "Externé",
   "settingsIO.group.drills": "Kontroly obnovenia",
   "settingsIO.group.digest": "Súhrn",
+  "settingsIO.group.everything": "Kompletná záloha",
   "settingsIO.group.monitoring": "Monitorovanie",
   "settingsIO.group.language": "Jazyk",
   "settingsIO.group.exportEncryption": "Šifrovanie exportu",
