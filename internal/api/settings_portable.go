@@ -313,17 +313,18 @@ func settingsGroups(v settingsView) []string {
 // off-site targets, and any credentials (re-encrypted with the local APP_KEY). It
 // never touches repos, snapshots or run history.
 func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
-	existing, err := h.store.GetSettings()
-	if err != nil {
-		return err
-	}
-
-	// Map the imported view onto a fresh Settings, PRESERVING the per-instance
+	// Map the imported view onto the CURRENT row, PRESERVING the per-instance
 	// fields the file intentionally omits (auth password, session epoch,
 	// recovery-kit ack, registry-auth blob) and the encrypted credential blobs
 	// (those are updated separately below, only when the file carries them).
-	s := mergeImportedSettings(existing, exp.Settings)
-	if err := h.store.UpdateSettings(s); err != nil {
+	// The merge runs inside MutateSettings' transaction so those preserved
+	// fields are read at write time: an import is a slow request (a 4 MiB body,
+	// a full validation pass), and a password change or credential save landing
+	// in that window must not be reverted by the row this writes back.
+	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
+		*cur = mergeImportedSettings(*cur, exp.Settings)
+		return nil
+	}); err != nil {
 		return err
 	}
 
@@ -346,7 +347,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// Mirror the imported off-site config into the primary off-site target rows and
 	// re-arm the scheduler, exactly like a settings save, so the imported schedules
 	// take effect. The scheduler may be absent in a stripped test wiring — guard it.
-	s, err = h.store.GetSettings()
+	s, err := h.store.GetSettings()
 	if err != nil {
 		return err
 	}

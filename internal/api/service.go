@@ -301,6 +301,17 @@ type Service struct {
 	foreignSessions   map[string]foreignSession
 	foreignJanitor    chan struct{}
 	foreignSweepEvery time.Duration
+
+	// detectMu guards detectFlight, the single in-flight encryption-detection
+	// pass (internal/api/encryption_detect.go). The Recovery page fires
+	// POST /api/encryption/detect on mount, and one pass can take minutes when a
+	// configured off-site host is dead — so a second tab, or a reload, joins the
+	// pass already running and gets its answer instead of forking a second set of
+	// restic probes against the same repositories. nil = no pass running. Zero
+	// value is ready to use, so it works regardless of how the Service was
+	// constructed.
+	detectMu     sync.Mutex
+	detectFlight *encryptionDetectFlight
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -10583,23 +10594,21 @@ func (s *Service) writeRcloneFile(encB64 string) error {
 // file restic→rclone reads. An empty conf clears both. The stored DB value is
 // AES-256-GCM-encrypted (APP_KEY); the on-disk file is 0600 in /config.
 func (s *Service) SetRcloneConf(conf string) error {
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(conf) == "" {
-		settings.RcloneConf = ""
-	} else {
+	stored := ""
+	if strings.TrimSpace(conf) != "" {
 		enc, encErr := secret.Encrypt(s.cfg.AppKey, []byte(conf))
 		if encErr != nil {
 			return fmt.Errorf("encrypt rclone conf: %w", encErr)
 		}
-		settings.RcloneConf = base64.StdEncoding.EncodeToString(enc)
+		stored = base64.StdEncoding.EncodeToString(enc)
 	}
-	if err := s.store.UpdateSettings(settings); err != nil {
+	if _, err := s.store.MutateSettings(func(settings *store.Settings) error {
+		settings.RcloneConf = stored
+		return nil
+	}); err != nil {
 		return err
 	}
-	return s.writeRcloneFile(settings.RcloneConf)
+	return s.writeRcloneFile(stored)
 }
 
 // RcloneRemotes returns the configured rclone remote names (the [name] sections)
@@ -10687,13 +10696,8 @@ func (s *Service) NotifyConfig() (notify.Config, error) {
 // SetNotifyConfig encrypts + stores the notification config. A config with no
 // channel and no policy clears it.
 func (s *Service) SetNotifyConfig(c notify.Config) error {
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	if !c.Configured() && (c.On == "" || c.On == "never") {
-		settings.NotifyConf = ""
-	} else {
+	stored := ""
+	if c.Configured() || (c.On != "" && c.On != "never") {
 		blob, mErr := json.Marshal(c)
 		if mErr != nil {
 			return fmt.Errorf("marshal notify conf: %w", mErr)
@@ -10702,9 +10706,13 @@ func (s *Service) SetNotifyConfig(c notify.Config) error {
 		if eErr != nil {
 			return fmt.Errorf("encrypt notify conf: %w", eErr)
 		}
-		settings.NotifyConf = base64.StdEncoding.EncodeToString(enc)
+		stored = base64.StdEncoding.EncodeToString(enc)
 	}
-	return s.store.UpdateSettings(settings)
+	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
+		settings.NotifyConf = stored
+		return nil
+	})
+	return err
 }
 
 // ---------------------------------------------------------------------------
@@ -10789,36 +10797,41 @@ func (s *Service) SetCloudCreds(c CloudCreds) error {
 	if c.S3StorageClass != "" && !restic.StorageClassAllowed(c.S3StorageClass) {
 		return fmt.Errorf("unsupported S3 storage class %q (allowed: %s)", c.S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
 	}
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	// A fully-blank request means "clear" — check BEFORE the keep-prior merge,
-	// otherwise the merge would re-fill the secrets and clearing would be
-	// impossible once a secret had been stored.
-	if (CloudCreds{}) == c {
-		settings.CloudConf = ""
-		return s.store.UpdateSettings(settings)
-	}
-	// Otherwise keep a previously stored secret when its field is left blank, so
-	// the non-secret fields can be edited without re-entering keys.
-	prev, _ := s.decodeCloud(settings)
-	if c.S3Secret == "" {
-		c.S3Secret = prev.S3Secret
-	}
-	if c.RESTPassword == "" {
-		c.RESTPassword = prev.RESTPassword
-	}
-	blob, mErr := json.Marshal(c)
-	if mErr != nil {
-		return fmt.Errorf("marshal cloud conf: %w", mErr)
-	}
-	enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
-	if eErr != nil {
-		return fmt.Errorf("encrypt cloud conf: %w", eErr)
-	}
-	settings.CloudConf = base64.StdEncoding.EncodeToString(enc)
-	return s.store.UpdateSettings(settings)
+	// The keep-prior merge below reads the CURRENTLY stored secrets, so it has to
+	// happen in the same transaction as the write. Doing it against a snapshot
+	// taken before the write would re-encrypt a secret that a save landing in
+	// between had already replaced — the blank field would then "keep" a value
+	// that is no longer the stored one.
+	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
+		c := c
+		// A fully-blank request means "clear" — check BEFORE the keep-prior merge,
+		// otherwise the merge would re-fill the secrets and clearing would be
+		// impossible once a secret had been stored.
+		if (CloudCreds{}) == c {
+			settings.CloudConf = ""
+			return nil
+		}
+		// Otherwise keep a previously stored secret when its field is left blank, so
+		// the non-secret fields can be edited without re-entering keys.
+		prev, _ := s.decodeCloud(*settings)
+		if c.S3Secret == "" {
+			c.S3Secret = prev.S3Secret
+		}
+		if c.RESTPassword == "" {
+			c.RESTPassword = prev.RESTPassword
+		}
+		blob, mErr := json.Marshal(c)
+		if mErr != nil {
+			return fmt.Errorf("marshal cloud conf: %w", mErr)
+		}
+		enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
+		if eErr != nil {
+			return fmt.Errorf("encrypt cloud conf: %w", eErr)
+		}
+		settings.CloudConf = base64.StdEncoding.EncodeToString(enc)
+		return nil
+	})
+	return err
 }
 
 // ---------------------------------------------------------------------------
@@ -10888,55 +10901,61 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 // set with a blank Name or a duplicate ID is rejected — both would make
 // CredsRef resolution ambiguous or the set unreachable from the UI.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	prev, _ := s.decodeCloudCredSets(settings)
-	prevByID := make(map[string]CloudCredSet, len(prev))
-	for _, p := range prev {
-		prevByID[p.ID] = p
-	}
-	seen := make(map[string]bool, len(sets))
-	for i := range sets {
-		sets[i].Name = strings.TrimSpace(sets[i].Name)
-		if sets[i].Name == "" {
-			return fmt.Errorf("credential set name must not be empty")
+	// Same reasoning as SetCloudCreds: the keep-prior-if-blank merge reads the
+	// CURRENTLY stored sets, so it belongs in the same transaction as the write.
+	// The incoming slice is copied rather than normalized in place — the caller's
+	// value is theirs, and the merged one carries real secrets.
+	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
+		next := make([]CloudCredSet, len(sets))
+		copy(next, sets)
+
+		prev, _ := s.decodeCloudCredSets(*settings)
+		prevByID := make(map[string]CloudCredSet, len(prev))
+		for _, p := range prev {
+			prevByID[p.ID] = p
 		}
-		if sets[i].ID == "" {
-			return fmt.Errorf("credential set %q: missing id", sets[i].Name)
-		}
-		if seen[sets[i].ID] {
-			return fmt.Errorf("duplicate credential set id %q", sets[i].ID)
-		}
-		seen[sets[i].ID] = true
-		sets[i].S3StorageClass = strings.ToUpper(strings.TrimSpace(sets[i].S3StorageClass))
-		if sets[i].S3StorageClass != "" && !restic.StorageClassAllowed(sets[i].S3StorageClass) {
-			return fmt.Errorf("credential set %q: unsupported S3 storage class %q (allowed: %s)", sets[i].Name, sets[i].S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
-		}
-		if old, ok := prevByID[sets[i].ID]; ok {
-			if sets[i].S3Secret == "" {
-				sets[i].S3Secret = old.S3Secret
+		seen := make(map[string]bool, len(next))
+		for i := range next {
+			next[i].Name = strings.TrimSpace(next[i].Name)
+			if next[i].Name == "" {
+				return fmt.Errorf("credential set name must not be empty")
 			}
-			if sets[i].RESTPassword == "" {
-				sets[i].RESTPassword = old.RESTPassword
+			if next[i].ID == "" {
+				return fmt.Errorf("credential set %q: missing id", next[i].Name)
+			}
+			if seen[next[i].ID] {
+				return fmt.Errorf("duplicate credential set id %q", next[i].ID)
+			}
+			seen[next[i].ID] = true
+			next[i].S3StorageClass = strings.ToUpper(strings.TrimSpace(next[i].S3StorageClass))
+			if next[i].S3StorageClass != "" && !restic.StorageClassAllowed(next[i].S3StorageClass) {
+				return fmt.Errorf("credential set %q: unsupported S3 storage class %q (allowed: %s)", next[i].Name, next[i].S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
+			}
+			if old, ok := prevByID[next[i].ID]; ok {
+				if next[i].S3Secret == "" {
+					next[i].S3Secret = old.S3Secret
+				}
+				if next[i].RESTPassword == "" {
+					next[i].RESTPassword = old.RESTPassword
+				}
 			}
 		}
-	}
-	if len(sets) == 0 {
-		settings.CloudCredSets = ""
-		return s.store.UpdateSettings(settings)
-	}
-	blob, mErr := json.Marshal(sets)
-	if mErr != nil {
-		return fmt.Errorf("marshal cloud cred sets: %w", mErr)
-	}
-	enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
-	if eErr != nil {
-		return fmt.Errorf("encrypt cloud cred sets: %w", eErr)
-	}
-	settings.CloudCredSets = base64.StdEncoding.EncodeToString(enc)
-	return s.store.UpdateSettings(settings)
+		if len(next) == 0 {
+			settings.CloudCredSets = ""
+			return nil
+		}
+		blob, mErr := json.Marshal(next)
+		if mErr != nil {
+			return fmt.Errorf("marshal cloud cred sets: %w", mErr)
+		}
+		enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
+		if eErr != nil {
+			return fmt.Errorf("encrypt cloud cred sets: %w", eErr)
+		}
+		settings.CloudCredSets = base64.StdEncoding.EncodeToString(enc)
+		return nil
+	})
+	return err
 }
 
 // decodeCloudFor resolves the credentials an off-site target should use: the

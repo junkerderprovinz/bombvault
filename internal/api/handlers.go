@@ -1649,30 +1649,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The metrics token is a secret the GET never echoes (toView blanks it), so
-	// an unchanged form re-submits it blank — blank therefore means "keep the
-	// stored token" (same contract as the notify/cloud secrets).
-	metricsToken := strings.TrimSpace(v.MetricsToken)
-	if metricsToken == "" {
-		metricsToken = existing.MetricsToken
-	}
-	// Same contract for the widget token (normally managed by POST/DELETE
-	// /api/widget/token; the round-trip here only has to never wipe it).
-	widgetToken := strings.TrimSpace(v.WidgetToken)
-	if widgetToken == "" {
-		widgetToken = existing.WidgetToken
-	}
-	// Same contract for the fleet token (normally managed by POST/DELETE
-	// /api/fleet/token; the round-trip here only has to never wipe it).
-	fleetToken := strings.TrimSpace(v.FleetToken)
-	if fleetToken == "" {
-		fleetToken = existing.FleetToken
-	}
-
 	// Registry credentials (#106): nil = field absent (an old client) → keep the
 	// stored encrypted blob unchanged; a present list REPLACES the stored one,
-	// with blank tokens filled from storage per host (mergeRegistryAuths).
-	registryAuths := existing.RegistryAuths
+	// with blank tokens filled from storage per host (mergeRegistryAuths). The
+	// re-encryption happens out here because it can fail with two DIFFERENT
+	// user-facing shapes; the write below applies the result.
+	var registryAuths string
 	if v.RegistryAuths != nil {
 		stored, dErr := h.svc.decodeRegistryAuths(existing)
 		if dErr != nil {
@@ -1692,92 +1674,113 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		registryAuths = blob
 	}
 
-	s := store.Settings{
-		EncryptionEnabled:           v.EncryptionEnabled,
-		ContainersEnabled:           v.ContainersEnabled,
-		VMsEnabled:                  v.VMsEnabled,
-		FlashEnabled:                v.FlashEnabled,
-		ConfigEnabled:               v.ConfigEnabled,
-		FilesEnabled:                v.FilesEnabled,
-		ContainersPath:              v.ContainersPath,
-		VMsPath:                     v.VMsPath,
-		FlashPath:                   v.FlashPath,
-		ConfigPath:                  v.ConfigPath,
-		FilesPath:                   v.FilesPath,
-		RestoreFolder:               v.RestoreFolder,
-		ContainersOffsite:           v.ContainersOffsite,
-		VMsOffsite:                  v.VMsOffsite,
-		FlashOffsite:                v.FlashOffsite,
-		ConfigOffsite:               v.ConfigOffsite,
-		FilesOffsite:                v.FilesOffsite,
-		ContainersOffsiteSchedule:   v.ContainersOffsiteSchedule,
-		VMsOffsiteSchedule:          v.VMsOffsiteSchedule,
-		FlashOffsiteSchedule:        v.FlashOffsiteSchedule,
-		ConfigOffsiteSchedule:       v.ConfigOffsiteSchedule,
-		FilesOffsiteSchedule:        v.FilesOffsiteSchedule,
-		ContainersSchedule:          v.ContainersSchedule,
-		VMsSchedule:                 v.VMsSchedule,
-		FlashSchedule:               v.FlashSchedule,
-		ConfigSchedule:              v.ConfigSchedule,
-		FilesSchedule:               v.FilesSchedule,
-		FlashZipExportEnabled:       v.FlashZipExportEnabled,
-		FlashZipExportPath:          v.FlashZipExportPath,
-		FlashZipExportKeep:          max(0, v.FlashZipExportKeep),
-		DefaultLanguage:             v.DefaultLanguage,
-		RetentionKeepLast:           max(0, v.RetentionKeepLast),
-		RetentionKeepDaily:          max(0, v.RetentionKeepDaily),
-		RetentionKeepWeekly:         max(0, v.RetentionKeepWeekly),
-		RetentionKeepMonthly:        max(0, v.RetentionKeepMonthly),
-		OffsiteRetentionKeepLast:    max(0, v.OffsiteRetentionKeepLast),
-		OffsiteRetentionKeepDaily:   max(0, v.OffsiteRetentionKeepDaily),
-		OffsiteRetentionKeepWeekly:  max(0, v.OffsiteRetentionKeepWeekly),
-		OffsiteRetentionKeepMonthly: max(0, v.OffsiteRetentionKeepMonthly),
-		OffsiteLimitUpload:          max(0, v.OffsiteLimitUpload),
-		OffsiteLimitDownload:        max(0, v.OffsiteLimitDownload),
-		MetricsEnabled:              v.MetricsEnabled,
-		MetricsToken:                metricsToken,
-		WidgetToken:                 widgetToken,
-		DrillsEnabled:               v.DrillsEnabled,
-		DrillsSchedule:              v.DrillsSchedule,
-		DrillsSubsetPct:             max(1, min(100, v.DrillsSubsetPct)),
-		OffsiteDrillsEnabled:        v.OffsiteDrillsEnabled,
-		RecoveryKitAck:              v.RecoveryKitAck,
-		ContainersOffsiteImmutable:  v.ContainersOffsiteImmutable,
-		VMsOffsiteImmutable:         v.VMsOffsiteImmutable,
-		FlashOffsiteImmutable:       v.FlashOffsiteImmutable,
-		ConfigOffsiteImmutable:      v.ConfigOffsiteImmutable,
-		FilesOffsiteImmutable:       v.FilesOffsiteImmutable,
-		OffsiteGrowthBudgetGB:       max(0, v.OffsiteGrowthBudgetGB),
-		TamperTestSchedule:          v.TamperTestSchedule,
-		DRDrillTarget:               strings.TrimSpace(v.DRDrillTarget),
-		DRDrillTargetVM:             strings.TrimSpace(v.DRDrillTargetVM),
-		PruneImageAfterUpdate:       v.PruneImageAfterUpdate,
-		ResticCacheMaxMB:            max(0, v.ResticCacheMaxMB),
-		DigestEnabled:               v.DigestEnabled,
-		DigestSchedule:              v.DigestSchedule,
-		CatchUpMissed:               v.CatchUpMissed,
-		WatchdogEnabled:             v.WatchdogEnabled,
-		ReconcileUnraidUpdateStatus: v.ReconcileUnraidUpdateStatus,
-		ExportEncryptEnabled:        v.ExportEncryptEnabled,
-		ExportAgeRecipients:         strings.TrimSpace(v.ExportAgeRecipients),
-		ReceiverEnabled:             v.ReceiverEnabled,
-		RestartHealthWait:           v.RestartHealthWait,
-		RestartHealthTimeoutSec:     clampHealthTimeoutSec(v.RestartHealthTimeoutSec),
-		PerItemSchedules:            v.PerItemSchedules,
-		FleetEnabled:                v.FleetEnabled,
-		InstanceName:                strings.TrimSpace(v.InstanceName),
-		FleetToken:                  fleetToken,
-		EverythingSchedule:          v.EverythingSchedule,
-		EverythingPreHook:           v.EverythingPreHook,
-		EverythingPostHook:          v.EverythingPostHook,
-		AuthPasswordHash:            existing.AuthPasswordHash,
-		SessionEpoch:                existing.SessionEpoch,
-		RcloneConf:                  existing.RcloneConf,
-		NotifyConf:                  existing.NotifyConf,
-		CloudConf:                   existing.CloudConf,
-		RegistryAuths:               registryAuths,
-	}
-	if err := h.store.UpdateSettings(s); err != nil {
+	// Write the form's OWN fields onto the CURRENT row, one assignment each —
+	// never `*cur = store.Settings{…}`. A whole-struct literal writes every
+	// column, including the ones it forgot to list, so a field that is not part
+	// of this form is wiped by every save until someone notices (cloud_cred_sets
+	// was, until this pass). Assigning only what the form owns cannot do that: a
+	// column nobody here names simply keeps its stored value. The read happens
+	// inside MutateSettings' transaction, so the preserved fields are the CURRENT
+	// ones — the `existing` snapshot above is already stale by the time we get
+	// here (the VM SSH test between them can burn its whole timeout), and writing
+	// its auth hash / session epoch back would revert a password change made
+	// meanwhile.
+	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
+		cur.EncryptionEnabled = v.EncryptionEnabled
+		cur.ContainersEnabled = v.ContainersEnabled
+		cur.VMsEnabled = v.VMsEnabled
+		cur.FlashEnabled = v.FlashEnabled
+		cur.ConfigEnabled = v.ConfigEnabled
+		cur.FilesEnabled = v.FilesEnabled
+		cur.ContainersPath = v.ContainersPath
+		cur.VMsPath = v.VMsPath
+		cur.FlashPath = v.FlashPath
+		cur.ConfigPath = v.ConfigPath
+		cur.FilesPath = v.FilesPath
+		cur.RestoreFolder = v.RestoreFolder
+		cur.ContainersOffsite = v.ContainersOffsite
+		cur.VMsOffsite = v.VMsOffsite
+		cur.FlashOffsite = v.FlashOffsite
+		cur.ConfigOffsite = v.ConfigOffsite
+		cur.FilesOffsite = v.FilesOffsite
+		cur.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
+		cur.VMsOffsiteSchedule = v.VMsOffsiteSchedule
+		cur.FlashOffsiteSchedule = v.FlashOffsiteSchedule
+		cur.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
+		cur.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+		cur.ContainersSchedule = v.ContainersSchedule
+		cur.VMsSchedule = v.VMsSchedule
+		cur.FlashSchedule = v.FlashSchedule
+		cur.ConfigSchedule = v.ConfigSchedule
+		cur.FilesSchedule = v.FilesSchedule
+		cur.FlashZipExportEnabled = v.FlashZipExportEnabled
+		cur.FlashZipExportPath = v.FlashZipExportPath
+		cur.FlashZipExportKeep = max(0, v.FlashZipExportKeep)
+		cur.DefaultLanguage = v.DefaultLanguage
+		cur.RetentionKeepLast = max(0, v.RetentionKeepLast)
+		cur.RetentionKeepDaily = max(0, v.RetentionKeepDaily)
+		cur.RetentionKeepWeekly = max(0, v.RetentionKeepWeekly)
+		cur.RetentionKeepMonthly = max(0, v.RetentionKeepMonthly)
+		cur.OffsiteRetentionKeepLast = max(0, v.OffsiteRetentionKeepLast)
+		cur.OffsiteRetentionKeepDaily = max(0, v.OffsiteRetentionKeepDaily)
+		cur.OffsiteRetentionKeepWeekly = max(0, v.OffsiteRetentionKeepWeekly)
+		cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
+		cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
+		cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
+		cur.MetricsEnabled = v.MetricsEnabled
+		cur.DrillsEnabled = v.DrillsEnabled
+		cur.DrillsSchedule = v.DrillsSchedule
+		cur.DrillsSubsetPct = max(1, min(100, v.DrillsSubsetPct))
+		cur.OffsiteDrillsEnabled = v.OffsiteDrillsEnabled
+		cur.RecoveryKitAck = v.RecoveryKitAck
+		cur.ContainersOffsiteImmutable = v.ContainersOffsiteImmutable
+		cur.VMsOffsiteImmutable = v.VMsOffsiteImmutable
+		cur.FlashOffsiteImmutable = v.FlashOffsiteImmutable
+		cur.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
+		cur.FilesOffsiteImmutable = v.FilesOffsiteImmutable
+		cur.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
+		cur.TamperTestSchedule = v.TamperTestSchedule
+		cur.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)
+		cur.DRDrillTargetVM = strings.TrimSpace(v.DRDrillTargetVM)
+		cur.PruneImageAfterUpdate = v.PruneImageAfterUpdate
+		cur.ResticCacheMaxMB = max(0, v.ResticCacheMaxMB)
+		cur.DigestEnabled = v.DigestEnabled
+		cur.DigestSchedule = v.DigestSchedule
+		cur.CatchUpMissed = v.CatchUpMissed
+		cur.WatchdogEnabled = v.WatchdogEnabled
+		cur.ReconcileUnraidUpdateStatus = v.ReconcileUnraidUpdateStatus
+		cur.ExportEncryptEnabled = v.ExportEncryptEnabled
+		cur.ExportAgeRecipients = strings.TrimSpace(v.ExportAgeRecipients)
+		cur.ReceiverEnabled = v.ReceiverEnabled
+		cur.RestartHealthWait = v.RestartHealthWait
+		cur.RestartHealthTimeoutSec = clampHealthTimeoutSec(v.RestartHealthTimeoutSec)
+		cur.PerItemSchedules = v.PerItemSchedules
+		cur.FleetEnabled = v.FleetEnabled
+		cur.InstanceName = strings.TrimSpace(v.InstanceName)
+		cur.EverythingSchedule = v.EverythingSchedule
+		cur.EverythingPreHook = v.EverythingPreHook
+		cur.EverythingPostHook = v.EverythingPostHook
+
+		// Write-only secrets: blank in the form means "keep the stored one", and
+		// the stored one is read here, inside the transaction — so a token minted
+		// by POST /api/{widget,fleet}/token while this form was open is kept, not
+		// reverted to the value it had when the page loaded.
+		if t := strings.TrimSpace(v.MetricsToken); t != "" {
+			cur.MetricsToken = t
+		}
+		if t := strings.TrimSpace(v.WidgetToken); t != "" {
+			cur.WidgetToken = t
+		}
+		if t := strings.TrimSpace(v.FleetToken); t != "" {
+			cur.FleetToken = t
+		}
+		// nil = the field was absent (an old client) → keep the stored blob.
+		if v.RegistryAuths != nil {
+			cur.RegistryAuths = registryAuths
+		}
+		return nil
+	})
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -1871,22 +1874,19 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleRecoveryKitAck records that the user has stored the recovery kit, which
-// dismisses the dashboard nag. It reads the current settings and flips ONLY that
-// flag, so acknowledging never overwrites unrelated settings changes made
-// elsewhere (a full-settings round-trip from the dashboard could clobber them).
+// dismisses the dashboard nag. It flips ONLY that flag, so acknowledging never
+// overwrites unrelated settings changes made elsewhere (a full-settings
+// round-trip from the dashboard could clobber them) — which is exactly what
+// MutateSettings guarantees, and what reading + writing the whole row back only
+// LOOKED like it did.
 // POST /api/recovery-kit/ack
 func (h *Handler) handleRecoveryKitAck(w http.ResponseWriter, _ *http.Request) {
-	s, err := h.store.GetSettings()
-	if err != nil {
+	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+		s.RecoveryKitAck = true
+		return nil
+	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
-	}
-	if !s.RecoveryKitAck {
-		s.RecoveryKitAck = true
-		if err := h.store.UpdateSettings(s); err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
@@ -2905,18 +2905,15 @@ func newSessionEpoch() (string, error) {
 // otherwise stateless 7-day tokens. The caller's own cookie is cleared too, so
 // the SPA lands on the login screen immediately.
 func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
 	epoch, err := newSessionEpoch()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	s.SessionEpoch = epoch
-	if err := h.store.UpdateSettings(s); err != nil {
+	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+		s.SessionEpoch = epoch
+		return nil
+	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -2934,25 +2931,20 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
+	hash := ""
+	if body.Password != "" {
+		hash = secret.HashPassword(h.cfg.AppKey, body.Password)
 	}
-
-	if body.Password == "" {
-		s.AuthPasswordHash = ""
-	} else {
-		s.AuthPasswordHash = secret.HashPassword(h.cfg.AppKey, body.Password)
-	}
-
-	if err := h.store.UpdateSettings(s); err != nil {
+	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+		s.AuthPasswordHash = hash
+		return nil
+	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"enabled": s.AuthPasswordHash != "",
+		"enabled": hash != "",
 	}))
 }
 
