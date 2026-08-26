@@ -234,15 +234,28 @@ func validateExport(exp settingsExport) string {
 			return "invalid schedule in settings: " + scrubError(err)
 		}
 	}
+	// …and must respect the SAME everyN restriction the settings save enforces
+	// (#166). Without this, an imported "containersOffsiteSchedule": "everyN 3
+	// 04:00" would persist happily and then make EVERY later settings save fail
+	// from any card: the UI always PUTs the full settings object, so one poisoned
+	// field blocks the whole Schedules tab. One guard, both write paths — which
+	// also means the drills/tamper-test/digest cadences that everyN now genuinely
+	// supports import exactly where a UI-set one is accepted, with no second list
+	// left to drift out of step.
+	if msg := rejectEveryNSchedules(exp.Settings); msg != "" {
+		return "invalid schedule in settings: " + msg
+	}
 	return ""
 }
 
-// exportCadences lists every schedule string carried in a settings view.
+// exportCadences lists every schedule string carried in a settings view. It must
+// stay in step with the parse-validation loop in handlePutSettings — a cadence
+// missing here imports without ever being checked for grammar.
 func exportCadences(v settingsView) []string {
 	return []string{
 		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
-		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule,
+		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule, v.EverythingSchedule,
 	}
 }
 
@@ -339,7 +352,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	if h.scheduler != nil {
-		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun); err != nil {
+		if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
 			return err
 		}
 	}

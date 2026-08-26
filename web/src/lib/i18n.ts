@@ -361,12 +361,22 @@ export const en = {
   // place, same as before percentage support existed.
   "offsite.replicatingWithDuration": "Replicating… ({duration})",
   // Issue #159: restic copy DOES print a real, parseable per-snapshot
-  // pack-copy percentage (see restic.Copy's doc comment) — this is used once
-  // OffsiteIndicator has a live SnapshotIndex/percent for the CURRENT
-  // snapshot, alongside a best-effort candidate total (SnapshotTotal; restic
-  // itself never reports a whole-run total across snapshots).
-  "offsite.replicatingSnapshotPercent": "Replicating snapshot {index} of {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replicating snapshot {index} of {total} ({percent}%) · {duration}",
+  // pack-copy percentage (see restic.Copy's doc comment), and lib/progress.ts's
+  // offsiteRunProgress folds it into the snapshot count to get ONE run-level
+  // figure. Word order matters here and is not free styling: the first cut read
+  // "Replicating snapshot 15 of 126 (55%)", where the parenthetical was the
+  // CURRENT snapshot's own pack progress but every reader took it as
+  // "15/126 = 55%" — two correct numbers rendered as one wrong claim. With the
+  // percentage leading and "snapshot k of N" demoted to the parenthetical, the
+  // two now agree (~12% either way) instead of fighting. Do not reorder them
+  // back. The "overall" wording is what makes the scope explicit — keep an
+  // equivalent in every locale.
+  "offsite.replicatingSnapshotPercent": "Replicating… {percent}% overall (snapshot {index} of {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replicating… {percent}% overall (snapshot {index} of {total}) · {duration}",
+  // The (i) next to that readout (OffsiteIndicator). The percentage counts
+  // SNAPSHOTS against a best-effort estimate, not bytes — house rule says that
+  // caveat belongs behind an info bubble, not as permanent prose on the line.
+  "offsite.overallPercentHint": "Overall progress for this replication run, counted in snapshots: restic only ever reports progress for one snapshot at a time, never for a whole copy. Snapshots differ in size, so treat this as an estimate.",
   "offsite.replicateFailed": "Replication failed",
   "offsite.test": "Test connection",
   // Shown instead of offsite.test once the domain has additional targets: that
@@ -932,6 +942,7 @@ export const en = {
   "cadence.daily": "Daily",
   "cadence.weekly": "Weekly",
   "cadence.everyN": "Every N days",
+  "cadence.everyNUnavailable": "Every N days is not available for this schedule — it fires at fixed times and has nothing to count the interval from. Use one of the other modes instead.",
   "cadence.time": "Time",
   "cadence.days": "Days",
   "cadence.every": "Every",
@@ -1003,7 +1014,7 @@ export const en = {
   "schedule.overrideTitle": "Schedule override",
   "schedule.overrideUsesDefault": "Uses the domain schedule",
   "schedule.overrideEdit": "Set override",
-  "schedule.overrideHint": "Empty uses the domain schedule. Per-item overrides do not support the every-N-days mode.",
+  "schedule.overrideHint": "Empty uses the domain schedule.",
   "schedule.overrideSaved": "Override saved",
 
   // Auth / Login
@@ -1396,6 +1407,15 @@ export const en = {
   "settings.schedulesChecks": "Restore-check schedule",
   "settings.tamperTestSchedule": "Tamper-test schedule",
   "settings.tamperScheduleInactive": "Inactive — no off-site repo is marked append-only, so this schedule never runs. Mark an off-site repo as append-only in its off-site settings to enable it.",
+  // Backup Everything (a 6th, independent pass over all five domains above)
+  "settings.everythingTitle": "Backup Everything",
+  "settings.everythingHint": "Runs every domain once, in order — containers, VMs, flash, folders, then the self-backup — so a single ping afterward (via the post-command below) confirms the whole server is protected. Off by default, and independent of each domain's own schedule above.",
+  "settings.everythingHooksHint": "These commands run on BombVault's own server via sh -c, not inside a container. The pre-command is best-effort and never blocks the pass; the post-command always fires exactly once, after every domain has been attempted, whether or not any of them failed.",
+  "settings.everythingOverlapWarning": "This runs independently of the per-domain schedules above. If both are on, containers, VMs, flash, folders and the self-backup each run twice — once here, once on their own schedule. Turn off the domains you don't want duplicated.",
+  "settings.everythingRunNow": "Run Backup Everything now",
+  "settings.everythingStarted": "Started — it runs on the server across every domain in turn; watch the Activity Log for the outcome.",
+  "settings.everythingAlreadyRunning": "A Backup Everything pass is already running.",
+  "settings.everythingBusy": "Working…",
   "settings.subtitle": "BombVault configuration — changes take effect immediately.",
   // Filter drawer trigger (v5 redesign)
   "filter.button": "Filters",
@@ -1527,6 +1547,7 @@ export const en = {
   "activityLog.domainFlash": "Flash",
   "activityLog.domainConfig": "Self-Backup",
   "activityLog.domainFiles": "Folders",
+  "activityLog.domainEverything": "Backup Everything",
   "activityLog.jobBackup": "backup",
   "activityLog.jobOffsite": "off-site replication",
   "activityLog.jobDrill": "restore-verification drill",
@@ -1541,12 +1562,13 @@ export const en = {
   // once the live progress event's startedAt is known (see activityLog.ts's
   // buildLiveLines) but no live per-snapshot percentage is available yet.
   "activityLog.lineOffsiteRunningWithDuration": "Off-site upload — {domain} … ({duration})",
-  // Issue #159: used once a live SnapshotIndex/percent is known for the
-  // CURRENT snapshot restic copy is transferring (see restic.Copy's doc
-  // comment) — {total} is a best-effort candidate count, since restic never
-  // reports a whole-run total across snapshots.
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site upload — {domain} … snapshot {index} of {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site upload — {domain} … snapshot {index} of {total} ({percent}%) · {duration}",
+  // Issue #159: the RUN-LEVEL percentage (lib/progress.ts's offsiteRunProgress),
+  // with the snapshot count as the parenthetical detail behind it — {total} is
+  // a best-effort candidate count, since restic never reports a whole-run total
+  // across snapshots. Same word-order rule as offsite.replicatingSnapshotPercent
+  // above, for the same reason; that key's comment has the full story.
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-site upload — {domain} … {percent}% overall (snapshot {index} of {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-site upload — {domain} … {percent}% overall (snapshot {index} of {total}) · {duration}",
   "activityLog.linePruneRunning": "Pruning — {domain} …",
   "activityLog.lineVerifyRunning": "Verifying — {domain} …",
   "activityLog.lineDrillRunning": "Restore check running — {domain} …",
@@ -1923,8 +1945,9 @@ export const de: Translations = {
   "offsite.replicateStarted": "Replikation gestartet - sie läuft im Hintergrund; der Laufindikator zeigt den Fortschritt.",
   "offsite.replicating": "Repliziere…",
   "offsite.replicatingWithDuration": "Repliziere… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Repliziere Snapshot {index} von {total} ({percent} %)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Repliziere Snapshot {index} von {total} ({percent} %) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Repliziere… {percent} % gesamt (Snapshot {index} von {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Repliziere… {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
+  "offsite.overallPercentHint": "Gesamtfortschritt dieses Replikationslaufs, gezählt in Snapshots: restic meldet Fortschritt immer nur für einen einzelnen Snapshot, nie für einen ganzen Kopiervorgang. Snapshots sind unterschiedlich groß, das hier ist also ein Schätzwert.",
   "offsite.replicateFailed": "Replikation fehlgeschlagen",
   "offsite.test": "Verbindung testen",
   "offsite.testPrimary": "Primäres Ziel testen",
@@ -2405,6 +2428,7 @@ export const de: Translations = {
   "cadence.daily": "Täglich",
   "cadence.weekly": "Wöchentlich",
   "cadence.everyN": "Alle N Tage",
+  "cadence.everyNUnavailable": "Alle N Tage ist für diesen Zeitplan nicht verfügbar — er läuft zu festen Zeiten und hat nichts, woran er den Abstand abzählen könnte. Nimm stattdessen einen der anderen Modi.",
   "cadence.time": "Zeit",
   "cadence.days": "Tage",
   "cadence.every": "Alle",
@@ -2465,7 +2489,7 @@ export const de: Translations = {
   "schedule.overrideTitle": "Zeitplan-Überschreibung",
   "schedule.overrideUsesDefault": "Nutzt den Domänen-Zeitplan",
   "schedule.overrideEdit": "Überschreibung festlegen",
-  "schedule.overrideHint": "Leer nutzt den Domänen-Zeitplan. Überschreibungen pro Element unterstützen den Alle-N-Tage-Modus nicht.",
+  "schedule.overrideHint": "Leer nutzt den Domänen-Zeitplan.",
   "schedule.overrideSaved": "Überschreibung gespeichert",
 
   // Auth / Login
@@ -2818,6 +2842,15 @@ export const de: Translations = {
   "settings.schedulesChecks": "Wiederherstellungs-Prüfplan",
   "settings.tamperTestSchedule": "Tamper-Test-Zeitplan",
   "settings.tamperScheduleInactive": "Inaktiv — kein Off-site-Repo ist als append-only markiert, daher läuft dieser Zeitplan nie. Markiere ein Off-site-Repo in dessen Off-site-Einstellungen als append-only, um ihn zu aktivieren.",
+  // Gesamt-Backup (ein 6., unabhängiger Durchlauf über alle fünf Bereiche oben)
+  "settings.everythingTitle": "Gesamt-Backup",
+  "settings.everythingHint": "Sichert einmal nacheinander jeden Bereich — Container, VMs, Flash, Ordner und zuletzt das Selbst-Backup —, sodass ein einzelner Ping danach (über den Post-Befehl unten) bestätigt, dass der ganze Server geschützt ist. Standardmäßig aus und unabhängig vom eigenen Zeitplan jedes Bereichs oben.",
+  "settings.everythingHooksHint": "Diese Befehle laufen auf dem eigenen Server von BombVault über sh -c, nicht in einem Container. Der Pre-Befehl ist best-effort und blockiert den Durchlauf nie; der Post-Befehl feuert immer genau einmal, nachdem jeder Bereich versucht wurde, egal ob einer davon fehlgeschlagen ist.",
+  "settings.everythingOverlapWarning": "Dieser Zeitplan läuft unabhängig von den Zeitplänen der einzelnen Bereiche oben. Sind beide aktiv, werden Container, VMs, Flash, Ordner und Selbst-Backup jeweils doppelt gesichert — einmal hier, einmal im eigenen Zeitplan. Deaktiviere die Bereiche, die nicht doppelt laufen sollen.",
+  "settings.everythingRunNow": "Gesamt-Backup jetzt starten",
+  "settings.everythingStarted": "Gestartet — es läuft auf dem Server nacheinander über jeden Bereich; das Aktivitätsprotokoll zeigt das Ergebnis.",
+  "settings.everythingAlreadyRunning": "Es läuft bereits ein Gesamt-Backup.",
+  "settings.everythingBusy": "Arbeite…",
   "settings.subtitle": "BombVault-Konfiguration — Änderungen wirken sofort.",
   // Filter-Auslöser (v5-Redesign)
   "filter.button": "Filter",
@@ -2942,6 +2975,7 @@ export const de: Translations = {
   "activityLog.domainFlash": "Flash",
   "activityLog.domainConfig": "Selbst-Backup",
   "activityLog.domainFiles": "Ordner",
+  "activityLog.domainEverything": "Gesamt-Backup",
   "activityLog.jobBackup": "Backup",
   "activityLog.jobOffsite": "Off-Site-Replikation",
   "activityLog.jobDrill": "Wiederherstellungs-Prüfung",
@@ -2953,8 +2987,8 @@ export const de: Translations = {
   "activityLog.lineBackingUpBatch": "Sichere alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-Site-Upload — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Off-Site-Upload — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-Site-Upload — {domain} … Snapshot {index} von {total} ({percent} %)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-Site-Upload — {domain} … Snapshot {index} von {total} ({percent} %) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Off-Site-Upload — {domain} … {percent} % gesamt (Snapshot {index} von {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Off-Site-Upload — {domain} … {percent} % gesamt (Snapshot {index} von {total}) · {duration}",
   "activityLog.linePruneRunning": "Räume auf — {domain} …",
   "activityLog.lineVerifyRunning": "Prüfe — {domain} …",
   "activityLog.lineDrillRunning": "Wiederherstellungs-Prüfung läuft — {domain} …",

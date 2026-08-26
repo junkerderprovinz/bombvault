@@ -10,6 +10,34 @@ import { TimePicker } from "./TimePicker";
 
 export type CadenceMode = "off" | "daily" | "weekly" | "everyN" | "cron";
 
+/** Every mode the grammar knows, in the order the pills are rendered. */
+export const ALL_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "everyN", "cron"];
+
+/**
+ * EXACT_CADENCE_MODES is the set a schedule WITHOUT a last-run gate may use
+ * (#166). The backend refuses `everyN` for the five OFF-SITE replication
+ * schedules — see `rejectEveryNSchedules` in internal/api/handlers.go, which is
+ * the single authority for both settings write paths — and for the per-item
+ * overrides, see SetScheduleCadence/SetVMScheduleCadence in
+ * internal/api/service.go. Those jobs have nothing to count an interval from,
+ * so an everyN cadence there would silently fire daily.
+ *
+ * The picker used to offer all five modes everywhere regardless, so choosing
+ * "Every N days" on a restricted card made the WHOLE Schedules tab unsavable
+ * (one Save button PUTs the full settings object). Pass this constant wherever a
+ * picker edits such a schedule, so the mode is never offered in the first place.
+ *
+ * As of #166 that is exactly ONE call site: ItemScheduleOverride.tsx. The five
+ * off-site cadences are edited as raw text inputs in Settings.tsx rather than
+ * through this component, so they have no mode list to restrict — their refusal
+ * is enforced server-side only. And the drills, tamper-test and digest cards
+ * deliberately do NOT pass it any more: each of those passes now stamps
+ * schedule_job_runs (migration v89) and reads it back through the scheduler's
+ * due-gate, so their interval is really enforced and the mode is offered and
+ * saved like any other.
+ */
+export const EXACT_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "cron"];
+
 export const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 export interface CadenceState {
@@ -169,12 +197,19 @@ export function CadenceBuilder({
   label,
   value,
   disabled,
+  modes,
   onChange,
   hueIndex,
 }: {
   label: string;
   value: string;
   disabled?: boolean;
+  /**
+   * Which modes this call site may offer. Defaults to ALL_CADENCE_MODES, so the
+   * schedules whose backend accepts everyN are untouched; pass
+   * EXACT_CADENCE_MODES where it doesn't (#166).
+   */
+  modes?: CadenceMode[];
   onChange: (v: string) => void;
   /** Rainbow position for the TimePicker rendered inside (Task 3, jdp
    *  live-review: "Der Zeitpicker ist nicht im Regenbogenmodus" — the
@@ -192,26 +227,42 @@ export function CadenceBuilder({
   const { t, lang } = useT();
   const [state, setState] = useState<CadenceState>(() => parseCadenceString(value));
 
+  const allowed = modes ?? ALL_CADENCE_MODES;
+  // Legacy-value guard, mirroring parseCadenceString's cron-preservation
+  // rationale: a value already stored out-of-band (a settings import from an
+  // older build, a hand-edited DB) keeps its own pill for this instance, so it
+  // is DISPLAYED rather than silently rewritten by the first onChange. Once the
+  // user moves off it the pill goes away, because there is nothing to preserve
+  // any more.
+  const offered = ALL_CADENCE_MODES.filter((m) => allowed.includes(m) || m === state.mode);
+
   // Re-parse when the stored value changes externally (e.g. after load or sync checkbox)
   useEffect(() => {
     setState(parseCadenceString(value));
   }, [value]);
 
+  // update() derives the next state from the CURRENT render's `state`, not from
+  // a setState updater callback. The parent notification must stay OUT of an
+  // updater: React runs those during render, so calling the parent's onChange
+  // (a setState on another component) from inside one is a
+  // "Cannot update a component while rendering a different component"
+  // violation, and StrictMode's double-invoke fired it twice per click. Every
+  // caller here is a discrete user event (one Selector/input change per event),
+  // so the closure's `state` is the latest — the same assumption toggleWeekday
+  // below already makes when it reads state.weekdays.
   function update(patch: Partial<CadenceState>) {
-    setState((prev) => {
-      let next = { ...prev, ...patch };
-      // Entering cron mode with no expression yet: prefill the equivalent of
-      // the schedule the user was on, so the field starts valid and editable.
-      if (patch.mode === "cron" && next.cron.trim() === "") {
-        next = { ...next, cron: cronFromState(prev) };
-      }
-      // Never emit a broken cadence string: while the cron text is invalid the
-      // parent keeps the last good value and the editor shows an inline error.
-      if (next.mode !== "cron" || isValidCronExpression(next.cron)) {
-        onChange(buildCadenceString(next));
-      }
-      return next;
-    });
+    let next = { ...state, ...patch };
+    // Entering cron mode with no expression yet: prefill the equivalent of
+    // the schedule the user was on, so the field starts valid and editable.
+    if (patch.mode === "cron" && next.cron.trim() === "") {
+      next = { ...next, cron: cronFromState(state) };
+    }
+    setState(next);
+    // Never emit a broken cadence string: while the cron text is invalid the
+    // parent keeps the last good value and the editor shows an inline error.
+    if (next.mode !== "cron" || isValidCronExpression(next.cron)) {
+      onChange(buildCadenceString(next));
+    }
   }
 
   function toggleWeekday(day: string) {
@@ -318,15 +369,15 @@ export function CadenceBuilder({
           `equalWidth`, which this call site simply does not pass. See
           Selector.tsx's own file header item 6 for the full writeup. */}
       <Selector
-        // Every cadence editor offers all five modes (#166). An earlier round
-        // had an `allowEveryN` prop that hid "every N days" on the drill,
-        // tamper-test and digest schedules, because the backend refused it
-        // there — those three jobs had no last-run record, so the interval could
-        // not be enforced and the cadence would have fired daily. They record
-        // one now (internal/store schedule_job_runs.go) and the API accepts it,
-        // so the prop had no call sites left and is gone.
-        items={(["off", "daily", "weekly", "everyN", "cron"] as CadenceMode[])
-          .map((m) => ({
+        // `offered` = the caller's allow-list plus the stored value itself, so a
+        // legacy everyN is still displayed rather than silently rewritten (#166).
+        // The drill, tamper-test and digest cards no longer restrict anything:
+        // those three now record when their pass last ran
+        // (internal/store/schedule_job_runs.go, migration v89), so the interval is
+        // genuinely enforced and the API accepts the mode. The allow-list survives
+        // for the one call site where everyN remains unenforceable: the per-item
+        // overrides, which have no per-item last-run fact to count from.
+        items={offered.map((m) => ({
           id: m,
           label:
             m === "off"
@@ -345,6 +396,18 @@ export function CadenceBuilder({
         onChange={(id) => update({ mode: id as CadenceMode })}
         variant="well"
       />
+
+      {/* Say WHY a mode is missing rather than leaving a silent gap (#166): a
+          user who used "Every N days" on another card and cannot find it here
+          otherwise has no way to tell whether it's absent on purpose or broken.
+          Keyed off the caller's allow-list, not `offered`, so it still explains
+          itself while a legacy everyN value is being displayed. Since the drill,
+          tamper-test and digest cards stopped restricting the mode, the per-item
+          override box is the one picker that still renders this — the one place
+          everyN genuinely stays unenforceable. */}
+      {!allowed.includes("everyN") && (
+        <p className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.everyNUnavailable")}</p>
+      )}
 
       {/* Time picker — shown for all non-off modes except cron (the expression
           carries its own times). Formerly a native `<input type="time">`;

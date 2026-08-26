@@ -472,6 +472,7 @@ type Scheduler struct {
 	watchdogFn       func() error                            // nil until SetWatchdogJob wires the overdue-backup watchdog
 	receiverFn       func() error                            // nil until SetReceiverJob wires the receiver watch (dead-mans-switch + integrity checks)
 	fleetFn          func() error                            // nil until SetFleetJob wires the fleet peer sweep
+	everythingFn     func() error                            // nil until SetEverythingJob wires the "Backup Everything" pass
 	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
 	// multi-item domain run (containers/VMs): one /start before the first item and
 	// one success/fail after the last, instead of once per item (#49). nil until
@@ -778,6 +779,16 @@ func (s *Scheduler) SetFleetJob(fleetFn func() error) {
 	s.fleetFn = fleetFn
 }
 
+// SetEverythingJob wires the "Backup Everything" pass so its own schedule
+// actually runs. Everything is a singleton from the scheduler's point of view
+// (like flash/config): everythingFn already loops over all five domains
+// internally (internal/api/everything.go's BackupEverything), so the job
+// takes no arguments. Until this is called the everything domain is a no-op
+// (logged). Call before Reload.
+func (s *Scheduler) SetEverythingJob(everythingFn func() error) {
+	s.everythingFn = everythingFn
+}
+
 // SetHealthchecksAggregator wires per-domain Healthchecks aggregation for SCHEDULED
 // multi-item runs (containers + VMs). A scheduled run then pings the domain's check
 // /start ONCE via startFn before the first item and success/fail ONCE via finishFn
@@ -827,7 +838,7 @@ type domainSpec struct {
 // everyN cadence unenforceable — such a domain is NOT registered at all, since
 // firing it daily would be N times too often (see the loop below).
 func (s *Scheduler) Reload(settings store.Settings) error {
-	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil)
+	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil, nil)
 }
 
 // ReloadWithDueChecks is the full-fidelity Reload that accepts per-domain
@@ -840,7 +851,7 @@ func (s *Scheduler) Reload(settings store.Settings) error {
 // once via SetJobRunStore alongside SetDrillJob / SetTamperJob / SetDigestJob.
 func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
-	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun LastRunFunc,
+	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun LastRunFunc,
 ) error {
 	// Snapshot + clear the existing entries under the lock, then remove them
 	// from cron OUTSIDE the lock — never call into cron while holding s.mu.
@@ -973,6 +984,20 @@ func (s *Scheduler) ReloadWithDueChecks(
 				}
 			},
 			lastRun: filesLastRun,
+		},
+		{
+			cadence: settings.EverythingSchedule,
+			name:    "everything",
+			fn: func() {
+				if s.everythingFn == nil {
+					log.Print("schedule: everything job skipped — Backup Everything not wired (SetEverythingJob)")
+					return
+				}
+				if err := s.everythingFn(); err != nil {
+					log.Printf("schedule: everything job: backup failed: %v", err)
+				}
+			},
+			lastRun: everythingLastRun,
 		},
 	}
 

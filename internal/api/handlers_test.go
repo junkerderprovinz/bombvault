@@ -745,6 +745,162 @@ func TestSettingsFilesImmutableRetentionWarning(t *testing.T) {
 	}
 }
 
+// TestSettingsEverythingFieldsRoundTrip pins the settings DTO's "Backup
+// Everything" fields (Task 5 of the backup-everything plan,
+// docs/superpowers/plans/2026-08-20-backup-everything.md): a PUT carrying
+// everythingSchedule/everythingPreHook/everythingPostHook is persisted and
+// comes back verbatim on the following GET — the same round-trip contract as
+// every other domain's fields (see TestSettingsConfigFieldsRoundTrip/
+// TestSettingsFilesFieldsRoundTrip).
+func TestSettingsEverythingFieldsRoundTrip(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+
+	body := `{
+		"containersPath": "backups/c",
+		"vmsPath": "backups/v",
+		"flashPath": "backups/f",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"everythingSchedule": "daily 04:00",
+		"everythingPreHook": "echo pre",
+		"everythingPostHook": "curl -fsS https://hc-ping.com/test-uuid"
+	}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("put status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	w, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("get status=%d", w.Code)
+	}
+	settings, ok := m["settings"].(map[string]any)
+	if !ok {
+		t.Fatalf("settings missing or not nested: %v", m)
+	}
+	for k, want := range map[string]any{
+		"everythingSchedule": "daily 04:00",
+		"everythingPreHook":  "echo pre",
+		"everythingPostHook": "curl -fsS https://hc-ping.com/test-uuid",
+	} {
+		if settings[k] != want {
+			t.Fatalf("%s not round-tripped: got %v, want %v", k, settings[k], want)
+		}
+	}
+}
+
+// TestSettingsPutRejectsBadEverythingCadence mirrors
+// TestSettingsPutRejectsBadCadence for the new EverythingSchedule field: an
+// invalid cadence is rejected with ok:false at save time, exactly like every
+// other domain's schedule.
+func TestSettingsPutRejectsBadEverythingCadence(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	body := `{"containersPath":"backups/c","vmsPath":"backups/v","flashPath":"backups/f",
+		"containersSchedule":"off","vmsSchedule":"off","flashSchedule":"off",
+		"everythingSchedule":"daily 99:99"}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected graceful 200, got %d", w.Code)
+	}
+	if m["ok"] != false {
+		t.Fatalf("expected ok:false for bad everything cadence, got %v", m)
+	}
+}
+
+// TestSettingsEverythingScheduleAllowsEveryN proves EverythingSchedule was
+// added to the cadence-validation loop that ALLOWS 'everyN' (the due-gate is
+// wired via LastSuccessfulEverythingBackup, matching the five domain
+// schedules), NOT the separate loop that rejects 'everyN' for the off-site/
+// drills/tamper/digest schedules — the design spec's explicit call-out
+// ("Settings / API surface" section of docs/superpowers/specs/
+// 2026-08-20-backup-everything-design.md). Without this, a save would fail
+// with "this schedule does not support 'everyN'".
+func TestSettingsEverythingScheduleAllowsEveryN(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	body := `{"containersPath":"backups/c","vmsPath":"backups/v","flashPath":"backups/f",
+		"containersSchedule":"off","vmsSchedule":"off","flashSchedule":"off",
+		"everythingSchedule":"everyN 3 04:00"}`
+	w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("everyN must be accepted for everythingSchedule, got status=%d body=%v", w.Code, m)
+	}
+}
+
+// TestSettingsEveryNSplitPinned pins WHICH schedules accept "everyN" and which
+// refuse it, field by field, so the split can never silently invert (#166).
+//
+// The split is not arbitrary — it is exactly "can this job answer WHEN IT LAST
+// RAN?", because an everyN cadence is a daily cron trigger plus a due-gate that
+// asks precisely that. The five domain schedules and Backup Everything answer it
+// from LastSuccessful*Backup. The drills, tamper-test and digest passes answer it
+// from schedule_job_runs (migration v89), recorded by the pass itself and read
+// back through the scheduler's SetJobRunStore — which is what moved them into the
+// accepted half. The five OFF-SITE replication schedules still have no such fact,
+// so an everyN cadence there would silently degrade into firing daily.
+//
+// This table changed direction once already, which is why it is worth keeping
+// sharp in BOTH halves. BaukeZwart reported that the picker offered "Every N
+// days" on the drills card and the save then refused it; the first fix withheld
+// the mode in the picker, and the fix that superseded it gave those three jobs a
+// real last-run record instead, so the cadence is honoured rather than hidden.
+// The frontend half of the same contract is CadenceBuilder.dom.test.tsx.
+func TestSettingsEveryNSplitPinned(t *testing.T) {
+	// The everyN cadence from the report, sent one schedule field at a time.
+	const everyN = "everyN 3 04:00"
+
+	accepted := []string{
+		"containersSchedule", "vmsSchedule", "flashSchedule", "configSchedule", "filesSchedule",
+		"everythingSchedule",
+		// #166: these three enforce the interval via schedule_job_runs now.
+		"drillsSchedule", "tamperTestSchedule", "digestSchedule",
+	}
+	rejected := []string{
+		"containersOffsiteSchedule", "vmsOffsiteSchedule", "flashOffsiteSchedule",
+		"configOffsiteSchedule", "filesOffsiteSchedule",
+	}
+
+	// put sends a settings save with exactly ONE schedule field set to everyN,
+	// every other cadence left at its default, mirroring a single card's edit
+	// arriving inside the full-object PUT the UI performs.
+	put := func(t *testing.T, field string) map[string]any {
+		t.Helper()
+		h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+		body := fmt.Sprintf(`{"containersPath":"backups/c","vmsPath":"backups/v","flashPath":"backups/f",
+			"containersSchedule":"off","vmsSchedule":"off","flashSchedule":"off",
+			%q:%q}`, field, everyN)
+		w, m := doJSON(t, h, http.MethodPut, "/api/settings", body)
+		if w.Code != http.StatusOK {
+			t.Fatalf("%s: expected a graceful 200 envelope, got %d", field, w.Code)
+		}
+		return m
+	}
+
+	for _, field := range accepted {
+		t.Run("accepted/"+field, func(t *testing.T) {
+			if m := put(t, field); m["ok"] != true {
+				t.Fatalf("%s must accept %q (it has a last-run gate), got %v", field, everyN, m)
+			}
+		})
+	}
+
+	for _, field := range rejected {
+		t.Run("rejected/"+field, func(t *testing.T) {
+			m := put(t, field)
+			if m["ok"] != false {
+				t.Fatalf("%s must reject %q (no last-run gate — it would fire daily), got %v", field, everyN, m)
+			}
+			errMsg, _ := m["error"].(string)
+			if !strings.Contains(errMsg, "does not support 'everyN'") {
+				t.Fatalf("%s: want the everyN guidance error, got %q", field, errMsg)
+			}
+		})
+	}
+}
+
 // TestCheckFilesDomainAccepted pins that POST /api/check/files reaches the
 // service (the domain switch no longer 400s "unknown domain"): with no files
 // repo initialised yet it reports the friendly not-yet error instead.

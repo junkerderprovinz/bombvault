@@ -995,6 +995,52 @@ CREATE TABLE IF NOT EXISTS mesh_offers (
   at  INTEGER NOT NULL DEFAULT 0
 );`,
 	},
+	{
+		// NOTE ON NUMBERING: this migration and the one after it were authored on
+		// main as v89 and v90, at the same time as schedule_job_runs above took
+		// v89 on the feature branch. Both lines were UNRELEASED (the newest tag,
+		// v7.12.1, tops out at v88), so no shipped database carries either 89.
+		// Migrate keys off the version NUMBER, recording each applied version as
+		// its own row in schema_migrations, so a number that already has a row is
+		// skipped forever regardless of what its body later becomes. The pair was
+		// therefore shifted to 90/91 rather than schedule_job_runs being shifted:
+		// databases that already ran the branch build have 89 recorded and would
+		// otherwise skip whichever migration inherited that number. The three
+		// bodies are mutually independent (this one and the next touch `settings`
+		// and `runs`; v89 creates a new table), so the reordering is behaviour-
+		// preserving on a fresh database.
+		//
+		// "Backup Everything": a 6th, independent pseudo-domain that runs
+		// containers/vms/flash/files/config in sequence and fires a dead-man's-
+		// switch-style post-hook exactly once when the pass completes. Its own
+		// cadence column mirrors the five domains' own *_schedule columns (e.g.
+		// config_schedule from v46); 'off' keeps it fully inert by default — it
+		// does not replace or gate the five existing schedules. The pre/post-hook
+		// columns are plain `sh -c` command strings, same mechanism as the
+		// existing per-container targets.pre_hook/post_hook (v8), but run in
+		// BombVault's OWN container (there is no single target container for a
+		// whole-pass hook). Empty hooks (the default) = no hook configured.
+		version: 90, name: "settings_everything",
+		sql: `
+ALTER TABLE settings ADD COLUMN everything_schedule  TEXT NOT NULL DEFAULT 'off';
+ALTER TABLE settings ADD COLUMN everything_pre_hook  TEXT NOT NULL DEFAULT '';
+ALTER TABLE settings ADD COLUMN everything_post_hook TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// "Backup Everything" run grouping: group_id lets every child run a pass
+		// produces (one per domain) be traced back to the parent "everything" run
+		// that triggered it, stamped through the existing backup.Runs.Start choke
+		// point every domain orchestrator already calls (runsAdapter/
+		// startedRunsAdapter), via the new SetRunGroup. '' (the default) means "not
+		// part of a group" — every run created before this feature, and every run
+		// outside a Backup Everything pass, is byte-for-byte unaffected.
+		// idx_runs_group supports the group-scoped lookup this and future
+		// group_id-aware queries need.
+		version: 91, name: "runs_group_id",
+		sql: `
+ALTER TABLE runs ADD COLUMN group_id TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_runs_group ON runs(group_id);`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

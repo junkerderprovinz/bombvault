@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../lib/i18n";
-import { CadenceBuilder, formatCadence } from "./CadenceBuilder";
+import { CadenceBuilder, EXACT_CADENCE_MODES, formatCadence } from "./CadenceBuilder";
 import { Badge } from "./Badge";
 import { ScheduleBadge } from "./ScheduleBadge";
 import { useToast } from "../lib/toast";
@@ -121,6 +121,11 @@ export function ItemScheduleOverride({
           <CadenceBuilder
             label={`${t("schedule.overrideTitle")}: ${name}`}
             value={value}
+            // A per-item override still has no last-run gate of its own, so the
+            // backend keeps refusing everyN here (SetScheduleCadence /
+            // SetVMScheduleCadence, internal/api/service.go). Unlike the drill,
+            // tamper-test and digest cards, this restriction stays (#166, #121).
+            modes={EXACT_CADENCE_MODES}
             onChange={handleChange}
           />
           <p className="text-xs text-carbon-textMuted">{t("schedule.overrideHint")}</p>

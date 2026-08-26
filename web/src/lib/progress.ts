@@ -59,6 +59,77 @@ export interface ProgressState {
 
 export type ProgressMap = Record<string, ProgressState>;
 
+// ---------------------------------------------------------------------------
+// Off-site run-level progress (issue #159)
+// ---------------------------------------------------------------------------
+
+/** One honest, run-level view of an in-flight off-site replication. */
+export interface OffsiteRunProgress {
+  /** Whole-run completion, 0..99 (see offsiteRunProgress for the 99 cap). */
+  percent: number;
+  /** 1-based index of the snapshot restic is copying right now. */
+  index: number;
+  /** Best-effort count of snapshots this run set out to copy. */
+  total: number;
+}
+
+/**
+ * offsiteRunProgress derives ONE run-level completion percentage for an
+ * "offsite:<domain>" progress state, or null when no honest one exists.
+ *
+ * Issue #159 shipped the raw wire values straight to two surfaces, rendered as
+ * "snapshot 15 of 126 (55%)". Neither number was miscalculated — they measure
+ * genuinely different things, both correctly:
+ *   - index/total is the SNAPSHOT count: restic is on the 15th of an estimated
+ *     126 snapshots that still need copying.
+ *   - percent is the PACK count WITHIN snapshot 15, which restarts at 0 for
+ *     every snapshot (restic copy has no whole-run total; see
+ *     internal/progress/progress.go's Event doc comment).
+ * Side by side, with the percentage in parentheses right after the fraction,
+ * every reader parses it as "15/126 = 55%" — and it self-contradicts, since
+ * real overall progress there is ~12%. Over a one-hour run the percentage also
+ * sawtoothed 0→100 once per snapshot while "of 126" crawled, which reads as
+ * simply broken.
+ *
+ * So the two are COMBINED here instead of being shown side by side: the packs
+ * done inside the current snapshot are the fractional part of the snapshots
+ * done overall. The resulting number now AGREES with the "15 of 126" beside it
+ * (~12% either way) instead of fighting it — which is the whole point.
+ *
+ * Honesty constraints, in order of how much they matter:
+ *   - A total of 0/undefined is "the backend could not estimate" (see
+ *     api.progBeginCopySink, which publishes that unknown rather than
+ *     fabricating one) — there is no denominator, so this returns null and the
+ *     caller falls back to its duration-only text. Dividing by a made-up total
+ *     would read ~99% for a run that had barely started.
+ *   - `total` is still only an estimate, and snapshots differ wildly in size,
+ *     so this is snapshot-COUNT progress, not byte progress. Surfaces that show
+ *     it say so (OffsiteIndicator's info bubble).
+ *   - Capped at 99 while a run is live: the copy is not the whole job (off-site
+ *     retention, unlock and the run record all follow), and a bar parked at
+ *     100% for minutes is exactly the "it's stuck" impression #159 was about.
+ *     Reaching a real 100% is the terminal event's job — it carries no
+ *     snapshotIndex, so this returns null for it anyway.
+ */
+export function offsiteRunProgress(state: ProgressState | undefined): OffsiteRunProgress | null {
+  const index = state?.snapshotIndex;
+  const percent = state?.percent;
+  const total = state?.snapshotTotal;
+  if (typeof index !== "number" || !Number.isFinite(index) || index < 1) return null;
+  if (typeof percent !== "number" || !Number.isFinite(percent)) return null;
+  if (typeof total !== "number" || !Number.isFinite(total) || total < 1) return null;
+  // The live index is ground truth; the total is a guess. If the guess
+  // undercounted, widen it rather than render "snapshot 3 of 2".
+  const wideTotal = Math.max(total, index);
+  const withinSnapshot = Math.max(0, Math.min(100, percent)) / 100;
+  const overall = ((index - 1 + withinSnapshot) / wideTotal) * 100;
+  return {
+    percent: Math.min(99, Math.max(0, Math.round(overall))),
+    index,
+    total: wideTotal,
+  };
+}
+
 // Shape of a single SSE payload. lastSeen is stamped locally in applyEvent, so
 // it is not part of the wire shape.
 type ProgressEvent = Omit<ProgressState, "lastSeen"> & { key: string };
