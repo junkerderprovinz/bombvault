@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -204,12 +205,27 @@ func (s *Service) receiverDeadManSweep(ctx context.Context, c notify.Config, ale
 // CheckCadence is due, persists the verdict, and fires an integrity alert only on
 // the transition into failure. A cadence of "off" (or an unparseable one) means no
 // scheduled check for that repo - the dead-mans-switch still runs.
+//
+// The due-gate is schedule.PeriodDue, not a raw `now-LastCheckAt < period`. The
+// two instants are not the same kind of thing: `now` is this sweep's fixed daily
+// fire (ReceiverCadence) while LastCheckAt is stamped when the previous check
+// FINISHED, and a restic check on a large received repo takes minutes. Measured
+// in elapsed seconds, the day a "daily 04:00" repo comes due therefore always
+// falls a few minutes short of 86400, the gate closes, and the next chance is a
+// whole sweep later — so every received repo was really checked at half its
+// configured frequency, and the skipped day logged nothing at all. PeriodDue
+// compares calendar days, the same rule internal/schedule already settled on for
+// everyN cadences and for exactly this reason.
 func (s *Service) receiverScheduledCheck(ctx context.Context, c notify.Config, alertsOn bool, rr store.ReceivedRepo, now int64) {
 	period := cadencePeriodSeconds(rr.CheckCadence)
 	if period <= 0 {
 		return // "off"/invalid: no scheduled integrity check for this repo
 	}
-	if rr.LastCheckAt != 0 && now-rr.LastCheckAt < period {
+	var lastCheck time.Time
+	if rr.LastCheckAt != 0 {
+		lastCheck = time.Unix(rr.LastCheckAt, 0)
+	}
+	if !schedule.PeriodDue(lastCheck, time.Unix(now, 0), period) {
 		return // not due yet
 	}
 	prev := rr.LastCheckOK // the verdict BEFORE this check, for the transition test
