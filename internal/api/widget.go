@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // ---------------------------------------------------------------------------
@@ -179,19 +180,16 @@ func (h *Handler) handleWidgetData(w http.ResponseWriter, r *http.Request) {
 // after generating. Session-protected via authGate: NOT on the public
 // allowlist — only a logged-in admin can mint or rotate the token.
 func (h *Handler) handleWidgetTokenGenerate(w http.ResponseWriter, _ *http.Request) {
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
 	buf := make([]byte, 16)
 	if _, err := rand.Read(buf); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	token := hex.EncodeToString(buf)
-	s.WidgetToken = token
-	if err := h.store.UpdateSettings(s); err != nil {
+	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+		s.WidgetToken = token
+		return nil
+	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -202,13 +200,10 @@ func (h *Handler) handleWidgetTokenGenerate(w http.ResponseWriter, _ *http.Reque
 // stored token, so both widget endpoints immediately fail closed (403) again.
 // Session-protected like the generate endpoint.
 func (h *Handler) handleWidgetTokenDisable(w http.ResponseWriter, _ *http.Request) {
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	s.WidgetToken = ""
-	if err := h.store.UpdateSettings(s); err != nil {
+	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+		s.WidgetToken = ""
+		return nil
+	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

@@ -125,7 +125,48 @@ const encryptionProbeParallel = 4
 // way. The probe itself is strictly read-only: `restic cat config`, never
 // EnsureRepo (which would INITIALIZE a missing repo, i.e. write an empty
 // repository over the location the user is still trying to attach to).
+//
+// Two callers arriving at once share ONE probe pass (encryptionDetectFlight):
+// the Recovery page fires this on mount, so a second tab — or a reload while a
+// dead off-site host is still burning its 2x30s probe budget — would otherwise
+// fork a second set of restic processes against the same repositories for an
+// answer the first pass is already computing.
 func (s *Service) DetectEncryption(ctx context.Context) (EncryptionDetection, error) {
+	s.detectMu.Lock()
+	if flight := s.detectFlight; flight != nil {
+		s.detectMu.Unlock()
+		select {
+		case <-flight.done:
+			return flight.det, flight.err
+		case <-ctx.Done():
+			// This caller gave up; the leader's pass carries on for the others.
+			return EncryptionDetection{}, ctx.Err()
+		}
+	}
+	flight := &encryptionDetectFlight{done: make(chan struct{})}
+	s.detectFlight = flight
+	s.detectMu.Unlock()
+
+	flight.det, flight.err = s.detectEncryption(ctx)
+
+	s.detectMu.Lock()
+	s.detectFlight = nil
+	s.detectMu.Unlock()
+	close(flight.done)
+	return flight.det, flight.err
+}
+
+// encryptionDetectFlight is one in-flight DetectEncryption pass, shared with
+// every caller that arrives while it runs. done is closed once det/err are
+// final, so a follower reads them only after they are written.
+type encryptionDetectFlight struct {
+	done chan struct{}
+	det  EncryptionDetection
+	err  error
+}
+
+// detectEncryption is the pass itself (see DetectEncryption for the contract).
+func (s *Service) detectEncryption(ctx context.Context) (EncryptionDetection, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return EncryptionDetection{}, fmt.Errorf("read settings: %w", err)
@@ -145,16 +186,34 @@ func (s *Service) DetectEncryption(ctx context.Context) (EncryptionDetection, er
 	// leave the stored setting exactly as it was: there is no detected fact to
 	// follow, and guessing is the failure mode this whole feature exists to
 	// remove.
+	//
+	// The `settings` snapshot above is MINUTES old by now — probing a dead
+	// off-site host burns 2x encryptionProbeTimeout on it — so it must never be
+	// written back: doing that reverts every unrelated column the user saved
+	// meanwhile (paths, schedules, the login password) while the UI reports
+	// those saves as successful. MutateSettings re-reads the row under its own
+	// lock and applies ONLY the one fact this pass established, so a detection
+	// can change nothing it did not determine. It also returns the row as it now
+	// stands, which is what the caller is told the effective setting is — the
+	// stale snapshot cannot answer that either.
 	want, definite := verdict.encryptionEnabled()
-	if definite && want != settings.EncryptionEnabled {
-		settings.EncryptionEnabled = want
-		if uErr := s.store.UpdateSettings(settings); uErr != nil {
-			return det, fmt.Errorf("apply detected encryption mode: %w", uErr)
+	applied := false
+	current, mErr := s.store.MutateSettings(func(cur *store.Settings) error {
+		if !definite || cur.EncryptionEnabled == want {
+			return nil
 		}
-		det.Applied = true
+		cur.EncryptionEnabled = want
+		applied = true
+		return nil
+	})
+	if mErr != nil {
+		return det, fmt.Errorf("apply detected encryption mode: %w", mErr)
+	}
+	if applied {
 		log.Printf("api: encryption mode auto-detected as %s — Settings.EncryptionEnabled set to %v", verdict, want)
 	}
-	det.EncryptionEnabled = settings.EncryptionEnabled
+	det.Applied = applied
+	det.EncryptionEnabled = current.EncryptionEnabled
 	return det, nil
 }
 

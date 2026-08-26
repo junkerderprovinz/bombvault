@@ -256,19 +256,16 @@ func refetchedOrStored(h *Handler, fallback store.FleetPeer) store.FleetPeer {
 // one, exactly like rotating a widget token breaks existing embeds. Session-
 // protected via authGate: only a logged-in admin can mint or rotate it.
 func (h *Handler) handleFleetTokenGenerate(w http.ResponseWriter, _ *http.Request) {
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
 	buf := make([]byte, 16)
 	if _, err := rand.Read(buf); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	token := hex.EncodeToString(buf)
-	s.FleetToken = token
-	if err := h.store.UpdateSettings(s); err != nil {
+	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+		s.FleetToken = token
+		return nil
+	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -280,13 +277,10 @@ func (h *Handler) handleFleetTokenGenerate(w http.ResponseWriter, _ *http.Reques
 // every peer polling this instance. Session-protected like the generate
 // endpoint.
 func (h *Handler) handleFleetTokenDisable(w http.ResponseWriter, _ *http.Request) {
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	s.FleetToken = ""
-	if err := h.store.UpdateSettings(s); err != nil {
+	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
+		s.FleetToken = ""
+		return nil
+	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

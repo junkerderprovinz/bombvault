@@ -254,9 +254,32 @@ type Settings struct {
 	EverythingPostHook string
 }
 
+// settingsQuerier / settingsExecer are the two halves of the database/sql API
+// the settings row needs, satisfied by BOTH *sql.DB and *sql.Tx. They exist so
+// the read and the write below have exactly one implementation each, used
+// unchanged inside MutateSettings' transaction — a second, transaction-only
+// copy of that 80-column scan/UPDATE pair is precisely the kind of duplicate
+// that drifts out of step the next time a column is added.
+type settingsQuerier interface {
+	QueryRow(query string, args ...any) *sql.Row
+}
+
+type settingsExecer interface {
+	Exec(query string, args ...any) (sql.Result, error)
+}
+
 // GetSettings returns the current app settings.
+//
+// A plain read is safe on its own. What is NOT safe is pairing it with
+// UpdateSettings to change one field: the write is a full-row UPDATE, so
+// anything another writer changed in between is reverted across every column.
+// Use MutateSettings for that — see its own doc.
 func (r *Repo) GetSettings() (Settings, error) {
-	row := r.db.QueryRow(`
+	return getSettings(r.db)
+}
+
+func getSettings(q settingsQuerier) (Settings, error) {
+	row := q.QueryRow(`
 		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled, config_enabled, files_enabled,
 		       containers_path, vms_path, flash_path, config_path, files_path, restore_folder,
 		       containers_offsite, vms_offsite, flash_offsite, config_offsite, files_offsite,
@@ -357,9 +380,77 @@ func (r *Repo) GetSettings() (Settings, error) {
 	return s, nil
 }
 
-// UpdateSettings persists s back to the single settings row.
+// UpdateSettings persists s back to the single settings row as ONE full-row
+// UPDATE: every column is written from s, including the ones the caller never
+// looked at.
+//
+// It is therefore a REPLACE, not a patch, and must only be used where s is the
+// whole intended new state of the row. Reading with GetSettings, changing one
+// field and writing the result back with UpdateSettings is a lost-update bug,
+// not a patch: whatever another writer stored in between is reverted across
+// every column, and the writer that lost is told its save succeeded. Use
+// MutateSettings for any read-modify-write; internal/store/settings_writers_test.go
+// keeps production code off this method.
 func (r *Repo) UpdateSettings(s Settings) error {
-	_, err := r.db.Exec(`
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
+	return updateSettings(r.db, s)
+}
+
+// MutateSettings applies fn to the CURRENT settings row and writes the result
+// back, with the read, the mutation and the write inside ONE serialized
+// transaction. It returns the settings as they now stand.
+//
+// This is the only safe way to change part of the row. The alternative —
+// GetSettings, edit a field, UpdateSettings — spans a window the caller does
+// not control (a probe, an HTTP round-trip, a restic run), and because the
+// write is a full-row UPDATE every column another writer touched inside that
+// window is silently reverted. Here the read happens under the same lock and
+// transaction as the write, so fn always sees the freshest row and can only
+// change what it actually sets.
+//
+// When fn leaves the settings byte-identical, NO write is issued at all: a
+// no-op detection or acknowledgement never bumps the row.
+//
+// fn must be pure — it must not touch this Repo (or the database at all).
+// The transaction holds the single pooled connection (store.Open sets
+// MaxOpenConns(1)), so a nested store call inside fn would deadlock.
+func (r *Repo) MutateSettings(fn func(*Settings) error) (Settings, error) {
+	if fn == nil {
+		return Settings{}, fmt.Errorf("MutateSettings: nil mutation")
+	}
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
+
+	tx, err := r.db.Begin()
+	if err != nil {
+		return Settings{}, fmt.Errorf("MutateSettings: begin: %w", err)
+	}
+	//nolint:errcheck // no-op once Commit succeeded; on every error path the
+	// rollback error is not actionable and must not mask the original error.
+	defer tx.Rollback()
+
+	before, err := getSettings(tx)
+	if err != nil {
+		return Settings{}, err
+	}
+	after := before
+	if err := fn(&after); err != nil {
+		return Settings{}, err
+	}
+	if after != before {
+		if err := updateSettings(tx, after); err != nil {
+			return Settings{}, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return Settings{}, fmt.Errorf("MutateSettings: commit: %w", err)
+	}
+	return after, nil
+}
+
+func updateSettings(e settingsExecer, s Settings) error {
+	_, err := e.Exec(`
 		UPDATE settings SET
 		  encryption_enabled  = ?,
 		  containers_enabled  = ?,
