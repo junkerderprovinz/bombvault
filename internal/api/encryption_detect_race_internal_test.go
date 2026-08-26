@@ -18,6 +18,8 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -252,5 +254,197 @@ func TestDetectEncryptionSharesOneProbePass(t *testing.T) {
 	// encrypted, mode). Two passes would have probed twice.
 	if eng.probes != 1 {
 		t.Fatalf("%d probes — two concurrent callers must share one pass, not run one each", eng.probes)
+	}
+}
+
+// detectResult pairs what one DetectEncryption caller got back.
+type detectResult struct {
+	det EncryptionDetection
+	err error
+}
+
+// cancelAwareEngine gates the first probe (a slow backend) and then answers the
+// way restic really does when the probe's context died mid-run: ctxCancelErr
+// wraps the context error, and that message names neither "repository does not
+// exist" nor "unable to open config file", so the repository classifies as
+// UNREACHABLE rather than absent.
+type cancelAwareEngine struct {
+	modeStubEngine
+	started chan struct{}
+	release chan struct{}
+	gate    sync.Once
+}
+
+func (e *cancelAwareEngine) RepoOpensErr(ctx context.Context, repo string, m restic.Mode) error {
+	e.gate.Do(func() {
+		close(e.started)
+		<-e.release
+	})
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("restic cat cancelled: %w", err)
+	}
+	return e.modeStubEngine.RepoOpensErr(ctx, repo, m)
+}
+
+// TestDetectEncryptionSurvivesTheLeadersCancelledRequest: the caller that
+// happens to lead the shared pass is just whoever arrived first. When ITS
+// browser tab closes mid-probe, the pass must carry on for the callers still
+// waiting on it. Running the probes on the leader's request context instead
+// cancels every one of them, and a cancelled probe reads as "unreachable" — so
+// a follower whose own request is perfectly alive is handed a confident
+// "unknown", reported as a SUCCESS, for a repository that opens fine.
+func TestDetectEncryptionSurvivesTheLeadersCancelledRequest(t *testing.T) {
+	eng := &cancelAwareEngine{
+		modeStubEngine: modeStubEngine{encrypted: map[string]bool{}},
+		started:        make(chan struct{}),
+		release:        make(chan struct{}),
+	}
+	s, st, _ := newDetectSvc(t, eng)
+	repo := mkrepo(t, s, "backups/containers")
+	eng.encrypted[repo] = true
+
+	settings := setPaths(t, st, map[string]string{"containers": "backups/containers"})
+	settings.EncryptionEnabled = false
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	leaderCtx, cancelLeader := context.WithCancel(context.Background())
+	defer cancelLeader()
+	leader := make(chan detectResult, 1)
+	go func() {
+		det, err := s.DetectEncryption(leaderCtx)
+		leader <- detectResult{det, err}
+	}()
+	select {
+	case <-eng.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the probe never started")
+	}
+
+	// A second tab joins the pass already running.
+	follower := make(chan detectResult, 1)
+	go func() {
+		det, err := s.DetectEncryption(context.Background())
+		follower <- detectResult{det, err}
+	}()
+	time.Sleep(50 * time.Millisecond)
+
+	// Now the tab that started it goes away, and only then does the backend answer.
+	cancelLeader()
+	close(eng.release)
+
+	var got detectResult
+	select {
+	case got = <-follower:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the following DetectEncryption never returned")
+	}
+	if got.err != nil {
+		t.Fatalf("follower detect: %v", got.err)
+	}
+	if got.det.Verdict != VerdictEncrypted {
+		t.Fatalf("follower verdict = %q (repos: %+v) — the leader's disconnect cancelled the shared probes, so a live caller was told the repositories are unreachable", got.det.Verdict, got.det.Repos)
+	}
+	if !got.det.EncryptionEnabled {
+		t.Fatal("the detected mode reached no one: a cancelled leader must not cost the followers their answer")
+	}
+
+	select {
+	case <-leader:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the leading DetectEncryption never returned")
+	}
+
+	after, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !after.EncryptionEnabled {
+		t.Fatal("the detected mode was never applied — the pass died with its leader's request")
+	}
+}
+
+// TestDetectEncryptionPanicOnTheLeaderReleasesTheFlight: the leader clears the
+// single-flight slot and signals the followers on its way out. If it does that
+// with plain statements, a panic skips both — the flight stays installed for the
+// life of the process (encryption detection dead for every later caller) and the
+// followers park forever on a channel nobody closes. Cleanup must be deferred,
+// and a follower released that way must be told the pass produced nothing rather
+// than handed an empty detection as a success.
+func TestDetectEncryptionPanicOnTheLeaderReleasesTheFlight(t *testing.T) {
+	eng := &gatedEngine{
+		modeStubEngine: modeStubEngine{encrypted: map[string]bool{}},
+		started:        make(chan struct{}),
+		release:        make(chan struct{}),
+	}
+	s, st, _ := newDetectSvc(t, eng)
+	repo := mkrepo(t, s, "backups/containers")
+	eng.encrypted[repo] = true
+	setPaths(t, st, map[string]string{"containers": "backups/containers"})
+
+	panicked := make(chan struct{})
+	go func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("the leading pass was supposed to panic")
+			}
+			close(panicked)
+		}()
+		_, _ = s.DetectEncryption(context.Background())
+	}()
+	select {
+	case <-eng.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the probe never started")
+	}
+
+	// A second tab joins the pass that is about to die.
+	follower := make(chan error, 1)
+	go func() {
+		_, err := s.DetectEncryption(context.Background())
+		follower <- err
+	}()
+	time.Sleep(50 * time.Millisecond)
+
+	// Blow the leader up on its OWN stack, after the probes: the store it writes
+	// the detected mode back through is gone. Any panic on that path does the same
+	// damage; this is only the shortest way to produce one.
+	s.store = nil
+	close(eng.release)
+
+	select {
+	case <-panicked:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the leading DetectEncryption never returned")
+	}
+
+	select {
+	case err := <-follower:
+		if err == nil {
+			t.Fatal("a follower of a pass that died mid-flight was told it succeeded")
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("the follower is still parked on a flight nobody closed")
+	}
+
+	// And the next caller starts a fresh pass instead of joining a flight that
+	// will never finish.
+	s.store = st
+	done := make(chan EncryptionDetection, 1)
+	go func() {
+		det, err := s.DetectEncryption(context.Background())
+		if err != nil {
+			t.Errorf("detect after the panic: %v", err)
+		}
+		done <- det
+	}()
+	select {
+	case det := <-done:
+		if det.Verdict != VerdictEncrypted {
+			t.Fatalf("verdict = %q, want encrypted (repos: %+v)", det.Verdict, det.Repos)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("encryption detection stayed wedged after the leader panicked")
 	}
 }
