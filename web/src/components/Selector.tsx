@@ -33,11 +33,18 @@
 //      both used to pass `hue={false}`, each justified by its own "this one
 //      genuinely shouldn't compete for attention" reasoning at the time —
 //      exactly the self-authored aesthetic exception jdp has now ruled out
-//      categorically. Neither call site opts out any more; every Selector in
-//      this app today relies on the plain `true` default. The prop itself
-//      stays (an escape hatch exists for a genuine HARD TECHNICAL case —
-//      e.g. an item count that isn't a stable, enumerable list position at
-//      all — never a taste call), but has no live consumer as of this pass.
+//      categorically. Neither call site opts out any more; both rely on the
+//      plain `true` default. The prop itself stays, because an escape hatch
+//      exists for a genuine HARD TECHNICAL case — an item count that isn't a
+//      stable, enumerable list position at all — never a taste call.
+//        There is exactly ONE live consumer, and it is that technical case:
+//      Recovery.tsx's StepDisclosure, step 3's two expander chips. A
+//      SINGLE-item Selector has only position 0 to hue by, so the rainbow
+//      would paint both chips RAINBOW[0] red inside a yellow StepCard and mean
+//      nothing by it — there is no list for the colour to encode a position
+//      in. This paragraph read "has no live consumer as of this pass", which
+//      was true when written (d68d8995, 2026-08-23) and went stale two days
+//      later when 362ae3ed added that chip.
 //   2. `plain` (default false). None of BombVault's twelve call sites are
 //      visually identical at rest: ten are toolbar "chips" that carry a
 //      visible `bg-carbon-surface2` pill even when unselected (so they read
@@ -327,8 +334,12 @@ interface SelectorCommon {
    *  Badge.tsx's own header comment for why a fourth ad-hoc size never gets
    *  to exist here. */
   size?: SelectorSize;
-  /** Rainbow position per item, default true. See the file header — the ONE
-   *  documented exception is Dashboard.tsx's heatmap toggle. */
+  /** Rainbow position per item, default true. See the file header for the rule
+   *  and for the ONE live opt-out: Recovery.tsx's StepDisclosure, a SINGLE-item
+   *  expander chip whose "position in the list" is therefore always 0 and
+   *  carries no information — the hard-technical case the escape hatch exists
+   *  for, never a taste call. Dashboard.tsx's heatmap toggle was named here
+   *  until d68d8995 removed its opt-out; it passes no `hue` at all now. */
   hue?: boolean;
   /** Page-tab treatment (no idle background) instead of the default
    *  toolbar-chip treatment (idle `bg-carbon-surface2` pill). See the file

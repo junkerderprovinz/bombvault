@@ -1146,6 +1146,12 @@ function StepDisclosure({
         label={label}
         select="many"
         size="lg"
+        /* The app's ONE `hue={false}`, and the hard-technical case Selector's
+           header reserves the escape hatch for rather than a taste call: the
+           rainbow encodes an item's POSITION in a list, and this Selector has
+           exactly one item. Every instance would be RAINBOW[0] red, inside a
+           StepCard already carrying its own step colour, and would mean nothing
+           by it — there is no list here for a position to be a position in. */
         hue={false}
         active={open ? OPEN_SECTION : NO_SECTION}
         onChange={() => setOpen((o) => !o)}

@@ -325,7 +325,6 @@ function Card({
 
 export function ToggleRow({
   label,
-  description,
   hint,
   checked,
   onChange,
@@ -335,7 +334,13 @@ export function ToggleRow({
   hueIndex,
 }: {
   label: string;
-  description?: string;
+  // `description` — a permanent grey caption under the row — is deliberately
+  // GONE, not merely unused. Rule 8 ("explanations live in a bubble, not on the
+  // page") had already moved ~40 rows onto `hint`, and the last two survivors
+  // sat on Config.tsx's Selbst-Backup card, whose own heading text the same
+  // sweep did convert. Leaving the prop behind would have left the pattern one
+  // autocomplete away; removing it makes the next attempt a type error instead
+  // of a review comment. A row that genuinely needs prose next to it has `hint`.
   /** Optional (i) bubble beside the visible label — same content contract as
    *  Card's own `hint` (design-language.md rule 8, "explanations live in a
    *  bubble, not on the page"). Added for the GlimStone follow-up pass's
@@ -481,9 +486,6 @@ export function ToggleRow({
           {label}
           {hint && <InfoBubble tip={hint} />}
         </span>
-        {description && (
-          <span className={`text-xs text-carbon-textMuted${dim}`}>{description}</span>
-        )}
       </div>
       <Toggle
         key={feedbackKey}

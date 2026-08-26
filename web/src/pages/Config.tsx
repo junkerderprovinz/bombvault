@@ -288,9 +288,13 @@ function ConfigSettingsCard({
         </Badge>
       </h2>
 
+      {/* Rule 8, "explanations live in a bubble, not on the page": these were
+          the app's LAST two `description` captions, on the same card whose own
+          heading text the sweep did convert six lines above. A permanent grey
+          paragraph is read once and costs vertical space forever. */}
       <ToggleRow
         label={t("config.enabled")}
-        description={tLtr(t, "config.enabledHint")}
+        hint={tLtr(t, "config.enabledHint")}
         checked={settings.configEnabled}
         onChange={(v) => setSettings((prev) => ({ ...prev, configEnabled: v }))}
       />
@@ -315,7 +319,7 @@ function ConfigSettingsCard({
 
       <ToggleRow
         label={t("config.immutable")}
-        description={t("config.immutableHint")}
+        hint={t("config.immutableHint")}
         checked={settings.configOffsiteImmutable}
         onChange={(v) => setSettings((prev) => ({ ...prev, configOffsiteImmutable: v }))}
       />
