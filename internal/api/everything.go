@@ -62,6 +62,13 @@ type EverythingDomainResult struct {
 	Failures  []schedule.ItemFailure
 }
 
+// ErrEverythingInFlight is returned by BackupEverything when a "Backup
+// Everything" pass is already running. It is a refusal, not a failure: the
+// caller asked for a pass and the answer is that the one already in flight is
+// the pass — the same answer StartBackupEverything gives the HTTP handler as a
+// 409, phrased for a caller that does not speak in status codes.
+var ErrEverythingInFlight = errors.New("a Backup Everything pass is already running")
+
 // BackupEverything runs one "Backup Everything" pass and returns once every
 // domain step has been attempted. It essentially never returns a non-nil
 // error once the parent run has started recording: every REAL failure (a
@@ -71,9 +78,34 @@ type EverythingDomainResult struct {
 // RunFilesJob's own contract of returning counts, not an error, for exactly
 // this reason (a scheduled job logs per-item failures, it does not abort
 // over them). A non-nil error here means the pass could not even be recorded
-// as attempted (reading Settings or starting the parent run itself failed) —
-// there is no partial outcome to report in that case.
+// as attempted (reading Settings or starting the parent run itself failed, or
+// a pass is already in flight) — there is no partial outcome to report.
+//
+// It holds the single-flight guard for the duration of the pass. The guard used
+// to live in StartBackupEverything alone — the HTTP entry point — so the
+// SCHEDULED closure, which calls this function directly, never set it and never
+// tested it. A manual "Run now" during a nightly pass therefore found the flag
+// still false, took it, and started a SECOND concurrent pass: two parent run
+// rows on the same target, every domain backed up twice (lockDomain blocks
+// rather than failing, so the two just interleaved and both completed), and the
+// post-hook fired twice, i.e. the dead-man's-switch reported the whole server
+// protected twice for one nightly window. cron's own SkipIfStillRunning only
+// stops a scheduled pass overlapping ITSELF. Owning the guard here means every
+// entry point is covered by construction rather than by each one remembering.
 func (s *Service) BackupEverything(ctx context.Context) (EverythingSummary, error) {
+	if !s.everythingActive.CompareAndSwap(false, true) {
+		return EverythingSummary{}, ErrEverythingInFlight
+	}
+	defer s.everythingActive.Store(false)
+	return s.backupEverythingHoldingGuard(ctx)
+}
+
+// backupEverythingHoldingGuard is the pass itself. Its caller MUST already hold
+// everythingActive and must release it when the pass returns — BackupEverything
+// does both around this call, and StartBackupEverything takes the guard
+// synchronously (so the handler can answer 409 without waiting on a goroutine)
+// and releases it in its own deferred chain.
+func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingSummary, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return EverythingSummary{}, fmt.Errorf("backup everything: read settings: %w", err)
@@ -182,7 +214,10 @@ func (s *Service) StartBackupEverything(ctx context.Context) (bool, error) {
 			s.failStuckRun(store.EverythingTargetID, msg)
 		})
 		defer s.everythingActive.Store(false)
-		if _, err := s.BackupEverything(bctx); err != nil {
+		// The guard is already held (the CAS above), so this calls the pass
+		// directly rather than BackupEverything, which would try to take it again
+		// and refuse its own caller.
+		if _, err := s.backupEverythingHoldingGuard(bctx); err != nil {
 			log.Printf("api: backup everything: pass failed to start: %v", err)
 		}
 	}()

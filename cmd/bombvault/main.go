@@ -308,8 +308,18 @@ func run() error {
 	// five domains internally (internal/api/everything.go's BackupEverything),
 	// so — like SetFlashJob/SetConfigJob — the scheduled closure takes no
 	// arguments and just discards the summary, returning only the error.
+	//
+	// A pass already in flight (the operator pressed "Run now" and the nightly
+	// trigger arrived on top of it) is a SKIP, not a job failure: it is the same
+	// answer cron's own SkipIfStillRunning gives when a run overruns its window,
+	// and reporting it as an error would put a red line in the log for the guard
+	// doing exactly its job.
 	scheduler.SetEverythingJob(func() error {
 		_, bErr := svc.BackupEverything(context.Background())
+		if errors.Is(bErr, api.ErrEverythingInFlight) {
+			log.Print("schedule: everything job skipped — a Backup Everything pass is already running")
+			return nil
+		}
 		return bErr
 	})
 	scheduler.SetOffsiteJob(func(domain string) error {
