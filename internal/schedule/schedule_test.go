@@ -321,16 +321,21 @@ func TestEveryNDueGateSkipsOnLastRunError(t *testing.T) {
 }
 
 // buildEveryNGate is a test helper that constructs the everyN due-gate closure
-// in the same way the Scheduler does, so the logic can be tested without
-// spinning up a real cron runner.
+// the same way the Scheduler does, so the logic can be tested without spinning
+// up a real cron runner.
+//
+// It calls the REAL schedule.EveryNDue rather than re-deriving the comparison.
+// It used to inline `time.Since(last) < intervalDays*24h`, and that copy is the
+// reason four green tests said nothing about the everyN+1 defect: they asserted
+// the test file's own arithmetic, not the scheduler's. The only thing this
+// helper still owns is the wiring around the decision (skip on a query error).
 func buildEveryNGate(intervalDays int, lastRunFn schedule.LastRunFunc, jobFn func()) func() {
 	return func() {
 		last, err := lastRunFn()
 		if err != nil {
 			return // conservative: skip on error
 		}
-		minAge := time.Duration(intervalDays) * 24 * time.Hour
-		if !last.IsZero() && time.Since(last) < minAge {
+		if !schedule.EveryNDue(last, time.Now(), intervalDays) {
 			return // not due yet
 		}
 		jobFn()
