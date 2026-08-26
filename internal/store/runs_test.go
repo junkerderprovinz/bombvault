@@ -583,6 +583,111 @@ func TestLastEverythingPass(t *testing.T) {
 	}
 }
 
+// TestLastEverythingPassIgnoresAbandonedRuns is the other half of the gate, and
+// the one the "a finished run counts, success or not" rule above opened up: a
+// pass that was ABANDONED must not count, even though it carries a finished_at.
+//
+// The pass holds one parent run open across containers → vms → flash → files →
+// config plus the batched prune and off-site replication, i.e. hours. Reboot the
+// box or update the container in that window and ReapInterruptedRuns — global,
+// unconditional, every startup — stamps the abandoned row finished_at = the
+// restart instant. On `everyN 7 03:00` that stamp shuts the everyN gate for the
+// next seven days and closes the anacron catch-up with it (the stamp lies after
+// the missed fire, so nothing reads as missed): a whole interval of whole-server
+// backups skipped, silently, because the box rebooted mid-pass. The panic path
+// (FailRunningRun) writes the same shape.
+func TestLastEverythingPassIgnoresAbandonedRuns(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		abandon func(*testing.T, *store.Repo)
+	}{
+		{
+			name: "reaped at startup",
+			abandon: func(t *testing.T, r *store.Repo) {
+				t.Helper()
+				if _, err := r.ReapInterruptedRuns(); err != nil {
+					t.Fatalf("ReapInterruptedRuns: %v", err)
+				}
+			},
+		},
+		{
+			name: "closed out by the panic path",
+			abandon: func(t *testing.T, r *store.Repo) {
+				t.Helper()
+				if _, err := r.FailRunningRun(store.EverythingTargetID, "panic: boom"); err != nil {
+					t.Fatalf("FailRunningRun: %v", err)
+				}
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			db := store.OpenMem(t)
+			if err := store.Migrate(db); err != nil {
+				t.Fatal(err)
+			}
+			r := store.New(db)
+
+			if _, err := r.StartRun(store.EverythingTargetID, "backup"); err != nil {
+				t.Fatalf("StartRun: %v", err)
+			}
+			tc.abandon(t, r)
+
+			// The row is closed out — that part is correct, the dashboard must not
+			// show a perpetual "running" chip.
+			runs, err := r.ListRuns(10)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(runs) != 1 || runs[0].FinishedAt == nil {
+				t.Fatalf("expected exactly one closed-out run, got %+v", runs)
+			}
+
+			ts, err := r.LastEverythingPass()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !ts.IsZero() {
+				t.Fatalf("an abandoned pass must not satisfy the everyN gate, got %v — the next interval of whole-server backups would be skipped", ts)
+			}
+		})
+	}
+}
+
+// TestLastEverythingPassCountsACompletedPassAfterAReap pins that the fix is
+// narrow: excluding abandoned rows must not exclude the completed pass that
+// follows one. A reboot mid-pass, then the catch-up pass that actually runs to
+// its own end — the gate measures the second, not the first.
+func TestLastEverythingPassCountsACompletedPassAfterAReap(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	if _, err := r.StartRun(store.EverythingTargetID, "backup"); err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	if _, err := r.ReapInterruptedRuns(); err != nil {
+		t.Fatalf("ReapInterruptedRuns: %v", err)
+	}
+
+	id, err := r.StartRun(store.EverythingTargetID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	if err := r.FinishRun(id, "failed", "", 0, "flash: not mounted"); err != nil {
+		t.Fatal(err)
+	}
+
+	ts, err := r.LastEverythingPass()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts.IsZero() {
+		t.Fatal("a pass that ran to completion must satisfy the gate even when an item failed, and even when an abandoned run precedes it")
+	}
+}
+
 // TestLastSuccessfulConfigBackupAndCounts verifies the config self-backup domain
 // helpers: a run tagged with the reserved ConfigTargetID satisfies the config
 // everyN due-gate and is attributed to the "config" domain by RunCounts.

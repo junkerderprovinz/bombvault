@@ -497,6 +497,55 @@ func TestUpgradeFromPreMergeBranchDatabase(t *testing.T) {
 
 // tableDDL returns a table's columns with the details a plain name:type
 // comparison would miss (nullability, default, primary key).
+// TestRunsCompletedBackfill covers the one-off reconstruction v93 has to do for
+// rows written before runs.completed existed: they carry no structural signal, so
+// the backfill reads the reap marker instead. A run FinishRun concluded must come
+// out completed (or every existing installation is granted one extra whole-server
+// pass), and a run ReapInterruptedRuns closed out must not (or the abandoned pass
+// keeps shutting the everyN gate for a whole interval, which is the defect v93
+// exists to close).
+func TestRunsCompletedBackfill(t *testing.T) {
+	db := OpenMem(t)
+	applyThrough(t, db, 92)
+
+	if hasColumn(t, db, "runs", "completed") {
+		t.Fatal("seed must predate runs.completed")
+	}
+	if _, err := db.Exec(`
+		INSERT INTO runs (id, target_id, kind, status, started_at, finished_at, error) VALUES
+		  ('concluded', 'everything', 'backup', 'failed',  1700000000, 1700003600, 'flash: not mounted'),
+		  ('clean',     'everything', 'backup', 'success', 1700000000, 1700003600, NULL),
+		  ('reaped',    'everything', 'backup', 'failed',  1700000000, 1700003600, 'interrupted (BombVault restarted mid-run)'),
+		  ('running',   'everything', 'backup', 'running', 1700000000, NULL,       NULL)`,
+	); err != nil {
+		t.Fatalf("seed runs: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("upgrade: %v", err)
+	}
+
+	want := map[string]int{"concluded": 1, "clean": 1, "reaped": 0, "running": 0}
+	for id, w := range want {
+		var got int
+		if err := db.QueryRow(`SELECT completed FROM runs WHERE id = ?`, id).Scan(&got); err != nil {
+			t.Fatalf("read %s: %v", id, err)
+		}
+		if got != w {
+			t.Fatalf("run %q: completed = %d, want %d", id, got, w)
+		}
+	}
+
+	// And the gate reads the backfill, not the reap stamp.
+	ts, err := New(db).LastEverythingPass()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts.IsZero() {
+		t.Fatal("the concluded pass must still satisfy the everyN gate after the upgrade")
+	}
+}
+
 func tableDDL(t *testing.T, db *sql.DB, table string) string {
 	t.Helper()
 	rows, err := db.Query(`SELECT name, type, "notnull", ifnull(dflt_value, ''), pk FROM pragma_table_info(?) ORDER BY name`, table)

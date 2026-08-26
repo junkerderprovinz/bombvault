@@ -1165,6 +1165,37 @@ CREATE TABLE IF NOT EXISTS schedule_job_runs (
 );
 CREATE INDEX IF NOT EXISTS idx_runs_group ON runs(group_id);`,
 	},
+	{
+		// "This run reached its own conclusion", as a structural fact rather than
+		// an inference. finished_at does not carry it: ReapInterruptedRuns (global,
+		// unconditional, every startup) and FailRunningRun (the panic path) both
+		// stamp finished_at on a run that NEVER completed, purely to close out a row
+		// a dead process left 'running'.
+		//
+		// LastEverythingPass is where that bites. It deliberately does not filter on
+		// status = 'success' (a whole-server pass with one persistently failing item
+		// must still count, or it runs every night instead of every N days), so
+		// without this column a reboot 40 minutes into a nightly pass leaves a
+		// finished_at the everyN gate reads as "the pass ran" — and the anacron
+		// catch-up reads the same way, since the stamp lies after the missed fire.
+		// A whole interval of whole-server backups, skipped silently.
+		//
+		// Written by FinishRun alone, which is what makes it fail SAFE: a writer
+		// that closes a row without concluding it — the two above, and any added
+		// later — leaves the DEFAULT 0 and the gate opens, instead of every future
+		// writer having to remember to mark itself.
+		//
+		// The backfill is the only place the reap marker string is matched, and only
+		// because rows written before this column existed carry no structural signal
+		// at all. It keeps the upgrade behaviour-preserving rather than granting
+		// every installation one extra whole-server pass.
+		version: 93, name: "runs_completed",
+		sql: `
+ALTER TABLE runs ADD COLUMN completed INTEGER NOT NULL DEFAULT 0;
+UPDATE runs SET completed = 1
+ WHERE finished_at IS NOT NULL
+   AND (error IS NULL OR error <> 'interrupted (BombVault restarted mid-run)');`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
