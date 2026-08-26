@@ -68,13 +68,96 @@ func buildSettingsView(s store.Settings) settingsView {
 	return v
 }
 
+// redactedLocationMarker replaces the "user:pass@" userinfo of a repo location on
+// the plain export path (scrubRepoLocation). The import recognises it, so a
+// location that arrives redacted can never overwrite a working one
+// (importedLocation).
+const redactedLocationMarker = "[redacted]@"
+
+// scrubRepoLocation strips a URL-embedded credential out of a restic repo
+// location, leaving the location itself — scheme, host, bucket, path — intact.
+//
+// It reuses credentialRe (handlers.go), the SAME userinfo pattern the error
+// scrubber matches on, rather than growing a second pattern that would drift
+// from it. What it deliberately does NOT reuse is scrubSecrets: that runs
+// absPathRe first, and a repo location IS a path-shaped string, so the whole
+// location would come out as "[path]" and the export would name no destination
+// at all. Only the credential half applies here.
+//
+// A location is not itself a secret — which bucket a box replicates to is the
+// portable part of a settings file — but it can CARRY one: restic accepts
+// rest:https://user:pass@host:8000/repo, and s3:, sftp: and b2: locations take
+// the same userinfo syntax (the generated recovery kit documents it in so many
+// words). Emitting one verbatim would have put a live password in a file that
+// any host on the LAN can fetch in trusted-LAN mode.
+func scrubRepoLocation(loc string) string {
+	return credentialRe.ReplaceAllString(loc, redactedLocationMarker)
+}
+
+// locationRedacted reports whether a repo location reached the import with its
+// embedded credential already stripped by a plain export.
+func locationRedacted(loc string) bool {
+	return strings.Contains(loc, redactedLocationMarker)
+}
+
+// redactExportLocations strips URL-embedded credentials out of every repo
+// location the envelope carries: the five per-domain off-site locations in the
+// settings block and each off-site target's repo.
+//
+// Applied to the PLAIN export only. The credentialed variant already hands out
+// every stored secret in the clear behind requireAuthForSecrets, so scrubbing
+// there would leave the one export that is meant to be a complete, portable copy
+// as the only one that is not.
+func redactExportLocations(exp *settingsExport) {
+	exp.Settings.ContainersOffsite = scrubRepoLocation(exp.Settings.ContainersOffsite)
+	exp.Settings.VMsOffsite = scrubRepoLocation(exp.Settings.VMsOffsite)
+	exp.Settings.FlashOffsite = scrubRepoLocation(exp.Settings.FlashOffsite)
+	exp.Settings.ConfigOffsite = scrubRepoLocation(exp.Settings.ConfigOffsite)
+	exp.Settings.FilesOffsite = scrubRepoLocation(exp.Settings.FilesOffsite)
+	for i := range exp.OffsiteTargets {
+		exp.OffsiteTargets[i].Repo = scrubRepoLocation(exp.OffsiteTargets[i].Repo)
+	}
+}
+
+// redactedLocations names the repo-location slots in a file whose credential the
+// exporting instance stripped, for the log line an apply writes.
+func redactedLocations(exp settingsExport) []string {
+	var out []string
+	for _, f := range []struct{ name, loc string }{
+		{"containersOffsite", exp.Settings.ContainersOffsite},
+		{"vmsOffsite", exp.Settings.VMsOffsite},
+		{"flashOffsite", exp.Settings.FlashOffsite},
+		{"configOffsite", exp.Settings.ConfigOffsite},
+		{"filesOffsite", exp.Settings.FilesOffsite},
+	} {
+		if locationRedacted(f.loc) {
+			out = append(out, f.name)
+		}
+	}
+	for _, tv := range exp.OffsiteTargets {
+		if !locationRedacted(tv.Repo) {
+			continue
+		}
+		name := strings.TrimSpace(tv.Name)
+		if name == "" {
+			name = strings.TrimSpace(tv.ID)
+		}
+		out = append(out, "off-site target "+name)
+	}
+	return out
+}
+
 // handleExportSettings streams the portable settings/off-site/credentials envelope
 // as a downloadable JSON attachment. GET /api/settings/export?includeCredentials=
 // true|false (default false). The body is never logged.
 //
-// The plain export carries no secrets (toView blanks the tokens, buildSettingsView
-// drops the registry-auth list), so it is served behind the session authGate like
-// every other /api route.
+// The plain export carries no secret: toView blanks the metrics/widget tokens,
+// buildSettingsView drops the registry-auth list and the hook commands, and
+// redactExportLocations strips the "user:pass@" a repo location can carry inside
+// its own URL. That last one is the reason this comment used to be wrong — a
+// location was emitted verbatim, and a rest:/s3:/sftp:/b2: location is allowed to
+// hold a live password. With all three closed the plain file is served behind the
+// session authGate like every other /api route.
 //
 // The CREDENTIALED export is a different animal: it hands out the decrypted S3
 // keys, the restic-REST password, the WHOLE rclone config, the SMTP password and
@@ -115,6 +198,10 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		exp.Credentials = creds
+	} else {
+		// No credentials block — so the file must not smuggle one out inside a
+		// repo URL either.
+		redactExportLocations(&exp)
 	}
 
 	body, err := json.MarshalIndent(exp, "", "  ")
@@ -380,6 +467,15 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 			"Enter it under Settings > Schedules > Backup Everything if you want it here.")
 	}
 
+	// Same deal for a location whose credential the exporting instance stripped:
+	// say so, because the operator is the only one who can put the password back.
+	if slots := redactedLocations(exp); len(slots) > 0 {
+		log.Printf("api: settings import: these repo locations arrived with their embedded credential removed (%s) — "+
+			"a plain export never writes a password into a URL. Where this instance already has a location it is KEPT; "+
+			"anywhere else the location lands with the marker still in it. Re-enter the credential in the repo URL, "+
+			"or export again with credentials included.", strings.Join(slots, ", "))
+	}
+
 	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		*cur = mergeImportedSettings(*cur, exp.Settings)
 		return nil
@@ -427,6 +523,13 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
 	if err != nil {
 		return err
 	}
+	// Remember each row's location BEFORE the rows are dropped: a location the
+	// file carries redacted must not overwrite the working one this instance
+	// already has for that id (see importedLocation).
+	currentRepo := make(map[string]string, len(current))
+	for _, t := range current {
+		currentRepo[t.ID] = t.Repo
+	}
 	for _, t := range current {
 		if err := h.store.DeleteOffsiteTarget(t.ID); err != nil {
 			return err
@@ -436,11 +539,36 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
 		t := tv.toStoreTarget()
 		t.ID = strings.TrimSpace(tv.ID) // preserve the exported id (empty → store mints one)
 		t.CreatedAt = tv.CreatedAt      // preserve the exported timestamp (0 → store stamps now)
+		t.Repo = importedLocation(currentRepo[t.ID], t.Repo)
 		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// importedLocation picks the repo location an apply writes into one slot: the
+// file's, unless that one arrived redacted (a plain export from an instance whose
+// location carried a credential) AND this instance already has a location there —
+// then the working one stays.
+//
+// Writing "rest:https://[redacted]@host:8000/repo" over a location that works
+// would turn importing a settings file into breaking the off-site replication the
+// target instance already had running, and it would do it quietly: nothing else in
+// the file says a credential was removed. Keeping what is there is the harmless
+// direction, the same one mergeImportedSettings takes for the hook commands and
+// the credential blobs; applyImport logs which slots it applied to.
+//
+// A slot this instance has NOTHING in keeps the redacted value instead of being
+// left empty. That is deliberate: the marker is visible in Settings and the next
+// run fails against a location an operator can repair by typing the password back
+// in, whereas a silently blank off-site location is a box that just stops
+// replicating and says nothing.
+func importedLocation(existing, imported string) string {
+	if locationRedacted(imported) && strings.TrimSpace(existing) != "" {
+		return existing
+	}
+	return imported
 }
 
 // applyImportedCredentials re-encrypts and stores each non-empty credential kind
@@ -511,11 +639,13 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.ConfigPath = v.ConfigPath
 	out.FilesPath = v.FilesPath
 	out.RestoreFolder = v.RestoreFolder
-	out.ContainersOffsite = v.ContainersOffsite
-	out.VMsOffsite = v.VMsOffsite
-	out.FlashOffsite = v.FlashOffsite
-	out.ConfigOffsite = v.ConfigOffsite
-	out.FilesOffsite = v.FilesOffsite
+	// Off-site locations, via importedLocation: a location the plain export
+	// stripped a credential out of never overwrites a working one here.
+	out.ContainersOffsite = importedLocation(existing.ContainersOffsite, v.ContainersOffsite)
+	out.VMsOffsite = importedLocation(existing.VMsOffsite, v.VMsOffsite)
+	out.FlashOffsite = importedLocation(existing.FlashOffsite, v.FlashOffsite)
+	out.ConfigOffsite = importedLocation(existing.ConfigOffsite, v.ConfigOffsite)
+	out.FilesOffsite = importedLocation(existing.FilesOffsite, v.FilesOffsite)
 	out.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
 	out.VMsOffsiteSchedule = v.VMsOffsiteSchedule
 	out.FlashOffsiteSchedule = v.FlashOffsiteSchedule
