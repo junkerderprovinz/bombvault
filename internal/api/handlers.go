@@ -1649,9 +1649,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Preserve fields that are NOT part of the settings form — they are managed
-	// by their own endpoints/flows (auth password) or are encrypted secrets
-	// (rclone config). Without this, every settings save would wipe them.
+	// A pre-transaction snapshot, used ONLY to spot the VMs OFF→ON transition
+	// below. Nothing that gets written back may be read from here: by the time
+	// the write runs this snapshot can be minutes old (the SSH test in between
+	// can burn its whole timeout), so anything preserved from it would revert a
+	// change another save made meanwhile. Preserving happens inside the
+	// transaction, against the current row.
 	existing, err := h.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -1672,30 +1675,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Registry credentials (#106): nil = field absent (an old client) → keep the
-	// stored encrypted blob unchanged; a present list REPLACES the stored one,
-	// with blank tokens filled from storage per host (mergeRegistryAuths). The
-	// re-encryption happens out here because it can fail with two DIFFERENT
-	// user-facing shapes; the write below applies the result.
-	var registryAuths string
-	if v.RegistryAuths != nil {
-		stored, dErr := h.svc.decodeRegistryAuths(existing)
-		if dErr != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(dErr))
-			return
-		}
-		merged, mErr := mergeRegistryAuths(v.RegistryAuths, stored)
-		if mErr != nil {
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": mErr.Error()})
-			return
-		}
-		blob, eErr := h.svc.EncodeRegistryAuths(merged)
-		if eErr != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(eErr))
-			return
-		}
-		registryAuths = blob
-	}
+	// mergeRegistryAuths (called inside the transaction below) rejects malformed
+	// input with a message the client must get VERBATIM — a rejected registry
+	// host legitimately contains "/", which failEnvelope's path scrubber would
+	// mangle into "[path]". Carried out of the callback so that one shape
+	// survives while every other failure keeps going through failEnvelope.
+	var registryInputErr error
 
 	// Write the form's OWN fields onto the CURRENT row, one assignment each —
 	// never `*cur = store.Settings{…}`. A whole-struct literal writes every
@@ -1797,12 +1782,36 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		if t := strings.TrimSpace(v.FleetToken); t != "" {
 			cur.FleetToken = t
 		}
-		// nil = the field was absent (an old client) → keep the stored blob.
+		// Registry credentials (#106): nil = the field was absent (an old client)
+		// → keep the stored blob. A present list REPLACES it, with a blank token
+		// per host filled from the stored one — resolved HERE, against `cur`, for
+		// exactly the reason the three tokens above are: the GET never echoes a
+		// token, so EVERY tab's baseline submits blanks for the stored hosts, and
+		// resolving them against the pre-transaction snapshot would revert a token
+		// rotated by a save that landed meanwhile — even a save that only touched
+		// an unrelated card. decode/encode touch no store, so both are safe here.
 		if v.RegistryAuths != nil {
-			cur.RegistryAuths = registryAuths
+			stored, dErr := h.svc.decodeRegistryAuths(*cur)
+			if dErr != nil {
+				return dErr
+			}
+			merged, mErr := mergeRegistryAuths(v.RegistryAuths, stored)
+			if mErr != nil {
+				registryInputErr = mErr
+				return mErr
+			}
+			blob, eErr := h.svc.EncodeRegistryAuths(merged)
+			if eErr != nil {
+				return eErr
+			}
+			cur.RegistryAuths = blob
 		}
 		return nil
 	})
+	if registryInputErr != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": registryInputErr.Error()})
+		return
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
