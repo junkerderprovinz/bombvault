@@ -5279,7 +5279,13 @@ function RestoreChecksSection({
 // `ScheduleRow` above the well is also new here: every other cadence editor
 // in the app renders one (ScheduleBadge.tsx's own doc says so), and this was
 // the only one that did not.
-function EverythingSection({
+//
+// Exported for Settings.everythingCard.dom.test.tsx only — the same reason
+// ThemeCard/AccentCard/LanguageCard are (see their own tests): the manual
+// trigger fires a real, cross-domain backup orchestration, so its wiring is
+// pinned against a MOCKED api client rather than by clicking it on a live
+// box. Not routed and not used anywhere else.
+export function EverythingSection({
   settings,
   update,
   t,
