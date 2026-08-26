@@ -42,6 +42,15 @@ function formatTs(unix: number | null | undefined): string {
   return new Date(unix * 1000).toLocaleString();
 }
 
+// formatSnapshotWhen renders a snapshot's RFC3339 timestamp for the exclusion
+// assistant's source line. The date is load-bearing there: it is what turns
+// "sizes as of the last backup" from a misleading number into an honest one.
+// An unparseable value falls back to the raw string rather than "Invalid Date".
+function formatSnapshotWhen(rfc3339: string): string {
+  const d = new Date(rfc3339);
+  return Number.isNaN(d.getTime()) ? rfc3339 : d.toLocaleString();
+}
+
 // ---------------------------------------------------------------------------
 // State chip — stateTone maps a raw container state to the shared Badge's
 // tone; stateLabel (lib/i18n) still does the actual state->text translation.
@@ -1110,7 +1119,7 @@ function StopContainersEditor({
 type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean };
 
 // `open` is controlled by the caller — see HooksEditor's own comment.
-function ExcludesEditor({ name, initial, open, t }: { name: string; initial: string[]; open: boolean; t: T }) {
+export function ExcludesEditor({ name, initial, open, t }: { name: string; initial: string[]; open: boolean; t: T }) {
   const [text, setText] = useState(initial.join("\n"));
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
@@ -1188,6 +1197,16 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
   const [scanning, setScanning] = useState(false);
   const [suggestions, setSuggestions] = useState<ExcludeSuggestion[] | null>(null); // null = not scanned yet
   const [truncated, setTruncated] = useState(false);
+  // Where the sizes came from, and the promise that goes with them (#175): the
+  // snapshot source is exact but AS OF snapshotTime, which is why the timestamp
+  // is rendered next to the list rather than treated as optional polish; the
+  // live source is as of now but can stop early, inside stoppedAt.
+  const [source, setSource] = useState<"snapshot" | "live">("live");
+  const [snapshotTime, setSnapshotTime] = useState("");
+  const [stoppedAt, setStoppedAt] = useState("");
+  // The backup index could not be read. Not a failed scan: the panel stays up
+  // and offers the folder scan as an explicit second request.
+  const [indexFailed, setIndexFailed] = useState(false);
   // Distinguishes "scanned, found nothing" from "the scan itself failed" for the
   // "nothing found" hint below — the failure TEXT itself no longer lives here
   // (see scan()'s own comment), just the fact of it.
@@ -1201,14 +1220,19 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
   // save/test button here. `truncated` (rendered below) stays inline: it is a
   // persistent fact ABOUT the current suggestion list ("this list was cut
   // short"), not a completion notice of the scan action itself.
-  async function scan() {
+  async function scan(live = false) {
     setScanning(true);
     setScanFailed(false);
+    setIndexFailed(false);
     try {
-      const r = await suggestContainerExcludes(name);
+      const r = await suggestContainerExcludes(name, live ? "live" : undefined);
       if (r.ok) {
         setSuggestions(r.suggestions);
         setTruncated(r.truncated);
+        setSource(r.source ?? "live");
+        setSnapshotTime(r.snapshotTime ?? "");
+        setStoppedAt(r.stoppedAt ?? "");
+        setIndexFailed(r.indexFailed === true);
       } else {
         setSuggestions([]);
         setScanFailed(true);
@@ -1341,10 +1365,27 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
                     : t("excludes.assistRescan")}
               </button>
               {truncated && !scanning && (
-                <span className="text-xs text-statusWarn">{t("excludes.assistTruncated")}</span>
+                // Stays inline and stays a separate line from the per-row size
+                // flags below: a folder the walk never reached has no row at
+                // all, so "the rest was not examined" is a claim no per-row flag
+                // can make. It now names WHERE the list ends (#175).
+                <span className="text-xs text-statusWarn">
+                  {t("excludes.assistTruncated").replace("{path}", stoppedAt)}
+                </span>
               )}
             </div>
-            {!scanning && suggestions !== null && !scanFailed && openSuggestions.length === 0 && (
+            {!scanning && indexFailed && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-statusWarn">{t("excludes.assistIndexFailed")}</span>
+                <button
+                  onClick={() => void scan(true)}
+                  className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+                >
+                  {t("excludes.assistScanLive")}
+                </button>
+              </div>
+            )}
+            {!scanning && suggestions !== null && !scanFailed && !indexFailed && openSuggestions.length === 0 && (
               <p className="text-xs text-carbon-textMuted">{t("excludes.assistNothingFound")}</p>
             )}
             {!scanning && openSuggestions.length > 0 && (
@@ -1371,7 +1412,19 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
                     >
                       {sg.reason === "large" ? t("excludes.assistReasonLarge") : t("excludes.assistReasonCache")}
                     </span>
-                    <span className="text-xs text-carbon-textSub whitespace-nowrap">{humanBytes(sg.sizeBytes)}</span>
+                    {/* #175: a size the scan could not finish measuring is a
+                        MINIMUM, and says so. Rendering it as a plain number is
+                        what showed a 55 GB folder as "5.7 GB". */}
+                    {sg.complete ? (
+                      <span className="text-xs text-carbon-textSub whitespace-nowrap">{humanBytes(sg.sizeBytes)}</span>
+                    ) : (
+                      <span
+                        title={t("excludes.assistSizeMinimumTip")}
+                        className="text-xs text-carbon-textMuted whitespace-nowrap"
+                      >
+                        {t("excludes.assistSizeAtLeast").replace("{size}", humanBytes(sg.sizeBytes))}
+                      </span>
+                    )}
                     <button
                       onClick={() => void addExclude(sg.line)}
                       disabled={state === "saving"}
@@ -1382,6 +1435,17 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
                   </div>
                 ))}
               </div>
+            )}
+            {/* Where the numbers come from. Required, not decoration: a
+                snapshot size is exact but AS OF that backup, so a cache that
+                has grown tenfold since reads at its old size — stating the date
+                is the whole reason that is honest rather than misleading. */}
+            {!scanning && suggestions !== null && !scanFailed && !indexFailed && (
+              <p className="text-xs text-carbon-textMuted">
+                {source === "snapshot"
+                  ? t("excludes.assistSourceSnapshot").replace("{when}", formatSnapshotWhen(snapshotTime))
+                  : t("excludes.assistSourceLive")}
+              </p>
             )}
             <p className="text-xs text-carbon-textSub">{t("excludes.assistCurrent")}</p>
             {currentLines.length === 0 ? (

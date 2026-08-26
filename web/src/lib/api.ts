@@ -1002,26 +1002,48 @@ export function previewContainerExcludes(
 /** One exclusion-assistant scan candidate: a directory in this container's
  *  backup worth excluding. `path` is relative to the backed-up folder (display),
  *  `line` is the ready-to-store exclude line (container path when a mount covers
- *  it), `reason` says why it surfaced. */
+ *  it), `reason` says why it surfaced.
+ *
+ *  `complete` says whether `sizeBytes` is the folder's real total or only a
+ *  LOWER BOUND: false means the scan stopped inside this folder. A false flag
+ *  must never be rendered as a plain size (#175 — a folder that backs up 55 GB
+ *  was shown as a flat "5.7 GB"). Always true on the snapshot source. */
 export interface ExcludeSuggestion {
   path: string;
   line: string;
   sizeBytes: number;
   reason: "known-cache" | "large";
+  complete: boolean;
 }
 
 /**
- * GET /api/containers/{name}/excludes/suggest — the exclusion assistant's scan:
- * walks the container's backed-up folders server-side and returns exclude
- * candidates (well-known junk dirs like cache/tmp/logs by name, plus any
- * directory over the size threshold), biggest first, capped. Depth- and
- * time-bounded; `truncated` means the time budget ran out and the list is
- * partial. Read-only — picked lines are stored via setContainerExcludes.
+ * GET /api/containers/{name}/excludes/suggest — the exclusion assistant's scan.
+ * Returns exclude candidates (well-known junk dirs like cache/tmp/logs by name,
+ * plus any directory over the size threshold), biggest first, capped.
+ *
+ * By default the sizes come from the container's newest local backup
+ * (`source: "snapshot"`, exact but as of `snapshotTime`); a container with no
+ * backup yet falls through to a live folder scan (`source: "live"`), which is
+ * time-bounded — `truncated` then means the budget ran out inside `stoppedAt`
+ * and the folders after it were never examined. `indexFailed` means the backup
+ * index could not be read; pass `source: "live"` to scan the folders instead.
+ * Read-only — picked lines are stored via setContainerExcludes.
  */
 export function suggestContainerExcludes(
-  name: string
-): Promise<{ ok: boolean; error?: string; suggestions: ExcludeSuggestion[]; truncated: boolean }> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest`);
+  name: string,
+  source?: "live"
+): Promise<{
+  ok: boolean;
+  error?: string;
+  suggestions: ExcludeSuggestion[];
+  truncated: boolean;
+  source?: "snapshot" | "live";
+  snapshotTime?: string;
+  stoppedAt?: string;
+  indexFailed?: boolean;
+}> {
+  const q = source ? `?source=${source}` : "";
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest${q}`);
 }
 
 /**

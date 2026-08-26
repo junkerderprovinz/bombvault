@@ -202,6 +202,18 @@ func (f *foreignRecordingEngine) Ls(_ context.Context, _, _ string, m restic.Mod
 	return f.lsEntries, nil
 }
 
+// LsStream is Ls in streaming form (the exclusion assistant's snapshot feeder):
+// same recorded lsEntries, handed over one at a time. A READ of the source repo,
+// so it is allowed here for the same reason Ls is.
+func (f *foreignRecordingEngine) LsStream(_ context.Context, _, _ string, m restic.Mode, onEntry func(restic.FileEntry)) error {
+	f.record("LsStream")
+	f.recordMode(m)
+	for _, e := range f.lsEntries {
+		onEntry(e)
+	}
+	return nil
+}
+
 // LsPath backs healRestoreDirOwnership's read of a remapped restore
 // directory's own recorded owner/mode. lsPathEntries/lsPathErr let a test fix
 // the response; lsPathCalls records the dirPath argument of every call, in

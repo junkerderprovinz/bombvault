@@ -1002,6 +1002,76 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 	return out.Bytes(), nil
 }
 
+// streamLines is scanLines without the accumulating buffer: it runs cmd with
+// stdout piped and invokes onLine for every complete line, keeping NOTHING.
+// scanLines' `out bytes.Buffer` exists so a trailing summary line can be parsed
+// after the fact; a listing has no summary line and its output is unbounded, so
+// retaining it is pure cost. See LsStream's doc comment for the measured
+// numbers that made this its own helper rather than a scanLines call.
+func streamLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) error {
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("restic %s: stdout pipe: %w", subcommand(args), err)
+	}
+	if err := cmd.Start(); err != nil {
+		return runError(args, stderr.String())
+	}
+	sc := bufio.NewScanner(stdout)
+	// One node object per line; a node embeds its full path, which can be very
+	// long. Same 16 MiB ceiling scanLines uses, for the same reason.
+	sc.Buffer(make([]byte, 0, 64*1024), 16<<20)
+	for sc.Scan() {
+		onLine(sc.Bytes())
+	}
+	if scErr := sc.Err(); scErr != nil {
+		log.Printf("restic %s: stdout scan: %v", subcommand(args), scErr)
+		// Drain the rest of stdout so restic doesn't block writing to a full pipe,
+		// which would hang cmd.Wait below.
+		_, _ = io.Copy(io.Discard, stdout)
+	}
+	if err := cmd.Wait(); err != nil {
+		return runError(args, stderr.String())
+	}
+	return nil
+}
+
+// LsStream lists a snapshot's nodes like Ls, but hands each FileEntry to
+// onEntry as the line is read and retains none of them.
+//
+// Do NOT "simplify" this back onto Ls. Ls buffers restic's ENTIRE stdout and
+// parseFileEntries then bytes.Splits that buffer into one slice header per
+// node: measured on a 672k-node snapshot that is 1355 MiB retained heap and
+// 1610 MiB of churn, inside a container that typically runs under a memory cap.
+// This streaming form measured 1 to 3 MiB retained on the same snapshot.
+// Nothing in the type system prevents the collapse, so the reason lives here.
+//
+// onEntry is called on the reading goroutine, in restic's own emission order
+// (a depth-first walk of the snapshot tree). The leading snapshot-metadata
+// line and any non-node line are skipped, exactly as parseFileEntries does.
+func (r Restic) LsStream(ctx context.Context, repo, snapshotID string, m Mode, onEntry func(FileEntry)) error {
+	args := LsArgs(repo, snapshotID, m)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
+	configureProcGroup(cmd)
+	cmd.Env = r.authEnv(m)
+	err := streamLines(cmd, args, func(line []byte) {
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 {
+			return
+		}
+		var e FileEntry
+		if uErr := json.Unmarshal(line, &e); uErr != nil {
+			return // skip non-node lines (the snapshot-metadata header)
+		}
+		if e.Path == "" || e.Path == "/" {
+			return
+		}
+		onEntry(e)
+	})
+	return ctxCancelErr(ctx, args, err)
+}
+
 // runStreaming runs restic and scans its --json stdout line by line, forwarding
 // each "status" line's percent_done to the sink while still accumulating the
 // full output so a trailing summary line can be parsed afterwards.
