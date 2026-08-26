@@ -50,7 +50,7 @@ import { SHAPES, getShape, setShape, type Shape } from "../lib/shape";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, type MotionIntensity } from "../lib/motion";
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
-import { Flag, IconAdd, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose, IconCopy } from "../components/Sidebar";
+import { Flag, IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose, IconCopy } from "../components/Sidebar";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
 
 // GlimStone version this UI is built against — bump by hand whenever
@@ -5220,70 +5220,150 @@ function RestoreChecksSection({
 // sequence, bracketed by a global pre/post shell hook (the post-hook is the
 // dead-man's-switch ping point — see docs/superpowers/specs/
 // 2026-08-20-backup-everything-design.md). It does NOT gate or replace the
-// five domain schedules above, so the overlap warning below is always shown,
-// not conditionally computed (a static warning, not a live conflict
-// detector — see the design spec's Decision 1). The hook inputs mirror
-// Containers.tsx's HooksEditor field style (monospace, shell-command
-// placeholders); the manual trigger button mirrors Containers.tsx's
-// backupSelected()'s simple busy/409/error text pattern — this cross-domain
-// pass has no single existing SSE progress key to hook a live bar to, so a
-// plain started/error message is enough (per the plan).
+// five domain schedules above.
+//
+// Convention pass (this branch): this card arrived from main written against
+// the app as it looked BEFORE the settled UI conventions existed here, so
+// every one of them had to be applied after the merge. What changed, and why
+// — each is a rule someone will otherwise re-break:
+//
+//   * `hueIndex` — the Card had NONE, so its heading badge sat outside the
+//     rainbow entirely (flat accent in all three rainbow modes) and, because
+//     Card only emits `.glim-hue` when it HAS a hueIndex, so did every
+//     control inside it. It is the LAST Card on the Schedules tab, so it
+//     takes that tab's next `nextHue()` slot and no sibling Card's rainbow
+//     position moves. The same index is threaded into CadenceBuilder, exactly
+//     as the four domain sections above already do, so the TimePicker
+//     popover's selected hour/minute reads as part of this card's own
+//     coloured group instead of falling back to the flat accent.
+//
+//   * Both explanations moved into bubbles (rule 8, "explanations live in a
+//     bubble, not on the page"). `everythingHint` was a permanent grey <p>
+//     under the title and is now the Card's own `hint` — the same title-badge
+//     InfoBubble ~20 other Cards on this page already use. `everythingHooksHint`
+//     was a second permanent <p> above the hook fields and is now an
+//     InfoBubble on a real `hooks.title` group label, which also gives those
+//     two fields the visible heading they never had.
+//
+//   * The overlap warning is now CONDITIONAL instead of permanent. Its own
+//     text is "if BOTH are on, each domain runs twice" — which it asserted
+//     even with this cadence off, when nothing runs twice and there is
+//     nothing to warn about. Gated on the overlap being real it stops being a
+//     permanent explanation (which rule 8 would move into a bubble) and
+//     becomes the live conditional warning rule 8 explicitly keeps VISIBLE —
+//     the same shape as the tamper-schedule-inactive warning further down,
+//     whose markup it already mirrors. This is not the "smart live conflict
+//     detector" the design spec rejected: it is two `scheduleStatus()` reads
+//     over settings this component already holds, not a cadence-intersection
+//     calculation.
+//
+//   * The manual trigger is a flush-right square icon Badge, not a text
+//     button — the same conversion Flash's and Config's own backup-now
+//     buttons already received (63f53d5, f2bf15b): same IconBackupNow glyph,
+//     same `shape="square" size="icon" tone="active"` recipe, same
+//     `flex justify-end` wrapper, same tip priority (in-flight → label), and
+//     the same terminal-state migration — the started/409/error line that sat
+//     inline beside the button becomes a toast, because a 32px badge has no
+//     room for it. A failure also shakes the badge, per the system-wide "a
+//     failed action toasts AND shakes its button" rule.
+//
+//   * The hook inputs keep Containers.tsx's HooksEditor field style but spell
+//     their class list out at the call site instead of hiding it in an
+//     `inputCls` local. Not cosmetic: `control-reads-engine-tokens` reads
+//     `className` LITERALS and deliberately skips a bare identifier
+//     (lint-rules/README.md, "Known limits"), so behind that variable these
+//     two controls were invisible to the guard. They happened to be
+//     compliant, but nothing was checking — the exact condition the guards
+//     exist to end.
+//
+// `ScheduleRow` above the well is also new here: every other cadence editor
+// in the app renders one (ScheduleBadge.tsx's own doc says so), and this was
+// the only one that did not.
 function EverythingSection({
   settings,
   update,
   t,
+  hueIndex,
 }: {
   settings: Settings;
   update: (patch: Partial<Settings>) => void;
   t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
 }) {
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const { push } = useToast();
+  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
+  // failed action toasts AND shakes its button. `key={shake}` remounts the
+  // badge so the CSS animation restarts on a repeat failure.
+  const [shake, setShake] = useState(0);
+
+  // The overlap this card warns about is only real when THIS cadence is on
+  // AND at least one of the five domain cadences above is too — configSchedule
+  // included, since the pass ends with the self-backup.
+  const everythingOn = scheduleStatus(settings.everythingSchedule) !== "off";
+  const anyDomainOn = [
+    settings.containersSchedule,
+    settings.vmsSchedule,
+    settings.flashSchedule,
+    settings.filesSchedule,
+    settings.configSchedule,
+  ].some((s) => scheduleStatus(s) !== "off");
+  const overlapWarning = everythingOn && anyDomainOn;
 
   async function runNow() {
-    if (busy) return; // guard the in-flight window (button also disables)
+    if (busy) return; // guard the in-flight window (badge also disables)
     setBusy(true);
-    setMsg(null);
     try {
       const res = await backupEverythingNow();
       if (res.ok) {
-        setMsg(t("settings.everythingStarted"));
+        push(t("settings.everythingStarted"), "success");
       } else {
-        setMsg(res.error ?? t("settings.error"));
+        push(res.error ?? t("settings.error"), "fail");
+        setShake((n) => n + 1);
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setMsg(t("settings.everythingAlreadyRunning"));
+        push(t("settings.everythingAlreadyRunning"), "fail");
       } else {
-        setMsg(err instanceof Error ? err.message : t("settings.error"));
+        push(err instanceof Error ? err.message : t("settings.error"), "fail");
       }
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
   }
 
-  const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
-
   return (
-    <Card title={t("settings.everythingTitle")}>
-      <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.everythingHint")}</p>
+    <Card title={t("settings.everythingTitle")} hint={t("settings.everythingHint")} hueIndex={hueIndex}>
+      <ScheduleRow schedule={settings.everythingSchedule} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
           label={t("settings.everythingTitle")}
           value={settings.everythingSchedule}
           onChange={(v) => update({ everythingSchedule: v })}
+          hueIndex={hueIndex}
         />
-        {/* Static overlap warning — ALWAYS shown, not gated behind a computed
-            condition (unlike the tamper-schedule-inactive warning above it
-            mirrors the markup of): a "smart" live conflict detector was
-            explicitly rejected as v1 over-engineering in the design spec. */}
-        <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-          {t("settings.everythingOverlapWarning")}
-        </div>
+        {/* Conditional overlap warning — see this component's header for why
+            it is no longer permanent. Same markup as the tamper-schedule-
+            inactive warning further down: status amber on a plain readout
+            surface, which rule 5 keeps OUT of the accent/rainbow engine on
+            purpose (a status colour, not control chrome). */}
+        {overlapWarning && (
+          <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+            {t("settings.everythingOverlapWarning")}
+          </div>
+        )}
       </div>
       <div className="flex flex-col gap-2">
-        <p className="text-xs text-carbon-textMuted">{t("settings.everythingHooksHint")}</p>
+        {/* The group label these two fields never had, carrying the
+            what-do-these-do explanation as an InfoBubble instead of the
+            permanent paragraph that used to sit here. `hooks.title`
+            ("Backup hooks") is an EXISTING key, already translated in all 42
+            locales, so this adds no new i18n surface. */}
+        <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+          {t("hooks.title")}
+          <InfoBubble tip={t("settings.everythingHooksHint")} />
+        </span>
         <label className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
           <input
@@ -5291,7 +5371,7 @@ function EverythingSection({
             onChange={(e) => update({ everythingPreHook: e.target.value })}
             spellCheck={false}
             placeholder="echo starting"
-            className={inputCls}
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -5301,23 +5381,36 @@ function EverythingSection({
             onChange={(e) => update({ everythingPostHook: e.target.value })}
             spellCheck={false}
             placeholder="curl -fsS https://hc-ping.com/your-uuid"
-            className={inputCls}
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
           />
         </label>
       </div>
-      <div className="flex items-center gap-3 pt-1">
-        <button
+      {/* `justify-end` on the row rather than `ms-auto` on the badge: this
+          app's flush-right idiom is ms-auto only when the badge has a leading
+          sibling to push away from (Containers' BackupButton/ExportButton
+          pair), and there is none here — byte-identical to how Flash's and
+          Config's own backup-now cards do it. */}
+      <div className="flex justify-end">
+        <Badge
+          key={shake}
+          as="button"
+          shape="square"
+          size="icon"
+          tone="active"
+          tip={busy ? t("settings.everythingBusy") : t("settings.everythingRunNow")}
           onClick={() => void runNow()}
           disabled={busy}
-          className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
+          className={shake ? "glim-shake" : undefined}
         >
-          {t("settings.everythingRunNow")}
-        </button>
-        {(busy || msg) && (
-          <span className="text-xs text-carbon-textSub wrap-break-word">
-            {busy ? t("settings.everythingBusy") : msg}
-          </span>
-        )}
+          {busy ? (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
+            />
+          ) : (
+            <IconBackupNow />
+          )}
+        </Badge>
       </div>
     </Card>
   );
@@ -7171,15 +7264,20 @@ export function SettingsPage() {
 
           {/* Backup Everything (schedulesEverything): a 6th, independent pass over
               all five domains above + a manual trigger. See EverythingSection's
-              own doc comment for why the overlap warning is unconditional.
+              own doc comment for the convention pass this card needed after the
+              merge, the conditional overlap warning included.
                 `update={scheduleUpdate}` rather than the bare setSettings merge
               this shipped with on main: the Schedules tab has no Save button any
               more (jdp: cadences "sollen live gespeichert werden"), so a patch
               that only touched local state here would look saved and be lost on
               reload. scheduleUpdate keeps the same Partial<Settings> shape and
               debounces each key through the shared save(), which is what the
-              cadence editor and the two hook text inputs want. */}
-          <EverythingSection settings={settings} update={scheduleUpdate} t={t} />
+              cadence editor and the two hook text inputs want.
+                `hueIndex={nextHue()}` — this is the LAST Card on the tab, so it
+              appends a new rainbow position and shifts none of the ones above
+              it (see the counter's own doc for why no manual renumbering is
+              ever needed here). */}
+          <EverythingSection settings={settings} update={scheduleUpdate} t={t} hueIndex={nextHue()} />
 
           {/* No SaveBar: every field in this tab auto-saves — see scheduleField
               / autoSaveScheduleField. main's buildSchedulePatch() is gone. */}
