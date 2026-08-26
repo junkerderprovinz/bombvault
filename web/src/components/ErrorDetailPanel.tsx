@@ -22,12 +22,17 @@ import { Badge } from "./Badge";
 // (containers/vms/…), but a Run carries the SINGULAR domain tag
 // (container/vm/…, with flash/config/files identical in both) — so a filter
 // selection must be translated to the run shape before comparing (#126 note).
+// "everything" (the Backup Everything pseudo-domain) is spelled the same in
+// both vocabularies, like flash/config/files — the backend tags that pass's
+// PARENT run with store.EverythingTargetID and runTargetMaps maps it straight
+// to the "everything" domain, with no singular form to translate.
 const DOMAIN_SELECT_TO_RUN: Record<string, string> = {
   containers: "container",
   vms: "vm",
   flash: "flash",
   config: "config",
   files: "files",
+  everything: "everything",
 };
 
 interface ErrorGroup {
@@ -98,6 +103,8 @@ export function ErrorDetailPanel({
         return t("activityLog.domainConfig");
       case "files":
         return t("activityLog.domainFiles");
+      case "everything":
+        return t("activityLog.domainEverything");
       default:
         return d;
     }
@@ -232,6 +239,7 @@ export function ErrorDetailPanel({
             <option value="flash">{t("activityLog.domainFlash")}</option>
             <option value="config">{t("activityLog.domainConfig")}</option>
             <option value="files">{t("activityLog.domainFiles")}</option>
+            <option value="everything">{t("activityLog.domainEverything")}</option>
           </select>
           <select
             value={filterType}
