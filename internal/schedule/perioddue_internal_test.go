@@ -106,7 +106,7 @@ func TestEveryNDueFutureStampIsNotAFreeze(t *testing.T) {
 		t.Fatal("a last-run stamp from the FUTURE must read as \"never ran\" and let the pass through — " +
 			"otherwise the schedule is frozen permanently with nothing but a \"last run -78840h ago\" log line")
 	}
-	// PeriodDue delegates, so the receiver check inherits the same protection.
+	// Both gates share that guard, so the receiver check has the same protection.
 	if !PeriodDue(fromABrokenClock, now, 86400) {
 		t.Fatal("PeriodDue must inherit EveryNDue's future-stamp reading")
 	}

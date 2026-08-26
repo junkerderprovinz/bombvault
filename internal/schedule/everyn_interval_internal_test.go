@@ -64,6 +64,58 @@ func TestEveryNHoldsBeforeTheNthDay(t *testing.T) {
 	}
 }
 
+// TestEveryNSurvivesAPassThatCrossesMidnight is the half of the defect whole
+// calendar days did NOT remove. Counting days from the stamp only works for a
+// pass that finishes on the day it fired: a 23:30 fire that runs forty minutes
+// stamps 00:10 the next morning, the count is one day short from then on, the
+// 7th day's fire is skipped, and the fire that finally runs stamps later still —
+// the everyN+1 rhythm again, for the schedules whose fire sits late enough in
+// the evening to be the likeliest to have it.
+func TestEveryNSurvivesAPassThatCrossesMidnight(t *testing.T) {
+	finished := at(3, 0, 10)  // the 2nd's 23:30 fire, forty minutes long
+	nextFire := at(9, 23, 30) // the 7th day's fire
+
+	if days := calendarDaysBetween(finished, nextFire); days >= 7 {
+		t.Fatalf("precondition: the stamp must be one calendar day short of the interval (%d) — that is the trap being guarded", days)
+	}
+	if !EveryNDue(finished, nextFire, 7) {
+		t.Fatal("a pass that ran past midnight must not cost its schedule a day: the 7th day's fire must run, not the 8th's")
+	}
+	// "everyN 1" — the cadence the UI calls "daily at 23:30" — is the same case
+	// one interval down: it ran every SECOND night.
+	if !EveryNDue(finished, at(3, 23, 30), 1) {
+		t.Fatal("everyN 1 at 23:30 must run on the next night's trigger, not the one after it")
+	}
+	// …and the gate must still be a gate for that schedule: every fire before the
+	// 7th day is skipped.
+	for day := 3; day <= 8; day++ {
+		if EveryNDue(finished, at(day, 23, 30), 7) {
+			t.Fatalf("day %d fire ran: a 7-day 23:30 schedule must skip every trigger before the 7th day", day)
+		}
+	}
+}
+
+// TestMissedRunAsksTheGateAboutTheFire is the catch-up half of the same anchor.
+// The pass that produced the stamp fired on the 2nd at 23:30; the box boots on
+// the 9th at 08:00, so the last fire is the 8th's — six days on, not yet due,
+// nothing missed. Asked at the boot instant instead of at that fire, the gate
+// reads the seven days it will only reach at 23:30 tonight and the catch-up runs
+// a whole pass early, on every boot.
+func TestMissedRunAsksTheGateAboutTheFire(t *testing.T) {
+	cad := mustCadence(t, "everyN 7 23:30")
+	finished := at(3, 0, 10)
+
+	if lastFire, missed := missedRun(cad, finished, at(9, 8, 0)); missed {
+		t.Fatalf("the last fire (%s) is six days after the pass's own fire — nothing was missed yet",
+			lastFire.Format(time.RFC3339))
+	}
+	// The fire that IS seven days on must still be caught up when the box slept
+	// through it.
+	if _, missed := missedRun(cad, finished, at(10, 8, 0)); !missed {
+		t.Fatal("the 7th day's 23:30 fire was slept through and must be caught up")
+	}
+}
+
 // TestEveryNSurvivesSpringForward: a long pass is not the only way to lose an
 // hour. Europe/Berlin's spring-forward night is 23 hours long, so seven of them
 // are 167h — again short of the exact threshold, again a skipped fire, for a
