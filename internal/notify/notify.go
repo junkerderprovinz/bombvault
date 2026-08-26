@@ -171,11 +171,46 @@ type Config struct {
 // blob, so every path that unmarshals a Config reads it the same way: the stored
 // blob, and a settings-export file written by an older instance.
 func (c *Config) UnmarshalJSON(data []byte) error {
+	return c.decode(data, false)
+}
+
+// DecodeStrict decodes a Config the way a request decoder would if UnmarshalJSON
+// were not in the way: an UNKNOWN key is an error. The back-fill above is applied
+// exactly as on the lenient path, and an ABSENT known key stays fine — only a key
+// that matches no field is refused.
+//
+// The API decodes every POST body with json.Decoder.DisallowUnknownFields, which
+// is what catches client/server field-name drift on a blob the UI edits as a
+// whole. That check works one level at a time: encoding/json hands the entire
+// object to a type's own UnmarshalJSON and never looks inside it, so the moment
+// Config grew the back-fill above, /api/notify and /api/notify/test stopped
+// rejecting anything. A misspelled "webhookEnable" was then dropped in silence
+// and the back-fill, seeing a filled-in URL and no gate key, switched the channel
+// ON — turning a user's explicit off into an on. The strict decode belongs here,
+// on the type that owns the field names, rather than at the two call sites.
+//
+// The STORED blob keeps the lenient path on purpose: it may carry keys from a
+// build whose fields no longer exist, and refusing to load it would take the
+// whole notification config down over a leftover key.
+func (c *Config) DecodeStrict(data []byte) error {
+	return c.decode(data, true)
+}
+
+// decode is the shared body of UnmarshalJSON and DecodeStrict; strict rejects
+// unknown keys.
+func (c *Config) decode(data []byte, strict bool) error {
 	// A distinct type with the same fields and NO method set, so unmarshalling
-	// into it cannot recurse back into this function.
+	// into it cannot recurse back into this function — and, on the strict path,
+	// so the decoder sees the fields themselves instead of a custom unmarshaller.
 	type storedConfig Config
 	var out storedConfig
-	if err := json.Unmarshal(data, &out); err != nil {
+	if strict {
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&out); err != nil {
+			return err
+		}
+	} else if err := json.Unmarshal(data, &out); err != nil {
 		return err
 	}
 	// Second pass over the same bytes, reading only the three gates as pointers:

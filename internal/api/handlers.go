@@ -2187,6 +2187,25 @@ func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
 	}))
 }
 
+// decodeNotifyBody decodes a POSTed notify.Config with the unknown-field
+// rejection every other request body gets. It cannot go through decodeBody
+// alone: notify.Config has its own UnmarshalJSON (it back-fills the channel
+// gates), and encoding/json hands the whole object to that method, so
+// DisallowUnknownFields never reaches the fields and a misspelled key would be
+// dropped in silence. The body is taken raw here and decoded by
+// notify.Config.DecodeStrict, which owns the field names.
+func decodeNotifyBody(w http.ResponseWriter, r *http.Request, c *notify.Config) bool {
+	var raw json.RawMessage
+	if !decodeBody(w, r, &raw) {
+		return false
+	}
+	if err := c.DecodeStrict(raw); err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid request body"})
+		return false
+	}
+	return true
+}
+
 // fillNotifySecrets fills blank credential fields from the stored config. Because
 // handleGetNotify never ships the SMTP password / Matrix token to the browser, an
 // unchanged form re-submits them blank — blank therefore means "keep the stored one".
@@ -2211,7 +2230,7 @@ func (h *Handler) fillNotifySecrets(c notify.Config) notify.Config {
 // or Matrix token keeps the previously stored one. POST /api/notify
 func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	var c notify.Config
-	if !decodeBody(w, r, &c) {
+	if !decodeNotifyBody(w, r, &c) {
 		return
 	}
 	if err := h.svc.SetNotifyConfig(h.fillNotifySecrets(c)); err != nil {
@@ -2307,7 +2326,7 @@ func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request)
 // user can test the form before saving). POST /api/notify/test
 func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 	var c notify.Config
-	if !decodeBody(w, r, &c) {
+	if !decodeNotifyBody(w, r, &c) {
 		return
 	}
 	if err := h.svc.TestNotify(r.Context(), h.fillNotifySecrets(c)); err != nil {

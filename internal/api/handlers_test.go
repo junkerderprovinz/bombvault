@@ -1109,6 +1109,65 @@ func TestNotifyAppriseRoundTrip(t *testing.T) {
 	}
 }
 
+// TestNotifyRejectsUnknownField pins the strictness the test above depends on.
+// notify.Config carries its own UnmarshalJSON (it back-fills the channel gates
+// for a config stored before they existed), and encoding/json hands the whole
+// object to that method — so DisallowUnknownFields on the request decoder never
+// reaches the fields, and a misspelled key is silently dropped instead of
+// refused. Here that is not a cosmetic slip: "webhookEnable" is discarded, the
+// back-fill then reads the non-empty URL and switches the channel ON, and the
+// user's explicit off is inverted. Both POST routes take a notify.Config, so
+// both are checked.
+func TestNotifyRejectsUnknownField(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	const misspelled = `{
+		"on": "failure",
+		"webhookEnable": false,
+		"webhookUrl": "https://discord.com/api/webhooks/123/abc"
+	}`
+	for _, path := range []string{"/api/notify", "/api/notify/test"} {
+		w, m := doJSON(t, h, http.MethodPost, path, misspelled)
+		if w.Code == http.StatusOK && m["ok"] == true {
+			t.Fatalf("POST %s accepted an unknown field: status=%d body=%s", path, w.Code, w.Body.String())
+		}
+	}
+
+	// Nothing from the refused body may have reached the store.
+	w, m := doJSON(t, h, http.MethodGet, "/api/notify", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("get status=%d body=%s", w.Code, w.Body.String())
+	}
+	cfg, ok := m["notify"].(map[string]any)
+	if !ok {
+		t.Fatalf("notify config missing or not nested: %v", m)
+	}
+	if cfg["webhookUrl"] != "" {
+		t.Fatalf("a refused body was stored anyway: webhookUrl=%v", cfg["webhookUrl"])
+	}
+
+	// The other half of the contract: an ABSENT gate key is not unknown. It is a
+	// body from an older client, and it must still be accepted and back-filled.
+	w, m = doJSON(t, h, http.MethodPost, "/api/notify", `{
+		"on": "failure",
+		"webhookUrl": "https://discord.com/api/webhooks/123/abc"
+	}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("post status=%d body=%s", w.Code, w.Body.String())
+	}
+	w, m = doJSON(t, h, http.MethodGet, "/api/notify", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("get status=%d body=%s", w.Code, w.Body.String())
+	}
+	cfg, ok = m["notify"].(map[string]any)
+	if !ok {
+		t.Fatalf("notify config missing or not nested: %v", m)
+	}
+	if cfg["webhookEnabled"] != true {
+		t.Fatalf("an absent gate key must be back-filled from the filled-in URL: got %v", cfg["webhookEnabled"])
+	}
+}
+
 // TestStatsCarriesForecast pins the /api/stats payload extension: the response
 // always carries the "forecast" key (null when nothing could be determined —
 // here: no samples and no statfs-able repo dir), so the Storage card's future
