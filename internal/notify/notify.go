@@ -143,6 +143,64 @@ type Config struct {
 	NotifyOnUpdate bool `json:"notifyOnUpdate"`
 }
 
+// UnmarshalJSON decodes a stored notification config and BACK-FILLS the three
+// channel gates for a config written before those gates existed.
+//
+// WebhookEnabled / MatrixEnabled / AppriseEnabled are new. Before them the three
+// channels were gated by their fields alone: a webhook fired iff WebhookURL was
+// set, Matrix iff homeserver+token+room were set, Apprise iff AppriseURL was set.
+// The config is persisted as a JSON blob (encrypted, settings.notify_conf), so
+// every config written by an earlier build simply has no such key — and a plain
+// decode turns an absent key into Go's zero value, false. That silently switches
+// off failure alerting on the first start after an upgrade: the webhook that was
+// meant to tell the operator a backup failed stops firing, and the Settings page
+// renders the channel as if it had never been set up (the toggle is off, so its
+// URL fields are hidden), with no error, no log line and nothing to notice.
+//
+// An ABSENT key is not a user decision. It is a config from a build in which the
+// switch did not exist, and the truthful value for it is the rule that build
+// actually applied: on iff the channel was filled in. A key that IS present is
+// honoured exactly as written, so an explicit false — a user switching a channel
+// off while keeping its URL — survives every later load. Once the config is saved
+// again the keys are written explicitly and this back-fill no longer applies to
+// it. Nothing needs to be rewritten for it to take effect, which is why this is
+// a decode rule and not a database migration: the blob is encrypted with APP_KEY,
+// which the SQL migrations deliberately have no access to.
+//
+// It sits on the type rather than at the one call site that decodes the stored
+// blob, so every path that unmarshals a Config reads it the same way: the stored
+// blob, and a settings-export file written by an older instance.
+func (c *Config) UnmarshalJSON(data []byte) error {
+	// A distinct type with the same fields and NO method set, so unmarshalling
+	// into it cannot recurse back into this function.
+	type storedConfig Config
+	var out storedConfig
+	if err := json.Unmarshal(data, &out); err != nil {
+		return err
+	}
+	// Second pass over the same bytes, reading only the three gates as pointers:
+	// nil means the key was absent, which is the case this exists for.
+	var gates struct {
+		Webhook *bool `json:"webhookEnabled"`
+		Matrix  *bool `json:"matrixEnabled"`
+		Apprise *bool `json:"appriseEnabled"`
+	}
+	if err := json.Unmarshal(data, &gates); err != nil {
+		return err
+	}
+	if gates.Webhook == nil {
+		out.WebhookEnabled = out.WebhookURL != ""
+	}
+	if gates.Matrix == nil {
+		out.MatrixEnabled = out.MatrixHomeserver != "" && out.MatrixToken != "" && out.MatrixRoom != ""
+	}
+	if gates.Apprise == nil {
+		out.AppriseEnabled = out.AppriseURL != ""
+	}
+	*c = Config(out)
+	return nil
+}
+
 // Event is a completed backup, rendered into each channel's message.
 type Event struct {
 	Title   string
