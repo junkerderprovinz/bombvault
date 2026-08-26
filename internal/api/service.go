@@ -98,6 +98,12 @@ type ResticEngine interface {
 	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
+	// LsStream lists a snapshot's nodes like Ls but hands each entry to onEntry
+	// as it is read, retaining none of them. The exclusion assistant's
+	// snapshot-sized scan aggregates a whole appdata tree this way; Ls would
+	// buffer the entire listing (measured 1.36 GiB on a 672k-node snapshot) —
+	// see restic.LsStream's own doc comment.
+	LsStream(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
 	// LsPath lists one directory's own node plus its direct children, scoped to
 	// dirPath (a subtree root) — used to read back a restored directory's
 	// original owner/mode after a remapped restore, since restic's restorer
@@ -269,6 +275,14 @@ type Service struct {
 	// (design spec, decision 7).
 	everythingActive atomic.Bool
 
+	// suggestMu guards suggestCache, the exclusion assistant's snapshot-aggregate
+	// cache: ONE entry per container, keyed inside on (repo, snapshot id, resolved
+	// excludes), so a rescan is instant until the next backup writes a newer
+	// snapshot. One entry per container means the map is bounded by the container
+	// count — no eviction policy, no unbounded growth.
+	suggestMu    sync.Mutex
+	suggestCache map[string]suggestCacheEntry
+
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
 	// every replication while over budget); the latch clears when growth drops
@@ -347,6 +361,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		domainActivity:    map[string]string{},
 		runCancels:        map[string]context.CancelFunc{},
 		offsiteOverBudget: map[string]bool{},
+		suggestCache:      map[string]suggestCacheEntry{},
 	}
 }
 

@@ -33,8 +33,9 @@ func TestScanExcludeCandidatesKnownAndLarge(t *testing.T) {
 	writeSized(t, filepath.Join(root, "data", "deep", "blob.bin"), 2e3) // large by SIZE (attributed from depth 2)
 	writeSized(t, filepath.Join(root, "small", "f.bin"), 10)            // neither — must not appear
 
-	cands, truncated := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts())
-	if truncated {
+	sc := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts())
+	cands := sc.cands
+	if sc.truncated {
 		t.Fatal("scan should not be truncated")
 	}
 	// data (2000, large) sorts before Cache (10, known). small never qualifies.
@@ -71,7 +72,7 @@ func TestScanExcludeCandidatesSkipsExcluded(t *testing.T) {
 		"logs", // basename — matches at any depth, like restic
 		filepath.ToSlash(filepath.Join(root, "skipme")), // anchored absolute
 	}
-	cands, _ := scanExcludeCandidates(context.Background(), root, patterns, suggestTestOpts())
+	cands := scanExcludeCandidates(context.Background(), root, patterns, suggestTestOpts()).cands
 	// Excluded subtrees are pruned AND not counted: "app" holds only the pruned
 	// logs, so it stays under the threshold and must not qualify either.
 	if len(cands) != 1 || cands[0].rel != "keep" || cands[0].size != 2000 {
@@ -85,7 +86,7 @@ func TestScanExcludeCandidatesDepthBound(t *testing.T) {
 	// but its bytes surface through every ancestor within the bound.
 	writeSized(t, filepath.Join(root, "a", "b", "c", "d", "Cache", "f.bin"), 2e3)
 
-	cands, _ := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts())
+	cands := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts()).cands
 	rels := map[string]int64{}
 	for _, c := range cands {
 		rels[c.rel] = c.size
@@ -106,7 +107,7 @@ func TestScanExcludeCandidatesKnownSuppressesChildren(t *testing.T) {
 	// excluding Cache already covers it, so only Cache may be suggested.
 	writeSized(t, filepath.Join(root, "Cache", "sub", "big.bin"), 2e3)
 
-	cands, _ := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts())
+	cands := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts()).cands
 	if len(cands) != 1 || cands[0].rel != "Cache" || cands[0].size != 2000 || !cands[0].known {
 		t.Fatalf("expected only Cache(2000,known), got %+v", cands)
 	}
@@ -118,12 +119,17 @@ func TestScanExcludeCandidatesTimeBound(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // already expired — the walk must stop immediately and say so
-	cands, truncated := scanExcludeCandidates(ctx, root, nil, suggestTestOpts())
-	if !truncated {
+	sc := scanExcludeCandidates(ctx, root, nil, suggestTestOpts())
+	if !sc.truncated {
 		t.Fatal("expired context must report truncated=true")
 	}
-	if len(cands) != 0 {
-		t.Fatalf("expired context must return no candidates, got %+v", cands)
+	if len(sc.cands) != 0 {
+		t.Fatalf("expired context must return no candidates, got %+v", sc.cands)
+	}
+	// The walk never got past the root, so that is where it stopped — the UI's
+	// truncation banner names a place, and there is always one to name.
+	if sc.stoppedAt != filepath.ToSlash(root) {
+		t.Fatalf("stoppedAt = %q, want the root %q", sc.stoppedAt, filepath.ToSlash(root))
 	}
 }
 

@@ -3829,6 +3829,16 @@ type fakeResticEngine struct {
 	checkDataPct    []int    // subset percent of each CheckData call
 	checkDataErr    error    // returned by CheckData (drill outcome)
 	unlockErr       error
+	// Exclusion-assistant snapshot feeder (issue #175). lsStreamEntries is what
+	// LsStream emits node by node; lsStreamErr fails the FIRST call only (so a
+	// test can exercise the stale-lock self-heal exactly like lsErr does for Ls);
+	// lsStreamCalls counts calls (cache assertions); lsStreamHook, when set,
+	// REPLACES the default emission entirely — used to simulate a listing that
+	// outruns its time budget.
+	lsStreamEntries []restic.FileEntry
+	lsStreamErr     error
+	lsStreamCalls   int
+	lsStreamHook    func(ctx context.Context, onEntry func(restic.FileEntry)) error
 	statsCalls      []string // --mode value of each Stats call
 	statsErr        error
 	diffResult      restic.DiffResult // returned by Diff
@@ -4085,6 +4095,26 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 		return nil, e
 	}
 	return f.lsEntries, nil
+}
+
+// LsStream is the streaming listing the exclusion assistant's snapshot feeder
+// uses (issue #175). Backed by its OWN field for the same reason LsPath is:
+// many tests set lsEntries for unrelated file-restore assertions and must not
+// have those turn into phantom exclude suggestions.
+func (f *fakeResticEngine) LsStream(ctx context.Context, _, _ string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+	f.lsStreamCalls++
+	if f.lsStreamErr != nil {
+		e := f.lsStreamErr
+		f.lsStreamErr = nil // fail once, then succeed (exercises the stale-unlock retry, #129)
+		return e
+	}
+	if f.lsStreamHook != nil {
+		return f.lsStreamHook(ctx, onEntry)
+	}
+	for _, e := range f.lsStreamEntries {
+		onEntry(e)
+	}
+	return nil
 }
 
 // LsPath is deliberately backed by its OWN field (lsPathEntries), not lsEntries:
