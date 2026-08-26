@@ -6500,8 +6500,18 @@ export function SettingsPage() {
   type PendingWrite = { timer: ReturnType<typeof setTimeout>; run: () => void };
   const debounceTimers = useRef<Record<string, PendingWrite>>({});
   const DEBOUNCE_MS = 800;
+  // importing is true for the WHOLE import window — from the click that starts
+  // an import until its re-loaded configuration has been installed — not only
+  // for the stretch the import spends at the head of the write queue. See
+  // applyImportedSettings for what it protects.
+  const importing = useRef(false);
 
   function debouncedSave(key: string, run: () => void) {
+    // An import is replacing the configuration this edit was typed against, so
+    // arming it would only queue a write that lands on top of the imported one.
+    // Dropped rather than deferred, for the same reason cancelAllDebounces
+    // drops the edits that were already armed when the import started.
+    if (importing.current) return;
     const existing = debounceTimers.current[key];
     if (existing) clearTimeout(existing.timer);
     debounceTimers.current[key] = {
@@ -6543,7 +6553,8 @@ export function SettingsPage() {
   // cancelAllDebounces drops every pending edit that has not been sent yet.
   // The one caller is the settings import: it replaces the whole configuration,
   // so a debounce armed seconds earlier would land on top of the imported
-  // config with a value the user typed against the OLD one.
+  // config with a value the user typed against the OLD one. It closes the first
+  // half of that window only — the `importing` guard above closes the rest.
   function cancelAllDebounces() {
     for (const key of Object.keys(debounceTimers.current)) cancelDebounce(key);
   }
@@ -6567,23 +6578,39 @@ export function SettingsPage() {
   // knows is stale: it shows the load error instead, which unmounts every card
   // and makes a stale-baseline save impossible. Reloading the browser is then
   // the honest recovery, and the import itself has already been applied.
+  //
+  // The debounces are dropped HERE, at the click, and not inside the queued
+  // body below. Queued, the drop happens whenever the import reaches the head
+  // of the write queue, which can be a whole round-trip later: a save already
+  // in flight holds the import back, the 800ms debounce armed just before the
+  // click elapses in the meantime, and its write is appended to the queue
+  // BEHIND the import. It then lands on the freshly imported configuration
+  // carrying the value the user typed against the one that was just replaced.
+  // Cancelling at the click empties the map before anything can queue itself,
+  // and `importing` keeps it empty for the rest of the window — otherwise a
+  // keystroke during the apply would simply re-open the same hole.
   async function applyImportedSettings(fileText: string) {
+    importing.current = true;
+    cancelAllDebounces();
     return queueSettingsWrite(async () => {
-      cancelAllDebounces();
-      const res = await importSettingsApply(fileText);
-      if (!res.ok) return res;
-      const fresh = await getSettings();
-      if (fresh.ok) {
-        installSettings(fresh.settings);
-        if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
-        if (fresh.platform) setPlatformKind(fresh.platform);
-      } else {
-        setLoadError("Settings were imported, but reloading them failed — reload the page.");
+      try {
+        const res = await importSettingsApply(fileText);
+        if (!res.ok) return res;
+        const fresh = await getSettings();
+        if (fresh.ok) {
+          installSettings(fresh.settings);
+          if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
+          if (fresh.platform) setPlatformKind(fresh.platform);
+        } else {
+          setLoadError("Settings were imported, but reloading them failed — reload the page.");
+        }
+        // Domains may have been switched on or off by the import: the sidebar and
+        // layout listen for this and refetch, exactly as they do after a save.
+        window.dispatchEvent(new Event("bv:settings-changed"));
+        return res;
+      } finally {
+        importing.current = false;
       }
-      // Domains may have been switched on or off by the import: the sidebar and
-      // layout listen for this and refetch, exactly as they do after a save.
-      window.dispatchEvent(new Event("bv:settings-changed"));
-      return res;
     });
   }
 
