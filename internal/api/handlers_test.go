@@ -812,8 +812,8 @@ func TestSettingsPutRejectsBadEverythingCadence(t *testing.T) {
 
 // TestSettingsEverythingScheduleAllowsEveryN proves EverythingSchedule was
 // added to the cadence-validation loop that ALLOWS 'everyN' (the due-gate is
-// wired via LastSuccessfulEverythingBackup, matching the five domain
-// schedules), NOT the separate loop that rejects 'everyN' for the off-site/
+// wired via LastEverythingPass, matching the five domain schedules), NOT the
+// separate loop that rejects 'everyN' for the off-site/
 // drills/tamper/digest schedules — the design spec's explicit call-out
 // ("Settings / API surface" section of docs/superpowers/specs/
 // 2026-08-20-backup-everything-design.md). Without this, a save would fail
@@ -835,8 +835,10 @@ func TestSettingsEverythingScheduleAllowsEveryN(t *testing.T) {
 //
 // The split is not arbitrary — it is exactly "can this job answer WHEN IT LAST
 // RAN?", because an everyN cadence is a daily cron trigger plus a due-gate that
-// asks precisely that. The five domain schedules and Backup Everything answer it
-// from LastSuccessful*Backup. The drills, tamper-test and digest passes answer it
+// asks precisely that. The five domain schedules answer it from their own
+// due-gate queries (schedule.ContainersDueGate and friends for the multi-item
+// ones, LastSuccessfulFlash/ConfigBackup for the singletons) and Backup
+// Everything from LastEverythingPass. The drills, tamper-test and digest passes answer it
 // from schedule_job_runs (migration v89), recorded by the pass itself and read
 // back through the scheduler's SetJobRunStore — which is what moved them into the
 // accepted half. The five OFF-SITE replication schedules still have no such fact,

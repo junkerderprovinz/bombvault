@@ -274,7 +274,7 @@ func TestImportRejectsBadSchemaAndMalformed(t *testing.T) {
 //	digest cadence        schedule_job_runs (migration v89) makes the interval
 //	                      enforceable, so refusing it on import while the save
 //	                      accepts it would be the same drift in mirror image
-//	domain cadence        accepted, as always (LastSuccessful*Backup gate)
+//	domain cadence        accepted, as always (each domain has a due-gate)
 func TestImportMatchesTheSaveOnEveryN(t *testing.T) {
 	dst, dstStore := newPortableHandler(t, appKeyB)
 

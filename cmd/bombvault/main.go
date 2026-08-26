@@ -374,14 +374,20 @@ func run() error {
 	scheduler.SetFleetJob(func() error {
 		return svc.RunFleetPolls(context.Background())
 	})
-	// Per-domain LastRunFuncs: the everyN due-gate queries the most recent
-	// successful backup within each domain (containers / VMs / flash scoped separately).
-	containersLastRun := schedule.LastRunFunc(st.LastSuccessfulContainerBackup)
-	vmsLastRun := schedule.LastRunFunc(st.LastSuccessfulVMBackup)
+	// Per-domain LastRunFuncs: the everyN due-gate asks "has this domain's pass
+	// waited out its interval?", so each one measures what that pass actually
+	// covers. The three MULTI-ITEM domains go through schedule's own gate
+	// builders, which exclude items the domain run does not touch (a per-item
+	// cadence override, "off", not included / not enabled) — an item the pass
+	// never runs must not answer for the pass. flash and config are singletons
+	// with nothing to exclude, and Backup Everything measures its own last
+	// COMPLETED pass rather than its all-or-nothing verdict.
+	containersLastRun := schedule.ContainersDueGate(st)
+	vmsLastRun := schedule.VMsDueGate(st)
 	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
 	configLastRun := schedule.LastRunFunc(st.LastSuccessfulConfigBackup)
-	filesLastRun := schedule.LastRunFunc(st.LastSuccessfulFilesBackup)
-	everythingLastRun := schedule.LastRunFunc(st.LastSuccessfulEverythingBackup)
+	filesLastRun := schedule.FilesDueGate(st)
+	everythingLastRun := schedule.LastRunFunc(st.LastEverythingPass)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
 		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun); rErr != nil {

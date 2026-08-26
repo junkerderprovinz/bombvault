@@ -180,11 +180,66 @@ func (r *Repo) LastRunForTarget(targetID string) (*Run, error) {
 	return &run, nil
 }
 
+// lastBackupAmongChunk bounds how many target ids go into one IN (...) clause.
+// SQLite's compiled-in parameter limit is the constraint; a box with hundreds
+// of containers is unusual but a file-set list is user-defined, so the query is
+// chunked rather than trusting the list to stay small.
+const lastBackupAmongChunk = 400
+
+// LastSuccessfulBackupAmong returns the most recent successful backup among the
+// GIVEN target ids, or a zero time when none of them has ever been backed up.
+//
+// It exists because a DOMAIN's everyN due-gate must measure the items that
+// domain's scheduled pass actually covers, and that set is not "every row in
+// the table": per-item schedule overrides (#121) move an item onto its own cron
+// entry and REMOVE it from the domain run (schedule.DomainRunTargets), and an
+// item that is not included in the schedule was never part of it either. The
+// caller decides the set; this only answers for it. See schedule's
+// ContainersDueGate/VMsDueGate/FilesDueGate for the composition.
+//
+// An EMPTY id list is a definite "none of the items this pass covers has ever
+// been backed up" and reports a zero time, which the gate reads as due — the
+// same answer a fresh install gets. The alternative (treating it as "not due")
+// would silently freeze a domain forever the moment its last item was excluded.
+func (r *Repo) LastSuccessfulBackupAmong(ids []string) (time.Time, error) {
+	var newest time.Time
+	for start := 0; start < len(ids); start += lastBackupAmongChunk {
+		end := min(start+lastBackupAmongChunk, len(ids))
+		chunk := ids[start:end]
+
+		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(chunk)), ",")
+		args := make([]any, len(chunk))
+		for i, id := range chunk {
+			args[i] = id
+		}
+		row := r.db.QueryRow(`
+			SELECT finished_at
+			FROM runs
+			WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
+			  AND target_id IN (`+placeholders+`)
+			ORDER BY finished_at DESC
+			LIMIT 1`, args...) //nolint:gosec // G202: placeholders is a generated "?,?,…" list, never user text; every id is a bound parameter
+		ts, err := scanLastBackupTime(row, "LastSuccessfulBackupAmong")
+		if err != nil {
+			return time.Time{}, err
+		}
+		if ts.After(newest) {
+			newest = ts
+		}
+	}
+	return newest, nil
+}
+
 // LastSuccessfulContainerBackup returns the time of the most recent successful
 // backup run across ALL container targets, or a zero time when there has been
-// none. This is used by the scheduler's everyN due-gate to decide whether the
-// containers domain is due for a run. It is scoped to container targets
-// (target_id in the `targets` table) so a VM backup never satisfies the gate.
+// none. It is scoped to container targets (target_id in the `targets` table) so
+// a VM backup never satisfies it.
+//
+// This is the domain's PROTECTION currency (the dashboard's RPO chip, the
+// overdue watchdog): "when was anything in this domain last backed up". It is
+// deliberately NOT the everyN due-gate any more — that asks a different
+// question ("has the pass's interval elapsed?") and must not be answered by an
+// item the pass does not even run; see LastSuccessfulBackupAmong.
 func (r *Repo) LastSuccessfulContainerBackup() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
@@ -267,16 +322,35 @@ func (r *Repo) LastSuccessfulConfigBackup() (time.Time, error) {
 // domains' gates.
 const EverythingTargetID = "everything"
 
-// LastSuccessfulEverythingBackup drives the "Backup Everything" pass's everyN
-// due-gate, scoped to the reserved everything target id.
-func (r *Repo) LastSuccessfulEverythingBackup() (time.Time, error) {
+// LastEverythingPass drives the "Backup Everything" pass's everyN due-gate: when
+// the pass last COMPLETED, whatever it concluded. A run that is still running
+// (finished_at NULL) does not count; a run that finished does, success or not.
+//
+// The status is deliberately not part of it. The parent run is all-or-nothing —
+// "success" iff EVERY domain step had zero item failures (internal/api/
+// everything.go) — so one item that fails every night (a container whose volume
+// is gone, or the flash step on a host that has no /boot mount at all, which is
+// a supported deployment) means the pass NEVER records a success. Gated on
+// success, the everyN due-gate then reads "never ran" on every daily trigger
+// and runs the whole containers+VMs+flash+files+config pass, plus the batched
+// prune and off-site replication for three domains, EVERY NIGHT instead of
+// every N days: maximum expense at exactly the moment the system is already
+// unhealthy, and silently, since a gate that opens logs nothing.
+//
+// This is the same rule the drill and tamper passes already apply for the same
+// reason (internal/store/schedule_job_runs.go: "an expensive multi-task pass
+// records even when some tasks failed"), and it matches how a daily/weekly
+// cadence behaves — a failed pass is not retried before its next fire either.
+// The failure itself is not lost: it is the parent run's own status, its
+// breakdown, and the per-item notifications.
+func (r *Repo) LastEverythingPass() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND target_id = ?
+		WHERE kind = 'backup' AND finished_at IS NOT NULL AND target_id = ?
 		ORDER BY finished_at DESC
 		LIMIT 1`, EverythingTargetID)
-	return scanLastBackupTime(row, "LastSuccessfulEverythingBackup")
+	return scanLastBackupTime(row, "LastEverythingPass")
 }
 
 // scanLastBackupTime reads the single nullable finished_at column from a

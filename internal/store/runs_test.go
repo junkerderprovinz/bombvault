@@ -510,11 +510,21 @@ func TestSetRunGroup(t *testing.T) {
 	}
 }
 
-// TestLastSuccessfulEverythingBackup mirrors the shape of the existing
-// flash/config LastSuccessfulXBackup tests: no matching rows report a zero
-// time; a successful run tagged with the reserved EverythingTargetID sets it;
-// a failed run does not.
-func TestLastSuccessfulEverythingBackup(t *testing.T) {
+// TestLastEverythingPass pins the "Backup Everything" everyN due-gate's input:
+// no matching rows report a zero time; a run that has FINISHED sets it, success
+// or failure; a run still in flight does not.
+//
+// The failure case is the point, and it is a deliberate reversal — this test
+// used to assert that a failed pass leaves the gate at zero. That is what made
+// the pass run every night instead of every N days: the parent run is
+// all-or-nothing ("success" iff every domain step had zero item failures), so a
+// single item that fails persistently — one broken container, or the flash step
+// on a host with no /boot mount, which is a supported deployment — means the
+// pass never records a success, the gate reads "never ran" on every daily
+// trigger, and the whole five-domain pass plus the batched prune and off-site
+// replication runs nightly, silently. Whether the pass may run is a question
+// about the INTERVAL, not about the verdict.
+func TestLastEverythingPass(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
 		t.Fatal(err)
@@ -522,31 +532,41 @@ func TestLastSuccessfulEverythingBackup(t *testing.T) {
 	r := store.New(db)
 
 	// No runs yet.
-	ts, err := r.LastSuccessfulEverythingBackup()
+	ts, err := r.LastEverythingPass()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !ts.IsZero() {
-		t.Fatalf("expected zero time before any everything backup, got %v", ts)
+		t.Fatalf("expected zero time before any everything pass, got %v", ts)
 	}
 
-	// A failed run must not satisfy the gate.
-	failedID, err := r.StartRun(store.EverythingTargetID, "backup")
+	// A pass that is still running is not a completed pass.
+	runningID, err := r.StartRun(store.EverythingTargetID, "backup")
 	if err != nil {
 		t.Fatalf("StartRun: %v", err)
 	}
-	if err := r.FinishRun(failedID, "failed", "", 0, "one domain failed"); err != nil {
-		t.Fatal(err)
-	}
-	ts, err = r.LastSuccessfulEverythingBackup()
+	ts, err = r.LastEverythingPass()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !ts.IsZero() {
-		t.Fatalf("a failed run must not satisfy the gate, got %v", ts)
+		t.Fatalf("a pass that has not finished must not satisfy the gate, got %v", ts)
 	}
 
-	// A successful run sets it.
+	// It finishes "failed" because one item failed. The pass still RAN, so the
+	// interval starts here.
+	if err := r.FinishRun(runningID, "failed", "", 0, "flash: not mounted"); err != nil {
+		t.Fatal(err)
+	}
+	failedAt, err := r.LastEverythingPass()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failedAt.IsZero() {
+		t.Fatal("a completed pass must satisfy the gate even when an item failed — otherwise the pass runs every night")
+	}
+
+	// A later successful pass moves it forward.
 	okID, err := r.StartRun(store.EverythingTargetID, "backup")
 	if err != nil {
 		t.Fatalf("StartRun: %v", err)
@@ -554,12 +574,12 @@ func TestLastSuccessfulEverythingBackup(t *testing.T) {
 	if err := r.FinishRun(okID, "success", "", 0, ""); err != nil {
 		t.Fatal(err)
 	}
-	ts, err = r.LastSuccessfulEverythingBackup()
+	ts, err = r.LastEverythingPass()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ts.IsZero() {
-		t.Fatal("expected a last-success time for everything")
+	if ts.Before(failedAt) {
+		t.Fatalf("expected the newest completed pass, got %v (older than %v)", ts, failedAt)
 	}
 }
 

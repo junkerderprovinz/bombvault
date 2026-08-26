@@ -233,6 +233,103 @@ func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 	return out
 }
 
+// DomainGateStore is the store surface a multi-item domain's everyN due-gate
+// needs: the settings (for the per-item-schedules switch), the domain's item
+// list, and "when was any of THESE items last backed up successfully". Same DI
+// seam LastRunFunc and JobRunStore already are.
+type DomainGateStore interface {
+	GetSettings() (store.Settings, error)
+	ListTargets() ([]store.Target, error)
+	ListVMTargets() ([]store.VMTarget, error)
+	ListFileSets() ([]store.FileSet, error)
+	LastSuccessfulBackupAmong(ids []string) (time.Time, error)
+}
+
+// ContainersDueGate builds the containers everyN due-gate query: the last
+// successful backup among the items THIS DOMAIN'S RUN actually covers.
+//
+// "Actually covers" is the whole point, and it applies the same two filters the
+// domain job itself applies at fire time:
+//
+//   - DomainRunTargets drops items carrying a concrete per-item cadence
+//     override (#121) — those run on their OWN cron entry and are deliberately
+//     removed from the domain run — and items set to "off".
+//   - IncludeInSchedule is what RunContainersJob itself skips on.
+//
+// Feeding the gate from "the newest success anywhere in the table" instead is
+// how a domain starves: with per-item schedules on, one container overridden to
+// "daily 01:00" writes a fresh success every night, so the containers domain's
+// "everyN 7" gate saw a two-hour-old timestamp at 03:00 and skipped — every
+// night, for good, while the other 43 containers were never backed up by the
+// schedule again and the dashboard's RPO chip stayed green because it reads the
+// same "anything at all" query. The same starvation follows from backing up a
+// single container by hand more often than every N days. An item the pass does
+// not run cannot answer for the pass.
+//
+// A store error is returned, never flattened into a zero time: the gate skips
+// the fire on an error ("cannot tell" is not "due") and runs only on a definite
+// answer.
+func ContainersDueGate(st DomainGateStore) LastRunFunc {
+	return func() (time.Time, error) {
+		settings, err := st.GetSettings()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("containers due-gate: read settings: %w", err)
+		}
+		targets, err := st.ListTargets()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("containers due-gate: list targets: %w", err)
+		}
+		ids := make([]string, 0, len(targets))
+		for _, t := range DomainRunTargets(targets, settings.PerItemSchedules) {
+			if t.IncludeInSchedule {
+				ids = append(ids, t.ID)
+			}
+		}
+		return st.LastSuccessfulBackupAmong(ids)
+	}
+}
+
+// VMsDueGate is the VM counterpart of ContainersDueGate.
+func VMsDueGate(st DomainGateStore) LastRunFunc {
+	return func() (time.Time, error) {
+		settings, err := st.GetSettings()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("vms due-gate: read settings: %w", err)
+		}
+		vms, err := st.ListVMTargets()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("vms due-gate: list VM targets: %w", err)
+		}
+		ids := make([]string, 0, len(vms))
+		for _, v := range DomainRunVMTargets(vms, settings.PerItemSchedules) {
+			if v.IncludeInSchedule {
+				ids = append(ids, v.ID)
+			}
+		}
+		return st.LastSuccessfulBackupAmong(ids)
+	}
+}
+
+// FilesDueGate is the file-set counterpart. File sets carry no per-item cadence
+// override, so the participating set is simply the ENABLED sets — still
+// narrower than "every file set ever backed up": a set the user switched off
+// must not hold the gate closed for the sets that are still on.
+func FilesDueGate(st DomainGateStore) LastRunFunc {
+	return func() (time.Time, error) {
+		sets, err := st.ListFileSets()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("files due-gate: list file sets: %w", err)
+		}
+		ids := make([]string, 0, len(sets))
+		for _, fs := range sets {
+			if fs.Enabled {
+				ids = append(ids, fs.ID)
+			}
+		}
+		return st.LastSuccessfulBackupAmong(ids)
+	}
+}
+
 // PeriodSeconds returns the expected interval between fires for this cadence, in
 // seconds — the RPO (recovery-point objective) window a backup is expected to
 // stay within. It is the basis of the per-domain protection status: a backup
