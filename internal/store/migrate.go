@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -10,8 +11,60 @@ type migration struct {
 	version int
 	name    string
 	sql     string
+
+	// alreadySatisfied, when non-nil, is asked BEFORE the body runs whether this
+	// database already has what the body would create. On true, Migrate skips the
+	// body and records the version as applied anyway — the version's intent is
+	// met, so it must never be retried.
+	//
+	// It exists for one specific hazard, and should not be reached for otherwise
+	// (a normal new migration gets a fresh number and runs unconditionally): a
+	// migration whose BODY has already shipped under a DIFFERENT version number.
+	// Migrate keys off the number alone, so such a body will run a second time on
+	// databases that took it under the old number, and SQLite has no idempotent
+	// form of `ALTER TABLE ... ADD COLUMN` to protect it — the second run fails
+	// with "duplicate column name" and, since cmd/bombvault's run() returns a
+	// migration error, the container does not start. See the NUMBERING HAZARD
+	// note above v90.
+	alreadySatisfied func(*sql.Tx) (bool, error)
 }
 
+// columnPresent reports whether table already has column. It is the probe behind
+// every alreadySatisfied guard on an ADD COLUMN migration: the column is exactly
+// what the body would add, so its presence is the same fact as "this body has
+// already been applied here, under some number". pragma_table_info returns no
+// rows for a table that does not exist, which reads correctly as "not present".
+func columnPresent(table, column string) func(*sql.Tx) (bool, error) {
+	return func(tx *sql.Tx) (bool, error) {
+		var n int
+		err := tx.QueryRow(
+			`SELECT count(*) FROM pragma_table_info(?) WHERE name = ?`, table, column,
+		).Scan(&n)
+		if err != nil {
+			return false, fmt.Errorf("probe %s.%s: %w", table, column, err)
+		}
+		return n > 0, nil
+	}
+}
+
+// ADDING A MIGRATION — and the one rule that got broken here:
+//
+// Take the next unused number, append at the end, never edit a body that has
+// been in any image. "Shipped" does NOT mean "tagged": build.yml republishes
+// ghcr.io/junkerderprovinz/bombvault:latest on EVERY push to main
+// (type=raw,value=latest,enable={{is_default_branch}}) and the Unraid CA
+// template installs :latest, so a migration is in users' databases the moment it
+// lands on main — tag or no tag.
+//
+// It follows that when a merge finds the same number claimed by two branches,
+// RENUMBERING IS NOT FREE. Migrate keys off the number, so moving a body to a
+// different number means: on databases that recorded the old number, the body
+// runs a SECOND time (fatal for ADD COLUMN), and whatever now owns the old
+// number never runs at all. Give the newcomer a fresh number instead, and only
+// where that is impossible — because both numberings are already in the field,
+// which is exactly what happened at 89/90/91 — reach for alreadySatisfied plus a
+// fresh-numbered idempotent recovery migration. See the NUMBERING HAZARD note
+// above v90.
 var migrations = []migration{
 	{
 		version: 1,
@@ -996,19 +1049,46 @@ CREATE TABLE IF NOT EXISTS mesh_offers (
 );`,
 	},
 	{
-		// NOTE ON NUMBERING: this migration and the one after it were authored on
-		// main as v89 and v90, at the same time as schedule_job_runs above took
-		// v89 on the feature branch. Both lines were UNRELEASED (the newest tag,
-		// v7.12.1, tops out at v88), so no shipped database carries either 89.
-		// Migrate keys off the version NUMBER, recording each applied version as
-		// its own row in schema_migrations, so a number that already has a row is
-		// skipped forever regardless of what its body later becomes. The pair was
-		// therefore shifted to 90/91 rather than schedule_job_runs being shifted:
-		// databases that already ran the branch build have 89 recorded and would
-		// otherwise skip whichever migration inherited that number. The three
-		// bodies are mutually independent (this one and the next touch `settings`
-		// and `runs`; v89 creates a new table), so the reordering is behaviour-
-		// preserving on a fresh database.
+		// NUMBERING HAZARD (corrects the merge commit daffac18 and the earlier
+		// version of this note, both of which got the premise wrong):
+		//
+		// This migration and the one after it were authored on main as v89 and
+		// v90 (commit 9ab1401b), at the same time as schedule_job_runs above took
+		// v89 on the feature branch. The merge kept schedule_job_runs at 89 and
+		// shifted this pair to 90/91, justified by "both lines were unreleased —
+		// the newest tag, v7.12.1, tops out at v88 — so no shipped database
+		// carries either 89".
+		//
+		// THAT JUSTIFICATION WAS FALSE. A release TAG is not what users run.
+		// .github/workflows/build.yml publishes ghcr.io/.../bombvault:latest on
+		// every push to main (`type=raw,value=latest,enable={{is_default_branch}}`)
+		// and BombVault's own Unraid CA template installs :latest, so from the
+		// moment 9ab1401b landed on main, ordinary users' databases carried
+		// main's numbering: 89 = settings_everything, 90 = runs_group_id.
+		//
+		// Two distinct consequences follow, and both are handled here rather than
+		// by renumbering again (renumbering is what caused this, and by now BOTH
+		// numberings are in the field — no assignment of 89/90/91 can be correct
+		// for every database):
+		//
+		//  1. A NUMBER THAT SHIPPED WITH A DIFFERENT BODY is skipped forever on
+		//     the databases that recorded it. A :latest database has 89 recorded
+		//     as settings_everything, so this build's v89 (schedule_job_runs) never
+		//     runs there and the table would be missing for good. Recovered by
+		//     v92 below, which carries a fresh number nobody has recorded and a
+		//     body that is idempotent in plain SQL (CREATE ... IF NOT EXISTS).
+		//
+		//  2. A BODY THAT SHIPPED UNDER A DIFFERENT NUMBER runs a second time on
+		//     the databases that already took it. `ALTER TABLE ... ADD COLUMN`
+		//     has no idempotent form in SQLite, so the retry aborts Migrate with
+		//     "duplicate column name" and cmd/bombvault's run() turns that into a
+		//     failed boot. Handled by the alreadySatisfied guards on this
+		//     migration and the next: they detect the column and record the
+		//     version without re-running the body.
+		//
+		// Nothing here is unconditional-by-luck: every reachable database state is
+		// constructed for real and driven through Migrate in
+		// migrate_upgrade_internal_test.go.
 		//
 		// "Backup Everything": a 6th, independent pseudo-domain that runs
 		// containers/vms/flash/files/config in sequence and fires a dead-man's-
@@ -1021,6 +1101,12 @@ CREATE TABLE IF NOT EXISTS mesh_offers (
 		// BombVault's OWN container (there is no single target container for a
 		// whole-pass hook). Empty hooks (the default) = no hook configured.
 		version: 90, name: "settings_everything",
+		// Shipped as main's v89. A database that recorded 89 = settings_everything
+		// and then stopped before main's v90 committed (the two are separate
+		// transactions, so a power cut or a killed container between them leaves
+		// exactly that state) reaches this migration with the three columns
+		// already there; without the guard the ALTER aborts the boot.
+		alreadySatisfied: columnPresent("settings", "everything_schedule"),
 		sql: `
 ALTER TABLE settings ADD COLUMN everything_schedule  TEXT NOT NULL DEFAULT 'off';
 ALTER TABLE settings ADD COLUMN everything_pre_hook  TEXT NOT NULL DEFAULT '';
@@ -1037,14 +1123,59 @@ ALTER TABLE settings ADD COLUMN everything_post_hook TEXT NOT NULL DEFAULT '';`,
 		// idx_runs_group supports the group-scoped lookup this and future
 		// group_id-aware queries need.
 		version: 91, name: "runs_group_id",
+		// Shipped as main's v90, so every :latest database already has the column
+		// and 91 is NOT recorded there — this body would run a second time. That
+		// is the exact failure this branch shipped with: "migrate: apply v91
+		// (runs_group_id): SQL logic error: duplicate column name: group_id (1)",
+		// returned from run() in cmd/bombvault/main.go, i.e. the appliance does
+		// not boot. The index is re-established unconditionally by v92, so
+		// skipping this whole body loses nothing.
+		alreadySatisfied: columnPresent("runs", "group_id"),
 		sql: `
 ALTER TABLE runs ADD COLUMN group_id TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_runs_group ON runs(group_id);`,
+	},
+	{
+		// RENUMBERING RECOVERY for the contested 89/90 numbers (see the NUMBERING
+		// HAZARD note above v90). A fresh number nobody in the field has recorded,
+		// so it runs exactly once on every database that exists, whichever
+		// numbering that database was born under — and a body that is idempotent
+		// in plain SQL, so running it where the objects already exist is a no-op.
+		//
+		// It re-establishes the two schema objects that a contested number can
+		// otherwise swallow:
+		//
+		//   schedule_job_runs — v89 on this line, but 89 is already recorded as
+		//   settings_everything on any database that came through main's :latest,
+		//   so v89 never runs there. Without this the table stays missing forever,
+		//   LastScheduleJobRun errors, and the everyN due-gate silently skips
+		//   every drills / tamper-test / digest pass (#166).
+		//
+		//   idx_runs_group — created by v91's body, which the guard above skips on
+		//   databases that already have runs.group_id.
+		//
+		// Keep this migration idempotent and keep it LAST-of-its-kind: it is a
+		// recovery step for a specific historical collision, not a general dumping
+		// ground. New schema work gets its own new number and runs unconditionally.
+		version: 92, name: "renumbering_recovery",
+		sql: `
+CREATE TABLE IF NOT EXISTS schedule_job_runs (
+  job TEXT    PRIMARY KEY,
+  at  INTEGER NOT NULL DEFAULT 0
+);
 CREATE INDEX IF NOT EXISTS idx_runs_group ON runs(group_id);`,
 	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.
+//
+// "Applied" is keyed on the version NUMBER — one schema_migrations row per
+// version, skipped forever once the row exists. A migration may additionally
+// declare alreadySatisfied to say "this database already has what my body would
+// create"; the body is then skipped and the version recorded, which is how the
+// contested 89/90/91 numbering survives contact with databases born under either
+// numbering. See the NUMBERING HAZARD note above v90.
 func Migrate(db *sql.DB) error {
 	// Ensure the tracking table exists.
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -1070,9 +1201,29 @@ func Migrate(db *sql.DB) error {
 		if err != nil {
 			return fmt.Errorf("migrate: begin v%d: %w", m.version, err)
 		}
-		if _, err := tx.Exec(m.sql); err != nil {
-			tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
-			return fmt.Errorf("migrate: apply v%d (%s): %w", m.version, m.name, err)
+		run := true
+		if m.alreadySatisfied != nil {
+			satisfied, perr := m.alreadySatisfied(tx)
+			if perr != nil {
+				tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+				return fmt.Errorf("migrate: probe v%d (%s): %w", m.version, m.name, perr)
+			}
+			run = !satisfied
+			if satisfied {
+				// Loud on purpose: this only ever fires on a database whose
+				// history crosses the contested 89/90/91 numbering, and the boot
+				// log is where that gets diagnosed.
+				log.Printf(
+					"migrate: v%d (%s) is already satisfied on this database — its effect shipped under a different migration number; recording it as applied without re-running",
+					m.version, m.name,
+				)
+			}
+		}
+		if run {
+			if _, err := tx.Exec(m.sql); err != nil {
+				tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+				return fmt.Errorf("migrate: apply v%d (%s): %w", m.version, m.name, err)
+			}
 		}
 		_, err = tx.Exec(
 			`INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)`,
