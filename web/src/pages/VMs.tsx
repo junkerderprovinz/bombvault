@@ -963,44 +963,29 @@ export function VMRow({
           </div>
         </div>
 
-        {/* The corner action pair, laid out exactly like Containers.tsx's
-            own BackupButton/ExportButton corner: two 32px badges side by
-            side (`items-start gap-1.5 shrink-0`), not one stacked inside
-            the other's column. VMExportButton used to be rendered from
-            INSIDE VMBackupButton — fine while both were text buttons in a
-            vertical stack, wrong once they became square tiles.
-            It sits in the TOP row now, the slot ContainerRow puts its own
-            badge pair in — this row had it one row lower, behind the
-            last-backup block that used to occupy this corner. */}
+        {/* The top-row corner: the backup method sharing the line with the
+            action badges (jdp, live review: "Die Badges für die Methode setzen
+            wir einfach in die Zeile von 'Jetzt sichern' und 'Export', nur mit
+            Abstand zu denen. Dann wird die Card weniger hoch und hat weniger
+            Leerraum"). A VM carries no image line and no IP, so this card's
+            left column is short and everything stacked on the right was paying
+            for vertical space the left half never used.
+              TWO gaps on purpose, and they are the whole point of the ask:
+            `gap-4` between the method group and the action pair, `gap-1.5`
+            WITHIN the pair. Both groups are 32px badges, so without the wider
+            outer gap the four tiles read as one undifferentiated strip and
+            "Live" sits as close to "Jetzt sichern" as it does to its own
+            sibling — a mis-click that starts a backup instead of changing a
+            setting. Same reason the pair itself keeps the tight gap
+            Containers.tsx's own BackupButton/ExportButton corner uses.
+              The label and its InfoBubble come along rather than being dropped
+            for compactness: two icon badges with no text next to them is
+            exactly the unlabelled control jdp has ruled out, and the hint is
+            the only place the difference between the methods is spelled out. */}
         {installed && (
-          <div className="ms-auto flex items-start gap-1.5 shrink-0">
-            <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
-            {/* Plain export is an advanced-only extra. */}
-            <Advanced><VMExportButton name={vm.libvirtName} t={t} /></Advanced>
-          </div>
-        )}
-      </div>
-
-      {/* Actions row — ContainerRow's exact shape: one right-aligned column
-          (`ms-auto flex flex-col items-end gap-2`) holding the include toggle
-          with the row's second, smaller control stacked under it. There, that
-          second control is UpdateAfterBackupRow; here it is the backup method.
-          Previously the toggle sat on the LEFT of a justify-between row next
-          to the method, which is what made the two pages' cards read
-          differently despite rendering the same ToggleRow. */}
-      {installed && (
-        <div className="flex items-start">
-          <div className="ms-auto flex flex-col items-end gap-2">
-            {/* No wrapping `<label>`/`<span>`: VMIncludeToggle renders the full
-                ToggleRow itself (label included, text-first), the identical
-                shape Containers.tsx's IncludeToggle call site already uses —
-                see that component's own comment. */}
-            <VMIncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} />
+          <div className="ms-auto flex items-center gap-4 shrink-0">
             {/* Backup method (graceful / live) — always visible, never gated
-                behind Advanced: it decides whether the VM is shut down. The
-                hint that explains the two methods rides on the label as an
-                InfoBubble rather than a native `title` on the old <select>,
-                which is where the app puts explanations. */}
+                behind Advanced: it decides whether the VM is shut down. */}
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t("vm.method")}
@@ -1008,6 +993,34 @@ export function VMRow({
               </span>
               <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
             </div>
+            {/* The action pair, laid out exactly like Containers.tsx's own
+                BackupButton/ExportButton corner: two 32px badges side by side,
+                not one stacked inside the other's column. VMExportButton used
+                to be rendered from INSIDE VMBackupButton — fine while both
+                were text buttons in a vertical stack, wrong once they became
+                square tiles. */}
+            <div className="flex items-center gap-1.5">
+              <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
+              {/* Plain export is an advanced-only extra. */}
+              <Advanced><VMExportButton name={vm.libvirtName} t={t} /></Advanced>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Actions row — ContainerRow's shape, one right-aligned block holding
+          the include toggle. There it also carries UpdateAfterBackupRow
+          stacked under it; VMs have no such setting, and the method that used
+          to sit in that slot moved up into the top row (see its comment
+          above), so this row is now the toggle alone. */}
+      {installed && (
+        <div className="flex items-start">
+          {/* No wrapping `<label>`/`<span>`: VMIncludeToggle renders the full
+              ToggleRow itself (label included, text-first), the identical
+              shape Containers.tsx's IncludeToggle call site already uses —
+              see that component's own comment. */}
+          <div className="ms-auto">
+            <VMIncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} />
           </div>
         </div>
       )}
