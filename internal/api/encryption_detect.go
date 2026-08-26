@@ -26,6 +26,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -119,6 +120,18 @@ const encryptionProbeTimeout = 30 * time.Second
 // restic process per repo all at once either.
 const encryptionProbeParallel = 4
 
+// encryptionDetectBudget bounds the SHARED pass as a whole. Because the pass is
+// detached from every caller's request (see DetectEncryption) it needs a
+// lifetime of its own, or a backend that never answers would hold the
+// single-flight slot — and with it encryption detection — for the life of the
+// process. It is deliberately far above what a real pass costs: the worst case
+// per repository is 2 x encryptionProbeTimeout (both modes time out) and
+// encryptionProbeParallel of them run at once, so this covers 60 configured
+// repositories, well past five domains plus their off-site destinations.
+// Cutting a legitimate pass short would produce exactly the "unreachable
+// everywhere" answer this feature exists to avoid.
+const encryptionDetectBudget = 15 * time.Minute
+
 // DetectEncryption probes every configured repository, folds the results into a
 // verdict, and — for a DEFINITE verdict only — writes that mode into the stored
 // settings so the user never has to assert it. It returns the detection either
@@ -143,22 +156,48 @@ func (s *Service) DetectEncryption(ctx context.Context) (EncryptionDetection, er
 			return EncryptionDetection{}, ctx.Err()
 		}
 	}
-	flight := &encryptionDetectFlight{done: make(chan struct{})}
+	flight := &encryptionDetectFlight{done: make(chan struct{}), err: errEncryptionDetectAborted}
 	s.detectFlight = flight
 	s.detectMu.Unlock()
 
-	flight.det, flight.err = s.detectEncryption(ctx)
+	// Clear the slot and signal from a DEFER. A panic anywhere on this path would
+	// otherwise leave the flight installed and never closed: encryption detection
+	// dead for the rest of the process, and every later caller parked forever on a
+	// channel nobody will close. The pre-seeded err above covers the same case
+	// from the other side — a follower released by that defer must be told the
+	// pass produced nothing, not handed a zero-value detection as a successful
+	// verdict.
+	defer func() {
+		s.detectMu.Lock()
+		s.detectFlight = nil
+		s.detectMu.Unlock()
+		close(flight.done)
+	}()
 
-	s.detectMu.Lock()
-	s.detectFlight = nil
-	s.detectMu.Unlock()
-	close(flight.done)
+	// The pass is SHARED, so no single caller may cancel it. The leader is merely
+	// whoever arrived first; running the probes on ITS request context means that
+	// closing its browser tab cancels every probe, and a cancelled probe reads as
+	// "unreachable" (restic wraps the context error, which matches no absence
+	// marker) — so the followers, whose own requests are perfectly alive, would be
+	// handed a confident verdict of "unknown". Detached, the pass runs to
+	// completion under its own budget; each caller still honours its own ctx while
+	// waiting on flight.done above.
+	pctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), encryptionDetectBudget)
+	defer cancel()
+
+	flight.det, flight.err = s.detectEncryption(pctx)
 	return flight.det, flight.err
 }
 
+// errEncryptionDetectAborted is what a follower is told when the leading pass
+// died before it wrote a result. "No answer" must never surface as a verdict.
+var errEncryptionDetectAborted = errors.New("encryption detection did not complete")
+
 // encryptionDetectFlight is one in-flight DetectEncryption pass, shared with
 // every caller that arrives while it runs. done is closed once det/err are
-// final, so a follower reads them only after they are written.
+// final, so a follower reads them only after they are written. err starts at
+// errEncryptionDetectAborted and the pass overwrites it, so a flight closed
+// without one is a failure rather than an empty success.
 type encryptionDetectFlight struct {
 	done chan struct{}
 	det  EncryptionDetection
