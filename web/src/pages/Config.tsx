@@ -223,7 +223,7 @@ function ConfigSettingsCard({
       // elsewhere. Abort the save instead.
       if (!latest.ok) {
         setSaveState("idle");
-        push(latest.error ?? "Could not load current settings", "fail");
+        push(latest.error ?? t("config.loadSettingsFailed"), "fail");
         setShake((n) => n + 1);
         return;
       }
@@ -242,12 +242,12 @@ function ConfigSettingsCard({
         push(t("settings.saved"), "success");
       } else {
         setSaveState("idle");
-        push(res.error ?? "Save failed", "fail");
+        push(res.error ?? t("common.saveFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
       setSaveState("idle");
-      push(err instanceof Error ? err.message : "Save failed", "fail");
+      push(err instanceof Error ? err.message : t("common.saveFailed"), "fail");
       setShake((n) => n + 1);
     }
   }
@@ -382,11 +382,11 @@ function ConfigSnapshotRow({
       const res = await deleteSnapshot("config", snap.id, source);
       if (res.ok) onDeleted();
       else {
-        push(res.error ?? "Delete failed", "fail");
+        push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Delete failed", "fail");
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setDeleting(false);
@@ -504,10 +504,10 @@ export function Config() {
     return listConfigSnapshots(source)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? "Failed to load config backups");
+        else setError(res.error ?? t("config.loadBackupsFailed"));
       })
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Failed to load config backups")
+        setError(err instanceof Error ? err.message : t("config.loadBackupsFailed"))
       );
   }
 

@@ -1061,6 +1061,42 @@ export const en = {
   // close button — not per-message copy.
   "toast.dismiss": "Dismiss notification",
 
+  // Failure fallbacks. Every one of these replaced a HARDCODED English literal
+  // sitting in a `res.error ?? "…"` or `err instanceof Error ? … : "…"` tail —
+  // 56 of them across seven files, each rendering untranslated English into
+  // whatever language the user had picked, and only ever at the moment
+  // something had already gone wrong.
+  //   They live under `common.` when the same sentence genuinely fits every
+  // caller (a delete that failed is a delete that failed) and under their own
+  // page's namespace when naming the thing that failed is the whole value of
+  // the message — "Failed to load VMs" against "Failed to load containers"
+  // tells the user which half of the app is broken, which a shared
+  // "Failed to load" would throw away.
+  //   The server's own `res.error` still wins wherever it is present; these are
+  // the tails for a transport failure or a response carrying no message, which
+  // is exactly the case a hardcoded string served worst.
+  "common.actionFailed": "Action failed",
+  "common.deleteFailed": "Delete failed",
+  "common.removeFailed": "Remove failed",
+  "common.saveFailed": "Save failed",
+  "common.discoverFailed": "Discover failed",
+  "common.checkFailed": "Check failed",
+  "common.networkError": "Network error",
+  "common.backupFailed": "Backup failed",
+  "common.restoreFailed": "Restore failed",
+  "common.compareFailed": "Compare failed",
+  "common.loadBackupsFailed": "Failed to load backups",
+  "common.deleteBackupsFailed": "Failed to delete backups",
+  "containers.loadFailed": "Failed to load containers",
+  "containers.backupStartFailed": "Failed to start backup",
+  "containers.updateSettingFailed": "Failed to update setting",
+  "vms.loadFailed": "Failed to load VMs",
+  "files.loadSetsFailed": "Failed to load folder sets",
+  "flash.loadBackupsFailed": "Failed to load flash backups",
+  "config.loadBackupsFailed": "Failed to load settings backups",
+  "config.loadSettingsFailed": "Could not load current settings",
+  "dashboard.loadRunsFailed": "Failed to load runs",
+
   // VMs page
   "vms.title": "Virtual Machines",
   "vms.subtitle": "Manage VM backups, schedules, and restores.",
@@ -2524,6 +2560,29 @@ export const de: Translations = {
   "toast.dismiss": "Benachrichtigung schließen",
   "common.confirm": "Bestätigen",
   "common.cancel": "Abbrechen",
+
+  // Fehler-Rückfalltexte — siehe den englischen Block für die Herkunft.
+  "common.actionFailed": "Aktion fehlgeschlagen",
+  "common.deleteFailed": "Löschen fehlgeschlagen",
+  "common.removeFailed": "Entfernen fehlgeschlagen",
+  "common.saveFailed": "Speichern fehlgeschlagen",
+  "common.discoverFailed": "Suche fehlgeschlagen",
+  "common.checkFailed": "Prüfung fehlgeschlagen",
+  "common.networkError": "Netzwerkfehler",
+  "common.backupFailed": "Sicherung fehlgeschlagen",
+  "common.restoreFailed": "Wiederherstellung fehlgeschlagen",
+  "common.compareFailed": "Vergleich fehlgeschlagen",
+  "common.loadBackupsFailed": "Sicherungen konnten nicht geladen werden",
+  "common.deleteBackupsFailed": "Sicherungen konnten nicht gelöscht werden",
+  "containers.loadFailed": "Container konnten nicht geladen werden",
+  "containers.backupStartFailed": "Sicherung konnte nicht gestartet werden",
+  "containers.updateSettingFailed": "Einstellung konnte nicht geändert werden",
+  "vms.loadFailed": "VMs konnten nicht geladen werden",
+  "files.loadSetsFailed": "Ordnersets konnten nicht geladen werden",
+  "flash.loadBackupsFailed": "Flash-Sicherungen konnten nicht geladen werden",
+  "config.loadBackupsFailed": "Einstellungs-Sicherungen konnten nicht geladen werden",
+  "config.loadSettingsFailed": "Aktuelle Einstellungen konnten nicht geladen werden",
+  "dashboard.loadRunsFailed": "Läufe konnten nicht geladen werden",
 
   // VMs page
   "vms.title": "Virtuelle Maschinen",

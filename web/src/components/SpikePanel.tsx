@@ -57,7 +57,7 @@ export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
       setChecks(res.checks ?? []);
       setAllOk(res.allOk);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Check failed";
+      const msg = err instanceof Error ? err.message : t("common.checkFailed");
       push(msg, "fail");
       setShake((n) => n + 1);
       setChecks(null);

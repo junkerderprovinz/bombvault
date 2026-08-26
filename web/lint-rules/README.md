@@ -79,6 +79,7 @@ There is exactly one today (`pages/Dashboard.tsx`, the heat-map cell).
 | `page-uses-page-shell` | A routed page's root is `PAGE_SHELL`; nothing hand-rolls the shell in literal width/gap classes. |
 | `no-status-color-on-control` | Status green/amber/red is a readout, never control chrome — and a destructive action gets no bespoke red either. |
 | `control-reads-engine-tokens` | An interactive control reads its radius from the shape engine and its colour from the colour engine. |
+| `user-message-is-translated` | A string the user reads goes through `t()`, including the fallback on an error path. |
 
 Each rule file opens with the history that made it necessary; read that before
 changing one.
@@ -101,6 +102,16 @@ These are the shapes that made a first draft noisy, and are now pinned as
   `gap-5` or larger as a hand-rolled shell. A first draft accepted any
   `max-w-*` and any `gap-*` and flagged four small label columns in
   `Settings.tsx` (`flex flex-col gap-1 max-w-40`), which are not pages.
+* **`user-message-is-translated`** checks three positions only, and applies a
+  "starts with a capital, contains a space" test to two of them. `?? "x"` and
+  `: "x"` are everywhere in this tree for values nobody reads — `?? ""`,
+  `?? "all"`, `?? "graceful"`, `: "rotate-90"`, `?? "0"` — and a rule that
+  flagged those would be disabled within a day. The capital-plus-space test
+  admits every one of the 56 real defects the first sweep found and none of the
+  enum values, ids or class names. `push()`/`setError()` need no test at all:
+  their first argument is a user message by construction, so any string literal
+  there is a finding. A one-word message ("Failed") slips through, which is the
+  accepted cost of not catching every PascalCase identifier in the file.
 * **`control-reads-engine-tokens`** only looks at interactive elements. Every
   one of the 43 `rounded-full` uses in this tree is a spinner ring or a status
   dot — genuinely circles, not controls whose corners should follow a

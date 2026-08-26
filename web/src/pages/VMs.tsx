@@ -581,11 +581,11 @@ function VMSnapshotRow({
       const res = await deleteSnapshot("vms", snap.id, source);
       if (res.ok) onDeleted();
       else {
-        push(res.error ?? "Delete failed", "fail");
+        push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Delete failed", "fail");
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setDeleting(false);
@@ -740,11 +740,11 @@ function VMRestorePanel({
     listVMSnapshots(name, source)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? "Failed to load backups");
+        else setError(res.error ?? t("common.loadBackupsFailed"));
       })
-      .catch(() => setError("Failed to load backups"))
+      .catch(() => setError(t("common.loadBackupsFailed")))
       .finally(() => setLoading(false));
-  }, [open, name, source, reloadTick]);
+  }, [open, name, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   // GlimStone follow-up pass (v8.0.0): "Delete all" is a one-shot action
   // failure — was ALSO routed through the section-load `error` above, but the
@@ -764,12 +764,12 @@ function VMRestorePanel({
     deleteBackupsVM(name, source)
       .then((res) => {
         if (!res.ok) {
-          push(res.error ?? "Failed to delete backups", "fail");
+          push(res.error ?? t("common.deleteBackupsFailed"), "fail");
           setShakeDeleteAll((n) => n + 1);
         }
       })
       .catch(() => {
-        push("Failed to delete backups", "fail");
+        push(t("common.deleteBackupsFailed"), "fail");
         setShakeDeleteAll((n) => n + 1);
       })
       .finally(() => {
@@ -1099,11 +1099,11 @@ function VMForgetButton({
       const res = await forgetVM(name);
       if (res.ok) onForgotten();
       else {
-        push(res.error ?? "Remove failed", "fail");
+        push(res.error ?? t("common.removeFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Remove failed", "fail");
+      push(err instanceof Error ? err.message : t("common.removeFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setPending(false);
@@ -1577,11 +1577,11 @@ export function VMs() {
         push(`+${res.discovered ?? 0}`, "success");
         await loadVMs();
       } else {
-        push(res.error ?? "Discover failed", "fail");
+        push(res.error ?? t("common.discoverFailed"), "fail");
         setShakeDiscover((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Discover failed", "fail");
+      push(err instanceof Error ? err.message : t("common.discoverFailed"), "fail");
       setShakeDiscover((n) => n + 1);
     } finally {
       setDiscovering(false);
@@ -1592,14 +1592,14 @@ export function VMs() {
     return listVMs()
       .then((res) => {
         if (res.ok) setVMs(res.vms ?? []);
-        else setError("Failed to load VMs");
+        else setError(t("vms.loadFailed"));
       })
-      .catch(() => setError("Failed to load VMs"));
+      .catch(() => setError(t("vms.loadFailed")));
   }
 
   useEffect(() => {
     void loadVMs().finally(() => setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   function handleSortChange(k: SortKey) {
     setSortKey(k);
@@ -1712,6 +1712,7 @@ export function VMs() {
         kind: "backup",
         matchRun: (r) => r.domain === "vm" && r.target === name,
         start: () => backupVMNow(name),
+        t,
       })
     );
   }
@@ -1723,6 +1724,7 @@ export function VMs() {
         kind: "restore",
         matchRun: (r) => r.domain === "vm" && r.target === name,
         start: () => restoreVM(name, "latest", true),
+        t,
       })
     );
   }

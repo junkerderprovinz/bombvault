@@ -177,11 +177,11 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
       const res = await deleteSnapshot("flash", snap.id, source);
       if (res.ok) onDeleted();
       else {
-        push(res.error ?? "Delete failed", "fail");
+        push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Delete failed", "fail");
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setDeleting(false);
@@ -315,10 +315,10 @@ export function Flash() {
     return listFlashSnapshots(source)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? "Failed to load flash backups");
+        else setError(res.error ?? t("flash.loadBackupsFailed"));
       })
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Failed to load flash backups")
+        setError(err instanceof Error ? err.message : t("flash.loadBackupsFailed"))
       );
   }
 
