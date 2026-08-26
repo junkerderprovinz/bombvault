@@ -88,4 +88,4 @@ BombVault on oletuksena yksinkertainen ja syvä silloin kun tarvitset. Käyttöl
 - **Mitä uutta päivityksen jälkeen.** Julkaisumuistiinpanot ponnahtavat esiin kerran per uusi versio, tarjottuna binääriin upotetuista muistiinpanoista, joten dialogi toimii offline-tilassa.
 - **HTTPS valmiiksi** (itse allekirjoitettu, tai tuo oma varmenteesi käänteisen välityspalvelimen taakse).
 - **Docker-terveystarkistus.** Kontti raportoi terve/epäterve omasta `/api/health`-päätepisteestään, joten automaattinen korjaustyökalu voi käynnistää sen uudelleen, jos moottori koskaan jumiutuu.
-- **Tumma/vaalea käyttöliittymä 26 kielellä** lippuvalitsimella.
+- **Tumma/vaalea käyttöliittymä 42 kielellä** lippuvalitsimella.

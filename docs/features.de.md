@@ -88,4 +88,4 @@ BombVault ist standardmäßig einfach und tiefgehend, wenn du es brauchst. Die O
 - **Was ist neu nach einem Update.** Release-Notes tauchen einmal pro neuer Version auf, ausgeliefert aus im Binary eingebetteten Notizen, sodass der Dialog offline funktioniert.
 - **HTTPS von Haus aus** (selbstsigniert, oder bring dein eigenes Zertifikat hinter einem Reverse Proxy mit).
 - **Docker-Healthcheck.** Der Container meldet gesund/ungesund aus seinem eigenen `/api/health`, sodass ein Auto-Heal-Werkzeug ihn neu starten kann, falls sich die Engine je verklemmt.
-- **Dunkle/helle Oberfläche in 26 Sprachen** mit einem Flaggen-Auswähler.
+- **Dunkle/helle Oberfläche in 42 Sprachen** mit einem Flaggen-Auswähler.

@@ -88,4 +88,4 @@ BombVault is standaard simpel en diepgaand wanneer je het nodig hebt. De interfa
 - **Wat is er nieuw na een update.** Release notes verschijnen één keer per nieuwe versie, geserveerd uit notities die in de binary zijn ingebed, zodat het dialoogvenster offline werkt.
 - **HTTPS out of the box** (zelfondertekend, of breng je eigen cert mee achter een reverse proxy).
 - **Docker-healthcheck.** De container meldt healthy/unhealthy vanuit zijn eigen `/api/health`, zodat een auto-heal-tool hem kan herstarten als de engine ooit vastloopt.
-- **Donkere/lichte UI in 26 talen** met een vlaggenkiezer.
+- **Donkere/lichte UI in 42 talen** met een vlaggenkiezer.

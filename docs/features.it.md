@@ -88,4 +88,4 @@ BombVault è semplice di default e profondo quando serve. L'interfaccia mostra s
 - **Novità dopo un aggiornamento.** Le note di rilascio compaiono una volta per ogni nuova versione, servite da note incorporate nel binario, così la finestra funziona offline.
 - **HTTPS pronto all'uso** (autofirmato, o porta il tuo certificato dietro un reverse proxy).
 - **Healthcheck Docker.** Il container segnala sano/non sano dal proprio `/api/health`, così uno strumento di auto-heal può riavviarlo se il motore dovesse mai incepparsi.
-- **Interfaccia scura/chiara in 26 lingue** con un selettore di bandiere.
+- **Interfaccia scura/chiara in 42 lingue** con un selettore di bandiere.
