@@ -5689,18 +5689,27 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
   system: <IconTabSystem />,
 };
 
-// keepRegistryAuths — the pure filtering logic behind the Image Cleanup &
-// Registries card's own save (GlimStone follow-up round, merge A auto-save):
-// drops untouched blank rows, and marks a freshly typed token as "stored" so
-// the field shows the kept-placeholder once the save lands. Pulled out as a
-// standalone, exported function (no React, no `save()` side effect) so it's
-// directly unit-testable without mounting SettingsPage — same "extract the
-// pure decision, test it without a renderer" shape as isRemotePath
+// keepRegistryAuths — what the SERVER should store for the Image Cleanup &
+// Registries card: untouched blank rows dropped, and a freshly typed token
+// marked "stored" so the field shows the kept-placeholder once the save lands.
+// Pulled out as a standalone, exported function (no React, no `save()` side
+// effect) so it's directly unit-testable without mounting SettingsPage — same
+// "extract the pure decision, test it without a renderer" shape as isRemotePath
 // (PathModeSwitch.tsx) and Selector.tsx's own nextFocusIndex/rovedIndex.
 // `auths`/`rowIds` are always the SAME length and index-aligned by
 // construction (every mutation site keeps them in lockstep) — the caller
 // (saveRegistries below) passes the freshly computed pair rather than
 // letting this function read component state directly.
+//
+// It answers for the PAYLOAD only. What stays on SCREEN is
+// markRegistryTokensStored below, and keeping the two apart is the whole point:
+// this filter used to run only when the user clicked the card's Save button,
+// where "drop the blank rows" and "I am finished" meant the same thing. It now
+// runs from every keystroke-triggered save, and applying it to the visible list
+// deleted the row the user had just added and was about to fill in — a row
+// vanishing from under the cursor because a typo was being corrected two rows
+// up. A blank row is worth nothing to the server and everything to the person
+// typing into it.
 export function keepRegistryAuths(
   auths: RegistryAuthEntry[],
   rowIds: string[]
@@ -5720,6 +5729,26 @@ export function keepRegistryAuths(
     })),
     rowIds: kept.map(({ idx }) => rowIds[idx]),
   };
+}
+
+// markRegistryTokensStored — what the SCREEN should show once a registry save
+// lands: EVERY row the user has, including the blank one they have only just
+// added, with a freshly typed token marked "stored" so that field switches to
+// its kept-placeholder. It is keepRegistryAuths' tokenSet half without the
+// filter, and the two are deliberately separate functions rather than one with
+// a flag: "what gets persisted" and "what stays under the cursor" are different
+// questions, and merging them is what made a save delete a row.
+//
+// A blank row leaves the screen when the user removes it or reloads the page —
+// nothing persisted it, so it does not come back. That is exactly what the
+// add-row badge's own comment already promised.
+export function markRegistryTokensStored(
+  auths: RegistryAuthEntry[]
+): RegistryAuthEntry[] {
+  return auths.map((a) => ({
+    ...a,
+    tokenSet: a.tokenSet || a.token.trim() !== "",
+  }));
 }
 
 export function SettingsPage() {
@@ -6462,20 +6491,50 @@ export function SettingsPage() {
   // debounce line can cover several fields that only make sense saved
   // together (e.g. every registry-row edit shares the "registryAuths" key,
   // since they all resolve to the SAME registryAuths patch).
-  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  // Each entry keeps the pending WRITE next to its timer, not just the timer
+  // handle. That is what makes the edit recoverable: a debounce can then be
+  // completed early (flushDebounces) instead of only being cancelled, which is
+  // the difference between "the user's last edit is sent" and "it is gone".
+  type PendingWrite = { timer: ReturnType<typeof setTimeout>; run: () => void };
+  const debounceTimers = useRef<Record<string, PendingWrite>>({});
   const DEBOUNCE_MS = 800;
 
   function debouncedSave(key: string, run: () => void) {
     const existing = debounceTimers.current[key];
-    if (existing) clearTimeout(existing);
-    debounceTimers.current[key] = setTimeout(run, DEBOUNCE_MS);
+    if (existing) clearTimeout(existing.timer);
+    debounceTimers.current[key] = {
+      run,
+      timer: setTimeout(() => {
+        delete debounceTimers.current[key];
+        run();
+      }, DEBOUNCE_MS),
+    };
   }
 
   function cancelDebounce(key: string) {
     const existing = debounceTimers.current[key];
     if (existing) {
-      clearTimeout(existing);
+      clearTimeout(existing.timer);
       delete debounceTimers.current[key];
+    }
+  }
+
+  // flushDebounces sends every pending edit NOW instead of waiting out its
+  // remaining delay. Cancelling and flushing are opposites and the page needs
+  // both: an import replaces the configuration a pending edit was typed against,
+  // so that edit must be dropped (cancelAllDebounces); leaving the page does not
+  // invalidate anything, so those edits must be sent.
+  //
+  // Entries are removed from the map before their write runs, so a flush can
+  // never double-send and a write that queues another edit is not re-collected.
+  // The map object itself is mutated in place, never replaced — see the unmount
+  // effect, which captures it.
+  function flushDebounces() {
+    for (const key of Object.keys(debounceTimers.current)) {
+      const pending = debounceTimers.current[key];
+      delete debounceTimers.current[key];
+      clearTimeout(pending.timer);
+      pending.run();
     }
   }
 
@@ -6526,38 +6585,69 @@ export function SettingsPage() {
     });
   }
 
-  // A pending debounce must not fire (and call setSettings/save with stale
-  // closures) after this page has unmounted — e.g. the user types into the
-  // registry host field and navigates away within the 800ms window. The
-  // ref's own object identity never changes (only its properties are
-  // mutated in place by debouncedSave/cancelDebounce above), but it's still
-  // captured into a local first — the plain, lint-satisfying version of the
-  // same "don't read .current fresh inside a cleanup" rule, even though this
-  // ref never actually goes stale the way a DOM-node ref could.
+  // Leaving the page COMMITS the pending edits; it does not discard them.
+  //
+  // This cleanup used to clear every timer. With the Save buttons gone, the
+  // debounce is the only thing that ever writes a text field, so clearing it
+  // threw the user's last edit away: type a new cron expression into the
+  // off-site cadence field (or a registry host, or the flash-zip export path),
+  // click "Dashboard" within 800ms, and the PATCH never happened — no toast, no
+  // error, and the value the field had shown as accepted was gone on return.
+  // The old justification, "must not call setSettings/save with stale
+  // closures", does not hold: scheduleField/debouncedSave capture their value
+  // explicitly, and a setState after unmount is a no-op in React 18. Nothing was
+  // being protected, and an edit was being lost.
+  //
+  // Flushing also matches the four card-level debounce maps in this file
+  // (FlashZipExportCard, FleetSettingsCard, CloudCard, NotifyCard), none of
+  // which cancel on unmount — so those already complete their pending write.
+  // This page was the one place that did not.
+  //
+  // The flush itself is flushDebounces, captured into a local so the cleanup
+  // closes over the function it had at mount — the plain, lint-satisfying
+  // version of the same "don't reach for a fresh binding inside a cleanup" rule.
+  // It reads debounceTimers.current, whose object identity never changes (only
+  // its properties are mutated in place by debouncedSave/cancelDebounce/
+  // flushDebounces above), so the entries it finds are the live ones.
+  const flushOnUnmount = flushDebounces;
   useEffect(() => {
-    const timers = debounceTimers.current;
     return () => {
-      Object.values(timers).forEach(clearTimeout);
+      flushOnUnmount();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount/unmount only: this must flush when the page GOES AWAY, not on every render that redefines the closure.
   }, []);
 
   // saveRegistries — the merge A registries sub-section's own save, shared by
   // both the debounced per-field edit path and the immediate Remove-row path
-  // (see the Card below). Reproduces the exact "drop untouched blank rows,
-  // mark a freshly typed token as stored" logic the old batched Speichern
-  // button used to run on click, now against an EXPLICIT (auths, rowIds)
-  // pair rather than reading `settings`/`registryRowIds` directly — both
-  // callers already have the freshly computed arrays in hand (the state
-  // update and this save race the same render otherwise), so passing them
-  // in avoids acting on a one-render-stale snapshot.
+  // (see the Card below). It works against an EXPLICIT (auths, rowIds) pair
+  // rather than reading `settings`/`registryRowIds` directly — both callers
+  // already have the freshly computed arrays in hand (the state update and this
+  // save race the same render otherwise), so passing them in avoids acting on a
+  // one-render-stale snapshot.
+  //
+  // The payload and the screen are answered separately, and that separation is
+  // the fix for a row disappearing mid-edit. The PUT carries the trimmed list
+  // (keepRegistryAuths — a blank row is nothing the server should store); the
+  // visible list keeps every row (markRegistryTokensStored), so a blank row the
+  // user just added survives a save triggered by a keystroke in a DIFFERENT row.
+  // Under the old batched Save button the two coincided, because clicking Save
+  // meant "I am finished"; a debounce firing 800ms after a keystroke does not.
+  //
+  // The re-assert runs AFTER save()'s own echo of the patch, so the trimmed
+  // array reaches savedBaseline (the server's truth) while the screen keeps the
+  // full list. registryRowIds is left alone for the same reason: it stays
+  // index-aligned with the rows that are actually on screen.
   function saveRegistries(nextAuths: RegistryAuthEntry[], nextRowIds: string[]) {
-    const { auths, rowIds } = keepRegistryAuths(nextAuths, nextRowIds);
+    const { auths } = keepRegistryAuths(nextAuths, nextRowIds);
+    const onScreen = markRegistryTokensStored(nextAuths);
     void save(
       { registryAuths: auths },
       setRegistrySaveState,
       setRegistrySaveError
     ).then((ok) => {
-      if (ok) setRegistryRowIds(rowIds);
+      if (ok) {
+        setSettings((prev) => (prev ? { ...prev, registryAuths: onScreen } : prev));
+      }
     });
   }
 
