@@ -397,6 +397,14 @@ export function OffsiteWizard({
   // shape, now called from a debounce 800ms after the last restUser/
   // restPassword keystroke instead of a click — see the two fields' own
   // onChange below.
+  //
+  // The password FIELD is left as the user typed it. Emptying it after a save
+  // was right for the click that triggered it (typing was finished by then) and
+  // is destructive on a debounce: the timer fires 800 ms into any pause
+  // mid-password, the input is wiped under the cursor, the rest is typed into
+  // an empty field, and that fragment overwrites the real credential with no
+  // error anywhere. Only the "is set" flag follows the save — same fix, same
+  // reason, as CloudCard's own persistPatch in Settings.tsx.
   async function persistCreds(patch: Partial<typeof cloud>) {
     // Never POST creds that were not loaded from the server (a blank round-trip
     // would wipe the stored non-secret fields).
@@ -406,7 +414,6 @@ export function OffsiteWizard({
     try {
       const r = await setCloud({ s3KeyId: merged.s3KeyId, s3Secret: "", s3Region: merged.s3Region, restUser: merged.restUser, restPassword: merged.restPassword, s3StorageClass: merged.s3StorageClass });
       if (r.ok) {
-        setCloudState((p) => ({ ...p, restPassword: "" }));
         setRestPwSet(restPwSet || merged.restPassword !== "");
         push(t("settings.saved"), "success");
       } else {
