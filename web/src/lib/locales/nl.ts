@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const nl: Partial<Translations> = {
   // General
   "language.label": "Taal",
-  "theme.toggle": "Thema wisselen",
   "theme.dark": "Donker",
   "theme.light": "Licht",
 
@@ -211,7 +210,6 @@ const nl: Partial<Translations> = {
   "settings.motion.full": "Volledig",
   "settings.rainbow": "Regenboogmodus",
   "settings.rainbowHint": "Elke rij in een lijst krijgt zijn eigen kleur uit een set van acht, in plaats van dat alles dezelfde accentkleur deelt — zo zijn lange lijsten in één oogopslag te onderscheiden.",
-  "settings.rainbowOn": "Palet gebruiken",
   "settings.rainbowReactive": "Reactieve modus",
   "settings.rainbowReactiveHint": "Indien aan toont een rij of item zijn kleur alleen bij hover, of terwijl het draait of geselecteerd is — anders blijft het neutraal. Indien uit tonen alle gekleurde rijen en items hun kleur voortdurend.",
   "settings.rainbowRotate": "Kleurrotatie",
@@ -415,7 +413,7 @@ const nl: Partial<Translations> = {
   "rclone.save": "Configuratie opslaan",
 
   // Integrity (restic check)
-  "integrity.title": "Integriteit",
+  "integrity.title": "Integriteit en onderhoud",
   "integrity.hint": "Voer restic check uit om te verifiëren dat de structuur en metadata van een repository intact zijn.",
   "integrity.verify": "Verifiëren",
   "integrity.checking": "Controleren…",
@@ -1011,8 +1009,6 @@ const nl: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Verstuur ÉÉN samenvatting per geplande backuprun (bijvoorbeeld: 42 van 45 geslaagd) in plaats van een apart bericht voor elke container of VM. Healthchecks wordt al samengevat. Handmatige backups blijven per item melden.",
   "notify.notifyOnUpdate": "Melden bij containerupdate",
   "notify.notifyOnUpdateHint": "Wanneer update-na-backup een container bijwerkt naar een nieuwere image, wordt er een bericht verstuurd zodat je kunt controleren of alles nog werkt. Wordt per bijgewerkte container verstuurd (updates zijn zeldzaam).",
-  "settings.imageCleanupTitle": "Image opruimen",
-  "settings.imageCleanupHint": "Onderhoud voor de optionele functie 'container bijwerken na backup'.",
   "settings.pruneImageAfterUpdate": "Oude image verwijderen na een update",
   "settings.pruneImageAfterUpdateHint": "Nadat een container is bijgewerkt naar een nieuwere image, wordt de vervangen oude image verwijderd. Standaard uit: door deze te bewaren is terugrollen goedkoop (een BombVault-snapshot herstelt gegevens, niet de oude image). Een gedeelde base-image wordt nooit verwijderd.",
   "settings.registriesTitle": "Container-registry's",
@@ -1373,7 +1369,6 @@ const nl: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Hoe lang op een container wordt gewacht tot deze gezond is voordat zijn afhankelijke containers toch starten. Bereik 5 tot 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid-updatestatus",
   "settings.reconcileUnraidStatus": "Unraids updatestatus vernieuwen na het bijwerken van een container",
   "settings.reconcileUnraidStatusHint": "Wist de updatemelding van Unraid nadat BombVault een container heeft bijgewerkt in de updatestap na de back-up.",
   "recovery.foreignVMDest": "Bestemming van de VM-schijven",

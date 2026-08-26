@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const fr: Partial<Translations> = {
   // General
   "language.label": "Langue",
-  "theme.toggle": "Changer le thème",
   "theme.dark": "Sombre",
   "theme.light": "Clair",
 
@@ -216,7 +215,6 @@ const fr: Partial<Translations> = {
   "settings.motion.full": "Complet",
   "settings.rainbow": "Mode arc-en-ciel",
   "settings.rainbowHint": "Chaque ligne d'une liste reçoit sa propre couleur parmi un jeu de huit, au lieu que tout partage une seule couleur d'accentuation — les longues listes se distinguent ainsi d'un coup d'œil.",
-  "settings.rainbowOn": "Utiliser la palette",
   "settings.rainbowReactive": "Mode réactif",
   "settings.rainbowReactiveHint": "Une fois activé, une ligne ou un élément ne montre sa couleur qu'au survol, ou pendant qu'il s'exécute ou qu'il est sélectionné — sinon il reste neutre. Une fois désactivé, chaque ligne et élément colorés affichent leur couleur en permanence.",
   "settings.rainbowRotate": "Rotation des couleurs",
@@ -421,7 +419,7 @@ const fr: Partial<Translations> = {
   "rclone.save": "Enregistrer la config",
 
   // Integrity (restic check)
-  "integrity.title": "Intégrité",
+  "integrity.title": "Intégrité et maintenance",
   "integrity.hint": "Lancez restic check pour vérifier que la structure et les métadonnées d'un dépôt sont intactes.",
   "integrity.verify": "Vérifier",
   "integrity.checking": "Vérification…",
@@ -1014,8 +1012,6 @@ const fr: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Envoyer UN seul résumé par sauvegarde planifiée (par exemple : 42 sur 45 réussies) au lieu d'un message distinct pour chaque container ou VM. Healthchecks est déjà résumé. Les sauvegardes manuelles notifient toujours élément par élément.",
   "notify.notifyOnUpdate": "Notifier lors de la mise à jour d'un container",
   "notify.notifyOnUpdateHint": "Lorsque la mise à jour après sauvegarde fait passer un container à une image plus récente, envoyer un message pour que vous puissiez vérifier qu'il fonctionne toujours. Se déclenche pour chaque container mis à jour (les mises à jour sont rares).",
-  "settings.imageCleanupTitle": "Nettoyage des images",
-  "settings.imageCleanupHint": "Entretien pour la fonction facultative de mise à jour des containers après sauvegarde.",
   "settings.pruneImageAfterUpdate": "Supprimer l'ancienne image après une mise à jour",
   "settings.pruneImageAfterUpdateHint": "Après la mise à jour d'un container vers une image plus récente, supprimer l'ancienne image remplacée. Désactivé par défaut : la conserver rend le retour en arrière peu coûteux (un instantané BombVault restaure les données, pas l'ancienne image). Une image de base partagée n'est jamais supprimée.",
   "settings.registriesTitle": "Registres de containers",
@@ -1376,7 +1372,6 @@ const fr: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Combien de temps attendre qu'un conteneur devienne sain avant que ses dépendants démarrent quand même. Plage de 5 à 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "État des mises à jour Unraid",
   "settings.reconcileUnraidStatus": "Actualiser l'état des mises à jour d'Unraid après la mise à jour d'un conteneur",
   "settings.reconcileUnraidStatusHint": "Efface la bannière de mise à jour d'Unraid après que BombVault a mis à jour un conteneur lors de l'étape de mise à jour suivant la sauvegarde.",
   "recovery.foreignVMDest": "Destination des disques de la VM",

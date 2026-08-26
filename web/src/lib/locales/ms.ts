@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const ms: Partial<Translations> = {
   // General
   "language.label": "Bahasa",
-  "theme.toggle": "Tukar tema",
   "theme.dark": "Gelap",
   "theme.light": "Cerah",
 
@@ -263,8 +262,8 @@ const ms: Partial<Translations> = {
   "offsite.replicateStarted": "Replikasi dimulakan - ia berjalan di latar belakang; penunjuk larian menunjukkan kemajuan.",
   "offsite.replicating": "Mereplikasikan…",
   "offsite.replicatingWithDuration": "Mereplikasikan… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Mereplikasikan snapshot {index} daripada {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Mereplikasikan snapshot {index} daripada {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Mereplikasikan… {percent}% keseluruhan (snapshot {index} daripada {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Mereplikasikan… {percent}% keseluruhan (snapshot {index} daripada {total}) · {duration}",
   "offsite.overallPercentHint": "Kemajuan keseluruhan replikasi ini, dikira dalam snapshot: restic sentiasa hanya melaporkan kemajuan satu snapshot, tidak pernah untuk keseluruhan penyalinan. Saiz snapshot berbeza-beza, jadi anggap ini sebagai anggaran.",
   "offsite.replicateFailed": "Replikasi gagal",
   "offsite.test": "Uji sambungan",
@@ -364,8 +363,6 @@ const ms: Partial<Translations> = {
   "settings.retentionHint": "Berapa banyak sandaran untuk disimpan bagi setiap item. Selepas setiap sandaran, restic mem-prune snapshot yang lebih lama mengikut polisi ini. Semua sifar = simpan semua (mati).",
   "settings.imageMaintenanceTitle": "Pembersihan imej & status kemas kini",
   "settings.imageMaintenanceHint": "Penyelenggaraan berkaitan kemas kini bekas selepas sandaran: membersihkan imej yang digantikan dan menyegarkan status kemas kini cache milik Unraid sendiri.",
-  "settings.imageCleanupTitle": "Pembersihan imej",
-  "settings.imageCleanupHint": "Penyelenggaraan untuk pilihan \"kemas kini bekas selepas sandaran\".",
   "settings.pruneImageAfterUpdate": "Alih keluar imej lama selepas kemas kini",
   "settings.pruneImageAfterUpdateHint": "Selepas bekas dikemas kini kepada imej yang lebih baharu, padamkan imej lama yang digantikan. Mati secara lalai — mengekalkannya menjadikan rollback murah (snapshot BombVault memulihkan data, bukan imej lama). Imej asas yang dikongsi tidak sekali-kali dipadamkan.",
   "settings.registriesTitle": "Registri bekas",
@@ -636,7 +633,6 @@ const ms: Partial<Translations> = {
   "settings.motion.full": "Penuh",
   "settings.rainbow": "Mod Pelangi",
   "settings.rainbowHint": "Setiap baris dalam senarai mendapat warnanya sendiri daripada set lapan warna, dan bukannya semua berkongsi satu warna aksen — ini menjadikan senarai panjang lebih mudah dibezakan sepintas lalu.",
-  "settings.rainbowOn": "Gunakan palet",
   "settings.rainbowReactive": "Mod reaktif",
   "settings.rainbowReactiveHint": "Apabila dihidupkan, warna baris atau item hanya muncul semasa anda mengarahkan kursor ke atasnya, atau semasa ia berjalan atau dipilih — jika tidak, ia kekal neutral. Apabila dimatikan, setiap baris dan item berwarna menunjukkan warnanya sepanjang masa.",
   "settings.rainbowRotate": "Putaran warna",
@@ -808,7 +804,7 @@ const ms: Partial<Translations> = {
   "schedule.overrideTitle": "Penggantian jadual",
   "schedule.overrideUsesDefault": "Menggunakan jadual domain",
   "schedule.overrideEdit": "Tetapkan penggantian",
-  "schedule.overrideHint": "Kosong menggunakan jadual domain. Penggantian setiap item tidak menyokong mod setiap-N-hari.",
+  "schedule.overrideHint": "Kosong menggunakan jadual domain.",
   "schedule.overrideSaved": "Penggantian disimpan",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const ms: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Menyandarkan semua {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Muat naik luar tapak — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Muat naik luar tapak — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Muat naik luar tapak — {domain} … snapshot {index} daripada {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Muat naik luar tapak — {domain} … snapshot {index} daripada {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Muat naik luar tapak — {domain} … {percent}% keseluruhan (snapshot {index} daripada {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Muat naik luar tapak — {domain} … {percent}% keseluruhan (snapshot {index} daripada {total}) · {duration}",
   "activityLog.linePruneRunning": "Prune — {domain} …",
   "activityLog.lineVerifyRunning": "Mengesahkan — {domain} …",
   "activityLog.lineDrillRunning": "Semakan pemulihan sedang berjalan — {domain} …",
@@ -1393,7 +1389,6 @@ const ms: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Berapa lama untuk menunggu bekas menjadi sihat sebelum yang bergantung kepadanya tetap dimulakan. Julat 5 hingga 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Status kemas kini Unraid",
   "settings.reconcileUnraidStatus": "Segarkan status kemas kini Unraid selepas mengemas kini bekas",
   "settings.reconcileUnraidStatusHint": "Kosongkan sepanduk kemas kini Unraid selepas BombVault mengemas kini bekas dalam langkah kemas kini selepas-sandaran.",
 };

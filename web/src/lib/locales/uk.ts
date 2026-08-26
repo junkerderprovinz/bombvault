@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const uk: Partial<Translations> = {
   // General
   "language.label": "Мова",
-  "theme.toggle": "Змінити тему",
   "theme.dark": "Темна",
   "theme.light": "Світла",
 
@@ -214,7 +213,6 @@ const uk: Partial<Translations> = {
   "settings.motion.full": "Повністю",
   "settings.rainbow": "Режим веселки",
   "settings.rainbowHint": "Кожен рядок у списку отримує власний колір з набору восьми, замість того щоб усе використовувало один акцентний колір — це робить довгі списки легшими для розрізнення з першого погляду.",
-  "settings.rainbowOn": "Використовувати палітру",
   "settings.rainbowReactive": "Реактивний режим",
   "settings.rainbowReactiveHint": "Коли увімкнено, рядок або елемент показує свій колір лише під час наведення курсора, або поки він виконується чи вибраний — в інший час залишається нейтральним. Коли вимкнено, кожен кольоровий рядок і елемент показує свій колір постійно.",
   "settings.rainbowRotate": "Ротація кольору",
@@ -416,7 +414,7 @@ const uk: Partial<Translations> = {
   "rclone.save": "Зберегти конфігурацію",
 
   // Integrity (restic check)
-  "integrity.title": "Цілісність",
+  "integrity.title": "Цілісність та обслуговування",
   "integrity.hint": "Запустіть restic check, щоб перевірити, що структура й метадані репозиторію не пошкоджені.",
   "integrity.verify": "Перевірити",
   "integrity.checking": "Перевірка…",
@@ -1009,8 +1007,6 @@ const uk: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Надсилати ОДИН підсумок на кожен запланований запуск резервного копіювання (наприклад: 42 з 45 успішно) замість окремого повідомлення для кожного контейнера чи VM. Healthchecks уже підсумовується. Ручні резервні копії все одно сповіщають окремо про кожен елемент.",
   "notify.notifyOnUpdate": "Сповіщати про оновлення контейнера",
   "notify.notifyOnUpdateHint": "Коли оновлення після резервного копіювання підвищує контейнер до новішого образу, надсилати повідомлення, щоб ви могли перевірити, що він досі працює. Спрацьовує для кожного оновленого контейнера (оновлення трапляються рідко).",
-  "settings.imageCleanupTitle": "Очищення образів",
-  "settings.imageCleanupHint": "Обслуговування для необов'язкової функції оновлення контейнера після резервного копіювання.",
   "settings.pruneImageAfterUpdate": "Видаляти старий образ після оновлення",
   "settings.pruneImageAfterUpdateHint": "Після оновлення контейнера до новішого образу видаляти замінений старий образ. Типово вимкнено: його збереження робить відкат дешевим (знімок BombVault відновлює дані, а не старий образ). Спільний базовий образ ніколи не видаляється.",
   "settings.registriesTitle": "Реєстри контейнерів",
@@ -1371,7 +1367,6 @@ const uk: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Скільки чекати, поки контейнер стане справним, перш ніж залежні від нього все одно запустяться. Діапазон від 5 до 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Статус оновлень Unraid",
   "settings.reconcileUnraidStatus": "Оновлювати статус оновлень Unraid після оновлення контейнера",
   "settings.reconcileUnraidStatusHint": "Прибирає банер оновлення Unraid після того, як BombVault оновить контейнер на етапі оновлення після резервного копіювання.",
   "recovery.foreignVMDest": "Розташування дисків ВМ",

@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const zh: Partial<Translations> = {
   // General
   "language.label": "语言",
-  "theme.toggle": "切换主题",
   "theme.dark": "深色",
   "theme.light": "浅色",
 
@@ -216,7 +215,6 @@ const zh: Partial<Translations> = {
   "settings.motion.full": "完整",
   "settings.rainbow": "彩虹模式",
   "settings.rainbowHint": "列表中的每一行都会从八种颜色中获得专属颜色，而不是所有内容共用一种强调色——让长列表一眼就能区分开。",
-  "settings.rainbowOn": "使用调色板",
   "settings.rainbowReactive": "响应模式",
   "settings.rainbowReactiveHint": "开启后，行或项目仅在鼠标悬停、正在运行或被选中时显示其颜色，其余时间保持中性色。关闭后，所有彩色行和项目会一直显示各自的颜色。",
   "settings.rainbowRotate": "颜色轮换",
@@ -416,7 +414,7 @@ const zh: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "请至少添加一个 age 收件人，否则加密导出将失败。",
   "rclone.save": "保存配置",
 
-  "integrity.title": "完整性",
+  "integrity.title": "完整性与维护",
   "integrity.hint": "运行 restic check 以验证仓库的结构和元数据是否完好。",
   "integrity.verify": "验证",
   "integrity.checking": "检查中…",
@@ -1006,8 +1004,6 @@ const zh: Partial<Translations> = {
   "notify.scheduledSummaryHint": "每次计划备份运行只发送一条汇总消息（例如：45 个中成功 42 个），而不是为每个容器或虚拟机单独发送一条消息。Healthchecks 已自动汇总。手动备份仍会逐项通知。",
   "notify.notifyOnUpdate": "容器更新时通知",
   "notify.notifyOnUpdateHint": "当“备份后更新”将容器升级到较新镜像时，发送一条消息，以便你确认它仍能正常工作。每个已更新的容器各触发一次（更新很少发生）。",
-  "settings.imageCleanupTitle": "镜像清理",
-  "settings.imageCleanupHint": "用于可选的“备份后更新容器”功能的清理维护。",
   "settings.pruneImageAfterUpdate": "更新后删除旧镜像",
   "settings.pruneImageAfterUpdateHint": "当容器更新到较新镜像后，删除已被取代的旧镜像。默认关闭：保留旧镜像可让回滚更省事（BombVault 快照恢复的是数据，而非旧镜像）。共享的基础镜像永远不会被删除。",
   "settings.registriesTitle": "容器镜像仓库",
@@ -1368,7 +1364,6 @@ const zh: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "在依赖它的容器无论如何启动之前，等待某个容器恢复正常的时长。范围为 5 到 3600。",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid 更新状态",
   "settings.reconcileUnraidStatus": "更新容器后刷新 Unraid 的更新状态",
   "settings.reconcileUnraidStatusHint": "在备份后更新步骤中 BombVault 更新容器后，清除 Unraid 的更新横幅。",
   "recovery.foreignVMDest": "虚拟机磁盘目标位置",

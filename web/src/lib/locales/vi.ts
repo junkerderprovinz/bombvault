@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const vi: Partial<Translations> = {
   // General
   "language.label": "Ngôn ngữ",
-  "theme.toggle": "Chuyển giao diện",
   "theme.dark": "Tối",
   "theme.light": "Sáng",
 
@@ -216,7 +215,6 @@ const vi: Partial<Translations> = {
   "settings.motion.full": "Đầy đủ",
   "settings.rainbow": "Chế độ cầu vồng",
   "settings.rainbowHint": "Mỗi dòng trong danh sách nhận màu riêng từ một bộ tám màu, thay vì tất cả dùng chung một màu nhấn — giúp các danh sách dài dễ phân biệt chỉ bằng một cái nhìn.",
-  "settings.rainbowOn": "Dùng bảng màu",
   "settings.rainbowReactive": "Chế độ phản ứng",
   "settings.rainbowReactiveHint": "Khi bật, một hàng hoặc mục chỉ hiện màu của nó khi bạn di chuột qua, hoặc khi nó đang chạy hoặc được chọn — còn lại thì giữ màu trung tính. Khi tắt, mọi hàng và mục có màu sẽ luôn hiện màu của nó.",
   "settings.rainbowRotate": "Luân chuyển màu",
@@ -416,7 +414,7 @@ const vi: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "Thêm ít nhất một người nhận age, nếu không bản xuất được mã hóa sẽ thất bại.",
   "rclone.save": "Lưu cấu hình",
 
-  "integrity.title": "Toàn vẹn",
+  "integrity.title": "Toàn vẹn và bảo trì",
   "integrity.hint": "Chạy restic check để xác minh cấu trúc và siêu dữ liệu của kho lưu trữ còn nguyên vẹn.",
   "integrity.verify": "Xác minh",
   "integrity.checking": "Đang kiểm tra…",
@@ -1006,8 +1004,6 @@ const vi: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Gửi MỘT bản tóm tắt cho mỗi lần sao lưu theo lịch (ví dụ: 42 trên 45 thành công) thay vì một thông báo riêng cho từng container hoặc VM. Healthchecks vốn đã được tóm tắt. Sao lưu thủ công vẫn thông báo theo từng mục.",
   "notify.notifyOnUpdate": "Thông báo khi container được cập nhật",
   "notify.notifyOnUpdateHint": "Khi tính năng cập-nhật-sau-sao-lưu nâng cấp một container lên image mới hơn, gửi một thông báo để bạn kiểm tra xem nó còn hoạt động không. Kích hoạt cho từng container được cập nhật (việc cập nhật hiếm khi xảy ra).",
-  "settings.imageCleanupTitle": "Dọn dẹp image",
-  "settings.imageCleanupHint": "Dọn dẹp cho tính năng tùy chọn cập-nhật-container-sau-sao-lưu.",
   "settings.pruneImageAfterUpdate": "Xóa image cũ sau khi cập nhật",
   "settings.pruneImageAfterUpdateHint": "Sau khi một container được cập nhật lên image mới hơn, xóa image cũ đã bị thay thế. Mặc định tắt: giữ lại giúp việc quay về phiên bản cũ trở nên dễ dàng (một bản snapshot của BombVault khôi phục dữ liệu, không phải image cũ). Image nền dùng chung sẽ không bao giờ bị xóa.",
   "settings.registriesTitle": "Registry container",
@@ -1368,7 +1364,6 @@ const vi: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Chờ một container trở nên khỏe mạnh trong bao lâu trước khi các container phụ thuộc vào nó vẫn khởi động. Phạm vi từ 5 đến 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Trạng thái cập nhật Unraid",
   "settings.reconcileUnraidStatus": "Làm mới trạng thái cập nhật của Unraid sau khi cập nhật một container",
   "settings.reconcileUnraidStatusHint": "Xóa biểu ngữ cập nhật của Unraid sau khi BombVault cập nhật một container trong bước cập nhật sau khi sao lưu.",
   "recovery.foreignVMDest": "Đích của đĩa VM",

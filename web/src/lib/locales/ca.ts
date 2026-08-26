@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const ca: Partial<Translations> = {
   // General
   "language.label": "Idioma",
-  "theme.toggle": "Canvia el tema",
   "theme.dark": "Fosc",
   "theme.light": "Clar",
 
@@ -263,8 +262,8 @@ const ca: Partial<Translations> = {
   "offsite.replicateStarted": "La replicació ha començat - s'executa en segon pla; l'indicador d'execució mostra el progrés.",
   "offsite.replicating": "Replicant…",
   "offsite.replicatingWithDuration": "Replicant… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Replicant instantani {index} de {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replicant instantani {index} de {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Replicant… {percent}% en total (instantani {index} de {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replicant… {percent}% en total (instantani {index} de {total}) · {duration}",
   "offsite.overallPercentHint": "Progrés global d'aquesta replicació, comptat en instantànies: restic només informa del progrés d'una instantània alhora, mai d'una còpia sencera. Les instantànies tenen mides diferents, així que pren-t'ho com una estimació.",
   "offsite.replicateFailed": "La replicació ha fallat",
   "offsite.test": "Prova la connexió",
@@ -364,8 +363,6 @@ const ca: Partial<Translations> = {
   "settings.retentionHint": "Quantes còpies conservar per element. Després de cada còpia, restic neteja instantanis més antics segons aquesta política. Tot a 0 = conserva-ho tot (desactivat).",
   "settings.imageMaintenanceTitle": "Neteja d'imatges i estat d'actualitzacions",
   "settings.imageMaintenanceHint": "Manteniment al voltant de l'actualització de contenidor després de la còpia: neteja la imatge substituïda i actualitza l'estat en caché propi d'Unraid.",
-  "settings.imageCleanupTitle": "Neteja d'imatges",
-  "settings.imageCleanupHint": "Manteniment per a l'opcional «actualitza el contenidor després de la còpia».",
   "settings.pruneImageAfterUpdate": "Elimina la imatge antiga després d'actualitzar",
   "settings.pruneImageAfterUpdateHint": "Després que un contenidor s'actualitzi a una imatge més nova, elimina la imatge antiga substituïda. Desactivat per defecte — conservar-la fa que tornar enrere surti barat (un instantani de BombVault restaura dades, no la imatge antiga). Una imatge base compartida mai s'elimina.",
   "settings.registriesTitle": "Registres de contenidors",
@@ -636,7 +633,6 @@ const ca: Partial<Translations> = {
   "settings.motion.full": "Complet",
   "settings.rainbow": "Mode arc de Sant Martí",
   "settings.rainbowHint": "Cada fila d'una llista rep un color propi d'un conjunt de vuit, en comptes que tot comparteixi un sol color d'accent — fa que les llistes llargues siguin més fàcils de distingir d'un cop d'ull.",
-  "settings.rainbowOn": "Fes servir la paleta",
   "settings.rainbowReactive": "Mode reactiu",
   "settings.rainbowReactiveHint": "Quan està actiu, el color d'una fila o element només apareix mentre el toques amb el cursor, o mentre s'està executant o està seleccionat — altrament es manté neutre. Quan està desactivat, totes les files i elements amb color mostren el seu color sempre.",
   "settings.rainbowRotate": "Rotació de color",
@@ -808,7 +804,7 @@ const ca: Partial<Translations> = {
   "schedule.overrideTitle": "Substitució d'horari",
   "schedule.overrideUsesDefault": "Fa servir l'horari del domini",
   "schedule.overrideEdit": "Configura substitució",
-  "schedule.overrideHint": "Buit fa servir l'horari del domini. Les substitucions per element no admeten el mode cada-N-dies.",
+  "schedule.overrideHint": "Buit fa servir l'horari del domini.",
   "schedule.overrideSaved": "Substitució desada",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const ca: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Fent còpia de tots els {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Pujada externa — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Pujada externa — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Pujada externa — {domain} … instantani {index} de {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Pujada externa — {domain} … instantani {index} de {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Pujada externa — {domain} … {percent}% en total (instantani {index} de {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Pujada externa — {domain} … {percent}% en total (instantani {index} de {total}) · {duration}",
   "activityLog.linePruneRunning": "Netejant — {domain} …",
   "activityLog.lineVerifyRunning": "Verificant — {domain} …",
   "activityLog.lineDrillRunning": "S'està executant la prova de restauració — {domain} …",
@@ -1393,7 +1389,6 @@ const ca: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Quant de temps s'espera que un contenidor esdevingui sa abans que els seus dependents s'engeguin igualment. Rang de 5 a 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Estat d'actualitzacions d'Unraid",
   "settings.reconcileUnraidStatus": "Actualitza l'estat d'actualitzacions d'Unraid després d'actualitzar un contenidor",
   "settings.reconcileUnraidStatusHint": "Neteja el bàner d'actualització d'Unraid després que BombVault actualitzi un contenidor al pas d'actualització posterior a la còpia.",
 };

@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const he: Partial<Translations> = {
   // General
   "language.label": "שפה",
-  "theme.toggle": "החלף ערכת נושא",
   "theme.dark": "כהה",
   "theme.light": "בהיר",
 
@@ -216,7 +215,6 @@ const he: Partial<Translations> = {
   "settings.motion.full": "מלא",
   "settings.rainbow": "מצב קשת",
   "settings.rainbowHint": "כל שורה ברשימה מקבלת צבע משלה מתוך מערך של שמונה צבעים, במקום שהכול ישתף צבע הדגשה אחד — כך רשימות ארוכות קלות יותר להבחנה במבט אחד.",
-  "settings.rainbowOn": "להשתמש בלוח",
   "settings.rainbowReactive": "מצב תגובתי",
   "settings.rainbowReactiveHint": "כשמופעל, שורה או פריט מציגים את הצבע שלהם רק בעת ריחוף העכבר, או בזמן שהם פועלים או נבחרים — אחרת הם נשארים ניטרליים. כשמושבת, כל שורה ופריט צבעוניים מציגים את הצבע שלהם כל הזמן.",
   "settings.rainbowRotate": "סבב צבעים",
@@ -421,7 +419,7 @@ const he: Partial<Translations> = {
   "rclone.save": "שמור תצורה",
 
   // Integrity (restic check)
-  "integrity.title": "שלמות",
+  "integrity.title": "שלמות ותחזוקה",
   "integrity.hint": "הרץ restic check כדי לאמת שהמבנה והמטא-נתונים של המאגר תקינים.",
   "integrity.verify": "אמת",
   "integrity.checking": "בודק…",
@@ -1014,8 +1012,6 @@ const he: Partial<Translations> = {
   "notify.scheduledSummaryHint": "שליחת סיכום אחד לכל הרצת גיבוי מתוזמנת (לדוגמה: 42 מתוך 45 הצליחו) במקום הודעה נפרדת לכל container או VM. Healthchecks כבר מסוכם. גיבויים ידניים עדיין שולחים התראה לכל פריט.",
   "notify.notifyOnUpdate": "התראה על עדכון container",
   "notify.notifyOnUpdateHint": "כאשר עדכון-לאחר-גיבוי משדרג container ל-image חדש יותר, נשלחת הודעה כדי שתוכל לוודא שהוא עדיין עובד. נשלח לכל container שעודכן (עדכונים הם נדירים).",
-  "settings.imageCleanupTitle": "ניקוי images",
-  "settings.imageCleanupHint": "תחזוקה עבור התכונה האופציונלית של עדכון container לאחר גיבוי.",
   "settings.pruneImageAfterUpdate": "הסרת ה-image הישן לאחר עדכון",
   "settings.pruneImageAfterUpdateHint": "לאחר ש-container עודכן ל-image חדש יותר, מחיקת ה-image הישן שהוחלף. כבוי כברירת מחדל: שמירתו מוזילה את החזרה לאחור (snapshot של BombVault משחזר נתונים, לא את ה-image הישן). image בסיס משותף לעולם לא נמחק.",
   "settings.registriesTitle": "Registries של containers",
@@ -1376,7 +1372,6 @@ const he: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "כמה זמן להמתין שמכולה תהיה תקינה לפני שהתלויות בה מופעלות בכל מקרה. טווח 5 עד 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "סטטוס עדכוני Unraid",
   "settings.reconcileUnraidStatus": "רענן את סטטוס העדכונים של Unraid לאחר עדכון מכולה",
   "settings.reconcileUnraidStatusHint": "מנקה את באנר העדכון של Unraid לאחר ש-BombVault מעדכן מכולה בשלב העדכון שלאחר הגיבוי.",
   "recovery.foreignVMDest": "יעד הדיסקים של המכונה הווירטואלית",

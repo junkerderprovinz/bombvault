@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const ar: Partial<Translations> = {
   // General
   "language.label": "اللغة",
-  "theme.toggle": "تبديل المظهر",
   "theme.dark": "داكن",
   "theme.light": "فاتح",
 
@@ -216,7 +215,6 @@ const ar: Partial<Translations> = {
   "settings.motion.full": "كاملة",
   "settings.rainbow": "وضع قوس قزح",
   "settings.rainbowHint": "يحصل كل صف في القائمة على لونه الخاص من مجموعة مكوّنة من ثمانية ألوان، بدلاً من أن يشترك كل شيء في لون تمييز واحد — ما يجعل القوائم الطويلة أسهل تمييزًا للوهلة الأولى.",
-  "settings.rainbowOn": "استخدام اللوحة",
   "settings.rainbowReactive": "الوضع التفاعلي",
   "settings.rainbowReactiveHint": "عند التفعيل، يعرض الصف أو العنصر لونه فقط عند تمرير المؤشر فوقه، أو أثناء تشغيله أو تحديده — وإلا يبقى محايدًا. عند الإيقاف، يعرض كل صف وعنصر ملوّن لونه طوال الوقت.",
   "settings.rainbowRotate": "تدوير الألوان",
@@ -421,7 +419,7 @@ const ar: Partial<Translations> = {
   "rclone.save": "حفظ الإعداد",
 
   // Integrity (restic check)
-  "integrity.title": "السلامة",
+  "integrity.title": "السلامة والصيانة",
   "integrity.hint": "شغّل restic check للتحقق من سلامة بنية المستودع وبياناته الوصفية.",
   "integrity.verify": "تحقّق",
   "integrity.checking": "جارٍ الفحص…",
@@ -1017,8 +1015,6 @@ const ar: Partial<Translations> = {
   "notify.scheduledSummaryHint": "أرسل ملخصاً واحداً لكل عملية نسخ احتياطي مجدولة (مثلاً: نجحت 42 من 45) بدلاً من رسالة منفصلة لكل حاوية أو جهاز ظاهري. Healthchecks مُلخَّص بالفعل. أما النسخ الاحتياطية اليدوية فتُرسِل إشعاراً لكل عنصر.",
   "notify.notifyOnUpdate": "إشعار عند تحديث الحاوية",
   "notify.notifyOnUpdateHint": "عندما يرقّي «التحديث بعد النسخ الاحتياطي» حاوية إلى صورة أحدث، يُرسَل إشعار لتتحقق من أنها لا تزال تعمل. يُرسَل لكل حاوية مُحدَّثة (التحديثات نادرة).",
-  "settings.imageCleanupTitle": "تنظيف الصور",
-  "settings.imageCleanupHint": "صيانة لميزة «تحديث الحاوية بعد النسخ الاحتياطي» الاختيارية.",
   "settings.pruneImageAfterUpdate": "إزالة الصورة القديمة بعد التحديث",
   "settings.pruneImageAfterUpdateHint": "بعد تحديث حاوية إلى صورة أحدث، احذف الصورة القديمة المُستبدَلة. معطَّل افتراضياً: الإبقاء عليها يجعل التراجع سهلاً (لقطة BombVault تستعيد البيانات لا الصورة القديمة). لا تُحذف الصورة الأساسية المشتركة أبداً.",
   "settings.registriesTitle": "سجلّات الحاويات",
@@ -1379,7 +1375,6 @@ const ar: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "مدة انتظار أن تصبح الحاوية سليمة قبل أن تبدأ الحاويات المعتمدة عليها على أي حال. النطاق من 5 إلى 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "حالة تحديثات Unraid",
   "settings.reconcileUnraidStatus": "تحديث حالة تحديثات Unraid بعد تحديث حاوية",
   "settings.reconcileUnraidStatusHint": "يمسح لافتة التحديث في Unraid بعد أن يحدّث BombVault حاوية في خطوة التحديث بعد النسخ الاحتياطي.",
   "recovery.foreignVMDest": "وجهة أقراص الجهاز الافتراضي",

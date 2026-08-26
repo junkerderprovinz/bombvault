@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const is: Partial<Translations> = {
   // General
   "language.label": "Tungumál",
-  "theme.toggle": "Skipta um þema",
   "theme.dark": "Dökkt",
   "theme.light": "Ljóst",
 
@@ -263,8 +262,8 @@ const is: Partial<Translations> = {
   "offsite.replicateStarted": "Fjarafritun hafin - hún keyrir í bakgrunni; keyrsluvísirinn sýnir framvindu.",
   "offsite.replicating": "Fjarafrita…",
   "offsite.replicatingWithDuration": "Fjarafrita… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Fjarafrita snapshot {index} af {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Fjarafrita snapshot {index} af {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Fjarafrita… {percent}% alls (snapshot {index} af {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Fjarafrita… {percent}% alls (snapshot {index} af {total}) · {duration}",
   "offsite.overallPercentHint": "Heildarframvinda þessarar fjarafritunar, talin í tökum: restic tilkynnir framvindu alltaf aðeins fyrir eitt tak í einu, aldrei fyrir heila afritun. Tökin eru mismunandi stór, svo líttu á þetta sem áætlun.",
   "offsite.replicateFailed": "Fjarafritun mistókst",
   "offsite.test": "Prófa tengingu",
@@ -364,8 +363,6 @@ const is: Partial<Translations> = {
   "settings.retentionHint": "Hversu mörg afrit eru geymd fyrir hvern hlut. Eftir hverja afritun hreinsar restic eldri snapshot samkvæmt þessari stefnu. Allt núll = geyma allt (slökkt).",
   "settings.imageMaintenanceTitle": "Ímyndahreinsun og uppfærslustaða",
   "settings.imageMaintenanceHint": "Viðhald í kringum uppfærslu gáms eftir afritun: hreinsa ímyndina sem var skipt út og endurnýja eigin skyndiminnisstöðu Unraid fyrir uppfærslur.",
-  "settings.imageCleanupTitle": "Ímyndahreinsun",
-  "settings.imageCleanupHint": "Viðhald fyrir valfrjálsa „uppfæra gám eftir afritun“.",
   "settings.pruneImageAfterUpdate": "Fjarlægja gömlu ímyndina eftir uppfærslu",
   "settings.pruneImageAfterUpdateHint": "Eftir að gámur er uppfærður í nýrri ímynd, eyddu gömlu ímyndinni sem var skipt út. Sjálfgefið slökkt — að geyma hana gerir afturköllun ódýra (BombVault snapshot endurheimtir gögn, ekki gömlu ímyndina). Sameiginlegri grunnímynd er aldrei eytt.",
   "settings.registriesTitle": "Gámaskrár",
@@ -636,7 +633,6 @@ const is: Partial<Translations> = {
   "settings.motion.full": "Full",
   "settings.rainbow": "Regnbogahamur",
   "settings.rainbowHint": "Hver lína í lista fær eigin lit úr átta lita safni, í stað þess að allt deili einum áherslulit — þetta gerir langa lista auðveldari að greina í einum svip.",
-  "settings.rainbowOn": "Nota litaspjaldið",
   "settings.rainbowReactive": "Viðbragðshamur",
   "settings.rainbowReactiveHint": "Þegar kveikt er á þessu birtist litur línu eða hlutar aðeins á meðan þú hoverar yfir hann, eða á meðan hann er í keyrslu eða valinn — annars er hann hlutlaus. Þegar slökkt er á þessu sýna allar litaðar línur og hlutir lit sinn allan tímann.",
   "settings.rainbowRotate": "Litaskipting",
@@ -808,7 +804,7 @@ const is: Partial<Translations> = {
   "schedule.overrideTitle": "Yfirskrifun tímaáætlunar",
   "schedule.overrideUsesDefault": "Notar tímaáætlun svæðisins",
   "schedule.overrideEdit": "Stilla yfirskrifun",
-  "schedule.overrideHint": "Autt notar tímaáætlun svæðisins. Yfirskrifanir fyrir hvern hlut styðja ekki N-daga-fresti hamin.",
+  "schedule.overrideHint": "Autt notar tímaáætlun svæðisins.",
   "schedule.overrideSaved": "Yfirskrifun vistuð",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const is: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Afrita öll {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Fjarlægt uppstreymi — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Fjarlægt uppstreymi — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Fjarlægt uppstreymi — {domain} … snapshot {index} af {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Fjarlægt uppstreymi — {domain} … snapshot {index} af {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Fjarlægt uppstreymi — {domain} … {percent}% alls (snapshot {index} af {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Fjarlægt uppstreymi — {domain} … {percent}% alls (snapshot {index} af {total}) · {duration}",
   "activityLog.linePruneRunning": "Hreinsa — {domain} …",
   "activityLog.lineVerifyRunning": "Staðfesti — {domain} …",
   "activityLog.lineDrillRunning": "Endurheimtarprófun í gangi — {domain} …",
@@ -1393,7 +1389,6 @@ const is: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Hversu lengi á að bíða eftir að gámur verði heilbrigður áður en þeir sem eru háðir honum ræsa samt. Bil 5 til 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Uppfærslustaða Unraid",
   "settings.reconcileUnraidStatus": "Endurnýja uppfærslustöðu Unraid eftir að gámur er uppfærður",
   "settings.reconcileUnraidStatusHint": "Hreinsa uppfærslueiningu Unraid eftir að BombVault uppfærir gám í uppfærsluskrefinu eftir afritun.",
 };

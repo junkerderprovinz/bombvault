@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const bg: Partial<Translations> = {
   // General
   "language.label": "Език",
-  "theme.toggle": "Смяна на темата",
   "theme.dark": "Тъмна",
   "theme.light": "Светла",
 
@@ -263,8 +262,8 @@ const bg: Partial<Translations> = {
   "offsite.replicateStarted": "Репликацията започна - изпълнява се във фонов режим; индикаторът за изпълнение показва напредъка.",
   "offsite.replicating": "Репликация…",
   "offsite.replicatingWithDuration": "Репликация… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Репликация на снапшот {index} от {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Репликация на снапшот {index} от {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Репликация… {percent}% общо (снапшот {index} от {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Репликация… {percent}% общо (снапшот {index} от {total}) · {duration}",
   "offsite.overallPercentHint": "Общ напредък на този репликационен цикъл, отчетен в снапшоти: restic съобщава напредък винаги само за един снапшот, никога за цялото копиране. Снапшотите са с различен размер, затова приемай това като приблизителна оценка.",
   "offsite.replicateFailed": "Репликацията е неуспешна",
   "offsite.test": "Провери връзката",
@@ -364,8 +363,6 @@ const bg: Partial<Translations> = {
   "settings.retentionHint": "Колко архивирания да се пазят за всеки елемент. След всяко архивиране restic прочиства по-старите снапшоти според тази политика. Всички на 0 = пази всичко (изключено).",
   "settings.imageMaintenanceTitle": "Почистване на образи и статус на обновленията",
   "settings.imageMaintenanceHint": "Поддръжка около обновяването на контейнер след архивиране: прочиства заменения образ и опреснява собствения кеширан статус на обновления на Unraid.",
-  "settings.imageCleanupTitle": "Почистване на образи",
-  "settings.imageCleanupHint": "Поддръжка за незадължителното „обнови контейнера след архивиране“.",
   "settings.pruneImageAfterUpdate": "Премахни стария образ след обновление",
   "settings.pruneImageAfterUpdateHint": "След като контейнер бъде обновен до по-нов образ, изтрий заменения стар образ. По подразбиране изключено — запазването му прави връщането назад евтино (снапшот на BombVault възстановява данни, не стария образ). Споделен базов образ никога не се изтрива.",
   "settings.registriesTitle": "Регистри за контейнери",
@@ -636,7 +633,6 @@ const bg: Partial<Translations> = {
   "settings.motion.full": "Пълно",
   "settings.rainbow": "Дъгов режим",
   "settings.rainbowHint": "Всеки ред в списък получава собствен цвят от набор от осем, вместо всичко да споделя един акцентен цвят — прави дългите списъци по-лесни за разграничаване с един поглед.",
-  "settings.rainbowOn": "Използвай палитрата",
   "settings.rainbowReactive": "Реактивен режим",
   "settings.rainbowReactiveHint": "Когато е включен, цветът на ред или елемент се появява само докато го посочваш с мишката, или докато се изпълнява или е избран — иначе остава неутрален. Когато е изключен, всеки цветен ред и елемент показва цвета си постоянно.",
   "settings.rainbowRotate": "Ротация на цветовете",
@@ -808,7 +804,7 @@ const bg: Partial<Translations> = {
   "schedule.overrideTitle": "Замяна на графика",
   "schedule.overrideUsesDefault": "Използва графика на областта",
   "schedule.overrideEdit": "Задай замяна",
-  "schedule.overrideHint": "Празно използва графика на областта. Замените по елемент не поддържат режима на всеки-N-дни.",
+  "schedule.overrideHint": "Празно използва графика на областта.",
   "schedule.overrideSaved": "Замяната е запазена",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const bg: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Архивиране на всички {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Качване извън обекта — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Качване извън обекта — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Качване извън обекта — {domain} … снапшот {index} от {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Качване извън обекта — {domain} … снапшот {index} от {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Качване извън обекта — {domain} … {percent}% общо (снапшот {index} от {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Качване извън обекта — {domain} … {percent}% общо (снапшот {index} от {total}) · {duration}",
   "activityLog.linePruneRunning": "Прочистване — {domain} …",
   "activityLog.lineVerifyRunning": "Проверка — {domain} …",
   "activityLog.lineDrillRunning": "Проверката за възстановяване се изпълнява — {domain} …",
@@ -1393,7 +1389,6 @@ const bg: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Колко дълго да се чака контейнер да стане здрав, преди зависимите от него да стартират въпреки това. Диапазон от 5 до 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Статус на обновленията на Unraid",
   "settings.reconcileUnraidStatus": "Опресни статуса на обновленията на Unraid след обновяване на контейнер",
   "settings.reconcileUnraidStatusHint": "Изчисти банера за обновление на Unraid, след като BombVault обнови контейнер в стъпката за обновление след архивиране.",
 };

@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const cs: Partial<Translations> = {
   // General
   "language.label": "Jazyk",
-  "theme.toggle": "Přepnout motiv",
   "theme.dark": "Tmavý",
   "theme.light": "Světlý",
 
@@ -216,7 +215,6 @@ const cs: Partial<Translations> = {
   "settings.motion.full": "Plné",
   "settings.rainbow": "Duhový režim",
   "settings.rainbowHint": "Každý řádek v seznamu dostane vlastní barvu z osmi barevné palety místo toho, aby vše sdílelo jeden akcent — dlouhé seznamy se tak na první pohled snáze rozliší.",
-  "settings.rainbowOn": "Použít paletu",
   "settings.rainbowReactive": "Reaktivní režim",
   "settings.rainbowReactiveHint": "Když je zapnuto, řádek nebo prvek zobrazí svou barvu jen při najetí myší, nebo když právě běží či je vybraný — jinak zůstává neutrální. Když je vypnuto, každý barevný řádek a prvek zobrazuje svou barvu neustále.",
   "settings.rainbowRotate": "Rotace barev",
@@ -419,7 +417,7 @@ const cs: Partial<Translations> = {
   "rclone.save": "Uložit konfiguraci",
 
   // Integrity (restic check)
-  "integrity.title": "Integrita",
+  "integrity.title": "Integrita a údržba",
   "integrity.hint": "Spusťte restic check k ověření, že struktura a metadata repozitáře jsou neporušené.",
   "integrity.verify": "Ověřit",
   "integrity.checking": "Kontroluji…",
@@ -1012,8 +1010,6 @@ const cs: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Odeslat JEDNO shrnutí za každý naplánovaný běh zálohy (například: 42 z 45 úspěšných) místo samostatné zprávy pro každý kontejner nebo VM. Healthchecks se už shrnuje. Ruční zálohy stále upozorňují pro každou položku.",
   "notify.notifyOnUpdate": "Upozornit na aktualizaci kontejneru",
   "notify.notifyOnUpdateHint": "Když aktualizace po záloze povýší kontejner na novější image, odeslat zprávu, abyste mohli ověřit, že stále funguje. Spustí se pro každý aktualizovaný kontejner (aktualizace jsou vzácné).",
-  "settings.imageCleanupTitle": "Čištění image",
-  "settings.imageCleanupHint": "Údržba pro volitelnou funkci aktualizace kontejneru po záloze.",
   "settings.pruneImageAfterUpdate": "Odstranit starý image po aktualizaci",
   "settings.pruneImageAfterUpdateHint": "Po aktualizaci kontejneru na novější image smazat nahrazený starý image. Ve výchozím nastavení vypnuto: jeho ponechání zlevňuje návrat zpět (snímek BombVault obnoví data, ne starý image). Sdílený základní image se nikdy nesmaže.",
   "settings.registriesTitle": "Registry kontejnerů",
@@ -1374,7 +1370,6 @@ const cs: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Jak dlouho čekat, než bude kontejner v pořádku, než se jeho závislé kontejnery přesto spustí. Rozsah 5 až 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Stav aktualizací Unraid",
   "settings.reconcileUnraidStatus": "Po aktualizaci kontejneru obnovit stav aktualizací Unraid",
   "settings.reconcileUnraidStatusHint": "Vymaže banner aktualizace Unraid poté, co BombVault aktualizuje kontejner v kroku aktualizace po záloze.",
   "recovery.foreignVMDest": "Cíl disků VM",

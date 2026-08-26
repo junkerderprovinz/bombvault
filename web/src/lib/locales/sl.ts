@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const sl: Partial<Translations> = {
   // General
   "language.label": "Jezik",
-  "theme.toggle": "Preklopi temo",
   "theme.dark": "Temna",
   "theme.light": "Svetla",
 
@@ -263,8 +262,8 @@ const sl: Partial<Translations> = {
   "offsite.replicateStarted": "Podvajanje se je začelo - teče v ozadju; kazalnik napredka prikazuje potek.",
   "offsite.replicating": "Podvajanje…",
   "offsite.replicatingWithDuration": "Podvajanje… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Podvajanje posnetka {index} od {total} ({percent} %)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Podvajanje posnetka {index} od {total} ({percent} %) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Podvajanje… {percent} % skupno (posnetek {index} od {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Podvajanje… {percent} % skupno (posnetek {index} od {total}) · {duration}",
   "offsite.overallPercentHint": "Skupni napredek tega podvajanja, štet v posnetkih: restic javlja napredek vedno le za en posnetek, nikoli za celotno kopiranje. Posnetki so različno veliki, zato to jemlji kot oceno.",
   "offsite.replicateFailed": "Podvajanje ni uspelo",
   "offsite.test": "Preizkusi povezavo",
@@ -364,8 +363,6 @@ const sl: Partial<Translations> = {
   "settings.retentionHint": "Koliko varnostnih kopij ohraniti na posamezen element. Po vsaki varnostni kopiji restic po tej politiki počisti starejše posnetke. Vse ničle = ohrani vse (izklopljeno).",
   "settings.imageMaintenanceTitle": "Čiščenje slik in stanje posodobitev",
   "settings.imageMaintenanceHint": "Vzdrževanje po varnostnem kopiranju za posodabljanje vsebnikov: počisti presežno sliko in osveži Unraidovo lastno predpomnjeno stanje posodobitev.",
-  "settings.imageCleanupTitle": "Čiščenje slik",
-  "settings.imageCleanupHint": "Vzdrževanje za neobvezno možnost \"posodobi vsebnik po varnostni kopiji\".",
   "settings.pruneImageAfterUpdate": "Po posodobitvi odstrani staro sliko",
   "settings.pruneImageAfterUpdateHint": "Ko je vsebnik posodobljen na novejšo sliko, izbriši presežno staro sliko. Privzeto izklopljeno — ohranitev omogoča poceni vrnitev nazaj (posnetek BombVaulta obnovi podatke, ne stare slike). Skupna osnovna slika se nikoli ne izbriše.",
   "settings.registriesTitle": "Registri vsebnikov",
@@ -634,7 +631,6 @@ const sl: Partial<Translations> = {
   "settings.motion.full": "Polno",
   "settings.rainbow": "Mavrični način",
   "settings.rainbowHint": "Vsaka vrstica na seznamu dobi lastno barvo iz nabora osmih, namesto da si vse deli eno poudarjeno barvo — dolge sezname naredi lažje razločljive na prvi pogled.",
-  "settings.rainbowOn": "Uporabi paleto",
   "settings.rainbowReactive": "Odzivni način",
   "settings.rainbowReactiveHint": "Ko je vklopljeno, se barva vrstice ali elementa pojavi samo, ko nanjo kažeš z miško ali ko teče ali je izbrana — sicer ostane nevtralna. Ko je izklopljeno, vsaka pobarvana vrstica in element ves čas kažeta svojo barvo.",
   "settings.rainbowRotate": "Vrtenje barv",
@@ -803,7 +799,7 @@ const sl: Partial<Translations> = {
   "schedule.overrideTitle": "Preglasitev urnika",
   "schedule.overrideUsesDefault": "Uporablja urnik domene",
   "schedule.overrideEdit": "Nastavi preglasitev",
-  "schedule.overrideHint": "Prazno uporabi urnik domene. Preglasitve po posameznih elementih ne podpirajo načina vsakih-N-dni.",
+  "schedule.overrideHint": "Prazno uporabi urnik domene.",
   "schedule.overrideSaved": "Preglasitev shranjena",
 
   // Auth / Login
@@ -1280,8 +1276,8 @@ const sl: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Izdelovanje varnostnih kopij za vse {domain} … {percent} %",
   "activityLog.lineOffsiteRunning": "Nalaganje na zunanjo kopijo — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Nalaganje na zunanjo kopijo — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Nalaganje na zunanjo kopijo — {domain} … posnetek {index} od {total} ({percent} %)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Nalaganje na zunanjo kopijo — {domain} … posnetek {index} od {total} ({percent} %) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Nalaganje na zunanjo kopijo — {domain} … {percent} % skupno (posnetek {index} od {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Nalaganje na zunanjo kopijo — {domain} … {percent} % skupno (posnetek {index} od {total}) · {duration}",
   "activityLog.linePruneRunning": "Čiščenje — {domain} …",
   "activityLog.lineVerifyRunning": "Preverjanje — {domain} …",
   "activityLog.lineDrillRunning": "Preverjanje obnovitve teče — {domain} …",
@@ -1377,7 +1373,6 @@ const sl: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Kako dolgo čakati, da vsebnik postane zdrav, preden se njegovi odvisniki vseeno zaženejo. Razpon od 5 do 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Stanje posodobitev Unraid",
   "settings.reconcileUnraidStatus": "Po posodobitvi vsebnika osveži Unraidovo stanje posodobitev",
   "settings.reconcileUnraidStatusHint": "Po tem, ko BombVault v koraku posodobitve po varnostni kopiji posodobi vsebnik, počisti Unraidov pasico posodobitve.",
 };

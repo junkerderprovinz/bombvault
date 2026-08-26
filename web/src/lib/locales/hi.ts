@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const hi: Partial<Translations> = {
   // General
   "language.label": "भाषा",
-  "theme.toggle": "थीम बदलें",
   "theme.dark": "डार्क",
   "theme.light": "लाइट",
 
@@ -263,8 +262,8 @@ const hi: Partial<Translations> = {
   "offsite.replicateStarted": "रेप्लिकेशन शुरू हुआ - यह बैकग्राउंड में चलता है; रन इंडिकेटर प्रगति दिखाता है।",
   "offsite.replicating": "रेप्लिकेट हो रहा है…",
   "offsite.replicatingWithDuration": "रेप्लिकेट हो रहा है… ({duration})",
-  "offsite.replicatingSnapshotPercent": "स्नैपशॉट {index}/{total} रेप्लिकेट हो रहा है ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "स्नैपशॉट {index}/{total} रेप्लिकेट हो रहा है ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "रेप्लिकेट हो रहा है… कुल {percent}% (स्नैपशॉट {index}/{total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "रेप्लिकेट हो रहा है… कुल {percent}% (स्नैपशॉट {index}/{total}) · {duration}",
   "offsite.overallPercentHint": "इस रेप्लिकेशन की कुल प्रगति, स्नैपशॉट में गिनी गई: restic हमेशा एक समय में केवल एक स्नैपशॉट की प्रगति बताता है, कभी पूरी कॉपी की नहीं। स्नैपशॉट अलग-अलग आकार के होते हैं, इसलिए इसे एक अनुमान मानें।",
   "offsite.replicateFailed": "रेप्लिकेशन विफल हुआ",
   "offsite.test": "कनेक्शन जाँचें",
@@ -364,8 +363,6 @@ const hi: Partial<Translations> = {
   "settings.retentionHint": "प्रति आइटम कितने बैकअप रखे जाएँ। हर बैकअप के बाद, restic इस नीति के अनुसार पुराने स्नैपशॉट प्रून करता है। सभी शून्य = सब कुछ रखें (बंद)।",
   "settings.imageMaintenanceTitle": "इमेज सफ़ाई और अपडेट स्थिति",
   "settings.imageMaintenanceHint": "बैकअप के बाद कंटेनर अपडेट से जुड़ा रखरखाव: बदली गई इमेज को साफ़ करना और Unraid की अपनी कैश्ड अपडेट स्थिति को ताज़ा करना।",
-  "settings.imageCleanupTitle": "इमेज सफ़ाई",
-  "settings.imageCleanupHint": "वैकल्पिक \"बैकअप के बाद कंटेनर अपडेट करें\" के लिए रखरखाव।",
   "settings.pruneImageAfterUpdate": "अपडेट के बाद पुरानी इमेज हटाएँ",
   "settings.pruneImageAfterUpdateHint": "किसी कंटेनर के नई इमेज में अपडेट हो जाने के बाद, बदली गई पुरानी इमेज हटाएँ। डिफ़ॉल्ट रूप से बंद — इसे रखने से रोलबैक सस्ता हो जाता है (BombVault स्नैपशॉट डेटा रीस्टोर करता है, पुरानी इमेज नहीं)। साझा बेस इमेज कभी नहीं हटाई जाती।",
   "settings.registriesTitle": "कंटेनर रजिस्ट्रीज़",
@@ -636,7 +633,6 @@ const hi: Partial<Translations> = {
   "settings.motion.full": "पूरा",
   "settings.rainbow": "रेनबो मोड",
   "settings.rainbowHint": "सूची की हर पंक्ति को आठ रंगों के सेट से अपना रंग मिलता है, इसके बजाय कि सब कुछ एक ही एक्सेंट रंग साझा करे — इससे लंबी सूचियों को एक नज़र में पहचानना आसान हो जाता है।",
-  "settings.rainbowOn": "पैलेट का उपयोग करें",
   "settings.rainbowReactive": "रिएक्टिव मोड",
   "settings.rainbowReactiveHint": "चालू होने पर, किसी पंक्ति या आइटम का रंग तभी दिखता है जब आप उस पर होवर करते हैं, या वह चल रहा हो या चुना गया हो — अन्यथा यह न्यूट्रल रहता है। बंद होने पर, हर रंगीन पंक्ति और आइटम हर समय अपना रंग दिखाता है।",
   "settings.rainbowRotate": "कलर रोटेशन",
@@ -808,7 +804,7 @@ const hi: Partial<Translations> = {
   "schedule.overrideTitle": "शेड्यूल ओवरराइड",
   "schedule.overrideUsesDefault": "डोमेन शेड्यूल का उपयोग करता है",
   "schedule.overrideEdit": "ओवरराइड सेट करें",
-  "schedule.overrideHint": "खाली होने पर डोमेन शेड्यूल उपयोग होता है। प्रति-आइटम ओवरराइड हर-N-दिन मोड को समर्थन नहीं देते।",
+  "schedule.overrideHint": "खाली होने पर डोमेन शेड्यूल उपयोग होता है।",
   "schedule.overrideSaved": "ओवरराइड सहेजा गया",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const hi: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "सभी {domain} का बैकअप लिया जा रहा है … {percent}%",
   "activityLog.lineOffsiteRunning": "ऑफ़-साइट अपलोड — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "ऑफ़-साइट अपलोड — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "ऑफ़-साइट अपलोड — {domain} … स्नैपशॉट {index}/{total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "ऑफ़-साइट अपलोड — {domain} … स्नैपशॉट {index}/{total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "ऑफ़-साइट अपलोड — {domain} … कुल {percent}% (स्नैपशॉट {index}/{total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "ऑफ़-साइट अपलोड — {domain} … कुल {percent}% (स्नैपशॉट {index}/{total}) · {duration}",
   "activityLog.linePruneRunning": "प्रून हो रहा है — {domain} …",
   "activityLog.lineVerifyRunning": "जाँच हो रही है — {domain} …",
   "activityLog.lineDrillRunning": "रीस्टोर जाँच चल रही है — {domain} …",
@@ -1393,7 +1389,6 @@ const hi: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "किसी कंटेनर के स्वस्थ होने का इंतज़ार कितनी देर किया जाए, उससे पहले कि उस पर निर्भर कंटेनर वैसे भी शुरू हो जाएँ। सीमा 5 से 3600।",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Unraid अपडेट स्थिति",
   "settings.reconcileUnraidStatus": "किसी कंटेनर को अपडेट करने के बाद Unraid की अपडेट स्थिति ताज़ा करें",
   "settings.reconcileUnraidStatusHint": "बैकअप के बाद के अपडेट चरण में BombVault द्वारा किसी कंटेनर को अपडेट करने के बाद Unraid का अपडेट बैनर साफ़ करें।",
 };

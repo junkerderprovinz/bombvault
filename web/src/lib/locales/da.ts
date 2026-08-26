@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const da: Partial<Translations> = {
   // General
   "language.label": "Sprog",
-  "theme.toggle": "Skift tema",
   "theme.dark": "Mørkt",
   "theme.light": "Lyst",
 
@@ -216,7 +215,6 @@ const da: Partial<Translations> = {
   "settings.motion.full": "Fuld",
   "settings.rainbow": "Regnbuetilstand",
   "settings.rainbowHint": "Hver række på en liste får sin egen farve fra et sæt på otte, i stedet for at alt deler én accentfarve — gør lange lister nemmere at skelne på et øjeblik.",
-  "settings.rainbowOn": "Brug paletten",
   "settings.rainbowReactive": "Reaktiv tilstand",
   "settings.rainbowReactiveHint": "Når slået til viser en række eller et element kun sin farve ved hover, eller mens det kører eller er valgt — ellers forbliver den neutral. Når slået fra viser hver farvet række og element sin farve hele tiden.",
   "settings.rainbowRotate": "Farverotation",
@@ -421,7 +419,7 @@ const da: Partial<Translations> = {
   "rclone.save": "Gem konfiguration",
 
   // Integrity (restic check)
-  "integrity.title": "Integritet",
+  "integrity.title": "Integritet og vedligeholdelse",
   "integrity.hint": "Kør restic check for at verificere, at et arkivs struktur og metadata er intakte.",
   "integrity.verify": "Verificer",
   "integrity.checking": "Tjekker…",
@@ -1014,8 +1012,6 @@ const da: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Send ÉN opsummering pr. planlagt backupkørsel (for eksempel: 42 af 45 lykkedes) i stedet for en separat besked for hver container eller VM. Healthchecks er allerede opsummeret. Manuelle backups giver stadig besked pr. element.",
   "notify.notifyOnUpdate": "Giv besked ved containeropdatering",
   "notify.notifyOnUpdateHint": "Når opdatér-efter-backup opgraderer en container til et nyere image, sendes en besked, så du kan bekræfte, at den stadig virker. Udløses pr. opdateret container (opdateringer er sjældne).",
-  "settings.imageCleanupTitle": "Image-oprydning",
-  "settings.imageCleanupHint": "Vedligeholdelse for den valgfrie funktion opdatér-container-efter-backup.",
   "settings.pruneImageAfterUpdate": "Fjern det gamle image efter en opdatering",
   "settings.pruneImageAfterUpdateHint": "Når en container er opdateret til et nyere image, slettes det gamle, erstattede image. Slået fra som standard: at beholde det gør det billigt at rulle tilbage (et BombVault-snapshot gendanner data, ikke det gamle image). Et delt base-image slettes aldrig.",
   "settings.registriesTitle": "Container-registre",
@@ -1376,7 +1372,6 @@ const da: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Hvor længe der ventes på, at en container bliver sund, før dens afhængige alligevel startes. Interval 5 til 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid-opdateringsstatus",
   "settings.reconcileUnraidStatus": "Opdater Unraids opdateringsstatus efter opdatering af en container",
   "settings.reconcileUnraidStatusHint": "Rydder Unraids opdateringsbanner, efter at BombVault har opdateret en container i opdateringstrinnet efter sikkerhedskopieringen.",
   "recovery.foreignVMDest": "Destination for VM-diske",

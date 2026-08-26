@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const ro: Partial<Translations> = {
   // General
   "language.label": "Limbă",
-  "theme.toggle": "Comută tema",
   "theme.dark": "Întunecat",
   "theme.light": "Luminos",
 
@@ -213,7 +212,6 @@ const ro: Partial<Translations> = {
   "settings.motion.full": "Completă",
   "settings.rainbow": "Mod curcubeu",
   "settings.rainbowHint": "Fiecare rând dintr-o listă primește propria culoare dintr-un set de opt, în loc ca totul să împartă o singură culoare de accent — face listele lungi mai ușor de distins dintr-o privire.",
-  "settings.rainbowOn": "Folosește paleta",
   "settings.rainbowReactive": "Mod reactiv",
   "settings.rainbowReactiveHint": "Când e activat, un rând sau element își arată culoarea doar la trecerea cu mouse-ul, sau cât timp rulează sau e selectat — altfel rămâne neutru. Când e dezactivat, fiecare rând și element colorat își arată culoarea tot timpul.",
   "settings.rainbowRotate": "Rotația culorilor",
@@ -418,7 +416,7 @@ const ro: Partial<Translations> = {
   "rclone.save": "Salvează configurația",
 
   // Integrity (restic check)
-  "integrity.title": "Integritate",
+  "integrity.title": "Integritate și întreținere",
   "integrity.hint": "Rulați restic check pentru a verifica dacă structura și metadatele unui depozit sunt intacte.",
   "integrity.verify": "Verifică",
   "integrity.checking": "Verificare…",
@@ -1017,8 +1015,6 @@ const ro: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Trimite UN singur rezumat pentru fiecare rulare de backup programată (de exemplu: 42 din 45 reușite) în loc de un mesaj separat pentru fiecare container sau VM. Healthchecks este deja rezumat. Backupurile manuale notifică în continuare pentru fiecare element.",
   "notify.notifyOnUpdate": "Notifică la actualizarea containerului",
   "notify.notifyOnUpdateHint": "Când actualizarea-după-backup trece un container la o imagine mai nouă, trimite un mesaj ca să poți verifica dacă încă funcționează. Se declanșează pentru fiecare container actualizat (actualizările sunt rare).",
-  "settings.imageCleanupTitle": "Curățare imagini",
-  "settings.imageCleanupHint": "Întreținere pentru funcția opțională de actualizare-container-după-backup.",
   "settings.pruneImageAfterUpdate": "Elimină imaginea veche după o actualizare",
   "settings.pruneImageAfterUpdateHint": "După ce un container este actualizat la o imagine mai nouă, șterge imaginea veche înlocuită. Dezactivat implicit: păstrarea ei face revenirea ieftină (un snapshot BombVault restaurează datele, nu imaginea veche). O imagine de bază partajată nu este niciodată ștearsă.",
   "settings.registriesTitle": "Registre de containere",
@@ -1379,7 +1375,6 @@ const ro: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Cât se așteaptă ca un container să devină sănătos înainte ca dependenții săi să pornească oricum. Interval de la 5 la 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Stare actualizări Unraid",
   "settings.reconcileUnraidStatus": "Reîmprospătează starea actualizărilor Unraid după actualizarea unui container",
   "settings.reconcileUnraidStatusHint": "Șterge bannerul de actualizare Unraid după ce BombVault actualizează un container în pasul de actualizare de după backup.",
   "recovery.foreignVMDest": "Destinația discurilor VM",

@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const fa: Partial<Translations> = {
   // General
   "language.label": "زبان",
-  "theme.toggle": "تغییر تم",
   "theme.dark": "تیره",
   "theme.light": "روشن",
 
@@ -263,8 +262,8 @@ const fa: Partial<Translations> = {
   "offsite.replicateStarted": "همانندسازی آغاز شد - در پس‌زمینه اجرا می‌شود؛ نشانگر اجرا پیشرفت را نشان می‌دهد.",
   "offsite.replicating": "در حال همانندسازی…",
   "offsite.replicatingWithDuration": "در حال همانندسازی… ({duration})",
-  "offsite.replicatingSnapshotPercent": "در حال همانندسازی اسنپ‌شات {index} از {total} ({percent}٪)",
-  "offsite.replicatingSnapshotPercentWithDuration": "در حال همانندسازی اسنپ‌شات {index} از {total} ({percent}٪) · {duration}",
+  "offsite.replicatingSnapshotPercent": "در حال همانندسازی… {percent}٪ در کل (اسنپ‌شات {index} از {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "در حال همانندسازی… {percent}٪ در کل (اسنپ‌شات {index} از {total}) · {duration}",
   "offsite.overallPercentHint": "پیشرفت کلی این همانندسازی، شمرده‌شده بر حسب اسنپ‌شات: restic همیشه فقط پیشرفت یک اسنپ‌شات را گزارش می‌کند، هرگز کل کپی را. اندازهٔ اسنپ‌شات‌ها متفاوت است، پس این را یک برآورد در نظر بگیر.",
   "offsite.replicateFailed": "همانندسازی ناموفق بود",
   "offsite.test": "آزمایش اتصال",
@@ -364,8 +363,6 @@ const fa: Partial<Translations> = {
   "settings.retentionHint": "چند پشتیبان به‌ازای هر مورد نگه‌داری شود. پس از هر پشتیبان‌گیری، restic اسنپ‌شات‌های قدیمی‌تر را طبق این سیاست پاک می‌کند. همه صفر = نگه‌داری همه (خاموش).",
   "settings.imageMaintenanceTitle": "پاک‌سازی ایمیج و وضعیت به‌روزرسانی",
   "settings.imageMaintenanceHint": "نگهداری پیرامون به‌روزرسانی کانتینر پس از پشتیبان‌گیری: پاک‌سازی ایمیج جایگزین‌شده و تازه‌سازی وضعیت کش‌شده به‌روزرسانی خود Unraid.",
-  "settings.imageCleanupTitle": "پاک‌سازی ایمیج",
-  "settings.imageCleanupHint": "نگهداری برای گزینه اختیاری «به‌روزرسانی کانتینر پس از پشتیبان‌گیری».",
   "settings.pruneImageAfterUpdate": "حذف ایمیج قدیمی پس از به‌روزرسانی",
   "settings.pruneImageAfterUpdateHint": "پس از به‌روزرسانی کانتینر به ایمیج جدیدتر، ایمیج قدیمی جایگزین‌شده را حذف کن. به‌طور پیش‌فرض خاموش است — نگه‌داشتنش برگشت به عقب را ارزان می‌کند (یک اسنپ‌شات BombVault داده را بازیابی می‌کند، نه ایمیج قدیمی را). یک ایمیج پایه مشترک هرگز حذف نمی‌شود.",
   "settings.registriesTitle": "رجیستری‌های کانتینر",
@@ -636,7 +633,6 @@ const fa: Partial<Translations> = {
   "settings.motion.full": "کامل",
   "settings.rainbow": "حالت رنگین‌کمان",
   "settings.rainbowHint": "هر ردیف در یک فهرست، رنگ خودش را از میان هشت رنگ می‌گیرد، به‌جای اینکه همه یک رنگ تأکیدی مشترک داشته باشند — این کار تشخیص فهرست‌های طولانی را در یک نگاه راحت‌تر می‌کند.",
-  "settings.rainbowOn": "استفاده از پالت",
   "settings.rainbowReactive": "حالت واکنشی",
   "settings.rainbowReactiveHint": "وقتی روشن است، رنگ یک ردیف یا آیتم فقط وقتی روی آن هاور می‌کنید، یا در حال اجراست یا انتخاب شده، ظاهر می‌شود — در غیر این صورت خنثی می‌ماند. وقتی خاموش است، همه ردیف‌ها و آیتم‌های رنگی همیشه رنگشان را نشان می‌دهند.",
   "settings.rainbowRotate": "چرخش رنگ",
@@ -808,7 +804,7 @@ const fa: Partial<Translations> = {
   "schedule.overrideTitle": "جایگزینی زمان‌بندی",
   "schedule.overrideUsesDefault": "از زمان‌بندی حوزه استفاده می‌کند",
   "schedule.overrideEdit": "تنظیم جایگزین",
-  "schedule.overrideHint": "خالی بودن، زمان‌بندی حوزه را استفاده می‌کند. جایگزینی‌های به‌ازای هر مورد از حالت هر-N-روز پشتیبانی نمی‌کنند.",
+  "schedule.overrideHint": "خالی بودن، زمان‌بندی حوزه را استفاده می‌کند.",
   "schedule.overrideSaved": "جایگزینی ذخیره شد",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const fa: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "در حال پشتیبان‌گیری از همه {domain} … {percent}٪",
   "activityLog.lineOffsiteRunning": "آپلود خارج از محل — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "آپلود خارج از محل — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "آپلود خارج از محل — {domain} … اسنپ‌شات {index} از {total} ({percent}٪)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "آپلود خارج از محل — {domain} … اسنپ‌شات {index} از {total} ({percent}٪) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "آپلود خارج از محل — {domain} … {percent}٪ در کل (اسنپ‌شات {index} از {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "آپلود خارج از محل — {domain} … {percent}٪ در کل (اسنپ‌شات {index} از {total}) · {duration}",
   "activityLog.linePruneRunning": "در حال پاک‌سازی — {domain} …",
   "activityLog.lineVerifyRunning": "در حال تأیید — {domain} …",
   "activityLog.lineDrillRunning": "بررسی بازیابی در حال اجراست — {domain} …",
@@ -1393,7 +1389,6 @@ const fa: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "چقدر منتظر سالم شدن یک کانتینر بماند پیش از اینکه وابستگانش به‌هرحال اجرا شوند. بازه ۵ تا ۳۶۰۰.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "وضعیت به‌روزرسانی Unraid",
   "settings.reconcileUnraidStatus": "پس از به‌روزرسانی یک کانتینر، وضعیت به‌روزرسانی Unraid را تازه کن",
   "settings.reconcileUnraidStatusHint": "پس از اینکه BombVault در مرحله به‌روزرسانی پس از پشتیبان‌گیری یک کانتینر را به‌روزرسانی کرد، بنر به‌روزرسانی Unraid را پاک کن.",
 };

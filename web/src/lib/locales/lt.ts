@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const lt: Partial<Translations> = {
   // General
   "language.label": "Kalba",
-  "theme.toggle": "Keisti temą",
   "theme.dark": "Tamsi",
   "theme.light": "Šviesi",
 
@@ -263,8 +262,8 @@ const lt: Partial<Translations> = {
   "offsite.replicateStarted": "Replikavimas pradėtas - jis vyksta fone; vykdymo indikatorius rodo eigą.",
   "offsite.replicating": "Replikuojama…",
   "offsite.replicatingWithDuration": "Replikuojama… ({duration})",
-  "offsite.replicatingSnapshotPercent": "Replikuojama momentinė kopija {index} iš {total} ({percent}%)",
-  "offsite.replicatingSnapshotPercentWithDuration": "Replikuojama momentinė kopija {index} iš {total} ({percent}%) · {duration}",
+  "offsite.replicatingSnapshotPercent": "Replikuojama… {percent}% iš viso (momentinė kopija {index} iš {total})",
+  "offsite.replicatingSnapshotPercentWithDuration": "Replikuojama… {percent}% iš viso (momentinė kopija {index} iš {total}) · {duration}",
   "offsite.overallPercentHint": "Bendra šio replikavimo eiga, skaičiuojama momentinėmis kopijomis: restic praneša eigą visada tik apie vieną momentinę kopiją, niekada apie visą kopijavimą. Momentinės kopijos skiriasi dydžiu, tad laikyk tai apytiksliu įverčiu.",
   "offsite.replicateFailed": "Replikavimas nepavyko",
   "offsite.test": "Tikrinti ryšį",
@@ -364,8 +363,6 @@ const lt: Partial<Translations> = {
   "settings.retentionHint": "Kiek atsarginių kopijų saugoti kiekvienam elementui. Po kiekvienos atsarginės kopijos restic pagal šią politiką išvalo senesnes momentines kopijas. Visi nuliai = saugoti viską (išjungta).",
   "settings.imageMaintenanceTitle": "Atvaizdų valymas ir atnaujinimo būsena",
   "settings.imageMaintenanceHint": "Priežiūra, susijusi su konteinerio atnaujinimu po atsarginės kopijos: pakeisto atvaizdo valymas ir Unraid paties talpykloje saugomos atnaujinimo būsenos atnaujinimas.",
-  "settings.imageCleanupTitle": "Atvaizdų valymas",
-  "settings.imageCleanupHint": "Priežiūra neprivalomai funkcijai „atnaujinti konteinerį po atsarginės kopijos“.",
   "settings.pruneImageAfterUpdate": "Pašalinti seną atvaizdą po atnaujinimo",
   "settings.pruneImageAfterUpdateHint": "Atnaujinus konteinerį į naujesnį atvaizdą, ištrinkite pakeistą seną atvaizdą. Pagal numatytuosius nustatymus išjungta — jo saugojimas atpigina grįžimą atgal (BombVault momentinė kopija atkuria duomenis, o ne seną atvaizdą). Bendras bazinis atvaizdas niekada netrinamas.",
   "settings.registriesTitle": "Konteinerių registrai",
@@ -636,7 +633,6 @@ const lt: Partial<Translations> = {
   "settings.motion.full": "Pilnas",
   "settings.rainbow": "Vaivorykštės režimas",
   "settings.rainbowHint": "Kiekviena sąrašo eilutė gauna savo spalvą iš aštuonių spalvų rinkinio, o ne visos dalijasi viena akcentine spalva — tai palengvina ilgų sąrašų atskyrimą vienu žvilgsniu.",
-  "settings.rainbowOn": "Naudoti paletę",
   "settings.rainbowReactive": "Reaktyvus režimas",
   "settings.rainbowReactiveHint": "Kai įjungta, eilutės ar elemento spalva pasirodo tik tada, kai užvedate pelės žymeklį virš jo, arba kai jis vykdomas ar pasirinktas — kitu atveju jis lieka neutralus. Kai išjungta, kiekviena spalvota eilutė ir elementas visą laiką rodo savo spalvą.",
   "settings.rainbowRotate": "Spalvų sukimas",
@@ -808,7 +804,7 @@ const lt: Partial<Translations> = {
   "schedule.overrideTitle": "Tvarkaraščio nepaisymas",
   "schedule.overrideUsesDefault": "Naudoja srities tvarkaraštį",
   "schedule.overrideEdit": "Nustatyti nepaisymą",
-  "schedule.overrideHint": "Tuščia naudoja srities tvarkaraštį. Nepaisymai kiekvienam elementui nepalaiko kas-N-dienų režimo.",
+  "schedule.overrideHint": "Tuščia naudoja srities tvarkaraštį.",
   "schedule.overrideSaved": "Nepaisymas išsaugotas",
 
   // Auth / Login
@@ -1296,8 +1292,8 @@ const lt: Partial<Translations> = {
   "activityLog.lineBackingUpBatch": "Kopijuojami visi {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Nuotolinis siuntimas — {domain} …",
   "activityLog.lineOffsiteRunningWithDuration": "Nuotolinis siuntimas — {domain} … ({duration})",
-  "activityLog.lineOffsiteRunningSnapshotPercent": "Nuotolinis siuntimas — {domain} … momentinė kopija {index} iš {total} ({percent}%)",
-  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Nuotolinis siuntimas — {domain} … momentinė kopija {index} iš {total} ({percent}%) · {duration}",
+  "activityLog.lineOffsiteRunningSnapshotPercent": "Nuotolinis siuntimas — {domain} … {percent}% iš viso (momentinė kopija {index} iš {total})",
+  "activityLog.lineOffsiteRunningSnapshotPercentWithDuration": "Nuotolinis siuntimas — {domain} … {percent}% iš viso (momentinė kopija {index} iš {total}) · {duration}",
   "activityLog.linePruneRunning": "Valoma — {domain} …",
   "activityLog.lineVerifyRunning": "Tikrinama — {domain} …",
   "activityLog.lineDrillRunning": "Vykdoma atkūrimo patikra — {domain} …",
@@ -1393,7 +1389,6 @@ const lt: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Kiek laiko laukti, kol konteineris taps sveikas, prieš vis tiek paleidžiant nuo jo priklausančius. Diapazonas nuo 5 iki 3600.",
 
   // Reconcile Unraid update status
-  "settings.reconcileTitle": "Unraid atnaujinimo būsena",
   "settings.reconcileUnraidStatus": "Atnaujinti Unraid atnaujinimo būseną po konteinerio atnaujinimo",
   "settings.reconcileUnraidStatusHint": "Išvalykite Unraid atnaujinimo juostą po to, kai BombVault atnaujina konteinerį po-atsarginės-kopijos atnaujinimo žingsnyje.",
 };

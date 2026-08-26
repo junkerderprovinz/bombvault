@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const ko: Partial<Translations> = {
   // General
   "language.label": "언어",
-  "theme.toggle": "테마 전환",
   "theme.dark": "어둡게",
   "theme.light": "밝게",
 
@@ -216,7 +215,6 @@ const ko: Partial<Translations> = {
   "settings.motion.full": "전체",
   "settings.rainbow": "무지개 모드",
   "settings.rainbowHint": "목록의 각 행은 하나의 강조색을 공유하는 대신 여덟 가지 색상 중 자신만의 색을 받습니다 — 긴 목록을 한눈에 구분하기 쉬워집니다.",
-  "settings.rainbowOn": "팔레트 사용",
   "settings.rainbowReactive": "반응형 모드",
   "settings.rainbowReactiveHint": "켜면 행이나 항목은 마우스를 올렸을 때, 또는 실행 중이거나 선택되었을 때만 색을 보여주고 그 외에는 중립 상태를 유지합니다. 끄면 색이 지정된 모든 행과 항목이 항상 색을 표시합니다.",
   "settings.rainbowRotate": "색상 순환",
@@ -416,7 +414,7 @@ const ko: Partial<Translations> = {
   "export.encrypt.recipientsRequired": "age 수신자를 최소한 하나 추가하세요. 그렇지 않으면 암호화된 내보내기가 실패합니다.",
   "rclone.save": "설정 저장",
 
-  "integrity.title": "무결성",
+  "integrity.title": "무결성 및 유지 관리",
   "integrity.hint": "restic check를 실행하여 저장소의 구조와 메타데이터가 온전한지 확인합니다.",
   "integrity.verify": "검증",
   "integrity.checking": "확인 중…",
@@ -1006,8 +1004,6 @@ const ko: Partial<Translations> = {
   "notify.scheduledSummaryHint": "예약 백업 실행마다 컨테이너나 VM별로 개별 메시지를 보내는 대신 요약 하나만 보냅니다(예: 45개 중 42개 성공). Healthchecks는 이미 요약되어 있습니다. 수동 백업은 여전히 항목별로 알립니다.",
   "notify.notifyOnUpdate": "컨테이너 업데이트 시 알림",
   "notify.notifyOnUpdateHint": "백업 후 업데이트로 컨테이너가 최신 image로 업그레이드되면 정상 작동 여부를 확인할 수 있도록 메시지를 보냅니다. 업데이트된 컨테이너마다 발생합니다(업데이트는 드뭅니다).",
-  "settings.imageCleanupTitle": "Image 정리",
-  "settings.imageCleanupHint": "선택적 백업 후 컨테이너 업데이트 기능을 위한 정리 작업입니다.",
   "settings.pruneImageAfterUpdate": "업데이트 후 이전 image 제거",
   "settings.pruneImageAfterUpdateHint": "컨테이너가 최신 image로 업데이트된 후 대체된 이전 image를 삭제합니다. 기본값은 꺼짐입니다. 이전 image를 유지하면 롤백이 간편해집니다(BombVault 스냅샷은 이전 image가 아니라 데이터를 복원합니다). 공유 베이스 image는 절대 삭제되지 않습니다.",
   "settings.registriesTitle": "컨테이너 레지스트리",
@@ -1368,7 +1364,6 @@ const ko: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "종속 컨테이너가 어쨌든 시작되기 전에 한 컨테이너가 정상 상태가 될 때까지 대기하는 시간입니다. 범위는 5에서 3600까지입니다.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraid 업데이트 상태",
   "settings.reconcileUnraidStatus": "컨테이너를 업데이트한 후 Unraid의 업데이트 상태 새로 고침",
   "settings.reconcileUnraidStatusHint": "백업 후 업데이트 단계에서 BombVault가 컨테이너를 업데이트한 후 Unraid의 업데이트 배너를 지웁니다.",
   "recovery.foreignVMDest": "VM 디스크 대상 위치",

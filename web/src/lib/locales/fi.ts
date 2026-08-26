@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const fi: Partial<Translations> = {
   // General
   "language.label": "Kieli",
-  "theme.toggle": "Vaihda teema",
   "theme.dark": "Tumma",
   "theme.light": "Vaalea",
 
@@ -216,7 +215,6 @@ const fi: Partial<Translations> = {
   "settings.motion.full": "Täysi",
   "settings.rainbow": "Sateenkaaritila",
   "settings.rainbowHint": "Jokainen listan rivi saa oman värinsä kahdeksan värin joukosta sen sijaan, että kaikki jakaisivat saman korostusvärin — pitkät listat erottuvat näin yhdellä silmäyksellä.",
-  "settings.rainbowOn": "Käytä palettia",
   "settings.rainbowReactive": "Reaktiivinen tila",
   "settings.rainbowReactiveHint": "Kun päällä, rivi tai kohde näyttää värinsä vain kohdistettaessa hiirellä tai kun se on käynnissä tai valittuna — muuten se pysyy neutraalina. Kun pois päältä, jokainen väritetty rivi ja kohde näyttää värinsä koko ajan.",
   "settings.rainbowRotate": "Värikierto",
@@ -421,7 +419,7 @@ const fi: Partial<Translations> = {
   "rclone.save": "Tallenna määritys",
 
   // Integrity (restic check)
-  "integrity.title": "Eheys",
+  "integrity.title": "Eheys ja ylläpito",
   "integrity.hint": "Suorita restic check tarkistaaksesi, että arkiston rakenne ja metatiedot ovat ehjät.",
   "integrity.verify": "Tarkista",
   "integrity.checking": "Tarkistetaan…",
@@ -1014,8 +1012,6 @@ const fi: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Lähetä YKSI yhteenveto jokaista ajastettua varmuuskopiointiajoa kohti (esimerkiksi: 42/45 onnistui) sen sijaan, että jokaisesta containerista tai VM:stä lähetettäisiin erillinen viesti. Healthchecks tiivistetään jo valmiiksi. Manuaaliset varmuuskopiot ilmoittavat edelleen kohdekohtaisesti.",
   "notify.notifyOnUpdate": "Ilmoita containerin päivityksestä",
   "notify.notifyOnUpdateHint": "Kun containeria päivitetään varmuuskopioinnin jälkeen uudempaan imageen, lähetä viesti, jotta voit varmistaa, että se toimii edelleen. Laukeaa jokaista päivitettyä containeria kohti (päivitykset ovat harvinaisia).",
-  "settings.imageCleanupTitle": "Imagejen siivous",
-  "settings.imageCleanupHint": "Ylläpitotoimet valinnaiselle 'päivitä container varmuuskopioinnin jälkeen' -ominaisuudelle.",
   "settings.pruneImageAfterUpdate": "Poista vanha image päivityksen jälkeen",
   "settings.pruneImageAfterUpdateHint": "Kun container on päivitetty uudempaan imageen, poista korvattu vanha image. Oletuksena pois päältä: sen säilyttäminen tekee edelliseen versioon palaamisesta vaivatonta (BombVault-tilannevedos palauttaa datan, ei vanhaa imagea). Jaettua perus-imagea ei koskaan poisteta.",
   "settings.registriesTitle": "Container-rekisterit",
@@ -1376,7 +1372,6 @@ const fi: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Kuinka kauan odotetaan säiliön kuntoon tuloa, ennen kuin siitä riippuvat käynnistyvät joka tapauksessa. Väli 5-3600 sekuntia.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Unraidin päivitystila",
   "settings.reconcileUnraidStatus": "Päivitä Unraidin päivitystila säiliön päivittämisen jälkeen",
   "settings.reconcileUnraidStatusHint": "Tyhjentää Unraidin päivitysbannerin sen jälkeen, kun BombVault on päivittänyt säiliön varmuuskopioinnin jälkeisessä päivitysvaiheessa.",
   "recovery.foreignVMDest": "VM-levyjen kohde",

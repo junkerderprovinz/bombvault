@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const pt: Partial<Translations> = {
   // General
   "language.label": "Idioma",
-  "theme.toggle": "Alternar tema",
   "theme.dark": "Escuro",
   "theme.light": "Claro",
 
@@ -213,7 +212,6 @@ const pt: Partial<Translations> = {
   "settings.motion.full": "Completo",
   "settings.rainbow": "Modo arco-íris",
   "settings.rainbowHint": "Cada linha de uma lista recebe a sua própria cor de um conjunto de oito, em vez de tudo partilhar uma só cor de destaque — torna listas longas mais fáceis de distinguir num relance.",
-  "settings.rainbowOn": "Usar a paleta",
   "settings.rainbowReactive": "Modo reativo",
   "settings.rainbowReactiveHint": "Quando ativado, uma linha ou item só mostra sua cor ao passar o mouse por cima, ou enquanto está em execução ou selecionado — o resto do tempo fica neutro. Quando desativado, toda linha ou item colorido mostra sua cor o tempo todo.",
   "settings.rainbowRotate": "Rotação de cores",
@@ -418,7 +416,7 @@ const pt: Partial<Translations> = {
   "rclone.save": "Guardar configuração",
 
   // Integrity (restic check)
-  "integrity.title": "Integridade",
+  "integrity.title": "Integridade e manutenção",
   "integrity.hint": "Execute restic check para verificar que a estrutura e os metadados de um repositório estão intactos.",
   "integrity.verify": "Verificar",
   "integrity.checking": "A verificar…",
@@ -1014,8 +1012,6 @@ const pt: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Enviar UM resumo por execução de backup agendada (por exemplo: 42 de 45 concluídos com sucesso) em vez de uma mensagem separada para cada container ou VM. O Healthchecks já é resumido. Os backups manuais continuam a notificar por item.",
   "notify.notifyOnUpdate": "Notificar ao atualizar container",
   "notify.notifyOnUpdateHint": "Quando a atualização após backup atualiza um container para uma image mais recente, envia uma mensagem para poder verificar se continua a funcionar. Ocorre por cada container atualizado (as atualizações são raras).",
-  "settings.imageCleanupTitle": "Limpeza de images",
-  "settings.imageCleanupHint": "Manutenção para a funcionalidade opcional de atualizar o container após o backup.",
   "settings.pruneImageAfterUpdate": "Remover a image antiga após uma atualização",
   "settings.pruneImageAfterUpdateHint": "Depois de um container ser atualizado para uma image mais recente, elimina a image antiga substituída. Desativado por predefinição: mantê-la torna a reversão simples (um snapshot do BombVault restaura os dados, não a image antiga). Uma image base partilhada nunca é eliminada.",
   "settings.registriesTitle": "Registries de containers",
@@ -1376,7 +1372,6 @@ const pt: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Quanto tempo esperar que um contentor fique saudável antes de os seus dependentes arrancarem mesmo assim. Intervalo de 5 a 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Estado de atualizações do Unraid",
   "settings.reconcileUnraidStatus": "Atualizar o estado de atualizações do Unraid depois de atualizar um contentor",
   "settings.reconcileUnraidStatusHint": "Limpa o aviso de atualização do Unraid depois de o BombVault atualizar um contentor no passo de atualização após o backup.",
   "recovery.foreignVMDest": "Destino dos discos da VM",

@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const el: Partial<Translations> = {
   // General
   "language.label": "Γλώσσα",
-  "theme.toggle": "Εναλλαγή θέματος",
   "theme.dark": "Σκοτεινό",
   "theme.light": "Φωτεινό",
 
@@ -216,7 +215,6 @@ const el: Partial<Translations> = {
   "settings.motion.full": "Πλήρης",
   "settings.rainbow": "Λειτουργία ουράνιου τόξου",
   "settings.rainbowHint": "Κάθε γραμμή σε μια λίστα αποκτά το δικό της χρώμα από ένα σύνολο οκτώ, αντί όλα να μοιράζονται ένα χρώμα τονισμού — έτσι οι μεγάλες λίστες ξεχωρίζουν με μια ματιά.",
-  "settings.rainbowOn": "Χρήση παλέτας",
   "settings.rainbowReactive": "Αντιδραστική λειτουργία",
   "settings.rainbowReactiveHint": "Όταν είναι ενεργό, μια γραμμή ή στοιχείο δείχνει το χρώμα του μόνο όταν περνάς το ποντίκι από πάνω, ή ενώ εκτελείται ή είναι επιλεγμένο — διαφορετικά παραμένει ουδέτερο. Όταν είναι ανενεργό, κάθε έγχρωμη γραμμή και στοιχείο δείχνει το χρώμα του συνέχεια.",
   "settings.rainbowRotate": "Περιστροφή χρωμάτων",
@@ -421,7 +419,7 @@ const el: Partial<Translations> = {
   "rclone.save": "Αποθήκευση διαμόρφωσης",
 
   // Integrity (restic check)
-  "integrity.title": "Ακεραιότητα",
+  "integrity.title": "Ακεραιότητα και συντήρηση",
   "integrity.hint": "Εκτελέστε restic check για επαλήθευση ότι η δομή και τα μεταδεδομένα ενός αποθετηρίου είναι άθικτα.",
   "integrity.verify": "Επαλήθευση",
   "integrity.checking": "Έλεγχος…",
@@ -1014,8 +1012,6 @@ const el: Partial<Translations> = {
   "notify.scheduledSummaryHint": "Αποστολή ΜΙΑΣ σύνοψης ανά προγραμματισμένη εκτέλεση αντιγράφου ασφαλείας (για παράδειγμα: 42 από 45 πέτυχαν) αντί για ξεχωριστό μήνυμα για κάθε container ή VM. Το Healthchecks συνοψίζεται ήδη. Τα χειροκίνητα αντίγραφα ασφαλείας εξακολουθούν να ειδοποιούν ανά στοιχείο.",
   "notify.notifyOnUpdate": "Ειδοποίηση κατά την ενημέρωση container",
   "notify.notifyOnUpdateHint": "Όταν η ενημέρωση-μετά-το-αντίγραφο αναβαθμίζει ένα container σε νεότερο image, αποστέλλεται μήνυμα ώστε να επιβεβαιώσετε ότι εξακολουθεί να λειτουργεί. Ενεργοποιείται ανά ενημερωμένο container (οι ενημερώσεις είναι σπάνιες).",
-  "settings.imageCleanupTitle": "Εκκαθάριση image",
-  "settings.imageCleanupHint": "Συντήρηση για την προαιρετική λειτουργία ενημέρωσης του container μετά το αντίγραφο ασφαλείας.",
   "settings.pruneImageAfterUpdate": "Αφαίρεση του παλιού image μετά από ενημέρωση",
   "settings.pruneImageAfterUpdateHint": "Αφού ένα container ενημερωθεί σε νεότερο image, διαγράφεται το παλιό image που αντικαταστάθηκε. Απενεργοποιημένο από προεπιλογή: η διατήρησή του κάνει φθηνή την επαναφορά (ένα στιγμιότυπο του BombVault επαναφέρει δεδομένα, όχι το παλιό image). Ένα κοινόχρηστο βασικό image δεν διαγράφεται ποτέ.",
   "settings.registriesTitle": "Registries για containers",
@@ -1376,7 +1372,6 @@ const el: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "Πόσο να περιμένει ένα κοντέινερ να γίνει υγιές πριν ξεκινήσουν ούτως ή άλλως τα εξαρτώμενα. Εύρος από 5 έως 3600.",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "Κατάσταση ενημερώσεων Unraid",
   "settings.reconcileUnraidStatus": "Ανανέωση της κατάστασης ενημερώσεων του Unraid μετά την ενημέρωση ενός κοντέινερ",
   "settings.reconcileUnraidStatusHint": "Καθαρίζει το μπάνερ ενημέρωσης του Unraid αφού το BombVault ενημερώσει ένα κοντέινερ στο βήμα ενημέρωσης μετά το αντίγραφο ασφαλείας.",
   "recovery.foreignVMDest": "Προορισμός δίσκων VM",

@@ -3,7 +3,6 @@ import type { Translations } from "../i18n";
 const th: Partial<Translations> = {
   // General
   "language.label": "ภาษา",
-  "theme.toggle": "สลับธีม",
   "theme.dark": "มืด",
   "theme.light": "สว่าง",
 
@@ -216,7 +215,6 @@ const th: Partial<Translations> = {
   "settings.motion.full": "เต็มรูปแบบ",
   "settings.rainbow": "โหมดสายรุ้ง",
   "settings.rainbowHint": "แต่ละแถวในรายการจะได้สีของตัวเองจากชุดแปดสี แทนที่จะใช้สีเน้นเดียวร่วมกันทั้งหมด — ทำให้รายการยาว ๆ แยกความแตกต่างได้ง่ายเพียงมองแวบเดียว",
-  "settings.rainbowOn": "ใช้จานสี",
   "settings.rainbowReactive": "โหมดตอบสนอง",
   "settings.rainbowReactiveHint": "เมื่อเปิดใช้งาน แถวหรือรายการจะแสดงสีของตัวเองเฉพาะตอนวางเมาส์ไว้เหนือ หรือขณะกำลังทำงานหรือถูกเลือกเท่านั้น — นอกจากนั้นจะเป็นสีกลาง เมื่อปิดใช้งาน ทุกแถวและรายการที่มีสีจะแสดงสีของตัวเองตลอดเวลา",
   "settings.rainbowRotate": "การหมุนสี",
@@ -421,7 +419,7 @@ const th: Partial<Translations> = {
   "rclone.save": "บันทึกการตั้งค่า",
 
   // Integrity (restic check)
-  "integrity.title": "ความสมบูรณ์",
+  "integrity.title": "ความสมบูรณ์และการบำรุงรักษา",
   "integrity.hint": "เรียกใช้ restic check เพื่อยืนยันว่าโครงสร้างและเมตาดาตาของรีพอสิทอรีสมบูรณ์",
   "integrity.verify": "ยืนยัน",
   "integrity.checking": "กำลังตรวจสอบ…",
@@ -1017,8 +1015,6 @@ const th: Partial<Translations> = {
   "notify.scheduledSummaryHint": "ส่งสรุปเพียงหนึ่งข้อความต่อการสำรองข้อมูลตามกำหนดเวลาแต่ละครั้ง (เช่น สำเร็จ 42 จาก 45) แทนที่จะส่งข้อความแยกสำหรับทุก container หรือ VM ส่วน Healthchecks มีการสรุปอยู่แล้ว การสำรองข้อมูลด้วยตนเองยังคงแจ้งเตือนแยกทีละรายการ",
   "notify.notifyOnUpdate": "แจ้งเตือนเมื่ออัปเดต container",
   "notify.notifyOnUpdateHint": "เมื่อการอัปเดตหลังสำรองข้อมูลอัปเกรด container ไปยัง image ที่ใหม่กว่า จะส่งข้อความเพื่อให้คุณตรวจสอบว่ายังทำงานได้ปกติ แจ้งเตือนแยกต่อ container ที่อัปเดต (การอัปเดตเกิดขึ้นไม่บ่อย)",
-  "settings.imageCleanupTitle": "การล้าง image",
-  "settings.imageCleanupHint": "การดูแลจัดการสำหรับฟีเจอร์อัปเดต container หลังสำรองข้อมูล (ซึ่งเป็นตัวเลือกเสริม)",
   "settings.pruneImageAfterUpdate": "ลบ image เก่าหลังการอัปเดต",
   "settings.pruneImageAfterUpdateHint": "หลังจาก container ถูกอัปเดตไปยัง image ที่ใหม่กว่า ให้ลบ image เก่าที่ถูกแทนที่ไปแล้ว ปิดไว้โดยค่าเริ่มต้น เพราะการเก็บไว้ทำให้การย้อนกลับทำได้ง่าย (สแนปช็อตของ BombVault กู้คืนข้อมูล ไม่ใช่ image เก่า) ส่วน base image ที่ใช้ร่วมกันจะไม่ถูกลบ",
   "settings.registriesTitle": "Registry ของ container",
@@ -1379,7 +1375,6 @@ const th: Partial<Translations> = {
   "settings.restartHealthTimeoutHint": "รอให้คอนเทนเนอร์พร้อมใช้งานนานเท่าใดก่อนที่คอนเทนเนอร์ที่พึ่งพามันจะเริ่มทำงานอยู่ดี ช่วง 5 ถึง 3600",
 
   // Reconcile Unraid update status (#116)
-  "settings.reconcileTitle": "สถานะการอัปเดต Unraid",
   "settings.reconcileUnraidStatus": "รีเฟรชสถานะการอัปเดตของ Unraid หลังจากอัปเดตคอนเทนเนอร์",
   "settings.reconcileUnraidStatusHint": "ล้างแบนเนอร์การอัปเดตของ Unraid หลังจากที่ BombVault อัปเดตคอนเทนเนอร์ในขั้นตอนการอัปเดตหลังการสำรองข้อมูล",
   "recovery.foreignVMDest": "ปลายทางของดิสก์ VM",
