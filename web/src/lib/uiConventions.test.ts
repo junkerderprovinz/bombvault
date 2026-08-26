@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // The settled UI conventions — rule tests.
 //
-// web/lint-rules/ turns six house conventions into lint errors. This file is
+// web/lint-rules/ turns seven house conventions into lint errors. This file is
 // the other half of that: proof that each rule FIRES on the violation it
 // targets, and proof that it stays silent on the shapes in the real tree that
 // merely look similar.
@@ -445,7 +445,81 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
 });
 
 // ---------------------------------------------------------------------------
-// 7. The router's routed pages are all files page-uses-page-shell can see.
+// 7. A user-facing string that never goes through t().
+// ---------------------------------------------------------------------------
+ruleTester.run("user-message-is-translated", rules["user-message-is-translated"], {
+  valid: [
+    // The fixed shapes: every message resolved through t() before it is shown.
+    `push(t("common.deleteFailed"), "fail");`,
+    `setError(res.error ?? t("common.loadBackupsFailed"));`,
+    `setError(err instanceof Error ? err.message : t("vms.loadFailed"));`,
+    `push(res.error ?? t("common.discoverFailed"), "fail");`,
+    // The whole reason for the capital-plus-space test: the tree is full of
+    // `??` and `?:` string tails that are values, not sentences. Not one of
+    // these may be flagged, or the rule gets disabled and protects nothing.
+    `const mode = stored ?? "";`,
+    `const kind = res.kind ?? "all";`,
+    `const method = vm.method ?? "graceful";`,
+    `const cls = open ? "rotate-90" : "rtl:rotate-180";`,
+    `const key = sort ?? "name";`,
+    `const n = count ?? "0";`,
+    // A capital with no space is an identifier, not a sentence.
+    `const domain = r.domain ?? "Containers";`,
+    // The escape hatch, with a real reason.
+    `
+      // bv-convention-exception: user-message-is-translated -- a developer-only
+      // console diagnostic behind an env flag; never rendered in the UI.
+      push("Debug probe failed", "fail");
+    `,
+  ],
+  invalid: [
+    {
+      // The single most-repeated defect in the sweep: 12 identical call sites.
+      code: `push(res.error ?? "Delete failed", "fail");`,
+      errors: [{ messageId: "hardcoded" }],
+    },
+    {
+      code: `setError("Failed to load VMs");`,
+      errors: [{ messageId: "hardcoded" }],
+    },
+    {
+      // The ternary tail — the shape the grep-based sweep missed six times.
+      code: `const msg = err instanceof Error ? err.message : "Check failed";`,
+      errors: [{ messageId: "hardcoded" }],
+    },
+    {
+      // Both branches of one ternary, both sentences: two findings, not one.
+      code: `const m = isRestore ? "Restore failed" : "Backup failed";`,
+      errors: [{ messageId: "hardcoded" }, { messageId: "hardcoded" }],
+    },
+    {
+      // A message sink takes ANY string literal, sentence-shaped or not — its
+      // first argument is a user message by construction.
+      code: `push("Failed", "fail");`,
+      errors: [{ messageId: "hardcoded" }],
+    },
+    {
+      // A marker whose reason is a shrug does not suppress anything.
+      code: `
+        // bv-convention-exception: user-message-is-translated -- nah
+        setError("Failed to load runs");
+      `,
+      errors: [{ messageId: "hardcoded" }],
+    },
+    {
+      // A marker naming a DIFFERENT rule does not suppress this one either.
+      code: `
+        // bv-convention-exception: one-icon-badge-size -- this badge is sized
+        // by its own container and cannot take the shared stage.
+        setError("Failed to load containers");
+      `,
+      errors: [{ messageId: "hardcoded" }],
+    },
+  ],
+});
+
+// ---------------------------------------------------------------------------
+// 8. The router's routed pages are all files page-uses-page-shell can see.
 //
 // The RuleTester cases above run against synthetic `filename:` strings, so they
 // prove what the rule DOES with a file it is handed. They cannot prove it is

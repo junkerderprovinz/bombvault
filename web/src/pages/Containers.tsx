@@ -128,6 +128,18 @@ const SORT_KEYS = {
 // copy-pasted here — that duplicated rendering (with zero keyboard support)
 // was exactly what had drifted apart between this file and VMs.tsx's own
 // near-identical copies.
+//
+// All three render the SMALL horizontal selector (`variant="well"`, no
+// `equalWidth`) — jdp, live review: "Im Filtermenü: die Optionen bitte in
+// kleine horizontale Selektoren einpflegen". They used to be Selector's
+// default `chip` variant, where every idle option carries its own filled
+// `bg-carbon-surface2` pill, so a three-option filter read as three competing
+// buttons rather than one control with one choice made. The "well" track puts
+// them in a single grooved strip with transparent idle segments, which is the
+// same small selector Settings' notify/integrity rows and CadenceBuilder
+// already use — and the small one, not the pinned `equalWidth size="lg"` one,
+// because these sit inside FilterPopover's 256-416px panel where a 200px
+// per-segment floor would immediately wrap every option onto its own line.
 function SortControl({
   value,
   onChange,
@@ -143,6 +155,7 @@ function SortControl({
       <Selector
         items={(["name", "status", "ip"] as SortKey[]).map((k) => ({ id: k, label: t(SORT_KEYS[k]) }))}
         label={t("sort.label")}
+        variant="well"
         select="one"
         active={value}
         onChange={(id) => onChange(id as SortKey)}
@@ -185,6 +198,7 @@ function FilterControl({
       <Selector
         items={(["all", "installed", "notInstalled"] as FilterKey[]).map((k) => ({ id: k, label: labels[k] }))}
         label={t("containers.filter")}
+        variant="well"
         select="one"
         active={value}
         onChange={(id) => onChange(id as FilterKey)}
@@ -235,6 +249,7 @@ function ChipFilter<K extends string>({
       <Selector
         items={options.map((o) => ({ id: o.key, label: o.label }))}
         label={label}
+        variant="well"
         select="one"
         active={value}
         onChange={(id) => onChange(id as K)}
@@ -278,11 +293,11 @@ function DeleteBackupsButton({
       const res = await deleteBackups(name);
       if (res.ok) onDeleted();
       else {
-        push(res.error ?? "Delete failed", "fail");
+        push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Delete failed", "fail");
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setPending(false);
@@ -583,11 +598,11 @@ function UpdateAfterBackupRow({
       const res = await setUpdateAfterBackup(name, next);
       if (res.ok) setEnabled(next);
       else {
-        push(res.error ?? "Failed to update setting", "fail");
+        push(res.error ?? t("containers.updateSettingFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to update setting", "fail");
+      push(err instanceof Error ? err.message : t("containers.updateSettingFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setBusy(false);
@@ -2464,14 +2479,14 @@ export function Containers() {
     return listContainers()
       .then((res) => {
         if (res.ok) setContainers(res.containers ?? []);
-        else setError("Failed to load containers");
+        else setError(t("containers.loadFailed"));
       })
-      .catch(() => setError("Failed to load containers"));
+      .catch(() => setError(t("containers.loadFailed")));
   }
 
   useEffect(() => {
     void loadContainers().finally(() => setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   function handleSortChange(k: SortKey) {
     setSortKey(k);
@@ -2616,7 +2631,7 @@ export function Containers() {
     try {
       const res = await backupAll(names);
       if (!res.ok) {
-        push(res.error ?? "Failed to start backup", "fail");
+        push(res.error ?? t("containers.backupStartFailed"), "fail");
         setShakeBackupSelected((n) => n + 1);
         return;
       }
@@ -2626,7 +2641,7 @@ export function Containers() {
       if (e instanceof ApiError && e.status === 409) {
         push(t("containers.batchAlreadyRunning"), "warn");
       } else {
-        push(e instanceof Error ? e.message : "Failed to start backup", "fail");
+        push(e instanceof Error ? e.message : t("containers.backupStartFailed"), "fail");
         setShakeBackupSelected((n) => n + 1);
       }
     } finally {
@@ -2645,6 +2660,7 @@ export function Containers() {
         kind: "restore",
         matchRun: (r) => r.domain === "container" && r.target === name,
         start: () => restore(name, "latest", true),
+        t,
       })
     );
   }
@@ -2661,11 +2677,11 @@ export function Containers() {
         push(`+${res.discovered ?? 0}`, "success");
         await loadContainers();
       } else {
-        push(res.error ?? "Discover failed", "fail");
+        push(res.error ?? t("common.discoverFailed"), "fail");
         setShakeDiscover((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Discover failed", "fail");
+      push(err instanceof Error ? err.message : t("common.discoverFailed"), "fail");
       setShakeDiscover((n) => n + 1);
     } finally {
       setDiscovering(false);
@@ -2765,7 +2781,59 @@ export function Containers() {
           </p>
         </div>
       )}
-      {/* Controls: search + filter (installed / schedule / backup) + sort. */}
+      {/* Backup-order panel (#119) — advanced: arrange the scheduled/batch backup
+          sequence. It and the stacks panel below are standalone feature CARDS,
+          so they sit above the toolbar; the toolbar, the bulk action bar and
+          the list are one group and stay together (jdp, live review: "im VM-Tab
+          ist die Backup-Reihenfolge über dem Filter und im Container-Tab unter
+          dem Filter. Bitte überall gleich machen." — resolved in favour of the
+          VMs page's arrangement). Before this, the filter sat at the very top
+          and these two cards wedged themselves between it and the list it
+          filters, so on a host with compose stacks the user scrolled past two
+          unrelated cards to get from "Filter" to the filtered rows.
+          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
+          <Advanced>: a JSX child's own props (this `hueIndex` expression
+          included) evaluate eagerly as part of building the <Advanced>
+          element itself, before <Advanced> ever runs its own `advanced &&
+          when` check — so an unconditional `nextHue()` here would burn a
+          slot every render regardless of whether the panel actually paints,
+          landing every later heading's notch one index late whenever
+          Advanced mode is off. Gating on the same `advanced` flag read
+          directly above keeps the counter honest.
+          MOVING THIS BLOCK IS SAFE FOR THE HUE COUNTER only because the
+          toolbar it jumped over contains no `nextHue()` call of its own, and
+          because it moved together with the stacks panel — the two kept their
+          relative order, and both still precede the not-installed section's
+          own notch. Re-check that if a notch is ever added to the toolbar. */}
+      {!loading && !error && (
+        <Advanced>
+          <BackupOrderPanel containers={containers} t={t} hueIndex={advanced ? nextHue() : undefined} />
+        </Advanced>
+      )}
+
+      {/* Stacks panel — one card per detected compose stack, above the toolbar
+          with the backup-order card (see its comment above).
+          `stackGroups.length > 0 ? nextHue() : undefined`: StacksPanel
+          returns null internally (its own groupStacks() call, computed
+          again from the identical `containers` array) when there are no
+          multi-member stacks — the common case on most setups — so an
+          ungated `nextHue()` here would burn a slot on every render where
+          the panel paints nothing, landing the not-installed heading below
+          one index late. Gating on the parent's own precomputed
+          `stackGroups` (see its own comment above) keeps the counter
+          honest, same reasoning as BackupOrderPanel's `advanced` gate. */}
+      {!loading && !error && (
+        <StacksPanel
+          containers={containers}
+          onRestored={() => void loadContainers()}
+          t={t}
+          hueIndex={stackGroups.length > 0 ? nextHue() : undefined}
+        />
+      )}
+
+      {/* Controls: search + filter (installed / schedule / backup) + sort.
+          Directly above the list it filters — see the backup-order card's own
+          comment above for why the two feature cards moved above this row. */}
       {!loading && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
           <FilterPopover label={t("filter.button")} active={filtersActive}>
@@ -2799,8 +2867,14 @@ export function Containers() {
                 { key: "neverBackedUp", label: t("filter.neverBackedUp") },
               ]}
             />
+            {/* Sort lives INSIDE the popover, like VMs.tsx has always had it
+                (jdp, live review: "bitte überall gleich machen"). It was the
+                one control this page kept outside as a bare sibling of the
+                trigger, so the two pages' toolbars disagreed about what the
+                "Filter" button contains — and sorting is one of the options
+                that menu is for. */}
+            <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           </FilterPopover>
-          <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           {filterKey !== "notInstalled" && selectable.length > 0 && (
             <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
               <input
@@ -2868,42 +2942,6 @@ export function Containers() {
           backupSelected); this is only the LIVE "still working" state. */}
       {bulkBusy && (
         <p className="text-xs text-carbon-textSub">{t("containers.working")}</p>
-      )}
-
-      {/* Backup-order panel (#119) — advanced: arrange the scheduled/batch backup
-          sequence. Above the list, next to the stacks panel.
-          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
-          <Advanced>: a JSX child's own props (this `hueIndex` expression
-          included) evaluate eagerly as part of building the <Advanced>
-          element itself, before <Advanced> ever runs its own `advanced &&
-          when` check — so an unconditional `nextHue()` here would burn a
-          slot every render regardless of whether the panel actually paints,
-          landing every later heading's notch one index late whenever
-          Advanced mode is off. Gating on the same `advanced` flag read
-          directly above keeps the counter honest. */}
-      {!loading && !error && (
-        <Advanced>
-          <BackupOrderPanel containers={containers} t={t} hueIndex={advanced ? nextHue() : undefined} />
-        </Advanced>
-      )}
-
-      {/* Stacks panel — one card per detected compose stack, above the list.
-          `stackGroups.length > 0 ? nextHue() : undefined`: StacksPanel
-          returns null internally (its own groupStacks() call, computed
-          again from the identical `containers` array) when there are no
-          multi-member stacks — the common case on most setups — so an
-          ungated `nextHue()` here would burn a slot on every render where
-          the panel paints nothing, landing the not-installed heading below
-          one index late. Gating on the parent's own precomputed
-          `stackGroups` (see its own comment above) keeps the counter
-          honest, same reasoning as BackupOrderPanel's `advanced` gate. */}
-      {!loading && !error && (
-        <StacksPanel
-          containers={containers}
-          onRestored={() => void loadContainers()}
-          t={t}
-          hueIndex={stackGroups.length > 0 ? nextHue() : undefined}
-        />
       )}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (

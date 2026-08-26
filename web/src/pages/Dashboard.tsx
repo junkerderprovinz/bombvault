@@ -516,7 +516,7 @@ function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?
       })
       .catch((err) => {
         if (!active) return;
-        setError(err instanceof Error ? err.message : "Check failed");
+        setError(err instanceof Error ? err.message : t("common.checkFailed"));
         setAllOk(false);
       })
       .finally(() => {
@@ -525,7 +525,7 @@ function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?
     return () => {
       active = false;
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   const hasRun = !loading && allOk !== null;
   const overallStatus = allOk ? "ok" : "degraded";
@@ -1126,11 +1126,11 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
     listRuns()
       .then((res) => {
         if (res.ok) setRuns(res.runs ?? []);
-        else setError("Failed to load runs");
+        else setError(t("dashboard.loadRunsFailed"));
       })
-      .catch(() => setError("Failed to load runs"))
+      .catch(() => setError(t("dashboard.loadRunsFailed")))
       .finally(() => setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   // Local calendar day of a run, used for the day filter + its labels. Runs come
   // newest-first, so the distinct-days list is already in descending order.

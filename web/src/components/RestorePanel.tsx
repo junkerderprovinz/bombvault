@@ -457,13 +457,13 @@ function CompareSnapshots({
       if (res.ok && res.diff) {
         setDiff(res.diff);
       } else {
-        const message = res.error ?? "Compare failed";
+        const message = res.error ?? t("common.compareFailed");
         setError(message);
         push(message, "fail");
         setShake((n) => n + 1);
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Network error";
+      const message = e instanceof Error ? e.message : t("common.networkError");
       setError(message);
       push(message, "fail");
       setShake((n) => n + 1);
@@ -583,10 +583,10 @@ function SnapshotTags({
         setAdding(false);
         onTagged();
       } else {
-        push(res.error ?? "Failed", "fail");
+        push(res.error ?? t("common.actionFailed"), "fail");
       }
     } catch (e) {
-      push(e instanceof Error ? e.message : "Network error", "fail");
+      push(e instanceof Error ? e.message : t("common.networkError"), "fail");
     } finally {
       setBusy(false);
     }
@@ -687,11 +687,11 @@ function SnapshotRow({
       const res = await deleteSnapshot("containers", snap.id, source);
       if (res.ok) onDeleted();
       else {
-        push(res.error ?? "Delete failed", "fail");
+        push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Delete failed", "fail");
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setDeleting(false);
@@ -952,11 +952,11 @@ export function RestorePanel({ name, t, installed = true, open }: RestorePanelPr
     listSnapshots(name, source)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? "Failed to load backups");
+        else setError(res.error ?? t("common.loadBackupsFailed"));
       })
-      .catch(() => setError("Failed to load backups"))
+      .catch(() => setError(t("common.loadBackupsFailed")))
       .finally(() => setLoading(false));
-  }, [open, name, source, reloadTick]);
+  }, [open, name, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   if (!open) return null;
 

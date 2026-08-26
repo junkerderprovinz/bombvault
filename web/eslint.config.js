@@ -105,6 +105,7 @@ export default [
       "bombvault/one-icon-badge-size": "error",
       "bombvault/no-status-color-on-control": "error",
       "bombvault/control-reads-engine-tokens": "error",
+      "bombvault/user-message-is-translated": "error",
       "bombvault/page-uses-page-shell": [
         "error",
         {
