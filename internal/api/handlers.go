@@ -1542,25 +1542,28 @@ func rejectEveryNSchedules(v settingsView) string {
 	return ""
 }
 
-func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
-	var v settingsView
-	if !decodeBody(w, r, &v) {
-		return
-	}
-
+// rejectInvalidSettingsPaths validates every repo location a settings row
+// carries: the restore folder is always local, a remote backend (rclone:/s3:/
+// rest:/sftp:/b2:) is accepted verbatim, an unprefixed remote-looking value is
+// refused with guidance, and a local path must resolve under the mount root.
+// Returns a user-facing message, or "" when the whole set is acceptable.
+//
+// It is shared by BOTH settings write paths for the reason rejectEveryNSchedules
+// gives, and the everyN guard is the precedent: this validation used to live
+// only in handlePutSettings, so an imported file could persist an absolute
+// containersPath that the UI's own save path then refused FOREVER. The SPA
+// always PUTs the whole settings object, so one poisoned field failed every
+// later save from every card — including the card that would fix it. One guard,
+// both write paths, or the two drift apart again the next time one is extended.
+func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 	// RestoreFolder is ALWAYS a local filesystem path (restores land on the local
 	// mount root). A remote-looking value (e.g. "s3:foo") would slip past the
 	// containment check below, which skips remotes with `continue`, so reject it
 	// up front — it can never legitimately be a remote backend.
 	if v.RestoreFolder != "" && restic.IsRemoteRepo(v.RestoreFolder) {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok": false, "error": "restore folder must be a local path under the mount root",
-		})
-		return
+		return "restore folder must be a local path under the mount root"
 	}
 
-	// Validate each domain repo location: a remote backend (rclone:…/s3:…) is
-	// accepted verbatim; a local path must stay under the mount root.
 	// Local domain repos, plus any configured off-site repos (off-site may be
 	// blank = none). A remote backend (rclone:/s3:/rest:…) is accepted verbatim;
 	// a local path must stay under the mount root.
@@ -1576,18 +1579,43 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		// "rclone:BackBlaze:bucket"); reject it with guidance rather than
 		// silently treating it as a local folder named after the string.
 		if restic.LooksLikeUnprefixedRemote(sub) {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": false, "error": fmt.Sprintf("%q looks like a remote backend but is missing its prefix — off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub),
-			})
-			return
+			return fmt.Sprintf("%q looks like a remote backend but is missing its prefix — off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub)
 		}
-		if _, err := paths.Resolve(h.cfg.HostMountRoot, sub); err != nil {
+		if _, err := paths.Resolve(mountRoot, sub); err != nil {
 			log.Printf("api: settings: rejected path %q: %v", sub, err)
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": false, "error": "invalid backup path: must be a relative subpath under the mount root, or an rclone:/s3: remote",
-			})
-			return
+			return "invalid backup path: must be a relative subpath under the mount root, or an rclone:/s3: remote"
 		}
+	}
+	return ""
+}
+
+// rejectInvalidSettingsNames validates the DR-drill targets, which are
+// container/VM names the UI dropdown supplies and every name-keyed handler path
+// re-validates. Shared by both settings write paths for the same reason
+// rejectInvalidSettingsPaths is.
+func rejectInvalidSettingsNames(v settingsView) string {
+	if dt := strings.TrimSpace(v.DRDrillTarget); dt != "" && !validResourceName(dt) {
+		return "invalid DR-drill target"
+	}
+	// VM names may contain spaces ("Windows 11"); validResourceName wrongly
+	// rejected them (#127).
+	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validVMName(dt) {
+		return "invalid DR-drill target"
+	}
+	return ""
+}
+
+func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
+	var v settingsView
+	if !decodeBody(w, r, &v) {
+		return
+	}
+
+	// Repo locations and the restore folder — the same guard the import path
+	// applies, so a value one path refuses cannot arrive through the other.
+	if msg := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
 	}
 
 	// Validate each cadence parses (backup schedules + off-site + drills +
@@ -1613,19 +1641,11 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// A DR-drill target, when set, is a container/VM name fed by the UI dropdown.
-	// Validate it with the same rule that guards name-keyed handler paths, so a
-	// garbage/injection-shaped value is rejected at save time rather than stored
-	// (parity with the other name validations above).
-	if dt := strings.TrimSpace(v.DRDrillTarget); dt != "" && !validResourceName(dt) {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok": false, "error": "invalid DR-drill target",
-		})
-		return
-	}
-	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validVMName(dt) { // VM names may contain spaces ("Windows 11"); validResourceName wrongly rejected them (#127)
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok": false, "error": "invalid DR-drill target",
-		})
+	// Validated with the same rule that guards name-keyed handler paths, so a
+	// garbage/injection-shaped value is rejected at save time rather than stored —
+	// and through the same shared guard the import path uses.
+	if msg := rejectInvalidSettingsNames(v); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
 
