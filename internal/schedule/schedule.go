@@ -463,11 +463,55 @@ const catchUpGrace = 10 * time.Minute
 //
 // A zero `last` ("never ran") is due — see the registration loop's own doc
 // comment for why the first fire after enabling must proceed.
+//
+// A `last` that lies in the FUTURE is not a measurement either, and is read the
+// same way. It was written while this box's clock was wrong — a dead CMOS
+// battery, or the early-boot window before NTP steps the clock, the same window
+// catchUpStartupDelay exists for — and the clock was then corrected back.
+// calendarDaysBetween is negative for it, and a negative count is always below
+// any interval, so the plain comparison would skip EVERY fire from then on,
+// forever, with nothing to show for it but a log line reading "last run
+// -78840h0m0s ago". Nothing overwrites the stamp either, because the job that
+// would overwrite it is the one being skipped. Treating it as "never ran" is the
+// only reading that heals: the pass runs once, re-stamps the record with a sane
+// instant, and the interval applies normally from there.
 func EveryNDue(last, now time.Time, intervalDays int) bool {
-	if intervalDays <= 0 || last.IsZero() {
+	if intervalDays <= 0 || last.IsZero() || last.After(now) {
 		return true
 	}
 	return calendarDaysBetween(last, now) >= intervalDays
+}
+
+// PeriodDue is EveryNDue's rule generalised to a cadence expressed as a PERIOD
+// in seconds (Cadence.PeriodSeconds), for the due-gates that are evaluated by a
+// sweep of their own rather than by the cadence's own cron entry.
+//
+// Those gates have exactly the phase-slip EveryNDue was written for, and worse:
+// `last` is stamped when the previous pass FINISHED, `now` is the sweep's fixed
+// fire time, and the sweep fires only once a day. Measured as elapsed seconds
+// against the full period, the day the check is due always comes up short by
+// however long the previous check took — a restic check on a large repo takes
+// minutes — so the gate closes, the next evaluation is a whole sweep interval
+// (a day) later, and a cadence configured as daily really runs every 48h.
+//
+// The comparison is therefore in local CALENDAR days, exactly as EveryNDue
+// argues: "daily 04:00" means the next day, whatever the check cost and
+// whatever the clocks did in between.
+//
+//   - periodSeconds <= 0 ("off"/unparseable) → due is not meaningful; the
+//     caller gates on its own cadence check first. Reported as due.
+//   - periodSeconds < 86400 (a sub-daily cron) → due on every evaluation. The
+//     sweep's own daily granularity is the binding constraint there, and
+//     measuring a 6-hourly cadence in elapsed seconds against a daily sweep
+//     reproduces the very skip this function removes.
+//   - otherwise → whole days, rounded DOWN. Rounding down errs toward running
+//     the check slightly early rather than skipping a day of it, which is the
+//     safe direction for an integrity check.
+func PeriodDue(last, now time.Time, periodSeconds int64) bool {
+	if periodSeconds < 86400 {
+		return true
+	}
+	return EveryNDue(last, now, int(periodSeconds/86400))
 }
 
 // calendarDaysBetween returns the number of local calendar days from `from` to
@@ -660,10 +704,19 @@ type catchUpEntry struct {
 // scheduledEntry pairs a registered cron.EntryID with the job+domain label
 // derived from the domainSpec that registered it, so NextRuns() can report
 // WHAT each upcoming fire time belongs to (not just when).
+//
+// It also carries what the everyN DUE-GATE needs, because for an everyN cadence
+// the cron entry's own Next is not the next RUN. ParseCadence compiles
+// "everyN N HH:MM" to a bare DAILY spec and keeps N on the side, so cron fires
+// every night and the wrapped job decides; without the interval and the last-run
+// query here, NextRuns could only report tomorrow, on every one of the N-1
+// nights the gate is going to close.
 type scheduledEntry struct {
-	id     cron.EntryID
-	job    string
-	domain string
+	id           cron.EntryID
+	job          string
+	domain       string
+	intervalDays int         // >0 for everyN cadences only
+	lastRun      LastRunFunc // read only when intervalDays > 0; never nil then (see the everyN registration guard)
 }
 
 // NextRun is one upcoming scheduled fire time for the dashboard activity log's
@@ -700,11 +753,25 @@ func jobDomainFromName(name string) (job, domain string) {
 	return "backup", name
 }
 
-// NextRuns returns the next fire time for every currently registered schedule
-// entry that has one (a registered-but-not-yet-computed entry — the cron
-// runner has not been started — has a zero Next and is omitted), sorted
-// soonest-first. It is the data source for the dashboard activity log's "up
-// next" line.
+// NextRuns returns the next time every currently registered schedule entry will
+// actually RUN (a registered-but-not-yet-computed entry — the cron runner has
+// not been started — has a zero Next and is omitted), sorted soonest-first. It is
+// the data source for the dashboard activity log's "up next" line.
+//
+// For everyN cadences the cron entry's Next is deliberately not the answer. An
+// everyN cadence is a DAILY trigger plus a due-gate (see ParseCadence and the
+// registration loop), so on the N-1 nights the gate is going to close, the cron
+// entry says "tomorrow 03:00" and nothing runs. Reporting that told the user a
+// drill was happening tomorrow when the real one was four days out — and now
+// that everyN is reachable for the drill, tamper and digest schedules as well as
+// the six backup domains, it said so for nine of them. Each everyN entry is
+// therefore walked forward through its own cron schedule until it reaches a fire
+// the SAME gate (EveryNDue) would let through.
+//
+// A last-run query that fails is reported as the raw cron fire: "cannot tell" is
+// not a licence to invent a later date, and the gate is conservative in the
+// other direction anyway (it skips the fire), so the honest answer is the
+// earliest time this could run.
 func (s *Scheduler) NextRuns() []NextRun {
 	if s.c == nil {
 		return nil
@@ -718,14 +785,44 @@ func (s *Scheduler) NextRuns() []NextRun {
 
 	out := make([]NextRun, 0, len(entries))
 	for _, e := range entries {
-		next := s.c.Entry(e.id).Next
+		entry := s.c.Entry(e.id)
+		next := entry.Next
 		if next.IsZero() {
 			continue
 		}
-		out = append(out, NextRun{Job: e.job, Domain: e.domain, Next: next})
+		out = append(out, NextRun{Job: e.job, Domain: e.domain, Next: nextDueFire(entry.Schedule, next, e)})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Next.Before(out[j].Next) })
 	return out
+}
+
+// nextDueFire advances an everyN entry's next cron fire to the first one its
+// due-gate would actually let through. Anything that is not an everyN entry, or
+// whose last-run query fails, is returned unchanged.
+//
+// The walk is bounded by the interval itself: the trigger is daily and the gate
+// measures whole calendar days, so at most intervalDays fires can be skipped
+// before one is due. The bound is a correctness guard, not an expectation — a
+// cron schedule that stops producing fires (a zero Next) also ends the walk.
+func nextDueFire(sched cron.Schedule, next time.Time, e scheduledEntry) time.Time {
+	if e.intervalDays <= 0 || e.lastRun == nil || sched == nil {
+		return next
+	}
+	last, err := e.lastRun()
+	if err != nil {
+		return next
+	}
+	for i := 0; i <= e.intervalDays; i++ {
+		if EveryNDue(last, next, e.intervalDays) {
+			return next
+		}
+		later := sched.Next(next)
+		if later.IsZero() || !later.After(next) {
+			return next
+		}
+		next = later
+	}
+	return next
 }
 
 // New creates a Scheduler. backupFn is called for each due container;
@@ -1419,7 +1516,14 @@ func (s *Scheduler) ReloadWithDueChecks(
 		}
 		job, domain := jobDomainFromName(d.name)
 		s.mu.Lock()
-		s.entries = append(s.entries, scheduledEntry{id: id, job: job, domain: domain})
+		// cad.IntervalDays/d.lastRun ride along so NextRuns can report the fire
+		// this entry will actually RUN on rather than tomorrow's daily trigger.
+		// The everyN guard above has already refused to register an entry with an
+		// interval and no last-run query, so the two are set together or not at all.
+		s.entries = append(s.entries, scheduledEntry{
+			id: id, job: job, domain: domain,
+			intervalDays: cad.IntervalDays, lastRun: d.lastRun,
+		})
 		// Backup domains with a last-run query join the anacron catch-up set —
 		// only they can tell whether the last scheduled fire was actually covered
 		// by a success. job=="backup" is exactly the five per-domain backup specs
