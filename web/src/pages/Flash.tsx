@@ -15,6 +15,7 @@ import { useToast } from "../lib/toast";
 import { FlashZipExportCard } from "./Settings";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
+import { tLtr } from "../lib/ltrFragments";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -340,7 +341,7 @@ export function Flash() {
       {/* Page heading */}
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
-        <p className="mt-1 text-sm text-carbon-textSub">{t("flash.subtitle")}</p>
+        <p className="mt-1 text-sm text-carbon-textSub">{tLtr(t, "flash.subtitle")}</p>
         <div className="mt-2"><OffsiteIndicator domain="flash" /></div>
       </div>
 
@@ -393,7 +394,7 @@ export function Flash() {
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={5}>
             {t("flash.backupTitle")}
-            <InfoBubble tip={t("flash.backupHint")} onAccent />
+            <InfoBubble tip={tLtr(t, "flash.backupHint")} onAccent />
           </Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">
@@ -451,7 +452,7 @@ export function Flash() {
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={1}>
             {t("snapshots.title")}
-            <InfoBubble tip={t("flash.restoreNote")} onAccent />
+            <InfoBubble tip={tLtr(t, "flash.restoreNote")} onAccent />
           </Badge>
         </h2>
 

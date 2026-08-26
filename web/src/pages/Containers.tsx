@@ -21,7 +21,7 @@ import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { ToggleRow } from "./Settings";
 import { ProgressBar } from "../components/ProgressBar";
-import { withLtrFragments, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { tLtr, withLtrFragments, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
@@ -1253,7 +1253,7 @@ function ExcludesEditor({ name, initial, open, t }: { name: string; initial: str
         }}
         spellCheck={false}
         rows={3}
-        placeholder={t("excludes.placeholder")}
+        placeholder={tLtr(t, "excludes.placeholder")}
         dir="ltr"
         className={`${inputCls} text-start`}
       />
@@ -2721,7 +2721,7 @@ export function Containers() {
             key={shakeDiscover}
             onClick={() => void handleDiscover()}
             disabled={discovering}
-            title={t("containers.discoverHint")}
+            title={tLtr(t, "containers.discoverHint")}
             className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
               shakeDiscover ? " glim-shake" : ""
             }`}

@@ -171,7 +171,12 @@ describe("declared fragments vs. the real locale tables", () => {
       const list = (ltrFragmentsModule as unknown as Record<string, readonly string[]>)[name];
       expect(registered, `${name} is not registered in LTR_FRAGMENTS_BY_KEY`).toContain(list);
     }
-    expect(exported.length).toBe(Object.keys(LTR_FRAGMENTS_BY_KEY).length);
+    // Every DISTINCT registered value is one of the exported lists, so the map
+    // can hold no ad-hoc inline array that escapes the checks below. A set
+    // comparison rather than a length equality, because several keys share one
+    // list (four cards name /config, five name /boot) — which is why the lists
+    // are named after the PATH rather than after a single key.
+    expect(new Set(registered).size).toBe(exported.length);
   });
 
   it("lists longer fragments before any shorter one they contain (match order matters)", () => {
@@ -279,4 +284,72 @@ describe("withLtrIsolates", () => {
       expect(out.replaceAll(LRI, "").replaceAll(PDI, "")).toBe(source);
     }
   );
+});
+
+// ---------------------------------------------------------------------------
+// COVERAGE — derived from `en`, not from the registry.
+//
+// The registry above proves that what IS registered stays correct in every
+// locale. It says nothing about what is MISSING, and missing is how this got
+// here: three strings were protected while fourteen others baked a leading-`/`
+// path into the same kind of translated prose and rendered it unisolated, so in
+// ar/he/fa the Flash tab's "Back up" bubble read "boot/" and the cache card
+// read "config/". A hand-maintained list of "the strings that mention a path"
+// will always lag the strings.
+//
+// So the required set is computed from the en table itself, and every key it
+// finds must be either registered or explicitly exempted with a reason. Adding
+// a hint that mentions a path now fails the build until someone decides which.
+//
+// What this guard does NOT check, stated plainly rather than implied: that each
+// registered key's RENDER SITE actually applies the isolation. `tLtr` exists to
+// make that hard to get wrong (pass the key, get the isolated string), but a
+// call site that reaches for a bare `t()` is still possible and this test would
+// not see it.
+// ---------------------------------------------------------------------------
+
+/** An absolute path embedded in prose: a `/` that is not preceded by a letter,
+ *  digit, `:` or another `/` (so a URL scheme and a mid-path slash are not
+ *  false starts), followed by at least one path-ish character. */
+const PATH_IN_PROSE = /(?<![A-Za-z0-9:/])\/[A-Za-z0-9._*{}<>-]+(?:\/[A-Za-z0-9._*{}<>-]*)*/;
+
+/** Keys whose `/` match is NOT the bug this module fixes. Each needs a reason:
+ *  an unexplained entry here is how a real one gets waved through. */
+const NOT_A_PATH: Record<string, string> = {
+  "dashboard.forecastGrowth": "a unit, not a path: {bytes}/week, and 'week' is translated per locale",
+  "dashboard.forecastShrink": "same unit as forecastGrowth",
+  "rclone.pathHint": "the example is rclone:<remote>:<bucket>/path — it BEGINS with letters, which are a strong LTR class that anchors the whole run; only a leading `/` misrenders",
+  "recovery.foreignVMDestHint": "the run is <destination>/<vm-name>/ and BOTH placeholder words are translated (sl 'ime-vm', sr 'naziv-vm'), so no literal fragment can match in every locale; the leading character is `<`, not `/`",
+  "folders.customPlaceholder": "orphaned key — rendered nowhere (see i18n.orphans.test.ts's ratchet)",
+};
+
+describe("coverage: every en string that embeds a path is accounted for", () => {
+  const withPaths = Object.entries(locales.en)
+    .filter(([, value]) => PATH_IN_PROSE.test(value as string))
+    .map(([key]) => key);
+
+  it("finds the strings it is supposed to find (the scan is not silently empty)", () => {
+    expect(withPaths.length).toBeGreaterThan(15);
+    expect(withPaths).toContain("flash.backupHint");
+    expect(withPaths).toContain("offsite.repoLocalHint");
+  });
+
+  it("leaves no path-bearing string unregistered and unexplained", () => {
+    const unaccounted = withPaths.filter(
+      (key) => !(key in LTR_FRAGMENTS_BY_KEY) && !(key in NOT_A_PATH)
+    );
+    expect(
+      unaccounted,
+      `these en strings embed a leading-"/" path and are neither registered in ` +
+        `LTR_FRAGMENTS_BY_KEY nor listed in NOT_A_PATH with a reason: ${unaccounted.join(", ")}. ` +
+        `In ar/he/fa the leading slash migrates to the far end of the path.`
+    ).toEqual([]);
+  });
+
+  it("keeps NOT_A_PATH honest — every exemption still matches a real key", () => {
+    for (const key of Object.keys(NOT_A_PATH)) {
+      expect(withPaths, `NOT_A_PATH lists "${key}", which no longer embeds a path`).toContain(key);
+      expect(NOT_A_PATH[key].length, `NOT_A_PATH["${key}"] needs a real reason`).toBeGreaterThan(20);
+    }
+  });
 });
