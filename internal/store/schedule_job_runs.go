@@ -60,6 +60,10 @@ func (r *Repo) RecordScheduleJobRun(job string, at time.Time) error {
 // time. That distinction is the safety property: the due-gate skips the job when
 // this returns an error, so a broken database can never be mistaken for "never
 // ran" and turned into a run.
+//
+// A stamp in the FUTURE reads as the zero time too, for the reason
+// SanitizeRecordedTime gives — the same rule the last-successful-backup queries
+// in runs.go apply, so all eight schedules answer a wrong-clock stamp alike.
 func (r *Repo) LastScheduleJobRun(job string) (time.Time, error) {
 	row := r.db.QueryRow(`SELECT at FROM schedule_job_runs WHERE job = ?`, job)
 	var at sql.NullInt64
@@ -72,5 +76,5 @@ func (r *Repo) LastScheduleJobRun(job string) (time.Time, error) {
 	if !at.Valid || at.Int64 <= 0 {
 		return time.Time{}, nil
 	}
-	return time.Unix(at.Int64, 0), nil
+	return SanitizeRecordedTime(time.Unix(at.Int64, 0), time.Now()), nil
 }

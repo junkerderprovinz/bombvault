@@ -208,15 +208,16 @@ func (r *Repo) LastSuccessfulBackupAmong(ids []string) (time.Time, error) {
 		chunk := ids[start:end]
 
 		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(chunk)), ",")
-		args := make([]any, len(chunk))
-		for i, id := range chunk {
-			args[i] = id
+		args := make([]any, 0, len(chunk)+1)
+		for _, id := range chunk {
+			args = append(args, id)
 		}
+		args = append(args, saneStampCutoff())
 		row := r.db.QueryRow(`
 			SELECT finished_at
 			FROM runs
 			WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
-			  AND target_id IN (`+placeholders+`)
+			  AND target_id IN (`+placeholders+`)`+sanePastStamp+`
 			ORDER BY finished_at DESC
 			LIMIT 1`, args...) //nolint:gosec // G202: placeholders is a generated "?,?,…" list, never user text; every id is a bound parameter
 		ts, err := scanLastBackupTime(row, "LastSuccessfulBackupAmong")
@@ -245,9 +246,9 @@ func (r *Repo) LastSuccessfulContainerBackup() (time.Time, error) {
 		SELECT finished_at
 		FROM runs
 		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
-		  AND target_id IN (SELECT id FROM targets)
+		  AND target_id IN (SELECT id FROM targets)`+sanePastStamp+`
 		ORDER BY finished_at DESC
-		LIMIT 1`)
+		LIMIT 1`, saneStampCutoff())
 	return scanLastBackupTime(row, "LastSuccessfulContainerBackup")
 }
 
@@ -259,9 +260,9 @@ func (r *Repo) LastSuccessfulVMBackup() (time.Time, error) {
 		SELECT finished_at
 		FROM runs
 		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
-		  AND target_id IN (SELECT id FROM vms)
+		  AND target_id IN (SELECT id FROM vms)`+sanePastStamp+`
 		ORDER BY finished_at DESC
-		LIMIT 1`)
+		LIMIT 1`, saneStampCutoff())
 	return scanLastBackupTime(row, "LastSuccessfulVMBackup")
 }
 
@@ -273,9 +274,9 @@ func (r *Repo) LastSuccessfulFilesBackup() (time.Time, error) {
 		SELECT finished_at
 		FROM runs
 		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
-		  AND target_id IN (SELECT id FROM file_sets)
+		  AND target_id IN (SELECT id FROM file_sets)`+sanePastStamp+`
 		ORDER BY finished_at DESC
-		LIMIT 1`)
+		LIMIT 1`, saneStampCutoff())
 	return scanLastBackupTime(row, "LastSuccessfulFilesBackup")
 }
 
@@ -291,9 +292,9 @@ func (r *Repo) LastSuccessfulFlashBackup() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND target_id = ?
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND target_id = ?`+sanePastStamp+`
 		ORDER BY finished_at DESC
-		LIMIT 1`, FlashTargetID)
+		LIMIT 1`, FlashTargetID, saneStampCutoff())
 	return scanLastBackupTime(row, "LastSuccessfulFlashBackup")
 }
 
@@ -308,9 +309,9 @@ func (r *Repo) LastSuccessfulConfigBackup() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND target_id = ?
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND target_id = ?`+sanePastStamp+`
 		ORDER BY finished_at DESC
-		LIMIT 1`, ConfigTargetID)
+		LIMIT 1`, ConfigTargetID, saneStampCutoff())
 	return scanLastBackupTime(row, "LastSuccessfulConfigBackup")
 }
 
@@ -347,14 +348,19 @@ func (r *Repo) LastEverythingPass() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND finished_at IS NOT NULL AND target_id = ?
+		WHERE kind = 'backup' AND finished_at IS NOT NULL AND target_id = ?`+sanePastStamp+`
 		ORDER BY finished_at DESC
-		LIMIT 1`, EverythingTargetID)
+		LIMIT 1`, EverythingTargetID, saneStampCutoff())
 	return scanLastBackupTime(row, "LastEverythingPass")
 }
 
 // scanLastBackupTime reads the single nullable finished_at column from a
 // last-successful-backup query, mapping no-rows / NULL to a zero time.
+//
+// It is also where a stamp from the FUTURE is refused. Every last-run query in
+// this file funnels through here, so this is the one place that rule has to be
+// right (LastScheduleJobRun applies the same rule for the three job-run
+// schedules, which do not come through here). See SanitizeRecordedTime.
 func scanLastBackupTime(row *sql.Row, label string) (time.Time, error) {
 	var ts sql.NullInt64
 	if err := row.Scan(&ts); err != nil {
@@ -366,7 +372,65 @@ func scanLastBackupTime(row *sql.Row, label string) (time.Time, error) {
 	if !ts.Valid {
 		return time.Time{}, nil
 	}
-	return time.Unix(ts.Int64, 0), nil
+	return SanitizeRecordedTime(time.Unix(ts.Int64, 0), time.Now()), nil
+}
+
+// futureStampTolerance is how far ahead of the reading clock a recorded
+// timestamp may sit and still count as a real measurement. It absorbs ordinary
+// skew — a stamp taken moments ago, a second-resolution column rounding up, an
+// NTP slew mid-run — without absorbing a wrong-clock stamp, which is off by days
+// or years, never by minutes.
+const futureStampTolerance = 5 * time.Minute
+
+// sanePastStamp is the SQL half of the same rule, and it is the half that
+// matters. Every currency query in this file is an `ORDER BY finished_at DESC
+// LIMIT 1`, so refusing the value AFTER the read is not enough: the poisoned row
+// still WINS the ordering, which means a correctly-stamped run that lands
+// afterwards is never seen and the schedule never heals — it just runs on every
+// trigger forever instead of on its interval. Excluding the row in the query
+// makes the answer the newest SANE success, so one run restores the cadence.
+//
+// It is a fragment rather than seven copies for the reason this project keeps
+// relearning: a guard spelled out once per call site is a guard missing at the
+// call site added next. Every use pairs it with saneStampCutoff() as the LAST
+// bound parameter.
+const sanePastStamp = ` AND finished_at <= ?`
+
+// saneStampCutoff is sanePastStamp's bound parameter: the newest instant a
+// recorded stamp may carry and still be a measurement of the past.
+func saneStampCutoff() int64 { return time.Now().Add(futureStampTolerance).Unix() }
+
+// SanitizeRecordedTime reports a recorded "when did this last happen" instant,
+// reading one that lies in the FUTURE as the zero time ("never happened").
+//
+// A stamp later than now cannot be a measurement of the past. It is what a box
+// with a wrong clock wrote — a dead CMOS battery, or the early-boot window
+// before NTP steps the clock — after which the clock was corrected back. Every
+// consumer of these timestamps does the same arithmetic, now − last, and every
+// one of them fails in the SILENT direction on a negative result:
+//
+//   - the everyN due-gate skips every fire from then on, forever, because a
+//     negative elapsed time is below any interval (schedule.EveryNDue);
+//   - the anacron catch-up mirrors that arithmetic and never flags the miss;
+//   - the overdue-backup watchdog reads the domain as freshly current and never
+//     raises the alert it exists to raise;
+//   - the dashboard's RPO chip reports the domain green for as long as the bogus
+//     stamp stays in the future.
+//
+// Worse, a poisoned row keeps WINNING these queries: they are all
+// `ORDER BY finished_at DESC LIMIT 1`, so a later, correctly-stamped run never
+// displaces it and the corruption never ages out. Refusing it here means the
+// gate measures the newest SANE success instead, so a single run heals the
+// schedule and the cadence is correct from that run on.
+//
+// The row itself is not hidden. ListRuns and the run history still report it
+// exactly as recorded; only the currency arithmetic declines to measure an
+// elapsed interval against an instant that has not happened yet.
+func SanitizeRecordedTime(at, now time.Time) time.Time {
+	if at.IsZero() || at.After(now.Add(futureStampTolerance)) {
+		return time.Time{}
+	}
+	return at
 }
 
 // ListRuns returns up to limit recent runs across all targets, newest first.
