@@ -385,6 +385,183 @@ func TestImportWithoutCredentialsPreservesExisting(t *testing.T) {
 	}
 }
 
+// A repo location an operator is entitled to write and restic is happy to use:
+// the credential lives inside the URL. The generated recovery kit documents this
+// exact shape ("They can also live inside the URL, e.g. rest:https://user:pass@
+// host:8000/path"), and s3:, sftp: and b2: locations take the same syntax.
+const (
+	locWithCreds = "rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers"
+	locRepoPass  = "Tr0ub4dor&3"
+	locRepoUser  = "backupuser"
+)
+
+// seedCredentialInLocation puts a URL-embedded credential into the settings
+// off-site location and into both off-site target rows.
+func seedCredentialInLocation(t *testing.T, st *store.Repo) {
+	t.Helper()
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = locWithCreds
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"tgt-1", "tgt-2"} {
+		tg, found, err := st.GetOffsiteTarget(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !found {
+			t.Fatalf("test setup: off-site target %q not seeded", id)
+		}
+		tg.Repo = locWithCreds
+		if _, err := st.UpsertOffsiteTarget(tg); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// TestPlainExportRedactsCredentialInsideRepoLocation is the regression proof for
+// the finding that the plain export emitted every repo location VERBATIM while
+// claiming to carry no secrets. A rest:/s3:/sftp:/b2: location may hold a live
+// "user:pass@", and the plain export is the variant any host on the LAN can fetch
+// unauthenticated in trusted-LAN mode — so the password (and the username) must
+// not be in the file, while the location itself, which is legitimately portable
+// configuration, must survive so the file still names a destination.
+func TestPlainExportRedactsCredentialInsideRepoLocation(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialInLocation(t, srcStore)
+
+	body, exp := doExport(t, src, "")
+
+	if bytes.Contains(body, []byte(locRepoPass)) {
+		t.Fatalf("the plain export leaked the password embedded in a repo location:\n%s", body)
+	}
+	if bytes.Contains(body, []byte(locRepoUser)) {
+		t.Fatalf("the plain export leaked the username embedded in a repo location:\n%s", body)
+	}
+	// …and it is still a usable settings file: scheme, host, port and path stay.
+	if !strings.HasPrefix(exp.Settings.ContainersOffsite, "rest:https://") ||
+		!strings.Contains(exp.Settings.ContainersOffsite, "storage.example.com:8000/containers") {
+		t.Fatalf("redaction destroyed the location instead of just its credential: %q", exp.Settings.ContainersOffsite)
+	}
+	if !strings.Contains(exp.Settings.ContainersOffsite, redactedLocationMarker) {
+		t.Fatalf("a stripped credential must leave a visible marker, got %q", exp.Settings.ContainersOffsite)
+	}
+	for _, tv := range exp.OffsiteTargets {
+		if !strings.Contains(tv.Repo, redactedLocationMarker) || strings.Contains(tv.Repo, locRepoPass) {
+			t.Fatalf("off-site target %q location not redacted: %q", tv.ID, tv.Repo)
+		}
+	}
+
+	// The CREDENTIALED variant is the opposite case: it is gated on a login
+	// password precisely because it hands out every secret in the clear, so it
+	// must keep the location whole — otherwise the one export meant to be a
+	// complete portable copy would be the only lossy one.
+	_, full := doExport(t, src, "?includeCredentials=true")
+	if full.Settings.ContainersOffsite != locWithCreds {
+		t.Fatalf("the credentialed export must carry the location verbatim, got %q", full.Settings.ContainersOffsite)
+	}
+}
+
+// TestImportKeepsWorkingLocationWhenFileArrivesRedacted pins the other half of
+// the round trip: a plain export cannot carry the credential, so applying one
+// must not overwrite a location that already WORKS on the destination with the
+// redacted stand-in. That would break the off-site replication of an instance
+// that was fine before the import, and break it quietly.
+func TestImportKeepsWorkingLocationWhenFileArrivesRedacted(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialInLocation(t, srcStore)
+	body, _ := doExport(t, src, "")
+
+	// The destination already has the same targets, with WORKING locations.
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	seedSource(t, dst, dstStore)
+	seedCredentialInLocation(t, dstStore)
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ContainersOffsite != locWithCreds {
+		t.Fatalf("a redacted location wiped the destination's working one: %q", got.ContainersOffsite)
+	}
+	targets, err := dstStore.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tg := range targets {
+		if tg.Repo != locWithCreds {
+			t.Fatalf("off-site target %q lost its working location: %q", tg.ID, tg.Repo)
+		}
+	}
+}
+
+// TestImportOnFreshInstanceKeepsRedactedLocationVisible: where the destination
+// has NOTHING to keep, the redacted location still lands. Dropping it would leave
+// a box with no off-site destination at all — the silent failure — whereas the
+// marker is on screen in Settings and the next run fails against a location the
+// operator can repair by typing the password back in.
+func TestImportOnFreshInstanceKeepsRedactedLocationVisible(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialInLocation(t, srcStore)
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got.ContainersOffsite, redactedLocationMarker) {
+		t.Fatalf("a fresh instance must keep the redacted location, got %q", got.ContainersOffsite)
+	}
+	if strings.Contains(got.ContainersOffsite, locRepoPass) {
+		t.Fatalf("the password must never reach the destination through a plain export: %q", got.ContainersOffsite)
+	}
+	targets, err := dstStore.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(targets) != 2 {
+		t.Fatalf("want the 2 imported targets, got %d", len(targets))
+	}
+	for _, tg := range targets {
+		if !strings.Contains(tg.Repo, redactedLocationMarker) {
+			t.Fatalf("off-site target %q should keep the redacted location, got %q", tg.ID, tg.Repo)
+		}
+	}
+}
+
+// TestScrubRepoLocationLeavesCredentialFreeLocationsAlone: the scrub must not
+// fire on the ordinary locations this app is full of — a bare s3:/b2: bucket, an
+// rclone remote, a rest: URL with no userinfo, a relative local path — or every
+// export would come back mangled.
+func TestScrubRepoLocationLeavesCredentialFreeLocationsAlone(t *testing.T) {
+	for _, loc := range []string{
+		"",
+		"s3:offsite-containers",
+		"rclone:b2:ark-backups/containers",
+		"rest:http://192.168.1.2:8000/containers",
+		"backups/containers-offsite",
+	} {
+		if got := scrubRepoLocation(loc); got != loc {
+			t.Fatalf("scrubRepoLocation(%q) = %q, want it untouched", loc, got)
+		}
+	}
+}
+
 // TestImportDoesNotTouchRunHistory: an apply writes settings/targets/creds but
 // never creates a run record (proxy for "never touches repos/snapshots/history").
 func TestImportDoesNotTouchRunHistory(t *testing.T) {

@@ -108,8 +108,10 @@ func TestCredentialedExportRefusedWhenAuthDisabled(t *testing.T) {
 
 // TestPlainExportStillWorksWithoutAuth: the gate must be on the SECRETS, not on
 // the export. The plain file carries no credentials (tokens blanked, registry
-// auths dropped), so it stays available in trusted-LAN mode like the rest of
-// the read API.
+// auths dropped, and the "user:pass@" a repo location may hold inside its own
+// URL redacted — see scrubRepoLocation, whose own regression test is in
+// settings_portable_internal_test.go), so it stays available in trusted-LAN mode
+// like the rest of the read API.
 func TestPlainExportStillWorksWithoutAuth(t *testing.T) {
 	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	seedExportSecrets(t, svc)
