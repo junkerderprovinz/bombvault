@@ -88,4 +88,4 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 - **Co je nového po aktualizaci.** Poznámky k vydání vyskočí jednou na novou verzi, poskytované z poznámek zabudovaných v binárce, takže dialog funguje offline.
 - **HTTPS rovnou z krabice** (samopodepsaný, nebo přineste si vlastní certifikát za reverzní proxy).
 - **Docker healthcheck.** Kontejner hlásí healthy/unhealthy ze svého vlastního `/api/health`, takže ho nástroj pro automatické hojení může restartovat, pokud se engine kdy zasekne.
-- **Tmavé/světlé UI v 26 jazycích** s výběrem vlajky.
+- **Tmavé/světlé UI v 42 jazycích** s výběrem vlajky.

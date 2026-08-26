@@ -88,4 +88,4 @@ BombVault đơn giản theo mặc định và sâu sắc khi bạn cần. Giao d
 - **Có gì mới sau một bản cập nhật.** Ghi chú phát hành bật lên một lần cho mỗi phiên bản mới, được phục vụ từ các ghi chú nhúng trong binary, nên hộp thoại hoạt động ngoại tuyến.
 - **HTTPS ngay từ đầu** (tự ký, hoặc mang chứng chỉ riêng của bạn phía sau một reverse proxy).
 - **Docker healthcheck.** Container báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó, nên một công cụ tự phục hồi có thể khởi động lại nó nếu công cụ có bao giờ bị kẹt.
-- **Giao diện tối/sáng bằng 26 ngôn ngữ** với một bộ chọn cờ.
+- **Giao diện tối/sáng bằng 42 ngôn ngữ** với một bộ chọn cờ.

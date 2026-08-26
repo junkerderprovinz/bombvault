@@ -1,9 +1,13 @@
 {#
   Sidebar footer controls — a faithful copy of the app's SidebarControls
   (web/src/components/Sidebar.tsx): a flag + language-name button that opens a
-  listbox of the 26 languages, and a sun/moon dark/light row. Rendered inside
-  .md-sidebar--primary and pinned to the bottom by extra.css; wired by
-  javascripts/bv-sidebar-controls.js.
+  listbox of the 26 documentation languages, and a sun/moon dark/light row.
+  Rendered inside .md-sidebar--primary and pinned to the bottom by extra.css;
+  wired by javascripts/bv-sidebar-controls.js.
+
+  The count is deliberately NOT the app's: the interface ships in 42 languages,
+  these docs are translated into 26, and this picker offers exactly the doc set
+  (mkdocs.yml's i18n plugin languages, kept in step with bv_langs below).
 
   Language list mirrors the app locales (web/src/lib/i18n.ts): [locale, native
   name, ISO 3166-1 alpha-2 for the flag]. The flag emoji is derived from the ISO

@@ -88,4 +88,4 @@ BombVault er simpel som standard og dyb, når du har brug for det. Grænsefladen
 - **Hvad er nyt efter en opdatering.** Release-noter dukker op én gang pr. ny version, serveret fra noter indlejret i binæren, så dialogen virker offline.
 - **HTTPS fra start** (selvsigneret, eller medbring dit eget certifikat bag en reverse proxy).
 - **Docker-healthcheck.** Containeren rapporterer sund/usund fra sin egen `/api/health`, så et auto-heal-værktøj kan genstarte den, hvis motoren nogensinde går i baglås.
-- **Mørk/lys UI på 26 sprog** med en flag-vælger.
+- **Mørk/lys UI på 42 sprog** med en flag-vælger.

@@ -48,7 +48,7 @@ BombVault is a self-hosted, **Unraid-native** web app for **backup and full disa
 - **Proof, not hope** — a customizable protection-status (RPO) dashboard, backup-health heatmap, run history with `start → end (duration)` timing, **restore-verification drills** with a "last verified restorable" badge, repository integrity checks, and an **encryption-key recovery kit** for restoring without a running BombVault.
 - **Ransomware protection** — append-only (immutable) off-site repos with a periodic **tamper test** that *proves* deletes are refused, off-site DR drills into a throwaway sandbox, a posture scorecard and a growth-budget alarm.
 - **Notifications** — webhook (Discord/Slack/Gotify/ntfy), Matrix, Healthchecks.io (full start/success/fail lifecycle), email (SMTP) and Unraid-native alerts, with an optional one-summary-per-scheduled-run mode; opt-in **Prometheus `/metrics`**.
-- **Ops niceties** — pre/post-backup hooks, stop-dependent-containers during backup, per-container exclude patterns with live preview, plain `tar.gz` exports (containers *and* VMs), snapshot diff & tags, server-side batch backups, Docker healthcheck, HTTPS out of the box, dark/light UI in **26 languages**, quiet toasts (pop-ups only on failure).
+- **Ops niceties** — a whole-server **Backup Everything** pass (every domain in one run, with global pre/post commands for a dead-man's-switch ping), Settings that save themselves with no Save button, pre/post-backup hooks, stop-dependent-containers during backup, per-container exclude patterns with live preview, plain `tar.gz` exports (containers *and* VMs), snapshot diff & tags, server-side batch backups, Docker healthcheck, HTTPS out of the box, dark/light UI in **42 languages** with your own choice of colours, corners and animations, quiet toasts (pop-ups only on failure).
 
 ## Install on Unraid
 
@@ -77,7 +77,7 @@ Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`,
 
 ## Security
 
-**⚠️ BombVault holds root-equivalent control of the host** (Docker socket + SSH for VMs). Run it **only on a trusted, non-exposed network** — never publish it directly to the internet; for remote access use a VPN or a reverse proxy that adds authentication and TLS. Optional built-in password protection is available under Settings → Security (off by default for trusted-LAN use); backups are encrypted by restic (on by default), with the key derived from `APP_KEY`.
+**⚠️ BombVault holds root-equivalent control of the host** (Docker socket + SSH for VMs). Run it **only on a trusted, non-exposed network** — never publish it directly to the internet; for remote access use a VPN or a reverse proxy that adds authentication and TLS. Optional built-in password protection is available under Settings → System → Security (off by default for trusted-LAN use); backups are encrypted by restic (on by default), with the key derived from `APP_KEY`.
 
 ## Full documentation & support
 

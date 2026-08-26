@@ -88,4 +88,4 @@ BombVault varsayılan olarak basit, ihtiyaç duyduğunuzda ise derindir. **Basit
 - **Bir güncellemeden sonra yenilikler.** Sürüm notları yeni sürüm başına bir kez açılır, ikili dosyaya gömülü notlardan sunulur, böylece iletişim kutusu çevrimdışı çalışır.
 - **Kutudan çıktığı gibi HTTPS** (kendinden imzalı ya da bir ters proxy arkasında kendi sertifikanızı getirin).
 - **Docker sağlık denetimi.** Konteyner, kendi `/api/health`'inden sağlıklı/sağlıksız bildirir, böylece motor bir şekilde sıkışırsa bir otomatik onarma aracı onu yeniden başlatabilir.
-- Bir bayrak seçiciyle **26 dilde koyu/açık arayüz**.
+- Bir bayrak seçiciyle **42 dilde koyu/açık arayüz**.

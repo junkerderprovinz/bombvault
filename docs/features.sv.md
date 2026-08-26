@@ -88,4 +88,4 @@ BombVault är enkel som standard och djup när du behöver det. Gränssnittet vi
 - **Vad som är nytt efter en uppdatering.** Versionsnoteringar dyker upp en gång per ny version, serverade från noteringar inbäddade i binären, så att dialogen fungerar offline.
 - **HTTPS direkt ur lådan** (självsignerat, eller ta med ditt eget certifikat bakom en reverse proxy).
 - **Docker-healthcheck.** Containern rapporterar frisk/osund från sin egen `/api/health`, så att ett auto-heal-verktyg kan starta om den om motorn någonsin skulle kärva.
-- **Mörkt/ljust gränssnitt på 26 språk** med en flaggväljare.
+- **Mörkt/ljust gränssnitt på 42 språk** med en flaggväljare.

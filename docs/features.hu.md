@@ -88,4 +88,4 @@ A BombVault alapból egyszerű, és mély, amikor szükséged van rá. A felüle
 - **Mi újság egy frissítés után.** A kiadási megjegyzések verziónként egyszer felugranak, a binárisba ágyazott jegyzetekből kiszolgálva, így a párbeszédablak offline is működik.
 - **HTTPS out of the box** (önaláírt, vagy hozd a saját tanúsítványodat egy reverse proxy mögött).
 - **Docker healthcheck.** A konténer a saját `/api/health`-jéből jelent egészségeset/egészségtelent, így egy automatikus gyógyító eszköz újraindíthatja, ha a motor valaha beragadna.
-- **Sötét/világos felület 26 nyelven** egy zászlóválasztóval.
+- **Sötét/világos felület 42 nyelven** egy zászlóválasztóval.

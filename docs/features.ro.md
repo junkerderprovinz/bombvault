@@ -88,4 +88,4 @@ BombVault este simplu implicit și profund atunci când ai nevoie. Interfața ar
 - **Ce este nou după o actualizare.** Notele de lansare apar o dată per versiune nouă, servite din note încorporate în binar, deci dialogul funcționează offline.
 - **HTTPS din start** (auto-semnat sau adu-ți propriul certificat în spatele unui reverse proxy).
 - **Healthcheck Docker.** Containerul raportează sănătos/nesănătos din propriul `/api/health`, astfel încât un instrument de auto-vindecare îl poate reporni dacă motorul se blochează vreodată.
-- **Interfață întunecată/luminoasă în 26 de limbi** cu un selector de steag.
+- **Interfață întunecată/luminoasă în 42 de limbi** cu un selector de steag.
