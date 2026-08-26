@@ -2917,9 +2917,19 @@ export function CloudCard({
   // "correct as long as one field is edited at a time" reasoning
   // debouncedSave's own callers rely on elsewhere in this file) and POSTs the
   // whole object — setCloud has no partial-patch form, unlike SettingsPage's
-  // own save(). Blanking a just-saved secret mirrors handleSave's old
-  // behaviour exactly, so a saved secret immediately shows as "already set"
-  // without waiting for a refresh().
+  // own save().
+  //
+  // A saved secret's FIELD IS LEFT ALONE. Only the "…Set" flag follows the
+  // save, so a blank field still shows the "already set" placeholder after a
+  // refresh(). Emptying the input here — which is what the deleted manual Save
+  // button did, correctly, because by then the user had finished typing — turns
+  // an auto-saving field into a secret shredder: the debounce fires 800 ms into
+  // any pause mid-secret, the input is wiped under the cursor, the REST of the
+  // secret is typed into an empty field, and that fragment is saved over the
+  // real credential. Nothing shows an error; the backend's "blank = keep the
+  // stored one" contract has no way to tell a fragment from a whole key. The
+  // field keeps its text until the card is remounted, and every later save just
+  // re-sends the same value.
   async function persistPatch(patch: Partial<typeof c>) {
     setState("saving");
     const merged = { ...c, ...patch };
@@ -2927,14 +2937,8 @@ export function CloudCard({
       const r = await setCloud(merged);
       if (r.ok) {
         setState("idle");
-        if (patch.s3Secret !== undefined) {
-          setC((p) => ({ ...p, s3Secret: "" }));
-          if (patch.s3Secret !== "") setSecretSet(true);
-        }
-        if (patch.restPassword !== undefined) {
-          setC((p) => ({ ...p, restPassword: "" }));
-          if (patch.restPassword !== "") setPwSet(true);
-        }
+        if (patch.s3Secret) setSecretSet(true);
+        if (patch.restPassword) setPwSet(true);
         push(t("settings.saved"), "success");
       } else {
         setState("idle");
