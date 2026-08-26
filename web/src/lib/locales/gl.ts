@@ -1366,6 +1366,7 @@ const gl: Partial<Translations> = {
   "settingsIO.group.offsite": "Externa",
   "settingsIO.group.drills": "Probas de restauración",
   "settingsIO.group.digest": "Resumo",
+  "settingsIO.group.everything": "Copia completa",
   "settingsIO.group.monitoring": "Supervisión",
   "settingsIO.group.language": "Idioma",
   "settingsIO.group.exportEncryption": "Cifrado de exportación",

@@ -1235,6 +1235,7 @@ const ro: Partial<Translations> = {
   "settingsIO.group.offsite": "Extern",
   "settingsIO.group.drills": "Teste de restaurare",
   "settingsIO.group.digest": "Rezumat",
+  "settingsIO.group.everything": "Backup total",
   "settingsIO.group.monitoring": "Monitorizare",
   "settingsIO.group.language": "Limbă",
   "settingsIO.group.exportEncryption": "Criptarea exporturilor",

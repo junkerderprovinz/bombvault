@@ -1224,6 +1224,7 @@ const vi: Partial<Translations> = {
   "settingsIO.group.offsite": "Ngoài site",
   "settingsIO.group.drills": "Kiểm tra khôi phục",
   "settingsIO.group.digest": "Tóm tắt",
+  "settingsIO.group.everything": "Sao lưu toàn bộ",
   "settingsIO.group.monitoring": "Giám sát",
   "settingsIO.group.language": "Ngôn ngữ",
   "settingsIO.group.exportEncryption": "Mã hóa xuất",

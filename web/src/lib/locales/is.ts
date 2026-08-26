@@ -1366,6 +1366,7 @@ const is: Partial<Translations> = {
   "settingsIO.group.offsite": "Fjarlægt",
   "settingsIO.group.drills": "Endurheimtaraþanganir",
   "settingsIO.group.digest": "Yfirlit",
+  "settingsIO.group.everything": "Heildarafritun",
   "settingsIO.group.monitoring": "Vöktun",
   "settingsIO.group.language": "Tungumál",
   "settingsIO.group.exportEncryption": "Dulkóðun útflutnings",

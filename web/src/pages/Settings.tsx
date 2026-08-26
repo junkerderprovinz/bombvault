@@ -1740,6 +1740,7 @@ chmod 600 /root/.ssh/authorized_keys`
 const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   domains: "settingsIO.group.domains",
   schedules: "settingsIO.group.schedules",
+  everything: "settingsIO.group.everything",
   retention: "settingsIO.group.retention",
   offsite: "settingsIO.group.offsite",
   drills: "settingsIO.group.drills",

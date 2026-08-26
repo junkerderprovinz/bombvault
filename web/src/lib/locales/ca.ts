@@ -1366,6 +1366,7 @@ const ca: Partial<Translations> = {
   "settingsIO.group.offsite": "Extern",
   "settingsIO.group.drills": "Proves de restauració",
   "settingsIO.group.digest": "Resum",
+  "settingsIO.group.everything": "Còpia completa",
   "settingsIO.group.monitoring": "Supervisió",
   "settingsIO.group.language": "Idioma",
   "settingsIO.group.exportEncryption": "Xifratge d'exportació",

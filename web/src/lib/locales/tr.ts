@@ -1232,6 +1232,7 @@ const tr: Partial<Translations> = {
   "settingsIO.group.offsite": "Tesis dışı",
   "settingsIO.group.drills": "Geri yükleme denemeleri",
   "settingsIO.group.digest": "Özet",
+  "settingsIO.group.everything": "Tam yedekleme",
   "settingsIO.group.monitoring": "İzleme",
   "settingsIO.group.language": "Dil",
   "settingsIO.group.exportEncryption": "Dışa aktarma şifrelemesi",

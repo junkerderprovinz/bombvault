@@ -1232,6 +1232,7 @@ const el: Partial<Translations> = {
   "settingsIO.group.offsite": "Εκτός έδρας",
   "settingsIO.group.drills": "Δοκιμές επαναφοράς",
   "settingsIO.group.digest": "Σύνοψη",
+  "settingsIO.group.everything": "Πλήρες αντίγραφο ασφαλείας",
   "settingsIO.group.monitoring": "Παρακολούθηση",
   "settingsIO.group.language": "Γλώσσα",
   "settingsIO.group.exportEncryption": "Κρυπτογράφηση εξαγωγών",

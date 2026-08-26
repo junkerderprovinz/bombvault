@@ -1232,6 +1232,7 @@ const sv: Partial<Translations> = {
   "settingsIO.group.offsite": "Externt",
   "settingsIO.group.drills": "Återställningstester",
   "settingsIO.group.digest": "Sammanfattning",
+  "settingsIO.group.everything": "Total säkerhetskopia",
   "settingsIO.group.monitoring": "Övervakning",
   "settingsIO.group.language": "Språk",
   "settingsIO.group.exportEncryption": "Exportkryptering",

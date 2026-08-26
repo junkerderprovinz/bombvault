@@ -1366,6 +1366,7 @@ const fa: Partial<Translations> = {
   "settingsIO.group.offsite": "خارج از محل",
   "settingsIO.group.drills": "بررسی‌های بازیابی",
   "settingsIO.group.digest": "خلاصه",
+  "settingsIO.group.everything": "پشتیبان‌گیری کامل",
   "settingsIO.group.monitoring": "نظارت",
   "settingsIO.group.language": "زبان",
   "settingsIO.group.exportEncryption": "رمزنگاری خروجی‌گیری",

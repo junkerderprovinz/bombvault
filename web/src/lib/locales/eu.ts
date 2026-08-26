@@ -1366,6 +1366,7 @@ const eu: Partial<Translations> = {
   "settingsIO.group.offsite": "Kanpokoa",
   "settingsIO.group.drills": "Berrezarpen-probak",
   "settingsIO.group.digest": "Laburpena",
+  "settingsIO.group.everything": "Babeskopia osoa",
   "settingsIO.group.monitoring": "Gainbegiratzea",
   "settingsIO.group.language": "Hizkuntza",
   "settingsIO.group.exportEncryption": "Esportazioaren zifratzea",

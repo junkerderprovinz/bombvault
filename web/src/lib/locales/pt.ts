@@ -1232,6 +1232,7 @@ const pt: Partial<Translations> = {
   "settingsIO.group.offsite": "Externo",
   "settingsIO.group.drills": "Testes de restauro",
   "settingsIO.group.digest": "Resumo",
+  "settingsIO.group.everything": "Backup total",
   "settingsIO.group.monitoring": "Monitorização",
   "settingsIO.group.language": "Idioma",
   "settingsIO.group.exportEncryption": "Encriptação das exportações",

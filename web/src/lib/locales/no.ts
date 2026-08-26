@@ -1232,6 +1232,7 @@ const no: Partial<Translations> = {
   "settingsIO.group.offsite": "Eksternt",
   "settingsIO.group.drills": "Gjenopprettingstester",
   "settingsIO.group.digest": "Sammendrag",
+  "settingsIO.group.everything": "Full sikkerhetskopi",
   "settingsIO.group.monitoring": "Overvåking",
   "settingsIO.group.language": "Språk",
   "settingsIO.group.exportEncryption": "Eksportkryptering",

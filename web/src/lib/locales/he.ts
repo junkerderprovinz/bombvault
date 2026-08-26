@@ -1232,6 +1232,7 @@ const he: Partial<Translations> = {
   "settingsIO.group.offsite": "חיצוני",
   "settingsIO.group.drills": "בדיקות שחזור",
   "settingsIO.group.digest": "תקציר",
+  "settingsIO.group.everything": "גיבוי מלא",
   "settingsIO.group.monitoring": "ניטור",
   "settingsIO.group.language": "שפה",
   "settingsIO.group.exportEncryption": "הצפנת ייצוא",

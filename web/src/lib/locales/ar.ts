@@ -1235,6 +1235,7 @@ const ar: Partial<Translations> = {
   "settingsIO.group.offsite": "خارج الموقع",
   "settingsIO.group.drills": "اختبارات الاستعادة",
   "settingsIO.group.digest": "ملخص",
+  "settingsIO.group.everything": "نسخ احتياطي شامل",
   "settingsIO.group.monitoring": "المراقبة",
   "settingsIO.group.language": "اللغة",
   "settingsIO.group.exportEncryption": "تشفير التصدير",

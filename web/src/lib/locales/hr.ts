@@ -1366,6 +1366,7 @@ const hr: Partial<Translations> = {
   "settingsIO.group.offsite": "Izvanmrežno",
   "settingsIO.group.drills": "Provjere vraćanja",
   "settingsIO.group.digest": "Sažetak",
+  "settingsIO.group.everything": "Potpuna sigurnosna kopija",
   "settingsIO.group.monitoring": "Nadzor",
   "settingsIO.group.language": "Jezik",
   "settingsIO.group.exportEncryption": "Enkripcija izvoza",
