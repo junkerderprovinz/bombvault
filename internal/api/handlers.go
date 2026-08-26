@@ -1524,8 +1524,10 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 // one path and accepted on the other.
 //
 // The five domain schedules plus EverythingSchedule are deliberately absent for
-// the same reason: each has a last-run gate (LastSuccessful*Backup) that makes
-// everyN meaningful. The scheduler also refuses to REGISTER an unenforceable
+// the same reason: each has a last-run gate that makes everyN meaningful (the
+// multi-item domains through schedule.ContainersDueGate/VMsDueGate/FilesDueGate,
+// the two singletons through LastSuccessfulFlash/ConfigBackup, and the whole-
+// server pass through LastEverythingPass). The scheduler also refuses to REGISTER an unenforceable
 // everyN (internal/schedule), so a legacy value that predates this guard cannot
 // fire daily either — this is the friendly save-time half of that same rule.
 func rejectEveryNSchedules(v settingsView) string {

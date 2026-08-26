@@ -75,18 +75,22 @@ func NewHandler(
 	probes []spike.Probe,
 ) *Handler {
 	return &Handler{
-		cfg:               cfg,
-		store:             st,
-		docker:            d,
-		svc:               svc,
-		scheduler:         scheduler,
-		probes:            probes,
-		containersLastRun: schedule.LastRunFunc(st.LastSuccessfulContainerBackup),
-		vmsLastRun:        schedule.LastRunFunc(st.LastSuccessfulVMBackup),
+		cfg:       cfg,
+		store:     st,
+		docker:    d,
+		svc:       svc,
+		scheduler: scheduler,
+		probes:    probes,
+		// Same six gate queries main.go wires for the initial reload — a settings
+		// save re-arms the scheduler through this handler, so a divergence here
+		// would mean the gates changed meaning the first time a user pressed a
+		// switch. See main.go's own comment for why each is what it is.
+		containersLastRun: schedule.ContainersDueGate(st),
+		vmsLastRun:        schedule.VMsDueGate(st),
 		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
 		configLastRun:     schedule.LastRunFunc(st.LastSuccessfulConfigBackup),
-		filesLastRun:      schedule.LastRunFunc(st.LastSuccessfulFilesBackup),
-		everythingLastRun: schedule.LastRunFunc(st.LastSuccessfulEverythingBackup),
+		filesLastRun:      schedule.FilesDueGate(st),
+		everythingLastRun: schedule.LastRunFunc(st.LastEverythingPass),
 		// Initialized explicitly rather than relying on every loginFails call
 		// site happening to only read-or-delete a nil map without ever
 		// assigning into it directly (recordLoginFail lazily allocates too,
