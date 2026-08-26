@@ -6,6 +6,7 @@ package schedule
 import (
 	"fmt"
 	"log"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,8 +52,9 @@ type ItemFailure struct {
 //   - Enabled=false: the domain is off (Spec is empty, IntervalDays is 0).
 //   - Enabled=true, IntervalDays=0: a regular cron spec fires unconditionally.
 //   - Enabled=true, IntervalDays>0: the spec is a daily trigger (fires once per
-//     day at the given HH:MM) but the job must consult a due-check before
-//     doing any real work — only proceed if now − last-successful-run ≥ IntervalDays.
+//     day at the given HH:MM) but the job must consult a due-check before doing
+//     any real work — only proceed when the last run falls at least IntervalDays
+//     CALENDAR days back (EveryNDue, which is where that "calendar" is argued).
 type Cadence struct {
 	Spec         string // 5-field cron expression; empty when Enabled=false
 	Enabled      bool
@@ -340,6 +342,49 @@ const FleetCadence = "daily 09:30"
 // a duplicate catch-up backup right after boot).
 const catchUpGrace = 10 * time.Minute
 
+// EveryNDue reports whether an "every N days" cadence may proceed at `now`,
+// given when it last ran. It is THE everyN due-gate: the registration loop's
+// gate and missedRun both call it, so the rule has one implementation and one
+// place to be right.
+//
+// The comparison is in local CALENDAR DAYS, not against an exact N*24h
+// threshold, because the two instants are not the same kind of thing. `now` is
+// a fixed wall-clock cron fire (an everyN cadence is a DAILY trigger at HH:MM,
+// see ParseCadence), while `last` is when the previous pass FINISHED, which is
+// always later than its own HH:MM fire by however long the pass took. Measured
+// as a duration, the Nth day therefore always comes up SHORT by exactly the
+// pass's own runtime: a 7-day drill pass that takes four minutes measures
+// 6d23h56m at the next fire, skips it, and lands on day 8 instead — and since
+// that fire re-stamps the record even later, every later cycle keeps the extra
+// day. Every everyN schedule was really an everyN+1 schedule, and "everyN 1",
+// which the UI renders as "daily at HH:MM", ran every second day. A
+// spring-forward DST transition inside the window shortens the local gap by
+// another hour and does the same to an instantaneous pass.
+//
+// Calendar days remove both: "every 7 days at 03:00" means the same weekday at
+// 03:00, whatever the pass costs and whatever the clocks did in between.
+//
+// A zero `last` ("never ran") is due — see the registration loop's own doc
+// comment for why the first fire after enabling must proceed.
+func EveryNDue(last, now time.Time, intervalDays int) bool {
+	if intervalDays <= 0 || last.IsZero() {
+		return true
+	}
+	return calendarDaysBetween(last, now) >= intervalDays
+}
+
+// calendarDaysBetween returns the number of local calendar days from `from` to
+// `to` (same day = 0), negative when `to` precedes `from`. It subtracts the two
+// local midnights and rounds, so a 23h or 25h DST day still counts as exactly
+// one day.
+func calendarDaysBetween(from, to time.Time) int {
+	loc := to.Location()
+	f := from.In(loc)
+	fromMidnight := time.Date(f.Year(), f.Month(), f.Day(), 0, 0, 0, 0, loc)
+	toMidnight := time.Date(to.Year(), to.Month(), to.Day(), 0, 0, 0, 0, loc)
+	return int(math.Round(toMidnight.Sub(fromMidnight).Hours() / 24))
+}
+
 // missedRun decides whether a domain MISSED its most recent scheduled run:
 // the cadence is enabled, the last fire lies more than catchUpGrace after the
 // last successful backup, and (for everyN cadences) the interval-days due-gate
@@ -360,9 +405,10 @@ func missedRun(cad Cadence, lastSuccess, now time.Time) (lastFire time.Time, mis
 		return time.Time{}, false
 	}
 	// everyN: the daily trigger fires every day but the due-gate only runs the
-	// job once the interval elapsed — mirror it here so a not-yet-due domain is
-	// never flagged missed (the invoked job re-checks the gate anyway).
-	if cad.IntervalDays > 0 && now.Sub(lastSuccess) < time.Duration(cad.IntervalDays)*24*time.Hour {
+	// job once the interval elapsed — mirror it here (through the SAME EveryNDue
+	// the gate itself uses, so the two can never drift) so a not-yet-due domain
+	// is never flagged missed (the invoked job re-checks the gate anyway).
+	if !EveryNDue(lastSuccess, now, cad.IntervalDays) {
 		return lastFire, false
 	}
 	return lastFire, lastSuccess.Add(catchUpGrace).Before(lastFire)
@@ -1257,9 +1303,10 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: %s everyN due-check: last-run query failed, skipping this fire: %v", domainName, err)
 					return
 				}
-				minAge := time.Duration(intervalDays) * 24 * time.Hour
-				if !last.IsZero() && time.Since(last) < minAge {
-					log.Printf("schedule: %s everyN skipped — last run %v ago, interval %d days", domainName, time.Since(last).Round(time.Second), intervalDays)
+				now := time.Now()
+				if !EveryNDue(last, now, intervalDays) {
+					log.Printf("schedule: %s everyN skipped — last run %v ago (%d calendar day(s)), interval %d days",
+						domainName, now.Sub(last).Round(time.Second), calendarDaysBetween(last, now), intervalDays)
 					return
 				}
 				innerFn()
