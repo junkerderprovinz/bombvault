@@ -517,6 +517,10 @@ const catchUpGrace = 10 * time.Minute
 // Calendar days remove both: "every 7 days at 03:00" means the same weekday at
 // 03:00, whatever the pass costs and whatever the clocks did in between.
 //
+// Calendar days alone remove them only for a pass that finishes on the day it
+// FIRED, though, which is why the count runs from the fire rather than from the
+// stamp — see calendarDaysSinceFire for the late-evening pass that does not.
+//
 // A zero `last` ("never ran") is due — see the registration loop's own doc
 // comment for why the first fire after enabling must proceed.
 //
@@ -532,10 +536,56 @@ const catchUpGrace = 10 * time.Minute
 // only reading that heals: the pass runs once, re-stamps the record with a sane
 // instant, and the interval applies normally from there.
 func EveryNDue(last, now time.Time, intervalDays int) bool {
-	if intervalDays <= 0 || last.IsZero() || last.After(now) {
+	if intervalDays <= 0 || notAMeasurement(last, now) {
 		return true
 	}
-	return calendarDaysBetween(last, now) >= intervalDays
+	return calendarDaysSinceFire(last, now) >= intervalDays
+}
+
+// notAMeasurement reports the two `last` values that are not a measurement of a
+// previous pass at all, and which therefore always read as due: the zero time
+// ("never ran") and a stamp from the FUTURE (a wrong clock — the reasoning is in
+// EveryNDue's doc comment above). Both due-gates share it rather than spelling
+// it out twice, so the reading of a broken stamp cannot drift between them.
+func notAMeasurement(last, now time.Time) bool {
+	return last.IsZero() || last.After(now)
+}
+
+// calendarDaysSinceFire counts local calendar days from the FIRE that produced
+// the `last` stamp to `now`.
+//
+// The fire is what the cadence is anchored on; `last` records when that pass
+// FINISHED, and the two are not always on the same calendar day. A pass that
+// fires at 23:30 and takes forty minutes stamps 00:10 the next morning, so a
+// count taken from the stamp is one day short: the Nth day's fire is skipped,
+// the fire that finally does run stamps later still, and the schedule settles
+// back into exactly the everyN+1 rhythm counting whole calendar days was
+// introduced to remove — for the late-evening schedules most likely to have a
+// pass long enough to cross midnight in the first place.
+//
+// The fire is derived, not guessed. An everyN cadence is a DAILY trigger at a
+// fixed HH:MM (ParseCadence) and `now` IS one of those fires, so the cadence's
+// fires are exactly `now`'s clock time on each preceding day. The fire that
+// produced `last` is the latest of them at or before `last`: `last`'s own day
+// when its clock time is at or after the fire's, the day before when it is
+// earlier. Nothing is fuzzed and no tolerance is involved — a stamp from a
+// same-day pass is counted from its own day exactly as before.
+//
+// A pass that runs for more than a whole day is counted from the last fire it
+// overran instead of the one that started it, which defers the next run rather
+// than doubling it — the safe direction, and the same one the gate takes
+// whenever it cannot tell.
+func calendarDaysSinceFire(last, now time.Time) int {
+	days := calendarDaysBetween(last, now)
+	l := last.In(now.Location())
+	lastClock := l.Hour()*3600 + l.Minute()*60 + l.Second()
+	// A cron fire lands on the minute, so the seconds `now` carries are the delay
+	// between the trigger and this gate, not part of the schedule.
+	fireClock := now.Hour()*3600 + now.Minute()*60
+	if lastClock < fireClock {
+		days++ // the pass fired the previous day and ran past midnight
+	}
+	return days
 }
 
 // PeriodDue is EveryNDue's rule generalised to a cadence expressed as a PERIOD
@@ -554,6 +604,16 @@ func EveryNDue(last, now time.Time, intervalDays int) bool {
 // argues: "daily 04:00" means the next day, whatever the check cost and
 // whatever the clocks did in between.
 //
+// What it does NOT take from EveryNDue is that gate's fire anchor
+// (calendarDaysSinceFire). There `now` is the cadence's own daily trigger, so
+// the fires a stamp can belong to are known exactly. Here `now` is a FOREIGN
+// sweep's fire — the receiver watch's 09:15 — while the cadence being gated is
+// the repo's own ("daily 04:00"), which never fires on a trigger of its own at
+// all. There is no fire grid to map a stamp onto, so the stamp itself is the
+// only honest anchor, and the sweep's once-a-day granularity is the binding
+// constraint anyway. It keeps the reading of a never-run and a wrong-clock
+// stamp identical, through the same notAMeasurement both gates share.
+//
 //   - periodSeconds <= 0 ("off"/unparseable) → due is not meaningful; the
 //     caller gates on its own cadence check first. Reported as due.
 //   - periodSeconds < 86400 (a sub-daily cron) → due on every evaluation. The
@@ -564,10 +624,10 @@ func EveryNDue(last, now time.Time, intervalDays int) bool {
 //     the check slightly early rather than skipping a day of it, which is the
 //     safe direction for an integrity check.
 func PeriodDue(last, now time.Time, periodSeconds int64) bool {
-	if periodSeconds < 86400 {
+	if periodSeconds < 86400 || notAMeasurement(last, now) {
 		return true
 	}
-	return EveryNDue(last, now, int(periodSeconds/86400))
+	return calendarDaysBetween(last, now) >= int(periodSeconds/86400)
 }
 
 // calendarDaysBetween returns the number of local calendar days from `from` to
@@ -605,7 +665,14 @@ func missedRun(cad Cadence, lastSuccess, now time.Time) (lastFire time.Time, mis
 	// job once the interval elapsed — mirror it here (through the SAME EveryNDue
 	// the gate itself uses, so the two can never drift) so a not-yet-due domain
 	// is never flagged missed (the invoked job re-checks the gate anyway).
-	if !EveryNDue(lastSuccess, now, cad.IntervalDays) {
+	//
+	// The gate is asked about the FIRE, not about `now`. `now` is whenever this
+	// sweep happens to run (boot, mostly), so it is not a fire of this cadence at
+	// all, and the question here is precisely whether lastFire would have been let
+	// through. Asked at the boot instant instead, a cadence whose fire is still
+	// hours away reads as already due and the catch-up runs a full pass a day
+	// early — on every boot, since the pass it runs does not move the fire.
+	if !EveryNDue(lastSuccess, lastFire, cad.IntervalDays) {
 		return lastFire, false
 	}
 	return lastFire, lastSuccess.Add(catchUpGrace).Before(lastFire)
