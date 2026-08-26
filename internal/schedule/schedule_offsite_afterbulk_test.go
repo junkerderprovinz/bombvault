@@ -136,6 +136,108 @@ func TestBatchedOffsiteRunsAfterAllBackups(t *testing.T) {
 	}
 }
 
+// TestEmptyDomainRunSkipsJobAndBatchedTail pins the other end of the batched
+// tail: when a domain's run has NO item left to back up, the pass must do
+// nothing at all — no Healthchecks start/finish ping, no prune, no off-site copy.
+//
+// This is the ordinary steady state with per-item schedules on (#121) once every
+// included item runs on its own entry or is switched "off": the domain schedule
+// is vestigial, and its everyN gate reads the last success among exactly those
+// (zero) items, which is the zero time — "never ran" — at every single fire,
+// because an empty pass writes no run row to move it. Firing the tail anyway
+// turned a configured "everyN 7" into a nightly `restic prune` plus a nightly
+// full off-site replication, and reported a green "0 of 0 items succeeded" for a
+// pass that backed up nothing. Same shape for file sets, where switching every
+// set off is the emptying move.
+//
+// Table-driven over the three multi-item domain closures. Each case leaves the
+// domain schedule ENABLED (the entry must stay registered so the UI still shows
+// the cadence) — it is the fn that has to be inert.
+func TestEmptyDomainRunSkipsJobAndBatchedTail(t *testing.T) {
+	cases := []struct {
+		domain string
+		wire   func(sc *Scheduler, backupFn BackupFunc)
+		// listFn is the containers list New() takes; only the containers case
+		// needs a non-empty one.
+		listFn   func() ([]store.Target, error)
+		settings store.Settings
+	}{
+		{
+			domain: "containers",
+			wire:   func(sc *Scheduler, backupFn BackupFunc) {},
+			listFn: func() ([]store.Target, error) {
+				// Included, but explicitly paused per item: dropped from the
+				// domain run and given no entry of its own.
+				return []store.Target{{ContainerName: "plex", IncludeInSchedule: true, ScheduleCadence: "off"}}, nil
+			},
+			settings: store.Settings{ContainersSchedule: "daily 03:00", PerItemSchedules: true},
+		},
+		{
+			domain: "vms",
+			wire: func(sc *Scheduler, backupFn BackupFunc) {
+				sc.SetVMJob(backupFn, func() ([]store.VMTarget, error) {
+					return []store.VMTarget{{Name: "vm1", IncludeInSchedule: true, ScheduleCadence: "off"}}, nil
+				})
+			},
+			listFn:   func() ([]store.Target, error) { return nil, nil },
+			settings: store.Settings{VMsSchedule: "daily 03:00", PerItemSchedules: true},
+		},
+		{
+			domain: "files",
+			wire: func(sc *Scheduler, backupFn BackupFunc) {
+				sc.SetFilesJob(backupFn, func() ([]store.FileSet, error) {
+					return []store.FileSet{{ID: "fs1", Name: "documents", Enabled: false}}, nil
+				})
+			},
+			listFn:   func() ([]store.Target, error) { return nil, nil },
+			settings: store.Settings{FilesSchedule: "daily 03:00"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.domain, func(t *testing.T) {
+			var mu sync.Mutex
+			var events []string
+			record := func(s string) {
+				mu.Lock()
+				events = append(events, s)
+				mu.Unlock()
+			}
+
+			backupFn := func(name string) error { record("backup:" + name); return nil }
+			sc := New(backupFn, tc.listFn)
+			tc.wire(sc, backupFn)
+			sc.SetPruneAfterBulkJob(func(domain string) { record("prune:" + domain) })
+			sc.SetOffsiteAfterBulkJob(func(domain string) { record("offsite:" + domain) })
+			sc.SetHealthchecksAggregator(
+				func(domain string) { record("hc-start:" + domain) },
+				func(domain string, attempted, failed int, failures []ItemFailure) { record("hc-finish:" + domain) },
+			)
+
+			if err := sc.ReloadWithDueChecks(tc.settings, nil, nil, nil, nil, nil, nil); err != nil {
+				t.Fatalf("ReloadWithDueChecks: %v", err)
+			}
+
+			fired := false
+			for _, e := range sc.entries {
+				if e.domain == tc.domain {
+					sc.c.Entry(e.id).WrappedJob.Run()
+					fired = true
+				}
+			}
+			if !fired {
+				t.Fatalf("no %s entry registered — an enabled cadence must stay on the schedule even with no items", tc.domain)
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
+			if len(events) != 0 {
+				t.Fatalf("empty %s run performed %v, want nothing at all (no ping, no prune, no off-site copy)", tc.domain, events)
+			}
+		})
+	}
+}
+
 // TestContainersJobNoOffsiteAfterBulkWhenUnwired ensures the batched post-loop
 // hooks are optional: with neither SetOffsiteAfterBulkJob nor SetPruneAfterBulkJob
 // wired, the run still backs up every container and simply performs no batched

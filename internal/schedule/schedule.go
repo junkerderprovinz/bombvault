@@ -233,6 +233,62 @@ func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 	return out
 }
 
+// domainRunHasWork reports whether a FILTERED container list still holds an item
+// the domain job would actually back up. IncludeInSchedule is the very check
+// RunContainersJob loops on, so this asks exactly "would that loop attempt
+// anything".
+//
+// The three multi-item domain closures gate their whole pass on it, and the
+// reason is the batched TAIL, not the loop: RunContainersJob over an empty list
+// is free, but what follows it is not. pruneAfterBulkFn is a real `restic prune`
+// that records a run of its own, replicateAfterBulkFn opens the off-site repo,
+// loads its index and copies, and the aggregated Healthchecks ping and summary
+// message in between report a green "0 of 0 items succeeded" for a pass that
+// touched nothing.
+//
+// An empty list is not an exotic state once per-item schedules are on (#121): it
+// is the ORDINARY one as soon as every included item carries its own override or
+// is switched off, which leaves the domain schedule vestigial. Its everyN gate
+// reads the last success among exactly those (zero) items, so it answers the
+// zero time — "never ran" — at every fire, for good, because an empty pass
+// writes no run row to move it. A user who configured "everyN 7" would be buying
+// a nightly prune plus a nightly full off-site replication with it. The domain
+// has nothing to do; it must do nothing.
+//
+// The legitimate "first ever run, nothing backed up yet" case is untouched:
+// that list is NON-empty, so the zero time genuinely means due and the pass runs.
+func domainRunHasWork(targets []store.Target) bool {
+	for _, t := range targets {
+		if t.IncludeInSchedule {
+			return true
+		}
+	}
+	return false
+}
+
+// domainRunHasVMWork is the VM counterpart of domainRunHasWork.
+func domainRunHasVMWork(vms []store.VMTarget) bool {
+	for _, v := range vms {
+		if v.IncludeInSchedule {
+			return true
+		}
+	}
+	return false
+}
+
+// domainRunHasFileWork is the file-set counterpart of domainRunHasWork. File sets
+// carry no per-item cadence override, so Enabled is the whole filter — and the
+// check RunFilesJob itself loops on. A user who switched every set off must not
+// keep paying for the domain's prune and off-site copy.
+func domainRunHasFileWork(sets []store.FileSet) bool {
+	for _, fs := range sets {
+		if fs.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
 // DomainGateStore is the store surface a multi-item domain's everyN due-gate
 // needs: the settings (for the per-item-schedules switch), the domain's item
 // list, and "when was any of THESE items last backed up successfully". Same DI
@@ -1127,6 +1183,11 @@ func (s *Scheduler) ReloadWithDueChecks(
 					return
 				}
 				targets = DomainRunTargets(targets, perItem) // drop items on their own per-item cadence (#121)
+				if !domainRunHasWork(targets) {
+					// Nothing left for this domain to back up: no loop, no ping,
+					// and above all no prune and no off-site copy (domainRunHasWork).
+					return
+				}
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
@@ -1160,6 +1221,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 				}
 				store.SortVMTargetsForRun(vms)         // #119: explicit VM backup order first, name-order tiebreak
 				vms = DomainRunVMTargets(vms, perItem) // drop VMs on their own per-item cadence (#121)
+				if !domainRunHasVMWork(vms) {
+					return // nothing to back up — skip the loop and the batched tail (domainRunHasWork)
+				}
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
@@ -1212,6 +1276,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 				if err != nil {
 					log.Printf("schedule: files job: list file sets: %v", err)
 					return
+				}
+				if !domainRunHasFileWork(sets) {
+					return // no enabled set — skip the loop and the batched tail (domainRunHasWork)
 				}
 				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
