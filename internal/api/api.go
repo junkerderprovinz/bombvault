@@ -178,7 +178,10 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/settings", h.handlePutSettings)
 	// Portable settings export / import (a JSON file to move a configuration
 	// between instances; no live link). Session-protected like every other /api
-	// route — the credentialed export is as sensitive as the recovery kit.
+	// route, and — because the credentialed export IS the recovery kit's class of
+	// payload — that variant additionally requires auth to be ENABLED
+	// (requireAuthForSecrets), so trusted-LAN mode cannot hand every stored
+	// backend credential to an unauthenticated LAN client.
 	mux.HandleFunc("GET /api/settings/export", h.handleExportSettings)
 	mux.HandleFunc("POST /api/settings/import", h.handleImportSettings)
 	mux.HandleFunc("GET /api/recovery-kit", h.handleRecoveryKit)

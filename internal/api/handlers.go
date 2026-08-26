@@ -1847,14 +1847,7 @@ func (h *Handler) handleDetectEncryption(w http.ResponseWriter, r *http.Request)
 // The body is the owner's own recovery document and carries the real repo
 // locations (no path scrubbing here), and it is never logged.
 func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
-	// Require auth to be enabled: when it is off, authGate is a pass-through and
-	// this handler would otherwise hand the master key to any LAN client. A store
-	// error also blocks (authEnabled reports auth OFF then) — fail closed.
-	if _, _, on := h.authEnabled(); !on {
-		writeJSON(w, http.StatusForbidden, map[string]any{
-			"ok":    false,
-			"error": "set a login password before downloading the recovery kit",
-		})
+	if !h.requireAuthForSecrets(w, "downloading the recovery kit") {
 		return
 	}
 	kit, err := h.svc.RecoveryKit()
@@ -2613,6 +2606,33 @@ func (h *Handler) authEnabled() (hash, epoch string, on bool) {
 		return "", "", false
 	}
 	return s.AuthPasswordHash, s.SessionEpoch, s.AuthPasswordHash != ""
+}
+
+// requireAuthForSecrets is the second gate every handler that hands out STORED
+// SECRETS in the clear must pass. It reports whether the request may proceed,
+// and answers 403 itself when it may not.
+//
+// authGate alone is not enough for these: with no login password set it is a
+// pass-through by design (the trusted-LAN model — the rest of the API is open
+// to current data), so a handler that decrypts credentials would hand them to
+// any host on the LAN, unauthenticated. Current data is a lesser thing than the
+// keys to it: these payloads decrypt every repository, including the append-only
+// off-site archives that exist to survive a host compromise, and the backend
+// accounts they live in. So they fail CLOSED instead.
+//
+// A store read error blocks too (authEnabled reports auth OFF then), which is
+// the safe direction.
+//
+// action names what is being refused, e.g. "downloading the recovery kit".
+func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, action string) bool {
+	if _, _, on := h.authEnabled(); on {
+		return true
+	}
+	writeJSON(w, http.StatusForbidden, map[string]any{
+		"ok":    false,
+		"error": "set a login password before " + action,
+	})
+	return false
 }
 
 // newSessionCookie constructs the bv_session cookie with the correct attributes.

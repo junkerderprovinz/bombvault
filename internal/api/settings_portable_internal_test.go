@@ -56,6 +56,12 @@ func seedSource(t *testing.T, h *Handler, st *store.Repo) {
 	s.DrillsEnabled = true
 	s.DrillsSchedule = "weekly Sun 04:00"
 	s.RecoveryKitAck = true // per-instance state — must NOT leak into the export
+	// A login password is a PRECONDITION of the CREDENTIALED export: it hands out
+	// every backend secret in the clear, so it fails closed when auth is off, the
+	// same way the recovery kit does (requireAuthForSecrets; the gate itself is
+	// covered by settings_export_gate_test.go). The plain export needs no
+	// password — seeding it here keeps one seed serving both.
+	s.AuthPasswordHash = "seeded-login-password-hash"
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
