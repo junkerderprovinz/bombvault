@@ -6310,18 +6310,28 @@ export function SettingsPage() {
   // on arms two 800ms debounces one render apart — each sent the other's field
   // at its pre-edit value, and whichever response landed last won the whole
   // object. The UI showed both edits; the server kept one.
+  //
+  // `echo` is for the one case where what the SERVER stores and what the SCREEN
+  // shows are deliberately different objects: the caller passes a function that
+  // is handed the LIVE settings at the moment the response lands and returns
+  // what the screen should keep instead of the patch's own value. It has to be
+  // a function, not a second object, because the round-trip is a window the user
+  // keeps typing in — anything computed at send time is already stale by the
+  // time it would be applied. Only saveRegistries needs it (see there).
   async function save(
     patch: Partial<Settings>,
     setSaveState: (s: SaveState) => void,
-    setSaveError: (e: string | null) => void
+    setSaveError: (e: string | null) => void,
+    echo?: (live: Settings) => Partial<Settings>
   ): Promise<boolean> {
-    return queueSettingsWrite(() => sendSettingsPatch(patch, setSaveState, setSaveError));
+    return queueSettingsWrite(() => sendSettingsPatch(patch, setSaveState, setSaveError, echo));
   }
 
   async function sendSettingsPatch(
     patch: Partial<Settings>,
     setSaveState: (s: SaveState) => void,
-    setSaveError: (e: string | null) => void
+    setSaveError: (e: string | null) => void,
+    echo?: (live: Settings) => Partial<Settings>
   ): Promise<boolean> {
     // Read at SEND time, not at call time: the previous write in the queue has
     // already advanced this ref by the time we get here.
@@ -6338,7 +6348,9 @@ export function SettingsPage() {
         // Advance the baseline; reflect just the saved fields in the live state so
         // other cards' in-progress edits are left untouched.
         savedBaseline.current = updated;
-        setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
+        setSettings((prev) =>
+          prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : updated
+        );
         setSaveState("idle");
         // Confirmation-pulse (GlimStone motion-engine animation 2) — bump
         // every key in THIS patch, not just the ones a ToggleRow happens to
@@ -6662,22 +6674,25 @@ export function SettingsPage() {
   // Under the old batched Save button the two coincided, because clicking Save
   // meant "I am finished"; a debounce firing 800ms after a keystroke does not.
   //
-  // The re-assert runs AFTER save()'s own echo of the patch, so the trimmed
-  // array reaches savedBaseline (the server's truth) while the screen keeps the
-  // full list. registryRowIds is left alone for the same reason: it stays
-  // index-aligned with the rows that are actually on screen.
+  // The screen's half is handed to save() as its `echo` (see there) instead of
+  // being computed here and applied afterwards, and that is the difference
+  // between the two lists staying apart and the round-trip eating an edit. The
+  // PUT takes a whole response to come back, and the user keeps typing in that
+  // window: a list frozen at send time no longer describes the card by the time
+  // it lands, so writing it back deleted a row added mid-flight and reverted
+  // characters typed mid-flight — while registryRowIds, which nothing here
+  // touches, kept the entry for the row that had just been erased and stopped
+  // being index-aligned with the rows on screen. Marking the LIVE list keeps
+  // both invariants: rows only ever leave the screen when the user removes
+  // them, so the ids stay aligned by construction.
   function saveRegistries(nextAuths: RegistryAuthEntry[], nextRowIds: string[]) {
     const { auths } = keepRegistryAuths(nextAuths, nextRowIds);
-    const onScreen = markRegistryTokensStored(nextAuths);
     void save(
       { registryAuths: auths },
       setRegistrySaveState,
-      setRegistrySaveError
-    ).then((ok) => {
-      if (ok) {
-        setSettings((prev) => (prev ? { ...prev, registryAuths: onScreen } : prev));
-      }
-    });
+      setRegistrySaveError,
+      (live) => ({ registryAuths: markRegistryTokensStored(live.registryAuths) })
+    );
   }
 
   // Task 5 (live-review — "Speichern-Buttons können weg, es soll immer alles
