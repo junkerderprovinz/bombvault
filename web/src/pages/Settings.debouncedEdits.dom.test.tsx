@@ -18,8 +18,15 @@
 //      going back to fix a typo in an existing one made the new, still-empty row
 //      vanish from under the cursor.
 //
-// Both are driven through the real page against a mocked client, with the test
-// controlling when each PUT resolves.
+//   3. AN IMPORT ARRIVING WHILE ONE IS PENDING. An import replaces the whole
+//      configuration, so an edit typed against the old one has to be dropped.
+//      The drop used to happen inside the serialized write queue, i.e. whenever
+//      the import reached the head of it — so a debounce that elapsed while an
+//      earlier save still held the queue appended its write BEHIND the import
+//      and wrote a pre-import value over the freshly imported configuration.
+//
+// All three are driven through the real page against a mocked client, with the
+// test controlling when each PUT resolves.
 //
 // jsdom opted in explicitly (real typing, controlled promises) — see
 // Selector.dom.test.tsx's header for this repo's naming convention.
@@ -78,6 +85,11 @@ type Pending = { body: Settings; resolve: (v: { ok: boolean; error?: string }) =
 
 const putCalls: Pending[] = [];
 let settingsOnServer = baseSettings();
+/** Import applies are controllable too: the window this file cares about runs
+ *  from the Import click until the re-loaded configuration is installed, and
+ *  the apply itself is the longest part of it. */
+const importApplyCalls: string[] = [];
+const importApplies: ((v: { ok: boolean; applied?: boolean; error?: string }) => void)[] = [];
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -94,6 +106,25 @@ vi.mock("../lib/api", async (importOriginal) => {
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
     getStatus: () => Promise.resolve({ ok: true }),
+    importSettingsPreview: () =>
+      Promise.resolve({
+        ok: true,
+        preview: true,
+        summary: {
+          schemaVersion: 1,
+          exportedAt: "2026-08-20T00:00:00Z",
+          appVersion: "v8.0.0",
+          offsiteTargets: 0,
+          credentials: { present: false, cloud: false, rclone: false, notify: false },
+          settingsGroups: ["schedules"],
+        },
+      }),
+    importSettingsApply: (text: string) => {
+      importApplyCalls.push(text);
+      return new Promise((resolve) => {
+        importApplies.push(resolve);
+      });
+    },
   };
 });
 
@@ -156,6 +187,8 @@ beforeEach(() => {
   stubMatchMedia();
   stubResizeObserver();
   putCalls.length = 0;
+  importApplyCalls.length = 0;
+  importApplies.length = 0;
   settingsOnServer = baseSettings();
 });
 
@@ -275,5 +308,103 @@ describe("a blank registry row while another row is being edited", () => {
     });
     expect(hostInputs()[0].value).toBe("ghcr.io/updated");
     expect(hostInputs()[1].value).toBe("docker.io");
+  });
+});
+
+describe("importing settings while an edit is still inside its debounce", () => {
+  /** Pick a file on the System tab and confirm the import. */
+  async function confirmImport() {
+    await gotoTab("system");
+    const file = new File(['{"schemaVersion":1}'], "settings.json", { type: "application/json" });
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [file] } });
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["settingsIO.confirmButton"] }));
+    });
+  }
+
+  it("drops the pending edit even when an earlier save is holding the write queue", async () => {
+    settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
+    await renderPage();
+    await gotoTab("general");
+
+    // A save is in flight and deliberately never resolved yet, so everything
+    // queued after it waits — including the import.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("switch", { name: en["settings.containersEnabled"] }));
+    });
+    await waitFor(() => expect(putCalls).toHaveLength(1));
+
+    // The user edits a registry host, arming the 800ms debounce...
+    await gotoTab("storage");
+    await act(async () => {
+      fireEvent.change(hostInputs()[0], { target: { value: "typed-before-import.example.com" } });
+    });
+
+    // ...then imports a file. The server now holds a different configuration.
+    await confirmImport();
+    settingsOnServer = baseSettings({
+      registryAuths: [registry({ host: "imported.example.com" })],
+      retentionKeepDaily: 30,
+    });
+    expect(importApplyCalls).toHaveLength(0); // still stuck behind the in-flight save
+
+    // The debounce elapses while the import is still waiting its turn. This is
+    // the moment the queued cancel was too late for: the edit used to queue
+    // itself BEHIND the import here.
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+
+    // Let the in-flight save land, which releases the queue, and let the import
+    // run all the way through.
+    await act(async () => {
+      putCalls[0].resolve({ ok: true });
+    });
+    await waitFor(() => expect(importApplyCalls).toHaveLength(1));
+    await act(async () => {
+      importApplies[0]({ ok: true, applied: true });
+    });
+
+    // Nothing may have been written after the import: the only PUT is the one
+    // that was already in flight before it started.
+    expect(putCalls).toHaveLength(1);
+
+    // ...and the imported value is what the page now shows and holds.
+    await gotoTab("storage");
+    await waitFor(() => expect(hostInputs()[0].value).toBe("imported.example.com"));
+  });
+
+  it("ignores a keystroke made while the import is being applied", async () => {
+    settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
+    await renderPage();
+
+    // Nothing is in flight, so the import starts straight away — and then sits
+    // on its own request, which is the longer half of the same window.
+    await confirmImport();
+    await waitFor(() => expect(importApplyCalls).toHaveLength(1));
+    settingsOnServer = baseSettings({
+      registryAuths: [registry({ host: "imported.example.com" })],
+    });
+
+    // The user keeps typing while the apply is still open.
+    await gotoTab("storage");
+    await act(async () => {
+      fireEvent.change(hostInputs()[0], { target: { value: "typed-during-import.example.com" } });
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+
+    await act(async () => {
+      importApplies[0]({ ok: true, applied: true });
+    });
+
+    // That keystroke was typed against the configuration the import replaced,
+    // so it must never reach the server.
+    expect(putCalls).toHaveLength(0);
+    await waitFor(() => expect(hostInputs()[0].value).toBe("imported.example.com"));
   });
 });
