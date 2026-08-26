@@ -333,7 +333,11 @@ export interface Run {
   error: string;
   acknowledged: boolean; // true once dismissed from the dashboard error panel (#126)
   target: string; // human target name (container/VM/file-set name, or "Unraid flash")
-  domain: string; // "container" | "vm" | "flash" | "files" | ""
+  // "container" | "vm" | "flash" | "config" | "files" | "everything" | "".
+  // "everything" is the Backup Everything pass's PARENT run (see
+  // store.EverythingTargetID). main's own follow-up commit updated the Go-side
+  // runView.Domain value comment for it and missed this, its TS counterpart.
+  domain: string;
 }
 
 export interface ListRunsResponse {
