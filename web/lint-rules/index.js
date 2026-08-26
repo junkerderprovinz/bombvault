@@ -44,6 +44,7 @@ import iconBadgeNeedsTooltip from "./icon-badge-needs-tooltip.js";
 import noStatusColorOnControl from "./no-status-color-on-control.js";
 import oneIconBadgeSize from "./one-icon-badge-size.js";
 import pageUsesPageShell from "./page-uses-page-shell.js";
+import userMessageIsTranslated from "./user-message-is-translated.js";
 
 export default {
   meta: { name: "bombvault", version: "1.0.0" },
@@ -53,5 +54,6 @@ export default {
     "no-status-color-on-control": noStatusColorOnControl,
     "one-icon-badge-size": oneIconBadgeSize,
     "page-uses-page-shell": pageUsesPageShell,
+    "user-message-is-translated": userMessageIsTranslated,
   },
 };

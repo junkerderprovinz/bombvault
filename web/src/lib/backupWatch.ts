@@ -27,6 +27,10 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { listRuns, type Run } from "./api";
 import { useProgress } from "./progress";
+import { useT } from "./i18n";
+
+/** The translate function, same alias every page in this app uses. */
+type T = ReturnType<typeof useT>["t"];
 
 export type BackupWatchState =
   | { phase: "idle" }
@@ -97,6 +101,7 @@ interface UseBackupWatchArgs {
  */
 export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", onDone, cancelledRef }: UseBackupWatchArgs) {
   const [state, setState] = useState<BackupWatchState>({ phase: "idle" });
+  const { t } = useT();
   const progress = useProgress();
   const entry = progress[progressKey];
 
@@ -169,7 +174,9 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
       if (run.status === "failed") {
         finish({
           phase: "error",
-          message: run.error || (kindRef.current === "restore" ? "Restore failed" : "Backup failed"),
+          message:
+            run.error ||
+            (kindRef.current === "restore" ? t("common.restoreFailed") : t("common.backupFailed")),
         });
         return "resolved";
       }
@@ -190,7 +197,7 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     } catch {
       return "inconclusive"; // transient network error — keep polling
     }
-  }, [finish]);
+  }, [finish, t]);
 
   // Record that the live progress entry appeared so we know to look for its
   // disappearance as the completion edge. Runs on every progress map change.
@@ -231,13 +238,14 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     try {
       res = await start();
     } catch (err) {
-      setState({ phase: "error", message: err instanceof Error ? err.message : "Network error" });
+      setState({ phase: "error", message: err instanceof Error ? err.message : t("common.networkError") });
       return;
     }
     if (!res.ok) {
       setState({
         phase: "error",
-        message: res.error ?? (kindRef.current === "restore" ? "Restore failed" : "Backup failed"),
+        message:
+          res.error ?? (kindRef.current === "restore" ? t("common.restoreFailed") : t("common.backupFailed")),
       });
       return;
     }
@@ -278,7 +286,7 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     };
     // Kick the first poll soon; a very fast run may already be recorded.
     setTimeout(() => void poll(), 600);
-  }, [start, resolveFromRuns, finish]);
+  }, [start, resolveFromRuns, finish, t]);
 
   // Clear a lingering success/error banner (e.g. when the user changes the
   // selection a stale result would misdescribe). No-op while a watch runs —
@@ -328,6 +336,10 @@ export async function fireAndWaitRun(opts: {
   kind: WatchKind;
   matchRun: RunMatcher;
   start: StartBackupFn;
+  /** Required, not optional: this function's failure tail is toasted verbatim
+   *  by every caller, so a missing `t` here is an untranslated sentence in a
+   *  user's face. Callers all have one in scope. */
+  t: T;
 }): Promise<{ ok: boolean; error?: string }> {
   const mine = (r: Run) => r.kind === opts.kind && opts.matchRun(r);
   let baseline = new Set<string>();
@@ -346,7 +358,7 @@ export async function fireAndWaitRun(opts: {
     try {
       res = await opts.start();
     } catch (err) {
-      return { ok: false, error: err instanceof Error ? err.message : "Network error" };
+      return { ok: false, error: err instanceof Error ? err.message : opts.t("common.networkError") };
     }
     if (res.ok) break;
     const busy = (res.error ?? "").toLowerCase().includes("already running");

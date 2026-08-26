@@ -293,11 +293,11 @@ function DeleteBackupsButton({
       const res = await deleteBackups(name);
       if (res.ok) onDeleted();
       else {
-        push(res.error ?? "Delete failed", "fail");
+        push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Delete failed", "fail");
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setPending(false);
@@ -598,11 +598,11 @@ function UpdateAfterBackupRow({
       const res = await setUpdateAfterBackup(name, next);
       if (res.ok) setEnabled(next);
       else {
-        push(res.error ?? "Failed to update setting", "fail");
+        push(res.error ?? t("containers.updateSettingFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Failed to update setting", "fail");
+      push(err instanceof Error ? err.message : t("containers.updateSettingFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setBusy(false);
@@ -2479,14 +2479,14 @@ export function Containers() {
     return listContainers()
       .then((res) => {
         if (res.ok) setContainers(res.containers ?? []);
-        else setError("Failed to load containers");
+        else setError(t("containers.loadFailed"));
       })
-      .catch(() => setError("Failed to load containers"));
+      .catch(() => setError(t("containers.loadFailed")));
   }
 
   useEffect(() => {
     void loadContainers().finally(() => setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   function handleSortChange(k: SortKey) {
     setSortKey(k);
@@ -2631,7 +2631,7 @@ export function Containers() {
     try {
       const res = await backupAll(names);
       if (!res.ok) {
-        push(res.error ?? "Failed to start backup", "fail");
+        push(res.error ?? t("containers.backupStartFailed"), "fail");
         setShakeBackupSelected((n) => n + 1);
         return;
       }
@@ -2641,7 +2641,7 @@ export function Containers() {
       if (e instanceof ApiError && e.status === 409) {
         push(t("containers.batchAlreadyRunning"), "warn");
       } else {
-        push(e instanceof Error ? e.message : "Failed to start backup", "fail");
+        push(e instanceof Error ? e.message : t("containers.backupStartFailed"), "fail");
         setShakeBackupSelected((n) => n + 1);
       }
     } finally {
@@ -2660,6 +2660,7 @@ export function Containers() {
         kind: "restore",
         matchRun: (r) => r.domain === "container" && r.target === name,
         start: () => restore(name, "latest", true),
+        t,
       })
     );
   }
@@ -2676,11 +2677,11 @@ export function Containers() {
         push(`+${res.discovered ?? 0}`, "success");
         await loadContainers();
       } else {
-        push(res.error ?? "Discover failed", "fail");
+        push(res.error ?? t("common.discoverFailed"), "fail");
         setShakeDiscover((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Discover failed", "fail");
+      push(err instanceof Error ? err.message : t("common.discoverFailed"), "fail");
       setShakeDiscover((n) => n + 1);
     } finally {
       setDiscovering(false);
