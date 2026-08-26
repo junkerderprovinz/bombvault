@@ -20,9 +20,21 @@
 //     changes behaviour before a reviewer has to.
 //   * Suppression is a first-class, auditable act. Each rule takes a
 //     `bv-convention-exception: <rule> -- <reason>` marker comment whose reason
-//     text is mandatory, and `reportUnusedDisableDirectives: "error"` (already
-//     on in this config) means a suppression that stops being needed fails the
-//     build instead of rotting.
+//     text is mandatory (helpers.js's hasException rejects a shrug), which names
+//     the rule it suppresses and must sit within eight lines above the element.
+//     Every exception in the app is therefore one command away, reasoning
+//     attached: `grep -rn "bv-convention-exception" web/src`.
+//
+//     What the marker does NOT get, said plainly because this header used to
+//     claim otherwise: `reportUnusedDisableDirectives: "error"` does not cover
+//     it. That setting governs real `eslint-disable` directives, which ESLint
+//     parses and tracks. The marker is an ordinary comment matched by a regex in
+//     helpers.js, and ESLint has no idea it is meant to mean anything — so a
+//     marker left behind after the element it excused stopped violating the rule
+//     goes on quietly exempting whatever else lands in its eight-line window,
+//     and the build says nothing. The grep is the audit; keeping the count low
+//     is what keeps the audit cheap. (lint-rules/README.md scopes the same
+//     setting correctly — this header was the one that overstated it.)
 //
 // The one convention that is NOT here is "explanations live in an InfoBubble":
 // see lint-rules/README.md for the measurements behind that decision.

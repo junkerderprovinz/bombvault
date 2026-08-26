@@ -165,7 +165,7 @@ export default {
         const name = jsxName(node);
         const ownsItsChrome = name === "Badge" || name === "IconTipButton";
 
-        for (const raw of classTokens(node)) {
+        for (const raw of classTokens(node, context)) {
           const token = baseUtility(raw);
           if (!ownsItsChrome && ANY_RADIUS.test(token) && !SHAPE_TOKEN_RADII.has(token)) {
             if (hasException(context, opening, RULE_ID)) return;

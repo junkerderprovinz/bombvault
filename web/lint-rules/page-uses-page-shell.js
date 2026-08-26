@@ -29,8 +29,20 @@
 //
 // so "Settings is allowed to differ" is a line someone wrote on purpose and
 // can read back, not a hole a page fell through. A page not listed there gets
-// no latitude. src/lib/uiConventions.test.ts separately proves the router's
-// routed pages are all files this rule actually sees.
+// no latitude.
+//
+// The rule's one structural blind spot is what it is HANDED. It returns `{}`
+// for anything outside src/pages/*.tsx, and inside such a file it recognises
+// the page component only as the default export or an export named after the
+// file (`Fleet` / `FleetPage` in Fleet.tsx). A routed page that is neither — a
+// Reports.tsx exporting `function ReportsView()`, or a routed component living
+// outside src/pages — would ship with its own width and gap and this rule would
+// say nothing at all. src/lib/uiConventions.test.ts closes that gap: its
+// "page-uses-page-shell sees every routed page" block reads the REAL router,
+// resolves every routed element back to its file, and fails when that file is
+// not one this rule would visit and recognise. (This citation previously named
+// a test that had never been written; it now names one that has, and that has
+// been seen to fail on exactly the shape above.)
 // ---------------------------------------------------------------------------
 import { escapeHatch, getAttr, hasException } from "./helpers.js";
 

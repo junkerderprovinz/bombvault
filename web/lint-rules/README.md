@@ -116,8 +116,23 @@ guessed at. This costs nothing today — the only such constant,
 text badges — and the alternative (following identifiers across modules) would
 mean type-aware linting, which `eslint.config.js` deliberately avoids.
 
-The same applies to `className={someVariable}`: literals inside a template or a
-ternary *are* read, a bare identifier is not.
+`className` used to be the same, and that limit was the expensive one. A dozen
+interactive call sites in this tree keep their class list in a local
+(`const inputCls = "rounded-control bg-carbon-surface2 …"` in
+`OffsiteTargetsSection`, `OffsiteWizard`, `RestorePanel`, `Containers` and
+`Fleet`), so every one of them was compliant by luck and unchecked in fact:
+factoring a literal out of JSX switched the guard off, silently. `classTokens`
+now follows a `className` identifier to the **`const`** it names in the same
+module, when that const has exactly one definition and is never reassigned. A
+`let` that is written to, a function parameter, an import — all still decline
+and read as unknown, because unknown must never become a guess. The first run
+after the change found a real one: `ConfirmDialog`'s destructive confirm button,
+whose class list lives in a `CONFIRM_BUTTON_TONE` lookup. It now carries an
+explicit `bv-convention-exception` marker instead of being invisible.
+
+Still not followed: an identifier imported from another module, and any value
+that does not resolve to a literal. That would need cross-module analysis, which
+`eslint.config.js` deliberately avoids.
 
 ## What is *not* checked, and why
 

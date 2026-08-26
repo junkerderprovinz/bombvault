@@ -58,22 +58,67 @@ export function attrStringValue(node, attr) {
   return undefined;
 }
 
-/** Every string literal anywhere inside a node (template quasis included). */
-function collectStrings(node, out) {
+/**
+ * The `const x = "…"` a className identifier stands for, or undefined.
+ *
+ * Only a CONST with a single definition and no later reassignment is followed:
+ * anything a rule cannot see for certain must read as "unknown", and unknown is
+ * never a violation. A `let` that is reassigned, a function parameter, an import
+ * from another module — all decline here rather than guess.
+ */
+function constInitializer(idNode, context) {
+  const sourceCode = context?.sourceCode ?? context?.getSourceCode?.();
+  if (!sourceCode?.getScope) return undefined;
+  let scope;
+  try {
+    scope = sourceCode.getScope(idNode);
+  } catch {
+    return undefined;
+  }
+  for (let s = scope; s; s = s.upper) {
+    const variable = s.variables.find((v) => v.name === idNode.name);
+    if (!variable) continue;
+    if (variable.defs.length !== 1) return undefined;
+    const def = variable.defs[0];
+    if (def.type !== "Variable" || def.parent?.kind !== "const") return undefined;
+    // A const can still be mutated through its own reference in TS? No — but a
+    // write reference at all means this is not the single settled value.
+    if (variable.references.some((r) => r.isWrite() && r.identifier !== def.name)) return undefined;
+    return def.node?.init;
+  }
+  return undefined;
+}
+
+/**
+ * Every string literal anywhere inside a node (template quasis included).
+ *
+ * `context` is optional and, when given, lets an IDENTIFIER be followed to the
+ * `const` it names. That is not a nicety: a class list moved into a local (the
+ * `const inputCls = "rounded-control bg-carbon-surface2 …"` idiom this codebase
+ * uses at a dozen interactive call sites) was invisible to every rule built on
+ * this helper, so those controls were compliant by luck and unchecked in fact —
+ * a guard that reads only literals silently stops guarding the moment someone
+ * factors the literal out. `seen` breaks a cycle between two consts.
+ */
+function collectStrings(node, out, context, seen) {
   if (!node || typeof node !== "object") return;
   if (Array.isArray(node)) {
-    for (const n of node) collectStrings(n, out);
+    for (const n of node) collectStrings(n, out, context, seen);
     return;
   }
   if (node.type === "Literal" && typeof node.value === "string") out.push(node.value);
   else if (node.type === "TemplateLiteral") {
     for (const q of node.quasis) if (q.value?.cooked) out.push(q.value.cooked);
-    for (const e of node.expressions) collectStrings(e, out);
+    for (const e of node.expressions) collectStrings(e, out, context, seen);
+  } else if (node.type === "Identifier" && context && seen && !seen.has(node.name)) {
+    seen.add(node.name);
+    collectStrings(constInitializer(node, context), out, context, seen);
+    return;
   }
   for (const key of Object.keys(node)) {
     if (key === "parent" || key === "loc" || key === "range" || key === "type") continue;
     const child = node[key];
-    if (child && typeof child === "object") collectStrings(child, out);
+    if (child && typeof child === "object") collectStrings(child, out, context, seen);
   }
 }
 
@@ -83,12 +128,17 @@ function collectStrings(node, out) {
  * literal, and both arms of a `cond ? "a" : "b"` inside one. Conditional arms
  * are included deliberately: `hover:text-statusFail` is just as much a
  * bespoke colour when it only appears in one branch.
+ *
+ * Pass `context` to also follow a bare identifier to the `const` it names, so
+ * `className={inputCls}` is read rather than skipped. Without it the old
+ * literals-only behaviour is unchanged, which is what the RuleTester cases that
+ * exercise this helper directly rely on.
  */
-export function classTokens(node) {
+export function classTokens(node, context) {
   const a = getAttr(node, "className");
   if (!a || !a.value) return [];
   const strings = [];
-  collectStrings(a.value, strings);
+  collectStrings(a.value, strings, context, context ? new Set() : undefined);
   return strings.flatMap((s) => s.split(/\s+/)).filter(Boolean);
 }
 

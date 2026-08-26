@@ -162,6 +162,18 @@ export function ConfirmDialog({
           >
             {cancelLabel}
           </button>
+          {/* bv-convention-exception: no-status-color-on-control -- this is THE
+              destructive-confirmation control, and the design language states
+              the rule it is the exception to: "the destructive control is
+              always the fault colour" (see the `tone` prop's own doc above).
+              The guard exists to stop bespoke red turning up on arbitrary
+              controls; the answer to that is ONE sanctioned place where the
+              status colour is the meaning, and this is it — every destructive
+              confirmation in the app routes through this dialog. `tone` is a
+              closed two-value union, not a free colour, so nothing here can
+              drift into a third shade. Invisible to the guard until it learned
+              to follow a class list behind an identifier (CONFIRM_BUTTON_TONE),
+              which is why the marker is only being written now. */}
           <button
             type="button"
             onClick={onConfirm}

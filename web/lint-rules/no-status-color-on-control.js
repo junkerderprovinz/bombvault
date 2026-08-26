@@ -89,7 +89,7 @@ export default {
           return;
         }
 
-        const offender = classTokens(node).find((t) => STATUS_UTILITY.test(baseUtility(t)));
+        const offender = classTokens(node, context).find((t) => STATUS_UTILITY.test(baseUtility(t)));
         if (!offender) return;
         if (hasException(context, opening, RULE_ID)) return;
 

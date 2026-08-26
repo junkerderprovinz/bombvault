@@ -20,7 +20,10 @@
 // side-by-side TypeScript 6 shim to run under vitest.
 // ---------------------------------------------------------------------------
 import { RuleTester } from "eslint";
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import plugin from "../../lint-rules/index.js";
 
 // Report each RuleTester case as its own vitest test.
@@ -331,6 +334,28 @@ ruleTester.run("no-status-color-on-control", rules["no-status-color-on-control"]
 ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens"], {
   valid: [
     `<button onClick={f} className="rounded-control bg-carbon-surface2">{t("x")}</button>`,
+    // A local the rule CAN see, and that is compliant — the widened lookup must
+    // not start reporting the eleven call sites it now reads.
+    `
+      const inputCls = "rounded-control bg-carbon-surface2 px-3";
+      export function F() {
+        return <input className={inputCls} />;
+      }
+    `,
+    // A local it CANNOT settle on stays unknown, and unknown is never a
+    // violation: a rule must not guess at a value it cannot see.
+    `
+      export function F({ cls }) {
+        return <input className={cls} />;
+      }
+    `,
+    `
+      let cls = "rounded-control";
+      cls = somethingElse();
+      export function F() {
+        return <input className={cls} />;
+      }
+    `,
     `<button onClick={f} className="rounded-card">{t("x")}</button>`,
     `<button onClick={f} className="rounded-pill bg-accent text-accentContrast">{t("x")}</button>`,
     // REAL TREE: every rounded-full in this app is a spinner ring or a status
@@ -355,6 +380,32 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
     {
       // The swatch bug, in the form it originally shipped.
       code: `<button onClick={f} className="h-8 w-8 rounded-full border-2">{t("x")}</button>`,
+      errors: [{ messageId: "radius" }],
+    },
+    {
+      // THE BLIND SPOT, closed. A class list moved into a local was invisible:
+      // the rule read className LITERALS and skipped a bare identifier, so the
+      // dozen `const inputCls = "…"` call sites in this tree (five inputs in
+      // OffsiteTargetsSection, OffsiteWizard's, two selects in RestorePanel,
+      // Containers' two, Fleet's two) were compliant by luck and unchecked in
+      // fact. Factoring a literal out must not switch the guard off.
+      code: `
+        const inputCls = "rounded-lg bg-carbon-surface2 px-3";
+        export function F() {
+          return <input className={inputCls} />;
+        }
+      `,
+      errors: [{ messageId: "radius" }],
+    },
+    {
+      // …through a template literal that interpolates the local, which is how
+      // the real call sites compose a base class list with a state class.
+      code: `
+        const base = "rounded-lg px-3";
+        export function F({ on }) {
+          return <select className={\`\${base} \${on ? "opacity-100" : ""}\`}>{o}</select>;
+        }
+      `,
       errors: [{ messageId: "radius" }],
     },
     {
@@ -391,4 +442,88 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
       errors: [{ messageId: "colourInline" }],
     },
   ],
+});
+
+// ---------------------------------------------------------------------------
+// 7. The router's routed pages are all files page-uses-page-shell can see.
+//
+// The RuleTester cases above run against synthetic `filename:` strings, so they
+// prove what the rule DOES with a file it is handed. They cannot prove it is
+// handed the right files, and that is the rule's one structural blind spot: it
+// returns `{}` for anything outside src/pages/*.tsx, and inside such a file it
+// only recognises the page component as the default export or an export named
+// after the file (`Fleet` / `FleetPage` in Fleet.tsx). A routed page whose
+// component is neither — `web/src/pages/Reports.tsx` exporting
+// `function ReportsView()` — or one placed outside src/pages, ships with its
+// own width and gap and the rule says nothing.
+//
+// page-uses-page-shell.js's header cites this test as the proof that no routed
+// page falls through that gap. It is that proof: it reads the REAL router and
+// resolves every routed element back to a file the rule would actually visit.
+// ---------------------------------------------------------------------------
+describe("page-uses-page-shell sees every routed page", () => {
+  const HERE = dirname(fileURLToPath(import.meta.url));
+  const ROUTER = readFileSync(join(HERE, "..", "app", "router.tsx"), "utf8");
+  const PAGES_DIR = join(HERE, "..", "pages");
+
+  /** `<Route path="/x" element={<Foo />} />` → the component names routed to.
+   *  `<Navigate …>` is excluded: a redirect renders no page. */
+  const routed = [
+    ...new Set(
+      [...ROUTER.matchAll(/element=\{<([A-Z][A-Za-z0-9_]*)\s*\/?>/g)]
+        .map((m) => m[1])
+        .filter((name) => name !== "Navigate" && name !== "Layout")
+    ),
+  ];
+
+  /** Every name router.tsx imports, mapped to the module it came from, e.g.
+   *  Recovery → "../pages/Recovery". Both `import X from` and `import { X } from`
+   *  are read: the pages use both forms. */
+  const IMPORTS = new Map<string, string>();
+  for (const m of ROUTER.matchAll(/^import\s+([^;]+?)\s+from\s+"([^"]+)";/gm)) {
+    const [, clause, from] = m;
+    const braced = /\{([^}]*)\}/.exec(clause);
+    const names = braced
+      ? braced[1].split(",").map((n) => n.trim().split(/\s+as\s+/).pop() ?? "")
+      : [clause.trim()];
+    for (const n of names) if (n) IMPORTS.set(n, from);
+  }
+
+  it("finds the routes (the scan is not silently empty)", () => {
+    expect(routed.length).toBeGreaterThan(8);
+    expect(routed).toContain("SettingsPage");
+  });
+
+  it.each(routed)("%s lives in src/pages and exports a name the rule recognises", (name) => {
+    const from = IMPORTS.get(name);
+    expect(from, `${name} is routed but not imported in router.tsx`).toBeDefined();
+    expect(
+      from,
+      `${name} is routed from "${from}" — page-uses-page-shell only visits src/pages/*.tsx, ` +
+        `so a routed page outside it is unchecked`
+    ).toMatch(/^\.\.\/pages\//);
+
+    const stem = (from as string).slice("../pages/".length);
+    const source = readFileSync(join(PAGES_DIR, stem + ".tsx"), "utf8");
+
+    // The rule's own candidate test: the default export, or an export named
+    // <stem> or <stem>Page. Keep this in step with page-uses-page-shell.js's
+    // `wanted` set — if that widens, widen this.
+    const named = new RegExp(
+      String.raw`export\s+(?:(?:async\s+)?function|const)\s+(?:${stem}|${stem}Page)\b`
+    );
+    const hasDefault = /export\s+default\s/.test(source);
+    expect(
+      hasDefault || named.test(source),
+      `src/pages/${stem}.tsx must export its page component as the default export or as ` +
+        `"${stem}"/"${stem}Page" — page-uses-page-shell finds the component by that name and ` +
+        `silently checks nothing otherwise`
+    ).toBe(true);
+
+    // …and the routed name must be one of those, not a third alias.
+    expect(
+      [stem, `${stem}Page`].includes(name) || hasDefault,
+      `router.tsx routes <${name} />, which is neither ${stem} nor ${stem}Page nor a default export`
+    ).toBe(true);
+  });
 });
