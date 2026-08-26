@@ -18,7 +18,13 @@
 //      going back to fix a typo in an existing one made the new, still-empty row
 //      vanish from under the cursor.
 //
-//   3. AN IMPORT ARRIVING WHILE ONE IS PENDING. An import replaces the whole
+//   3. EDITING THE REGISTRY LIST WHILE ITS OWN SAVE IS IN FLIGHT. The response
+//      used to write back the list the request had been built from, so a row
+//      added — or characters typed — during the round-trip were erased when the
+//      PUT came back, and the row ids were left describing a list that no longer
+//      existed.
+//
+//   4. AN IMPORT ARRIVING WHILE ONE IS PENDING. An import replaces the whole
 //      configuration, so an edit typed against the old one has to be dropped.
 //      The drop used to happen inside the serialized write queue, i.e. whenever
 //      the import reached the head of it — so a debounce that elapsed while an
@@ -308,6 +314,76 @@ describe("a blank registry row while another row is being edited", () => {
     });
     expect(hostInputs()[0].value).toBe("ghcr.io/updated");
     expect(hostInputs()[1].value).toBe("docker.io");
+  });
+});
+
+describe("editing the registry list while its save is in flight", () => {
+  it("keeps a row added after the PUT went out", async () => {
+    settingsOnServer = baseSettings({
+      registryAuths: [registry({ host: "ghcr.io", username: "old" })],
+    });
+    await renderPage();
+    await gotoTab("storage");
+
+    // One row on screen; edit it and let the debounce elapse, so the PUT is
+    // genuinely in flight and its payload is now frozen.
+    await act(async () => {
+      fireEvent.change(hostInputs()[0], { target: { value: "ghcr.io/updated" } });
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+    await waitFor(() => expect(putCalls).toHaveLength(1));
+
+    // The user adds a row DURING the round-trip — the window the frozen
+    // payload knows nothing about.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["settings.registryAdd"] }));
+    });
+    expect(hostInputs()).toHaveLength(2);
+
+    await act(async () => {
+      putCalls[0].resolve({ ok: true });
+    });
+
+    // The response must not carry the card back to the list it was sent with.
+    await waitFor(() => expect(hostInputs()).toHaveLength(2));
+    expect(hostInputs()[1].value).toBe("");
+
+    // ...and the row ids must still line up with the rows, so typing into the
+    // new row reaches THAT row.
+    await act(async () => {
+      fireEvent.change(hostInputs()[1], { target: { value: "docker.io" } });
+    });
+    expect(hostInputs()[0].value).toBe("ghcr.io/updated");
+    expect(hostInputs()[1].value).toBe("docker.io");
+  });
+
+  it("keeps characters typed after the PUT went out", async () => {
+    settingsOnServer = baseSettings({
+      registryAuths: [registry({ host: "ghcr.io" }), registry({ host: "quay.io" })],
+    });
+    await renderPage();
+    await gotoTab("storage");
+
+    await act(async () => {
+      fireEvent.change(hostInputs()[0], { target: { value: "ghcr.io/updated" } });
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(900);
+    });
+    await waitFor(() => expect(putCalls).toHaveLength(1));
+
+    // Second row edited while the first row's write is still open.
+    await act(async () => {
+      fireEvent.change(hostInputs()[1], { target: { value: "quay.io/typed-mid-flight" } });
+    });
+    await act(async () => {
+      putCalls[0].resolve({ ok: true });
+    });
+
+    await waitFor(() => expect(hostInputs()[1].value).toBe("quay.io/typed-mid-flight"));
+    expect(hostInputs()[0].value).toBe("ghcr.io/updated");
   });
 });
 
