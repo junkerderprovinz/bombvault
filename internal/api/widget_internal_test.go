@@ -154,3 +154,59 @@ func TestThemeBootScriptCSPHashMatches(t *testing.T) {
 			"script will be silently blocked by CSP in production.", wantSource, csp)
 	}
 }
+
+// TestWidgetOffsiteColourMatchesToken pins the pairing that issue #164 broke.
+//
+// widget.html is a standalone, dark-only document served straight from the Go
+// binary: it cannot read web/src/index.css's custom properties, so it hard-copies
+// their hexes. Nothing enforced that copy, so when GlimStone Phase 2 Task 7
+// re-pointed the dashboard's off-site log lines at the accent, this file was left
+// frozen at the old blue and the two surfaces rendered the SAME "Off-site
+// replication done — Containers" line in two different colours.
+//
+// The resolution of #164 was to restore blue on BOTH surfaces as a narrow
+// off-site IDENTITY colour (--status-offsite-text, see index.css's
+// --color-statusOffsite comment for why that is not the removed fifth state hue
+// coming back). This test is the guard so the next person to touch either side
+// finds out immediately instead of via a screenshot months later.
+func TestWidgetOffsiteColourMatchesToken(t *testing.T) {
+	css, err := os.ReadFile(filepath.Join("..", "..", "web", "src", "index.css"))
+	if err != nil {
+		t.Fatalf("reading web/src/index.css: %v", err)
+	}
+
+	// The DARK value is the one the widget mirrors — it always renders the dark
+	// palette regardless of the embedding dashboard's theme. It is the FIRST
+	// declaration in the file: the bare :root block is dark, and the light
+	// theme's override comes later.
+	want := firstDeclValue(t, string(css), "--status-offsite-text")
+	got := firstDeclValue(t, string(widgetPage), ".offsite { color")
+
+	if !strings.EqualFold(want, got) {
+		t.Fatalf("off-site colour drifted between the two surfaces:\n"+
+			"  web/src/index.css --status-offsite-text (dark) = %s\n"+
+			"  internal/api/widget.html .offsite            = %s\n"+
+			"These must stay byte-identical — the widget cannot read the CSS token, "+
+			"so it hard-copies the hex. Change both together (issue #164).", want, got)
+	}
+}
+
+// firstDeclValue returns the hex value of the first `<prefix>: #rrggbb`
+// declaration in src, failing the test when there is none.
+func firstDeclValue(t *testing.T, src, prefix string) string {
+	t.Helper()
+	i := strings.Index(src, prefix+":")
+	if i == -1 {
+		t.Fatalf("no %q declaration found", prefix)
+	}
+	rest := src[i+len(prefix)+1:]
+	j := strings.Index(rest, "#")
+	if j == -1 || j > 40 { // guard against skipping ahead into an unrelated rule
+		t.Fatalf("no hex value follows the %q declaration", prefix)
+	}
+	hex := rest[j:]
+	if len(hex) < 7 {
+		t.Fatalf("truncated hex value after %q", prefix)
+	}
+	return hex[:7]
+}

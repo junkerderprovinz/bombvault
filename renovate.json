@@ -37,6 +37,13 @@
       "matchFileNames": ["web/lint-ts/package.json"],
       "matchDepNames": ["typescript"],
       "enabled": false
+    },
+    {
+      "description": "BombVault's OWN published image stays on the floating :latest tag, never a pinned digest. docker:pinDigests (above) is right for build INPUTS — the golang base image in the Dockerfile — but deploy/docker-compose.generic.yml is a file users copy to RUN BombVault, and the Unraid CA template it mirrors installs :latest. A digest there freezes every copy of that file on one build forever, so nobody receives an update, and it silently drifts from the template. Renovate proposed exactly that in #168, which was closed rather than merged.",
+      "matchManagers": ["docker-compose"],
+      "matchDepNames": ["junkerderprovinz/bombvault"],
+      "pinDigests": false,
+      "enabled": false
     }
   ]
 }

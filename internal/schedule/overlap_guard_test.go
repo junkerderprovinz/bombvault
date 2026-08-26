@@ -44,7 +44,7 @@ func TestScheduledJobSkipsOverlappingRun(t *testing.T) {
 
 	sc := New(backupFn, listFn)
 	s := store.Settings{ContainersSchedule: "daily 03:00"}
-	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(s, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 

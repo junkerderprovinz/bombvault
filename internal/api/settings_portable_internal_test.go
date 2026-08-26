@@ -249,6 +249,94 @@ func TestImportRejectsBadSchemaAndMalformed(t *testing.T) {
 	}
 }
 
+// TestImportMatchesTheSaveOnEveryN pins that the import path applies EXACTLY the
+// everyN split handlePutSettings applies (#166) — one guard, both write paths,
+// via the shared rejectEveryNSchedules.
+//
+// The guard exists because the two paths once disagreed: the settings import only
+// checked that a cadence PARSED, so a hand-written or older-build export could
+// smuggle in a value the save itself refused, which then made EVERY later
+// settings save fail from ANY card (the UI always PUTs the full settings object,
+// so one poisoned field rejected the whole Schedules tab with nothing on screen
+// pointing at it).
+//
+// Both halves of the split are asserted here, because the split has moved once
+// and the import path must move WITH it rather than keeping its own stale list:
+//
+//	off-site cadence      still refused — no last-run fact, would fire daily
+//	drills / tamper /     now ACCEPTED and persisted, exactly like a UI-set one:
+//	digest cadence        schedule_job_runs (migration v89) makes the interval
+//	                      enforceable, so refusing it on import while the save
+//	                      accepts it would be the same drift in mirror image
+//	domain cadence        accepted, as always (LastSuccessful*Backup gate)
+func TestImportMatchesTheSaveOnEveryN(t *testing.T) {
+	dst, dstStore := newPortableHandler(t, appKeyB)
+
+	// Still refused: an off-site replication cadence has nothing to count from.
+	poisoned := settingsExport{
+		SchemaVersion: settingsExportSchema,
+		Settings:      settingsView{ContainersSchedule: "off", ContainersOffsiteSchedule: "everyN 3 04:00"},
+	}
+	body, _ := json.Marshal(poisoned)
+	env := doImport(t, dst, body, "?apply=true")
+	if env["ok"] != false {
+		t.Fatalf("an everyN off-site schedule must be rejected on import: %v", env)
+	}
+	if msg, _ := env["error"].(string); !strings.Contains(msg, "does not support 'everyN'") {
+		t.Fatalf("want the everyN guidance error, got %q", msg)
+	}
+	if s, _ := dstStore.GetSettings(); s.ContainersOffsiteSchedule == "everyN 3 04:00" {
+		t.Fatal("the rejected everyN off-site schedule must never reach the store")
+	}
+
+	// Now accepted, and actually persisted: BaukeZwart's exact cadence on the
+	// three schedules that gained a last-run record. An imported value must land
+	// wherever a UI-set one would.
+	for _, tc := range []struct {
+		name    string
+		cadence string
+		view    func(string) settingsView
+		stored  func(store.Settings) string
+	}{
+		{"drills", "everyN 3 04:00",
+			func(c string) settingsView { return settingsView{DrillsSchedule: c} },
+			func(s store.Settings) string { return s.DrillsSchedule }},
+		{"tamperTest", "everyN 5 03:00",
+			func(c string) settingsView { return settingsView{TamperTestSchedule: c} },
+			func(s store.Settings) string { return s.TamperTestSchedule }},
+		{"digest", "everyN 7 09:00",
+			func(c string) settingsView { return settingsView{DigestSchedule: c} },
+			func(s store.Settings) string { return s.DigestSchedule }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b, _ := json.Marshal(settingsExport{
+				SchemaVersion: settingsExportSchema,
+				Settings:      tc.view(tc.cadence),
+			})
+			if env := doImport(t, dst, b, "?apply=true"); env["ok"] != true {
+				t.Fatalf("everyN on %s must import now that its interval is enforced: %v", tc.name, env)
+			}
+			s, _ := dstStore.GetSettings()
+			if got := tc.stored(s); got != tc.cadence {
+				t.Fatalf("%s not applied: got %q, want %q", tc.name, got, tc.cadence)
+			}
+		})
+	}
+
+	// The long-standing counterpart: everyN on a domain schedule still imports.
+	ok := settingsExport{
+		SchemaVersion: settingsExportSchema,
+		Settings:      settingsView{ContainersSchedule: "everyN 3 04:00"},
+	}
+	okBody, _ := json.Marshal(ok)
+	if env := doImport(t, dst, okBody, "?apply=true"); env["ok"] != true {
+		t.Fatalf("everyN on containersSchedule must still import: %v", env)
+	}
+	if s, _ := dstStore.GetSettings(); s.ContainersSchedule != "everyN 3 04:00" {
+		t.Fatalf("containersSchedule not applied: %q", s.ContainersSchedule)
+	}
+}
+
 // TestImportWithoutCredentialsPreservesExisting: an apply of a file with NO
 // credentials block leaves the destination's stored secrets untouched.
 func TestImportWithoutCredentialsPreservesExisting(t *testing.T) {

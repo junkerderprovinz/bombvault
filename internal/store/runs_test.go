@@ -463,6 +463,106 @@ func TestLastSuccessfulFilesBackupAndCounts(t *testing.T) {
 	}
 }
 
+// TestSetRunGroup verifies SetRunGroup stamps a run's group_id, that ListRuns
+// round-trips it correctly, and that a run never stamped keeps the zero-value
+// "" (an ungrouped run is unaffected — the default for every run outside a
+// "Backup Everything" pass).
+func TestSetRunGroup(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	tg, _ := r.UpsertTarget(store.Target{ContainerName: "sonarr", AppdataPaths: []string{"/data"}})
+
+	grouped, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	ungrouped, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+
+	if err := r.SetRunGroup(grouped, "parent-run-id"); err != nil {
+		t.Fatalf("SetRunGroup: %v", err)
+	}
+
+	runs, err := r.ListRuns(10)
+	if err != nil {
+		t.Fatalf("ListRuns: %v", err)
+	}
+	byID := map[string]store.Run{}
+	for _, run := range runs {
+		byID[run.ID] = run
+	}
+	if byID[grouped].GroupID != "parent-run-id" {
+		t.Fatalf("grouped run's GroupID not set: %+v", byID[grouped])
+	}
+	if byID[ungrouped].GroupID != "" {
+		t.Fatalf("ungrouped run's GroupID must stay empty (zero-value default), got %+v", byID[ungrouped])
+	}
+
+	// Best-effort bookkeeping: stamping an id that matches no row is not an error.
+	if err := r.SetRunGroup("no-such-run", "some-group"); err != nil {
+		t.Fatalf("SetRunGroup(unknown id) must not error: %v", err)
+	}
+}
+
+// TestLastSuccessfulEverythingBackup mirrors the shape of the existing
+// flash/config LastSuccessfulXBackup tests: no matching rows report a zero
+// time; a successful run tagged with the reserved EverythingTargetID sets it;
+// a failed run does not.
+func TestLastSuccessfulEverythingBackup(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// No runs yet.
+	ts, err := r.LastSuccessfulEverythingBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ts.IsZero() {
+		t.Fatalf("expected zero time before any everything backup, got %v", ts)
+	}
+
+	// A failed run must not satisfy the gate.
+	failedID, err := r.StartRun(store.EverythingTargetID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	if err := r.FinishRun(failedID, "failed", "", 0, "one domain failed"); err != nil {
+		t.Fatal(err)
+	}
+	ts, err = r.LastSuccessfulEverythingBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ts.IsZero() {
+		t.Fatalf("a failed run must not satisfy the gate, got %v", ts)
+	}
+
+	// A successful run sets it.
+	okID, err := r.StartRun(store.EverythingTargetID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	if err := r.FinishRun(okID, "success", "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+	ts, err = r.LastSuccessfulEverythingBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ts.IsZero() {
+		t.Fatal("expected a last-success time for everything")
+	}
+}
+
 // TestLastSuccessfulConfigBackupAndCounts verifies the config self-backup domain
 // helpers: a run tagged with the reserved ConfigTargetID satisfies the config
 // everyN due-gate and is attributed to the "config" domain by RunCounts.

@@ -27,7 +27,7 @@ RUN npm --prefix web run build
 
 # ---- Stage 2: build (cross-compile the static Go binary) --------------------
 # Runs natively on BUILDPLATFORM and cross-compiles via GOOS/GOARCH (set below).
-FROM --platform=$BUILDPLATFORM golang:1.26-bookworm@sha256:116d58cbd88c1297624acc6e967a060012422bacf9930927e23fb719189c6f36 AS build
+FROM --platform=$BUILDPLATFORM golang:1.26-bookworm@sha256:6ef6e30f0ea5c384f6d111cf856e024e3086bbdcb1779da3f3b3fbba0aea53d2 AS build
 WORKDIR /src
 
 # Module graph first so `go mod download` is cached across source changes.
@@ -84,7 +84,7 @@ ARG TARGETARCH
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client tini bzip2 wget unzip; \
+    apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client tini curl bzip2 wget unzip; \
     rm -rf /var/lib/apt/lists/*; \
     case "${TARGETARCH}" in \
         amd64) restic_arch="amd64"; restic_sha256="${RESTIC_SHA256_AMD64}"; rclone_sha256="${RCLONE_SHA256_AMD64}" ;; \
@@ -125,7 +125,9 @@ EXPOSE 3000 3443
 
 # Docker healthcheck (#60): the engine answers its own /api/health while serving,
 # so auto-heal tools (Autoheal etc.) can restart a wedged container. It runs the
-# binary itself (`bombvault healthcheck`), so the image needs no shell or curl.
+# binary itself (`bombvault healthcheck`), so the check itself needs no shell or
+# curl invocation, even though curl is present in the image (for the "Backup
+# Everything" global post-hook's dead-man's-switch ping — see hostshell.go).
 # start-period covers the cold start (store open + first sweep); a backup never
 # blocks the API from binding, so 40s is plenty.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \

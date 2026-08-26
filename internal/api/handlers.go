@@ -639,6 +639,27 @@ func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.Names)}))
 }
 
+// handleBackupEverything starts a "Backup Everything" pass — a 6th,
+// independent pseudo-domain that runs containers/vms/flash/files/config in
+// sequence (internal/api/everything.go) — ON THE SERVER and returns
+// immediately. The pass runs in a background goroutine independent of this
+// request, mirroring handleBackupAll's exact response-shape/status-code
+// convention: a 409 with a reason both when StartBackupEverything itself
+// fails and when it reports the pass could not start (one already in
+// flight), a plain 200 {ok:true, started:true} once it is launched.
+func (h *Handler) handleBackupEverything(w http.ResponseWriter, r *http.Request) {
+	started, err := h.svc.StartBackupEverything(r.Context())
+	if err != nil { // mirrors handleBackupAll: any failure to even start is reported the same way
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a Backup Everything pass is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
 // sourceParam returns the requested repo source from the ?source= query:
 // "offsite" selects the off-site replica, anything else (incl. absent) is the
 // local repo. Used by the snapshot-browser, restore and maintenance endpoints.
@@ -998,7 +1019,7 @@ func (h *Handler) reloadScheduler() error {
 	if err != nil {
 		return err
 	}
-	return h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun)
+	return h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun)
 }
 
 // handleScheduleIncludeAll sets the include_in_schedule flag for EVERY installed
@@ -1326,6 +1347,15 @@ type settingsView struct {
 	// POST/DELETE /api/fleet/token (the Settings card).
 	FleetToken    string `json:"fleetToken"`
 	FleetTokenSet bool   `json:"fleetTokenSet"`
+	// EverythingSchedule is the cadence for the "Backup Everything" pass (a 6th,
+	// independent pseudo-domain that runs containers/vms/flash/files/config in
+	// sequence). 'off' (the default) leaves it fully inert. EverythingPreHook /
+	// EverythingPostHook are optional shell commands run in BombVault's own
+	// container (HostShell) before/after the whole pass — not secrets, so they
+	// round-trip plainly like every other schedule/hook field.
+	EverythingSchedule string `json:"everythingSchedule"`
+	EverythingPreHook  string `json:"everythingPreHook"`
+	EverythingPostHook string `json:"everythingPostHook"`
 }
 
 // registryAuthView is one container-registry credential in the settings view
@@ -1417,6 +1447,9 @@ func toView(s store.Settings) settingsView {
 		InstanceName:                s.InstanceName,
 		FleetToken:                  "", // secret — never echoed; FleetTokenSet reports presence
 		FleetTokenSet:               s.FleetToken != "",
+		EverythingSchedule:          s.EverythingSchedule,
+		EverythingPreHook:           s.EverythingPreHook,
+		EverythingPostHook:          s.EverythingPostHook,
 	}
 }
 
@@ -1466,6 +1499,44 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 		"hostMountRoot": h.cfg.HostMountRoot,
 		"platform":      string(h.svc.platformFn().Kind()),
 	})
+}
+
+// rejectEveryNSchedules reports the user-facing error for a settings view whose
+// OFF-SITE replication cadence uses "everyN". An everyN cadence is a daily cron
+// trigger plus a "has the interval elapsed?" gate, and a replication job has no
+// last-run fact to answer that with, so its interval could not be enforced and
+// the job would silently fire daily. The five off-site schedules are restricted
+// to off / daily / weekly / cron, which all fire on an exact schedule. Returns
+// "" when the view is acceptable.
+//
+// This is THE authority for that split, called from every path that writes
+// settings: handlePutSettings (the UI save) and validateExport (settings import,
+// #166). An import that slipped an everyN into one of these fields would persist
+// it and then break every later settings save from any card, because the UI
+// always PUTs the full settings object.
+//
+// The drills, tamper-test and digest schedules used to be in this list and no
+// longer are (#166): each now records when its scheduled pass last ran
+// (store.RecordScheduleJobRun, migration v89's schedule_job_runs) and hands that
+// back to the due-gate through SetJobRunStore, so their interval is genuinely
+// enforced. Accepting them here is what makes an IMPORTED everyN drills/tamper/
+// digest cadence behave exactly like a UI-set one, rather than being refused on
+// one path and accepted on the other.
+//
+// The five domain schedules plus EverythingSchedule are deliberately absent for
+// the same reason: each has a last-run gate (LastSuccessful*Backup) that makes
+// everyN meaningful. The scheduler also refuses to REGISTER an unenforceable
+// everyN (internal/schedule), so a legacy value that predates this guard cannot
+// fire daily either — this is the friendly save-time half of that same rule.
+func rejectEveryNSchedules(v settingsView) string {
+	for _, cad := range []string{
+		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+	} {
+		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
+			return "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression"
+		}
+	}
+	return ""
 }
 
 func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
@@ -1521,7 +1592,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	for _, cad := range []string{
 		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
-		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule,
+		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule, v.EverythingSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -1530,25 +1601,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// The five OFF-SITE replication schedules still can't use "everyN". An everyN
-	// cadence is a daily cron trigger plus a "has the interval elapsed?" gate, and
-	// a replication job has no last-run fact to answer that with, so its interval
-	// could not be enforced. Restrict them to off / daily / weekly / cron, which
-	// all fire on an exact schedule. The scheduler now refuses to REGISTER an
-	// unenforceable everyN as well, so a legacy or imported value cannot fire
-	// daily either — this is the friendly save-time half of that same rule.
-	//
-	// The drills, tamper-test and digest schedules used to be in this list and no
-	// longer are (#166): each records when its scheduled pass last ran
-	// (store.RecordScheduleJobRun) and hands that back to the due-gate through
-	// SetJobRunStore, so their interval is genuinely enforced now.
-	for _, cad := range []string{v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule} {
-		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok": false, "error": "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression",
-			})
-			return
-		}
+	// One shared guard for both settings write paths — see rejectEveryNSchedules.
+	if msg := rejectEveryNSchedules(v); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok": false, "error": msg,
+		})
+		return
 	}
 
 	// A DR-drill target, when set, is a container/VM name fed by the UI dropdown.
@@ -1709,6 +1767,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		FleetEnabled:                v.FleetEnabled,
 		InstanceName:                strings.TrimSpace(v.InstanceName),
 		FleetToken:                  fleetToken,
+		EverythingSchedule:          v.EverythingSchedule,
+		EverythingPreHook:           v.EverythingPreHook,
+		EverythingPostHook:          v.EverythingPostHook,
 		AuthPasswordHash:            existing.AuthPasswordHash,
 		SessionEpoch:                existing.SessionEpoch,
 		RcloneConf:                  existing.RcloneConf,
@@ -1724,7 +1785,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// offsite_targets row so the replication path (which now reads those rows) sees
 	// the change. Settings stays authoritative for the fallback/rollback path.
 	h.svc.syncAllPrimaryOffsiteTargets(s)
-	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun); err != nil {
+	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
@@ -2308,15 +2369,23 @@ func (h *Handler) handleSpikeCached(w http.ResponseWriter, _ *http.Request) {
 type runView struct {
 	store.Run
 	Target string `json:"target"`
-	Domain string `json:"domain"` // "container" | "vm" | "flash" | "config" | "files" | ""
+	Domain string `json:"domain"` // "container" | "vm" | "flash" | "config" | "files" | "everything" | ""
 }
 
 // runTargetMaps resolves target_id → (human name, domain) across every domain,
 // for enriching stored runs (handleRuns + the widget feed). Best-effort: an
 // unknown id (e.g. a deleted target) simply stays absent, so lookups yield "".
 func (h *Handler) runTargetMaps() (name, domain map[string]string) {
-	name = map[string]string{store.FlashTargetID: "Unraid flash", store.ConfigTargetID: "App configuration"}
-	domain = map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
+	name = map[string]string{
+		store.FlashTargetID:      "Unraid flash",
+		store.ConfigTargetID:     "App configuration",
+		store.EverythingTargetID: "Backup Everything",
+	}
+	domain = map[string]string{
+		store.FlashTargetID:      "flash",
+		store.ConfigTargetID:     "config",
+		store.EverythingTargetID: "everything",
+	}
 	if cts, lErr := h.store.ListTargets(); lErr == nil {
 		for _, t := range cts {
 			name[t.ID] = t.ContainerName

@@ -304,6 +304,14 @@ func run() error {
 		_, bErr := svc.BackupFileSet(ctx, id)
 		return bErr
 	}, st.ListFileSets)
+	// "Backup Everything": a 6th, independent pseudo-domain that loops over all
+	// five domains internally (internal/api/everything.go's BackupEverything),
+	// so — like SetFlashJob/SetConfigJob — the scheduled closure takes no
+	// arguments and just discards the summary, returning only the error.
+	scheduler.SetEverythingJob(func() error {
+		_, bErr := svc.BackupEverything(context.Background())
+		return bErr
+	})
 	scheduler.SetOffsiteJob(func(domain string) error {
 		return svc.ScheduledReplicateOffsite(context.Background(), domain)
 	})
@@ -373,9 +381,10 @@ func run() error {
 	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
 	configLastRun := schedule.LastRunFunc(st.LastSuccessfulConfigBackup)
 	filesLastRun := schedule.LastRunFunc(st.LastSuccessfulFilesBackup)
+	everythingLastRun := schedule.LastRunFunc(st.LastSuccessfulEverythingBackup)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
-		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun); rErr != nil {
+		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {

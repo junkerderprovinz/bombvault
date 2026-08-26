@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useProgress } from "../lib/progress";
+import { offsiteRunProgress, useProgress } from "../lib/progress";
 import type { ProgressState } from "../lib/progress";
 import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
 import { elapsedSince } from "../lib/reltime";
+import { InfoBubble } from "./InfoBubble";
 
 type Domain = "containers" | "vms" | "flash" | "files";
 
@@ -23,14 +24,18 @@ const ELAPSED_TICK_MS = 1000;
  * offsiteStatusText picks the honest live status text for an "offsite:<domain>"
  * progress state (issue #159), in three tiers, most-informative first:
  *
- *   1. A live per-snapshot signal is available (state.snapshotIndex > 0, a
- *      real restic-copy percentage — see restic.Copy's doc comment): "Replicating
- *      snapshot {index} of {total} ({percent}%)". `total` is widened to at
- *      least `index` in case the backend's own upfront candidate-count
- *      ESTIMATE undercounted — the live index is always the ground truth,
- *      the total is only ever a best-effort guess (restic never reports one).
- *   2. Only a startedAt is known (no live percentage yet, e.g. restic is
- *      still walking the source tree): the plain elapsed-duration text.
+ *   1. A RUN-LEVEL percentage can be derived (offsiteRunProgress returns a
+ *      value — see its doc comment): "Replicating… {percent}% overall
+ *      (snapshot {index} of {total})". The percentage leads and owns the line;
+ *      "snapshot k of N" is the parenthetical detail behind it, which is the
+ *      reading order that cannot be misparsed. This used to render as
+ *      "Replicating snapshot {index} of {total} ({percent}%)", where the
+ *      percentage was restic's PER-SNAPSHOT pack progress sitting in
+ *      parentheses right after an unrelated fraction — "15 of 126 (55%)" reads
+ *      as "15/126 = 55%" to everyone, and contradicted itself.
+ *   2. Only a startedAt is known (no live percentage yet — restic still
+ *      walking the source tree, or no candidate-count estimate to divide by):
+ *      the plain elapsed-duration text.
  *   3. Neither is known yet: the bare "Replicating…" label.
  *
  * Each tier has its own "WithDuration" sibling key appending the SAME live
@@ -43,16 +48,13 @@ export function offsiteStatusText(
   state: ProgressState | undefined,
   duration: string
 ): string {
-  const index = state?.snapshotIndex;
-  const percent = state?.percent;
-  if (typeof index === "number" && index > 0 && typeof percent === "number") {
-    const total = Math.max(state?.snapshotTotal ?? 0, index);
-    const pct = String(Math.round(Math.max(0, Math.min(100, percent))));
+  const run = offsiteRunProgress(state);
+  if (run) {
     const key: TranslationKey = duration ? "offsite.replicatingSnapshotPercentWithDuration" : "offsite.replicatingSnapshotPercent";
     return t(key)
-      .replace("{index}", String(index))
-      .replace("{total}", String(total))
-      .replace("{percent}", pct)
+      .replace("{index}", String(run.index))
+      .replace("{total}", String(run.total))
+      .replace("{percent}", String(run.percent))
       .replace("{duration}", duration);
   }
   return duration ? t("offsite.replicatingWithDuration").replace("{duration}", duration) : t("offsite.replicating");
@@ -77,15 +79,18 @@ export function offsiteStatusText(
  * api.copyToOffsiteTarget/restic.PendingCopyIDs).
  *
  * So the segment beneath the label stays an INDETERMINATE sliding bar (it
- * represents the whole domain replication, which — across a multi-snapshot
- * batch or a multiTarget loop — has no single completion fraction of its
- * own; a determinate fill here would misleadingly suggest otherwise), while
- * the TEXT shows the real, live numbers once available: "Replicating
- * snapshot 2 of 4 (63%)". Falls back to a live "(2m 14s)"-style elapsed
- * duration (from the backend-stamped StartedAt) whenever no live
- * per-snapshot signal has arrived yet (e.g. restic is still walking the
- * source tree), and further to the plain label when even startedAt isn't
- * known yet.
+ * represents the whole domain replication across a multiTarget loop, which no
+ * single fraction covers; a determinate fill would misleadingly suggest
+ * otherwise), while the TEXT shows the real, live numbers once available:
+ * "Replicating… 41% overall (snapshot 2 of 4)". That percentage is the
+ * per-snapshot signal FOLDED INTO the snapshot count, not printed beside it —
+ * the first cut showed "snapshot 2 of 4 (63%)", where the two correct-but
+ * -differently-scoped numbers read as one contradictory claim (see
+ * offsiteRunProgress in lib/progress.ts, and issue #159). Falls back to a live
+ * "(2m 14s)"-style elapsed duration (from the backend-stamped StartedAt)
+ * whenever no run-level percentage can be derived (restic still walking the
+ * source tree, or no candidate-count estimate to divide by), and further to
+ * the plain label when even startedAt isn't known yet.
  *
  * The segment reuses ProgressBar's own `bv-indeterminate` keyframe/accent color
  * so it reads as the same "progress bar" motif as the determinate bars
@@ -128,6 +133,11 @@ export function OffsiteIndicator({ domain, withLabel }: { domain: Domain; withLa
   const label = withLabel ? `${t(navKey[domain])} · ` : "";
   const duration = elapsedSince(state?.startedAt, now);
   const statusText = offsiteStatusText(t, state, duration);
+  // The run-level percentage is snapshot-COUNT progress against a best-effort
+  // estimate, not byte progress — house rule says that explanation belongs
+  // behind an (i), never as permanent prose on the line. Only shown in the
+  // tier that actually renders a percentage.
+  const showsRunPercent = offsiteRunProgress(state) !== null;
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-carbon-textSub">
       <span
@@ -140,6 +150,7 @@ export function OffsiteIndicator({ domain, withLabel }: { domain: Domain; withLa
         />
       </span>
       ↗ {label}{statusText}
+      {showsRunPercent ? <InfoBubble tip={t("offsite.overallPercentHint")} /> : null}
     </span>
   );
 }
