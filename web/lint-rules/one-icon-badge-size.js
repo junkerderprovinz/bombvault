@@ -111,7 +111,7 @@ export default {
             return;
           }
 
-          const offender = classTokens(node)
+          const offender = classTokens(node, context)
             .map((t) => baseUtility(t))
             .find((t) => SIZING_UTILITY.test(t));
           if (offender) {
@@ -128,7 +128,7 @@ export default {
         if (jsxName(node) === "Badge") return;
         if (!isInteractive(node) || !isIconOnly(node)) return;
 
-        const tokens = classTokens(node).map((t) => baseUtility(t));
+        const tokens = classTokens(node, context).map((t) => baseUtility(t));
         let step;
         let token;
         for (const t of tokens) {
