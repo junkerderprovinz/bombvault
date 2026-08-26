@@ -219,10 +219,14 @@ export function CadenceBuilder({
    *  selected-hour/-minute highlight always fell back to the flat accent
    *  even in rainbow mode). Every caller of THIS component passes the SAME
    *  `hueIndex` its own enclosing `<Card hueIndex={...}>` already receives
-   *  (see each call site in Settings.tsx), so the TimePicker inside reads
-   *  as part of the same coloured group as the Card around it — the exact
-   *  "a card and its own action button read as one coloured group" pattern
-   *  SaveBar's own `hueIndex` doc already established for this file. */
+   *  (see each call site in Settings.tsx), so the TimePicker inside reads as
+   *  part of the same coloured group as the Card around it rather than
+   *  falling back to the flat accent. The live statement of that contract is
+   *  the Backup Everything card's own convention-pass note in Settings.tsx,
+   *  which spells out what threading a Card's index into this component buys.
+   *  (This used to cite "SaveBar's own `hueIndex` doc" as the precedent —
+   *  that prop and its doc were deleted as dead plumbing in the same
+   *  Speichern-button sweep, so the cross-reference pointed at nothing.) */
   hueIndex?: number;
 }) {
   const { t, lang } = useT();

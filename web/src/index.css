@@ -1271,7 +1271,10 @@ body {
 
    Consumers as of Task 3: .glim-hue is carried by every Selector segment
    (components/Selector.tsx) with hue enabled — the default, opted out of
-   only by Dashboard.tsx's heatmap domain toggle (`hue={false}`) — across
+   only by Recovery.tsx's StepDisclosure (`hue={false}`, a single-item
+   expander chip whose one position carries no information; Dashboard.tsx's
+   heatmap toggle was the opt-out named here until d68d8995 removed it) —
+   across
    twelve call sites in seven files (Settings.tsx's tab strip and drill-type
    toggle, Containers.tsx, VMs.tsx, Files.tsx, Dashboard.tsx,
    CadenceBuilder.tsx, SourceToggle.tsx; Settings.tsx no longer sets the class
