@@ -64,11 +64,25 @@ func buildSettingsView(s store.Settings) settingsView {
 
 // handleExportSettings streams the portable settings/off-site/credentials envelope
 // as a downloadable JSON attachment. GET /api/settings/export?includeCredentials=
-// true|false (default false). With credentials the file is as sensitive as the
-// recovery kit — it holds the decrypted off-site backend secrets — so the body is
-// never logged. It is served behind the same session authGate as every other
-// /api route.
+// true|false (default false). The body is never logged.
+//
+// The plain export carries no secrets (toView blanks the tokens, buildSettingsView
+// drops the registry-auth list), so it is served behind the session authGate like
+// every other /api route.
+//
+// The CREDENTIALED export is a different animal: it hands out the decrypted S3
+// keys, the restic-REST password, the WHOLE rclone config, the SMTP password and
+// the Matrix access token. That is the recovery kit's class of payload, so it
+// takes the recovery kit's second gate — auth must actually be ENABLED. Without
+// it, the trusted-LAN mode (no login password → authGate is a pass-through) let
+// any host on the LAN fetch every backend credential this instance holds with a
+// single unauthenticated GET.
 func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
+	withCredentials := truthy(r.URL.Query().Get("includeCredentials"))
+	if withCredentials && !h.requireAuthForSecrets(w, "exporting settings with credentials") {
+		return
+	}
+
 	s, err := h.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -88,7 +102,7 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		OffsiteTargets: offsiteTargetsToViews(targets),
 	}
 
-	if truthy(r.URL.Query().Get("includeCredentials")) {
+	if withCredentials {
 		creds, cErr := h.collectCredentials(s)
 		if cErr != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(cErr))
