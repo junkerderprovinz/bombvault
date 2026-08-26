@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -42,24 +43,37 @@ func (f *suggestFakeDocker) Inspect(context.Context, string) (model.Inspect, err
 // the buffered listing (measured 1.36 GiB retained on a 672k-node snapshot).
 type suggestFakeEngine struct {
 	ResticEngine
-	snaps       []restic.Snapshot
-	entries     []restic.FileEntry
-	streamErr   error // fails the FIRST LsStream call only (stale-lock self-heal)
-	streamHook  func(onEntry func(restic.FileEntry)) error
+	snaps      []restic.Snapshot
+	entries    []restic.FileEntry
+	streamErr  error // fails the FIRST LsStream call only (stale-lock self-heal)
+	streamHook func(onEntry func(restic.FileEntry)) error
+	// snapsHook runs inside Snapshots, the last engine call before the suggest
+	// path decides whether to start its own listing. The singleflight test uses
+	// it to hold every caller at that point, so the assertion is about the
+	// singleflight and not about goroutine scheduling.
+	snapsHook func()
+	// mu guards the counters, which the singleflight test increments from
+	// several goroutines at once. Everything else here is single-threaded.
+	mu          sync.Mutex
 	streamCalls int
 	lsCalls     int
 	unlocks     int
 }
 
 func (e *suggestFakeEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
+	if e.snapsHook != nil {
+		e.snapsHook()
+	}
 	return e.snaps, nil
 }
 
 func (e *suggestFakeEngine) LsStream(_ context.Context, _, _ string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+	e.mu.Lock()
 	e.streamCalls++
-	if e.streamErr != nil {
-		err := e.streamErr
-		e.streamErr = nil // fail once, then succeed
+	err := e.streamErr
+	e.streamErr = nil // fail once, then succeed
+	e.mu.Unlock()
+	if err != nil {
 		return err
 	}
 	if e.streamHook != nil {
@@ -69,6 +83,14 @@ func (e *suggestFakeEngine) LsStream(_ context.Context, _, _ string, _ restic.Mo
 		onEntry(en)
 	}
 	return nil
+}
+
+// streamCallCount reads the counter under the lock, for tests that assert it
+// while other goroutines may still be running.
+func (e *suggestFakeEngine) streamCallCount() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.streamCalls
 }
 
 func (e *suggestFakeEngine) Ls(context.Context, string, string, restic.Mode) ([]restic.FileEntry, error) {
@@ -284,7 +306,7 @@ func TestSnapshotPassIsAllOrNothing(t *testing.T) {
 		t.Fatalf("source = %q, want %q so the UI can offer the live scan", res.Source, suggestSourceSnapshot)
 	}
 	// And nothing was cached from the half-read stream.
-	if _, ok := svc.suggestCacheGet("plex", suggestExcludesKey("x", "abc123", nil)); ok {
+	if _, ok := svc.suggestCacheGet("plex", suggestExcludesKey("x", "abc123", []string{root}, nil)); ok {
 		t.Fatal("a failed pass must not seed the cache")
 	}
 }

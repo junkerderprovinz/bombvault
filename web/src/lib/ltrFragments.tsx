@@ -69,6 +69,39 @@ export function withLtrFragments(text: string, fragments: readonly string[]): Re
 }
 
 /**
+ * withLtrPlaceholder — the RUNTIME-VALUE counterpart of withLtrFragments.
+ *
+ * withLtrFragments protects a technical string baked INTO the translation. This
+ * protects one substituted into it: a `{path}` token whose replacement is only
+ * known at render time (the folder a scan stopped inside, the backup folders it
+ * could not read). The app's usual `t("…").replace("{path}", value)` produces
+ * one flat string, and a value beginning with `/` then hits exactly the bug
+ * this module exists for — `/` is a weak bidi class, so in ar/he/fa the leading
+ * slash migrates to the far end of the path and the user is shown a folder name
+ * they cannot type back.
+ *
+ * The surrounding TRANSLATED prose is left alone and keeps reading in the
+ * page's own direction; only the substituted value is pinned. A token that does
+ * not occur (a locale that dropped it — the parity test catches that on its
+ * own) renders the sentence unchanged rather than throwing.
+ */
+export function withLtrPlaceholder(text: string, token: string, value: string): ReactNode {
+  const pieces = text.split(token);
+  const out: ReactNode[] = [];
+  pieces.forEach((piece, i) => {
+    if (piece) out.push(piece);
+    if (i < pieces.length - 1) {
+      out.push(
+        <span key={`v-${i}`} dir="ltr" className="font-mono text-start">
+          {value}
+        </span>
+      );
+    }
+  });
+  return out;
+}
+
+/**
  * withLtrIsolates — the PLAIN-STRING counterpart of withLtrFragments above,
  * for the same sentences when they land somewhere that can only hold text.
  * An InfoBubble tip is exactly that place: it renders as a text node and is

@@ -732,12 +732,25 @@ export const en = {
   "excludes.assistScanning": "Scanning…",
   "excludes.assistScanFailed": "Scan failed",
   "excludes.assistTruncated": "The scan hit its time limit inside {path}. Folders after it were not examined.",
+  // Whole backup folders that produced no rows at all, so no per-row flag can
+  // speak for them. Without these, one unreadable folder among four reads as a
+  // finished scan of all four.
+  "excludes.assistUnexamined": "These backup folders were not examined at all: {paths}",
+  "excludes.assistUnreadable": "These backup folders could not be read, so anything inside them is missing from this list: {paths}",
+  "excludes.assistPathsUnavailable": "This container's backup folders cannot be reached right now, and there is no backup to read sizes from either. Check that the array or share holding them is mounted.",
   "excludes.assistNothingFound": "Nothing left to exclude — no junk or oversized folders found in this container's backup.",
   // Where the sizes come from, and what that promises (#175). The snapshot
   // date is required, not optional: an as-of-last-backup size shown without it
   // would just be a different misleading number.
   "excludes.assistSourceSnapshot": "Sizes come from the backup of {when}, so they are exact.",
+  // Three reasons for a folder scan, three sentences. One string used to serve
+  // all of them and told a user who had just been shown a failed index read
+  // that the container had never been backed up.
   "excludes.assistSourceLive": "This container has no backup yet, so the sizes come from a live scan of the folders.",
+  "excludes.assistSourceLiveRequested": "The sizes come from a scan of the folders as they are right now.",
+  "excludes.assistSourceLiveNotInSnapshot": "The last backup does not cover the folders selected now, so the sizes come from a live scan of the folders.",
+  "excludes.assistSnapshotStale": "This backup is more than a day old, so anything created since then is missing from this list.",
+  "excludes.assistScanCurrent": "Check the folders as they are now",
   "excludes.assistIndexFailed": "Could not finish reading the backup index.",
   "excludes.assistScanLive": "Scan the folders instead",
   "excludes.assistSizeAtLeast": "at least {size}",
@@ -2329,9 +2342,16 @@ export const de: Translations = {
   "excludes.assistScanning": "Scanne…",
   "excludes.assistScanFailed": "Scan fehlgeschlagen",
   "excludes.assistTruncated": "Der Scan hat sein Zeitlimit in {path} erreicht. Ordner danach wurden nicht mehr geprüft.",
+  "excludes.assistUnexamined": "Diese gesicherten Ordner wurden gar nicht geprüft: {paths}",
+  "excludes.assistUnreadable": "Diese gesicherten Ordner ließen sich nicht lesen, alles darin fehlt deshalb in dieser Liste: {paths}",
+  "excludes.assistPathsUnavailable": "Die gesicherten Ordner dieses Containers sind gerade nicht erreichbar, und es gibt auch kein Backup, aus dem sich Größen lesen ließen. Prüfe, ob das Array oder die Freigabe mit diesen Ordnern eingebunden ist.",
   "excludes.assistNothingFound": "Nichts mehr auszuschließen — kein Junk und keine übergroßen Ordner im Backup dieses Containers gefunden.",
   "excludes.assistSourceSnapshot": "Die Größen stammen aus dem Backup vom {when} und sind damit exakt.",
   "excludes.assistSourceLive": "Dieser Container hat noch kein Backup, deshalb stammen die Größen aus einem Live-Scan der Ordner.",
+  "excludes.assistSourceLiveRequested": "Die Größen stammen aus einem Scan der Ordner, so wie sie gerade jetzt sind.",
+  "excludes.assistSourceLiveNotInSnapshot": "Das letzte Backup enthält die jetzt ausgewählten Ordner nicht, deshalb stammen die Größen aus einem Live-Scan der Ordner.",
+  "excludes.assistSnapshotStale": "Dieses Backup ist älter als einen Tag, alles danach Entstandene fehlt also in dieser Liste.",
+  "excludes.assistScanCurrent": "Ordner im jetzigen Zustand prüfen",
   "excludes.assistIndexFailed": "Der Backup-Index konnte nicht zu Ende gelesen werden.",
   "excludes.assistScanLive": "Stattdessen die Ordner scannen",
   "excludes.assistSizeAtLeast": "mindestens {size}",

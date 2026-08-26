@@ -1028,6 +1028,24 @@ export interface ExcludeSuggestion {
  * and the folders after it were never examined. `indexFailed` means the backup
  * index could not be read; pass `source: "live"` to scan the folders instead.
  * Read-only — picked lines are stored via setContainerExcludes.
+ *
+ * `source: "live"` is ALSO the standing "what is on disk right now" question,
+ * which a snapshot cannot answer: a folder created since the last backup is not
+ * in the index at all, so it has no row and no warning. The panel exposes it as
+ * its own action, not only as an error recovery.
+ *
+ * The remaining fields all answer "why is this list short", which the panel must
+ * never leave to the user's imagination:
+ *   `liveReason` — why the live walk ran. One of "no-snapshot" (never backed up
+ *     / off-site-only repo), "requested" (the caller asked) or "not-in-snapshot"
+ *     (the last backup does not cover the folders selected now). The panel's
+ *     source sentence is picked from this; a single sentence for all three told
+ *     users with backups that they had none.
+ *   `unexaminedRoots` — backup folders the walk never opened (budget spent).
+ *   `unreadableRoots` — backup folders the walk could not read at all. Nothing
+ *     below them produced a row, so no per-row flag can speak for them.
+ *   `pathsUnavailable` — folders are configured but none is reachable (an
+ *     unmounted array or share) and there was no backup to answer from either.
  */
 export function suggestContainerExcludes(
   name: string,
@@ -1038,8 +1056,12 @@ export function suggestContainerExcludes(
   suggestions: ExcludeSuggestion[];
   truncated: boolean;
   source?: "snapshot" | "live";
+  liveReason?: "no-snapshot" | "requested" | "not-in-snapshot";
   snapshotTime?: string;
   stoppedAt?: string;
+  unexaminedRoots?: string[] | null;
+  unreadableRoots?: string[] | null;
+  pathsUnavailable?: boolean;
   indexFailed?: boolean;
 }> {
   const q = source ? `?source=${source}` : "";
