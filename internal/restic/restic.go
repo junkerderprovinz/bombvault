@@ -1008,6 +1008,16 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 // after the fact; a listing has no summary line and its output is unbounded, so
 // retaining it is pure cost. See LsStream's doc comment for the measured
 // numbers that made this its own helper rather than a scanLines call.
+//
+// A SCANNER ERROR IS FATAL HERE, unlike in scanLines. scanLines logs and
+// swallows it on purpose: a backup's trailing summary line has to survive an
+// over-long status line in the middle of the run. A LISTING has no such
+// remainder to salvage — every line dropped is a node the caller never sees, so
+// swallowing it would hand back a silently short stream that the process's own
+// exit code 0 then certifies as complete. That is issue #175's defect on a
+// different feeder: a fraction presented as a total. The process is still
+// reaped (drain, then Wait) so nothing is left blocked on a full pipe, but the
+// scan error wins over a clean exit.
 func streamLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) error {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -1025,7 +1035,8 @@ func streamLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) error {
 	for sc.Scan() {
 		onLine(sc.Bytes())
 	}
-	if scErr := sc.Err(); scErr != nil {
+	scErr := sc.Err()
+	if scErr != nil {
 		log.Printf("restic %s: stdout scan: %v", subcommand(args), scErr)
 		// Drain the rest of stdout so restic doesn't block writing to a full pipe,
 		// which would hang cmd.Wait below.
@@ -1033,6 +1044,9 @@ func streamLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) error {
 	}
 	if err := cmd.Wait(); err != nil {
 		return runError(args, stderr.String())
+	}
+	if scErr != nil {
+		return fmt.Errorf("restic %s: stdout scan: %w", subcommand(args), scErr)
 	}
 	return nil
 }

@@ -60,6 +60,15 @@ const (
 	suggestLargeBytes = 200 << 20 // 200 MiB
 	// suggestMaxResults caps the response: the biggest wins, the tail is noise.
 	suggestMaxResults = 20
+	// suggestPartialSeats bounds how many of those seats a LOWER BOUND may take
+	// out of size order. A truncated walk's genuinely-unmeasured set is the stop
+	// point's ancestor chain, which is at most suggestMaxDepth deep and belongs at
+	// the table no matter how small its measured fraction looks. Unreadable
+	// subtrees are unbounded, and seating those unconditionally is how an exactly
+	// measured 55 GiB folder gets evicted by twenty "at least 0 B" rows — the
+	// mirror image of the bug this file exists to fix. Past the reservation a
+	// lower bound competes on size like everything else.
+	suggestPartialSeats = suggestMaxDepth
 	// suggestScanTimeout bounds the whole LIVE walk; on timeout the partial
 	// result is returned with truncated=true, every candidate whose subtree did
 	// not finish flagged as a lower bound rather than a total.
@@ -80,12 +89,39 @@ const (
 	suggestSourceLive     = "live"
 )
 
+// suggestLive* say WHY a result came from the live walk. One string cannot
+// serve all three: the panel used to announce "this container has no backup
+// yet" on every live result, including the folder scan the user asked for after
+// an index read failed — a container that demonstrably HAS a backup, which is
+// why the index was read at all. The UI picks its sentence from this.
+const (
+	// suggestLiveNoSnapshot — no readable local snapshot for this container at
+	// all: never backed up, off-site-only repo, or the repo itself is missing.
+	suggestLiveNoSnapshot = "no-snapshot"
+	// suggestLiveRequested — the caller asked for ?source=live.
+	suggestLiveRequested = "requested"
+	// suggestLiveNotInSnapshot — a snapshot exists, but it holds none of the
+	// folders currently selected, so reading it would answer about the wrong ones.
+	suggestLiveNotInSnapshot = "not-in-snapshot"
+)
+
 // errSuggestIndexRead is returned when the snapshot pass could not be completed
 // — the listing errored, or it outran suggestSnapshotTimeout. The aggregate is
 // DISCARDED in that case: a partially consumed `ls` stream would reproduce the
 // exact defect this whole change exists to remove (#175), so there is no code
 // path that emits a partial snapshot list.
 var errSuggestIndexRead = errors.New("could not finish reading the backup index")
+
+// errSuggestNodeOrder is the loud failure for a listing that hands a file to the
+// collector before the folder holding it. The aggregate credits a file's bytes
+// only to ancestors it has already seen, which is sound for restic's depth-first
+// emission order and silently catastrophic without it: every directory would
+// read 0 bytes, fall under the size threshold, and the panel would report
+// "nothing left to exclude" for a 55 GB tree while flagging nothing. There is no
+// test fixture that can drift into this — snapEntries builds its input with
+// WalkDir — so the invariant is checked at runtime instead of assumed, and a
+// violation becomes an index-read failure with a working live-scan fallback.
+var errSuggestNodeOrder = errors.New("the backup index listed a file before the folder holding it")
 
 // knownJunkDirNames are directory basenames (lowercased for the lookup) that
 // are safe-to-skip regenerable data by convention: browser/app caches, temp
@@ -135,12 +171,32 @@ type ExcludeSuggestion struct {
 // StoppedAt names the folder the live walk stopped inside, so the truncation
 // banner can say WHERE the list ends (a folder never visited has no row to
 // carry a flag).
+//
+// The three list fields below exist because "the list is short" and "the list is
+// short for a reason nobody was told" are different products. Each names a
+// specific way this pass came up empty of information rather than empty of
+// findings:
+//
+//	UnexaminedRoots — backup folders the walk never opened, because the budget
+//	  was already spent on an earlier one. StoppedAt names ONE place; with
+//	  several roots it would otherwise be the only thing said about a run that
+//	  never looked at three of them.
+//	UnreadableRoots — backup folders the walk could not read at all. Without
+//	  this they are indistinguishable from empty folders: nothing below them
+//	  produces a row, so no per-row flag can speak for them.
+//	PathsUnavailable — the container's folders are configured but none is
+//	  reachable right now (an unmounted array or share) AND there was no
+//	  snapshot to answer from instead.
 type SuggestResult struct {
-	Suggestions  []ExcludeSuggestion
-	Truncated    bool
-	Source       string
-	SnapshotTime string
-	StoppedAt    string
+	Suggestions      []ExcludeSuggestion
+	Truncated        bool
+	Source           string
+	LiveReason       string
+	SnapshotTime     string
+	StoppedAt        string
+	UnexaminedRoots  []string
+	UnreadableRoots  []string
+	PathsUnavailable bool
 }
 
 // suggestCacheEntry is one container's cached snapshot aggregate. Key pins the
@@ -151,6 +207,18 @@ type suggestCacheEntry struct {
 	key          string
 	snapshotTime string
 	cands        []suggestCandidate
+}
+
+// suggestFlight is one in-flight snapshot aggregate. Two requests for the same
+// key (a refresh, a second tab, two viewers) share ONE `restic ls`: the second
+// waits on done and reads the same result. Without it the panel's auto-scan
+// multiplies restic processes inside a memory-capped container, which is the
+// one place this feature is cheap to make expensive.
+type suggestFlight struct {
+	done     chan struct{}
+	cands    []suggestCandidate
+	snapTime string
+	err      error
 }
 
 // suggestOpts are the scan bounds, injectable so tests can shrink them.
@@ -208,6 +276,10 @@ type suggestCollector struct {
 	byRel     map[string]*suggestCandidate
 	order     []string        // rel keys in feed order (parents before children)
 	pruned    map[string]bool // rel of directories an exclude pattern covers
+	// outOfOrder latches when a file arrived before a within-bound ancestor of
+	// its own — i.e. the feeder broke the parents-before-children contract `add`
+	// attributes sizes with. See errSuggestNodeOrder.
+	outOfOrder bool
 }
 
 func newSuggestCollector(root string, patterns []string, o suggestOpts) *suggestCollector {
@@ -267,13 +339,23 @@ func (c *suggestCollector) add(rel string, isDir bool, size int64) bool {
 		return true
 	}
 	// Attribute the file's size to every ancestor directory within the depth
-	// bound: each '/' in rel marks one ancestor prefix.
+	// bound: each '/' in rel marks one ancestor prefix. An ancestor DEEPER than
+	// the bound was never collected and is expected to be absent; one within the
+	// bound that is absent means the feeder sent this file before its folder, and
+	// those bytes are being lost silently — latch it (errSuggestNodeOrder).
 	for i := 0; i < len(rel); i++ {
-		if rel[i] == '/' {
-			if a, ok := c.byRel[rel[:i]]; ok {
-				a.size += size
-			}
+		if rel[i] != '/' {
+			continue
 		}
+		anc := rel[:i]
+		a, ok := c.byRel[anc]
+		if !ok {
+			if strings.Count(anc, "/")+1 <= c.opts.maxDepth {
+				c.outOfOrder = true
+			}
+			continue
+		}
+		a.size += size
 	}
 	return true
 }
@@ -363,32 +445,45 @@ func sortSuggestCandidates(cands []suggestCandidate) {
 	})
 }
 
-// capSuggestions applies the suggestMaxResults cap WITHOUT letting the cut fall
-// on a lower bound. The list mixes exact sizes with minimums, so a plain
-// cands[:max] can drop a partially-measured 55 GB folder in favour of a fully
-// measured 300 MiB one — the same silent-drop bug as the size gate, one step
-// later. Incomplete candidates are seated first (there are at most a walk's
-// ancestor chain of them per root, plus any unreadable subtrees), then the
-// budget goes to the biggest complete ones. Relative order is preserved.
+// capSuggestions applies the suggestMaxResults cap without letting the cut fall
+// on a lower bound merely BECAUSE it is a lower bound, and without letting lower
+// bounds shove out folders that are demonstrably bigger.
+//
+// The list mixes exact sizes with minimums, so a plain cands[:max] drops a
+// partially measured 55 GB folder in favour of a fully measured 300 MiB one —
+// the same silent-drop bug as the size gate, one step later. Seating EVERY
+// incomplete candidate first is the same bug pointed the other way: unreadable
+// subtrees are unbounded, so twenty "at least 0 B" rows evict the one exactly
+// measured 55 GiB folder the user came for.
+//
+// So: suggestPartialSeats of the budget are reserved for the biggest lower
+// bounds (cands arrives sorted, so a forward pass takes them biggest first) —
+// that covers a truncated walk's ancestor chain, which is the bounded population
+// the reservation exists for. Everything after that competes on size, either
+// kind. Relative order is preserved.
 func capSuggestions(cands []suggestCandidate, max int) []suggestCandidate {
 	if max <= 0 || len(cands) <= max {
 		return cands
 	}
 	keep := make([]bool, len(cands))
 	budget := max
+	seats := suggestPartialSeats
+	if seats > max {
+		seats = max
+	}
 	for i, c := range cands {
-		if budget == 0 {
+		if seats == 0 || budget == 0 {
 			break
 		}
 		if !c.complete {
-			keep[i], budget = true, budget-1
+			keep[i], seats, budget = true, seats-1, budget-1
 		}
 	}
-	for i, c := range cands {
+	for i := range cands {
 		if budget == 0 {
 			break
 		}
-		if c.complete {
+		if !keep[i] {
 			keep[i], budget = true, budget-1
 		}
 	}
@@ -412,6 +507,13 @@ type suggestScan struct {
 	cands     []suggestCandidate
 	truncated bool
 	stoppedAt string
+	// rootUnreadable is set when the walk could not read the ROOT itself. Nothing
+	// below it produced a row, so no per-row flag can speak for it and an empty
+	// candidate list is otherwise indistinguishable from an empty folder — with
+	// several roots, one unreadable root would read as a finished scan of all of
+	// them. markIncomplete cannot cover this: at the root there is nothing
+	// collected yet to mark.
+	rootUnreadable bool
 }
 
 // suggestWalkDir is filepath.WalkDir, behind a variable so a test can deliver
@@ -470,6 +572,12 @@ func scanExcludeCandidates(ctx context.Context, root string, patterns []string, 
 			// Unreadable subtree — skip it, keep scanning the rest, but never let its
 			// ancestors report the short total they now carry as final.
 			incomplete[full] = true
+			if full == col.rootSlash {
+				// The ROOT is the thing that could not be read. There are no ancestors
+				// to mark and no rows to flag, so the fact has to travel out on its own
+				// or the caller reports a confident empty list for the whole folder.
+				out.rootUnreadable = true
+			}
 			return nil
 		}
 		rel, under := relUnder(col.rootSlash, full)
@@ -534,6 +642,12 @@ func aggregateSnapshotCandidates(entries func(func(restic.FileEntry)) error, roo
 	}
 	var cands []suggestCandidate
 	for _, col := range cols {
+		if col.outOfOrder {
+			// Sizes were dropped on the floor as the stream was read. Every directory
+			// would read short (most of them 0), fall under the threshold and vanish,
+			// and nothing in the result would say so. Fail loudly instead.
+			return nil, fmt.Errorf("%w (root %s)", errSuggestNodeOrder, col.rootSlash)
+		}
 		cands = append(cands, col.results()...)
 	}
 	sortSuggestCandidates(cands)
@@ -575,14 +689,25 @@ func (s *Service) excludeLineFor(full string, in model.Inspect) string {
 }
 
 // suggestExcludesKey builds the snapshot-cache key from everything a cached
-// aggregate depends on: which repo, which snapshot, and the RESOLVED excludes
-// the collector pruned with. Editing the exclude list changes what is pruned, so
-// it must recompute — the hash keeps the key short and order-sensitive.
-func suggestExcludesKey(repo, snapshotID string, resolved []string) string {
+// aggregate depends on: which repo, which snapshot, which ROOTS were aggregated,
+// and the RESOLVED excludes the collector pruned with.
+//
+// The roots are not optional. They are a live input to the aggregate — deselect
+// a folder without touching the excludes and the candidate set must change — and
+// leaving them out meant a cache hit kept offering exclude lines for folders the
+// user had just stopped backing up, on every rescan until the next backup wrote
+// a new snapshot ID. Both lists are sorted into the hash so merely REORDERING
+// the same selection still hits.
+func suggestExcludesKey(repo, snapshotID string, roots, resolved []string) string {
 	h := sha256.New()
-	for _, p := range resolved {
-		_, _ = h.Write([]byte(p))
-		_, _ = h.Write([]byte{0})
+	for _, set := range [][]string{roots, resolved} {
+		sorted := append([]string(nil), set...)
+		sort.Strings(sorted)
+		for _, p := range sorted {
+			_, _ = h.Write([]byte(p))
+			_, _ = h.Write([]byte{0})
+		}
+		_, _ = h.Write([]byte{1}) // separator: the two lists never blur together
 	}
 	return repo + "|" + snapshotID + "|" + hex.EncodeToString(h.Sum(nil)[:8])
 }
@@ -641,39 +766,87 @@ func snapshotRoots(snapPaths, effective []string) []string {
 // repo, an unmounted share) and the caller falls back to the live walk; a
 // non-nil error is errSuggestIndexRead and is NOT a fallback — the UI offers the
 // live scan as an explicit second request instead of chaining 70s onto one GET.
-func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roots, resolved []string, o suggestOpts) (cands []suggestCandidate, snapTime string, ok bool, err error) {
+func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roots, resolved []string, o suggestOpts) (cands []suggestCandidate, snapTime string, ok bool, why string, err error) {
 	snap, repo, mode, found := s.newestSnapshotFor(ctx, name)
 	if !found {
-		return nil, "", false, nil
+		return nil, "", false, suggestLiveNoSnapshot, nil
 	}
 	roots = snapshotRoots(snap.Paths, roots)
 	if len(roots) == 0 {
 		// The snapshot holds none of the currently selected folders — reading it
 		// would produce nothing. Let the live walk answer instead.
-		return nil, "", false, nil
+		return nil, "", false, suggestLiveNotInSnapshot, nil
 	}
-	key := suggestExcludesKey(repo, snap.ID, resolved)
+	key := suggestExcludesKey(repo, snap.ID, roots, resolved)
 	if hit, hitOK := s.suggestCacheGet(name, key); hitOK {
-		return hit.cands, hit.snapshotTime, true, nil
+		return hit.cands, hit.snapshotTime, true, "", nil
 	}
+
+	// SINGLEFLIGHT. Panel-open auto-scans arrive in bursts (a refresh, a second
+	// tab, two viewers), and each miss otherwise starts its own `restic ls`
+	// against the same repo inside a memory-capped container.
+	fl, leader := s.suggestFlightFor(key)
+	if !leader {
+		select {
+		case <-fl.done:
+		case <-ctx.Done():
+			return nil, "", false, "", fmt.Errorf("%w: %v", errSuggestIndexRead, ctx.Err())
+		}
+		if fl.err != nil {
+			return nil, "", false, "", fl.err
+		}
+		return fl.cands, fl.snapTime, true, "", nil
+	}
+	defer s.suggestFlightDone(key, fl)
 
 	sctx, cancel := context.WithTimeout(ctx, suggestSnapshotTimeout)
 	defer cancel()
 	stream := func(onEntry func(restic.FileEntry)) error {
 		return s.lsStreamSelfHeal(sctx, repo, snap.ID, mode, onEntry)
 	}
-	cands, aErr := aggregateSnapshotCandidates(stream, roots, resolved, o)
+	agg, aErr := aggregateSnapshotCandidates(stream, roots, resolved, o)
 	if aErr != nil {
 		// ALL-OR-NOTHING: whatever was aggregated so far is dropped on the floor.
 		// Emitting it would be defect #175 with a different feeder.
 		log.Printf("api: exclusion assistant: snapshot index read failed: %v", aErr)
-		return nil, "", false, fmt.Errorf("%w: %v", errSuggestIndexRead, aErr)
+		fl.err = fmt.Errorf("%w: %v", errSuggestIndexRead, aErr)
+		return nil, "", false, "", fl.err
 	}
 	if sctx.Err() != nil {
-		return nil, "", false, fmt.Errorf("%w: %v", errSuggestIndexRead, sctx.Err())
+		fl.err = fmt.Errorf("%w: %v", errSuggestIndexRead, sctx.Err())
+		return nil, "", false, "", fl.err
 	}
-	s.suggestCachePut(name, suggestCacheEntry{key: key, snapshotTime: snap.Time, cands: cands})
-	return cands, snap.Time, true, nil
+	s.suggestCachePut(name, suggestCacheEntry{key: key, snapshotTime: snap.Time, cands: agg})
+	fl.cands, fl.snapTime = agg, snap.Time
+	return agg, snap.Time, true, "", nil
+}
+
+// suggestFlightFor joins the in-flight aggregate for key, or registers this
+// caller as the one that will produce it. leader=false means the returned flight
+// belongs to someone else and must only be waited on.
+func (s *Service) suggestFlightFor(key string) (fl *suggestFlight, leader bool) {
+	s.suggestMu.Lock()
+	defer s.suggestMu.Unlock()
+	if s.suggestFlights == nil {
+		s.suggestFlights = map[string]*suggestFlight{}
+	}
+	if existing, ok := s.suggestFlights[key]; ok {
+		return existing, false
+	}
+	fl = &suggestFlight{done: make(chan struct{})}
+	s.suggestFlights[key] = fl
+	return fl, true
+}
+
+// suggestFlightDone publishes the leader's result to every waiter and retires
+// the flight. Deferred, so a panic cannot leave followers blocked forever.
+func (s *Service) suggestFlightDone(key string, fl *suggestFlight) {
+	s.suggestMu.Lock()
+	if s.suggestFlights[key] == fl {
+		delete(s.suggestFlights, key)
+	}
+	s.suggestMu.Unlock()
+	close(fl.done)
 }
 
 // lsStreamSelfHeal is lsSelfHeal for the streaming listing: on a stale-lock
@@ -681,11 +854,27 @@ func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roo
 // reintroduce #129 verbatim — an exclusive lock left by an interrupted write
 // elsewhere in the repo blocks even a shared-lock `ls`, and nothing else clears
 // it until the next scheduled backup happens to run its own unlockStale.
+//
+// THE RETRY IS NOT IDEMPOTENT and the guard below is what makes that safe. The
+// buffered lsSelfHeal this was modelled on could retry freely because it
+// returned a fresh slice each time; the streaming twin hands nodes straight to
+// collectors that keep them, so replaying a stream that had already emitted
+// would count every one of those nodes twice — a directory listed twice, at
+// double its size, under a duplicate React key. restic takes the repo lock
+// before it emits anything, so a lock error after the first node is not the
+// stale-lock-at-open case this exists for: it is reported as-is, the
+// all-or-nothing rule discards the partial aggregate, and the panel offers the
+// live scan.
 func (s *Service) lsStreamSelfHeal(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error {
-	err := s.engine.LsStream(ctx, repo, snapshotID, mode, onEntry)
-	if isLockErr(err) {
+	emitted := false
+	fed := func(e restic.FileEntry) {
+		emitted = true
+		onEntry(e)
+	}
+	err := s.engine.LsStream(ctx, repo, snapshotID, mode, fed)
+	if isLockErr(err) && !emitted {
 		s.unlockStale(ctx, repo, mode)
-		err = s.engine.LsStream(ctx, repo, snapshotID, mode, onEntry)
+		err = s.engine.LsStream(ctx, repo, snapshotID, mode, fed)
 	}
 	return err
 }
@@ -714,18 +903,27 @@ func (s *Service) suggestCachePut(name string, e suggestCacheEntry) {
 // capped. Directories the stored excludes already cover are skipped.
 //
 // source "live" forces the live walk (the UI's explicit retry after a failed
-// index read); anything else prefers the snapshot aggregate and falls back to
-// the live walk when the container has no local snapshot to read. Read-only —
-// nothing is persisted.
+// index read, and the standing "what is on disk RIGHT NOW" question a snapshot
+// cannot answer); anything else prefers the snapshot aggregate and falls back to
+// the live walk when there is no snapshot to read. Read-only — nothing is
+// persisted.
+//
+// The snapshot pass runs against the CONFIGURED folders, not the ones that
+// currently stat: it reads the backup, so an unmounted array is no reason to
+// withhold the answer it holds. Only the live walk needs a filesystem, and when
+// it has none it says so instead of returning an empty list.
 func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (SuggestResult, error) {
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
 		return SuggestResult{}, fmt.Errorf("inspect container: %w", err)
 	}
-	roots := s.effectiveBackupPaths(name, in)
-	if len(roots) == 0 {
-		return SuggestResult{Source: suggestSourceLive}, nil // stateless container — nothing to scan
+	configured := s.configuredBackupPaths(name, in)
+	if len(configured) == 0 {
+		// Genuinely stateless: no selection, no appdata mount. Nothing to scan and
+		// nothing to read — an empty list here is the true answer.
+		return SuggestResult{Source: suggestSourceLive, LiveReason: suggestLiveNoSnapshot}, nil
 	}
+	roots := onlyExistingPaths(configured)
 	var resolved []string
 	if tg, gErr := s.store.GetTargetByContainer(name); gErr == nil {
 		resolved = s.resolveExcludePatterns(tg.Excludes, in)
@@ -734,29 +932,32 @@ func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (Sug
 
 	res := SuggestResult{Source: suggestSourceSnapshot}
 	var cands []suggestCandidate
-	if source != suggestSourceLive {
-		snapCands, snapTime, ok, sErr := s.suggestSnapshotAggregate(ctx, name, roots, resolved, opts)
+	if source == suggestSourceLive {
+		res.LiveReason = suggestLiveRequested
+	} else {
+		snapCands, snapTime, ok, why, sErr := s.suggestSnapshotAggregate(ctx, name, configured, resolved, opts)
 		if sErr != nil {
 			return SuggestResult{Source: suggestSourceSnapshot}, sErr
 		}
 		if ok {
 			cands, res.SnapshotTime = snapCands, snapTime
 		} else {
-			source = suggestSourceLive // never backed up — only a walk can answer
+			source, res.LiveReason = suggestSourceLive, why // only a walk can answer
 		}
 	}
 	if source == suggestSourceLive {
 		res.Source = suggestSourceLive
+		if len(roots) == 0 {
+			// Folders are configured but none is reachable, and there was no snapshot
+			// to answer from. A walk has nothing to walk; reporting "nothing left to
+			// exclude" would be the loudest lie this panel can tell.
+			res.PathsUnavailable = true
+			res.Suggestions = []ExcludeSuggestion{}
+			return res, nil
+		}
 		sctx, cancel := context.WithTimeout(ctx, suggestScanTimeout)
 		defer cancel()
-		for _, root := range roots {
-			sc := scanExcludeCandidates(sctx, root, resolved, opts)
-			cands = append(cands, sc.cands...)
-			res.Truncated = res.Truncated || sc.truncated
-			if res.StoppedAt == "" {
-				res.StoppedAt = sc.stoppedAt
-			}
-		}
+		cands = append(cands, suggestLivePass(sctx, roots, resolved, opts, &res)...)
 	}
 
 	// Roots are collected in order, each pre-sorted; merge-sort the union so the
@@ -781,7 +982,61 @@ func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (Sug
 	if res.StoppedAt != "" {
 		res.StoppedAt = s.excludeLineFor(res.StoppedAt, in)
 	}
+	res.UnexaminedRoots = s.excludeLinesFor(res.UnexaminedRoots, in)
+	res.UnreadableRoots = s.excludeLinesFor(res.UnreadableRoots, in)
 	return res, nil
+}
+
+// suggestLivePass walks every root under ONE shared budget and records, into
+// res, everything about the run that no per-row flag can express.
+//
+// The shared budget is the reason this is not a plain loop over
+// scanExcludeCandidates: once it expires, every remaining root would abort on
+// its own first callback and contribute nothing, while StoppedAt still named the
+// FIRST root's stop point. With four backup folders that reads as a finished
+// scan of all four. A root never opened is named as such instead, and a root
+// that aborted AT its own top is counted the same way — the walk got nowhere
+// inside it either.
+//
+// Its own function so a test can drive the multi-root ordering with a context it
+// controls (context.WithTimeout cannot be made to expire on demand).
+func suggestLivePass(ctx context.Context, roots, resolved []string, o suggestOpts, res *SuggestResult) []suggestCandidate {
+	var cands []suggestCandidate
+	for _, root := range roots {
+		if ctx.Err() != nil {
+			res.Truncated = true
+			res.UnexaminedRoots = append(res.UnexaminedRoots, root)
+			continue
+		}
+		sc := scanExcludeCandidates(ctx, root, resolved, o)
+		cands = append(cands, sc.cands...)
+		if sc.rootUnreadable {
+			res.UnreadableRoots = append(res.UnreadableRoots, root)
+		}
+		if sc.truncated {
+			res.Truncated = true
+			if sc.stoppedAt == root {
+				res.UnexaminedRoots = append(res.UnexaminedRoots, root)
+			} else if res.StoppedAt == "" {
+				res.StoppedAt = sc.stoppedAt
+			}
+		}
+	}
+	return cands
+}
+
+// excludeLinesFor maps a list of scanned paths into the editor's vocabulary, so
+// a folder named in a banner reads the same way as the lines in the box above
+// it. Returns nil for an empty list (the JSON stays absent rather than []).
+func (s *Service) excludeLinesFor(paths []string, in model.Inspect) []string {
+	if len(paths) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(paths))
+	for _, p := range paths {
+		out = append(out, s.excludeLineFor(p, in))
+	}
+	return out
 }
 
 // handleExcludesSuggest runs the exclusion assistant's scan for one container
@@ -819,11 +1074,15 @@ func (h *Handler) handleExcludesSuggest(w http.ResponseWriter, r *http.Request) 
 		res.Suggestions = []ExcludeSuggestion{}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"suggestions":  res.Suggestions,
-		"truncated":    res.Truncated,
-		"source":       res.Source,
-		"snapshotTime": res.SnapshotTime,
-		"stoppedAt":    res.StoppedAt,
-		"indexFailed":  false,
+		"suggestions":      res.Suggestions,
+		"truncated":        res.Truncated,
+		"source":           res.Source,
+		"liveReason":       res.LiveReason,
+		"snapshotTime":     res.SnapshotTime,
+		"stoppedAt":        res.StoppedAt,
+		"unexaminedRoots":  res.UnexaminedRoots,
+		"unreadableRoots":  res.UnreadableRoots,
+		"pathsUnavailable": res.PathsUnavailable,
+		"indexFailed":      false,
 	}))
 }

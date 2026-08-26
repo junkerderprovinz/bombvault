@@ -7,7 +7,8 @@ import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { DropdownListbox } from "../components/DropdownListbox";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import { useT, stateLabel } from "../lib/i18n";
+import { useT, stateLabel, type TranslationKey } from "../lib/i18n";
+import { InfoBubble } from "../components/InfoBubble";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
@@ -21,7 +22,7 @@ import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { ToggleRow } from "./Settings";
 import { ProgressBar } from "../components/ProgressBar";
-import { tLtr, withLtrFragments, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { tLtr, withLtrFragments, withLtrPlaceholder, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
@@ -49,6 +50,36 @@ function formatTs(unix: number | null | undefined): string {
 function formatSnapshotWhen(rfc3339: string): string {
   const d = new Date(rfc3339);
   return Number.isNaN(d.getTime()) ? rfc3339 : d.toLocaleString();
+}
+
+// SNAPSHOT_STALE_MS — past this age the assistant says out loud that its list
+// describes the past. The date alone is not enough: a user reading "sizes come
+// from the backup of <date>" still has to notice the date is not today, and the
+// case that matters (a cache that exploded since the last backup, a junk folder
+// created yesterday) is invisible in a snapshot list — no row, no warning. One
+// day is the threshold because the schedule most installs run is nightly, so
+// anything older than that means the backup the panel is quoting is not even
+// the one the user thinks they made last night.
+const SNAPSHOT_STALE_MS = 24 * 60 * 60 * 1000;
+
+// snapshotIsStale reports whether a snapshot timestamp is old enough to warrant
+// the "check the folders as they are now" nudge. An unparseable value is never
+// stale — it would be a warning about a date nobody can read.
+function snapshotIsStale(rfc3339: string): boolean {
+  const d = new Date(rfc3339);
+  if (Number.isNaN(d.getTime())) return false;
+  return Date.now() - d.getTime() > SNAPSHOT_STALE_MS;
+}
+
+// liveSourceKey picks the sentence that says WHY the sizes came from a folder
+// scan. One string used to serve all three cases and claimed "this container has
+// no backup yet" on every one of them, including the folder scan offered after
+// an index read failed — a container that demonstrably HAS a backup, which is
+// the only reason its index was read at all.
+function liveSourceKey(reason: "no-snapshot" | "requested" | "not-in-snapshot"): TranslationKey {
+  if (reason === "requested") return "excludes.assistSourceLiveRequested";
+  if (reason === "not-in-snapshot") return "excludes.assistSourceLiveNotInSnapshot";
+  return "excludes.assistSourceLive";
 }
 
 // ---------------------------------------------------------------------------
@@ -1202,8 +1233,23 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
   // is rendered next to the list rather than treated as optional polish; the
   // live source is as of now but can stop early, inside stoppedAt.
   const [source, setSource] = useState<"snapshot" | "live">("live");
+  // Why the live walk ran. Three different facts, three different sentences —
+  // see liveSourceKey.
+  const [liveReason, setLiveReason] = useState<"no-snapshot" | "requested" | "not-in-snapshot">(
+    "no-snapshot"
+  );
   const [snapshotTime, setSnapshotTime] = useState("");
   const [stoppedAt, setStoppedAt] = useState("");
+  // Backup folders the walk never opened (its budget went on an earlier one) and
+  // ones it could not read at all. Neither can be expressed by a per-row flag:
+  // a folder that produced no rows has nothing to flag, and with several roots
+  // an unmentioned one reads as a finished scan of all of them (#175).
+  const [unexamined, setUnexamined] = useState<string[]>([]);
+  const [unreadable, setUnreadable] = useState<string[]>([]);
+  // The folders are configured but none is reachable (unmounted array/share) and
+  // there was no backup to read instead. "Nothing left to exclude" would be the
+  // loudest lie this panel can tell.
+  const [pathsUnavailable, setPathsUnavailable] = useState(false);
   // The backup index could not be read. Not a failed scan: the panel stays up
   // and offers the folder scan as an explicit second request.
   const [indexFailed, setIndexFailed] = useState(false);
@@ -1224,14 +1270,31 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
     setScanning(true);
     setScanFailed(false);
     setIndexFailed(false);
+    // Every "why is this list short" fact below describes ONE scan: the one that
+    // produced the list currently on screen. A rescan that fails leaves no list,
+    // so keeping the previous run's truncation banner up would describe a scan
+    // that no longer exists ("the scan hit its time limit inside /config/Media"
+    // sitting above an empty panel and a failure toast).
+    setTruncated(false);
+    setStoppedAt("");
+    setUnexamined([]);
+    setUnreadable([]);
+    setPathsUnavailable(false);
     try {
       const r = await suggestContainerExcludes(name, live ? "live" : undefined);
       if (r.ok) {
         setSuggestions(r.suggestions);
         setTruncated(r.truncated);
         setSource(r.source ?? "live");
+        // A scan the user asked for is known to be one HERE, whatever the server
+        // says: the fallback must never be the "no backup yet" sentence on a
+        // request that only exists because a backup was there to read.
+        setLiveReason(r.liveReason ?? (live ? "requested" : "no-snapshot"));
         setSnapshotTime(r.snapshotTime ?? "");
         setStoppedAt(r.stoppedAt ?? "");
+        setUnexamined(r.unexaminedRoots ?? []);
+        setUnreadable(r.unreadableRoots ?? []);
+        setPathsUnavailable(r.pathsUnavailable === true);
         setIndexFailed(r.indexFailed === true);
       } else {
         setSuggestions([]);
@@ -1364,16 +1427,49 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                     ? t("excludes.assistScan")
                     : t("excludes.assistRescan")}
               </button>
-              {truncated && !scanning && (
+              {/* The standing "what is on disk RIGHT NOW" question. A snapshot
+                  cannot answer it: a junk folder created since the last backup
+                  is not in the index, so it has no row and no warning at all,
+                  and "what can I stop backing up" is exactly the question a
+                  cache that exploded yesterday answers. Offered whenever the
+                  list came from a backup, not only after an index failure. */}
+              {!scanning && suggestions !== null && !scanFailed && source === "snapshot" && (
+                <button
+                  onClick={() => void scan(true)}
+                  className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+                >
+                  {t("excludes.assistScanCurrent")}
+                </button>
+              )}
+              {truncated && !scanning && stoppedAt && (
                 // Stays inline and stays a separate line from the per-row size
                 // flags below: a folder the walk never reached has no row at
                 // all, so "the rest was not examined" is a claim no per-row flag
-                // can make. It now names WHERE the list ends (#175).
+                // can make. It names WHERE the list ends (#175), and the folder
+                // is pinned LTR so the leading `/` does not migrate to the far
+                // end of the path in ar/he/fa.
                 <span className="text-xs text-statusWarn">
-                  {t("excludes.assistTruncated").replace("{path}", stoppedAt)}
+                  {withLtrPlaceholder(t("excludes.assistTruncated"), "{path}", stoppedAt)}
                 </span>
               )}
             </div>
+            {/* Whole backup folders that produced no rows, for two different
+                reasons. Both are claims no per-row flag can make, and with
+                several roots their absence read as a finished scan of all of
+                them. */}
+            {!scanning && unexamined.length > 0 && (
+              <p className="text-xs text-statusWarn">
+                {withLtrPlaceholder(t("excludes.assistUnexamined"), "{paths}", unexamined.join(", "))}
+              </p>
+            )}
+            {!scanning && unreadable.length > 0 && (
+              <p className="text-xs text-statusWarn">
+                {withLtrPlaceholder(t("excludes.assistUnreadable"), "{paths}", unreadable.join(", "))}
+              </p>
+            )}
+            {!scanning && pathsUnavailable && (
+              <p className="text-xs text-statusWarn">{t("excludes.assistPathsUnavailable")}</p>
+            )}
             {!scanning && indexFailed && (
               <div className="flex items-center gap-3">
                 <span className="text-xs text-statusWarn">{t("excludes.assistIndexFailed")}</span>
@@ -1385,7 +1481,10 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                 </button>
               </div>
             )}
-            {!scanning && suggestions !== null && !scanFailed && !indexFailed && openSuggestions.length === 0 && (
+            {/* "Nothing left to exclude" is a POSITIVE finding and may only be
+                said when the scan actually looked. pathsUnavailable means it
+                could not look at all. */}
+            {!scanning && suggestions !== null && !scanFailed && !indexFailed && !pathsUnavailable && openSuggestions.length === 0 && (
               <p className="text-xs text-carbon-textMuted">{t("excludes.assistNothingFound")}</p>
             )}
             {!scanning && openSuggestions.length > 0 && (
@@ -1418,11 +1517,16 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                     {sg.complete ? (
                       <span className="text-xs text-carbon-textSub whitespace-nowrap">{humanBytes(sg.sizeBytes)}</span>
                     ) : (
-                      <span
-                        title={t("excludes.assistSizeMinimumTip")}
-                        className="text-xs text-carbon-textMuted whitespace-nowrap"
-                      >
-                        {t("excludes.assistSizeAtLeast").replace("{size}", humanBytes(sg.sizeBytes))}
+                      // Same tone as the exact figure on purpose. It used to be
+                      // text-carbon-textMuted, which made the least legible text
+                      // in the row the one carrying the caveat, in both colour
+                      // modes. The explanation moved out of a native title= —
+                      // invisible on touch — into the house InfoBubble.
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                        <span className="text-xs text-carbon-textSub">
+                          {t("excludes.assistSizeAtLeast").replace("{size}", humanBytes(sg.sizeBytes))}
+                        </span>
+                        <InfoBubble tip={t("excludes.assistSizeMinimumTip")} />
                       </span>
                     )}
                     <button
@@ -1444,8 +1548,15 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
               <p className="text-xs text-carbon-textMuted">
                 {source === "snapshot"
                   ? t("excludes.assistSourceSnapshot").replace("{when}", formatSnapshotWhen(snapshotTime))
-                  : t("excludes.assistSourceLive")}
+                  : t(liveSourceKey(liveReason))}
               </p>
+            )}
+            {/* The date above is necessary and not sufficient. A snapshot list
+                cannot show a folder that did not exist when the backup ran, so
+                once the backup is old enough to matter the panel says so rather
+                than leaving the user to compare a timestamp. */}
+            {!scanning && suggestions !== null && !scanFailed && !indexFailed && source === "snapshot" && snapshotIsStale(snapshotTime) && (
+              <p className="text-xs text-statusWarn">{t("excludes.assistSnapshotStale")}</p>
             )}
             <p className="text-xs text-carbon-textSub">{t("excludes.assistCurrent")}</p>
             {currentLines.length === 0 ? (

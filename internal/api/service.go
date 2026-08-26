@@ -280,8 +280,13 @@ type Service struct {
 	// excludes), so a rescan is instant until the next backup writes a newer
 	// snapshot. One entry per container means the map is bounded by the container
 	// count — no eviction policy, no unbounded growth.
-	suggestMu    sync.Mutex
-	suggestCache map[string]suggestCacheEntry
+	// suggestFlights is the singleflight for that cache: one in-flight snapshot
+	// aggregate per key, so a refresh, a second browser tab or two viewers do not
+	// each spawn their own `restic ls` against the same repo inside a
+	// memory-capped container. Guarded by suggestMu as well.
+	suggestMu      sync.Mutex
+	suggestCache   map[string]suggestCacheEntry
+	suggestFlights map[string]*suggestFlight
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
@@ -362,6 +367,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		runCancels:        map[string]context.CancelFunc{},
 		offsiteOverBudget: map[string]bool{},
 		suggestCache:      map[string]suggestCacheEntry{},
+		suggestFlights:    map[string]*suggestFlight{},
 	}
 }
 
@@ -3521,16 +3527,30 @@ func onlyExistingPaths(paths []string) []string {
 	return out
 }
 
+// configuredBackupPaths returns the paths a container backup is CONFIGURED to
+// use — the explicit folder selection if set, otherwise the automatic appdata
+// detection — WITHOUT the on-disk filter effectiveBackupPaths applies.
+//
+// The distinction matters to any reader that can answer from the backup rather
+// than from the filesystem (the exclusion assistant's snapshot feeder): an
+// unmounted array makes every configured path fail its stat, and treating that
+// as "this container has no folders" turns a temporarily unreachable share into
+// a confident empty answer (#175 at root granularity). An empty list here means
+// genuinely nothing is configured, which is the only case that IS "nothing".
+func (s *Service) configuredBackupPaths(name string, in model.Inspect) []string {
+	chosen := s.resolveAppdataPaths(name, in)
+	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
+		chosen = existing.SelectedPaths
+	}
+	return chosen
+}
+
 // effectiveBackupPaths returns the paths a container backup/export actually uses:
 // the explicit folder selection if set, otherwise the automatic appdata
 // detection, filtered to those that exist on disk (a stateless container ends up
 // with an empty list).
 func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
-	chosen := s.resolveAppdataPaths(name, in)
-	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
-		chosen = existing.SelectedPaths
-	}
-	return onlyExistingPaths(chosen)
+	return onlyExistingPaths(s.configuredBackupPaths(name, in))
 }
 
 // expectsData reports whether a container ought to have backup data: it has an
