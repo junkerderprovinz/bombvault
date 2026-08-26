@@ -20,6 +20,7 @@ import { useToast } from "../lib/toast";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconTrash } from "../components/Sidebar";
+import { tLtr } from "../lib/ltrFragments";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -289,7 +290,7 @@ function ConfigSettingsCard({
 
       <ToggleRow
         label={t("config.enabled")}
-        description={t("config.enabledHint")}
+        description={tLtr(t, "config.enabledHint")}
         checked={settings.configEnabled}
         onChange={(v) => setSettings((prev) => ({ ...prev, configEnabled: v }))}
       />
@@ -581,7 +582,7 @@ export function Config() {
         <h2 className="flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={1} insetStart={5}>
             {t("config.backupTitle")}
-            <InfoBubble tip={t("config.backupHint")} onAccent />
+            <InfoBubble tip={tLtr(t, "config.backupHint")} onAccent />
           </Badge>
         </h2>
         <div className="relative overflow-hidden bg-carbon-surface rounded-card p-5 flex flex-col gap-4">

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { TranslationKey } from "./i18n";
 
 // ---------------------------------------------------------------------------
 // withLtrFragments — isolates a literal technical substring (a path) that is
@@ -135,6 +136,56 @@ export const EXCLUDES_HINT_LTR_FRAGMENTS = ["/config/Library/.../Cache"] as cons
 export const FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS = ["/mnt/zfs"] as const;
 
 // ---------------------------------------------------------------------------
+// The rest of the app's path-in-prose strings.
+//
+// The three lists above were the ones the RTL sweep happened to reach. They
+// were never the only ones: fourteen more translated strings bake a
+// leading-`/` path into their prose and hit exactly the same bug, so in ar/he/
+// fa the Flash tab's "Back up" bubble read "boot/" instead of "/boot", the
+// Storage tab's cache card said "config/", and so on. The coverage guard in
+// ltrFragments.test.ts now derives the full set from `en` rather than trusting
+// this list to be complete, so the next hint that mentions a path fails the
+// build until it is either registered here or explicitly exempted.
+//
+// Every fragment below was checked to appear byte-for-byte in all 42 tables
+// (the parity test in ltrFragments.test.ts re-checks it on every run, which is
+// what keeps a translator's retyped path from silently un-protecting one
+// locale).
+// ---------------------------------------------------------------------------
+
+/** BombVault's own config volume, named in prose by four different cards. */
+export const CONFIG_VOLUME_LTR_FRAGMENTS = ["/config"] as const;
+
+/** The Unraid USB mount, named by the Flash tab and its schedule/settings rows. */
+export const BOOT_VOLUME_LTR_FRAGMENTS = ["/boot"] as const;
+
+/** notify.unraidPlatformMismatch names BOTH the host path and the in-container
+ *  one, so the longer `/host/boot` is listed first — see the ordering rule in
+ *  withLtrFragments' own doc. */
+export const UNRAID_PLATFORM_MISMATCH_LTR_FRAGMENTS = ["/host/boot", "/boot"] as const;
+
+/** excludes.placeholder's example path (the input's own placeholder text). */
+export const EXCLUDES_PLACEHOLDER_LTR_FRAGMENTS = ["/config/Library/Application"] as const;
+
+/** The Prometheus scrape endpoint, named by the metrics toggle and its hint. */
+export const METRICS_ENDPOINT_LTR_FRAGMENTS = ["/metrics"] as const;
+
+/** Apprise's endpoint. Only the `/notify/` prefix is pinned: the `<key>`
+ *  placeholder after it IS translated in some locales (sl "ključ", sr "кључ"),
+ *  so a longer fragment would silently stop matching there — and the prefix is
+ *  where the leading `/` that misrenders actually lives. */
+export const APPRISE_ENDPOINT_LTR_FRAGMENTS = ["/notify/"] as const;
+
+/** The authorized-keys path the VM SSH card tells the user to append to. */
+export const VM_SSH_KEY_PATH_LTR_FRAGMENTS = ["/root/.ssh/authorized_keys"] as const;
+
+/** cadence.cronInvalid's worked example. Not a path, but the same bug: a run of
+ *  digits, spaces, `*` and `/` is entirely weak/neutral bidi classes, so an RTL
+ *  paragraph reorders the whole expression and the user is shown a cron line
+ *  they cannot type back. */
+export const CRON_EXAMPLE_LTR_FRAGMENTS = ["0 */6 * * *"] as const;
+
+// ---------------------------------------------------------------------------
 // Which translation key each fragment list belongs to. The whole mechanism
 // above matches by LITERAL SUBSTRING against whatever `t()` returned, so its
 // one failure mode is silent: if a translator ever retypes the path in one
@@ -154,4 +205,43 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "offsite.repoLocalHint": REPO_LOCAL_HINT_LTR_FRAGMENTS,
   "excludes.hint": EXCLUDES_HINT_LTR_FRAGMENTS,
   "recovery.foreignAppdataDestHint": FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
+  "config.backupHint": CONFIG_VOLUME_LTR_FRAGMENTS,
+  "config.enabledHint": CONFIG_VOLUME_LTR_FRAGMENTS,
+  "containers.discoverHint": CONFIG_VOLUME_LTR_FRAGMENTS,
+  "settings.cacheHint": CONFIG_VOLUME_LTR_FRAGMENTS,
+  "excludes.placeholder": EXCLUDES_PLACEHOLDER_LTR_FRAGMENTS,
+  "flash.backupHint": BOOT_VOLUME_LTR_FRAGMENTS,
+  "flash.restoreNote": BOOT_VOLUME_LTR_FRAGMENTS,
+  "flash.subtitle": BOOT_VOLUME_LTR_FRAGMENTS,
+  "jobs.flashScheduleHint": BOOT_VOLUME_LTR_FRAGMENTS,
+  "settings.flashEnabledHint": BOOT_VOLUME_LTR_FRAGMENTS,
+  "notify.unraidPlatformMismatch": UNRAID_PLATFORM_MISMATCH_LTR_FRAGMENTS,
+  "notify.appriseHint": APPRISE_ENDPOINT_LTR_FRAGMENTS,
+  "settings.metricsEnable": METRICS_ENDPOINT_LTR_FRAGMENTS,
+  "settings.metricsHint": METRICS_ENDPOINT_LTR_FRAGMENTS,
+  "vm.ssh.publicKey": VM_SSH_KEY_PATH_LTR_FRAGMENTS,
+  "cadence.cronInvalid": CRON_EXAMPLE_LTR_FRAGMENTS,
 } as const satisfies Record<string, readonly string[]>;
+
+/**
+ * tLtr — read a translation and isolate its registered technical fragments in
+ * one step: `tip={tLtr(t, "flash.backupHint")}`.
+ *
+ * It exists so a call site cannot get this half right. The isolation only
+ * works if the render site remembers to apply it, and "remember to wrap this
+ * one" is precisely what left fourteen strings unprotected while the mechanism
+ * to protect them already existed. A key with no registered fragments passes
+ * straight through, so this is safe to use for any hint and there is no
+ * decision for a caller to get wrong.
+ *
+ * It returns a plain string (withLtrIsolates' Unicode-isolate form), which is
+ * what the tip/hint/label/placeholder props it feeds require — those render as
+ * text nodes and double as accessible names, so a `<span dir="ltr">` has
+ * nowhere to live. withLtrFragments' span form stays for the three call sites
+ * that render into real JSX and want the mono styling with it.
+ */
+export function tLtr(t: (key: TranslationKey) => string, key: TranslationKey): string {
+  const fragments = (LTR_FRAGMENTS_BY_KEY as Record<string, readonly string[]>)[key];
+  const text = t(key);
+  return fragments ? withLtrIsolates(text, fragments) : text;
+}

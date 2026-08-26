@@ -3,6 +3,7 @@ import { useT } from "../lib/i18n";
 import { isValidCronExpression, nextCronFires } from "../lib/cron";
 import { Selector } from "./Selector";
 import { TimePicker } from "./TimePicker";
+import { tLtr } from "../lib/ltrFragments";
 
 // ---------------------------------------------------------------------------
 // Schedule cadence builder (shared by the Plans tab and the Settings drills card)
@@ -566,7 +567,7 @@ function CronEditor({
       </div>
 
       {!valid ? (
-        <p className="text-xs text-statusFail group-disabled:opacity-50">{t("cadence.cronInvalid")}</p>
+        <p className="text-xs text-statusFail group-disabled:opacity-50">{tLtr(t, "cadence.cronInvalid")}</p>
       ) : fires && fires.length >= 2 ? (
         <p className="text-xs text-carbon-textSub group-disabled:opacity-50">
           {t("cadence.cronNext")

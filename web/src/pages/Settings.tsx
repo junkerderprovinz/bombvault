@@ -31,7 +31,7 @@ import type { Settings, NotifyConfig, RestoreDrill, Container, VM, FileSetView, 
 import { useT, type TranslationKey } from "../lib/i18n";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
-import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
+import { tLtr, withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { randomId } from "../lib/uuid";
 import { useAdvanced } from "../lib/advanced";
 import { SpikePanel } from "../components/SpikePanel";
@@ -1585,7 +1585,7 @@ chmod 600 /root/.ssh/authorized_keys`
           {t("vm.ssh.host")}: <span dir="ltr" className="font-mono text-start">{host || "—"}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-carbon-textMuted">{t("vm.ssh.publicKey")}</span>
+          <span className="text-xs text-carbon-textMuted">{tLtr(t, "vm.ssh.publicKey")}</span>
           <div className="flex items-start gap-2">
             <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {pub || "—"}
@@ -3744,7 +3744,7 @@ function NotifyCard({
           on the toggle (never clicking "Send test" below) still finds out. */}
       {cfg.unraid && platformKind !== "unraid" && (
         <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-          {t("notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
+          {tLtr(t, "notify.unraidPlatformMismatch").replace("{platform}", platformKind)}
         </div>
       )}
 
@@ -3842,7 +3842,7 @@ function NotifyCard({
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
         <ToggleRow
           label={t("notify.apprise")}
-          hint={t("notify.appriseHint")}
+          hint={tLtr(t, "notify.appriseHint")}
           checked={cfg.appriseEnabled}
           onChange={(v) => setImmediate("appriseEnabled", v)}
           hueIndex={1}
@@ -4981,7 +4981,7 @@ function FlashSection({
     // list, so the hint states what a Flash backup actually covers rather
     // than explaining a list). Same Task 3 `hueIndex` threaded into
     // CadenceBuilder below.
-    <Card title={t("jobs.flashSection")} hint={t("jobs.flashScheduleHint")} hueIndex={hueIndex}>
+    <Card title={t("jobs.flashSection")} hint={tLtr(t, "jobs.flashScheduleHint")} hueIndex={hueIndex}>
       <ScheduleRow schedule={schedule} />
       <div className="rounded-card bg-carbon-surface2 p-4">
         <CadenceBuilder
@@ -7543,7 +7543,7 @@ export function SettingsPage() {
         />
         <ToggleRow
           label={t("settings.flashEnabled")}
-          hint={t("settings.flashEnabledHint")}
+          hint={tLtr(t, "settings.flashEnabledHint")}
           checked={settings.flashEnabled}
           onChange={(v) => void toggleDomainEnabled("flashEnabled", v)}
           disabled={domainToggleBusy.flashEnabled}
@@ -8055,7 +8055,7 @@ export function SettingsPage() {
           while Advanced was off. Plain `&&` short-circuits properly, exactly
           like every other conditional Card on this page. */}
       {tab === "storage" && advanced && (
-      <Card title={t("settings.cacheTitle")} hint={t("settings.cacheHint")} hueIndex={nextHue()}>
+      <Card title={t("settings.cacheTitle")} hint={tLtr(t, "settings.cacheHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
           <input
@@ -8589,8 +8589,8 @@ export function SettingsPage() {
             covers it" reasoning this row's OLD comment gave, just now living
             on the toggle's `hint` instead of a Card-level paragraph. */}
         <ToggleRow
-          label={t("settings.metricsEnable")}
-          hint={t("settings.metricsHint")}
+          label={tLtr(t, "settings.metricsEnable")}
+          hint={tLtr(t, "settings.metricsHint")}
           checked={settings.metricsEnabled}
           onChange={(v) => void autoSaveToggle("metricsEnabled", v, setMetricsSaveState, setMetricsSaveError)}
           disabled={fieldBusy.metricsEnabled}
