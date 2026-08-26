@@ -46,6 +46,15 @@ func (r *Repo) StartRun(targetID, kind string) (string, error) {
 }
 
 // FinishRun updates a run with its final status, snapshot ID, bytes, and optional error.
+//
+// It is also the ONLY writer of runs.completed, which is the whole point of that
+// column: reaching here means the operation ran to its own conclusion and
+// recorded the verdict, whatever the verdict was. The two writers that stamp
+// finished_at WITHOUT that being true (ReapInterruptedRuns, FailRunningRun)
+// leave completed at its 0 default, so a query that must distinguish "the pass
+// ran" from "the row was closed out for a process that died mid-pass" can ask
+// structurally instead of pattern-matching an error string. See
+// LastEverythingPass, the query that needs it.
 func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg string) error {
 	now := time.Now().Unix()
 	var snap, errCol any
@@ -56,7 +65,7 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 		errCol = errMsg
 	}
 	res, err := r.db.Exec(`
-		UPDATE runs SET status = ?, finished_at = ?, snapshot_id = ?, bytes = ?, error = ?
+		UPDATE runs SET status = ?, finished_at = ?, snapshot_id = ?, bytes = ?, error = ?, completed = 1
 		WHERE id = ?`,
 		status, now, snap, bytes, errCol, id,
 	)
@@ -93,6 +102,10 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 // of the backup's own. It self-heals — the download's own FinishRun overwrites
 // the row by id once it completes — so the only real damage is a transiently
 // wrong Activity Log entry, never lost data.
+//
+// It deliberately leaves runs.completed at 0: the run it closes out did NOT
+// reach its own conclusion, and a due-gate that measures "when did this last
+// run" must not read the panic instant as a completed pass.
 func (r *Repo) FailRunningRun(targetID, errMsg string) (int64, error) {
 	res, err := r.db.Exec(`
 		UPDATE runs SET status = 'failed', finished_at = ?, error = ?
@@ -129,6 +142,12 @@ func (r *Repo) SetRunGroup(runID, groupID string) error {
 // crashed or was updated mid-backup) and can never still be in progress. Without
 // this, such a run keeps a NULL bytes/finished_at and shows a perpetual "running"
 // chip on the dashboard. Returns how many runs were reaped.
+//
+// Like FailRunningRun it leaves runs.completed at 0. The finished_at it writes is
+// the RESTART instant, not the end of the work: an "everything" pass runs for
+// hours, so a reboot mid-pass is exactly the case where a due-gate that trusted
+// finished_at alone would call the abandoned pass "the pass that ran" and skip a
+// whole interval of whole-server backups. See LastEverythingPass.
 func (r *Repo) ReapInterruptedRuns() (int64, error) {
 	res, err := r.db.Exec(`
 		UPDATE runs
@@ -325,7 +344,20 @@ const EverythingTargetID = "everything"
 
 // LastEverythingPass drives the "Backup Everything" pass's everyN due-gate: when
 // the pass last COMPLETED, whatever it concluded. A run that is still running
-// (finished_at NULL) does not count; a run that finished does, success or not.
+// does not count; a run that reached its own end does, success or not.
+//
+// "Reached its own end" is runs.completed, not finished_at, and the distinction
+// is the whole gate. Two writers stamp finished_at on a pass that never
+// completed: ReapInterruptedRuns closes out every 'running' row at EVERY
+// startup, and FailRunningRun does the same on the panic path. The parent run
+// here is held open across containers → vms → flash → files → config plus the
+// batched prune and off-site replication — hours — so a reboot or a container
+// update mid-pass is an ordinary event, and it writes a finished_at at the
+// RESTART instant. Read as "the pass ran", that stamp shuts the everyN gate for
+// the next N days AND the anacron catch-up along with it (the stamp lies after
+// the missed fire, so nothing looks missed): a whole interval of whole-server
+// backups skipped, silently, because the box rebooted. completed is set by
+// FinishRun alone, so only a pass that recorded its own verdict answers here.
 //
 // The status is deliberately not part of it. The parent run is all-or-nothing —
 // "success" iff EVERY domain step had zero item failures (internal/api/
@@ -348,7 +380,7 @@ func (r *Repo) LastEverythingPass() (time.Time, error) {
 	row := r.db.QueryRow(`
 		SELECT finished_at
 		FROM runs
-		WHERE kind = 'backup' AND finished_at IS NOT NULL AND target_id = ?`+sanePastStamp+`
+		WHERE kind = 'backup' AND completed = 1 AND finished_at IS NOT NULL AND target_id = ?`+sanePastStamp+`
 		ORDER BY finished_at DESC
 		LIMIT 1`, EverythingTargetID, saneStampCutoff())
 	return scanLastBackupTime(row, "LastEverythingPass")
