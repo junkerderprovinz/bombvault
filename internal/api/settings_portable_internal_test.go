@@ -28,8 +28,11 @@ func newPortableHandler(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	}
 	st := store.New(db)
 	// DataDir points at a temp dir so SetRcloneConf writes its 0600 rclone.conf
-	// there, never into the package working directory.
-	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir()}
+	// there, never into the package working directory. HostMountRoot carries the
+	// production default because the import path now applies the SAME repo-path
+	// containment the settings save does, and a handler without a root would
+	// refuse every relative path this file seeds.
+	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir(), HostMountRoot: "/host/user"}
 	svc := &Service{cfg: cfg, store: st}
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
 }

@@ -188,7 +188,7 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if msg := validateExport(exp); msg != "" {
+	if msg := validateExport(exp, h.cfg.HostMountRoot); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
@@ -235,7 +235,16 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 
 // validateExport checks the envelope is a supported, structurally-sane export.
 // Returns a user-facing error string, or "" when valid.
-func validateExport(exp settingsExport) string {
+//
+// Every check here is one the SETTINGS SAVE also enforces, and that is the whole
+// contract: an import must not be able to persist a row the UI's own save path
+// then refuses. The SPA always PUTs the full settings object, so a single field
+// this let through but handlePutSettings rejects blocks EVERY later save from
+// EVERY card — including the card that would fix it. The everyN guard below was
+// the first field to be shared for that reason; the path and DR-target guards
+// are now shared the same way, through the same functions handlePutSettings
+// calls, so extending one cannot leave the other behind.
+func validateExport(exp settingsExport, mountRoot string) string {
 	if exp.SchemaVersion != settingsExportSchema {
 		return fmt.Sprintf("unsupported schemaVersion %d (this build reads version %d)", exp.SchemaVersion, settingsExportSchema)
 	}
@@ -264,6 +273,21 @@ func validateExport(exp settingsExport) string {
 	// left to drift out of step.
 	if msg := rejectEveryNSchedules(exp.Settings); msg != "" {
 		return "invalid schedule in settings: " + msg
+	}
+	// Repo locations. Without this an imported `containersPath` of
+	// "/mnt/user/backups" — absolute rather than the required relative subpath,
+	// which is exactly what a file produced on a box with a different mount root
+	// carries — persisted happily and then made every later settings save fail
+	// with "invalid backup path: must be a relative subpath under the mount root".
+	// The user could not change ANY setting, including the path itself, without
+	// editing the database.
+	if msg := rejectInvalidSettingsPaths(exp.Settings, mountRoot); msg != "" {
+		return "invalid path in settings: " + msg
+	}
+	// The DR-drill targets, which had the same asymmetry: validated on PUT,
+	// unchecked on import.
+	if msg := rejectInvalidSettingsNames(exp.Settings); msg != "" {
+		return "invalid settings: " + msg
 	}
 	return ""
 }
