@@ -95,6 +95,10 @@ describe("fireAndWaitRun busy-retry (#154)", () => {
       kind: "backup",
       matchRun: (r) => r.domain === "vm" && r.target === "Windows Server 2022",
       start,
+      // fireAndWaitRun now takes the translate function for its failure tail
+      // (bombvault/user-message-is-translated). This test never reaches that
+      // tail, so identity is enough and keeps the assertions reading in keys.
+      t: ((key: string) => key) as never,
     });
 
     // Fast-forward well past the old 30s cap (retry) AND the poll interval

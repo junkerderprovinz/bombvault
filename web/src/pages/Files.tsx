@@ -597,11 +597,11 @@ function FileSetSnapshotRow({
       const res = await deleteSnapshot("files", snap.id, source);
       if (res.ok) onDeleted();
       else {
-        push(res.error ?? "Delete failed", "fail");
+        push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Delete failed", "fail");
+      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setDeleting(false);
@@ -722,11 +722,11 @@ function FileSetRestorePanel({
     fileSetSnapshots(set.id, source)
       .then((res) => {
         if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? "Failed to load backups");
+        else setError(res.error ?? t("common.loadBackupsFailed"));
       })
-      .catch(() => setError("Failed to load backups"))
+      .catch(() => setError(t("common.loadBackupsFailed")))
       .finally(() => setLoading(false));
-  }, [open, set.id, source, reloadTick]);
+  }, [open, set.id, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   // BUG FIX (GlimStone follow-up pass, v8.0.0): "Delete all" is a one-shot
   // action failure — it used to be routed through the section-load `error`
@@ -750,7 +750,7 @@ function FileSetRestorePanel({
     deleteFileSetBackups(set.id)
       .then((res) => {
         if (!res.ok) {
-          push(res.error ?? "Failed to delete backups", "fail");
+          push(res.error ?? t("common.deleteBackupsFailed"), "fail");
           setShakeDeleteAll((n) => n + 1);
           setReloadTick((n) => n + 1);
           return;
@@ -760,7 +760,7 @@ function FileSetRestorePanel({
         onSetsChanged();
       })
       .catch(() => {
-        push("Failed to delete backups", "fail");
+        push(t("common.deleteBackupsFailed"), "fail");
         setShakeDeleteAll((n) => n + 1);
         setReloadTick((n) => n + 1);
       })
@@ -1107,11 +1107,11 @@ function FileSetRow({
       const res = await deleteFileSet(set.id);
       if (res.ok) onRefresh();
       else {
-        push(res.error ?? "Remove failed", "fail");
+        push(res.error ?? t("common.removeFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Remove failed", "fail");
+      push(err instanceof Error ? err.message : t("common.removeFailed"), "fail");
       setShake((n) => n + 1);
     } finally {
       setRemoving(false);
@@ -1339,9 +1339,9 @@ export function Files() {
           // Clear any stale banner from a previous failed load — a later success
           // must not leave "Failed to load file sets" up while the UI works.
           setError(null);
-        } else setError(res.error ?? "Failed to load file sets");
+        } else setError(res.error ?? t("files.loadSetsFailed"));
       })
-      .catch(() => setError("Failed to load file sets"));
+      .catch(() => setError(t("files.loadSetsFailed")));
   }
 
   useEffect(() => {
@@ -1367,7 +1367,7 @@ export function Files() {
       })
       .catch(() => undefined);
     void Promise.all([sets, settings]).finally(() => setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
   /** Opens the create dialog pre-filled with the "Host system config" preset
    *  (still fully editable — Save persists through the SAME create-file-set
@@ -1398,11 +1398,11 @@ export function Files() {
         push(`+${res.discovered ?? 0}`, "success");
         await loadSets();
       } else {
-        push(res.error ?? "Discover failed", "fail");
+        push(res.error ?? t("common.discoverFailed"), "fail");
         setShakeDiscover((n) => n + 1);
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : "Discover failed", "fail");
+      push(err instanceof Error ? err.message : t("common.discoverFailed"), "fail");
       setShakeDiscover((n) => n + 1);
     } finally {
       setDiscovering(false);

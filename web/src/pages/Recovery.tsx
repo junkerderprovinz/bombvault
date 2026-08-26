@@ -221,6 +221,7 @@ function FileSetRecoveryRow({
         kind: "restore",
         matchRun: (r) => r.domain === "files" && r.target === set.name,
         start: () => restoreFileSet(set.id, latest.id, true, target.trim()),
+        t,
       });
       if (res.ok) {
         push(t("common.done"), "success");
@@ -499,6 +500,7 @@ function ForeignItemRow({
             // Containers only: confirm overwriting a non-empty destination (#125).
             overwrite: domain === "containers" ? overwrite : undefined,
           }),
+        t,
       });
       if (res.ok) {
         push(t("common.done"), "success");
@@ -1778,6 +1780,7 @@ export default function Recovery() {
           kind: "restore",
           matchRun: (r) => r.domain === "container" && r.target === c.name,
           start: () => restore(c.name, "latest", true, undefined, true),
+          t,
         });
         if (res.ok) ok++;
         else fail++;
@@ -1790,6 +1793,7 @@ export default function Recovery() {
           kind: "restore",
           matchRun: (r) => r.domain === "vm" && r.target === v.libvirtName,
           start: () => restoreVM(v.libvirtName, "latest", true, undefined, true),
+          t,
         });
         if (res.ok) ok++;
         else fail++;
