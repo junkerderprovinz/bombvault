@@ -397,6 +397,41 @@ func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptio
 	return RepoAbsent, ""
 }
 
+// repoAbsenceMarkers are the substrings that PROVE the backend answered and the
+// object restic asked for is not there. This is an ALLOW-list, and that
+// direction is the whole point: every phrasing nobody listed here resolves to
+// "unreachable", which is the safe verdict, instead of to "absent", which is
+// the dangerous one.
+//
+// The list was a DENY-list first (transportFailureMarkers below) and that shape
+// was wrong by construction. It enumerated the ways a probe can fail to reach a
+// backend, so any failure nobody had thought of — a 502 from the reverse proxy
+// in front of a rest-server that is down, an rclone remote that does not exist
+// yet on a fresh recovery instance — fell through to "absent" while the doc
+// comment promised the opposite. A backend cannot report "there is nothing
+// here" without saying so; a broken one says a hundred other things. So the
+// signal must be the statement, never the absence of a counter-statement.
+//
+// Every entry is a phrasing of "the named object does not exist", taken from
+// what the backends actually print (the rest one is verbatim from the live test
+// box, see listsnapshots_internal_test.go):
+//
+//	rest      Fatal: unable to open config file: <config/> does not exist
+//	restic    Fatal: repository does not exist: unable to open config file
+//	s3/minio  Stat: The specified key does not exist. / NoSuchKey
+//	b2        b2_download_file_by_name: 404: … does not exist
+//	azure     BlobNotFound
+//	gcs       storage: object doesn't exist
+//	sftp/swift  file does not exist / Object Not Found / no such file or directory
+//
+// A generic "404 Not Found" is deliberately NOT here: a reverse proxy answers
+// that for a mis-routed path in front of a repository that exists.
+var repoAbsenceMarkers = []string{
+	"does not exist", "doesn't exist", "no such file or directory",
+	"file not found", "object not found", "key not found",
+	"nosuchkey", "nosuchbucket", "blobnotfound",
+}
+
 // transportFailureMarkers are substrings that prove a probe failed to REACH the
 // backend, rather than reaching it and finding no repository. Caught on the live
 // test box: pointing an off-site repo at a host with nothing listening makes
@@ -413,6 +448,13 @@ func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptio
 // "absent" means "nothing exists, your choice decides", so a dead REST server
 // would license the user to pick a mode and have BombVault create a second,
 // empty repository beside backups that were there all along.
+//
+// It is kept as a VETO on top of the allow-list above, not as the decision:
+// "dial tcp: lookup backup.example: no such host" is a dead name that happens
+// to phrase itself like a missing object, and "open /mnt/x/config: permission
+// denied: no such file or directory" is the kind of compound message a layered
+// backend can produce. A message that names a transport failure is never
+// evidence of an empty location, whatever else it also says.
 var transportFailureMarkers = []string{
 	"dial tcp", "no route to host", "connection refused", "connection reset",
 	"network is unreachable", "no such host", "i/o timeout", "timeout",
@@ -425,14 +467,16 @@ var transportFailureMarkers = []string{
 
 // isRepoDefinitelyAbsent reports whether err means "this location is reachable
 // and holds no repository" — and nothing else. It is deliberately STRICTER than
-// isRepoUninitialized: the uninitialized signal must be present AND no transport
+// isRepoUninitialized: the uninitialized signal must be present, the backend
+// must have SAID the object is not there (repoAbsenceMarkers), and no transport
 // failure may be named alongside it.
 //
 // The asymmetry is intentional. Guessing "unreachable" when a repo is merely
 // absent costs the user one visible "can't tell" line and a switch they set
 // themselves. Guessing "absent" when a repo is merely unreachable can silently
 // create an empty repository next to real backups. So anything ambiguous
-// resolves to unreachable.
+// resolves to unreachable — and with the allow-list above, "ambiguous" is the
+// DEFAULT rather than a case someone has to have enumerated in advance.
 func isRepoDefinitelyAbsent(err error) bool {
 	if !isRepoUninitialized(err) {
 		return false
@@ -443,7 +487,12 @@ func isRepoDefinitelyAbsent(err error) bool {
 			return false
 		}
 	}
-	return true
+	for _, marker := range repoAbsenceMarkers {
+		if strings.Contains(msg, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 // foldEncryption folds the per-repository states into one verdict.
