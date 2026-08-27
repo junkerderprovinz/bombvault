@@ -110,6 +110,15 @@ function collectStrings(node, out, context, seen) {
   else if (node.type === "TemplateLiteral") {
     for (const q of node.quasis) if (q.value?.cooked) out.push(q.value.cooked);
     for (const e of node.expressions) collectStrings(e, out, context, seen);
+  } else if (node.type === "MemberExpression") {
+    // A property ACCESS is not the whole map. Resolving `S.btn` by expanding its
+    // object through constInitializer pulled in every string of the class map,
+    // so all three class-reading rules (which run at "error") judged a className
+    // by strings the element never referenced. The property name is the useful
+    // part and is collected on its own when it is a plain literal key; the
+    // object is deliberately not followed.
+    if (node.computed) collectStrings(node.property, out, context, seen);
+    return;
   } else if (node.type === "Identifier" && context && seen && !seen.has(node.name)) {
     seen.add(node.name);
     collectStrings(constInitializer(node, context), out, context, seen);

@@ -44,7 +44,7 @@
 // a test that had never been written; it now names one that has, and that has
 // been seen to fail on exactly the shape above.)
 // ---------------------------------------------------------------------------
-import { escapeHatch, getAttr, hasException } from "./helpers.js";
+import { baseUtility, escapeHatch, getAttr, hasException } from "./helpers.js";
 
 const RULE_ID = "page-uses-page-shell";
 
@@ -67,8 +67,13 @@ const PAGE_WIDTH_CAP = /^max-w-\d*xl$/;
 const CARD_RHYTHM_GAP = /^gap(?:-x|-y)?-(\d+)$/;
 
 function isHandRolledShell(tokens) {
-  const has = (re) => tokens.some((t) => re.test(t));
-  const gap = tokens.map((t) => CARD_RHYTHM_GAP.exec(t)).find(Boolean);
+  // Matched on the BASE utility, so a variant prefix cannot hide a token from
+  // the patterns: they are ^-anchored, and `md:max-w-6xl` therefore missed
+  // PAGE_WIDTH_CAP entirely. helpers.js exports baseUtility for exactly this and
+  // every sibling rule already uses it.
+  const bases = tokens.map(baseUtility);
+  const has = (re) => bases.some((t) => re.test(t));
+  const gap = bases.map((t) => CARD_RHYTHM_GAP.exec(t)).find(Boolean);
   return has(PAGE_WIDTH_CAP) && has(/^flex-col$/) && gap !== undefined && Number(gap[1]) >= 5;
 }
 
@@ -132,12 +137,35 @@ export default {
         }
       } else if (isDefault && (decl.type === "ArrowFunctionExpression" || decl.type === "FunctionExpression")) {
         candidates.push(decl);
+      } else if (isDefault && decl.type === "Identifier") {
+        // `export default Fleet;` — the function is declared elsewhere in the
+        // file. Dropping it here meant the whole page went unchecked, which is
+        // the same silent pass the arrow-body gap produced.
+        const scope = context.sourceCode.getScope(decl);
+        const variable = scope.references.find((r) => r.identifier === decl)?.resolved
+          ?? scope.set.get(decl.name);
+        for (const def of variable?.defs ?? []) {
+          if (def.node?.type === "FunctionDeclaration") candidates.push(def.node);
+          else if (
+            def.node?.init &&
+            (def.node.init.type === "ArrowFunctionExpression" || def.node.init.type === "FunctionExpression")
+          ) {
+            candidates.push(def.node.init);
+          }
+        }
       }
     }
 
     /** The `return` statements written directly in a function's own body. */
     function ownReturns(fn) {
       const out = [];
+      // An arrow with an EXPRESSION body has no ReturnStatement at all, so the
+      // walk below found nothing and the component was skipped in silence — a
+      // page written as `const Fleet = () => (<div>…</div>)` was never checked.
+      // Synthesised here as the return it is.
+      if (fn.type === "ArrowFunctionExpression" && fn.body?.type !== "BlockStatement") {
+        return [{ type: "ReturnStatement", argument: fn.body }];
+      }
       (function walk(node) {
         if (!node || typeof node !== "object") return;
         if (Array.isArray(node)) return node.forEach(walk);
