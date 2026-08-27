@@ -1,12 +1,10 @@
 # BombVault
 
-[BombVault](https://github.com/junkerderprovinz/bombvault) is a self-hosted backup and full disaster-recovery tool for Docker containers and KVM/libvirt VMs, powered by [restic](https://restic.net). It runs as a single container with a web UI: back up appdata and VM disks, then restore with one click — containers and VMs are automatically re-created, not just their files copied back.
+[BombVault](https://github.com/junkerderprovinz/bombvault) backs up Docker containers and KVM/libvirt VMs with [restic](https://restic.net), and restores them by recreating the container or VM rather than only copying its files back. Incremental, deduplicated and encrypted, with off-site replication, retention, file-level restore and scheduling, all from a web UI.
 
-Incremental, deduplicated and encrypted by default, with off-site replication (SMB/NFS/S3/rclone/SSH), immutable/append-only off-site copies with tamper verification, per-source retention, file-level restore, restore-verification drills, scheduling, and pre/post-backup hooks — all configured in the WebUI.
+Two things to know before installing. It needs the Docker socket, which is root-equivalent access, because it stops and recreates containers around backup and restore. And it needs a real host path holding the data you want backed up: TrueNAS does not allow mounting `/mnt` itself, and apps left on the default ixVolume storage keep their data under `/mnt/.ix-apps`, which cannot be mounted either, so those apps' data is out of reach while apps configured with host-path storage are fully covered.
 
-BombVault needs the Docker socket (root-equivalent) to stop/start/recreate containers around backup and restore, and a real host path covering the other apps' persistent data it backs up (**Host Data** below). VM backup is optional and talks to libvirt over SSH — no libvirt mount required.
-
-See the [main README](https://github.com/junkerderprovinz/bombvault/blob/main/README.md) for full documentation, and [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) for VM backup setup, including the TrueNAS Scale-specific `LIBVIRT_URI` this catalog form asks for.
+VM backup is optional and talks to libvirt over SSH. On TrueNAS it needs `LIBVIRT_URI` to name the socket at `/run/truenas_libvirt/libvirt-sock`, since the default URI does not work there. See [the VM backup setup guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
 
 Support: [GitHub issues](https://github.com/junkerderprovinz/bombvault/issues).
 

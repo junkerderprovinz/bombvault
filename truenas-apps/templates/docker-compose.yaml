@@ -32,31 +32,13 @@
    over-granting. #}
 {% do c1.add_caps(["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]) %}
 
-{# Fixed, predictable hostname — same reasoning as this app's generic-Docker-
-   host compose file (deploy/docker-compose.generic.yml in the source repo):
-   restic's own stale-lock detection can only safely recognize a lock left by
-   BombVault's OWN prior incarnation as dead when that prior incarnation
-   reported the SAME hostname, and Docker gives every recreated container
-   (e.g. on an image update) a new random hostname by default.
-
-   IT HAS A COST, measured on a live TrueNAS SCALE 25.10.0 box rather than
-   reasoned about: BombVault resolves its OWN container by looking up the one
-   whose NAME equals its hostname (dockercli.Self →
-   ContainerInspect(os.Hostname())). TrueNAS names the real container after
-   the app instance, ix-<app name>-bombvault-1, so with the hostname pinned
-   here that lookup misses it entirely — and if any OTHER container on the box
-   happens to be named "bombvault", the lookup finds THAT one and BombVault
-   treats a stranger as itself: it refuses to back that container up, and a
-   self-restart would restart it instead of us. Two probes on the same box,
-   identical but for this one setting, showed exactly that split.
-
-   Left in place rather than dropped, because dropping it trades this for
-   restic stale locks after every image update, which is the failure this pin
-   exists to prevent. The real way out is to stop deriving identity from the
-   hostname at all (the container id is available from /proc/self/mountinfo).
-   Until then bombvault.self_container_name (questions.yaml) is the documented
-   answer, and its description now tells the operator to set it instead of
-   describing automatic detection as reliable. #}
+{# A fixed hostname, so restic can recognise a lock left by a previous
+   incarnation of this container as its own; Docker would otherwise hand out a
+   new random hostname on every recreate. The cost is that BombVault's
+   self-detection (which looks up the container whose name matches its
+   hostname) then misses the real container, since TrueNAS names it after the
+   app instance. That is what bombvault.self_container_name is for, and its
+   description says so. #}
 {% do c1.set_hostname(values.consts.bombvault_container_name) %}
 
 {# The image's own Dockerfile HEALTHCHECK already runs this exact command
@@ -127,13 +109,16 @@
 
 {% do c1.add_storage(values.consts.config_path, values.storage.config) %}
 
-{# Host Data is modeled as a plain required host path (see questions.yaml's
-   comment on why it is NOT offered as an ixVolume) — build the same
-   IxStorage shape add_storage() expects by hand, the same pattern the
-   rsyncd community app uses for its own per-module real-host-path mounts. #}
+{# Host Data is a plain host path, not an ixVolume (questions.yaml says why),
+   built by hand into the IxStorage shape add_storage() expects — the same
+   pattern rsyncd and webdav use for their real-host-path mounts, including
+   reading create_host_path from the values rather than pinning it. #}
 {% set host_data_cfg = {
   "type": "host_path",
-  "host_path_config": {"path": values.storage.host_data, "create_host_path": false},
+  "host_path_config": {
+    "path": values.storage.host_data,
+    "create_host_path": values.storage.get("host_data_create", false),
+  },
 } %}
 {% do c1.add_storage(values.consts.host_data_path, host_data_cfg) %}
 
