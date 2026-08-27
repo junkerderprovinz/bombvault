@@ -338,6 +338,22 @@ func (c *suggestCollector) add(rel string, isDir bool, size int64) bool {
 		}
 		return true
 	}
+	// A FILE an exclude pattern covers is skipped by restic, so it must not be
+	// counted here either — this function's own doc says "already excluded —
+	// restic skips it, so do we", and until now only the directory branch above
+	// honoured it. Without this, a stored line like `*.log` still let every log
+	// file's bytes flow into its parents' totals, so an appdata folder that is
+	// 90% logs was proposed as a fat exclusion candidate at its FULL on-disk
+	// size, i.e. the assistant recommended excluding a folder on the strength of
+	// bytes the user had already excluded.
+	//
+	// Only the live walk reaches this: the snapshot feeder replays what restic
+	// itself stored, which never contains an excluded file. Returning false is
+	// free for a file — the walk ignores the result for non-directories (there
+	// is no subtree to prune) and only directories use it for fs.SkipDir.
+	if matchesExcludePatterns(full, base, c.patterns) {
+		return false
+	}
 	// Attribute the file's size to every ancestor directory within the depth
 	// bound: each '/' in rel marks one ancestor prefix. An ancestor DEEPER than
 	// the bound was never collected and is expected to be absent; one within the
@@ -799,7 +815,16 @@ func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roo
 	}
 	defer s.suggestFlightDone(key, fl)
 
-	sctx, cancel := context.WithTimeout(ctx, suggestSnapshotTimeout)
+	// DETACHED from the leader's request, the same way the encryption-detect
+	// singleflight next door does it (encryption_detect.go, which has a test
+	// pinning exactly this). The pass is SHARED and the leader is merely whoever
+	// arrived first, so running the restic ls on ITS request context meant that
+	// closing its browser tab killed the process — and every follower, with a
+	// perfectly live request of its own, got handed errSuggestIndexRead for
+	// something that had nothing to do with it. Followers still honour their own
+	// ctx while waiting on fl.done above; the pass runs to completion under its
+	// own budget.
+	sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), suggestSnapshotTimeout)
 	defer cancel()
 	stream := func(onEntry func(restic.FileEntry)) error {
 		return s.lsStreamSelfHeal(sctx, repo, snap.ID, mode, onEntry)
