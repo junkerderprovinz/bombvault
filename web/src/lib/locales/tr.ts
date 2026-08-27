@@ -884,6 +884,8 @@ const tr: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Site dışı depo URL'si",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST sunucu kimlik bilgileri",
+  "offsite.wizard.credsShared": "Bu bilgiler, kendi kümesi olmayan her hedef için geçerlidir, yalnızca bu tür için değil.",
+  "offsite.wizard.credsInSet": "Bu hedef \u201c{name}\u201d kümesini kullanır. Bilgiler orada yönetilir.",
   "offsite.wizard.credLoadError": "Mevcut kimlik bilgileri yüklenemedi. Düzenlemeden önce yeniden yükleyin.",
   "offsite.wizard.step4": "4 · Append-only korumasını etkinleştir",
   "offsite.immutable": "Değiştirilemez (append-only)",

@@ -295,6 +295,8 @@ const bg: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL на хранилището извън обекта",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Данни за достъп до REST сървъра",
+  "offsite.wizard.credsShared": "Тези данни важат за всяка дестинация без собствен набор, не само за този тип.",
+  "offsite.wizard.credsInSet": "Тази дестинация използва набора „{name}“. Данните се управляват там.",
   "offsite.wizard.credLoadError": "Съществуващите данни за достъп не можаха да се заредят — презареди преди редактиране.",
   "offsite.wizard.step4": "4 · Активирай защитата само-добавяне",
   "offsite.immutable": "Неизменяемо (само-добавяне)",

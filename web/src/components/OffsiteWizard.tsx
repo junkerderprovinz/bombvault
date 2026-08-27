@@ -10,7 +10,11 @@ import {
   setPrimaryRemote,
   testPrimaryRemote,
   primaryRemoteTamperTest,
+  listOffsiteTargets,
+  updateOffsiteTarget,
 } from "../lib/api";
+import type { OffsiteTarget } from "../lib/api";
+import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { RevealInput } from "./RevealInput";
@@ -274,6 +278,24 @@ export function OffsiteWizard({
   const [cloudLoaded, setCloudLoaded] = useState(false);
   const [cloudLoadErr, setCloudLoadErr] = useState<string | null>(null);
 
+  // Step 3 — which credentials this domain's PRIMARY off-site destination uses
+  // (#176, kramttocs). The fields below write the SHARED cloud credentials, so
+  // editing them from one domain's wizard changed every other domain's too —
+  // exactly the "setting it in any of the places updates all of the others"
+  // the issue describes. Every off-site destination already carries its own
+  // credential-set selector, the replication path already resolves it per
+  // destination (offsiteModeForTarget), and the primary destination IS such a
+  // row whose creds_ref syncPrimaryOffsiteTarget deliberately preserves — the
+  // only thing missing was a control that sets it, which is what this is.
+  //
+  // Loaded through the shared hook rather than a private copy, for the reason
+  // OffsiteTargetsSection documents: the card that creates these sets lives on
+  // this same page, so a fetched-once copy goes stale the moment one is added.
+  const credSets = useCloudCredSets();
+  const [primaryTarget, setPrimaryTarget] = useState<OffsiteTarget | null>(null);
+  const credsRef = primaryTarget?.credsRef ?? "";
+  const selectedCredSet = credSets.find((c) => c.id === credsRef);
+
   // Step 3 — connection test verdict. GlimStone follow-up pass (v8.0.0): the
   // ok/uninit/fail verdict below is now a toast, the exact same migration
   // Settings.tsx's TestConnectionButton already got for this exact
@@ -390,6 +412,50 @@ export function OffsiteWizard({
     // t is stable for a given language; the load runs once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load this domain's primary off-site destination so its credential-set
+  // selector below has something to bind to. Failures are silent on purpose:
+  // the row only exists once an off-site repo has been saved, so "not there
+  // yet" is an ordinary state during first-time setup, not an error worth
+  // showing. The selector simply stays hidden until it exists.
+  function refreshPrimaryTarget() {
+    if (primary) return; // remote-primary mode has no off-site destination row
+    listOffsiteTargets(offsiteDomain)
+      .then((r) => {
+        if (!r.ok) return;
+        setPrimaryTarget((r.targets ?? []).find((x) => x.sortOrder === 0) ?? null);
+      })
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    refreshPrimaryTarget();
+    // Re-reads when the repo URL changes, because saving a repo for the first
+    // time is what CREATES the row this selector edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offsiteDomain, primary, repoURL]);
+
+  // Persist the credential-set choice onto the primary destination. The row is
+  // rewritten from Settings on every settings save, but syncPrimaryOffsiteTarget
+  // explicitly carries creds_ref across that rewrite, so this survives.
+  async function pickCredSet(ref: string) {
+    const row = primaryTarget;
+    if (!row) return;
+    const next = { ...row, credsRef: ref };
+    setPrimaryTarget(next); // optimistic: the select must not snap back while saving
+    try {
+      const r = await updateOffsiteTarget(row.id, next);
+      if (!r.ok) {
+        setPrimaryTarget(row);
+        push(r.error ?? t("common.actionFailed"), "fail");
+        return;
+      }
+      if (r.target) setPrimaryTarget(r.target);
+    } catch {
+      setPrimaryTarget(row);
+      push(t("common.actionFailed"), "fail");
+    }
+  }
 
   // Full-page Speichern-Button sweep: patchRepo used to only update local
   // state, relying on the "Save repository" button (now gone) to persist it.
@@ -785,6 +851,34 @@ export function OffsiteWizard({
         {urlBackend === "rest" && (
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface p-3 mt-1">
             <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
+            {/* #176: which credentials this destination uses. Without this the
+                fields below are the SHARED set, so filling them in from one
+                domain's wizard silently rewrote every other domain's. Only
+                shown once the destination row exists (i.e. a repo was saved). */}
+            {primaryTarget && (
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textSub">{t("offsite.targets.credsLabel")}</span>
+                <select
+                  value={credsRef}
+                  onChange={(e) => void pickCredSet(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">{t("offsite.targets.credsDefault")}</option>
+                  {credSets.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {selectedCredSet ? (
+              <span className="text-xs text-carbon-textMuted">
+                {t("offsite.wizard.credsInSet").replace("{name}", selectedCredSet.name)}
+              </span>
+            ) : (
+              <>
+                <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.credsShared")}</span>
             <label dir="ltr" className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub text-start">
               RESTIC_REST_USERNAME
               <input
@@ -818,6 +912,8 @@ export function OffsiteWizard({
             {/* Full-page Speichern-Button sweep: the "Save credentials" button
                 that used to sit here is gone — both fields above debounce-
                 auto-save themselves via persistCreds now. */}
+              </>
+            )}
           </div>
         )}
 

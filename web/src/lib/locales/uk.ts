@@ -879,6 +879,8 @@ const uk: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL зовнішнього репозиторію",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Облікові дані REST-сервера",
+  "offsite.wizard.credsShared": "Ці дані діють для кожного призначення без власного набору, а не лише для цього типу.",
+  "offsite.wizard.credsInSet": "Це призначення використовує набір «{name}». Дані керуються там.",
   "offsite.wizard.credLoadError": "Не вдалося завантажити наявні облікові дані — перезавантажте перед редагуванням.",
   "offsite.wizard.step4": "4 · Увімкніть захист append-only",
   "offsite.immutable": "Незмінний (append-only)",

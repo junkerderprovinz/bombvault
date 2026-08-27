@@ -295,6 +295,8 @@ const et: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Välise hoidla URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST-serveri mandaadid",
+  "offsite.wizard.credsShared": "Need andmed kehtivad igale sihtkohale, millel pole oma komplekti, mitte ainult sellele tüübile.",
+  "offsite.wizard.credsInSet": "See sihtkoht kasutab komplekti „{name}“. Andmeid hallatakse seal.",
   "offsite.wizard.credLoadError": "Olemasolevaid mandaate ei õnnestunud laadida. Laadi enne muutmist uuesti.",
   "offsite.wizard.step4": "4 · Luba ainult-lisamise kaitse",
   "offsite.immutable": "Muutumatu (ainult-lisamine)",

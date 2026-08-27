@@ -853,6 +853,8 @@ const nl: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Off-site repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST-server-inloggegevens",
+  "offsite.wizard.credsShared": "Deze gegevens gelden voor elke bestemming zonder eigen set, niet alleen voor dit type.",
+  "offsite.wizard.credsInSet": "Deze bestemming gebruikt de set “{name}”. De gegevens worden daar beheerd.",
   "offsite.wizard.credLoadError": "Kon bestaande inloggegevens niet laden. Herlaad voordat je bewerkt.",
   "offsite.wizard.step4": "4 · Append-only-bescherming inschakelen",
   "offsite.immutable": "Onveranderlijk (append-only)",

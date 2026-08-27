@@ -295,6 +295,8 @@ const ca: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL del repositori extern",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Credencials del servidor REST",
+  "offsite.wizard.credsShared": "Aquestes credencials s'apliquen a tota destinació sense conjunt propi, no només a aquest tipus.",
+  "offsite.wizard.credsInSet": "Aquesta destinació fa servir el conjunt «{name}». Les credencials es gestionen allà.",
   "offsite.wizard.credLoadError": "No s'han pogut carregar les credencials existents. Recarrega abans d'editar.",
   "offsite.wizard.step4": "4 · Activa la protecció de només-afegir",
   "offsite.immutable": "Immutable (només-afegir)",

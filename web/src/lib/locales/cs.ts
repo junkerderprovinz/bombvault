@@ -882,6 +882,8 @@ const cs: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL repozitáře mimo lokalitu",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Přihlašovací údaje REST serveru",
+  "offsite.wizard.credsShared": "Tyto údaje platí pro každý cíl bez vlastní sady, nejen pro tento typ.",
+  "offsite.wizard.credsInSet": "Tento cíl používá sadu „{name}“. Údaje se spravují tam.",
   "offsite.wizard.credLoadError": "Stávající přihlašovací údaje se nepodařilo načíst. Před úpravou znovu načtěte.",
   "offsite.wizard.step4": "4 · Zapněte ochranu append-only",
   "offsite.immutable": "Neměnné (append-only)",

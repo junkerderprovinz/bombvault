@@ -295,6 +295,8 @@ const gl: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL do repositorio externo",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Credenciais do servidor REST",
+  "offsite.wizard.credsShared": "Estas credenciais aplícanse a calquera destino sen conxunto propio, non só a este tipo.",
+  "offsite.wizard.credsInSet": "Este destino usa o conxunto «{name}». As credenciais xestiónanse alí.",
   "offsite.wizard.credLoadError": "Non se puideron cargar as credenciais existentes. Recarga antes de editar.",
   "offsite.wizard.step4": "4 · Activar a protección de só-engadir",
   "offsite.immutable": "Inmutable (só-engadir)",

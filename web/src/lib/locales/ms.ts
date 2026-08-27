@@ -295,6 +295,8 @@ const ms: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL repositori luar tapak",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Kelayakan pelayan REST",
+  "offsite.wizard.credsShared": "Kelayakan ini digunakan untuk setiap destinasi tanpa set sendiri, bukan jenis ini sahaja.",
+  "offsite.wizard.credsInSet": "Destinasi ini menggunakan set \u201c{name}\u201d. Kelayakan diurus di sana.",
   "offsite.wizard.credLoadError": "Kelayakan sedia ada gagal dimuatkan. Muat semula sebelum mengedit.",
   "offsite.wizard.step4": "4 · Dayakan perlindungan tambah-sahaja",
   "offsite.immutable": "Tidak boleh diubah (tambah-sahaja)",

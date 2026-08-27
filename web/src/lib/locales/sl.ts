@@ -295,6 +295,8 @@ const sl: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL zunanjega repozitorija",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Poverilnice REST strežnika",
+  "offsite.wizard.credsShared": "Ti podatki veljajo za vsak cilj brez lastnega nabora, ne le za to vrsto.",
+  "offsite.wizard.credsInSet": "Ta cilj uporablja nabor »{name}«. Podatki se urejajo tam.",
   "offsite.wizard.credLoadError": "Obstoječih poverilnic ni bilo mogoče naložiti. Pred urejanjem znova naloži stran.",
   "offsite.wizard.step4": "4 · Omogoči zaščito s samo-dodajanjem",
   "offsite.immutable": "Nespremenljivo (samo dodajanje)",
