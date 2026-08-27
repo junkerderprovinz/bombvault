@@ -1011,6 +1011,25 @@ func New(backupFn BackupFunc, listFn ListTargetsFunc) *Scheduler {
 		// Recover then wraps every job so a panic in one backup is logged and
 		// contained instead of crashing the whole process (which would silently stop
 		// ALL schedules and take the web UI down).
+		//
+		// NO WithLocation, and that is not the oversight it looks like. A wall-clock
+		// cadence really does behave oddly across a DST switch — measured against
+		// robfig/cron v3.0.1 with "30 2 * * *" in Europe/Berlin: 2026-03-29 is
+		// skipped entirely (02:30 does not exist that day, so the next fire is the
+		// 30th) and 2026-10-25 fires TWICE an hour apart (02:30 CEST, then 02:30
+		// CET). Both reproduced in a standalone program rather than reasoned about.
+		//
+		// WithLocation changes neither. The library's default is already
+		// time.Local, and walking the same schedule through
+		// cron.New(cron.WithLocation(Berlin)) returns fire times identical to
+		// cron.New(). That was measured too, precisely because the review finding
+		// proposed it as the fix — adding it would look like a repair and be a
+		// placebo.
+		//
+		// A real fix is a product decision rather than a constructor argument:
+		// either a minimum-gap gate so the second fire of a doubled hour is dropped
+		// (new logic on the path that starts every backup), or extending
+		// CatchUpMissed beyond boot so a skipped day is picked up the next day.
 		c:      cron.New(cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger), cron.Recover(cron.DefaultLogger))),
 		backup: backupFn,
 		listFn: listFn,
