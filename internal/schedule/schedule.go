@@ -1047,6 +1047,22 @@ func New(backupFn BackupFunc, listFn ListTargetsFunc) *Scheduler {
 		// either a minimum-gap gate so the second fire of a doubled hour is dropped
 		// (new logic on the path that starts every backup), or extending
 		// CatchUpMissed beyond boot so a skipped day is picked up the next day.
+		//
+		// DECIDED 2026-08-27: build NEITHER, deliberately. Twice a year one run is
+		// skipped and one runs twice, and both are cheap here — restic dedupes, so a
+		// doubled run stores almost nothing and costs one extra snapshot against
+		// retention, while a skipped run is picked up by the next day's schedule.
+		// Weigh that against a minimum-gap gate sitting on the path that starts
+		// EVERY backup, where a bug suppresses runs that should have happened: the
+		// guard would be more dangerous than the thing it guards. Not a gap left
+		// open by accident, and not to be re-proposed without a concrete report of
+		// the doubled run actually causing harm.
+		//
+		// This is also why the wall-clock behaviour is kept at all: running to the
+		// clock the operator typed is worth more than dodging two edge days a year.
+		// A deployment that would rather have exact 24h intervals can simply leave
+		// TZ unset and run in UTC, which has no transitions (see logSchedulerTimezone
+		// in cmd/bombvault, and the TZ row in docs/configuration*.md).
 		c:      cron.New(cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger), cron.Recover(cron.DefaultLogger))),
 		backup: backupFn,
 		listFn: listFn,
