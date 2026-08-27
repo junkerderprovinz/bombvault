@@ -18,7 +18,7 @@ func doLogin(t *testing.T, h *Handler, remoteAddr, password string) (code int, o
 	if err != nil {
 		t.Fatalf("marshal body: %v", err)
 	}
-	r := httptest.NewRequest(http.MethodPost, "/api/login", bytes.NewReader(body))
+	r := jsonReq(http.MethodPost, "/api/login", bytes.NewReader(body))
 	r.RemoteAddr = remoteAddr
 	w := httptest.NewRecorder()
 	h.handleLogin(w, r)

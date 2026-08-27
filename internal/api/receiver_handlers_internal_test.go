@@ -51,7 +51,7 @@ func postJSONReq(t *testing.T, target string, body any) *http.Request {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return httptest.NewRequest(http.MethodPost, target, bytes.NewReader(b))
+	return jsonReq(http.MethodPost, target, bytes.NewReader(b))
 }
 
 // TestReceiverCreateValidation covers the create contract that needs no restic: a
@@ -132,7 +132,7 @@ func TestReceiverCreateAndCheckNow(t *testing.T) {
 
 	// Check-now: runs the independent check and persists the verdict.
 	w = httptest.NewRecorder()
-	cr := httptest.NewRequest(http.MethodPost, "/api/receiver/repos/"+id+"/check", nil)
+	cr := jsonReq(http.MethodPost, "/api/receiver/repos/"+id+"/check", nil)
 	cr.SetPathValue("id", id)
 	h.handleReceiverCheck(w, cr)
 	resp = decodeResp(t, w)
@@ -171,7 +171,7 @@ func TestReceiverDeleteRemovesRowOnly(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	dr := httptest.NewRequest(http.MethodDelete, "/api/receiver/repos/"+created.ID, nil)
+	dr := jsonReq(http.MethodDelete, "/api/receiver/repos/"+created.ID, nil)
 	dr.SetPathValue("id", created.ID)
 	h.handleDeleteReceiverRepo(w, dr)
 	if resp := decodeResp(t, w); resp["ok"] != true {

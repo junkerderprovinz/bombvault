@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"os"
@@ -226,9 +227,100 @@ func scrubError(err error) string {
 	return strings.TrimSpace(msg)
 }
 
+// sameSiteOnly refuses a request a browser fired from another website, judged by
+// the Sec-Fetch-Site header the browser attaches itself and a page cannot forge.
+//
+// Only the explicit cross-site value is refused. same-site is left alone: what a
+// browser counts as one "site" for a bare LAN IP is not something to bet a
+// working install on. An ABSENT header means a non-browser client (curl, another
+// BombVault's mesh POST, a script), which was never the threat — the attack this
+// closes needs a browser to carry it.
+//
+// It runs as middleware over every unsafe method rather than only inside
+// decodeBody, because plenty of state-changing routes take no body at all:
+// POST /api/containers/{name}/backup, POST /api/prune/{domain},
+// POST /api/backup-everything. A guard that only covered request bodies would
+// have left exactly those reachable from any page the operator happens to open.
+func sameSiteOnly(w http.ResponseWriter, r *http.Request) bool {
+	if r.Header.Get("Sec-Fetch-Site") != "cross-site" {
+		return true
+	}
+	writeJSON(w, http.StatusForbidden, map[string]any{
+		"ok":    false,
+		"error": "refused a cross-site request",
+	})
+	return false
+}
+
+// csrfGate applies sameSiteOnly to every method that can change state. Safe
+// methods (GET/HEAD/OPTIONS) pass through untouched: they are reachable
+// cross-site by design, the browser's same-origin policy keeps the response
+// unreadable, and gating them would break the widget iframe and a peer's status
+// poll, both of which are GETs on purpose.
+func csrfGate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
+		default:
+			if !sameSiteOnly(w, r) {
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// crossOriginGuard refuses a body-carrying request that a browser fired from
+// another website. Every handler that takes a body goes through decodeBody, so
+// this sits there rather than in each of its forty-odd call sites.
+//
+// WHY THIS IS NEEDED AT ALL. authGate is a deliberate pass-through when no login
+// password is set — the documented trusted-LAN mode, and the default. That model
+// assumes the attacker has to be ON the LAN. A cross-site form does not: an HTML
+// form with enctype="text/plain" posts a body the JSON decoder accepts, to any
+// address the attacker names, from the operator's own browser, with no preflight
+// and needing no cookie. Reaching a LAN address from a public page is enough to
+// repoint every notification (POST /api/notify) or set the Backup Everything
+// hooks, which run as `sh -c` in a container holding the Docker socket and /mnt.
+//
+// TWO CHECKS, and the first one is the one that does the work:
+//
+//   - Content-Type must be JSON. A cross-origin form can only send
+//     application/x-www-form-urlencoded, multipart/form-data or text/plain;
+//     anything else, fetch() included, needs a CORS preflight that this server
+//     never answers. So requiring JSON removes the whole form-post class.
+//   - Sec-Fetch-Site must not say cross-site. Browsers attach it themselves and
+//     a page cannot forge it. Only the explicit cross-site value is refused:
+//     same-site is left alone because a browser's notion of "site" for a bare IP
+//     is not something to bet a working install on, and an ABSENT header means a
+//     non-browser client (curl, another BombVault's mesh POST, a script), which
+//     was never the threat here.
+//
+// Both are cheap and neither needs a token, session or any state, which matters:
+// a CSRF token would need somewhere to live, and in trusted-LAN mode there is no
+// session to hang it on.
+func crossOriginGuard(w http.ResponseWriter, r *http.Request) bool {
+	if !sameSiteOnly(w, r) {
+		return false
+	}
+	ct := r.Header.Get("Content-Type")
+	if mediaType, _, err := mime.ParseMediaType(ct); err != nil || mediaType != "application/json" {
+		writeJSON(w, http.StatusUnsupportedMediaType, map[string]any{
+			"ok":    false,
+			"error": "this endpoint takes application/json; set the Content-Type header",
+		})
+		return false
+	}
+	return true
+}
+
 // decodeBody decodes a JSON request body into v. Returns false (and writes a
-// graceful failure) on malformed JSON.
+// graceful failure) on malformed JSON, on a body that is not declared as JSON,
+// or on a request a browser fired from another site (see crossOriginGuard).
 func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
+	if !crossOriginGuard(w, r) {
+		return false
+	}
 	if r.Body == nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "missing request body"})
 		return false
@@ -2287,21 +2379,53 @@ func decodeNotifyBody(w http.ResponseWriter, r *http.Request, c *notify.Config) 
 // fillNotifySecrets fills blank credential fields from the stored config. Because
 // handleGetNotify never ships the SMTP password / Matrix token to the browser, an
 // unchanged form re-submits them blank — blank therefore means "keep the stored one".
-func (h *Handler) fillNotifySecrets(c notify.Config) notify.Config {
+func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
 	if c.SMTPPassword != "" && c.MatrixToken != "" {
-		return c
+		return c, nil
 	}
 	cur, err := h.svc.NotifyConfig()
 	if err != nil {
-		return c
+		return c, nil
 	}
-	if c.SMTPPassword == "" {
-		c.SMTPPassword = cur.SMTPPassword
-	}
-	if c.MatrixToken == "" {
+	// A stored secret is only ever refilled for the destination it was stored
+	// FOR. Both fields are refilled from the encrypted store while the rest of
+	// the config comes from the request, so without this check a request could
+	// name any destination it liked, leave the secret blank, and have the real
+	// one attached: POST /api/notify/test with matrixEnabled, a homeserver of
+	// the caller's choosing and an empty token sent the stored Matrix token
+	// there as a bearer header. It is a read of a secret the API otherwise
+	// never hands back, dressed as a connection test.
+	//
+	// Refusing rather than blanking, because blanking would be a silent
+	// half-configuration: notifications would simply stop, at the moment
+	// somebody was setting them up and being told it worked.
+	if c.MatrixToken == "" && cur.MatrixToken != "" {
+		if !sameMatrixTarget(c, cur) {
+			return c, errors.New("enter the Matrix access token again: the stored one belongs to the previous homeserver")
+		}
 		c.MatrixToken = cur.MatrixToken
 	}
-	return c
+	if c.SMTPPassword == "" && cur.SMTPPassword != "" {
+		if !sameSMTPTarget(c, cur) {
+			return c, errors.New("enter the SMTP password again: the stored one belongs to the previous server")
+		}
+		c.SMTPPassword = cur.SMTPPassword
+	}
+	return c, nil
+}
+
+// sameMatrixTarget reports whether a request names the same Matrix destination
+// the stored token was saved for. The homeserver is where the token is SENT;
+// the room is where it grants access, so a changed room is a changed
+// destination too.
+func sameMatrixTarget(req, cur notify.Config) bool {
+	return req.MatrixHomeserver == cur.MatrixHomeserver && req.MatrixRoom == cur.MatrixRoom
+}
+
+// sameSMTPTarget is the SMTP counterpart: host, port and username together
+// identify the account the stored password belongs to.
+func sameSMTPTarget(req, cur notify.Config) bool {
+	return req.SMTPHost == cur.SMTPHost && req.SMTPPort == cur.SMTPPort && req.SMTPUsername == cur.SMTPUsername
 }
 
 // handleSetNotify stores the notification config (encrypted). A blank SMTP password
@@ -2311,7 +2435,12 @@ func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	if !decodeNotifyBody(w, r, &c) {
 		return
 	}
-	if err := h.svc.SetNotifyConfig(h.fillNotifySecrets(c)); err != nil {
+	filled, err := h.fillNotifySecrets(c)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.svc.SetNotifyConfig(filled); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -2407,7 +2536,12 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 	if !decodeNotifyBody(w, r, &c) {
 		return
 	}
-	if err := h.svc.TestNotify(r.Context(), h.fillNotifySecrets(c)); err != nil {
+	filled, err := h.fillNotifySecrets(c)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.svc.TestNotify(r.Context(), filled); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

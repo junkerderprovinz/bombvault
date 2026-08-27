@@ -56,7 +56,7 @@ func TestDashboardPluginInstallRemoveNoSSH(t *testing.T) {
 		{"remove", h.handleDashboardPluginRemove},
 	} {
 		rec := httptest.NewRecorder()
-		ep.call(rec, httptest.NewRequest(http.MethodPost, "/api/dashboard-plugin/"+ep.name, nil))
+		ep.call(rec, jsonReq(http.MethodPost, "/api/dashboard-plugin/"+ep.name, nil))
 		body := dashDecode(t, rec)
 		if body["ok"] != false {
 			t.Fatalf("%s without SSH must fail, got %v", ep.name, body)
@@ -132,7 +132,7 @@ func TestDashboardPluginInstallRunsPinnedCommand(t *testing.T) {
 	ssh := &fakeHostSSH{runOut: "plugin: installing: bombvaultwidget.plg\nplugin: bombvaultwidget.plg installed"}
 	h := dashHandler(ssh)
 	rec := httptest.NewRecorder()
-	h.handleDashboardPluginInstall(rec, httptest.NewRequest(http.MethodPost, "/api/dashboard-plugin/install", nil))
+	h.handleDashboardPluginInstall(rec, jsonReq(http.MethodPost, "/api/dashboard-plugin/install", nil))
 
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected exactly one SSH round-trip, got %d", len(ssh.runs))
@@ -159,7 +159,7 @@ func TestDashboardPluginRemoveRunsPinnedCommand(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	h := dashHandler(ssh)
 	rec := httptest.NewRecorder()
-	h.handleDashboardPluginRemove(rec, httptest.NewRequest(http.MethodPost, "/api/dashboard-plugin/remove", nil))
+	h.handleDashboardPluginRemove(rec, jsonReq(http.MethodPost, "/api/dashboard-plugin/remove", nil))
 
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected exactly one SSH round-trip, got %d", len(ssh.runs))
@@ -182,7 +182,7 @@ func TestDashboardPluginInstallFailureCarriesOutputTail(t *testing.T) {
 	}
 	h := dashHandler(ssh)
 	rec := httptest.NewRecorder()
-	h.handleDashboardPluginInstall(rec, httptest.NewRequest(http.MethodPost, "/api/dashboard-plugin/install", nil))
+	h.handleDashboardPluginInstall(rec, jsonReq(http.MethodPost, "/api/dashboard-plugin/install", nil))
 	body := dashDecode(t, rec)
 	if body["ok"] != false {
 		t.Fatalf("expected failure envelope, got %v", body)

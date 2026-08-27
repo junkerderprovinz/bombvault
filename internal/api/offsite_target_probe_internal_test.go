@@ -176,7 +176,7 @@ func TestOffsiteTargetTestRouteRegisters(t *testing.T) {
 		{"/api/offsite/containers/test", "/api/offsite/{domain}/test"},
 	}
 	for _, c := range cases {
-		_, pattern := mux.Handler(httptest.NewRequest(http.MethodPost, c.path, nil))
+		_, pattern := mux.Handler(jsonReq(http.MethodPost, c.path, nil))
 		if !strings.HasSuffix(pattern, c.want) {
 			t.Errorf("POST %s resolved to %q, want %q", c.path, pattern, c.want)
 		}
@@ -196,7 +196,7 @@ func TestHandleTestOffsiteTargetEnvelope(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/api/offsite/targets/"+tgt.ID+"/test", nil)
+	req := jsonReq(http.MethodPost, "/api/offsite/targets/"+tgt.ID+"/test", nil)
 	req.SetPathValue("id", tgt.ID)
 	rec := httptest.NewRecorder()
 	h.handleTestOffsiteTarget(rec, req)
@@ -205,7 +205,7 @@ func TestHandleTestOffsiteTargetEnvelope(t *testing.T) {
 		t.Fatalf("ok probe envelope = %v, want ok/reachable/initialized", env)
 	}
 
-	req = httptest.NewRequest(http.MethodPost, "/api/offsite/targets/nope/test", nil)
+	req = jsonReq(http.MethodPost, "/api/offsite/targets/nope/test", nil)
 	req.SetPathValue("id", "nope")
 	rec = httptest.NewRecorder()
 	h.handleTestOffsiteTarget(rec, req)

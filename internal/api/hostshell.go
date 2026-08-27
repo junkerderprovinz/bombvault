@@ -56,7 +56,21 @@ func (execHostShell) Run(ctx context.Context, cmd string) error {
 	ctx, cancel := context.WithTimeout(ctx, hostShellTimeout)
 	defer cancel()
 
-	c := exec.CommandContext(ctx, "sh", "-c", cmd) //nolint:gosec // G204: cmd is operator-configured via Settings (EverythingPreHook/EverythingPostHook), not request/user input — same trust model as the existing per-container hook's Docker.Exec(ctx, ref, []string{"sh", "-c", d.PreHook}) in internal/backup/orchestrator.go; see also internal/restic/restic.go:823's identical justification for restic's own argv construction.
+	// G204 is real and accepted, not absent. cmd is a shell command the operator
+	// stores in Settings (EverythingPreHook/EverythingPostHook) precisely so it
+	// can run arbitrary commands — that IS the feature, the same trust model as
+	// the per-container hook's Docker.Exec(ctx, ref, []string{"sh", "-c",
+	// d.PreHook}) in internal/backup/orchestrator.go and restic.go's own argv
+	// construction. What makes it acceptable is not that the string never came
+	// from a request (it reaches Settings through PUT /api/settings, so it did —
+	// an earlier version of this comment claimed otherwise and was simply wrong),
+	// but that the write path is the one an operator uses to configure the
+	// instance: same-site only (csrfGate), and behind the login when one is set.
+	// The settings IMPORT path deliberately strips these two fields instead
+	// (settings_portable.go), because an imported file is not an operator sitting
+	// at the UI. Anything else that ever comes to write them needs the same
+	// question asked of it.
+	c := exec.CommandContext(ctx, "sh", "-c", cmd) //nolint:gosec // G204: see the comment above — an operator-configured hook command is the feature.
 	c.WaitDelay = hostShellWaitDelay
 	out, err := c.CombinedOutput()
 	if err != nil {

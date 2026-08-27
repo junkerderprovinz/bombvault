@@ -507,12 +507,18 @@ async function fetchJSON<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
+  // headers AFTER ...options, not before. Spread the other way round, a caller
+  // passing any headers of its own replaced this object wholesale and silently
+  // dropped the Content-Type — which the server now refuses a body without, so
+  // the next such caller would have got a 415 for a reason nothing on screen
+  // could explain. No caller passes headers today; this keeps it that way by
+  // construction rather than by everyone remembering.
   const res = await fetch(path, {
+    ...options,
     headers: {
       "Content-Type": "application/json",
       ...(options?.headers ?? {}),
     },
-    ...options,
   });
   if (!res.ok) {
     throw new ApiError(res.status, `HTTP ${res.status} ${res.statusText}`);
