@@ -234,7 +234,17 @@ export function TimePicker({
   const selectedMinute = nearestStep(minutes, minute);
 
   const closeSelf = useCallback(() => {
+    // Focus goes back to the trigger, but only when it is still inside the
+    // popover: opening deliberately moves focus onto the selected hour, and that
+    // button is unmounted with the portal, so without this the focus fell to
+    // <body> and the next Tab after Escape restarted at the top of the document
+    // instead of at the time field. useConfirm returns focus on all four of its
+    // close paths for the same reason. Someone who closed it by clicking
+    // elsewhere has already chosen where focus belongs, so their choice stands.
+    const panel = panelRef.current;
+    const returnFocus = !!panel && panel.contains(document.activeElement);
     setOpen(false);
+    if (returnFocus) triggerRef.current?.focus();
     if (activeCloser === closeSelf) activeCloser = null;
   }, []);
 

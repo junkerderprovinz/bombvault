@@ -86,7 +86,25 @@ export function computeBubblePosition(
   const opensBelowClips = trigger.bottom + margin + bubble.height > viewport.height;
   const roomAbove = trigger.top - margin - bubble.height >= 0;
   const above = opensBelowClips && roomAbove;
-  const top = above ? trigger.top - margin - bubble.height : trigger.bottom + margin;
+  const unclamped = above ? trigger.top - margin - bubble.height : trigger.bottom + margin;
+  // Vertical clamping, the way the horizontal axis already has it — but ONLY for
+  // a bubble that actually fits in the viewport.
+  //
+  // There used to be just the flip: a bubble that fitted neither below nor above
+  // stayed at trigger.bottom + margin and ran off the screen. Every consumer is
+  // position:fixed, so the overhanging part cannot be scrolled to; the content
+  // was simply gone.
+  //
+  // The fits check is what keeps this from making things worse. A bubble TALLER
+  // than the viewport clips no matter where it goes, and moving it up would only
+  // trade a clipped bottom for a covered trigger — reference/tooltip.ts's
+  // documented edge case, pinned by this module's own "does NOT flip when the
+  // trigger is pinned near the very top" test. That case keeps its old
+  // behaviour; only the winnable one is now won.
+  const fits = bubble.height + 2 * margin <= viewport.height;
+  const top = fits
+    ? Math.max(margin, Math.min(viewport.height - margin - bubble.height, unclamped))
+    : unclamped;
 
   return { left, top, above };
 }

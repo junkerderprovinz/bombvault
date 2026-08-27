@@ -1,4 +1,12 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { computeBubblePosition } from "../lib/bubblePosition";
 
@@ -113,7 +121,7 @@ export function IconTipButton({
     const { left, top } = computeBubblePosition(
       r,
       { width: bubble.offsetWidth, height: bubble.offsetHeight },
-      viewport
+      viewport,
     );
     bubble.style.left = `${left}px`;
     bubble.style.top = `${top}px`;
@@ -133,32 +141,55 @@ export function IconTipButton({
     };
   }, [open]);
 
+  // A DISABLED button emits no mouse events and takes no focus, so the hover
+  // handlers below never fire and the tip — which for an icon-only control is
+  // the only thing naming it — becomes unreachable exactly when the user most
+  // wants to know why the control is dead. The wrapper is not disabled, so it
+  // still sees the pointer; it is rendered ONLY in that case, so the enabled
+  // layout is untouched rather than gaining a box everywhere for a corner case.
+  // `inline-flex` matches what these buttons already sit in.
+  const withHoverWrapper = (node: ReactNode) =>
+    disabled ? (
+      <span className="inline-flex" onMouseEnter={show} onMouseLeave={hide}>
+        {node}
+      </span>
+    ) : (
+      node
+    );
+
   return (
     <>
-      <button
-        ref={btnRef}
-        type={type}
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={tip}
-        aria-pressed={ariaPressed}
-        aria-expanded={ariaExpanded}
-        aria-describedby={open ? tooltipId : undefined}
-        onMouseEnter={show}
-        onMouseLeave={hide}
-        onFocus={show}
-        onBlur={hide}
-        className={className}
-        style={style}
-      >
-        {children}
-      </button>
+      {withHoverWrapper(
+        <button
+          ref={btnRef}
+          type={type}
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={tip}
+          aria-pressed={ariaPressed}
+          aria-expanded={ariaExpanded}
+          aria-describedby={open ? tooltipId : undefined}
+          onMouseEnter={show}
+          onMouseLeave={hide}
+          onFocus={show}
+          onBlur={hide}
+          className={className}
+          style={style}
+        >
+          {children}
+        </button>,
+      )}
       {open &&
         createPortal(
-          <div ref={bubbleRef} role="tooltip" id={tooltipId} className="glim-bubble glim-fade">
+          <div
+            ref={bubbleRef}
+            role="tooltip"
+            id={tooltipId}
+            className="glim-bubble glim-fade"
+          >
             {tip}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
