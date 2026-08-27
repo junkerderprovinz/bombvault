@@ -1327,6 +1327,8 @@ const eu: Partial<Translations> = {
   "activityLog.jobTamper": "manipulazio-proba",
   "activityLog.jobDigest": "asteko laburpena",
   "activityLog.jobWatchdog": "atzeratutako babeskopiaren egiaztapena",
+  "activityLog.jobReceiver": "jasotako biltegien egiaztapena",
+  "activityLog.jobFleet": "flotako kideen egiaztapena",
   "activityLog.lineBackingUpItem": "{name} babesten… %{percent}",
   "activityLog.lineRestoringItem": "{name} berrezartzen… %{percent}",
   "activityLog.lineBackingUpBatch": "{domain} guztiak babesten… %{percent}",

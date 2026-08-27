@@ -1202,6 +1202,8 @@ const uk: Partial<Translations> = {
   "activityLog.typeExport": "Експорт",
   "activityLog.jobDigest": "щотижневий підсумок",
   "activityLog.jobWatchdog": "перевірка прострочених резервних копій",
+  "activityLog.jobReceiver": "перевірка отриманих репозиторіїв",
+  "activityLog.jobFleet": "перевірка вузлів флоту",
   "activityLog.lineOffsiteSuccess": "Зовнішню реплікацію завершено — {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Зовнішня реплікація не вдалася — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Перевірку відновлення пройдено — {domain}",

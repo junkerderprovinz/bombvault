@@ -1204,6 +1204,8 @@ const nl: Partial<Translations> = {
   "activityLog.typeExport": "Export",
   "activityLog.jobDigest": "wekelijkse samenvatting",
   "activityLog.jobWatchdog": "controle op achterstallige back-ups",
+  "activityLog.jobReceiver": "controle van ontvangen repository's",
+  "activityLog.jobFleet": "controle van vlootpeers",
   "activityLog.lineOffsiteSuccess": "Off-site replicatie voltooid: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Off-site replicatie mislukt, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Herstelcontrole geslaagd: {domain}",

@@ -1327,6 +1327,8 @@ const lv: Partial<Translations> = {
   "activityLog.jobTamper": "manipulācijas tests",
   "activityLog.jobDigest": "iknedēļas kopsavilkums",
   "activityLog.jobWatchdog": "nokavētas rezerves kopijas pārbaude",
+  "activityLog.jobReceiver": "saņemto repozitoriju pārbaude",
+  "activityLog.jobFleet": "flotes dalībnieku pārbaude",
   "activityLog.lineBackingUpItem": "Dublē {name} … {percent}%",
   "activityLog.lineRestoringItem": "Atjauno {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Dublē visus {domain} … {percent}%",

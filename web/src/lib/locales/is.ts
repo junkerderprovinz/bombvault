@@ -1327,6 +1327,8 @@ const is: Partial<Translations> = {
   "activityLog.jobTamper": "átroðsluprófun",
   "activityLog.jobDigest": "vikuyfirlit",
   "activityLog.jobWatchdog": "athugun á afriti á gjalddaga",
+  "activityLog.jobReceiver": "athugun á móttekinni geymslu",
+  "activityLog.jobFleet": "athugun á flotafélögum",
   "activityLog.lineBackingUpItem": "Afrita {name} … {percent}%",
   "activityLog.lineRestoringItem": "Endurheimti {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Afrita öll {domain} … {percent}%",

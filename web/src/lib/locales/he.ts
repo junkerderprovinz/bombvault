@@ -1207,6 +1207,8 @@ const he: Partial<Translations> = {
   "activityLog.typeExport": "ייצוא",
   "activityLog.jobDigest": "תקציר שבועי",
   "activityLog.jobWatchdog": "בדיקת גיבויים באיחור",
+  "activityLog.jobReceiver": "בדיקת מאגרים שהתקבלו",
+  "activityLog.jobFleet": "בדיקת עמיתי הצי",
   "activityLog.lineOffsiteSuccess": "שכפול מחוץ לאתר הושלם: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "שכפול מחוץ לאתר נכשל, {domain}: {error}",
   "activityLog.lineDrillSuccess": "בדיקת השחזור עברה: {domain}",

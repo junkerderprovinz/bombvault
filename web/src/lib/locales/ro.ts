@@ -1210,6 +1210,8 @@ const ro: Partial<Translations> = {
   "activityLog.typeExport": "Export",
   "activityLog.jobDigest": "rezumat săptămânal",
   "activityLog.jobWatchdog": "verificarea backupurilor întârziate",
+  "activityLog.jobReceiver": "verificarea depozitelor primite",
+  "activityLog.jobFleet": "verificarea nodurilor din flotă",
   "activityLog.lineOffsiteSuccess": "Replicarea externă finalizată: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Replicarea externă a eșuat, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Verificarea restaurării a reușit: {domain}",

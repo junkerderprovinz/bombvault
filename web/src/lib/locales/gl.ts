@@ -1327,6 +1327,8 @@ const gl: Partial<Translations> = {
   "activityLog.jobTamper": "proba de manipulación",
   "activityLog.jobDigest": "resumo semanal",
   "activityLog.jobWatchdog": "comprobación de copia vencida",
+  "activityLog.jobReceiver": "comprobación de repositorios recibidos",
+  "activityLog.jobFleet": "comprobación de pares da frota",
   "activityLog.lineBackingUpItem": "Copiando {name} … {percent}%",
   "activityLog.lineRestoringItem": "Restaurando {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Copiando todos os {domain} … {percent}%",

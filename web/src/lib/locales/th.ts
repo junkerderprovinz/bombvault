@@ -1210,6 +1210,8 @@ const th: Partial<Translations> = {
   "activityLog.typeExport": "ส่งออก",
   "activityLog.jobDigest": "สรุปประจำสัปดาห์",
   "activityLog.jobWatchdog": "ตรวจสอบการสำรองข้อมูลที่เลยกำหนด",
+  "activityLog.jobReceiver": "การตรวจสอบที่เก็บที่ได้รับ",
+  "activityLog.jobFleet": "การตรวจสอบเพียร์ในฟลีต",
   "activityLog.lineOffsiteSuccess": "การจำลองข้อมูลนอกสถานที่เสร็จสิ้น {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "การจำลองข้อมูลนอกสถานที่ล้มเหลว {domain}: {error}",
   "activityLog.lineDrillSuccess": "การตรวจสอบการกู้คืนผ่าน {domain}",

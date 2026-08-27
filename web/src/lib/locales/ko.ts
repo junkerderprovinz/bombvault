@@ -1199,6 +1199,8 @@ const ko: Partial<Translations> = {
   "activityLog.typeExport": "내보내기",
   "activityLog.jobDigest": "주간 요약",
   "activityLog.jobWatchdog": "백업 지연 점검",
+  "activityLog.jobReceiver": "수신 저장소 점검",
+  "activityLog.jobFleet": "플릿 피어 점검",
   "activityLog.lineOffsiteSuccess": "오프사이트 복제 완료: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "오프사이트 복제 실패, {domain}: {error}",
   "activityLog.lineDrillSuccess": "복원 검사 통과: {domain}",

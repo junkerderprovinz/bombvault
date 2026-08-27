@@ -1207,6 +1207,8 @@ const fi: Partial<Translations> = {
   "activityLog.typeExport": "Vienti",
   "activityLog.jobDigest": "viikkokooste",
   "activityLog.jobWatchdog": "myöhästyneiden varmuuskopioiden tarkistus",
+  "activityLog.jobReceiver": "vastaanotettujen arkistojen tarkistus",
+  "activityLog.jobFleet": "laivaston vertaisten tarkistus",
   "activityLog.lineOffsiteSuccess": "Etäreplikointi valmis: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Etäreplikointi epäonnistui, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Palautustarkistus läpäisty: {domain}",

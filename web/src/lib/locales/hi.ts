@@ -1327,6 +1327,8 @@ const hi: Partial<Translations> = {
   "activityLog.jobTamper": "छेड़छाड़ टेस्ट",
   "activityLog.jobDigest": "साप्ताहिक सारांश",
   "activityLog.jobWatchdog": "देय बैकअप जाँच",
+  "activityLog.jobReceiver": "प्राप्त रिपॉजिटरी जाँच",
+  "activityLog.jobFleet": "फ्लीट पीयर जाँच",
   "activityLog.lineBackingUpItem": "{name} का बैकअप लिया जा रहा है … {percent}%",
   "activityLog.lineRestoringItem": "{name} रीस्टोर हो रहा है … {percent}%",
   "activityLog.lineBackingUpBatch": "सभी {domain} का बैकअप लिया जा रहा है … {percent}%",

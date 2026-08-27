@@ -94,6 +94,11 @@ const JOB_KEYS: Record<string, string> = {
   tamper: "activityLog.jobTamper",
   digest: "activityLog.jobDigest",
   watchdog: "activityLog.jobWatchdog",
+  // Both were missing, so both fell through to the raw literal: the scheduler
+  // emits job "receiver" and (since the fleet sweep learned its own name) job
+  // "fleet". An unmapped job renders as the bare English identifier.
+  receiver: "activityLog.jobReceiver",
+  fleet: "activityLog.jobFleet",
 };
 
 /** Translates a domain literal ("containers"/"vms"/"flash"/"config"/"files");
@@ -104,7 +109,8 @@ function domainLabel(resolveName: ResolveName, domain: string): string {
 }
 
 /** Translates a schedule job literal ("backup"/"offsite"/"drill"/"tamper"/
- *  "digest"/"watchdog"); an unknown literal falls back to the raw string. */
+ *  "digest"/"watchdog"/"receiver"/"fleet"); an unknown literal falls back to the
+ *  raw string, which is why an unmapped job shows up as bare English. */
 function jobLabel(resolveName: ResolveName, job: string): string {
   const key = JOB_KEYS[job];
   return key ? resolveName(key) : job;

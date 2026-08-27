@@ -1327,6 +1327,8 @@ const bg: Partial<Translations> = {
   "activityLog.jobTamper": "тест за манипулация",
   "activityLog.jobDigest": "седмично обобщение",
   "activityLog.jobWatchdog": "проверка за просрочени архивирания",
+  "activityLog.jobReceiver": "проверка на получените хранилища",
+  "activityLog.jobFleet": "проверка на партньорите във флота",
   "activityLog.lineBackingUpItem": "Архивиране на {name} … {percent}%",
   "activityLog.lineRestoringItem": "Възстановяване на {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Архивиране на всички {domain} … {percent}%",

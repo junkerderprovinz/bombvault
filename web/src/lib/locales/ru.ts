@@ -1202,6 +1202,8 @@ const ru: Partial<Translations> = {
   "activityLog.typeExport": "Экспорт",
   "activityLog.jobDigest": "еженедельная сводка",
   "activityLog.jobWatchdog": "проверка просроченных резервных копий",
+  "activityLog.jobReceiver": "проверка полученных репозиториев",
+  "activityLog.jobFleet": "проверка узлов флота",
   "activityLog.lineOffsiteSuccess": "Внешняя репликация завершена — {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Внешняя репликация не удалась — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Проверка восстановления пройдена — {domain}",

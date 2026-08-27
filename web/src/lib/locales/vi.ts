@@ -1199,6 +1199,8 @@ const vi: Partial<Translations> = {
   "activityLog.typeExport": "Xuất",
   "activityLog.jobDigest": "tóm tắt hằng tuần",
   "activityLog.jobWatchdog": "kiểm tra sao lưu quá hạn",
+  "activityLog.jobReceiver": "kiểm tra kho lưu trữ đã nhận",
+  "activityLog.jobFleet": "kiểm tra máy ngang hàng trong đội",
   "activityLog.lineOffsiteSuccess": "Sao chép off-site hoàn tất: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Sao chép off-site thất bại, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kiểm tra khôi phục đạt: {domain}",

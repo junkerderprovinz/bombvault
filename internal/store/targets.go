@@ -184,16 +184,24 @@ func (r *Repo) ListTargets() ([]Target, error) {
 // order (the default) the stable sort is a no-op and the #95 order is returned
 // verbatim.
 func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
+	// sanePastStamp here too. The guard reached all seven currency queries in
+	// runs.go but not this MAX(finished_at) subquery, and MAX is exactly where a
+	// bogus stamp does the most damage: a single run recorded with a wrong clock
+	// (dead CMOS battery, or the early-boot window before NTP steps it) wins the
+	// MAX permanently, because no later CORRECT run can ever exceed a timestamp
+	// in the future. That container then sorts as the most recently backed up one
+	// there is and drifts to the end of the queue for good — quietly, since the
+	// ordering is a preference rather than an error.
 	rows, err := r.db.Query(`
 		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
 			FROM runs
-			WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
+			WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL`+sanePastStamp+`
 			GROUP BY target_id
 		) r ON r.target_id = t.id
-		ORDER BY (r.last_ok IS NULL) DESC, r.last_ok ASC, t.container_name ASC`)
+		ORDER BY (r.last_ok IS NULL) DESC, r.last_ok ASC, t.container_name ASC`, saneStampCutoff())
 	if err != nil {
 		return nil, fmt.Errorf("ListTargetsScheduleOrder: %w", err)
 	}

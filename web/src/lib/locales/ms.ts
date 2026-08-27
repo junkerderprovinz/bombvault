@@ -1327,6 +1327,8 @@ const ms: Partial<Translations> = {
   "activityLog.jobTamper": "ujian gangguan",
   "activityLog.jobDigest": "ringkasan mingguan",
   "activityLog.jobWatchdog": "semakan sandaran tertunggak",
+  "activityLog.jobReceiver": "pemeriksaan repositori diterima",
+  "activityLog.jobFleet": "pemeriksaan rakan armada",
   "activityLog.lineBackingUpItem": "Menyandarkan {name} … {percent}%",
   "activityLog.lineRestoringItem": "Memulihkan {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Menyandarkan semua {domain} … {percent}%",

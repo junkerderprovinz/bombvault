@@ -1327,6 +1327,8 @@ const ca: Partial<Translations> = {
   "activityLog.jobTamper": "prova de manipulació",
   "activityLog.jobDigest": "resum setmanal",
   "activityLog.jobWatchdog": "comprovació de còpies vençudes",
+  "activityLog.jobReceiver": "comprovació de repositoris rebuts",
+  "activityLog.jobFleet": "comprovació de companys de la flota",
   "activityLog.lineBackingUpItem": "Fent còpia de {name} … {percent}%",
   "activityLog.lineRestoringItem": "Restaurant {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Fent còpia de tots els {domain} … {percent}%",

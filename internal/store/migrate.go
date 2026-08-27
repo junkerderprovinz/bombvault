@@ -1196,6 +1196,50 @@ UPDATE runs SET completed = 1
  WHERE finished_at IS NOT NULL
    AND (error IS NULL OR error <> 'interrupted (BombVault restarted mid-run)');`,
 	},
+	{
+		// The OTHER half of the renumbering recovery. v92 restored what a
+		// :latest-numbered database lost from THIS build's v89 (schedule_job_runs
+		// and idx_runs_group), but not the mirror case: a database that recorded 90
+		// with the other body skips this build's v90 — settings_everything — for
+		// good, and v92 does not create those three columns. getSettings selects
+		// them by name, so such a database fails to read its settings at all.
+		//
+		// A fresh number nobody has recorded, so it runs exactly once everywhere,
+		// and the same columnPresent guard v90 carries makes it a no-op on the
+		// databases that already have the columns. Same recovery shape as v92,
+		// same rule: this is a repair for a specific historical collision, not a
+		// place to put new schema work.
+		version: 94, name: "renumbering_recovery_settings_everything",
+		alreadySatisfied: columnPresent("settings", "everything_schedule"),
+		sql: `
+ALTER TABLE settings ADD COLUMN everything_schedule  TEXT NOT NULL DEFAULT 'off';
+ALTER TABLE settings ADD COLUMN everything_pre_hook  TEXT NOT NULL DEFAULT '';
+ALTER TABLE settings ADD COLUMN everything_post_hook TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// v93's backfill excluded ONE of the two writers that close a row without
+		// concluding it. Its own comment names both — ReapInterruptedRuns and
+		// FailRunningRun — but the WHERE clause only filtered the reap marker, so
+		// every run closed by the panic path was backfilled as completed = 1.
+		//
+		// That is the exact signal LastEverythingPass reads. A whole-server pass
+		// that died in a panic therefore counted as "the pass ran", and the everyN
+		// gate skipped the next interval's worth of whole-server backups — the
+		// failure mode v93 was written to prevent, reintroduced by its own
+		// backfill.
+		//
+		// A correction rather than an edit to v93: that migration is recorded in
+		// the field, so changing its body would fix nobody. Matching on the message
+		// FailRunningRun writes is the same last-resort technique v93's own
+		// backfill uses, and for the same reason — rows written before the column
+		// existed carry no structural signal. Anchored with LIKE '...%' because the
+		// panic value is appended to it.
+		version: 95, name: "runs_completed_panic_correction",
+		sql: `
+UPDATE runs SET completed = 0
+ WHERE completed = 1
+   AND error LIKE 'internal error (recovered panic):%';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
