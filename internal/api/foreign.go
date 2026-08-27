@@ -78,7 +78,7 @@ var foreignKeyRe = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 // errForeignSession is returned for an unknown or expired session id — the UI
 // answer is the same either way: connect again.
-var errForeignSession = errors.New("foreign session expired or unknown — connect to the repository again")
+var errForeignSession = errors.New("foreign session expired or unknown. Connect to the repository again")
 
 // newForeignSessionID returns a URL-safe 24-character random session id
 // (18 bytes of crypto/rand, base64url — same recipe as randomDeployPassword).
@@ -140,7 +140,7 @@ func (s *Service) OpenForeign(ctx context.Context, location, foreignKey string) 
 	case s.engine.RepoOpens(ctx, repo, plainMode):
 		mode = plainMode
 	default:
-		return "", ForeignInventory{}, errors.New("could not open the repository — wrong APP_KEY, or the location is not a BombVault/restic repository")
+		return "", ForeignInventory{}, errors.New("could not open the repository: wrong APP_KEY, or the location is not a BombVault/restic repository")
 	}
 
 	inv, err := s.foreignInventory(ctx, repo, mode)
@@ -566,7 +566,7 @@ func (s *Service) foreignContainerTarget(sess foreignSession, name string) (stor
 	}
 	enc, err := readStoredDef(filepath.Join(sess.repo, "def"), filepath.Join(filepath.Dir(sess.repo), "bombvault-defs"), fn)
 	if err != nil {
-		return store.Target{}, fmt.Errorf("the foreign repository holds no readable definition for container %q — it cannot be recreated here", name)
+		return store.Target{}, fmt.Errorf("the foreign repository holds no readable definition for container %q, so it cannot be recreated here", name)
 	}
 	plain, err := secret.Decrypt(sess.key, enc)
 	if err != nil {
@@ -595,7 +595,7 @@ func (s *Service) foreignVMTarget(sess foreignSession, name string) (store.VMTar
 	}
 	enc, err := readStoredDef(filepath.Join(sess.repo, "vm-def"), filepath.Join(filepath.Dir(sess.repo), "bombvault-vm-defs"), fn)
 	if err != nil {
-		return store.VMTarget{}, fmt.Errorf("the foreign repository holds no readable definition for vm %q — it cannot be recreated here", name)
+		return store.VMTarget{}, fmt.Errorf("the foreign repository holds no readable definition for vm %q, so it cannot be recreated here", name)
 	}
 	plain, err := secret.Decrypt(sess.key, enc)
 	if err != nil {

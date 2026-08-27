@@ -564,7 +564,7 @@ const vi: Partial<Translations> = {
   "notify.hcPerDomainHint": "Để trống một trường để dùng URL toàn cục ở trên. Một miền có URL riêng sẽ có phần kiểm tra riêng, với thời gian chạy và lịch sử riêng.",
   "notify.unraid": "Thông báo Unraid",
   "notify.unraidHint": "Gửi đến hệ thống thông báo của chính Unraid (có thể chuyển tiếp tới Pushover, email, Discord, …). Chạy qua kết nối SSH từ Cài đặt → VM Backup over SSH, nên khóa phải được ủy quyền ở đó — nhưng KHÔNG bắt buộc phải có libvirt/VMs (bỏ qua kết quả “libvirt not reachable” nếu bạn không sao lưu VMs). Để kiểm tra, dùng “Gửi thử” bên dưới.",
-  "notify.unraidPlatformMismatch": "BombVault đã phát hiện máy chủ này là \"{platform}\", không phải Unraid — thông báo Unraid vẫn tắt dù tùy chọn này đang bật. Nếu đây THỰC SỰ là máy chủ Unraid, hãy kiểm tra xem /boot của máy chủ đã được bind-mount tới /host/boot bên trong container chưa (xem mẫu Unraid của BombVault), rồi khởi động lại container.",
+  "notify.unraidPlatformMismatch": "BombVault đã phát hiện máy chủ này là \"{platform}\", không phải Unraid. Thông báo Unraid vẫn tắt dù tùy chọn này đang bật. Nếu đây THỰC SỰ là máy chủ Unraid, hãy kiểm tra xem /boot của máy chủ đã được bind-mount tới /host/boot bên trong container chưa (xem mẫu Unraid của BombVault), rồi khởi động lại container.",
   "notify.test": "Gửi thử",
   "notify.tested": "Đã gửi thử",
   "stophook.title": "Dừng các container khác",
@@ -807,7 +807,7 @@ const vi: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Dùng lịch của Containers cho cả VMs, Flash và Thư mục",
-  "jobs.syncSchedulesHint": "Khi bật, VMs, Flash và Thư mục sẽ theo lịch của Containers thay vì lịch riêng — tắt để đặt nhịp độ riêng cho từng miền.",
+  "jobs.syncSchedulesHint": "Khi bật, VMs, Flash và Thư mục sẽ theo lịch của Containers thay vì lịch riêng. Tắt để đặt nhịp độ riêng cho từng miền.",
   "jobs.vmIncludeHint": "Sao lưu mọi VM có bật \"đưa vào lịch trình\" (đặt riêng cho từng VM trong tab VMs).",
   "jobs.flashScheduleHint": "Sao lưu ổ USB khởi động Flash của Unraid (/boot) vào thời điểm đã lên lịch.",
   "jobs.flashNotImplemented": "Lưu ý: Bộ thực thi sao lưu Flash chưa được triển khai trong Giai đoạn 1 — lịch được lưu nhưng không được thực thi.",
@@ -972,7 +972,7 @@ const vi: Partial<Translations> = {
   "excludes.assistSourceLive": "Container này chưa có bản sao lưu nào, nên kích thước lấy từ việc quét trực tiếp các thư mục.",
   "excludes.assistUnexamined": "Những thư mục được sao lưu này hoàn toàn không được kiểm tra: {paths}",
   "excludes.assistUnreadable": "Không đọc được những thư mục được sao lưu này, nên mọi thứ bên trong chúng đều thiếu trong danh sách này: {paths}",
-  "excludes.assistPathsUnavailable": "Hiện không thể truy cập các thư mục sao lưu của container này, và cũng không có bản sao lưu nào để đọc kích thước. Hãy kiểm tra xem mảng đĩa hoặc chia sẻ chứa chúng đã được gắn kết chưa.",
+  "excludes.assistPathsUnavailable": "Hiện không thể truy cập các thư mục sao lưu của container này. Hãy kiểm tra xem mảng đĩa hoặc chia sẻ chứa chúng đã được gắn kết chưa.",
   "excludes.assistSourceLiveRequested": "Kích thước lấy từ một lần quét các thư mục ở trạng thái hiện tại.",
   "excludes.assistSourceLiveNotInSnapshot": "Bản sao lưu gần nhất không bao gồm các thư mục đang chọn, nên kích thước lấy từ một lần quét trực tiếp các thư mục.",
   "excludes.assistSnapshotStale": "Bản sao lưu này đã hơn một ngày, nên mọi thứ tạo ra từ đó đến nay đều thiếu trong danh sách này.",

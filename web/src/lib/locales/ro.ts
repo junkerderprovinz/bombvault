@@ -569,7 +569,7 @@ const ro: Partial<Translations> = {
   "notify.hcPerDomainHint": "Lasă un câmp gol pentru a folosi URL-ul global de mai sus. Un domeniu cu propriul URL primește propria verificare, cu propriul timp de execuție și istoric.",
   "notify.unraid": "Notificări Unraid",
   "notify.unraidHint": "Trimite către sistemul de notificări al Unraid (care poate redirecționa către Pushover, e-mail, Discord, …). Funcționează prin conexiunea SSH din Setări → VM Backup over SSH, deci cheia trebuie autorizată acolo — dar libvirt/VMs NU sunt necesare (ignoră un rezultat „libvirt not reachable” dacă nu faci backup pentru VMs). Pentru verificare, folosește „Trimite test” de mai jos.",
-  "notify.unraidPlatformMismatch": "BombVault a detectat această gazdă ca fiind \"{platform}\", nu Unraid — notificările Unraid rămân dezactivate chiar dacă această opțiune este activată. Dacă aceasta ESTE într-adevăr o gazdă Unraid, verifică dacă /boot al gazdei este montat (bind-mount) la /host/boot în interiorul containerului (vezi șablonul Unraid al BombVault) și repornește containerul.",
+  "notify.unraidPlatformMismatch": "BombVault a detectat această gazdă ca fiind \"{platform}\", nu Unraid. Notificările Unraid rămân dezactivate chiar dacă această opțiune este activată. Dacă aceasta ESTE într-adevăr o gazdă Unraid, verifică dacă /boot al gazdei este montat (bind-mount) la /host/boot în interiorul containerului (vezi șablonul Unraid al BombVault) și repornește containerul.",
   "notify.test": "Trimite test",
   "notify.tested": "Test trimis",
   "stophook.title": "Oprește alte containere",
@@ -790,7 +790,7 @@ const ro: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Folosește programarea Containerelor și pentru VM-uri, Flash și Foldere",
-  "jobs.syncSchedulesHint": "Când este activată, VM-urile, Flash și Folderele urmează programarea Containerelor în loc de propria lor — dezactivați pentru a seta ritmul fiecărui domeniu în mod independent.",
+  "jobs.syncSchedulesHint": "Când este activată, VM-urile, Flash și Folderele urmează programarea Containerelor în loc de propria lor. Dezactivați pentru a seta ritmul fiecărui domeniu în mod independent.",
   "jobs.vmIncludeHint": "Face backup fiecărui VM cu „Includeți în programare” activat (se setează per VM în fila VMs).",
   "jobs.flashScheduleHint": "Face copie de rezervă a stick-ului USB de pornire Flash al Unraid (/boot) la ora programată.",
   "jobs.flashNotImplemented": "Notă: Executorul de backup Flash nu este încă implementat în Faza 1 — programarea este salvată, dar nu este executată.",
@@ -983,7 +983,7 @@ const ro: Partial<Translations> = {
   "excludes.assistSourceLive": "Acest container nu are încă o copie de rezervă, așa că dimensiunile provin dintr-o scanare live a folderelor.",
   "excludes.assistUnexamined": "Aceste foldere din copie nu au fost examinate deloc: {paths}",
   "excludes.assistUnreadable": "Aceste foldere din copie nu au putut fi citite, așa că tot ce se află în ele lipsește din această listă: {paths}",
-  "excludes.assistPathsUnavailable": "Folderele din copia acestui container nu pot fi accesate acum și nu există nici o copie din care să se citească dimensiunile. Verifică dacă matricea sau partajarea care le conține este montată.",
+  "excludes.assistPathsUnavailable": "Folderele din copia acestui container nu pot fi accesate acum. Verifică dacă matricea sau partajarea care le conține este montată.",
   "excludes.assistSourceLiveRequested": "Dimensiunile provin dintr-o scanare a folderelor în starea lor de acum.",
   "excludes.assistSourceLiveNotInSnapshot": "Ultima copie nu acoperă folderele selectate acum, așa că dimensiunile provin dintr-o scanare live a folderelor.",
   "excludes.assistSnapshotStale": "Această copie este mai veche de o zi, așa că tot ce a apărut de atunci lipsește din această listă.",

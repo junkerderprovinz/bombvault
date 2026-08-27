@@ -566,7 +566,7 @@ const nl: Partial<Translations> = {
   "notify.hcPerDomainHint": "Laat een veld leeg om de globale URL hierboven te gebruiken. Een domein met een eigen URL krijgt een eigen controle, met eigen looptijd en geschiedenis.",
   "notify.unraid": "Unraid-meldingen",
   "notify.unraidHint": "Stuur naar Unraids eigen meldingssysteem (dat kan doorsturen naar Pushover, e-mail, Discord, …). Werkt via de SSH-verbinding uit Instellingen → VM Backup over SSH, dus de sleutel moet daar geautoriseerd zijn — maar libvirt/VMs zijn NIET vereist (negeer een “libvirt not reachable”-resultaat als je geen VMs back-upt). Controleer het met “Test versturen” hieronder.",
-  "notify.unraidPlatformMismatch": "BombVault heeft deze host gedetecteerd als \"{platform}\", niet als Unraid — Unraid-meldingen blijven uit, ook als deze optie aan staat. Als dit ECHT een Unraid-host is, controleer dan of het /boot van de host is bind-mounted naar /host/boot binnen de container (zie de BombVault Unraid-template) en start de container opnieuw.",
+  "notify.unraidPlatformMismatch": "BombVault heeft deze host gedetecteerd als \"{platform}\", niet als Unraid. Unraid-meldingen blijven uit, ook als deze optie aan staat. Als dit ECHT een Unraid-host is, controleer dan of het /boot van de host is bind-mounted naar /host/boot binnen de container (zie de BombVault Unraid-template) en start de container opnieuw.",
   "notify.test": "Test versturen",
   "notify.tested": "Test verstuurd",
   "stophook.title": "Andere containers stoppen",
@@ -784,7 +784,7 @@ const nl: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Gebruik de planning van Containers ook voor VM's, Flash en Mappen",
-  "jobs.syncSchedulesHint": "Indien ingeschakeld volgen VM's, Flash en Mappen de planning van Containers in plaats van hun eigen planning — schakel uit om voor elk domein een eigen ritme in te stellen.",
+  "jobs.syncSchedulesHint": "Indien ingeschakeld volgen VM's, Flash en Mappen de planning van Containers in plaats van hun eigen planning. Schakel uit om voor elk domein een eigen ritme in te stellen.",
   "jobs.vmIncludeHint": "Maakt een back-up van elke VM waarbij „opnemen in planning” is ingeschakeld (stel dit per VM in op het tabblad VM's).",
   "jobs.flashScheduleHint": "Back-upt de Unraid USB-flash-bootstick (/boot) op het geplande tijdstip.",
   "jobs.flashNotImplemented": "Let op: de Flash-back-upuitvoerder is in fase 1 nog niet geïmplementeerd — de planning wordt opgeslagen maar niet uitgevoerd.",
@@ -977,7 +977,7 @@ const nl: Partial<Translations> = {
   "excludes.assistSourceLive": "Deze container heeft nog geen back-up, dus de groottes komen uit een live scan van de mappen.",
   "excludes.assistUnexamined": "Deze back-upmappen zijn helemaal niet onderzocht: {paths}",
   "excludes.assistUnreadable": "Deze back-upmappen konden niet worden gelezen, dus alles erin ontbreekt in deze lijst: {paths}",
-  "excludes.assistPathsUnavailable": "De back-upmappen van deze container zijn nu niet bereikbaar, en er is ook geen back-up om groottes uit te lezen. Controleer of de array of share met die mappen is aangekoppeld.",
+  "excludes.assistPathsUnavailable": "De back-upmappen van deze container zijn nu niet bereikbaar. Controleer of de array of share met die mappen is aangekoppeld.",
   "excludes.assistSourceLiveRequested": "De groottes komen uit een scan van de mappen zoals ze er nu bij staan.",
   "excludes.assistSourceLiveNotInSnapshot": "De laatste back-up bevat de nu geselecteerde mappen niet, dus de groottes komen uit een live scan van de mappen.",
   "excludes.assistSnapshotStale": "Deze back-up is meer dan een dag oud, dus alles wat sindsdien is gemaakt ontbreekt in deze lijst.",

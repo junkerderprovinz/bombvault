@@ -3100,7 +3100,7 @@ func (s *Service) EnsureRepo(ctx context.Context, repo string, mode restic.Mode)
 	// rather than running Init (which would log "config already exists") and then
 	// failing every subsequent backup against the now-mismatched repo.
 	if s.engine.RepoOpens(ctx, repo, s.oppositeMode(mode)) {
-		return fmt.Errorf("this backup repository was created %s, but the Encryption setting is now %s — "+
+		return fmt.Errorf("this backup repository was created %s, but the Encryption setting is now %s, so "+
 			"restic cannot open it after the change. Set Encryption back to %s, or point this backup at a "+
 			"new, empty repository location",
 			encryptionWord(!mode.Encrypted), enabledWord(mode.Encrypted), enabledWord(!mode.Encrypted))
@@ -3716,7 +3716,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// of recording an empty backup that looks successful and overwrites the stored
 	// path list. A first backup of a new/stateless container is unaffected.
 	if len(effective) == 0 && s.expectsData(name) {
-		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?) — refusing an empty backup that would look successful", name)
+		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?). Refusing an empty backup that would look successful", name)
 		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
@@ -5001,12 +5001,12 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		appdataForRestore = nil
 	} else {
 		if len(tg.AppdataPaths) == 0 {
-			return containerRestorePlan{}, errors.New("no backup paths recorded for this container — run a backup once, then restore")
+			return containerRestorePlan{}, errors.New("no backup paths recorded for this container: run a backup once, then restore")
 		}
 		for _, p := range tg.AppdataPaths {
 			if !paths.Within(s.cfg.HostMountRoot, p) {
 				log.Printf("api: restore: appdata path %q escapes mount root", p) //nolint:gosec // G706: %q-quoted
-				return containerRestorePlan{}, errors.New("a stored backup path is outside the host mount — refusing to restore")
+				return containerRestorePlan{}, errors.New("a stored backup path is outside the host mount, so refusing to restore")
 			}
 		}
 		// Cross-instance / cross-pool remap (destBase set: foreign restore, #123/#125).
@@ -5064,7 +5064,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// Fallback: target was backed up before this feature; try live inspect.
 		liveIn, liveErr := s.docker.Inspect(ctx, name)
 		if liveErr != nil {
-			return containerRestorePlan{}, errors.New("no stored definition for this container — run a backup once after upgrading, then restore is possible even after deletion")
+			return containerRestorePlan{}, errors.New("no stored definition for this container: run a backup once after upgrading, then restore is possible even after deletion")
 		}
 		in = liveIn
 		xml, _, _ = template.Read(s.cfg.FlashTemplatesDir, name)
@@ -6299,7 +6299,7 @@ func (s *Service) SetScheduleCadence(ctx context.Context, name, cadence string) 
 			return fmt.Errorf("invalid schedule: %w", err)
 		}
 		if cad.IntervalDays > 0 {
-			return fmt.Errorf("per-item schedules do not support 'everyN' — use 'off', 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression")
+			return fmt.Errorf("per-item schedules do not support 'everyN': use 'off', 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression")
 		}
 	}
 	if _, err := s.store.GetTargetByContainer(name); err != nil {
@@ -6872,7 +6872,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	for _, hp := range domain.DiskPaths {
 		cp, ok := s.toContainerPath(hp)
 		if !ok {
-			return backup.Summary{}, fmt.Errorf("backup vm: disk %q is not under the host mount and can't be reached for backup — the VM disk must live under your Host Data mount (/mnt)", hp)
+			return backup.Summary{}, fmt.Errorf("backup vm: disk %q is not under the host mount and can't be reached for backup. The VM disk must live under your Host Data mount (/mnt)", hp)
 		}
 		diskPaths = append(diskPaths, cp)
 	}
@@ -6928,7 +6928,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		vmBlockDisks = append(vmBlockDisks, backup.VMBlockDisk{Dataset: dataset, Dev: bd.Dev})
 	}
 	if len(vmBlockDisks) > 0 && s.ssh == nil {
-		return backup.Summary{}, fmt.Errorf("backup vm: %q has block-device (zvol) disks but no SSH host connection is configured — zvol backup requires SSH", name)
+		return backup.Summary{}, fmt.Errorf("backup vm: %q has block-device (zvol) disks but no SSH host connection is configured, and zvol backup requires SSH", name)
 	}
 
 	// Default autostart to true (safe: most Unraid-managed VMs have autostart on).
@@ -7265,7 +7265,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	}
 
 	if tg.Definition == "" {
-		return vmRestorePlan{}, errors.New("no stored definition for this vm — run a backup once first")
+		return vmRestorePlan{}, errors.New("no stored definition for this vm: run a backup once first")
 	}
 	var def vmDefinition
 	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
@@ -7390,7 +7390,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// just failing this one restore. Caught here, before a plan is ever
 	// returned, exactly like the backup-side check in BackupVM.
 	if len(vmRestoreBlockDisks) > 0 && s.ssh == nil {
-		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured — zvol restore requires SSH", name)
+		return vmRestorePlan{}, fmt.Errorf("restore vm: %q has block-device (zvol) disks but no SSH host connection is configured, and zvol restore requires SSH", name)
 	}
 
 	// CROSS-INSTANCE zvol rebase: destBase remaps a FILE-backed disk onto the
@@ -7420,7 +7420,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 			// direct API call. Keep this in sync with
 			// docs/vm-backup-ssh-setup.md's TrueNAS section, which carries
 			// the same guidance for someone reading ahead of time.
-			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified — the destination pool cannot be inferred from the chosen destination folder. There is no web UI field for this yet: call POST /api/foreign/restore directly with its zvolPool parameter set to the destination pool name (see docs/vm-backup-ssh-setup.md's TrueNAS section), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
+			return vmRestorePlan{}, fmt.Errorf("restore vm: %q has %d TrueNAS zvol-backed disk(s) and this is a cross-instance restore, but no destination ZFS pool was specified, and the destination pool cannot be inferred from the chosen destination folder. There is no web UI field for this yet: call POST /api/foreign/restore directly with its zvolPool parameter set to the destination pool name (see docs/vm-backup-ssh-setup.md's TrueNAS section), or restore this VM on the instance it was backed up from", name, len(vmRestoreBlockDisks))
 		}
 		for i := range vmRestoreBlockDisks {
 			rebased, ok := virshcli.RebaseZvolDatasetPool(vmRestoreBlockDisks[i].SourceDataset, destZvolPool)
@@ -7871,7 +7871,7 @@ func (s *Service) VMSSHTest(ctx context.Context) error {
 		// libvirt is missing. Say so, so a notifications-only user (who needs the
 		// SSH connection but not libvirt) isn't misled into thinking their SSH is
 		// broken (#53).
-		return fmt.Errorf("%w. The SSH connection itself is working — libvirt is only needed for VM backups, not for Unraid notifications", err)
+		return fmt.Errorf("%w. The SSH connection itself is working, and libvirt is only needed for VM backups, not for Unraid notifications", err)
 	}
 	return nil
 }
@@ -7922,7 +7922,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
 	if _, statErr := os.Stat(s.cfg.FlashDir); errors.Is(statErr, fs.ErrNotExist) {
-		return backup.Summary{}, fmt.Errorf("flash backup: the Unraid flash is not mounted — add the /boot → %s mount to the container template", s.cfg.FlashDir)
+		return backup.Summary{}, fmt.Errorf("flash backup: the Unraid flash is not mounted. Add the /boot → %s mount to the container template", s.cfg.FlashDir)
 	}
 	repo, err := s.flashRepoPath(settings)
 	if err != nil {
@@ -8112,7 +8112,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// disabled sets from fileset: tags alone) — say so instead of letting
 	// paths.Resolve report a misleading traversal error for "".
 	if strings.TrimSpace(set.Path) == "" {
-		return backup.Summary{}, fmt.Errorf("files backup: file set %q has no source path configured — set a path before backing up", set.Name)
+		return backup.Summary{}, fmt.Errorf("files backup: file set %q has no source path configured. Set a path before backing up", set.Name)
 	}
 	src, err := paths.Resolve(s.cfg.HostMountRoot, set.Path)
 	if err != nil {
@@ -8121,7 +8121,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	if _, statErr := os.Stat(src); errors.Is(statErr, fs.ErrNotExist) {
 		// Record the miss as a failed run so a scheduled backup of a renamed or
 		// deleted folder shows up in Run History instead of failing invisibly.
-		err := fmt.Errorf("files backup: source path not found for %q — %s does not exist under the host mount", set.Name, src)
+		err := fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
 		if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
 			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
 		} else if fErr := s.store.FinishRun(runID, "failed", "", 0, err.Error()); fErr != nil {
@@ -8231,7 +8231,7 @@ func (s *Service) validateFileSet(fs store.FileSet) error {
 	}
 	if strings.TrimSpace(fs.Path) == "" {
 		if fs.Enabled {
-			return errors.New("file set has no source path — set a path before enabling it")
+			return errors.New("file set has no source path: set a path before enabling it")
 		}
 		return nil
 	}
@@ -8406,7 +8406,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		// say so instead of letting paths.Resolve report a misleading traversal
 		// error for "" (restore-to-folder works without a path).
 		if strings.TrimSpace(set.Path) == "" {
-			return fileSetRestorePlan{}, fmt.Errorf("file set %q has no source path configured — restore to a folder instead, or set a path first", set.Name)
+			return fileSetRestorePlan{}, fmt.Errorf("file set %q has no source path configured: restore to a folder instead, or set a path first", set.Name)
 		}
 		src, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path)
 		if rErr != nil {
@@ -9322,7 +9322,7 @@ func (s *Service) SetVMScheduleCadence(_ context.Context, name, cadence string) 
 			return fmt.Errorf("invalid schedule: %w", err)
 		}
 		if cad.IntervalDays > 0 {
-			return fmt.Errorf("per-item schedules do not support 'everyN' — use 'off', 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression")
+			return fmt.Errorf("per-item schedules do not support 'everyN': use 'off', 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression")
 		}
 	}
 	if _, err := s.store.GetVMTargetByName(name); err != nil {
@@ -9729,7 +9729,7 @@ const drillSnapshotTimeout = 15 * time.Minute
 // file data (0 files / 0 bytes — e.g. a definition-only / stateless container). A
 // DR drill then records NOTHING: a green would be a false "verified restorable"
 // and a red a false failure, so the scorecard must green/red neither.
-var errNothingToDrill = errors.New("no restorable file data in the newest off-site snapshot — nothing to drill")
+var errNothingToDrill = errors.New("no restorable file data in the newest off-site snapshot: nothing to drill")
 
 // runDRDrill performs a real off-site disaster-recovery drill for a domain: it
 // restores the newest off-site snapshot of the drill target into a marker-guarded

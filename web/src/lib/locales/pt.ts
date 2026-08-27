@@ -569,7 +569,7 @@ const pt: Partial<Translations> = {
   "notify.hcPerDomainHint": "Deixe um campo em branco para usar o URL global acima. Um domínio com o seu próprio URL recebe a sua própria verificação, com o seu próprio tempo de execução e histórico.",
   "notify.unraid": "Notificações do Unraid",
   "notify.unraidHint": "Enviar para o sistema de notificações do próprio Unraid (que pode encaminhar para Pushover, e-mail, Discord, …). Funciona pela conexão SSH de Configurações → VM Backup over SSH, então a chave precisa estar autorizada ali — mas libvirt/VMs NÃO são necessários (ignore um resultado “libvirt not reachable” se você não faz backup de VMs). Para verificar, use “Enviar teste” abaixo.",
-  "notify.unraidPlatformMismatch": "O BombVault detetou este host como \"{platform}\", não como Unraid — as notificações do Unraid permanecem desativadas mesmo com esta opção ativada. Se este FOR realmente um host Unraid, verifique se o /boot do host está montado (bind-mount) em /host/boot dentro do contêiner (consulte o template Unraid do BombVault) e reinicie o contêiner.",
+  "notify.unraidPlatformMismatch": "O BombVault detetou este host como \"{platform}\", não como Unraid. As notificações do Unraid permanecem desativadas mesmo com esta opção ativada. Se este FOR realmente um host Unraid, verifique se o /boot do host está montado (bind-mount) em /host/boot dentro do contêiner (consulte o template Unraid do BombVault) e reinicie o contêiner.",
   "notify.test": "Enviar teste",
   "notify.tested": "Teste enviado",
   "stophook.title": "Parar outros contentores",
@@ -787,7 +787,7 @@ const pt: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Usar o agendamento dos Containers também para as VMs, Flash e Pastas",
-  "jobs.syncSchedulesHint": "Quando ativado, VMs, Flash e Pastas seguem o agendamento dos Containers em vez do próprio — desative para definir o ritmo de cada domínio de forma independente.",
+  "jobs.syncSchedulesHint": "Quando ativado, VMs, Flash e Pastas seguem o agendamento dos Containers em vez do próprio. Desative para definir o ritmo de cada domínio de forma independente.",
   "jobs.vmIncludeHint": "Faz backup de cada VM com «incluir no agendamento» ativado (defina por VM no separador VMs).",
   "jobs.flashScheduleHint": "Faz backup do pendrive de boot Flash do Unraid (/boot) no horário agendado.",
   "jobs.flashNotImplemented": "Nota: o executor de backup do Flash ainda não está implementado na fase 1 — o agendamento é guardado mas não executado.",
@@ -980,7 +980,7 @@ const pt: Partial<Translations> = {
   "excludes.assistSourceLive": "Este contentor ainda não tem backup, por isso os tamanhos vêm de uma análise ao vivo das pastas.",
   "excludes.assistUnexamined": "Estas pastas da cópia não foram examinadas de todo: {paths}",
   "excludes.assistUnreadable": "Não foi possível ler estas pastas da cópia, por isso tudo o que está dentro delas falta nesta lista: {paths}",
-  "excludes.assistPathsUnavailable": "As pastas de cópia deste contentor não estão acessíveis neste momento e também não há cópia de onde ler os tamanhos. Verifica se o array ou a partilha que as contém está montado.",
+  "excludes.assistPathsUnavailable": "As pastas de cópia deste contentor não estão acessíveis neste momento. Verifica se o array ou a partilha que as contém está montado.",
   "excludes.assistSourceLiveRequested": "Os tamanhos vêm de uma análise das pastas tal como estão neste momento.",
   "excludes.assistSourceLiveNotInSnapshot": "A última cópia não abrange as pastas selecionadas agora, por isso os tamanhos vêm de uma análise ao vivo das pastas.",
   "excludes.assistSnapshotStale": "Esta cópia tem mais de um dia, por isso tudo o que foi criado desde então falta nesta lista.",

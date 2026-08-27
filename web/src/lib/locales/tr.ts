@@ -572,7 +572,7 @@ const tr: Partial<Translations> = {
   "notify.hcPerDomainHint": "Yukarıdaki genel URL'yi kullanmak için bir alanı boş bırakın. Kendi URL'si olan bir etki alanı, kendi çalışma süresi ve geçmişiyle kendi denetimini alır.",
   "notify.unraid": "Unraid bildirimleri",
   "notify.unraidHint": "Unraid'in kendi bildirim sistemine gönderir (Pushover, e-posta, Discord, … iletebilir). Ayarlar → VM Backup over SSH bölümündeki SSH bağlantısı üzerinden çalışır, bu nedenle anahtarın orada yetkilendirilmiş olması gerekir — ancak libvirt/VMs gerekli DEĞİLDİR (VMs yedeklemiyorsanız “libvirt not reachable” sonucunu yok sayın). Kontrol etmek için aşağıdaki “Test gönder” düğmesini kullanın.",
-  "notify.unraidPlatformMismatch": "BombVault bu ana makineyi Unraid değil, \"{platform}\" olarak algıladı — bu seçenek açık olsa bile Unraid bildirimleri kapalı kalır. Bu GERÇEKTEN bir Unraid ana makinesiyse, ana makinenin /boot yolunun container içinde /host/boot konumuna bind-mount edildiğini kontrol edin (BombVault Unraid şablonuna bakın) ve container'ı yeniden başlatın.",
+  "notify.unraidPlatformMismatch": "BombVault bu ana makineyi Unraid değil, \"{platform}\" olarak algıladı. Bu seçenek açık olsa bile Unraid bildirimleri kapalı kalır. Bu GERÇEKTEN bir Unraid ana makinesiyse, ana makinenin /boot yolunun container içinde /host/boot konumuna bind-mount edildiğini kontrol edin (BombVault Unraid şablonuna bakın) ve container'ı yeniden başlatın.",
   "notify.test": "Test gönder",
   "notify.tested": "Test gönderildi",
   "stophook.title": "Diğer konteynerleri durdur",
@@ -815,7 +815,7 @@ const tr: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Konteyner zamanlamasını VM'ler, Flash ve Klasörler için de kullan",
-  "jobs.syncSchedulesHint": "Etkinleştirildiğinde VM'ler, Flash ve Klasörler kendi zamanlamaları yerine Konteyner zamanlamasını izler — her alan için ayrı bir sıklık ayarlamak üzere kapatın.",
+  "jobs.syncSchedulesHint": "Etkinleştirildiğinde VM'ler, Flash ve Klasörler kendi zamanlamaları yerine Konteyner zamanlamasını izler. Her alan için ayrı bir sıklık ayarlamak üzere kapatın.",
   "jobs.vmIncludeHint": "“Zamanlamaya ekle” etkin olan her VM'yi yedekler (her VM için VMs sekmesinden ayarlanır).",
   "jobs.flashScheduleHint": "Unraid USB Flash önyükleme sürücüsünü (/boot) zamanlanan saatte yedekler.",
   "jobs.flashNotImplemented": "Not: Flash yedekleme yürütücüsü Aşama 1'de henüz uygulanmadı — zamanlama saklanır ancak çalıştırılmaz.",
@@ -980,7 +980,7 @@ const tr: Partial<Translations> = {
   "excludes.assistSourceLive": "Bu kapsayıcının henüz yedeği yok, bu yüzden boyutlar klasörlerin canlı taramasından geliyor.",
   "excludes.assistUnexamined": "Yedeklenen bu klasörler hiç incelenmedi: {paths}",
   "excludes.assistUnreadable": "Yedeklenen bu klasörler okunamadı, bu yüzden içlerindeki her şey bu listede yok: {paths}",
-  "excludes.assistPathsUnavailable": "Bu konteynerin yedeklenen klasörlerine şu anda erişilemiyor ve boyutların okunabileceği bir yedek de yok. Onları tutan dizinin veya paylaşımın bağlı olup olmadığını kontrol et.",
+  "excludes.assistPathsUnavailable": "Bu konteynerin yedeklenen klasörlerine şu anda erişilemiyor. Onları tutan dizinin veya paylaşımın bağlı olup olmadığını kontrol et.",
   "excludes.assistSourceLiveRequested": "Boyutlar, klasörlerin şu anki hâlinin taranmasından geliyor.",
   "excludes.assistSourceLiveNotInSnapshot": "Son yedek şu anda seçili klasörleri kapsamıyor, bu yüzden boyutlar klasörlerin canlı taranmasından geliyor.",
   "excludes.assistSnapshotStale": "Bu yedek bir günden eski, bu yüzden o zamandan beri oluşturulan her şey bu listede yok.",

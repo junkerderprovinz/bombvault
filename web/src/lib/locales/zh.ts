@@ -564,7 +564,7 @@ const zh: Partial<Translations> = {
   "notify.hcPerDomainHint": "留空某个字段可使用上方的全局 URL。拥有自己 URL 的域会获得自己的检查，拥有各自的运行时长和历史记录。",
   "notify.unraid": "Unraid 通知",
   "notify.unraidHint": "发送到 Unraid 自带的通知系统（可转发到 Pushover、邮件、Discord、…）。它通过 设置 → VM Backup over SSH 中的 SSH 连接运行，因此密钥必须在那里获得授权 — 但不需要 libvirt/VMs（如果你不备份 VMs，请忽略“libvirt not reachable”结果）。使用下方的“发送测试”进行检查。",
-  "notify.unraidPlatformMismatch": "BombVault 检测到该主机是 “{platform}”，而不是 Unraid — 即使此选项已开启，Unraid 通知仍会保持关闭状态。如果这确实是 Unraid 主机，请检查主机的 /boot 是否已绑定挂载（bind-mount）到容器内的 /host/boot（参见 BombVault 的 Unraid 模板），然后重启容器。",
+  "notify.unraidPlatformMismatch": "BombVault 检测到该主机是 “{platform}”，而不是 Unraid。即使此选项已开启，Unraid 通知仍会保持关闭状态。如果这确实是 Unraid 主机，请检查主机的 /boot 是否已绑定挂载（bind-mount）到容器内的 /host/boot（参见 BombVault 的 Unraid 模板），然后重启容器。",
   "notify.test": "发送测试",
   "notify.tested": "测试已发送",
   "stophook.title": "停止其他容器",
@@ -807,7 +807,7 @@ const zh: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "VMs、Flash 和文件夹也使用容器的计划",
-  "jobs.syncSchedulesHint": "启用后，VMs、Flash 和文件夹都将使用容器的计划，而不是各自的计划 — 关闭后可为每个域单独设置节奏。",
+  "jobs.syncSchedulesHint": "启用后，VMs、Flash 和文件夹都将使用容器的计划，而不是各自的计划。关闭后可为每个域单独设置节奏。",
   "jobs.vmIncludeHint": "备份每台启用了“加入计划”的 VM（在 VMs 标签页中逐台设置）。",
   "jobs.flashScheduleHint": "在计划时间备份 Unraid 的 USB 闪存启动盘(/boot)。",
   "jobs.flashNotImplemented": "注意：Flash 备份执行器在第 1 阶段尚未实现——计划会被保存但不会执行。",
@@ -972,7 +972,7 @@ const zh: Partial<Translations> = {
   "excludes.assistSourceLive": "此容器还没有备份，因此大小来自对文件夹的实时扫描。",
   "excludes.assistUnexamined": "这些已备份的文件夹完全没有被检查：{paths}",
   "excludes.assistUnreadable": "无法读取这些已备份的文件夹，因此其中的内容都不在此列表中：{paths}",
-  "excludes.assistPathsUnavailable": "当前无法访问此容器的备份文件夹，也没有可供读取大小的备份。请检查存放它们的阵列或共享是否已挂载。",
+  "excludes.assistPathsUnavailable": "当前无法访问此容器的备份文件夹。请检查存放它们的阵列或共享是否已挂载。",
   "excludes.assistSourceLiveRequested": "大小来自对文件夹当前状态的扫描。",
   "excludes.assistSourceLiveNotInSnapshot": "最近一次备份不包含当前选择的文件夹，因此大小来自对文件夹的实时扫描。",
   "excludes.assistSnapshotStale": "此备份已超过一天，因此之后新建的内容都不在此列表中。",

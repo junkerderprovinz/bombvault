@@ -151,7 +151,7 @@ func (s *Service) SetPrimaryRemoteConfig(domain string, cfg store.OffsiteTarget)
 	}
 	loc := domainPathRaw(domain, settings)
 	if loc == "" || !restic.IsRemoteRepo(loc) {
-		return store.OffsiteTarget{}, errors.New("this domain's backup path is not a remote repository — set a remote URL (s3:/rest:/sftp:/b2:/rclone:...) on the path field first")
+		return store.OffsiteTarget{}, errors.New("this domain's backup path is not a remote repository. Set a remote URL (s3:/rest:/sftp:/b2:/rclone:...) on the path field first")
 	}
 	cfg.Repo = loc
 	cfg.Enabled = true

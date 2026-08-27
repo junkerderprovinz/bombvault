@@ -572,7 +572,7 @@ const da: Partial<Translations> = {
   "notify.hcPerDomainHint": "Lad et felt stå tomt for at bruge den globale URL ovenfor. Et domæne med sin egen URL får sit eget tjek, med sin egen kørselstid og historik.",
   "notify.unraid": "Unraid-notifikationer",
   "notify.unraidHint": "Send til Unraids eget notifikationssystem (som kan videresende til Pushover, e-mail, Discord, …). Kører via SSH-forbindelsen fra Indstillinger → VM Backup over SSH, så nøglen skal være godkendt der — men libvirt/VMs er IKKE påkrævet (ignorér et „libvirt not reachable”-resultat, hvis du ikke sikkerhedskopierer VMs). Tjek det med „Send test” nedenfor.",
-  "notify.unraidPlatformMismatch": "BombVault har registreret denne vært som \"{platform}\", ikke Unraid — Unraid-notifikationer forbliver slået fra, selvom denne indstilling er slået til. Hvis dette RENT FAKTISK er en Unraid-vært, så tjek at værtens /boot er bind-mountet til /host/boot inde i containeren (se BombVault Unraid-skabelonen), og genstart containeren.",
+  "notify.unraidPlatformMismatch": "BombVault har registreret denne vært som \"{platform}\", ikke Unraid. Unraid-notifikationer forbliver slået fra, selvom denne indstilling er slået til. Hvis dette RENT FAKTISK er en Unraid-vært, så tjek at værtens /boot er bind-mountet til /host/boot inde i containeren (se BombVault Unraid-skabelonen), og genstart containeren.",
   "notify.test": "Send test",
   "notify.tested": "Test sendt",
   "stophook.title": "Stop andre containere",
@@ -815,7 +815,7 @@ const da: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Brug Containers-tidsplanen til VMs, Flash og Mapper også",
-  "jobs.syncSchedulesHint": "Når aktiveret følger VMs, Flash og Mapper alle Containers-tidsplanen i stedet for deres egen — slå fra for at angive hver domænes rytme uafhængigt.",
+  "jobs.syncSchedulesHint": "Når aktiveret følger VMs, Flash og Mapper alle Containers-tidsplanen i stedet for deres egen. Slå fra for at angive hver domænes rytme uafhængigt.",
   "jobs.vmIncludeHint": "Sikkerhedskopierer hver VM med »inkluder i tidsplan« slået til (indstilles pr. VM på VMs-fanen).",
   "jobs.flashScheduleHint": "Sikkerhedskopierer Unraids USB-flash-boot-drev (/boot) på det planlagte tidspunkt.",
   "jobs.flashNotImplemented": "Bemærk: Flash-sikkerhedskopieringseksekutoren er endnu ikke implementeret i fase 1 — tidsplanen gemmes, men køres ikke.",
@@ -980,7 +980,7 @@ const da: Partial<Translations> = {
   "excludes.assistSourceLive": "Denne container har endnu ingen sikkerhedskopi, så størrelserne kommer fra en live-scanning af mapperne.",
   "excludes.assistUnexamined": "Disse sikkerhedskopierede mapper blev slet ikke undersøgt: {paths}",
   "excludes.assistUnreadable": "Disse sikkerhedskopierede mapper kunne ikke læses, så alt i dem mangler på denne liste: {paths}",
-  "excludes.assistPathsUnavailable": "Containerens sikkerhedskopierede mapper kan ikke nås lige nu, og der er heller ingen sikkerhedskopi at læse størrelser fra. Tjek, at arrayet eller delingen med dem er monteret.",
+  "excludes.assistPathsUnavailable": "Containerens sikkerhedskopierede mapper kan ikke nås lige nu. Tjek, at arrayet eller delingen med dem er monteret.",
   "excludes.assistSourceLiveRequested": "Størrelserne kommer fra en scanning af mapperne, som de ser ud lige nu.",
   "excludes.assistSourceLiveNotInSnapshot": "Den seneste sikkerhedskopi dækker ikke de mapper, der er valgt nu, så størrelserne kommer fra en live-scanning af mapperne.",
   "excludes.assistSnapshotStale": "Denne sikkerhedskopi er mere end et døgn gammel, så alt oprettet siden da mangler på denne liste.",

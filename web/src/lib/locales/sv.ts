@@ -572,7 +572,7 @@ const sv: Partial<Translations> = {
   "notify.hcPerDomainHint": "Lämna ett fält tomt för att använda den globala URL:en ovan. En domän med en egen URL får en egen kontroll, med egen körtid och historik.",
   "notify.unraid": "Unraid-aviseringar",
   "notify.unraidHint": "Skicka till Unraids eget aviseringssystem (som kan vidarebefordra till Pushover, e-post, Discord, …). Körs via SSH-anslutningen från Inställningar → VM Backup over SSH, så nyckeln måste vara auktoriserad där — men libvirt/VMs krävs INTE (ignorera ett ”libvirt not reachable”-resultat om du inte säkerhetskopierar VMs). Kontrollera med ”Skicka test” nedan.",
-  "notify.unraidPlatformMismatch": "BombVault upptäckte den här värden som \"{platform}\", inte Unraid — Unraid-aviseringar förblir avstängda även om detta är påslaget. Om detta FAKTISKT är en Unraid-värd, kontrollera att värdens /boot är bind-mountad till /host/boot inuti containern (se BombVaults Unraid-mall) och starta om containern.",
+  "notify.unraidPlatformMismatch": "BombVault upptäckte den här värden som \"{platform}\", inte Unraid. Unraid-aviseringar förblir avstängda även om detta är påslaget. Om detta FAKTISKT är en Unraid-värd, kontrollera att värdens /boot är bind-mountad till /host/boot inuti containern (se BombVaults Unraid-mall) och starta om containern.",
   "notify.test": "Skicka test",
   "notify.tested": "Test skickat",
   "stophook.title": "Stoppa andra containrar",
@@ -815,7 +815,7 @@ const sv: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Använd Containers-schemat även för VMs, Flash och Mappar",
-  "jobs.syncSchedulesHint": "När det är aktiverat följer VMs, Flash och Mappar Containers-schemat i stället för sitt eget — stäng av för att ställa in varje domäns takt separat.",
+  "jobs.syncSchedulesHint": "När det är aktiverat följer VMs, Flash och Mappar Containers-schemat i stället för sitt eget. Stäng av för att ställa in varje domäns takt separat.",
   "jobs.vmIncludeHint": "Säkerhetskopierar varje VM med ”inkludera i schema” aktiverat (ställs in per VM på VMs-fliken).",
   "jobs.flashScheduleHint": "Säkerhetskopierar Unraids USB-flashenhet för uppstart (/boot) vid den schemalagda tiden.",
   "jobs.flashNotImplemented": "Obs: Flash-säkerhetskopieringsexekutorn är ännu inte implementerad i fas 1 — schemat sparas men körs inte.",
@@ -980,7 +980,7 @@ const sv: Partial<Translations> = {
   "excludes.assistSourceLive": "Den här containern har ingen säkerhetskopia ännu, så storlekarna kommer från en live-skanning av mapparna.",
   "excludes.assistUnexamined": "Dessa säkerhetskopierade mappar undersöktes inte alls: {paths}",
   "excludes.assistUnreadable": "Dessa säkerhetskopierade mappar gick inte att läsa, så allt i dem saknas i den här listan: {paths}",
-  "excludes.assistPathsUnavailable": "Containerns säkerhetskopierade mappar går inte att nå just nu, och det finns ingen säkerhetskopia att läsa storlekar från heller. Kontrollera att arrayen eller utdelningen som håller dem är monterad.",
+  "excludes.assistPathsUnavailable": "Containerns säkerhetskopierade mappar går inte att nå just nu. Kontrollera att arrayen eller utdelningen som håller dem är monterad.",
   "excludes.assistSourceLiveRequested": "Storlekarna kommer från en genomsökning av mapparna som de ser ut just nu.",
   "excludes.assistSourceLiveNotInSnapshot": "Den senaste säkerhetskopian täcker inte de mappar som är valda nu, så storlekarna kommer från en direkt genomsökning av mapparna.",
   "excludes.assistSnapshotStale": "Den här säkerhetskopian är mer än ett dygn gammal, så allt som skapats sedan dess saknas i den här listan.",

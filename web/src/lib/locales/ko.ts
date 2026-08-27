@@ -564,7 +564,7 @@ const ko: Partial<Translations> = {
   "notify.hcPerDomainHint": "위의 전역 URL을 사용하려면 필드를 비워 두세요. 자체 URL이 있는 도메인은 자체 실행 시간과 기록을 가진 전용 검사를 받습니다.",
   "notify.unraid": "Unraid 알림",
   "notify.unraidHint": "Unraid 자체 알림 시스템으로 전송합니다(Pushover, 이메일, Discord, … 로 전달 가능). 설정 → VM Backup over SSH의 SSH 연결을 통해 실행되므로 키가 그곳에서 승인되어 있어야 합니다 — 하지만 libvirt/VMs는 필요하지 않습니다(VMs를 백업하지 않는다면 “libvirt not reachable” 결과는 무시하세요). 확인하려면 아래의 “테스트 보내기”를 사용하세요.",
-  "notify.unraidPlatformMismatch": "BombVault가 이 호스트를 Unraid가 아닌 \"{platform}\"(으)로 감지했습니다 — 이 옵션이 켜져 있어도 Unraid 알림은 꺼진 상태로 유지됩니다. 실제로 Unraid 호스트라면 호스트의 /boot가 컨테이너 내부의 /host/boot에 바인드 마운트되어 있는지 확인하고(BombVault Unraid 템플릿 참고) 컨테이너를 다시 시작하세요.",
+  "notify.unraidPlatformMismatch": "BombVault가 이 호스트를 Unraid가 아닌 \"{platform}\"(으)로 감지했습니다. 이 옵션이 켜져 있어도 Unraid 알림은 꺼진 상태로 유지됩니다. 실제로 Unraid 호스트라면 호스트의 /boot가 컨테이너 내부의 /host/boot에 바인드 마운트되어 있는지 확인하고(BombVault Unraid 템플릿 참고) 컨테이너를 다시 시작하세요.",
   "notify.test": "테스트 보내기",
   "notify.tested": "테스트 전송됨",
   "stophook.title": "다른 컨테이너 중지",
@@ -783,7 +783,7 @@ const ko: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "VM, Flash, 폴더에도 컨테이너 일정을 사용",
-  "jobs.syncSchedulesHint": "활성화하면 VM, Flash, 폴더가 자체 일정 대신 컨테이너 일정을 따릅니다 — 각 도메인의 주기를 독립적으로 설정하려면 끄세요.",
+  "jobs.syncSchedulesHint": "활성화하면 VM, Flash, 폴더가 자체 일정 대신 컨테이너 일정을 따릅니다. 각 도메인의 주기를 독립적으로 설정하려면 끄세요.",
   "jobs.vmIncludeHint": "「일정에 포함」이 활성화된 모든 VM을 백업합니다(VMs 탭에서 VM별로 설정).",
   "jobs.flashScheduleHint": "예약된 시간에 Unraid USB 플래시 부팅 드라이브(/boot)를 백업합니다.",
   "jobs.flashNotImplemented": "참고: Flash 백업 실행기는 1단계에서 아직 구현되지 않았습니다 — 일정은 저장되지만 실행되지는 않습니다.",
@@ -972,7 +972,7 @@ const ko: Partial<Translations> = {
   "excludes.assistSourceLive": "이 컨테이너에는 아직 백업이 없어서 크기는 폴더 실시간 스캔에서 가져옵니다.",
   "excludes.assistUnexamined": "이 백업 폴더들은 전혀 검사되지 않았습니다: {paths}",
   "excludes.assistUnreadable": "이 백업 폴더들을 읽을 수 없어 그 안의 내용이 이 목록에서 빠져 있습니다: {paths}",
-  "excludes.assistPathsUnavailable": "이 컨테이너의 백업 폴더에 지금 접근할 수 없고, 크기를 읽어올 백업도 없습니다. 폴더가 있는 어레이나 공유가 마운트되어 있는지 확인하세요.",
+  "excludes.assistPathsUnavailable": "이 컨테이너의 백업 폴더에 지금 접근할 수 없습니다. 폴더가 있는 어레이나 공유가 마운트되어 있는지 확인하세요.",
   "excludes.assistSourceLiveRequested": "크기는 폴더의 현재 상태를 검사한 결과입니다.",
   "excludes.assistSourceLiveNotInSnapshot": "마지막 백업에는 지금 선택된 폴더가 들어 있지 않아 크기는 폴더 실시간 검사에서 가져왔습니다.",
   "excludes.assistSnapshotStale": "이 백업은 하루가 넘었으므로 그 이후에 만들어진 것은 이 목록에 없습니다.",
