@@ -102,11 +102,20 @@ var ErrEverythingInFlight = errors.New("a Backup Everything pass is already runn
 // protected twice for one nightly window. cron's own SkipIfStillRunning only
 // stops a scheduled pass overlapping ITSELF. Owning the guard here means every
 // entry point is covered by construction rather than by each one remembering.
-func (s *Service) BackupEverything(ctx context.Context) (EverythingSummary, error) {
+func (s *Service) BackupEverything(ctx context.Context) (_ EverythingSummary, retErr error) {
 	if !s.everythingActive.CompareAndSwap(false, true) {
 		return EverythingSummary{}, ErrEverythingInFlight
 	}
 	defer s.everythingActive.Store(false)
+	// The same recovery StartBackupEverything wraps its goroutine in, and for a
+	// reason this entry point shares: it is what the SCHEDULER calls. A panic in
+	// a domain step is caught there by cron.Recover, so the process survives —
+	// but nothing then closes the parent run row, and it sits in the Activity Log
+	// and Run History as a whole-server pass still running, until a restart.
+	// Deferred FIRST so it runs LAST, after the guard is released.
+	defer s.recoverOperation("backup everything: "+store.EverythingTargetID, &retErr, func(msg string) {
+		s.failStuckRun(store.EverythingTargetID, msg)
+	})
 	return s.backupEverythingHoldingGuard(ctx)
 }
 
