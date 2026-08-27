@@ -503,10 +503,24 @@ function useDebouncedSave(delayMs: number = AUTOSAVE_DEBOUNCE_MS) {
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);
-  return function debouncedSave(run: () => void) {
+  function debouncedSave(run: () => void) {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(run, delayMs);
-  };
+  }
+  // cancel() is what lets an IMMEDIATE save win over a pending debounced one.
+  // Without it the two paths raced and the timer won by construction, because
+  // it fires later: clicking a suggestion chip within 800ms of a keystroke saved
+  // the chip's list, then the timer wrote the PRE-CHIP list back over it — and
+  // both paths toasted "Saved". A caller that saves right now must retire the
+  // timer first; every such caller already computes the full next list, so
+  // nothing typed is lost by dropping it.
+  function cancel() {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  }
+  return { debouncedSave, cancel };
 }
 
 // HooksEditor edits the per-container pre/post-backup commands (collapsible).
@@ -550,7 +564,7 @@ function HooksEditor({
   const [pre, setPre] = useState(initialPre);
   const [post, setPost] = useState(initialPost);
   const { push } = useToast();
-  const debouncedSave = useDebouncedSave();
+  const { debouncedSave } = useDebouncedSave();
 
   async function saveHooks(nextPre: string, nextPost: string) {
     try {
@@ -1176,7 +1190,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
   // one-click suggestion chips (addExclude/removeExclude below) already
   // saved immediately, no button involved, before this conversion — that
   // half of this editor was ALREADY live-save and needed no change.
-  const debouncedSave = useDebouncedSave();
+  const { debouncedSave, cancel: cancelPendingSave } = useDebouncedSave();
 
   // Debounced live preview: whenever the editor is open and the textarea holds at
   // least one non-blank line, resolve the candidate lines against the container's
@@ -1329,12 +1343,19 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
     if (opening && suggestions === null) void scan();
   }
 
+  // Both chip paths save IMMEDIATELY, so they retire any pending textarea
+  // debounce first — see cancel()'s own comment. currentLines is derived from
+  // the textarea's live value, so the list sent here already carries whatever
+  // was typed in that same window; the dropped timer would only have written an
+  // older copy of it.
   async function addExclude(line: string) {
     if (currentLines.includes(line)) return;
+    cancelPendingSave();
     await saveLines([...currentLines, line]);
   }
 
   async function removeExclude(line: string) {
+    cancelPendingSave();
     await saveLines(currentLines.filter((l) => l !== line));
   }
 
