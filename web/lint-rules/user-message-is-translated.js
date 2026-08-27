@@ -85,6 +85,21 @@ function looksLikeSentence(value) {
   return typeof value === "string" && /^[A-Z]/.test(value) && value.includes(" ");
 }
 
+/**
+ * Does a template's STATIC text carry prose, once the interpolations are gone?
+ *
+ * looksLikeSentence cannot answer this: it asks for a leading capital, and the
+ * text a template contributes usually starts mid-sentence — `${ok} ok, ${fail}
+ * failed` leaves "ok,  failed", which is unmistakably English and has no capital
+ * anywhere. Asking for a WORD instead draws the line where it belongs: two or
+ * more letters in a row is language, while `${a}/${b}` and `${n} %` leave only
+ * punctuation and are formatting, which this rule must not touch or it gets
+ * disabled and protects nothing.
+ */
+function templateReadsAsProse(staticText) {
+  return typeof staticText === "string" && /[A-Za-z]{2,}/.test(staticText);
+}
+
 function isStringLiteral(node) {
   return node?.type === "Literal" && typeof node.value === "string";
 }
@@ -126,14 +141,45 @@ export default {
     return {
       // 1. push("…", "fail") / setError("…")
       CallExpression(node) {
-        if (!MESSAGE_SINKS.has(calleeName(node))) return;
+        const callee = calleeName(node);
+        if (!MESSAGE_SINKS.has(callee)) return;
+        // `push` is also Array.prototype.push, and the two are indistinguishable
+        // by name alone. The toast's push always takes (message, tone) — there is
+        // not one single-argument call to it in the tree — while `seen.push(x)`
+        // and `broken.push(x)` take one. Requiring the tone argument tells them
+        // apart without needing type information.
+        //
+        // This only started to matter once template literals were covered:
+        // an array push rarely holds a quoted sentence, but it very often holds
+        // `${a}:${b}`, so every collector in the test files lit up at once.
+        if (callee === "push" && node.arguments.length < 2) return;
         const first = node.arguments[0];
-        if (isStringLiteral(first)) report(first, first.value);
+        if (isStringLiteral(first)) {
+          report(first, first.value);
+          return;
+        }
+        // A TEMPLATE literal is a string literal here too — this file's own
+        // header says every string literal in these two sinks is a finding, and
+        // only the quoted form was checked. That is precisely how the hard
+        // English `${ok} ok, ${fail} failed` toast in VMs.tsx got out.
+        //
+        // Judged on the static text ALONE, with the interpolations removed: a
+        // template whose fixed parts are punctuation or spacing (`${a}/${b}`,
+        // `${n} %`) is formatting, not a sentence, and looksLikeSentence is what
+        // draws that line for the rest of this rule already.
+        if (first?.type === "TemplateLiteral") {
+          const staticText = first.quasis.map((q) => q.value.cooked ?? "").join(" ").trim();
+          if (templateReadsAsProse(staticText)) report(first, staticText);
+        }
       },
 
-      // 2. res.error ?? "…"
+      // 2. res.error ?? "…" — and `||`, which is the same fallback written the
+      // other way. Only "??" was checked, so `setError(err || "Failed to load
+      // VMs")` was silent while the "??" spelling was reported. Rule 1 does not
+      // cover it either, since the argument is then a LogicalExpression rather
+      // than a Literal.
       LogicalExpression(node) {
-        if (node.operator !== "??") return;
+        if (node.operator !== "??" && node.operator !== "||") return;
         if (isStringLiteral(node.right) && looksLikeSentence(node.right.value)) {
           report(node.right, node.right.value);
         }

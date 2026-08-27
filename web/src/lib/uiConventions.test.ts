@@ -224,6 +224,32 @@ ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
   ],
   invalid: [
     {
+      // An ARROW with an expression body has no ReturnStatement, so the rule
+      // found no returns and skipped the component in silence — a page written
+      // this way was never checked at all.
+      code: `export const Fleet = () => (<div className="flex flex-col gap-6 max-w-5xl"><h1 /></div>);`,
+      filename: PAGE,
+      options: shellOptions,
+      errors: [{ messageId: "notShelled" }, { messageId: "handRolled" }],
+    },
+    {
+      // `export default Fleet;` is a bare Identifier, which noteExport dropped —
+      // same silent pass, different shape.
+      code: `function Fleet() { return <div className="space-y-4"><h1 /></div>; }
+export default Fleet;`,
+      filename: PAGE,
+      options: shellOptions,
+      errors: [{ messageId: "notShelled" }],
+    },
+    {
+      // A VARIANT PREFIX hid the width cap from an ^-anchored pattern, so the
+      // second net (a literal shell copy in a nested element) had a hole in it.
+      code: `export function Fleet() { return <div className={PAGE_SHELL}><div className="flex flex-col gap-6 md:max-w-6xl"><h1 /></div></div>; }`,
+      filename: PAGE,
+      options: shellOptions,
+      errors: [{ messageId: "handRolled" }],
+    },
+    {
       // Page eleven, with its own idea of how wide a page is.
       code: `export function Fleet() { return <div className="flex flex-col gap-6 max-w-5xl"><h1 /></div>; }`,
       filename: PAGE,
@@ -465,6 +491,15 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
     `const n = count ?? "0";`,
     // A capital with no space is an identifier, not a sentence.
     `const domain = r.domain ?? "Containers";`,
+    // Templates whose STATIC text is punctuation or spacing are formatting, not
+    // sentences — the same line looksLikeSentence draws for the rest of the rule.
+    "push(`${a}/${b}`, \"info\");",
+    "setError(`${n} %`);",
+    // Array.prototype.push is not the toast. The toast always takes
+    // (message, tone), and requiring that second argument is what keeps every
+    // `seen.push(`enter:${id}`)` collector in the test files out of this rule.
+    "seen.push(`enter:${id}`);",
+    "broken.push(`${key}: want [${want}]`);",
     // The escape hatch, with a real reason.
     `
       // bv-convention-exception: user-message-is-translated -- a developer-only
@@ -473,6 +508,19 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
     `,
   ],
   invalid: [
+    {
+      // `||` is the same fallback written the other way, and only `??` was
+      // checked — so this exact line was silent while its `??` twin was
+      // reported.
+      code: `setError(err || "Failed to load VMs");`,
+      errors: [{ messageId: "hardcoded" }],
+    },
+    {
+      // A TEMPLATE literal in a message sink is a string literal too. This is
+      // the shape the hard-English VM bulk toast escaped through.
+      code: "push(`${ok} ok, ${fail} failed`, \"warn\");",
+      errors: [{ messageId: "hardcoded" }],
+    },
     {
       // The single most-repeated defect in the sweep: 12 identical call sites.
       code: `push(res.error ?? "Delete failed", "fail");`,
