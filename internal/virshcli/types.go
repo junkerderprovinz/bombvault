@@ -113,7 +113,10 @@ type DomainInfo struct {
 	// internal/backup/vm_orchestrator.go's BackupZvolDisk/RestoreZvolDisk) since
 	// restic cannot back up a block device by path the way it backs up a file.
 	//
-	// ⚠ UNVERIFIED AGAINST REAL HARDWARE — see zvol.go's package doc comment.
+	// Verified against a real TrueNAS SCALE box 2026-08-27, including that a
+	// running domain's <source dev=…> carries the /dev/zvol/… path verbatim —
+	// see zvol.go's package doc comment for the full measurement and for the
+	// two paths that remain unverified.
 	BlockDisks []DiskRef
 }
 

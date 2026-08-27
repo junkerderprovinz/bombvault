@@ -791,14 +791,18 @@ func isFreezeErr(err error) bool {
 // Zvol-aware VM disk backup/restore (v8.0.0 TrueNAS platform expansion,
 // Task 10)
 //
-// ⚠ UNVERIFIED AGAINST REAL HARDWARE. Everything below is REASONED from ZFS's
-// public documentation — `zfs snapshot`/`zfs send`/`zfs receive` as the
-// ZFS-native way to move a stable point-in-time dataset byte stream off/onto
-// a zvol — and exercised only with fakes (vm_zvol_test.go and
-// vm_zvol_wiring_test.go); no TrueNAS Scale test instance was available
-// anywhere in this project's development environment to run it against a
-// real zvol over a real SSH connection. See internal/virshcli/zvol.go's
-// package doc comment for the full caveat, which applies equally here.
+// HARDWARE STATUS. Every individual host command the orchestrators below emit
+// — `zfs snapshot`, `zfs send` piped into `restic backup --stdin`, the dump
+// back out, `zfs receive` into a fresh restore target, `zfs destroy` — was run
+// against a real TrueNAS SCALE 25.10.0 box on 2026-08-27, against a zvol
+// attached to a RUNNING VM, and the round-tripped stream came back
+// byte-identical. See internal/virshcli/zvol.go's package doc comment for the
+// full measurement.
+//
+// What is still fake-only is the Go ORCHESTRATION in this file: the ordering,
+// the error/cleanup paths, and the deferred snapshot destroy are exercised
+// solely by vm_zvol_test.go and vm_zvol_wiring_test.go. So the commands are
+// proven; the sequencing around them is not yet proven end-to-end on hardware.
 //
 // WIRED IN (Task 10 Step 5): BackupZvolDisk/RestoreZvolDisk below ARE called
 // from BackupVMGraceful/BackupVMLive/RestoreVM above, via the
@@ -949,7 +953,8 @@ type BackupZvolDeps struct {
 // returned error) either way; a leftover snapshot is host-hygiene, not data
 // loss — the operator can `zfs destroy` it manually.
 //
-// ⚠ UNVERIFIED AGAINST REAL HARDWARE — see this section's header comment.
+// The host commands this emits are verified on real hardware; the sequencing
+// in this function is fake-tested only — see this section's header comment.
 func BackupZvolDisk(ctx context.Context, d BackupZvolDeps) (Summary, error) {
 	if err := d.Host.SnapshotCreate(ctx, d.Dataset, d.SnapName); err != nil {
 		return Summary{}, fmt.Errorf("zvol backup: snapshot create: %w", err)
@@ -1146,7 +1151,8 @@ type RestoreZvolDeps struct {
 // live source dataset" structural safety property holds regardless of which
 // base was used.
 //
-// ⚠ UNVERIFIED AGAINST REAL HARDWARE — see this section's header comment.
+// The host commands this emits are verified on real hardware; the sequencing
+// in this function is fake-tested only — see this section's header comment.
 func RestoreZvolDisk(ctx context.Context, d RestoreZvolDeps) (string, error) {
 	base := d.SourceDataset
 	if d.RestoreBaseDataset != "" {

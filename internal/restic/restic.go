@@ -1674,13 +1674,15 @@ func (r Restic) DumpZip(ctx context.Context, repo, snapshotID, subfolder string,
 // v8.0.0 TrueNAS platform expansion Task 10) to pipe a `zfs send` stream
 // straight into a backup with no local staging file.
 //
-// ⚠ This method's OWN mechanism (restic reading a backup from stdin, and
+// This method's OWN mechanism (restic reading a backup from stdin, and
 // DumpRaw reading it back byte-identically) is verified locally against a
-// real restic 0.17.3 binary — see TestBackupStdinRoundtrip. What remains
-// UNVERIFIED is everything upstream of it: a real `zfs send` stream piped
-// over a real SSH connection from a real TrueNAS Scale host has never been
-// exercised end-to-end (no test hardware available) — see
-// internal/virshcli/zvol.go's package doc comment.
+// real restic 0.17.3 binary — see TestBackupStdinRoundtrip. The upstream half
+// is no longer unverified either: on 2026-08-27 a real `zfs send` stream, taken
+// from a zvol attached to a RUNNING VM on a TrueNAS SCALE 25.10.0 box, was
+// piped through this exact path and dumped back byte-identically (sha256
+// d2cd7136…52c93 on both sides), with the per-disk identity tag preserved on
+// the snapshot. See internal/virshcli/zvol.go's package doc comment for the
+// full measurement and the two paths that remain unverified.
 func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, m Mode) (Summary, error) {
 	args := BackupStdinArgs(repo, path, tags, m)
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input
