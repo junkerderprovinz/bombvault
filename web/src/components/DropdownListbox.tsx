@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -106,6 +107,15 @@ export function DropdownListbox({
 }: DropdownListboxProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null);
+  // One focus move per opening, and only once the panel sits at its real
+  // coordinates — see the focus effect below for why both halves matter.
+  const focusedOnOpen = useRef(false);
+  // Tracks whether focus currently sits inside the panel — see the focus-return
+  // effect below for why this cannot be read at teardown instead.
+  const focusInsideRef = useRef(false);
+  useEffect(() => {
+    if (!open) focusedOnOpen.current = false;
+  }, [open]);
   // `onClose` is read through a ref inside the listener effect so that a call
   // site passing an inline arrow function (both of them do) doesn't tear down
   // and re-attach every listener on each of its own re-renders — a re-render
@@ -251,12 +261,94 @@ export function DropdownListbox({
     };
   }, [open, triggerRef]);
 
+  // The options are the caller's children, so they are found in the DOM rather
+  // than held as refs (TimePicker owns its own options and can keep refs; this
+  // panel cannot). `[role="option"]` is the contract every call site already
+  // renders — it is what makes this a listbox at all.
+  function options(): HTMLElement[] {
+    const panel = panelRef.current;
+    if (!panel) return [];
+    return Array.from(panel.querySelectorAll<HTMLElement>('[role="option"]'));
+  }
+
+  // Move focus INTO the panel when it opens, at the selected option, so a
+  // keyboard user reaches the list at all. Without this, focus stayed on the
+  // trigger: the next Tab went to the following control on the page rather than
+  // into the 42 languages, and because the capture-phase scroll listener above
+  // closes the panel, tabbing away often shut it before it could be reached.
+  //
+  // Gated on `pos`, not just `open`, and this is load-bearing — TimePicker
+  // documents the same trap for the same reason: focusing an option while the
+  // panel is still parked at left/top -9999px makes the browser auto-scroll to
+  // bring it into view, which trips this component's own scroll-closes-the-panel
+  // listener a few milliseconds later and closes the panel it just opened.
+  useLayoutEffect(() => {
+    if (!open || !pos || focusedOnOpen.current) return;
+    const opts = options();
+    if (opts.length === 0) return;
+    const active = opts.find((o) => o.getAttribute("aria-selected") === "true") ?? opts[0];
+    focusedOnOpen.current = true;
+    active.scrollIntoView?.({ block: "nearest" });
+    active.focus();
+  }, [open, pos]);
+
+  // Give focus back to the trigger when the panel closes, but ONLY if focus is
+  // still inside the panel: a user who closed it by clicking elsewhere has
+  // already chosen where focus should go, and yanking it back would fight them.
+  // Whether focus is inside the panel is TRACKED as it moves, not asked for at
+  // teardown. By the time any cleanup runs, React has removed the portal's nodes
+  // and the browser has already moved focus to <body>, so a
+  // panel.contains(document.activeElement) test there can never be true — it
+  // reads as "focus was outside" for every close, including the one case that
+  // should return focus. Measured: both a passive and a layout cleanup see
+  // <body>.
+  //
+  // The two events are enough because they bubble: onFocus fires for any option
+  // gaining focus, and onBlur only counts as leaving when focus is going
+  // somewhere OUTSIDE the panel (relatedTarget), so moving between options with
+  // the arrow keys does not clear it.
+  useLayoutEffect(() => {
+    const trigger = triggerRef.current;
+    return () => {
+      if (focusInsideRef.current) trigger?.focus();
+      focusInsideRef.current = false;
+    };
+  }, [open, triggerRef]);
+
+  // Arrow/Home/End move between options; the panel handles it rather than each
+  // call site, so every listbox in the app behaves the same. Enter/Space are NOT
+  // handled here: the options are real buttons and already activate themselves.
+  function onPanelKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Home" && e.key !== "End") return;
+    const opts = options();
+    if (opts.length === 0) return;
+    e.preventDefault();
+    const at = opts.indexOf(document.activeElement as HTMLElement);
+    let next: number;
+    if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = opts.length - 1;
+    else {
+      const dir = e.key === "ArrowDown" ? 1 : -1;
+      // Wrapping, like TimePicker's own columns.
+      next = at < 0 ? (dir === 1 ? 0 : opts.length - 1) : (at + dir + opts.length) % opts.length;
+    }
+    opts[next].scrollIntoView?.({ block: "nearest" });
+    opts[next].focus();
+  }
+
   if (!open) return null;
 
   return createPortal(
     <div
       ref={panelRef}
       role="listbox"
+      onKeyDown={onPanelKeyDown}
+      onFocus={() => {
+        focusInsideRef.current = true;
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) focusInsideRef.current = false;
+      }}
       aria-multiselectable={multiselectable ? "true" : undefined}
       aria-label={label}
       className={`fixed z-50 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl glim-fade${
