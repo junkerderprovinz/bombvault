@@ -228,9 +228,8 @@ func TestCatchUpMissedTriggersBackupJob(t *testing.T) {
 	// missed. Flash: fresh success → covered.
 	staleLastRun := func() (time.Time, error) { return time.Now().Add(-48 * time.Hour), nil }
 	freshLastRun := func() (time.Time, error) { return time.Now(), nil }
-	settings := store.Settings{
-		ContainersSchedule: "daily 03:00",
-		FlashSchedule:      "daily 03:00",
+	settings := store.Settings{ContainersEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 03:00",
+		FlashSchedule: "daily 03:00",
 	}
 	if err := sc.ReloadWithDueChecks(settings, staleLastRun, nil, freshLastRun, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
@@ -266,9 +265,8 @@ func TestCatchUpMissedSkipsNeverRanAndErrors(t *testing.T) {
 
 	neverRan := func() (time.Time, error) { return time.Time{}, nil }
 	failing := func() (time.Time, error) { return time.Time{}, errors.New("db locked") }
-	settings := store.Settings{
-		ContainersSchedule: "daily 03:00",
-		VMsSchedule:        "daily 03:00",
+	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, ContainersSchedule: "daily 03:00",
+		VMsSchedule: "daily 03:00",
 	}
 	if err := sc.ReloadWithDueChecks(settings, neverRan, failing, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)

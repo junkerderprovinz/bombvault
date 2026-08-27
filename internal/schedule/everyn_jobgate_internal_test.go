@@ -376,7 +376,7 @@ func TestEveryNUnenforceableCadenceIsNotRegistered(t *testing.T) {
 	replicated := 0
 	sc.SetOffsiteJob(func(string) error { replicated++; return nil })
 
-	settings := store.Settings{ContainersOffsiteSchedule: "everyN 5 02:00"}
+	settings := store.Settings{ContainersEnabled: true, ContainersOffsiteSchedule: "everyN 5 02:00"}
 	if err := sc.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
@@ -389,7 +389,7 @@ func TestEveryNUnenforceableCadenceIsNotRegistered(t *testing.T) {
 
 	// The same schedule on a plain daily cadence is registered and fires — the
 	// refusal is specific to an unenforceable everyN, not to off-site as such.
-	if err := sc.ReloadWithDueChecks(store.Settings{ContainersOffsiteSchedule: "daily 02:00"}, nil, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(store.Settings{ContainersEnabled: true, ContainersOffsiteSchedule: "daily 02:00"}, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks(daily): %v", err)
 	}
 	found := false

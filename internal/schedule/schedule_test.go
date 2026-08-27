@@ -146,6 +146,24 @@ func TestCadencePeriodSeconds(t *testing.T) {
 		{"cron weekly", "15 4 * * 2", 604800},
 		{"off", "off", 0},
 		{"empty", "", 0},
+		// Several weekdays: the RPO window is the LONGEST wait between two
+		// fires, not the first gap the walk happens to land on. Sat+Sun fire a
+		// day apart and then six days apart, so the answer is six days —
+		// reading the first pair called this a daily schedule and put the domain
+		// on warn every Monday and overdue every Tuesday, week after week.
+		{"weekly two adjacent days", "weekly Sat,Sun 03:00", 6 * 86400},
+		{"cron two adjacent days", "0 3 * * 0,6", 6 * 86400},
+		// Spread out rather than adjacent: Mon/Wed/Fri leaves Fri→Mon as the
+		// widest gap, three days, not the two-day gaps between the weekdays.
+		{"cron three spread days", "0 3 * * 1,3,5", 3 * 86400},
+		// Every weekday: the weekend is the window, Fri→Mon.
+		{"cron weekdays only", "0 3 * * 1-5", 3 * 86400},
+		// Twice a day stays twelve hours: an even split has one gap, and the
+		// widest-gap rule must not inflate it.
+		{"cron twice daily", "0 3,15 * * *", 12 * 3600},
+		// Monthly: February is the short month, but the widest gap is the long
+		// one — 31 days between the two 31-day months.
+		{"cron monthly", "0 3 1 * *", 31 * 86400},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -555,10 +573,9 @@ func TestSchedulerReloadRegistersEnabledDomains(t *testing.T) {
 	sched := schedule.New(backupFn, listFn)
 
 	// Reload with containers on daily schedule — must not panic or error.
-	settings := store.Settings{
-		ContainersSchedule: "daily 03:00",
-		VMsSchedule:        "off",
-		FlashSchedule:      "off",
+	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 03:00",
+		VMsSchedule:   "off",
+		FlashSchedule: "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload returned error: %v", err)
@@ -581,10 +598,9 @@ func TestSchedulerReloadEveryN(t *testing.T) {
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{
-		ContainersSchedule: "everyN 7 04:00",
-		VMsSchedule:        "off",
-		FlashSchedule:      "off",
+	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "everyN 7 04:00",
+		VMsSchedule:   "off",
+		FlashSchedule: "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload with everyN returned error: %v", err)
@@ -605,10 +621,9 @@ func TestSchedulerReloadWithDueChecksEveryNFires(t *testing.T) {
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{
-		ContainersSchedule: "everyN 5 03:00",
-		VMsSchedule:        "off",
-		FlashSchedule:      "off",
+	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "everyN 5 03:00",
+		VMsSchedule:   "off",
+		FlashSchedule: "off",
 	}
 	if err := sched.ReloadWithDueChecks(settings, lastRun, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks returned error: %v", err)
@@ -629,10 +644,9 @@ func TestNextRunsReturnsEnabledEntries(t *testing.T) {
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{
-		ContainersSchedule: "daily 03:00",
-		VMsSchedule:        "off",
-		FlashSchedule:      "off",
+	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 03:00",
+		VMsSchedule:   "off",
+		FlashSchedule: "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload returned error: %v", err)
@@ -659,6 +673,67 @@ func TestNextRunsReturnsEnabledEntries(t *testing.T) {
 	}
 }
 
+// TestSwitchedOffDomainIsNotRegistered pins the domain on/off switch to the
+// scheduler. A configured cadence is not on its own an instruction to run: the
+// domain it belongs to has to be switched on too.
+//
+// Registration used to read the cadence alone, so switching a domain off left
+// its nightly run going — container stop/start, prune and off-site replication
+// included — while the dashboard, the overdue watchdog and the drill set all
+// reported that same domain as off, and its tab was gone from the UI. The
+// off-site schedule is covered here as well: it replicates snapshots for a
+// domain that is producing none.
+func TestSwitchedOffDomainIsNotRegistered(t *testing.T) {
+	sched := schedule.New(func(string) error { return nil }, func() ([]store.Target, error) { return nil, nil })
+
+	// Every domain carries a real cadence; only containers is switched on.
+	settings := store.Settings{
+		ContainersEnabled:         true,
+		ContainersSchedule:        "daily 03:00",
+		VMsEnabled:                false,
+		VMsSchedule:               "daily 04:00",
+		FlashEnabled:              false,
+		FlashSchedule:             "daily 05:00",
+		ConfigEnabled:             false,
+		ConfigSchedule:            "daily 06:00",
+		FilesEnabled:              false,
+		FilesSchedule:             "daily 07:00",
+		VMsOffsiteSchedule:        "daily 08:00",
+		ContainersOffsiteSchedule: "daily 09:00",
+	}
+	if err := sched.Reload(settings); err != nil {
+		t.Fatalf("Reload: %v", err)
+	}
+	sched.Start()
+	defer sched.Stop()
+
+	var domains []string
+	for _, r := range sched.NextRuns() {
+		domains = append(domains, r.Domain)
+	}
+	for _, r := range sched.NextRuns() {
+		switch r.Domain {
+		case "vms", "flash", "config", "files":
+			t.Fatalf("domain %q is switched off and must not be registered, got %+v (all: %v)", r.Domain, r, domains)
+		}
+	}
+	var haveContainers, haveContainersOffsite bool
+	for _, r := range sched.NextRuns() {
+		if r.Domain == "containers" && r.Job == "backup" {
+			haveContainers = true
+		}
+		if r.Domain == "containers" && r.Job == "offsite" {
+			haveContainersOffsite = true
+		}
+	}
+	if !haveContainers {
+		t.Fatalf("containers is switched on and must still be registered, got %v", domains)
+	}
+	if !haveContainersOffsite {
+		t.Fatalf("the off-site schedule of a switched-on domain must still be registered, got %v", domains)
+	}
+}
+
 // TestNextRunsSortedSoonestFirst verifies that with multiple enabled domains
 // NextRuns() returns them ordered ascending by Next, regardless of the order
 // they were registered in.
@@ -668,10 +743,9 @@ func TestNextRunsSortedSoonestFirst(t *testing.T) {
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{
-		ContainersSchedule: "daily 23:59",
-		VMsSchedule:        "daily 00:01",
-		FlashSchedule:      "off",
+	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 23:59",
+		VMsSchedule:   "daily 00:01",
+		FlashSchedule: "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload returned error: %v", err)
