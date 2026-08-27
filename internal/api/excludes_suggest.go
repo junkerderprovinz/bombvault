@@ -260,6 +260,20 @@ func matchesExcludePatterns(full, base string, patterns []string) bool {
 		if full == p || strings.HasPrefix(full, p+"/") {
 			return true
 		}
+		// Wildcards, which the plain comparison above cannot see. The basename
+		// branch has used path.Match all along; this branch compared literally, so
+		// a path pattern with a wildcard in it — `/config/*/Cache`, the shape the
+		// assistant's own suggestions take — matched nothing at all. The already
+		// excluded folders were then suggested again AND their bytes counted
+		// against the parent, both of which this function exists to prevent.
+		//
+		// path.Match does not cross "/" with "*", so `/config/*/Cache` matches one
+		// level deep exactly as restic reads it. Nothing is needed for what lies
+		// BELOW a match: a matched directory is added to the pruned set, and
+		// underPruned rejects its whole subtree for both feeders.
+		if ok, err := path.Match(p, full); err == nil && ok {
+			return true
+		}
 	}
 	return false
 }
@@ -783,6 +797,17 @@ func snapshotRoots(snapPaths, effective []string) []string {
 // non-nil error is errSuggestIndexRead and is NOT a fallback — the UI offers the
 // live scan as an explicit second request instead of chaining 70s onto one GET.
 func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roots, resolved []string, o suggestOpts) (cands []suggestCandidate, snapTime string, ok bool, why string, err error) {
+	// The budget starts HERE, not at the `ls`. suggestSnapshotTimeout's own
+	// comment justifies its value against the 60s proxy timeout in front of a
+	// typical Unraid install — but it used to wrap only the listing, while
+	// newestSnapshotFor ahead of it (GetSettings, repoFor, and a snapshots
+	// listing that itself retries after unlocking a stale lock) ran on the naked
+	// request context with no bound at all. On a cold-starting array that prelude
+	// alone can outlast the proxy, so the promise the constant makes was not one
+	// the code kept.
+	ctx, cancelBudget := context.WithTimeout(ctx, suggestSnapshotTimeout)
+	defer cancelBudget()
+
 	snap, repo, mode, found := s.newestSnapshotFor(ctx, name)
 	if !found {
 		return nil, "", false, suggestLiveNoSnapshot, nil
@@ -824,7 +849,14 @@ func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roo
 	// something that had nothing to do with it. Followers still honour their own
 	// ctx while waiting on fl.done above; the pass runs to completion under its
 	// own budget.
-	sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), suggestSnapshotTimeout)
+	// WithoutCancel detaches from the LEADER's request (see below); the timeout is
+	// what remains of the budget opened at the top of this function, so the two
+	// halves share one bound instead of the listing getting a fresh full one.
+	deadline, hasDeadline := ctx.Deadline()
+	sctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
+	if hasDeadline {
+		sctx, cancel = context.WithDeadline(context.WithoutCancel(ctx), deadline)
+	}
 	defer cancel()
 	stream := func(onEntry func(restic.FileEntry)) error {
 		return s.lsStreamSelfHeal(sctx, repo, snap.ID, mode, onEntry)
@@ -842,13 +874,25 @@ func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roo
 		return nil, "", false, "", fl.err
 	}
 	s.suggestCachePut(name, suggestCacheEntry{key: key, snapshotTime: snap.Time, cands: agg})
-	fl.cands, fl.snapTime = agg, snap.Time
+	// Clears the errSuggestAborted seed — success is the ONLY thing that does, so
+	// a leader that dies anywhere before this line leaves followers a failure
+	// rather than an empty list.
+	fl.cands, fl.snapTime, fl.err = agg, snap.Time, nil
 	return agg, snap.Time, true, "", nil
 }
 
 // suggestFlightFor joins the in-flight aggregate for key, or registers this
 // caller as the one that will produce it. leader=false means the returned flight
 // belongs to someone else and must only be waited on.
+// errSuggestAborted is what a follower is told when the leading pass died before
+// writing a result. A flight is seeded with it so "no answer" can never be read
+// as "the answer is: nothing" — the zero value of err is nil, and nil with a nil
+// candidate list is indistinguishable from a genuine empty result. The follower
+// would then be told there is nothing left to exclude on a large tree. Same
+// treatment, and the same reasoning, as encryption_detect.go's
+// errEncryptionDetectAborted.
+var errSuggestAborted = errors.New("exclusion scan did not complete")
+
 func (s *Service) suggestFlightFor(key string) (fl *suggestFlight, leader bool) {
 	s.suggestMu.Lock()
 	defer s.suggestMu.Unlock()
@@ -858,7 +902,8 @@ func (s *Service) suggestFlightFor(key string) (fl *suggestFlight, leader bool) 
 	if existing, ok := s.suggestFlights[key]; ok {
 		return existing, false
 	}
-	fl = &suggestFlight{done: make(chan struct{})}
+	// Seeded with the aborted error, not the zero value — see errSuggestAborted.
+	fl = &suggestFlight{done: make(chan struct{}), err: errSuggestAborted}
 	s.suggestFlights[key] = fl
 	return fl, true
 }
@@ -1027,6 +1072,13 @@ func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (Sug
 // controls (context.WithTimeout cannot be made to expire on demand).
 func suggestLivePass(ctx context.Context, roots, resolved []string, o suggestOpts, res *SuggestResult) []suggestCandidate {
 	var cands []suggestCandidate
+	// NESTED roots are dropped before scanning. Each root gets its own collector,
+	// so /appdata/plex and /appdata/plex/Media walked the same directories twice
+	// and emitted the same candidate twice — with the same exclude line, and
+	// therefore the same React key, while burning two of the twenty suggestion
+	// slots. The snapshot feeder cannot hit this (one pass over one tree), which
+	// is why it only shows up on the live path.
+	roots = dropNestedRoots(roots)
 	for _, root := range roots {
 		if ctx.Err() != nil {
 			res.Truncated = true
@@ -1048,6 +1100,36 @@ func suggestLivePass(ctx context.Context, roots, resolved []string, o suggestOpt
 		}
 	}
 	return cands
+}
+
+// dropNestedRoots removes any root that already lies underneath another one,
+// keeping the outermost. Sorting puts a parent ahead of its children, so a
+// single pass over the kept set answers it.
+//
+// Comparison is on the slash-normalised path with a trailing separator, so
+// "/appdata/plex-extra" is NOT treated as nested under "/appdata/plex".
+func dropNestedRoots(roots []string) []string {
+	if len(roots) < 2 {
+		return roots
+	}
+	sorted := make([]string, len(roots))
+	copy(sorted, roots)
+	sort.Strings(sorted)
+	kept := make([]string, 0, len(sorted))
+	for _, r := range sorted {
+		norm := strings.TrimSuffix(filepath.ToSlash(r), "/")
+		nested := false
+		for _, k := range kept {
+			if norm == k || strings.HasPrefix(norm, k+"/") {
+				nested = true
+				break
+			}
+		}
+		if !nested {
+			kept = append(kept, norm)
+		}
+	}
+	return kept
 }
 
 // excludeLinesFor maps a list of scanned paths into the editor's vocabulary, so
