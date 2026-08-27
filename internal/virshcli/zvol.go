@@ -1,22 +1,44 @@
 // Package virshcli — zvol-aware VM disk backup support (v8.0.0 TrueNAS
 // platform expansion, Task 10).
 //
-// ⚠ UNVERIFIED AGAINST REAL HARDWARE. Everything in this file is REASONED
-// from ZFS's and TrueNAS's PUBLIC documentation (zfs(8), the
-// /dev/zvol/<pool>/<dataset> device-node convention libvirt's own <source
-// dev="..."> XML attribute exposes for a block-device-backed disk, and `zfs
-// send`/`zfs receive` as the ZFS-native way to move a stable point-in-time
-// byte stream off/onto a dataset). No TrueNAS Scale test instance was
-// available anywhere in this project's development environment to exercise
-// it end-to-end against a real zvol. Only the pure functions below (argv/name
-// builders, no process execution) are unit-tested here; the orchestration
-// that actually runs these commands over SSH lives in
-// internal/backup/vm_orchestrator.go and carries the same caveat. Treat this
-// whole mechanism as a documented, unit-tested STARTING POINT — not a
-// confirmed-working backup path — until it has been exercised against a real
-// TrueNAS Scale box with a real zvol-backed VM (see
-// docs/vm-backup-ssh-setup.md's TrueNAS section for the operator-facing
-// version of this same warning).
+// VERIFIED AGAINST REAL HARDWARE 2026-08-27 (TrueNAS SCALE 25.10.0, pool
+// "tank", zvol "tank/vms/testvm-disk0" attached to a RUNNING VM). This file
+// was originally written REASONED-ONLY from ZFS's and TrueNAS's public
+// documentation, with no test instance available anywhere in the project's
+// development environment; that gap is now closed. What was measured on the
+// real box, in order:
+//
+//   - The device-node convention this file's parser depends on holds: the
+//     running domain's XML carries <source dev='/dev/zvol/tank/vms/
+//     testvm-disk0'/> VERBATIM — libvirt does NOT resolve it to the /dev/zdN
+//     node it symlinks to, so ZvolDatasetFromDevPath sees exactly the shape
+//     it parses.
+//   - `zfs snapshot <dataset>@<snap>` succeeds against a zvol a RUNNING VM is
+//     actively using — the live-consistency assumption behind BackupZvolDisk's
+//     snapshot-then-send design.
+//   - `zfs send` produced a stream, that stream survived
+//     `restic backup --stdin` → `restic dump` BYTE-IDENTICALLY (sha256
+//     d2cd7136…52c93 on both sides, restic 0.17.3), and the per-disk identity
+//     tag ("vm:<name>:zvol:<dev>") was recorded on the resulting snapshot.
+//   - `zfs receive` into a fresh "<dataset>-bombvault-restore-<ns>" target
+//     (RestoreZvolTargetDataset's convention) succeeded, and the received
+//     dataset appeared under /dev/zvol/<target> as a usable zvol.
+//   - `zfs destroy` cleaned up both the snapshot and the restore target.
+//
+// STILL UNVERIFIED, deliberately narrow: (a) a full RestoreVM run driven by
+// internal/backup/vm_orchestrator.go's own Go code path — every individual
+// command it emits is confirmed above, but the Go orchestration around them is
+// still covered only by the fakes in vm_zvol_test.go/vm_zvol_wiring_test.go;
+// and (b) a zvol holding a large amount of real data — the verified zvol was
+// sparse, so the stream was small and the timing/throughput behaviour of a
+// multi-gigabyte send remains untested.
+//
+// See docs/vm-backup-ssh-setup.md's TrueNAS section for the operator-facing
+// setup, including the non-default libvirt socket
+// (/run/truenas_libvirt/libvirt-sock) that TrueNAS requires LIBVIRT_URI to
+// name explicitly — also confirmed on the same box, where the stock
+// qemu:///system URI fails with "Failed to connect socket to
+// '/var/run/libvirt/libvirt-sock': No such file or directory".
 package virshcli
 
 import (

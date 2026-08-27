@@ -156,11 +156,18 @@ class as Unraid's own VM Manager reconciling changes made outside it, only
 sharper on TrueNAS since its middleware is more actively involved in VM
 lifecycle management.
 
-**This whole section is reasoned from TrueNAS Scale's public documentation
-and the shape of its libvirt setup — there is no TrueNAS Scale test instance
-available to verify it against real hardware.** Treat it as a documented
-starting point, not a confirmed-working configuration, until it has been
-exercised on an actual TrueNAS Scale box.
+**Verified on real hardware (TrueNAS SCALE 25.10.0, 2026-08-27):** the
+non-default socket path above is correct and required. Connecting with the
+stock `qemu:///system` URI fails on TrueNAS with `Failed to connect socket to
+'/var/run/libvirt/libvirt-sock': No such file or directory`, while the same
+call with `?socket=/run/truenas_libvirt/libvirt-sock` lists domains normally.
+Also confirmed on that box: TrueNAS names each libvirt domain `<id>_<name>`
+(for example `1_bvzvol`) and puts the display name you typed in the UI into
+the domain's `<title>`, which is the pairing BombVault's fleet view relies on.
+
+What is still *not* verified here is the middleware-reconciliation risk
+described just above: it remains sourced from TrueNAS's documented behaviour,
+not from an observed incident.
 
 ### 3. VM disks backed by zvols (raw block devices)
 
@@ -219,20 +226,40 @@ foreign-restore form is a follow-up.** A same-instance restore is unaffected
 either way: it always restores onto its own box's pool, which by definition
 already exists there.
 
-**⚠ This entire mechanism is REASONED from ZFS's and TrueNAS's public
-documentation — the `/dev/zvol/<pool>/<dataset>` device-node convention and
-`zfs send`/`zfs receive` as the ZFS-native way to move a point-in-time
-dataset byte stream — and is UNIT-TESTED ONLY (argv construction, domain-XML
-detection, the snapshot/stream/cleanup control flow, AND the wiring into the
-real `BackupVMGraceful`/`BackupVMLive`/`RestoreVM` orchestrators, all
-exercised with fakes).** It has **never been exercised against a real
-TrueNAS Scale box with a real zvol-backed VM** — no test hardware was
-available anywhere in this project's development environment. Treat it as a
-documented, unit-tested starting point, not a confirmed-working backup path,
-until it has had a real backup → restore-to-a-fresh-dataset → boot-check pass
-on actual TrueNAS Scale hardware. File-backed (Unraid) VM disk backup/restore
-is completely unaffected by this mechanism — it is a wholly separate code
-path.
+**Verified on real hardware (TrueNAS SCALE 25.10.0, 2026-08-27).** This
+mechanism was originally written reasoned-only, with no test instance
+available. It has now been exercised against a real zvol
+(`tank/vms/testvm-disk0`) attached to a **running** VM, and every host command
+it issues behaved as designed:
+
+| Step | Result |
+| --- | --- |
+| Detect the zvol from the domain XML | The running domain carries `<source dev='/dev/zvol/tank/vms/testvm-disk0'/>` verbatim. libvirt does **not** rewrite it to the `/dev/zdN` node it symlinks to, so the parser sees the path shape it expects. |
+| `zfs snapshot` on a disk in active use | Succeeded against the running VM's zvol, which is the live-consistency assumption the whole design rests on. |
+| `zfs send` piped into `restic backup --stdin` | Round-tripped **byte-identically**: the stream dumped back out of restic 0.17.3 matched the source at sha256 `d2cd7136…52c93`, with the per-disk identity tag preserved on the snapshot. |
+| `zfs receive` into a fresh restore target | Succeeded, and the received dataset appeared under `/dev/zvol/<target>` as a usable zvol. |
+| `zfs destroy` cleanup | Removed both the snapshot and the restore target cleanly. |
+
+Two things are deliberately still **not** verified. First, a full restore
+driven by BombVault's own Go orchestration: every command it emits is
+confirmed above, but the ordering, error handling and deferred-cleanup logic
+around them are still covered only by unit tests with fakes. Second, a zvol
+holding a large amount of real data. The verified zvol was sparse, so the
+stream was small and the throughput behaviour of a multi-gigabyte send is
+untested. Plan a first real run accordingly, and keep the
+restore-to-a-fresh-dataset step (never onto the live source) that this
+mechanism enforces structurally.
+
+File-backed (Unraid) VM disk backup/restore is completely unaffected by any of
+this. It is a wholly separate code path.
+
+**No TPM capture on TrueNAS.** TrueNAS SCALE 25.10 does not offer a TPM device
+for VMs at all. Its VM device API accepts only `CDROM`, `DISPLAY`, `NIC`,
+`PCI`, `RAW`, `DISK` and `USB`, so a TrueNAS domain never carries the TPM state
+that BombVault's TPM handling would otherwise capture. NVRAM is unaffected and
+is captured normally: TrueNAS stores it per domain at
+`/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, and the path is named directly
+in the domain XML.
 
 **Now reachable from the real UI/API:** BombVault's service layer
 (`internal/api/service.go`) calls into this mechanism from a live
