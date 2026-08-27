@@ -852,6 +852,8 @@ const ja: Partial<Translations> = {
   "offsite.wizard.repoUrl": "オフサイトリポジトリ URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST サーバーの認証情報",
+  "offsite.wizard.credsShared": "この認証情報は、独自のセットを持たないすべての保存先に適用されます。この種類だけではありません。",
+  "offsite.wizard.credsInSet": "この保存先はセット「{name}」を使用します。認証情報はそちらで管理します。",
   "offsite.wizard.credLoadError": "既存の認証情報を読み込めませんでした。編集する前に再読み込みしてください。",
   "offsite.wizard.step4": "4 · append-only 保護を有効化",
   "offsite.immutable": "イミュータブル（append-only）",

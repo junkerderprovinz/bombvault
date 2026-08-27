@@ -295,6 +295,8 @@ const lv: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Attālinātā repozitorija URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST servera akreditācijas dati",
+  "offsite.wizard.credsShared": "Šie dati attiecas uz katru galamērķi bez sava komplekta, ne tikai uz šo veidu.",
+  "offsite.wizard.credsInSet": "Šis galamērķis izmanto komplektu „{name}“. Datus pārvalda tur.",
   "offsite.wizard.credLoadError": "Neizdevās ielādēt esošos akreditācijas datus. Pirms rediģēšanas ielādējiet no jauna.",
   "offsite.wizard.step4": "4 · Iespējojiet tikai-pievienot aizsardzību",
   "offsite.immutable": "Nemaināms (tikai-pievienot)",

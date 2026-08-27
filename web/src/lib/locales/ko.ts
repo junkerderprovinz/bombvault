@@ -852,6 +852,8 @@ const ko: Partial<Translations> = {
   "offsite.wizard.repoUrl": "오프사이트 리포지토리 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST 서버 자격 증명",
+  "offsite.wizard.credsShared": "이 자격 증명은 자체 세트가 없는 모든 대상에 적용되며, 이 유형에만 해당하지 않습니다.",
+  "offsite.wizard.credsInSet": "이 대상은 \u201c{name}\u201d 세트를 사용합니다. 자격 증명은 그곳에서 관리됩니다.",
   "offsite.wizard.credLoadError": "기존 자격 증명을 불러올 수 없습니다. 편집하기 전에 새로고침하세요.",
   "offsite.wizard.step4": "4 · append-only 보호 활성화",
   "offsite.immutable": "불변 (append-only)",

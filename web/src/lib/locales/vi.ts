@@ -876,6 +876,8 @@ const vi: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL kho off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Thông tin đăng nhập REST server",
+  "offsite.wizard.credsShared": "Thông tin này áp dụng cho mọi đích đến không có bộ riêng, không chỉ loại này.",
+  "offsite.wizard.credsInSet": "Đích đến này dùng bộ \u201c{name}\u201d. Thông tin được quản lý ở đó.",
   "offsite.wizard.credLoadError": "Không thể tải thông tin đăng nhập hiện có. Hãy tải lại trước khi chỉnh sửa.",
   "offsite.wizard.step4": "4 · Bật bảo vệ append-only",
   "offsite.immutable": "Bất biến (append-only)",

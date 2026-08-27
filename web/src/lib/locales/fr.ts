@@ -860,6 +860,8 @@ const fr: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL du dépôt hors site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Identifiants du serveur REST",
+  "offsite.wizard.credsShared": "Ces identifiants s'appliquent à toute destination sans jeu propre, pas seulement à ce type.",
+  "offsite.wizard.credsInSet": "Cette destination utilise le jeu « {name} ». Les identifiants s'y gèrent.",
   "offsite.wizard.credLoadError": "Impossible de charger les identifiants existants : rechargez avant de modifier.",
   "offsite.wizard.step4": "4 · Activer la protection append-only",
   "offsite.immutable": "Immuable (append-only)",

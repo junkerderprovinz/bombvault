@@ -851,6 +851,8 @@ const pl: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Adres URL repozytorium poza siedzibą",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Poświadczenia serwera REST",
+  "offsite.wizard.credsShared": "Te dane dotyczą każdego celu bez własnego zestawu, nie tylko tego typu.",
+  "offsite.wizard.credsInSet": "Ten cel używa zestawu „{name}”. Dane są zarządzane tam.",
   "offsite.wizard.credLoadError": "Nie udało się załadować istniejących poświadczeń. Odśwież przed edycją.",
   "offsite.wizard.step4": "4 · Włącz ochronę append-only",
   "offsite.immutable": "Niezmienne (append-only)",

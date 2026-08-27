@@ -876,6 +876,8 @@ const zh: Partial<Translations> = {
   "offsite.wizard.repoUrl": "异地仓库 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST 服务器凭据",
+  "offsite.wizard.credsShared": "这些凭据适用于所有没有自己凭据集的目标，而不仅仅是此类型。",
+  "offsite.wizard.credsInSet": "此目标使用凭据集“{name}”。凭据在那里管理。",
   "offsite.wizard.credLoadError": "无法加载现有凭据。请先重新加载再编辑。",
   "offsite.wizard.step4": "4 · 启用 append-only 保护",
   "offsite.immutable": "不可变（append-only）",

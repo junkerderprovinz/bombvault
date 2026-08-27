@@ -21,6 +21,34 @@ import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
 
 const setCloudCalls: Record<string, string>[] = [];
+const updateTargetCalls: { id: string; credsRef: string }[] = [];
+
+// The domain's PRIMARY off-site destination: the row whose credsRef the
+// wizard's credential selector edits (#176). sortOrder 0 is what marks it.
+const PRIMARY_TARGET = {
+  id: "tgt-primary",
+  domain: "containers",
+  name: "Primary",
+  repo: "rest:http://192.168.20.199:8000/containers",
+  credsRef: "",
+  storageClass: "",
+  immutable: false,
+  schedule: "",
+  retentionKeepLast: 0,
+  retentionKeepDaily: 0,
+  retentionKeepWeekly: 0,
+  retentionKeepMonthly: 0,
+  limitUpload: 0,
+  limitDownload: 0,
+  growthBudgetGb: 0,
+  enabled: true,
+  createdAt: 0,
+  sortOrder: 0,
+};
+
+vi.mock("../lib/useCloudCredSets", () => ({
+  useCloudCredSets: () => [{ id: "set-a", name: "Backblaze" }],
+}));
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -39,6 +67,11 @@ vi.mock("../lib/api", async (importOriginal) => {
     setCloud: (c: Record<string, string>) => {
       setCloudCalls.push({ ...c });
       return Promise.resolve({ ok: true });
+    },
+    listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [PRIMARY_TARGET] }),
+    updateOffsiteTarget: (id: string, target: { credsRef: string }) => {
+      updateTargetCalls.push({ id, credsRef: target.credsRef });
+      return Promise.resolve({ ok: true, target: { ...PRIMARY_TARGET, credsRef: target.credsRef } });
     },
   };
 });
@@ -100,6 +133,7 @@ function lastSave(): Record<string, string> {
 beforeEach(() => {
   vi.useFakeTimers();
   setCloudCalls.length = 0;
+  updateTargetCalls.length = 0;
 });
 
 afterEach(() => {
@@ -123,4 +157,45 @@ it("stores the whole REST password when typing pauses part-way through", async (
 
   expect(field.value).toBe("9f3a1c8e2b7d4a");
   expect(lastSave().restPassword).toBe("9f3a1c8e2b7d4a");
+});
+
+// ---------------------------------------------------------------------------
+// #176 (kramttocs): the credentials step is opened per domain, but its fields
+// write the SHARED cloud credentials, so filling them in under Containers also
+// rewrote every other domain's. The plumbing for per-destination credentials
+// already existed (each destination carries a credsRef the replication path
+// resolves, and the primary destination is such a row) — the wizard simply had
+// no control that set it. These two tests pin the control and, just as
+// importantly, that choosing a set STOPS the shared fields from being offered,
+// since leaving them visible is what made the two look like the same thing.
+// ---------------------------------------------------------------------------
+it("writes the chosen credential set onto this domain's primary destination", async () => {
+  await renderWizard();
+
+  const select = screen.getByLabelText(/Credentials|Zugangsdaten/) as HTMLSelectElement;
+  expect(select.value).toBe(""); // shared by default, as before
+
+  await act(async () => {
+    fireEvent.change(select, { target: { value: "set-a" } });
+  });
+
+  expect(updateTargetCalls).toEqual([{ id: "tgt-primary", credsRef: "set-a" }]);
+});
+
+it("hides the shared credential fields once a set is chosen", async () => {
+  await renderWizard();
+
+  // Shared by default: the fields are the shared ones and are offered.
+  expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).not.toBeNull();
+
+  await act(async () => {
+    fireEvent.change(screen.getByLabelText(/Credentials|Zugangsdaten/), {
+      target: { value: "set-a" },
+    });
+  });
+
+  // With a set selected they must be gone: editing them would silently change
+  // every other destination that still uses the shared set.
+  expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
+  expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
 });

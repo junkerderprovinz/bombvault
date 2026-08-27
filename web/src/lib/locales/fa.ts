@@ -295,6 +295,8 @@ const fa: Partial<Translations> = {
   "offsite.wizard.repoUrl": "نشانی مخزن خارج از محل",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "اطلاعات ورود سرور REST",
+  "offsite.wizard.credsShared": "این اطلاعات برای هر مقصدی که مجموعه‌ی اختصاصی ندارد اعمال می‌شود، نه فقط این نوع.",
+  "offsite.wizard.credsInSet": "این مقصد از مجموعه‌ی «{name}» استفاده می‌کند. اطلاعات آنجا مدیریت می‌شود.",
   "offsite.wizard.credLoadError": "اطلاعات ورود موجود بارگذاری نشد. پیش از ویرایش دوباره بارگذاری کنید.",
   "offsite.wizard.step4": "۴ · فعال‌سازی محافظت فقط-افزودنی",
   "offsite.immutable": "غیرقابل‌تغییر (فقط-افزودنی)",

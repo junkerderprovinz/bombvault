@@ -856,6 +856,8 @@ const no: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "REST-server-legitimasjon",
+  "offsite.wizard.credsShared": "Disse opplysningene gjelder alle destinasjoner uten eget sett, ikke bare denne typen.",
+  "offsite.wizard.credsInSet": "Denne destinasjonen bruker settet «{name}». Opplysningene forvaltes der.",
   "offsite.wizard.credLoadError": "Kunne ikke laste eksisterende legitimasjon. Last inn på nytt før redigering.",
   "offsite.wizard.step4": "4 · Aktiver append-only-beskyttelse",
   "offsite.immutable": "Uforanderlig (append-only)",
