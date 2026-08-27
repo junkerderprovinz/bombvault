@@ -122,6 +122,60 @@ func TestRunTamperTestProtected(t *testing.T) {
 	}
 }
 
+// TestRunTamperTestUsesTargetOwnCredentials pins that each destination is
+// probed with ITS OWN credentials. The credentials used to be decoded once,
+// before the loop, and handed to every target, so a destination pointing at a
+// named credential set (CredsRef, since 7.11.0) was probed with the shared
+// ones. The rest-server answers 401 to that, and 401 is deliberately
+// inconclusive here, so the tamper test for exactly those destinations
+// recorded no verdict and stayed "skipped" forever while looking like it ran.
+// Replication always resolved per target, so only the verification was blind.
+func TestRunTamperTestUsesTargetOwnCredentials(t *testing.T) {
+	var probedAs []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete {
+			user, _, _ := r.BasicAuth()
+			probedAs = append(probedAs, user)
+		}
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer srv.Close()
+
+	svc, st := tamperService(t, "rest:"+srv.URL, &fakeHostSSH{})
+	if err := svc.SetCloudCreds(CloudCreds{RESTUser: "shared", RESTPassword: "sharedpw"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "garage", Name: "Garage", CloudCreds: CloudCreds{RESTUser: "named", RESTPassword: "namedpw"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// A real target row (not the settings-synthesised one) so the target loop
+	// sees a CredsRef at all.
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain:    "containers",
+		Name:      "Primary",
+		Repo:      "rest:" + srv.URL,
+		Immutable: true,
+		Enabled:   true,
+		CredsRef:  "garage",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.RunTamperTest(context.Background(), "containers"); err != nil {
+		t.Fatalf("RunTamperTest: %v", err)
+	}
+	if len(probedAs) == 0 {
+		t.Fatal("no DELETE probe reached the server")
+	}
+	for _, user := range probedAs {
+		if user != "named" {
+			t.Fatalf("tamper probe authenticated as %q, want %q: the target's own credential set was ignored", user, "named")
+		}
+	}
+}
+
 // drainTwoProgressEvents reads a begin + terminal progress event pair a
 // synchronous call published (the Subscribe channel is buffered, so both are
 // already queued when the call returns); a 5s deadline keeps a regression from

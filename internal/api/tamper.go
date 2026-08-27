@@ -130,8 +130,18 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 
 	// Basic-auth credentials for the rest-server come from the encrypted cloud
 	// config (best-effort: a decode failure just means no auth header, and the
-	// server then answers 401 — a real HTTP verdict, not a transport error).
-	creds, _ := s.decodeCloud(settings)
+	// server then answers 401, which this probe treats as inconclusive rather
+	// than as a delete verdict).
+	//
+	// Resolved PER TARGET, inside the loop below. It used to be hoisted here as
+	// a single decodeCloud(settings) and handed to every destination, which
+	// meant a target pointing at its own named credential set (CredsRef, since
+	// 7.11.0) was probed with the shared credentials instead of its own. The
+	// rest-server answers 401 to that, 401 is inconclusive by design, so the
+	// tamper test for exactly those destinations recorded no verdict and
+	// stayed permanently "skipped" while looking like it had run. Replication
+	// itself always resolved per target (offsiteModeForTarget), so only the
+	// verification was blind, which is the worst half to get wrong.
 
 	// Fold each destination's verdict worst-of: testable if ANY is testable,
 	// protected only if EVERY testable destination refused the delete, details
@@ -145,6 +155,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 		errs         []error
 	)
 	for _, t := range targets {
+		creds, _ := s.decodeCloudFor(settings, t.CredsRef)
 		v, perr := s.runTamperTestForTarget(ctx, domain, t, creds)
 		if perr != nil {
 			errs = append(errs, perr)
