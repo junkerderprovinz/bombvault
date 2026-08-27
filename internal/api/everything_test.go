@@ -9,8 +9,9 @@ package api_test
 // exercised over containers + flash + config only — the cheapest domains to
 // fake, per the plan's own explicit allowance when wiring ALL FIVE real
 // domains (VM/libvirt fakes especially) into one test is impractical. The
-// production BackupEverything code is NOT special-cased for this: it always
-// attempts all five domains unconditionally. vms/files are exercised for
+// production BackupEverything code is NOT special-cased for this: it attempts
+// every domain the operator has switched ON, and the fixture below switches all
+// five on for exactly that reason. vms/files are exercised for
 // real, at ZERO eligible items (no VM targets or file sets are ever
 // registered by everythingTestService below), which is itself a genuine,
 // common production path (an operator who hasn't set up VMs/file sets yet)
@@ -128,6 +129,16 @@ func everythingTestService(t *testing.T, eng api.ResticEngine) (svc *api.Service
 	s.ContainersPath = "backups/containers"
 	s.FlashPath = "backups/flash"
 	s.ConfigPath = "backups/config"
+	// All five domain switches on: the pass now skips a domain the operator
+	// switched off, so a fixture left at the store defaults (vms/flash/config/
+	// files all off) would exercise the skip path instead of the orchestration
+	// these tests are about. vms/files still contribute nothing — no VM target
+	// or file set is ever registered here — which is exactly the
+	// zero-eligible-items case the file header describes.
+	s.ContainersEnabled = true
+	s.VMsEnabled = true
+	s.FlashEnabled = true
+	s.FilesEnabled = true
 	s.ConfigEnabled = true
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)

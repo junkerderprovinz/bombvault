@@ -233,10 +233,15 @@ func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 	return out
 }
 
-// domainRunHasWork reports whether a FILTERED container list still holds an item
+// DomainRunHasWork reports whether a FILTERED container list still holds an item
 // the domain job would actually back up. IncludeInSchedule is the very check
 // RunContainersJob loops on, so this asks exactly "would that loop attempt
 // anything".
+//
+// Exported because the "Backup Everything" pass (internal/api/everything.go)
+// reproduces these same domain loops inline and needs the SAME answer, not a
+// second copy of the rule: a private helper here is exactly how the two drifted
+// apart in the first place.
 //
 // The three multi-item domain closures gate their whole pass on it, and the
 // reason is the batched TAIL, not the loop: RunContainersJob over an empty list
@@ -257,7 +262,7 @@ func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 //
 // The legitimate "first ever run, nothing backed up yet" case is untouched:
 // that list is NON-empty, so the zero time genuinely means due and the pass runs.
-func domainRunHasWork(targets []store.Target) bool {
+func DomainRunHasWork(targets []store.Target) bool {
 	for _, t := range targets {
 		if t.IncludeInSchedule {
 			return true
@@ -266,8 +271,8 @@ func domainRunHasWork(targets []store.Target) bool {
 	return false
 }
 
-// domainRunHasVMWork is the VM counterpart of domainRunHasWork.
-func domainRunHasVMWork(vms []store.VMTarget) bool {
+// DomainRunHasVMWork is the VM counterpart of DomainRunHasWork.
+func DomainRunHasVMWork(vms []store.VMTarget) bool {
 	for _, v := range vms {
 		if v.IncludeInSchedule {
 			return true
@@ -276,11 +281,11 @@ func domainRunHasVMWork(vms []store.VMTarget) bool {
 	return false
 }
 
-// domainRunHasFileWork is the file-set counterpart of domainRunHasWork. File sets
+// DomainRunHasFileWork is the file-set counterpart of DomainRunHasWork. File sets
 // carry no per-item cadence override, so Enabled is the whole filter — and the
 // check RunFilesJob itself loops on. A user who switched every set off must not
 // keep paying for the domain's prune and off-site copy.
-func domainRunHasFileWork(sets []store.FileSet) bool {
+func DomainRunHasFileWork(sets []store.FileSet) bool {
 	for _, fs := range sets {
 		if fs.Enabled {
 			return true
@@ -393,9 +398,27 @@ func FilesDueGate(st DomainGateStore) LastRunFunc {
 //
 //   - off / disabled (Enabled=false)   → 0 (no RPO expectation)
 //   - everyN (IntervalDays>0)           → IntervalDays * 86400
-//   - daily / weekly / raw cron (Spec)  → the gap between the next two fires of
-//     the parsed cron schedule (covers "daily" = 86400 and "weekly" = 604800
-//     too, so there is one code path and no special-casing)
+//   - daily / weekly / raw cron (Spec)  → the LARGEST gap between consecutive
+//     fires of the parsed cron schedule (covers "daily" = 86400 and a
+//     single-day "weekly" = 604800 too, so there is one code path and no
+//     special-casing)
+//
+// The largest gap, not the first one. An RPO window is the longest a backup can
+// legitimately be missing, and a weekly cadence with SEVERAL weekdays — what the
+// UI's own cadence builder produces the moment a second day is ticked — has
+// unequal gaps. "0 3 * * 0,6" (Sun and Sat) fires a day apart and then six days
+// apart; reading the first pair called it a daily schedule and put the domain on
+// warn from Monday and overdue from Tuesday, sending a weekly "expected every 1d"
+// alert about a schedule that was running exactly as configured. Since this value
+// also feeds the tamper, off-site, drill and digest windows, the same understated
+// number was quietly making all of them impatient too.
+//
+// The scan is bounded twice over: it stops once the fires cover a year (long
+// enough for any cadence the builder can produce, monthly and day-of-week
+// included) or after periodScanMaxFires steps, whichever comes first — a
+// once-a-minute raw cron would otherwise walk half a million fires to conclude
+// "60". Both bounds still leave at least two fires, so there is always a gap to
+// measure.
 //
 // A Spec that fails to parse (should never happen for a Cadence built by
 // ParseCadence, which validates) yields 0.
@@ -413,17 +436,45 @@ func (c Cadence) PeriodSeconds() int64 {
 	if err != nil {
 		return 0
 	}
-	// Take two consecutive fires from a fixed reference and use their gap. A fixed
-	// base keeps the result deterministic regardless of when this is called.
+	// A fixed base keeps the result deterministic regardless of when this is
+	// called. UTC deliberately: this is a window length, not a wall-clock time,
+	// and a DST transition inside the scan would otherwise add or drop an hour.
 	base := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
 	first := sched.Next(base)
-	second := sched.Next(first)
-	d := second.Sub(first)
-	if d <= 0 {
+	if first.IsZero() {
 		return 0
 	}
-	return int64(d.Seconds())
+	var widest time.Duration
+	cur := first
+	for i := 0; i < periodScanMaxFires; i++ {
+		next := sched.Next(cur)
+		if next.IsZero() {
+			break
+		}
+		if gap := next.Sub(cur); gap > widest {
+			widest = gap
+		}
+		cur = next
+		if cur.Sub(first) >= periodScanWindow {
+			break
+		}
+	}
+	if widest <= 0 {
+		return 0
+	}
+	return int64(widest.Seconds())
 }
+
+// periodScanWindow and periodScanMaxFires bound PeriodSeconds' walk over a cron
+// spec's fires. The window is a full year so a monthly or day-of-week cadence
+// shows its whole cycle (February's short month included); the fire cap keeps a
+// high-frequency raw cron from walking that entire year one minute at a time,
+// and a cadence dense enough to hit the cap has repeated its cycle many times
+// over long before it does.
+const (
+	periodScanWindow   = 366 * 24 * time.Hour
+	periodScanMaxFires = 2048
+)
 
 // LastFire returns the most recent fire time of this cadence's cron spec at or
 // before now — the "Prev" robfig/cron does not provide. It is the basis of the
@@ -1184,9 +1235,17 @@ func (s *Scheduler) Stop() {
 }
 
 // domainSpec bundles everything needed to register one scheduler domain entry.
+//
+// off carries the operator's own on/off switch for the five backup domains
+// (settings.ContainersEnabled and friends) and their off-site counterparts. It
+// is stated in the NEGATIVE on purpose: every other spec built below — drills,
+// tamper, digest, receiver, fleet — is appended only when its own gate already
+// says yes, so the zero value has to mean "registered", or adding this field
+// would silently switch all of them off.
 type domainSpec struct {
 	cadence string
 	name    string
+	off     bool
 	fn      func()
 	lastRun LastRunFunc // nil for domains without everyN support
 }
@@ -1243,6 +1302,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 		{
 			cadence: settings.ContainersSchedule,
 			name:    "containers",
+			off:     !settings.ContainersEnabled,
 			fn: func() {
 				targets, err := s.listFn()
 				if err != nil {
@@ -1250,9 +1310,9 @@ func (s *Scheduler) ReloadWithDueChecks(
 					return
 				}
 				targets = DomainRunTargets(targets, perItem) // drop items on their own per-item cadence (#121)
-				if !domainRunHasWork(targets) {
+				if !DomainRunHasWork(targets) {
 					// Nothing left for this domain to back up: no loop, no ping,
-					// and above all no prune and no off-site copy (domainRunHasWork).
+					// and above all no prune and no off-site copy (DomainRunHasWork).
 					return
 				}
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
@@ -1276,6 +1336,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 		{
 			cadence: settings.VMsSchedule,
 			name:    "vms",
+			off:     !settings.VMsEnabled,
 			fn: func() {
 				if s.backupVM == nil || s.listVMsFn == nil {
 					log.Print("schedule: vms job skipped — VM backup not wired (SetVMJob)")
@@ -1288,8 +1349,8 @@ func (s *Scheduler) ReloadWithDueChecks(
 				}
 				store.SortVMTargetsForRun(vms)         // #119: explicit VM backup order first, name-order tiebreak
 				vms = DomainRunVMTargets(vms, perItem) // drop VMs on their own per-item cadence (#121)
-				if !domainRunHasVMWork(vms) {
-					return // nothing to back up — skip the loop and the batched tail (domainRunHasWork)
+				if !DomainRunHasVMWork(vms) {
+					return // nothing to back up — skip the loop and the batched tail (DomainRunHasWork)
 				}
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
@@ -1306,6 +1367,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 		{
 			cadence: settings.FlashSchedule,
 			name:    "flash",
+			off:     !settings.FlashEnabled,
 			fn: func() {
 				if s.backupFlash == nil {
 					log.Print("schedule: flash job skipped — flash backup not wired (SetFlashJob)")
@@ -1320,6 +1382,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 		{
 			cadence: settings.ConfigSchedule,
 			name:    "config",
+			off:     !settings.ConfigEnabled,
 			fn: func() {
 				if s.configJob == nil {
 					log.Print("schedule: config job skipped — config backup not wired (SetConfigJob)")
@@ -1334,6 +1397,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 		{
 			cadence: settings.FilesSchedule,
 			name:    "files",
+			off:     !settings.FilesEnabled,
 			fn: func() {
 				if s.backupFiles == nil || s.listFileSetsFn == nil {
 					log.Print("schedule: files job skipped — file-set backup not wired (SetFilesJob)")
@@ -1344,8 +1408,8 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: files job: list file sets: %v", err)
 					return
 				}
-				if !domainRunHasFileWork(sets) {
-					return // no enabled set — skip the loop and the batched tail (domainRunHasWork)
+				if !DomainRunHasFileWork(sets) {
+					return // no enabled set — skip the loop and the batched tail (DomainRunHasWork)
 				}
 				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
@@ -1378,10 +1442,16 @@ func (s *Scheduler) ReloadWithDueChecks(
 	// Off-site replication on its own per-domain schedule (decoupled from the
 	// backup schedules above). A blank cadence means "replicate after every local
 	// backup" and is handled in the backup path, not here.
-	offsite := func(domain, cadence string) domainSpec {
+	//
+	// It carries the same domain switch as the backup schedule it replicates:
+	// a domain that is switched off produces no new snapshots, so a nightly
+	// replication for it is a repo open, an index load and a copy pass for
+	// nothing — and it is a scheduled job the UI shows no tab for.
+	offsite := func(domain, cadence string, enabled bool) domainSpec {
 		return domainSpec{
 			cadence: cadence,
 			name:    domain + "-offsite",
+			off:     !enabled,
 			fn: func() {
 				if s.replicateOffFn == nil {
 					log.Printf("schedule: %s-offsite job skipped — off-site not wired (SetOffsiteJob)", domain)
@@ -1394,11 +1464,11 @@ func (s *Scheduler) ReloadWithDueChecks(
 		}
 	}
 	domains = append(domains,
-		offsite("containers", settings.ContainersOffsiteSchedule),
-		offsite("vms", settings.VMsOffsiteSchedule),
-		offsite("flash", settings.FlashOffsiteSchedule),
-		offsite("config", settings.ConfigOffsiteSchedule),
-		offsite("files", settings.FilesOffsiteSchedule),
+		offsite("containers", settings.ContainersOffsiteSchedule, settings.ContainersEnabled),
+		offsite("vms", settings.VMsOffsiteSchedule, settings.VMsEnabled),
+		offsite("flash", settings.FlashOffsiteSchedule, settings.FlashEnabled),
+		offsite("config", settings.ConfigOffsiteSchedule, settings.ConfigEnabled),
+		offsite("files", settings.FilesOffsiteSchedule, settings.FilesEnabled),
 	)
 
 	// Restore-verification drills run on a single schedule across a set of
@@ -1574,6 +1644,24 @@ func (s *Scheduler) ReloadWithDueChecks(
 			return fmt.Errorf("schedule: domain %s: %w", d.name, err)
 		}
 		if !cad.Enabled {
+			continue
+		}
+
+		// The domain's own on/off switch, checked AFTER the cadence so this only
+		// speaks up for the case that is actually surprising: a real schedule is
+		// configured and the domain it belongs to is switched off.
+		//
+		// Registration used to ignore the switch entirely, and svc.Backup gates
+		// only on path/repo, so switching a domain off left its nightly run going
+		// — container stop/start, prune and off-site replication included — while
+		// the dashboard, the overdue watchdog and the drill set all reported the
+		// domain as off, and for VMs, flash, folders and self-backup the tab it
+		// was configured on had disappeared from the UI. It said off in every
+		// place a user can look, and ran anyway. It is logged rather than dropped
+		// in silence because the reverse mistake — a schedule the user believes is
+		// running and is not — is the one that costs backups.
+		if d.off {
+			log.Printf("schedule: %s NOT registered — the domain is switched off in Settings; its schedule stays inert until the domain is switched back on", d.name)
 			continue
 		}
 

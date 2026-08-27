@@ -121,7 +121,7 @@ func TestNextRunsFallsBackToTheCronFireWhenTheQueryFails(t *testing.T) {
 func TestNextRunsLeavesPlainCadencesAlone(t *testing.T) {
 	noTargets := func() ([]store.Target, error) { return nil, nil }
 	sc := New(func(string) error { return nil }, noTargets)
-	if err := sc.Reload(store.Settings{ContainersSchedule: "daily 03:00"}); err != nil {
+	if err := sc.Reload(store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}); err != nil {
 		t.Fatalf("Reload: %v", err)
 	}
 	sc.Start()

@@ -1475,7 +1475,7 @@ func TestScheduleNext(t *testing.T) {
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
-	if err := sched.Reload(store.Settings{ContainersSchedule: "daily 03:00"}); err != nil {
+	if err := sched.Reload(store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}); err != nil {
 		t.Fatalf("Reload: %v", err)
 	}
 	sched.Start()

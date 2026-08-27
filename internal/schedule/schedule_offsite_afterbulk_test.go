@@ -34,7 +34,7 @@ func TestBatchedOffsiteRunsAfterAllBackups(t *testing.T) {
 			domain:   "containers",
 			wire:     func(sc *Scheduler, backupFn BackupFunc) {},
 			items:    [2]string{"plex", "radarr"},
-			settings: store.Settings{ContainersSchedule: "daily 03:00"},
+			settings: store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"},
 		},
 		{
 			domain: "vms",
@@ -47,7 +47,7 @@ func TestBatchedOffsiteRunsAfterAllBackups(t *testing.T) {
 				})
 			},
 			items:    [2]string{"vm1", "vm2"},
-			settings: store.Settings{VMsSchedule: "daily 03:00"},
+			settings: store.Settings{VMsEnabled: true, VMsSchedule: "daily 03:00"},
 		},
 		{
 			domain: "files",
@@ -60,7 +60,7 @@ func TestBatchedOffsiteRunsAfterAllBackups(t *testing.T) {
 				})
 			},
 			items:    [2]string{"fs1", "fs2"},
-			settings: store.Settings{FilesSchedule: "daily 03:00"},
+			settings: store.Settings{FilesEnabled: true, FilesSchedule: "daily 03:00"},
 		},
 	}
 
@@ -170,7 +170,7 @@ func TestEmptyDomainRunSkipsJobAndBatchedTail(t *testing.T) {
 				// domain run and given no entry of its own.
 				return []store.Target{{ContainerName: "plex", IncludeInSchedule: true, ScheduleCadence: "off"}}, nil
 			},
-			settings: store.Settings{ContainersSchedule: "daily 03:00", PerItemSchedules: true},
+			settings: store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00", PerItemSchedules: true},
 		},
 		{
 			domain: "vms",
@@ -180,7 +180,7 @@ func TestEmptyDomainRunSkipsJobAndBatchedTail(t *testing.T) {
 				})
 			},
 			listFn:   func() ([]store.Target, error) { return nil, nil },
-			settings: store.Settings{VMsSchedule: "daily 03:00", PerItemSchedules: true},
+			settings: store.Settings{VMsEnabled: true, VMsSchedule: "daily 03:00", PerItemSchedules: true},
 		},
 		{
 			domain: "files",
@@ -190,7 +190,7 @@ func TestEmptyDomainRunSkipsJobAndBatchedTail(t *testing.T) {
 				})
 			},
 			listFn:   func() ([]store.Target, error) { return nil, nil },
-			settings: store.Settings{FilesSchedule: "daily 03:00"},
+			settings: store.Settings{FilesEnabled: true, FilesSchedule: "daily 03:00"},
 		},
 	}
 
@@ -254,7 +254,7 @@ func TestContainersJobNoOffsiteAfterBulkWhenUnwired(t *testing.T) {
 	)
 	// Deliberately NOT calling SetOffsiteAfterBulkJob or SetPruneAfterBulkJob.
 
-	if err := sc.ReloadWithDueChecks(store.Settings{ContainersSchedule: "daily 03:00"}, nil, nil, nil, nil, nil, nil); err != nil {
+	if err := sc.ReloadWithDueChecks(store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	for _, e := range sc.entries {

@@ -62,6 +62,16 @@ type EverythingDomainResult struct {
 	Failures  []schedule.ItemFailure
 }
 
+// everythingStep is one domain's place in a "Backup Everything" pass: the
+// domain name (for the skip log), the operator's own on/off switch for it, and
+// the step itself. It exists so the enabled-check sits in ONE loop rather than
+// five call sites, which is how the check came to be missing from all five.
+type everythingStep struct {
+	domain  string
+	enabled bool
+	run     func() EverythingDomainResult
+}
+
 // ErrEverythingInFlight is returned by BackupEverything when a "Backup
 // Everything" pass is already running. It is a refusal, not a failure: the
 // caller asked for a pass and the answer is that the one already in flight is
@@ -138,12 +148,37 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 	// itself erroring) is captured into that step's own EverythingDomainResult
 	// and never aborts the remaining steps (design spec, decision 5's explicit
 	// "survive one domain failing" requirement).
-	results := []EverythingDomainResult{
-		s.everythingRunContainers(ctx, runID, settings),
-		s.everythingRunVMs(ctx, runID, settings),
-		s.everythingRunFlash(ctx, runID),
-		s.everythingRunFiles(ctx, runID),
-		s.everythingRunConfig(ctx, runID),
+	//
+	// A domain the operator switched OFF is not part of the pass at all. Every
+	// other consumer of these five flags already reads them — rpoStatus
+	// (service.go), the overdue watchdog (watchdog.go), drillTasks
+	// (schedule.go) — and the UI hides the whole tab for a domain that is off.
+	// Running it here anyway made "Backup Everything" the one path that ignored
+	// the switch, in both directions: on a host without an Unraid flash the
+	// flash step failed on every single pass, which failed the PARENT run, i.e.
+	// the one signal the feature exists to produce; and with FlashEnabled=false
+	// on Unraid it would create a whole repo the operator never asked for.
+	steps := []everythingStep{
+		{"containers", settings.ContainersEnabled, func() EverythingDomainResult { return s.everythingRunContainers(ctx, runID, settings) }},
+		{"vms", settings.VMsEnabled, func() EverythingDomainResult { return s.everythingRunVMs(ctx, runID, settings) }},
+		{"flash", settings.FlashEnabled, func() EverythingDomainResult { return s.everythingRunFlash(ctx, runID) }},
+		{"files", settings.FilesEnabled, func() EverythingDomainResult { return s.everythingRunFiles(ctx, runID) }},
+		{"config", settings.ConfigEnabled, func() EverythingDomainResult { return s.everythingRunConfig(ctx, runID) }},
+	}
+	results := make([]EverythingDomainResult, 0, len(steps))
+	for _, step := range steps {
+		if !step.enabled {
+			log.Printf("api: backup everything: %s skipped — the domain is switched off in Settings", step.domain)
+			continue
+		}
+		results = append(results, step.run())
+	}
+	if len(results) == 0 {
+		// Not an error — the operator's own configuration says there is nothing
+		// to back up — but a "Backup Everything" schedule with all five domains
+		// off is a standing misconfiguration that looks like protection from the
+		// dashboard, so it says so rather than reporting a silent clean pass.
+		log.Print("api: backup everything: no domain is switched on — the pass backed up nothing")
 	}
 
 	// Unconditional, exactly once, after every domain step has been attempted —
@@ -273,6 +308,9 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 		return everythingDomainFault(domain, err)
 	}
 	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules) // drop items on their own per-item cadence (#121)
+	if !schedule.DomainRunHasWork(targets) {
+		return everythingDomainIdle(domain)
+	}
 
 	runCtx := everythingRunCtx(ctx, runID)
 
@@ -289,7 +327,7 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 				continue // removed container: a skip (already recorded), not a job failure (#57)
 			}
 			failed++
-			failures = append(failures, schedule.ItemFailure{Name: t.ContainerName, Reason: err.Error()})
+			failures = append(failures, schedule.ItemFailure{Name: t.ContainerName, Reason: truncateRunErr(err)})
 			log.Printf("api: backup everything: containers: backup %q failed: %v", t.ContainerName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
@@ -319,6 +357,9 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 	}
 	store.SortVMTargetsForRun(vms)                                    // #119: explicit VM backup order first, name-order tiebreak
 	vms = schedule.DomainRunVMTargets(vms, settings.PerItemSchedules) // drop VMs on their own per-item cadence (#121)
+	if !schedule.DomainRunHasVMWork(vms) {
+		return everythingDomainIdle(domain)
+	}
 
 	runCtx := everythingRunCtx(ctx, runID)
 
@@ -335,7 +376,7 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 				continue // VM no longer on the host: a skip (already logged), not a job failure
 			}
 			failed++
-			failures = append(failures, schedule.ItemFailure{Name: v.Name, Reason: err.Error()})
+			failures = append(failures, schedule.ItemFailure{Name: v.Name, Reason: truncateRunErr(err)})
 			log.Printf("api: backup everything: vms: backup %q failed: %v", v.Name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
@@ -362,6 +403,9 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string) Everythi
 		log.Printf("api: backup everything: files: list file sets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
+	if !schedule.DomainRunHasFileWork(sets) {
+		return everythingDomainIdle(domain)
+	}
 
 	runCtx := everythingRunCtx(ctx, runID)
 
@@ -375,7 +419,7 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string) Everythi
 		attempted++
 		if _, err := s.BackupFileSet(runCtx, fs.ID); err != nil {
 			failed++
-			failures = append(failures, schedule.ItemFailure{Name: fs.Name, Reason: err.Error()})
+			failures = append(failures, schedule.ItemFailure{Name: fs.Name, Reason: truncateRunErr(err)})
 			log.Printf("api: backup everything: files: backup %q failed: %v", fs.Name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
@@ -413,6 +457,24 @@ func (s *Service) everythingRunConfig(ctx context.Context, runID string) Everyth
 	return EverythingDomainResult{Domain: domain, Attempted: 1}
 }
 
+// everythingDomainIdle builds the EverythingDomainResult for a MULTI-ITEM
+// domain whose filtered list holds nothing this pass would back up — the
+// Attempted==0/Failed==0 benign no-op formatEverythingDomain already renders as
+// "<domain>: ok".
+//
+// The point is not the result value, it is the four calls the caller skips by
+// returning it: the aggregated Healthchecks start/result pair, PruneAfterBulk
+// and ReplicateOffsiteAfterBulk. The real scheduler gates its loop on exactly
+// this (schedule.go's DomainRunHasWork, whose own comment says "no loop, no
+// ping, and above all no prune and no off-site copy"); this pass reproduced the
+// loop and left the gate behind. On a box with no VMs and no file sets that
+// meant every pass pinged a green "0 of 0 items succeeded" at the dead-man's
+// switch — turning a check that had gone red back to green — and paid for a
+// real prune plus a full off-site repo open, twice, for nothing.
+func everythingDomainIdle(domain string) EverythingDomainResult {
+	return EverythingDomainResult{Domain: domain}
+}
+
 // everythingDomainFault builds the EverythingDomainResult for a domain that
 // faulted BEFORE any item could even be attempted (e.g. ListTargetsScheduleOrder/
 // ListVMTargets/ListFileSets itself erroring) — Attempted stays 0, Failed is 1,
@@ -421,7 +483,7 @@ func everythingDomainFault(domain string, err error) EverythingDomainResult {
 	return EverythingDomainResult{
 		Domain:   domain,
 		Failed:   1,
-		Failures: []schedule.ItemFailure{{Name: domain, Reason: err.Error()}},
+		Failures: []schedule.ItemFailure{{Name: domain, Reason: truncateRunErr(err)}},
 	}
 }
 
@@ -433,7 +495,7 @@ func everythingSingletonFault(domain string, err error) EverythingDomainResult {
 		Domain:    domain,
 		Attempted: 1,
 		Failed:    1,
-		Failures:  []schedule.ItemFailure{{Name: domain, Reason: err.Error()}},
+		Failures:  []schedule.ItemFailure{{Name: domain, Reason: truncateRunErr(err)}},
 	}
 }
 
