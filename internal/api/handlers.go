@@ -1383,18 +1383,18 @@ type registryAuthView struct {
 
 func toView(s store.Settings) settingsView {
 	return settingsView{
-		EncryptionEnabled:           s.EncryptionEnabled,
-		ContainersEnabled:           s.ContainersEnabled,
-		VMsEnabled:                  s.VMsEnabled,
-		FlashEnabled:                s.FlashEnabled,
-		ConfigEnabled:               s.ConfigEnabled,
-		FilesEnabled:                s.FilesEnabled,
-		ContainersPath:              s.ContainersPath,
-		VMsPath:                     s.VMsPath,
-		FlashPath:                   s.FlashPath,
-		ConfigPath:                  s.ConfigPath,
-		FilesPath:                   s.FilesPath,
-		RestoreFolder:               s.RestoreFolder,
+		EncryptionEnabled: s.EncryptionEnabled,
+		ContainersEnabled: s.ContainersEnabled,
+		VMsEnabled:        s.VMsEnabled,
+		FlashEnabled:      s.FlashEnabled,
+		ConfigEnabled:     s.ConfigEnabled,
+		FilesEnabled:      s.FilesEnabled,
+		ContainersPath:    s.ContainersPath,
+		VMsPath:           s.VMsPath,
+		FlashPath:         s.FlashPath,
+		ConfigPath:        s.ConfigPath,
+		FilesPath:         s.FilesPath,
+		RestoreFolder:     s.RestoreFolder,
 		// Verbatim here on purpose. toView is the faithful store-to-view
 		// mapping that BOTH exits share, and the credentialed settings export
 		// is gated on a login password precisely so it can hand out a complete
