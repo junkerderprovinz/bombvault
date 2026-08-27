@@ -390,8 +390,11 @@ func TestImportWithoutCredentialsPreservesExisting(t *testing.T) {
 // exact shape ("They can also live inside the URL, e.g. rest:https://user:pass@
 // host:8000/path"), and s3:, sftp: and b2: locations take the same syntax.
 const (
-	locWithCreds = "rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers"
-	locRepoPass  = "Tr0ub4dor&3"
+	// The fake credential is the fixture: this file exists to prove a password
+	// embedded in a repo URL never leaves in an export, so the literal has to
+	// look exactly like one gosec would flag. Nothing here is real or reachable.
+	locWithCreds = "rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers" //nolint:gosec // G101: deliberate fixture, see above
+	locRepoPass  = "Tr0ub4dor&3"                                                             //nolint:gosec // G101: deliberate fixture, see above
 	locRepoUser  = "backupuser"
 )
 
