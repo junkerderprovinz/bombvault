@@ -664,7 +664,7 @@ function UpdateAfterBackupRow({
           check records no run, so this line is its only surface. */}
       {enabled && lastUpdateCheck > 0 && (
         <p className="text-xs text-carbon-textMuted text-end">
-          {t("containers.updateCheckLabel")}: {relativeTime(t, lastUpdateCheck)} — {updateCheckResultText(t, lastUpdateResult)}
+          {t("containers.updateCheckLabel")}: {relativeTime(t, lastUpdateCheck)}, {updateCheckResultText(t, lastUpdateResult)}
         </p>
       )}
     </div>

@@ -41,6 +41,7 @@
 // ---------------------------------------------------------------------------
 import controlReadsEngineTokens from "./control-reads-engine-tokens.js";
 import iconBadgeNeedsTooltip from "./icon-badge-needs-tooltip.js";
+import noEmDashInUserText from "./no-em-dash-in-user-text.js";
 import noStatusColorOnControl from "./no-status-color-on-control.js";
 import oneIconBadgeSize from "./one-icon-badge-size.js";
 import pageUsesPageShell from "./page-uses-page-shell.js";
@@ -51,6 +52,7 @@ export default {
   rules: {
     "control-reads-engine-tokens": controlReadsEngineTokens,
     "icon-badge-needs-tooltip": iconBadgeNeedsTooltip,
+    "no-em-dash-in-user-text": noEmDashInUserText,
     "no-status-color-on-control": noStatusColorOnControl,
     "one-icon-badge-size": oneIconBadgeSize,
     "page-uses-page-shell": pageUsesPageShell,

@@ -519,7 +519,186 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
 });
 
 // ---------------------------------------------------------------------------
-// 8. The router's routed pages are all files page-uses-page-shell can see.
+// 8. An em dash in text a user reads.
+//
+// The rule is file-scoped for translation tables, so most cases here carry an
+// explicit `filename`. The mark itself is interpolated from one constant
+// rather than typed into forty strings: this file is prose ABOUT em dashes as
+// much as it is a test of them, and a literal one inside a test string is
+// indistinguishable at a glance from a literal one inside a comment.
+// ---------------------------------------------------------------------------
+const EM = String.fromCharCode(0x2014);
+const LOCALE_DE = "/repo/web/src/lib/locales/de.ts";
+const LOCALE_JA = "/repo/web/src/lib/locales/ja.ts";
+const LOCALE_RU = "/repo/web/src/lib/locales/ru.ts";
+const LOCALE_UK = "/repo/web/src/lib/locales/uk.ts";
+const LOCALE_BG = "/repo/web/src/lib/locales/bg.ts";
+const LOCALE_SR = "/repo/web/src/lib/locales/sr.ts";
+const I18N = "/repo/web/src/lib/i18n.ts";
+
+ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
+  valid: [
+    // The fixed shapes, one per replacement the sweep actually used: a comma
+    // where the dash joined a clause, a full stop where it introduced a
+    // standalone explanation, a colon before a definition, a parenthesis
+    // around an aside.
+    { code: `const de = { "files.hint": "Sichert alles, auch die Konfiguration." };`, filename: LOCALE_DE },
+    { code: `const de = { "files.hint": "Sichert alles. Die Konfiguration liegt daneben." };`, filename: LOCALE_DE },
+    { code: `const de = { "files.hint": "Zwei Ziele: lokal und offsite." };`, filename: LOCALE_DE },
+    { code: `const de = { "files.hint": "Sichert alles (auch die Konfiguration)." };`, filename: LOCALE_DE },
+    // CJK takes its own punctuation, never a spaced hyphen.
+    { code: `const ja = { "files.hint": "すべて保存します。設定も含みます。" };`, filename: LOCALE_JA },
+
+    // THE EXEMPTION. In ru/uk/bg/sr the em dash stands in for the absent
+    // copula and is ordinary punctuation; 561 of these live in the real files
+    // and not one is a defect. If this rule ever starts flagging them, the
+    // next sweep "fixes" 538 correct sentences into broken ones.
+    { code: `const ru = { "x.y": "Мой брат ${EM} врач" };`, filename: LOCALE_RU },
+    { code: `const uk = { "x.y": "Це ${EM} важливо" };`, filename: LOCALE_UK },
+    { code: `const bg = { "x.y": "Това ${EM} е важно" };`, filename: LOCALE_BG },
+    { code: `const sr = { "x.y": "Ово ${EM} је важно" };`, filename: LOCALE_SR },
+    // The exemption is by LOCALE, not by script: a Cyrillic string in a file
+    // that is not one of the four is still checked (the invalid block proves
+    // the other half of this).
+    { code: `const sr = { "x.y": "Ово је важно" };`, filename: LOCALE_SR },
+
+    // A COMMENT IS NEVER USER-FACING. This is the load-bearing case: src/**
+    // holds 4,708 em dashes and 4,705 of them look exactly like this. A rule
+    // that flagged one of them would be switched off the same day.
+    {
+      code: `
+        // Settings ${EM} Security card
+        /* Restore from another BombVault repo ${EM} Recovery page (#61) */
+        const de = { "settings.security": "Sicherheit" };
+      `,
+      filename: LOCALE_DE,
+    },
+    // …including a JSX comment sitting in rendered markup.
+    `<p>{/* the label ${EM} which used to be inline ${EM} now comes from t() */}{t("x")}</p>`,
+
+    // An i18n KEY is read by the lookup, never by a person. (No key in this
+    // app contains one, but a key is not user-facing on principle, and the
+    // rule must not depend on that staying true by luck.)
+    { code: `const de = { "a.b${EM}c": "Sicherheit" };`, filename: I18N },
+
+    // Outside the tables, an ordinary string literal is a class list, a path,
+    // a storage key or a test fixture. Not checked, and deliberately so.
+    `const sep = " ${EM} ";`,
+    `expect(render()).toContain("2026 ${EM} ok");`,
+    // …not even in a .ts file that merely sits near the tables.
+    { code: `export const SEP = "${EM}";`, filename: "/repo/web/src/lib/format.ts" },
+
+    // An attribute that is not one of the four text-bearing ones.
+    `<div data-sep="${EM}" className="a ${EM} b" />`,
+
+    // The escape hatch, with a real reason.
+    `
+      {/* bv-convention-exception: no-em-dash-in-user-text -- the empty-value
+          glyph in a numeric cell, not prose; it is the typographic "no value"
+          mark and reads wrong as a comma. */}
+      <td>${EM}</td>
+    `,
+  ],
+  invalid: [
+    {
+      // The plain case, in the file where 4,900 of them lived.
+      code: `const de = { "files.hint": "Sichert alles ${EM} auch die Konfiguration." };`,
+      filename: LOCALE_DE,
+      errors: [{ messageId: "inTranslation" }],
+    },
+    {
+      // WITH A PLACEHOLDER. The one thing the fix must never disturb: the
+      // sweep's whole failure mode would have been a mangled {path} rendering
+      // a broken sentence at runtime, so the rule reports the string that
+      // carries one exactly like any other.
+      code: `const de = { "files.restored": "{count} Dateien nach {path} ${EM} fertig in {when}." };`,
+      filename: LOCALE_DE,
+      errors: [{ messageId: "inTranslation" }],
+    },
+    {
+      // i18n.ts holds en and de inline as the source of truth, so it is a
+      // translation table too.
+      code: `export const en = { "files.hint": "Backs everything up ${EM} configuration included." };`,
+      filename: I18N,
+      errors: [{ messageId: "inTranslation" }],
+    },
+    {
+      // Written as an escape sequence rather than the character. A grep over
+      // the source text misses this one; the rule reads the cooked value.
+      code: `const de = { "files.hint": "Sichert alles \\u2014 auch die Konfiguration." };`,
+      filename: LOCALE_DE,
+      errors: [{ messageId: "inTranslation" }],
+    },
+    {
+      // A template literal's literal chunks are as user-facing as a plain
+      // string; the interpolation between them is not the rule's business.
+      code: "const de = { \"files.hint\": `Sichert ${n} Dateien \\u2014 auch die Konfiguration.` };",
+      filename: LOCALE_DE,
+      errors: [{ messageId: "inTranslation" }],
+    },
+    {
+      // A Cyrillic STRING in a locale that is not one of the four exempt ones.
+      // The exemption is by locale, not by script.
+      code: `const mk = { "x.y": "Тоа ${EM} е важно" };`,
+      filename: "/repo/web/src/lib/locales/mk.ts",
+      errors: [{ messageId: "inTranslation" }],
+    },
+
+    // REAL TREE, the three the locale sweep could not reach: separators
+    // hardcoded in components, where no translator can see them.
+    {
+      // pages/Containers.tsx:667
+      code: `<p className="text-xs">{t("containers.updateCheckLabel")}: {relativeTime(t, at)} ${EM} {resultText(t, r)}</p>`,
+      errors: [{ messageId: "inJsxText" }],
+    },
+    {
+      // pages/Recovery.tsx:547, inside an <option>.
+      code: `<option key={s.id} value={s.id}>{new Date(s.time).toLocaleString()} ${EM} {s.id.slice(0, 8)}</option>`,
+      errors: [{ messageId: "inJsxText" }],
+    },
+    {
+      // pages/Recovery.tsx:1356, prefixing an error string.
+      code: `<span dir="ltr" className="font-mono break-all"> ${EM} {r.error}</span>`,
+      errors: [{ messageId: "inJsxText" }],
+    },
+    {
+      // The entity spelling React decodes at render time. Not in the tree
+      // today, and the obvious way around a rule that only knows the
+      // character.
+      code: `<p>Backs everything up &mdash; configuration included.</p>`,
+      errors: [{ messageId: "inJsxText" }],
+    },
+    {
+      // Spoken by a screen reader, so it is text a user reads.
+      code: `<button aria-label="Delete ${EM} permanently" onClick={f}><svg /></button>`,
+      errors: [{ messageId: "inAttribute" }],
+    },
+    {
+      code: `<input placeholder={"host ${EM} optional"} />`,
+      errors: [{ messageId: "inAttribute" }],
+    },
+    {
+      // A marker whose reason is a shrug suppresses nothing.
+      code: `
+        {/* bv-convention-exception: no-em-dash-in-user-text -- nah */}
+        <td>${EM}</td>
+      `,
+      errors: [{ messageId: "inJsxText" }],
+    },
+    {
+      // A marker naming a DIFFERENT rule does not suppress this one.
+      code: `
+        {/* bv-convention-exception: user-message-is-translated -- the wrong
+            rule name, so this exception does not apply here at all. */}
+        <td>${EM}</td>
+      `,
+      errors: [{ messageId: "inJsxText" }],
+    },
+  ],
+});
+
+// ---------------------------------------------------------------------------
+// 9. The router's routed pages are all files page-uses-page-shell can see.
 //
 // The RuleTester cases above run against synthetic `filename:` strings, so they
 // prove what the rule DOES with a file it is handed. They cannot prove it is
