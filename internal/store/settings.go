@@ -346,7 +346,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return Settings{}, fmt.Errorf("settings row missing — run Migrate first")
+		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
 	}
 	if err != nil {
 		return Settings{}, fmt.Errorf("GetSettings: %w", err)

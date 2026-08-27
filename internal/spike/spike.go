@@ -234,7 +234,7 @@ func probePathWritable(deps Deps) (string, error) {
 // VM Backup over SSH).
 func probeLibvirt(d Deps) (string, error) {
 	if d.LibvirtTest == nil {
-		return "", fmt.Errorf("VM backup over SSH not configured — authorize the key in Settings → VM Backup over SSH")
+		return "", fmt.Errorf("VM backup over SSH not configured: authorize the key in Settings → VM Backup over SSH")
 	}
 	if err := d.LibvirtTest(); err != nil {
 		return "", fmt.Errorf("libvirt not reachable over SSH: %v", err)
