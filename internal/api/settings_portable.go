@@ -304,6 +304,13 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 // not rejected outright, but it still rejects a syntactically malformed body.
 func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool) {
 	var exp settingsExport
+	// decodeBody's twin needs decodeBody's guard. This is the most powerful write
+	// in the API — it replaces the entire configuration — and having its own copy
+	// of the decode logic is exactly how it came to be missing the check the
+	// ordinary settings PUT has.
+	if !crossOriginGuard(w, r) {
+		return exp, false
+	}
 	if r.Body == nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "missing request body"})
 		return exp, false

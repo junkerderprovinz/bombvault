@@ -201,7 +201,7 @@ func TestSettingsExportImportRoundTrip(t *testing.T) {
 func doImport(t *testing.T, h *Handler, body []byte, query string) map[string]any {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	h.handleImportSettings(rec, httptest.NewRequest(http.MethodPost, "/api/settings/import"+query, bytes.NewReader(body)))
+	h.handleImportSettings(rec, jsonReq(http.MethodPost, "/api/settings/import"+query, bytes.NewReader(body)))
 	var m map[string]any
 	if err := json.Unmarshal(rec.Body.Bytes(), &m); err != nil {
 		t.Fatalf("decode import envelope: %v (body=%s)", err, rec.Body.String())

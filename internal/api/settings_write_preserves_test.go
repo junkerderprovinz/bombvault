@@ -36,7 +36,7 @@ func loginCookie(t *testing.T, h http.Handler, password string) *http.Cookie {
 	if _, m := doJSON(t, h, http.MethodPost, "/api/auth/password", `{"password":"`+password+`"}`); m["ok"] != true {
 		t.Fatalf("set password: %v", m)
 	}
-	r := httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(`{"password":"`+password+`"}`))
+	r := jsonReq(http.MethodPost, "/api/login", strings.NewReader(`{"password":"`+password+`"}`))
 	r.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -52,7 +52,7 @@ func loginCookie(t *testing.T, h http.Handler, password string) *http.Cookie {
 // putWithCookie is doJSON for a request that must carry a session cookie.
 func putWithCookie(t *testing.T, h http.Handler, path, body string, c *http.Cookie) map[string]any {
 	t.Helper()
-	r := httptest.NewRequest(http.MethodPut, path, strings.NewReader(body))
+	r := jsonReq(http.MethodPut, path, strings.NewReader(body))
 	r.Header.Set("Content-Type", "application/json")
 	r.AddCookie(c)
 	w := httptest.NewRecorder()

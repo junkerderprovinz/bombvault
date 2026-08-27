@@ -346,5 +346,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/fleet/mesh-offers/{id}/decline", h.handleDeclineMeshOffer)
 	mux.HandleFunc("POST /api/fleet/peers/{id}/mesh-offer", h.handleProposeMeshOffer)
 
-	return h.authGate(mux)
+	// csrfGate OUTSIDE authGate: a cross-site write is refused before any auth
+	// decision, which matters most in exactly the case authGate does not cover —
+	// trusted-LAN mode, where it is a deliberate pass-through (see csrfGate).
+	return csrfGate(h.authGate(mux))
 }

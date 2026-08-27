@@ -31,7 +31,7 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 	// CREATE
 	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: "Second", Repo: "s3:c2", StorageClass: "standard_ia", Enabled: true, SortOrder: 5})
 	rec := httptest.NewRecorder()
-	h.handleCreateOffsiteTarget(rec, httptest.NewRequest(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
 	env := decodeEnvelope(t, rec)
 	if env["ok"] != true {
 		t.Fatalf("create not ok: %v", env)
@@ -56,7 +56,7 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 
 	// UPDATE
 	body, _ = json.Marshal(offsiteTargetView{Domain: "containers", Name: "Second", Repo: "s3:c2-moved", Enabled: false, SortOrder: 5})
-	req := httptest.NewRequest(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader(body))
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader(body))
 	req.SetPathValue("id", id)
 	rec = httptest.NewRecorder()
 	h.handleUpdateOffsiteTarget(rec, req)
@@ -73,7 +73,7 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 	}
 
 	// DELETE
-	req = httptest.NewRequest(http.MethodDelete, "/api/offsite/targets/"+id, nil)
+	req = jsonReq(http.MethodDelete, "/api/offsite/targets/"+id, nil)
 	req.SetPathValue("id", id)
 	rec = httptest.NewRecorder()
 	h.handleDeleteOffsiteTarget(rec, req)
@@ -103,7 +103,7 @@ func TestOffsiteTargetCreateValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			body, _ := json.Marshal(tc.v)
 			rec := httptest.NewRecorder()
-			h.handleCreateOffsiteTarget(rec, httptest.NewRequest(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+			h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
 			if env := decodeEnvelope(t, rec); env["ok"] == true {
 				t.Fatalf("%s: expected rejection, got %v", tc.name, env)
 			}
@@ -115,7 +115,7 @@ func TestOffsiteTargetCreateValidation(t *testing.T) {
 func TestUpdateOffsiteTargetMissing(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Repo: "s3:x"})
-	req := httptest.NewRequest(http.MethodPut, "/api/offsite/targets/deadbeef", bytes.NewReader(body))
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/deadbeef", bytes.NewReader(body))
 	req.SetPathValue("id", "deadbeef")
 	rec := httptest.NewRecorder()
 	h.handleUpdateOffsiteTarget(rec, req)

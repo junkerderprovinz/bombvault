@@ -398,7 +398,7 @@ func TestPrimaryRemoteHandlersEnvelope(t *testing.T) {
 
 	// PUT saves it.
 	body, _ := json.Marshal(primaryRemoteView{Immutable: true, LimitUpload: 100, LimitDownload: 200, GrowthBudgetGB: 10})
-	req = httptest.NewRequest(http.MethodPut, "/api/settings/primary-remote/vms", bytes.NewReader(body))
+	req = jsonReq(http.MethodPut, "/api/settings/primary-remote/vms", bytes.NewReader(body))
 	req.SetPathValue("domain", "vms")
 	rec = httptest.NewRecorder()
 	h.handleSetPrimaryRemote(rec, req)
@@ -423,7 +423,7 @@ func TestPrimaryRemoteHandlersEnvelope(t *testing.T) {
 	}
 
 	// DELETE clears it.
-	req = httptest.NewRequest(http.MethodDelete, "/api/settings/primary-remote/vms", nil)
+	req = jsonReq(http.MethodDelete, "/api/settings/primary-remote/vms", nil)
 	req.SetPathValue("domain", "vms")
 	rec = httptest.NewRecorder()
 	h.handleDeletePrimaryRemote(rec, req)
@@ -456,7 +456,7 @@ func TestSetPrimaryRemoteHandlerRejectsLocalPath(t *testing.T) {
 	}
 
 	body, _ := json.Marshal(primaryRemoteView{Immutable: true})
-	req := httptest.NewRequest(http.MethodPut, "/api/settings/primary-remote/flash", bytes.NewReader(body))
+	req := jsonReq(http.MethodPut, "/api/settings/primary-remote/flash", bytes.NewReader(body))
 	req.SetPathValue("domain", "flash")
 	rec := httptest.NewRecorder()
 	h.handleSetPrimaryRemote(rec, req)

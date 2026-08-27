@@ -52,7 +52,7 @@ func TestFleetMeshOfferReceive(t *testing.T) {
 
 	// Wrong token -> 403, nothing persisted.
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
+	r := jsonReq(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
 	r.Header.Set("X-Fleet-Token", "wrong")
 	h.handleFleetMeshOfferReceive(w, r)
 	if w.Code != http.StatusForbidden {
@@ -64,7 +64,7 @@ func TestFleetMeshOfferReceive(t *testing.T) {
 
 	// Correct token -> stored as pending, password encrypted at rest.
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
+	r = jsonReq(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
 	r.Header.Set("X-Fleet-Token", "correct-token")
 	h.handleFleetMeshOfferReceive(w, r)
 	if w.Code != http.StatusOK {
@@ -175,7 +175,7 @@ func TestDeclineMeshOffer(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/decline", nil)
+	r := jsonReq(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/decline", nil)
 	r.SetPathValue("id", offer.ID)
 	h.handleDeclineMeshOffer(w, r)
 	if resp := decodeResp(t, w); resp["ok"] != true {
@@ -192,7 +192,7 @@ func TestDeclineMeshOffer(t *testing.T) {
 
 	// Unknown id -> 404.
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodPost, "/api/fleet/mesh-offers/does-not-exist/decline", nil)
+	r = jsonReq(http.MethodPost, "/api/fleet/mesh-offers/does-not-exist/decline", nil)
 	r.SetPathValue("id", "does-not-exist")
 	h.handleDeclineMeshOffer(w, r)
 	if w.Code != http.StatusNotFound {
