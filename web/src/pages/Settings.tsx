@@ -5436,25 +5436,56 @@ export function EverythingSection({
           {t("hooks.title")}
           <InfoBubble tip={t("settings.everythingHooksHint")} />
         </span>
+        {/* A stored hook is never echoed back, so the field arrives blank with
+            ...Set true. It then shows the same "already set" placeholder every
+            write-only secret field on this page uses, and a Remove badge, which
+            is the only way to actually delete one — a blank field means "keep"
+            on save. Both labels are existing keys, so this adds no new i18n. */}
         <label className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textSub">{t("hooks.pre")}</span>
-          <input
-            value={settings.everythingPreHook}
-            onChange={(e) => update({ everythingPreHook: e.target.value })}
-            spellCheck={false}
-            placeholder="echo starting"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              value={settings.everythingPreHook}
+              onChange={(e) => update({ everythingPreHook: e.target.value })}
+              spellCheck={false}
+              placeholder={settings.everythingPreHookSet ? t("cloud.secretSet") : "echo starting"}
+              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
+            />
+            {settings.everythingPreHookSet && (
+              <Badge
+                tone="active"
+                size="small"
+                hueIndex={hueIndex}
+                onClick={() => update({ everythingPreHook: "", everythingPreHookClear: true })}
+              >
+                {t("offsite.targets.remove")}
+              </Badge>
+            )}
+          </div>
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
-          <input
-            value={settings.everythingPostHook}
-            onChange={(e) => update({ everythingPostHook: e.target.value })}
-            spellCheck={false}
-            placeholder="curl -fsS https://hc-ping.com/your-uuid"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              value={settings.everythingPostHook}
+              onChange={(e) => update({ everythingPostHook: e.target.value })}
+              spellCheck={false}
+              placeholder={
+                settings.everythingPostHookSet ? t("cloud.secretSet") : "curl -fsS https://hc-ping.com/your-uuid"
+              }
+              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
+            />
+            {settings.everythingPostHookSet && (
+              <Badge
+                tone="active"
+                size="small"
+                hueIndex={hueIndex}
+                onClick={() => update({ everythingPostHook: "", everythingPostHookClear: true })}
+              >
+                {t("offsite.targets.remove")}
+              </Badge>
+            )}
+          </div>
         </label>
       </div>
       {/* `justify-end` on the row rather than `ms-auto` on the badge: this

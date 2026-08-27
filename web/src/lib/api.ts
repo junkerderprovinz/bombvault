@@ -159,8 +159,17 @@ export interface Settings {
    *  "Backup Everything" sequence. Pre is best-effort and never blocks the
    *  pass; post always fires exactly once after every domain was attempted,
    *  success or failure. */
+  /*  The GET never echoes a hook: the useful ones carry a secret in their URL
+   *  (a healthchecks.io ping is a UUID), and with no login password set the
+   *  API is open to the LAN by design. They arrive blank with the ...Set flags
+   *  reporting presence, a blank field on save keeps the stored command, and
+   *  the write-only ...Clear flags are the one way to remove one. */
   everythingPreHook: string;
   everythingPostHook: string;
+  everythingPreHookSet: boolean;
+  everythingPostHookSet: boolean;
+  everythingPreHookClear?: boolean;
+  everythingPostHookClear?: boolean;
   defaultLanguage: string;
   retentionKeepLast: number;
   retentionKeepDaily: number;
