@@ -806,7 +806,6 @@ const hr: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Kad je uključeno, VM-ovi, Flash i Mape prate raspored Kontejnera umjesto vlastitog. Isključite to za postavljanje neovisnog ritma za svaku domenu.",
   "jobs.flashScheduleHint": "Sigurnosno kopira Unraid USB pokretački disk (/boot) u zakazano vrijeme.",
   "jobs.vmIncludeHint": "Sigurnosno kopira svaki VM s uključenim „uključi u raspored” (postavlja se po VM-u na kartici VM-ovi).",
-  "jobs.flashNotImplemented": "Napomena: izvršitelj Flash sigurnosne kopije još nije implementiran u Fazi 1 — raspored se sprema, ali se ne izvršava.",
   "schedule.includeAll": "Uključi sve u raspored",
   "schedule.excludeAll": "Isključi sve iz rasporeda",
   "schedule.updateFailed": "Raspored se nije mogao ažurirati",

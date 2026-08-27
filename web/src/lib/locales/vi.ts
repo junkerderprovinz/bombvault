@@ -810,7 +810,6 @@ const vi: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Khi bật, VMs, Flash và Thư mục sẽ theo lịch của Containers thay vì lịch riêng. Tắt để đặt nhịp độ riêng cho từng miền.",
   "jobs.vmIncludeHint": "Sao lưu mọi VM có bật \"đưa vào lịch trình\" (đặt riêng cho từng VM trong tab VMs).",
   "jobs.flashScheduleHint": "Sao lưu ổ USB khởi động Flash của Unraid (/boot) vào thời điểm đã lên lịch.",
-  "jobs.flashNotImplemented": "Lưu ý: Bộ thực thi sao lưu Flash chưa được triển khai trong Giai đoạn 1 — lịch được lưu nhưng không được thực thi.",
   "schedule.includeAll": "Đưa tất cả vào lịch trình",
   "schedule.excludeAll": "Loại tất cả khỏi lịch trình",
 

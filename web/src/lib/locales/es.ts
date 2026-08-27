@@ -816,7 +816,6 @@ const es: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Cuando está activado, las VMs, Flash y Carpetas siguen el calendario de Contenedores en lugar del propio. Desactívalo para establecer el ritmo de cada dominio de forma independiente.",
   "jobs.vmIncludeHint": "Hace copia de cada VM con «incluir en el calendario» activado (configúralo por VM en la pestaña VMs).",
   "jobs.flashScheduleHint": "Hace copia de seguridad de la unidad USB de arranque Flash de Unraid (/boot) a la hora programada.",
-  "jobs.flashNotImplemented": "Nota: el ejecutor de copias de Flash aún no está implementado en la fase 1 — el calendario se guarda pero no se ejecuta.",
   "schedule.includeAll": "Incluir todo en el calendario",
   "schedule.excludeAll": "Excluir todo del calendario",
 

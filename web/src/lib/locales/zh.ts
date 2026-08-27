@@ -810,7 +810,6 @@ const zh: Partial<Translations> = {
   "jobs.syncSchedulesHint": "启用后，VMs、Flash 和文件夹都将使用容器的计划，而不是各自的计划。关闭后可为每个域单独设置节奏。",
   "jobs.vmIncludeHint": "备份每台启用了“加入计划”的 VM（在 VMs 标签页中逐台设置）。",
   "jobs.flashScheduleHint": "在计划时间备份 Unraid 的 USB 闪存启动盘(/boot)。",
-  "jobs.flashNotImplemented": "注意：Flash 备份执行器在第 1 阶段尚未实现——计划会被保存但不会执行。",
   "schedule.includeAll": "全部加入计划",
   "schedule.excludeAll": "全部移出计划",
 

@@ -818,7 +818,6 @@ const tr: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Etkinleştirildiğinde VM'ler, Flash ve Klasörler kendi zamanlamaları yerine Konteyner zamanlamasını izler. Her alan için ayrı bir sıklık ayarlamak üzere kapatın.",
   "jobs.vmIncludeHint": "“Zamanlamaya ekle” etkin olan her VM'yi yedekler (her VM için VMs sekmesinden ayarlanır).",
   "jobs.flashScheduleHint": "Unraid USB Flash önyükleme sürücüsünü (/boot) zamanlanan saatte yedekler.",
-  "jobs.flashNotImplemented": "Not: Flash yedekleme yürütücüsü Aşama 1'de henüz uygulanmadı — zamanlama saklanır ancak çalıştırılmaz.",
   "schedule.includeAll": "Tümünü zamanlamaya ekle",
   "schedule.excludeAll": "Tümünü zamanlamadan çıkar",
 

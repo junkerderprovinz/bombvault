@@ -3380,8 +3380,9 @@ const emptyNotify: NotifyConfig = {
 // the paragraph above): RcloneCard's pathHint and CloudCard's
 // own hint (both name exact Backup Path URL-prefix syntax used on a
 // different tab), settings.metricsHint (names the exact /metrics path +
-// Authorization header — see its own call site's comment), and
-// jobs.flashNotImplemented (a behavioural caveat, not an explainer). One
+// Authorization header — see its own call site's comment). A fourth,
+// jobs.flashNotImplemented, was in this list until the caveat it carried
+// stopped being true and the whole string was deleted. One
 // site — settings.offsiteHint — was a genuine toss-up between "syntax
 // reference" and "already covered by the field's own placeholder + caption"
 // and was left as-is with its own comment rather than force that call here.
@@ -5007,16 +5008,20 @@ function FlashSection({
             member-list row) — removed outright, along with its now-orphaned
             jobs.flashRow/jobs.flashPlanned keys, since Flash has no actual
             per-item collection to list and the row conveyed nothing this
-            paragraph doesn't already say. THIS paragraph is deliberately
-            kept: jdp's own task description explicitly carves out "the Flash
-            cadence itself not being wired to a real backend job yet" as the
-            still-true, genuinely-different case — which is exactly what this
-            says (the executor isn't implemented), as opposed to the removed
-            row's purely decorative, redundant "planned" restatement of the
-            same fact. */}
-        {!syncSchedules && (
-          <p className="text-xs text-carbon-textMuted mt-2">{t("jobs.flashNotImplemented")}</p>
-        )}
+            paragraph doesn't already say. The paragraph that stood here is
+            gone as well, and so is the carve-out that kept it. It read "the
+            Flash backup executor is not yet implemented in Phase 1, the
+            schedule is stored but not executed", and it had been false for
+            some time: main.go calls SetFlashJob at startup, the scheduler
+            runs it on the flash cadence, and the service does the work. It
+            told a user their boot drive was unprotected while it was being
+            backed up every night.
+            Worth keeping the reason it survived: this very comment argued
+            for it, citing a task description from back when it was true. A
+            caveat that outlives the thing it warned about is a lie with an
+            alibi - correct once, and nobody re-reads a sentence that already
+            has a justification written next to it. When a caveat's condition
+            is fixed, the caveat is part of the fix. */}
       </div>
     </Card>
   );

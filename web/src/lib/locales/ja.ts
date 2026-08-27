@@ -786,7 +786,6 @@ const ja: Partial<Translations> = {
   "jobs.syncSchedulesHint": "有効にすると、VM、フラッシュ、フォルダーは独自のスケジュールではなくコンテナのスケジュールに従います。各ドメインの周期を個別に設定するにはオフにしてください。",
   "jobs.vmIncludeHint": "「スケジュールに含める」が有効なすべての VM をバックアップします（VM ごとに VMs タブで設定）。",
   "jobs.flashScheduleHint": "予定時刻に Unraid の USB フラッシュ起動ドライブ(/boot)をバックアップします。",
-  "jobs.flashNotImplemented": "注意: フラッシュバックアップの実行機能はフェーズ 1 ではまだ未実装です — スケジュールは保存されますが実行されません。",
   "schedule.includeAll": "すべてスケジュールに含める",
   "schedule.excludeAll": "すべてスケジュールから除外",
 

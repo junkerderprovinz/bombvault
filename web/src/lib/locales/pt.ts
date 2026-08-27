@@ -790,7 +790,6 @@ const pt: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Quando ativado, VMs, Flash e Pastas seguem o agendamento dos Containers em vez do próprio. Desative para definir o ritmo de cada domínio de forma independente.",
   "jobs.vmIncludeHint": "Faz backup de cada VM com «incluir no agendamento» ativado (defina por VM no separador VMs).",
   "jobs.flashScheduleHint": "Faz backup do pendrive de boot Flash do Unraid (/boot) no horário agendado.",
-  "jobs.flashNotImplemented": "Nota: o executor de backup do Flash ainda não está implementado na fase 1 — o agendamento é guardado mas não executado.",
   "schedule.includeAll": "Incluir tudo no agendamento",
   "schedule.excludeAll": "Excluir tudo do agendamento",
 

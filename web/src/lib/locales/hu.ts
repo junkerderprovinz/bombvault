@@ -797,7 +797,6 @@ const hu: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Ha be van kapcsolva, a VM-ek, a Flash és a Mappák a saját ütemezésük helyett a konténerek ütemezését követik. Kapcsolja ki, ha minden tartománynak külön ritmust szeretne beállítani.",
   "jobs.vmIncludeHint": "Minden VM-et ment, amelynél az „Ütemezésbe foglalás“ engedélyezve van (VM-enként a VMs lapon állítható be).",
   "jobs.flashScheduleHint": "Az Unraid USB Flash rendszerindító meghajtóját (/boot) menti az ütemezett időpontban.",
-  "jobs.flashNotImplemented": "Megjegyzés: A Flash mentési végrehajtó az 1. fázisban még nincs megvalósítva — az ütemezés mentésre kerül, de nem fut le.",
   "schedule.includeAll": "Mind az ütemezésbe",
   "schedule.excludeAll": "Mind ki az ütemezésből",
 

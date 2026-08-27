@@ -816,7 +816,6 @@ const cs: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Když je zapnuto, VM, Flash a Složky se řídí plánem kontejnerů místo vlastního. Vypněte, chcete-li nastavit rytmus každé domény samostatně.",
   "jobs.vmIncludeHint": "Zálohuje každý VM se zapnutým „Zahrnout do plánu“ (nastavíte u jednotlivých VM na kartě VMs).",
   "jobs.flashScheduleHint": "Zálohuje zaváděcí USB flash disk Unraid (/boot) v naplánovaný čas.",
-  "jobs.flashNotImplemented": "Poznámka: Executor zálohování Flash zatím není ve fázi 1 implementován — plán se uloží, ale nespustí.",
   "schedule.includeAll": "Zahrnout vše do plánu",
   "schedule.excludeAll": "Vyřadit vše z plánu",
 

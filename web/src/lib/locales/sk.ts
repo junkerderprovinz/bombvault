@@ -806,7 +806,6 @@ const sk: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Keď je zapnuté, VM, Flash a Priečinky sledujú plán Kontajnerov namiesto vlastného. Vypnite, aby ste nastavili nezávislé tempo pre každú doménu.",
   "jobs.flashScheduleHint": "Zálohuje zavádzaciu jednotku USB Flash Unraid (/boot) v naplánovanom čase.",
   "jobs.vmIncludeHint": "Zálohuje každý VM so zapnutým „zahrnúť do plánu“ (nastavuje sa pre každý VM na karte VM).",
-  "jobs.flashNotImplemented": "Poznámka: vykonávač zálohovania Flash zatiaľ nie je implementovaný vo Fáze 1 — plán sa ukladá, ale nespúšťa.",
   "schedule.includeAll": "Zahrnúť všetky do plánu",
   "schedule.excludeAll": "Vylúčiť všetky z plánu",
   "schedule.updateFailed": "Plán sa nepodarilo aktualizovať",
