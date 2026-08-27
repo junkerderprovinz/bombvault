@@ -12,13 +12,15 @@
   <ReadMe>https://github.com/junkerderprovinz/bombvault/blob/main/README.md</ReadMe>
   <Overview>The best and only backup tool you'll ever need for Unraid.
 
-One-click backup and full disaster recovery for your Docker containers, VMs and the flash USB, powered by restic.
+One-click backup and full disaster recovery for your Docker containers, VMs, the flash USB and any folders you point it at, powered by restic.
 
-The restore is the star: a backed-up container or VM reappears in the Docker or VM tab exactly as before, with no reinstall and no reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos (including immutable, ransomware-resistant append-only copies with tamper verification), retention, file-level restore, live restore progress and cancel, integrity checks and off-site DR drills, scheduling and pre/post-backup hooks, all configured in the WebUI. A single "Backup Everything" pass covers containers, VMs, flash, folders and BombVault's own config in one run, so one ping afterwards tells you the whole server is protected.</Overview>
+The restore is the star: a backed-up container or VM reappears in the Docker or VM tab exactly as before, with no reinstall and no reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos (including immutable, ransomware-resistant append-only copies with tamper verification), retention, file-level restore, restore from another BombVault server, live restore progress and cancel, integrity checks and off-site DR drills, scheduling and pre/post-backup hooks, all configured in the WebUI. A single "Backup Everything" pass covers containers, VMs, flash, folders and BombVault's own config in one run, so one ping afterwards tells you the whole server is protected.
+
+Full documentation: https://junkerderprovinz.github.io/bombvault/</Overview>
   <Category>Backup:</Category>
   <WebUI>https://[IP]:[PORT:3443]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/junkerderprovinz/unraid-apps/main/bombvault/my-BombVault.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/icon.png?v=4</Icon>
+  <Icon>https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/icon.png?v=5</Icon>
   <ExtraParams>--restart unless-stopped --hostname=bombvault --add-host=host.docker.internal:host-gateway</ExtraParams>
   <DateInstalled/>
   <DonateText>If this template helps you, consider buying me a coffee.</DonateText>
