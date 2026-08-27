@@ -253,11 +253,21 @@ mechanism enforces structurally.
 File-backed (Unraid) VM disk backup/restore is completely unaffected by any of
 this. It is a wholly separate code path.
 
-**No TPM capture on TrueNAS.** TrueNAS SCALE 25.10 does not offer a TPM device
-for VMs at all. Its VM device API accepts only `CDROM`, `DISPLAY`, `NIC`,
-`PCI`, `RAW`, `DISK` and `USB`, so a TrueNAS domain never carries the TPM state
-that BombVault's TPM handling would otherwise capture. NVRAM is unaffected and
-is captured normally: TrueNAS stores it per domain at
+**You cannot attach a TPM to a TrueNAS VM yourself.** TrueNAS SCALE 25.10's VM
+device API accepts only `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` and
+`USB`; asking it for a `TPM` device is rejected outright as an unknown type. A
+VM created through the API therefore has no TPM in its domain XML, which is
+what was measured here.
+
+Read that narrowly. It does **not** prove a TrueNAS domain can never carry TPM
+state: TrueNAS provisions an emulated vTPM of its own for Windows 11 and
+Secure-Boot guests, and that case was not exercised on the test box. The
+practical guidance for such a guest is unchanged and is the same one that
+applies on any platform: an emulated vTPM does not publish a state path in the
+domain XML, so BombVault reports "no TPM path found" rather than guessing, and
+you should keep that guest's recovery key to hand before restoring it.
+
+NVRAM is unaffected and is captured normally. TrueNAS stores it per domain at
 `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, and the path is named directly
 in the domain XML.
 
