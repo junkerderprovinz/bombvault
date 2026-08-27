@@ -207,6 +207,8 @@ const eu: Partial<Translations> = {
   "run.statusSuccess": "Arrakastatsua",
   "run.statusFailed": "Huts egin du",
   "run.statusSkipped": "Saltatuta",
+  "run.statusCancelled": "Bertan behera utzita",
+  "common.selectItem": "Hautatu {name}",
   "run.historyTitle": "Exekuzioen historia",
   "run.filterDay": "Eguna:",
   "run.allDays": "Egun guztiak",

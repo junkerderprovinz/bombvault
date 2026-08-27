@@ -139,6 +139,8 @@ const tr: Partial<Translations> = {
   "run.statusSuccess": "Başarılı",
   "run.statusFailed": "Başarısız",
   "run.statusSkipped": "Atlandı",
+  "run.statusCancelled": "İptal edildi",
+  "common.selectItem": "{name} ögesini seç",
   "run.historyTitle": "Çalışma Geçmişi",
   "run.filterDay": "Gün:",
   "run.allDays": "Tüm günler",

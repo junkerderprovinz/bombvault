@@ -207,6 +207,8 @@ const hr: Partial<Translations> = {
   "run.statusSuccess": "Uspješno",
   "run.statusFailed": "Neuspješno",
   "run.statusSkipped": "Preskočeno",
+  "run.statusCancelled": "Otkazano",
+  "common.selectItem": "Odaberi {name}",
   "run.historyTitle": "Povijest izvršavanja",
   "run.filterDay": "Dan:",
   "run.allDays": "Svi dani",

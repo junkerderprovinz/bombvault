@@ -139,6 +139,8 @@ const it: Partial<Translations> = {
   "run.statusSuccess": "Riuscito",
   "run.statusFailed": "Fallito",
   "run.statusSkipped": "Saltato",
+  "run.statusCancelled": "Annullato",
+  "common.selectItem": "Seleziona {name}",
   "run.historyTitle": "Cronologia esecuzioni",
   "run.filterDay": "Giorno:",
   "run.allDays": "Tutti i giorni",

@@ -139,6 +139,8 @@ const da: Partial<Translations> = {
   "run.statusSuccess": "Gennemført",
   "run.statusFailed": "Mislykkedes",
   "run.statusSkipped": "Sprunget over",
+  "run.statusCancelled": "Annulleret",
+  "common.selectItem": "Vælg {name}",
   "run.historyTitle": "Kørselsoversigt",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dage",

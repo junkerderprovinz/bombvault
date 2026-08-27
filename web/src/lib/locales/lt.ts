@@ -207,6 +207,8 @@ const lt: Partial<Translations> = {
   "run.statusSuccess": "Sėkminga",
   "run.statusFailed": "Nepavyko",
   "run.statusSkipped": "Praleista",
+  "run.statusCancelled": "Atšaukta",
+  "common.selectItem": "Pasirinkti {name}",
   "run.historyTitle": "Vykdymo istorija",
   "run.filterDay": "Diena:",
   "run.allDays": "Visos dienos",

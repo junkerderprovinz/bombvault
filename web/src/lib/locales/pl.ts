@@ -137,6 +137,8 @@ const pl: Partial<Translations> = {
   "run.statusSuccess": "Sukces",
   "run.statusFailed": "Niepowodzenie",
   "run.statusSkipped": "Pominięto",
+  "run.statusCancelled": "Anulowano",
+  "common.selectItem": "Zaznacz {name}",
   "run.historyTitle": "Historia uruchomień",
   "run.filterDay": "Dzień:",
   "run.allDays": "Wszystkie dni",

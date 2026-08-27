@@ -1753,7 +1753,7 @@ function ContainerRow({
             type="checkbox"
             checked={!!selected}
             onChange={onToggleSelect}
-            aria-label={`Select ${container.name}`}
+            aria-label={t("common.selectItem").replace("{name}", container.name)}
             className="mt-1 h-4 w-4 shrink-0 cursor-pointer"
             style={{ accentColor: "var(--accent)" }}
           />
@@ -2689,8 +2689,16 @@ export function Containers() {
   function loadContainers() {
     return listContainers()
       .then((res) => {
-        if (res.ok) setContainers(res.containers ?? []);
-        else setError(t("containers.loadFailed"));
+        if (res.ok) {
+          setContainers(res.containers ?? []);
+          // Clear on success, which nothing in this file did. A red banner set by
+          // one transient failure (the daemon restarting, a proxy 502) stayed
+          // above the correctly reloaded list for as long as the page was open,
+          // and it also suppressed the empty state and the "no matches" hint, so
+          // the page looked broken until the user navigated away. Files.tsx
+          // clears it explicitly and says why.
+          setError(null);
+        } else setError(t("containers.loadFailed"));
       })
       .catch(() => setError(t("containers.loadFailed")));
   }

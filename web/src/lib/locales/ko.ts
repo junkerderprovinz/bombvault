@@ -139,6 +139,8 @@ const ko: Partial<Translations> = {
   "run.statusSuccess": "성공",
   "run.statusFailed": "실패",
   "run.statusSkipped": "건너뜀",
+  "run.statusCancelled": "취소됨",
+  "common.selectItem": "{name} 선택",
   "run.historyTitle": "실행 기록",
   "run.filterDay": "날짜:",
   "run.allDays": "모든 날짜",

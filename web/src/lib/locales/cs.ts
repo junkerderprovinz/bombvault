@@ -139,6 +139,8 @@ const cs: Partial<Translations> = {
   "run.statusSuccess": "Úspěch",
   "run.statusFailed": "Selhalo",
   "run.statusSkipped": "Přeskočeno",
+  "run.statusCancelled": "Zrušeno",
+  "common.selectItem": "Vybrat {name}",
   "run.historyTitle": "Historie běhů",
   "run.filterDay": "Den:",
   "run.allDays": "Všechny dny",

@@ -207,6 +207,8 @@ const bg: Partial<Translations> = {
   "run.statusSuccess": "Успешно",
   "run.statusFailed": "Неуспешно",
   "run.statusSkipped": "Пропуснато",
+  "run.statusCancelled": "Отменено",
+  "common.selectItem": "Избери {name}",
   "run.historyTitle": "История на изпълненията",
   "run.filterDay": "Ден:",
   "run.allDays": "Всички дни",

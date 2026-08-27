@@ -381,6 +381,12 @@ function statusTone(status: string): BadgeTone {
 // never wired up until now). neutral/default gets the one genuinely new key
 // this task adds, run.statusSkipped, translated into all 26 locales.
 function statusLabel(status: string, t: ReturnType<typeof useT>["t"]): string {
+  // Checked BEFORE the tone lookup, because "cancelled" and "skipped" share the
+  // neutral tone and the tone is all the switch below can see. A restore the
+  // user cancelled therefore read "Skipped" in Last Result and in the run
+  // history — a different claim about a different event, and the one the user
+  // themselves had just caused.
+  if (status === "cancelled") return t("run.statusCancelled");
   switch (statusTone(status)) {
     case "ok":
       return t("spike.ok");

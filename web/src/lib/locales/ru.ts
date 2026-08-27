@@ -137,6 +137,8 @@ const ru: Partial<Translations> = {
   "run.statusSuccess": "Успешно",
   "run.statusFailed": "Ошибка",
   "run.statusSkipped": "Пропущено",
+  "run.statusCancelled": "Отменено",
+  "common.selectItem": "Выбрать {name}",
   "run.historyTitle": "История запусков",
   "run.filterDay": "День:",
   "run.allDays": "Все дни",

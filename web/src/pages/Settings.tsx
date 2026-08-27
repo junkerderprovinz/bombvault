@@ -1382,6 +1382,12 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
   async function toggleKeepHistory(next: boolean) {
     const prev = keep;
     const nextKeep = next ? rememberedKeep : 0;
+    // Retire the number field's pending debounce first. It arms 800ms with the
+    // typed value and this toggle saves immediately, so a flip inside that
+    // window lost the race by construction: the toggle wrote keep=0, the timer
+    // then wrote the old count back over it, and both reported success. The UI
+    // showed history off while the server kept it.
+    cancelKeepDebounce();
     setKeep(nextKeep);
     setBusyKeep(true);
     const ok = await persist({ flashZipExportKeep: nextKeep });
@@ -1398,6 +1404,16 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
     const existing = debounceTimers.current[key];
     if (existing) clearTimeout(existing);
     debounceTimers.current[key] = setTimeout(run, DEBOUNCE_MS);
+  }
+
+  // Lets an IMMEDIATE save beat a pending debounced one — see
+  // toggleKeepHistory, which is the only caller and the reason this exists.
+  function cancelKeepDebounce() {
+    const existing = debounceTimers.current.flashZipExportKeep;
+    if (existing) {
+      clearTimeout(existing);
+      delete debounceTimers.current.flashZipExportKeep;
+    }
   }
 
   return (

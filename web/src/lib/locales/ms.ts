@@ -207,6 +207,8 @@ const ms: Partial<Translations> = {
   "run.statusSuccess": "Berjaya",
   "run.statusFailed": "Gagal",
   "run.statusSkipped": "Dilangkau",
+  "run.statusCancelled": "Dibatalkan",
+  "common.selectItem": "Pilih {name}",
   "run.historyTitle": "Sejarah larian",
   "run.filterDay": "Hari:",
   "run.allDays": "Semua hari",

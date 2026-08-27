@@ -139,6 +139,8 @@ const vi: Partial<Translations> = {
   "run.statusSuccess": "Thành công",
   "run.statusFailed": "Thất bại",
   "run.statusSkipped": "Đã bỏ qua",
+  "run.statusCancelled": "Đã hủy",
+  "common.selectItem": "Chọn {name}",
   "run.historyTitle": "Lịch sử chạy",
   "run.filterDay": "Ngày:",
   "run.allDays": "Tất cả các ngày",

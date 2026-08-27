@@ -207,6 +207,8 @@ const sk: Partial<Translations> = {
   "run.statusSuccess": "Úspešné",
   "run.statusFailed": "Zlyhalo",
   "run.statusSkipped": "Preskočené",
+  "run.statusCancelled": "Zrušené",
+  "common.selectItem": "Vybrať {name}",
   "run.historyTitle": "História behov",
   "run.filterDay": "Deň:",
   "run.allDays": "Všetky dni",
