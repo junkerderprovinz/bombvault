@@ -305,15 +305,16 @@ const et: Partial<Translations> = {
   "offsite.tamperFail": "server AKTSEPTEERIS kustutamise, POLE kaitstud",
   "offsite.tamperUnverifiable": "seda hoidla tüüpi ei saa kontrollida",
   "offsite.tamperError": "Manipuleerimistest ebamäärane (server pole kättesaadav)",
-  "offsite.retention.title": "5 · Säilitamisstrateegia",
-  "offsite.retention.farside": "Puhastus teisel pool (soovitatud)",
-  "offsite.retention.window": "Hooldusaken",
-  "offsite.retention.grow": "Kasv + eelarve alarm",
-  "offsite.retention.farsideHint": "Käivita restic forget --prune otse salvestuskastis (BombVault jääb ainult-lisamise režiimi). Cron-vihje:",
-  "offsite.retention.windowHint": "Käivita ajutiselt teine, mitte-ainult-lisamise rest-server, puhasta ja lülita see siis välja. Mandaate ei salvestata kunagi ja järgneb kohustuslik manipuleerimise kordustest. Kasuta ainult siis, kui puhastus teisel pool pole võimalik.",
-  "offsite.retention.windowRestOnly": "Kehtib ainult REST-serveri sihtkohtadele. See taustasüsteem ei saa selle vastu ajutist teist serverit käivitada. Kasuta selle asemel puhastust teisel pool või kasvu + eelarve alarmi.",
-  "offsite.retention.growHint": "Ära kunagi puhasta väliseid; selle asemel anna häire, kui hoidla ületab baitide eelarve. Aus vaikeväärtus, kuni valid puhastusviisi.",
   "offsite.retention.budget": "Kasvueelarve (GB, 0 = väljas)",
+  "offsite.prune.title": "5 · Väline puhastamine",
+  "offsite.prune.info": "See samm üksnes teatab, mis toimub, see ei sea midagi paika. Kas seda koopiat puhastatakse, otsustavad ainult-lisamine 4. sammus ja säilitusväärtused jaotises Seaded, Väline säilitamine. Kui tahad ainult-lisamise koopiat siiski puhastada, käivita salvestuspoolel restic forget --prune, kas oma ajakava järgi või tõstes korraks püsti teise, ainult-lisamiseta REST-serveri, puhastades selle kaudu ja lülitades ta uuesti välja.",
+  "offsite.prune.stateFarSide": "Siit ei puhasta seda koopiat miski. Ainult-lisamine on sees, nii et BombVault ainult lisab sellele ja puhastamine on salvestuspoole asi.",
+  "offsite.prune.statePolicy": "BombVault puhastab selle koopia pärast iga replikatsiooni välise säilituspoliitika järgi.",
+  "offsite.prune.stateNone": "Miski ei puhasta seda koopiat. Ainult-lisamine on väljas ja kõik välised säilitusväärtused on 0, seega kasvab see, kuni ketas otsa saab.",
+  "offsite.prune.effective": "Säilitab {last} viimast, {daily} päevast, {weekly} nädalast, {monthly} kuist.",
+  "offsite.prune.editedElsewhere": "Määratakse jaotises Seaded, Väline säilitamine. Väärtused on kõigil valdkondadel ühised.",
+  "offsite.prune.budgetInfo": "Annab häire, kui väline hoidla kasvab üle nii mitme gigabaidi. See ei kustuta kunagi midagi, seega on see turvavõrk koopiale, mida miski ei puhasta.",
+  "settings.retentionImmutableNotPruned": "Ainult-lisamisega välist sihtkohta ei puhastata siit kunagi, ükskõik mida need väärtused ütlevad. Selle enda samm välises abilises selgitab, kuidas seda salvestuspoolelt puhastada.",
 
   // Additional off-site targets
   "offsite.targets.title": "Täiendavad välised sihtkohad",
@@ -386,7 +387,6 @@ const et: Partial<Translations> = {
   "settings.retentionOffsite": "Väline hoidla",
   "settings.retentionOffsiteTitle": "Väline säilitamine",
   "settings.retentionOffsiteHint": "Eraldi reegel välise hoidla jaoks, et saaksid seda kauem arhiivina hoida. Kõik nullid = säilita iga väline varundus (välist puhastust ei toimu).",
-  "settings.retentionOffsiteImmutableInfo": "Muutumatut välist sihtkohta ei puhastata siit kunagi, olenemata neist seadetest. Vaata, kuidas seda siiski puhastada, jaotisest Väline › Säilitamisstrateegia.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Väline ribalaius",

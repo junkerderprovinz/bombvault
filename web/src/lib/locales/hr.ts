@@ -305,15 +305,16 @@ const hr: Partial<Translations> = {
   "offsite.tamperFail": "poslužitelj je PRIHVATIO brisanje: NIJE zaštićeno",
   "offsite.tamperUnverifiable": "nije provjerljivo za ovu vrstu repozitorija",
   "offsite.tamperError": "Test neovlaštene izmjene nije uvjerljiv (poslužitelj nedostupan)",
-  "offsite.retention.title": "5 · Strategija zadržavanja",
-  "offsite.retention.farside": "Čišćenje na drugoj strani (preporučeno)",
-  "offsite.retention.window": "Prozor održavanja",
-  "offsite.retention.grow": "Rast + alarm proračuna",
-  "offsite.retention.farsideHint": "Pokrenite restic forget --prune izravno na pohranskom uređaju (BombVault ostaje u načinu samo-dodavanja). Savjet za cron:",
-  "offsite.retention.windowHint": "Privremeno pokrenite drugi, ne-samo-dodavajući rest-server, očistite ga, pa ga zatim ugasite. Vjerodajnice se nikad ne spremaju, a slijedi obavezan ponovljeni test neovlaštene izmjene. Koristite samo kad čišćenje na drugoj strani nije moguće.",
-  "offsite.retention.windowRestOnly": "Odnosi se samo na odredišta REST poslužitelja. Ovaj backend ne može protiv njega pokrenuti privremeni drugi poslužitelj. Umjesto toga koristite Čišćenje na drugoj strani ili Rast + alarm proračuna.",
-  "offsite.retention.growHint": "Nikada ne čistite izvanmrežno; umjesto toga, alarmirajte kad repozitorij premaši proračun bajtova. Iskren zadani izbor dok ne odaberete način čišćenja.",
   "offsite.retention.budget": "Proračun rasta (GB, 0 = isključeno)",
+  "offsite.prune.title": "5 · Izvanmrežno čišćenje",
+  "offsite.prune.info": "Ovaj korak samo javlja što se događa, ništa ne postavlja. Hoće li se ova kopija čistiti, određuju samo-dodavanje iz koraka 4 i vrijednosti zadržavanja u Postavke, Izvanmrežno zadržavanje. Želite li ipak očistiti kopiju sa samo-dodavanjem, pokrenite restic forget --prune na strani pohrane, bilo po vlastitom rasporedu bilo tako da nakratko podignete drugi REST poslužitelj bez samo-dodavanja, kroz njega očistite i opet ga ugasite.",
+  "offsite.prune.stateFarSide": "Odavde ništa ne čisti ovu kopiju. Samo-dodavanje je uključeno, pa joj BombVault samo dodaje, a čišćenje je posao strane pohrane.",
+  "offsite.prune.statePolicy": "BombVault čisti ovu kopiju nakon svake replikacije, prema politici izvanmrežnog zadržavanja.",
+  "offsite.prune.stateNone": "Ništa ne čisti ovu kopiju. Samo-dodavanje je isključeno i sve izvanmrežne vrijednosti zadržavanja su 0, pa raste dok disk izdrži.",
+  "offsite.prune.effective": "Zadržava {last} najnovijih, {daily} dnevnih, {weekly} tjednih, {monthly} mjesečnih.",
+  "offsite.prune.editedElsewhere": "Postavlja se u Postavke, Izvanmrežno zadržavanje. Vrijednosti su zajedničke svim područjima.",
+  "offsite.prune.budgetInfo": "Diže uzbunu čim izvanmrežni repozitorij naraste preko toliko gigabajta. Nikad ništa ne briše, pa je sigurnosna mreža za kopiju koju ništa ne čisti.",
+  "settings.retentionImmutableNotPruned": "Izvanmrežno odredište sa samo-dodavanjem odavde se nikad ne čisti, što god ove vrijednosti govorile. Njegov vlastiti korak u izvanmrežnom čarobnjaku objašnjava kako ga očistiti sa strane pohrane.",
 
   // Additional off-site targets
   "offsite.targets.title": "Dodatna izvanmrežna odredišta",
@@ -386,7 +387,6 @@ const hr: Partial<Translations> = {
   "settings.retentionOffsite": "Izvanmrežni repozitorij",
   "settings.retentionOffsiteTitle": "Izvanmrežno zadržavanje",
   "settings.retentionOffsiteHint": "Zasebna politika za izvanmrežni repozitorij, kako biste ga mogli dulje čuvati kao arhivu. Sve nula = zadrži svaku izvanmrežnu sigurnosnu kopiju (bez izvanmrežnog čišćenja).",
-  "settings.retentionOffsiteImmutableInfo": "Nepromjenjivo izvanmrežno odredište nikad se ne čisti odavde, bez obzira na ove postavke. Pogledajte Izvanmrežno › Strategija zadržavanja za način kako ga ipak očistiti.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Izvanmrežna propusnost",

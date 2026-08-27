@@ -305,15 +305,16 @@ const lv: Partial<Translations> = {
   "offsite.tamperFail": "serveris PIEŅĒMA dzēšanu, NAV aizsargāts",
   "offsite.tamperUnverifiable": "šim repozitorija veidam nav pārbaudāms",
   "offsite.tamperError": "Manipulācijas tests nav pārliecinošs (serveris nav sasniedzams)",
-  "offsite.retention.title": "5 · Saglabāšanas stratēģija",
-  "offsite.retention.farside": "Tīrīšana otrā pusē (ieteicams)",
-  "offsite.retention.window": "Uzturēšanas logs",
-  "offsite.retention.grow": "Pieaugums + budžeta trauksme",
-  "offsite.retention.farsideHint": "Palaidiet restic forget --prune pašā krātuves ierīcē (BombVault paliek tikai-pievienot režīmā). Cron padoms:",
-  "offsite.retention.windowHint": "Uz laiku palaidiet otru, ne-tikai-pievienot rest-server, iztīriet to, tad izslēdziet. Akreditācijas dati nekad netiek saglabāti, un seko obligāta manipulācijas atkārtota pārbaude. Izmantojiet tikai tad, kad tīrīšana otrā pusē nav iespējama.",
-  "offsite.retention.windowRestOnly": "Attiecas tikai uz REST servera mērķiem. Šī aizmugursistēma pret to nevar palaist pagaidu otru serveri. Tā vietā izmantojiet Tīrīšanu otrā pusē vai Pieaugumu + budžeta trauksmi.",
-  "offsite.retention.growHint": "Nekad netīriet attālinātajā; tā vietā trauksme, kad repozitorijs pārsniedz baitu budžetu. Godīgais noklusējums, līdz izvēlaties tīrīšanas ceļu.",
   "offsite.retention.budget": "Pieauguma budžets (GB, 0 = izslēgts)",
+  "offsite.prune.title": "5 · Attālinātā tīrīšana",
+  "offsite.prune.info": "Šis solis tikai ziņo, kas notiek, tas neko neiestata. To, vai šī kopija tiek tīrīta, nosaka tikai-pievienot 4. solī un saglabāšanas vērtības sadaļā Iestatījumi, Attālinātā saglabāšana. Ja tikai-pievienot kopiju tomēr gribi iztīrīt, palaid restic forget --prune krātuves pusē, vai nu pēc paša grafika, vai uz brīdi paceļot otru REST serveri bez tikai-pievienot, iztīrot caur to un atkal to izslēdzot.",
+  "offsite.prune.stateFarSide": "No šejienes šo kopiju nekas netīra. Tikai-pievienot ir ieslēgts, tāpēc BombVault tai tikai pievieno, un tīrīšana ir krātuves puses uzdevums.",
+  "offsite.prune.statePolicy": "BombVault iztīra šo kopiju pēc katras replikācijas atbilstoši attālinātās saglabāšanas politikai.",
+  "offsite.prune.stateNone": "Šo kopiju nekas netīra. Tikai-pievienot ir izslēgts un visas attālinātās saglabāšanas vērtības ir 0, tāpēc tā aug, kamēr disks vēl velk.",
+  "offsite.prune.effective": "Saglabā {last} jaunākās, {daily} ikdienas, {weekly} iknedēļas, {monthly} ikmēneša.",
+  "offsite.prune.editedElsewhere": "Iestata sadaļā Iestatījumi, Attālinātā saglabāšana. Vērtības ir kopīgas visām jomām.",
+  "offsite.prune.budgetInfo": "Ceļ trauksmi, tiklīdz attālinātais repozitorijs pārsniedz tik gigabaitu. Tas nekad neko nedzēš, tāpēc ir drošības tīkls kopijai, ko nekas netīra.",
+  "settings.retentionImmutableNotPruned": "Attālinātais galamērķis ar tikai-pievienot no šejienes nekad netiek tīrīts, lai ko arī rādītu šīs vērtības. Tā paša solis attālinātajā vednī skaidro, kā to iztīrīt no krātuves puses.",
 
   // Additional off-site targets
   "offsite.targets.title": "Papildu attālinātie mērķi",
@@ -386,7 +387,6 @@ const lv: Partial<Translations> = {
   "settings.retentionOffsite": "Attālinātais repozitorijs",
   "settings.retentionOffsiteTitle": "Attālinātā saglabāšana",
   "settings.retentionOffsiteHint": "Atsevišķa politika attālinātajam repozitorijam, lai varētu to saglabāt ilgāk kā arhīvu. Viss uz nulli = saglabāt katru attālināto rezerves kopiju (bez attālinātas tīrīšanas).",
-  "settings.retentionOffsiteImmutableInfo": "Nemaināms attālinātais mērķis šeit nekad netiek iztīrīts neatkarīgi no šiem iestatījumiem. Skatiet Attālināts › Saglabāšanas stratēģija, kā to tomēr iztīrīt.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Attālinātais joslas platums",

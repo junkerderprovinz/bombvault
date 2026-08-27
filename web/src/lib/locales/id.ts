@@ -305,15 +305,16 @@ const id: Partial<Translations> = {
   "offsite.tamperFail": "server MENERIMA penghapusan: TIDAK dilindungi",
   "offsite.tamperUnverifiable": "tidak dapat diverifikasi untuk jenis repositori ini",
   "offsite.tamperError": "Uji sabotase tidak meyakinkan (server tidak dapat dijangkau)",
-  "offsite.retention.title": "5 · Strategi retensi",
-  "offsite.retention.farside": "Prune di sisi lain (disarankan)",
-  "offsite.retention.window": "Jendela pemeliharaan",
-  "offsite.retention.grow": "Tumbuh + alarm anggaran",
-  "offsite.retention.farsideHint": "Jalankan restic forget --prune di storage box itu sendiri (BombVault tetap append-only). Petunjuk cron:",
-  "offsite.retention.windowHint": "Jalankan sementara rest-server kedua yang bukan append-only, prune, lalu matikan. Kredensial tidak pernah disimpan dan uji ulang sabotase wajib mengikutinya. Gunakan hanya jika prune di sisi lain tidak memungkinkan.",
-  "offsite.retention.windowRestOnly": "Hanya berlaku untuk tujuan server REST. Backend ini tidak dapat menjalankan server kedua sementara terhadapnya. Gunakan Prune di sisi lain atau Tumbuh + alarm anggaran sebagai gantinya.",
-  "offsite.retention.growHint": "Jangan pernah prune off-site; sebagai gantinya, beri alarm saat repositori melebihi anggaran byte. Default yang jujur sampai Anda memilih jalur prune.",
   "offsite.retention.budget": "Anggaran pertumbuhan (GB, 0 = mati)",
+  "offsite.prune.title": "5 · Prune off-site",
+  "offsite.prune.info": "Langkah ini hanya melaporkan apa yang terjadi, tidak mengatur apa pun. Apakah salinan ini di-prune ditentukan oleh append-only pada langkah 4 dan oleh nilai penyimpanan di Pengaturan, Retensi off-site. Untuk tetap mem-prune salinan append-only, jalankan restic forget --prune di sisi penyimpanan, entah dengan jadwalnya sendiri atau dengan menyalakan sebentar server REST kedua tanpa append-only, mem-prune lewat server itu, lalu mematikannya lagi.",
+  "offsite.prune.stateFarSide": "Dari sini tidak ada yang mem-prune salinan ini. Append-only aktif, jadi BombVault hanya menambah ke sana, dan prune adalah tugas sisi penyimpanan.",
+  "offsite.prune.statePolicy": "BombVault mem-prune salinan ini setelah setiap replikasi, mengikuti kebijakan retensi off-site.",
+  "offsite.prune.stateNone": "Tidak ada yang mem-prune salinan ini. Append-only mati dan semua nilai penyimpanan off-site adalah 0, jadi ia tumbuh sampai diska tidak sanggup lagi.",
+  "offsite.prune.effective": "Menyimpan {last} terbaru, {daily} harian, {weekly} mingguan, {monthly} bulanan.",
+  "offsite.prune.editedElsewhere": "Diatur di Pengaturan, Retensi off-site. Nilainya dipakai bersama oleh setiap domain.",
+  "offsite.prune.budgetInfo": "Membunyikan alarm begitu repositori off-site tumbuh melewati sekian gigabyte ini. Ia tidak pernah menghapus apa pun, jadi ini jaring pengaman untuk salinan yang tidak di-prune siapa pun.",
+  "settings.retentionImmutableNotPruned": "Tujuan off-site dengan append-only tidak pernah di-prune dari sini, apa pun isi nilai-nilai ini. Langkah tersendiri di asisten off-site menjelaskan cara mem-prune-nya dari sisi penyimpanan.",
 
   // Additional off-site targets
   "offsite.targets.title": "Target off-site tambahan",
@@ -386,7 +387,6 @@ const id: Partial<Translations> = {
   "settings.retentionOffsite": "Repositori off-site",
   "settings.retentionOffsiteTitle": "Retensi off-site",
   "settings.retentionOffsiteHint": "Kebijakan terpisah untuk repositori off-site, sehingga Anda dapat menyimpannya lebih lama sebagai arsip. Semua nol = simpan setiap cadangan off-site (tanpa prune off-site).",
-  "settings.retentionOffsiteImmutableInfo": "Tujuan off-site yang tidak dapat diubah tidak pernah di-prune dari sini, terlepas dari pengaturan ini. Lihat Off-site › Strategi retensi untuk cara men-prune-nya.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Bandwidth off-site",

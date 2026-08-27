@@ -305,15 +305,16 @@ const lt: Partial<Translations> = {
   "offsite.tamperFail": "serveris SUTIKO su trynimu, NĖRA apsaugotas",
   "offsite.tamperUnverifiable": "šiam saugyklos tipui neįmanoma patikrinti",
   "offsite.tamperError": "Klastojimo testas neįtikinamas (serveris nepasiekiamas)",
-  "offsite.retention.title": "5 · Saugojimo strategija",
-  "offsite.retention.farside": "Valymas kitoje pusėje (rekomenduojama)",
-  "offsite.retention.window": "Priežiūros langas",
-  "offsite.retention.grow": "Augimas + biudžeto įspėjimas",
-  "offsite.retention.farsideHint": "Paleiskite restic forget --prune tiesiai saugyklos dėžėje (BombVault lieka tik-pridėjimo režime). Cron patarimas:",
-  "offsite.retention.windowHint": "Laikinai paleiskite antrą, ne-tik-pridėjimo rest-server, išvalykite jį, tada išjunkite. Prisijungimo duomenys niekada neišsaugomi, o po to seka privalomas pakartotinis klastojimo testas. Naudokite tik tada, kai valymas kitoje pusėje neįmanomas.",
-  "offsite.retention.windowRestOnly": "Taikoma tik REST serverio paskirties vietoms. Ši programinė sąsaja negali prieš ją paleisti laikino antro serverio. Vietoj to naudokite Valymą kitoje pusėje arba Augimą + biudžeto įspėjimą.",
-  "offsite.retention.growHint": "Niekada nevalykite nuotolinės saugyklos; vietoj to įspėkite, kai saugykla viršija baitų biudžetą. Sąžiningas numatytasis pasirinkimas, kol pasirinksite valymo būdą.",
   "offsite.retention.budget": "Augimo biudžetas (GB, 0 = išjungta)",
+  "offsite.prune.title": "5 · Nuotolinis valymas",
+  "offsite.prune.info": "Šis žingsnis tik praneša, kas vyksta, jis nieko nenustato. Ar ši kopija valoma, lemia tik-pridėjimas iš 4 žingsnio ir saugojimo reikšmės skiltyje Nustatymai, Nuotolinis saugojimas. Jei tik-pridėjimo kopiją vis dėlto norite išvalyti, paleiskite restic forget --prune saugyklos pusėje, arba pagal atskirą tvarkaraštį, arba trumpam pakėlę antrą REST serverį be tik-pridėjimo, per jį išvalę ir vėl jį išjungę.",
+  "offsite.prune.stateFarSide": "Iš čia šios kopijos niekas nevalo. Tik-pridėjimas įjungtas, todėl BombVault tik prideda prie jos, o valymas yra saugyklos pusės reikalas.",
+  "offsite.prune.statePolicy": "BombVault išvalo šią kopiją po kiekvienos replikacijos pagal nuotolinio saugojimo politiką.",
+  "offsite.prune.stateNone": "Šios kopijos niekas nevalo. Tik-pridėjimas išjungtas, o visos nuotolinio saugojimo reikšmės yra 0, todėl ji auga tol, kol užtenka disko.",
+  "offsite.prune.effective": "Saugo {last} naujausias, {daily} dienines, {weekly} savaitines, {monthly} mėnesines.",
+  "offsite.prune.editedElsewhere": "Nustatoma skiltyje Nustatymai, Nuotolinis saugojimas. Reikšmės bendros visoms sritims.",
+  "offsite.prune.budgetInfo": "Sukelia pavojaus signalą, kai tik nuotolinė saugykla peraugs tiek gigabaitų. Ji niekada nieko netrina, todėl tai apsauginis tinklas kopijai, kurios niekas nevalo.",
+  "settings.retentionImmutableNotPruned": "Nuotolinė paskirtis su tik-pridėjimu iš čia niekada nevaloma, kad ir ką rodytų šios reikšmės. Jos pačios žingsnis nuotoliniame vediklyje paaiškina, kaip ją išvalyti iš saugyklos pusės.",
 
   // Additional off-site targets
   "offsite.targets.title": "Papildomos nuotolinės paskirties vietos",
@@ -386,7 +387,6 @@ const lt: Partial<Translations> = {
   "settings.retentionOffsite": "Nuotolinė saugykla",
   "settings.retentionOffsiteTitle": "Nuotolinis saugojimas",
   "settings.retentionOffsiteHint": "Atskira nuotolinės saugyklos politika, kad galėtumėte ją saugoti ilgiau kaip archyvą. Visi nuliai = saugoti kiekvieną nuotolinę atsarginę kopiją (be nuotolinio valymo).",
-  "settings.retentionOffsiteImmutableInfo": "Nekintama nuotolinė paskirties vieta niekada nevaloma iš čia, nepriklausomai nuo šių nustatymų. Kaip ją vis tiek išvalyti, žr. Nuotolinis › Saugojimo strategija.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Nuotolinis pralaidumas",

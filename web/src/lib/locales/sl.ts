@@ -305,15 +305,16 @@ const sl: Partial<Translations> = {
   "offsite.tamperFail": "strežnik je SPREJEL brisanje, NI zaščiteno",
   "offsite.tamperUnverifiable": "za to vrsto repozitorija ni mogoče preveriti",
   "offsite.tamperError": "Preizkus nespremenljivosti ni bil dokončan (strežnik ni dosegljiv)",
-  "offsite.retention.title": "5 · Strategija hrambe",
-  "offsite.retention.farside": "Čiščenje na drugi strani (priporočeno)",
-  "offsite.retention.window": "Vzdrževalno okno",
-  "offsite.retention.grow": "Rast + alarm proračuna",
-  "offsite.retention.farsideHint": "Zaženi restic forget --prune neposredno na shrambi (BombVault ostane samo-dodajajoč). Namig za cron:",
-  "offsite.retention.windowHint": "Začasno zaženi drugi, ne-samo-dodajajoč rest-server, ga počisti, nato ugasni. Poverilnice se nikoli ne shranijo, sledi pa obvezen ponovni preizkus nespremenljivosti. Uporabi samo, kadar čiščenje na drugi strani ni mogoče.",
-  "offsite.retention.windowRestOnly": "Velja samo za cilje tipa REST-server. To zaledje ne more zagnati začasnega drugega strežnika proti sebi. Namesto tega uporabi Čiščenje na drugi strani ali Rast + alarm proračuna.",
-  "offsite.retention.growHint": "Nikoli ne čisti zunanje kopije; namesto tega sproži alarm, ko repozitorij preseže proračun v bajtih. Pošten privzet izbor, dokler ne izbereš poti čiščenja.",
   "offsite.retention.budget": "Proračun rasti (GB, 0 = izklopljeno)",
+  "offsite.prune.title": "5 · Čiščenje zunanje kopije",
+  "offsite.prune.info": "Ta korak samo poroča, kaj se dogaja, ničesar ne nastavlja. Ali se ta kopija čisti, določata samo-dodajanje iz koraka 4 in vrednosti hrambe v Nastavitve, Hramba zunanje kopije. Če želiš kopijo s samo-dodajanjem vseeno počistiti, zaženi restic forget --prune na strani shrambe, bodisi po lastnem urniku bodisi tako, da za kratko postaviš drugi strežnik REST brez samo-dodajanja, počistiš prek njega in ga spet ugasneš.",
+  "offsite.prune.stateFarSide": "Od tu te kopije ne čisti nič. Samo-dodajanje je vklopljeno, zato BombVault vanjo samo dodaja, čiščenje pa je naloga strani shrambe.",
+  "offsite.prune.statePolicy": "BombVault to kopijo počisti po vsaki replikaciji, po politiki hrambe zunanje kopije.",
+  "offsite.prune.stateNone": "Te kopije ne čisti nič. Samo-dodajanje je izklopljeno in vse vrednosti hrambe zunanje kopije so 0, zato raste, dokler disk zdrži.",
+  "offsite.prune.effective": "Ohranja {last} najnovejših, {daily} dnevnih, {weekly} tedenskih, {monthly} mesečnih.",
+  "offsite.prune.editedElsewhere": "Nastavi se v Nastavitve, Hramba zunanje kopije. Vrednosti so skupne vsem področjem.",
+  "offsite.prune.budgetInfo": "Sproži alarm, brž ko zunanji repozitorij preraste toliko gigabajtov. Nikoli ničesar ne izbriše, zato je varnostna mreža za kopijo, ki je nič ne čisti.",
+  "settings.retentionImmutableNotPruned": "Zunanji cilj s samo-dodajanjem se od tu nikoli ne čisti, karkoli že govorijo te vrednosti. Njegov lastni korak v čarovniku za zunanjo kopijo pojasni, kako ga počistiti s strani shrambe.",
 
   // Additional off-site targets (multi-off-site)
   "offsite.targets.title": "Dodatni zunanji cilji",
@@ -386,7 +387,6 @@ const sl: Partial<Translations> = {
   "settings.retentionOffsite": "Zunanji repozitorij",
   "settings.retentionOffsiteTitle": "Hramba zunanje kopije",
   "settings.retentionOffsiteHint": "Ločena politika za zunanji repozitorij, da ga lahko ohraniš dlje kot arhiv. Vse ničle = ohrani vsako zunanjo varnostno kopijo (brez čiščenja zunanje kopije).",
-  "settings.retentionOffsiteImmutableInfo": "Nespremenljiv zunanji cilj se od tu nikoli ne počisti, ne glede na te nastavitve. Glej Zunanja kopija › Strategija hrambe za način čiščenja.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Pasovna širina za zunanjo kopijo",

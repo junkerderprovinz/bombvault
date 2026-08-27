@@ -8547,7 +8547,7 @@ export function SettingsPage() {
         // Same fix as the local-retention Card above, folding all three
         // sentences (what this Card does, the OR-combination rule, and the
         // immutable-destination override) into the one title-level bubble.
-        hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionOffsiteImmutableInfo")}`}
+        hint={`${t("settings.retentionOffsiteHint")} ${t("settings.retentionCombineInfo")} ${t("settings.retentionImmutableNotPruned")}`}
         hueIndex={nextHue()}
       >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

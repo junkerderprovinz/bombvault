@@ -305,15 +305,16 @@ const ca: Partial<Translations> = {
   "offsite.tamperFail": "el servidor ha ACCEPTAT l'esborrat, NO protegit",
   "offsite.tamperUnverifiable": "no verificable per a aquest tipus de repositori",
   "offsite.tamperError": "La prova de manipulació no és concloent (servidor inaccessible)",
-  "offsite.retention.title": "5 · Estratègia de retenció",
-  "offsite.retention.farside": "Neteja a l'altra banda (recomanat)",
-  "offsite.retention.window": "Finestra de manteniment",
-  "offsite.retention.grow": "Creixement + alarma de pressupost",
-  "offsite.retention.farsideHint": "Executa restic forget --prune a la mateixa caixa d'emmagatzematge (BombVault continua en només-afegir). Consell per a cron:",
-  "offsite.retention.windowHint": "Inicia temporalment un segon rest-server sense només-afegir, neteja, i després apaga'l. Les credencials mai es desen i segueix una reprova de manipulació obligatòria. Fes-ho servir només quan la neteja a l'altra banda no sigui possible.",
-  "offsite.retention.windowRestOnly": "Només s'aplica a destins de servidor REST. Aquest backend no pot executar un segon servidor temporal contra ell. Fes servir Neteja a l'altra banda o Creixement + alarma de pressupost.",
-  "offsite.retention.growHint": "Mai netegis l'extern; en comptes, alarma quan el repositori superi un pressupost de bytes. L'opció honesta fins que triïs un camí de neteja.",
   "offsite.retention.budget": "Pressupost de creixement (GB, 0 = desactivat)",
+  "offsite.prune.title": "5 · Neteja externa",
+  "offsite.prune.info": "Aquest pas només informa del que passa, no configura res. Que aquesta còpia es netegi ho decideixen el només-afegir del pas 4 i els valors de conservació a Configuració, Retenció externa. Per netejar igualment una còpia de només-afegir, executa restic forget --prune al costat de l'emmagatzematge, ja sigui amb una planificació pròpia o aixecant breument un segon servidor REST sense només-afegir, netejant a través seu i tornant-lo a aturar.",
+  "offsite.prune.stateFarSide": "Des d'aquí res no neteja aquesta còpia. El només-afegir està activat, així que BombVault només hi afegeix, i la neteja és feina del costat de l'emmagatzematge.",
+  "offsite.prune.statePolicy": "BombVault neteja aquesta còpia després de cada replicació, seguint la política de retenció externa.",
+  "offsite.prune.stateNone": "Res no neteja aquesta còpia. El només-afegir està desactivat i tots els valors de conservació externs són 0, així que creix fins que el disc s'acaba.",
+  "offsite.prune.effective": "Conserva {last} últimes, {daily} diàries, {weekly} setmanals, {monthly} mensuals.",
+  "offsite.prune.editedElsewhere": "Es configura a Configuració, Retenció externa. Els valors són compartits per tots els àmbits.",
+  "offsite.prune.budgetInfo": "Dispara una alarma quan el repositori extern supera aquesta quantitat de gigabytes. No elimina mai res, així que és la xarxa de seguretat per a una còpia que ningú no neteja.",
+  "settings.retentionImmutableNotPruned": "Una destinació externa de només-afegir no es neteja mai des d'aquí, diguin el que diguin aquests valors. El seu propi pas de l'assistent extern explica com netejar-la des del costat de l'emmagatzematge.",
 
   // Additional off-site targets
   "offsite.targets.title": "Destins externs addicionals",
@@ -386,7 +387,6 @@ const ca: Partial<Translations> = {
   "settings.retentionOffsite": "Repositori extern",
   "settings.retentionOffsiteTitle": "Retenció externa",
   "settings.retentionOffsiteHint": "Una política separada per al repositori extern, perquè el puguis conservar més temps com a arxiu. Tot a 0 = conserva totes les còpies externes (sense neteja externa).",
-  "settings.retentionOffsiteImmutableInfo": "Un destí extern immutable mai es neteja des d'aquí, independentment d'aquesta configuració. Mira Extern › Estratègia de retenció per saber com netejar-lo igualment.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Amplada de banda externa",

@@ -305,15 +305,16 @@ const is: Partial<Translations> = {
   "offsite.tamperFail": "netþjónninn SAMÞYKKTI eyðinguna, er EKKI varið",
   "offsite.tamperUnverifiable": "ekki hægt að staðfesta fyrir þessa tegund geymslusafns",
   "offsite.tamperError": "Prófun á átroðslu er óvissuþrungin (netþjónn ekki aðgengilegur)",
-  "offsite.retention.title": "5 · Varðveislustefna",
-  "offsite.retention.farside": "Hreinsun hinum megin (mælt með)",
-  "offsite.retention.window": "Viðhaldsgluggi",
-  "offsite.retention.grow": "Vöxtur + fjárhagsviðvörun",
-  "offsite.retention.farsideHint": "Keyrðu restic forget --prune á sjálfu geymslutækinu (BombVault helst aðeins-bæta-við). Cron-vísbending:",
-  "offsite.retention.windowHint": "Ræstu tímabundið annan, ekki-aðeins-bæta-við rest-server, hreinsaðu hann, slökktu svo á honum. Aðgangsgögn eru aldrei vistuð og skylduprófun á átroðslu fylgir á eftir. Notaðu þetta aðeins þegar hreinsun hinum megin er ekki möguleg.",
-  "offsite.retention.windowRestOnly": "Gildir aðeins fyrir REST-netþjónaáfangastaði. Þessi bakendi getur ekki keyrt tímabundinn annan netþjón gegn honum. Notaðu Hreinsun hinum megin eða Vöxtur + fjárhagsviðvörun í staðinn.",
-  "offsite.retention.growHint": "Hreinsaðu aldrei fjarlæga geymslusafnið; í staðinn skaltu vara við þegar geymslusafnið fer yfir bætafjárhagsáætlun. Heiðarlega sjálfgefna stillingin þar til þú velur hreinsunarleið.",
   "offsite.retention.budget": "Vaxtarfjárhagsáætlun (GB, 0 = slökkt)",
+  "offsite.prune.title": "5 · Fjarlæg hreinsun",
+  "offsite.prune.info": "Þetta skref segir aðeins frá því sem gerist, það stillir ekkert. Hvort þetta afrit er hreinsað ræðst af aðeins-bæta-við í skrefi 4 og af geymslugildunum undir Stillingar, Fjarlæg varðveisla. Viljir þú samt hreinsa aðeins-bæta-við afrit skaltu keyra restic forget --prune geymslumegin, annaðhvort á eigin áætlun eða með því að reisa stutta stund upp annan REST netþjón án aðeins-bæta-við, hreinsa í gegnum hann og slökkva svo á honum aftur.",
+  "offsite.prune.stateFarSide": "Héðan hreinsar ekkert þetta afrit. Aðeins-bæta-við er kveikt, svo BombVault bætir aðeins við það og hreinsunin er verk geymslumegin.",
+  "offsite.prune.statePolicy": "BombVault hreinsar þetta afrit eftir hverja eftirmyndun, samkvæmt stefnunni um fjarlæga varðveislu.",
+  "offsite.prune.stateNone": "Ekkert hreinsar þetta afrit. Aðeins-bæta-við er slökkt og öll fjarlæg geymslugildi eru 0, svo það vex þar til diskurinn gefst upp.",
+  "offsite.prune.effective": "Geymir {last} nýjustu, {daily} daglega, {weekly} vikulega, {monthly} mánaðarlega.",
+  "offsite.prune.editedElsewhere": "Stillt undir Stillingar, Fjarlæg varðveisla. Gildin eru sameiginleg fyrir öll svið.",
+  "offsite.prune.budgetInfo": "Slær viðvörun um leið og fjarlæga geymslusafnið vex fram yfir svona mörg gígabæti. Það eyðir aldrei neinu, svo það er öryggisnetið fyrir afrit sem ekkert hreinsar.",
+  "settings.retentionImmutableNotPruned": "Fjarlægur áfangastaður með aðeins-bæta-við er aldrei hreinsaður héðan, sama hvað þessi gildi segja. Hans eigið skref í fjarlæga leiðarvísinum útskýrir hvernig hreinsa má hann geymslumegin.",
 
   // Additional off-site targets
   "offsite.targets.title": "Fleiri fjarlægir áfangastaðir",
@@ -386,7 +387,6 @@ const is: Partial<Translations> = {
   "settings.retentionOffsite": "Fjarlægt geymslusafn",
   "settings.retentionOffsiteTitle": "Fjarlæg varðveisla",
   "settings.retentionOffsiteHint": "Sérstök stefna fyrir fjarlæga geymslusafnið, svo þú getir geymt það lengur sem safn. Allt núll = geyma öll fjarlæg afrit (engin fjarlæg hreinsun).",
-  "settings.retentionOffsiteImmutableInfo": "Óbreytanlegur fjarlægur áfangastaður er aldrei hreinsaður héðan, sama hvað þessar stillingar segja. Sjá Fjarlægt › Varðveislustefna fyrir hvernig má samt hreinsa hann.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Fjarlæg bandbreidd",

@@ -305,15 +305,16 @@ const gl: Partial<Translations> = {
   "offsite.tamperFail": "o servidor ACEPTOU o borrado, NON está protexido",
   "offsite.tamperUnverifiable": "non verificable para este tipo de repositorio",
   "offsite.tamperError": "A proba de manipulación non é concluínte (servidor non accesible)",
-  "offsite.retention.title": "5 · Estratexia de retención",
-  "offsite.retention.farside": "Limpeza no outro lado (recomendado)",
-  "offsite.retention.window": "Xanela de mantemento",
-  "offsite.retention.grow": "Crecemento + alarma de orzamento",
-  "offsite.retention.farsideHint": "Executa restic forget --prune na propia caixa de almacenamento (BombVault mantense en só-engadir). Consello de cron:",
-  "offsite.retention.windowHint": "Inicia temporalmente un segundo rest-server sen só-engadir, limpa, e despois apágao: as credenciais nunca se gardan e segue unha reproba de manipulación obrigatoria. Úsao só cando a limpeza no outro lado non sexa posible.",
-  "offsite.retention.windowRestOnly": "Só se aplica a destinos de servidor REST. Este backend non pode executar un segundo servidor temporal contra el. Usa no seu lugar Limpeza no outro lado ou Crecemento + alarma de orzamento.",
-  "offsite.retention.growHint": "Nunca limpes a externa; en troques, avisa cando o repositorio supere un orzamento de bytes. A opción honesta ata que escollas unha vía de limpeza.",
   "offsite.retention.budget": "Orzamento de crecemento (GB, 0 = desactivado)",
+  "offsite.prune.title": "5 · Limpeza externa",
+  "offsite.prune.info": "Este paso só informa do que ocorre, non configura nada. Que esta copia se limpe decídeno o só-engadir do paso 4 e os valores de conservación en Configuración, Retención externa. Para limpar aínda así unha copia de só-engadir, executa restic forget --prune no lado do almacenamento, xa sexa cunha planificación propia ou levantando brevemente un segundo servidor REST sen só-engadir, limpando a través del e apagándoo de novo.",
+  "offsite.prune.stateFarSide": "Dende aquí nada limpa esta copia. O só-engadir está activado, así que BombVault só engade nela, e limpar é tarefa do lado do almacenamento.",
+  "offsite.prune.statePolicy": "BombVault limpa esta copia despois de cada replicación, seguindo a política de retención externa.",
+  "offsite.prune.stateNone": "Nada limpa esta copia. O só-engadir está desactivado e todos os valores de conservación externos son 0, así que medra ata que o disco non dá máis.",
+  "offsite.prune.effective": "Conserva {last} últimas, {daily} diarias, {weekly} semanais, {monthly} mensuais.",
+  "offsite.prune.editedElsewhere": "Configúrase en Configuración, Retención externa. Os valores son comúns a todos os ámbitos.",
+  "offsite.prune.budgetInfo": "Dá a alarma en canto o repositorio externo supera esta cantidade de xigabytes. Nunca borra nada, así que é a rede de seguridade para unha copia que ninguén limpa.",
+  "settings.retentionImmutableNotPruned": "Un destino externo de só-engadir nunca se limpa dende aquí, digan o que digan estes valores. O seu propio paso no asistente externo explica como limpalo dende o lado do almacenamento.",
 
   // Additional off-site targets
   "offsite.targets.title": "Destinos externos adicionais",
@@ -386,7 +387,6 @@ const gl: Partial<Translations> = {
   "settings.retentionOffsite": "Repositorio externo",
   "settings.retentionOffsiteTitle": "Retención externa",
   "settings.retentionOffsiteHint": "Unha política separada para o repositorio externo, para que o poidas conservar máis tempo como arquivo. Todo a 0 = conservar todas as copias externas (sen limpeza externa).",
-  "settings.retentionOffsiteImmutableInfo": "Un destino externo inmutable nunca se limpa desde aquí, sexan cales sexan estas opcións. Mira Externa › Estratexia de retención para saber como limpalo igualmente.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Largura de banda externa",

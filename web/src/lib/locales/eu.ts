@@ -305,15 +305,16 @@ const eu: Partial<Translations> = {
   "offsite.tamperFail": "zerbitzariak ezabatzea ONARTU DU, EZ dago babestuta",
   "offsite.tamperUnverifiable": "biltegi mota honentzat ezin da egiaztatu",
   "offsite.tamperError": "Manipulazio-proba ez da erabakigarria (zerbitzaria ez dago eskuragarri)",
-  "offsite.retention.title": "5 · Mantentze-estrategia",
-  "offsite.retention.farside": "Garbitu beste aldean (gomendatua)",
-  "offsite.retention.window": "Mantentze-lehioa",
-  "offsite.retention.grow": "Hazkundea + aurrekontu-alarma",
-  "offsite.retention.farsideHint": "Exekutatu restic forget --prune biltegiratze-kutxan bertan (BombVaultek gehitu-soilik izaten jarraitzen du). Cron aholkua:",
-  "offsite.retention.windowHint": "Aldi baterako bigarren rest-server bat abiarazi, gehitu-soilik gabe, garbitu eta gero itzali. Kredentzialak inoiz ez dira gordetzen eta nahitaezko manipulazio-berrproba bat dator jarraian. Erabili beste aldean garbitzea posible ez denean bakarrik.",
-  "offsite.retention.windowRestOnly": "REST zerbitzari-helmugetan bakarrik aplikatzen da. Backend honek ezin du bigarren zerbitzari aldi baterakoa exekutatu horren aurka. Erabili horren ordez Garbitu beste aldean edo Hazkundea + aurrekontu-alarma.",
-  "offsite.retention.growHint": "Ez garbitu inoiz kanpokoa; horren ordez, alarma bidali biltegiak byte-aurrekontua gainditzen duenean. Aukera zintzoa garbitze-bide bat aukeratu arte.",
   "offsite.retention.budget": "Hazkunde-aurrekontua (GB, 0 = itzalita)",
+  "offsite.prune.title": "5 · Kanpoko garbiketa",
+  "offsite.prune.info": "Urrats honek zer gertatzen den jakinarazten du soilik, ez du ezer ezartzen. Kopia hau garbitzen den ala ez 4. urratseko gehitu-soilik aukerak eta Ezarpenak, Kanpoko mantentzea atalean dauden gordetze-balioek erabakitzen dute. Gehitu-soilik kopia bat hala ere garbitu nahi baduzu, exekutatu restic forget --prune biltegiratze-aldean, bere ordutegi propioarekin edo gehitu-soilik gabeko bigarren REST zerbitzari bat une labur batez altxatuz, haren bidez garbituz eta berriro itzaliz.",
+  "offsite.prune.stateFarSide": "Hemendik ez du ezerk kopia hau garbitzen. Gehitu-soilik piztuta dago, beraz BombVaultek gehitu baino ez dio egiten, eta garbitzea biltegiratze-aldearen lana da.",
+  "offsite.prune.statePolicy": "BombVaultek kopia hau garbitzen du replikazio bakoitzaren ondoren, kanpoko mantentze-politikari jarraituz.",
+  "offsite.prune.stateNone": "Ez du ezerk kopia hau garbitzen. Gehitu-soilik itzalita dago eta kanpoko gordetze-balio guztiak 0 dira, beraz diskoak eusten dion arte haziko da.",
+  "offsite.prune.effective": "{last} azken, {daily} eguneko, {weekly} asteko eta {monthly} hileko gordetzen ditu.",
+  "offsite.prune.editedElsewhere": "Ezarpenak, Kanpoko mantentzea atalean ezartzen da. Balioak eremu guztien artean partekatzen dira.",
+  "offsite.prune.budgetInfo": "Alarma jotzen du kanpoko biltegia gigabyte kopuru hori gainditzen duenean. Ez du inoiz ezer ezabatzen, beraz inork garbitzen ez duen kopia baten segurtasun-sarea da.",
+  "settings.retentionImmutableNotPruned": "Gehitu-soilik duen kanpoko helburu bat ez da inoiz hemendik garbitzen, balio hauek diotena diotela. Kanpoko laguntzaileko bere urratsak azaltzen du nola garbitu biltegiratze-aldetik.",
 
   // Additional off-site targets
   "offsite.targets.title": "Kanpoko helmuga gehigarriak",
@@ -386,7 +387,6 @@ const eu: Partial<Translations> = {
   "settings.retentionOffsite": "Kanpoko biltegia",
   "settings.retentionOffsiteTitle": "Kanpoko mantentzea",
   "settings.retentionOffsiteHint": "Kanpoko biltegirako politika bereizi bat, artxibo gisa denbora gehiago gorde ahal izateko. Denak 0 = gorde kanpoko babeskopia guztiak (kanpoko garbiketarik gabe).",
-  "settings.retentionOffsiteImmutableInfo": "Kanpoko helmuga aldaezin bat ez da inoiz hemendik garbitzen, ezarpen hauek gorabehera. Ikusi Kanpokoa › Mantentze-estrategia hala ere nola garbitu jakiteko.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Kanpoko banda-zabalera",
