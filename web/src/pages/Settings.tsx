@@ -5422,7 +5422,7 @@ export function EverythingSection({
             purpose (a status colour, not control chrome). */}
         {overlapWarning && (
           <div className="mt-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-            {t("settings.everythingOverlapWarning")}
+            {t("settings.everythingDuplicateWarning")}
           </div>
         )}
       </div>
