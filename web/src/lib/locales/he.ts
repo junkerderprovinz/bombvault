@@ -196,6 +196,7 @@ const he: Partial<Translations> = {
   "settings.save": "שמור",
   "settings.saved": "ההגדרות נשמרו",
   "settings.error": "שגיאה בשמירה",
+  "settings.notLoadedNoSave": "לא ניתן היה לטעון את התצורה הנוכחית, ולכן דבר לא נשמר. טען מחדש את הדף ונסה שוב.",
 
   // Appearance / Accent
   "settings.colors": "צבעים",

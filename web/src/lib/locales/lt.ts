@@ -358,6 +358,7 @@ const lt: Partial<Translations> = {
   "settings.save": "Išsaugoti",
   "settings.saved": "Nustatymai išsaugoti",
   "settings.error": "Klaida išsaugant",
+  "settings.notLoadedNoSave": "Nepavyko įkelti dabartinės konfigūracijos, todėl niekas neišsaugoma. Iš naujo įkelkite puslapį ir bandykite dar kartą.",
 
   // Retention
   "settings.retentionTitle": "Momentinių kopijų saugojimas",

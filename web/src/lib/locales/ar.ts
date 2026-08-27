@@ -196,6 +196,7 @@ const ar: Partial<Translations> = {
   "settings.save": "حفظ",
   "settings.saved": "تم حفظ الإعدادات",
   "settings.error": "خطأ في الحفظ",
+  "settings.notLoadedNoSave": "تعذّر تحميل الإعدادات الحالية، لذلك لن يُحفظ أي شيء. أعد تحميل الصفحة وحاول مرة أخرى.",
 
   // Appearance / Accent
   "settings.colors": "الألوان",

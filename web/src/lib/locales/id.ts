@@ -358,6 +358,7 @@ const id: Partial<Translations> = {
   "settings.save": "Simpan",
   "settings.saved": "Pengaturan disimpan",
   "settings.error": "Gagal menyimpan",
+  "settings.notLoadedNoSave": "Konfigurasi saat ini gagal dimuat, jadi tidak ada yang disimpan. Muat ulang halaman dan coba lagi.",
 
   // Retention
   "settings.retentionTitle": "Retensi snapshot",

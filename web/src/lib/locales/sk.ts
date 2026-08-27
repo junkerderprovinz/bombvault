@@ -358,6 +358,7 @@ const sk: Partial<Translations> = {
   "settings.save": "Uložiť",
   "settings.saved": "Nastavenia uložené",
   "settings.error": "Chyba pri ukladaní",
+  "settings.notLoadedNoSave": "Aktuálnu konfiguráciu sa nepodarilo načítať, preto sa nič neuloží. Znova načítajte stránku a skúste to znova.",
 
   // Retention
   "settings.retentionTitle": "Uchovávanie snímok",

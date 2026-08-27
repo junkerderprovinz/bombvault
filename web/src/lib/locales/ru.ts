@@ -191,6 +191,7 @@ const ru: Partial<Translations> = {
   "settings.save": "Сохранить",
   "settings.saved": "Настройки сохранены",
   "settings.error": "Ошибка сохранения",
+  "settings.notLoadedNoSave": "Не удалось загрузить текущую конфигурацию, поэтому ничего не сохраняется. Перезагрузите страницу и попробуйте ещё раз.",
 
   // Appearance / Accent
   "settings.colors": "Цвета",

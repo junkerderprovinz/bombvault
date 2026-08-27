@@ -358,6 +358,7 @@ const sl: Partial<Translations> = {
   "settings.save": "Shrani",
   "settings.saved": "Nastavitve shranjene",
   "settings.error": "Napaka pri shranjevanju nastavitev",
+  "settings.notLoadedNoSave": "Trenutne konfiguracije ni bilo mogoče naložiti, zato se nič ne shrani. Znova naloži stran in poskusi znova.",
 
   // Retention
   "settings.retentionTitle": "Hramba posnetkov",

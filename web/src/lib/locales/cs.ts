@@ -196,6 +196,7 @@ const cs: Partial<Translations> = {
   "settings.save": "Uložit",
   "settings.saved": "Nastavení uloženo",
   "settings.error": "Chyba při ukládání nastavení",
+  "settings.notLoadedNoSave": "Aktuální konfiguraci se nepodařilo načíst, proto se nic neuloží. Znovu načtěte stránku a zkuste to znovu.",
 
   // Appearance / Accent
   "settings.colors": "Barvy",

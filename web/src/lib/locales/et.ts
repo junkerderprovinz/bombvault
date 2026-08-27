@@ -358,6 +358,7 @@ const et: Partial<Translations> = {
   "settings.save": "Salvesta",
   "settings.saved": "Seaded salvestatud",
   "settings.error": "Viga salvestamisel",
+  "settings.notLoadedNoSave": "Praegust seadistust ei õnnestunud laadida, seega ei salvestata midagi. Laadi leht uuesti ja proovi veel kord.",
 
   // Retention
   "settings.retentionTitle": "Hetktõmmiste säilitamine",

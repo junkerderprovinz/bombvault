@@ -193,6 +193,7 @@ const pt: Partial<Translations> = {
   "settings.save": "Guardar",
   "settings.saved": "Definições guardadas",
   "settings.error": "Erro ao guardar as definições",
+  "settings.notLoadedNoSave": "Não foi possível carregar a configuração atual, por isso não é guardado nada. Recarregue a página e tente novamente.",
 
   // Appearance / Accent
   "settings.colors": "Cores",

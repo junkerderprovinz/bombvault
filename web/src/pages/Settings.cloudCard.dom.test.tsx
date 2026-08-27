@@ -30,6 +30,8 @@ import { I18nProvider, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
 const setCloudCalls: Record<string, string>[] = [];
+// Flipped by the load-failure test below; the mock reads it on every call.
+let cloudLoadFails = false;
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -37,7 +39,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     ...actual,
     getCloud: () =>
       Promise.resolve({
-        ok: true,
+        ok: !cloudLoadFails,
         s3KeyId: "AKIAEXAMPLE",
         s3Region: "eu-central-1",
         restUser: "bombvault",
@@ -94,6 +96,7 @@ function lastSave(): Record<string, string> {
 beforeEach(() => {
   vi.useFakeTimers();
   setCloudCalls.length = 0;
+  cloudLoadFails = false;
 });
 
 afterEach(() => {
@@ -154,5 +157,26 @@ describe("CloudCard secret entry", () => {
     // mean the field had been emptied, which is what breaks the case above.)
     expect(lastSave().s3Region).toBe("us-east-1");
     expect(lastSave().s3Secret).toBe("wJalrXUtnFEMI/K7MDENG");
+  });
+
+  // setCloud is a FULL REPLACE. Before the loaded gate, a non-ok GET left the
+  // card at its empty initial state with nothing on screen to say so, and the
+  // next edit posted that emptiness as the new truth: stored AWS key id,
+  // region, REST user and storage class gone, with a "saved" toast on top.
+  // The same shape exists in OffsiteWizard, where the guard has been there all
+  // along as `cloudLoaded`.
+  it("saves nothing when the current config could not be loaded, and says so", async () => {
+    cloudLoadFails = true;
+    await renderCard();
+
+    const region = screen.getByLabelText(/AWS_DEFAULT_REGION/) as HTMLInputElement;
+    fireEvent.change(region, { target: { value: "us-east-1" } });
+    await pauseTyping();
+
+    expect(setCloudCalls).toHaveLength(0);
+    // And the failure is visible rather than a silently dead card. It shows
+    // twice on purpose: a standing line in the card (the card stays refusing)
+    // and a toast for the click that was just refused.
+    expect(screen.getAllByText(/could not be loaded/i).length).toBeGreaterThan(0);
   });
 });

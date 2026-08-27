@@ -196,6 +196,7 @@ const hu: Partial<Translations> = {
   "settings.save": "Mentés",
   "settings.saved": "Beállítások mentve",
   "settings.error": "Hiba a beállítások mentésekor",
+  "settings.notLoadedNoSave": "A jelenlegi konfigurációt nem sikerült betölteni, ezért semmi sem lesz elmentve. Töltsd újra az oldalt, és próbáld meg újra.",
 
   // Appearance / Accent
   "settings.colors": "Színek",

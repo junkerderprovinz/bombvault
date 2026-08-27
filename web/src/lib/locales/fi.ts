@@ -196,6 +196,7 @@ const fi: Partial<Translations> = {
   "settings.save": "Tallenna",
   "settings.saved": "Asetukset tallennettu",
   "settings.error": "Virhe asetusten tallennuksessa",
+  "settings.notLoadedNoSave": "Nykyisiä asetuksia ei voitu ladata, joten mitään ei tallenneta. Lataa sivu uudelleen ja yritä uudestaan.",
 
   // Appearance / Accent
   "settings.colors": "Värit",

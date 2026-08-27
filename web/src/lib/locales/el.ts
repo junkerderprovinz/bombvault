@@ -196,6 +196,7 @@ const el: Partial<Translations> = {
   "settings.save": "Αποθήκευση",
   "settings.saved": "Οι ρυθμίσεις αποθηκεύτηκαν",
   "settings.error": "Σφάλμα αποθήκευσης ρυθμίσεων",
+  "settings.notLoadedNoSave": "Δεν ήταν δυνατή η φόρτωση της τρέχουσας διαμόρφωσης, οπότε δεν αποθηκεύεται τίποτα. Φορτώστε ξανά τη σελίδα και δοκιμάστε πάλι.",
 
   // Appearance / Accent
   "settings.colors": "Χρώματα",

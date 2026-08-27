@@ -358,6 +358,7 @@ const gl: Partial<Translations> = {
   "settings.save": "Gardar",
   "settings.saved": "Configuración gardada",
   "settings.error": "Erro ao gardar",
+  "settings.notLoadedNoSave": "Non se puido cargar a configuración actual, así que non se garda nada. Recarga a páxina e téntao de novo.",
 
   // Retention
   "settings.retentionTitle": "Retención de instantáneas",

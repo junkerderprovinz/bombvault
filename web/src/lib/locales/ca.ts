@@ -358,6 +358,7 @@ const ca: Partial<Translations> = {
   "settings.save": "Desa",
   "settings.saved": "Configuració desada",
   "settings.error": "Error en desar",
+  "settings.notLoadedNoSave": "No s'ha pogut carregar la configuració actual, així que no es desa res. Torna a carregar la pàgina i prova-ho de nou.",
 
   // Retention
   "settings.retentionTitle": "Retenció d'instantanis",

@@ -358,6 +358,7 @@ const lv: Partial<Translations> = {
   "settings.save": "Saglabāt",
   "settings.saved": "Iestatījumi saglabāti",
   "settings.error": "Kļūda saglabājot",
+  "settings.notLoadedNoSave": "Neizdevās ielādēt pašreizējo konfigurāciju, tāpēc nekas netiek saglabāts. Ielādējiet lapu no jauna un mēģiniet vēlreiz.",
 
   // Retention
   "settings.retentionTitle": "Momentuzņēmumu saglabāšana",

@@ -194,6 +194,7 @@ const uk: Partial<Translations> = {
   "settings.save": "Зберегти",
   "settings.saved": "Налаштування збережено",
   "settings.error": "Помилка збереження",
+  "settings.notLoadedNoSave": "Не вдалося завантажити поточну конфігурацію, тому нічого не зберігається. Перезавантажте сторінку та спробуйте ще раз.",
 
   // Appearance / Accent
   "settings.colors": "Кольори",

@@ -196,6 +196,7 @@ const da: Partial<Translations> = {
   "settings.save": "Gem",
   "settings.saved": "Indstillinger gemt",
   "settings.error": "Fejl ved gemning af indstillinger",
+  "settings.notLoadedNoSave": "Den aktuelle konfiguration kunne ikke indlæses, så der gemmes ikke noget. Genindlæs siden, og prøv igen.",
 
   // Appearance / Accent
   "settings.colors": "Farver",
