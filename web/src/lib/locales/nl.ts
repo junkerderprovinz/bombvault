@@ -191,6 +191,7 @@ const nl: Partial<Translations> = {
   "settings.save": "Opslaan",
   "settings.saved": "Instellingen opgeslagen",
   "settings.error": "Fout bij opslaan",
+  "settings.notLoadedNoSave": "De huidige configuratie kon niet worden geladen, dus er wordt niets opgeslagen. Herlaad de pagina en probeer het opnieuw.",
 
   // Appearance / Accent
   "settings.colors": "Kleuren",

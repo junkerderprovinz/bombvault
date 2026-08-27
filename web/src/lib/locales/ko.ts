@@ -196,6 +196,7 @@ const ko: Partial<Translations> = {
   "settings.save": "저장",
   "settings.saved": "설정이 저장되었습니다",
   "settings.error": "설정 저장 오류",
+  "settings.notLoadedNoSave": "현재 설정을 불러오지 못해서 아무것도 저장되지 않습니다. 페이지를 새로고침한 후 다시 시도하세요.",
 
   // Appearance / Accent
   "settings.colors": "색상",

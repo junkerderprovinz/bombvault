@@ -193,6 +193,7 @@ const no: Partial<Translations> = {
   "settings.save": "Lagre",
   "settings.saved": "Innstillinger lagret",
   "settings.error": "Feil ved lagring av innstillinger",
+  "settings.notLoadedNoSave": "Den gjeldende konfigurasjonen kunne ikke lastes, så ingenting lagres. Last inn siden på nytt og prøv igjen.",
 
   // Appearance / Accent
   "settings.colors": "Farger",

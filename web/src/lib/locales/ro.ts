@@ -193,6 +193,7 @@ const ro: Partial<Translations> = {
   "settings.save": "Salvare",
   "settings.saved": "Setări salvate",
   "settings.error": "Eroare la salvare",
+  "settings.notLoadedNoSave": "Configurația actuală nu a putut fi încărcată, așa că nu se salvează nimic. Reîncarcă pagina și încearcă din nou.",
 
   // Appearance / Accent
   "settings.colors": "Culori",

@@ -358,6 +358,7 @@ const hi: Partial<Translations> = {
   "settings.save": "सहेजें",
   "settings.saved": "सेटिंग्स सहेज ली गईं",
   "settings.error": "सहेजने में त्रुटि",
+  "settings.notLoadedNoSave": "मौजूदा कॉन्फ़िगरेशन लोड नहीं हो पाया, इसलिए कुछ भी सहेजा नहीं जाएगा। पेज को फिर से लोड करें और दोबारा कोशिश करें।",
 
   // Retention
   "settings.retentionTitle": "स्नैपशॉट रिटेंशन",

@@ -358,6 +358,7 @@ const bg: Partial<Translations> = {
   "settings.save": "Запази",
   "settings.saved": "Настройките са запазени",
   "settings.error": "Грешка при запазването",
+  "settings.notLoadedNoSave": "Текущата конфигурация не можа да бъде заредена, затова нищо не се запазва. Презареди страницата и опитай отново.",
 
   // Retention
   "settings.retentionTitle": "Задържане на снапшоти",

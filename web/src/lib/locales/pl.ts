@@ -191,6 +191,7 @@ const pl: Partial<Translations> = {
   "settings.save": "Zapisz",
   "settings.saved": "Ustawienia zapisane",
   "settings.error": "Błąd podczas zapisywania",
+  "settings.notLoadedNoSave": "Nie udało się wczytać bieżącej konfiguracji, więc nic nie zostanie zapisane. Przeładuj stronę i spróbuj ponownie.",
 
   // Appearance / Accent
   "settings.colors": "Kolory",

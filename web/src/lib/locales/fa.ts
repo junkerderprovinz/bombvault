@@ -358,6 +358,7 @@ const fa: Partial<Translations> = {
   "settings.save": "ذخیره",
   "settings.saved": "تنظیمات ذخیره شد",
   "settings.error": "خطا در ذخیره‌سازی",
+  "settings.notLoadedNoSave": "پیکربندی فعلی بارگذاری نشد، بنابراین چیزی ذخیره نمی‌شود. صفحه را دوباره بارگذاری کنید و دوباره تلاش کنید.",
 
   // Retention
   "settings.retentionTitle": "نگه‌داری اسنپ‌شات‌ها",

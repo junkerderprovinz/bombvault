@@ -196,6 +196,7 @@ const vi: Partial<Translations> = {
   "settings.save": "Lưu",
   "settings.saved": "Đã lưu cài đặt",
   "settings.error": "Lỗi khi lưu cài đặt",
+  "settings.notLoadedNoSave": "Không thể tải cấu hình hiện tại nên không có gì được lưu. Hãy tải lại trang và thử lại.",
 
   // Appearance / Accent
   "settings.colors": "Màu sắc",

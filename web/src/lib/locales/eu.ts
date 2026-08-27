@@ -358,6 +358,7 @@ const eu: Partial<Translations> = {
   "settings.save": "Gorde",
   "settings.saved": "Ezarpenak gordeta",
   "settings.error": "Errorea gordetzean",
+  "settings.notLoadedNoSave": "Ezin izan da uneko konfigurazioa kargatu, beraz ez da ezer gordetzen. Birkargatu orria eta saiatu berriro.",
 
   // Retention
   "settings.retentionTitle": "Argazkien mantentzea",

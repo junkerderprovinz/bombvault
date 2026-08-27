@@ -358,6 +358,7 @@ const is: Partial<Translations> = {
   "settings.save": "Vista",
   "settings.saved": "Stillingar vistaðar",
   "settings.error": "Villa við vistun",
+  "settings.notLoadedNoSave": "Ekki tókst að hlaða núverandi stillingum, þess vegna er ekkert vistað. Hladdu síðunni aftur og reyndu aftur.",
 
   // Retention
   "settings.retentionTitle": "Varðveisla snapshotta",

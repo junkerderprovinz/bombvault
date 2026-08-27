@@ -196,6 +196,7 @@ const ja: Partial<Translations> = {
   "settings.save": "保存",
   "settings.saved": "設定を保存しました",
   "settings.error": "保存エラー",
+  "settings.notLoadedNoSave": "現在の設定を読み込めなかったため、何も保存されません。ページを再読み込みして、もう一度お試しください。",
 
   // Appearance / Accent
   "settings.colors": "カラー",

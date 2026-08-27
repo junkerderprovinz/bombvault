@@ -196,6 +196,7 @@ const fr: Partial<Translations> = {
   "settings.save": "Enregistrer",
   "settings.saved": "Paramètres enregistrés",
   "settings.error": "Erreur lors de l'enregistrement",
+  "settings.notLoadedNoSave": "Impossible de charger la configuration actuelle, rien n'est donc enregistré. Rechargez la page et réessayez.",
 
   // Appearance / Accent
   "settings.colors": "Couleurs",

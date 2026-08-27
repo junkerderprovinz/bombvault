@@ -358,6 +358,7 @@ const sr: Partial<Translations> = {
   "settings.save": "Сачувај",
   "settings.saved": "Подешавања сачувана",
   "settings.error": "Грешка при чувању подешавања",
+  "settings.notLoadedNoSave": "Тренутна конфигурација није могла да се учита, па се ништа не чува. Поново учитај страницу и покушај поново.",
 
   // Retention
   "settings.retentionTitle": "Задржавање снимака",

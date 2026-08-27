@@ -196,6 +196,7 @@ const th: Partial<Translations> = {
   "settings.save": "บันทึก",
   "settings.saved": "บันทึกการตั้งค่าแล้ว",
   "settings.error": "เกิดข้อผิดพลาดในการบันทึก",
+  "settings.notLoadedNoSave": "ไม่สามารถโหลดการตั้งค่าปัจจุบันได้ จึงไม่มีการบันทึกใด ๆ โหลดหน้านี้ใหม่แล้วลองอีกครั้ง",
 
   // Appearance / Accent
   "settings.colors": "สี",

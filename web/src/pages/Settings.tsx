@@ -2913,6 +2913,15 @@ export function CloudCard({
     debounceTimers.current[key] = setTimeout(run, 800);
   }
 
+  // loaded gates persistPatch below, exactly like OffsiteWizard's cloudLoaded
+  // and for the same reason: setCloud is a FULL REPLACE, so posting before a
+  // successful read had filled `c` would send this card's empty initial state
+  // as the new truth and blank the stored AWS key id, region, REST user and
+  // storage class. The read used to swallow every failure silently
+  // (.catch(() => undefined), nothing set, nothing shown), so a single failed
+  // GET plus one dropdown click was enough, and the toast said "saved".
+  const [loaded, setLoaded] = useState(false);
+  const [loadErr, setLoadErr] = useState(false);
   function refresh() {
     getCloud()
       .then((r) => {
@@ -2920,9 +2929,13 @@ export function CloudCard({
           setC((p) => ({ ...p, s3KeyId: r.s3KeyId ?? "", s3Region: r.s3Region ?? "", restUser: r.restUser ?? "", s3StorageClass: r.s3StorageClass ?? "" }));
           setSecretSet(!!r.s3SecretSet);
           setPwSet(!!r.restPasswordSet);
+          setLoaded(true);
+          setLoadErr(false);
+        } else {
+          setLoadErr(true);
         }
       })
-      .catch(() => undefined);
+      .catch(() => setLoadErr(true));
   }
   useEffect(refresh, []);
 
@@ -2945,6 +2958,11 @@ export function CloudCard({
   // field keeps its text until the card is remounted, and every later save just
   // re-sends the same value.
   async function persistPatch(patch: Partial<typeof c>) {
+    // Never write a full replace built on a state that was never read.
+    if (!loaded) {
+      push(t("settings.notLoadedNoSave"), "fail");
+      return;
+    }
     setState("saving");
     const merged = { ...c, ...patch };
     try {
@@ -2987,6 +3005,9 @@ export function CloudCard({
 
   return (
     <Card title={t("cloud.title")} hueIndex={hueIndex} nested={nested}>
+      {/* A failed read used to be invisible. It has to be on screen, because
+          the card refuses to save until it succeeds. */}
+      {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
       {/* GlimStone follow-up pass (Phase 2 Task 4's remainder): stays permanent
           text, NOT bubbled — it is the only complete reference for all four
           remote-URL prefixes this card's credentials unlock (s3:/rest:/b2:/
@@ -3486,6 +3507,16 @@ function NotifyCard({
     debounceTimers.current[key] = setTimeout(run, 800);
   }
 
+  // loaded gates persistNotify below, exactly like OffsiteWizard's cloudLoaded
+  // and for the same reason: setNotify is a FULL REPLACE. Before this gate, a
+  // failed or non-ok GET left cfg at emptyNotify with nothing shown, and the
+  // very next click posted all ~20 fields as blank. The server then sees an
+  // unconfigured, "never" notify config and clears the whole encrypted blob,
+  // taking the SMTP password, the Matrix token and healthchecksByDomain with
+  // it, while the toast said "saved". No undo, and nothing on screen had ever
+  // said the load failed.
+  const [loaded, setLoaded] = useState(false);
+  const [loadErr, setLoadErr] = useState(false);
   useEffect(() => {
     getNotify()
       .then((r) => {
@@ -3496,10 +3527,14 @@ function NotifyCard({
           // a revert before any edit has ever been attempted rolls back to
           // exactly this, same as a fresh page load never shaking anything.
           lastGoodRef.current = merged;
+          setLoaded(true);
+          setLoadErr(false);
+        } else {
+          setLoadErr(true);
         }
         setSecretSet({ smtp: !!r.smtpPasswordSet, matrix: !!r.matrixTokenSet });
       })
-      .catch(() => undefined);
+      .catch(() => setLoadErr(true));
   }, []);
 
   // persistNotify merges patch onto the CURRENT cfg snapshot and POSTs the
@@ -3518,6 +3553,11 @@ function NotifyCard({
   // SettingsPage's own PATCH-shaped save() never sends untouched sibling
   // fields in the first place.
   async function persistNotify(patch: Partial<NotifyConfig>): Promise<boolean> {
+    // Never write a full replace built on a state that was never read.
+    if (!loaded) {
+      push(t("settings.notLoadedNoSave"), "fail");
+      return false;
+    }
     setState("saving");
     const merged = { ...cfg, ...patch };
     try {
@@ -3601,6 +3641,9 @@ function NotifyCard({
   return (
     <>
     <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
+      {/* A failed read used to be invisible. It has to be on screen, because
+          the card refuses to save until it succeeds. */}
+      {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
       {/* "on" select → Selector (jdp, live-review: "Benachrichtigen: nie, nur
           bei Fehler, bei Fehler und Erfolg soll bitte ein horizontaler
           Selektor sein"). `variant="well"` with no `equalWidth` — the SMALL

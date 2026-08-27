@@ -2757,10 +2757,21 @@ export function Containers() {
   // the bulk-bar count honest and, crucially, stops a bulk action — including the
   // DESTRUCTIVE "Restore selected" — from ever touching a row the user can no
   // longer see. Deps are exactly the inputs that change `selectable`'s membership.
+  //
+  // `selectable` derives from `live`, which honours search, scheduleFilter and
+  // backupFilter but NOT filterKey: the installed/not-installed choice is
+  // applied at render time only. So the effect had filterKey in its deps and
+  // recomputed the identical set, dropping nothing. Switching to "not
+  // installed" hid every installed row and hid the select-all box with them,
+  // but the bulk action bar below is gated on `selected.size > 0` alone and
+  // stayed. Selecting three containers, switching the filter, then pressing
+  // "Restore selected" started in-place restores on rows that were not on
+  // screen. filterKey now takes part in the visible set, which is what the
+  // paragraph above always claimed.
   useEffect(() => {
     setSelected((prev) => {
       if (prev.size === 0) return prev;
-      const visible = new Set(selectable.map((c) => c.name));
+      const visible = new Set(filterKey === "notInstalled" ? [] : selectable.map((c) => c.name));
       let changed = false;
       const next = new Set<string>();
       for (const n of prev) {

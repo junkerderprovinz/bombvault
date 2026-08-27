@@ -196,6 +196,7 @@ const sv: Partial<Translations> = {
   "settings.save": "Spara",
   "settings.saved": "Inställningar sparade",
   "settings.error": "Fel vid sparande av inställningar",
+  "settings.notLoadedNoSave": "Den aktuella konfigurationen kunde inte läsas in, så ingenting sparas. Ladda om sidan och försök igen.",
 
   // Appearance / Accent
   "settings.colors": "Färger",

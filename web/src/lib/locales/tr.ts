@@ -196,6 +196,7 @@ const tr: Partial<Translations> = {
   "settings.save": "Kaydet",
   "settings.saved": "Ayarlar kaydedildi",
   "settings.error": "Ayarlar kaydedilemedi",
+  "settings.notLoadedNoSave": "Mevcut yapılandırma yüklenemedi, bu yüzden hiçbir şey kaydedilmiyor. Sayfayı yeniden yükleyip tekrar deneyin.",
 
   // Appearance / Accent
   "settings.colors": "Renkler",

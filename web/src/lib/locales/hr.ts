@@ -358,6 +358,7 @@ const hr: Partial<Translations> = {
   "settings.save": "Spremi",
   "settings.saved": "Postavke spremljene",
   "settings.error": "Greška pri spremanju",
+  "settings.notLoadedNoSave": "Trenutnu konfiguraciju nije bilo moguće učitati, pa se ništa ne sprema. Ponovno učitajte stranicu i pokušajte ponovno.",
 
   // Retention
   "settings.retentionTitle": "Zadržavanje snimki",

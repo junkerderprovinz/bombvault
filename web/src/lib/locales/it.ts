@@ -196,6 +196,7 @@ const it: Partial<Translations> = {
   "settings.save": "Salva",
   "settings.saved": "Impostazioni salvate",
   "settings.error": "Errore durante il salvataggio",
+  "settings.notLoadedNoSave": "Impossibile caricare la configurazione attuale, quindi non viene salvato nulla. Ricarica la pagina e riprova.",
 
   // Appearance / Accent
   "settings.colors": "Colori",

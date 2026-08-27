@@ -475,6 +475,7 @@ export const en = {
   "settings.save": "Save",
   "settings.saved": "Settings saved",
   "settings.error": "Error saving settings",
+  "settings.notLoadedNoSave": "The current configuration could not be loaded, so nothing is saved. Reload the page and try again.",
 
   // Retention
   "settings.retentionTitle": "Snapshot retention",
@@ -2093,6 +2094,7 @@ export const de: Translations = {
   "settings.save": "Speichern",
   "settings.saved": "Einstellungen gespeichert",
   "settings.error": "Fehler beim Speichern",
+  "settings.notLoadedNoSave": "Die aktuelle Konfiguration konnte nicht geladen werden, daher wird nichts gespeichert. Lade die Seite neu und versuche es noch einmal.",
 
   // Retention
   "settings.retentionTitle": "Snapshot-Aufbewahrung",

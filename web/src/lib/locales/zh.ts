@@ -196,6 +196,7 @@ const zh: Partial<Translations> = {
   "settings.save": "保存",
   "settings.saved": "设置已保存",
   "settings.error": "保存设置出错",
+  "settings.notLoadedNoSave": "无法加载当前配置，因此不会保存任何内容。请重新加载页面后再试一次。",
 
   // Appearance / Accent
   "settings.colors": "颜色",
