@@ -19,7 +19,7 @@ Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která �
 | `PLATFORM` | Ne | Vynutí platformu, na které BombVault předpokládá, že běží, místo automatické detekce: `unraid`, `generic` nebo `truenas` (výchozí nenastaveno; automaticky detekuje Unraid hledáním jeho značky `dockerMan` pod připojením flash, jinak `generic`; nerozpoznaná hodnota se rovněž vrátí na `generic`, což se zaznamená do logu). Nastavte ji explicitně na obecném Docker hostiteli nebo na TrueNAS Scale, místo spoléhání na automatickou detekci dostupnou jen pro Unraid; obecný compose soubor to tak dělá. Mění konvenci náhradního umístění appdata, výchozí cíle obnovy mezi instancemi a to, zda se vůbec zkouší kroky oznámení/doprovodného pluginu dostupné jen pro Unraid (viz `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Ne | Název samotného kontejneru BombVault, takže nikdy nezálohuje (a tedy nezastaví) sám sebe (výchozí `BombVault`; automaticky detekován přes hostname na bridge síti). |
 | `BACKUP_MAX_HOURS` | Ne | Maximální počet hodin reálného času, po které jeden zálohovací běh smí držet zámek své domény, než je násilně zrušen (pojistka, aby zaseknutý běh nemohl navždy blokovat doménu). Prázdné (výchozí) použije `48`. Zvyšte pro velmi velké nebo pomalé cloudové zálohy (běh zrušený na stropu selže s `context deadline exceeded`). Nastavte `0` pro úplné vypnutí stropu. |
-| `TZ` | Ne | Časové pásmo pro plánovač (například `Europe/Berlin`). |
+| `TZ` | Ne | Časové pásmo pro plánovač (například `Europe/Berlin`). **Pokud ji nenastavíte, běží všechny plány v UTC**: plán nastavený na 02:30 se pak spustí ve 02:30 UTC, nikoli podle místního času. |
 
 ## Připojení
 

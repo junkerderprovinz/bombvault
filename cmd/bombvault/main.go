@@ -132,6 +132,33 @@ func ensureDataDirWritable(dir string) error {
 	return nil
 }
 
+// logSchedulerTimezone records, once per start, which timezone every schedule is
+// interpreted in. Without it the most common silent misconfiguration in a
+// containerised deployment leaves no trace at all: with TZ unset, Go's
+// time.Local is UTC, so a schedule the operator typed as "02:30" fires at 02:30
+// UTC — 04:30 on a Central European summer wall clock. Nothing in the UI shows
+// the difference, and a backup quietly running two hours late looks exactly like
+// one running on time, which is why this belongs in the boot log rather than in
+// a settings tooltip. The image ships tzdata, so any IANA zone name resolves.
+//
+// A TZ that does NOT resolve is reported separately and loudly: Go silently
+// falls back to UTC for an unknown zone name, so "TZ=Europe/Berln" would
+// otherwise look identical to not setting TZ at all.
+func logSchedulerTimezone() {
+	now := time.Now()
+	name, _ := now.Zone()
+	offset := now.Format("-07:00")
+	tz := os.Getenv("TZ")
+	switch {
+	case tz == "":
+		log.Print("scheduler: planning in UTC - TZ is NOT set, so a schedule entered as 02:30 fires at 02:30 UTC, not 02:30 on your wall clock. Set TZ (for example Europe/Berlin) if you want wall-clock times.")
+	case name == "UTC" && tz != "UTC" && tz != "Etc/UTC":
+		log.Printf("scheduler: TZ=%q did NOT resolve to a known zone, so planning fell back to UTC. Check the spelling against the IANA zone list (for example Europe/Berlin).", tz) //nolint:gosec // G706: tz is %q-quoted
+	default:
+		log.Printf("scheduler: planning in %s (TZ=%q, UTC%s) - a schedule entered as 02:30 fires at 02:30 on that clock", name, tz, offset) //nolint:gosec // G706: name/tz are %q- or zone-name values
+	}
+}
+
 func run() error {
 	// Send the standard logger to stdout so all runtime logs share ONE stream
 	// with the ASCII banner (printed via fmt to stdout). Otherwise Docker/Unraid
@@ -235,6 +262,7 @@ func run() error {
 	} else {
 		log.Printf("platform: detected %q (auto; marker checked: %s)", detectedKind, filepath.Join(cfg.FlashDir, "config/plugins/dockerMan"))
 	}
+	logSchedulerTimezone()
 	svc.SetPlatform(platformFor(detectedKind))
 	// Tell the service where the persistent cache lives so the post-run cache
 	// trim (TrimResticCache) can measure + evict per-repo cache subdirs. Empty

@@ -19,7 +19,7 @@ Trang này bao quát các biến môi trường của container, các điểm g�
 | `PLATFORM` | Không | Buộc BombVault coi mình đang chạy trên nền tảng nào, thay vì tự phát hiện: `unraid`, `generic`, hoặc `truenas` (mặc định không đặt: tự phát hiện Unraid bằng cách dò tìm dấu hiệu `dockerMan` của nó dưới điểm gắn kết flash, nếu không thì dùng `generic`; một giá trị không nhận dạng được cũng quay về `generic`, được ghi log). Đặt nó rõ ràng trên một máy chủ Docker thông thường hoặc TrueNAS Scale, thay vì dựa vào việc dò tìm tự động chỉ dành cho Unraid; tệp compose thông thường đã làm đúng như vậy. Thay đổi quy ước dự phòng appdata, các đích khôi phục mặc định khi khôi phục sang một phiên bản khác, và liệu các bước thông báo/plugin đồng hành chỉ dành cho Unraid có được thử hay không (xem `internal/platform`). |
 | `BOMBVAULT_SELF_CONTAINER` | Không | Tên của chính container BombVault, để nó không bao giờ sao lưu (và do đó dừng) chính mình (mặc định `BombVault`; tự phát hiện qua hostname trên mạng bridge). |
 | `BACKUP_MAX_HOURS` | Không | Số giờ đồng hồ tối đa mà một lần sao lưu đơn có thể giữ khóa miền của nó trước khi bị hủy cưỡng bức (một biện pháp bảo vệ để một lần chạy bị kẹt không thể chặn miền mãi mãi). Để trống (mặc định) dùng `48`. Tăng nó lên cho các bản sao lưu đám mây rất lớn hoặc chậm (một lần chạy bị hủy ở mức giới hạn thất bại với `context deadline exceeded`). Đặt `0` để tắt hoàn toàn giới hạn. |
-| `TZ` | Không | Múi giờ cho bộ lập lịch (ví dụ `Europe/Berlin`). |
+| `TZ` | Không | Múi giờ cho bộ lập lịch (ví dụ `Europe/Berlin`). **Nếu không đặt, mọi lịch trình sẽ chạy theo UTC**: lịch đặt lúc 02:30 sẽ bắt đầu lúc 02:30 UTC chứ không theo giờ địa phương. |
 
 ## Điểm gắn kết
 

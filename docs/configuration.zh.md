@@ -19,7 +19,7 @@
 | `PLATFORM` | 否 | 强制指定 BombVault 认为自己运行在哪个平台上，而不进行自动检测：`unraid`、`generic` 或 `truenas`（默认未设置，会通过在闪存挂载下探测 `dockerMan` 标记来自动检测 Unraid，否则为 `generic`；无法识别的值同样回退为 `generic`，并记录到日志）。请在通用 Docker 主机或 TrueNAS Scale 上显式设置它，而不要依赖仅适用于 Unraid 的自动探测；通用 compose 文件正是这样做的。它会改变 appdata 回退约定、跨实例还原目标的默认值，以及是否会尝试仅适用于 Unraid 的通知/配套插件步骤（参见 `internal/platform`）。 |
 | `BOMBVAULT_SELF_CONTAINER` | 否 | BombVault 容器自身的名称，以便它绝不会备份（从而停止）自己（默认 `BombVault`；在桥接网络上通过主机名自动检测）。 |
 | `BACKUP_MAX_HOURS` | 否 | 单次备份运行在被强制取消前可持有其域锁的最长挂钟小时数（一道防护，防止卡死的运行永久阻塞该域）。留空（默认）使用 `48`。对于非常大或缓慢的云备份可调高它（在上限处被取消的运行会以 `context deadline exceeded` 失败）。设为 `0` 可完全禁用该上限。 |
-| `TZ` | 否 | 计划任务的时区（例如 `Europe/Berlin`）。 |
+| `TZ` | 否 | 计划任务的时区（例如 `Europe/Berlin`）。 **未设置时，所有计划均按 UTC 运行**：设为 02:30 的计划将在 02:30 UTC 启动，而不是本地时间。 |
 
 ## 挂载
 
