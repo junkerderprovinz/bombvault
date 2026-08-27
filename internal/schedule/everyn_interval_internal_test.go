@@ -194,3 +194,39 @@ func TestCalendarDaysBetweenCountsDays(t *testing.T) {
 		t.Fatalf("the 25-hour day counted as %d days, want 1", got)
 	}
 }
+
+// TestCalendarDaysSinceFireAnchorsOnTheFire guards the anchor correction itself,
+// which had no direct test of its own until a date-dependent failure in
+// nextruns_everyn_internal_test.go exposed it (2026-08-28): the stamp-vs-fire
+// distinction is the whole reason EveryNDue does not simply call
+// calendarDaysBetween, so it deserves to be pinned rather than only exercised
+// through a caller.
+//
+// The rule: `now` is one of the cadence's own daily fires, so its clock time IS
+// the fire time. A `last` stamp EARLIER in the day than that belongs to the
+// PREVIOUS day's fire, which ran past midnight, and must count one day more.
+func TestCalendarDaysSinceFireAnchorsOnTheFire(t *testing.T) {
+	// The plain case: a pass that started at 03:00 and finished at 03:04 is
+	// stamped after the fire, so stamp and fire share a day and nothing shifts.
+	if got := calendarDaysSinceFire(at(2, 3, 4), at(9, 3, 0)); got != 7 {
+		t.Fatalf("a same-day stamp counted %d days, want 7 (unshifted)", got)
+	}
+	// The correction: a pass that fired at 23:30 on day 1 and ran past midnight
+	// is stamped 00:10 on day 2. Counting from the STAMP gives 6, which would
+	// skip the seventh day's fire; counting from the FIRE gives 7.
+	if got := calendarDaysBetween(at(2, 0, 10), at(9, 3, 0)); got != 7 {
+		t.Fatalf("precondition: the raw stamp-to-fire span is %d, want 7", got)
+	}
+	if got := calendarDaysSinceFire(at(2, 0, 10), at(9, 3, 0)); got != 8 {
+		t.Fatalf("an over-midnight stamp counted %d days, want 8 (anchored one day earlier)", got)
+	}
+	// Exactly at the fire time is NOT earlier, so it must not shift.
+	if got := calendarDaysSinceFire(at(2, 3, 0), at(9, 3, 0)); got != 7 {
+		t.Fatalf("a stamp exactly at the fire time counted %d days, want 7 (unshifted)", got)
+	}
+	// The seconds `now` carries are the delay between trigger and gate, not part
+	// of the schedule, so a stamp at the fire's minute still does not shift.
+	if got := calendarDaysSinceFire(at(2, 3, 0), time.Date(2026, time.March, 9, 3, 0, 41, 0, time.Local)); got != 7 {
+		t.Fatalf("a gate running 41s after its trigger counted %d days, want 7", got)
+	}
+}
