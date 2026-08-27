@@ -232,6 +232,8 @@ func (r *Repo) LastSuccessfulBackupAmong(ids []string) (time.Time, error) {
 			args = append(args, id)
 		}
 		args = append(args, saneStampCutoff())
+		//nolint:gosec // G202: `placeholders` is a generated "?,?,…" list sized from
+		// len(chunk), never user text; every id travels as a bound parameter in args.
 		row := r.db.QueryRow(`
 			SELECT finished_at
 			FROM runs
