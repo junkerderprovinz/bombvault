@@ -80,6 +80,7 @@ There is exactly one today (`pages/Dashboard.tsx`, the heat-map cell).
 | `no-status-color-on-control` | Status green/amber/red is a readout, never control chrome — and a destructive action gets no bespoke red either. |
 | `control-reads-engine-tokens` | An interactive control reads its radius from the shape engine and its colour from the colour engine. |
 | `user-message-is-translated` | A string the user reads goes through `t()`, including the fallback on an error path. |
+| `no-em-dash-in-user-text` | No em dash (U+2014) in text a user reads: the translation tables, rendered JSX text, and the four text-bearing attributes. `ru`, `uk`, `bg` and `sr` are exempt. |
 
 Each rule file opens with the history that made it necessary; read that before
 changing one.
@@ -112,6 +113,46 @@ These are the shapes that made a first draft noisy, and are now pinned as
   their first argument is a user message by construction, so any string literal
   there is a finding. A one-word message ("Failed") slips through, which is the
   accepted cost of not catching every PascalCase identifier in the file.
+* **`no-em-dash-in-user-text`** is the one rule here whose scope is a *file
+  set* rather than a JSX shape, and the numbers are why. `src/**/*.ts*` holds
+  **4,708** em dashes across 180 of its 181 files; exactly **3** of them reach a
+  user. Everything else is prose, including the headers of the rules in this
+  directory, which are written in the very mark they describe. So the rule
+  checks the two places a mark can be user-facing and stays out of the rest:
+  * **The translation tables** (`src/lib/locales/*.ts`, `src/lib/i18n.ts`).
+    No sentence heuristic here, unlike its sibling: a value in a translation
+    table *is* a user message by construction, and those files contain no enum
+    values, class names or ids to confuse with one. Object keys are skipped,
+    because `"dashboard.title"` is read by the lookup and never by a person.
+  * **Rendered JSX text and `title` / `aria-label` / `placeholder` / `alt`.**
+    This is a deliberate widening past where `user-message-is-translated` drew
+    its line, and it was measured first, in that rule's own style.
+    `user-message-is-translated` declined JSX text because "is this hardcoded
+    English copy" cannot be settled from the node. "Does this render an em
+    dash" can: there is no such thing as an em dash that appears on screen and
+    is not user-facing. On the clean post-sweep tree the widening produces
+    **3 findings and 0 false positives**, and all three are real defects the
+    locale sweep could not structurally have reached, because they are
+    separators living in components rather than values living in the tables:
+    `pages/Containers.tsx:667`, `pages/Recovery.tsx:547` and
+    `pages/Recovery.tsx:1356`. The four attributes find nothing today and cost
+    nothing.
+  * **`ru`, `uk`, `bg`, `sr` are exempt**, by locale code, taken from the
+    file's own name. In those four the em dash is ordinary punctuation standing
+    in for an absent copula, so removing it breaks the sentence rather than
+    simplifying it. This is not decoration on the rule, it is load-bearing:
+    dropping the four codes turns a clean tree into **538 errors**, every one
+    of them wrong. The exemption is by *locale*, never by script: a Cyrillic
+    string in any other locale file is checked normally, and there is a test
+    case pinning both halves of that.
+  * **A comment is never checked**, which is a property of reading the AST
+    rather than a case the rule implements. It is still the single most
+    important fact about its scope: the by-hand sweep that preceded the rule
+    had to special-case comment lines, and got that wrong before it got it
+    right.
+  * Not the `push()` / `setError()` sinks: `user-message-is-translated` already
+    reports *any* string literal there, so a second squiggle on the same line
+    would add no information.
 * **`control-reads-engine-tokens`** only looks at interactive elements. Every
   one of the 43 `rounded-full` uses in this tree is a spinner ring or a status
   dot — genuinely circles, not controls whose corners should follow a

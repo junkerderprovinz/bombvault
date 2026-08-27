@@ -106,6 +106,14 @@ export default [
       "bombvault/no-status-color-on-control": "error",
       "bombvault/control-reads-engine-tokens": "error",
       "bombvault/user-message-is-translated": "error",
+      // Unlike page-uses-page-shell below, this one takes no options, and the
+      // ru/uk/bg/sr exemption is deliberately NOT configurable here. Settings'
+      // exception is a project decision and belongs where a reader can find
+      // it; "the em dash is ordinary punctuation in Russian" is a fact about
+      // Russian, it lives next to the paragraph explaining it, and it is not
+      // something a future config edit should be able to switch off by
+      // accident. See lint-rules/no-em-dash-in-user-text.js.
+      "bombvault/no-em-dash-in-user-text": "error",
       "bombvault/page-uses-page-shell": [
         "error",
         {

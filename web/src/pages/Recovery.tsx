@@ -544,7 +544,7 @@ function ForeignItemRow({
           <option value="latest">{t("recovery.foreignLatest")}</option>
           {snaps.map((s) => (
             <option key={s.id} value={s.id}>
-              {new Date(s.time).toLocaleString()} — {s.id.slice(0, 8)}
+              {new Date(s.time).toLocaleString()}, {s.id.slice(0, 8)}
             </option>
           ))}
         </select>
@@ -1353,7 +1353,7 @@ function EncryptionStatus({
               {": "}
               {t(ENC_STATE_KEY[r.state])}
               {r.error && (
-                <span dir="ltr" className="font-mono break-all"> — {r.error}</span>
+                <span dir="ltr" className="font-mono break-all">: {r.error}</span>
               )}
             </li>
           ))}
