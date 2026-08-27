@@ -291,6 +291,11 @@ run BombVault **only on a trusted, non-exposed network** — never publish it di
 internet; for remote access put it behind a reverse proxy that adds authentication and TLS.
 Responses carry baseline security headers (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 
+Requests that CHANGE something must declare `Content-Type: application/json` and must not be
+marked cross-site by the browser, so a page on another site cannot make your browser reach in and
+change settings on a LAN address. If you drive the API from a script, send that header - anything
+else is refused with 415.
+
 Because the password gate is **opt-in**, when it is unset the whole UI and API are reachable by
 anyone who can reach the port — including the off-site setup and tamper-test routes that mint or
 use append-only credentials, and the encryption-key recovery kit. Enable the password gate
