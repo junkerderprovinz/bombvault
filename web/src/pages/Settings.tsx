@@ -6192,6 +6192,19 @@ export function SettingsPage() {
   // than widening that generic. See toggleConfigSchedule below.
   const [configScheduleToggleBusy, setConfigScheduleToggleBusy] = useState(false);
   const [configScheduleToggleShake, setConfigScheduleToggleShake] = useState(0);
+  // Remembers the cadence in force before the self-backup schedule was switched
+  // off, so switching it back on restores THAT instead of the shipped
+  // daily-at-02:00 default. Same shape and same reason as the
+  // FlashZipExportCard's rememberedKeep, which this toggle was missing: OFF
+  // writes the literal "off" over the stored string, so a "weekly Sun 04:00" the
+  // user had chosen existed nowhere afterwards and came back as a daily.
+  //
+  // Its reach is this page's lifetime, exactly like rememberedKeep's. The server
+  // stores one cadence string per domain, so once "off" is saved the previous
+  // value is genuinely gone and a reload cannot bring it back. Covering that
+  // would take a second persisted field, i.e. a second source of truth for the
+  // same fact, which is what toggleConfigSchedule's own comment rules out.
+  const [rememberedConfigSchedule, setRememberedConfigSchedule] = useState("daily 02:00");
 
   // installSettings adopts a settings object the server just handed us as BOTH
   // the live state and the confirmed baseline, and re-derives the page state
@@ -6882,9 +6895,11 @@ export function SettingsPage() {
   // immediate optimistic-flip + save + revert-on-failure + shake shape as
   // handleSyncSchedulesToggle above, applied to configSchedule's cadence
   // string instead of the three VMs/Flash/Folders fields that one touches.
-  // OFF writes the literal "off" cadence string; ON restores "daily 02:00"
-  // (the same daily-at-02:00 baseline this grammar already uses elsewhere,
-  // e.g. ContainersSchedule's own portable-settings test fixture) — this
+  // OFF writes the literal "off" cadence string; ON restores the cadence that
+  // was in force before the last OFF (rememberedConfigSchedule above), falling
+  // back to "daily 02:00" when there is none to restore — the same
+  // daily-at-02:00 baseline this grammar already uses elsewhere, e.g.
+  // ContainersSchedule's own portable-settings test fixture. This
   // does NOT introduce a new configScheduleEnabled field: parseCadenceString/
   // buildCadenceString (CadenceBuilder.tsx) already round-trip "off"/""
   // through CadenceMode "off" cleanly, so a second boolean would just be a
@@ -6893,7 +6908,11 @@ export function SettingsPage() {
   // concept — whether the self-backup domain exists at all — left untouched.)
   async function toggleConfigSchedule(next: boolean) {
     const prev = settings?.configSchedule ?? "off";
-    const value = next ? "daily 02:00" : "off";
+    // Switching OFF is the only moment the cadence is lost, and `prev` is
+    // exactly the value being overwritten — whether it came from the server, the
+    // CadenceBuilder below, or an earlier flip of this toggle.
+    if (!next && prev && prev !== "off") setRememberedConfigSchedule(prev);
+    const value = next ? rememberedConfigSchedule : "off";
     setSettings((s) => (s ? { ...s, configSchedule: value } : s));
     setConfigScheduleToggleBusy(true);
     const ok = await save({ configSchedule: value }, setSchedSaveState, setSchedSaveError);
