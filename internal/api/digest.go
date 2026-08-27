@@ -168,11 +168,18 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 			log.Printf("api: digest: latest off-site run for %s: %v", domain, oErr) //nolint:gosec // G706: domain is a fixed literal
 		} else if found {
 			line.LastOK = run.FinishedAt
-			schedule := s.offsiteScheduleFor(domain, settings)
-			if schedule == "" {
-				schedule = digestBackupScheduleFor(domain, settings)
+			// An off-site schedule of its own governs on its own. Without one the
+			// copy rides along with the local backup, so the local cadence is the
+			// expectation — and that includes the "Backup Everything" pass, which
+			// replicates after its loop exactly as a domain run does. Reading only
+			// the per-domain cadence left a domain covered solely by the pass at
+			// period 0, i.e. never stale, however old its off-site copy got (#177,
+			// the same blind spot as in the protection status and the watchdog).
+			period := cadencePeriodSeconds(s.offsiteScheduleFor(domain, settings))
+			if period == 0 {
+				period, _ = domainCoverage(digestBackupScheduleFor(domain, settings), settings.EverythingSchedule)
 			}
-			if period := cadencePeriodSeconds(schedule); period > 0 && stats.Now-line.LastOK > 2*period {
+			if period > 0 && stats.Now-line.LastOK > 2*period {
 				line.Stale = true
 			}
 		}

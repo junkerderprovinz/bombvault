@@ -754,6 +754,7 @@ const he: Partial<Translations> = {
   "dashboard.rpoOverdue": "באיחור",
   "dashboard.rpoNever": "אין גיבוי עדיין",
   "dashboard.rpoOff": "לא מתוזמן",
+  "dashboard.rpoViaEverything": "{cadence}, דרך גיבוי מלא",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

@@ -770,6 +770,7 @@ const zh: Partial<Translations> = {
   "dashboard.rpoOverdue": "已逾期",
   "dashboard.rpoNever": "尚无备份",
   "dashboard.rpoOff": "未计划",
+  "dashboard.rpoViaEverything": "{cadence}（通过全部备份）",
   "dashboard.domainContainers": "容器",
   "dashboard.domainVMs": "虚拟机",
   "dashboard.domainFlash": "闪存",

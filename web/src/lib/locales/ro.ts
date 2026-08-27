@@ -754,6 +754,7 @@ const ro: Partial<Translations> = {
   "dashboard.rpoOverdue": "Restant",
   "dashboard.rpoNever": "Încă niciun backup",
   "dashboard.rpoOff": "Neprogramat",
+  "dashboard.rpoViaEverything": "{cadence}, prin Backup total",
   "dashboard.domainContainers": "Containere",
   "dashboard.domainVMs": "VM-uri",
   "dashboard.domainFlash": "Flash",

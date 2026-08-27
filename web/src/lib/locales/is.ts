@@ -682,6 +682,7 @@ const is: Partial<Translations> = {
   "dashboard.rpoOverdue": "Á gjalddaga",
   "dashboard.rpoNever": "Ekkert afrit ennþá",
   "dashboard.rpoOff": "Ekki áætlað",
+  "dashboard.rpoViaEverything": "{cadence}, um Heildarafritun",
   "dashboard.domainContainers": "Gámar",
   "dashboard.domainVMs": "Sýndarvélar",
   "dashboard.domainFlash": "Flash",

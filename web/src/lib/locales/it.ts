@@ -744,6 +744,7 @@ const it: Partial<Translations> = {
   "dashboard.rpoOverdue": "In ritardo",
   "dashboard.rpoNever": "Nessun backup ancora",
   "dashboard.rpoOff": "Non pianificato",
+  "dashboard.rpoViaEverything": "{cadence}, tramite Backup totale",
   "dashboard.domainContainers": "Container",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "Flash",

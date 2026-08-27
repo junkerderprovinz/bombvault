@@ -778,6 +778,7 @@ const fi: Partial<Translations> = {
   "dashboard.rpoOverdue": "Myöhässä",
   "dashboard.rpoNever": "Ei vielä varmuuskopiota",
   "dashboard.rpoOff": "Ei aikataulutettu",
+  "dashboard.rpoViaEverything": "{cadence}, Täysvarmuuskopion kautta",
   "dashboard.domainContainers": "Kontit",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

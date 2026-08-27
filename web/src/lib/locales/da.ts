@@ -778,6 +778,7 @@ const da: Partial<Translations> = {
   "dashboard.rpoOverdue": "Forfalden",
   "dashboard.rpoNever": "Ingen sikkerhedskopi endnu",
   "dashboard.rpoOff": "Ikke planlagt",
+  "dashboard.rpoViaEverything": "{cadence}, via Fuld sikkerhedskopi",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

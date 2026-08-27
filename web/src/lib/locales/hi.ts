@@ -682,6 +682,7 @@ const hi: Partial<Translations> = {
   "dashboard.rpoOverdue": "समय सीमा बीत गई",
   "dashboard.rpoNever": "अभी तक कोई बैकअप नहीं",
   "dashboard.rpoOff": "शेड्यूल नहीं किया गया",
+  "dashboard.rpoViaEverything": "{cadence}, सब कुछ बैकअप के माध्यम से",
   "dashboard.domainContainers": "कंटेनर",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "फ़्लैश",

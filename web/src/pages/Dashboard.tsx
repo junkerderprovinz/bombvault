@@ -752,9 +752,16 @@ function ProtectionCard({
                           {rpoLabel(d.status)}
                         </span>
                       </div>
-                      {/* Col 3 — schedule cadence. */}
+                      {/* Col 3 — schedule cadence. A domain with no cadence of
+                          its own can still be covered by the whole-server
+                          "Backup Everything" pass, and then it is the pass's
+                          cadence that applies — naming it keeps the row from
+                          contradicting the domain's own card, which correctly
+                          shows no schedule (#177). */}
                       <span className="col-start-3 min-w-0 truncate text-carbon-textMuted text-xs">
-                        {formatCadence(d.schedule, t, lang)}
+                        {d.coveredBy
+                          ? t("dashboard.rpoViaEverything").replace("{cadence}", formatCadence(d.coveredBy, t, lang))
+                          : formatCadence(d.schedule, t, lang)}
                       </span>
                       {/* Col 4 — last successful run. */}
                       <span

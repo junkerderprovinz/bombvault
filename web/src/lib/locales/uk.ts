@@ -773,6 +773,7 @@ const uk: Partial<Translations> = {
   "dashboard.rpoOverdue": "Прострочено",
   "dashboard.rpoNever": "Ще немає копії",
   "dashboard.rpoOff": "Без розкладу",
+  "dashboard.rpoViaEverything": "{cadence}, через Повний бекап",
   "dashboard.domainContainers": "Контейнери",
   "dashboard.domainVMs": "Віртуальні машини",
   "dashboard.domainFlash": "Flash",

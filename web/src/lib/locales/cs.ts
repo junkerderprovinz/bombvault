@@ -776,6 +776,7 @@ const cs: Partial<Translations> = {
   "dashboard.rpoOverdue": "Po termínu",
   "dashboard.rpoNever": "Zatím žádná záloha",
   "dashboard.rpoOff": "Neplánováno",
+  "dashboard.rpoViaEverything": "{cadence}, přes Zálohu všeho",
   "dashboard.domainContainers": "Kontejnery",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

@@ -682,6 +682,7 @@ const eu: Partial<Translations> = {
   "dashboard.rpoOverdue": "Epea gaindituta",
   "dashboard.rpoNever": "Oraindik babeskopiarik ez",
   "dashboard.rpoOff": "Programatu gabe",
+  "dashboard.rpoViaEverything": "{cadence}, Babeskopia osoaren bidez",
   "dashboard.domainContainers": "Edukiontziak",
   "dashboard.domainVMs": "MB",
   "dashboard.domainFlash": "Flash",
