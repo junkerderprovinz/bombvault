@@ -11,6 +11,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os/exec"
 	"time"
@@ -71,10 +72,59 @@ func (execHostShell) Run(ctx context.Context, cmd string) error {
 	// at the UI. Anything else that ever comes to write them needs the same
 	// question asked of it.
 	c := exec.CommandContext(ctx, "sh", "-c", cmd) //nolint:gosec // G204: see the comment above — an operator-configured hook command is the feature.
-	c.WaitDelay = hostShellWaitDelay
-	out, err := c.CombinedOutput()
+	// Kills the whole process group, not just `sh` — a hook is routinely a
+	// pipeline or an `&&` chain, whose children would otherwise be orphaned
+	// inside this container when the command overruns. Also sets WaitDelay.
+	configureHookProcGroup(c)
+
+	// Output is CAPPED rather than collected wholesale. CombinedOutput() would
+	// buffer stdout+stderr unbounded for up to five minutes; the sibling
+	// primitive for the per-container hook (dockercli.go) caps at the same 64
+	// KiB with the comment "a hook flooding stdout cannot balloon memory", and
+	// this file names that path as its model. Only a short tail is ever logged,
+	// so the rest was never wanted in the first place.
+	var out cappedBuffer
+	out.limit = hostShellOutputCap
+	c.Stdout = &out
+	c.Stderr = &out
+	err := c.Run()
 	if err != nil {
-		log.Printf("api: host shell hook failed (best-effort, backup continues): %v; output: %s", err, out)
+		log.Printf("api: host shell hook failed (best-effort, backup continues): %v; output: %s", err, out.String())
 	}
 	return err
+}
+
+// hostShellOutputCap bounds how much hook output is kept in memory, matching
+// dockercli.go's cap for the per-container hook exactly.
+const hostShellOutputCap = 64 << 10
+
+// cappedBuffer accepts writes until limit bytes have been kept, then discards
+// the rest while still REPORTING them as written — a short write would make
+// exec close the pipe and hand the hook an EPIPE, turning a chatty command into
+// a failed one. Discarding keeps the command's own fate untouched.
+type cappedBuffer struct {
+	buf     []byte
+	limit   int
+	dropped int
+}
+
+func (b *cappedBuffer) Write(p []byte) (int, error) {
+	if room := b.limit - len(b.buf); room > 0 {
+		if len(p) <= room {
+			b.buf = append(b.buf, p...)
+		} else {
+			b.buf = append(b.buf, p[:room]...)
+			b.dropped += len(p) - room
+		}
+	} else {
+		b.dropped += len(p)
+	}
+	return len(p), nil
+}
+
+func (b *cappedBuffer) String() string {
+	if b.dropped == 0 {
+		return string(b.buf)
+	}
+	return fmt.Sprintf("%s… (%d more bytes dropped)", b.buf, b.dropped)
 }
