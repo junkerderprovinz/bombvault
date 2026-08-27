@@ -273,7 +273,16 @@
 // and grepping every one of its twelve call sites confirms none of them do
 // either (see the migration commit).
 // ---------------------------------------------------------------------------
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { computeBubblePosition } from "../lib/bubblePosition";
@@ -396,8 +405,16 @@ interface SelectorCommon {
 }
 
 export type SelectorProps =
-  | (SelectorCommon & { select?: "one"; active: string | null; onChange: (id: string) => void })
-  | (SelectorCommon & { select: "many"; active: ReadonlySet<string>; onChange: (id: string) => void });
+  | (SelectorCommon & {
+      select?: "one";
+      active: string | null;
+      onChange: (id: string) => void;
+    })
+  | (SelectorCommon & {
+      select: "many";
+      active: ReadonlySet<string>;
+      onChange: (id: string) => void;
+    });
 
 // Split into gap/padding/text (rather than one combined string, the
 // pre-`variant` shape of this table) so `variant="well"` can drop just the
@@ -409,7 +426,10 @@ export type SelectorProps =
 // three fields instead of one literal string; reordering plain, independent
 // Tailwind utility classes within a `className` doesn't change the
 // generated CSS, so this is a pure refactor for that branch.
-const SIZE: Record<SelectorSize, { gap: string; padding: string; text: string }> = {
+const SIZE: Record<
+  SelectorSize,
+  { gap: string; padding: string; text: string }
+> = {
   sm: { gap: "gap-1", padding: "px-2 py-0.5", text: "text-xs" },
   md: { gap: "gap-1.5", padding: "px-3 py-1", text: "text-xs" },
   lg: { gap: "gap-2", padding: "px-3 py-1.5", text: "text-sm" },
@@ -479,7 +499,12 @@ export function stepFor(key: SelectorNavKey, rtl: boolean): -1 | 0 | 1 {
  * rather than stepping from an undefined position. Returns -1 for an empty
  * strip so the caller can no-op instead of focusing nothing.
  */
-export function nextFocusIndex(key: SelectorNavKey, current: number, count: number, rtl: boolean): number {
+export function nextFocusIndex(
+  key: SelectorNavKey,
+  current: number,
+  count: number,
+  rtl: boolean,
+): number {
   if (count <= 0) return -1;
   if (key === "Home") return 0;
   if (key === "End") return count - 1;
@@ -528,7 +553,17 @@ interface SelectorTabProps {
   registerRef: (el: HTMLButtonElement | null) => void;
 }
 
-function SelectorTab({ item, many, on, disabled, roved, className, style, onSelect, registerRef }: SelectorTabProps) {
+function SelectorTab({
+  item,
+  many,
+  on,
+  disabled,
+  roved,
+  className,
+  style,
+  onSelect,
+  registerRef,
+}: SelectorTabProps) {
   const [tipOpen, setTipOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
@@ -563,7 +598,7 @@ function SelectorTab({ item, many, on, disabled, roved, className, style, onSele
     const { left, top } = computeBubblePosition(
       r,
       { width: bubble.offsetWidth, height: bubble.offsetHeight },
-      viewport
+      viewport,
     );
     bubble.style.left = `${left}px`;
     bubble.style.top = `${top}px`;
@@ -586,41 +621,67 @@ function SelectorTab({ item, many, on, disabled, roved, className, style, onSele
     };
   }, [tipOpen]);
 
+  // A DISABLED segment emits no mouse events and takes no focus, so its tip is
+  // unreachable — and for an iconOnly segment the tip is the only thing that
+  // names it, at exactly the moment (a short in-flight disable) when the user
+  // wants to know why it is dead. The wrapper is not disabled and still sees the
+  // pointer. Rendered ONLY when disabled, so the enabled strip's layout, which
+  // this component measures for its own sliding indicator, is untouched.
+  const wrapDisabled = (node: ReactNode) =>
+    disabled && item.tip ? (
+      <span
+        className="inline-flex"
+        onMouseEnter={showTip}
+        onMouseLeave={hideTip}
+      >
+        {node}
+      </span>
+    ) : (
+      node
+    );
+
   return (
     <>
-      <button
-        ref={(el) => {
-          btnRef.current = el;
-          registerRef(el);
-        }}
-        type="button"
-        data-sel-id={item.id}
-        role={many ? undefined : "tab"}
-        aria-selected={many ? undefined : on}
-        aria-pressed={many ? on : undefined}
-        aria-label={item.iconOnly ? item.label : undefined}
-        aria-describedby={item.tip && tipOpen ? tooltipId : undefined}
-        title={item.title}
-        disabled={disabled}
-        tabIndex={roved ? 0 : -1}
-        style={style}
-        className={className}
-        onClick={onSelect}
-        onMouseEnter={item.tip ? showTip : undefined}
-        onMouseLeave={item.tip ? hideTip : undefined}
-        onFocus={item.tip ? showTip : undefined}
-        onBlur={item.tip ? hideTip : undefined}
-      >
-        {item.icon}
-        {!item.iconOnly && <span className="truncate">{item.label}</span>}
-      </button>
+      {wrapDisabled(
+        <button
+          ref={(el) => {
+            btnRef.current = el;
+            registerRef(el);
+          }}
+          type="button"
+          data-sel-id={item.id}
+          role={many ? undefined : "tab"}
+          aria-selected={many ? undefined : on}
+          aria-pressed={many ? on : undefined}
+          aria-label={item.iconOnly ? item.label : undefined}
+          aria-describedby={item.tip && tipOpen ? tooltipId : undefined}
+          title={item.title}
+          disabled={disabled}
+          tabIndex={roved ? 0 : -1}
+          style={style}
+          className={className}
+          onClick={onSelect}
+          onMouseEnter={item.tip ? showTip : undefined}
+          onMouseLeave={item.tip ? hideTip : undefined}
+          onFocus={item.tip ? showTip : undefined}
+          onBlur={item.tip ? hideTip : undefined}
+        >
+          {item.icon}
+          {!item.iconOnly && <span className="truncate">{item.label}</span>}
+        </button>,
+      )}
       {item.tip &&
         tipOpen &&
         createPortal(
-          <div ref={bubbleRef} role="tooltip" id={tooltipId} className="glim-bubble glim-fade">
+          <div
+            ref={bubbleRef}
+            role="tooltip"
+            id={tooltipId}
+            className="glim-bubble glim-fade"
+          >
             {item.tip}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
@@ -734,7 +795,10 @@ export function Selector(props: SelectorProps) {
     // measurement, not a separate clamp afterwards — one call, one floor,
     // still a pure floor (see that constant's own doc): a widest label that
     // already measures past 200px keeps its own larger number untouched.
-    const widest = Math.max(...nodes.map((n) => n.getBoundingClientRect().width), MIN_PINNED_WIDTH);
+    const widest = Math.max(
+      ...nodes.map((n) => n.getBoundingClientRect().width),
+      MIN_PINNED_WIDTH,
+    );
     setMatchedWidth(widest);
   }, [pinWidth, matchedWidth, itemsKey, size, items.length]);
 
@@ -761,7 +825,11 @@ export function Selector(props: SelectorProps) {
   const roved = rovedIndex(disabledFlags, activeIdx);
 
   function segNodes(): HTMLElement[] {
-    return Array.from(strip.current?.querySelectorAll<HTMLElement>("[data-sel-id]:not(:disabled)") ?? []);
+    return Array.from(
+      strip.current?.querySelectorAll<HTMLElement>(
+        "[data-sel-id]:not(:disabled)",
+      ) ?? [],
+    );
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -772,9 +840,16 @@ export function Selector(props: SelectorProps) {
     // Read direction off the strip itself rather than assuming it, so the
     // same component behaves correctly under dir="rtl" (Arabic, Hebrew —
     // both shipped locales, lib/i18n.ts's isRtl) without a prop.
-    const rtl = strip.current ? getComputedStyle(strip.current).direction === "rtl" : false;
+    const rtl = strip.current
+      ? getComputedStyle(strip.current).direction === "rtl"
+      : false;
     const here = nodes.indexOf(document.activeElement as HTMLElement);
-    const next = nextFocusIndex(e.key as SelectorNavKey, here, nodes.length, rtl);
+    const next = nextFocusIndex(
+      e.key as SelectorNavKey,
+      here,
+      nodes.length,
+      rtl,
+    );
     if (next < 0) return;
 
     e.preventDefault();
@@ -881,7 +956,9 @@ export function Selector(props: SelectorProps) {
           // this same crossfade-only transition — the variant exists so a
           // strip reads as one coherent physical control, and that reading
           // is worth exactly as much at the small scale as the large one.
-          well ? "rounded-control [transition:background-color_120ms_ease]" : "rounded-control transition-colors",
+          well
+            ? "rounded-control [transition:background-color_120ms_ease]"
+            : "rounded-control transition-colors",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           // `.glim-hue-icon` (index.css) additionally tints the glyph itself
           // with the item's own hue while idle — right for a tab-strip icon
@@ -901,27 +978,27 @@ export function Selector(props: SelectorProps) {
           hue ? (item.iconOnly ? "glim-hue" : "glim-hue glim-hue-icon") : "",
           on
             ? "glim-active bg-accent text-accentContrast"
-            // "well", BOTH scales (jdp, live-review round 8: "Die kleinen
-            // Selektoren sollen so aussehen wie die grossen! Die nicht
-            // ausgewaehlten Optionen sollen kein Badge sein"). An idle
-            // segment carries NO fill of its own — the groove behind it is
-            // the whole enclosure, and only the chosen segment is a badge.
-            // Round 7's small variant filled every idle segment at
-            // `bg-carbon-surface` instead ("a groove holding keys"), which is
-            // exactly the per-segment badge this reverses; see file header
-            // item 6 for the full writeup.
-            //   The cost, stated where the class lives: this label now sits
-            // on the surface3 groove rather than on a surface fill, so
-            // `text-carbon-textSub` measures 4.57:1 (dark) / 5.12:1 (light)
-            // instead of 8.85:1 / 7.82:1. Both clear WCAG AA for normal text;
-            // dark clears it by 0.08, so treat that as the floor.
-            //   `hover:bg-carbon-hover` is the other half of that trade and
-            // gets better on the deeper groove: 1.57:1 dark / 1.16:1 light
-            // against surface3, up from a near-invisible 1.06:1 / 1.08:1 when
-            // the groove was surface2.
-            //   `plain`/`raised` are both meaningless here (see each prop's
-            // own doc) so neither is read in this branch.
-            : well
+            : // "well", BOTH scales (jdp, live-review round 8: "Die kleinen
+              // Selektoren sollen so aussehen wie die grossen! Die nicht
+              // ausgewaehlten Optionen sollen kein Badge sein"). An idle
+              // segment carries NO fill of its own — the groove behind it is
+              // the whole enclosure, and only the chosen segment is a badge.
+              // Round 7's small variant filled every idle segment at
+              // `bg-carbon-surface` instead ("a groove holding keys"), which is
+              // exactly the per-segment badge this reverses; see file header
+              // item 6 for the full writeup.
+              //   The cost, stated where the class lives: this label now sits
+              // on the surface3 groove rather than on a surface fill, so
+              // `text-carbon-textSub` measures 4.57:1 (dark) / 5.12:1 (light)
+              // instead of 8.85:1 / 7.82:1. Both clear WCAG AA for normal text;
+              // dark clears it by 0.08, so treat that as the floor.
+              //   `hover:bg-carbon-hover` is the other half of that trade and
+              // gets better on the deeper groove: 1.57:1 dark / 1.16:1 light
+              // against surface3, up from a near-invisible 1.06:1 / 1.08:1 when
+              // the groove was surface2.
+              //   `plain`/`raised` are both meaningless here (see each prop's
+              // own doc) so neither is read in this branch.
+              well
               ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
               : plain
                 ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
@@ -1010,9 +1087,13 @@ export function Selector(props: SelectorProps) {
         // fixed width (if `pinWidth` has completed its measurement pass) —
         // both are optional and independent, so this stays undefined
         // whenever neither applies rather than always allocating an object.
-        const hueStyle = hue ? (hueVars(rainbowAt(i)) as CSSProperties) : undefined;
+        const hueStyle = hue
+          ? (hueVars(rainbowAt(i)) as CSSProperties)
+          : undefined;
         const widthStyle: CSSProperties | undefined =
-          pinWidth && matchedWidth !== null ? { width: `${matchedWidth}px` } : undefined;
+          pinWidth && matchedWidth !== null
+            ? { width: `${matchedWidth}px` }
+            : undefined;
         const itemStyle =
           hueStyle || widthStyle ? { ...hueStyle, ...widthStyle } : undefined;
 

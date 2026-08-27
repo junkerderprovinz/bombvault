@@ -100,3 +100,26 @@ describe("computeBubblePosition — combined edge cases", () => {
     expect(pos.left).toBe(1024 - 20 - 100);
   });
 });
+
+describe("computeBubblePosition — vertical clamping", () => {
+  it("pulls a bubble back inside when it fits but would overhang the bottom", () => {
+    // Fits in the viewport, fits neither in the gap below the trigger nor in the
+    // one above it. Before the clamp this stayed at trigger.bottom + margin and
+    // the last ~150px hung off the screen — unreachable, since every consumer is
+    // position:fixed.
+    const trigger = { left: 300, right: 340, top: 300, bottom: 320 };
+    const bubble = { width: 260, height: 600 };
+    const pos = computeBubblePosition(trigger, bubble, VIEWPORT);
+    expect(pos.top).toBeGreaterThanOrEqual(8);
+    expect(pos.top + bubble.height).toBeLessThanOrEqual(VIEWPORT.height);
+  });
+
+  it("leaves a bubble taller than the viewport exactly where it was", () => {
+    // Clipping is unavoidable here, and moving it up would trade a clipped
+    // bottom for a covered trigger. The old behaviour is the better one.
+    const trigger = { left: 300, right: 340, top: 4, bottom: 24 };
+    const bubble = { width: 260, height: 900 };
+    const pos = computeBubblePosition(trigger, bubble, VIEWPORT);
+    expect(pos.top).toBe(24 + 8);
+  });
+});
