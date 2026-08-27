@@ -780,14 +780,52 @@ func TestSettingsEverythingFieldsRoundTrip(t *testing.T) {
 	if !ok {
 		t.Fatalf("settings missing or not nested: %v", m)
 	}
-	for k, want := range map[string]any{
-		"everythingSchedule": "daily 04:00",
-		"everythingPreHook":  "echo pre",
-		"everythingPostHook": "curl -fsS https://hc-ping.com/test-uuid",
-	} {
-		if settings[k] != want {
-			t.Fatalf("%s not round-tripped: got %v, want %v", k, settings[k], want)
+	if settings["everythingSchedule"] != "daily 04:00" {
+		t.Fatalf("everythingSchedule not round-tripped: got %v", settings["everythingSchedule"])
+	}
+	// The hooks deliberately do NOT round-trip. A hook's whole value is often
+	// the secret (this test's own post-hook is a healthchecks.io UUID), and
+	// with no login password set authGate is a pass-through, so echoing them
+	// handed them to any host on the LAN. The GET reports presence instead.
+	for _, k := range []string{"everythingPreHook", "everythingPostHook"} {
+		if settings[k] != "" {
+			t.Fatalf("%s must never be echoed, got %v", k, settings[k])
 		}
+	}
+	for _, k := range []string{"everythingPreHookSet", "everythingPostHookSet"} {
+		if settings[k] != true {
+			t.Fatalf("%s must report the stored hook, got %v", k, settings[k])
+		}
+	}
+
+	// A blank hook on PUT keeps the stored command: every tab's baseline
+	// submits blanks, so taking them at face value would erase a hook on the
+	// next save of an unrelated card.
+	w, m = doJSON(t, h, http.MethodPut, "/api/settings", `{"containersPath":"backups/c","everythingSchedule":"daily 04:00"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("blank-hook put status=%d body=%s", w.Code, w.Body.String())
+	}
+	_, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	settings, _ = m["settings"].(map[string]any)
+	if settings["everythingPreHookSet"] != true || settings["everythingPostHookSet"] != true {
+		t.Fatalf("a blank hook must keep the stored one, got pre=%v post=%v",
+			settings["everythingPreHookSet"], settings["everythingPostHookSet"])
+	}
+
+	// …and the Clear flag is the one way to actually remove one, so a set hook
+	// cannot become undeletable.
+	w, m = doJSON(t, h, http.MethodPut, "/api/settings",
+		`{"containersPath":"backups/c","everythingSchedule":"daily 04:00","everythingPreHookClear":true}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("clear put status=%d body=%s", w.Code, w.Body.String())
+	}
+	_, m = doJSON(t, h, http.MethodGet, "/api/settings", "")
+	settings, _ = m["settings"].(map[string]any)
+	if settings["everythingPreHookSet"] != false {
+		t.Fatalf("the pre-hook should be gone after a clear, got set=%v", settings["everythingPreHookSet"])
+	}
+	if settings["everythingPostHookSet"] != true {
+		t.Fatalf("clearing the pre-hook must not touch the post-hook, got set=%v", settings["everythingPostHookSet"])
 	}
 }
 

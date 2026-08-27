@@ -1354,8 +1354,21 @@ type settingsView struct {
 	// container (HostShell) before/after the whole pass — not secrets, so they
 	// round-trip plainly like every other schedule/hook field.
 	EverythingSchedule string `json:"everythingSchedule"`
-	EverythingPreHook  string `json:"everythingPreHook"`
-	EverythingPostHook string `json:"everythingPostHook"`
+	// Never echoed, for the same reason FleetToken above is not: a hook is a
+	// shell command the operator wrote, and the useful ones carry a secret in
+	// the URL (a healthchecks.io ping is a UUID, an ntfy call a token). With no
+	// login password set authGate is a pass-through by design, so returning
+	// them verbatim handed those to anyone on the LAN. The ...Set flags report
+	// presence, and a blank field on PUT keeps the stored command.
+	// The ...Clear flags are the deliberate way to REMOVE a hook. Without them
+	// "blank keeps the stored one" would make a set hook impossible to get rid
+	// of: the field looks empty while the command still runs.
+	EverythingPreHook       string `json:"everythingPreHook"`
+	EverythingPostHook      string `json:"everythingPostHook"`
+	EverythingPreHookSet    bool   `json:"everythingPreHookSet"`
+	EverythingPostHookSet   bool   `json:"everythingPostHookSet"`
+	EverythingPreHookClear  bool   `json:"everythingPreHookClear"`
+	EverythingPostHookClear bool   `json:"everythingPostHookClear"`
 }
 
 // registryAuthView is one container-registry credential in the settings view
@@ -1382,6 +1395,11 @@ func toView(s store.Settings) settingsView {
 		ConfigPath:                  s.ConfigPath,
 		FilesPath:                   s.FilesPath,
 		RestoreFolder:               s.RestoreFolder,
+		// Verbatim here on purpose. toView is the faithful store-to-view
+		// mapping that BOTH exits share, and the credentialed settings export
+		// is gated on a login password precisely so it can hand out a complete
+		// copy. Each exit applies its own policy instead: redactExportLocations
+		// for the plain export, scrubGetSettingsSecrets for GET /api/settings.
 		ContainersOffsite:           s.ContainersOffsite,
 		VMsOffsite:                  s.VMsOffsite,
 		FlashOffsite:                s.FlashOffsite,
@@ -1450,6 +1468,8 @@ func toView(s store.Settings) settingsView {
 		EverythingSchedule:          s.EverythingSchedule,
 		EverythingPreHook:           s.EverythingPreHook,
 		EverythingPostHook:          s.EverythingPostHook,
+		EverythingPreHookSet:        s.EverythingPreHook != "",
+		EverythingPostHookSet:       s.EverythingPostHook != "",
 	}
 }
 
@@ -1464,13 +1484,43 @@ func clampHealthTimeoutSec(sec int) int {
 	return min(3600, max(5, sec))
 }
 
+// scrubGetSettingsSecrets applies this endpoint's own policy to the shared view.
+//
+// authGate is a pass-through with no login password set (the trusted-LAN model),
+// so everything below would otherwise go to any host on the LAN unauthenticated.
+// Two different treatments, because the two fields are not the same kind of thing:
+//
+//   - The off-site LOCATIONS are scrubbed, not blanked. scrubRepoLocation's own
+//     doc comment settles it: a location is not itself a secret, "which bucket a
+//     box replicates to is the portable part", but it CAN carry one, because
+//     restic accepts rest:https://user:pass@host/repo. Blanking would take the
+//     wizard's backend inference, its cron snippet and the plain answer to "where
+//     does my off-site copy live" with it. A location that comes back on PUT still
+//     carrying the marker keeps the stored one.
+//   - The HOOKS are blanked, with ...Set reporting presence, because a hook's
+//     whole value is often the secret (a healthchecks.io ping is a UUID). The
+//     settings export already blanks them for exactly this reason
+//     (buildSettingsView); this endpoint, the other way they leave the process,
+//     did not. Blank on PUT keeps the stored command, and the ...Clear flags
+//     remove one.
+func scrubGetSettingsSecrets(v settingsView) settingsView {
+	v.ContainersOffsite = scrubRepoLocation(v.ContainersOffsite)
+	v.VMsOffsite = scrubRepoLocation(v.VMsOffsite)
+	v.FlashOffsite = scrubRepoLocation(v.FlashOffsite)
+	v.ConfigOffsite = scrubRepoLocation(v.ConfigOffsite)
+	v.FilesOffsite = scrubRepoLocation(v.FilesOffsite)
+	v.EverythingPreHook = ""
+	v.EverythingPostHook = ""
+	return v
+}
+
 func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	s, err := h.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	view := toView(s)
+	view := scrubGetSettingsSecrets(toView(s))
 	// Registry credentials (#106) live encrypted in the settings row, so toView
 	// (a pure store.Settings mapping) can't decode them — fill the view here.
 	// Tokens are secrets and never echoed; TokenSet reports presence.
@@ -1706,11 +1756,23 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.ConfigPath = v.ConfigPath
 		cur.FilesPath = v.FilesPath
 		cur.RestoreFolder = v.RestoreFolder
-		cur.ContainersOffsite = v.ContainersOffsite
-		cur.VMsOffsite = v.VMsOffsite
-		cur.FlashOffsite = v.FlashOffsite
-		cur.ConfigOffsite = v.ConfigOffsite
-		cur.FilesOffsite = v.FilesOffsite
+		// keepLocation: the GET now hands out these locations with any embedded
+		// credential replaced by the redaction marker, so every client's
+		// baseline carries the redacted form. Writing that back verbatim would
+		// destroy the stored password on the next unrelated save. A location
+		// that still carries the marker therefore keeps the stored one, exactly
+		// as the settings IMPORT already resolves a redacted location.
+		keepLocation := func(incoming, stored string) string {
+			if locationRedacted(incoming) {
+				return stored
+			}
+			return incoming
+		}
+		cur.ContainersOffsite = keepLocation(v.ContainersOffsite, cur.ContainersOffsite)
+		cur.VMsOffsite = keepLocation(v.VMsOffsite, cur.VMsOffsite)
+		cur.FlashOffsite = keepLocation(v.FlashOffsite, cur.FlashOffsite)
+		cur.ConfigOffsite = keepLocation(v.ConfigOffsite, cur.ConfigOffsite)
+		cur.FilesOffsite = keepLocation(v.FilesOffsite, cur.FilesOffsite)
 		cur.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
 		cur.VMsOffsiteSchedule = v.VMsOffsiteSchedule
 		cur.FlashOffsiteSchedule = v.FlashOffsiteSchedule
@@ -1766,8 +1828,24 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.FleetEnabled = v.FleetEnabled
 		cur.InstanceName = strings.TrimSpace(v.InstanceName)
 		cur.EverythingSchedule = v.EverythingSchedule
-		cur.EverythingPreHook = v.EverythingPreHook
-		cur.EverythingPostHook = v.EverythingPostHook
+		// Blank keeps the stored command, same contract as the three tokens
+		// below: the GET never echoes a hook, so EVERY tab's baseline submits
+		// blanks for them, and taking those at face value would erase a hook on
+		// the next save of an unrelated card. Removing one on purpose therefore
+		// needs its own signal, which is what the ...Clear flags are for. The
+		// card renders a Remove control next to a hook it reports as set.
+		switch {
+		case v.EverythingPreHookClear:
+			cur.EverythingPreHook = ""
+		case strings.TrimSpace(v.EverythingPreHook) != "":
+			cur.EverythingPreHook = strings.TrimSpace(v.EverythingPreHook)
+		}
+		switch {
+		case v.EverythingPostHookClear:
+			cur.EverythingPostHook = ""
+		case strings.TrimSpace(v.EverythingPostHook) != "":
+			cur.EverythingPostHook = strings.TrimSpace(v.EverythingPostHook)
+		}
 
 		// Write-only secrets: blank in the form means "keep the stored one", and
 		// the stored one is read here, inside the transaction — so a token minted
