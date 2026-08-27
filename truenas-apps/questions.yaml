@@ -1,16 +1,6 @@
-# TrueNAS Apps UI form schema for BombVault.
-#
-# Structure grounded in the real truenas/apps repo's CONTRIBUTIONS.md and
-# several real community apps (dockhand, duplicati, portainer, urbackup,
-# nginx-proxy-manager, rsyncd — see truenas-apps/app.yaml's header comment
-# and the commit message for exact URLs). Deliberate deviations from the
-# most common pattern are called out inline below.
-#
-# NOTE: no "User and Group Configuration" group/`run_as` question. Per
-# CONTRIBUTIONS.md: "Can be skipped if the app can ONLY run as a specific
-# uid/gid and users can't choose" — BombVault's image has no USER directive
-# (see the Dockerfile) and always runs as root; there is no uid/gid to pick.
-# See app.yaml's run_as_context and templates/docker-compose.yaml's comments.
+# There is no "User and Group Configuration" group here on purpose: the image
+# has no USER directive and always runs as root, so there is no uid/gid for the
+# operator to choose. CONTRIBUTIONS.md allows skipping the group in that case.
 
 groups:
   - name: BombVault Configuration
@@ -354,26 +344,38 @@ questions:
         - variable: host_data
           label: Host Data
           description: |
-            REQUIRED. A REAL, ALREADY-EXISTING host path — the root under
-            which the OTHER containers/apps you want backed up keep their
-            persistent data. Backup sources AND destinations both live
-            here by default (the exact subpaths are picked later in the
-            BombVault WebUI). Deliberately NOT offered as an ixVolume
-            here (unlike Config Storage above): a fresh, empty,
-            auto-created dataset would not contain any of your other
-            apps' existing data. This path is mounted into the container
-            at a fixed internal location, and BombVault is told the REAL
-            host-side path you enter here (via HOST_SOURCE_ROOT) so it can
-            translate the bind-mount sources Docker reports for OTHER
-            containers (which are expressed in terms of THIS real host
-            path) into that fixed internal location — the same
-            fixed-target/real-source split-root scheme the Unraid
-            template uses (there /mnt -> /host/user), not a literal
-            identity bind. Point it at a real, pre-existing directory —
-            e.g. the dataset/pool root your apps already live under.
+            REQUIRED. A real, already-existing host path holding the data
+            you want backed up, normally the pool or dataset your other
+            apps live under, for example /mnt/tank. It is mounted into the
+            container at a fixed internal location, and BombVault is told
+            the real host-side path (via HOST_SOURCE_ROOT) so it can
+            translate the bind-mount sources Docker reports for other
+            containers into that internal location.
+
+            Two limits are worth knowing before you pick a path. TrueNAS
+            does not allow mounting /mnt itself, so choose a pool or
+            dataset below it. And apps left on the default ixVolume
+            storage keep their data under /mnt/.ix-apps, which also cannot
+            be mounted, so for those apps BombVault can back up the
+            container and its definition but not that data. Apps you have
+            configured with host-path storage are fully covered.
+
+            Deliberately not offered as an ixVolume: a fresh, empty,
+            auto-created dataset would contain none of your existing data.
           schema:
             type: hostpath
             required: true
+        - variable: host_data_create
+          label: Create the Host Data path if it does not exist
+          description: |
+            Leave this off for a normal install. The path should already
+            exist, and creating it silently would turn a typo into an
+            empty directory that backs up nothing. It exists mainly so an
+            automated deploy test can run against a path it creates
+            itself.
+          schema:
+            type: boolean
+            default: false
         - variable: additional_storage
           label: Additional Storage
           schema:

@@ -1,10 +1,3 @@
-# CI test values for `.github/scripts/ci.py` in the real truenas/apps repo
-# (--app bombvault --train community --test-file basic-values.yaml).
-#
-# Filename matches the real repo's convention (CONTRIBUTIONS.md: "basic-
-# values.yaml # Basic test scenario (required)") rather than the
-# "default.yaml" name guessed before this file existed.
-
 resources:
   limits:
     cpus: 2
@@ -13,9 +6,7 @@ resources:
 TZ: Etc/UTC
 
 bombvault:
-  # Not a real secret — 64 lowercase hex chars for schema/CI validation only
-  # (length verified with `python3 -c "print(len(k))"`, not eyeballed — a
-  # too-short value here previously slipped past review once already).
+  # Not a real secret: 64 hex characters, the length the schema requires.
   app_key: "ecc786b571f536ebb075da4bfe0ff40f6218631903a7af98722f81d78ee20e28"
   http_only: false
   backup_max_hours: null
@@ -32,7 +23,7 @@ network:
   host_network: false
   web_port:
     bind_mode: published
-    port_number: 30443 # non-default port for testing, catches issues early
+    port_number: 30443
     host_ips: []
   http_port:
     bind_mode: published
@@ -48,10 +39,11 @@ storage:
     ix_volume_config:
       dataset_name: config
       create_host_path: true
-  # Plain required host path (see questions.yaml's comment) — not an
-  # ix_volume, so no ix_volumes: mapping needed for it, same as rsyncd's
-  # per-module host_path test values.
   host_data: /opt/tests/mnt/bombvault/hostdata
+  # The deploy test runs against a path that does not exist yet, so it has to
+  # be created here. A real install leaves this off and points at an existing
+  # pool or dataset.
+  host_data_create: true
   additional_storage: []
 
 labels: []
