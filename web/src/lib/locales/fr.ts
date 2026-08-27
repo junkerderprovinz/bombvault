@@ -794,7 +794,6 @@ const fr: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Une fois activé, les VMs, Flash et Dossiers suivent le planning des Conteneurs au lieu du leur. Désactivez pour définir le rythme de chaque domaine indépendamment.",
   "jobs.vmIncludeHint": "Sauvegarde chaque VM dont l'option « inclure dans le planning » est activée (à régler par VM dans l'onglet VMs).",
   "jobs.flashScheduleHint": "Sauvegarde la clé USB de démarrage Flash d'Unraid (/boot) à l'heure planifiée.",
-  "jobs.flashNotImplemented": "Remarque : l'exécuteur de sauvegarde Flash n'est pas encore implémenté en phase 1 — le planning est enregistré mais pas exécuté.",
   "schedule.includeAll": "Tout inclure dans le planning",
   "schedule.excludeAll": "Tout exclure du planning",
 

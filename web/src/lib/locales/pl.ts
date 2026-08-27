@@ -785,7 +785,6 @@ const pl: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Po włączeniu VMs, Flash i Foldery korzystają z harmonogramu Containers zamiast własnego. Wyłącz, aby ustawić rytm każdej domeny niezależnie.",
   "jobs.vmIncludeHint": "Tworzy kopię każdej VM z włączoną opcją „uwzględnij w harmonogramie” (ustawiane osobno dla każdej VM w zakładce VMs).",
   "jobs.flashScheduleHint": "Tworzy kopię zapasową nośnika rozruchowego USB Flash Unraid (/boot) o zaplanowanej godzinie.",
-  "jobs.flashNotImplemented": "Uwaga: executor kopii Flash nie jest jeszcze zaimplementowany w fazie 1 — harmonogram jest zapisywany, ale nie wykonywany.",
   "schedule.includeAll": "Uwzględnij wszystkie w harmonogramie",
   "schedule.excludeAll": "Wyklucz wszystkie z harmonogramu",
 

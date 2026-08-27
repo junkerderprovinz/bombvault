@@ -821,7 +821,6 @@ const th: Partial<Translations> = {
   "jobs.syncSchedulesHint": "เมื่อเปิดใช้งาน VMs, Flash และโฟลเดอร์ทั้งหมดจะใช้ตารางเวลาของ Containers แทนตารางของตัวเอง ปิดเพื่อกำหนดจังหวะของแต่ละโดเมนแยกกัน",
   "jobs.vmIncludeHint": "สำรองข้อมูลทุก VM ที่เปิด «รวมในตารางเวลา» ไว้ (ตั้งค่าแยกแต่ละ VM ในแท็บ VMs)",
   "jobs.flashScheduleHint": "สำรองข้อมูลไดรฟ์บูต USB Flash ของ Unraid (/boot) ตามเวลาที่กำหนดไว้",
-  "jobs.flashNotImplemented": "หมายเหตุ: ตัวประมวลผลสำรองข้อมูล Flash ยังไม่ได้พัฒนาในเฟส 1 — ตารางเวลาจะถูกบันทึกแต่ไม่ถูกดำเนินการ",
   "schedule.includeAll": "รวมทั้งหมดในตารางเวลา",
   "schedule.excludeAll": "ยกเว้นทั้งหมดจากตารางเวลา",
 

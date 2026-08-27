@@ -793,7 +793,6 @@ const ro: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Când este activată, VM-urile, Flash și Folderele urmează programarea Containerelor în loc de propria lor. Dezactivați pentru a seta ritmul fiecărui domeniu în mod independent.",
   "jobs.vmIncludeHint": "Face backup fiecărui VM cu „Includeți în programare” activat (se setează per VM în fila VMs).",
   "jobs.flashScheduleHint": "Face copie de rezervă a stick-ului USB de pornire Flash al Unraid (/boot) la ora programată.",
-  "jobs.flashNotImplemented": "Notă: Executorul de backup Flash nu este încă implementat în Faza 1 — programarea este salvată, dar nu este executată.",
   "schedule.includeAll": "Include toate în programare",
   "schedule.excludeAll": "Exclude toate din programare",
 

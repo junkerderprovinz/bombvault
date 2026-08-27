@@ -806,7 +806,6 @@ const et: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Kui see on sees, järgivad VM-id, Flash ja Kaustad oma ajakava asemel Konteinerite ajakava. Lülita välja, et määrata igale valdkonnale oma rütm.",
   "jobs.flashScheduleHint": "Varundab Unraidi USB-alglaadimisdraivi (/boot) plaanitud ajal.",
   "jobs.vmIncludeHint": "Varundab iga VM-i, millel on „lisa ajakavasse” sees (määra iga VM-i kohta VM-ide vahekaardil).",
-  "jobs.flashNotImplemented": "Märkus: Flashi varunduse käivitaja pole Faasis 1 veel rakendatud — ajakava salvestatakse, kuid seda ei käivitata.",
   "schedule.includeAll": "Lisa kõik ajakavasse",
   "schedule.excludeAll": "Jäta kõik ajakavast välja",
   "schedule.updateFailed": "Ajakava ei õnnestunud uuendada",

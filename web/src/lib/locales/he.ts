@@ -794,7 +794,6 @@ const he: Partial<Translations> = {
   "jobs.syncSchedulesHint": "כאשר מופעל, VMs, Flash ותיקיות פועלים לפי לוח הזמנים של Containers במקום לפי שלהם. כבה כדי להגדיר קצב נפרד לכל תחום.",
   "jobs.vmIncludeHint": "מגבה כל VM שבו מופעל „כלול בלוח הזמנים‟ (נקבע לכל VM בלשונית VMs).",
   "jobs.flashScheduleHint": "מגבה את כונן ה-USB לאתחול Flash של Unraid (/boot) בשעה המתוזמנת.",
-  "jobs.flashNotImplemented": "הערה: מנוע גיבוי Flash טרם מומש בשלב 1 — לוח הזמנים נשמר אך אינו מורץ.",
   "schedule.includeAll": "כלול הכל בלוח הזמנים",
   "schedule.excludeAll": "החרג הכל מלוח הזמנים",
 

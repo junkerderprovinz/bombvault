@@ -806,7 +806,6 @@ const id: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Saat diaktifkan, VM, Flash, dan Folder mengikuti jadwal Container alih-alih jadwal mereka sendiri. Matikan untuk mengatur ritme independen bagi setiap domain.",
   "jobs.flashScheduleHint": "Mencadangkan drive boot USB Flash Unraid (/boot) pada waktu yang dijadwalkan.",
   "jobs.vmIncludeHint": "Mencadangkan setiap VM dengan \"sertakan dalam jadwal\" aktif (diatur per VM di tab VM).",
-  "jobs.flashNotImplemented": "Catatan: pelaksana pencadangan Flash belum diimplementasikan pada Fase 1 — jadwal disimpan tetapi tidak dijalankan.",
   "schedule.includeAll": "Sertakan semua dalam jadwal",
   "schedule.excludeAll": "Kecualikan semua dari jadwal",
   "schedule.updateFailed": "Jadwal gagal diperbarui",

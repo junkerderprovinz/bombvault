@@ -806,7 +806,6 @@ const ms: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Apabila dihidupkan, VM, Flash dan Folder mengikut jadual Bekas dan bukannya jadual sendiri. Matikan untuk menetapkan rentak bebas bagi setiap domain.",
   "jobs.flashScheduleHint": "Menyandarkan pemacu but USB Flash Unraid (/boot) pada masa berjadual.",
   "jobs.vmIncludeHint": "Menyandarkan setiap VM dengan \"sertakan dalam jadual\" dihidupkan (ditetapkan bagi setiap VM dalam tab VM).",
-  "jobs.flashNotImplemented": "Nota: pelaksana sandaran Flash belum dilaksanakan lagi dalam Fasa 1 — jadual disimpan tetapi tidak dijalankan.",
   "schedule.includeAll": "Sertakan semua dalam jadual",
   "schedule.excludeAll": "Kecualikan semua daripada jadual",
   "schedule.updateFailed": "Jadual gagal dikemas kini",

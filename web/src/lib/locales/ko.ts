@@ -786,7 +786,6 @@ const ko: Partial<Translations> = {
   "jobs.syncSchedulesHint": "활성화하면 VM, Flash, 폴더가 자체 일정 대신 컨테이너 일정을 따릅니다. 각 도메인의 주기를 독립적으로 설정하려면 끄세요.",
   "jobs.vmIncludeHint": "「일정에 포함」이 활성화된 모든 VM을 백업합니다(VMs 탭에서 VM별로 설정).",
   "jobs.flashScheduleHint": "예약된 시간에 Unraid USB 플래시 부팅 드라이브(/boot)를 백업합니다.",
-  "jobs.flashNotImplemented": "참고: Flash 백업 실행기는 1단계에서 아직 구현되지 않았습니다 — 일정은 저장되지만 실행되지는 않습니다.",
   "schedule.includeAll": "모두 일정에 포함",
   "schedule.excludeAll": "모두 일정에서 제외",
 

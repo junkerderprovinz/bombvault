@@ -806,7 +806,6 @@ const gl: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Cando está activado, MV, Flash e Cartafoles seguen o horario de Contedores en vez do propio. Desactívao para fixar un ritmo independente para cada dominio.",
   "jobs.flashScheduleHint": "Fai copia da unidade USB de arranque Flash de Unraid (/boot) á hora programada.",
   "jobs.vmIncludeHint": "Fai copia de cada MV con «incluír na planificación» activado (configurable por MV na lapela MV).",
-  "jobs.flashNotImplemented": "Nota: o executor de copia de Flash aínda non está implementado na Fase 1 — o horario gárdase pero non se executa.",
   "schedule.includeAll": "Incluír todo no horario",
   "schedule.excludeAll": "Excluír todo do horario",
   "schedule.updateFailed": "Non se puido actualizar o horario",

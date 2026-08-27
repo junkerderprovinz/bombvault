@@ -806,7 +806,6 @@ const is: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Þegar þetta er virkt fylgja sýndarvélar, Flash og möppur tímaáætlun gáma í stað eigin. Slökktu til að setja sjálfstæðan takt fyrir hvert svæði.",
   "jobs.flashScheduleHint": "Afritar Unraid USB-ræsidiskinn (/boot) á áætluðum tíma.",
   "jobs.vmIncludeHint": "Afritar hverja sýndarvél með virkjuðu „setja í tímaáætlun“ (stillt fyrir hverja sýndarvél í sýndarvélaflipanum).",
-  "jobs.flashNotImplemented": "Athugið: framkvæmdaraðili Flash-afritunar hefur ekki enn verið innleiddur í Áfanga 1 — tímaáætlunin er vistuð en ekki keyrð.",
   "schedule.includeAll": "Setja allt í tímaáætlun",
   "schedule.excludeAll": "Taka allt úr tímaáætlun",
   "schedule.updateFailed": "Ekki tókst að uppfæra tímaáætlunina",

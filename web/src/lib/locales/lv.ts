@@ -806,7 +806,6 @@ const lv: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Kad ieslēgts, VM, Flash un Mapes seko Konteineru grafikam, nevis savam. Izslēdziet, lai katram domēnam iestatītu neatkarīgu ritmu.",
   "jobs.flashScheduleHint": "Dublē Unraid USB sāknēšanas dzini (/boot) ieplānotajā laikā.",
   "jobs.vmIncludeHint": "Dublē katru VM ar iespējotu „iekļaut grafikā” (iestatāms katrai VM cilnē VM).",
-  "jobs.flashNotImplemented": "Piezīme: Flash rezerves kopēšanas izpildītājs 1. fāzē vēl nav ieviests — grafiks tiek saglabāts, bet netiek izpildīts.",
   "schedule.includeAll": "Iekļaut visus grafikā",
   "schedule.excludeAll": "Izslēgt visus no grafika",
   "schedule.updateFailed": "Neizdevās atjaunināt grafiku",

@@ -802,7 +802,6 @@ const sl: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Ko je omogočeno, VM-ji, Flash in Mape sledijo urniku vsebnikov namesto svojemu. Izklopi, da vsaki domeni ročno nastaviš svoj utrip.",
   "jobs.flashScheduleHint": "Ob načrtovanem času varnostno kopira Unraidov USB zagonski pogon Flash (/boot).",
   "jobs.vmIncludeHint": "Varnostno kopira vsak VM z omogočenim \"vključi v urnik\" (nastavi za vsak VM posebej v zavihku VM-ji).",
-  "jobs.flashNotImplemented": "Opomba: izvajalnik za varnostno kopiranje Flasha v prvi fazi še ni implementiran — urnik je shranjen, a se ne izvaja.",
   "schedule.includeAll": "Vključi vse v urnik",
   "schedule.excludeAll": "Izključi vse iz urnika",
   "schedule.updateFailed": "Posodobitev urnika ni uspela",

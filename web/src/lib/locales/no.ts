@@ -790,7 +790,6 @@ const no: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Når aktivert følger VM-er, Flash og Mapper kontainer-tidsplanen i stedet for sin egen. Slå av for å angi hver domenes rytme uavhengig.",
   "jobs.vmIncludeHint": "Sikkerhetskopierer hver VM med «Inkluder i tidsplan» aktivert (stilles inn per VM i VMs-fanen).",
   "jobs.flashScheduleHint": "Sikkerhetskopierer Unraids USB-flash-oppstartsdisk (/boot) til planlagt tid.",
-  "jobs.flashNotImplemented": "Merk: Flash-sikkerhetskopi-executoren er ennå ikke implementert i fase 1 — tidsplanen lagres, men kjøres ikke.",
   "schedule.includeAll": "Inkluder alle i tidsplan",
   "schedule.excludeAll": "Ekskluder alle fra tidsplan",
 

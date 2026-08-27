@@ -818,7 +818,6 @@ const fi: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Kun käytössä, VM:t, Flash ja Kansiot noudattavat konttien aikataulua oman sijaan. Poista käytöstä, jos haluat asettaa kunkin osa-alueen rytmin erikseen.",
   "jobs.vmIncludeHint": "Varmuuskopioi jokaisen VM:n, jolla „sisällytä aikatauluun” on käytössä (asetetaan VM-kohtaisesti VMs-välilehdellä).",
   "jobs.flashScheduleHint": "Varmuuskopioi Unraidin käynnistys-USB:n (Flash, /boot) ajoitettuna aikana.",
-  "jobs.flashNotImplemented": "Huomautus: Flash-varmuuskopioinnin suoritinta ei ole vielä toteutettu vaiheessa 1 — aikataulu tallennetaan, mutta sitä ei suoriteta.",
   "schedule.includeAll": "Sisällytä kaikki aikatauluun",
   "schedule.excludeAll": "Poista kaikki aikataulusta",
 

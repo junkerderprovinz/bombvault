@@ -806,7 +806,6 @@ const eu: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Piztuta dagoenean, MB, Flash eta Karpetek beren egutegiaren ordez Edukiontzien egutegia jarraitzen dute. Itzali domeinu bakoitzari erritmo independentea ezartzeko.",
   "jobs.flashScheduleHint": "Unraid USB abioko unitatea (/boot) programatutako orduan babesten du.",
   "jobs.vmIncludeHint": "«egutegian sartu» piztuta duen MB bakoitza babesten du (MB fitxan MBko ezar daiteke).",
-  "jobs.flashNotImplemented": "Oharra: Flash-en babeskopia-exekutatzailea oraindik ez dago 1. Fasean inplementatuta — egutegia gordetzen da baina ez da exekutatzen.",
   "schedule.includeAll": "Sartu denak egutegian",
   "schedule.excludeAll": "Baztertu denak egutegitik",
   "schedule.updateFailed": "Ezin izan da egutegia eguneratu",

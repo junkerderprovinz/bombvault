@@ -794,7 +794,6 @@ const it: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Se attivo, VM, Flash e Cartelle seguono il calendario dei Container invece del proprio. Disattiva per impostare il ritmo di ogni dominio in modo indipendente.",
   "jobs.vmIncludeHint": "Esegue il backup di ogni VM con «includi nel calendario» attivo (impostabile per VM nella scheda VM).",
   "jobs.flashScheduleHint": "Esegue il backup della chiavetta USB di avvio Flash di Unraid (/boot) all'orario pianificato.",
-  "jobs.flashNotImplemented": "Nota: l'esecutore di backup Flash non è ancora implementato nella fase 1 — il calendario viene salvato ma non eseguito.",
   "schedule.includeAll": "Includi tutto nel calendario",
   "schedule.excludeAll": "Escludi tutto dal calendario",
 

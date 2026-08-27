@@ -806,7 +806,6 @@ const lt: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Kai įjungta, VM, Flash ir aplankai seka konteinerių tvarkaraštį, o ne savo. Išjunkite, kad nustatytumėte kiekvienai sričiai nepriklausomą ritmą.",
   "jobs.flashScheduleHint": "Kopijuoja Unraid USB paleidimo diską (/boot) suplanuotu laiku.",
   "jobs.vmIncludeHint": "Kopijuoja kiekvieną VM, kuriai įjungta „įtraukti į tvarkaraštį“ (nustatoma kiekvienai VM VM skirtuke).",
-  "jobs.flashNotImplemented": "Pastaba: Flash atsarginio kopijavimo vykdytojas dar neįdiegtas 1 fazėje — tvarkaraštis išsaugomas, bet nevykdomas.",
   "schedule.includeAll": "Įtraukti visus į tvarkaraštį",
   "schedule.excludeAll": "Pašalinti visus iš tvarkaraščio",
   "schedule.updateFailed": "Nepavyko atnaujinti tvarkaraščio",

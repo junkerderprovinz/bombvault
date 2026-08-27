@@ -806,7 +806,6 @@ const ca: Partial<Translations> = {
   "jobs.syncSchedulesHint": "Quan està activat, MV, Flash i Carpetes segueixen l'horari de Contenidors en comptes del propi. Desactiva-ho per fixar un ritme independent per a cada domini.",
   "jobs.flashScheduleHint": "Fa còpia de la unitat USB d'arrencada Flash d'Unraid (/boot) a l'hora programada.",
   "jobs.vmIncludeHint": "Fa còpia de cada MV amb «inclou en la planificació» activat (es configura per MV a la pestanya MV).",
-  "jobs.flashNotImplemented": "Nota: l'executor de còpia de Flash encara no està implementat a la Fase 1 — l'horari es desa però no s'executa.",
   "schedule.includeAll": "Inclou tot a l'horari",
   "schedule.excludeAll": "Exclou tot de l'horari",
   "schedule.updateFailed": "No s'ha pogut actualitzar l'horari",

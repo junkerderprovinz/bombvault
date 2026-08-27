@@ -821,7 +821,6 @@ const ar: Partial<Translations> = {
   "jobs.syncSchedulesHint": "عند التفعيل، تتبع VMs وFlash والمجلدات جدول Containers بدلاً من جدولها الخاص. أوقف التفعيل لضبط وتيرة كل نطاق بشكل مستقل.",
   "jobs.vmIncludeHint": "ينسخ كل VM مفعَّل فيه «التضمين في الجدول» احتياطياً (يُضبط لكل VM في تبويب VMs).",
   "jobs.flashScheduleHint": "ينسخ محرك أقراص USB الإقلاعي Flash الخاص بـ Unraid (/boot) احتياطيًا في الوقت المجدول.",
-  "jobs.flashNotImplemented": "ملاحظة: منفذ نسخ Flash الاحتياطي لم يُنفَّذ بعد في المرحلة الأولى — يُحفظ الجدول لكنه لا يُنفَّذ.",
   "schedule.includeAll": "تضمين الكل في الجدول",
   "schedule.excludeAll": "استبعاد الكل من الجدول",
 
