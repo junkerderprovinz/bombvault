@@ -247,6 +247,8 @@ const uk: Partial<Translations> = {
   "jobs.vmsSection": "Віртуальні машини",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Без розкладу",
+  "picker.hue": "Відтінок",
+  "picker.saturationBrightness": "Насиченість і яскравість",
   "jobs.cadenceDaily": "Щодня о {time}",
   "jobs.cadenceWeekly": "Щотижня ({days}) о {time}",
   "jobs.cadenceEveryN": "Кожні {n} дн. о {time}",

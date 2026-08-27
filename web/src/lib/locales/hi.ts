@@ -746,6 +746,8 @@ const hi: Partial<Translations> = {
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "फ़्लैश",
   "jobs.notScheduled": "शेड्यूल नहीं किया गया",
+  "picker.hue": "रंगत",
+  "picker.saturationBrightness": "संतृप्ति और चमक",
   "jobs.cadenceDaily": "रोज़ {time} बजे",
   "jobs.cadenceWeekly": "हर हफ़्ते ({days}) {time} बजे",
   "jobs.cadenceEveryN": "हर {n} दिन में {time} बजे",

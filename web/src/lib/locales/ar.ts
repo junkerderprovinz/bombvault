@@ -249,6 +249,8 @@ const ar: Partial<Translations> = {
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "غير مجدوَل",
+  "picker.hue": "درجة اللون",
+  "picker.saturationBrightness": "التشبع والسطوع",
   "jobs.cadenceDaily": "يوميًا في {time}",
   "jobs.cadenceWeekly": "أسبوعيًا ({days}) في {time}",
   "jobs.cadenceEveryN": "كل {n} أيام في {time}",

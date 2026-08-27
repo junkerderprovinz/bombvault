@@ -746,6 +746,8 @@ const ca: Partial<Translations> = {
   "jobs.vmsSection": "MV",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Sense programar",
+  "picker.hue": "To",
+  "picker.saturationBrightness": "Saturació i brillantor",
   "jobs.cadenceDaily": "Diàriament a les {time}",
   "jobs.cadenceWeekly": "Setmanalment ({days}) a les {time}",
   "jobs.cadenceEveryN": "Cada {n} dies a les {time}",

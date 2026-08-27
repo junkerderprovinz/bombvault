@@ -249,6 +249,8 @@ const ja: Partial<Translations> = {
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "フラッシュ",
   "jobs.notScheduled": "未スケジュール",
+  "picker.hue": "色相",
+  "picker.saturationBrightness": "彩度と明度",
   "jobs.cadenceDaily": "毎日 {time}",
   "jobs.cadenceWeekly": "毎週（{days}）{time}",
   "jobs.cadenceEveryN": "{n}日ごと {time}",

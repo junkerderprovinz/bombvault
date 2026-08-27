@@ -746,6 +746,8 @@ const lt: Partial<Translations> = {
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Neplanuota",
+  "picker.hue": "Atspalvis",
+  "picker.saturationBrightness": "Sodrumas ir šviesumas",
   "jobs.cadenceDaily": "Kasdien {time}",
   "jobs.cadenceWeekly": "Kas savaitę ({days}) {time}",
   "jobs.cadenceEveryN": "Kas {n} dienų {time}",

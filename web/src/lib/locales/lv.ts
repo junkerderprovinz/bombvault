@@ -746,6 +746,8 @@ const lv: Partial<Translations> = {
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Nav ieplānots",
+  "picker.hue": "Nokrāsa",
+  "picker.saturationBrightness": "Piesātinājums un spilgtums",
   "jobs.cadenceDaily": "Katru dienu {time}",
   "jobs.cadenceWeekly": "Katru nedēļu ({days}) {time}",
   "jobs.cadenceEveryN": "Ik pēc {n} dienām {time}",

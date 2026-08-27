@@ -249,6 +249,8 @@ const el: Partial<Translations> = {
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Μη προγραμματισμένο",
+  "picker.hue": "Απόχρωση",
+  "picker.saturationBrightness": "Κορεσμός και φωτεινότητα",
   "jobs.cadenceDaily": "Καθημερινά στις {time}",
   "jobs.cadenceWeekly": "Εβδομαδιαία ({days}) στις {time}",
   "jobs.cadenceEveryN": "Κάθε {n} ημέρες στις {time}",

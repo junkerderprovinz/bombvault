@@ -246,6 +246,8 @@ const pt: Partial<Translations> = {
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Não agendado",
+  "picker.hue": "Matiz",
+  "picker.saturationBrightness": "Saturação e brilho",
   "jobs.cadenceDaily": "Diariamente às {time}",
   "jobs.cadenceWeekly": "Semanal ({days}) às {time}",
   "jobs.cadenceEveryN": "A cada {n} dias às {time}",

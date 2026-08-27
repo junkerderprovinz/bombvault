@@ -746,6 +746,8 @@ const is: Partial<Translations> = {
   "jobs.vmsSection": "Sýndarvélar",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Ekki áætlað",
+  "picker.hue": "Litblær",
+  "picker.saturationBrightness": "Mettun og birta",
   "jobs.cadenceDaily": "Daglega klukkan {time}",
   "jobs.cadenceWeekly": "Vikulega ({days}) klukkan {time}",
   "jobs.cadenceEveryN": "Á {n} daga fresti klukkan {time}",

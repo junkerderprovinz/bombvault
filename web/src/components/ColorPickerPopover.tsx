@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { createPortal } from "react-dom";
+import { useT } from "../lib/i18n";
 
 // ---------------------------------------------------------------------------
 // ColorPickerSwatch — the shared custom-colour trigger (design-language.md,
@@ -129,6 +137,7 @@ export function ColorPickerSwatch({
    *  component hard-coding one. */
   className?: string;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [hsv, setHsv] = useState<Hsv>(() => hexToHsv(value) ?? DEFAULT_HSV);
   const [hexDraft, setHexDraft] = useState(value);
@@ -220,6 +229,98 @@ export function ColorPickerSwatch({
     };
   }, [open, closeSelf]);
 
+  // ONE update path for every input: drag, keyboard, and the hex field all end
+  // here. It used to live inside the drag effect, which is why the keyboard had
+  // nowhere to plug in.
+  const apply = useCallback((patch: Partial<Hsv>) => {
+    const next = { ...hsvRef.current, ...patch };
+    hsvRef.current = next;
+    setHsv(next);
+    const hex = hsvToHex(next.h, next.s, next.v);
+    setHexDraft(hex);
+    onChangeRef.current(hex);
+  }, []);
+
+  // Keyboard equivalents of the two drags. The SV square and the hue bar were
+  // bare <div>s with mousedown/touchstart and nothing else: no tabindex, no
+  // role, no keys. That made the palette swatches unreachable without a mouse —
+  // a regression against the native <input type="color"> they replaced, which
+  // was fully keyboard-operable. (The accent swatch at least kept its 8
+  // presets; the palette had nothing.)
+  //
+  // Step sizes follow the usual slider convention: arrows nudge, PageUp/Down
+  // and Shift take the coarse step, Home/End go to the ends.
+  const HUE_STEP = 1;
+  const HUE_PAGE = 15;
+  const SV_STEP = 0.01;
+  const SV_PAGE = 0.1;
+
+  function clamp01(n: number) {
+    return Math.min(1, Math.max(0, n));
+  }
+
+  function onHueKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    const coarse = e.shiftKey || e.key === "PageUp" || e.key === "PageDown";
+    const step = coarse ? HUE_PAGE : HUE_STEP;
+    let h: number;
+    const cur = hsvRef.current.h;
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowUp":
+      case "PageUp":
+        h = cur + step;
+        break;
+      case "ArrowLeft":
+      case "ArrowDown":
+      case "PageDown":
+        h = cur - step;
+        break;
+      case "Home":
+        h = 0;
+        break;
+      case "End":
+        h = 359;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    // Hue is a circle, so it wraps rather than clamping.
+    apply({ h: ((h % 360) + 360) % 360 });
+  }
+
+  function onSvKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    const step = e.shiftKey || e.key === "PageUp" || e.key === "PageDown" ? SV_PAGE : SV_STEP;
+    const { s: curS, v: curV } = hsvRef.current;
+    let patch: Partial<Hsv>;
+    switch (e.key) {
+      case "ArrowRight":
+        patch = { s: clamp01(curS + step) };
+        break;
+      case "ArrowLeft":
+        patch = { s: clamp01(curS - step) };
+        break;
+      case "ArrowUp":
+      case "PageUp":
+        patch = { v: clamp01(curV + step) };
+        break;
+      case "ArrowDown":
+      case "PageDown":
+        patch = { v: clamp01(curV - step) };
+        break;
+      case "Home":
+        patch = { s: 0, v: 1 };
+        break;
+      case "End":
+        patch = { s: 1, v: 1 };
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    apply(patch);
+  }
+
   // Drag wiring for the SV square + hue bar — mouse and touch both, exactly
   // reference/colorPicker.ts's own `drag()` helper, ported to attach/detach
   // via a ref-scoped effect instead of returning plain DOM nodes.
@@ -228,15 +329,6 @@ export function ColorPickerSwatch({
     const svEl = svRef.current;
     const hueEl = hueRef.current;
     if (!svEl || !hueEl) return;
-
-    function apply(patch: Partial<Hsv>) {
-      const next = { ...hsvRef.current, ...patch };
-      hsvRef.current = next;
-      setHsv(next);
-      const hex = hsvToHex(next.h, next.s, next.v);
-      setHexDraft(hex);
-      onChangeRef.current(hex);
-    }
 
     function clientPoint(e: MouseEvent | TouchEvent): { x: number; y: number } | null {
       if ("touches" in e) {
@@ -284,7 +376,10 @@ export function ColorPickerSwatch({
       detachSv();
       detachHue();
     };
-  }, [open]);
+    // `apply` is a useCallback with no dependencies of its own, so listing it
+    // does not re-attach the listeners on every render — it just stops the
+    // dependency list from lying about what this effect reads.
+  }, [open, apply]);
 
   return (
     <>
@@ -313,8 +408,23 @@ export function ColorPickerSwatch({
             style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
           >
             <div className="glim-picker">
+              {/* role="slider" on a 2-D control is a deliberate approximation:
+                  ARIA has no two-axis slider, and the alternatives (two linked
+                  sliders, or role="application") either double the tab stops or
+                  hand the whole panel's key handling to the page. aria-valuetext
+                  carries BOTH axes so a screen reader still announces the real
+                  position; aria-valuenow tracks saturation, the axis the arrow
+                  keys move first. */}
               <div
                 ref={svRef}
+                role="slider"
+                tabIndex={0}
+                aria-label={t("picker.saturationBrightness")}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(hsv.s * 100)}
+                aria-valuetext={`${Math.round(hsv.s * 100)}% / ${Math.round(hsv.v * 100)}%`}
+                onKeyDown={onSvKeyDown}
                 className="glim-picker-sv"
                 style={{
                   background: `linear-gradient(to top, #000, rgba(0,0,0,0)), linear-gradient(to right, #fff, hsl(${Math.round(hsv.h)},100%,50%))`,
@@ -325,7 +435,17 @@ export function ColorPickerSwatch({
                   style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%` }}
                 />
               </div>
-              <div ref={hueRef} className="glim-picker-hue">
+              <div
+                ref={hueRef}
+                role="slider"
+                tabIndex={0}
+                aria-label={t("picker.hue")}
+                aria-valuemin={0}
+                aria-valuemax={359}
+                aria-valuenow={Math.round(hsv.h)}
+                onKeyDown={onHueKeyDown}
+                className="glim-picker-hue"
+              >
                 <span className="glim-picker-hdot" style={{ left: `${(hsv.h / 360) * 100}%` }} />
               </div>
             </div>

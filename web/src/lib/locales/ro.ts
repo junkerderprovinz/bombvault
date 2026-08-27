@@ -246,6 +246,8 @@ const ro: Partial<Translations> = {
   "jobs.vmsSection": "VM-uri",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Neprogramat",
+  "picker.hue": "Nuanță",
+  "picker.saturationBrightness": "Saturație și luminozitate",
   "jobs.cadenceDaily": "Zilnic la {time}",
   "jobs.cadenceWeekly": "Săptămânal ({days}) la {time}",
   "jobs.cadenceEveryN": "La fiecare {n} zile la {time}",

@@ -746,6 +746,8 @@ const fa: Partial<Translations> = {
   "jobs.vmsSection": "ماشین‌های مجازی",
   "jobs.flashSection": "فلش",
   "jobs.notScheduled": "زمان‌بندی‌نشده",
+  "picker.hue": "رنگ‌مایه",
+  "picker.saturationBrightness": "اشباع و روشنایی",
   "jobs.cadenceDaily": "هر روز ساعت {time}",
   "jobs.cadenceWeekly": "هر هفته ({days}) ساعت {time}",
   "jobs.cadenceEveryN": "هر {n} روز ساعت {time}",

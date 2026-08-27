@@ -249,6 +249,8 @@ const he: Partial<Translations> = {
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "לא מתוזמן",
+  "picker.hue": "גוון",
+  "picker.saturationBrightness": "רוויה ובהירות",
   "jobs.cadenceDaily": "מדי יום ב-{time}",
   "jobs.cadenceWeekly": "שבועי ({days}) ב-{time}",
   "jobs.cadenceEveryN": "כל {n} ימים ב-{time}",

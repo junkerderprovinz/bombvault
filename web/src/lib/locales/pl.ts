@@ -244,6 +244,8 @@ const pl: Partial<Translations> = {
   "jobs.vmsSection": "Maszyny wirtualne",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Bez harmonogramu",
+  "picker.hue": "Odcień",
+  "picker.saturationBrightness": "Nasycenie i jasność",
   "jobs.cadenceDaily": "Codziennie o {time}",
   "jobs.cadenceWeekly": "Co tydzień ({days}) o {time}",
   "jobs.cadenceEveryN": "Co {n} dni o {time}",
