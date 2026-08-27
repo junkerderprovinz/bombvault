@@ -781,6 +781,7 @@ const th: Partial<Translations> = {
   "dashboard.rpoOverdue": "เกินกำหนด",
   "dashboard.rpoNever": "ยังไม่มีการสำรองข้อมูล",
   "dashboard.rpoOff": "ไม่มีตารางเวลา",
+  "dashboard.rpoViaEverything": "{cadence} ผ่านสำรองข้อมูลทั้งหมด",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

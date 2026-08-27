@@ -770,6 +770,7 @@ const vi: Partial<Translations> = {
   "dashboard.rpoOverdue": "Quá hạn",
   "dashboard.rpoNever": "Chưa có bản sao lưu",
   "dashboard.rpoOff": "Chưa lên lịch",
+  "dashboard.rpoViaEverything": "{cadence}, qua Sao lưu toàn bộ",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

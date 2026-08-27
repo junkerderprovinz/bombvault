@@ -746,6 +746,7 @@ const pl: Partial<Translations> = {
   "dashboard.rpoOverdue": "Zaległe",
   "dashboard.rpoNever": "Brak kopii zapasowej",
   "dashboard.rpoOff": "Bez harmonogramu",
+  "dashboard.rpoViaEverything": "{cadence}, przez Pełną kopię",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "Maszyny wirtualne",
   "dashboard.domainFlash": "Flash",

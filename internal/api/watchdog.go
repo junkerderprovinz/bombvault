@@ -102,7 +102,14 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		if !last.IsZero() {
 			lastUnix = last.Unix()
 		}
-		period := cadencePeriodSeconds(d.schedule)
+		// Same coverage rule DomainStatus uses, and it bites harder here: a domain
+		// backed up only by the "Backup Everything" pass has no cadence of its
+		// own, so reading that cadence alone gave period 0 — and period 0 means
+		// "no expectation", which switches this watchdog OFF for that domain. A
+		// user who runs the whole server through the pass, the configuration
+		// #177's reporter is in, had no dead-man's switch on any domain at all,
+		// and nothing said so.
+		period, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
 
 		state, haveState, sErr := s.store.GetWatchdogState(d.name)
 		if sErr != nil {

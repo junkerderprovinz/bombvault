@@ -1584,9 +1584,16 @@ var errOffsiteAppendOnly = errors.New("repo is append-only; prune far-side or us
 // domain's backups are current relative to its schedule. It drives the
 // dashboard's green/amber/red "are my backups current?" indicator.
 type DomainStatusEntry struct {
-	Domain        string `json:"domain"`        // "containers" | "vms" | "flash" | "config" | "files"
-	Enabled       bool   `json:"enabled"`       // domain switched on in Settings
-	Schedule      string `json:"schedule"`      // the cadence string (e.g. "daily 02:30")
+	Domain   string `json:"domain"`   // "containers" | "vms" | "flash" | "config" | "files"
+	Enabled  bool   `json:"enabled"`  // domain switched on in Settings
+	Schedule string `json:"schedule"` // the domain's OWN cadence string (e.g. "daily 02:30")
+	// CoveredBy carries the "Backup Everything" cadence when that pass is the
+	// ONLY thing backing this domain up — its own schedule is off, but the pass
+	// includes it. Empty whenever the domain has a schedule of its own, so a
+	// client can render "the domain's cadence" and "covered by the whole-server
+	// pass" as the different statements they are. Without it the status read
+	// "Not scheduled" for a domain backed up nightly (#177).
+	CoveredBy     string `json:"coveredBy"`
 	LastSuccess   int64  `json:"lastSuccess"`   // unix time of the last successful backup, 0 = none
 	PeriodSeconds int64  `json:"periodSeconds"` // expected RPO window in seconds, 0 = no expectation
 	Status        string `json:"status"`        // "off" | "never" | "overdue" | "warn" | "ok"
@@ -1682,6 +1689,38 @@ func cadencePeriodSeconds(cadence string) int64 {
 		return 0
 	}
 	return cad.PeriodSeconds()
+}
+
+// domainCoverage answers "how often does this domain actually get backed up, and
+// by what" for ONE domain, given its own cadence and the "Backup Everything"
+// cadence. It returns the RPO window in seconds and, when the pass is the only
+// thing covering the domain, that pass's cadence string.
+//
+// Backup Everything runs the domains as a sixth, independent pseudo-domain, so a
+// user can (and #177's reporter does) leave every per-domain schedule off and let
+// the pass do the work. Reading the per-domain cadence alone then answers zero,
+// which the protection status renders as "Not scheduled" for a domain that is in
+// fact backed up nightly, and which makes the overdue watchdog fall silent for
+// that domain entirely — the far more expensive half, since its whole job is to
+// notice when backups stop.
+//
+// When both are scheduled the window is the SHORTER of the two: whichever fires
+// more often is what bounds how stale a backup can get. The pass only touches
+// domains that are switched on, so a switched-off domain gets no coverage from
+// it either — the caller's own enabled check still governs.
+func domainCoverage(ownCadence, everythingCadence string) (period int64, coveredBy string) {
+	own := cadencePeriodSeconds(ownCadence)
+	every := cadencePeriodSeconds(everythingCadence)
+	switch {
+	case own == 0 && every == 0:
+		return 0, ""
+	case own == 0:
+		return every, strings.TrimSpace(everythingCadence)
+	case every == 0 || own <= every:
+		return own, ""
+	default:
+		return every, ""
+	}
 }
 
 // protInputs carries the facts protectionLevel aggregates, so the decision is a
@@ -1914,14 +1953,11 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			lastUnix = last.Unix()
 		}
 
-		// A period is only meaningful for an enabled domain with a parseable,
-		// non-"off" cadence. An unparseable cadence (defensive — the settings PUT
-		// validates) collapses to period 0 → "off".
-		var period int64
-		cad, cErr := schedule.ParseCadence(d.schedule)
-		if cErr == nil {
-			period = cad.PeriodSeconds()
-		}
+		// A period is only meaningful for an enabled domain that something
+		// actually backs up on a cadence — its own, or the "Backup Everything"
+		// pass (see domainCoverage). An unparseable cadence (defensive — the
+		// settings PUT validates) collapses to period 0 → "off".
+		period, coveredBy := domainCoverage(d.schedule, settings.EverythingSchedule)
 		scheduled := d.enabled && period > 0
 
 		// The latest LOCAL restore-verification drill drives the "last verified
@@ -2021,6 +2057,7 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 			Domain:                d.name,
 			Enabled:               d.enabled,
 			Schedule:              d.schedule,
+			CoveredBy:             coveredBy,
 			LastSuccess:           lastUnix,
 			PeriodSeconds:         period,
 			Status:                rpoStatus(now, lastUnix, period, scheduled),

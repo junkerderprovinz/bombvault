@@ -781,6 +781,7 @@ const ar: Partial<Translations> = {
   "dashboard.rpoOverdue": "متأخر",
   "dashboard.rpoNever": "لا نسخة احتياطية بعد",
   "dashboard.rpoOff": "غير مجدوَل",
+  "dashboard.rpoViaEverything": "{cadence}، عبر نسخ احتياطي شامل",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

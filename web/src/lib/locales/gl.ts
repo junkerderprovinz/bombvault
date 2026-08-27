@@ -682,6 +682,7 @@ const gl: Partial<Translations> = {
   "dashboard.rpoOverdue": "Vencido",
   "dashboard.rpoNever": "Aínda sen copia",
   "dashboard.rpoOff": "Sen programar",
+  "dashboard.rpoViaEverything": "{cadence}, mediante Copia completa",
   "dashboard.domainContainers": "Contedores",
   "dashboard.domainVMs": "MV",
   "dashboard.domainFlash": "Flash",

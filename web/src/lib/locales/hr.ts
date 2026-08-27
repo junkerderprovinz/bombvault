@@ -682,6 +682,7 @@ const hr: Partial<Translations> = {
   "dashboard.rpoOverdue": "Zakašnjelo",
   "dashboard.rpoNever": "Još nema sigurnosne kopije",
   "dashboard.rpoOff": "Nije zakazano",
+  "dashboard.rpoViaEverything": "{cadence}, putem Potpune sigurnosne kopije",
   "dashboard.domainContainers": "Kontejneri",
   "dashboard.domainVMs": "VM-ovi",
   "dashboard.domainFlash": "Flash",

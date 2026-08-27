@@ -778,6 +778,7 @@ const tr: Partial<Translations> = {
   "dashboard.rpoOverdue": "Gecikmiş",
   "dashboard.rpoNever": "Henüz yedek yok",
   "dashboard.rpoOff": "Zamanlanmamış",
+  "dashboard.rpoViaEverything": "{cadence}, Tam yedekleme ile",
   "dashboard.domainContainers": "Konteynerler",
   "dashboard.domainVMs": "VM'ler",
   "dashboard.domainFlash": "Flash",

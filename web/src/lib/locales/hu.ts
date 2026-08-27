@@ -757,6 +757,7 @@ const hu: Partial<Translations> = {
   "dashboard.rpoOverdue": "Lejárt",
   "dashboard.rpoNever": "Még nincs mentés",
   "dashboard.rpoOff": "Nincs ütemezve",
+  "dashboard.rpoViaEverything": "{cadence}, Teljes mentés útján",
   "dashboard.domainContainers": "Konténerek",
   "dashboard.domainVMs": "VM-ek",
   "dashboard.domainFlash": "Flash",

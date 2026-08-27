@@ -746,6 +746,7 @@ const ko: Partial<Translations> = {
   "dashboard.rpoOverdue": "기한 초과",
   "dashboard.rpoNever": "아직 백업 없음",
   "dashboard.rpoOff": "예약 안 됨",
+  "dashboard.rpoViaEverything": "{cadence}, 전체 백업으로",
   "dashboard.domainContainers": "컨테이너",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "플래시",

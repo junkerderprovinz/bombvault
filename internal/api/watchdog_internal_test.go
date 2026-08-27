@@ -181,3 +181,60 @@ func TestWatchdogMutedPolicyIsSilent(t *testing.T) {
 		t.Fatalf("a muted policy must not record an episode, found=%v err=%v", found, err)
 	}
 }
+
+// TestWatchdogCoversEverythingOnlyDomains: a domain backed up ONLY by the
+// "Backup Everything" pass must still get an overdue alert.
+//
+// Issue #177's reporter runs exactly this configuration: every per-domain
+// schedule off, one whole-server pass. The watchdog read the per-domain cadence
+// alone, which is "off", which is period 0, which the decision treats as "no
+// expectation" — so the dead-man's switch was disarmed for every domain on that
+// server, and the only visible sign was the protection card saying "Not
+// scheduled", which reads like a statement about scheduling rather than about
+// alerting.
+func TestWatchdogCoversEverythingOnlyDomains(t *testing.T) {
+	svc, _, hits, seeded := watchdogTestService(t)
+
+	settings, err := svc.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersSchedule = "off"         // no cadence of its own …
+	settings.EverythingSchedule = "daily 03:00" // … but the pass backs it up nightly
+	if err := svc.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	// Three days past a daily expectation is overdue by the same predicate the
+	// dashboard chip uses.
+	if err := svc.runWatchdogAt(context.Background(), seeded+3*86400); err != nil {
+		t.Fatalf("runWatchdogAt: %v", err)
+	}
+	if n := atomic.LoadInt32(hits); n != 1 {
+		t.Fatalf("a domain covered by the Everything pass must alert when it goes overdue, got %d notifications", n)
+	}
+}
+
+// TestWatchdogStaysQuietWithNothingScheduled is the other half: no per-domain
+// cadence and no pass either means there genuinely is no expectation, and the
+// fix above must not invent one.
+func TestWatchdogStaysQuietWithNothingScheduled(t *testing.T) {
+	svc, _, hits, seeded := watchdogTestService(t)
+
+	settings, err := svc.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersSchedule = "off"
+	settings.EverythingSchedule = "off"
+	if err := svc.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.runWatchdogAt(context.Background(), seeded+30*86400); err != nil {
+		t.Fatalf("runWatchdogAt: %v", err)
+	}
+	if n := atomic.LoadInt32(hits); n != 0 {
+		t.Fatalf("nothing is scheduled, so nothing is overdue, got %d notifications", n)
+	}
+}

@@ -746,6 +746,7 @@ const ru: Partial<Translations> = {
   "dashboard.rpoOverdue": "Просрочено",
   "dashboard.rpoNever": "Резервной копии ещё нет",
   "dashboard.rpoOff": "Без расписания",
+  "dashboard.rpoViaEverything": "{cadence}, через Полный бэкап",
   "dashboard.domainContainers": "Контейнеры",
   "dashboard.domainVMs": "Виртуальные машины",
   "dashboard.domainFlash": "Flash",

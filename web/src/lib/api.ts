@@ -358,7 +358,12 @@ export interface ListRunsResponse {
 export interface DomainStatus {
   domain: string; // "containers" | "vms" | "flash"
   enabled: boolean;
-  schedule: string;
+  schedule: string; // the domain's OWN cadence; "off"/"" when it has none
+  // coveredBy is the "Backup Everything" cadence when that pass is the only
+  // thing backing this domain up, "" whenever the domain has a schedule of its
+  // own. A domain can be protected without a cadence of its own, and reading
+  // `schedule` alone reported exactly that case as unprotected (#177).
+  coveredBy: string;
   lastSuccess: number; // unix seconds; 0 = never
   periodSeconds: number; // expected RPO window; 0 = no expectation
   status: string; // "off" | "never" | "overdue" | "warn" | "ok"
