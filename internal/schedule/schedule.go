@@ -855,8 +855,18 @@ type Scheduler struct {
 	// concurrently. It guards ONLY the slice access — never held while
 	// calling into cron.Cron (AddFunc/Remove/Entry), which has its own
 	// internal locking, so the two locks never nest and cannot deadlock.
-	mu      sync.Mutex
-	entries []scheduledEntry
+	mu sync.Mutex
+	// reloadMu serialises whole RELOAD operations, which mu deliberately cannot:
+	// mu is dropped between clearing the old entries and registering the new ones,
+	// because cron must never be called while holding it. Two reloads arriving in
+	// the same millisecond therefore interleaved — both snapshot the same old set,
+	// both remove it, and both register a full set, leaving every domain in cron
+	// TWICE. SkipIfStillRunning does not help: it only stops an entry overlapping
+	// itself, and these are two distinct entries, so a nightly backup ran twice
+	// over the same repo. Held for the whole call, never while mu is also held, so
+	// the two cannot nest.
+	reloadMu sync.Mutex
+	entries  []scheduledEntry
 	// catchUps is the anacron seam: one entry per registered BACKUP domain
 	// (containers/vms/flash/config/files) with a last-run query, so
 	// CatchUpMissed can compare each domain's last scheduled fire against its
@@ -920,6 +930,13 @@ func jobDomainFromName(name string) (job, domain string) {
 		return "watchdog", "" // one app-wide overdue check per fire
 	case "receiver":
 		return "receiver", "" // one app-wide received-repo watch per fire
+	case "fleet":
+		// One app-wide peer sweep per fire, same shape as the four above. Without
+		// this it fell through to the "backup" default and GET /api/schedule/next
+		// advertised {job:"backup", domain:"fleet"} — which the frontend knows
+		// neither half of, so the activity log's "up next" line read
+		// "Backup (fleet)" for something that backs nothing up.
+		return "fleet", ""
 	}
 	if d, ok := strings.CutSuffix(name, "-offsite"); ok {
 		return "offsite", d
@@ -1294,6 +1311,11 @@ func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
 	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun LastRunFunc,
 ) error {
+	// ONE reload at a time — see reloadMu's own comment for what interleaving
+	// two of them produced.
+	s.reloadMu.Lock()
+	defer s.reloadMu.Unlock()
+
 	// Snapshot + clear the existing entries under the lock, then remove them
 	// from cron OUTSIDE the lock — never call into cron while holding s.mu.
 	// catchUps is rebuilt alongside entries: a stale catch-up entry would point

@@ -1210,6 +1210,8 @@ const hu: Partial<Translations> = {
   "activityLog.typeExport": "Exportálás",
   "activityLog.jobDigest": "heti összefoglaló",
   "activityLog.jobWatchdog": "késedelmes mentések ellenőrzése",
+  "activityLog.jobReceiver": "fogadott tárolók ellenőrzése",
+  "activityLog.jobFleet": "flottatagok ellenőrzése",
   "activityLog.lineOffsiteSuccess": "Telephelyen kívüli replikáció kész: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Telephelyen kívüli replikáció sikertelen, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Visszaállítási ellenőrzés sikeres: {domain}",

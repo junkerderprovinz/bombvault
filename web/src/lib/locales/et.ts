@@ -1327,6 +1327,8 @@ const et: Partial<Translations> = {
   "activityLog.jobTamper": "manipuleerimistest",
   "activityLog.jobDigest": "nädalakokkuvõte",
   "activityLog.jobWatchdog": "hilinenud varunduse kontroll",
+  "activityLog.jobReceiver": "vastuvõetud hoidlate kontroll",
+  "activityLog.jobFleet": "laevastiku sõlmede kontroll",
   "activityLog.lineBackingUpItem": "Varundatakse {name} … {percent}%",
   "activityLog.lineRestoringItem": "Taastatakse {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Varundatakse kõik {domain} … {percent}%",

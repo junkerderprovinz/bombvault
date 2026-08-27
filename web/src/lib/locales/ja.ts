@@ -1199,6 +1199,8 @@ const ja: Partial<Translations> = {
   "activityLog.typeExport": "エクスポート",
   "activityLog.jobDigest": "週次ダイジェスト",
   "activityLog.jobWatchdog": "バックアップ遅延チェック",
+  "activityLog.jobReceiver": "受信リポジトリの点検",
+  "activityLog.jobFleet": "フリートピアの点検",
   "activityLog.lineOffsiteSuccess": "オフサイトレプリケーション完了：{domain}（{duration}）",
   "activityLog.lineOffsiteFailed": "オフサイトレプリケーション失敗。{domain}: {error}",
   "activityLog.lineDrillSuccess": "復元チェック合格：{domain}",

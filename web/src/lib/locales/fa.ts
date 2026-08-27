@@ -1327,6 +1327,8 @@ const fa: Partial<Translations> = {
   "activityLog.jobTamper": "آزمایش دستکاری",
   "activityLog.jobDigest": "خلاصه هفتگی",
   "activityLog.jobWatchdog": "بررسی پشتیبان معوق",
+  "activityLog.jobReceiver": "بررسی مخازن دریافتی",
+  "activityLog.jobFleet": "بررسی همتایان ناوگان",
   "activityLog.lineBackingUpItem": "در حال پشتیبان‌گیری {name} … {percent}٪",
   "activityLog.lineRestoringItem": "در حال بازیابی {name} … {percent}٪",
   "activityLog.lineBackingUpBatch": "در حال پشتیبان‌گیری از همه {domain} … {percent}٪",

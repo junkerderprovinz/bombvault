@@ -1327,6 +1327,8 @@ const lt: Partial<Translations> = {
   "activityLog.jobTamper": "klastojimo testas",
   "activityLog.jobDigest": "savaitinė suvestinė",
   "activityLog.jobWatchdog": "vėluojančios atsarginės kopijos patikra",
+  "activityLog.jobReceiver": "gautų saugyklų patikra",
+  "activityLog.jobFleet": "flotilės narių patikra",
   "activityLog.lineBackingUpItem": "Kopijuojama {name} … {percent}%",
   "activityLog.lineRestoringItem": "Atkuriama {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Kopijuojami visi {domain} … {percent}%",

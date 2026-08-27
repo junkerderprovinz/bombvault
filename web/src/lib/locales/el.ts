@@ -1207,6 +1207,8 @@ const el: Partial<Translations> = {
   "activityLog.typeExport": "Εξαγωγή",
   "activityLog.jobDigest": "εβδομαδιαία σύνοψη",
   "activityLog.jobWatchdog": "έλεγχος καθυστερημένων αντιγράφων",
+  "activityLog.jobReceiver": "έλεγχος ληφθέντων αποθετηρίων",
+  "activityLog.jobFleet": "έλεγχος ομότιμων στόλου",
   "activityLog.lineOffsiteSuccess": "Η αναπαραγωγή εκτός τόπου ολοκληρώθηκε: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Η αναπαραγωγή εκτός τόπου απέτυχε, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Ο έλεγχος επαναφοράς πέτυχε: {domain}",

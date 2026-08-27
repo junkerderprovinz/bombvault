@@ -1327,6 +1327,8 @@ const sk: Partial<Translations> = {
   "activityLog.jobTamper": "test neoprávnenej manipulácie",
   "activityLog.jobDigest": "týždenný súhrn",
   "activityLog.jobWatchdog": "kontrola zálohy po termíne",
+  "activityLog.jobReceiver": "kontrola prijatých úložísk",
+  "activityLog.jobFleet": "kontrola členov flotily",
   "activityLog.lineBackingUpItem": "Zálohuje sa {name} … {percent} %",
   "activityLog.lineRestoringItem": "Obnovuje sa {name} … {percent} %",
   "activityLog.lineBackingUpBatch": "Zálohujú sa všetky {domain} … {percent} %",

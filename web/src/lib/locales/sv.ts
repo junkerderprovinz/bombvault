@@ -1207,6 +1207,8 @@ const sv: Partial<Translations> = {
   "activityLog.typeExport": "Export",
   "activityLog.jobDigest": "veckosammanfattning",
   "activityLog.jobWatchdog": "kontroll av försenade säkerhetskopior",
+  "activityLog.jobReceiver": "kontroll av mottagna arkiv",
+  "activityLog.jobFleet": "kontroll av flottnoder",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering klar: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Off-site-replikering misslyckades, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Återställningskontroll godkänd: {domain}",

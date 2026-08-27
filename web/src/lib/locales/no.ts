@@ -1207,6 +1207,8 @@ const no: Partial<Translations> = {
   "activityLog.typeExport": "Eksport",
   "activityLog.jobDigest": "ukentlig oppsummering",
   "activityLog.jobWatchdog": "sjekk av forsinkede sikkerhetskopier",
+  "activityLog.jobReceiver": "sjekk av mottatte arkiver",
+  "activityLog.jobFleet": "sjekk av flåteenheter",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering fullført: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Off-site-replikering mislyktes, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Gjenopprettingssjekk bestått: {domain}",

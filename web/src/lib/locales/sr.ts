@@ -1311,6 +1311,8 @@ const sr: Partial<Translations> = {
   "activityLog.jobTamper": "тест непроменљивости",
   "activityLog.jobDigest": "недељни сажетак",
   "activityLog.jobWatchdog": "провера закашњелих резервних копија",
+  "activityLog.jobReceiver": "провера примљених репозиторијума",
+  "activityLog.jobFleet": "провера чворова флоте",
   "activityLog.lineBackingUpItem": "Израда резервне копије {name} … {percent}%",
   "activityLog.lineRestoringItem": "Враћање {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Израда резервних копија за све {domain} … {percent}%",

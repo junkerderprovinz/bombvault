@@ -1199,6 +1199,8 @@ const zh: Partial<Translations> = {
   "activityLog.typeExport": "导出",
   "activityLog.jobDigest": "每周摘要",
   "activityLog.jobWatchdog": "备份逾期检查",
+  "activityLog.jobReceiver": "接收仓库检查",
+  "activityLog.jobFleet": "机群节点检查",
   "activityLog.lineOffsiteSuccess": "异地复制完成：{domain}（{duration}）",
   "activityLog.lineOffsiteFailed": "异地复制失败，{domain}：{error}",
   "activityLog.lineDrillSuccess": "恢复检查通过：{domain}",

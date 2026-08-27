@@ -1207,6 +1207,8 @@ const fr: Partial<Translations> = {
   "activityLog.typeExport": "Export",
   "activityLog.jobDigest": "résumé hebdomadaire",
   "activityLog.jobWatchdog": "contrôle des sauvegardes en retard",
+  "activityLog.jobReceiver": "vérification des dépôts reçus",
+  "activityLog.jobFleet": "vérification des pairs de la flotte",
   "activityLog.lineOffsiteSuccess": "Réplication hors site terminée : {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Réplication hors site échouée, {domain} : {error}",
   "activityLog.lineDrillSuccess": "Contrôle de restauration réussi : {domain}",

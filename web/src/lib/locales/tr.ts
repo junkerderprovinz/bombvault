@@ -1207,6 +1207,8 @@ const tr: Partial<Translations> = {
   "activityLog.typeExport": "Dışa aktarma",
   "activityLog.jobDigest": "haftalık özet",
   "activityLog.jobWatchdog": "geciken yedekleme denetimi",
+  "activityLog.jobReceiver": "alınan depo denetimi",
+  "activityLog.jobFleet": "filo eş denetimi",
   "activityLog.lineOffsiteSuccess": "Site dışı çoğaltma tamamlandı: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Site dışı çoğaltma başarısız, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Geri yükleme denetimi başarılı: {domain}",

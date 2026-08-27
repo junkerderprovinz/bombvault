@@ -1205,6 +1205,8 @@ const cs: Partial<Translations> = {
   "activityLog.typeExport": "Export",
   "activityLog.jobDigest": "týdenní souhrn",
   "activityLog.jobWatchdog": "kontrola zpožděných záloh",
+  "activityLog.jobReceiver": "kontrola přijatých úložišť",
+  "activityLog.jobFleet": "kontrola členů flotily",
   "activityLog.lineOffsiteSuccess": "Replikace mimo lokalitu dokončena: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "Replikace mimo lokalitu selhala, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kontrola obnovy prošla: {domain}",

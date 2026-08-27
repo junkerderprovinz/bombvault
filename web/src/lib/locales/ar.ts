@@ -1210,6 +1210,8 @@ const ar: Partial<Translations> = {
   "activityLog.typeExport": "تصدير",
   "activityLog.jobDigest": "الملخص الأسبوعي",
   "activityLog.jobWatchdog": "فحص النسخ الاحتياطية المتأخرة",
+  "activityLog.jobReceiver": "فحص المستودعات المستلمة",
+  "activityLog.jobFleet": "فحص أقران الأسطول",
   "activityLog.lineOffsiteSuccess": "اكتمل النسخ المتماثل خارج الموقع: {domain} ({duration})",
   "activityLog.lineOffsiteFailed": "فشل النسخ المتماثل خارج الموقع، {domain}: {error}",
   "activityLog.lineDrillSuccess": "نجح فحص الاستعادة: {domain}",
