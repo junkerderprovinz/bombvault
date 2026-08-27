@@ -10,7 +10,10 @@ package api
 // The function's own doc had said "already excluded — restic skips it, so do
 // we" the whole time.
 
-import "testing"
+import (
+	"path"
+	"testing"
+)
 
 // feed replays a small tree parents-before-children, the contract add()
 // attributes sizes with.
@@ -87,4 +90,54 @@ func TestSuggestCollectorSkipsExcludedFiles(t *testing.T) {
 			t.Fatal("excluding a file must not read as a node-order violation")
 		}
 	})
+}
+
+// TestAnchoredWildcardPatternsMatch: the path branch of matchesExcludePatterns
+// compared literally while the basename branch used path.Match, so a pattern
+// with a wildcard in a path — `/config/*/Cache`, the shape the assistant's own
+// suggestions take — matched nothing. The already excluded folders were then
+// suggested again AND counted against their parent.
+func TestAnchoredWildcardPatternsMatch(t *testing.T) {
+	pats := []string{"/config/*/Cache"}
+	cases := []struct {
+		full string
+		want bool
+	}{
+		{"/config/plex/Cache", true},
+		{"/config/sonarr/Cache", true},
+		// One level only: path.Match does not let "*" cross a separator, which is
+		// how restic reads it too.
+		{"/config/a/b/Cache", false},
+		// The literal branch must keep working alongside it.
+		{"/config/plex/Media", false},
+		{"/config", false},
+	}
+	for _, c := range cases {
+		got := matchesExcludePatterns(c.full, path.Base(c.full), pats)
+		if got != c.want {
+			t.Errorf("matchesExcludePatterns(%q) = %v, want %v", c.full, got, c.want)
+		}
+	}
+}
+
+// TestDropNestedRoots: each root gets its own collector, so overlapping roots
+// emitted the same directory twice — same exclude line, same React key, two of
+// the twenty suggestion slots.
+func TestDropNestedRoots(t *testing.T) {
+	got := dropNestedRoots([]string{"/appdata/plex/Media", "/appdata/plex", "/appdata/sonarr"})
+	want := []string{"/appdata/plex", "/appdata/sonarr"}
+	if len(got) != len(want) {
+		t.Fatalf("dropNestedRoots = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("dropNestedRoots = %v, want %v", got, want)
+		}
+	}
+
+	// A shared prefix is NOT nesting: only a real path boundary counts.
+	sibling := dropNestedRoots([]string{"/appdata/plex", "/appdata/plex-extra"})
+	if len(sibling) != 2 {
+		t.Fatalf("dropNestedRoots kept %v — /appdata/plex-extra is a sibling, not a child", sibling)
+	}
 }
