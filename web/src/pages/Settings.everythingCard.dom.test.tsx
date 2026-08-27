@@ -155,7 +155,7 @@ describe("EverythingSection — the manual trigger", () => {
 });
 
 describe("EverythingSection — the overlap warning is conditional", () => {
-  const warning = en["settings.everythingOverlapWarning"];
+  const warning = en["settings.everythingDuplicateWarning"];
 
   it("is hidden while this cadence is off, however many domains are scheduled", () => {
     renderCard(settingsWith({ everythingSchedule: "", containersSchedule: "daily 02:00" }));
@@ -180,6 +180,20 @@ describe("EverythingSection — the overlap warning is conditional", () => {
   it('treats the literal "off" cadence as off, not as a scheduled value', () => {
     renderCard(settingsWith({ everythingSchedule: "off", containersSchedule: "daily 02:00" }));
     expect(screen.queryByText(warning)).toBeNull();
+  });
+
+  // Issue #177 (manilx): turning the self-backup schedule off made "a help
+  // text disappear". The box was hiding correctly — his self-backup was the
+  // last scheduled domain, so nothing ran twice any more — but it opened with
+  // "This runs independently of the per-domain schedules above", a permanent
+  // fact that also sits in this Card's own info bubble. A conditional box that
+  // starts with an explanation reads as an explanation, so its disappearance
+  // reads as a bug. The box now carries only the conditional half.
+  it("says nothing about running independently, that fact belongs to the bubble", () => {
+    renderCard(settingsWith({ everythingSchedule: "daily 03:00", containersSchedule: "daily 02:00" }));
+    expect(screen.getByText(warning).textContent).not.toMatch(/independently/i);
+    // …and the permanent fact is still there, as the Card's hint.
+    expect(en["settings.everythingHint"]).toMatch(/independent/i);
   });
 });
 

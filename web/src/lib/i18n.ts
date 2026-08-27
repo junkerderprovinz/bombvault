@@ -1464,8 +1464,8 @@ export const en = {
   // Backup Everything (a 6th, independent pass over all five domains above)
   "settings.everythingTitle": "Backup Everything",
   "settings.everythingHint": "Runs every domain once, in order (containers, VMs, flash, folders, then the self-backup) so a single ping afterward (via the post-command below) confirms the whole server is protected. Off by default, and independent of each domain's own schedule above.",
+  "settings.everythingDuplicateWarning": "Containers, VMs, flash, folders and the self-backup are backed up twice while this schedule and their own are both on: once here, once on their own. Turn off the domains you do not want duplicated.",
   "settings.everythingHooksHint": "These commands run on BombVault's own server via sh -c, not inside a container. The pre-command is best-effort and never blocks the pass; the post-command always fires exactly once, after every domain has been attempted, whether or not any of them failed.",
-  "settings.everythingOverlapWarning": "This runs independently of the per-domain schedules above. If both are on, containers, VMs, flash, folders and the self-backup each run twice: once here, once on their own schedule. Turn off the domains you don't want duplicated.",
   "settings.everythingRunNow": "Run Backup Everything now",
   "settings.everythingStarted": "Started. It runs on the server across every domain in turn; watch the Activity Log for the outcome.",
   "settings.everythingAlreadyRunning": "A Backup Everything pass is already running.",
@@ -2931,8 +2931,8 @@ export const de: Translations = {
   // Gesamt-Backup (ein 6., unabhängiger Durchlauf über alle fünf Bereiche oben)
   "settings.everythingTitle": "Gesamt-Backup",
   "settings.everythingHint": "Sichert einmal nacheinander jeden Bereich (Container, VMs, Flash, Ordner und zuletzt das Selbst-Backup), sodass ein einzelner Ping danach (über den Post-Befehl unten) bestätigt, dass der ganze Server geschützt ist. Standardmäßig aus und unabhängig vom eigenen Zeitplan jedes Bereichs oben.",
+  "settings.everythingDuplicateWarning": "Container, VMs, Flash, Ordner und Selbst-Backup werden doppelt gesichert, solange dieser Zeitplan und ihr eigener gleichzeitig aktiv sind: einmal hier, einmal im eigenen Zeitplan. Schalte die Bereiche ab, die du nicht doppelt sichern willst.",
   "settings.everythingHooksHint": "Diese Befehle laufen auf dem eigenen Server von BombVault über sh -c, nicht in einem Container. Der Pre-Befehl ist best-effort und blockiert den Durchlauf nie; der Post-Befehl feuert immer genau einmal, nachdem jeder Bereich versucht wurde, egal ob einer davon fehlgeschlagen ist.",
-  "settings.everythingOverlapWarning": "Dieser Zeitplan läuft unabhängig von den Zeitplänen der einzelnen Bereiche oben. Sind beide aktiv, werden Container, VMs, Flash, Ordner und Selbst-Backup jeweils doppelt gesichert: einmal hier, einmal im eigenen Zeitplan. Deaktiviere die Bereiche, die nicht doppelt laufen sollen.",
   "settings.everythingRunNow": "Gesamt-Backup jetzt starten",
   "settings.everythingStarted": "Gestartet. Es läuft auf dem Server nacheinander über jeden Bereich; das Aktivitätsprotokoll zeigt das Ergebnis.",
   "settings.everythingAlreadyRunning": "Es läuft bereits ein Gesamt-Backup.",
