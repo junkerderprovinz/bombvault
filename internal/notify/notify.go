@@ -712,7 +712,7 @@ func sendSMTP(ctx context.Context, c Config, ev Event) error {
 		// (a STARTTLS-stripping MITM must not be able to downgrade us). Users who
 		// genuinely want plaintext can pick the "none" encryption mode explicitly.
 		if ok, _ := client.Extension("STARTTLS"); !ok {
-			return fmt.Errorf("starttls: server does not advertise STARTTLS — set Encryption to TLS (implicit) or None")
+			return fmt.Errorf("starttls: server does not advertise STARTTLS. Set Encryption to TLS (implicit) or None")
 		}
 		if err := client.StartTLS(&tls.Config{ServerName: c.SMTPHost, MinVersion: tls.VersionTLS12}); err != nil {
 			return fmt.Errorf("starttls: %w", err)

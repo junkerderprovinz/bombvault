@@ -828,7 +828,7 @@ func checkRestoreConflicts(ctx context.Context, d RestoreDeps) error {
 		}
 	}
 	if len(conflicts) > 0 {
-		return fmt.Errorf("%w — free these and retry: %s", ErrRestoreConflict, strings.Join(conflicts, "; "))
+		return fmt.Errorf("%w. Free these and retry: %s", ErrRestoreConflict, strings.Join(conflicts, "; "))
 	}
 	return nil
 }

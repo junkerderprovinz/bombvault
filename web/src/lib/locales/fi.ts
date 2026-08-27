@@ -572,7 +572,7 @@ const fi: Partial<Translations> = {
   "notify.hcPerDomainHint": "Jätä kenttä tyhjäksi käyttääksesi yllä olevaa yleistä URL-osoitetta. Toimialue, jolla on oma URL-osoite, saa oman tarkistuksensa, jolla on oma suoritusaika ja historia.",
   "notify.unraid": "Unraid-ilmoitukset",
   "notify.unraidHint": "Lähetä Unraidin omaan ilmoitusjärjestelmään (joka voi välittää Pushoveriin, sähköpostiin, Discordiin, …). Toimii Asetukset → VM Backup over SSH -kohdan SSH-yhteyden kautta, joten avain on valtuutettava siellä — mutta libvirt/VMs EIVÄT ole pakollisia (ohita ”libvirt not reachable” -tulos, jos et varmuuskopioi VMs). Tarkista se alla olevalla ”Lähetä testi” -painikkeella.",
-  "notify.unraidPlatformMismatch": "BombVault tunnisti tämän isännän tyypiksi \"{platform}\", ei Unraidiksi — Unraid-ilmoitukset pysyvät pois päältä, vaikka tämä on päällä. Jos kyseessä ON oikeasti Unraid-isäntä, tarkista, että isännän /boot on bind-mountattu kontin sisällä kohteeseen /host/boot (katso BombVaultin Unraid-mallipohja), ja käynnistä kontti uudelleen.",
+  "notify.unraidPlatformMismatch": "BombVault tunnisti tämän isännän tyypiksi \"{platform}\", ei Unraidiksi. Unraid-ilmoitukset pysyvät pois päältä, vaikka tämä on päällä. Jos kyseessä ON oikeasti Unraid-isäntä, tarkista, että isännän /boot on bind-mountattu kontin sisällä kohteeseen /host/boot (katso BombVaultin Unraid-mallipohja), ja käynnistä kontti uudelleen.",
   "notify.test": "Lähetä testi",
   "notify.tested": "Testi lähetetty",
   "stophook.title": "Pysäytä muut säiliöt",
@@ -815,7 +815,7 @@ const fi: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Käytä konttien aikataulua myös VM:ille, Flashille ja Kansioille",
-  "jobs.syncSchedulesHint": "Kun käytössä, VM:t, Flash ja Kansiot noudattavat konttien aikataulua oman sijaan — poista käytöstä, jos haluat asettaa kunkin osa-alueen rytmin erikseen.",
+  "jobs.syncSchedulesHint": "Kun käytössä, VM:t, Flash ja Kansiot noudattavat konttien aikataulua oman sijaan. Poista käytöstä, jos haluat asettaa kunkin osa-alueen rytmin erikseen.",
   "jobs.vmIncludeHint": "Varmuuskopioi jokaisen VM:n, jolla „sisällytä aikatauluun” on käytössä (asetetaan VM-kohtaisesti VMs-välilehdellä).",
   "jobs.flashScheduleHint": "Varmuuskopioi Unraidin käynnistys-USB:n (Flash, /boot) ajoitettuna aikana.",
   "jobs.flashNotImplemented": "Huomautus: Flash-varmuuskopioinnin suoritinta ei ole vielä toteutettu vaiheessa 1 — aikataulu tallennetaan, mutta sitä ei suoriteta.",
@@ -980,7 +980,7 @@ const fi: Partial<Translations> = {
   "excludes.assistSourceLive": "Tällä kontilla ei ole vielä varmuuskopiota, joten koot tulevat kansioiden suorasta skannauksesta.",
   "excludes.assistUnexamined": "Näitä varmuuskopioituja kansioita ei tutkittu lainkaan: {paths}",
   "excludes.assistUnreadable": "Näitä varmuuskopioituja kansioita ei voitu lukea, joten kaikki niiden sisältö puuttuu tästä luettelosta: {paths}",
-  "excludes.assistPathsUnavailable": "Tämän kontin varmuuskopioituihin kansioihin ei saada juuri nyt yhteyttä, eikä ole varmuuskopiotakaan, josta koot voisi lukea. Tarkista, että ne sisältävä levypakka tai jako on liitetty.",
+  "excludes.assistPathsUnavailable": "Tämän kontin varmuuskopioituihin kansioihin ei saada juuri nyt yhteyttä. Tarkista, että ne sisältävä levypakka tai jako on liitetty.",
   "excludes.assistSourceLiveRequested": "Koot ovat peräisin kansioiden tarkistuksesta sellaisina kuin ne ovat juuri nyt.",
   "excludes.assistSourceLiveNotInSnapshot": "Viimeisin varmuuskopio ei kata nyt valittuja kansioita, joten koot ovat peräisin kansioiden reaaliaikaisesta tarkistuksesta.",
   "excludes.assistSnapshotStale": "Tämä varmuuskopio on yli vuorokauden vanha, joten kaikki sen jälkeen luotu puuttuu tästä luettelosta.",

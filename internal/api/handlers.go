@@ -209,7 +209,7 @@ func scrubError(err error) string {
 	case err == nil:
 		return ""
 	case errors.Is(err, backup.ErrNotConfirmed):
-		return "restore not confirmed — set confirm:true to proceed"
+		return "restore not confirmed: set confirm:true to proceed"
 	case errors.Is(err, backup.ErrInvalidSnapshotID):
 		return "invalid snapshot id (must be 8–64 lowercase hex)"
 	}
@@ -220,7 +220,7 @@ func scrubError(err error) string {
 	// Map restic's password/key mismatch to an actionable hint: the repo was
 	// created with a different APP_KEY or a different encryption setting.
 	if strings.Contains(msg, "wrong password or no key found") {
-		return "backup repository can't be opened — the APP_KEY differs from when this repo was first created (or encryption was toggled). Use the original APP_KEY, or point Settings at a fresh, empty backup path."
+		return "backup repository can't be opened: the APP_KEY differs from when this repo was first created (or encryption was toggled). Use the original APP_KEY, or point Settings at a fresh, empty backup path."
 	}
 	msg = scrubSecrets(msg)
 	return strings.TrimSpace(msg)
@@ -1536,7 +1536,7 @@ func rejectEveryNSchedules(v settingsView) string {
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
 	} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
-			return "this schedule does not support 'everyN' — use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression"
+			return "this schedule does not support 'everyN': use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression"
 		}
 	}
 	return ""

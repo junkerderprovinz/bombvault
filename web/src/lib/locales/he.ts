@@ -572,7 +572,7 @@ const he: Partial<Translations> = {
   "notify.hcPerDomainHint": "השאירו שדה ריק כדי להשתמש בכתובת ה-URL הגלובלית שלמעלה. דומיין עם כתובת URL משלו מקבל בדיקה משלו, עם זמן ריצה והיסטוריה משלו.",
   "notify.unraid": "התראות Unraid",
   "notify.unraidHint": "שלח למערכת ההתראות של Unraid עצמו (שיכולה להעביר ל-Pushover, אימייל, Discord, …). פועל דרך חיבור ה-SSH מתוך הגדרות → VM Backup over SSH, ולכן המפתח חייב להיות מורשה שם — אך libvirt/VMs אינם נדרשים (התעלם מתוצאת “libvirt not reachable” אם אינך מגבה VMs). כדי לבדוק, השתמש ב“שלח בדיקה” למטה.",
-  "notify.unraidPlatformMismatch": "BombVault זיהה את המארח הזה כ-\"{platform}\", לא כ-Unraid — לכן התראות Unraid נשארות כבויות גם כשהאפשרות הזו מופעלת. אם זהו אכן מארח Unraid, בדוק שה-/boot של המארח מחובר (bind-mount) אל /host/boot בתוך הקונטיינר (ראה את תבנית ה-Unraid של BombVault), והפעל מחדש את הקונטיינר.",
+  "notify.unraidPlatformMismatch": "BombVault זיהה את המארח הזה כ-\"{platform}\", לא כ-Unraid. לכן התראות Unraid נשארות כבויות גם כשהאפשרות הזו מופעלת. אם זהו אכן מארח Unraid, בדוק שה-/boot של המארח מחובר (bind-mount) אל /host/boot בתוך הקונטיינר (ראה את תבנית ה-Unraid של BombVault), והפעל מחדש את הקונטיינר.",
   "notify.test": "שלח בדיקה",
   "notify.tested": "הבדיקה נשלחה",
   "stophook.title": "עצירת מכולות אחרות",
@@ -791,7 +791,7 @@ const he: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "השתמש בלוח הזמנים של Containers גם עבור VMs, Flash ותיקיות",
-  "jobs.syncSchedulesHint": "כאשר מופעל, VMs, Flash ותיקיות פועלים לפי לוח הזמנים של Containers במקום לפי שלהם — כבה כדי להגדיר קצב נפרד לכל תחום.",
+  "jobs.syncSchedulesHint": "כאשר מופעל, VMs, Flash ותיקיות פועלים לפי לוח הזמנים של Containers במקום לפי שלהם. כבה כדי להגדיר קצב נפרד לכל תחום.",
   "jobs.vmIncludeHint": "מגבה כל VM שבו מופעל „כלול בלוח הזמנים‟ (נקבע לכל VM בלשונית VMs).",
   "jobs.flashScheduleHint": "מגבה את כונן ה-USB לאתחול Flash של Unraid (/boot) בשעה המתוזמנת.",
   "jobs.flashNotImplemented": "הערה: מנוע גיבוי Flash טרם מומש בשלב 1 — לוח הזמנים נשמר אך אינו מורץ.",
@@ -980,7 +980,7 @@ const he: Partial<Translations> = {
   "excludes.assistSourceLive": "למכל הזה עדיין אין גיבוי, ולכן הגדלים מגיעים מסריקה חיה של התיקיות.",
   "excludes.assistUnexamined": "התיקיות המגובות האלה לא נבדקו כלל: {paths}",
   "excludes.assistUnreadable": "לא ניתן היה לקרוא את התיקיות המגובות האלה, ולכן כל מה שבתוכן חסר ברשימה הזו: {paths}",
-  "excludes.assistPathsUnavailable": "אי אפשר להגיע כעת לתיקיות הגיבוי של הקונטיינר הזה, וגם אין גיבוי שממנו אפשר לקרוא גדלים. בדוק שהמערך או השיתוף שמחזיק אותן מעוגן.",
+  "excludes.assistPathsUnavailable": "אי אפשר להגיע כעת לתיקיות הגיבוי של הקונטיינר הזה. בדוק שהמערך או השיתוף שמחזיק אותן מעוגן.",
   "excludes.assistSourceLiveRequested": "הגדלים מגיעים מסריקה של התיקיות במצבן הנוכחי.",
   "excludes.assistSourceLiveNotInSnapshot": "הגיבוי האחרון לא כולל את התיקיות שנבחרו כעת, ולכן הגדלים מגיעים מסריקה חיה של התיקיות.",
   "excludes.assistSnapshotStale": "הגיבוי הזה בן יותר מיום, ולכן כל מה שנוצר מאז חסר ברשימה הזו.",

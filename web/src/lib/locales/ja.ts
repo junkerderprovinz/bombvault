@@ -564,7 +564,7 @@ const ja: Partial<Translations> = {
   "notify.hcPerDomainHint": "フィールドを空欄のままにすると、上のグローバル URL が使用されます。独自の URL を持つドメインは、独自の実行時間と履歴を備えた専用のチェックを取得します。",
   "notify.unraid": "Unraid 通知",
   "notify.unraidHint": "Unraid 自身の通知システムに送信します（Pushover、メール、Discord、… へ転送可能）。設定 → VM Backup over SSH の SSH 接続経由で動作するため、キーはそこで承認されている必要があります — ただし libvirt/VMs は不要です（VMs をバックアップしない場合は「libvirt not reachable」の結果を無視してください）。確認するには下の「テスト送信」を使用してください。",
-  "notify.unraidPlatformMismatch": "BombVault はこのホストを Unraid ではなく \"{platform}\" として検出しました — このオプションが有効でも Unraid 通知は無効のままです。実際に Unraid ホストである場合は、ホストの /boot がコンテナ内の /host/boot にバインドマウントされているか確認し（BombVault の Unraid テンプレートを参照）、コンテナを再起動してください。",
+  "notify.unraidPlatformMismatch": "BombVault はこのホストを Unraid ではなく \"{platform}\" として検出しました。このオプションが有効でも Unraid 通知は無効のままです。実際に Unraid ホストである場合は、ホストの /boot がコンテナ内の /host/boot にバインドマウントされているか確認し（BombVault の Unraid テンプレートを参照）、コンテナを再起動してください。",
   "notify.test": "テスト送信",
   "notify.tested": "テストを送信しました",
   "stophook.title": "他のコンテナを停止",
@@ -783,7 +783,7 @@ const ja: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "コンテナのスケジュールを VM、フラッシュ、フォルダーにも使用する",
-  "jobs.syncSchedulesHint": "有効にすると、VM、フラッシュ、フォルダーは独自のスケジュールではなくコンテナのスケジュールに従います — 各ドメインの周期を個別に設定するにはオフにしてください。",
+  "jobs.syncSchedulesHint": "有効にすると、VM、フラッシュ、フォルダーは独自のスケジュールではなくコンテナのスケジュールに従います。各ドメインの周期を個別に設定するにはオフにしてください。",
   "jobs.vmIncludeHint": "「スケジュールに含める」が有効なすべての VM をバックアップします（VM ごとに VMs タブで設定）。",
   "jobs.flashScheduleHint": "予定時刻に Unraid の USB フラッシュ起動ドライブ(/boot)をバックアップします。",
   "jobs.flashNotImplemented": "注意: フラッシュバックアップの実行機能はフェーズ 1 ではまだ未実装です — スケジュールは保存されますが実行されません。",
@@ -972,7 +972,7 @@ const ja: Partial<Translations> = {
   "excludes.assistSourceLive": "このコンテナーにはまだバックアップがないため、サイズはフォルダーのライブスキャンによるものです。",
   "excludes.assistUnexamined": "これらのバックアップ対象フォルダーはまったく調べられませんでした：{paths}",
   "excludes.assistUnreadable": "これらのバックアップ対象フォルダーを読み取れなかったため、その中身はこの一覧に含まれていません：{paths}",
-  "excludes.assistPathsUnavailable": "このコンテナーのバックアップ対象フォルダーに現在アクセスできず、サイズを読み取れるバックアップもありません。それらを保持しているアレイまたは共有がマウントされているか確認してください。",
+  "excludes.assistPathsUnavailable": "このコンテナーのバックアップ対象フォルダーに現在アクセスできません。それらを保持しているアレイまたは共有がマウントされているか確認してください。",
   "excludes.assistSourceLiveRequested": "サイズは現在の状態のフォルダーをスキャンした結果です。",
   "excludes.assistSourceLiveNotInSnapshot": "直近のバックアップには現在選択中のフォルダーが含まれていないため、サイズはフォルダーのライブスキャンによるものです。",
   "excludes.assistSnapshotStale": "このバックアップは1日以上前のものなので、それ以降に作られたものはこの一覧にありません。",

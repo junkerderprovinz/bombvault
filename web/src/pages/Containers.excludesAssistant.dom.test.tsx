@@ -220,9 +220,19 @@ describe("exclusion assistant size presentation", () => {
     await openAssistant();
 
     expect(screen.queryByText(/Nothing left to exclude/)).toBeNull();
+    // Two separate facts, carried by two separate lines. The unreachable-folders
+    // sentence no longer asserts anything about backups: it is also shown when
+    // the user asks for a live scan on a container that HAS one, and claiming
+    // otherwise there was its own lie. The "no backup yet" half is the reason
+    // line's job, so this pins both rather than one merged sentence.
     expect(
       screen.getByText(
-        "This container's backup folders cannot be reached right now, and there is no backup to read sizes from either. Check that the array or share holding them is mounted."
+        "This container's backup folders cannot be reached right now. Check that the array or share holding them is mounted."
+      )
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "This container has no backup yet, so the sizes come from a live scan of the folders."
       )
     ).toBeTruthy();
   });

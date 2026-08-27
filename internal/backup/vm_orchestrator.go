@@ -524,7 +524,7 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		commitDevs = []string{d.DiskDevice}
 	}
 	if len(commitDevs) == 0 {
-		return Summary{}, fmt.Errorf("vm live backup: no writable disk to snapshot/commit — use the graceful method for this VM")
+		return Summary{}, fmt.Errorf("vm live backup: no writable disk to snapshot/commit. Use the graceful method for this VM")
 	}
 	quiesce := d.VM.GuestAgentPing(ctx, d.Name)
 
@@ -567,7 +567,7 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		}
 	}
 	if commitErr != nil {
-		return Summary{}, fmt.Errorf("vm live backup: blockcommit failed — the VM is STILL RUNNING on its snapshot overlay (no data lost); resolve the overlay before the next backup: %w", commitErr)
+		return Summary{}, fmt.Errorf("vm live backup: blockcommit failed. The VM is STILL RUNNING on its snapshot overlay (no data lost); resolve the overlay before the next backup: %w", commitErr)
 	}
 	if backupErr != nil {
 		return Summary{}, fmt.Errorf("vm live backup: restic: %w", backupErr)

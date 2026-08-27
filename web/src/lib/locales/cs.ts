@@ -570,7 +570,7 @@ const cs: Partial<Translations> = {
   "notify.hcPerDomainHint": "Nechte pole prázdné, chcete-li použít globální URL výše. Doména s vlastní URL získá vlastní kontrolu, s vlastní dobou běhu a historií.",
   "notify.unraid": "Oznámení Unraid",
   "notify.unraidHint": "Odeslat do vlastního systému oznámení Unraidu (který umí přeposlat do Pushover, e-mailu, Discordu, …). Běží přes připojení SSH z Nastavení → VM Backup over SSH, takže klíč tam musí být autorizovaný — ale libvirt/VMs NEJSOU vyžadovány (pokud nezálohujete VMs, ignorujte výsledek „libvirt not reachable“). Pro ověření použijte „Odeslat test“ níže.",
-  "notify.unraidPlatformMismatch": "BombVault rozpoznal tento hostitel jako \"{platform}\", nikoli jako Unraid — oznámení Unraid tak zůstávají vypnutá, i když je tato možnost zapnutá. Pokud je to skutečně hostitel Unraid, zkontrolujte, že cesta /boot hostitele je připojena (bind-mount) do kontejneru na /host/boot (viz šablona BombVault pro Unraid), a kontejner restartujte.",
+  "notify.unraidPlatformMismatch": "BombVault rozpoznal tento hostitel jako \"{platform}\", nikoli jako Unraid. Oznámení Unraid tak zůstávají vypnutá, i když je tato možnost zapnutá. Pokud je to skutečně hostitel Unraid, zkontrolujte, že cesta /boot hostitele je připojena (bind-mount) do kontejneru na /host/boot (viz šablona BombVault pro Unraid), a kontejner restartujte.",
   "notify.test": "Odeslat test",
   "notify.tested": "Test odeslán",
   "stophook.title": "Zastavit ostatní kontejnery",
@@ -813,7 +813,7 @@ const cs: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Použít plán kontejnerů i pro VM, Flash a Složky",
-  "jobs.syncSchedulesHint": "Když je zapnuto, VM, Flash a Složky se řídí plánem kontejnerů místo vlastního — vypněte, chcete-li nastavit rytmus každé domény samostatně.",
+  "jobs.syncSchedulesHint": "Když je zapnuto, VM, Flash a Složky se řídí plánem kontejnerů místo vlastního. Vypněte, chcete-li nastavit rytmus každé domény samostatně.",
   "jobs.vmIncludeHint": "Zálohuje každý VM se zapnutým „Zahrnout do plánu“ (nastavíte u jednotlivých VM na kartě VMs).",
   "jobs.flashScheduleHint": "Zálohuje zaváděcí USB flash disk Unraid (/boot) v naplánovaný čas.",
   "jobs.flashNotImplemented": "Poznámka: Executor zálohování Flash zatím není ve fázi 1 implementován — plán se uloží, ale nespustí.",
@@ -978,7 +978,7 @@ const cs: Partial<Translations> = {
   "excludes.assistSourceLive": "Tento kontejner zatím nemá zálohu, velikosti proto pocházejí z živého skenování složek.",
   "excludes.assistUnexamined": "Tyto zálohované složky nebyly vůbec prozkoumány: {paths}",
   "excludes.assistUnreadable": "Tyto zálohované složky se nepodařilo přečíst, takže vše v nich v tomto seznamu chybí: {paths}",
-  "excludes.assistPathsUnavailable": "Zálohované složky tohoto kontejneru teď nejsou dostupné a není ani žádná záloha, ze které by šlo velikosti načíst. Zkontroluj, jestli je pole nebo sdílení s nimi připojené.",
+  "excludes.assistPathsUnavailable": "Zálohované složky tohoto kontejneru teď nejsou dostupné. Zkontroluj, jestli je pole nebo sdílení s nimi připojené.",
   "excludes.assistSourceLiveRequested": "Velikosti pocházejí z prohledání složek v jejich současném stavu.",
   "excludes.assistSourceLiveNotInSnapshot": "Poslední záloha neobsahuje nyní vybrané složky, takže velikosti pocházejí z živého prohledání složek.",
   "excludes.assistSnapshotStale": "Tato záloha je starší než jeden den, takže vše vytvořené od té doby v tomto seznamu chybí.",

@@ -572,7 +572,7 @@ const hu: Partial<Translations> = {
   "notify.hcPerDomainHint": "Hagyjon egy mezőt üresen a fenti globális URL használatához. A saját URL-lel rendelkező tartomány saját ellenőrzést kap, saját futásidővel és előzményekkel.",
   "notify.unraid": "Unraid-értesítések",
   "notify.unraidHint": "Küldés az Unraid saját értesítési rendszerébe (amely továbbíthat Pushoverre, e-mailre, Discordra, …). A Beállítások → VM Backup over SSH SSH-kapcsolatán keresztül fut, ezért a kulcsot ott engedélyezni kell — de a libvirt/VMs NEM szükséges (hagyd figyelmen kívül a „libvirt not reachable” eredményt, ha nem mentesz VMs-t). Az ellenőrzéshez használd a lenti „Teszt küldése” gombot.",
-  "notify.unraidPlatformMismatch": "A BombVault ezt a hosztot \"{platform}\" típusúnak érzékelte, nem Unraidnek — az Unraid-értesítések így kikapcsolva maradnak, még ha ez a kapcsoló be is van kapcsolva. Ha ez valóban Unraid hoszt, ellenőrizd, hogy a host /boot útvonala be van-e kötve (bind-mount) a konténeren belül a /host/boot alá (lásd a BombVault Unraid sablonját), majd indítsd újra a konténert.",
+  "notify.unraidPlatformMismatch": "A BombVault ezt a hosztot \"{platform}\" típusúnak érzékelte, nem Unraidnek. Az Unraid-értesítések így kikapcsolva maradnak, még ha ez a kapcsoló be is van kapcsolva. Ha ez valóban Unraid hoszt, ellenőrizd, hogy a host /boot útvonala be van-e kötve (bind-mount) a konténeren belül a /host/boot alá (lásd a BombVault Unraid sablonját), majd indítsd újra a konténert.",
   "notify.test": "Teszt küldése",
   "notify.tested": "Teszt elküldve",
   "stophook.title": "Más konténerek leállítása",
@@ -794,7 +794,7 @@ const hu: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "A konténerek ütemezésének használata a VM-ekhez, a Flashhez és a Mappákhoz is",
-  "jobs.syncSchedulesHint": "Ha be van kapcsolva, a VM-ek, a Flash és a Mappák a saját ütemezésük helyett a konténerek ütemezését követik — kapcsolja ki, ha minden tartománynak külön ritmust szeretne beállítani.",
+  "jobs.syncSchedulesHint": "Ha be van kapcsolva, a VM-ek, a Flash és a Mappák a saját ütemezésük helyett a konténerek ütemezését követik. Kapcsolja ki, ha minden tartománynak külön ritmust szeretne beállítani.",
   "jobs.vmIncludeHint": "Minden VM-et ment, amelynél az „Ütemezésbe foglalás“ engedélyezve van (VM-enként a VMs lapon állítható be).",
   "jobs.flashScheduleHint": "Az Unraid USB Flash rendszerindító meghajtóját (/boot) menti az ütemezett időpontban.",
   "jobs.flashNotImplemented": "Megjegyzés: A Flash mentési végrehajtó az 1. fázisban még nincs megvalósítva — az ütemezés mentésre kerül, de nem fut le.",
@@ -983,7 +983,7 @@ const hu: Partial<Translations> = {
   "excludes.assistSourceLive": "Ennek a konténernek még nincs mentése, ezért a méretek a mappák élő vizsgálatából származnak.",
   "excludes.assistUnexamined": "Ezeket a mentett mappákat egyáltalán nem vizsgálta meg: {paths}",
   "excludes.assistUnreadable": "Ezeket a mentett mappákat nem sikerült beolvasni, ezért minden, ami bennük van, hiányzik ebből a listából: {paths}",
-  "excludes.assistPathsUnavailable": "A konténer mentett mappái jelenleg nem érhetők el, és mentés sincs, amelyből a méretek kiolvashatók lennének. Ellenőrizd, hogy az őket tároló tömb vagy megosztás csatolva van-e.",
+  "excludes.assistPathsUnavailable": "A konténer mentett mappái jelenleg nem érhetők el. Ellenőrizd, hogy az őket tároló tömb vagy megosztás csatolva van-e.",
   "excludes.assistSourceLiveRequested": "A méretek a mappák mostani állapotának vizsgálatából származnak.",
   "excludes.assistSourceLiveNotInSnapshot": "A legutóbbi mentés nem fedi le a most kiválasztott mappákat, ezért a méretek a mappák élő vizsgálatából származnak.",
   "excludes.assistSnapshotStale": "Ez a mentés több mint egy napos, ezért minden, ami azóta keletkezett, hiányzik ebből a listából.",

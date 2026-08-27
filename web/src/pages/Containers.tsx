@@ -1432,8 +1432,11 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                   is not in the index, so it has no row and no warning at all,
                   and "what can I stop backing up" is exactly the question a
                   cache that exploded yesterday answers. Offered whenever the
-                  list came from a backup, not only after an index failure. */}
-              {!scanning && suggestions !== null && !scanFailed && source === "snapshot" && (
+                  list came from a backup, not only after an index failure.
+                  NOT while indexFailed: that branch already offers the same
+                  action under its own label, and two differently-worded
+                  buttons for one thing read as two different things. */}
+              {!scanning && suggestions !== null && !scanFailed && !indexFailed && source === "snapshot" && (
                 <button
                   onClick={() => void scan(true)}
                   className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"

@@ -572,7 +572,7 @@ const es: Partial<Translations> = {
   "notify.hcPerDomainHint": "Deja un campo en blanco para usar la URL global de arriba. Un dominio con su propia URL obtiene su propia comprobación, con su propio tiempo de ejecución e historial.",
   "notify.unraid": "Notificaciones de Unraid",
   "notify.unraidHint": "Enviar al sistema de notificaciones del propio Unraid (que puede reenviar a Pushover, correo, Discord, …). Funciona a través de la conexión SSH de Ajustes → VM Backup over SSH, por lo que la clave debe estar autorizada allí — pero libvirt/VMs NO son necesarios (ignora un resultado «libvirt not reachable» si no haces copia de seguridad de VMs). Para comprobarlo, usa «Enviar prueba» abajo.",
-  "notify.unraidPlatformMismatch": "BombVault detectó este host como \"{platform}\", no como Unraid — las notificaciones de Unraid permanecen desactivadas aunque esta opción esté activada. Si este ES realmente un host Unraid, comprueba que el /boot del host esté montado (bind-mount) en /host/boot dentro del contenedor (consulta la plantilla de Unraid de BombVault) y reinicia el contenedor.",
+  "notify.unraidPlatformMismatch": "BombVault detectó este host como \"{platform}\", no como Unraid. Las notificaciones de Unraid permanecen desactivadas aunque esta opción esté activada. Si este ES realmente un host Unraid, comprueba que el /boot del host esté montado (bind-mount) en /host/boot dentro del contenedor (consulta la plantilla de Unraid de BombVault) y reinicia el contenedor.",
   "notify.smtp": "Correo (SMTP)",
   "notify.smtpHost": "Host SMTP",
   "notify.smtpPort": "Puerto",
@@ -813,7 +813,7 @@ const es: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Usar el calendario de Contenedores también para las VMs, Flash y Carpetas",
-  "jobs.syncSchedulesHint": "Cuando está activado, las VMs, Flash y Carpetas siguen el calendario de Contenedores en lugar del propio — desactívalo para establecer el ritmo de cada dominio de forma independiente.",
+  "jobs.syncSchedulesHint": "Cuando está activado, las VMs, Flash y Carpetas siguen el calendario de Contenedores en lugar del propio. Desactívalo para establecer el ritmo de cada dominio de forma independiente.",
   "jobs.vmIncludeHint": "Hace copia de cada VM con «incluir en el calendario» activado (configúralo por VM en la pestaña VMs).",
   "jobs.flashScheduleHint": "Hace copia de seguridad de la unidad USB de arranque Flash de Unraid (/boot) a la hora programada.",
   "jobs.flashNotImplemented": "Nota: el ejecutor de copias de Flash aún no está implementado en la fase 1 — el calendario se guarda pero no se ejecuta.",
@@ -978,7 +978,7 @@ const es: Partial<Translations> = {
   "excludes.assistSourceLive": "Este contenedor aún no tiene copia de seguridad, así que los tamaños provienen de un análisis en vivo de las carpetas.",
   "excludes.assistUnexamined": "Estas carpetas de la copia no se examinaron en absoluto: {paths}",
   "excludes.assistUnreadable": "No se pudieron leer estas carpetas de la copia, así que todo lo que contienen falta en esta lista: {paths}",
-  "excludes.assistPathsUnavailable": "Ahora mismo no se puede acceder a las carpetas de copia de este contenedor, y tampoco hay una copia de la que leer los tamaños. Comprueba que el array o el recurso compartido que las contiene esté montado.",
+  "excludes.assistPathsUnavailable": "Ahora mismo no se puede acceder a las carpetas de copia de este contenedor. Comprueba que el array o el recurso compartido que las contiene esté montado.",
   "excludes.assistSourceLiveRequested": "Los tamaños proceden de un análisis de las carpetas tal como están ahora mismo.",
   "excludes.assistSourceLiveNotInSnapshot": "La última copia no incluye las carpetas seleccionadas ahora, así que los tamaños proceden de un análisis en vivo de las carpetas.",
   "excludes.assistSnapshotStale": "Esta copia tiene más de un día, así que todo lo creado desde entonces falta en esta lista.",

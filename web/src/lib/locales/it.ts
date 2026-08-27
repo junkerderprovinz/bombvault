@@ -572,7 +572,7 @@ const it: Partial<Translations> = {
   "notify.hcPerDomainHint": "Lascia vuoto un campo per usare l'URL globale qui sopra. Un dominio con un proprio URL ottiene un controllo dedicato, con tempo di esecuzione e cronologia propri.",
   "notify.unraid": "Notifiche Unraid",
   "notify.unraidHint": "Invia al sistema di notifiche di Unraid (che può inoltrare a Pushover, email, Discord, …). Funziona tramite la connessione SSH da Impostazioni → VM Backup over SSH, quindi la chiave deve essere autorizzata lì — ma libvirt/VMs NON sono necessari (ignora un risultato «libvirt not reachable» se non esegui il backup delle VMs). Per verificare, usa «Invia test» qui sotto.",
-  "notify.unraidPlatformMismatch": "BombVault ha rilevato questo host come \"{platform}\", non come Unraid — le notifiche Unraid restano disattivate anche con questa opzione attiva. Se questo È davvero un host Unraid, verifica che il /boot dell'host sia montato (bind-mount) su /host/boot all'interno del container (vedi il template Unraid di BombVault) e riavvia il container.",
+  "notify.unraidPlatformMismatch": "BombVault ha rilevato questo host come \"{platform}\", non come Unraid. Le notifiche Unraid restano disattivate anche con questa opzione attiva. Se questo È davvero un host Unraid, verifica che il /boot dell'host sia montato (bind-mount) su /host/boot all'interno del container (vedi il template Unraid di BombVault) e riavvia il container.",
   "notify.test": "Invia test",
   "notify.tested": "Test inviato",
   "stophook.title": "Arresta altri container",
@@ -791,7 +791,7 @@ const it: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Usa il calendario dei Container anche per VM, Flash e Cartelle",
-  "jobs.syncSchedulesHint": "Se attivo, VM, Flash e Cartelle seguono il calendario dei Container invece del proprio — disattiva per impostare il ritmo di ogni dominio in modo indipendente.",
+  "jobs.syncSchedulesHint": "Se attivo, VM, Flash e Cartelle seguono il calendario dei Container invece del proprio. Disattiva per impostare il ritmo di ogni dominio in modo indipendente.",
   "jobs.vmIncludeHint": "Esegue il backup di ogni VM con «includi nel calendario» attivo (impostabile per VM nella scheda VM).",
   "jobs.flashScheduleHint": "Esegue il backup della chiavetta USB di avvio Flash di Unraid (/boot) all'orario pianificato.",
   "jobs.flashNotImplemented": "Nota: l'esecutore di backup Flash non è ancora implementato nella fase 1 — il calendario viene salvato ma non eseguito.",
@@ -980,7 +980,7 @@ const it: Partial<Translations> = {
   "excludes.assistSourceLive": "Questo container non ha ancora un backup, quindi le dimensioni provengono da una scansione dal vivo delle cartelle.",
   "excludes.assistUnexamined": "Queste cartelle del backup non sono state esaminate affatto: {paths}",
   "excludes.assistUnreadable": "Non è stato possibile leggere queste cartelle del backup, quindi tutto ciò che contengono manca da questo elenco: {paths}",
-  "excludes.assistPathsUnavailable": "Le cartelle di backup di questo contenitore non sono raggiungibili al momento e non c'è nemmeno un backup da cui leggere le dimensioni. Verifica che l'array o la condivisione che le contiene sia montata.",
+  "excludes.assistPathsUnavailable": "Le cartelle di backup di questo contenitore non sono raggiungibili al momento. Verifica che l'array o la condivisione che le contiene sia montata.",
   "excludes.assistSourceLiveRequested": "Le dimensioni provengono da una scansione delle cartelle nel loro stato attuale.",
   "excludes.assistSourceLiveNotInSnapshot": "L'ultimo backup non copre le cartelle selezionate ora, quindi le dimensioni provengono da una scansione dal vivo delle cartelle.",
   "excludes.assistSnapshotStale": "Questo backup ha più di un giorno, quindi tutto ciò che è stato creato da allora manca da questo elenco.",

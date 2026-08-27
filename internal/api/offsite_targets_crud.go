@@ -99,7 +99,7 @@ func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 // toStoreTarget (repo trimmed, class trim+uppercased).
 func validateOffsiteTargetInput(t store.OffsiteTarget) string {
 	if !validOffsiteDomain(t.Domain) {
-		return "invalid domain — must be one of containers, vms, flash, config, files"
+		return "invalid domain: must be one of containers, vms, flash, config, files"
 	}
 	if t.Repo == "" {
 		return "repo must not be empty"

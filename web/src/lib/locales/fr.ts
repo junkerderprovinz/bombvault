@@ -572,7 +572,7 @@ const fr: Partial<Translations> = {
   "notify.hcPerDomainHint": "Laissez un champ vide pour utiliser l'URL globale ci-dessus. Un domaine avec sa propre URL obtient sa propre vérification, avec sa propre durée d'exécution et son propre historique.",
   "notify.unraid": "Notifications Unraid",
   "notify.unraidHint": "Envoyer au système de notifications d'Unraid (qui peut relayer vers Pushover, e-mail, Discord, …). Fonctionne via la connexion SSH de Réglages → VM Backup over SSH, la clé doit donc y être autorisée — mais libvirt/VMs ne sont PAS requis (ignorez un résultat « libvirt not reachable » si vous ne sauvegardez pas de VMs). Pour vérifier, utilisez « Envoyer un test » ci-dessous.",
-  "notify.unraidPlatformMismatch": "BombVault a détecté cet hôte comme \"{platform}\", pas comme Unraid — les notifications Unraid restent désactivées même avec cette option activée. Si c'est bien un hôte Unraid, vérifiez que le /boot de l'hôte est monté (bind-mount) sur /host/boot à l'intérieur du conteneur (voir le modèle Unraid de BombVault), puis redémarrez le conteneur.",
+  "notify.unraidPlatformMismatch": "BombVault a détecté cet hôte comme \"{platform}\", pas comme Unraid. Les notifications Unraid restent désactivées même avec cette option activée. Si c'est bien un hôte Unraid, vérifiez que le /boot de l'hôte est monté (bind-mount) sur /host/boot à l'intérieur du conteneur (voir le modèle Unraid de BombVault), puis redémarrez le conteneur.",
   "notify.test": "Envoyer un test",
   "notify.tested": "Test envoyé",
   "stophook.title": "Arrêter d'autres conteneurs",
@@ -791,7 +791,7 @@ const fr: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Utiliser le planning des Conteneurs aussi pour les VMs, Flash et Dossiers",
-  "jobs.syncSchedulesHint": "Une fois activé, les VMs, Flash et Dossiers suivent le planning des Conteneurs au lieu du leur — désactivez pour définir le rythme de chaque domaine indépendamment.",
+  "jobs.syncSchedulesHint": "Une fois activé, les VMs, Flash et Dossiers suivent le planning des Conteneurs au lieu du leur. Désactivez pour définir le rythme de chaque domaine indépendamment.",
   "jobs.vmIncludeHint": "Sauvegarde chaque VM dont l'option « inclure dans le planning » est activée (à régler par VM dans l'onglet VMs).",
   "jobs.flashScheduleHint": "Sauvegarde la clé USB de démarrage Flash d'Unraid (/boot) à l'heure planifiée.",
   "jobs.flashNotImplemented": "Remarque : l'exécuteur de sauvegarde Flash n'est pas encore implémenté en phase 1 — le planning est enregistré mais pas exécuté.",
@@ -980,7 +980,7 @@ const fr: Partial<Translations> = {
   "excludes.assistSourceLive": "Ce conteneur n'a pas encore de sauvegarde, les tailles proviennent donc d'une analyse en direct des dossiers.",
   "excludes.assistUnexamined": "Ces dossiers sauvegardés n'ont pas été examinés du tout : {paths}",
   "excludes.assistUnreadable": "Ces dossiers sauvegardés n'ont pas pu être lus, tout ce qu'ils contiennent manque donc dans cette liste : {paths}",
-  "excludes.assistPathsUnavailable": "Les dossiers sauvegardés de ce conteneur sont inaccessibles pour l'instant, et il n'y a pas non plus de sauvegarde d'où lire les tailles. Vérifiez que la matrice ou le partage qui les contient est monté.",
+  "excludes.assistPathsUnavailable": "Les dossiers sauvegardés de ce conteneur sont inaccessibles pour l'instant. Vérifiez que la matrice ou le partage qui les contient est monté.",
   "excludes.assistSourceLiveRequested": "Les tailles proviennent d'une analyse des dossiers dans leur état actuel.",
   "excludes.assistSourceLiveNotInSnapshot": "La dernière sauvegarde ne couvre pas les dossiers sélectionnés actuellement, les tailles proviennent donc d'une analyse en direct des dossiers.",
   "excludes.assistSnapshotStale": "Cette sauvegarde date de plus d'un jour, tout ce qui a été créé depuis manque donc dans cette liste.",

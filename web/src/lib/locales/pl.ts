@@ -564,7 +564,7 @@ const pl: Partial<Translations> = {
   "notify.hcPerDomainHint": "Pozostaw pole puste, aby użyć globalnego adresu URL powyżej. Domena z własnym adresem URL otrzymuje własne sprawdzenie, z własnym czasem działania i historią.",
   "notify.unraid": "Powiadomienia Unraid",
   "notify.unraidHint": "Wyślij do własnego systemu powiadomień Unraida (który może przekazywać do Pushover, e-mail, Discord, …). Działa przez połączenie SSH z Ustawienia → VM Backup over SSH, więc klucz musi być tam autoryzowany — ale libvirt/VMs NIE są wymagane (zignoruj wynik „libvirt not reachable”, jeśli nie tworzysz kopii zapasowych VMs). Aby sprawdzić, użyj poniżej „Wyślij test”.",
-  "notify.unraidPlatformMismatch": "BombVault wykrył ten host jako \"{platform}\", a nie jako Unraid — powiadomienia Unraid pozostają wyłączone, mimo że ta opcja jest włączona. Jeśli to NAPRAWDĘ jest host Unraid, sprawdź, czy /boot hosta jest zamontowane (bind-mount) do /host/boot wewnątrz kontenera (zobacz szablon Unraid BombVault), a następnie zrestartuj kontener.",
+  "notify.unraidPlatformMismatch": "BombVault wykrył ten host jako \"{platform}\", a nie jako Unraid. Powiadomienia Unraid pozostają wyłączone, mimo że ta opcja jest włączona. Jeśli to NAPRAWDĘ jest host Unraid, sprawdź, czy /boot hosta jest zamontowane (bind-mount) do /host/boot wewnątrz kontenera (zobacz szablon Unraid BombVault), a następnie zrestartuj kontener.",
   "notify.test": "Wyślij test",
   "notify.tested": "Test wysłany",
   "stophook.title": "Zatrzymaj inne kontenery",
@@ -782,7 +782,7 @@ const pl: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "Użyj harmonogramu Containers także dla VMs, Flash i Folderów",
-  "jobs.syncSchedulesHint": "Po włączeniu VMs, Flash i Foldery korzystają z harmonogramu Containers zamiast własnego — wyłącz, aby ustawić rytm każdej domeny niezależnie.",
+  "jobs.syncSchedulesHint": "Po włączeniu VMs, Flash i Foldery korzystają z harmonogramu Containers zamiast własnego. Wyłącz, aby ustawić rytm każdej domeny niezależnie.",
   "jobs.vmIncludeHint": "Tworzy kopię każdej VM z włączoną opcją „uwzględnij w harmonogramie” (ustawiane osobno dla każdej VM w zakładce VMs).",
   "jobs.flashScheduleHint": "Tworzy kopię zapasową nośnika rozruchowego USB Flash Unraid (/boot) o zaplanowanej godzinie.",
   "jobs.flashNotImplemented": "Uwaga: executor kopii Flash nie jest jeszcze zaimplementowany w fazie 1 — harmonogram jest zapisywany, ale nie wykonywany.",
@@ -975,7 +975,7 @@ const pl: Partial<Translations> = {
   "excludes.assistSourceLive": "Ten kontener nie ma jeszcze kopii zapasowej, więc rozmiary pochodzą z bieżącego skanowania folderów.",
   "excludes.assistUnexamined": "Te foldery objęte kopią w ogóle nie zostały sprawdzone: {paths}",
   "excludes.assistUnreadable": "Nie udało się odczytać tych folderów, więc wszystko, co w nich jest, nie znalazło się na tej liście: {paths}",
-  "excludes.assistPathsUnavailable": "Foldery kopii tego kontenera są teraz nieosiągalne i nie ma też kopii, z której dałoby się odczytać rozmiary. Sprawdź, czy macierz albo udział z tymi folderami jest zamontowany.",
+  "excludes.assistPathsUnavailable": "Foldery kopii tego kontenera są teraz nieosiągalne. Sprawdź, czy macierz albo udział z tymi folderami jest zamontowany.",
   "excludes.assistSourceLiveRequested": "Rozmiary pochodzą ze skanowania folderów w ich obecnym stanie.",
   "excludes.assistSourceLiveNotInSnapshot": "Ostatnia kopia nie obejmuje obecnie wybranych folderów, więc rozmiary pochodzą z bieżącego skanowania folderów.",
   "excludes.assistSnapshotStale": "Ta kopia jest starsza niż jeden dzień, więc wszystko utworzone od tego czasu nie znalazło się na tej liście.",

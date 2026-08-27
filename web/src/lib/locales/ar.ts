@@ -572,7 +572,7 @@ const ar: Partial<Translations> = {
   "notify.hcPerDomainHint": "اترك الحقل فارغاً لاستخدام الرابط العام أعلاه. يحصل النطاق الذي له رابطه الخاص على فحصه الخاص، بمدة تشغيله وسجله الخاصّين.",
   "notify.unraid": "إشعارات Unraid",
   "notify.unraidHint": "أرسل إلى نظام إشعارات Unraid نفسه (الذي يمكنه إعادة التوجيه إلى Pushover والبريد الإلكتروني وDiscord، …). يعمل عبر اتصال SSH من الإعدادات → VM Backup over SSH، لذا يجب أن يكون المفتاح مُصرّحًا به هناك — لكن libvirt/VMs غير مطلوبة (تجاهل نتيجة «libvirt not reachable» إذا كنت لا تنسخ VMs احتياطيًا). للتحقق، استخدم «إرسال اختبار» بالأسفل.",
-  "notify.unraidPlatformMismatch": "اكتشف BombVault أن هذا المضيف هو \"{platform}\"، وليس Unraid — لذا تظل إشعارات Unraid متوقفة حتى مع تفعيل هذا الخيار. إذا كان هذا فعلاً مضيف Unraid، تحقق من أن /boot الخاص بالمضيف مربوط (bind-mounted) بالمسار /host/boot داخل الحاوية (راجع قالب BombVault لـ Unraid)، ثم أعد تشغيل الحاوية.",
+  "notify.unraidPlatformMismatch": "اكتشف BombVault أن هذا المضيف هو \"{platform}\"، وليس Unraid، لذا تظل إشعارات Unraid متوقفة حتى مع تفعيل هذا الخيار. إذا كان هذا فعلاً مضيف Unraid، تحقق من أن /boot الخاص بالمضيف مربوط (bind-mounted) بالمسار /host/boot داخل الحاوية (راجع قالب BombVault لـ Unraid)، ثم أعد تشغيل الحاوية.",
   "notify.test": "إرسال اختبار",
   "notify.tested": "تم إرسال الاختبار",
   "stophook.title": "إيقاف حاويات أخرى",
@@ -818,7 +818,7 @@ const ar: Partial<Translations> = {
 
   // Schedules / Plans tab
   "jobs.syncSchedules": "استخدم جدول Containers أيضاً لـ VMs وFlash والمجلدات",
-  "jobs.syncSchedulesHint": "عند التفعيل، تتبع VMs وFlash والمجلدات جدول Containers بدلاً من جدولها الخاص — أوقف التفعيل لضبط وتيرة كل نطاق بشكل مستقل.",
+  "jobs.syncSchedulesHint": "عند التفعيل، تتبع VMs وFlash والمجلدات جدول Containers بدلاً من جدولها الخاص. أوقف التفعيل لضبط وتيرة كل نطاق بشكل مستقل.",
   "jobs.vmIncludeHint": "ينسخ كل VM مفعَّل فيه «التضمين في الجدول» احتياطياً (يُضبط لكل VM في تبويب VMs).",
   "jobs.flashScheduleHint": "ينسخ محرك أقراص USB الإقلاعي Flash الخاص بـ Unraid (/boot) احتياطيًا في الوقت المجدول.",
   "jobs.flashNotImplemented": "ملاحظة: منفذ نسخ Flash الاحتياطي لم يُنفَّذ بعد في المرحلة الأولى — يُحفظ الجدول لكنه لا يُنفَّذ.",
@@ -983,7 +983,7 @@ const ar: Partial<Translations> = {
   "excludes.assistSourceLive": "لا توجد نسخة احتياطية لهذه الحاوية بعد، لذا تأتي الأحجام من فحص مباشر للمجلدات.",
   "excludes.assistUnexamined": "هذه المجلدات المنسوخة احتياطيًا لم تُفحص إطلاقًا: {paths}",
   "excludes.assistUnreadable": "تعذّرت قراءة هذه المجلدات المنسوخة احتياطيًا، لذا كل ما بداخلها مفقود من هذه القائمة: {paths}",
-  "excludes.assistPathsUnavailable": "لا يمكن الوصول إلى مجلدات النسخ الاحتياطي لهذه الحاوية الآن، ولا يوجد نسخ احتياطي تُقرأ منه الأحجام. تأكد من أن المصفوفة أو المشاركة التي تحتويها مُركّبة.",
+  "excludes.assistPathsUnavailable": "لا يمكن الوصول إلى مجلدات النسخ الاحتياطي لهذه الحاوية الآن. تأكد من أن المصفوفة أو المشاركة التي تحتويها مُركّبة.",
   "excludes.assistSourceLiveRequested": "الأحجام مأخوذة من فحص للمجلدات كما هي الآن.",
   "excludes.assistSourceLiveNotInSnapshot": "النسخة الاحتياطية الأخيرة لا تشمل المجلدات المحددة حاليًا، لذا الأحجام مأخوذة من فحص مباشر للمجلدات.",
   "excludes.assistSnapshotStale": "هذه النسخة الاحتياطية أقدم من يوم، لذا كل ما أُنشئ بعدها غير موجود في هذه القائمة.",

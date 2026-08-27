@@ -155,7 +155,7 @@ func mergeRegistryAuths(submitted []registryAuthView, stored []RegistryAuth) ([]
 			return nil, errors.New("registry host is required")
 		}
 		if strings.ContainsAny(host, " /") {
-			return nil, fmt.Errorf("invalid registry host %q — use just the host, e.g. ghcr.io", host)
+			return nil, fmt.Errorf("invalid registry host %q: use just the host, e.g. ghcr.io", host)
 		}
 		if seen[host] {
 			return nil, fmt.Errorf("duplicate registry %q", host)
