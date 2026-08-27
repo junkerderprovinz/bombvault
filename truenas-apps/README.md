@@ -41,6 +41,14 @@ detail):
   for this file and CONTRIBUTIONS.md's explicit "TrueNAS is the only
   maintainer for now" — NOT a junkerderprovinz contact address. If that
   convention ever changes upstream, update this to match.
+- **`item.yaml` was missing until 2026-08-28.** Every real app in
+  `ix-dev/community/` ships one (categories, `icon_url`, `screenshots`,
+  tags) alongside `app.yaml`, and this directory did not have it — found by
+  listing a real app's contents rather than trusting the prepared set. Its
+  `icon_url` follows the catalog convention and points at
+  `media.sys.truenas.net`, which is where the reviewer will host the icon;
+  it is therefore a forward reference that only resolves once the icon is
+  uploaded, exactly like every other app's.
 - **Icon and screenshots**: `app.yaml`'s `icon` currently points at
   `raw.githubusercontent.com` (BombVault's own repo asset) and
   `screenshots: []` is empty. Real catalog apps host BOTH on
