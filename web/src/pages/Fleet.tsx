@@ -114,6 +114,11 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
 }
 
 // ---------------------------------------------------------------------------
+// Per-browser: whether a peer card shows its scorecard (#179 — manilx: "Have to
+// open it every time"). Same "bombvault.*" localStorage convention as the other
+// UI preferences.
+const FLEET_DETAILS_OPEN_KEY = "bombvault.fleetDetailsOpen";
+
 // Cached scorecard (one row per domain the peer reported)
 // ---------------------------------------------------------------------------
 
@@ -467,9 +472,37 @@ function FleetPeerCard({
    *  below. */
   index: number;
 }) {
-  const [open, setOpen] = useState(false);
+  // #179 (manilx): "Have to open it every time. Collapsed not a lot of info is
+  // shown." The scorecard IS the page's content — collapsed a peer card shows
+  // little more than its name — so the state is remembered instead of resetting
+  // to closed on every visit. Open one card and every card opens next time.
+  //
+  // Deliberately ONE key rather than one per peer: the request is "let it stay
+  // open", not "remember each card separately", and a per-peer key would leave a
+  // renamed or removed peer's entry behind forever. Same "bombvault.*"
+  // localStorage convention, and the same try/catch shape, as the backup-order
+  // card's own collapsed state.
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(FLEET_DETAILS_OPEN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [polling, setPolling] = useState(false);
   const [removing, setRemoving] = useState(false);
+
+  function toggleDetails() {
+    setOpen((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(FLEET_DETAILS_OPEN_KEY, next ? "1" : "0");
+      } catch {
+        /* private mode / quota — it just will not be remembered */
+      }
+      return next;
+    });
+  }
   const { push } = useToast();
   const [showPropose, setShowPropose] = useState(false);
   // Reversible action: removing a monitoring entry never contacts the peer
@@ -564,8 +597,12 @@ function FleetPeerCard({
           </div>
           <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{peer.url}</p>
         </div>
+        {/* No "v" prefix: the value already carries one (api.Version is
+            "v8.0.0+…"), so this rendered "vv8.0.0+main.e3db401" — visible in
+            both screenshots on #179. Every other version render in the app
+            prints the string as-is. */}
         {peer.lastPollVersion && (
-          <span className="text-xs text-carbon-textMuted shrink-0">v{peer.lastPollVersion}</span>
+          <span className="text-xs text-carbon-textMuted shrink-0">{peer.lastPollVersion}</span>
         )}
       </div>
 
@@ -608,7 +645,7 @@ function FleetPeerCard({
             {t("fleet.mesh.proposeButton")}
           </button>
           <button
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => toggleDetails()}
             className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
           >
             <svg
