@@ -1289,6 +1289,7 @@ const lt: Partial<Translations> = {
   "recovery.foreignBindWarning": "Šie bind nurodo į saugyklą, kurios šis serveris neturi. Appdata automatiškai pertvarkoma, tačiau ištaisykite tai konteinerio šablone po atkūrimo:",
   "recovery.foreignRestore": "Atkurti čia",
   "recovery.foreignExistsConfirm": "„{name}“ jau yra šioje sistemoje, todėl atkūrimas jį PERRAŠYS svetimo šaltinio atsargine kopija. Tęsti?",
+  "recovery.restoreRowConfirm": "Atkurti naujausią „{name}“ atsarginę kopiją vietoje? Jis bus sustabdytas, dabartiniai duomenys pakeisti, ir liks sustabdytas.",
   "recovery.foreignUnverifiedConfirm": "BombVault nepavyko perskaityti dabartinių šios sistemos konteinerių ir VM, todėl negali pasakyti, ar „{name}“ jau yra čia. Atkūrimas gali perrašyti esamą. Tęsti?",
   "recovery.foreignExpired": "Seansas baigėsi (seansai trunka 30 minučių). Prisijunkite iš naujo, kad tęstumėte naršymą.",
   "recovery.foreignReconnect": "Prisijungti iš naujo",

@@ -1120,6 +1120,7 @@ const pl: Partial<Translations> = {
   "recovery.foreignBindWarning": "Te montowania wskazują na pamięć, której ten serwer nie ma. Appdata są przemapowywane automatycznie, ale popraw je w szablonie kontenera po przywróceniu:",
   "recovery.foreignRestore": "Przywróć tutaj",
   "recovery.foreignExistsConfirm": "„{name}” już istnieje w tym systemie. Przywracanie NADPISZE go obcą kopią. Kontynuować?",
+  "recovery.restoreRowConfirm": "Przywrócić najnowszą kopię „{name}” w miejscu? Zostanie zatrzymany, jego bieżące dane zastąpione, i pozostanie zatrzymany.",
   "recovery.foreignUnverifiedConfirm": "BombVault nie mógł odczytać bieżących kontenerów i maszyn wirtualnych tego systemu, więc nie może ustalić, czy „{name}” już tutaj istnieje. Przywracanie może nadpisać istniejący element. Kontynuować?",
   "recovery.foreignExpired": "Sesja wygasła (sesje trwają 30 minut). Połącz się ponownie, aby dalej przeglądać.",
   "recovery.foreignReconnect": "Połącz ponownie",

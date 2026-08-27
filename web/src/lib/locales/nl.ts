@@ -1122,6 +1122,7 @@ const nl: Partial<Translations> = {
   "recovery.foreignBindWarning": "Deze binds wijzen naar opslag die deze server niet heeft. Appdata wordt automatisch geremapt, maar corrigeer deze na het herstel in het containersjabloon:",
   "recovery.foreignRestore": "Hierheen herstellen",
   "recovery.foreignExistsConfirm": "“{name}” bestaat al op dit systeem. Herstellen zal het OVERSCHRIJVEN met de vreemde back-up. Doorgaan?",
+  "recovery.restoreRowConfirm": "De nieuwste back-up van “{name}” ter plaatse terugzetten? Het wordt gestopt, de huidige gegevens worden vervangen en het blijft gestopt.",
   "recovery.foreignUnverifiedConfirm": "BombVault kon de huidige containers en VM's van dit systeem niet uitlezen en kan daarom niet bepalen of “{name}” hier al bestaat. Herstellen kan een bestaande overschrijven. Doorgaan?",
   "recovery.foreignExpired": "De sessie is verlopen (sessies duren 30 minuten). Maak opnieuw verbinding om verder te bladeren.",
   "recovery.foreignReconnect": "Opnieuw verbinden",

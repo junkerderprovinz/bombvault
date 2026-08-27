@@ -1289,6 +1289,7 @@ const ca: Partial<Translations> = {
   "recovery.foreignBindWarning": "Aquests binds apunten a emmagatzematge que aquest servidor no té. L'appdata es redirigeix automàticament, però corregeix això a la plantilla del contenidor després de restaurar:",
   "recovery.foreignRestore": "Restaura aquí",
   "recovery.foreignExistsConfirm": "«{name}» ja existeix en aquest sistema, així que restaurar la SOBREESCRIURÀ amb la còpia externa. Vols continuar?",
+  "recovery.restoreRowConfirm": "Restaurar la còpia més recent de «{name}» al seu lloc? S'aturarà, se'n substituiran les dades actuals i quedarà aturat.",
   "recovery.foreignUnverifiedConfirm": "BombVault no ha pogut llegir els contenidors i MV actuals d'aquest sistema, així que no pot saber si «{name}» ja existeix aquí. Restaurar pot sobreescriure un existent. Vols continuar?",
   "recovery.foreignExpired": "La sessió ha caducat (les sessions duren 30 minuts). Torna a connectar per continuar explorant.",
   "recovery.foreignReconnect": "Torna a connectar",

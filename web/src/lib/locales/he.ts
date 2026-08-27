@@ -1125,6 +1125,7 @@ const he: Partial<Translations> = {
   "recovery.foreignBindWarning": "חיבורים אלה מצביעים על אחסון שאין לשרת הזה. נתוני appdata ממופים מחדש אוטומטית, אך תקנו אותם בתבנית הקונטיינר לאחר השחזור:",
   "recovery.foreignRestore": "שחזר לכאן",
   "recovery.foreignExistsConfirm": "\"{name}\" כבר קיים במערכת הזו: השחזור ידרוס אותו עם הגיבוי הזר. להמשיך?",
+  "recovery.restoreRowConfirm": "לשחזר את הגיבוי האחרון של „{name}” במקומו? הוא ייעצר, הנתונים הנוכחיים שלו יוחלפו והוא יישאר עצור.",
   "recovery.foreignUnverifiedConfirm": "BombVault לא הצליח לקרוא את הקונטיינרים והמכונות הווירטואליות הנוכחיים של המערכת הזו, ולכן אינו יכול לדעת אם \"{name}\" כבר קיים כאן. השחזור עלול לדרוס פריט קיים. להמשיך?",
   "recovery.foreignExpired": "תוקף ההפעלה פג (הפעלות נמשכות 30 דקות). התחברו שוב כדי להמשיך לעיין.",
   "recovery.foreignReconnect": "התחבר מחדש",

@@ -1289,6 +1289,7 @@ const ms: Partial<Translations> = {
   "recovery.foreignBindWarning": "Bind ini menunjuk kepada storan yang tiada pada pelayan ini. Appdata dipetakan semula secara automatik, tetapi betulkan ini dalam templat bekas selepas pemulihan:",
   "recovery.foreignRestore": "Pulihkan di sini",
   "recovery.foreignExistsConfirm": "\"{name}\" sudah wujud pada sistem ini, jadi pemulihan akan MENULIS GANTI ia dengan sandaran asing. Teruskan?",
+  "recovery.restoreRowConfirm": "Pulihkan sandaran terbaharu “{name}” di tempatnya? Ia dihentikan, data semasanya diganti, dan kekal terhenti selepas itu.",
   "recovery.foreignUnverifiedConfirm": "BombVault gagal membaca bekas dan VM semasa sistem ini, jadi ia tidak dapat memberitahu sama ada \"{name}\" sudah wujud di sini. Pemulihan mungkin menulis ganti yang sedia ada. Teruskan?",
   "recovery.foreignExpired": "Sesi telah tamat tempoh (sesi berlangsung 30 minit). Sambung semula untuk meneruskan penyemakimbasan.",
   "recovery.foreignReconnect": "Sambung semula",

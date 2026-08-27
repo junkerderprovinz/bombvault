@@ -1125,6 +1125,7 @@ const it: Partial<Translations> = {
   "recovery.foreignBindWarning": "Questi bind puntano ad archiviazione che questo server non ha. Gli appdata vengono rimappati automaticamente, ma correggi questi nel modello del contenitore dopo il ripristino:",
   "recovery.foreignRestore": "Ripristina qui",
   "recovery.foreignExistsConfirm": "“{name}” esiste già su questo sistema. Il ripristino lo SOVRASCRIVERÀ con il backup esterno. Continuare?",
+  "recovery.restoreRowConfirm": "Ripristinare il backup più recente di «{name}» sul posto? Viene arrestato, i dati attuali sostituiti e resta arrestato.",
   "recovery.foreignUnverifiedConfirm": "BombVault non è riuscito a leggere i container e le VM attualmente presenti su questo sistema, quindi non può stabilire se “{name}” esista già qui. Il ripristino potrebbe sovrascriverne uno esistente. Continuare?",
   "recovery.foreignExpired": "La sessione è scaduta (le sessioni durano 30 minuti). Riconnettiti per continuare a sfogliare.",
   "recovery.foreignReconnect": "Riconnetti",

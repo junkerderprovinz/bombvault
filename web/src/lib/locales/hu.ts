@@ -1128,6 +1128,7 @@ const hu: Partial<Translations> = {
   "recovery.foreignBindWarning": "Ezek a csatolások olyan tárolóra mutatnak, amellyel ez a szerver nem rendelkezik. Az appdata automatikusan átképeződik, de ezeket a visszaállítás után javítsd a konténer sablonjában:",
   "recovery.foreignRestore": "Visszaállítás ide",
   "recovery.foreignExistsConfirm": "„{name}” már létezik ezen a rendszeren. A visszaállítás FELÜLÍRJA az idegen mentéssel. Folytatja?",
+  "recovery.restoreRowConfirm": "Visszaállítod a(z) „{name}” legutóbbi mentését a helyére? Leáll, a jelenlegi adatai lecserélődnek, és leállítva marad.",
   "recovery.foreignUnverifiedConfirm": "A BombVault nem tudta beolvasni ezen a rendszeren jelenleg futó konténereket és VM-eket, ezért nem tudja megállapítani, hogy „{name}” már létezik-e itt. A visszaállítás felülírhat egy meglévőt. Folytatja?",
   "recovery.foreignExpired": "A munkamenet lejárt (a munkamenetek 30 percig tartanak). Csatlakozzon újra a böngészés folytatásához.",
   "recovery.foreignReconnect": "Újracsatlakozás",

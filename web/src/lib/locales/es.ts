@@ -1123,6 +1123,7 @@ const es: Partial<Translations> = {
   "recovery.foreignBindWarning": "Estos montajes apuntan a almacenamiento que este servidor no tiene. Los appdata se reasignan automáticamente, pero corrige estos en la plantilla del contenedor tras la restauración:",
   "recovery.foreignRestore": "Restaurar aquí",
   "recovery.foreignExistsConfirm": "«{name}» ya existe en este sistema: la restauración lo SOBRESCRIBIRÁ con la copia ajena. ¿Continuar?",
+  "recovery.restoreRowConfirm": "¿Restaurar la copia más reciente de «{name}» en su sitio? Se detiene, se sustituyen sus datos actuales y queda detenido.",
   "recovery.foreignUnverifiedConfirm": "BombVault no pudo leer los contenedores y las VM actuales de este sistema, por lo que no puede saber si «{name}» ya existe aquí. La restauración podría sobrescribir uno existente. ¿Continuar?",
   "recovery.foreignExpired": "La sesión ha caducado (las sesiones duran 30 minutos). Reconéctate para seguir explorando.",
   "recovery.foreignReconnect": "Reconectar",

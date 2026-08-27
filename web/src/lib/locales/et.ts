@@ -1289,6 +1289,7 @@ const et: Partial<Translations> = {
   "recovery.foreignBindWarning": "Need bindid osutavad salvestusruumile, mida sellel serveril pole. Appdata suunatakse automaatselt ümber, kuid paranda need pärast taastamist konteineri mallis:",
   "recovery.foreignRestore": "Taasta siia",
   "recovery.foreignExistsConfirm": "„{name}” on selles süsteemis juba olemas, seega taastamine KIRJUTAB selle üle võõra varundusega. Kas jätkata?",
+  "recovery.restoreRowConfirm": "Kas taastada „{name}” uusim varukoopia kohapeal? See peatatakse, praegused andmed asendatakse ja see jääb peatatuks.",
   "recovery.foreignUnverifiedConfirm": "BombVault ei suutnud lugeda selle süsteemi praeguseid konteinereid ja VM-e, seega ei saa öelda, kas „{name}” on siin juba olemas. Taastamine võib olemasoleva üle kirjutada. Kas jätkata?",
   "recovery.foreignExpired": "Seanss on aegunud (seansid kestavad 30 minutit). Sirvimise jätkamiseks ühendu uuesti.",
   "recovery.foreignReconnect": "Ühendu uuesti",

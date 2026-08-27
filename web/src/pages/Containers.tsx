@@ -963,7 +963,19 @@ function StopContainersEditor({
   // fresh `listContainers()` reload after Discover) — the same "derived from
   // props but independently editable until the next save" shape
   // UpdateAfterBackupRow's own `initial`-seeded toggle already uses.
-  useEffect(() => setSelected(new Set(initial)), [initial]);
+  //
+  // Keyed on the CONTENT, not the array's identity. The call site passes
+  // `container.stopContainers ?? []`, and the API returns null for any
+  // container that has no target row yet, so that fallback minted a BRAND NEW
+  // array on every parent render — and this effect then reset the selection to
+  // empty each time. What made it costly rather than merely annoying: the next
+  // toggle saves the visible set, and the server replaces the stored list
+  // wholesale, so a user who ticked three containers and then triggered any
+  // parent re-render silently saved a list with only the fourth in it.
+  const initialKey = JSON.stringify(initial);
+  useEffect(() => {
+    setSelected(new Set(JSON.parse(initialKey) as string[]));
+  }, [initialKey]);
 
   // Candidates: every OTHER installed container — excludes this row's own
   // container (a container can't stop itself) and BombVault's own container

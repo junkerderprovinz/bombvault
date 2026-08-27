@@ -1125,6 +1125,7 @@ const da: Partial<Translations> = {
   "recovery.foreignBindWarning": "Disse bind peger på lager, denne server ikke har. Appdata remappes automatisk, men ret disse i containerens skabelon efter gendannelsen:",
   "recovery.foreignRestore": "Gendan hertil",
   "recovery.foreignExistsConfirm": "”{name}” findes allerede på dette system. Gendannelsen OVERSKRIVER det med den fremmede sikkerhedskopi. Fortsæt?",
+  "recovery.restoreRowConfirm": "Gendan den nyeste sikkerhedskopi af “{name}” på stedet? Den stoppes, dens nuværende data erstattes, og den forbliver stoppet.",
   "recovery.foreignUnverifiedConfirm": "BombVault kunne ikke læse dette systems aktuelle containere og VM'er og kan derfor ikke afgøre, om ”{name}” allerede findes her. Gendannelsen kan overskrive en eksisterende. Fortsæt?",
   "recovery.foreignExpired": "Sessionen er udløbet (sessioner varer 30 minutter). Forbind igen for at fortsætte med at gennemse.",
   "recovery.foreignReconnect": "Forbind igen",

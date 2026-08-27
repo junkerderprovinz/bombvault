@@ -1289,6 +1289,7 @@ const sk: Partial<Translations> = {
   "recovery.foreignBindWarning": "Tieto väzby ukazujú na úložisko, ktoré tento server nemá. Appdata sa automaticky premapuje, ale opravte toto v šablóne kontajnera po obnovení:",
   "recovery.foreignRestore": "Obnoviť sem",
   "recovery.foreignExistsConfirm": "„{name}“ už v tomto systéme existuje, takže obnovenie ho PREPÍŠE cudzou zálohou. Pokračovať?",
+  "recovery.restoreRowConfirm": "Obnoviť najnovšiu zálohu „{name}“ na mieste? Bude zastavený, jeho aktuálne dáta nahradené a zostane zastavený.",
   "recovery.foreignUnverifiedConfirm": "BombVault sa nepodarilo prečítať aktuálne kontajnery a VM tohto systému, takže nemôže povedať, či „{name}“ tu už existuje. Obnovenie môže prepísať existujúci. Pokračovať?",
   "recovery.foreignExpired": "Relácia vypršala (relácie trvajú 30 minút). Pripojte sa znova, aby ste pokračovali v prehľadávaní.",
   "recovery.foreignReconnect": "Pripojiť sa znova",

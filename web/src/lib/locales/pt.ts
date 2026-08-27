@@ -1125,6 +1125,7 @@ const pt: Partial<Translations> = {
   "recovery.foreignBindWarning": "Estas ligações apontam para armazenamento que este servidor não tem. Os appdata são remapeados automaticamente, mas corrija estas no modelo do contentor após o restauro:",
   "recovery.foreignRestore": "Restaurar aqui",
   "recovery.foreignExistsConfirm": "«{name}» já existe neste sistema. O restauro irá SOBRESCREVÊ-LO com o backup externo. Continuar?",
+  "recovery.restoreRowConfirm": "Restaurar a cópia mais recente de “{name}” no local? Ele é parado, os dados atuais são substituídos e permanece parado.",
   "recovery.foreignUnverifiedConfirm": "O BombVault não conseguiu ler os contentores e VMs atuais deste sistema, pelo que não consegue saber se «{name}» já existe aqui. O restauro pode sobrescrever um existente. Continuar?",
   "recovery.foreignExpired": "A sessão expirou (as sessões duram 30 minutos). Volte a ligar-se para continuar a explorar.",
   "recovery.foreignReconnect": "Voltar a ligar",

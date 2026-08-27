@@ -1289,6 +1289,7 @@ const id: Partial<Translations> = {
   "recovery.foreignBindWarning": "Bind ini mengarah ke penyimpanan yang tidak dimiliki server ini. Appdata dipetakan ulang secara otomatis, tetapi perbaiki ini di template container setelah pemulihan:",
   "recovery.foreignRestore": "Pulihkan di sini",
   "recovery.foreignExistsConfirm": "\"{name}\" sudah ada di sistem ini, jadi pemulihan akan MENIMPANYA dengan cadangan asing. Lanjutkan?",
+  "recovery.restoreRowConfirm": "Pulihkan cadangan terbaru “{name}” di tempatnya? Ia dihentikan, data saat ini diganti, dan tetap berhenti setelahnya.",
   "recovery.foreignUnverifiedConfirm": "BombVault tidak dapat membaca container dan VM saat ini di sistem ini, jadi tidak dapat mengetahui apakah \"{name}\" sudah ada di sini. Pemulihan dapat menimpa yang sudah ada. Lanjutkan?",
   "recovery.foreignExpired": "Sesi telah kedaluwarsa (sesi berlangsung 30 menit). Hubungkan kembali untuk melanjutkan penjelajahan.",
   "recovery.foreignReconnect": "Hubungkan kembali",

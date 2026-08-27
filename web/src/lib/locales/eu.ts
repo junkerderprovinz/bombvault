@@ -1289,6 +1289,7 @@ const eu: Partial<Translations> = {
   "recovery.foreignBindWarning": "Bind hauek zerbitzari honek ez duen biltegiratzera zuzentzen dute. Appdata automatikoki birbideratzen da, baina konpondu hauek berrezarpenaren ondoren edukiontziaren txantiloian:",
   "recovery.foreignRestore": "Berrezarri hemen",
   "recovery.foreignExistsConfirm": "«{name}» sistema honetan jada existitzen da, beraz berrezartzeak kanpoko babeskopiarekin GAINIDATZIKO du. Jarraitu nahi duzu?",
+  "recovery.restoreRowConfirm": "«{name}»-ren azken babeskopia bere lekuan leheneratu? Gelditu egingo da, uneko datuak ordeztuko dira eta geldirik geratuko da.",
   "recovery.foreignUnverifiedConfirm": "BombVaultek ezin izan ditu sistema honen uneko edukiontziak eta MB irakurri, beraz ezin du jakin «{name}» dagoeneko existitzen den hemen. Berrezartzeak jada dagoen bat gainidatz dezake. Jarraitu nahi duzu?",
   "recovery.foreignExpired": "Saioa iraungi da (saioak 30 minutu irauten dute). Konektatu berriz arakatzen jarraitzeko.",
   "recovery.foreignReconnect": "Konektatu berriz",

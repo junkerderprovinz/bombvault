@@ -1117,6 +1117,7 @@ const zh: Partial<Translations> = {
   "recovery.foreignBindWarning": "这些绑定指向本服务器没有的存储。appdata 会自动重新映射，但请在恢复后于容器模板中修正这些:",
   "recovery.foreignRestore": "恢复到此处",
   "recovery.foreignExistsConfirm": "“{name}”已存在于本系统。恢复会用外部备份将其覆盖。是否继续？",
+  "recovery.restoreRowConfirm": "就地还原“{name}”的最新备份？它会被停止，当前数据将被替换，并在之后保持停止状态。",
   "recovery.foreignUnverifiedConfirm": "BombVault 无法读取本系统当前的容器和虚拟机，因此无法确定“{name}”是否已存在于此。恢复可能会覆盖已有的同名项。是否继续？",
   "recovery.foreignExpired": "会话已过期（会话有效期为 30 分钟）。请重新连接以继续浏览。",
   "recovery.foreignReconnect": "重新连接",
