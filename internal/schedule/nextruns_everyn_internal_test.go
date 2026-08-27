@@ -77,8 +77,21 @@ func TestNextRunsSkipsFiresTheEveryNGateWillClose(t *testing.T) {
 	if drill.Next.Before(tomorrow) {
 		t.Fatalf("NextRuns reported %v, sooner than tomorrow: with a 3-day-old pass and a 7-day interval the next real run is 4 days out", drill.Next)
 	}
-	if got := calendarDaysBetween(last, drill.Next); got != 7 {
-		t.Fatalf("the reported run is %d calendar days after the last pass, want the first one at 7", got)
+	// Count with the gate's OWN measure, not calendarDaysBetween. The gate
+	// anchors on the FIRE that produced `last`, not on the stamp: when the
+	// stamp's clock time is earlier than the fire's, it belongs to the previous
+	// day's fire that ran past midnight (see calendarDaysSinceFire). `last` here
+	// is "now minus three days", so its clock time IS now's — and between
+	// midnight and the 03:00 fire the two measures then legitimately differ by
+	// one. Asserting on calendarDaysBetween made this test fail for three hours
+	// every night while the code was right, which is exactly the drift this
+	// test's own comment above warns about: assert against the gate, not against
+	// a parallel calculation.
+	//
+	// 7 exactly, not >= 7: the walk must stop at the FIRST fire the gate lets
+	// through. An 8 would mean it skipped a run that would really have happened.
+	if got := calendarDaysSinceFire(last, drill.Next); got != 7 {
+		t.Fatalf("the reported run is %d calendar days after the last pass's fire, want the first one at 7", got)
 	}
 }
 
