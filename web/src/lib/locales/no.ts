@@ -1125,6 +1125,7 @@ const no: Partial<Translations> = {
   "recovery.foreignBindWarning": "Disse bindingene peker på lagring denne serveren ikke har. Appdata remappes automatisk, men rett disse i containerens mal etter gjenopprettingen:",
   "recovery.foreignRestore": "Gjenopprett hit",
   "recovery.foreignExistsConfirm": "«{name}» finnes allerede på dette systemet. Gjenopprettingen OVERSKRIVER den med den fremmede sikkerhetskopien. Fortsette?",
+  "recovery.restoreRowConfirm": "Gjenopprette den nyeste sikkerhetskopien av «{name}» på stedet? Den stoppes, gjeldende data erstattes, og den forblir stoppet.",
   "recovery.foreignUnverifiedConfirm": "BombVault kunne ikke lese dette systemets nåværende containere og VM-er, og kan derfor ikke avgjøre om «{name}» allerede finnes her. Gjenoppretting kan overskrive en eksisterende. Fortsette?",
   "recovery.foreignExpired": "Økten er utløpt (økter varer i 30 minutter). Koble til på nytt for å fortsette å bla.",
   "recovery.foreignReconnect": "Koble til på nytt",

@@ -1117,6 +1117,7 @@ const vi: Partial<Translations> = {
   "recovery.foreignBindWarning": "Các bind này trỏ đến bộ nhớ mà máy chủ này không có. Appdata được ánh xạ lại tự động, nhưng hãy sửa chúng trong mẫu container sau khi khôi phục:",
   "recovery.foreignRestore": "Khôi phục vào đây",
   "recovery.foreignExistsConfirm": "\"{name}\" đã tồn tại trên hệ thống này. Việc khôi phục sẽ GHI ĐÈ nó bằng bản sao lưu bên ngoài. Tiếp tục?",
+  "recovery.restoreRowConfirm": "Khôi phục bản sao lưu mới nhất của “{name}” tại chỗ? Nó sẽ bị dừng, dữ liệu hiện tại được thay thế và vẫn ở trạng thái dừng.",
   "recovery.foreignUnverifiedConfirm": "BombVault không thể đọc danh sách container và máy ảo hiện tại của hệ thống này, nên không thể biết \"{name}\" đã tồn tại ở đây hay chưa. Việc khôi phục có thể ghi đè một mục đang có. Tiếp tục?",
   "recovery.foreignExpired": "Phiên đã hết hạn (mỗi phiên kéo dài 30 phút). Hãy kết nối lại để tiếp tục duyệt.",
   "recovery.foreignReconnect": "Kết nối lại",

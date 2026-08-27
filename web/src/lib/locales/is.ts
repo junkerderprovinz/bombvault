@@ -1289,6 +1289,7 @@ const is: Partial<Translations> = {
   "recovery.foreignBindWarning": "Þessar bindingar benda á geymslu sem þessi netþjónn hefur ekki. Appdata er endurkortlagt sjálfkrafa, en lagfærðu þetta í gámasniðmátinu eftir endurheimtina:",
   "recovery.foreignRestore": "Endurheimta hér",
   "recovery.foreignExistsConfirm": "„{name}“ er þegar til á þessu kerfi, svo endurheimt mun SKRIFA YFIR það með aðkomna afritinu. Halda áfram?",
+  "recovery.restoreRowConfirm": "Endurheimta nýjasta afrit af „{name}“ á sínum stað? Því er hætt, núverandi gögn þess koma í staðinn og það helst stöðvað.",
   "recovery.foreignUnverifiedConfirm": "BombVault gat ekki lesið núverandi gáma og sýndarvélar þessa kerfis, svo það getur ekki sagt hvort „{name}“ sé þegar til hér. Endurheimt gæti skrifað yfir fyrirliggjandi. Halda áfram?",
   "recovery.foreignExpired": "Setan er runnin út (setur endast í 30 mínútur). Tengdu aftur til að halda áfram að skoða.",
   "recovery.foreignReconnect": "Tengjast aftur",

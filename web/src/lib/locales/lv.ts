@@ -1289,6 +1289,7 @@ const lv: Partial<Translations> = {
   "recovery.foreignBindWarning": "Šīs saites norāda uz krātuvi, kāda šim serverim nav. Appdata tiek automātiski pārkartota, bet salabojiet to konteinera veidnē pēc atjaunošanas:",
   "recovery.foreignRestore": "Atjaunot šeit",
   "recovery.foreignExistsConfirm": "„{name}” šajā sistēmā jau eksistē, tāpēc atjaunošana to PĀRRAKSTĪS ar svešu rezerves kopiju. Turpināt?",
+  "recovery.restoreRowConfirm": "Atjaunot jaunāko “{name}” rezerves kopiju uz vietas? Tas tiks apturēts, pašreizējie dati aizstāti, un tas paliks apturēts.",
   "recovery.foreignUnverifiedConfirm": "BombVault neizdevās nolasīt šīs sistēmas pašreizējos konteinerus un VM, tāpēc nevar pateikt, vai „{name}” šeit jau eksistē. Atjaunošana var pārrakstīt esošu. Turpināt?",
   "recovery.foreignExpired": "Sesija ir beigusies (sesijas ilgst 30 minūtes). Izveidojiet savienojumu vēlreiz, lai turpinātu pārlūkošanu.",
   "recovery.foreignReconnect": "Izveidot savienojumu vēlreiz",

@@ -1125,6 +1125,7 @@ const fi: Partial<Translations> = {
   "recovery.foreignBindWarning": "Nämä sidokset osoittavat tallennustilaan jota tällä palvelimella ei ole. Appdata uudelleenohjataan automaattisesti, mutta korjaa nämä kontin mallipohjassa palautuksen jälkeen:",
   "recovery.foreignRestore": "Palauta tänne",
   "recovery.foreignExistsConfirm": "”{name}” on jo tässä järjestelmässä. Palautus KORVAA sen vieraalla varmuuskopiolla. Jatketaanko?",
+  "recovery.restoreRowConfirm": "Palautetaanko kohteen ”{name}” uusin varmuuskopio paikalleen? Se pysäytetään, nykyiset tiedot korvataan ja se jää pysäytetyksi.",
   "recovery.foreignUnverifiedConfirm": "BombVault ei voinut lukea tämän järjestelmän nykyisiä kontteja ja virtuaalikoneita, joten se ei voi tietää, onko ”{name}” jo täällä. Palautus saattaa korvata olemassa olevan. Jatketaanko?",
   "recovery.foreignExpired": "Istunto on vanhentunut (istunnot kestävät 30 minuuttia). Yhdistä uudelleen jatkaaksesi selaamista.",
   "recovery.foreignReconnect": "Yhdistä uudelleen",

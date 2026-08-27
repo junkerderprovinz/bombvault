@@ -1289,6 +1289,7 @@ const hr: Partial<Translations> = {
   "recovery.foreignBindWarning": "Ovi bindovi pokazuju na pohranu koju ovaj poslužitelj nema. Appdata se automatski preusmjerava, ali popravite ovo u predlošku kontejnera nakon vraćanja:",
   "recovery.foreignRestore": "Vrati ovdje",
   "recovery.foreignExistsConfirm": "„{name}” već postoji na ovom sustavu, pa će ga vraćanje PREPISATI stranom sigurnosnom kopijom. Nastaviti?",
+  "recovery.restoreRowConfirm": "Vratiti najnoviju sigurnosnu kopiju stavke „{name}” na mjesto? Bit će zaustavljena, trenutni podaci zamijenjeni, i ostat će zaustavljena.",
   "recovery.foreignUnverifiedConfirm": "BombVault nije mogao pročitati trenutne kontejnere i VM-ove ovog sustava, pa ne može reći postoji li „{name}” ovdje već. Vraćanje može prepisati postojeći. Nastaviti?",
   "recovery.foreignExpired": "Sesija je istekla (sesije traju 30 minuta). Ponovno se povežite za nastavak pregledavanja.",
   "recovery.foreignReconnect": "Ponovno se poveži",

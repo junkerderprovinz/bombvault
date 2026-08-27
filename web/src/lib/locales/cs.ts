@@ -1123,6 +1123,7 @@ const cs: Partial<Translations> = {
   "recovery.foreignBindWarning": "Tyto přípojné body ukazují na úložiště, které tento server nemá. Appdata se přemapuje automaticky, ale tyto po obnově upravte v šabloně kontejneru:",
   "recovery.foreignRestore": "Obnovit sem",
   "recovery.foreignExistsConfirm": "„{name}“ v tomto systému už existuje. Obnova ho PŘEPÍŠE cizí zálohou. Pokračovat?",
+  "recovery.restoreRowConfirm": "Obnovit nejnovější zálohu „{name}“ na místě? Bude zastaven, jeho současná data nahrazena a zůstane zastavený.",
   "recovery.foreignUnverifiedConfirm": "BombVault nedokázal načíst aktuální kontejnery a virtuální stroje tohoto systému, takže nemůže zjistit, zda „{name}“ zde už existuje. Obnova může přepsat stávající položku. Pokračovat?",
   "recovery.foreignExpired": "Relace vypršela (relace trvají 30 minut). Připojte se znovu a pokračujte v procházení.",
   "recovery.foreignReconnect": "Připojit znovu",

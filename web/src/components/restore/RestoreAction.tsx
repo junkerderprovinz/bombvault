@@ -38,6 +38,7 @@ import { RestoreProgress } from "./RestoreProgress";
 import type { RepoSource } from "../SourceToggle";
 import { Badge } from "../Badge";
 import { IconRestore } from "../Sidebar";
+import { useConfirm } from "../../lib/useConfirm";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -66,9 +67,24 @@ interface RestoreActionProps {
   otherActive: { active: boolean; phase?: string };
   /** Sticky success-banner text (already localized by the caller). */
   successMessage: string;
-  /** Gate the restore behind an explicit confirm checkbox. Default true;
-   *  Recovery passes false (its own stepper gates the whole flow). */
+  /** Gate the restore behind an explicit confirm checkbox. Default true.
+   *  Recovery's per-row action passes false because the checkbox does not fit
+   *  in a single-line row action, and pairs it with `confirmMessage` instead —
+   *  it does NOT mean the restore is unguarded. */
   requireConfirm?: boolean;
+  /** Ask this question in a modal before firing, the same way "Restore all"
+   *  and every other destructive action in the app does (useConfirm). Already
+   *  localized by the caller.
+   *
+   *  It exists because `requireConfirm={false}` used to mean genuinely
+   *  unguarded: Recovery's card-5 rows passed it on the strength of a prop doc
+   *  claiming "its own stepper gates the whole flow", and that stepper gates
+   *  nothing. One click on an unlabelled glyph badge started an in-place
+   *  restore over live appdata or VM disks, while the "Restore all" button in
+   *  the SAME card asked first. A row action needs a modal rather than the
+   *  checkbox, so it gets one here instead of a second fire() path at the call
+   *  site — nothing that decides WHETHER a restore runs may live twice. */
+  confirmMessage?: string;
   /** Offer the "recreate but leave stopped" checkbox. Default true;
    *  Recovery passes false. */
   showLeaveStopped?: boolean;
@@ -126,6 +142,7 @@ export function RestoreAction({
   otherActive,
   successMessage,
   requireConfirm = true,
+  confirmMessage,
   showLeaveStopped = true,
   forceLeaveStopped = false,
   showBusyHint = true,
@@ -136,6 +153,7 @@ export function RestoreAction({
   t,
 }: RestoreActionProps) {
   const [confirmed, setConfirmed] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
   // leaveStopped overrides the captured run-state so an in-place restore
   // recreates the target without starting it (rebuild a stack member by member).
   const [leaveStopped, setLeaveStopped] = useState(false);
@@ -160,8 +178,11 @@ export function RestoreAction({
   const blockedByOther = otherActive.active && !isPending;
   const done = state.phase === "success";
 
-  function handleRestore() {
+  async function handleRestore() {
     if (requireConfirm && !confirmed) return;
+    // The modal is the row action's stand-in for the checkbox, so it gates the
+    // SAME single fire() rather than adding a second path to it.
+    if (confirmMessage && !(await confirm(confirmMessage))) return;
     void fire();
   }
 
@@ -185,7 +206,7 @@ export function RestoreAction({
       size="icon"
       tone="active"
       tip={label ?? t("snapshots.restore")}
-      onClick={handleRestore}
+      onClick={() => void handleRestore()}
       disabled={triggerDisabled}
       className="ms-auto shrink-0"
     >
@@ -203,7 +224,7 @@ export function RestoreAction({
     </Badge>
   ) : (
     <button
-      onClick={handleRestore}
+      onClick={() => void handleRestore()}
       disabled={triggerDisabled}
       className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
     >
@@ -223,6 +244,7 @@ export function RestoreAction({
 
   return (
     <div className="flex flex-col gap-2">
+      {confirmDialog}
       <div className="flex items-center gap-3 flex-wrap">
         {leading}
         {requireConfirm && (

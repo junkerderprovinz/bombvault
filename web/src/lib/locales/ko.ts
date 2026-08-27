@@ -1117,6 +1117,7 @@ const ko: Partial<Translations> = {
   "recovery.foreignBindWarning": "이 바인드는 이 서버에 없는 저장소를 가리킵니다. appdata는 자동으로 재매핑되지만, 복원 후 컨테이너 템플릿에서 이 항목들을 수정하세요:",
   "recovery.foreignRestore": "여기로 복원",
   "recovery.foreignExistsConfirm": "\"{name}\"이(가) 이 시스템에 이미 있습니다. 복원하면 외부 백업으로 덮어쓰게 됩니다. 계속할까요?",
+  "recovery.restoreRowConfirm": "“{name}”의 최신 백업을 제자리에 복원할까요? 중지되고 현재 데이터가 교체되며 이후에도 중지된 상태로 남습니다.",
   "recovery.foreignUnverifiedConfirm": "BombVault가 이 시스템의 현재 컨테이너와 VM 목록을 읽지 못해서 \"{name}\"이(가) 여기에 이미 있는지 확인할 수 없습니다. 복원하면 기존 항목을 덮어쓸 수 있습니다. 계속할까요?",
   "recovery.foreignExpired": "세션이 만료되었습니다(세션은 30분간 유지됩니다). 계속 살펴보려면 다시 연결하세요.",
   "recovery.foreignReconnect": "다시 연결",

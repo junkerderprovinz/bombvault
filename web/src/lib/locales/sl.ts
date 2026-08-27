@@ -1273,6 +1273,7 @@ const sl: Partial<Translations> = {
   "recovery.foreignBindWarning": "Te povezave kažejo na shrambo, ki je ta strežnik nima. Appdata se preslika samodejno, a to po obnovitvi popravi v predlogi vsebnika:",
   "recovery.foreignRestore": "Obnovi sem",
   "recovery.foreignExistsConfirm": "\"{name}\" na tem sistemu že obstaja, zato bo obnovitev to PREPISALA s tujo varnostno kopijo. Nadaljujem?",
+  "recovery.restoreRowConfirm": "Ali želite obnoviti najnovejšo varnostno kopijo »{name}« na mestu? Ustavljen bo, trenutni podatki zamenjani, in ostal bo ustavljen.",
   "recovery.foreignUnverifiedConfirm": "BombVault ni mogel prebrati trenutnih vsebnikov in VM-jev tega sistema, zato ne more ugotoviti, ali \"{name}\" tukaj že obstaja. Obnovitev lahko prepiše obstoječega. Nadaljujem?",
   "recovery.foreignExpired": "Seja je potekla (seje trajajo 30 minut). Za nadaljnje brskanje se znova poveži.",
   "recovery.foreignReconnect": "Znova se poveži",

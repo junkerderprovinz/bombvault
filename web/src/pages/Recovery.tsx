@@ -124,6 +124,13 @@ function RestoreRow({
       {/* In-place restore, LEFT STOPPED (forceLeaveStopped): the recovery flow
           restores everything first, then you start them from the Containers/VMs
           tabs. source omitted => the backend-default repo.
+            `requireConfirm={false}` + `confirmMessage`: the confirm CHECKBOX
+          does not fit a one-line row action, so the guard is a modal instead —
+          the same one "Restore all" in this card already uses. This row used to
+          pass requireConfirm={false} alone, on the strength of a prop doc
+          claiming the stepper gated the flow. It does not: a single click on
+          the glyph badge overwrote live appdata or VM disks with no question
+          asked, and it was the only requireConfirm={false} in the tree.
             jdp live-review: "Card 5: die ganzen Wiederherstellen-Buttons sollen
           quadratische Badges mit Glyphen sein und ganz rechts platziert sein."
           `iconBadge` does the conversion (see RestoreAction's own doc for the
@@ -142,6 +149,7 @@ function RestoreRow({
         otherActive={{ active: otherActive }}
         successMessage={t("common.done")}
         requireConfirm={false}
+        confirmMessage={t("recovery.restoreRowConfirm").replace("{name}", displayName ?? name)}
         showLeaveStopped={false}
         forceLeaveStopped
         showBusyHint={false}
@@ -1387,7 +1395,6 @@ export default function Recovery() {
   // RcloneCard self-persist; paths/off-site/encryption go through the mirrored
   // merge-onto-baseline save below — no new endpoint, no duplicate storage).
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [savedSettings, setSavedSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [attachState, setAttachState] = useState<"idle" | "saving">("idle");
   const [previewed, setPreviewed] = useState(false);
@@ -1420,7 +1427,6 @@ export default function Recovery() {
       if (res.ok && typeof res.encryptionEnabled === "boolean") {
         const detected = res.encryptionEnabled;
         setSettings((prev) => (prev ? { ...prev, encryptionEnabled: detected } : prev));
-        setSavedSettings((prev) => (prev ? { ...prev, encryptionEnabled: detected } : prev));
       }
       return res;
     } catch (err) {
@@ -1461,7 +1467,6 @@ export default function Recovery() {
       .then((res) => {
         if (res.ok) {
           setSettings(res.settings);
-          setSavedSettings(res.settings);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
         }
       })
@@ -1531,9 +1536,26 @@ export default function Recovery() {
   // var (which would still read stale here, mid-function, before this
   // render's state settles).
   const connectPreview = useCallback(async () => {
-    const base = savedSettings ?? settings;
-    if (!base || !settings) return;
+    if (!settings) return;
     setAttachState("saving");
+    // Re-fetch before merging, exactly like Config.tsx's handleSave and for the
+    // same reason. The PUT below sends a FULL object, and the baseline it used
+    // to merge onto was a mount-time snapshot — this page does not even listen
+    // to its own bv:settings-changed event. So anything changed meanwhile from
+    // a second tab, another device or a settings import was silently rolled
+    // back, cadences and retention included. That snapshot state is gone now
+    // rather than left lying around for the next caller to reach for.
+    //
+    // A failed re-fetch ABORTS rather than falling back to that snapshot: the
+    // backend answers {ok:false} at HTTP 200 instead of throwing, so a fallback
+    // would quietly do the exact damage this guard exists to prevent.
+    const latest = await getSettings();
+    if (!latest.ok) {
+      setAttachState("idle");
+      push(latest.error ?? t("config.loadSettingsFailed"), "fail");
+      return;
+    }
+    const base = latest.settings;
     const patch: Partial<Settings> = {
       containersPath: settings.containersPath,
       vmsPath: settings.vmsPath,
@@ -1549,7 +1571,6 @@ export default function Recovery() {
     try {
       const res = await putSettings(updated);
       if (res.ok) {
-        setSavedSettings(updated);
         setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
         // Keep the sidebar/Settings in sync (same event the Settings page fires).
         window.dispatchEvent(new Event("bv:settings-changed"));
@@ -1587,7 +1608,7 @@ export default function Recovery() {
     } finally {
       setAttachState("idle");
     }
-  }, [savedSettings, settings, checkReadable, runEncryptionDetect, push, t]);
+  }, [settings, checkReadable, runEncryptionDetect, push, t]);
 
   // restoreOwnConfig stages a restore of BombVault's OWN settings and drives the
   // self-restart that applies it. It first persists the chosen config-repo
@@ -1596,10 +1617,21 @@ export default function Recovery() {
   // until BombVault returns and reloads so the restored settings load; without an
   // auto-restart it shows the manual container-restart instruction.
   const restoreOwnConfig = useCallback(async () => {
-    const base = savedSettings ?? settings;
-    if (!base || !settings) return;
+    if (!settings) return;
     setConfigPhase("saving");
     setConfigError(null);
+    // Same full-object PUT, same stale mount-time baseline, same re-fetch — see
+    // connectPreview above.
+    const latest = await getSettings();
+    if (!latest.ok) {
+      const message = latest.error ?? t("config.loadSettingsFailed");
+      setConfigError(message);
+      setConfigPhase("error");
+      push(message, "fail");
+      setConfigShake((n) => n + 1);
+      return;
+    }
+    const base = latest.settings;
     const patch: Partial<Settings> =
       configSource === "offsite"
         ? { configOffsite: settings.configOffsite }
@@ -1615,7 +1647,6 @@ export default function Recovery() {
         setConfigShake((n) => n + 1);
         return;
       }
-      setSavedSettings(updated);
       setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
       const res = await restoreConfig("latest", configSource === "offsite" ? "offsite" : undefined);
       if (!res.ok) {
@@ -1662,7 +1693,7 @@ export default function Recovery() {
       push(message, "fail");
       setConfigShake((n) => n + 1);
     }
-  }, [savedSettings, settings, configSource, t, push]);
+  }, [settings, configSource, t, push]);
 
   const configStepState: StepState =
     configPhase === "error"

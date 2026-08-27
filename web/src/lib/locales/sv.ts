@@ -1125,6 +1125,7 @@ const sv: Partial<Translations> = {
   "recovery.foreignBindWarning": "Dessa bindningar pekar på lagring som den här servern inte har. Appdata remappas automatiskt, men rätta dessa i containerns mall efter återställningen:",
   "recovery.foreignRestore": "Återställ hit",
   "recovery.foreignExistsConfirm": "”{name}” finns redan på det här systemet. Återställningen SKRIVER ÖVER den med den främmande säkerhetskopian. Fortsätta?",
+  "recovery.restoreRowConfirm": "Återställa den senaste säkerhetskopian av ”{name}” på plats? Den stoppas, dess nuvarande data ersätts och den förblir stoppad.",
   "recovery.foreignUnverifiedConfirm": "BombVault kunde inte läsa det här systemets aktuella containrar och VM:ar och kan därför inte avgöra om ”{name}” redan finns här. En återställning kan skriva över en befintlig. Fortsätta?",
   "recovery.foreignExpired": "Sessionen har gått ut (sessioner varar 30 minuter). Anslut igen för att fortsätta bläddra.",
   "recovery.foreignReconnect": "Anslut igen",

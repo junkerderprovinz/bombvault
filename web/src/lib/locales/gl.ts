@@ -1289,6 +1289,7 @@ const gl: Partial<Translations> = {
   "recovery.foreignBindWarning": "Estes binds apuntan a almacenamento que este servidor non ten. O appdata reasígnase automaticamente, pero corrixe isto na plantilla do contedor despois de restaurar:",
   "recovery.foreignRestore": "Restaurar aquí",
   "recovery.foreignExistsConfirm": "«{name}» xa existe neste sistema, así que restaurar SOBRESCRIBIRAO coa copia allea. Continuar?",
+  "recovery.restoreRowConfirm": "Restaurar a copia máis recente de «{name}» no seu sitio? Detense, substitúense os seus datos actuais e queda detido.",
   "recovery.foreignUnverifiedConfirm": "BombVault non puido ler os contedores e MV actuais deste sistema, así que non pode saber se «{name}» xa existe aquí. Restaurar pode sobrescribir un existente. Continuar?",
   "recovery.foreignExpired": "A sesión caducou (as sesións duran 30 minutos). Conéctate de novo para seguir explorando.",
   "recovery.foreignReconnect": "Conectar de novo",

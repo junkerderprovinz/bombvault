@@ -1125,6 +1125,7 @@ const tr: Partial<Translations> = {
   "recovery.foreignBindWarning": "Bu bağlamalar bu sunucuda olmayan depolamayı gösteriyor. Appdata otomatik olarak yeniden eşlenir, ancak bunları geri yüklemeden sonra kapsayıcının şablonunda düzeltin:",
   "recovery.foreignRestore": "Buraya geri yükle",
   "recovery.foreignExistsConfirm": "\"{name}\" bu sistemde zaten var. Geri yükleme onu yabancı yedekle ÜZERİNE YAZACAK. Devam edilsin mi?",
+  "recovery.restoreRowConfirm": "“{name}” ögesinin en son yedeği yerinde geri yüklensin mi? Durdurulur, mevcut verileri değiştirilir ve sonrasında durdurulmuş kalır.",
   "recovery.foreignUnverifiedConfirm": "BombVault bu sistemin mevcut konteyner ve sanal makinelerini okuyamadı, bu yüzden \"{name}\" burada zaten var mı bilemiyor. Geri yükleme mevcut bir öğeyi üzerine yazabilir. Devam edilsin mi?",
   "recovery.foreignExpired": "Oturum süresi doldu (oturumlar 30 dakika sürer). Göz atmaya devam etmek için yeniden bağlanın.",
   "recovery.foreignReconnect": "Yeniden bağlan",

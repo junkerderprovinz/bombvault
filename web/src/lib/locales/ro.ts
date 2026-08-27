@@ -1128,6 +1128,7 @@ const ro: Partial<Translations> = {
   "recovery.foreignBindWarning": "Aceste montări indică spre stocare pe care acest server nu o are. Datele appdata sunt remapate automat, dar corectează-le în șablonul containerului după restaurare:",
   "recovery.foreignRestore": "Restaurează aici",
   "recovery.foreignExistsConfirm": "„{name}” există deja pe acest sistem. Restaurarea îl va SUPRASCRIE cu copia străină. Continuați?",
+  "recovery.restoreRowConfirm": "Restaurezi cea mai recentă copie a „{name}” pe loc? Este oprit, datele actuale sunt înlocuite și rămâne oprit.",
   "recovery.foreignUnverifiedConfirm": "BombVault nu a putut citi containerele și mașinile virtuale curente ale acestui sistem, așa că nu poate stabili dacă „{name}” există deja aici. Restaurarea ar putea suprascrie unul existent. Continuați?",
   "recovery.foreignExpired": "Sesiunea a expirat (sesiunile durează 30 de minute). Reconectați-vă pentru a continua răsfoirea.",
   "recovery.foreignReconnect": "Reconectare",
