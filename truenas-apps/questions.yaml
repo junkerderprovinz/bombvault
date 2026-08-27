@@ -84,15 +84,18 @@ questions:
         - variable: self_container_name
           label: BombVault's Own Container Name (advanced)
           description: |
-            So BombVault never backs up (and thus stops) itself. Leave
-            empty to rely on automatic hostname-based detection — this
-            usually works, but TrueNAS's compose deployment may name the
-            actual Docker container differently from what the Apps UI
-            shows (commonly prefixed with the app instance name). If a
-            backup run ever appears to include/skip this container
-            incorrectly, find BombVault's REAL Docker container name (TrueNAS
-            shell: `docker ps --filter name=bombvault`) and set it here
-            exactly.
+            So BombVault never backs up (and thus stops) itself. SET THIS
+            on TrueNAS, do not leave it empty. Automatic detection looks up
+            the container whose NAME matches this container's hostname, and
+            this app pins the hostname to "bombvault" (restic's stale-lock
+            detection needs one that survives a container recreation) while
+            TrueNAS names the real container after the app instance:
+            ix-<app name>-bombvault-1. Verified on TrueNAS SCALE 25.10.0:
+            detection does not find this container, and if some OTHER
+            container on the box happens to be named "bombvault", it
+            identifies THAT one as itself instead. Find the real name in the
+            TrueNAS shell with `docker ps --filter name=bombvault` and enter
+            it here exactly.
           schema:
             type: string
             default: ""
