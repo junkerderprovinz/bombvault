@@ -139,6 +139,8 @@ const fi: Partial<Translations> = {
   "run.statusSuccess": "Onnistui",
   "run.statusFailed": "Epäonnistui",
   "run.statusSkipped": "Ohitettu",
+  "run.statusCancelled": "Peruutettu",
+  "common.selectItem": "Valitse {name}",
   "run.historyTitle": "Ajohistoria",
   "run.filterDay": "Päivä:",
   "run.allDays": "Kaikki päivät",

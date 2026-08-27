@@ -207,6 +207,8 @@ const ca: Partial<Translations> = {
   "run.statusSuccess": "Correcte",
   "run.statusFailed": "Fallit",
   "run.statusSkipped": "Omès",
+  "run.statusCancelled": "Cancel·lat",
+  "common.selectItem": "Selecciona {name}",
   "run.historyTitle": "Historial d'execucions",
   "run.filterDay": "Dia:",
   "run.allDays": "Tots els dies",

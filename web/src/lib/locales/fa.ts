@@ -207,6 +207,8 @@ const fa: Partial<Translations> = {
   "run.statusSuccess": "موفق",
   "run.statusFailed": "ناموفق",
   "run.statusSkipped": "رد شد",
+  "run.statusCancelled": "لغو شد",
+  "common.selectItem": "انتخاب {name}",
   "run.historyTitle": "تاریخچه اجراها",
   "run.filterDay": "روز:",
   "run.allDays": "همه روزها",

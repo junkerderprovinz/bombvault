@@ -137,6 +137,8 @@ const nl: Partial<Translations> = {
   "run.statusSuccess": "Geslaagd",
   "run.statusFailed": "Mislukt",
   "run.statusSkipped": "Overgeslagen",
+  "run.statusCancelled": "Geannuleerd",
+  "common.selectItem": "{name} selecteren",
   "run.historyTitle": "Uitvoeringsgeschiedenis",
   "run.filterDay": "Dag:",
   "run.allDays": "Alle dagen",

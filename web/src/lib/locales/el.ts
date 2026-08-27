@@ -139,6 +139,8 @@ const el: Partial<Translations> = {
   "run.statusSuccess": "Επιτυχία",
   "run.statusFailed": "Αποτυχία",
   "run.statusSkipped": "Παραλείφθηκε",
+  "run.statusCancelled": "Ακυρώθηκε",
+  "common.selectItem": "Επιλογή {name}",
   "run.historyTitle": "Ιστορικό εκτελέσεων",
   "run.filterDay": "Ημέρα:",
   "run.allDays": "Όλες οι ημέρες",

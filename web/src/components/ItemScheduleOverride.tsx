@@ -52,6 +52,9 @@ export function ItemScheduleOverride({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initial ?? "");
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The value a pending debounce would write, so unmount can flush it rather
+  // than drop it. Cleared when the timer fires normally.
+  const pendingValue = useRef<string | null>(null);
 
   // A non-empty, non-"off" cadence is an active override; anything else means the
   // item follows its domain schedule.
@@ -79,15 +82,32 @@ export function ItemScheduleOverride({
   function handleChange(v: string) {
     setValue(v);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => void persist(v), DEBOUNCE_MS);
+    // Tracked so the unmount cleanup can flush it (see the effect below).
+    pendingValue.current = v;
+    debounceTimer.current = setTimeout(() => {
+      pendingValue.current = null;
+      void persist(v);
+    }, DEBOUNCE_MS);
   }
 
-  // A pending debounce must not fire after this row unmounts (e.g. the
-  // container list re-fetches while the user is still typing).
+  // A pending debounce must not fire after this row unmounts — but the pending
+  // WRITE must not be thrown away with it. Since the Save button was removed,
+  // this debounce is the only path that persists a per-item cadence, so a
+  // cleanup that merely cleared the timer lost the input outright: set a
+  // cadence, switch tab or flip the per-item toggle within 800ms, and it was
+  // gone with no toast and nothing on screen to suggest it had not been saved.
+  //
+  // The pending value is flushed instead. persist() is a plain fetch and does
+  // not touch this component's state, so calling it during unmount is safe —
+  // what must not survive unmount is the TIMER, and that is still cleared.
   useEffect(() => {
     return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+        if (pendingValue.current !== null) void persist(pendingValue.current);
+      }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only; persist is stable for this row's lifetime
   }, []);
 
   return (

@@ -139,6 +139,8 @@ const zh: Partial<Translations> = {
   "run.statusSuccess": "成功",
   "run.statusFailed": "失败",
   "run.statusSkipped": "已跳过",
+  "run.statusCancelled": "已取消",
+  "common.selectItem": "选择 {name}",
   "run.historyTitle": "运行历史",
   "run.filterDay": "日期：",
   "run.allDays": "所有日期",

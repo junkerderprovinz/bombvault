@@ -139,6 +139,8 @@ const he: Partial<Translations> = {
   "run.statusSuccess": "הצלחה",
   "run.statusFailed": "כשל",
   "run.statusSkipped": "דולג",
+  "run.statusCancelled": "בוטל",
+  "common.selectItem": "בחר את {name}",
   "run.historyTitle": "היסטוריית הרצות",
   "run.filterDay": "יום:",
   "run.allDays": "כל הימים",

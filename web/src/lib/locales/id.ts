@@ -207,6 +207,8 @@ const id: Partial<Translations> = {
   "run.statusSuccess": "Berhasil",
   "run.statusFailed": "Gagal",
   "run.statusSkipped": "Dilewati",
+  "run.statusCancelled": "Dibatalkan",
+  "common.selectItem": "Pilih {name}",
   "run.historyTitle": "Riwayat eksekusi",
   "run.filterDay": "Hari:",
   "run.allDays": "Semua hari",

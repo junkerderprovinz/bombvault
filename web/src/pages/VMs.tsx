@@ -944,7 +944,7 @@ export function VMRow({
             type="checkbox"
             checked={!!selected}
             onChange={onToggleSelect}
-            aria-label={`Select ${vm.name}`}
+            aria-label={t("common.selectItem").replace("{name}", vm.name)}
             className="mt-1 h-4 w-4 shrink-0 cursor-pointer"
             style={{ accentColor: "var(--accent)" }}
           />
@@ -1591,8 +1591,16 @@ export function VMs() {
   function loadVMs() {
     return listVMs()
       .then((res) => {
-        if (res.ok) setVMs(res.vms ?? []);
-        else setError(t("vms.loadFailed"));
+        if (res.ok) {
+          setVMs(res.vms ?? []);
+          // Clear on success, which nothing in this file did. A red banner set by
+          // one transient failure (the daemon restarting, a proxy 502) stayed
+          // above the correctly reloaded list for as long as the page was open,
+          // and it also suppressed the empty state and the "no matches" hint, so
+          // the page looked broken until the user navigated away. Files.tsx
+          // clears it explicitly and says why.
+          setError(null);
+        } else setError(t("vms.loadFailed"));
       })
       .catch(() => setError(t("vms.loadFailed")));
   }
@@ -1695,7 +1703,14 @@ export function VMs() {
       }
     }
     setBulkBusy(false);
-    push(`${ok} ok, ${fail} failed`, fail > 0 ? "warn" : "success");
+    // Same key the Containers twin uses for the identical sentence: the text is
+    // domain-neutral, and a second copy would be a second thing to translate.
+    // As a raw template literal this was hard English in 41 languages, and it
+    // escaped the parity test too, since that test only sees locale tables.
+    push(
+      t("containers.bulkResult").replace("{ok}", String(ok)).replace("{fail}", String(fail)),
+      fail > 0 ? "warn" : "success"
+    );
     setSelected(new Set());
     void loadVMs();
   }

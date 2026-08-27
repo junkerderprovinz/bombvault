@@ -207,6 +207,8 @@ const hi: Partial<Translations> = {
   "run.statusSuccess": "सफल",
   "run.statusFailed": "विफल",
   "run.statusSkipped": "छोड़ दिया गया",
+  "run.statusCancelled": "रद्द किया गया",
+  "common.selectItem": "{name} चुनें",
   "run.historyTitle": "रन इतिहास",
   "run.filterDay": "दिन:",
   "run.allDays": "सभी दिन",

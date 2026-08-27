@@ -207,6 +207,8 @@ const sr: Partial<Translations> = {
   "run.statusSuccess": "Успешно",
   "run.statusFailed": "Неуспешно",
   "run.statusSkipped": "Прескочено",
+  "run.statusCancelled": "Отказано",
+  "common.selectItem": "Изабери {name}",
   "run.historyTitle": "Историја извршавања",
   "run.filterDay": "Дан:",
   "run.allDays": "Сви дани",

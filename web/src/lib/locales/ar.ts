@@ -139,6 +139,8 @@ const ar: Partial<Translations> = {
   "run.statusSuccess": "ناجح",
   "run.statusFailed": "فشل",
   "run.statusSkipped": "تم التخطي",
+  "run.statusCancelled": "أُلغي",
+  "common.selectItem": "تحديد {name}",
   "run.historyTitle": "سجل التشغيلات",
   "run.filterDay": "اليوم:",
   "run.allDays": "كل الأيام",

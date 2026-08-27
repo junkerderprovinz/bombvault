@@ -139,6 +139,8 @@ const th: Partial<Translations> = {
   "run.statusSuccess": "สำเร็จ",
   "run.statusFailed": "ล้มเหลว",
   "run.statusSkipped": "ข้ามไป",
+  "run.statusCancelled": "ยกเลิกแล้ว",
+  "common.selectItem": "เลือก {name}",
   "run.historyTitle": "ประวัติการทำงาน",
   "run.filterDay": "วัน:",
   "run.allDays": "ทุกวัน",
