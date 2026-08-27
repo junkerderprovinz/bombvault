@@ -249,6 +249,8 @@ const zh: Partial<Translations> = {
   "jobs.vmsSection": "虚拟机",
   "jobs.flashSection": "闪存",
   "jobs.notScheduled": "未计划",
+  "picker.hue": "色相",
+  "picker.saturationBrightness": "饱和度和明度",
   "jobs.cadenceDaily": "每天 {time}",
   "jobs.cadenceWeekly": "每周（{days}）{time}",
   "jobs.cadenceEveryN": "每 {n} 天 {time}",

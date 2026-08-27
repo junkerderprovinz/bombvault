@@ -746,6 +746,8 @@ const eu: Partial<Translations> = {
   "jobs.vmsSection": "MB",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Programatu gabe",
+  "picker.hue": "Ñabardura",
+  "picker.saturationBrightness": "Asetasuna eta distira",
   "jobs.cadenceDaily": "Egunero {time} orduan",
   "jobs.cadenceWeekly": "Astero ({days}) {time} orduan",
   "jobs.cadenceEveryN": "{n} egunero {time} orduan",

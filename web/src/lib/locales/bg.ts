@@ -746,6 +746,8 @@ const bg: Partial<Translations> = {
   "jobs.vmsSection": "ВМ",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Непланирано",
+  "picker.hue": "Нюанс",
+  "picker.saturationBrightness": "Наситеност и яркост",
   "jobs.cadenceDaily": "Ежедневно в {time}",
   "jobs.cadenceWeekly": "Ежеседмично ({days}) в {time}",
   "jobs.cadenceEveryN": "На всеки {n} дни в {time}",

@@ -249,6 +249,8 @@ const ko: Partial<Translations> = {
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "플래시",
   "jobs.notScheduled": "예약 안 됨",
+  "picker.hue": "색조",
+  "picker.saturationBrightness": "채도 및 명도",
   "jobs.cadenceDaily": "매일 {time}",
   "jobs.cadenceWeekly": "매주（{days}）{time}",
   "jobs.cadenceEveryN": "{n}일마다 {time}",

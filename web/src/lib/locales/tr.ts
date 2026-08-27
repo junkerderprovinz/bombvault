@@ -249,6 +249,8 @@ const tr: Partial<Translations> = {
   "jobs.vmsSection": "VM'ler",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Zamanlanmamış",
+  "picker.hue": "Renk tonu",
+  "picker.saturationBrightness": "Doygunluk ve parlaklık",
   "jobs.cadenceDaily": "Her gün {time}",
   "jobs.cadenceWeekly": "Haftalık ({days}) {time}",
   "jobs.cadenceEveryN": "Her {n} günde bir {time}",

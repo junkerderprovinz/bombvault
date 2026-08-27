@@ -244,6 +244,8 @@ const nl: Partial<Translations> = {
   "jobs.vmsSection": "VM's",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Niet gepland",
+  "picker.hue": "Tint",
+  "picker.saturationBrightness": "Verzadiging en helderheid",
   "jobs.cadenceDaily": "Dagelijks om {time}",
   "jobs.cadenceWeekly": "Wekelijks ({days}) om {time}",
   "jobs.cadenceEveryN": "Elke {n} dagen om {time}",

@@ -744,6 +744,8 @@ const sl: Partial<Translations> = {
   "jobs.vmsSection": "VM-ji",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Ni načrtovano",
+  "picker.hue": "Odtenek",
+  "picker.saturationBrightness": "Nasičenost in svetlost",
   "jobs.cadenceDaily": "Dnevno ob {time}",
   "jobs.cadenceWeekly": "Tedensko ({days}) ob {time}",
   "jobs.cadenceEveryN": "Vsakih {n} dni ob {time}",

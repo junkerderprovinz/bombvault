@@ -746,6 +746,8 @@ const et: Partial<Translations> = {
   "jobs.vmsSection": "VM-id",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Plaanimata",
+  "picker.hue": "Värvitoon",
+  "picker.saturationBrightness": "Küllastus ja heledus",
   "jobs.cadenceDaily": "Iga päev kell {time}",
   "jobs.cadenceWeekly": "Iga nädal ({days}) kell {time}",
   "jobs.cadenceEveryN": "Iga {n} päeva järel kell {time}",

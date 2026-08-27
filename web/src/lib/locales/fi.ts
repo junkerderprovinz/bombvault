@@ -249,6 +249,8 @@ const fi: Partial<Translations> = {
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Ei aikataulutettu",
+  "picker.hue": "Sävy",
+  "picker.saturationBrightness": "Kylläisyys ja kirkkaus",
   "jobs.cadenceDaily": "Päivittäin klo {time}",
   "jobs.cadenceWeekly": "Viikoittain ({days}) klo {time}",
   "jobs.cadenceEveryN": "Joka {n}. päivä klo {time}",

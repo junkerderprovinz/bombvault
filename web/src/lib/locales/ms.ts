@@ -746,6 +746,8 @@ const ms: Partial<Translations> = {
   "jobs.vmsSection": "VM",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Tidak berjadual",
+  "picker.hue": "Rona",
+  "picker.saturationBrightness": "Ketepuan dan kecerahan",
   "jobs.cadenceDaily": "Setiap hari pada {time}",
   "jobs.cadenceWeekly": "Setiap minggu ({days}) pada {time}",
   "jobs.cadenceEveryN": "Setiap {n} hari pada {time}",

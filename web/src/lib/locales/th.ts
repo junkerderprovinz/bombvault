@@ -249,6 +249,8 @@ const th: Partial<Translations> = {
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "ไม่มีตารางเวลา",
+  "picker.hue": "เฉดสี",
+  "picker.saturationBrightness": "ความอิ่มตัวและความสว่าง",
   "jobs.cadenceDaily": "ทุกวันเวลา {time}",
   "jobs.cadenceWeekly": "ทุกสัปดาห์ ({days}) เวลา {time}",
   "jobs.cadenceEveryN": "ทุก {n} วันเวลา {time}",

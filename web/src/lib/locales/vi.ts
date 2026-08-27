@@ -249,6 +249,8 @@ const vi: Partial<Translations> = {
   "jobs.vmsSection": "VMs",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Chưa lên lịch",
+  "picker.hue": "Sắc màu",
+  "picker.saturationBrightness": "Độ bão hòa và độ sáng",
   "jobs.cadenceDaily": "Hằng ngày lúc {time}",
   "jobs.cadenceWeekly": "Hằng tuần ({days}) lúc {time}",
   "jobs.cadenceEveryN": "Mỗi {n} ngày lúc {time}",

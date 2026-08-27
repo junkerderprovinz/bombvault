@@ -746,6 +746,8 @@ const gl: Partial<Translations> = {
   "jobs.vmsSection": "MV",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Sen programar",
+  "picker.hue": "Ton",
+  "picker.saturationBrightness": "Saturación e brillo",
   "jobs.cadenceDaily": "A diario ás {time}",
   "jobs.cadenceWeekly": "Semanalmente ({days}) ás {time}",
   "jobs.cadenceEveryN": "Cada {n} días ás {time}",

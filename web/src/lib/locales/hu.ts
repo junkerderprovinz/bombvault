@@ -249,6 +249,8 @@ const hu: Partial<Translations> = {
   "jobs.vmsSection": "VM-ek",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Nincs ütemezve",
+  "picker.hue": "Színárnyalat",
+  "picker.saturationBrightness": "Telítettség és fényerő",
   "jobs.cadenceDaily": "Naponta {time}-kor",
   "jobs.cadenceWeekly": "Hetente ({days}) {time}-kor",
   "jobs.cadenceEveryN": "{n} naponta {time}-kor",

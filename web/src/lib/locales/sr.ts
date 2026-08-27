@@ -744,6 +744,8 @@ const sr: Partial<Translations> = {
   "jobs.vmsSection": "ВМ-ови",
   "jobs.flashSection": "Flash",
   "jobs.notScheduled": "Није заказано",
+  "picker.hue": "Нијанса",
+  "picker.saturationBrightness": "Засићеност и осветљеност",
   "jobs.cadenceDaily": "Дневно у {time}",
   "jobs.cadenceWeekly": "Недељно ({days}) у {time}",
   "jobs.cadenceEveryN": "Сваких {n} дана у {time}",
