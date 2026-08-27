@@ -26,11 +26,16 @@ detail):
   automatically on first run there; it cannot be meaningfully pre-computed
   outside that repo.
 - **`app.yaml`'s `app_version` / `ix_values.yaml`'s image `tag`** track the
-  BombVault release these files were prepared against (`7.11.1`, the bare
-  image tag — not the `v`-prefixed git tag). Bump both, plus `app.yaml`'s
-  `version`, on every BombVault release meant to reach this catalog
-  listing. This is an ongoing commitment, not a one-time value — do not
-  treat "7.11.1" as fixed.
+  BombVault release these files were prepared against (`8.0.0`, the bare
+  image tag, not the `v`-prefixed git tag). Bump both on every BombVault
+  release meant to reach this catalog listing. This is an ongoing
+  commitment, not a one-time value, so do not treat "8.0.0" as fixed.
+  Nothing enforces it: the two fields drifted apart once already, when
+  `app_version` went to 8.0.0 and the image `tag` stayed on 7.11.1.
+- **`app.yaml`'s `version`** is the chart's own version, not BombVault's.
+  It stays at `1.0.0` until the app is actually listed, because a bump
+  would claim a published predecessor that never existed. Once the app is
+  in the catalog, bump it alongside the two fields above.
 - **`app.yaml`'s maintainer entry** is `name: truenas` / `email: dev@truenas.com`
   / `url: https://www.truenas.com/`, matching every real catalog app read
   for this file and CONTRIBUTIONS.md's explicit "TrueNAS is the only

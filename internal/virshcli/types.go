@@ -35,17 +35,13 @@ type VMInfo struct {
 	// FriendlyName over Name, rather than assuming the shape match alone
 	// means "this is TrueNAS".
 	//
-	// NOT YET CONSUMED by internal/api/service.go's ListVMs today (confirmed
-	// by reading the real code, not assumed): it builds VMView{Name:
-	// vm.Name, ...} and matches DB targets via byName[vm.Name], never
-	// touching FriendlyName. Wiring it into that layer — so a TrueNAS 26 VM
-	// shows its real name instead of a bare UUID in the UI, and matches its
-	// stored VM record by friendly name instead of the volatile UUID — is a
-	// deliberately separate, not-yet-done follow-up; this task's scope is
-	// internal/virshcli only. Mirrors VMBackupDeps.TPMPath's doc comment
-	// (internal/backup/vm_orchestrator.go) and the zvol section of
-	// docs/vm-backup-ssh-setup.md, which flag the exact same "wired at this
-	// layer only, one layer up is a separate task" gap for Tasks 10/11.
+	// Consumed one layer up by internal/api/service.go's ListVMs, which uses
+	// it as the display name only (service.go:6650, guarded by the detected
+	// platform), so a TrueNAS VM shows its real name instead of a bare UUID.
+	// vm.Name stays the identifier everywhere that matters: DB target
+	// matching, backup tags and restore all key off it, never off
+	// FriendlyName, because the friendly name is presentation and can
+	// change under you.
 	FriendlyName string
 }
 

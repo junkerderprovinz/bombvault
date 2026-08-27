@@ -1056,7 +1056,7 @@ func backupBlockDisksAndLog(ctx context.Context, d VMBackupDeps, logPrefix strin
 			}
 			continue
 		}
-		log.Printf("%s: zvol disk %q: backed up as restic snapshot %s (%d bytes) — NOT YET tracked by run-recording, see VMBackupDeps.BlockDisks's doc comment", logPrefix, bd.Dataset, sum.SnapshotID, sum.Bytes)
+		log.Printf("%s: zvol disk %q: backed up as restic snapshot %s (%d bytes), tags %v", logPrefix, bd.Dataset, sum.SnapshotID, sum.Bytes, tags)
 	}
 	return firstErr
 }

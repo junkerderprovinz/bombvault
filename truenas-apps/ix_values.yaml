@@ -5,15 +5,17 @@
 #
 # NOTE (maintenance): `tag` here must track the container image tag actually
 # published to the registry, NOT the git release tag. This repo's git/GitHub
-# release tags carry a "v" prefix (e.g. v7.11.1), but .github/workflows/build.yml's
+# release tags carry a "v" prefix (e.g. v8.0.0), but .github/workflows/build.yml's
 # docker/metadata-action `type=semver,pattern={{version}}` rule strips it, so the
-# published image tag is the bare "7.11.1". Bump this file's `tag` (and app.yaml's
-# `app_version`, and app.yaml's `version`) on every BombVault release meant to reach
-# this catalog listing — this is an ongoing commitment, not a one-time value.
+# published image tag is the bare "8.0.0". Bump this file's `tag` together with
+# app.yaml's `app_version` on every BombVault release meant to reach this catalog
+# listing. This is an ongoing commitment, not a one-time value, and the two drift
+# apart in silence: nothing here fails when only one of them is bumped, which is
+# exactly what happened between 7.11.1 and 8.0.0.
 images:
   image:
     repository: ghcr.io/junkerderprovinz/bombvault
-    tag: 7.11.1
+    tag: 8.0.0
 
 consts:
   bombvault_container_name: bombvault
