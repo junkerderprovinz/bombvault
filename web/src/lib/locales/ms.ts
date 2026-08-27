@@ -305,15 +305,16 @@ const ms: Partial<Translations> = {
   "offsite.tamperFail": "pelayan TELAH MENERIMA pemadaman, TIDAK dilindungi",
   "offsite.tamperUnverifiable": "tidak boleh disahkan untuk jenis repositori ini",
   "offsite.tamperError": "Ujian gangguan tidak meyakinkan (pelayan tidak boleh dicapai)",
-  "offsite.retention.title": "5 · Strategi pengekalan",
-  "offsite.retention.farside": "Prune di pihak lain (disyorkan)",
-  "offsite.retention.window": "Tetingkap penyelenggaraan",
-  "offsite.retention.grow": "Pertumbuhan + amaran bajet",
-  "offsite.retention.farsideHint": "Jalankan restic forget --prune pada kotak storan itu sendiri (BombVault kekal tambah-sahaja). Petunjuk cron:",
-  "offsite.retention.windowHint": "Jalankan buat sementara waktu rest-server kedua yang bukan tambah-sahaja, prune, kemudian matikan. Kelayakan tidak pernah disimpan dan ujian semula gangguan wajib akan mengikutinya. Gunakan hanya apabila prune di pihak lain tidak dapat dilakukan.",
-  "offsite.retention.windowRestOnly": "Hanya berkuat kuasa untuk destinasi pelayan REST. Backend ini tidak boleh menjalankan pelayan kedua sementara terhadapnya. Gunakan Prune di pihak lain atau Pertumbuhan + amaran bajet sebagai gantinya.",
-  "offsite.retention.growHint": "Jangan sekali-kali prune luar tapak; sebaliknya beri amaran apabila repositori melebihi bajet bait. Lalai yang jujur sehingga anda memilih laluan prune.",
   "offsite.retention.budget": "Bajet pertumbuhan (GB, 0 = mati)",
+  "offsite.prune.title": "5 · Prune luar tapak",
+  "offsite.prune.info": "Langkah ini hanya melaporkan apa yang berlaku, ia tidak menetapkan apa-apa. Sama ada salinan ini di-prune ditentukan oleh tambah-sahaja pada langkah 4 dan oleh nilai simpanan dalam Tetapan, Pengekalan luar tapak. Untuk tetap mem-prune salinan tambah-sahaja, jalankan restic forget --prune di sebelah storan, sama ada mengikut jadualnya sendiri atau dengan menaikkan sebentar pelayan REST kedua tanpa tambah-sahaja, mem-prune melaluinya dan mematikannya semula.",
+  "offsite.prune.stateFarSide": "Dari sini tiada apa-apa yang mem-prune salinan ini. Tambah-sahaja dihidupkan, jadi BombVault hanya menambah padanya, dan prune ialah tugas sebelah storan.",
+  "offsite.prune.statePolicy": "BombVault mem-prune salinan ini selepas setiap replikasi, mengikut polisi pengekalan luar tapak.",
+  "offsite.prune.stateNone": "Tiada apa-apa yang mem-prune salinan ini. Tambah-sahaja dimatikan dan setiap nilai simpanan luar tapak ialah 0, jadi ia membesar selagi cakera mampu.",
+  "offsite.prune.effective": "Menyimpan {last} terkini, {daily} harian, {weekly} mingguan, {monthly} bulanan.",
+  "offsite.prune.editedElsewhere": "Ditetapkan dalam Tetapan, Pengekalan luar tapak. Nilainya dikongsi oleh setiap domain.",
+  "offsite.prune.budgetInfo": "Membunyikan penggera sebaik sahaja repositori luar tapak membesar melebihi jumlah gigabait ini. Ia tidak pernah memadam apa-apa, jadi ia jaring keselamatan bagi salinan yang tiada apa-apa mem-prune-nya.",
+  "settings.retentionImmutableNotPruned": "Destinasi luar tapak dengan tambah-sahaja tidak pernah di-prune dari sini, apa pun yang dinyatakan oleh nilai-nilai ini. Langkah tersendiri dalam pembantu luar tapak menerangkan cara mem-prune-nya dari sebelah storan.",
 
   // Additional off-site targets
   "offsite.targets.title": "Sasaran luar tapak tambahan",
@@ -386,7 +387,6 @@ const ms: Partial<Translations> = {
   "settings.retentionOffsite": "Repositori luar tapak",
   "settings.retentionOffsiteTitle": "Pengekalan luar tapak",
   "settings.retentionOffsiteHint": "Polisi berasingan untuk repositori luar tapak, supaya anda boleh menyimpannya lebih lama sebagai arkib. Semua sifar = simpan setiap sandaran luar tapak (tiada prune luar tapak).",
-  "settings.retentionOffsiteImmutableInfo": "Sasaran luar tapak yang tidak boleh diubah tidak sekali-kali di-prune dari sini, tanpa mengira tetapan ini. Lihat Luar tapak › Strategi pengekalan untuk cara mem-prune-nya juga.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Lebar jalur luar tapak",

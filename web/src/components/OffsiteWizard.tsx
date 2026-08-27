@@ -12,6 +12,7 @@ import {
   primaryRemoteTamperTest,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { InfoBubble } from "./InfoBubble";
 import { RevealInput } from "./RevealInput";
 import { Toggle } from "./Toggle";
 import { useReveal } from "../lib/useReveal";
@@ -316,10 +317,39 @@ export function OffsiteWizard({
   // className shape as immShake above.
   const [tamperShake, setTamperShake] = useState(0);
 
-  // Step 6 — retention strategy (UI-only; only the budget number persists).
-  const [retention, setRetention] = useState<"farside" | "window" | "grow">(
-    settings.offsiteGrowthBudgetGB > 0 ? "grow" : "farside"
-  );
+  // #176 (kramttocs): this step used to be three radio buttons headed
+  // "Retention strategy", which read as a setting and was not one. Only
+  // `offsiteGrowthBudgetGB` was ever persisted; the choice itself lived in
+  // local state, was reconstructed from that one number every time the
+  // wizard mounted, and had NO influence on whether anything got pruned.
+  // What actually decides that is service.go's copyToOffsiteTarget: an
+  // immutable target is never pruned from here, otherwise the shared
+  // off-site keep values apply. So the step now REPORTS that state instead
+  // of offering a choice that decided nothing.
+  const keepTotal =
+    settings.offsiteRetentionKeepLast +
+    settings.offsiteRetentionKeepDaily +
+    settings.offsiteRetentionKeepWeekly +
+    settings.offsiteRetentionKeepMonthly;
+  const pruneMode: "farside" | "policy" | "none" = immutable
+    ? "farside"
+    : keepTotal > 0
+      ? "policy"
+      : "none";
+  // Colour follows the same reading as the tamper verdict above: green is
+  // the protected, fully-handled case. "farside" is green because
+  // append-only is on AND the far side is told how to prune; "policy" is
+  // plain text because it is ordinary working behaviour, not an
+  // achievement; "none" warns because the repository grows without limit
+  // and nothing in the app will ever say so on its own.
+  const pruneColor =
+    pruneMode === "farside" ? "text-statusOk" : pruneMode === "none" ? "text-statusWarn" : "text-carbon-text";
+  const pruneText =
+    pruneMode === "farside"
+      ? t("offsite.prune.stateFarSide")
+      : pruneMode === "policy"
+        ? t("offsite.prune.statePolicy")
+        : t("offsite.prune.stateNone");
   // `budgetState` is SHARED the same way `immState` is above: off-site mode's
   // "grow" branch routes through the shared `save` prop, primary mode's own
   // branch through savePrimarySafety — both toast their own outcome. Full-
@@ -957,66 +987,62 @@ export function OffsiteWizard({
         </div>
       ) : (
         <div className="flex flex-col gap-2 border-t border-carbon-border pt-3">
-          <span className={stepTitle}>{t("offsite.retention.title")}</span>
-          <div className="flex flex-col gap-1.5">
-            {([
-              ["farside", "offsite.retention.farside"],
-              ["window", "offsite.retention.window"],
-              ["grow", "offsite.retention.grow"],
-            ] as const).map(([val, label]) => (
-              <label key={val} className="flex items-center gap-2 text-sm text-carbon-text cursor-pointer">
-                <input
-                  type="radio"
-                  name={`retention-${domain}`}
-                  checked={retention === val}
-                  onChange={() => setRetention(val)}
-                  style={{ accentColor: "var(--accent)" }}
-                />
-                {t(label)}
-              </label>
-            ))}
+          <span className="flex items-center gap-1">
+            <span className={stepTitle}>{t("offsite.prune.title")}</span>
+            <InfoBubble tip={t("offsite.prune.info")} />
+          </span>
+
+          {/* Shade, not a border, per the house rule: the state sits on a
+              lighter surface inside the step rather than inside a box. */}
+          <div className="flex flex-col gap-1 rounded-card bg-carbon-surface p-3">
+            <span className={`text-sm wrap-break-word ${pruneColor}`}>{pruneText}</span>
+            {pruneMode === "policy" && (
+              <>
+                <span className="text-xs text-carbon-textSub">
+                  {t("offsite.prune.effective")
+                    .replace("{last}", String(settings.offsiteRetentionKeepLast))
+                    .replace("{daily}", String(settings.offsiteRetentionKeepDaily))
+                    .replace("{weekly}", String(settings.offsiteRetentionKeepWeekly))
+                    .replace("{monthly}", String(settings.offsiteRetentionKeepMonthly))}
+                </span>
+                <span className="text-xs text-carbon-textMuted">{t("offsite.prune.editedElsewhere")}</span>
+              </>
+            )}
           </div>
 
-          {retention === "farside" && (
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-carbon-textMuted">{t("offsite.retention.farsideHint")}</p>
-              <CopyBlock text={cronHint} t={t} />
-            </div>
-          )}
-          {retention === "window" && urlBackend === "rest" && (
-            <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowHint")}</p>
-          )}
-          {/* "window" (a temporary second rest-server) is REST-specific — for any
-              other backend the instructions above don't apply, so say so instead
-              of silently showing nothing for a selected option (#131). */}
-          {retention === "window" && urlBackend !== "rest" && (
-            <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.windowRestOnly")}</p>
-          )}
-          {retention === "grow" && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs text-carbon-textMuted leading-relaxed">{t("offsite.retention.growHint")}</p>
-              {/* Full-page Speichern-Button sweep: this field's own "Save
-                  budget" button is gone — it debounce-auto-saves itself
-                  through the same shared `save` prop every other off-site
-                  field on this page already converted to. */}
-              <label className="flex flex-col gap-1 max-w-48">
-                <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={settings.offsiteGrowthBudgetGB}
-                  onChange={(e) => {
-                    const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                    setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
-                    debounced("offsiteGrowthBudgetGB", () =>
-                      void save({ offsiteGrowthBudgetGB: n }, setBudgetState, () => undefined)
-                    );
-                  }}
-                  className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
-                />
-              </label>
-            </div>
-          )}
+          {/* The cron snippet is only useful while BombVault is standing
+              back, i.e. exactly when append-only is on. Showing it in the
+              other two states invited someone to run a second pruner
+              against a repository BombVault is already pruning. */}
+          {pruneMode === "farside" && <CopyBlock text={cronHint} t={t} />}
+
+          {/* The growth budget is NOT tied to a strategy choice any more.
+              It was reachable only behind the old "grow" radio, and this
+              wizard is the only editor for it in the whole app, so hiding
+              it behind a choice made a real, persisted setting
+              unreachable depending on an unrelated radio button.
+              Full-page Speichern-Button sweep: no save button, it
+              debounce-auto-saves through the same shared `save` prop every
+              other off-site field on this page already converted to. */}
+          <label className="flex flex-col gap-1 max-w-48">
+            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("offsite.retention.budget")}
+              <InfoBubble tip={t("offsite.prune.budgetInfo")} />
+            </span>
+            <input
+              type="number"
+              min={0}
+              value={settings.offsiteGrowthBudgetGB}
+              onChange={(e) => {
+                const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                setSettings((prev) => (prev ? { ...prev, offsiteGrowthBudgetGB: n } : prev));
+                debounced("offsiteGrowthBudgetGB", () =>
+                  void save({ offsiteGrowthBudgetGB: n }, setBudgetState, () => undefined)
+                );
+              }}
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+            />
+          </label>
         </div>
       )}
     </div>

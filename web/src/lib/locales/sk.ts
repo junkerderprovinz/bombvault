@@ -305,15 +305,16 @@ const sk: Partial<Translations> = {
   "offsite.tamperFail": "server odstránenie PRIJAL, NIE JE chránený",
   "offsite.tamperUnverifiable": "pre tento typ repozitára nemožno overiť",
   "offsite.tamperError": "Test neoprávnenej manipulácie nie je jednoznačný (server nedostupný)",
-  "offsite.retention.title": "5 · Stratégia uchovávania",
-  "offsite.retention.farside": "Čistenie na druhej strane (odporúčané)",
-  "offsite.retention.window": "Okno údržby",
-  "offsite.retention.grow": "Rast + upozornenie na rozpočet",
-  "offsite.retention.farsideHint": "Spustite restic forget --prune priamo na úložnom boxe (BombVault zostáva v režime len-na-pridávanie). Tip pre cron:",
-  "offsite.retention.windowHint": "Dočasne spustite druhý, nie-len-na-pridávanie rest-server, vyčistite ho a potom vypnite. Poverenia sa nikdy neukladajú a nasleduje povinný opakovaný test neoprávnenej manipulácie. Použite iba vtedy, keď čistenie na druhej strane nie je možné.",
-  "offsite.retention.windowRestOnly": "Platí iba pre ciele servera REST. Tento backend proti nemu nemôže spustiť dočasný druhý server. Namiesto toho použite Čistenie na druhej strane alebo Rast + upozornenie na rozpočet.",
-  "offsite.retention.growHint": "Nikdy nečistite externú stranu; namiesto toho upozornite, keď repozitár prekročí rozpočet bajtov. Poctivá predvoľba, kým si nevyberiete spôsob čistenia.",
   "offsite.retention.budget": "Rozpočet rastu (GB, 0 = vypnuté)",
+  "offsite.prune.title": "5 · Externé čistenie",
+  "offsite.prune.info": "Tento krok len oznamuje, čo sa deje, nič nenastavuje. O tom, či sa táto kópia čistí, rozhoduje len-na-pridávanie z kroku 4 a hodnoty uchovávania v Nastavenia, Externé uchovávanie. Ak chcete kópiu s len-na-pridávaním napriek tomu vyčistiť, spustite restic forget --prune na strane úložiska, buď podľa vlastného plánu, alebo tak, že nakrátko postavíte druhý REST server bez len-na-pridávania, cez neho vyčistíte a znova ho vypnete.",
+  "offsite.prune.stateFarSide": "Odtiaľto túto kópiu nič nečistí. Len-na-pridávanie je zapnuté, takže BombVault do nej iba pridáva a čistenie je vecou strany úložiska.",
+  "offsite.prune.statePolicy": "BombVault vyčistí túto kópiu po každej replikácii podľa zásady externého uchovávania.",
+  "offsite.prune.stateNone": "Túto kópiu nič nečistí. Len-na-pridávanie je vypnuté a všetky externé hodnoty uchovávania sú 0, takže rastie, kým disk vydrží.",
+  "offsite.prune.effective": "Uchováva {last} najnovších, {daily} denných, {weekly} týždenných, {monthly} mesačných.",
+  "offsite.prune.editedElsewhere": "Nastavuje sa v Nastavenia, Externé uchovávanie. Hodnoty sú spoločné pre všetky oblasti.",
+  "offsite.prune.budgetInfo": "Spustí poplach, len čo externý repozitár prerastie tento počet gigabajtov. Nikdy nič nemaže, takže je to záchranná sieť pre kópiu, ktorú nič nečistí.",
+  "settings.retentionImmutableNotPruned": "Externý cieľ s len-na-pridávaním sa odtiaľto nikdy nečistí, nech tieto hodnoty hovoria čokoľvek. Jeho vlastný krok v externom sprievodcovi vysvetľuje, ako ho vyčistiť zo strany úložiska.",
 
   // Additional off-site targets
   "offsite.targets.title": "Ďalšie externé ciele",
@@ -386,7 +387,6 @@ const sk: Partial<Translations> = {
   "settings.retentionOffsite": "Externý repozitár",
   "settings.retentionOffsiteTitle": "Externé uchovávanie",
   "settings.retentionOffsiteHint": "Samostatná zásada pre externý repozitár, aby ste ho mohli uchovávať dlhšie ako archív. Všetko nula = uchovať každú externú zálohu (bez externého čistenia).",
-  "settings.retentionOffsiteImmutableInfo": "Nemenný externý cieľ sa odtiaľto nikdy nečistí, bez ohľadu na tieto nastavenia. Pozrite si Externý › Stratégia uchovávania, ako ho napriek tomu vyčistiť.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Externá šírka pásma",
