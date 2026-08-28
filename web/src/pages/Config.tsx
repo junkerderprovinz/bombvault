@@ -168,12 +168,13 @@ function ConfigSettingsCard({
   // copy-feedback sites) used to hold "saved"/"error" here for a 3000ms
   // inline-text flash; that completion notice is now a toast instead (push
   // below), so there's no lingering render state left to revert from.
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
-  const [shake, setShake] = useState(0);
+  // Only the setter survives: with the Save button gone there is no control
+  // left to disable while a write is in flight, but the state still guards
+  // against overlapping writes and keeps the shape of every other autosaving
+  // card in the app.
+  const [, setSaveState] = useState<SaveState>("idle");
 
-  async function handleSave() {
+  async function persist(enabled: boolean) {
     setSaveState("saving");
     try {
       // Re-fetch the latest settings and merge only the fields THIS card owns,
@@ -190,7 +191,6 @@ function ConfigSettingsCard({
       if (!latest.ok) {
         setSaveState("idle");
         push(latest.error ?? t("config.loadSettingsFailed"), "fail");
-        setShake((n) => n + 1);
         return;
       }
       // configOffsite/configOffsiteImmutable are deliberately NOT merged in
@@ -204,7 +204,7 @@ function ConfigSettingsCard({
       // this page's snapshot would undo a location set there.
       const merged: Settings = {
         ...latest.settings,
-        configEnabled: settings.configEnabled,
+        configEnabled: enabled,
       };
       const res = await putSettings(merged);
       if (res.ok) {
@@ -215,12 +215,10 @@ function ConfigSettingsCard({
       } else {
         setSaveState("idle");
         push(res.error ?? t("common.saveFailed"), "fail");
-        setShake((n) => n + 1);
       }
     } catch (err) {
       setSaveState("idle");
       push(err instanceof Error ? err.message : t("common.saveFailed"), "fail");
-      setShake((n) => n + 1);
     }
   }
 
@@ -264,11 +262,19 @@ function ConfigSettingsCard({
           the app's LAST two `description` captions, on the same card whose own
           heading text the sweep did convert six lines above. A permanent grey
           paragraph is read once and costs vertical space forever. */}
+      {/* Saves itself (#182, manilx: "switching the setting autosaves ... here i
+          need to select save button"). Every other toggle in the app persists
+          on the spot; this card kept a Save button because it used to own three
+          text fields, and once those moved out a lone toggle behind a button
+          was the only one of its kind left. */}
       <ToggleRow
         label={t("config.enabled")}
         hint={tLtr(t, "config.enabledHint")}
         checked={settings.configEnabled}
-        onChange={(v) => setSettings((prev) => ({ ...prev, configEnabled: v }))}
+        onChange={(v) => {
+          setSettings((prev) => ({ ...prev, configEnabled: v }));
+          void persist(v);
+        }}
       />
 
       {/* The backup location moved out too (#182, manilx: "Can't set
@@ -294,28 +300,6 @@ function ConfigSettingsCard({
           credentials. Only the enable toggle lives here now. */}
       <p className="text-xs text-carbon-textMuted">{t("config.offsiteMoved")}</p>
 
-      <div className="flex items-center gap-3 pt-1">
-        <button
-          key={shake}
-          onClick={() => void handleSave()}
-          disabled={saveState === "saving"}
-          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
-        >
-          {saveState === "saving" ? (
-            <>
-              <span
-                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("common.saving")}
-            </>
-          ) : (
-            t("settings.save")
-          )}
-        </button>
-      </div>
     </div>
   );
 }
@@ -353,7 +337,6 @@ function ConfigSnapshotRow({
       if (res.ok) onDeleted();
       else {
         push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
