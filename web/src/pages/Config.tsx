@@ -146,40 +146,6 @@ function ConfigBackupButton({
 // sets "idle"/"saving" — see the comment on the state declaration itself.
 type SaveState = "idle" | "saving";
 
-// jdp live-review ("Infotexte in i Infobubbles"): `hint` used to render as a
-// permanent grey <p> under the field — the same "read once, costs vertical
-// space forever" case design-language.md rule 8 exists to fold away. Moved
-// onto the label itself as an InfoBubble instead, the exact idiom Settings.tsx
-// already uses for a labelled field (see e.g. its cloud.storageClass.label
-// `<span className="flex items-center gap-1">{label}<InfoBubble .../></span>`
-// pair) — reused here rather than inventing a second one for this file's own
-// hand-rolled field helper. Zero i18n changes: same keys (config.pathHint/
-// config.offsiteHint), only where they render.
-function labelledInput(
-  label: string,
-  value: string,
-  onChange: (v: string) => void,
-  placeholder: string,
-  hint?: string
-) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-        {label}
-        {hint && <InfoBubble tip={hint} />}
-      </span>
-      <input
-        value={value}
-        spellCheck={false}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        dir="ltr"
-        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
-      />
-    </div>
-  );
-}
-
 function ConfigSettingsCard({
   t,
   settings,
@@ -202,12 +168,13 @@ function ConfigSettingsCard({
   // copy-feedback sites) used to hold "saved"/"error" here for a 3000ms
   // inline-text flash; that completion notice is now a toast instead (push
   // below), so there's no lingering render state left to revert from.
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
-  const [shake, setShake] = useState(0);
+  // Only the setter survives: with the Save button gone there is no control
+  // left to disable while a write is in flight, but the state still guards
+  // against overlapping writes and keeps the shape of every other autosaving
+  // card in the app.
+  const [, setSaveState] = useState<SaveState>("idle");
 
-  async function handleSave() {
+  async function persist(enabled: boolean) {
     setSaveState("saving");
     try {
       // Re-fetch the latest settings and merge only the fields THIS card owns,
@@ -224,7 +191,6 @@ function ConfigSettingsCard({
       if (!latest.ok) {
         setSaveState("idle");
         push(latest.error ?? t("config.loadSettingsFailed"), "fail");
-        setShake((n) => n + 1);
         return;
       }
       // configOffsite/configOffsiteImmutable are deliberately NOT merged in
@@ -233,10 +199,12 @@ function ConfigSettingsCard({
       // page's mount-time snapshot would re-assert a stale repo URL and undo an
       // edit made there, exactly the way the schedules used to be clobbered
       // before they moved out for the same reason.
+      // configPath left out for the same reason as the two above (#182): the
+      // path row in Settings › Paths and storage owns it now, and re-asserting
+      // this page's snapshot would undo a location set there.
       const merged: Settings = {
         ...latest.settings,
-        configEnabled: settings.configEnabled,
-        configPath: settings.configPath,
+        configEnabled: enabled,
       };
       const res = await putSettings(merged);
       if (res.ok) {
@@ -247,12 +215,10 @@ function ConfigSettingsCard({
       } else {
         setSaveState("idle");
         push(res.error ?? t("common.saveFailed"), "fail");
-        setShake((n) => n + 1);
       }
     } catch (err) {
       setSaveState("idle");
       push(err instanceof Error ? err.message : t("common.saveFailed"), "fail");
-      setShake((n) => n + 1);
     }
   }
 
@@ -296,54 +262,44 @@ function ConfigSettingsCard({
           the app's LAST two `description` captions, on the same card whose own
           heading text the sweep did convert six lines above. A permanent grey
           paragraph is read once and costs vertical space forever. */}
+      {/* Saves itself (#182, manilx: "switching the setting autosaves ... here i
+          need to select save button"). Every other toggle in the app persists
+          on the spot; this card kept a Save button because it used to own three
+          text fields, and once those moved out a lone toggle behind a button
+          was the only one of its kind left. */}
       <ToggleRow
         label={t("config.enabled")}
         hint={tLtr(t, "config.enabledHint")}
         checked={settings.configEnabled}
-        onChange={(v) => setSettings((prev) => ({ ...prev, configEnabled: v }))}
+        onChange={(v) => {
+          setSettings((prev) => ({ ...prev, configEnabled: v }));
+          void persist(v);
+        }}
       />
 
-      {labelledInput(
-        t("config.path"),
-        settings.configPath,
-        (v) => setSettings((prev) => ({ ...prev, configPath: v })),
-        "user/bombvault/config",
-        t("config.pathHint")
-      )}
+      {/* The backup location moved out too (#182, manilx: "Can't set
+          credentials here"). It was a plain text field, while Settings › Paths
+          and storage has had the same value as a full path row for a long
+          time: local or remote, and for a remote one the safety dialog that
+          holds bandwidth limits, append-only and, since #182, the credential
+          set. Someone pointing self-backup at an S3 bucket from THIS field
+          therefore had nowhere to say which keys it should use.
+          Its caption was wrong for that case as well, promising a "relative
+          subpath under the host mount root" for a value that had just been
+          given an s3: URL.
+          Keeping both would also have repeated the schedules/off-site mistake:
+          two editors for one setting, with this page's mount-time snapshot
+          able to overwrite the other one. */}
+      <p className="text-xs text-carbon-textMuted">{t("config.pathMoved")}</p>
 
       {/* The self-backup + off-site cadences moved to Settings › Schedules (the
           single schedule owner), and since #176 the off-site repo and its
           append-only flag moved to Settings › Off-site, where self-backup now
           has the same card every other domain has: a setup wizard, a connection
           test, replicate-now, extra destinations and per-destination
-          credentials. Keeping a second, plainer copy of the repo field here
-          would mean two places to edit one value, with this page's older
-          snapshot able to overwrite the other. Only path and the enable toggle
-          live here now. */}
+          credentials. Only the enable toggle lives here now. */}
       <p className="text-xs text-carbon-textMuted">{t("config.offsiteMoved")}</p>
 
-      <div className="flex items-center gap-3 pt-1">
-        <button
-          key={shake}
-          onClick={() => void handleSave()}
-          disabled={saveState === "saving"}
-          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
-        >
-          {saveState === "saving" ? (
-            <>
-              <span
-                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("common.saving")}
-            </>
-          ) : (
-            t("settings.save")
-          )}
-        </button>
-      </div>
     </div>
   );
 }
@@ -381,7 +337,6 @@ function ConfigSnapshotRow({
       if (res.ok) onDeleted();
       else {
         push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
