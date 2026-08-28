@@ -463,9 +463,16 @@ export function OffsiteWizard({
   // site Card's own repo-URL field (Settings.tsx) already converted to.
   function patchRepo(v: string) {
     setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-    debounced(String(repoKey), () =>
-      void save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined)
-    );
+    debounced(String(repoKey), () => {
+      // Re-read the destination AFTER the save completes, not only when repoURL
+      // changes. Saving a repo for the first time is what CREATES the row the
+      // credential selector binds to, and the keystroke that triggered this save
+      // happened while it did not exist yet — so without this the selector stays
+      // hidden until the wizard is next opened. Seen live on a first-time setup.
+      void Promise.resolve(
+        save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined)
+      ).then(() => refreshPrimaryTarget());
+    });
   }
 
   async function genSnippet() {
