@@ -22,6 +22,8 @@ import type { Settings } from "../lib/api";
 
 const setCloudCalls: Record<string, string>[] = [];
 const updateTargetCalls: { id: string; credsRef: string }[] = [];
+let listTargetCalls = 0;
+let saveCalls = 0;
 
 // The domain's PRIMARY off-site destination: the row whose credsRef the
 // wizard's credential selector edits (#176). sortOrder 0 is what marks it.
@@ -68,7 +70,10 @@ vi.mock("../lib/api", async (importOriginal) => {
       setCloudCalls.push({ ...c });
       return Promise.resolve({ ok: true });
     },
-    listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [PRIMARY_TARGET] }),
+    listOffsiteTargets: () => {
+      listTargetCalls++;
+      return Promise.resolve({ ok: true, targets: [PRIMARY_TARGET] });
+    },
     updateOffsiteTarget: (id: string, target: { credsRef: string }) => {
       updateTargetCalls.push({ id, credsRef: target.credsRef });
       return Promise.resolve({ ok: true, target: { ...PRIMARY_TARGET, credsRef: target.credsRef } });
@@ -96,7 +101,7 @@ function Harness() {
       domain="containers"
       settings={settingsWith()}
       setSettings={() => {}}
-      save={() => Promise.resolve(true)}
+      save={() => { saveCalls++; return Promise.resolve(true); }}
       t={t}
     />
   );
@@ -134,6 +139,8 @@ beforeEach(() => {
   vi.useFakeTimers();
   setCloudCalls.length = 0;
   updateTargetCalls.length = 0;
+  listTargetCalls = 0;
+  saveCalls = 0;
 });
 
 afterEach(() => {
@@ -198,4 +205,31 @@ it("hides the shared credential fields once a set is chosen", async () => {
   // every other destination that still uses the shared set.
   expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
   expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
+});
+
+// Saving a repo for the first time is what CREATES the destination row the
+// selector binds to, and the keystroke that triggered the save happened before
+// it existed. Without a re-read after the save the selector stays hidden until
+// the wizard is next opened - seen live during a first-time setup.
+it("re-reads the destination after saving the repository", async () => {
+  await renderWizard();
+
+  const repo = screen.getByLabelText(/Off-site-Repository-URL|Off-site repository URL/) as HTMLInputElement;
+  await act(async () => {
+    fireEvent.change(repo, { target: { value: "rest:http://192.0.2.99:8000/new" } });
+  });
+  // Typing alone does not re-read here (this harness keeps settings constant),
+  // so pin the count now and require the SAVE itself to produce the read.
+  const beforeSave = listTargetCalls;
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(900);
+  });
+  // The re-read hangs off the save promise, so let the microtasks settle.
+  await act(async () => {
+    await Promise.resolve();
+  });
+
+  expect(saveCalls).toBe(1);
+  expect(listTargetCalls).toBe(beforeSave + 1);
 });
