@@ -3590,20 +3590,52 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 	return onlyExistingPaths(s.configuredBackupPaths(name, in))
 }
 
-// expectsData reports whether a container ought to have backup data: it has an
-// appdata-style bind mount, or the user explicitly selected folders. Used to
-// distinguish a genuinely stateless container (empty backup is correct) from one
-// whose paths transiently resolved to nothing (appdata not mounted / misconfig),
-// so the latter is refused rather than recorded as a successful empty backup.
-func (s *Service) expectsData(name string) bool {
+// emptyBackupIsUnreachable decides what an empty effective path list MEANS, and
+// therefore whether a container backup should be refused (#181, manilx).
+//
+// Three states produce an empty list and only one of them is a fault:
+//
+//   - Nothing configured, nothing ever stored — a stateless container. Correct,
+//     back up its definition only.
+//   - Nothing configured, but a previous backup DID capture data — the user has
+//     deselected every folder since. Also correct: the container is stateless
+//     from now on. This was refused before, which left no way forward except
+//     re-selecting the folder that had just been deliberately removed.
+//   - The data a previous backup captured is GONE from disk — the share is not
+//     mounted or HOST_SOURCE_ROOT is wrong. THIS is the fault worth refusing,
+//     because recording it would look successful and overwrite the stored path
+//     list with nothing.
+//
+// Only storedDataIsGone separates the second case from the third. The store
+// cannot: an emptied selection is indistinguishable there from one that was
+// never made (both are an empty SelectedPaths, meaning "use automatic
+// detection"), and the configured list cannot either, because the appdata
+// fallback in resolveAppdataPaths is itself stat-gated and so disappears along
+// with the folder.
+func (s *Service) emptyBackupIsUnreachable(name string, effective []string) bool {
+	return len(effective) == 0 && s.storedDataIsGone(name)
+}
+
+// storedDataIsGone reports whether the paths a previous backup actually captured
+// have all disappeared from disk. That is precisely what the guard's message
+// claims ("not reachable"), so it is what the guard measures.
+//
+// A container with no stored target, or one whose last run captured nothing, is
+// a first or a genuinely stateless backup and is never refused.
+func (s *Service) storedDataIsGone(name string) bool {
 	existing, err := s.store.GetTargetByContainer(name)
 	if err != nil {
 		return false // no prior target — a first backup of a new/stateless container
 	}
-	// Only when a PREVIOUS backup actually captured data (or the user selected
-	// folders) is an empty result suspicious. This avoids refusing the first
-	// backup of a brand-new container whose appdata folder doesn't exist yet.
-	return len(existing.AppdataPaths) > 0 || len(existing.SelectedPaths) > 0
+	// SelectedPaths first: while a selection stands it is what a backup uses, so
+	// it is the list whose disappearance means the share went away. Once the user
+	// clears it, what the last run captured (AppdataPaths) is the only record of
+	// where the data was, and it still tells us whether that data is still there.
+	stored := existing.SelectedPaths
+	if len(stored) == 0 {
+		stored = existing.AppdataPaths
+	}
+	return len(stored) > 0 && len(onlyExistingPaths(stored)) == 0
 }
 
 // ErrSelfBackup is returned when a backup targets BombVault's own container.
@@ -3752,7 +3784,15 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// isn't mounted right now, or HOST_SOURCE_ROOT is misconfigured — refuse instead
 	// of recording an empty backup that looks successful and overwrites the stored
 	// path list. A first backup of a new/stateless container is unaffected.
-	if len(effective) == 0 && s.expectsData(name) {
+	//
+	// GONE, not merely absent (#181, manilx): an empty result on its own does not
+	// mean the data is unreachable. It also happens when the user has DESELECTED
+	// every folder on purpose, which leaves the container correctly stateless and
+	// makes a definition-only backup exactly the right outcome. Refusing that left
+	// no way forward except re-selecting the folder the user had just deliberately
+	// removed. The guard therefore measures what its own message claims: whether
+	// the data a previous backup captured has disappeared from disk.
+	if s.emptyBackupIsUnreachable(name, effective) {
 		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?). Refusing an empty backup that would look successful", name)
 		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
 		return backup.Summary{}, err
