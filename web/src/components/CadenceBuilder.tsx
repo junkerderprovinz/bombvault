@@ -95,11 +95,21 @@ const WEEKDAY_OFFSET: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4,
 // localizedWeekday renders a stored English 3-letter weekday in the given
 // language's short form via Intl (e.g. "Mon" -> "Mo." in de), falling back to the
 // stored abbreviation.
+//
+// timeZone: "UTC" is load-bearing, not tidiness. The reference date is built with
+// Date.UTC, so it is midnight UTC; formatting it in the VIEWER's zone shifts it
+// backwards by the offset anywhere west of UTC, and midnight minus a few hours
+// is the previous day. A Wednesday schedule therefore read as "Tue" for anyone
+// in the Americas while being correct in Europe, which is why it went unnoticed
+// here for so long (#183, kramttocs). Formatted in UTC, the date means the same
+// day in every zone.
 function localizedWeekday(abbr: string, lang: string): string {
   const off = WEEKDAY_OFFSET[abbr];
   if (!off) return abbr;
   try {
-    return new Intl.DateTimeFormat(lang, { weekday: "short" }).format(new Date(Date.UTC(2024, 0, off)));
+    return new Intl.DateTimeFormat(lang, { weekday: "short", timeZone: "UTC" }).format(
+      new Date(Date.UTC(2024, 0, off))
+    );
   } catch {
     return abbr;
   }
