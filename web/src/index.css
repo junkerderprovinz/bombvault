@@ -125,6 +125,76 @@
   --badge-md: 2.35rem;
 }
 
+/* Button width stages (#178, [200]) — the size system for CLICKABLE controls.
+   ---------------------------------------------------------------------------
+   jdp's requirement: a button is the same width in all three label modes, so
+   switching between text / text+glyph / glyph never reflows the page. The
+   width therefore keys off the LABEL, which exists in every mode (visible, or
+   hidden but still announced), and never off what happens to be painted.
+
+   Four stages rather than a measured per-button width: a stage is decided
+   before the first paint, is testable without a browser, and gives the aligned
+   look jdp asked for instead of 197 subtly different widths.
+
+   The bounds come from measuring the app's real button labels across all 42
+   locales, not from taste. The same label grows by up to 3.4x between
+   languages ("Clear" -> "Kijelölés törlése"), which is why lib/controls.ts
+   picks the stage from the CURRENT language: one global stage per button would
+   make every English interface pay for the longest translation forever.
+
+   Height and radius are shared by all four, so only the horizontal axis
+   stages. min-width, not width: a stage is a floor that keeps a row tidy, not
+   a cage that clips a label a translation made longer than expected. */
+:root {
+  --btn-h: 2.25rem;
+  --btn-pad-x: 0.875rem;
+  --btn-gap: 0.5rem;
+
+  --btn-w-xs: 5.5rem;
+  --btn-w-sm: 8rem;
+  --btn-w-md: 11.5rem;
+  --btn-w-lg: 15rem;
+}
+
+.bv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--btn-gap);
+  height: var(--btn-h);
+  padding-inline: var(--btn-pad-x);
+  border-radius: var(--radius-control);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  box-sizing: border-box;
+  transition: opacity 120ms, background-color 120ms;
+}
+
+.bv-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bv-btn-xs { min-width: var(--btn-w-xs); }
+.bv-btn-sm { min-width: var(--btn-w-sm); }
+.bv-btn-md { min-width: var(--btn-w-md); }
+.bv-btn-lg { min-width: var(--btn-w-lg); }
+
+.bv-btn-glyph {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+/* The label may be narrower than its stage; it must not stretch the button
+   past it either, so long text ellipsises rather than breaking a row. */
+.bv-btn-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Shape and type scale (GlimStone form-engine #1) — theme-invariant: radius
    and font size don't change between dark and light, only colors do, so
    these are declared ONCE on a bare :root rather than duplicated identically
