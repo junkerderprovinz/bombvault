@@ -151,7 +151,7 @@ func logSchedulerTimezone() {
 	tz := os.Getenv("TZ")
 	switch {
 	case tz == "":
-		log.Print("scheduler: planning in UTC - TZ is NOT set, so a schedule entered as 02:30 fires at 02:30 UTC, not 02:30 on your wall clock. Set TZ (for example Europe/Berlin) if you want wall-clock times.")
+		log.Print("scheduler: planning in UTC - TZ is NOT set, so a schedule entered as 02:30 fires at 02:30 UTC, not 02:30 on your wall clock. Set TZ (for example Europe/Berlin) if you want wall-clock times. On Unraid the system passes its own TZ into every container, so an empty one there means this container predates that and only needs recreating - do not add a TZ variable to the template, that would be a second one.")
 	case name == "UTC" && tz != "UTC" && tz != "Etc/UTC":
 		log.Printf("scheduler: TZ=%q did NOT resolve to a known zone, so planning fell back to UTC. Check the spelling against the IANA zone list (for example Europe/Berlin).", tz) //nolint:gosec // G706: tz is %q-quoted
 	default:
