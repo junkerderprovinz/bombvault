@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Settings, DeploySnippetData, PrimaryRemoteConfig, PrimaryRemoteDomain } from "../lib/api";
+import type { Settings, DeploySnippetData, PrimaryRemoteConfig, PrimaryRemoteDomain, OffsiteDomain } from "../lib/api";
 import {
   deploySnippet,
   tamperTest,
@@ -36,11 +36,12 @@ import { useToast } from "../lib/toast";
 // append-only tamper verdict, and a retention-strategy chooser.
 // ---------------------------------------------------------------------------
 
-// "config" is a valid domain for REMOTE-PRIMARY mode (primary=true) below —
-// off-site mode (primary=false, the original behaviour) never receives it:
-// Settings.tsx's off-site tab only ever lists containers/vms/flash/files.
-type OffsiteDomain = "containers" | "vms" | "flash" | "files";
-type Domain = OffsiteDomain | "config";
+// Both modes take all five domains. "config" (self-backup) used to be valid
+// only in remote-primary mode, and this file kept its own four-domain copy of
+// the type to say so. Since #176 the off-site tab lists self-backup too, and
+// the stale copy is what let REPO_KEY silently miss an entry. Imported now, so
+// the domain list has one definition (api.ts) rather than one per file.
+type Domain = OffsiteDomain;
 type T = ReturnType<typeof useT>["t"];
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -51,6 +52,7 @@ const REPO_KEY = {
   vms: "vmsOffsite",
   flash: "flashOffsite",
   files: "filesOffsite",
+  config: "configOffsite",
 } as const;
 // The off-site schedule is owned by Settings › Schedules — the wizard no longer
 // edits it, so there is no SCHED_KEY map here.
@@ -59,6 +61,7 @@ const IMM_KEY = {
   vms: "vmsOffsiteImmutable",
   flash: "flashOffsiteImmutable",
   files: "filesOffsiteImmutable",
+  config: "configOffsiteImmutable",
 } as const;
 // Every domain's backup PATH field — used only by remote-primary mode to read
 // the LIVE path for display + backend inference; never written here (editing
@@ -178,10 +181,14 @@ export function OffsiteWizard({
    *  singleton hue-eligible badge with no `hueIndex` passed. */
   hueIndex?: number;
 }) {
-  // Off-site mode never receives "config" (see the Domain/OffsiteDomain
-  // comment above) — this narrows once so REPO_KEY/IMM_KEY lookups below
-  // don't need a repeated undefined-guard. Never read in primary mode.
-  const offsiteDomain = domain as OffsiteDomain;
+  // Off-site mode DOES receive "config" since #176 gave self-backup the same
+  // card as every other domain. It did not before, and this line used to cast
+  // the domain to narrow it away, which turned the first render for
+  // self-backup into a blank page: REPO_KEY had no "config" entry, so repoKey
+  // was undefined, settings[undefined] was undefined, and inferBackend called
+  // .trim() on it (manilx, on #182). No cast now, so leaving a domain out of
+  // either map is a compile error rather than a crash in the browser.
+  const offsiteDomain: OffsiteDomain = domain;
   const repoKey = REPO_KEY[offsiteDomain];
   const immKey = IMM_KEY[offsiteDomain];
 
@@ -204,7 +211,7 @@ export function OffsiteWizard({
   useEffect(() => {
     if (!primary) return;
     let active = true;
-    getPrimaryRemote(domain as PrimaryRemoteDomain)
+    getPrimaryRemote(domain)
       .then((r) => {
         if (!active) return;
         if (!r.ok || !r.config) {
@@ -595,7 +602,7 @@ export function OffsiteWizard({
   // the bandwidth/budget form's own Save button (limits/budget + the CURRENT
   // immutable flag), so neither one clobbers the field the other owns.
   async function savePrimarySafety(patch: { immutable?: boolean; limitUpload?: number; limitDownload?: number; growthBudgetGb?: number; credsRef?: string }) {
-    return setPrimaryRemote(domain as PrimaryRemoteDomain, {
+    return setPrimaryRemote(domain, {
       immutable: patch.immutable ?? immutable,
       limitUpload: patch.limitUpload ?? pLimitUpload,
       limitDownload: patch.limitDownload ?? pLimitDownload,
