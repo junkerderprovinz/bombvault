@@ -295,7 +295,6 @@ const sk: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL externého repozitára",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Prihlasovacie údaje",
-  "offsite.wizard.credsShared": "Tieto údaje platia pre každý cieľ bez vlastnej sady, nielen pre tento typ.",
   "offsite.wizard.credsSharedElsewhere": "Používa zdieľané cloudové prihlasovacie údaje. Vyberte súpravu, aby mal tento cieľ vlastné.",
   "offsite.wizard.credsInSet": "Tento cieľ používa sadu „{name}“. Údaje sa spravujú tam.",
   "offsite.wizard.credLoadError": "Existujúce poverenia sa nepodarilo načítať. Pred úpravou znova načítajte.",

@@ -881,7 +881,6 @@ const sv: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Autentiseringsuppgifter",
-  "offsite.wizard.credsShared": "Dessa uppgifter gäller varje destination utan egen uppsättning, inte bara den här typen.",
   "offsite.wizard.credsSharedElsewhere": "Använder de delade molnautentiseringsuppgifterna. Välj en uppsättning för att ge det här målet egna.",
   "offsite.wizard.credsInSet": "Den här destinationen använder uppsättningen ”{name}”. Uppgifterna hanteras där.",
   "offsite.wizard.credLoadError": "Det gick inte att läsa in befintliga uppgifter. Läs in på nytt innan du redigerar.",

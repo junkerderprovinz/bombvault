@@ -860,7 +860,6 @@ const he: Partial<Translations> = {
   "offsite.wizard.repoUrl": "כתובת URL של מאגר מחוץ לאתר",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "פרטי גישה",
-  "offsite.wizard.credsShared": "פרטים אלה חלים על כל יעד שאין לו ערכה משלו, לא רק על סוג זה.",
   "offsite.wizard.credsSharedElsewhere": "משתמש בפרטי הגישה המשותפים לענן. בחר ערכה כדי להעניק ליעד הזה פרטים משלו.",
   "offsite.wizard.credsInSet": "יעד זה משתמש בערכה \u201e{name}\u201d. הפרטים מנוהלים שם.",
   "offsite.wizard.credLoadError": "לא ניתן לטעון את פרטי ההתחברות הקיימים. טען מחדש לפני עריכה.",

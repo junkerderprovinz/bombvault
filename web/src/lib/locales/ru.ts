@@ -851,7 +851,6 @@ const ru: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL внешнего репозитория",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Учётные данные",
-  "offsite.wizard.credsShared": "Эти данные действуют для каждого назначения без собственного набора, а не только для этого типа.",
   "offsite.wizard.credsSharedElsewhere": "Использует общие облачные учётные данные. Выберите набор, чтобы у этой цели были собственные.",
   "offsite.wizard.credsInSet": "Это назначение использует набор «{name}». Данные управляются там.",
   "offsite.wizard.credLoadError": "Не удалось загрузить существующие учётные данные — перезагрузите перед редактированием.",

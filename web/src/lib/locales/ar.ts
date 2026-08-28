@@ -884,7 +884,6 @@ const ar: Partial<Translations> = {
   "offsite.wizard.repoUrl": "رابط المستودع خارج الموقع",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "بيانات الاعتماد",
-  "offsite.wizard.credsShared": "تُستخدم هذه البيانات لكل وجهة لا تملك مجموعة خاصة بها، وليس لهذا النوع فقط.",
   "offsite.wizard.credsSharedElsewhere": "يستخدم بيانات اعتماد السحابة المشتركة. اختر مجموعة لمنح هذا الهدف بيانات خاصة به.",
   "offsite.wizard.credsInSet": "تستخدم هذه الوجهة المجموعة „{name}\u201c. تُدار البيانات هناك.",
   "offsite.wizard.credLoadError": "تعذّر تحميل بيانات الاعتماد الحالية. أعد التحميل قبل التعديل.",

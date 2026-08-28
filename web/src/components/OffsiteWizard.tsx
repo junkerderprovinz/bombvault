@@ -4,8 +4,6 @@ import {
   deploySnippet,
   tamperTest,
   testOffsite,
-  getCloud,
-  setCloud,
   getPrimaryRemote,
   setPrimaryRemote,
   testPrimaryRemote,
@@ -17,9 +15,7 @@ import type { OffsiteTarget } from "../lib/api";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
-import { RevealInput } from "./RevealInput";
 import { Toggle } from "./Toggle";
-import { useReveal } from "../lib/useReveal";
 import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
@@ -29,9 +25,10 @@ import { useToast } from "../lib/toast";
 //
 // It does NOT own any new persistence: the repo URL/schedule + immutable flag +
 // growth budget flow through the SAME `settings`/`setSettings`/`save` the Settings
-// page already uses, and the REST credentials flow through the SAME getCloud/
-// setCloud cloud-credential endpoints the Cloud card uses. The wizard only wraps
-// those existing inputs in a step-by-step flow and adds the guided extras:
+// page already uses. Credentials are only SELECTED here (which named set a
+// destination uses); editing them lives in Settings › Shared cloud credentials
+// and in each set's own row. The wizard wraps those existing inputs in a
+// step-by-step flow and adds the guided extras:
 // backend choice, a rest-server deploy snippet, a connection test, an
 // append-only tamper verdict, and a retention-strategy chooser.
 // ---------------------------------------------------------------------------
@@ -274,21 +271,11 @@ export function OffsiteWizard({
   // idle (see genSnippet), so only the busy/idle distinction is left to track.
   const [snipBusy, setSnipBusy] = useState(false);
 
-  // Step 3 — REST credentials (reuses the cloud-credential endpoints). S3 fields
-  // are loaded + preserved on save so this flow never clobbers them.
-  const [cloud, setCloudState] = useState({ s3KeyId: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "" });
-  const [restPwSet, setRestPwSet] = useState(false);
-  const revealRestPassword = useReveal();
-  // Full-page Speichern-Button sweep: the "Save credentials" button is gone
-  // (see persistCreds below) — only the setter survives, as persistCreds
-  // still needs it, same "only the setters are needed" shape as
-  // Settings.tsx's own setDomSaveState.
-  const [, setCredState] = useState<"idle" | "saving">("idle");
-  // cloudLoaded gates persistCreds (below): we must never POST a cloud
-  // object that wasn't loaded from the server, or a blank round-trip would WIPE
-  // the stored S3/REST non-secret fields (or clear CloudConf entirely).
-  const [cloudLoaded, setCloudLoaded] = useState(false);
-  const [cloudLoadErr, setCloudLoadErr] = useState<string | null>(null);
+  // The wizard no longer holds any shared-credential state. It used to load,
+  // edit and save the shared cloud credentials inline whenever the backend was
+  // REST; since #176 it only SELECTS which credentials a destination uses, and
+  // editing them belongs to Settings › Shared cloud credentials and to each
+  // set's own row. That removes the second editor for one pair of values.
 
   // Step 3 — which credentials this domain's PRIMARY off-site destination uses
   // (#176, kramttocs). The fields below write the SHARED cloud credentials, so
@@ -400,39 +387,6 @@ export function OffsiteWizard({
   // survives.
   const [, setBudgetState] = useState<SaveState>("idle");
 
-  // Load the stored cloud creds once (mirrors the Cloud card) so a save can keep
-  // the S3 fields + treat a blank REST password as "keep the stored one".
-  useEffect(() => {
-    let active = true;
-    getCloud()
-      .then((r) => {
-        if (!active) return;
-        if (!r.ok) {
-          setCloudLoadErr(t("offsite.wizard.credLoadError"));
-          return;
-        }
-        setCloudState((p) => ({
-          ...p,
-          s3KeyId: r.s3KeyId ?? "",
-          s3Region: r.s3Region ?? "",
-          restUser: r.restUser ?? "",
-          s3StorageClass: r.s3StorageClass ?? "",
-        }));
-        setRestPwSet(!!r.restPasswordSet);
-        // Only now is a save safe: the object about to be POSTed reflects the
-        // server's stored non-secret fields.
-        setCloudLoaded(true);
-      })
-      .catch(() => {
-        if (active) setCloudLoadErr(t("offsite.wizard.credLoadError"));
-      });
-    return () => {
-      active = false;
-    };
-    // t is stable for a given language; the load runs once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Load this domain's primary off-site destination so its credential-set
   // selector below has something to bind to. Failures are silent on purpose:
   // the row only exists once an off-site repo has been saved, so "not there
@@ -510,42 +464,6 @@ export function OffsiteWizard({
       push(e instanceof Error ? e.message : t("offsite.wizard.snippetError"), "fail");
     } finally {
       setSnipBusy(false);
-    }
-  }
-
-  // Full-page Speichern-Button sweep: was triggered by the "Save
-  // credentials" button (now gone) with no arguments, always sending the
-  // full CURRENT `cloud` state. persistCreds keeps that exact same "blank
-  // secret = keep the stored value, S3 fields round-tripped unchanged" PUT
-  // shape, now called from a debounce 800ms after the last restUser/
-  // restPassword keystroke instead of a click — see the two fields' own
-  // onChange below.
-  //
-  // The password FIELD is left as the user typed it. Emptying it after a save
-  // was right for the click that triggered it (typing was finished by then) and
-  // is destructive on a debounce: the timer fires 800 ms into any pause
-  // mid-password, the input is wiped under the cursor, the rest is typed into
-  // an empty field, and that fragment overwrites the real credential with no
-  // error anywhere. Only the "is set" flag follows the save — same fix, same
-  // reason, as CloudCard's own persistPatch in Settings.tsx.
-  async function persistCreds(patch: Partial<typeof cloud>) {
-    // Never POST creds that were not loaded from the server (a blank round-trip
-    // would wipe the stored non-secret fields).
-    if (!cloudLoaded) return;
-    const merged = { ...cloud, ...patch };
-    setCredState("saving");
-    try {
-      const r = await setCloud({ s3KeyId: merged.s3KeyId, s3Secret: "", s3Region: merged.s3Region, restUser: merged.restUser, restPassword: merged.restPassword, s3StorageClass: merged.s3StorageClass });
-      if (r.ok) {
-        setRestPwSet(restPwSet || merged.restPassword !== "");
-        push(t("settings.saved"), "success");
-      } else {
-        push(r.error ?? t("settings.error"), "fail");
-      }
-    } catch (e) {
-      push(e instanceof Error ? e.message : t("settings.error"), "fail");
-    } finally {
-      setCredState("idle");
     }
   }
 
@@ -930,49 +848,21 @@ export function OffsiteWizard({
                 </select>
               </label>
             )}
+            {/* One place to CHOOSE credentials (this dropdown), one place to
+                EDIT them (Settings › Shared cloud credentials, or the set's own
+                row). The wizard used to also edit the shared username and
+                password inline whenever the backend was REST, which meant the
+                same two values had two editors and made "Shared" look like a
+                property of this destination rather than one list everything
+                falls back to. kramttocs asked for exactly this on #176: "my
+                preference would be to ONLY have a dropdown here and never see
+                the Username or Password". */}
             {selectedCredSet ? (
               <span className="text-xs text-carbon-textMuted">
                 {t("offsite.wizard.credsInSet").replace("{name}", selectedCredSet.name)}
               </span>
-            ) : urlBackend !== "rest" ? (
-              <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.credsSharedElsewhere")}</span>
             ) : (
-              <>
-                <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.credsShared")}</span>
-            <label dir="ltr" className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub text-start">
-              RESTIC_REST_USERNAME
-              <input
-                value={cloud.restUser}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCloudState((p) => ({ ...p, restUser: v }));
-                  debounced("restUser", () => void persistCreds({ restUser: v }));
-                }}
-                spellCheck={false}
-                className={`${inputCls} text-start`}
-              />
-            </label>
-            <label dir="ltr" className="flex flex-col gap-1 text-xs font-mono text-carbon-textSub text-start">
-              RESTIC_REST_PASSWORD
-              <RevealInput
-                {...revealRestPassword}
-                value={cloud.restPassword}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCloudState((p) => ({ ...p, restPassword: v }));
-                  debounced("restPassword", () => void persistCreds({ restPassword: v }));
-                }}
-                spellCheck={false}
-                placeholder={restPwSet ? t("cloud.secretSet") : ""}
-                wrapperClassName="w-full"
-                className={inputCls}
-              />
-            </label>
-            {cloudLoadErr && <span className="text-xs text-statusFail">{cloudLoadErr}</span>}
-            {/* Full-page Speichern-Button sweep: the "Save credentials" button
-                that used to sit here is gone — both fields above debounce-
-                auto-save themselves via persistCreds now. */}
-              </>
+              <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.credsSharedElsewhere")}</span>
             )}
           </div>
         )}

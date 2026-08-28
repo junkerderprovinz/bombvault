@@ -20,7 +20,6 @@ import { I18nProvider, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
 
-const setCloudCalls: Record<string, string>[] = [];
 const updateTargetCalls: { id: string; credsRef: string }[] = [];
 let listTargetCalls = 0;
 let saveCalls = 0;
@@ -66,10 +65,7 @@ vi.mock("../lib/api", async (importOriginal) => {
         s3SecretSet: false,
         restPasswordSet: false,
       }),
-    setCloud: (c: Record<string, string>) => {
-      setCloudCalls.push({ ...c });
-      return Promise.resolve({ ok: true });
-    },
+    setCloud: () => Promise.resolve({ ok: true }),
     listOffsiteTargets: () => {
       listTargetCalls++;
       return Promise.resolve({ ok: true, targets: [PRIMARY_TARGET] });
@@ -142,25 +138,8 @@ async function renderWizard(repo: string = REST_REPO) {
   });
 }
 
-function typeMore(field: HTMLInputElement, chunk: string) {
-  fireEvent.change(field, { target: { value: field.value + chunk } });
-}
-
-async function pauseTyping() {
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(900);
-  });
-}
-
-function lastSave(): Record<string, string> {
-  const call = setCloudCalls.at(-1);
-  if (!call) throw new Error("setCloud was never called");
-  return call;
-}
-
 beforeEach(() => {
   vi.useFakeTimers();
-  setCloudCalls.length = 0;
   updateTargetCalls.length = 0;
   listTargetCalls = 0;
   saveCalls = 0;
@@ -171,23 +150,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("stores the whole REST password when typing pauses part-way through", async () => {
-  await renderWizard();
-  const field = screen.getByLabelText(/RESTIC_REST_PASSWORD/) as HTMLInputElement;
-
-  typeMore(field, "9f3a1c");
-  await pauseTyping();
-  expect(lastSave().restPassword).toBe("9f3a1c");
-  // If the field were blanked here, the rest of the password below would land
-  // in an empty field and be saved over the real one.
-  expect(field.value).toBe("9f3a1c");
-
-  typeMore(field, "8e2b7d4a");
-  await pauseTyping();
-
-  expect(field.value).toBe("9f3a1c8e2b7d4a");
-  expect(lastSave().restPassword).toBe("9f3a1c8e2b7d4a");
-});
+// The REST password debounce test that used to live here is gone with the
+// fields it covered: the wizard no longer edits the shared credentials at all
+// (#176, kramttocs). The same defect and the same fix are still pinned for the
+// component that DOES own them, in Settings.cloudCard.dom.test.tsx.
 
 // ---------------------------------------------------------------------------
 // #176 (kramttocs): the credentials step is opened per domain, but its fields
@@ -212,11 +178,14 @@ it("writes the chosen credential set onto this domain's primary destination", as
   expect(updateTargetCalls).toEqual([{ id: "tgt-primary", credsRef: "set-a" }]);
 });
 
-it("hides the shared credential fields once a set is chosen", async () => {
+it("never shows credential FIELDS, only the selector, whichever set is chosen", async () => {
   await renderWizard();
 
-  // Shared by default: the fields are the shared ones and are offered.
-  expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).not.toBeNull();
+  // Shared is the default, and even then the shared username and password are
+  // not editable here: the wizard picks credentials, it does not define them.
+  expect(screen.getByLabelText(/Credentials|Zugangsdaten/)).toBeTruthy();
+  expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
+  expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
 
   await act(async () => {
     fireEvent.change(screen.getByLabelText(/Credentials|Zugangsdaten/), {
@@ -224,8 +193,6 @@ it("hides the shared credential fields once a set is chosen", async () => {
     });
   });
 
-  // With a set selected they must be gone: editing them would silently change
-  // every other destination that still uses the shared set.
   expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
   expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
 });

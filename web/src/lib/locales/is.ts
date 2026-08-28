@@ -295,7 +295,6 @@ const is: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Slóð fjarlægs geymslusafns",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Auðkenni",
-  "offsite.wizard.credsShared": "Þessi auðkenni gilda fyrir hvern áfangastað sem hefur ekki eigið sett, ekki bara þessa tegund.",
   "offsite.wizard.credsSharedElsewhere": "Notar sameiginlegu skýjaauðkennin. Veldu safn til að gefa þessum áfangastað sín eigin.",
   "offsite.wizard.credsInSet": "Þessi áfangastaður notar settið „{name}“. Auðkennin eru vistuð þar.",
   "offsite.wizard.credLoadError": "Ekki tókst að hlaða núverandi aðgangsgögnum. Endurhlaða áður en breytt er.",

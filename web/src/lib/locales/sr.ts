@@ -295,7 +295,6 @@ const sr: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL спољног репозиторијума",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Акредитиви",
-  "offsite.wizard.credsShared": "Ови подаци важе за свако одредиште без сопственог скупа, не само за ову врсту.",
   "offsite.wizard.credsSharedElsewhere": "Користи заједничке акредитиве у облаку. Изаберите скуп да ово одредиште добије сопствене.",
   "offsite.wizard.credsInSet": "Ово одредиште користи скуп „{name}“. Подаци се уређују тамо.",
   "offsite.wizard.credLoadError": "Постојећи акредитиви нису могли да се учитају — освежи страницу пре уређивања.",

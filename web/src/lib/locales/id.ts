@@ -295,7 +295,6 @@ const id: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL repositori off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Kredensial",
-  "offsite.wizard.credsShared": "Kredensial ini berlaku untuk setiap tujuan tanpa set sendiri, bukan hanya jenis ini.",
   "offsite.wizard.credsSharedElsewhere": "Menggunakan kredensial cloud bersama. Pilih satu set agar tujuan ini punya miliknya sendiri.",
   "offsite.wizard.credsInSet": "Tujuan ini memakai set \u201c{name}\u201d. Kredensial dikelola di sana.",
   "offsite.wizard.credLoadError": "Kredensial yang ada gagal dimuat. Muat ulang sebelum mengedit.",

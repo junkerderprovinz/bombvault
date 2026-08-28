@@ -881,7 +881,6 @@ const fi: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Etärepon URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Tunnistetiedot",
-  "offsite.wizard.credsShared": "Nämä tunnukset koskevat jokaista kohdetta, jolla ei ole omaa joukkoa, ei vain tätä tyyppiä.",
   "offsite.wizard.credsSharedElsewhere": "Käyttää jaettuja pilvitunnistetietoja. Valitse joukko, niin tämä kohde saa omansa.",
   "offsite.wizard.credsInSet": "Tämä kohde käyttää joukkoa ”{name}”. Tunnuksia hallitaan siellä.",
   "offsite.wizard.credLoadError": "Olemassa olevia tunnuksia ei voitu ladata. Lataa uudelleen ennen muokkausta.",

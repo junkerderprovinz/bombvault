@@ -295,7 +295,6 @@ const eu: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Kanpoko biltegiaren URLa",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Kredentzialak",
-  "offsite.wizard.credsShared": "Kredentzial hauek berezko multzorik ez duen edozein helmugatan aplikatzen dira, ez mota honetan bakarrik.",
   "offsite.wizard.credsSharedElsewhere": "Partekatutako hodeiko kredentzialak erabiltzen ditu. Aukeratu multzo bat helburu honi bereak emateko.",
   "offsite.wizard.credsInSet": "Helmuga honek „{name}“ multzoa erabiltzen du. Kredentzialak han kudeatzen dira.",
   "offsite.wizard.credLoadError": "Ezin izan dira lehendik dauden kredentzialak kargatu. Birkargatu editatu aurretik.",

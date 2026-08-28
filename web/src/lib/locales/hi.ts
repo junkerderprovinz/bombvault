@@ -295,7 +295,6 @@ const hi: Partial<Translations> = {
   "offsite.wizard.repoUrl": "ऑफ़-साइट रिपॉज़िटरी URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "क्रेडेंशियल",
-  "offsite.wizard.credsShared": "ये क्रेडेंशियल हर उस गंतव्य पर लागू होते हैं जिसका अपना सेट नहीं है, केवल इस प्रकार पर नहीं।",
   "offsite.wizard.credsSharedElsewhere": "साझा क्लाउड क्रेडेंशियल का उपयोग करता है। इस गंतव्य को अपने खुद के देने के लिए एक सेट चुनें।",
   "offsite.wizard.credsInSet": "यह गंतव्य सेट \u201c{name}\u201d का उपयोग करता है। क्रेडेंशियल वहीं प्रबंधित होते हैं।",
   "offsite.wizard.credLoadError": "मौजूदा क्रेडेंशियल्स लोड नहीं हो पाए। एडिट करने से पहले फिर से लोड करें।",

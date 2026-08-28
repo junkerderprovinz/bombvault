@@ -881,7 +881,6 @@ const el: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL αποθετηρίου εκτός τόπου",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Διαπιστευτήρια",
-  "offsite.wizard.credsShared": "Αυτά τα στοιχεία ισχύουν για κάθε προορισμό χωρίς δικό του σύνολο, όχι μόνο γι' αυτόν τον τύπο.",
   "offsite.wizard.credsSharedElsewhere": "Χρησιμοποιεί τα κοινόχρηστα διαπιστευτήρια cloud. Επιλέξτε ένα σύνολο για να δώσετε δικά του σε αυτόν τον προορισμό.",
   "offsite.wizard.credsInSet": "Αυτός ο προορισμός χρησιμοποιεί το σύνολο «{name}». Τα στοιχεία διαχειρίζονται εκεί.",
   "offsite.wizard.credLoadError": "Δεν ήταν δυνατή η φόρτωση των υπαρχόντων διαπιστευτηρίων. Επαναφορτώστε πριν την επεξεργασία.",

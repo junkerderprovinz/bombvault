@@ -856,7 +856,6 @@ const no: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Legitimasjon",
-  "offsite.wizard.credsShared": "Disse opplysningene gjelder alle destinasjoner uten eget sett, ikke bare denne typen.",
   "offsite.wizard.credsSharedElsewhere": "Bruker den delte skylegitimasjonen. Velg et sett for å gi dette målet sitt eget.",
   "offsite.wizard.credsInSet": "Denne destinasjonen bruker settet «{name}». Opplysningene forvaltes der.",
   "offsite.wizard.credLoadError": "Kunne ikke laste eksisterende legitimasjon. Last inn på nytt før redigering.",

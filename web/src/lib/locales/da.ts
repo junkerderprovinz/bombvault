@@ -881,7 +881,6 @@ const da: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Legitimationsoplysninger",
-  "offsite.wizard.credsShared": "Disse oplysninger gælder for alle destinationer uden eget sæt, ikke kun denne type.",
   "offsite.wizard.credsSharedElsewhere": "Bruger de delte cloud-legitimationsoplysninger. Vælg et sæt for at give denne destination sine egne.",
   "offsite.wizard.credsInSet": "Denne destination bruger sættet “{name}”. Oplysningerne administreres der.",
   "offsite.wizard.credLoadError": "Kunne ikke indlæse eksisterende legitimationsoplysninger. Genindlæs før redigering.",
