@@ -1,195 +1,235 @@
 // ---------------------------------------------------------------------------
 // Action glyphs (#178, [202]) — the symbols buttons wear.
 //
-// Sidebar.tsx already owns the NAVIGATION and domain glyphs (containers, VMs,
-// files, trash, pencil, gear, sync, …) and those are reused verbatim rather
-// than redrawn here. This file adds the verbs the app has buttons for and had
-// no symbol for: save, cancel, refresh, upload, search, unlock, and so on.
+// GENERATED from Streamline's free "Core Solid" set, see scripts/gen_glyphs.py.
+// Do not hand-edit: regenerate instead, or the next run will overwrite the fix.
 //
-// Same recipe as Sidebar's own: a 16x16 viewBox, `fill="currentColor"` so the
-// glyph inherits whatever ink the button paints (which is what keeps them
-// correct in every theme and in rainbow mode), `shrink-0` so a flex row cannot
-// squash them, and `aria-hidden` because the button's label is the accessible
-// name — a glyph that announced itself would double every control's name.
+// Attribution (CC BY 4.0, required by the licence):
+//   Free icons from Streamline — https://streamlinehq.com
 //
-// Drawn from rectangles, circles and simple paths on the same 16-unit grid, so
-// they sit at the same optical weight as the existing set instead of looking
-// like a second icon family bolted on.
+// Only the FREE 1000-icon subset is used (github.com/webalys-hq/streamline-vectors,
+// core/solid), which is CC BY 4.0 and explicitly redistributable. The larger
+// 5771-icon set on the website is premium and its licence forbids
+// redistribution, which is exactly what a public repository does.
+//
+// Sidebar.tsx keeps owning the NAVIGATION and domain glyphs. These are the
+// VERBS the app has buttons for: save, cancel, refresh, upload, search,
+// unlock, prune, play, stop, back, forward, select-all, clear-selection, key,
+// link, eye, info.
+//
+// Two changes are made on import, both load-bearing:
+//   - fill becomes `currentColor`, so a glyph inherits the ink its button
+//     paints and therefore stays correct in every theme and in rainbow mode.
+//     The source files hard-code #000000, which would be invisible on a dark
+//     surface and would ignore the colour engine entirely.
+//   - the source <desc> is dropped and `aria-hidden` added, because the
+//     button's LABEL is the accessible name; a described glyph would be
+//     announced on top of it.
+//
+// The source grid is 14 units, not the 16 Sidebar's own icons use, so the
+// viewBox differs by design — both render into the same box.
 // ---------------------------------------------------------------------------
 
-const SVG = "shrink-0";
+import type { ReactNode } from "react";
 
-function G({ children }: { children: React.ReactNode }) {
+function G({ children }: { children: ReactNode }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className={SVG} aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
       {children}
     </svg>
   );
 }
 
-/** Save: a floppy, the same shape the app's own logo quotes. */
+/** Save. */
 export function IconSave() {
   return (
     <G>
-      <path d="M2.6 2.2h8.1l2.7 2.7v8.9c0 .3-.3.6-.6.6H2.6a.6.6 0 0 1-.6-.6V2.8c0-.33.27-.6.6-.6Zm2 .9v3.3h5.2V3.1H4.6Zm-.5 6.1v4.3h7.8V9.2H4.1Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M4.875 0.000507706C4.49342 0.0104768 4.12949 0.165624 3.85789 0.435009l-0.00144 0.001442L0.436447 3.85645l-0.000003 0 -0.00144 0.00145c-0.277116 0.27939 -0.43334264 0.65649 -0.4349995595 1.05H0V12.5c0 0.3978 0.158035 0.7794 0.43934 1.0607C0.720644 13.842 1.10217 14 1.5 14l0.63361 0V9.5c0 -0.34137 0.16522 -0.63802 0.40467 -0.83561 0.23602 -0.19478 0.53448 -0.28939 0.82624 -0.28939h7.27088c0.2918 0 0.5903 0.09461 0.8263 0.28939 0.2394 0.19759 0.4047 0.49424 0.4047 0.83561V14l0.6336 0c0.3978 0 0.7794 -0.158 1.0607 -0.4393S14 12.8978 14 12.5v-11c0 -0.39782 -0.158 -0.779351 -0.4393 -1.060656C13.2794 0.15804 12.8978 0.0000044107 12.5 0.0000044107L11.8664 0v3.5c0 0.32845 -0.1506 0.6227 -0.3827 0.82488 -0.2294 0.19978 -0.5242 0.30012 -0.8165 0.30012H6.07414c-0.29227 0 -0.58703 -0.10034 -0.81644 -0.30012C5.02555 4.1227 4.875 3.82845 4.875 3.5V0.000507706ZM10.6164 0H6.125v3.375h4.4914V0Zm0 14H3.38361V9.625h7.23279V14Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Cancel / dismiss: a circle with a slash, distinct from IconClose's plain X
- *  so "cancel this action" does not look like "close this panel". */
+/** Cancel or dismiss. */
 export function IconCancel() {
   return (
     <G>
-      <path d="M8 1.6a6.4 6.4 0 1 0 0 12.8A6.4 6.4 0 0 0 8 1.6Zm0 1.8c1 0 2 .32 2.8.9l-6.3 6.3A4.6 4.6 0 0 1 8 3.4Zm0 9.2c-1 0-2-.32-2.8-.9l6.3-6.3A4.6 4.6 0 0 1 8 12.6Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M1.70711 0.292893c-0.39053 -0.3905241 -1.023693 -0.3905241 -1.414217 0 -0.3905241 0.390524 -0.3905241 1.023687 0 1.414217L5.58579 7 0.292893 12.2929c-0.3905241 0.3905 -0.3905241 1.0237 0 1.4142 0.390524 0.3905 1.023687 0.3905 1.414217 0L7 8.41421l5.2929 5.29289c0.3905 0.3905 1.0237 0.3905 1.4142 0 0.3905 -0.3905 0.3905 -1.0237 0 -1.4142L8.41421 7l5.29289 -5.29289c0.3905 -0.39053 0.3905 -1.023693 0 -1.414217 -0.3905 -0.3905241 -1.0237 -0.3905241 -1.4142 0L7 5.58579 1.70711 0.292893Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Refresh / reload: an open circular arrow. */
+/** Refresh or reload. */
 export function IconRefresh() {
   return (
     <G>
-      <path d="M8 2.6a5.4 5.4 0 0 1 4.75 2.85l1.5-.75A7.1 7.1 0 0 0 8 .9a7.1 7.1 0 0 0-7.1 7.1h1.8A5.3 5.3 0 0 1 8 2.6Z" />
-      <path d="M8 13.4a5.4 5.4 0 0 1-4.75-2.85l-1.5.75A7.1 7.1 0 0 0 8 15.1a7.1 7.1 0 0 0 7.1-7.1h-1.8A5.3 5.3 0 0 1 8 13.4Z" />
-      <path d="M12.2 3.1h2.6v2.6l-2.6-2.6ZM3.8 12.9H1.2v-2.6l2.6 2.6Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M9.35355 0.146447c-0.143 -0.14299938 -0.35805 -0.1857772 -0.54489 -0.1083868C8.62182 0.115451 8.5 0.297769 8.5 0.5V2h-6C1.11929 2 0 3.11929 0 4.5V6c0 0.55228 0.447715 1 1 1 0.55228 0 1 -0.44772 1 -1V4.5c0 -0.27614 0.22386 -0.5 0.5 -0.5h6v1.5c0 0.20223 0.12182 0.38455 0.30866 0.46194 0.18684 0.07739 0.40189 0.03461 0.54489 -0.10839l2.50005 -2.5c0.1952 -0.19526 0.1952 -0.51184 0 -0.7071L9.35355 0.146447ZM5.19134 8.03806C5.37818 8.11545 5.5 8.29777 5.5 8.5V10h6c0.2761 0 0.5 -0.22386 0.5 -0.5V8c0 -0.55228 0.4477 -1 1 -1s1 0.44772 1 1v1.5c0 1.3807 -1.1193 2.5 -2.5 2.5h-6v1.5c0 0.2022 -0.12182 0.3845 -0.30866 0.4619 -0.18684 0.0774 -0.40189 0.0347 -0.54489 -0.1083l-2.5 -2.5c-0.19527 -0.1953 -0.19527 -0.5119 0 -0.7072l2.5 -2.49995c0.143 -0.143 0.35805 -0.18578 0.54489 -0.10839Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Upload / send: an arrow leaving a tray, the mirror of IconDownload. */
+/** Upload or send. */
 export function IconUpload() {
   return (
     <G>
-      <rect x="7" y="5" width="2" height="7" rx="0.6" />
-      <path d="M8 1.9 4.6 5.6h6.8L8 1.9Z" />
-      <path d="M2.6 12.4h10.8v1.8H2.6z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M6.375 0H3.383A1.5 1.5 0 0 0 2.07 0.772L0.347 3.875h6.028V0ZM0 12.5V5.125h14V12.5a1.5 1.5 0 0 1 -1.5 1.5h-11A1.5 1.5 0 0 1 0 12.5Zm13.653 -8.625H7.625V0h2.992a1.5 1.5 0 0 1 1.312 0.772l1.724 3.103Zm-9.3 5.064 2.293 -2.292a0.5 0.5 0 0 1 0.708 0l2.292 2.292a0.5 0.5 0 0 1 -0.353 0.854H8v2a1 1 0 1 1 -2 0v-2H4.707a0.5 0.5 0 0 1 -0.353 -0.854Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Search / discover: a magnifier. */
+/** Search, scan or discover. */
 export function IconSearch() {
   return (
     <G>
-      <path d="M7 1.8a5.2 5.2 0 1 0 3.1 9.37l3 3a.9.9 0 0 0 1.28-1.27l-3-3A5.2 5.2 0 0 0 7 1.8Zm0 1.8a3.4 3.4 0 1 1 0 6.8 3.4 3.4 0 0 1 0-6.8Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M2 6a4 4 0 1 1 8 0 4 4 0 0 1 -8 0Zm4 -6a6 6 0 1 0 3.476 10.89l2.817 2.817a1 1 0 0 0 1.414 -1.414l-2.816 -2.816A6 6 0 0 0 6 0Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Unlock: an open padlock, for clearing a stale lock. */
+/** Unlock, clear a stale lock. */
 export function IconUnlock() {
   return (
     <G>
-      <path d="M8 1.4a3.5 3.5 0 0 0-3.5 3.5v1.3h1.8V4.9a1.7 1.7 0 1 1 3.4 0v1.3h1.8V4.9A3.5 3.5 0 0 0 8 1.4Z" />
-      <rect x="2.8" y="6.9" width="8" height="7.1" rx="1" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M14 7c0 3.866 -3.134 7 -7 7 -3.86599 0 -7 -3.134 -7 -7 0 -3.86599 3.13401 -7 7 -7 3.866 0 7 3.13401 7 7Zm-6 0.73244C8.5978 7.38663 9 6.74028 9 6c0 -1.10457 -0.89543 -2 -2 -2s-2 0.89543 -2 2c0 0.74028 0.4022 1.38663 1 1.73244V9.5c0 0.5523 0.44772 1 1 1s1 -0.4477 1 -1V7.73244Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Broom / prune: sweeping space back. */
+/** Prune, reclaim space. */
 export function IconPrune() {
   return (
     <G>
-      <rect x="7.1" y="1.6" width="1.8" height="6.4" rx="0.6" transform="rotate(35 8 4.8)" />
-      <path d="M4.2 8.6h7.6l1.5 5.4a.6.6 0 0 1-.58.76H3.28a.6.6 0 0 1-.58-.76L4.2 8.6Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M5.76256 2.01256C6.09075 1.68437 6.53587 1.5 7 1.5c0.46413 0 0.90925 0.18437 1.23744 0.51256 0.20736 0.20737 0.35731 0.46141 0.43961 0.73744h-3.3541c0.0823 -0.27603 0.23225 -0.53007 0.43961 -0.73744ZM3.78868 2.75c0.10537 -0.67679 0.42285 -1.30773 0.91322 -1.798097C5.3114 0.34241 6.13805 0 7 0c0.86195 0 1.6886 0.34241 2.2981 0.951903 0.49037 0.490367 0.8079 1.121307 0.9132 1.798097H13c0.4142 0 0.75 0.33579 0.75 0.75 0 0.41422 -0.3358 0.75 -0.75 0.75h-1v8.25c0 0.3978 -0.158 0.7794 -0.4393 1.0607S10.8978 14 10.5 14h-7c-0.39783 0 -0.77936 -0.158 -1.06066 -0.4393C2.15804 13.2794 2 12.8978 2 12.5V4.25H1c-0.414214 0 -0.75 -0.33578 -0.75 -0.75 0 -0.41421 0.335786 -0.75 0.75 -0.75h2.78868ZM5 5.87646c0.34518 0 0.625 0.27983 0.625 0.625V10.503c0 0.3451 -0.27982 0.625 -0.625 0.625s-0.625 -0.2799 -0.625 -0.625V6.50146c0 -0.34517 0.27982 -0.625 0.625 -0.625Zm4.625 0.625c0 -0.34517 -0.27982 -0.625 -0.625 -0.625s-0.625 0.27983 -0.625 0.625V10.503c0 0.3451 0.27982 0.625 0.625 0.625s0.625 -0.2799 0.625 -0.625V6.50146Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Play / run now: a triangle. */
+/** Start or run now. */
 export function IconPlay() {
   return (
     <G>
-      <path d="M4.4 2.6 13 8l-8.6 5.4V2.6Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M2.67593 0.019165c-0.29576 0 -0.58657 0.0753875 -0.84499 0.218948 -0.26314 0.134139 -0.48525 0.336896 -0.64277 0.58693 -0.15979 0.253627 -0.247004 0.546207 -0.252169 0.845927l-0.000075 0V12.3396H0.935852l0.000149 0.0086c0.005165 0.2997 0.092379 0.5923 0.252169 0.8459 0.15752 0.2501 0.37963 0.4528 0.64277 0.587 0.25842 0.1435 0.54923 0.2189 0.84499 0.2189 0.29995 0 0.59481 -0.0775 0.85596 -0.2251 0.00575 -0.0032 0.01143 -0.0066 0.01704 -0.0101l8.62977 -5.33745c0.2617 -0.13189 0.4826 -0.33282 0.6388 -0.5813 0.1611 -0.25659 0.2467 -0.55345 0.2467 -0.85647 0 -0.30301 -0.0856 -0.59988 -0.2467 -0.85646 -0.1563 -0.24874 -0.3776 -0.44984 -0.6396 -0.58172L3.54751 0.253465c-0.00515 -0.00316 -0.01036 -0.006227 -0.01562 -0.009199 -0.26115 -0.1475588 -0.55601 -0.225101 -0.85596 -0.225101Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Stop: a square. */
+/** Stop or abort. */
 export function IconStop() {
   return (
     <G>
-      <rect x="3.4" y="3.4" width="9.2" height="9.2" rx="1" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M1.5 0C0.671573 0 0 0.671573 0 1.5v11c0 0.8284 0.671573 1.5 1.5 1.5h11c0.8284 0 1.5 -0.6716 1.5 -1.5v-11c0 -0.828427 -0.6716 -1.5 -1.5 -1.5h-11Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Back / previous: a left chevron. */
+/** Back or previous. */
 export function IconBack() {
   return (
     <G>
-      <path d="M10.4 2.3 4.7 8l5.7 5.7 1.3-1.3L7.3 8l4.4-4.4-1.3-1.3Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M10 0a1.5 1.5 0 0 0 -1.5 1.5v11A1.5 1.5 0 0 0 10 14h2.5a1.5 1.5 0 0 0 1.5 -1.5v-11A1.5 1.5 0 0 0 12.5 0H10ZM3.5 4.5a0.5 0.5 0 0 0 -0.854 -0.354l-2.5 2.5a0.5 0.5 0 0 0 0 0.708l2.5 2.5A0.5 0.5 0 0 0 3.5 9.5V8h3a1 1 0 0 0 0 -2h-3V4.5Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Forward / next / continue: a right chevron. */
+/** Next, continue or forward. */
 export function IconForward() {
   return (
     <G>
-      <path d="M5.6 2.3 11.3 8l-5.7 5.7-1.3-1.3L8.7 8 4.3 3.6l1.3-1.3Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M1.5 0A1.5 1.5 0 0 0 0 1.5v11A1.5 1.5 0 0 0 1.5 14H4a1.5 1.5 0 0 0 1.5 -1.5v-11A1.5 1.5 0 0 0 4 0H1.5Zm6 6a1 1 0 0 0 0 2h3v1.5a0.5 0.5 0 0 0 0.854 0.354l2.5 -2.5a0.5 0.5 0 0 0 0 -0.708l-2.5 -2.5a0.5 0.5 0 0 0 -0.854 0.354V6h-3Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Select all / apply to every row: a checklist. */
+/** Select all. */
 export function IconSelectAll() {
   return (
     <G>
-      <rect x="1.6" y="2.4" width="4" height="4" rx="0.8" />
-      <rect x="1.6" y="9.2" width="4" height="4" rx="0.8" />
-      <rect x="7.2" y="3.5" width="7.2" height="1.8" rx="0.6" />
-      <rect x="7.2" y="10.3" width="7.2" height="1.8" rx="0.6" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M3.5 0C1.567 0 0 1.567 0 3.5v7C0 12.433 1.567 14 3.5 14h7c1.933 0 3.5 -1.567 3.5 -3.5v-7C14 1.567 12.433 0 10.5 0h-7Zm7.0028 5.21852c0.2587 -0.32345 0.2063 -0.79541 -0.1172 -1.05417 -0.3234 -0.25876 -0.79538 -0.20632 -1.05414 0.11713L5.78557 8.71384 4.36711 7.65c-0.33137 -0.24853 -0.80147 -0.18137 -1.05 0.15 -0.24852 0.33137 -0.18137 0.80147 0.15 1.05l2 1.5c0.32408 0.2431 0.7826 0.1848 1.03566 -0.1315l4.00003 -4.99998Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Clear selection: a checklist with a slash. */
+/** Clear the selection. */
 export function IconClearSelection() {
   return (
     <G>
-      <rect x="1.6" y="2.4" width="4" height="4" rx="0.8" />
-      <rect x="7.2" y="3.5" width="7.2" height="1.8" rx="0.6" />
-      <path d="M2.1 13.6 13.4 2.3l1.1 1.1L3.2 14.7l-1.1-1.1Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M3.5 0C1.567 0 0 1.567 0 3.5v7C0 12.433 1.567 14 3.5 14h7c1.933 0 3.5 -1.567 3.5 -3.5v-7C14 1.567 12.433 0 10.5 0h-7ZM4 6.25c-0.41421 0 -0.75 0.33579 -0.75 0.75s0.33579 0.75 0.75 0.75h6c0.4142 0 0.75 -0.33579 0.75 -0.75s-0.3358 -0.75 -0.75 -0.75H4Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Key / credentials. */
+/** Credentials. */
 export function IconKey() {
   return (
     <G>
-      <path d="M10.2 1.8a4.2 4.2 0 0 0-4 5.5L1.7 11.8v2.4h2.4v-1.6h1.6v-1.6h1.6l1.1-1.1a4.2 4.2 0 1 0 1.8-8.1Zm1.1 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M10.2929 1.29289c0.3905 -0.390521 1.0237 -0.390521 1.4142 0l2 2c0.3905 0.39053 0.3905 1.02369 0 1.41422 -0.3905 0.39052 -1.0237 0.39052 -1.4142 0L11 3.41421l-1.08578 1.0858 1.29288 1.29288c0.3905 0.39053 0.3905 1.02369 0 1.41422 -0.3905 0.39052 -1.0237 0.39052 -1.41421 0L8.50001 5.91422 7.44619 6.96804C7.79807 7.56355 8 8.2582 8 9c0 2.2091 -1.79086 4 -4 4s-4 -1.7909 -4 -4c0 -2.20914 1.79086 -4 4 -4 0.74181 0 1.43646 0.20193 2.03198 0.55383l1.75731 -1.75732 0.0036 -0.00362 0.00362 -0.0036 2.49639 -2.4964ZM2 9c0 -1.10457 0.89543 -2 2 -2s2 0.89543 2 2c0 1.1046 -0.89543 2 -2 2s-2 -0.8954 -2 -2Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Link / connect. */
+/** Connect or link. */
 export function IconLink() {
   return (
     <G>
-      <path d="M6.4 9.6a2.6 2.6 0 0 1 0-3.7l2.1-2.1a2.6 2.6 0 0 1 3.7 3.7l-1 1-1.3-1.3 1-1a.8.8 0 0 0-1.1-1.1l-2.1 2.1a.8.8 0 0 0 0 1.1L6.4 9.6Z" />
-      <path d="M9.6 6.4a2.6 2.6 0 0 1 0 3.7l-2.1 2.1a2.6 2.6 0 0 1-3.7-3.7l1-1 1.3 1.3-1 1a.8.8 0 0 0 1.1 1.1l2.1-2.1a.8.8 0 0 0 0-1.1l1.3-1.3Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="m7.6715 2.7426 -0.00004 0.00004 -0.96431 0.96443c-0.3905 0.39054 -1.02367 0.39058 -1.41422 0.00008 -0.39054 -0.3905 -0.39058 -1.02367 -0.00008 -1.41422l0.96436 -0.96446 0.00004 -0.00004c1.77124 -1.771239 4.64295 -1.771239 6.41425 0 1.7712 1.77122 1.7712 4.64293 0 6.41417l0 0.00004 -0.9644 0.96443c-0.3905 0.39054 -1.0236 0.39058 -1.4142 0.00008 -0.39051 -0.39051 -0.39055 -1.02367 0 -1.41422l0.9643 -0.96446 0 -0.00004c0.9902 -0.99019 0.9902 -2.5956 0 -3.58579 -0.9901 -0.99017 -2.59551 -0.99019 -3.5857 -0.00004ZM3.70696 5.29285c0.39054 0.3905 0.39058 1.02367 0.00008 1.41422l-0.96436 0.96446 -0.00004 0.00004c-0.99019 0.99019 -0.99019 2.59563 0 3.58583 0.99018 0.9901 2.59555 0.9901 3.58575 0l0.00004 0 0.96431 -0.9645c0.3905 -0.39051 1.02367 -0.39055 1.41422 0 0.39054 0.3905 0.39058 1.0236 0.00008 1.4142l-0.96436 0.9644 -0.00004 0.0001c-1.77124 1.7712 -4.64298 1.7712 -6.41421 0 -1.771226 -1.7713 -1.771239 -4.64296 -0.00004 -6.4142l0.00004 -0.00004 0.96431 -0.96443c0.3905 -0.39054 1.02367 -0.39058 1.41422 -0.00008Zm5.50015 0.91426c0.39052 -0.39053 0.39052 -1.02369 0 -1.41422 -0.39053 -0.39052 -1.02369 -0.39052 -1.41422 0l-3 3c-0.39052 0.39053 -0.39052 1.02369 0 1.41422 0.39053 0.39052 1.02369 0.39052 1.41422 0l3 -3Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Eye / show, reveal, preview. */
+/** Show, reveal or preview. */
 export function IconEye() {
   return (
     <G>
-      <path d="M8 3.2C4.4 3.2 1.6 8 1.6 8s2.8 4.8 6.4 4.8S14.4 8 14.4 8 11.6 3.2 8 3.2Zm0 7.8A3 3 0 1 1 8 5a3 3 0 0 1 0 6Z" />
-      <circle cx="8" cy="8" r="1.4" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M9.61536 1c0 -0.414214 0.33578 -0.75 0.75004 -0.75h0.9615c0.7089 0 1.3888 0.281627 1.8901 0.78293 0.5013 0.50129 0.783 1.1812 0.783 1.89015v6.06881L14 9v2.8846c0 0.4539 -0.1803 0.8893 -0.5013 1.2103 -0.321 0.3209 -0.7563 0.5013 -1.2102 0.5013H9.40386c-0.45393 0 -0.88926 -0.1804 -1.21024 -0.5013 -0.32098 -0.321 -0.5013 -0.7564 -0.5013 -1.2103V9.75H6.30769v2.1346c0 0.4539 -0.18032 0.8893 -0.5013 1.2103 -0.32097 0.3209 -0.75631 0.5013 -1.21024 0.5013H1.71154c-0.45393 0 -0.889267 -0.1804 -1.210242 -0.5013C0.180322 12.7739 0 12.3385 0 11.8846V2.92308c0 -0.70895 0.281627 -1.38885 0.782926 -1.89015C1.28423 0.531627 1.96413 0.25 2.67308 0.25h0.96154c0.41421 0 0.75 0.335786 0.75 0.75 0 0.41421 -0.33579 0.75 -0.75 0.75h-0.96154c-0.31112 0 -0.6095 0.12359 -0.82949 0.34359 -0.22 0.21999 -0.34359 0.51837 -0.34359 0.82949V8.25h11V2.92308c0 -0.31112 -0.1236 -0.6095 -0.3436 -0.82949 -0.22 -0.22 -0.5184 -0.34359 -0.8295 -0.34359h-0.9615c-0.41426 0 -0.75004 -0.33579 -0.75004 -0.75ZM1.5 9.75v2.1346c0 0.0561 0.02229 0.1099 0.06196 0.1496 0.03967 0.0397 0.09348 0.062 0.14958 0.062h2.88461c0.05611 0 0.10991 -0.0223 0.14958 -0.062 0.03968 -0.0397 0.06196 -0.0935 0.06196 -0.1496V9.75H1.5Zm7.69232 0v2.1346c0 0.0561 0.02229 0.1099 0.06196 0.1496 0.03967 0.0397 0.09348 0.062 0.14958 0.062h2.88464c0.0561 0 0.1099 -0.0223 0.1496 -0.062 0.0396 -0.0397 0.0619 -0.0935 0.0619 -0.1496V9.75H9.19232Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }
 
-/** Info / details. */
+/** Information or details. */
 export function IconInfo() {
   return (
     <G>
-      <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm0 2.6a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm1.2 8.1H6.8v-1.1h.7V8.4h-.7V7.3h2.4v3.8h.7v1.1Z" />
+<g>
+    <path fill="currentColor" fillRule="evenodd" d="M7 14c3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7 -3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7ZM5.5 9.375c-0.34518 0 -0.625 0.27982 -0.625 0.625 0 0.3452 0.27982 0.625 0.625 0.625h3c0.34518 0 0.625 -0.2798 0.625 -0.625 0 -0.34518 -0.27982 -0.625 -0.625 -0.625h-0.875V6.5c0 -0.34518 -0.27982 -0.625 -0.625 -0.625H6c-0.34518 0 -0.625 0.27982 -0.625 0.625s0.27982 0.625 0.625 0.625h0.375v2.25H5.5ZM8 4c0 0.55228 -0.44772 1 -1 1s-1 -0.44772 -1 -1 0.44772 -1 1 -1 1 0.44772 1 1Z" clipRule="evenodd" strokeWidth="1"></path>
+  </g>
     </G>
   );
 }

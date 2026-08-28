@@ -417,6 +417,7 @@ Real Docker, libvirt and Unraid behavior cannot be tested in CI (no KVM, no Unra
 - **[VolumeVault](https://github.com/Darkdragon14/VolumeVault)** by [@Darkdragon14](https://github.com/Darkdragon14) (Apache-2.0) — the original idea that sparked BombVault: one-click backup and automatic re-install of Docker containers. Thank you. BombVault is an independent rewrite (Go + restic) that extends the concept to VMs and the Unraid flash.
 - **[restic](https://restic.net/)** — the fast, secure, deduplicating backup engine BombVault orchestrates.
 - **[rclone](https://rclone.org/)** — off-site cloud backends.
+- **Free icons from [Streamline](https://streamlinehq.com)** — the action glyphs on buttons come from Streamline's free Core Solid set ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [source](https://github.com/webalys-hq/streamline-vectors)). Only the free set is used; the larger paid sets are not redistributable.
 
 <br>
 
