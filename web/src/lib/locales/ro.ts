@@ -859,7 +859,6 @@ const ro: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL depozit off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Credențiale",
-  "offsite.wizard.credsShared": "Aceste date se aplică oricărei destinații fără set propriu, nu doar acestui tip.",
   "offsite.wizard.credsSharedElsewhere": "Folosește credențialele cloud partajate. Alegeți un set pentru a-i da acestei destinații propriile credențiale.",
   "offsite.wizard.credsInSet": "Această destinație folosește setul „{name}”. Datele se administrează acolo.",
   "offsite.wizard.credLoadError": "Credențialele existente nu au putut fi încărcate. Reîncarcă înainte de editare.",

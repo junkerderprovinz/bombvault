@@ -884,7 +884,6 @@ const th: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL รีพอสิทอรีนอกสถานที่",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "ข้อมูลรับรอง",
-  "offsite.wizard.credsShared": "ข้อมูลนี้ใช้กับทุกปลายทางที่ไม่มีชุดของตนเอง ไม่ใช่เฉพาะประเภทนี้",
   "offsite.wizard.credsSharedElsewhere": "ใช้ข้อมูลรับรองคลาวด์ที่ใช้ร่วมกัน เลือกชุดหนึ่งเพื่อให้ปลายทางนี้มีข้อมูลรับรองของตัวเอง",
   "offsite.wizard.credsInSet": "ปลายทางนี้ใช้ชุด \u201c{name}\u201d ข้อมูลจัดการอยู่ที่นั่น",
   "offsite.wizard.credLoadError": "โหลดข้อมูลรับรองที่มีอยู่ไม่สำเร็จ โหลดใหม่ก่อนแก้ไข",

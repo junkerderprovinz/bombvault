@@ -295,7 +295,6 @@ const sl: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL zunanjega repozitorija",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Poverilnice",
-  "offsite.wizard.credsShared": "Ti podatki veljajo za vsak cilj brez lastnega nabora, ne le za to vrsto.",
   "offsite.wizard.credsSharedElsewhere": "Uporablja skupne oblačne poverilnice. Izberite nabor, da bo ta cilj dobil svoje.",
   "offsite.wizard.credsInSet": "Ta cilj uporablja nabor »{name}«. Podatki se urejajo tam.",
   "offsite.wizard.credLoadError": "Obstoječih poverilnic ni bilo mogoče naložiti. Pred urejanjem znova naloži stran.",

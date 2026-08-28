@@ -860,7 +860,6 @@ const it: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL del repository off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Credenziali",
-  "offsite.wizard.credsShared": "Queste credenziali valgono per ogni destinazione senza un set proprio, non solo per questo tipo.",
   "offsite.wizard.credsSharedElsewhere": "Usa le credenziali cloud condivise. Scegli un set per dare a questa destinazione le proprie.",
   "offsite.wizard.credsInSet": "Questa destinazione usa il set «{name}». Le credenziali si gestiscono lì.",
   "offsite.wizard.credLoadError": "Impossibile caricare le credenziali esistenti. Ricarica prima di modificarle.",

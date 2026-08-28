@@ -851,7 +851,6 @@ const pl: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Adres URL repozytorium poza siedzibą",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Dane logowania",
-  "offsite.wizard.credsShared": "Te dane dotyczą każdego celu bez własnego zestawu, nie tylko tego typu.",
   "offsite.wizard.credsSharedElsewhere": "Używa współdzielonych danych logowania do chmury. Wybierz zestaw, aby ten cel miał własne.",
   "offsite.wizard.credsInSet": "Ten cel używa zestawu „{name}”. Dane są zarządzane tam.",
   "offsite.wizard.credLoadError": "Nie udało się załadować istniejących poświadczeń. Odśwież przed edycją.",

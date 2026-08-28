@@ -295,7 +295,6 @@ const hr: Partial<Translations> = {
   "offsite.wizard.repoUrl": "URL izvanmrežnog repozitorija",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Vjerodajnice",
-  "offsite.wizard.credsShared": "Ovi se podaci odnose na svako odredište bez vlastitog skupa, ne samo na ovu vrstu.",
   "offsite.wizard.credsSharedElsewhere": "Koristi zajedničke vjerodajnice u oblaku. Odaberite skup da ovo odredište dobije vlastite.",
   "offsite.wizard.credsInSet": "Ovo odredište koristi skup „{name}“. Podaci se uređuju ondje.",
   "offsite.wizard.credLoadError": "Postojeće vjerodajnice nisu se mogle učitati. Ponovno učitajte prije uređivanja.",

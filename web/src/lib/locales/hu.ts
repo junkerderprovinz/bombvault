@@ -863,7 +863,6 @@ const hu: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Telephelyen kívüli repository URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Hitelesítő adatok",
-  "offsite.wizard.credsShared": "Ezek az adatok minden olyan célra érvényesek, amelynek nincs saját készlete, nem csak erre a típusra.",
   "offsite.wizard.credsSharedElsewhere": "A megosztott felhőbeli hitelesítő adatokat használja. Válasszon készletet, hogy ez a cél sajátot kapjon.",
   "offsite.wizard.credsInSet": "Ez a cél a(z) „{name}” készletet használja. Az adatokat ott kell kezelni.",
   "offsite.wizard.credLoadError": "A meglévő hitelesítő adatokat nem sikerült betölteni. Töltsd újra a szerkesztés előtt.",

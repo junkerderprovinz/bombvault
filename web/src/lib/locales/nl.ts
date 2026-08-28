@@ -853,7 +853,6 @@ const nl: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Off-site repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Inloggegevens",
-  "offsite.wizard.credsShared": "Deze gegevens gelden voor elke bestemming zonder eigen set, niet alleen voor dit type.",
   "offsite.wizard.credsSharedElsewhere": "Gebruikt de gedeelde cloud-inloggegevens. Kies een set om deze bestemming eigen gegevens te geven.",
   "offsite.wizard.credsInSet": "Deze bestemming gebruikt de set “{name}”. De gegevens worden daar beheerd.",
   "offsite.wizard.credLoadError": "Kon bestaande inloggegevens niet laden. Herlaad voordat je bewerkt.",

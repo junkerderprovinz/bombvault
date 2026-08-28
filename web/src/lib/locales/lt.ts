@@ -295,7 +295,6 @@ const lt: Partial<Translations> = {
   "offsite.wizard.repoUrl": "Nuotolinės saugyklos URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
   "offsite.wizard.credentials": "Prisijungimo duomenys",
-  "offsite.wizard.credsShared": "Šie duomenys galioja kiekvienai paskirčiai, neturinčiai savo rinkinio, ne tik šiam tipui.",
   "offsite.wizard.credsSharedElsewhere": "Naudoja bendrus debesijos prisijungimo duomenis. Pasirinkite rinkinį, kad ši paskirtis turėtų savus.",
   "offsite.wizard.credsInSet": "Ši paskirtis naudoja rinkinį „{name}“. Duomenys tvarkomi ten.",
   "offsite.wizard.credLoadError": "Nepavyko įkelti esamų prisijungimo duomenų. Perkraukite prieš redaguodami.",
