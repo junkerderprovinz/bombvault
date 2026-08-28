@@ -107,6 +107,33 @@ func (s *Service) primaryLimitsFor(domain, repo string) restic.Limits {
 	return restic.Limits{UploadKBps: t.LimitUpload, DownloadKBps: t.LimitDownload}
 }
 
+// primaryModeFor builds the restic mode for a domain's PRIMARY backup: the
+// shared mode, plus everything the domain's saved safety row contributes — its
+// bandwidth caps (issue #152) and, when it names one, its own credential set
+// (#182, manilx).
+//
+// The credential half has to be here rather than only in the UI. TestPrimaryRepo
+// already resolves the row's CredsRef through offsiteModeForTarget, so without
+// this a domain whose primary path used its own set would pass its connection
+// test and then run every real backup against the SHARED credentials. A
+// selector that works in the test and not in the backup is worse than no
+// selector, because it looks verified.
+//
+// A local path, a missing row, or a row naming no set all return exactly what
+// ModeFor plus the (possibly zero) limits produced before this existed.
+func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) restic.Mode {
+	mode := s.ModeFor(settings)
+	mode.Limits = s.primaryLimitsFor(domain, repo)
+	if !restic.IsRemoteRepo(repo) {
+		return mode
+	}
+	t, ok := s.primaryRemoteTarget(domain)
+	if !ok {
+		return mode
+	}
+	return s.applyTargetCreds(mode, settings, t)
+}
+
 // primaryIsImmutable reports whether repo is a domain's remote primary AND its
 // saved safety settings flag it append-only — the primary-repo counterpart of
 // offsiteImmutableFor, used by applyRetention to skip the local retention
@@ -289,10 +316,15 @@ func handlePrimaryRemoteDomain(w http.ResponseWriter, r *http.Request) (string, 
 }
 
 // primaryRemoteView is the JSON wire shape of a domain's remote-primary safety
-// settings. Deliberately narrower than offsiteTargetView (no id/name/schedule/
-// retention/creds/storage-class — those are either meaningless for a primary
-// row today or already exposed via other cards): only the fields the inline
-// "Remote" dialog actually edits.
+// settings. Narrower than offsiteTargetView (no id/name/schedule/retention/
+// storage-class — those are either meaningless for a primary row today or
+// already exposed via other cards): the fields the inline "Remote" dialog edits.
+//
+// CredsRef was originally left out here on the grounds that a primary row had no
+// use for it. That was wrong for anyone whose primary path is an S3 bucket with
+// its own keys: they had no way to say which credentials the path uses, and the
+// shared set was the only thing on offer (#182, manilx). It is carried now, and
+// primaryModeFor applies it to real backups, not just to the connection test.
 type primaryRemoteView struct {
 	Configured     bool   `json:"configured"`
 	Repo           string `json:"repo"`
@@ -300,6 +332,7 @@ type primaryRemoteView struct {
 	LimitUpload    int    `json:"limitUpload"`
 	LimitDownload  int    `json:"limitDownload"`
 	GrowthBudgetGB int    `json:"growthBudgetGb"`
+	CredsRef       string `json:"credsRef"`
 }
 
 func primaryRemoteToView(t store.OffsiteTarget, configured bool) primaryRemoteView {
@@ -310,6 +343,7 @@ func primaryRemoteToView(t store.OffsiteTarget, configured bool) primaryRemoteVi
 		LimitUpload:    t.LimitUpload,
 		LimitDownload:  t.LimitDownload,
 		GrowthBudgetGB: t.GrowthBudgetGB,
+		CredsRef:       t.CredsRef,
 	}
 }
 
@@ -344,6 +378,7 @@ func (h *Handler) handleSetPrimaryRemote(w http.ResponseWriter, r *http.Request)
 		LimitUpload:    v.LimitUpload,
 		LimitDownload:  v.LimitDownload,
 		GrowthBudgetGB: v.GrowthBudgetGB,
+		CredsRef:       v.CredsRef,
 	})
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})

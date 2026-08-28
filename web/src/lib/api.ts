@@ -1555,9 +1555,22 @@ export function pruneDomain(
   return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
+/**
+ * The five domains that can carry an off-site destination, a remote primary
+ * path, or both. Defined here because api.ts is the layer everything else
+ * imports, so this is the one place a domain can be added without leaving a
+ * stale copy behind.
+ *
+ * It used to be re-declared per file, and four of those copies had dropped
+ * "config" (self-backup). That is why self-backup alone had no wizard, no
+ * connection test and no per-destination credentials, even though its backend
+ * supported all three the whole time (#176, kramttocs).
+ */
+export type OffsiteDomain = "containers" | "vms" | "flash" | "config" | "files";
+
 /** POST /api/offsite/{domain} — replicate a domain's local repo to its off-site repo now. */
 export function replicateOffsite(
-  domain: "containers" | "vms" | "flash" | "files"
+  domain: OffsiteDomain
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/offsite/${domain}`, { method: "POST" });
 }
@@ -1569,7 +1582,7 @@ export function replicateOffsite(
  * testOffsiteTarget for those (issue #138).
  */
 export function testOffsite(
-  domain: "containers" | "vms" | "flash" | "files"
+  domain: OffsiteDomain
 ): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
   return fetchJSON(`/api/offsite/${domain}/test`, { method: "POST" });
 }
@@ -1606,7 +1619,7 @@ export interface DeploySnippetData {
  * response, so it must be saved by the user right away.
  */
 export function deploySnippet(
-  domain: "containers" | "vms" | "flash" | "files"
+  domain: OffsiteDomain
 ): Promise<OkEnvelope & { snippet?: DeploySnippetData }> {
   return fetchJSON(`/api/offsite/${domain}/deploy-snippet`);
 }
@@ -1619,7 +1632,7 @@ export function deploySnippet(
  * `detail` carries the scrubbed reason when not protected.
  */
 export function tamperTest(
-  domain: "containers" | "vms" | "flash" | "files"
+  domain: OffsiteDomain
 ): Promise<OkEnvelope & { testable?: boolean; protected?: boolean; detail?: string }> {
   return fetchJSON(`/api/offsite/${domain}/tamper-test`, { method: "POST" });
 }
@@ -1638,8 +1651,11 @@ export function tamperTest(
 // internal/api/primary_remote.go exactly.
 // ---------------------------------------------------------------------------
 
-/** Domains whose primary backup path can be a remote repository. */
-export type PrimaryRemoteDomain = "containers" | "vms" | "flash" | "config" | "files";
+/** Domains whose primary backup path can be a remote repository. Identical to
+ *  OffsiteDomain by definition: the same five domains carry both roles, and
+ *  keeping them as two independent literal lists is exactly how "config" ended
+ *  up missing from some copies and present in others (#176/#182). */
+export type PrimaryRemoteDomain = OffsiteDomain;
 
 export interface PrimaryRemoteConfig {
   /** Whether safety settings have ever been saved for this domain — false is
@@ -1653,6 +1669,10 @@ export interface PrimaryRemoteConfig {
   limitUpload: number;
   limitDownload: number;
   growthBudgetGb: number;
+  /** Which named credential set this path uses; "" means the shared ones.
+   *  #182: an S3 primary path with its own keys had no way to say so, and
+   *  primaryModeFor applies this to real backups, not only to the test. */
+  credsRef: string;
 }
 
 /** GET /api/settings/primary-remote/{domain} */
@@ -1670,7 +1690,7 @@ export function getPrimaryRemote(
  */
 export function setPrimaryRemote(
   domain: PrimaryRemoteDomain,
-  patch: { immutable: boolean; limitUpload: number; limitDownload: number; growthBudgetGb: number }
+  patch: { immutable: boolean; limitUpload: number; limitDownload: number; growthBudgetGb: number; credsRef: string }
 ): Promise<OkEnvelope & { config?: PrimaryRemoteConfig }> {
   return fetchJSON(`/api/settings/primary-remote/${domain}`, {
     method: "PUT",

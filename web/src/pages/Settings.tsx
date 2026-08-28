@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getVMSSH, testVMSSH, getRclone, setRclone, getCloud, setCloud, setCloudCredSets, checkDomain, unlockDomain, pruneDomain, replicateOffsite, testOffsite, tamperTest, getStatus, getNotify, setNotify, testNotify, runDrill, getDrills, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, exportSettings, importSettingsPreview, importSettingsApply, getHealth, generateWidgetToken, disableWidgetToken, generateFleetToken, disableFleetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin, backupEverythingNow, ApiError } from "../lib/api";
 import type { CloudCredSet, CloudCredSetInfo } from "../lib/api";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
-import { useOffsiteTargets } from "../lib/useOffsiteTargets";
+import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { useCloudCredSets, credSetsChanged } from "../lib/useCloudCredSets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
@@ -4179,7 +4179,7 @@ function ReplicateNowButton({
   t,
   hueIndex,
 }: {
-  domain: "containers" | "vms" | "flash" | "files";
+  domain: OffsiteDomain;
   t: ReturnType<typeof useT>["t"];
   /** Offsite-tab card-split follow-up (jdp: "Die Buttons Verbindung testen,
    *  Jetzt replizieren, Einrichten, Ziel hinzufügen in die Farbengine
@@ -4241,7 +4241,7 @@ function TestConnectionButton({
   t,
   hueIndex,
 }: {
-  domain: "containers" | "vms" | "flash" | "files";
+  domain: OffsiteDomain;
   t: ReturnType<typeof useT>["t"];
   /** See ReplicateNowButton's own doc above — identical offsite-tab
    *  card-split follow-up, same enclosing Card's hueIndex threaded through,
@@ -6075,7 +6075,7 @@ export function SettingsPage() {
   const [, setOffsiteSaveState] = useState<SaveState>("idle");
   const [, setOffsiteSaveError] = useState<string | null>(null);
   // Which domain's guided off-site setup wizard is expanded (null = none).
-  const [offsiteWizard, setOffsiteWizard] = useState<"containers" | "vms" | "flash" | "files" | null>(null);
+  const [offsiteWizard, setOffsiteWizard] = useState<OffsiteDomain | null>(null);
 
   // Domains card (#142 — auto-save, no Speichern button): each row now saves
   // itself the instant it's clicked instead of batching into one SaveBar, so
@@ -8527,11 +8527,19 @@ export function SettingsPage() {
           exists only because `id="offsite"` (the deep-link anchor,
           `/settings#offsite`) needs a real element to attach to, not a
           Fragment. */}
+      {/* Self-backup ("config") sits here with the rest since #176 (kramttocs:
+          "Self-Backup should probably be more closely related to the other
+          Off-site sections"). It was never a lesser domain in the backend — it
+          has had configOffsite, its own targets and its own primary-remote row
+          all along. It was simply missing from this list, so it alone got a
+          bare URL field on its own page instead of a wizard, a connection test
+          and per-destination credentials. */}
       {([
         ["containersOffsite", "nav.containers", "containers"],
         ["vmsOffsite", "nav.vms", "vms"],
         ["flashOffsite", "nav.flash", "flash"],
         ["filesOffsite", "nav.files", "files"],
+        ["configOffsite", "nav.config", "config"],
       ] as const).map(([repoKey, label, domain]) => {
         const wizardOpen = offsiteWizard === domain;
         // This domain's OWN rainbow position — the SAME value fed to this

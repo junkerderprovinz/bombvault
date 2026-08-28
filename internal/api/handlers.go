@@ -2228,7 +2228,11 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	// #176: "config" (self-backup) belongs here too. Its service side has
+	// supported the domain all along; this handler-local copy of the domain
+	// list was the only thing rejecting it, which is why self-backup alone had
+	// no connection test, no replicate-now and no wizard snippet.
+	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2246,7 +2250,11 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	// #176: "config" (self-backup) belongs here too. Its service side has
+	// supported the domain all along; this handler-local copy of the domain
+	// list was the only thing rejecting it, which is why self-backup alone had
+	// no connection test, no replicate-now and no wizard snippet.
+	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2269,7 +2277,11 @@ func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	// #176: "config" (self-backup) belongs here too. Its service side has
+	// supported the domain all along; this handler-local copy of the domain
+	// list was the only thing rejecting it, which is why self-backup alone had
+	// no connection test, no replicate-now and no wizard snippet.
+	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -2289,7 +2301,11 @@ func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	// #176: "config" (self-backup) belongs here too. Its service side has
+	// supported the domain all along; this handler-local copy of the domain
+	// list was the only thing rejecting it, which is why self-backup alone had
+	// no connection test, no replicate-now and no wizard snippet.
+	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
