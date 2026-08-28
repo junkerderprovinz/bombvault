@@ -1484,16 +1484,15 @@ function VMBackupOrderPanel({
               >
                 {t("backupOrder.save")}
               </button>
-              <button
-                key={shakeReset}
+              <Button
+                label={t("backupOrder.reset")}
+                tone="neutral"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
                 className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
                   shakeReset ? " glim-shake" : ""
                 }`}
-              >
-                {t("backupOrder.reset")}
-              </button>
+              />
             </div>
           </>
         ))}
@@ -1870,13 +1869,12 @@ export function VMs() {
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>
-          <button
+          <Button
+            label={t("vms.backupSelected")}
+            tone="accent"
             onClick={backupSelected}
             disabled={bulkBusy || running.active}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {t("vms.backupSelected")}
-          </button>
+          />
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
           <Advanced>
             <button

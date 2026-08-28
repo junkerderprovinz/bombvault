@@ -943,13 +943,11 @@ function ForeignRestoreCard({
           {phase === "connected" && (
             <>
               <span className="text-sm text-statusOk">{t("recovery.foreignConnected")}</span>
-              <button
-                type="button"
+              <Button
+                label={t("recovery.foreignClose")}
+                tone="neutral"
                 onClick={disconnect}
-                className="text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-              >
-                {t("recovery.foreignClose")}
-              </button>
+              />
             </>
           )}
         </div>

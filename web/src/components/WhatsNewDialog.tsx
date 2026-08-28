@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
+import { Button } from "./Button";
 
 // ---------------------------------------------------------------------------
 // WhatsNewDialog (#48) — a "What's new" modal shown once when a NEW BombVault
@@ -317,13 +318,11 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
           >
             {t("whatsnew.viewOnGitHub")}
           </Badge>
-          <button
-            type="button"
+          <Button
+            label={t("whatsnew.close")}
+            tone="neutral"
             onClick={onClose}
-            className="rounded-control bg-carbon-surface3 px-4 py-2 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
-          >
-            {t("whatsnew.close")}
-          </button>
+          />
         </div>
       </div>
     </div>

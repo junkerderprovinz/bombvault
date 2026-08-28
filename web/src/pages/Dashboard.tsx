@@ -24,6 +24,7 @@ import { Selector } from "../components/Selector";
 // storage forecast line shares the exact formatter of the size column.
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
 import type { TranslationKey } from "../lib/i18n";
+import { Button } from "../components/Button";
 
 // Same cadence as ActivityLog's own runs polling (web/src/components/ActivityLog.tsx)
 // so the summary tier's "Last result" cell and the Activity Log never disagree
@@ -1797,14 +1798,12 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         {kitError && (
           <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
         )}
-        <button
-          type="button"
+        <Button
+          label={t("recovery.stored")}
+          tone="neutral"
           onClick={dismiss}
           disabled={dismissing}
-          className="rounded-control px-3 py-1.5 text-sm text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
-        >
-          {t("recovery.stored")}
-        </button>
+        />
       </div>
     </div>
   );
@@ -2534,13 +2533,12 @@ export function Dashboard() {
           editing, the Reset button + hint appear here. */}
       {editing && (
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
+          <Button
+            label={t("dashboard.resetLayout")}
+            tone="neutral"
             onClick={reset}
-            className="self-start rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
-          >
-            {t("dashboard.resetLayout")}
-          </button>
+            className="self-start"
+          />
           <p className="text-xs text-carbon-textMuted">{t("dashboard.customizeHint")}</p>
         </div>
       )}

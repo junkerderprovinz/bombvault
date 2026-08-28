@@ -2004,15 +2004,13 @@ function SettingsPortabilityCard({
               >
                 {importBusy === "applying" ? t("settingsIO.importing") : t("settingsIO.confirmButton")}
               </button>
-              <button
-                type="button"
+              <Button
+                label={t("settingsIO.cancel")}
+                tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
                 className={`rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
-                style={hueStyle}
-              >
-                {t("settingsIO.cancel")}
-              </button>
+              />
             </div>
           </div>
         )}
@@ -3323,12 +3321,11 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
             >
               {state === "saving" ? t("auth.saving") : t("settings.save")}
             </button>
-            <button
+            <Button
+              label={t("common.close")}
+              tone="neutral"
               onClick={closeEditor}
-              className="rounded-control bg-carbon-surface3 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
-            >
-              {t("common.close")}
-            </button>
+            />
           </div>
         </div>
       ) : (

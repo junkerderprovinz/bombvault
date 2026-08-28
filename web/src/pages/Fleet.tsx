@@ -44,6 +44,7 @@ import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
+import { Button } from "../components/Button";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -401,13 +402,12 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
               <p className="text-caption text-carbon-textMuted">{t("fleet.mesh.baseUrlHint")}</p>
             </div>
             <div className="flex items-center justify-end gap-2 pt-1">
-              <button
+              <Button
+                label={t("files.cancel")}
+                tone="neutral"
                 onClick={onClose}
                 disabled={sending}
-                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
-              >
-                {t("files.cancel")}
-              </button>
+              />
               <button
                 key={shake}
                 onClick={() => void handleSend()}
@@ -433,12 +433,11 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
               <CopyBlock text={snippet.compose} t={t} />
             </div>
             <div className="flex items-center justify-end pt-1">
-              <button
+              <Button
+                label={t("common.close")}
+                tone="accent"
                 onClick={onClose}
-                className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
-              >
-                {t("common.close")}
-              </button>
+              />
             </div>
           </>
         )}
@@ -659,12 +658,11 @@ function FleetPeerCard({
             </svg>
             {t("fleet.details")}
           </button>
-          <button
+          <Button
+            label={t("fleet.edit")}
+            tone="neutral"
             onClick={onEdit}
-            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-          >
-            {t("fleet.edit")}
-          </button>
+          />
           {/* NO bespoke red on either state (whole-app sweep): both were
               `bg-statusFailBg`/`text-statusFail`. The standing rule is that a
               destructive action gets no special red treatment (jdp: "Keine
@@ -874,13 +872,12 @@ function FleetDialog({
         </label>
 
         <div className="flex items-center justify-end gap-2 pt-1">
-          <button
+          <Button
+            label={t("files.cancel")}
+            tone="neutral"
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
-          >
-            {t("files.cancel")}
-          </button>
+          />
           <button
             key={shake}
             onClick={() => void handleSave()}

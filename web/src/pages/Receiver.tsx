@@ -39,6 +39,7 @@ import { useReveal } from "../lib/useReveal";
 import { useToast } from "../lib/toast";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
+import { Button } from "../components/Button";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -338,12 +339,11 @@ function ReceivedRepoCard({
             </svg>
             {t("receiver.details")}
           </button>
-          <button
+          <Button
+            label={t("receiver.edit")}
+            tone="neutral"
             onClick={onEdit}
-            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-          >
-            {t("receiver.edit")}
-          </button>
+          />
           {/* NO bespoke red on either state (whole-app sweep) — the exact
               twin of Fleet.tsx's peer-row remove pair, converted in the same
               pass; see that call site for the full writeup, including why
@@ -619,13 +619,12 @@ function ReceiverDialog({
         </label>
 
         <div className="flex items-center justify-end gap-2 pt-1">
-          <button
+          <Button
+            label={t("files.cancel")}
+            tone="neutral"
             onClick={onClose}
             disabled={saving}
-            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50"
-          >
-            {t("files.cancel")}
-          </button>
+          />
           <button
             key={shake}
             onClick={() => void handleSave()}

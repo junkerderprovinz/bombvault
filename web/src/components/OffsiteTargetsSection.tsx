@@ -560,13 +560,11 @@ export function OffsiteTargetsSection({
             >
               {saveState === "saving" ? t("common.saving") : t("offsite.targets.save")}
             </button>
-            <button
-              type="button"
+            <Button
+              label={t("offsite.targets.cancel")}
+              tone="neutral"
               onClick={closeEditor}
-              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover"
-            >
-              {t("offsite.targets.cancel")}
-            </button>
+            />
           </div>
         </div>
       )}

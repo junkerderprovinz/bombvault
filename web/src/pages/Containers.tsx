@@ -2607,16 +2607,15 @@ function BackupOrderPanel({
               >
                 {t("backupOrder.save")}
               </button>
-              <button
-                key={shakeReset}
+              <Button
+                label={t("backupOrder.reset")}
+                tone="neutral"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
                 className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
                   shakeReset ? " glim-shake" : ""
                 }`}
-              >
-                {t("backupOrder.reset")}
-              </button>
+              />
             </div>
           </>
         ))}

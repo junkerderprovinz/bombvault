@@ -346,12 +346,11 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           {/* Action buttons */}
           {!manualFallback && (
             <div className="flex items-center gap-2 pt-1 border-t border-carbon-border">
-              <button
+              <Button
+                label={t("folder.use")}
+                tone="neutral"
                 onClick={handleSelect}
-                className="text-xs rounded-control bg-carbon-surface3 px-3 py-1 text-carbon-text hover:bg-carbon-hover transition-colors"
-              >
-                {t("folder.use")}
-              </button>
+              />
               <span dir="ltr" className="text-xs text-carbon-textMuted font-mono min-w-0 truncate text-start">
                 {browsePath || "(root)"}
               </span>
