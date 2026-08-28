@@ -2609,6 +2609,7 @@ function BackupOrderPanel({
               </button>
               <Button
                 label={t("backupOrder.reset")}
+          labelKey="backupOrder.reset"
                 tone="neutral"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}

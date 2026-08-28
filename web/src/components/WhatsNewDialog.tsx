@@ -320,6 +320,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
           </Badge>
           <Button
             label={t("whatsnew.close")}
+          labelKey="whatsnew.close"
             tone="neutral"
             onClick={onClose}
           />

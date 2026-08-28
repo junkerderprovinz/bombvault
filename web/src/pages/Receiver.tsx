@@ -341,6 +341,7 @@ function ReceivedRepoCard({
           </button>
           <Button
             label={t("receiver.edit")}
+          labelKey="receiver.edit"
             tone="neutral"
             onClick={onEdit}
           />
@@ -621,6 +622,7 @@ function ReceiverDialog({
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button
             label={t("files.cancel")}
+          labelKey="files.cancel"
             tone="neutral"
             onClick={onClose}
             disabled={saving}

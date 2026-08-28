@@ -404,6 +404,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             <div className="flex items-center justify-end gap-2 pt-1">
               <Button
                 label={t("files.cancel")}
+          labelKey="files.cancel"
                 tone="neutral"
                 onClick={onClose}
                 disabled={sending}
@@ -435,6 +436,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             <div className="flex items-center justify-end pt-1">
               <Button
                 label={t("common.close")}
+          labelKey="common.close"
                 tone="accent"
                 onClick={onClose}
               />
@@ -660,6 +662,7 @@ function FleetPeerCard({
           </button>
           <Button
             label={t("fleet.edit")}
+          labelKey="fleet.edit"
             tone="neutral"
             onClick={onEdit}
           />
@@ -874,6 +877,7 @@ function FleetDialog({
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button
             label={t("files.cancel")}
+          labelKey="files.cancel"
             tone="neutral"
             onClick={onClose}
             disabled={saving}

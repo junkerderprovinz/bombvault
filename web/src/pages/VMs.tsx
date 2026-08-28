@@ -1486,6 +1486,7 @@ function VMBackupOrderPanel({
               </button>
               <Button
                 label={t("backupOrder.reset")}
+          labelKey="backupOrder.reset"
                 tone="neutral"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
@@ -1871,6 +1872,7 @@ export function VMs() {
           </span>
           <Button
             label={t("vms.backupSelected")}
+          labelKey="vms.backupSelected"
             tone="accent"
             onClick={backupSelected}
             disabled={bulkBusy || running.active}

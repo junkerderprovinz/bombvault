@@ -1029,6 +1029,7 @@ function FileSetDialog({
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button
             label={t("files.cancel")}
+          labelKey="files.cancel"
             tone="neutral"
             onClick={onClose}
             disabled={saving}
@@ -1468,6 +1469,7 @@ export function Files() {
           {!showEmptyState && (
             <Button
               label={t("files.addSet")}
+          labelKey="files.addSet"
               tone="accent"
               onClick={handleAddBlank}
             />
@@ -1555,6 +1557,7 @@ export function Files() {
             )}
             <Button
               label={t("files.addSet")}
+          labelKey="files.addSet"
               tone="accent"
               onClick={handleAddBlank}
             />

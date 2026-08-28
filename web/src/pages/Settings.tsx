@@ -2006,6 +2006,7 @@ function SettingsPortabilityCard({
               </button>
               <Button
                 label={t("settingsIO.cancel")}
+          labelKey="settingsIO.cancel"
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
@@ -3323,6 +3324,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
             </button>
             <Button
               label={t("common.close")}
+          labelKey="common.close"
               tone="neutral"
               onClick={closeEditor}
             />

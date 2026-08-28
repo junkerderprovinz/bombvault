@@ -348,6 +348,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             <div className="flex items-center gap-2 pt-1 border-t border-carbon-border">
               <Button
                 label={t("folder.use")}
+          labelKey="folder.use"
                 tone="neutral"
                 onClick={handleSelect}
               />

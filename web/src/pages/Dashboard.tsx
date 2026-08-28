@@ -1800,6 +1800,7 @@ function RecoveryNag({ t, suppressed }: { t: ReturnType<typeof useT>["t"]; suppr
         )}
         <Button
           label={t("recovery.stored")}
+          labelKey="recovery.stored"
           tone="neutral"
           onClick={dismiss}
           disabled={dismissing}
@@ -2535,6 +2536,7 @@ export function Dashboard() {
         <div className="flex flex-col gap-2">
           <Button
             label={t("dashboard.resetLayout")}
+          labelKey="dashboard.resetLayout"
             tone="neutral"
             onClick={reset}
             className="self-start"

@@ -945,6 +945,7 @@ function ForeignRestoreCard({
               <span className="text-sm text-statusOk">{t("recovery.foreignConnected")}</span>
               <Button
                 label={t("recovery.foreignClose")}
+          labelKey="recovery.foreignClose"
                 tone="neutral"
                 onClick={disconnect}
               />

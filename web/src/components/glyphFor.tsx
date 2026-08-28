@@ -1,0 +1,119 @@
+import type { ReactNode } from "react";
+import {
+  IconAdd,
+  IconBackupNow,
+  IconCheckCircle,
+  IconClose,
+  IconCopy,
+  IconDownload,
+  IconFolder,
+  IconGear,
+  IconPencil,
+  IconPower,
+  IconRestore,
+  IconSync,
+  IconTrash,
+} from "./Sidebar";
+import {
+  IconBack,
+  IconCancel,
+  IconClearSelection,
+  IconEye,
+  IconForward,
+  IconInfo,
+  IconKey,
+  IconLink,
+  IconPlay,
+  IconPrune,
+  IconRefresh,
+  IconSave,
+  IconSearch,
+  IconSelectAll,
+  IconStop,
+  IconUnlock,
+  IconUpload,
+} from "./glyphs";
+
+// ---------------------------------------------------------------------------
+// glyphFor (#178, [202]) — which symbol a button wears, decided once.
+//
+// jdp asked for every button to get a glyph. Drawing 146 unique symbols would
+// not have helped anyone: most of these buttons are the SAME VERB in different
+// places, and a reader learns "this shape means delete" far faster from twelve
+// repeated symbols than from a hundred and forty-six unique ones. So the
+// mapping is by MEANING, keyed off the translation key, which is stable across
+// all 42 languages in a way the visible text is not.
+//
+// Order matters: the first matching rule wins, so the specific patterns sit
+// above the general ones ("backupSelected" before "selected", "unlock" before
+// "lock"). A key that matches nothing returns undefined, and Button then falls
+// back to showing that button's text rather than an empty square.
+// ---------------------------------------------------------------------------
+
+type Rule = [RegExp, () => ReactNode];
+
+const RULES: Rule[] = [
+  // Backups and restores, the app's own verbs, before anything generic.
+  [/backupNow|backupAll|backupSelected|runNow|backupOrder\.save/i, () => <IconBackupNow />],
+  [/restore/i, () => <IconRestore />],
+  [/replicate|sync|refreshStatus/i, () => <IconSync />],
+
+  // Destructive and corrective actions.
+  [/\.(delete|remove)|removeExclusion|assistRemove|forget/i, () => <IconTrash />],
+  [/prune|reclaim/i, () => <IconPrune />],
+  [/unlock/i, () => <IconUnlock />],
+
+  // Creation and editing.
+  [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd/i, () => <IconAdd />],
+  [/edit|rename|editSet/i, () => <IconPencil />],
+  [/save|apply|confirm(?!Password)/i, () => <IconSave />],
+
+  // Selection.
+  [/clearSelection|clearDayFilter|clearOrder|reset/i, () => <IconClearSelection />],
+  [/selectAll|selectEvery/i, () => <IconSelectAll />],
+
+  // Navigation and dialogs.
+  [/cancel|skip|decline/i, () => <IconCancel />],
+  [/close|dismiss/i, () => <IconClose />],
+  [/back|previous|prev\b/i, () => <IconBack />],
+  [/next|continue|forward|jumpToLatest/i, () => <IconForward />],
+
+  // Probing and inspection.
+  [/test|verify|check|drill/i, () => <IconCheckCircle />],
+  [/scan|discover|browse|search/i, () => <IconSearch />],
+  [/show|reveal|preview|view/i, () => <IconEye />],
+  [/hint|info|explain|examples/i, () => <IconInfo />],
+
+  // Transfer.
+  [/download|export/i, () => <IconDownload />],
+  [/upload|send|offer|push/i, () => <IconUpload />],
+  [/copy/i, () => <IconCopy />],
+
+  // Connections and secrets.
+  [/connect|pair|link|reconnect/i, () => <IconLink />],
+  [/credential|password|secret|token|key\b/i, () => <IconKey />],
+
+  // Lifecycle.
+  [/start|run\b|play/i, () => <IconPlay />],
+  [/stop|abort|halt/i, () => <IconStop />],
+  [/power|shutdown|reboot/i, () => <IconPower />],
+
+  // Places and configuration, last because they are the vaguest.
+  [/folder|path|directory/i, () => <IconFolder />],
+  [/settings|config|setup|wizard|options/i, () => <IconGear />],
+  [/refresh|reload/i, () => <IconRefresh />],
+];
+
+/**
+ * The glyph for a translation key, or undefined when nothing sensible matches.
+ *
+ * Undefined is a real answer, not a gap to be filled with a placeholder: a
+ * button with no glyph keeps showing its text even in glyph mode, which is far
+ * better than a symbol that means nothing.
+ */
+export function glyphFor(key: string): ReactNode | undefined {
+  for (const [pattern, make] of RULES) {
+    if (pattern.test(key)) return make();
+  }
+  return undefined;
+}

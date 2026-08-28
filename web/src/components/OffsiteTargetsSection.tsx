@@ -562,6 +562,7 @@ export function OffsiteTargetsSection({
             </button>
             <Button
               label={t("offsite.targets.cancel")}
+          labelKey="offsite.targets.cancel"
               tone="neutral"
               onClick={closeEditor}
             />

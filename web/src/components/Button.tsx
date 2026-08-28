@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { widthStage, type WidthStage } from "../lib/controls";
 import { useLabelMode } from "../lib/useLabelMode";
+import { glyphFor } from "./glyphFor";
 
 // ---------------------------------------------------------------------------
 // Button — the one clickable control (#178).
@@ -50,6 +51,7 @@ const TONE_CLASS: Record<ButtonTone, string> = {
 
 export function Button({
   label,
+  labelKey,
   glyph,
   onClick,
   tone = "neutral",
@@ -67,8 +69,13 @@ export function Button({
    *  up…") would resize the control mid-action, which is exactly what the
    *  width stages exist to prevent — pass that through `title` instead. */
   label: string;
-  /** Optional icon. Without one, glyph mode shows this button's text instead
-   *  of an empty box. */
+  /** The translation key behind `label`. Passing it lets the component pick a
+   *  glyph by MEANING (glyphFor), so a call site does not have to choose one,
+   *  and so the same verb wears the same symbol everywhere. An explicit
+   *  `glyph` always wins over it. */
+  labelKey?: string;
+  /** Optional icon, overriding whatever `labelKey` would have chosen. Without
+   *  either, glyph mode shows this button's text instead of an empty box. */
   glyph?: ReactNode;
   onClick?: () => void;
   tone?: ButtonTone;
@@ -88,8 +95,11 @@ export function Button({
   busy?: boolean;
 }) {
   const mode = useLabelMode("buttons");
+  // An explicit glyph wins; otherwise the key decides, so the same verb wears
+  // the same symbol app-wide without 163 call sites each making a choice.
+  const resolved = glyph ?? (labelKey ? glyphFor(labelKey) : undefined);
   // No glyph to show means text, whatever the mode says — see the header note.
-  const hasGlyph = !!glyph || busy;
+  const hasGlyph = !!resolved || busy;
   const effective = mode === "glyph" && !hasGlyph ? "text" : mode;
   const showText = effective !== "glyph";
   const showGlyph = effective !== "text" && hasGlyph;
@@ -123,7 +133,7 @@ export function Button({
               style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
             />
           ) : (
-            glyph
+            resolved
           )}
         </span>
       )}
