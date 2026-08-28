@@ -14,7 +14,7 @@ import { SnapshotFileTree } from "./SnapshotFileTree";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
-import { Badge } from "./Badge";
+import { Button } from "./Button";
 import { InfoBubble } from "./InfoBubble";
 import { IconRestore, IconTrash } from "./Sidebar";
 
@@ -764,16 +764,12 @@ function SnapshotRow({
             already the visible feedback. (Badge/IconTipButton don't carry an
             `aria-expanded` passthrough today, same as the plain `<button>`
             this replaces, which never set one either — no regression.) */}
-        <Badge
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("restore.open")}
+        <Button
+          label={t("restore.open")}
+          glyph={<IconRestore />}
+          tone="accent"
           onClick={() => setShowRestore((p) => !p)}
-        >
-          <IconRestore />
-        </Badge>
+        />
 
         {/* Delete this backup (restic forget) — square icon badge, styled
             EXACTLY like the restore badge beside it and like every other
@@ -805,19 +801,15 @@ function SnapshotRow({
               `glim-shake` (the system-wide "failed delete shakes its button"
             rule) survives on `className` — that is behaviour, not colour.
             IconTrash reused verbatim (Sidebar.tsx). */}
-        <Badge
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("snapshots.delete")}
+        <Button
+          key={shake}
+          label={t("snapshots.delete")}
+          glyph={<IconTrash />}
+          tone="accent"
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
-          className={shake ? "glim-shake" : undefined}
-          key={shake}
-        >
-          <IconTrash />
-        </Badge>
+          className={shake ? "glim-shake" : ""}
+        />
       </div>
 
       {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
