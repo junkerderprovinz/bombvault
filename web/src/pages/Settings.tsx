@@ -7,6 +7,15 @@ import { useCloudCredSets, credSetsChanged } from "../lib/useCloudCredSets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
+import {
+  CONTROL_AXES,
+  LABEL_MODES,
+  getLabelMode,
+  setLabelMode,
+  type ControlAxis,
+  type LabelMode,
+} from "../lib/controls";
+import { labelModeChanged } from "../lib/useLabelMode";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
@@ -6037,6 +6046,14 @@ export function SettingsPage() {
   // localStorage via motion.ts, the identical pattern shape state above
   // already uses.
   const [motion, setMotionLocal] = useState<MotionIntensity>(() => getMotionIntensity());
+  // #178: the three label modes, mirrored into local state so the selectors
+  // show the current choice; the controls themselves read through
+  // useLabelMode, which the labelModeChanged() call below wakes.
+  const [labelModes, setLabelModes] = useState<Record<ControlAxis, LabelMode>>(() => ({
+    buttons: getLabelMode("buttons"),
+    sidebar: getLabelMode("sidebar"),
+    tabs: getLabelMode("tabs"),
+  }));
 
   // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
   // localStorage via appearance.ts, the same pattern as accentHex above.
@@ -9383,6 +9400,45 @@ export function SettingsPage() {
         />
       </Card>
       )}
+
+      {/* Control labels (#178) — how much of a control's identity is shown.
+          Three axes rather than one switch, because the right answer differs
+          per axis: a sidebar reduced to glyphs narrows the whole page, tabs do
+          not, and action buttons are a density preference. jdp asked for one
+          selector each, sharing the same three options.
+          Placed straight after Animations on purpose: both are per-viewer
+          appearance dials kept in this browser rather than server settings,
+          and they read as a pair. */}
+      <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
+        <div className="flex flex-col gap-4">
+          {CONTROL_AXES.map((axis) => (
+            <div key={axis} className="flex flex-col gap-1">
+              <span className="text-xs text-carbon-textSub">
+                {t(`settings.labels.${axis}` as TranslationKey)}
+              </span>
+              <Selector
+                items={LABEL_MODES.map((m) => ({
+                  id: m,
+                  label: t(`settings.labels.mode.${m}` as TranslationKey),
+                }))}
+                label={t(`settings.labels.${axis}` as TranslationKey)}
+                select="one"
+                active={labelModes[axis]}
+                onChange={(id) => {
+                  setLabelMode(axis, id as LabelMode);
+                  setLabelModes((prev) => ({ ...prev, [axis]: id as LabelMode }));
+                  // Every mounted control re-reads on this, so the page changes
+                  // under the selector instead of only after a reload.
+                  labelModeChanged();
+                }}
+                size="lg"
+                variant="well"
+                equalWidth
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Colors (GlimStone form-engine Phase 2, Task 1; the accent Card and
           the Rainbow Card, MERGED — jdp, live-review: "Die card von
