@@ -146,40 +146,6 @@ function ConfigBackupButton({
 // sets "idle"/"saving" — see the comment on the state declaration itself.
 type SaveState = "idle" | "saving";
 
-// jdp live-review ("Infotexte in i Infobubbles"): `hint` used to render as a
-// permanent grey <p> under the field — the same "read once, costs vertical
-// space forever" case design-language.md rule 8 exists to fold away. Moved
-// onto the label itself as an InfoBubble instead, the exact idiom Settings.tsx
-// already uses for a labelled field (see e.g. its cloud.storageClass.label
-// `<span className="flex items-center gap-1">{label}<InfoBubble .../></span>`
-// pair) — reused here rather than inventing a second one for this file's own
-// hand-rolled field helper. Zero i18n changes: same keys (config.pathHint/
-// config.offsiteHint), only where they render.
-function labelledInput(
-  label: string,
-  value: string,
-  onChange: (v: string) => void,
-  placeholder: string,
-  hint?: string
-) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-        {label}
-        {hint && <InfoBubble tip={hint} />}
-      </span>
-      <input
-        value={value}
-        spellCheck={false}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        dir="ltr"
-        className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
-      />
-    </div>
-  );
-}
-
 function ConfigSettingsCard({
   t,
   settings,
@@ -233,10 +199,12 @@ function ConfigSettingsCard({
       // page's mount-time snapshot would re-assert a stale repo URL and undo an
       // edit made there, exactly the way the schedules used to be clobbered
       // before they moved out for the same reason.
+      // configPath left out for the same reason as the two above (#182): the
+      // path row in Settings › Paths and storage owns it now, and re-asserting
+      // this page's snapshot would undo a location set there.
       const merged: Settings = {
         ...latest.settings,
         configEnabled: settings.configEnabled,
-        configPath: settings.configPath,
       };
       const res = await putSettings(merged);
       if (res.ok) {
@@ -303,23 +271,27 @@ function ConfigSettingsCard({
         onChange={(v) => setSettings((prev) => ({ ...prev, configEnabled: v }))}
       />
 
-      {labelledInput(
-        t("config.path"),
-        settings.configPath,
-        (v) => setSettings((prev) => ({ ...prev, configPath: v })),
-        "user/bombvault/config",
-        t("config.pathHint")
-      )}
+      {/* The backup location moved out too (#182, manilx: "Can't set
+          credentials here"). It was a plain text field, while Settings › Paths
+          and storage has had the same value as a full path row for a long
+          time: local or remote, and for a remote one the safety dialog that
+          holds bandwidth limits, append-only and, since #182, the credential
+          set. Someone pointing self-backup at an S3 bucket from THIS field
+          therefore had nowhere to say which keys it should use.
+          Its caption was wrong for that case as well, promising a "relative
+          subpath under the host mount root" for a value that had just been
+          given an s3: URL.
+          Keeping both would also have repeated the schedules/off-site mistake:
+          two editors for one setting, with this page's mount-time snapshot
+          able to overwrite the other one. */}
+      <p className="text-xs text-carbon-textMuted">{t("config.pathMoved")}</p>
 
       {/* The self-backup + off-site cadences moved to Settings › Schedules (the
           single schedule owner), and since #176 the off-site repo and its
           append-only flag moved to Settings › Off-site, where self-backup now
           has the same card every other domain has: a setup wizard, a connection
           test, replicate-now, extra destinations and per-destination
-          credentials. Keeping a second, plainer copy of the repo field here
-          would mean two places to edit one value, with this page's older
-          snapshot able to overwrite the other. Only path and the enable toggle
-          live here now. */}
+          credentials. Only the enable toggle lives here now. */}
       <p className="text-xs text-carbon-textMuted">{t("config.offsiteMoved")}</p>
 
       <div className="flex items-center gap-3 pt-1">
