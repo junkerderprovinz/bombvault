@@ -126,16 +126,6 @@ Full documentation: https://junkerderprovinz.github.io/bombvault/</Overview>
     Required="false"
     Mask="false">BombVault</Config>
   <Config
-    Name="Timezone"
-    Target="TZ"
-    Default=""
-    Mode=""
-    Description="Timezone the scheduler plans in, for example Europe/Berlin or America/New_York. LEAVE THIS EMPTY AND EVERY SCHEDULE RUNS IN UTC: a backup set to 02:30 then starts at 02:30 UTC, which is 04:30 local time in Central European Summer Time. Set it to your own zone if you want &quot;02:30&quot; to mean 02:30 on your wall clock. Note the trade-off: a wall-clock zone with daylight saving skips one run in spring and runs twice in autumn, while UTC never does either but drifts by an hour against your local clock twice a year."
-    Type="Variable"
-    Display="always"
-    Required="false"
-    Mask="false"></Config>
-  <Config
     Name="BACKUP_MAX_HOURS"
     Target="BACKUP_MAX_HOURS"
     Default=""
