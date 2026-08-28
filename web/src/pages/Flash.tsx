@@ -11,6 +11,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
+import { Button } from "../components/Button";
 import { useToast } from "../lib/toast";
 import { FlashZipExportCard } from "./Settings";
 import { InfoBubble } from "../components/InfoBubble";
@@ -117,33 +118,25 @@ function FlashBackupButton({
     }
   }, [state, push, t]);
 
-  const tip = isPending
+  // #178: stable name, exceptional states as tooltip only.
+  const stateTip = isPending
     ? t("flash.backingUp")
     : blockedByOther
       ? t(busyPhraseKey(busyPhase))
-      : t("flash.backupNow");
+      : undefined;
 
   return (
-    <Badge
+    <Button
       key={shake}
-      as="button"
-      shape="square"
-      tone="active"
-      size="icon"
-      tip={tip}
+      label={t("flash.backupNow")}
+      glyph={<IconBackupNow />}
+      tone="accent"
       onClick={() => void fire()}
       disabled={isPending || blockedByOther}
-      className={shake ? "glim-shake" : undefined}
-    >
-      {isPending ? (
-        <span
-          className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-          style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-        />
-      ) : (
-        <IconBackupNow />
-      )}
-    </Badge>
+      busy={isPending}
+      title={stateTip}
+      className={shake ? "glim-shake" : ""}
+    />
   );
 }
 
@@ -256,38 +249,24 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
             keeps its spinner by swapping the GLYPH for it, the same trade
             FlashBackupButton above and Containers' ExportButton already
             make. */}
-        <Badge
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("flash.download")}
+        <Button
+          label={t("flash.download")}
+          glyph={<IconDownload />}
+          tone="accent"
           onClick={handleDownload}
           disabled={preparing}
-          className="shrink-0"
-        >
-          {preparing ? (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconDownload />
-          )}
-        </Badge>
-        <Badge
+          busy={preparing}
+          className={"shrink-0"}
+        />
+        <Button
           key={shake}
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("snapshots.delete")}
+          label={t("snapshots.delete")}
+          glyph={<IconTrash />}
+          tone="accent"
           onClick={() => void handleDelete()}
           disabled={deleting || preparing}
           className={`shrink-0${shake ? " glim-shake" : ""}`}
-        >
-          <IconTrash />
-        </Badge>
+        />
       </div>
       {confirmDialog}
     </div>

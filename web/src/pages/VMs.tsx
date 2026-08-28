@@ -16,6 +16,7 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { Button } from "../components/Button";
 // ToggleRow, not the bare Toggle: VMIncludeToggle renders the shared row
 // (label + switch) rather than a naked switch its caller labels by hand — the
 // same import components/IncludeToggle.tsx already uses for the Container
@@ -392,26 +393,16 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
           screen), not a one-shot ping a toast would replace. The column flips
           items-start → items-end so the tile lines up with the card edge and
           the text hangs beneath it. */}
-      <Badge
+      <Button
         key={shake}
-        as="button"
-        shape="square"
-        size="icon"
-        tone="active"
-        tip={t("export.button")}
+        label={t("export.button")}
+        glyph={<IconDownload />}
+        tone="accent"
         onClick={() => void run()}
         disabled={state === "pending"}
-        className={shake ? "glim-shake" : undefined}
-      >
-        {state === "pending" ? (
-          <span
-            className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-            style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-          />
-        ) : (
-          <IconDownload />
-        )}
-      </Badge>
+        busy={state === "pending"}
+        className={shake ? "glim-shake" : ""}
+      />
       {state === "done" && (
         <span className="text-xs text-statusOk break-all text-end max-w-[18rem]">{t("export.exportedTo")} {msg}</span>
       )}
@@ -502,33 +493,25 @@ function VMBackupButton({
     }
   }, [state, push, t]);
 
-  const tip = isPending
+  // #178: stable name, exceptional states as tooltip only.
+  const stateTip = isPending
     ? t("common.backingUp")
     : blockedByOther
       ? t(busyPhraseKey(running?.phase))
-      : t("containers.backupNow");
+      : undefined;
 
   return (
-    <Badge
+    <Button
       key={shake}
-      as="button"
-      shape="square"
-      tone="active"
-      size="icon"
-      tip={tip}
+      label={t("containers.backupNow")}
+      glyph={<IconBackupNow />}
+      tone="accent"
       onClick={() => void fire()}
       disabled={isPending || blockedByOther}
-      className={shake ? "glim-shake" : undefined}
-    >
-      {isPending ? (
-        <span
-          className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-          style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-        />
-      ) : (
-        <IconBackupNow />
-      )}
-    </Badge>
+      busy={isPending}
+      title={stateTip}
+      className={shake ? "glim-shake" : ""}
+    />
   );
 }
 
@@ -645,30 +628,22 @@ function VMSnapshotRow({
             resolve by stylesheet order, not className order, so that was
             never a safe override. The panel appearing below is the visible
             feedback, the same call RestorePanel's converted toggle made. */}
-        <Badge
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("restore.open")}
+        <Button
+          label={t("restore.open")}
+          glyph={<IconRestore />}
+          tone="accent"
           onClick={() => setShowRestore((p) => !p)}
-          className="shrink-0"
-        >
-          <IconRestore />
-        </Badge>
-        <Badge
+          className={"shrink-0"}
+        />
+        <Button
           key={shake}
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("snapshots.delete")}
+          label={t("snapshots.delete")}
+          glyph={<IconTrash />}
+          tone="accent"
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
           className={`shrink-0${shake ? " glim-shake" : ""}`}
-        >
-          <IconTrash />
-        </Badge>
+        />
       </div>
       {/* Restore control (confirm + leave-stopped + progress banner), indented
           under the id column (ps-24, LOGICAL — the row's content column sits

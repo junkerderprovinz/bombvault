@@ -3,7 +3,7 @@ import { backupNow } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
 import { busyPhraseKey } from "../lib/progress";
 import type { useT } from "../lib/i18n";
-import { Badge } from "./Badge";
+import { Button } from "./Button";
 import { IconBackupNow } from "./Sidebar";
 import { useToast } from "../lib/toast";
 
@@ -86,32 +86,26 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
     }
   }, [state, push, t]);
 
-  const tip = isPending
+  // #178: the button's NAME is stable; only the exceptional states get a
+  // tooltip. A label that changed to "Backing up…" would resize the control
+  // mid-action, which the width stages exist to prevent.
+  const stateTip = isPending
     ? t("common.backingUp")
     : blockedByOther
       ? t(busyPhraseKey(running?.phase))
-      : t("containers.backupNow");
+      : undefined;
 
   return (
-    <Badge
+    <Button
       key={shake}
-      as="button"
-      shape="square"
-      tone="active"
-      size="icon"
-      tip={tip}
+      label={t("containers.backupNow")}
+      glyph={<IconBackupNow />}
+      tone="accent"
       onClick={() => void fire()}
       disabled={isPending || blockedByOther}
-      className={shake ? "glim-shake" : undefined}
-    >
-      {isPending ? (
-        <span
-          className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-          style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-        />
-      ) : (
-        <IconBackupNow />
-      )}
-    </Badge>
+      busy={isPending}
+      title={stateTip}
+      className={shake ? "glim-shake" : ""}
+    />
   );
 }

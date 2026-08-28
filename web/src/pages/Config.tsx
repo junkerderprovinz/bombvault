@@ -18,6 +18,7 @@ import { ToggleRow } from "./Settings";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { Badge } from "../components/Badge";
+import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
@@ -103,33 +104,25 @@ function ConfigBackupButton({
     }
   }, [state, push, t]);
 
-  const tip = isPending
+  // #178: stable name, exceptional states as tooltip only.
+  const stateTip = isPending
     ? t("config.backingUp")
     : blockedByOther
       ? t(busyPhraseKey(busyPhase))
-      : t("config.backupNow");
+      : undefined;
 
   return (
-    <Badge
+    <Button
       key={shake}
-      as="button"
-      shape="square"
-      tone="active"
-      size="icon"
-      tip={tip}
+      label={t("config.backupNow")}
+      glyph={<IconBackupNow />}
+      tone="accent"
       onClick={() => void fire()}
       disabled={isPending || blockedByOther}
-      className={shake ? "glim-shake" : undefined}
-    >
-      {isPending ? (
-        <span
-          className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-          style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-        />
-      ) : (
-        <IconBackupNow />
-      )}
-    </Badge>
+      busy={isPending}
+      title={stateTip}
+      className={shake ? "glim-shake" : ""}
+    />
   );
 }
 
@@ -406,19 +399,15 @@ function ConfigSnapshotRow({
               `glim-shake` (the system-wide "failed delete shakes the delete
             button" rule) and `shrink-0` survive via `className` — behaviour
             and layout, not colour. */}
-        <Badge
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("snapshots.delete")}
+        <Button
+          key={shake}
+          label={t("snapshots.delete")}
+          glyph={<IconTrash />}
+          tone="accent"
           onClick={() => void handleDelete()}
           disabled={deleting}
           className={`shrink-0${shake ? " glim-shake" : ""}`}
-          key={shake}
-        >
-          <IconTrash />
-        </Badge>
+        />
       </div>
       {confirmDialog}
     </div>

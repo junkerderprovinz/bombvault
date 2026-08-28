@@ -12,6 +12,7 @@ import { offsiteTargetsChanged, subscribeOffsiteTargets, type OffsiteDomain } fr
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
 import { Badge, type BadgeSize } from "./Badge";
+import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
@@ -592,18 +593,14 @@ export function OffsiteTargetsSection({
           "ONE SIZE FOR SQUARE ICON BADGES" block. The visible "Ziel
           hinzufügen" text survives unchanged as the `tip` tooltip content. */}
       {!draft && (
-        <Badge
-          as="button"
-          tone="active"
-          shape="square"
-          size="icon"
-          hueIndex={hueIndex}
+        <Button
+          label={t("offsite.targets.add")}
+          glyph={<IconAdd />}
+          tone="accent"
           onClick={openNew}
-          className="self-start"
-          tip={t("offsite.targets.add")}
-        >
-          <IconAdd />
-        </Badge>
+          hueIndex={hueIndex}
+          className={"self-start"}
+        />
       )}
     </div>
   );

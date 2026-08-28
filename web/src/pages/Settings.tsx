@@ -32,6 +32,7 @@ import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
 import { CheckDraw } from "../components/CheckDraw";
 import { Badge } from "../components/Badge";
+import { Button } from "../components/Button";
 import { ScheduleRow, scheduleStatus } from "../components/ScheduleBadge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
@@ -1009,21 +1010,17 @@ export function AccentCard({
             member of this row"; it is not an un-migrated grey. Same reasoning
             applies verbatim to the rainbow-palette reset badge below, whose
             row of eight swatches makes the clash even more literal. */}
-        <Badge
-          as="button"
-          shape="square"
-          size="icon"
-          tone="neutral"
-          className="border-2 border-carbon-border"
-          disabled={nothingToReset}
+        <Button
+          label={t("settings.accentReset")}
+          glyph={<IconResetArrow />}
+          tone="accent"
           onClick={() => {
             selectAccent(DEFAULT_ACCENT);
             setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS));
           }}
-          tip={t("settings.accentReset")}
-        >
-          <IconResetArrow />
-        </Badge>
+          disabled={nothingToReset}
+          className={"border-2 border-carbon-border"}
+        />
       </div>
     </div>
   );
@@ -1651,19 +1648,15 @@ chmod 600 /root/.ssh/authorized_keys`
                 below still uses it. `size="icon"` is the app's one square-
                 icon-badge size and is the same 32px these buttons already
                 measured to, so the footprint is unchanged. */}
-            <Badge
-              as="button"
-              tone="active"
-              shape="square"
-              size="icon"
-              hueIndex={hueIndex}
-              className="shrink-0"
+            <Button
+              label={t("vm.ssh.copy")}
+              glyph={<IconCopy />}
+              tone="accent"
               onClick={() => void handleCopy()}
               disabled={!pub}
-              tip={t("vm.ssh.copy")}
-            >
-              <IconCopy />
-            </Badge>
+              hueIndex={hueIndex}
+              className={"shrink-0"}
+            />
           </div>
         </div>
 
@@ -1686,19 +1679,15 @@ chmod 600 /root/.ssh/authorized_keys`
                 `items-start` so the badge never stretches to match it — it
                 keeps its own fixed 32px regardless, exactly as it already did
                 as a plain button before either round. */}
-            <Badge
-              as="button"
-              tone="active"
-              shape="square"
-              size="icon"
-              hueIndex={hueIndex}
-              className="shrink-0"
+            <Button
+              label={t("vm.ssh.copyCmd")}
+              glyph={<IconCopy />}
+              tone="accent"
               onClick={() => void handleCopyCmd()}
               disabled={!pub}
-              tip={t("vm.ssh.copyCmd")}
-            >
-              <IconCopy />
-            </Badge>
+              hueIndex={hueIndex}
+              className={"shrink-0"}
+            />
           </div>
           {/* Task 5 (rule 13): was a plain underline-on-hover text link. Task 7:
               tone was "info" (the old fifth hue) only because it was the
@@ -4222,18 +4211,20 @@ function ReplicateNowButton({
     }
   }
   return (
-    <Badge
-      as="button"
-      tone="active"
-      shape="square"
-      size="icon"
+    // The label is the STABLE name; the running state rides in `title` and in
+    // the spinner. A label that changed to "Replicating…" mid-action would
+    // resize the button while you look at it, which is what the width stages
+    // exist to prevent (#178).
+    <Button
+      label={t("offsite.replicateNow")}
+      glyph={<IconSync />}
+      tone="accent"
       hueIndex={hueIndex}
       onClick={() => void go()}
       disabled={busy}
-      tip={busy ? t("offsite.replicating") : t("offsite.replicateNow")}
-    >
-      <IconSync />
-    </Badge>
+      busy={busy}
+      title={busy ? t("offsite.replicating") : undefined}
+    />
   );
 }
 
@@ -4282,18 +4273,19 @@ function TestConnectionButton({
     }
   }
   return (
-    <Badge
-      as="button"
-      tone="active"
-      shape="square"
-      size="icon"
+    <Button
+      label={t("offsite.test")}
+      glyph={<IconCheckCircle />}
+      tone="accent"
       hueIndex={hueIndex}
       onClick={() => void go()}
       disabled={busy}
-      tip={multiTarget ? t("offsite.testPrimary") : t("offsite.test")}
-    >
-      <IconCheckCircle />
-    </Badge>
+      busy={busy}
+      // With several destinations this button probes the PRIMARY one, which is
+      // worth saying but is not a different button: as a label it would change
+      // this control's width the moment a second destination is added.
+      title={multiTarget ? t("offsite.testPrimary") : undefined}
+    />
   );
 }
 
@@ -5519,26 +5511,17 @@ export function EverythingSection({
           pair), and there is none here — byte-identical to how Flash's and
           Config's own backup-now cards do it. */}
       <div className="flex justify-end">
-        <Badge
+        <Button
           key={shake}
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={busy ? t("settings.everythingBusy") : t("settings.everythingRunNow")}
+          label={t("settings.everythingRunNow")}
+          glyph={<IconBackupNow />}
+          tone="accent"
           onClick={() => void runNow()}
           disabled={busy}
-          className={shake ? "glim-shake" : undefined}
-        >
-          {busy ? (
-            <span
-              className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconBackupNow />
-          )}
-        </Badge>
+          busy={busy}
+          title={busy ? t("settings.everythingBusy") : undefined}
+          className={shake ? "glim-shake" : ""}
+        />
       </div>
     </Card>
   );
@@ -8128,13 +8111,10 @@ export function SettingsPage() {
                   fresh for this — no trash glyph existed in this codebase
                   yet — filled/`currentColor`-only, no `stroke`, matching
                   every other icon in that file's icon-only-badge set. */}
-              <Badge
-                as="button"
-                tone="active"
-                shape="square"
-                size="icon"
-                className="shrink-0"
-                tip={t("settings.registryRemove")}
+              <Button
+                label={t("settings.registryRemove")}
+                glyph={<IconTrash />}
+                tone="accent"
                 onClick={() => {
                   // Removing a row is a discrete action, not a text edit — it
                   // saves IMMEDIATELY (no debounce), and cancels any pending
@@ -8156,9 +8136,8 @@ export function SettingsPage() {
                   cancelDebounce("registryAuths");
                   saveRegistries(nextAuths, nextRowIds);
                 }}
-              >
-                <IconTrash />
-              </Badge>
+                className={"shrink-0"}
+              />
             </div>
             );
           })}
@@ -8181,13 +8160,10 @@ export function SettingsPage() {
               for the full reasoning, including why neither needs an explicit
               `hueIndex`. */}
           <div className="flex justify-end">
-            <Badge
-              as="button"
-              tone="active"
-              shape="square"
-              size="icon"
-              className="shrink-0"
-              tip={t("settings.registryAdd")}
+            <Button
+              label={t("settings.registryAdd")}
+              glyph={<IconAdd />}
+              tone="accent"
               onClick={() => {
                 setSettings((prev) => {
                   if (!prev) return prev;
@@ -8208,9 +8184,8 @@ export function SettingsPage() {
                 // again anyway if it's abandoned blank).
                 setRegistryRowIds((prev) => [...prev, randomId()]);
               }}
-            >
-              <IconAdd />
-            </Badge>
+              className={"shrink-0"}
+            />
           </div>
         </div>
       </Card>
@@ -8476,20 +8451,16 @@ export function SettingsPage() {
                   badge's own comment for the full reasoning, including why the
                   enclosing Card's `.glim-hue` makes an explicit `hueIndex`
                   unnecessary here. */}
-              <Badge
-                as="button"
-                tone="active"
-                shape="square"
-                size="icon"
-                className="self-end shrink-0"
-                tip={t("recovery.download")}
+              <Button
+                label={t("recovery.download")}
+                glyph={<IconDownload />}
+                tone="accent"
                 onClick={() => {
                   setKitError(null);
                   void downloadRecoveryKit().then(setKitError);
                 }}
-              >
-                <IconDownload />
-              </Badge>
+                className={"self-end shrink-0"}
+              />
               {kitError && (
                 // Backend-provided error text shown verbatim BY DESIGN (e.g. the
                 // fail-closed "set a login password" refusal when auth is off) —
@@ -8609,17 +8580,17 @@ export function SettingsPage() {
                     ReplicateNowButton's own comment above for the full
                     "coloured text -> neutral glyph, wash -> solid fill"
                     writeup this shares. */}
-                <Badge
-                  as="button"
-                  tone="active"
-                  shape="square"
-                  size="icon"
+                {/* The one place a swapping label is right: open and close are
+                    two different actions with two different glyphs, not one
+                    action reporting its state. Both names are short enough to
+                    share a width stage, so the control does not jump. */}
+                <Button
+                  label={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
+                  glyph={wizardOpen ? <IconClose /> : <IconGear />}
+                  tone="accent"
                   hueIndex={hueIdx}
                   onClick={() => setOffsiteWizard(wizardOpen ? null : domain)}
-                  tip={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
-                >
-                  {wizardOpen ? <IconClose /> : <IconGear />}
-                </Badge>
+                />
               </span>
             </div>
             {wizardOpen ? (
@@ -9707,18 +9678,14 @@ export function SettingsPage() {
                 #1D99F3 #BE95FF #FF7EB6). Giving it a rainbow fill would make
                 the control that RESETS the palette look like a ninth entry
                 IN the palette. Do not "fix" this to tone="active". */}
-            <Badge
-              as="button"
-              shape="square"
-              size="icon"
-              tone="neutral"
-              className="border-2 border-carbon-border"
-              disabled={!rainbow.on || paletteIsDefault}
+            <Button
+              label={t("settings.rainbowPaletteReset")}
+              glyph={<IconResetArrow />}
+              tone="accent"
               onClick={() => updateRainbow({ palette: RAINBOW })}
-              tip={t("settings.rainbowPaletteReset")}
-            >
-              <IconResetArrow />
-            </Badge>
+              disabled={!rainbow.on || paletteIsDefault}
+              className={"border-2 border-carbon-border"}
+            />
             </div>
           </div>
         </div>

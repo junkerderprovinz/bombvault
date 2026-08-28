@@ -36,7 +36,7 @@ import { useBackupWatch } from "../../lib/backupWatch";
 import { useProgress, busyPhraseKey } from "../../lib/progress";
 import { RestoreProgress } from "./RestoreProgress";
 import type { RepoSource } from "../SourceToggle";
-import { Badge } from "../Badge";
+import { Button } from "../Button";
 import { IconRestore } from "../Sidebar";
 import { useConfirm } from "../../lib/useConfirm";
 
@@ -199,29 +199,20 @@ export function RestoreAction({
       <span className="text-caption text-carbon-textMuted shrink-0">{t(busyPhraseKey(otherActive.phase))}</span>
     ) : null;
 
+  // The caller's own `label` wins when it passes one, exactly as before; it is
+  // a per-site NAME (e.g. "Restore this snapshot"), not a state, so it is safe
+  // as the width-bearing label. The spinner is now the component's own `busy`
+  // rather than a hand-rolled conditional child (#178, [201]).
   const trigger = iconBadge ? (
-    <Badge
-      as="button"
-      shape="square"
-      size="icon"
-      tone="active"
-      tip={label ?? t("snapshots.restore")}
+    <Button
+      label={label ?? t("snapshots.restore")}
+      glyph={<IconRestore />}
+      tone="accent"
       onClick={() => void handleRestore()}
       disabled={triggerDisabled}
+      busy={isPending}
       className="ms-auto shrink-0"
-    >
-      {isPending ? (
-        // The text button's spinner at glyph scale, same two tokens: the badge
-        // paints bg-accent/text-accentContrast (Badge's isIconOnly + tone
-        // "active" branch), so --accent-contrast is the ink that reads on it.
-        <span
-          className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-          style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-        />
-      ) : (
-        <IconRestore />
-      )}
-    </Badge>
+    />
   ) : (
     <button
       onClick={() => void handleRestore()}

@@ -49,6 +49,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
+import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
 // ToggleRow, not the bare Toggle: FileSetEnabledToggle renders the shared row
 // (label + switch) rather than a naked switch its caller labels by hand — the
@@ -201,34 +202,26 @@ function FileSetBackupButton({
   // yet). The label the visible text used to carry is the last fallback — an
   // icon-only trigger's tooltip has to say what the button DOES when nothing
   // is blocking it.
-  const tip = noPath
+  // #178: stable name, exceptional states as tooltip only.
+  const stateTip = noPath
     ? t("files.noPathHint")
     : isPending
       ? t("common.backingUp")
       : blockedByOther
         ? t(busyPhraseKey(running?.phase))
-        : t("containers.backupNow");
+        : undefined;
 
   return (
     <div className="flex flex-col gap-1 items-end">
-      <Badge
-        as="button"
-        shape="square"
-        size="icon"
-        tone="active"
-        tip={tip}
+      <Button
+        label={t("containers.backupNow")}
+        glyph={<IconBackupNow />}
+        tone="accent"
         onClick={() => void fire()}
         disabled={isPending || blockedByOther || noPath}
-      >
-        {isPending ? (
-          <span
-            className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-            style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-          />
-        ) : (
-          <IconBackupNow />
-        )}
-      </Badge>
+        busy={isPending}
+        title={stateTip}
+      />
       {blockedByOther && (
         <span className="text-xs text-carbon-textMuted text-end">{t(busyPhraseKey(running?.phase))}</span>
       )}
@@ -649,19 +642,15 @@ function FileSetSnapshotRow({
             (t("snapshots.deleteConfirm")), which is untouched. The "…"
             in-flight label has nowhere to live on an icon-only badge, so
             `deleting` shows as `disabled`, exactly like RestorePanel's. */}
-        <Badge
+        <Button
           key={shake}
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-          tip={t("snapshots.delete")}
+          label={t("snapshots.delete")}
+          glyph={<IconTrash />}
+          tone="accent"
           onClick={() => void handleDelete()}
           disabled={deleting || busy}
-        >
-          <IconTrash />
-        </Badge>
+          className={`shrink-0${shake ? " glim-shake" : ""}`}
+        />
       </div>
       {/* Restore control, indented under the id column to match the row. */}
       <div className="ps-24">
@@ -1236,29 +1225,21 @@ function FileSetRow({
               reference). The row's own gap-4 still separates this pair from the
               schedule toggle beside it, which is a different kind of control. */}
           <div className="flex items-center gap-1.5">
-            <Badge
-              as="button"
-              shape="square"
-              size="icon"
-              tone="active"
-              tip={t("files.editSet")}
+            <Button
+              label={t("files.editSet")}
+              glyph={<IconPencil />}
+              tone="accent"
               onClick={onEdit}
-            >
-              <IconPencil />
-            </Badge>
-            <Badge
+            />
+            <Button
               key={shake}
-              as="button"
-              shape="square"
-              size="icon"
-              tone="active"
-              tip={t("files.deleteSet")}
+              label={t("files.deleteSet")}
+              glyph={<IconTrash />}
+              tone="accent"
               onClick={() => void handleRemove()}
               disabled={removing}
-              className={shake ? "glim-shake" : undefined}
-            >
-              <IconTrash />
-            </Badge>
+              className={shake ? "glim-shake" : ""}
+            />
           </div>
         </div>
         <div className="ms-auto flex flex-col items-end">

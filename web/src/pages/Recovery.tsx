@@ -8,6 +8,7 @@ import { useReveal } from "../lib/useReveal";
 import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
+import { Button } from "../components/Button";
 import { IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
@@ -265,26 +266,16 @@ function FileSetRecoveryRow({
         <span className="text-carbon-textMuted text-xs shrink-0">
           {snapLabel || t("containers.never")}
         </span>
-        <Badge
+        <Button
           key={shake}
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("snapshots.restore")}
+          label={t("snapshots.restore")}
+          glyph={<IconRestore />}
+          tone="accent"
           onClick={() => void handleRestore()}
           disabled={busy || otherActive || target.trim() === ""}
+          busy={busy}
           className={`ms-auto shrink-0${shake ? " glim-shake" : ""}`}
-        >
-          {busy ? (
-            <span
-              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconRestore />
-          )}
-        </Badge>
+        />
       </div>
       <FolderBrowser
         label={t("restore.targetPath")}
@@ -556,31 +547,19 @@ function ForeignItemRow({
             </option>
           ))}
         </select>
-        <Badge
+        <Button
           key={shake}
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("recovery.foreignRestore")}
+          label={t("recovery.foreignRestore")}
+          glyph={<IconRestore />}
+          tone="accent"
           onClick={() => void handleRestore()}
-          disabled={
-            busy ||
+          disabled={busy ||
             blocked ||
             (needsTarget && target.trim() === "") ||
-            (subsetActive && selected.size === 0)
-          }
+            (subsetActive && selected.size === 0)}
+          busy={busy}
           className={`ms-auto shrink-0${shake ? " glim-shake" : ""}`}
-        >
-          {busy ? (
-            <span
-              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-          ) : (
-            <IconRestore />
-          )}
-        </Badge>
+        />
       </div>
       {domain === "files" && (
         <div className="flex flex-col gap-2">

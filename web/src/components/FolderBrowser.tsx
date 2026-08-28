@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
-import { Badge } from "./Badge";
+import { Button } from "./Button";
 import { IconFolder } from "./Sidebar";
 import { useToast } from "../lib/toast";
 
@@ -224,17 +224,13 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             layout, not appearance. `tip` still carries `folder.browseTitle`
             and still routes through IconTipButton — Badge renders its own
             `tip` branch through that very component. */}
-        <Badge
-          as="button"
-          tone="active"
-          shape="square"
-          size="icon"
-          className="shrink-0"
+        <Button
+          label={t("folder.browseTitle")}
+          glyph={<IconFolder />}
+          tone="accent"
           onClick={handleOpen}
-          tip={t("folder.browseTitle")}
-        >
-          <IconFolder />
-        </Badge>
+          className={"shrink-0"}
+        />
       </div>
 
       {/* Absolute path preview */}

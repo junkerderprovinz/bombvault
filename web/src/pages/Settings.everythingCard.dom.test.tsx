@@ -102,13 +102,15 @@ afterEach(() => {
 });
 
 describe("EverythingSection — the manual trigger", () => {
-  it("is an icon-only control whose LABEL survives as its accessible name", () => {
+  it("keeps its LABEL as its accessible name, in whichever mode it renders", () => {
     renderCard();
     const badge = runNowBadge();
-    // Icon-only: a glyph child and no text of its own. This is exactly what
-    // convention 3 is about — the words moved into the bubble, they did not
-    // disappear, so the control still has a name without showing one.
-    expect(badge.textContent?.trim()).toBe("");
+    // This used to assert the control had NO text at all, which was right
+    // while it was a square icon-only badge. Since #178 how much of a control
+    // is shown is the viewer's choice, so the invariant worth pinning is the
+    // one that has to survive every mode: it has a glyph, and it has an
+    // accessible name. runNowBadge() finds it BY that name, so reaching this
+    // line already proves the second half.
     expect(badge.querySelector("svg")).not.toBeNull();
     expect(badge).toHaveProperty("disabled", false);
   });

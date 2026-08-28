@@ -20,6 +20,7 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers, IconDownload, IconAdd } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
+import { Button } from "../components/Button";
 import { ToggleRow } from "./Settings";
 import { ProgressBar } from "../components/ProgressBar";
 import { tLtr, withLtrFragments, withLtrPlaceholder, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -447,26 +448,16 @@ function ExportButton({ name, t }: { name: string; t: T }) {
           branch) and inherits this row's own rainbow position from the
           ambient `.glim-hue` cascade, exactly like BackupButton beside it —
           no `hueIndex` needed. */}
-      <Badge
+      <Button
         key={shake}
-        as="button"
-        shape="square"
-        tone="active"
-        size="icon"
-        tip={t("export.button")}
+        label={t("export.button")}
+        glyph={<IconDownload />}
+        tone="accent"
         onClick={() => void run()}
         disabled={state === "pending"}
-        className={shake ? "glim-shake" : undefined}
-      >
-        {state === "pending" ? (
-          <span
-            className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-            style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-          />
-        ) : (
-          <IconDownload />
-        )}
-      </Badge>
+        busy={state === "pending"}
+        className={shake ? "glim-shake" : ""}
+      />
       {state === "done" && msg && (
         <span className="text-xs text-statusOk break-all text-end max-w-[18rem]">
           {t("export.exportedTo")} <span dir="ltr" className="text-start">{msg}</span>
@@ -904,16 +895,12 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
             — it is simply no longer a number this call site owns. `tip`
             carries the exact text this button showed before becoming
             icon-only. */}
-        <Badge
-          as="button"
-          shape="square"
-          size="icon"
-          tone="active"
-          tip={t("folders.add")}
+        <Button
+          label={t("folders.add")}
+          glyph={<IconAdd />}
+          tone="accent"
           onClick={addCustom}
-        >
-          <IconAdd />
-        </Badge>
+        />
       </div>
     </div>
   );
