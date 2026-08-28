@@ -110,6 +110,26 @@ function Harness({ repo }: { repo: string }) {
   );
 }
 
+// Self-backup ("config"): the domain whose settings key is configOffsite, not
+// containersOffsite, and which the wizard used to have no map entry for.
+function SelfBackupHarness() {
+  const { t } = useT();
+  return (
+    <OffsiteWizard
+      domain="config"
+      settings={{
+        configOffsite: "s3:https://offsite.example/selfbackup",
+        configOffsiteImmutable: false,
+        configPath: "user/bombvault/config",
+        offsiteGrowthBudgetGB: 0,
+      } as unknown as Settings}
+      setSettings={() => {}}
+      save={() => { saveCalls++; return Promise.resolve(true); }}
+      t={t}
+    />
+  );
+}
+
 async function renderWizard(repo: string = REST_REPO) {
   await act(async () => {
     render(
@@ -265,4 +285,33 @@ it("shows no credentials block at all for a local path", async () => {
 
   expect(screen.queryByLabelText(/Credentials|Zugangsdaten/)).toBeNull();
   expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
+});
+
+// ---------------------------------------------------------------------------
+// #182 (manilx), reported against v8.3.0: opening the wizard for self-backup
+// rendered a blank page and needed a browser refresh. #176 had added the domain
+// to the off-site tab, but this file still carried its own four-domain copy of
+// the type plus an `as` cast asserting that off-site mode "never receives
+// config". So REPO_KEY had no entry, repoKey was undefined, settings[undefined]
+// was undefined, and inferBackend called .trim() on it during the first render.
+//
+// The cast is gone (a missing map entry is a compile error now), but the render
+// itself is pinned here: a type-level guarantee does not prove the component
+// mounts.
+// ---------------------------------------------------------------------------
+
+it("renders for the self-backup domain instead of blanking the page", async () => {
+  await act(async () => {
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <SelfBackupHarness />
+        </ToastProvider>
+      </I18nProvider>
+    );
+  });
+
+  // Reaching step 3 at all means the first render survived: this is exactly
+  // where the crash used to happen, on inferBackend(settings[repoKey]).
+  expect(screen.getByLabelText(/Credentials|Zugangsdaten/)).toBeTruthy();
 });
