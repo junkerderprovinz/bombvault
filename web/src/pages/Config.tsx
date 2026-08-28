@@ -227,12 +227,16 @@ function ConfigSettingsCard({
         setShake((n) => n + 1);
         return;
       }
+      // configOffsite/configOffsiteImmutable are deliberately NOT merged in
+      // any more: since #176 self-backup has a full off-site card in Settings ›
+      // Off-site like every other domain, and that card owns them. Sending this
+      // page's mount-time snapshot would re-assert a stale repo URL and undo an
+      // edit made there, exactly the way the schedules used to be clobbered
+      // before they moved out for the same reason.
       const merged: Settings = {
         ...latest.settings,
         configEnabled: settings.configEnabled,
         configPath: settings.configPath,
-        configOffsite: settings.configOffsite,
-        configOffsiteImmutable: settings.configOffsiteImmutable,
       };
       const res = await putSettings(merged);
       if (res.ok) {
@@ -308,21 +312,15 @@ function ConfigSettingsCard({
       )}
 
       {/* The self-backup + off-site cadences moved to Settings › Schedules (the
-          single schedule owner). Only path / off-site repo / immutable live here. */}
-      {labelledInput(
-        t("config.offsite"),
-        settings.configOffsite,
-        (v) => setSettings((prev) => ({ ...prev, configOffsite: v })),
-        "rest:http://host:8000/repo",
-        t("config.offsiteHint")
-      )}
-
-      <ToggleRow
-        label={t("config.immutable")}
-        hint={t("config.immutableHint")}
-        checked={settings.configOffsiteImmutable}
-        onChange={(v) => setSettings((prev) => ({ ...prev, configOffsiteImmutable: v }))}
-      />
+          single schedule owner), and since #176 the off-site repo and its
+          append-only flag moved to Settings › Off-site, where self-backup now
+          has the same card every other domain has: a setup wizard, a connection
+          test, replicate-now, extra destinations and per-destination
+          credentials. Keeping a second, plainer copy of the repo field here
+          would mean two places to edit one value, with this page's older
+          snapshot able to overwrite the other. Only path and the enable toggle
+          live here now. */}
+      <p className="text-xs text-carbon-textMuted">{t("config.offsiteMoved")}</p>
 
       <div className="flex items-center gap-3 pt-1">
         <button

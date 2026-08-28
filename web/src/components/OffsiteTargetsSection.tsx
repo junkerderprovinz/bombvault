@@ -8,7 +8,7 @@ import {
   testOffsiteTarget,
 } from "../lib/api";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
-import { offsiteTargetsChanged, subscribeOffsiteTargets } from "../lib/useOffsiteTargets";
+import { offsiteTargetsChanged, subscribeOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
 import { Badge, type BadgeSize } from "./Badge";
@@ -55,7 +55,10 @@ const ROW_BADGE_SIZE: BadgeSize = "medium";
 // visible, half-configured off-site destination the instant it's typed.
 // ---------------------------------------------------------------------------
 
-type Domain = "containers" | "vms" | "flash" | "files";
+// The canonical list, imported rather than re-declared: this file had its own
+// copy that omitted "config", which is half of why self-backup never got a
+// targets section (#176).
+type Domain = OffsiteDomain;
 type T = ReturnType<typeof useT>["t"];
 // "error" was removed from this type — the toast migration below (GlimStone
 // follow-up pass, v8.0.0) replaced that inline-flash outcome with a real

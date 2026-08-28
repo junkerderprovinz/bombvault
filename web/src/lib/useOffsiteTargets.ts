@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import type { OffsiteTarget } from "./api";
+import type { OffsiteTarget, OffsiteDomain } from "./api";
 import { listOffsiteTargets } from "./api";
 
-/** The five domains that can carry an off-site destination. */
-export type OffsiteDomain = "containers" | "vms" | "flash" | "config" | "files";
+/** Re-exported so the many callers that import it from here keep working; the
+ *  definition itself lives in api.ts, which is the one place it can be edited
+ *  without leaving a stale copy behind. */
+export type { OffsiteDomain } from "./api";
 
 /** Event name for "a domain's off-site target rows changed". */
 const OFFSITE_TARGETS_CHANGED = "bv:offsite-targets-changed";

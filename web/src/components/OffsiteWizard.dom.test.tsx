@@ -83,23 +83,26 @@ vi.mock("../lib/api", async (importOriginal) => {
 
 const { OffsiteWizard } = await import("./OffsiteWizard");
 
-// The credentials block renders only for a rest: repo (rclone/s3 carry their
-// own auth), so the domain's off-site repo has to be one.
-function settingsWith(): Settings {
+// The REST username/password FIELDS render only for a rest: repo (s3/rclone
+// carry their own auth), but since #182 the credential-SET selector renders for
+// every remote backend — so the repo URL is a parameter here.
+const REST_REPO = "rest:http://192.168.20.199:8000/containers";
+
+function settingsWith(repo: string = REST_REPO): Settings {
   return {
-    containersOffsite: "rest:http://192.168.20.199:8000/containers",
+    containersOffsite: repo,
     containersOffsiteImmutable: false,
     containersPath: "backups/containers",
     offsiteGrowthBudgetGB: 0,
   } as unknown as Settings;
 }
 
-function Harness() {
+function Harness({ repo }: { repo: string }) {
   const { t } = useT();
   return (
     <OffsiteWizard
       domain="containers"
-      settings={settingsWith()}
+      settings={settingsWith(repo)}
       setSettings={() => {}}
       save={() => { saveCalls++; return Promise.resolve(true); }}
       t={t}
@@ -107,12 +110,12 @@ function Harness() {
   );
 }
 
-async function renderWizard() {
+async function renderWizard(repo: string = REST_REPO) {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <Harness />
+          <Harness repo={repo} />
         </ToastProvider>
       </I18nProvider>
     );
@@ -232,4 +235,34 @@ it("re-reads the destination after saving the repository", async () => {
 
   expect(saveCalls).toBe(1);
   expect(listTargetCalls).toBe(beforeSave + 1);
+});
+
+// ---------------------------------------------------------------------------
+// #182 (manilx): "I can't set s3 credentials when i use s3 as main path and
+// offsite". The whole credentials block, selector included, used to be gated on
+// urlBackend === "rest", on the reasoning that only REST needs a username and
+// password here. True of the FIELDS, wrong for the SELECTOR: a credential set
+// carries S3 keys too, and the replication path resolves whichever set a
+// destination names. So an S3 user was never offered the choice at all and
+// could only ever run on the shared credentials.
+// ---------------------------------------------------------------------------
+
+it("offers the credential selector for an S3 destination, not just a REST one", async () => {
+  await renderWizard("s3:https://s3.eu-central-1.example/bucket");
+
+  const select = screen.getByLabelText(/Credentials|Zugangsdaten/) as HTMLSelectElement;
+  expect(select).toBeTruthy();
+  expect([...select.options].map((o) => o.textContent)).toContain("Backblaze");
+
+  // The REST-only fields must stay away: S3 keys live in the credential set or
+  // the shared cloud credentials, never in this block (#131).
+  expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
+  expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
+});
+
+it("shows no credentials block at all for a local path", async () => {
+  await renderWizard("backups/containers-copy");
+
+  expect(screen.queryByLabelText(/Credentials|Zugangsdaten/)).toBeNull();
+  expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
 });

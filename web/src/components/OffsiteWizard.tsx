@@ -196,6 +196,10 @@ export function OffsiteWizard({
   const [pLimitUpload, setPLimitUpload] = useState(0);
   const [pLimitDownload, setPLimitDownload] = useState(0);
   const [pBudget, setPBudget] = useState(0);
+  // #182: the primary path's own credential set. Carried through every
+  // savePrimarySafety call below, because that PUT writes the FULL config — a
+  // save that omitted this would silently clear the user's choice.
+  const [pCredsRef, setPCredsRef] = useState("");
 
   useEffect(() => {
     if (!primary) return;
@@ -211,6 +215,7 @@ export function OffsiteWizard({
         setPLimitUpload(r.config.limitUpload);
         setPLimitDownload(r.config.limitDownload);
         setPBudget(r.config.growthBudgetGb);
+        setPCredsRef(r.config.credsRef ?? "");
         setPrimaryLoaded(true);
       })
       .catch(() => {
@@ -293,8 +298,16 @@ export function OffsiteWizard({
   // this same page, so a fetched-once copy goes stale the moment one is added.
   const credSets = useCloudCredSets();
   const [primaryTarget, setPrimaryTarget] = useState<OffsiteTarget | null>(null);
-  const credsRef = primaryTarget?.credsRef ?? "";
+  // The wizard edits either a domain's PRIMARY path or one of its off-site
+  // destinations, and both can now name their own credential set (#182). The
+  // two keep their state in different places, so the selector reads whichever
+  // mode is active rather than being duplicated into two near-identical blocks.
+  const credsRef = primary ? pCredsRef : (primaryTarget?.credsRef ?? "");
   const selectedCredSet = credSets.find((c) => c.id === credsRef);
+  // Off-site: the destination row only exists once a repo has been saved.
+  // Primary: the safety row is created on demand by the PUT, so the only thing
+  // to wait for is the initial read that tells us the current value.
+  const canPickCredSet = primary ? primaryLoaded : primaryTarget !== null;
 
   // Step 3 — connection test verdict. GlimStone follow-up pass (v8.0.0): the
   // ok/uninit/fail verdict below is now a toast, the exact same migration
@@ -581,13 +594,32 @@ export function OffsiteWizard({
   // used by both toggleImmutable (immutable + the CURRENT limits/budget) and
   // the bandwidth/budget form's own Save button (limits/budget + the CURRENT
   // immutable flag), so neither one clobbers the field the other owns.
-  async function savePrimarySafety(patch: { immutable?: boolean; limitUpload?: number; limitDownload?: number; growthBudgetGb?: number }) {
+  async function savePrimarySafety(patch: { immutable?: boolean; limitUpload?: number; limitDownload?: number; growthBudgetGb?: number; credsRef?: string }) {
     return setPrimaryRemote(domain as PrimaryRemoteDomain, {
       immutable: patch.immutable ?? immutable,
       limitUpload: patch.limitUpload ?? pLimitUpload,
       limitDownload: patch.limitDownload ?? pLimitDownload,
       growthBudgetGb: patch.growthBudgetGb ?? pBudget,
+      credsRef: patch.credsRef ?? pCredsRef,
     });
+  }
+
+  // #182: pick the primary path's credential set. Mirrors pickCredSet's
+  // optimistic-then-revert shape, but goes through savePrimarySafety so the
+  // limits and immutable flag ride along untouched.
+  async function pickPrimaryCredSet(ref: string) {
+    const prev = pCredsRef;
+    setPCredsRef(ref); // optimistic: the select must not snap back while saving
+    try {
+      const r = await savePrimarySafety({ credsRef: ref });
+      if (!r.ok) {
+        setPCredsRef(prev);
+        push(r.error ?? t("common.actionFailed"), "fail");
+      }
+    } catch {
+      setPCredsRef(prev);
+      push(t("common.actionFailed"), "fail");
+    }
   }
 
   // persistPrimarySafety — the bandwidth-limits/growth-budget form's own
@@ -852,22 +884,34 @@ export function OffsiteWizard({
           </>
         )}
 
-        {/* REST credentials — reuse the cloud-credential endpoints. Only the REST
-            backend needs a username/password; rclone/s3 carry their own auth in
-            their own config, so this block would be pure noise for them (#131). */}
-        {urlBackend === "rest" && (
+        {/* Credentials — reuse the cloud-credential endpoints.
+            #182 (manilx): the SELECTOR belongs to every remote backend, not just
+            REST. A credential set carries S3 keys as well as REST ones, and
+            offsiteModeForTarget resolves whichever set a destination names, so
+            an S3 destination can have its own credentials just as much as a REST
+            one. Gating the whole block on REST meant an S3 user was never
+            offered that choice and could only ever see the shared set.
+            #131 still holds for the FIELDS below: only REST needs a username and
+            password here, since s3/rclone carry their auth in the shared cloud
+            credentials, so for them this block shows the selector and says where
+            the shared ones live. A local path needs no credentials at all. */}
+        {urlBackend !== "none" && urlBackend !== "path" && (
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface p-3 mt-1">
             <span className="text-xs font-medium text-carbon-textSub">{t("offsite.wizard.credentials")}</span>
             {/* #176: which credentials this destination uses. Without this the
                 fields below are the SHARED set, so filling them in from one
                 domain's wizard silently rewrote every other domain's. Only
                 shown once the destination row exists (i.e. a repo was saved). */}
-            {primaryTarget && (
+            {/* No VISIBLE field label: the block heading right above already
+                says "Credentials", and repeating it underneath was only the
+                right shape while that heading named REST specifically. The name
+                moves to aria-label so the control still announces itself. */}
+            {canPickCredSet && (
               <label className="flex flex-col gap-1">
-                <span className="text-xs text-carbon-textSub">{t("offsite.targets.credsLabel")}</span>
                 <select
+                  aria-label={t("offsite.targets.credsLabel")}
                   value={credsRef}
-                  onChange={(e) => void pickCredSet(e.target.value)}
+                  onChange={(e) => void (primary ? pickPrimaryCredSet(e.target.value) : pickCredSet(e.target.value))}
                   className={inputCls}
                 >
                   <option value="">{t("offsite.targets.credsDefault")}</option>
@@ -883,6 +927,8 @@ export function OffsiteWizard({
               <span className="text-xs text-carbon-textMuted">
                 {t("offsite.wizard.credsInSet").replace("{name}", selectedCredSet.name)}
               </span>
+            ) : urlBackend !== "rest" ? (
+              <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.credsSharedElsewhere")}</span>
             ) : (
               <>
                 <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.credsShared")}</span>

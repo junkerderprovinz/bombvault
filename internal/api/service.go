@@ -1205,19 +1205,33 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 // never unconditionally overwritten, which would wipe it to empty for existing
 // single-off-site installs.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
-	mode := s.ModeFor(settings)
-	if strings.TrimSpace(target.CredsRef) != "" {
-		if c, err := s.decodeCloudFor(settings, target.CredsRef); err != nil {
-			log.Printf("api: offsite target %s: cloud creds decode failed (ignoring, falling back to shared): %v", target.ID, err) //nolint:gosec // G706: target.ID is an opaque store-generated id
-		} else {
-			mode.Env = cloudEnv(c)
-			if c.S3StorageClass != "" {
-				mode.StorageClass = c.S3StorageClass
-			}
-		}
-	}
+	mode := s.applyTargetCreds(s.ModeFor(settings), settings, target)
 	if target.StorageClass != "" {
 		mode.StorageClass = target.StorageClass
+	}
+	return mode
+}
+
+// applyTargetCreds overrides mode's Env (and storage class) with the credential
+// set a target NAMES, if it names one; a target with an empty CredsRef is
+// returned untouched, which is every install that never picked a set.
+//
+// Deliberately shared between the off-site path (offsiteModeForTarget) and the
+// primary path (primaryModeFor): both ask the same row type the same question,
+// and a second copy of this resolution is exactly how the two would drift into
+// answering it differently.
+func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, target store.OffsiteTarget) restic.Mode {
+	if strings.TrimSpace(target.CredsRef) == "" {
+		return mode
+	}
+	c, err := s.decodeCloudFor(settings, target.CredsRef)
+	if err != nil {
+		log.Printf("api: target %s: cloud creds decode failed (ignoring, falling back to shared): %v", target.ID, err) //nolint:gosec // G706: target.ID is an opaque store-generated id
+		return mode
+	}
+	mode.Env = cloudEnv(c)
+	if c.S3StorageClass != "" {
+		mode.StorageClass = c.S3StorageClass
 	}
 	return mode
 }
@@ -3748,8 +3762,8 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	mode := s.ModeFor(settings)
-	mode.Limits = s.primaryLimitsFor("containers", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
+	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
+	mode := s.primaryModeFor(settings, "containers", repo)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -6890,8 +6904,8 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	mode := s.ModeFor(settings)
-	mode.Limits = s.primaryLimitsFor("vms", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
+	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
+	mode := s.primaryModeFor(settings, "vms", repo)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -8005,8 +8019,8 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	mode := s.ModeFor(settings)
-	mode.Limits = s.primaryLimitsFor("flash", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
+	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
+	mode := s.primaryModeFor(settings, "flash", repo)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -8216,8 +8230,8 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	mode := s.ModeFor(settings)
-	mode.Limits = s.primaryLimitsFor("files", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
+	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
+	mode := s.primaryModeFor(settings, "files", repo)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
@@ -9008,8 +9022,8 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	mode := s.ModeFor(settings)
-	mode.Limits = s.primaryLimitsFor("config", repo) // issue #152: a remote primary's saved bandwidth caps, else zero (unlimited)
+	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
+	mode := s.primaryModeFor(settings, "config", repo)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return backup.Summary{}, err
 	}
