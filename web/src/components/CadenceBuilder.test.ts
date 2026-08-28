@@ -56,3 +56,47 @@ describe("formatCadence", () => {
     expect(formatCadence("off", t, "en")).toBe("");
   });
 });
+
+// ---------------------------------------------------------------------------
+// #183 (kramttocs): a schedule set to Wednesday was summarised as "weekly (Tue)"
+// on the dashboard, one day early, while the Schedules tab showed Wed correctly.
+//
+// The weekday label is produced by formatting a Date built with Date.UTC, so it
+// is midnight UTC. Formatting it in the VIEWER's zone shifts it backwards
+// anywhere west of UTC, and midnight minus a few hours lands on the previous
+// day. It was therefore wrong for the Americas and right for Europe, which is
+// how it survived: it looks correct wherever it was written.
+// ---------------------------------------------------------------------------
+describe("weekday labels are zone-independent", () => {
+  const days: [string, string][] = [
+    ["Mon", "Mon"],
+    ["Tue", "Tue"],
+    ["Wed", "Wed"],
+    ["Thu", "Thu"],
+    ["Fri", "Fri"],
+    ["Sat", "Sat"],
+    ["Sun", "Sun"],
+  ];
+
+  it.each(days)("names %s as %s regardless of the viewer's timezone", (stored, label) => {
+    // A negative UTC offset is what triggers the bug. Rather than depend on the
+    // machine's zone, assert the formatter is asked for UTC explicitly, since
+    // that is the property that makes every zone agree.
+    const seen: Intl.DateTimeFormatOptions[] = [];
+    const real = Intl.DateTimeFormat;
+    // @ts-expect-error deliberately swapping the constructor for the assertion
+    Intl.DateTimeFormat = function (loc: string, opts: Intl.DateTimeFormatOptions) {
+      seen.push(opts);
+      return new real(loc, opts);
+    };
+    try {
+      expect(formatCadence(`weekly ${stored} 02:00`, t, "en")).toBe(`weekly (${label}) at 2:00`);
+    } finally {
+      Intl.DateTimeFormat = real;
+    }
+    expect(seen.length).toBeGreaterThan(0);
+    for (const opts of seen) {
+      expect(opts.timeZone).toBe("UTC");
+    }
+  });
+});
