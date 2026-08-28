@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactNode, Ref } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { widthStage, type WidthStage } from "../lib/controls";
 import { useLabelMode } from "../lib/useLabelMode";
@@ -61,6 +61,7 @@ export function Button({
   title,
   hueIndex,
   busy = false,
+  ref,
 }: {
   /** The button's words. Always present, in every mode: visible as text, or
    *  hidden but still announced and shown as the tooltip in glyph mode.
@@ -89,6 +90,10 @@ export function Button({
   title?: string;
   /** This button's rainbow position, same meaning as Badge's own prop. */
   hueIndex?: number;
+  /** Forwarded to the underlying <button>. Dialogs need it: they move focus
+   *  to their close control on open, which is what makes the Escape key and
+   *  the focus trap behave. */
+  ref?: Ref<HTMLButtonElement>;
   /** Shows a spinner in place of the glyph. Deliberately separate from
    *  `disabled`: a busy button is usually disabled too, but the two are not
    *  the same thing and a caller may want one without the other. */
@@ -118,6 +123,7 @@ export function Button({
 
   return (
     <button
+      ref={ref}
       type={type}
       onClick={onClick}
       disabled={disabled}

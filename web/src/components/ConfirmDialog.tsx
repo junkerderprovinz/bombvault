@@ -36,6 +36,8 @@
 // ---------------------------------------------------------------------------
 import type { Ref } from "react";
 import { Badge } from "./Badge";
+import { Button } from "./Button";
+import { IconClose } from "./Sidebar";
 
 export type ConfirmTone = "fail" | "warn";
 
@@ -126,21 +128,16 @@ export function ConfirmDialog({
           <h2 id="confirmdialog-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{title}</Badge>
           </h2>
-          <button
-            type="button"
+          {/* #178, [201]: the dialog's close control is a Button like every
+              other clickable thing, so it follows the label mode instead of
+              being a permanently glyph-only square of its own. */}
+          <Button
+            label={closeLabel}
+            glyph={<IconClose />}
+            tone="neutral"
             onClick={onCancel}
-            aria-label={closeLabel}
-            className="shrink-0 rounded-control p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
-          >
-            {/* FILLED × (design-language.md "Icon glyphs", rule 219 — an X
-                needs real geometry, two overlapping filled rects, not a
-                thicker stroke): same technique as Sidebar.tsx's own
-                IconClose, just at this dialog header's own 20×20 scale. */}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <rect x="9" y="3" width="2" height="14" rx="1" transform="rotate(45 10 10)" />
-              <rect x="9" y="3" width="2" height="14" rx="1" transform="rotate(-45 10 10)" />
-            </svg>
-          </button>
+            className="shrink-0"
+          />
         </div>
 
         {/* Body (scrolls) — the real per-call-site question/explanation. Also

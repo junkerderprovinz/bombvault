@@ -36,7 +36,14 @@ function findAll(node: unknown, pred: (n: ElementNode) => boolean, out: ElementN
 }
 
 function findAllButtons(tree: unknown): ElementNode[] {
-  return findAll(tree, (n) => n.type === "button");
+  // Both kinds count: a raw <button> element, and the shared <Button>
+  // component (#178), whose node type is the function itself rather than the
+  // string "button". This tree is never rendered, only inspected, so a
+  // component node stays a component node.
+  return findAll(
+    tree,
+    (n) => n.type === "button" || (typeof n.type === "function" && n.type.name === "Button")
+  );
 }
 
 function visibleText(node: unknown): string {
@@ -99,9 +106,11 @@ describe("ConfirmDialog", () => {
     let calls = 0;
     const tree = ConfirmDialog({ ...baseProps, onCancel: () => calls++ });
     const buttons = findAllButtons(tree);
-    // The header close button is the only one with an aria-label but no
-    // visible text of its own (an SVG glyph child, not a text label).
-    const closeBtn = buttons.find((b) => b.props?.["aria-label"] === "Close" && visibleText(b) === "");
+    // Since #178 the close control is a <Button> like any other, so its name
+    // is its LABEL rather than an aria-label on a glyph-only square. It is
+    // still the only button carrying the close label, which is the property
+    // that matters: the header's X and the footer's Cancel stay distinct.
+    const closeBtn = buttons.find((b) => b.props?.label === "Close");
     expect(closeBtn).toBeDefined();
     closeBtn!.props!.onClick();
     expect(calls).toBe(1);
@@ -110,9 +119,12 @@ describe("ConfirmDialog", () => {
   it("gives the header close (X) button its OWN accessible name, distinct from the footer Cancel button", () => {
     const tree = ConfirmDialog(baseProps);
     const buttons = findAllButtons(tree);
-    const closeBtn = buttons.find((b) => visibleText(b) === "" && b.props?.["aria-label"] !== undefined);
-    expect(closeBtn?.props?.["aria-label"]).toBe("Close");
-    expect(closeBtn?.props?.["aria-label"]).not.toBe(baseProps.cancelLabel);
+    const closeBtn = buttons.find((b) => b.props?.label === "Close");
+    expect(closeBtn?.props?.label).toBe("Close");
+    // The point of this test survives the #178 conversion unchanged: the two
+    // controls must not share a name, or "Cancel" and "Close" become one
+    // thing to anyone navigating by name.
+    expect(closeBtn?.props?.label).not.toBe(baseProps.cancelLabel);
   });
 
   it("calls onCancel when the backdrop itself is clicked (not a click inside the card)", () => {

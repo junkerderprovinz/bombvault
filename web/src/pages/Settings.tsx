@@ -9,6 +9,7 @@ import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import {
   CONTROL_AXES,
+  groupWidth,
   LABEL_MODES,
   getLabelMode,
   setLabelMode,
@@ -1010,17 +1011,28 @@ export function AccentCard({
             member of this row"; it is not an un-migrated grey. Same reasoning
             applies verbatim to the rainbow-palette reset badge below, whose
             row of eight swatches makes the clash even more literal. */}
-        <Button
-          label={t("settings.accentReset")}
-          glyph={<IconResetArrow />}
-          tone="accent"
+        {/* DELIBERATE EXCEPTION to the #178 button engine (jdp, 2026-08-29:
+            "der Resetbutton von Akzentfarbe und Farbpallette soll so bleiben
+            wie er war"). It stays a square icon badge with a NEUTRAL fill,
+            for the reason spelled out above: this control sits inside the row
+            of colours it throws away, and giving it a label and an accent
+            fill would make it read as a member of that row. Do not fold this
+            into Button. */}
+        <Badge
+          as="button"
+          shape="square"
+          size="icon"
+          tone="neutral"
+          tip={t("settings.accentReset")}
           onClick={() => {
             selectAccent(DEFAULT_ACCENT);
             setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS));
           }}
           disabled={nothingToReset}
-          className={"border-2 border-carbon-border"}
-        />
+          className="border-2 border-carbon-border"
+        >
+          <IconResetArrow />
+        </Badge>
       </div>
     </div>
   );
@@ -7288,6 +7300,14 @@ export function SettingsPage() {
         }}
         size="lg"
         equalWidth
+        /* #178, [200]: the strip joins the size system, with jdp's stated
+           exception that these segments must be equal ALWAYS. groupWidth picks
+           the stage the longest tab name needs in the current language and
+           gives it to every tab, so the strip is uniform by construction
+           rather than by measurement. That also retires the failure this
+           file's own header describes: the measured pin once grew to 1424px
+           in German and wrapped the seven tabs onto two rows. */
+        segmentWidth={groupWidth(TAB_ORDER.map((k) => t(`settings.tab.${k}` as TranslationKey)))}
       />
       </div>
       </div>
@@ -9371,6 +9391,8 @@ export function SettingsPage() {
       </Card>
       )}
 
+      {tab === "general" && (
+      <>
       {/* Control labels (#178) — how much of a control's identity is shown.
           Three axes rather than one switch, because the right answer differs
           per axis: a sidebar reduced to glyphs narrows the whole page, tabs do
@@ -9409,6 +9431,8 @@ export function SettingsPage() {
           ))}
         </div>
       </Card>
+      </>
+      )}
 
       {/* Colors (GlimStone form-engine Phase 2, Task 1; the accent Card and
           the Rainbow Card, MERGED — jdp, live-review: "Die card von
@@ -9677,14 +9701,22 @@ export function SettingsPage() {
                 #1D99F3 #BE95FF #FF7EB6). Giving it a rainbow fill would make
                 the control that RESETS the palette look like a ninth entry
                 IN the palette. Do not "fix" this to tone="active". */}
-            <Button
-              label={t("settings.rainbowPaletteReset")}
-              glyph={<IconResetArrow />}
-              tone="accent"
+            {/* Same deliberate exception as the accent reset above (jdp,
+                2026-08-29), and for a reason that is even more literal here:
+                a row of eight palette swatches, with a ninth control that
+                empties it. */}
+            <Badge
+              as="button"
+              shape="square"
+              size="icon"
+              tone="neutral"
+              tip={t("settings.rainbowPaletteReset")}
               onClick={() => updateRainbow({ palette: RAINBOW })}
               disabled={!rainbow.on || paletteIsDefault}
-              className={"border-2 border-carbon-border"}
-            />
+              className="border-2 border-carbon-border"
+            >
+              <IconResetArrow />
+            </Badge>
             </div>
           </div>
         </div>

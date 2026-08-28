@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { IconClose } from "./Sidebar";
 
 // ---------------------------------------------------------------------------
 // WhatsNewDialog (#48) — a "What's new" modal shown once when a NEW BombVault
@@ -254,20 +255,17 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
           <h2 id="whatsnew-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("whatsnew.title").replace("{version}", version)}</Badge>
           </h2>
-          <button
+          {/* #178, [201]: the dialog's close control is a Button like every
+              other clickable thing, so it follows the label mode instead of
+              being a permanently glyph-only square of its own. */}
+          <Button
             ref={closeRef}
-            type="button"
+            label={t("whatsnew.close")}
+            glyph={<IconClose />}
+            tone="neutral"
             onClick={onClose}
-            aria-label={t("whatsnew.close")}
-            className="shrink-0 rounded-control p-1 text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text"
-          >
-            {/* FILLED × (design-language.md "Icon glyphs", rule 219) — same
-                technique as Sidebar.tsx's own IconClose. */}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <rect x="9" y="3" width="2" height="14" rx="1" transform="rotate(45 10 10)" />
-              <rect x="9" y="3" width="2" height="14" rx="1" transform="rotate(-45 10 10)" />
-            </svg>
-          </button>
+            className="shrink-0"
+          />
         </div>
 
         {/* Body (scrolls) */}

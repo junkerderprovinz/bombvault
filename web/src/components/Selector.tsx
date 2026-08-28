@@ -374,6 +374,17 @@ interface SelectorCommon {
    *    Default false: every pre-existing "chip" call site, and every small
    *  "well" call site, keeps its own content-hugging width. */
   equalWidth?: boolean;
+  /** A fixed CSS width for every segment, replacing `equalWidth`'s live
+   *  measurement (#178, [200]).
+   *
+   *  jdp asked for the Settings tab strip to join the button size system while
+   *  staying "wirklich immer gleich breit". Measuring gets the second half
+   *  right but not the first: the pinned width is whatever the widest
+   *  translation happens to need, which is how this strip once grew to 1424px
+   *  in German and wrapped onto two rows. A stage from lib/controls is decided
+   *  before the first paint and is bounded, so the strip cannot surprise
+   *  anyone in a language nobody tested. */
+  segmentWidth?: string;
   /** Bumps the idle "chip" fill one step deeper — `bg-carbon-surface3`
    *  instead of the default `bg-carbon-surface2` (jdp, live-review: "Aus,
    *  Täglich, Wöchentlich, Alle N Tage, Cron sollen auch im nicht
@@ -696,6 +707,7 @@ export function Selector(props: SelectorProps) {
     plain = false,
     variant = "chip",
     equalWidth = false,
+  segmentWidth,
     raised = false,
     disabled = false,
     className = "",
@@ -1091,7 +1103,9 @@ export function Selector(props: SelectorProps) {
           ? (hueVars(rainbowAt(i)) as CSSProperties)
           : undefined;
         const widthStyle: CSSProperties | undefined =
-          pinWidth && matchedWidth !== null
+          segmentWidth
+            ? { width: segmentWidth }
+            : pinWidth && matchedWidth !== null
             ? { width: `${matchedWidth}px` }
             : undefined;
         const itemStyle =
