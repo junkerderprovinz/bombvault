@@ -90,16 +90,74 @@ func newForeignSessionID() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
+// isRcloneLocation reports whether a location would be served by rclone: either
+// the explicit "rclone:" scheme, or the unprefixed remote-name shape
+// ("MyB2:bucket/path") that restic also hands to rclone. Both draw their
+// credentials from RCLONE_CONFIG rather than the process env, which is why a
+// foreign session can never make them safe by supplying credentials.
+func isRcloneLocation(location string) bool {
+	loc := strings.TrimSpace(location)
+	if strings.HasPrefix(strings.ToLower(loc), "rclone:") {
+		return true
+	}
+	return restic.LooksLikeUnprefixedRemote(loc)
+}
+
+// checkForeignCreds verifies the caller supplied the credentials the chosen
+// backend actually needs, not merely a non-empty field. A presence check would
+// let {"s3Region":"x"} open a remote session while contributing no authority at
+// all — the request would then succeed on whatever credentials happened to be
+// ambient, which is the situation the gate exists to rule out.
+//
+// Backends whose credentials restic reads from somewhere other than the process
+// env (sftp: uses SSH keys/agent, azure:/gs: use their own env or file
+// conventions) are not given a bespoke rule here: they still need SOMETHING, and
+// requiring at least one supplied field keeps them behind a conscious step
+// rather than silently inheriting.
+func checkForeignCreds(location string, creds *CloudCreds) error {
+	const remedy = ", or mount its backup share and point at a local path instead"
+	if creds == nil {
+		return errors.New("a remote repository needs its own credentials: enter the other server's backend credentials" + remedy)
+	}
+	loc := strings.ToLower(strings.TrimSpace(location))
+	switch {
+	case strings.HasPrefix(loc, "s3:"), strings.HasPrefix(loc, "b2:"):
+		if strings.TrimSpace(creds.S3KeyID) == "" || creds.S3Secret == "" {
+			return errors.New("this repository needs an access key ID and a secret access key — the ones belonging to the OTHER server's bucket" + remedy)
+		}
+	case strings.HasPrefix(loc, "rest:"):
+		if strings.TrimSpace(creds.RESTUser) == "" || creds.RESTPassword == "" {
+			return errors.New("a rest: repository needs the REST username and password of the OTHER server" + remedy)
+		}
+	default:
+		if cloudEnv(*creds) == nil {
+			return errors.New("a remote repository needs its own credentials: enter the other server's backend credentials" + remedy)
+		}
+	}
+	return nil
+}
+
 // OpenForeign opens a foreign BombVault repository read-only and returns a new
-// session id plus the full inventory. location MUST be a LOCAL, mounted-share
-// path (a relative subpath under the host mount root) — the real use case is
-// mounting server A's backup share on server B and pointing at it. A restic
-// REMOTE backend (rest:/s3:/sftp:/rclone:/b2:/gs:/azure:, or an unprefixed rclone
-// remote name) is REJECTED: resolving one would hand a third-party URL to restic
-// together with THIS instance's own off-site credentials — a confused-deputy
-// credential disclosure. Foreign sessions therefore never attach cloudEnv and
-// never touch a remote backend. foreignKey is the OTHER instance's APP_KEY;
+// session id plus the full inventory. foreignKey is the OTHER instance's APP_KEY;
 // nothing is persisted (Settings is never written).
+//
+// location is either a LOCAL, mounted-share path (a relative subpath under the
+// host mount root — mount server A's backup share on server B and point at it),
+// or a restic REMOTE backend (rest:/s3:/sftp:/rclone:/b2:/gs:/azure:, or an
+// unprefixed rclone remote name).
+//
+// A remote location REQUIRES creds: the foreign repository's OWN backend
+// credentials, supplied by the user for this one session. That requirement is
+// the confused-deputy fix (#61), not a leftover of it. Resolving a remote
+// location with THIS instance's off-site credentials would let a user-controlled
+// URL harvest authority the local instance was never asked to lend. Passing the
+// foreign repo's own credentials removes the borrowed authority entirely, which
+// is what makes remote foreign restores safe to allow at all (#185). The local
+// instance's own cloudEnv is NEVER attached to a foreign session, remote or not,
+// and creds are used for this call only — never written to Settings.
+//
+// For a local location creds are ignored: a mounted path needs no backend
+// credentials, so nothing travels that the location could not use anyway.
 //
 // Mode detection is a pure read: probe RepoOpens with the key-derived encrypted
 // mode first, then the plain (unencrypted) mode. Every probe — and every later
@@ -107,32 +165,58 @@ func newForeignSessionID() (string, error) {
 // else's repo read-only never writes a lock file into it. EnsureRepo is
 // deliberately NOT used — it would initialize a missing repo, i.e. write into the
 // foreign location.
-func (s *Service) OpenForeign(ctx context.Context, location, foreignKey string) (string, ForeignInventory, error) {
+func (s *Service) OpenForeign(ctx context.Context, location, foreignKey string, creds *CloudCreds) (string, ForeignInventory, error) {
 	if strings.TrimSpace(location) == "" {
 		return "", ForeignInventory{}, errors.New("missing repository location")
 	}
 	if !foreignKeyRe.MatchString(foreignKey) {
 		return "", ForeignInventory{}, errors.New("the APP_KEY must be exactly 64 lowercase hex characters")
 	}
-	// Only a locally mounted repository path is allowed. resolveRepo would pass a
-	// remote-backend location (rest:/s3:/… — see restic.IsRemoteRepo) straight to
-	// restic, which the foreign session would then probe with the local instance's
-	// off-site credentials against a location the user controls. Reject it — and
-	// the unprefixed-remote typo ("BackBlaze:bucket") — before any engine call.
-	if restic.IsRemoteRepo(location) || restic.LooksLikeUnprefixedRemote(location) {
-		return "", ForeignInventory{}, errors.New("only a locally mounted repository path is supported here; mount the other server's backup share and point at it")
+
+	// A remote location without its own credentials is refused before any engine
+	// call, so restic is never handed a third-party URL while this instance's
+	// off-site credentials are in scope.
+	remote := restic.IsRemoteRepo(location) || restic.LooksLikeUnprefixedRemote(location)
+	var env []string
+	var storageClass string
+	if remote {
+		// rclone is refused outright, and cannot be fixed by supplying credentials:
+		// rclone reads its remotes from RCLONE_CONFIG — THIS instance's file — and
+		// ignores the process env a caller can influence. A `rclone:` location would
+		// therefore authenticate to a caller-chosen endpoint with OUR stored remote
+		// secrets, which is the confused-deputy disclosure this whole gate exists to
+		// prevent. There is no per-session foreign rclone config to offer instead.
+		// NoAmbientCreds below is belt-and-braces for the schemes we do allow.
+		if isRcloneLocation(location) {
+			return "", ForeignInventory{}, errors.New("an rclone remote is not supported here: it would use this server's own rclone configuration. Use the repository's native URL (s3:, b2:, rest:, sftp:) with its credentials, or mount its backup share and point at a local path")
+		}
+		if err := checkForeignCreds(location, creds); err != nil {
+			return "", ForeignInventory{}, err
+		}
+		env = cloudEnv(*creds)
+		storageClass = creds.S3StorageClass
 	}
+
 	repo, err := s.resolveRepo(location)
 	if err != nil {
 		return "", ForeignInventory{}, err
 	}
 
-	// No cloudEnv is attached: a foreign session is local-only by construction
-	// (remote locations were rejected above), so the local instance's backend
-	// credentials never travel with a foreign probe or restore. NoLock keeps the
-	// read-only session from writing a lock file into the foreign repo.
-	encMode := restic.Mode{Encrypted: true, Password: restickey.Derive(foreignKey), NoLock: true}
-	plainMode := restic.Mode{NoLock: true}
+	// env carries ONLY what the caller supplied for this session; the local
+	// instance's own credentials are never read here. NoLock keeps the read-only
+	// session from writing a lock file into the foreign repo.
+	//
+	// NoAmbientCreds is set for EVERY foreign session, local or remote, and not
+	// just where `remote` is true. A foreign session never needs this instance's
+	// rclone remotes: a genuinely local path has no use for them, and gating on
+	// our own remote-detection would make the withholding only as good as that
+	// detection. It is not good enough — a connection-string shape like
+	// "MyB2,endpoint=http://…:bucket/repo" matches neither IsRemoteRepo nor
+	// LooksLikeUnprefixedRemote (the comma breaks the scheme pattern), so it would
+	// have slipped through as "local" and kept RCLONE_CONFIG attached. Withholding
+	// unconditionally removes that whole class of gap instead of chasing spellings.
+	encMode := restic.Mode{Encrypted: true, Password: restickey.Derive(foreignKey), NoLock: true, NoAmbientCreds: true, Env: env, StorageClass: storageClass}
+	plainMode := restic.Mode{NoLock: true, NoAmbientCreds: true, Env: env, StorageClass: storageClass}
 	var mode restic.Mode
 	switch {
 	case s.engine.RepoOpens(ctx, repo, encMode):

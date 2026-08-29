@@ -4093,11 +4093,15 @@ func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Location string `json:"location"`
 		Key      string `json:"key"`
+		// Creds are the FOREIGN repository's own backend credentials, required
+		// for a remote location and used for this session only (#185). They are
+		// never persisted: OpenForeign does not write Settings.
+		Creds *CloudCreds `json:"creds"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	session, inv, err := h.svc.OpenForeign(r.Context(), body.Location, body.Key)
+	session, inv, err := h.svc.OpenForeign(r.Context(), body.Location, body.Key, body.Creds)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

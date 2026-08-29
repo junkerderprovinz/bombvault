@@ -2438,14 +2438,26 @@ export interface ForeignOpenResponse extends OkEnvelope {
 }
 
 /** POST /api/foreign/open — open a foreign repo read-only with the OTHER
- *  instance's APP_KEY (64 hex). `location` is a relative subpath under the host
- *  mount root (a mounted share) or a restic remote URL (rest:/s3:/…; the LOCAL
- *  instance's stored cloud credentials are reused). Errors (wrong key, not a
- *  repo) arrive as {ok:false, error} at HTTP 200. */
-export function foreignOpen(location: string, key: string): Promise<ForeignOpenResponse> {
+ *  instance's APP_KEY (64 hex). `location` is either a relative subpath under
+ *  the host mount root (a mounted share) or a restic remote URL (rest:/s3:/…).
+ *
+ *  A remote location REQUIRES `creds`: the FOREIGN repository's own backend
+ *  credentials. This instance's stored cloud credentials are never used for a
+ *  foreign session — lending them to a user-supplied URL is the confused-deputy
+ *  disclosure that #61 closed, and supplying the foreign repo's own credentials
+ *  is what makes remote foreign restores possible without reopening it (#185).
+ *  `creds` is used for that one session and never persisted.
+ *
+ *  Errors (wrong key, not a repo, remote without credentials) arrive as
+ *  {ok:false, error} at HTTP 200. */
+export function foreignOpen(
+  location: string,
+  key: string,
+  creds?: CloudCreds,
+): Promise<ForeignOpenResponse> {
   return fetchJSON("/api/foreign/open", {
     method: "POST",
-    body: JSON.stringify({ location, key }),
+    body: JSON.stringify({ location, key, creds: creds ?? null }),
   });
 }
 

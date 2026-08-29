@@ -234,7 +234,7 @@ func TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	sessionID, _, err := svc.OpenForeign(context.Background(), location, strings.Repeat("ab", 32))
+	sessionID, _, err := svc.OpenForeign(context.Background(), location, strings.Repeat("ab", 32), nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}

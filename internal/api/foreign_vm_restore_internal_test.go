@@ -606,7 +606,7 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 	destBase := filepath.ToSlash(filepath.Join(mountRoot, "vmrestore"))
 	writeMountFixture(t, "/", filepath.ToSlash(mountRoot), destBase)
 
-	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}

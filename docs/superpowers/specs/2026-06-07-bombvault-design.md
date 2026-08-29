@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-07
 **Status:** Draft for review
-**Author:** junkerderprovinz (with Claude, via superpowers:brainstorming)
+**Author:** junkerderprovinz
 
 ---
 
