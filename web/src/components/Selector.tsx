@@ -287,6 +287,7 @@ import { createPortal } from "react-dom";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { computeBubblePosition } from "../lib/bubblePosition";
 import { useRainbow } from "../lib/useRainbow";
+import { useLabelMode } from "../lib/useLabelMode";
 
 export interface SelectorItem {
   /** Stable id — what onChange hands back. */
@@ -575,6 +576,10 @@ function SelectorTab({
   onSelect,
   registerRef,
 }: SelectorTabProps) {
+  // #178: how much of a segment is shown follows the "tabs" axis, the same
+  // shared setting the Settings tab strip and every other horizontal selector
+  // obey, so the app has one answer rather than one per strip.
+  const labelMode = useLabelMode("tabs");
   const [tipOpen, setTipOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
@@ -664,7 +669,7 @@ function SelectorTab({
           role={many ? undefined : "tab"}
           aria-selected={many ? undefined : on}
           aria-pressed={many ? on : undefined}
-          aria-label={item.iconOnly ? item.label : undefined}
+          aria-label={item.iconOnly || (labelMode === "glyph" && item.icon) ? item.label : undefined}
           aria-describedby={item.tip && tipOpen ? tooltipId : undefined}
           title={item.title}
           disabled={disabled}
@@ -677,8 +682,16 @@ function SelectorTab({
           onFocus={item.tip ? showTip : undefined}
           onBlur={item.tip ? hideTip : undefined}
         >
-          {item.icon}
-          {!item.iconOnly && <span className="truncate">{item.label}</span>}
+          {/* #178: a segment shows what the "tabs" axis asks for. `iconOnly`
+              is still honoured as the call site's own hard choice, and a
+              segment with NO glyph keeps its text whatever the mode says,
+              for the same reason a glyphless Button does: an empty segment
+              is unusable, an inconsistent strip merely looks uneven. */}
+          {labelMode !== "text" && item.icon}
+          {(labelMode === "text" || !item.iconOnly) &&
+            (labelMode !== "glyph" || !item.icon) && (
+              <span className="truncate">{item.label}</span>
+            )}
         </button>,
       )}
       {item.tip &&
