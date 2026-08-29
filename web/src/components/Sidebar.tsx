@@ -12,6 +12,12 @@ import {
   IconFiles,
   IconReceiver,
   IconFleet,
+  IconDashboard,
+  IconRecovery,
+  IconFlash,
+  IconConfig,
+  IconLayers,
+  IconGear,
 } from "./navGlyphs";
 import { useLabelMode } from "../lib/useLabelMode";
 
@@ -41,6 +47,11 @@ export {
   IconGear,
   IconClose,
   IconCopy,
+  IconDashboard,
+  IconRecovery,
+  IconFlash,
+  IconConfig,
+  IconLayers,
 } from "./navGlyphs";
 
 
@@ -195,194 +206,11 @@ const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
   };
 });
 
-// Simple inline SVG icons (monochrome, 20×20)
-function IconDashboard() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
-      <rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor" />
-      <rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".6" />
-      <rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".6" />
-      <rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".4" />
-    </svg>
-  );
-}
-
-
-
-function IconFlash() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" className="shrink-0">
-      <path d="M11 2L4 11h6l-1 7 7-9h-6l1-7z" fill="currentColor" />
-    </svg>
-  );
-}
-
-
-// Padlock glyph for the Config self-backup tab — REDRAWN (GlimStone
-// follow-up round, jdp's live review, emphatic: "Selbstbackup-Tab: bitte ein
-// anderes Glyph verwenden, das sieht nicht gut aus"). The old sliders/tuner
-// glyph (two tracks + two knobs) is what actually looked wrong, and the
-// live screenshot this round pulled from the real deployed container showed
-// exactly why: its "knobs" were `fill="var(--sidebar-surface, transparent)"`
-// cutout circles, and `--sidebar-surface` is never actually DEFINED anywhere
-// in index.css — the fallback `transparent` is all it ever resolved to, in
-// EVERY theme and EVERY nav state (idle sidebar ground, hovered, and the
-// solid `bg-accent` selected background alike). A cutout that always shows
-// literally nothing is, by construction, invisible against any background
-// whatsoever — confirmed live: the two knobs never rendered at all, in
-// either state, leaving only the two flat bars, which read as a plain "="
-// sign, not "sliders." This wasn't a tuning problem the same shape could be
-// nudged out of; the whole "knob" concept needed dropping, not adjusting —
-// hence a full redesign rather than a path-data patch, per this round's own
-// instructions.
-//
-// New concept: "Selbst-Backup" is BombVault backing up its OWN settings/
-// config, not a domain it protects — a padlock ("this instance's own state,
-// kept secure") reads unambiguously at a glance and needs no internal detail
-// at all to be recognisable, sidestepping the whole "small internal feature
-// disappears at 16px" failure class above. Deliberately NOT a shield: this
-// app's own Settings-page tab strip already has a shield+checkmark glyph
-// for "Integrität" (IconTabIntegrity, Settings.tsx) — reusing that
-// silhouette for a DIFFERENT concept elsewhere in the same app would be a
-// fresh legibility problem of exactly the kind this round exists to fix, not
-// a solution to it. Deliberately NOT a gear-with-arrow either, per this
-// glyph's own long-standing "distinct from the Settings cog below" rule —
-// even a small secondary gear risks reading as "a second settings icon" two
-// rows away from the real one.
-//
-// Two plain filled shapes, no stroke, no cutout, no colour-on-colour overlap
-// (this file's own IconCopy comment names the exact two failure modes this
-// avoids): a ring-band shackle (the SAME two-concentric-arcs "thin filled
-// shape" technique IconRecovery below already uses for its own circular
-// arrow, just closed into a full loop instead of an open sweep) sitting
-// directly above a solid rounded-rect body — the shackle's own two straight
-// legs run flush into the body's top edge with zero gap, so the two pieces
-// read as one continuous padlock silhouette (exactly how a plain-colour
-// emoji/icon padlock always draws this — the outline alone carries the
-// whole shape, no internal keyhole needed or attempted).
-function IconConfig() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M6.6 9V6.4a3.4 3.4 0 1 1 6.8 0V9h-1.8V6.4a1.6 1.6 0 1 0-3.2 0V9Z" />
-      <rect x="4.2" y="9" width="11.6" height="8.6" rx="1.8" />
-    </svg>
-  );
-}
-
-function IconSettings() {
-  // Standard 8-tooth cog/gear — conventional settings symbol
-  return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 0 1-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 0 1 .947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 0 1 2.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 0 1 2.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 0 1 .947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 0 1-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 0 1-2.287-.947zM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
-      />
-    </svg>
-  );
-}
-
-// Circular "restore" arrow — a recovery/roll-back glyph for the Recovery tab.
-// FILLED (design-language.md "Icon glyphs"): the old glyph was two open
-// strokes (a big arc + an L-shaped arrowhead) — a "line glyph" per rule 219,
-// which needs real geometry, not a thicker stroke. Redrawn as one filled
-// ring segment (rule 220's "thin filled shape" technique — two concentric
-// arcs, outer r=7.4 / inner r=5.6, closed into a band) sweeping 270°
-// clockwise from the right (3 o'clock) up to the top (12 o'clock), plus a
-// solid filled triangular arrowhead capping the top end and pointing back
-// along the sweep — same "mostly a circle, gap + arrowhead at one end"
-// reading as the old stroke version, just filled. Same construction reused
-// at the smaller 16×16 icon-only-badge scale for this file's own IconRestore
-// below — the two read as the same visual family.
-//   NOT shared any more with Settings.tsx's "reset to default" glyph
-// (IconResetArrow, formerly IconResetSwirl): that one deliberately diverged
-// to a bolder ring/arrowhead ratio for its own harder legibility case (16px,
-// beside 8 competing colour swatches) — see IconResetArrow's own header
-// comment in Settings.tsx. This icon and IconRestore below are unaffected
-// and keep their original, already-correct-for-their-own-context proportions.
-function IconRecovery() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M17.4 10A7.4 7.4 0 1 1 10 2.6L10 4.4A5.6 5.6 0 1 0 15.6 10Z" />
-      <path d="M10 1.6 5.4 3.5 10 5.4Z" />
-    </svg>
-  );
-}
-
-
-
-
-
-
-
-
-// IconSave (a second, plain save-disk glyph that used to sit beside
-// IconBackupNow's then-arrowed disk) REMOVED — its only callers were
-// Containers.tsx's four disclosure-panel
-// editors (FoldersEditor/StopContainersEditor/ExcludesEditor/
-// HooksEditor), each of which used it purely for an explicit "Speichern"
-// icon-badge button. Live-save conversion (jdp, live review: "Brauchen wir
-// die Speichern-Buttons in den Aufklappcards überhaupt? Es soll doch immer
-// live speichern.") removed every one of those buttons — each editor now
-// auto-saves instead (see HooksEditor's own header comment in Containers.tsx
-// for the full writeup) — leaving this glyph with zero remaining call sites,
-// so it goes too rather than lingering as dead code. (It was also the
-// specific glyph jdp flagged as illegible at render size — moot now that
-// nothing renders it, but if a genuine "explicit save/commit" button ever
-// returns to this app, reuse IconBackupNow above rather than reviving this
-// one — that glyph has since been redrawn to the proportions that actually
-// survive 16px, which this one never had.)
-
-
-// VM backup-method pair (jdp, live review: "die Methode für den VM-Backup
-// (Live und graceful) bitte in quadratische Badges mit Glyph umformen") — the
-// two glyphs the VMs page's method Selector paints as icon-only segments, at
-// this file's own 16×16 icon-only-badge scale with the same solid,
-// `currentColor`-only, no-`stroke` construction as everything else here
-// (design-language.md's icon-glyph rule).
-//
-// They are a deliberate PAIR and have to stay apart at 16px, because they sit
-// side by side in one 2-segment Selector where only the ACTIVE segment carries
-// a fill — once colour is spent on the badge background rather than the glyph
-// (the icon-only-badge rule), the silhouette is the only thing left telling
-// the two states apart. Hence one round shape against one angular one, rather
-// than two members of the same family: a "play" triangle beside a power ring
-// would read at this size as two variants of one control, not as two
-// different methods.
-
-
-
-
-
-
-
-
-
-
-// Stacked-layers glyph for the Simple/Advanced view toggle — "more layers = more
-// controls". Deliberately distinct from IconConfig (sliders) and IconSettings (cog).
-// FILLED (design-language.md "Icon glyphs"): the top diamond was ALREADY a
-// closed shape under its old stroke, so per rule 218 it flips directly to
-// `fill="currentColor"` with the same path data. The two lower "V" folds were
-// open line glyphs (rule 219) — each redrawn as a thin filled ribbon (two
-// parallel V-paths closed into one band, rule 220's thin-filled-shape
-// technique) with a small gap left above it so the three layers still read
-// as separate, not fused into one blob.
-function IconLayers() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
-      <path d="M2 12.6 12 16.6 22 12.6 22 13.9 12 17.9 2 13.9Z" />
-      <path d="M2 18.5 12 22.5 22 18.5 22 19.8 12 23.8 2 19.8Z" />
-    </svg>
-  );
-}
-
 // `transition` (not just `transition-colors`) so the transform-based hover/press
 // micro-interactions below animate too; all transforms are motion-safe-gated so
 // reduced-motion users get colour-only feedback (Item 7a/7d).
 const navBase =
-  "flex items-center gap-3 px-3.5 py-2.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
+  "bv-nav-row flex items-center gap-3 px-3.5 py-2.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
 const navActive =
   "bg-accent text-accentContrast";
 // `rtl:-translate-x-0.5!` — physical `translate-x`, same trap as the Toggle
@@ -756,7 +584,7 @@ export function Sidebar({ settings }: SidebarProps) {
               <NavItem
                 to="/settings"
                 label={t("nav.settings")}
-                icon={<IconSettings />}
+                icon={<IconGear />}
                 hueIndex={nextHue()}
               />
             </div>

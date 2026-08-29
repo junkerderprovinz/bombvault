@@ -66,6 +66,15 @@ NAV = [
     ("IconGear", "interface-essential/cog.svg", "Settings"),
     ("IconClose", "interface-essential/delete-1.svg", "Close"),
     ("IconCopy", "interface-essential/copy-paste.svg", "Copy"),
+    # The last five nav-rail glyphs. They were hand-drawn at 22x22 on a 20-unit
+    # grid while everything generated here renders 16x16 on a 14-unit one, so
+    # six rows of the rail sat at one size and six at another and the labels
+    # beside them did not line up. Same source now, same box, one family.
+    ("IconDashboard", "interface-essential/dashboard-3.svg", "Dashboard"),
+    ("IconRecovery", "computer-devices/database-refresh.svg", "Recovery, rebuild from backups"),
+    ("IconFlash", "computer-devices/usb-drive.svg", "The Unraid boot flash drive"),
+    ("IconConfig", "interface-essential/vertical-slider-square.svg", "Configuration"),
+    ("IconLayers", "interface-essential/layout-window-2.svg", "Simple/advanced view"),
 ]
 
 ATTRIBUTION = """// ---------------------------------------------------------------------------

@@ -15,6 +15,7 @@
 // path under test never actually touches.
 // ---------------------------------------------------------------------------
 import { describe, expect, it, vi } from "vitest";
+import { setLabelMode } from "../lib/controls";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { PathModeSwitch } from "./PathModeSwitch";
@@ -45,7 +46,7 @@ function renderSwitch(value = "", onChange = vi.fn()) {
 }
 
 describe("PathModeSwitch — icon-only Selector integration", () => {
-  it("renders a real tablist with exactly two icon-only tabs, accessible by their plain-language names", () => {
+  it("renders a real tablist of two tabs, accessible by their plain-language names", () => {
     renderSwitch();
     const list = screen.getByRole("tablist");
     const tabs = screen.getAllByRole("tab");
@@ -53,8 +54,27 @@ describe("PathModeSwitch — icon-only Selector integration", () => {
     expect(list.getAttribute("aria-label")).toBe("Containers path");
     expect(screen.getByRole("tab", { name: "Local" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Remote" })).toBeTruthy();
-    // Neither tab renders its own visible text span — icon-only.
-    for (const tab of tabs) expect(tab.querySelector("span.truncate")).toBeNull();
+  });
+
+  // These two segments used to be pinned to a square glyph with `iconOnly`, in
+  // every mode, which is the square badge jdp asked to abolish: neither the
+  // label mode nor the width system could reach them. They now follow the
+  // "tabs" axis like every other selector, and the accessible name survives
+  // the glyph-only mode, which is the part that must never regress.
+  it("follows the tabs label mode instead of being pinned to a glyph", () => {
+    setLabelMode("tabs", "textGlyph");
+    renderSwitch();
+    expect(screen.getByRole("tab", { name: "Local" }).querySelector("span.truncate")).toBeTruthy();
+    cleanup();
+
+    setLabelMode("tabs", "glyph");
+    renderSwitch();
+    for (const tab of screen.getAllByRole("tab")) {
+      expect(tab.querySelector("span.truncate")).toBeNull();
+    }
+    expect(screen.getByRole("tab", { name: "Local" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Remote" })).toBeTruthy();
+    setLabelMode("tabs", "textGlyph");
   });
 
   it("starts in Local mode for a plain relative path, Remote mode for a restic remote URL", () => {

@@ -221,6 +221,21 @@
   box-sizing: border-box;
 }
 
+/* Nav-rail glyphs (#178). Every one of them now comes from the same generated
+   16px box; the rail's own type is 15px and the rows are 20px tall inside
+   their padding, so they are scaled up HERE rather than in the generator,
+   which serves buttons at their own, smaller size.
+
+   Fixing the box (not just the width) is what actually makes the column line
+   up: an SVG with only one dimension set takes its other from the viewBox, so
+   glyphs whose art is wider than it is tall would each sit a different amount
+   off the shared centre line. */
+.bv-nav-row > svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
 .bv-btn-glyph {
   display: inline-flex;
   flex: none;

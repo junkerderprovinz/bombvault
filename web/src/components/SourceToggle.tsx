@@ -108,19 +108,18 @@ export function SourceToggle({
             id: "local",
             label: t("source.local"),
             icon: <IconFolder />,
-            iconOnly: true,
             tip: t("source.localTip"),
           },
           {
             id: "offsite",
             label: t("source.offsite"),
             icon: <IconCloud />,
-            iconOnly: true,
             tip: t("source.offsiteTip"),
           },
         ]}
         label={t("source.label")}
         select="one"
+        equalWidth
         active={offsite ? "offsite" : "local"}
         onChange={(id) => onChange(id as RepoSource)}
         disabled={disabled}

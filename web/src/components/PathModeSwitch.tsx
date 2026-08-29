@@ -154,20 +154,19 @@ export function PathModeSwitch({
               id: "local",
               label: t("settings.pathMode.local"),
               icon: <IconFolder />,
-              iconOnly: true,
               tip: t("settings.pathMode.localTip"),
             },
             {
               id: "remote",
               label: t("settings.pathMode.remote"),
               icon: <IconCloud />,
-              iconOnly: true,
               tip: t("settings.pathMode.remoteTip"),
             },
           ]}
           label={label}
           size="sm"
           select="one"
+          equalWidth
           active={remoteMode ? "remote" : "local"}
           onChange={(id) => (id === "remote" ? setRemoteMode(true) : switchToLocal())}
         />

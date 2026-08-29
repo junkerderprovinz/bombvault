@@ -248,14 +248,12 @@ function VMMethodSelect({
           id: "graceful",
           label: t("vm.method.graceful"),
           icon: <IconPower />,
-          iconOnly: true,
           tip: t("vm.method.graceful"),
         },
         {
           id: "live",
           label: t("vm.method.live"),
           icon: <IconLive />,
-          iconOnly: true,
           tip: t("vm.method.live"),
         },
       ]}
