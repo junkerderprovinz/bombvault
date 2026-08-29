@@ -181,6 +181,46 @@
 .bv-btn-md { min-width: var(--btn-w-md); }
 .bv-btn-lg { min-width: var(--btn-w-lg); }
 
+/* The remove control inside a pill (Button variant="chip"). It takes no width
+   stage and none of the button height: it has to fit INSIDE its chip, which is
+   a 0.75rem-text pill. It inherits the pill's ink rather than painting its own
+   surface, so it reads as part of the chip and stays correct on an accent
+   background as well as a neutral one. */
+.bv-btn-chip {
+  height: 1.125rem;
+  width: 1.125rem;
+  min-width: 0;
+  padding-inline: 0;
+  border-radius: 999px;
+  opacity: 0.7;
+  transition: opacity 120ms, background-color 120ms;
+}
+
+.bv-btn-chip:hover:not(:disabled) {
+  opacity: 1;
+  background-color: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.bv-btn-chip svg {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+/* Selector segments share the button height (#178, jdp: "die tabs sind
+   insgesamt niedriger als die normalen button. bitte größer machen").
+   A fixed height rather than padding, because padding makes the height depend
+   on the CONTENT: with the label hidden in glyph mode a segment collapsed to
+   its 16px glyph and the whole strip visibly shrank on switching. Height is
+   also what makes a tab strip line up with a button sitting next to it. */
+.bv-seg {
+  height: var(--btn-h);
+  padding-block: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
 .bv-btn-glyph {
   display: inline-flex;
   flex: none;

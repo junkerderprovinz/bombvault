@@ -80,16 +80,15 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
       <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
-      <button
-        key={shake}
-        type="button"
+      <Button
+        label={t("vm.ssh.copy")}
+        labelKey="vm.ssh.copy"
+        tone="neutral"
         onClick={() => void copy()}
         className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${
-          shake ? " glim-shake" : ""
+          shake ? "glim-shake" : ""
         }`}
-      >
-        {t("vm.ssh.copy")}
-      </button>
+      />
     </div>
   );
 }
@@ -273,26 +272,26 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
               ))}
             </select>
           </label>
-          <button
-            key={shakeAccept}
+          <Button
+            label={t("fleet.mesh.accept")}
+            labelKey="fleet.mesh.accept"
+            tone="accent"
             onClick={() => void handleAccept()}
             disabled={busy}
             className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeAccept ? " glim-shake" : ""
+              shakeAccept ? "glim-shake" : ""
             }`}
-          >
-            {t("fleet.mesh.accept")}
-          </button>
-          <button
-            key={shakeDecline}
+          />
+          <Button
+            label={t("fleet.mesh.decline")}
+            labelKey="fleet.mesh.decline"
+            tone="neutral"
             onClick={() => void handleDecline()}
             disabled={busy}
             className={`inline-flex items-center rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-              shakeDecline ? " glim-shake" : ""
+              shakeDecline ? "glim-shake" : ""
             }`}
-          >
-            {t("fleet.mesh.decline")}
-          </button>
+          />
         </div>
       )}
     </div>
@@ -409,16 +408,17 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
                 onClick={onClose}
                 disabled={sending}
               />
-              <button
+              <Button
                 key={shake}
+                label={t("fleet.mesh.send")}
+                labelKey="fleet.mesh.send"
+                tone="accent"
                 onClick={() => void handleSend()}
                 disabled={sending}
-                className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                  shake ? " glim-shake" : ""
-                }`}
-              >
-                {sending ? t("fleet.mesh.sending") : t("fleet.mesh.send")}
-              </button>
+                busy={sending}
+                title={sending ? t("fleet.mesh.sending") : undefined}
+                className={shake ? "glim-shake" : ""}
+              />
             </div>
           </>
         ) : (
@@ -617,49 +617,32 @@ function FleetPeerCard({
       )}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <button
-          key={shakePoll}
+        <Button
+          label={t("fleet.pollNow")}
+          labelKey="fleet.pollNow"
+          title={polling ? t("fleet.polling") : undefined}
+          tone="accent"
           onClick={() => void handlePoll()}
           disabled={polling}
+          busy={polling}
           className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shakePoll ? " glim-shake" : ""
+            shakePoll ? "glim-shake" : ""
           }`}
-        >
-          {polling ? (
-            <>
-              <span
-                className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("fleet.polling")}
-            </>
-          ) : (
-            t("fleet.pollNow")
-          )}
-        </button>
+        />
 
         <div className="ms-auto flex items-center gap-2">
-          <button
+          <Button
+            label={t("fleet.mesh.proposeButton")}
+            labelKey="fleet.mesh.proposeButton"
+            tone="neutral"
             onClick={() => setShowPropose(true)}
-            className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-          >
-            {t("fleet.mesh.proposeButton")}
-          </button>
-          <button
+          />
+          <Button
+            label={t("fleet.details")}
+            labelKey="fleet.details"
+            tone="neutral"
             onClick={() => toggleDetails()}
-            className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
-            >
-              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-            </svg>
-            {t("fleet.details")}
-          </button>
+          />
           <Button
             label={t("fleet.edit")}
           labelKey="fleet.edit"
@@ -700,12 +683,12 @@ function FleetPeerCard({
               {removing ? t("fleet.removing") : t("fleet.confirmRemove")}
             </button>
           ) : (
-            <button
+            <Button
+              label={t("fleet.remove")}
+              labelKey="fleet.remove"
+              tone="neutral"
               onClick={() => setConfirmRemove(true)}
-              className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
-            >
-              {t("fleet.remove")}
-            </button>
+            />
           )}
         </div>
       </div>
@@ -882,16 +865,17 @@ function FleetDialog({
             onClick={onClose}
             disabled={saving}
           />
-          <button
+          <Button
             key={shake}
+            label={t("settings.save")}
+            labelKey="settings.save"
+            tone="accent"
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shake ? " glim-shake" : ""
-            }`}
-          >
-            {saving ? t("common.saving") : t("settings.save")}
-          </button>
+            busy={saving}
+            title={saving ? t("common.saving") : undefined}
+            className={shake ? "glim-shake" : ""}
+          />
         </div>
       </div>
       </div>
@@ -993,12 +977,13 @@ export function Fleet() {
           <p className="mt-1 text-sm text-carbon-textSub">{t("fleet.subtitle")}</p>
         </div>
         {!showEmptyState && (
-          <button
+          <Button
+            label={t("fleet.addPeer")}
+            labelKey="fleet.addPeer"
+            tone="accent"
             onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
-          >
-            {t("fleet.addPeer")}
-          </button>
+            className="shrink-0"
+          />
         )}
       </div>
 
@@ -1079,12 +1064,12 @@ export function Fleet() {
               </Badge>
             </h2>
             <EmptyStateIcon icon={IconFleet} />
-            <button
+            <Button
+              label={t("fleet.addPeer")}
+              labelKey="fleet.addPeer"
+              tone="accent"
               onClick={() => setDialog("new")}
-              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
-            >
-              {t("fleet.addPeer")}
-            </button>
+            />
           </div>
         );
       })()}

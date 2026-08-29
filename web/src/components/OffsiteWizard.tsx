@@ -19,6 +19,7 @@ import { Toggle } from "./Toggle";
 import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
+import { Button } from "./Button";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -118,13 +119,13 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
       <pre className="flex-1 overflow-x-auto rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text whitespace-pre">
         {text}
       </pre>
-      <button
-        type="button"
+      <Button
+        label={t("vm.ssh.copy")}
+        labelKey="vm.ssh.copy"
+        tone="neutral"
         onClick={() => void copy()}
-        className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover"
-      >
-        {t("vm.ssh.copy")}
-      </button>
+        className="shrink-0"
+      />
     </div>
   );
 }
@@ -713,14 +714,16 @@ export function OffsiteWizard({
           <span className={stepTitle}>{t("offsite.wizard.step2")}</span>
           <p className="text-xs text-carbon-textMuted">{t("offsite.wizard.step2Hint")}</p>
           {!snippet && (
-            <button
-              type="button"
+            <Button
+              label={t("offsite.wizard.generate")}
+              labelKey="offsite.wizard.generate"
+              tone="accent"
               onClick={() => void genSnippet()}
               disabled={snipBusy}
-              className="self-start rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50"
-            >
-              {snipBusy ? t("common.saving") : t("offsite.wizard.generate")}
-            </button>
+              busy={snipBusy}
+              title={snipBusy ? t("common.saving") : undefined}
+              className="self-start"
+            />
           )}
           {snippet && (
             <div className="flex flex-col gap-2">

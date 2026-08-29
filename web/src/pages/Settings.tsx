@@ -574,23 +574,15 @@ export function SaveBar({
 }) {
   return (
     <div className="flex items-center gap-3 pt-1">
-      <button
+      <Button
+        label={t("settings.save")}
+        labelKey="settings.save"
+        tone="accent"
         onClick={onSave}
         disabled={disabled || state === "saving"}
-        className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-      >
-        {state === "saving" ? (
-          <>
-            <span
-              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-            />
-            {t("common.saving")}
-          </>
-        ) : (
-          t("settings.save")
-        )}
-      </button>
+        busy={state === "saving"}
+        title={state === "saving" ? t("common.saving") : undefined}
+      />
     </div>
   );
 }
@@ -1611,9 +1603,6 @@ chmod 600 /root/.ssh/authorized_keys`
   // redefinition every other `.glim-hue` element already gets, a real,
   // live-verifiable per-item colour a keyboard user actually sees on
   // Tab/click.
-  const hueOn = hueIndex !== undefined;
-  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
-
   return (
     <Card title={t("vm.ssh.title")} hint={t("vm.ssh.desc")} hueIndex={hueIndex}>
       <div className="flex flex-col gap-3">
@@ -1656,8 +1645,7 @@ chmod 600 /root/.ssh/authorized_keys`
                 own `.glim-hue` subtree, which would compute the identical
                 colour) purely because this component already HAS the value in
                 scope, matching every other hue-aware control in it. The
-                hand-rolled `hueOn`/`hueStyle` pair stays — the Test button
-                below still uses it. `size="icon"` is the app's one square-
+                `size="icon"` is the app's one square-
                 icon-badge size and is the same 32px these buttons already
                 measured to, so the footprint is unchanged. */}
             <Button
@@ -1727,18 +1715,19 @@ chmod 600 /root/.ssh/authorized_keys`
               dominant control height this whole page already standardizes
               on — see SettingsPortabilityCard's own Export button for the
               same 32px recipe). Now matches that convention exactly, plus
-              `.glim-hue` per this Card's own hueOn/hueStyle above. */}
-          <button
+              `.glim-hue` from its own `hueIndex`. */}
+          <Button
             key={shake || 0}
+            label={t("vm.ssh.test")}
+            labelKey="vm.ssh.test"
+            tone="neutral"
             onClick={handleTest}
             disabled={testState === "testing"}
-            className={`rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-              shake ? " glim-shake" : ""
-            }${hueOn ? " glim-hue" : ""}`}
-            style={hueStyle}
-          >
-            {testState === "testing" ? t("vm.ssh.testing") : t("vm.ssh.test")}
-          </button>
+            busy={testState === "testing"}
+            title={testState === "testing" ? t("vm.ssh.testing") : undefined}
+            className={shake ? "glim-shake" : ""}
+            hueIndex={hueIndex}
+          />
           {testState === "ok" && (
             <span className="text-sm text-statusOk">{t("vm.ssh.testOk")}</span>
           )}
@@ -1921,18 +1910,17 @@ function SettingsPortabilityCard({
             {t("settingsIO.credsWarning")}
           </div>
         )}
-        <button
-          type="button"
+        <Button
           key={shake.export || 0}
+          label={t("settingsIO.exportButton")}
+          labelKey="settingsIO.exportButton"
+          tone="neutral"
           onClick={() => void handleExport()}
           disabled={busy}
-          className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${
-            shake.export ? " glim-shake" : ""
-          }${hueOn ? " glim-hue" : ""}`}
-          style={hueStyle}
-        >
-          {exporting ? t("settingsIO.exporting") : t("settingsIO.exportButton")}
-        </button>
+          busy={exporting}
+          title={exporting ? t("settingsIO.exporting") : undefined}
+          className={`self-start${shake.export ? " glim-shake" : ""}`}
+        />
       </div>
 
       {/* IMPORT ---------------------------------------------------------- */}
@@ -2004,25 +1992,25 @@ function SettingsPortabilityCard({
               {t("settingsIO.confirmWarning")}
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
+              <Button
                 key={shake.import || 0}
+                label={t("settingsIO.confirmButton")}
+                labelKey="settingsIO.confirmButton"
+                tone="accent"
                 onClick={() => void handleConfirmImport()}
                 disabled={busy}
-                className={`rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                  shake.import ? " glim-shake" : ""
-                }${hueOn ? " glim-hue" : ""}`}
-                style={hueStyle}
-              >
-                {importBusy === "applying" ? t("settingsIO.importing") : t("settingsIO.confirmButton")}
-              </button>
+                busy={importBusy === "applying"}
+                title={importBusy === "applying" ? t("settingsIO.importing") : undefined}
+                className={shake.import ? "glim-shake" : ""}
+              />
               <Button
                 label={t("settingsIO.cancel")}
           labelKey="settingsIO.cancel"
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
-                className={`rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+                className={`rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? "glim-hue" : ""}`}
+                hueIndex={hueIndex}
               />
             </div>
           </div>
@@ -2193,14 +2181,13 @@ function UnraidTileSection({
             <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {DASH_PLUGIN_PLG_URL}
             </code>
-            <button
-              type="button"
+            <Button
+              label={t("vm.ssh.copy")}
+              labelKey="vm.ssh.copy"
+              tone="accent"
               onClick={() => void handleCopyUrl()}
-              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
-            >
-              {t("vm.ssh.copy")}
-            </button>
+              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? "glim-hue" : ""}`}
+            />
           </div>
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileCa")}</p>
         </div>
@@ -2291,17 +2278,16 @@ function UnraidTileSection({
       {status.kind === "error" && (
         <div className="flex flex-col gap-2">
           <span className="text-xs text-statusFail wrap-break-word">✗ {status.message}</span>
-          <button
-            type="button"
+          <Button
+            label={t("whatsnew.retry")}
+            labelKey="whatsnew.retry"
+            tone="neutral"
             onClick={() => {
               setStatus({ kind: "loading" });
               refresh();
             }}
-            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${hueOn ? " glim-hue" : ""}`}
-            style={hueStyle}
-          >
-            {t("whatsnew.retry")}
-          </button>
+            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${hueOn ? "glim-hue" : ""}`}
+          />
         </div>
       )}
     </div>
@@ -2430,45 +2416,39 @@ function DashboardWidgetCard({
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              key={shake.generate || 0}
+            <Button
+              label={t("settings.widgetRegenerate")}
+              labelKey="settings.widgetRegenerate"
+              tone="neutral"
               onClick={() => void handleGenerate()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.generate ? " glim-shake" : ""
+                shake.generate ? "glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
-            >
-              {t("settings.widgetRegenerate")}
-            </button>
-            <button
-              type="button"
-              key={shake.disable || 0}
+            />
+            <Button
+              label={t("settings.widgetDisable")}
+              labelKey="settings.widgetDisable"
+              tone="neutral"
               onClick={() => void handleDisable()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.disable ? " glim-shake" : ""
+                shake.disable ? "glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
-            >
-              {t("settings.widgetDisable")}
-            </button>
+            />
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          key={shake.generate || 0}
+        <Button
+          label={t("settings.widgetGenerate")}
+          labelKey="settings.widgetGenerate"
+          tone="accent"
           onClick={() => void handleGenerate()}
           disabled={busy}
           className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake.generate ? " glim-shake" : ""
+            shake.generate ? "glim-shake" : ""
           }${hueOn ? " glim-hue" : ""}`}
-          style={hueStyle}
-        >
-          {t("settings.widgetGenerate")}
-        </button>
+        />
       )}
 
       {tokenSet && !token && (
@@ -2661,7 +2641,6 @@ function FleetSettingsCard({
   // copy were already at this page's dominant 32px control height but had no
   // tie to this Card's own hueIndex.
   const hueOn = hueIndex !== undefined;
-  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
 
   return (
     <Card title={t("settings.fleet")} hint={t("settings.fleetHint")} hueIndex={hueIndex}>
@@ -2704,45 +2683,42 @@ function FleetSettingsCard({
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
           />
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              key={shake.generate || 0}
+            <Button
+              label={t("settings.fleetRegenerate")}
+              labelKey="settings.fleetRegenerate"
+              tone="neutral"
               onClick={() => void handleGenerate()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.generate ? " glim-shake" : ""
+                shake.generate ? "glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
-            >
-              {t("settings.fleetRegenerate")}
-            </button>
-            <button
-              type="button"
-              key={shake.disable || 0}
+              hueIndex={hueIndex}
+            />
+            <Button
+              label={t("settings.fleetDisable")}
+              labelKey="settings.fleetDisable"
+              tone="neutral"
               onClick={() => void handleDisable()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.disable ? " glim-shake" : ""
+                shake.disable ? "glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
-            >
-              {t("settings.fleetDisable")}
-            </button>
+              hueIndex={hueIndex}
+            />
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          key={shake.generate || 0}
+        <Button
+          label={t("settings.fleetGenerate")}
+          labelKey="settings.fleetGenerate"
+          tone="accent"
           onClick={() => void handleGenerate()}
           disabled={busy}
           className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake.generate ? " glim-shake" : ""
+            shake.generate ? "glim-shake" : ""
           }${hueOn ? " glim-hue" : ""}`}
-          style={hueStyle}
-        >
-          {t("settings.fleetGenerate")}
-        </button>
+          hueIndex={hueIndex}
+        />
       )}
 
       {tokenSet && !token && (
@@ -2755,14 +2731,14 @@ function FleetSettingsCard({
             <code className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-xs text-carbon-text">
               {token}
             </code>
-            <button
-              type="button"
+            <Button
+              label={t("vm.ssh.copy")}
+              labelKey="vm.ssh.copy"
+              tone="accent"
               onClick={() => void handleCopy()}
-              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
-              style={hueStyle}
-            >
-              {t("vm.ssh.copy")}
-            </button>
+              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? "glim-hue" : ""}`}
+              hueIndex={hueIndex}
+            />
           </div>
           <p className="text-caption text-carbon-textMuted">
             {t("settings.fleetUrlHint").replace("{url}", window.location.origin)}
@@ -2880,16 +2856,17 @@ export function RcloneCard({
           the task spec calls out by name. */}
       <p className="text-xs text-carbon-textMuted">{t("rclone.pathHint")}</p>
       <div className="flex items-center gap-3 pt-1">
-        <button
+        <Button
           key={shake || 0}
+          label={t("rclone.save")}
+          labelKey="rclone.save"
+          tone="accent"
           onClick={() => void handleSave()}
           disabled={state === "saving" || conf.trim() === ""}
-          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }`}
-        >
-          {state === "saving" ? t("auth.saving") : t("rclone.save")}
-        </button>
+          busy={state === "saving"}
+          title={state === "saving" ? t("auth.saving") : undefined}
+          className={shake ? "glim-shake" : ""}
+        />
       </div>
     </Card>
   );
@@ -3234,13 +3211,12 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
             </span>
           </div>
           <div className="flex shrink-0 items-start gap-2">
-            <button
-              type="button"
+            <Button
+              label={t("offsite.targets.edit")}
+              labelKey="offsite.targets.edit"
+              tone="neutral"
               onClick={() => openEdit(s)}
-              className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover"
-            >
-              {t("offsite.targets.edit")}
-            </button>
+            />
             {/* NO bespoke red on either state (whole-app sweep). The confirm
                 state was `bg-statusFailBg`/`text-statusFail` and the resting
                 state carried `text-statusFail` ink on a neutral fill — the
@@ -3266,16 +3242,15 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
                 {removingId === s.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
               </button>
             ) : (
-              <button
-                type="button"
-                key={shake[`remove:${s.id}`] || 0}
+              <Button
+                label={t("offsite.targets.remove")}
+                labelKey="offsite.targets.remove"
+                tone="neutral"
                 onClick={() => setConfirmRemove(s.id)}
                 className={`rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover${
                   shake[`remove:${s.id}`] ? " glim-shake" : ""
                 }`}
-              >
-                {t("offsite.targets.remove")}
-              </button>
+              />
             )}
           </div>
         </div>
@@ -3324,16 +3299,17 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
                 placeholder={sets.find((s) => s.id === editing.id)?.restPasswordSet ? t("cloud.secretSet") : ""} wrapperClassName="w-full" className={inputCls} /></label>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <Button
               key={shake.save || 0}
+              label={t("settings.save")}
+              labelKey="settings.save"
+              tone="accent"
               onClick={() => void save()}
               disabled={state === "saving"}
-              className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                shake.save ? " glim-shake" : ""
-              }`}
-            >
-              {state === "saving" ? t("auth.saving") : t("settings.save")}
-            </button>
+              busy={state === "saving"}
+              title={state === "saving" ? t("auth.saving") : undefined}
+              className={shake.save ? "glim-shake" : ""}
+            />
             <Button
               label={t("common.close")}
           labelKey="common.close"
@@ -3343,13 +3319,13 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
           </div>
         </div>
       ) : (
-        <button
-          type="button"
+        <Button
+          label={t("cloud.credSets.add")}
+          labelKey="cloud.credSets.add"
+          tone="neutral"
           onClick={openNew}
-          className="self-start rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover"
-        >
-          + {t("cloud.credSets.add")}
-        </button>
+          className="self-start"
+        />
       )}
     </Card>
   );
@@ -3833,10 +3809,12 @@ function NotifyCard({
           on `advanced` above for why the channels Card is allowed to
           disappear but this button never is. */}
       <div className="flex items-center gap-3 pt-1 flex-wrap">
-        <button onClick={() => void handleTest()}
-          className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors">
-          {t("notify.test")}
-        </button>
+        <Button
+          label={t("notify.test")}
+          labelKey="notify.test"
+          tone="neutral"
+          onClick={() => void handleTest()}
+        />
       </div>
     </Card>
 
@@ -4735,19 +4713,23 @@ function IntegrityCard({
                     </span>
                   );
                 })}
-                <button
+                <Button
                   key={shake[dKey] || 0}
+                  label={kind === "dr" ? t("drill.runDR") : t("verify.now")}
+                  tone="neutral"
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}
-                  title={kind === "dr" ? t("drill.drNote") : t("verify.hint")}
-                  className={`rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                    shake[dKey] ? " glim-shake" : ""
-                  }`}
-                >
-                  {state[dKey] === "busy"
-                    ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
-                    : kind === "dr" ? t("drill.runDR") : t("verify.now")}
-                </button>
+                  busy={state[dKey] === "busy"}
+                  // The label is fixed now, so the RUNNING wording moves here,
+                  // where Button already puts everything that changes; the
+                  // standing hint is what it says the rest of the time.
+                  title={
+                    state[dKey] === "busy"
+                      ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
+                      : kind === "dr" ? t("drill.drNote") : t("verify.hint")
+                  }
+                  className={shake[dKey] ? "glim-shake" : ""}
+                />
                 {state[dKey] === "ok" && (
                   <span className="inline-flex items-center gap-1 text-sm text-statusOk">
                     <CheckDraw />
@@ -4793,17 +4775,16 @@ function IntegrityCard({
               {appendOnlyEligible[domain] && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="w-24 shrink-0" />
-                  <button
+                  <Button
                     key={shake[`${domain}:tamper`] || 0}
+                    label={t("integrity.appendOnly")}
+                    labelKey="integrity.appendOnly"
+                    tone="neutral"
                     onClick={() => void runTamperFor(domain)}
                     disabled={tRes?.kind === "busy"}
+                    busy={tRes?.kind === "busy"}
                     title={t("integrity.appendOnlyHint")}
-                    className={`rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                      shake[`${domain}:tamper`] ? " glim-shake" : ""
-                    }`}
-                  >
-                    {tRes?.kind === "busy" ? t("integrity.checking") : t("integrity.appendOnly")}
-                  </button>
+                  />
                   {tRes?.kind === "verdict" && (
                     <span
                       className={`text-sm wrap-break-word ${
@@ -9109,7 +9090,6 @@ export function SettingsPage() {
           already use, not several independent `nextHue()` calls. */}
       {tab === "system" && (() => {
         const hueIdx = nextHue();
-        const hueStyle = hueVars(rainbowAt(hueIdx)) as CSSProperties;
         return (
       <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={hueIdx}>
         {/* Status badge */}
@@ -9155,27 +9135,18 @@ export function SettingsPage() {
 
           {/* Save / status row */}
           <div className="flex items-center gap-3 pt-1">
-            <button
+            <Button
               key={pwSaveShake || 0}
+              label={t("settings.save")}
+              labelKey="settings.save"
+              tone="accent"
               onClick={() => void handleSetPassword()}
               disabled={pwSaveState === "saving"}
-              className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 glim-hue${
-                pwSaveShake ? " glim-shake" : ""
-              }`}
-              style={hueStyle}
-            >
-              {pwSaveState === "saving" ? (
-                <>
-                  <span
-                    className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                    style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                  />
-                  {t("auth.saving")}
-                </>
-              ) : (
-                t("settings.save")
-              )}
-            </button>
+              busy={pwSaveState === "saving"}
+              title={pwSaveState === "saving" ? t("auth.saving") : undefined}
+              className={pwSaveShake ? "glim-shake" : ""}
+              hueIndex={hueIdx}
+            />
             {/* Only the pre-flight mismatch validation error renders here now
                 (GlimStone form-engine Task 9) — the post-save success/failure
                 notice is a toast instead; see handleSetPassword's own comment. */}
@@ -9190,20 +9161,20 @@ export function SettingsPage() {
             server-side session epoch, revoking every outstanding session. */}
         {authEnabled && authAuthed && (
           <div className="pt-2 border-t border-carbon-border flex items-center gap-3">
-            <button
+            <Button
+              label={t("auth.logout")}
+              labelKey="auth.logout"
+              tone="neutral"
               onClick={() => void handleLogout()}
-              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors glim-hue"
-              style={hueStyle}
-            >
-              {t("auth.logout")}
-            </button>
-            <button
+              hueIndex={hueIdx}
+            />
+            <Button
+              label={t("settings.logoutAll")}
+              labelKey="settings.logoutAll"
+              tone="neutral"
               onClick={() => void handleLogoutAll()}
-              className="rounded-control bg-carbon-surface2 px-4 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors glim-hue"
-              style={hueStyle}
-            >
-              {t("settings.logoutAll")}
-            </button>
+              hueIndex={hueIdx}
+            />
           </div>
         )}
       </Card>

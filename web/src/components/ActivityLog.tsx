@@ -21,6 +21,7 @@ import { buildLogLines, filterLogLines, formatLogDate } from "../lib/activityLog
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
 import { Badge } from "./Badge";
 import { formatClockTime } from "../lib/reltime";
+import { Button } from "./Button";
 
 const POLL_RUNS_MS = 10000;
 const POLL_SCHEDULE_MS = 30000;
@@ -366,15 +367,11 @@ export function ActivityLog({
             {resolveName("activityLog.dayFilterChip", {
               date: new Date(dayFilter + "T00:00:00").toLocaleDateString(),
             })}
-            <button
-              type="button"
+            <Button
+              label={t("activityLog.clearDayFilter")}
+              variant="chip"
               onClick={onClearDayFilter}
-              aria-label={t("activityLog.clearDayFilter")}
-              title={t("activityLog.clearDayFilter")}
-              className="cursor-pointer rounded-control px-1 leading-none hover:bg-black/10"
-            >
-              ×
-            </button>
+            />
           </span>
         )}
       </div>
@@ -399,13 +396,13 @@ export function ActivityLog({
           ))}
         </div>
         {!autoFollow && (
-          <button
-            type="button"
+          <Button
+            label={t("activityLog.jumpToLatest")}
+            labelKey="activityLog.jumpToLatest"
+            tone="neutral"
             onClick={jumpToLatest}
-            className="absolute bottom-3 end-3 rounded-pill bg-carbon-surface2 px-3 py-1 text-xs text-carbon-text shadow-lg hover:bg-carbon-hover"
-          >
-            ↓ {t("activityLog.jumpToLatest")}
-          </button>
+            className="absolute bottom-3 end-3"
+          />
         )}
       </div>
     </div>

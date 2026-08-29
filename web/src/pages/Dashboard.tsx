@@ -869,18 +869,16 @@ function ProtectionCard({
                       </span>
                     )}
                     {d.offsiteConfigured && (
-                      <button
-                        type="button"
-                        onClick={() => runOffsiteDr(d.domain)}
-                        disabled={drRunning === d.domain}
-                        className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-                      >
-                        {drRunning === d.domain
-                          ? t("drill.runningOffsiteDr")
-                          : d.lastDrDrillAt && d.lastDrDrillOK
+                      <Button
+                        label={d.lastDrDrillAt && d.lastDrDrillOK
                             ? t("drill.rerunOffsiteDr")
                             : t("drill.runOffsiteDr")}
-                      </button>
+                        tone="neutral"
+                        onClick={() => runOffsiteDr(d.domain)}
+                        disabled={drRunning === d.domain}
+                        busy={drRunning === d.domain}
+                        title={drRunning === d.domain ? t("drill.runningOffsiteDr") : undefined}
+                      />
                     )}
                     {drRunError[d.domain] && (
                       <span className="text-xs text-statusFail wrap-break-word">✗ {drRunError[d.domain]}</span>
@@ -1860,14 +1858,12 @@ function FreshInstallNudge({
           {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
         </Link>
       </div>
-      <button
-        type="button"
+      <Button
+        label={"✕"}
+        tone="neutral"
         onClick={onDismiss}
-        aria-label={t("common.close")}
-        className="shrink-0 rounded-control px-2 py-1 text-sm text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
-      >
-        ✕
-      </button>
+        className="shrink-0"
+      />
     </div>
   );
 }
@@ -2635,14 +2631,12 @@ export function Dashboard() {
                 <span className="max-w-48 truncate text-xs text-carbon-textSub">
                   {b.label}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  label={t("dashboard.showCard")}
+                  labelKey="dashboard.showCard"
+                  tone="neutral"
                   onClick={() => toggleHidden(b.id)}
-                  aria-label={`${t("dashboard.showCard")} ${b.label}`}
-                  className="rounded-control px-2 py-0.5 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text motion-safe:transition-colors"
-                >
-                  {t("dashboard.showCard")}
-                </button>
+                />
               </div>
             ))}
           </div>

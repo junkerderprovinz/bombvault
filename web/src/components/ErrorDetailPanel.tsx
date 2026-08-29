@@ -195,14 +195,13 @@ export function ErrorDetailPanel({
             <Badge tone="heading" size="heading" wrap>{t("errorPanel.title")}</Badge>
           </h2>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button
+              label={t("errorPanel.resolveAll")}
+              labelKey="errorPanel.resolveAll"
+              tone="neutral"
               onClick={() => acknowledge({ all: true })}
               disabled={busy || groups.length === 0}
-              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50"
-            >
-              {t("errorPanel.resolveAll")}
-            </button>
+            />
             {/* #178, [201]: the dialog's close control is a Button like every
                 other clickable thing, so it follows the label mode instead of
                 being a permanently glyph-only square of its own. */}

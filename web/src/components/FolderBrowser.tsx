@@ -291,26 +291,21 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">
               {/* ".." go up — only when not at root */}
               {browsePath !== "" && (
-                <button
+                <Button
+                  label={".."}
+                  tone="neutral"
                   onClick={handleUp}
-                  dir="ltr"
-                  className="text-start text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
-                >
-                  ..
-                </button>
+                />
               )}
               {dirs.length === 0 && !browseError && (
                 <p className="text-xs text-carbon-textMuted px-2">{t("folder.none")}</p>
               )}
               {dirs.map((d) => (
-                <button
-                  key={d.path}
+                <Button
+                  label={"/"}
+                  tone="neutral"
                   onClick={() => doFetch(d.path)}
-                  dir="ltr"
-                  className="text-start text-xs font-mono text-carbon-textSub px-2 py-1 rounded-control hover:bg-carbon-hover hover:text-carbon-text transition-colors"
-                >
-                  {d.name}/
-                </button>
+                />
               ))}
             </div>
           )}
@@ -333,13 +328,16 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 dir="ltr"
                 className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 bv-field-focus text-start"
               />
-              <button
+              <Button
+                label={t("folder.newFolder")}
+                labelKey="folder.newFolder"
+                tone="neutral"
                 onClick={handleCreate}
                 disabled={creating || newName.trim() === ""}
-                className="shrink-0 rounded-control bg-carbon-surface3 px-3 py-1 text-xs text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {creating ? t("folder.creating") : t("folder.newFolder")}
-              </button>
+                busy={creating}
+                title={creating ? t("folder.creating") : undefined}
+                className="shrink-0"
+              />
             </div>
           )}
 

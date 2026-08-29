@@ -279,16 +279,16 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
           {state === "error" && (
             <div className="py-4">
               <p className="text-sm text-carbon-textSub">{t("whatsnew.loadFailed")}</p>
-              <button
-                type="button"
+              <Button
+                label={t("whatsnew.retry")}
+                labelKey="whatsnew.retry"
+                tone="neutral"
                 onClick={() => {
                   autoTriesRef.current = 0;
                   setReloadKey((k) => k + 1);
                 }}
-                className="mt-3 rounded-control bg-carbon-surface3 px-3 py-1.5 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
-              >
-                {t("whatsnew.retry")}
-              </button>
+                className="mt-3"
+              />
             </div>
           )}
           {state === "ok" &&

@@ -1093,16 +1093,17 @@ function VMForgetButton({
           action, handleForget still routes through the shared useConfirm
           dialog (t("vms.removeEntryConfirm")), and `glim-shake` survives as
           behaviour rather than colour. */}
-      <button
+      <Button
         key={shake}
+        label={t("vms.removeEntry")}
+        labelKey="vms.removeEntry"
+        tone="neutral"
         onClick={() => void handleForget()}
         disabled={pending}
-        className={`inline-flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
-          shake ? " glim-shake" : ""
-        }`}
-      >
-        {pending ? t("dashboard.checking") : t("vms.removeEntry")}
-      </button>
+        busy={pending}
+        title={pending ? t("dashboard.checking") : undefined}
+        className={shake ? "glim-shake" : ""}
+      />
       {confirmDialog}
     </div>
   );
@@ -1146,26 +1147,26 @@ function ScheduleIncludeAllControl({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <button
-        key={shakeInclude}
+      <Button
+        label={t("schedule.includeAll")}
+        labelKey="schedule.includeAll"
+        tone="accent"
         onClick={() => void run(true)}
         disabled={busy}
         className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-          shakeInclude ? " glim-shake" : ""
+          shakeInclude ? "glim-shake" : ""
         }`}
-      >
-        {t("schedule.includeAll")}
-      </button>
-      <button
-        key={shakeExclude}
+      />
+      <Button
+        label={t("schedule.excludeAll")}
+        labelKey="schedule.excludeAll"
+        tone="neutral"
         onClick={() => void run(false)}
         disabled={busy}
         className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
-          shakeExclude ? " glim-shake" : ""
+          shakeExclude ? "glim-shake" : ""
         }`}
-      >
-        {t("schedule.excludeAll")}
-      </button>
+      />
     </div>
   );
 }
@@ -1491,7 +1492,7 @@ function VMBackupOrderPanel({
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
                 className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
-                  shakeReset ? " glim-shake" : ""
+                  shakeReset ? "glim-shake" : ""
                 }`}
               />
             </div>
@@ -1758,17 +1759,17 @@ export function VMs() {
           <div className="mt-2"><OffsiteIndicator domain="vms" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
+          <Button
             key={shakeDiscover}
+            label={t("containers.discover")}
+            labelKey="containers.discover"
+            tone="accent"
             onClick={() => void handleDiscover()}
             disabled={discovering}
+            busy={discovering}
             title={t("vms.discoverHint")}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeDiscover ? " glim-shake" : ""
-            }`}
-          >
-            {discovering ? t("containers.discovering") : t("containers.discover")}
-          </button>
+            className={shakeDiscover ? "glim-shake" : ""}
+          />
         </div>
       </div>
 
@@ -1879,21 +1880,21 @@ export function VMs() {
           />
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
           <Advanced>
-            <button
+            <Button
+              label={t("vms.restoreSelected")}
+              labelKey="vms.restoreSelected"
+              tone="accent"
               onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}
-              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {t("vms.restoreSelected")}
-            </button>
+            />
           </Advanced>
-          <button
+          <Button
+            label={t("containers.clearSelection")}
+            labelKey="containers.clearSelection"
+            tone="neutral"
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}
-            className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors disabled:opacity-50"
-          >
-            {t("containers.clearSelection")}
-          </button>
+          />
           {bulkBusy && (
             <span className="text-xs text-carbon-textMuted">{t("containers.working")}</span>
           )}

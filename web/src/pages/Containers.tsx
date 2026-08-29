@@ -364,16 +364,17 @@ function DeleteBackupsButton({
           behaviour, not colour. Stays a TEXT button (not an icon badge) —
           it is a labelled action that also carries an in-flight label, not
           a row-action glyph pair. */}
-      <button
+      <Button
         key={shake}
+        label={t("containers.deleteBackups")}
+        labelKey="containers.deleteBackups"
+        tone="neutral"
         onClick={() => void handleDelete()}
         disabled={pending}
-        className={`inline-flex items-center gap-2 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
-          shake ? " glim-shake" : ""
-        }`}
-      >
-        {pending ? t("dashboard.checking") : t("containers.deleteBackups")}
-      </button>
+        busy={pending}
+        title={pending ? t("dashboard.checking") : undefined}
+        className={shake ? "glim-shake" : ""}
+      />
       {confirmDialog}
     </div>
   );
@@ -854,13 +855,11 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
               i18n parity test because it never went through t(). Now
               t("offsite.targets.remove"), an existing key already translated
               in all 42 locales, so this adds no new key. */}
-          <button
+          <Button
+            label={t("offsite.targets.remove")}
+            variant="chip"
             onClick={() => removeCustomPath(cp.path)}
-            className="text-carbon-textMuted hover:text-carbon-text px-1"
-            aria-label={t("offsite.targets.remove")}
-          >
-            ×
-          </button>
+          />
         </div>
       ))}
       <div className="flex items-end gap-2 pt-1">
@@ -1139,14 +1138,12 @@ function StopContainersEditor({
               className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
             >
               {n}
-              <button
+              <Button
+                label={t("stophook.remove").replace("{name}", n)}
+                variant="chip"
                 onClick={() => void toggle(n)}
                 disabled={!!rowBusy[n]}
-                className="text-carbon-textMuted hover:text-carbon-text transition-colors disabled:opacity-60"
-                aria-label={t("stophook.remove").replace("{name}", n)}
-              >
-                ×
-              </button>
+              />
             </span>
           ))}
         </div>
@@ -1413,15 +1410,12 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
 
       {/* Exclusion assistant */}
       <div className="mt-1 flex flex-col gap-2">
-        <button
+        <Button
+          label={t("excludes.assistTitle")}
+          labelKey="excludes.assistTitle"
+          tone="neutral"
           onClick={toggleAssistant}
-          className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
-            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-          </svg>
-          {t("excludes.assistTitle")}
-        </button>
+        />
         {assistOpen && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-carbon-textMuted">{t("excludes.assistHint")}</p>
@@ -1433,20 +1427,18 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                   suggestion-accept button below which was ALREADY
                   `bg-accent` — matches that sibling now, same
                   already-correct .glim-hue-cascade mechanism. */}
-              <button
+              <Button
                 key={shakeScan}
-                onClick={() => void scan()}
-                disabled={scanning}
-                className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)${
-                  shakeScan ? " glim-shake" : ""
-                }`}
-              >
-                {scanning
-                  ? t("excludes.assistScanning")
-                  : suggestions === null
+                label={suggestions === null
                     ? t("excludes.assistScan")
                     : t("excludes.assistRescan")}
-              </button>
+                tone="accent"
+                onClick={() => void scan()}
+                disabled={scanning}
+                busy={scanning}
+                title={scanning ? t("excludes.assistScanning") : undefined}
+                className={shakeScan ? "glim-shake" : ""}
+              />
               {/* The standing "what is on disk RIGHT NOW" question. A snapshot
                   cannot answer it: a junk folder created since the last backup
                   is not in the index, so it has no row and no warning at all,
@@ -1457,12 +1449,12 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                   action under its own label, and two differently-worded
                   buttons for one thing read as two different things. */}
               {!scanning && suggestions !== null && !scanFailed && !indexFailed && source === "snapshot" && (
-                <button
+                <Button
+                  label={t("excludes.assistScanCurrent")}
+                  labelKey="excludes.assistScanCurrent"
+                  tone="neutral"
                   onClick={() => void scan(true)}
-                  className="rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
-                >
-                  {t("excludes.assistScanCurrent")}
-                </button>
+                />
               )}
               {truncated && !scanning && stoppedAt && (
                 // Stays inline and stays a separate line from the per-row size
@@ -1496,12 +1488,12 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
             {!scanning && indexFailed && (
               <div className="flex items-center gap-3">
                 <span className="text-xs text-statusWarn">{t("excludes.assistIndexFailed")}</span>
-                <button
+                <Button
+                  label={t("excludes.assistScanLive")}
+                  labelKey="excludes.assistScanLive"
+                  tone="accent"
                   onClick={() => void scan(true)}
-                  className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
-                >
-                  {t("excludes.assistScanLive")}
-                </button>
+                />
               </div>
             )}
             {/* "Nothing left to exclude" is a POSITIVE finding and may only be
@@ -1552,13 +1544,13 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                         <InfoBubble tip={t("excludes.assistSizeMinimumTip")} />
                       </span>
                     )}
-                    <button
+                    <Button
+                      label={t("excludes.assistExclude")}
+                      labelKey="excludes.assistExclude"
+                      tone="accent"
                       onClick={() => void addExclude(sg.line)}
                       disabled={state === "saving"}
-                      className="rounded-control bg-accent px-2.5 py-0.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
-                    >
-                      {t("excludes.assistExclude")}
-                    </button>
+                    />
                   </div>
                 ))}
               </div>
@@ -1592,15 +1584,13 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                     className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs font-mono text-carbon-textSub"
                   >
                     {line}
-                    <button
+                    <Button
+                      label={t("excludes.assistRemoveLine").replace("{line}", line)}
+                      variant="chip"
                       onClick={() => void removeExclude(line)}
                       disabled={state === "saving"}
-                      aria-label={t("excludes.assistRemoveLine").replace("{line}", line)}
                       title={t("excludes.assistRemove")}
-                      className="text-carbon-textMuted hover:text-carbon-text transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-(--focus-ring)"
-                    >
-                      ×
-                    </button>
+                    />
                   </span>
                 ))}
               </div>
@@ -1959,26 +1949,26 @@ function ScheduleIncludeAllControl({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <button
-        key={shakeInclude}
+      <Button
+        label={t("schedule.includeAll")}
+        labelKey="schedule.includeAll"
+        tone="accent"
         onClick={() => void run(true)}
         disabled={busy}
         className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-          shakeInclude ? " glim-shake" : ""
+          shakeInclude ? "glim-shake" : ""
         }`}
-      >
-        {t("schedule.includeAll")}
-      </button>
-      <button
-        key={shakeExclude}
+      />
+      <Button
+        label={t("schedule.excludeAll")}
+        labelKey="schedule.excludeAll"
+        tone="neutral"
         onClick={() => void run(false)}
         disabled={busy}
         className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
-          shakeExclude ? " glim-shake" : ""
+          shakeExclude ? "glim-shake" : ""
         }`}
-      >
-        {t("schedule.excludeAll")}
-      </button>
+      />
     </div>
   );
 }
@@ -2192,16 +2182,17 @@ function StackCard({
             {t("stack.startInOrder")}
           </label>
           <div className="flex items-center gap-3 pt-0.5">
-            <button
+            <Button
               key={shake}
+              label={t("stack.restore")}
+              labelKey="stack.restore"
+              tone="accent"
               onClick={() => void run()}
               disabled={busy}
-              className={`rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                shake ? " glim-shake" : ""
-              }`}
-            >
-              {busy ? t("stack.restoring") : t("stack.restore")}
-            </button>
+              busy={busy}
+              title={busy ? t("stack.restoring") : undefined}
+              className={shake ? "glim-shake" : ""}
+            />
           </div>
 
           {/* Async ack: the server runs the stack restore detached and the ack
@@ -2614,7 +2605,7 @@ function BackupOrderPanel({
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
                 className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
-                  shakeReset ? " glim-shake" : ""
+                  shakeReset ? "glim-shake" : ""
                 }`}
               />
             </div>
@@ -2950,17 +2941,17 @@ export function Containers() {
           <div className="mt-2"><OffsiteIndicator domain="containers" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
+          <Button
             key={shakeDiscover}
+            label={t("containers.discover")}
+            labelKey="containers.discover"
+            tone="accent"
             onClick={() => void handleDiscover()}
             disabled={discovering}
+            busy={discovering}
             title={tLtr(t, "containers.discoverHint")}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeDiscover ? " glim-shake" : ""
-            }`}
-          >
-            {discovering ? t("containers.discovering") : t("containers.discover")}
-          </button>
+            className={shakeDiscover ? "glim-shake" : ""}
+          />
         </div>
       </div>
 
@@ -3118,33 +3109,33 @@ export function Containers() {
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
           </span>
-          <button
-            key={shakeBackupSelected}
+          <Button
+            label={t("containers.backupSelected")}
+            labelKey="containers.backupSelected"
+            tone="accent"
             onClick={() => void backupSelected()}
             disabled={bulkBusy || batchActive || running.active}
             className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeBackupSelected ? " glim-shake" : ""
+              shakeBackupSelected ? "glim-shake" : ""
             }`}
-          >
-            {t("containers.backupSelected")}
-          </button>
+          />
           {/* Bulk restore is advanced-only; bulk backup stays basic. */}
           <Advanced>
-            <button
+            <Button
+              label={t("containers.restoreSelected")}
+              labelKey="containers.restoreSelected"
+              tone="accent"
               onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}
-              className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {t("containers.restoreSelected")}
-            </button>
+            />
           </Advanced>
-          <button
+          <Button
+            label={t("containers.clearSelection")}
+            labelKey="containers.clearSelection"
+            tone="neutral"
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}
-            className="text-xs text-carbon-textMuted hover:text-carbon-text transition-colors disabled:opacity-50"
-          >
-            {t("containers.clearSelection")}
-          </button>
+          />
           {running.active && (
             <span className="text-xs text-carbon-textMuted">
               {t(busyPhraseKey(running.phase))}

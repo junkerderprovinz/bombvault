@@ -357,13 +357,15 @@ function FileSetFileBrowser({
             onChange={pickFolder}
           />
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              label={t("files.restoreSelected").replace("{n}", String(count))}
+              tone="accent"
               onClick={handleRestoreSelected}
               disabled={isPending || blockedByOther || !folder.trim()}
-              className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
-            </button>
+              busy={isPending}
+              title={isPending ? t("common.restoring") : undefined}
+              className="shrink-0"
+            />
             {blockedByOther && (
               <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(otherActive.phase))}</span>
             )}
@@ -487,23 +489,15 @@ function FileSetRestoreControl({
         {/* The whole-set restore button + its own picker/progress; the selective
             mode renders its own controls below (FileSetFileBrowser). */}
         {dest !== "select" && (
-          <button
+          <Button
+            label={t("common.restoring")}
+            labelKey="common.restoring"
+            tone="accent"
             onClick={() => void handleRestore()}
             disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
-            className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-          >
-            {isPending ? (
-              <>
-                <span
-                  className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                  style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                />
-                {t("common.restoring")}
-              </>
-            ) : (
-              t("snapshots.restore")
-            )}
-          </button>
+            busy={isPending}
+            className="shrink-0"
+          />
         )}
         {blockedByOther && dest !== "select" && (
           <span className="text-caption text-carbon-textMuted shrink-0">
@@ -758,21 +752,12 @@ function FileSetRestorePanel({
 
   return (
     <div className="mt-1">
-      <button
+      <Button
+        label={t("snapshots.title")}
+        labelKey="snapshots.title"
+        tone="neutral"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-      >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
-        >
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {t("snapshots.title")}
-      </button>
+      />
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
@@ -1034,16 +1019,17 @@ function FileSetDialog({
             onClick={onClose}
             disabled={saving}
           />
-          <button
+          <Button
             key={shake}
+            label={t("settings.save")}
+            labelKey="settings.save"
+            tone="accent"
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shake ? " glim-shake" : ""
-            }`}
-          >
-            {saving ? t("common.saving") : t("settings.save")}
-          </button>
+            busy={saving}
+            title={saving ? t("common.saving") : undefined}
+            className={shake ? "glim-shake" : ""}
+          />
         </div>
       </div>
       </div>
@@ -1442,29 +1428,29 @@ export function Files() {
           <div className="mt-2"><OffsiteIndicator domain="files" /></div>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <button
+          <Button
             key={shakeDiscover}
+            label={t("containers.discover")}
+            labelKey="containers.discover"
+            tone="neutral"
             onClick={() => void handleDiscover()}
             disabled={discovering}
+            busy={discovering}
             title={t("files.discoverHint")}
-            className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
-              shakeDiscover ? " glim-shake" : ""
-            }`}
-          >
-            {discovering ? t("containers.discovering") : t("containers.discover")}
-          </button>
+            className={shakeDiscover ? "glim-shake" : ""}
+          />
           {/* Generic/TrueNAS-only one-click starting point (#134): Unraid
               already has the dedicated flash domain for host-level config, so
               preset stays null (never offered) there. Also hidden in the
               empty state — see showEmptyState's own comment above. */}
           {!showEmptyState && preset?.offered && (
-            <button
+            <Button
+              label={t("files.addPreset")}
+              labelKey="files.addPreset"
+              tone="neutral"
               onClick={handleAddPreset}
               title={t("files.addPresetHint")}
-              className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
-            >
-              {t("files.addPreset")}
-            </button>
+            />
           )}
           {!showEmptyState && (
             <Button
@@ -1547,13 +1533,13 @@ export function Files() {
           <EmptyStateIcon icon={IconFiles} />
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {preset?.offered && (
-              <button
+              <Button
+                label={t("files.addPreset")}
+                labelKey="files.addPreset"
+                tone="neutral"
                 onClick={handleAddPreset}
                 title={t("files.addPresetHint")}
-                className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors"
-              >
-                {t("files.addPreset")}
-              </button>
+              />
             )}
             <Button
               label={t("files.addSet")}
@@ -1568,16 +1554,16 @@ export function Files() {
       {/* Bulk "back up all" bar */}
       {!loading && sets.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
-          <button
-            key={shakeBackupAll}
+          <Button
+            label={t("files.backupAll")}
+            labelKey="files.backupAll"
+            tone="accent"
             onClick={() => void handleBackupAll()}
             disabled={backupAllBusy || running.active || backupableIds.length === 0}
             className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeBackupAll ? " glim-shake" : ""
+              shakeBackupAll ? "glim-shake" : ""
             }`}
-          >
-            {t("files.backupAll")}
-          </button>
+          />
           {!backupAllBusy && running.active && (
             <span className="text-xs text-carbon-textMuted">
               {t(busyPhraseKey(running.phase))}

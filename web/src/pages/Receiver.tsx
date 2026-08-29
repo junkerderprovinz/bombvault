@@ -291,26 +291,16 @@ function ReceivedRepoCard({
 
       {/* Actions row */}
       <div className="flex items-center gap-3 flex-wrap">
-        <button
-          key={shakeCheck}
+        <Button
+          label={t("receiver.checkNow")}
+          labelKey="receiver.checkNow"
+          tone="accent"
           onClick={() => void handleCheck()}
           disabled={checking}
-          className={`inline-flex items-center gap-1.5 rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shakeCheck ? " glim-shake" : ""
-          }`}
-        >
-          {checking ? (
-            <>
-              <span
-                className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("dashboard.checking")}
-            </>
-          ) : (
-            t("receiver.checkNow")
-          )}
-        </button>
+          busy={checking}
+          title={checking ? t("dashboard.checking") : undefined}
+          className={shakeCheck ? "glim-shake" : ""}
+        />
         <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer">
           <input
             type="checkbox"
@@ -324,21 +314,12 @@ function ReceivedRepoCard({
         </label>
 
         <div className="ms-auto flex items-center gap-2">
-          <button
+          <Button
+            label={t("receiver.details")}
+            labelKey="receiver.details"
+            tone="neutral"
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
-            >
-              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-            </svg>
-            {t("receiver.details")}
-          </button>
+          />
           <Button
             label={t("receiver.edit")}
           labelKey="receiver.edit"
@@ -364,12 +345,12 @@ function ReceivedRepoCard({
               {removing ? t("receiver.removing") : t("receiver.confirmRemove")}
             </button>
           ) : (
-            <button
+            <Button
+              label={t("receiver.remove")}
+              labelKey="receiver.remove"
+              tone="neutral"
               onClick={() => setConfirmRemove(true)}
-              className="inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50"
-            >
-              {t("receiver.remove")}
-            </button>
+            />
           )}
         </div>
       </div>
@@ -627,16 +608,17 @@ function ReceiverDialog({
             onClick={onClose}
             disabled={saving}
           />
-          <button
+          <Button
             key={shake}
+            label={t("settings.save")}
+            labelKey="settings.save"
+            tone="accent"
             onClick={() => void handleSave()}
             disabled={!canSave}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shake ? " glim-shake" : ""
-            }`}
-          >
-            {saving ? t("common.saving") : t("settings.save")}
-          </button>
+            busy={saving}
+            title={saving ? t("common.saving") : undefined}
+            className={shake ? "glim-shake" : ""}
+          />
         </div>
       </div>
       </div>
@@ -706,12 +688,13 @@ export function Receiver() {
           <p className="mt-1 text-sm text-carbon-textSub">{t("receiver.subtitle")}</p>
         </div>
         {!showEmptyState && (
-          <button
+          <Button
+            label={t("receiver.addRepo")}
+            labelKey="receiver.addRepo"
+            tone="accent"
             onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity shrink-0"
-          >
-            {t("receiver.addRepo")}
-          </button>
+            className="shrink-0"
+          />
         )}
       </div>
 
@@ -760,12 +743,12 @@ export function Receiver() {
             </Badge>
           </h2>
           <EmptyStateIcon icon={IconReceiver} />
-          <button
+          <Button
+            label={t("receiver.addRepo")}
+            labelKey="receiver.addRepo"
+            tone="accent"
             onClick={() => setDialog("new")}
-            className="inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity"
-          >
-            {t("receiver.addRepo")}
-          </button>
+          />
         </div>
       )}
 

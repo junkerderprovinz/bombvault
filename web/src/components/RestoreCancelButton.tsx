@@ -17,6 +17,7 @@ import { useState, type MutableRefObject } from "react";
 import { cancelRestore } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { useConfirm } from "../lib/useConfirm";
+import { Button } from "./Button";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -84,14 +85,16 @@ export function RestoreCancelButton({
           (fail for an in-place restore, warn for a restore-to-a-folder) —
           that dialog tone is a STATUS surface and stays exactly as it was.
           Only this trigger's own bespoke hover colour goes. */}
-      <button
-        type="button"
+      <Button
+        label={t("restore.cancel")}
+        labelKey="restore.cancel"
+        tone="neutral"
         onClick={() => void handle()}
         disabled={cancelling}
-        className="self-start inline-flex items-center rounded-control px-2.5 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {cancelling ? t("restore.cancelling") : t("restore.cancel")}
-      </button>
+        busy={cancelling}
+        title={cancelling ? t("restore.cancelling") : undefined}
+        className="self-start"
+      />
       {confirmDialog}
     </>
   );

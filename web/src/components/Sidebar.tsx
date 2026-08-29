@@ -13,6 +13,7 @@ import {
   IconReceiver,
   IconFleet,
 } from "./navGlyphs";
+import { useLabelMode } from "../lib/useLabelMode";
 
 // Navigation and domain glyphs now come from Streamline's free Core Solid set
 // (#178, [202]) rather than being drawn here, so the whole interface reads as
@@ -429,6 +430,12 @@ const navInactive =
 // colour declaration, so painting this item's hue on top of a badge already
 // filled with that same hue never happens.
 function NavItem({ to, label, icon, hueIndex }: NavItem) {
+  // #178: the sidebar has its own axis, deliberately separate from buttons and
+  // tabs, because reducing THIS rail to glyphs is a layout decision (the rail
+  // narrows and the page grows) rather than a density preference.
+  const labelMode = useLabelMode("sidebar");
+  const showLabel = labelMode !== "glyph";
+  const showIcon = labelMode !== "text";
   return (
     <NavLink
       to={to}
@@ -437,8 +444,10 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
       }
       style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
     >
-      {icon}
-      <span>{label}</span>
+      {showIcon && icon}
+      {/* Never removed, only hidden: a nav row whose text is gone entirely
+          has no accessible name, and this rail is how the app is navigated. */}
+      <span className={showLabel ? undefined : "sr-only"}>{label}</span>
     </NavLink>
   );
 }

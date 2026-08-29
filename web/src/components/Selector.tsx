@@ -444,7 +444,10 @@ const SIZE: Record<
 > = {
   sm: { gap: "gap-1", padding: "px-2 py-0.5", text: "text-xs" },
   md: { gap: "gap-1.5", padding: "px-3 py-1", text: "text-xs" },
-  lg: { gap: "gap-2", padding: "px-3 py-1.5", text: "text-sm" },
+  // "lg" is the page-level scale (Settings tabs, Shape/Motion/Labels pickers).
+  // `bv-seg` gives it the button height instead of letting padding decide, so
+  // the strip neither shrinks in glyph mode nor sits lower than a button.
+  lg: { gap: "gap-2", padding: "px-3 bv-seg", text: "text-sm" },
 };
 
 // MIN_PINNED_WIDTH — the one standardized floor every `pinWidth` segment (both

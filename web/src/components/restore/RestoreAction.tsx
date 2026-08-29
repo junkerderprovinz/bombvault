@@ -214,23 +214,15 @@ export function RestoreAction({
       className="ms-auto shrink-0"
     />
   ) : (
-    <button
+    <Button
+      label={t("common.restoring")}
+      labelKey="common.restoring"
+      tone="accent"
       onClick={() => void handleRestore()}
       disabled={triggerDisabled}
-      className="inline-flex items-center gap-1.5 rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-    >
-      {isPending ? (
-        <>
-          <span
-            className="h-2.5 w-2.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-            style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-          />
-          {t("common.restoring")}
-        </>
-      ) : (
-        label ?? t("snapshots.restore")
-      )}
-    </button>
+      busy={isPending}
+      className="shrink-0"
+    />
   );
 
   return (

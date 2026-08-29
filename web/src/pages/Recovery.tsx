@@ -969,13 +969,12 @@ function ForeignRestoreCard({
             {sessionGone && (
               <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed flex items-center gap-3 flex-wrap">
                 <span className="flex-1">{t("recovery.foreignExpired")}</span>
-                <button
-                  type="button"
+                <Button
+                  label={t("recovery.foreignReconnect")}
+                  labelKey="recovery.foreignReconnect"
+                  tone="neutral"
                   onClick={() => void connect()}
-                  className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-xs text-carbon-text transition-colors"
-                >
-                  {t("recovery.foreignReconnect")}
-                </button>
+                />
               </div>
             )}
             {total === 0 ? (
@@ -2005,14 +2004,13 @@ export default function Recovery() {
                     )}
                     {configPhase === "saving" ? t("recovery.configRestoring") : t("recovery.configRestore")}
                   </button>
-                  <button
-                    type="button"
+                  <Button
+                    label={t("recovery.configSkip")}
+                    labelKey="recovery.configSkip"
+                    tone="neutral"
                     onClick={() => setConfigSkipped(true)}
                     disabled={configPhase === "saving" || configPhase === "restarting"}
-                    className="text-xs text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50"
-                  >
-                    {t("recovery.configSkip")}
-                  </button>
+                  />
                 </div>
 
                 {/* Restarting — optimistic; waitForAppBack() reloads on return. The
@@ -2049,13 +2047,12 @@ export default function Recovery() {
                 {configPhase === "reload" && (
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-xs text-statusWarn">{t("recovery.configReloadWhenBack")}</span>
-                    <button
-                      type="button"
+                    <Button
+                      label={t("recovery.configReload")}
+                      labelKey="recovery.configReload"
+                      tone="neutral"
                       onClick={() => window.location.reload()}
-                      className="rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors"
-                    >
-                      {t("recovery.configReload")}
-                    </button>
+                    />
                   </div>
                 )}
                 {configPhase === "error" && configError && (
@@ -2219,22 +2216,16 @@ export default function Recovery() {
                 used to sit here is now part of this step's heading bubble — see
                 the StepCard's own `hint` above.) */}
             <div className="flex items-center gap-3 pt-1">
-              <button
-                key={connectPreviewShake}
+              <Button
+                label={t("recovery.connectPreview")}
+                labelKey="recovery.connectPreview"
+                tone="accent"
                 onClick={() => void connectPreview()}
                 disabled={attachState === "saving"}
                 className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
                   connectPreviewShake ? " glim-shake" : ""
                 }`}
-              >
-                {attachState === "saving" && (
-                  <span
-                    className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                    style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                  />
-                )}
-                {t("recovery.connectPreview")}
-              </button>
+              />
             </div>
           </>
         ) : (
@@ -2321,19 +2312,14 @@ export default function Recovery() {
                     .replace("{fail}", String(restoreAllResult.fail))}
                 </span>
               )}
-              <button
+              <Button
+                label={t("recovery.restoreAll")}
+                labelKey="recovery.restoreAll"
+                tone="accent"
                 onClick={() => void restoreAll()}
                 disabled={restoreAllBusy || running.active}
-                className="ms-auto inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {restoreAllBusy && (
-                  <span
-                    className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                    style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                  />
-                )}
-                {t("recovery.restoreAll")}
-              </button>
+                className="ms-auto"
+              />
             </div>
             )}
 
@@ -2420,9 +2406,10 @@ export default function Recovery() {
           own (i). The `kitError` span below stays: it is the backend's own
           refusal text, shown only when a download is actually refused. */}
       <StepCard n={6} title={t("recovery.step5")} hint={t("recovery.kitHint")} state="idle" hueIndex={nextHue()}>
-        <button
-          type="button"
-          key={kitShake}
+        <Button
+          label={t("recovery.kitDownload")}
+          labelKey="recovery.kitDownload"
+          tone="neutral"
           onClick={() => {
             setKitError(null);
             void downloadRecoveryKit().then((err) => {
@@ -2436,9 +2423,7 @@ export default function Recovery() {
           className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors${
             kitShake ? " glim-shake" : ""
           }`}
-        >
-          {t("recovery.kitDownload")}
-        </button>
+        />
         {kitError && (
           // Backend-provided error text shown verbatim BY DESIGN (e.g. the
           // fail-closed "set a login password" refusal when auth is off) —

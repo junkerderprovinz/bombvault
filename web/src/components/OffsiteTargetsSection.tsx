@@ -549,17 +549,17 @@ export function OffsiteTargetsSection({
           </label>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <button
+            <Button
               key={saveShake}
-              type="button"
+              label={t("offsite.targets.save")}
+              labelKey="offsite.targets.save"
+              tone="accent"
               onClick={() => void saveDraft()}
               disabled={saveState === "saving"}
-              className={`rounded-control bg-accent px-3 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 disabled:opacity-50${
-                saveShake ? " glim-shake" : ""
-              }`}
-            >
-              {saveState === "saving" ? t("common.saving") : t("offsite.targets.save")}
-            </button>
+              busy={saveState === "saving"}
+              title={saveState === "saving" ? t("common.saving") : undefined}
+              className={saveShake ? "glim-shake" : ""}
+            />
             <Button
               label={t("offsite.targets.cancel")}
           labelKey="offsite.targets.cancel"

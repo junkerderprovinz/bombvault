@@ -1,10 +1,10 @@
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import { runSpike } from "../lib/api";
 import type { SpikeCheck } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
 import { useToast } from "../lib/toast";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { Button } from "./Button";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -37,8 +37,6 @@ export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
   const [checks, setChecks] = useState<SpikeCheck[] | null>(null);
   const [allOk, setAllOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
-  const hueOn = hueIndex !== undefined;
-  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
   // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
   // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
   // action shows its message via a TOAST, never as permanent page text, and
@@ -91,27 +89,17 @@ export function SpikePanel({ t, hueIndex }: SpikePanelProps) {
             height this whole Settings page already standardizes on). Now
             matches that convention exactly, plus `.glim-hue` per this Card's
             own hueOn/hueStyle above. */}
-        <button
-          key={shake || 0}
+        <Button
+          label={t("spike.checkNow")}
+          labelKey="spike.checkNow"
+          tone="accent"
           onClick={() => void handleCheck()}
           disabled={loading}
-          className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake ? " glim-shake" : ""
-          }${hueOn ? " glim-hue" : ""}`}
-          style={hueStyle}
-        >
-          {loading ? (
-            <>
-              <span
-                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-              {t("dashboard.checking")}
-            </>
-          ) : (
-            t("spike.checkNow")
-          )}
-        </button>
+          busy={loading}
+          title={loading ? t("dashboard.checking") : undefined}
+          className={shake ? "glim-shake" : ""}
+          hueIndex={hueIndex}
+        />
 
         {allOk !== null && !loading && (
           <span

@@ -3,6 +3,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { widthStage, type WidthStage } from "../lib/controls";
 import { useLabelMode } from "../lib/useLabelMode";
 import { glyphFor } from "./glyphFor";
+import { IconClose } from "./navGlyphs";
 
 // ---------------------------------------------------------------------------
 // Button — the one clickable control (#178).
@@ -43,6 +44,24 @@ const STAGE_CLASS: Record<WidthStage, string> = {
 
 export type ButtonTone = "accent" | "neutral" | "danger";
 
+/**
+ * "default" — the ordinary action button described above.
+ * "chip"    — the tiny remove control that lives INSIDE a pill (a selected
+ *             path, a stop-hook name, an exclusion line, the day filter).
+ *
+ * Why this needs to be its own variant rather than a `className` override at
+ * four call sites: a chip's control is glyph-only by nature, in every mode. It
+ * sits inside its chip, so it cannot take a width stage without bursting the
+ * pill, and its text would be absurd if shown ("Remove exclusion /var/log/*"
+ * printed next to the line it already sits on). It still satisfies the
+ * same-width-in-all-modes rule, trivially: it is the same size in all three.
+ *
+ * What it does NOT get to skip is the accessible name. These four buttons each
+ * carried a real one in an `aria-label`, naming the thing they remove, and it
+ * survives here as the label: hidden, announced, and shown on hover.
+ */
+export type ButtonVariant = "default" | "chip";
+
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:opacity-90",
   neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hover",
@@ -55,6 +74,7 @@ export function Button({
   glyph,
   onClick,
   tone = "neutral",
+  variant = "default",
   disabled = false,
   type = "button",
   className = "",
@@ -80,6 +100,8 @@ export function Button({
   glyph?: ReactNode;
   onClick?: () => void;
   tone?: ButtonTone;
+  /** "chip" for the small remove control inside a pill; see ButtonVariant. */
+  variant?: ButtonVariant;
   disabled?: boolean;
   type?: "button" | "submit";
   className?: string;
@@ -102,16 +124,19 @@ export function Button({
   const mode = useLabelMode("buttons");
   // An explicit glyph wins; otherwise the key decides, so the same verb wears
   // the same symbol app-wide without 163 call sites each making a choice.
-  const resolved = glyph ?? (labelKey ? glyphFor(labelKey) : undefined);
+  const chip = variant === "chip";
+  // A chip always closes, so it has a glyph even when no call site passes one.
+  const resolved = glyph ?? (labelKey ? glyphFor(labelKey) : undefined) ?? (chip ? <IconClose /> : undefined);
   // No glyph to show means text, whatever the mode says — see the header note.
   const hasGlyph = !!resolved || busy;
-  const effective = mode === "glyph" && !hasGlyph ? "text" : mode;
+  const effective = chip ? "glyph" : mode === "glyph" && !hasGlyph ? "text" : mode;
   const showText = effective !== "glyph";
   const showGlyph = effective !== "text" && hasGlyph;
 
   // The stage comes from the label in the CURRENT language, never from what is
-  // rendered: the width has to survive a mode change untouched.
-  const stage = STAGE_CLASS[widthStage(label)];
+  // rendered: the width has to survive a mode change untouched. A chip takes no
+  // stage at all: it is sized by its glyph so it fits inside its pill.
+  const stage = chip ? "bv-btn-chip" : STAGE_CLASS[widthStage(label)];
 
   // In glyph mode the label IS the tooltip, so the control still explains
   // itself on hover. When both exist they are joined rather than one replacing
@@ -129,7 +154,7 @@ export function Button({
       disabled={disabled}
       title={tip || undefined}
       style={hueStyle}
-      className={`bv-btn ${stage} ${TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""} ${className}`.trim()}
+      className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""} ${className}`.trim()}
     >
       {showGlyph && (
         <span className="bv-btn-glyph">

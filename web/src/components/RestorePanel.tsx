@@ -192,13 +192,15 @@ function SnapshotFileBrowser({
             />
           )}
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              label={t("files.restoreSelected").replace("{n}", String(count))}
+              tone="accent"
               onClick={() => void handleRestoreSelected()}
               disabled={isPending || blockedByOther || (dest === "toFolder" && !folder.trim())}
-              className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isPending ? t("common.restoring") : t("files.restoreSelected").replace("{n}", String(count))}
-            </button>
+              busy={isPending}
+              title={isPending ? t("common.restoring") : undefined}
+              className="shrink-0"
+            />
             {blockedByOther && (
               <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
             )}
@@ -276,13 +278,16 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
   }
   return (
     <div className="flex flex-col gap-1 py-2">
-      <button
+      <Button
+        label={t("snapshots.recreate")}
+        labelKey="snapshots.recreate"
+        tone="accent"
         onClick={() => void handle()}
         disabled={isPending || blockedByOther || state.phase === "success"}
-        className="self-start inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-      >
-        {isPending ? t("common.restoring") : t("snapshots.recreate")}
-      </button>
+        busy={isPending}
+        title={isPending ? t("common.restoring") : undefined}
+        className="self-start"
+      />
       {blockedByOther && (
         <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
       )}
@@ -364,13 +369,16 @@ function RestoreToFolder({
         onChange={pickPath}
       />
       <div className="flex items-center gap-2">
-        <button
+        <Button
+          label={t("common.confirm")}
+          labelKey="common.confirm"
+          tone="accent"
           onClick={() => void fire()}
           disabled={!path.trim() || isPending || blockedByOther || done}
-          className="shrink-0 inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {isPending ? t("common.restoring") : t("common.confirm")}
-        </button>
+          busy={isPending}
+          title={isPending ? t("common.restoring") : undefined}
+          className="shrink-0"
+        />
         {blockedByOther && (
           <span className="text-caption text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
         )}
@@ -486,15 +494,12 @@ function CompareSnapshots({
 
   return (
     <div className="py-2 border-b border-carbon-border">
-      <button
+      <Button
+        label={t("snapshot.compare")}
+        labelKey="snapshot.compare"
+        tone="neutral"
         onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-1.5 text-xs text-carbon-textSub hover:text-carbon-text transition-colors"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
-          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
-        </svg>
-        {t("snapshot.compare")}
-      </button>
+      />
       {open && (
         <div className="mt-2 rounded-card bg-carbon-surface2 p-2 flex flex-col gap-2">
           <p className="text-caption text-carbon-textMuted">{t("snapshot.pickTwo")}</p>
@@ -513,16 +518,17 @@ function CompareSnapshots({
                 <option key={s.id} value={s.id}>{snapLabel(s)}</option>
               ))}
             </select>
-            <button
+            <Button
               key={shake}
+              label={t("snapshot.compare")}
+              labelKey="snapshot.compare"
+              tone="accent"
               onClick={() => void run()}
               disabled={loading || !from || !to || from === to}
-              className={`inline-flex items-center rounded-control bg-accent px-2.5 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed${
-                shake ? " glim-shake" : ""
-              }`}
-            >
-              {loading ? "…" : t("snapshot.compare")}
-            </button>
+              busy={loading}
+              title={loading ? "…" : undefined}
+              className={shake ? "glim-shake" : ""}
+            />
           </div>
           {error && <p className="text-xs text-statusFail wrap-break-word">{error}</p>}
           {diff && (
@@ -622,13 +628,13 @@ function SnapshotTags({
           className="w-24 rounded-control bg-carbon-surface2 text-carbon-text text-caption px-1.5 py-0.5 bv-field-focus"
         />
       ) : (
-        <button
+        <Button
+          label={t("snapshot.tags")}
+          labelKey="snapshot.tags"
+          tone="neutral"
           onClick={() => setAdding(true)}
           title={t("snapshot.addTag")}
-          className="inline-flex items-center rounded-control px-1.5 py-0.5 text-caption text-carbon-textMuted hover:bg-carbon-hover hover:text-carbon-text transition-colors"
-        >
-          + {t("snapshot.tags")}
-        </button>
+        />
       )}
     </div>
   );
