@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode, Ref } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { widthStage, type WidthStage } from "../lib/controls";
 import { useLabelMode } from "../lib/useLabelMode";
+import { useTipBubble } from "../lib/useTipBubble";
 import { glyphFor } from "./glyphFor";
 import { IconClose } from "./navGlyphs";
 
@@ -24,6 +25,18 @@ import { IconClose } from "./navGlyphs";
 //   3. THAT IT STAYS READABLE — in glyph mode the label is visually hidden but
 //      still in the accessible tree (`sr-only`), and it becomes the tooltip.
 //      Nothing here can produce a button whose purpose is unlabelled.
+//      That tooltip is the app's REAL `.glim-bubble` (lib/useTipBubble.tsx),
+//      never the native `title=` balloon — jdp's ruling on the contradiction
+//      glyph mode created. design-language.md calls a native title on an
+//      icon-only control the anti-pattern IconTipButton exists to replace,
+//      and lint-rules/icon-badge-needs-tooltip.js fails the build over it;
+//      glyph mode would otherwise have committed that anti-pattern 171 times
+//      in one setting, where before it was a handful of deliberate spots.
+//      The choice was to weaken the rule or to make this component honour it.
+//      It honours it — and while the bubble was being wired in, the native
+//      balloon left this component entirely, so a button's `title` is now
+//      shown the same way in every mode instead of switching mechanism when
+//      the text disappears.
 //   4. ITS COLOUR-ENGINE POSITION — `hueIndex` works exactly as it does on
 //      Badge, because rainbow mode is a standing, app-wide rule: a control
 //      that opts out of it is a bug, not a simplification.
@@ -116,7 +129,14 @@ export function Button({
   /** Extra explanation, and the place for anything that CHANGES: the running
    *  state, why the button is unavailable right now, which other job is
    *  holding it. The label is used as the tooltip in glyph mode on its own,
-   *  and both are shown when both exist. */
+   *  and both are shown when both exist.
+   *
+   *  Shown in the app's own hover/focus bubble, NOT as a native `title`
+   *  attribute — the name is kept because that is what 57 call sites already
+   *  call this, and because "the extra line of explanation" is exactly what a
+   *  title was for. Reaching a DISABLED button's explanation still works: see
+   *  useTipBubble's `wrap`, which is why the native balloon could go without
+   *  losing the "why is this dead" hint 54 of those call sites pass. */
   title?: string;
   /** This button's rainbow position, same meaning as Badge's own prop. */
   hueIndex?: number;
@@ -152,39 +172,77 @@ export function Button({
 
   // In glyph mode the label IS the tooltip, so the control still explains
   // itself on hover. When both exist they are joined rather than one replacing
-  // the other, so neither the name nor the state explanation is lost.
-  const tip = showText ? title : [label, title].filter(Boolean).join(" — ");
+  // the other, so neither the name nor the state explanation is lost — unless
+  // they are the same words, which collapse rather than printing twice (the
+  // Settings tab strip does exactly that on purpose, one component over).
+  const tip =
+    (showText ? title : [...new Set([label, title].filter(Boolean))].join(" — ")) || undefined;
+  const tooltip = useTipBubble(tip, disabled);
 
   const hueOn = hueIndex !== undefined;
   const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
 
   return (
-    <button
-      ref={ref}
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      autoFocus={autoFocus}
-      title={tip || undefined}
-      style={hueStyle}
-      className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""} ${className}`.trim()}
-    >
-      {showGlyph && (
-        <span className="bv-btn-glyph">
-          {busy ? (
-            <span
-              className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
-              style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
-            />
-          ) : (
-            resolved
+    <>
+      {/* `wrap` only does anything for a DISABLED button carrying a tip, which
+          is 54 of the 57 that pass one: a disabled <button> emits no mouse
+          events and takes no focus, so without a box around it the "why is
+          this unavailable" line would be unreachable at the exact moment it is
+          wanted. The native balloon used to show there for free; that is the
+          one thing it did better, and this is the price of replacing it.
+          No enabled button gains a wrapper, and no `w-full`/`flex-1` call site
+          is ever disabled, so no layout changes. */}
+      {tooltip.wrap(
+        <button
+          ref={mergeRefs(ref, tooltip.ref)}
+          type={type}
+          onClick={onClick}
+          disabled={disabled}
+          autoFocus={autoFocus}
+          aria-describedby={tooltip.describedBy}
+          {...tooltip.handlers}
+          style={hueStyle}
+          className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""} ${className}`.trim()}
+        >
+          {showGlyph && (
+            <span className="bv-btn-glyph">
+              {busy ? (
+                <span
+                  className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                  style={{ borderColor: "currentColor", borderTopColor: "transparent" }}
+                />
+              ) : (
+                resolved
+              )}
+            </span>
           )}
-        </span>
+          {/* Never removed from the DOM, only hidden: a button whose text is
+              gone entirely has no accessible name, which is the exact defect
+              this engine could otherwise introduce 197 times over. */}
+          <span className={showText ? "bv-btn-label" : "sr-only"}>{label}</span>
+        </button>,
       )}
-      {/* Never removed from the DOM, only hidden: a button whose text is gone
-          entirely has no accessible name, which is the exact defect this
-          engine could otherwise introduce 197 times over. */}
-      <span className={showText ? "bv-btn-label" : "sr-only"}>{label}</span>
-    </button>
+      {tooltip.bubble}
+    </>
   );
+}
+
+/**
+ * Feeds one element to both the caller's `ref` (dialogs move focus to a button
+ * on open, which is what makes Escape and the focus trap behave) and the
+ * tooltip's own, which needs the same node's rect to place the bubble against.
+ *
+ * Written out rather than reached for from a library because this is the only
+ * place in the app that needs it, and because the object-ref case has to be
+ * handled too: `ConfirmDialog` passes a `useRef`, not a callback.
+ */
+function mergeRefs(
+  outer: Ref<HTMLButtonElement> | undefined,
+  inner: (el: HTMLElement | null) => void,
+): (el: HTMLButtonElement | null) => void {
+  return (el) => {
+    inner(el);
+    if (typeof outer === "function") outer(el);
+    else if (outer) outer.current = el;
+  };
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // ---------------------------------------------------------------------------
-// Button (#178) — the two promises the engine makes.
+// Button (#178) — the three promises the engine makes.
 //
 //   1. The width does not move between modes. jdp: "Alle buttons bleiben in
 //      allen drei modi auch gleich breit." That is why the stage is derived
@@ -8,9 +8,13 @@
 //   2. A button always has an accessible name. Glyph mode is where an engine
 //      like this normally introduces 197 unlabelled controls at once, so the
 //      label is hidden visually and kept in the accessible tree, never removed.
+//   3. When the text IS hidden, the name comes back on hover and on focus, in
+//      the app's own `.glim-bubble` — never in the native `title=` balloon the
+//      design language calls the anti-pattern.
 // ---------------------------------------------------------------------------
+import { useRef } from "react";
 import { afterEach, beforeEach, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Button } from "./Button";
 import { setLabelMode } from "../lib/controls";
 
@@ -61,16 +65,93 @@ it("still has an accessible name in glyph mode", () => {
   expect(screen.getByRole("button", { name: "Clear" })).toBeTruthy();
 });
 
-it("turns the label into the tooltip when the text is hidden", () => {
+// The tooltip contract, after jdp's ruling on the contradiction glyph mode
+// created: a button that hides its text says what it is in the app's REAL
+// `.glim-bubble`, never in the native `title=` balloon that the design
+// language calls the anti-pattern and lint-rules/icon-badge-needs-tooltip.js
+// fails the build over. Glyph mode would otherwise have committed that
+// anti-pattern on all 171 buttons at once, from one setting.
+it("turns the label into a real bubble when the text is hidden, not a native title", () => {
   setLabelMode("buttons", "glyph");
   renderButton();
-  expect(screen.getByRole("button").getAttribute("title")).toBe("Clear");
+  const el = screen.getByRole("button");
+  expect(el.getAttribute("title")).toBeNull();
+  expect(document.querySelector(".glim-bubble")).toBeNull();
+  fireEvent.mouseEnter(el);
+  expect(document.querySelector(".glim-bubble")?.textContent).toBe("Clear");
+  fireEvent.mouseLeave(el);
+  expect(document.querySelector(".glim-bubble")).toBeNull();
+});
+
+// The native balloon never appeared on keyboard focus, which is half of why
+// it had to go: a control reachable by Tab whose only explanation needs a
+// mouse is not explained.
+it("opens the same bubble on keyboard focus, not only on hover", () => {
+  setLabelMode("buttons", "glyph");
+  renderButton();
+  const el = screen.getByRole("button");
+  fireEvent.focus(el);
+  expect(document.querySelector(".glim-bubble")?.textContent).toBe("Clear");
+  fireEvent.blur(el);
+  expect(document.querySelector(".glim-bubble")).toBeNull();
 });
 
 it("does not repeat the label as a tooltip while the text is visible", () => {
   setLabelMode("buttons", "textGlyph");
   renderButton();
-  expect(screen.getByRole("button").getAttribute("title")).toBeNull();
+  const el = screen.getByRole("button");
+  expect(el.getAttribute("title")).toBeNull();
+  fireEvent.mouseEnter(el);
+  expect(document.querySelector(".glim-bubble")).toBeNull();
+});
+
+// `title` is the CHANGING half — why the button is unavailable, which job is
+// holding it. It used to be the one thing the native balloon still carried;
+// dropping it would have been a silent regression at 57 call sites.
+it("shows the extra explanation in the bubble in every mode, joined to the name once the text is hidden", () => {
+  for (const [mode, expected] of [
+    ["textGlyph", "Another backup is running"],
+    ["glyph", "Clear — Another backup is running"],
+  ] as const) {
+    cleanup();
+    setLabelMode("buttons", mode);
+    render(
+      <Button label="Clear" glyph={<svg />} title="Another backup is running" onClick={() => {}} />
+    );
+    fireEvent.mouseEnter(screen.getByRole("button"));
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe(expected);
+  }
+});
+
+// The one thing the native balloon did BETTER, and the reason the replacement
+// needs a wrapper at all: a disabled <button> emits no mouse events and takes
+// no focus, so its own handlers can never fire — at exactly the moment the
+// user wants to know why it is dead. 54 of the 57 buttons carrying a `title`
+// pass `disabled` too, so this is the common case, not a corner.
+it("still reaches a DISABLED button's explanation, which the element itself cannot report", () => {
+  setLabelMode("buttons", "text");
+  const { container } = render(
+    <Button label="Restore" title="Pick a snapshot first" disabled onClick={() => {}} />
+  );
+  const wrapper = container.firstElementChild as HTMLElement;
+  expect(wrapper.tagName).toBe("SPAN");
+  fireEvent.mouseEnter(wrapper);
+  expect(document.querySelector(".glim-bubble")?.textContent).toBe("Pick a snapshot first");
+});
+
+// ...and no wrapper anywhere else, so nothing an ENABLED button sits in
+// changes shape. FolderBrowser's two `w-full` rows are never disabled, which
+// is what makes the wrapper safe to add at all.
+it("wraps nothing when the button is enabled, or when a disabled one has nothing to say", () => {
+  setLabelMode("buttons", "text");
+  for (const props of [
+    { title: "Pick a snapshot first" },
+    { disabled: true },
+  ] as const) {
+    cleanup();
+    const { container } = render(<Button label="Restore" onClick={() => {}} {...props} />);
+    expect((container.firstElementChild as HTMLElement).tagName).toBe("BUTTON");
+  }
 });
 
 it("shows a button's text in glyph mode when it has no glyph yet", () => {
@@ -111,6 +192,13 @@ it("resolves each tone to its own fill", () => {
 
 it("keeps the destructive and the warning fills distinct", () => {
   setLabelMode("buttons", "text");
+  // bv-convention-exception: no-status-color-on-control -- this is the TEST of
+  // the tone table, not a call site painting a control. `warn` has to be named
+  // literally here or there is nothing pinning it apart from `danger`; the rule
+  // guards real UI, and its own message asks for this line rather than an
+  // eslint-disable. (Pre-existing: the branch's `eslint src` failed on it
+  // before this round touched the file, since the gate list only ran tsc and
+  // vitest.)
   render(<Button label="Delete" tone="warn" onClick={() => {}} />);
   expect(screen.getByRole("button").className).not.toContain("bg-statusFailSolid");
 });
@@ -132,7 +220,10 @@ it("a chip takes no width stage and never shows its text", () => {
     }
     // Announced and on hover, never painted next to the thing it removes.
     expect(screen.getByText("Remove plex").className).toBe("sr-only");
-    expect(el.getAttribute("title")).toContain("Remove plex");
+    expect(el.getAttribute("title")).toBeNull();
+    fireEvent.mouseEnter(el);
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Remove plex");
+    fireEvent.mouseLeave(el);
   }
 });
 
@@ -149,4 +240,35 @@ it("a chip still gets a glyph when the call site passes none", () => {
   setLabelMode("buttons", "text");
   render(<Button label="Remove plex" variant="chip" onClick={() => {}} />);
   expect(screen.getByRole("button").querySelector("svg")).toBeTruthy();
+});
+
+// The tooltip needs the button's own rect to place its bubble against, so
+// `ref` is no longer forwarded straight through — it is merged with the
+// tooltip's. Both shapes have a live caller and neither may be dropped:
+// ErrorDetailPanel passes an OBJECT ref and calls `.current?.focus()` when the
+// panel opens, which is what makes Escape and the focus trap behave.
+it("still hands the element to the caller's own ref, object or callback", () => {
+  setLabelMode("buttons", "text");
+  let fromCallback: HTMLButtonElement | null = null;
+  function Harness() {
+    const object = useRef<HTMLButtonElement>(null);
+    return (
+      <>
+        <Button label="Close" ref={object} onClick={() => object.current?.focus()} />
+        <Button
+          label="Cancel"
+          ref={(el) => {
+            fromCallback = el;
+          }}
+          onClick={() => {}}
+        />
+      </>
+    );
+  }
+  render(<Harness />);
+  const close = screen.getByRole("button", { name: "Close" });
+  // Focusing THROUGH the object ref is the actual thing a dialog does on open.
+  fireEvent.click(close);
+  expect(document.activeElement).toBe(close);
+  expect(fromCallback).toBe(screen.getByRole("button", { name: "Cancel" }));
 });

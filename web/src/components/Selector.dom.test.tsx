@@ -26,6 +26,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Selector, MIN_PINNED_WIDTH, type SelectorItem } from "./Selector";
 import { RAINBOW_OFF, applyRainbow } from "../lib/appearance";
+import { setLabelMode } from "../lib/controls";
 
 const ITEMS: SelectorItem[] = [
   { id: "a", label: "Alpha" },
@@ -675,5 +676,111 @@ describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimSto
     expect(spy).toHaveBeenCalledWith("remote");
     expect((screen.getByRole("tab", { name: "Remote" }) as HTMLElement).tabIndex).toBe(0);
     expect((screen.getByRole("tab", { name: "Local" }) as HTMLElement).tabIndex).toBe(-1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The same ruling Button and the nav rail got, applied to the third axis: a
+// segment whose text the label engine has hidden says what it is in the real
+// `.glim-bubble`, and `title` stops being a native attribute anywhere in this
+// component. Before this, `tip` was the ONLY thing that produced a bubble, so
+// glyph mode turned every strip without one into unnamed pictures — with a
+// native balloon (Files' "pick a target folder first") as the only fallback,
+// which is the anti-pattern the round exists to remove.
+// ---------------------------------------------------------------------------
+describe("Selector — glyph mode names its segments (#178)", () => {
+  const PLAIN: SelectorItem[] = [
+    { id: "a", label: "Alpha", icon: <span data-testid="icon-a" /> },
+    { id: "b", label: "Beta", icon: <span data-testid="icon-b" /> },
+  ];
+  const WITH_TIPS: SelectorItem[] = [
+    { id: "local", label: "Local", icon: <span />, tip: "Local path on this host" },
+    { id: "remote", label: "Remote", icon: <span />, tip: "Remote restic repository" },
+  ];
+
+  afterEach(() => {
+    // This axis is stored, so it would otherwise leak into every later file.
+    setLabelMode("tabs", "textGlyph");
+    localStorage.clear();
+  });
+
+  it("falls back to the label when a hidden segment carries no tip of its own", () => {
+    setLabelMode("tabs", "glyph");
+    render(<Selector items={PLAIN} label="Test strip" active="a" onChange={() => {}} />);
+    const alpha = screen.getByRole("tab", { name: "Alpha" });
+    expect(alpha.querySelector("span.truncate")).toBeNull();
+    fireEvent.mouseEnter(alpha);
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Alpha");
+  });
+
+  it("lets an explicit tip win outright rather than joining it to the label", () => {
+    setLabelMode("tabs", "glyph");
+    render(<Selector items={WITH_TIPS} label="Path mode" active="local" onChange={() => {}} />);
+    fireEvent.mouseEnter(screen.getByRole("tab", { name: "Local" }));
+    // These tips are already written as the fuller sentence that REPLACES the
+    // label; joining would read "Local — Local path on this host".
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Local path on this host");
+  });
+
+  it("says nothing on hover while a segment still shows its own words", () => {
+    render(<Selector items={PLAIN} label="Test strip" active="a" onChange={() => {}} />);
+    fireEvent.mouseEnter(screen.getByRole("tab", { name: "Alpha" }));
+    expect(document.querySelector(".glim-bubble")).toBeNull();
+  });
+
+  it("moves `title` out of the native attribute and into the bubble, reachable while disabled", () => {
+    const items: SelectorItem[] = [
+      { id: "a", label: "Alpha", disabled: true, title: "Pick a target folder first" },
+      { id: "b", label: "Beta" },
+    ];
+    const { container } = render(
+      <Selector items={items} label="Test strip" active="b" onChange={() => {}} />
+    );
+    const alpha = screen.getByRole("tab", { name: "Alpha" });
+    expect(alpha.getAttribute("title")).toBeNull();
+    // A disabled <button> emits no mouse events, so the hover has to land on
+    // the wrapper the tooltip puts around it — otherwise the reason the
+    // segment is dead is unreachable exactly when it is wanted.
+    const wrapper = container.querySelector("span.inline-flex") as HTMLElement;
+    expect(wrapper.contains(alpha)).toBe(true);
+    fireEvent.mouseEnter(wrapper);
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Pick a target folder first");
+  });
+
+  it("joins `title` to the name once the label is hidden, keeping both", () => {
+    setLabelMode("tabs", "glyph");
+    render(
+      <Selector
+        items={[{ id: "a", label: "Alpha", icon: <span />, title: "Busy right now" }]}
+        label="Test strip"
+        active="a"
+        onChange={() => {}}
+      />
+    );
+    fireEvent.mouseEnter(screen.getByRole("tab", { name: "Alpha" }));
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Alpha — Busy right now");
+  });
+
+  // Found live, not reasoned about: the Settings tab strip passes
+  // `title: label` on purpose — equal-width segments can truncate a long label
+  // ("Benachrichtigungen" at 1400px) and the title was the only way to read
+  // the rest of it. The naive join printed "Allgemein — Allgemein".
+  it("collapses a `title` that only repeats the name", () => {
+    for (const mode of ["glyph", "textGlyph"] as const) {
+      cleanup();
+      setLabelMode("tabs", mode);
+      render(
+        <Selector
+          items={[{ id: "general", label: "Allgemein", icon: <span />, title: "Allgemein" }]}
+          label="Settings sections"
+          active="general"
+          onChange={() => {}}
+        />
+      );
+      fireEvent.mouseEnter(screen.getByRole("tab", { name: "Allgemein" }));
+      // Text mode is unchanged from the native balloon it replaced: the title
+      // stands alone and still does its truncation job.
+      expect(document.querySelector(".glim-bubble")?.textContent).toBe("Allgemein");
+    }
   });
 });

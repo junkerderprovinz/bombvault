@@ -1,45 +1,34 @@
-import {
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
-import { createPortal } from "react-dom";
-import { computeBubblePosition } from "../lib/bubblePosition";
+import type { CSSProperties, ReactNode } from "react";
+import { useTipBubble } from "../lib/useTipBubble";
 
 // ---------------------------------------------------------------------------
 // IconTipButton — a plain icon-only <button> whose accessible name AND its
 // only hover/focus explanation is a real `.glim-bubble` tooltip, not the OS's
 // own native `title=` balloon.
 //
-// design-language.md, "The tooltip and info bubble": "A plain icon-only
-// button's hover tooltip and a control's '(i)' explanatory bubble are the
-// same mechanism wearing two different trigger elements, not two separate
-// implementations that happen to look similar... A stray native `title=`
-// anywhere in the app is auto-upgraded to `data-tip`..." BombVault has no
-// single delegated `wireTooltips()` engine the way the GlimStone reference
-// does — InfoBubble.tsx (the "(i)" trigger) and Selector.tsx's SelectorTab
-// (a Selector segment's own `tip`) are its own two existing, independent
-// ports of that engine, each wired to its own specific trigger shape. This
-// file is the THIRD: the same open-state/measure-then-clamp-position/
-// scroll-and-Escape-close contract as those two, wired to a plain `<button>`
-// instead — so a bare icon-only action button (not an "(i)" glyph, not a
-// Selector segment) has a real place to render its own tooltip from rather
-// than a fourth call site reaching for the native `title=` attribute that
-// caused this file to need to exist in the first place.
-//
 // Root cause (jdp, live-review: "beim Ordnersymbol ist die Hover-Infobubble
 // nicht im GlimStone"): FolderBrowser's own "Durchsuchen" icon button carried
 // only `title=`/`aria-label=` — the browser's own plain OS balloon, visibly
 // disagreeing with PathModeSwitch's Local/Remote icon pair sitting right next
-// to it, which already got the real `.glim-bubble` treatment (via Selector's
-// own `tip`) in an earlier round. `tip` is REQUIRED here, not optional:
-// design-language.md's own tooltip section is explicit that "an icon-only
-// button (no visible text at all) needs one unconditionally — there's no
-// other way to know what it does."
+// to it, which already got the real `.glim-bubble` treatment in an earlier
+// round. `tip` is REQUIRED here, not optional: design-language.md's own
+// tooltip section is explicit that "an icon-only button (no visible text at
+// all) needs one unconditionally — there's no other way to know what it does."
+//
+// This file used to carry its own copy of the open-state / measure-then-clamp
+// / close-on-scroll-or-Escape machinery — the THIRD of four identical copies
+// in this app. That machinery now lives in lib/useTipBubble.tsx and this file
+// is what remained once it left: a button element, a `tip` that is also its
+// accessible name, and the two ARIA state props below. See the hook's own
+// header for why the four copies had to become one.
+//
+// What is left here that Button.tsx does NOT do — i.e. why this component
+// still exists as its own thing now that Button has grown the same bubble:
+// this is the control with NO label to hide. A bare glyph in a caller-sized
+// box (`h-8 w-8`, `size-7`), taking no width stage, no tone fill and no place
+// in the label-mode engine, because there is no text for a mode to show or
+// hide. Button is a labelled action that CAN be shown as a glyph; this is a
+// glyph that never had words in the first place.
 // ---------------------------------------------------------------------------
 export function IconTipButton({
   tip,
@@ -92,105 +81,28 @@ export function IconTipButton({
   children: ReactNode;
   type?: "button" | "submit";
 }) {
-  const [open, setOpen] = useState(false);
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-  const bubbleRef = useRef<HTMLDivElement | null>(null);
-  const tooltipId = useId();
-
-  function show() {
-    setOpen(true);
-  }
-  function hide() {
-    setOpen(false);
-  }
-
-  // Same measure-then-clamp positioning as InfoBubble.tsx/Selector.tsx's
-  // SelectorTab — see either file's own header comment for the full
-  // root-cause writeup (the "Wiederherstellungskit" viewport-overflow bug)
-  // this ports verbatim rather than reinventing.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const trigger = btnRef.current;
-    const bubble = bubbleRef.current;
-    if (!trigger || !bubble) return;
-    const r = trigger.getBoundingClientRect();
-    const viewport = {
-      width: document.documentElement.clientWidth || window.innerWidth,
-      height: document.documentElement.clientHeight || window.innerHeight,
-    };
-    const { left, top } = computeBubblePosition(
-      r,
-      { width: bubble.offsetWidth, height: bubble.offsetHeight },
-      viewport,
-    );
-    bubble.style.left = `${left}px`;
-    bubble.style.top = `${top}px`;
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onScroll = () => hide();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") hide();
-    };
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  // A DISABLED button emits no mouse events and takes no focus, so the hover
-  // handlers below never fire and the tip — which for an icon-only control is
-  // the only thing naming it — becomes unreachable exactly when the user most
-  // wants to know why the control is dead. The wrapper is not disabled, so it
-  // still sees the pointer; it is rendered ONLY in that case, so the enabled
-  // layout is untouched rather than gaining a box everywhere for a corner case.
-  // `inline-flex` matches what these buttons already sit in.
-  const withHoverWrapper = (node: ReactNode) =>
-    disabled ? (
-      <span className="inline-flex" onMouseEnter={show} onMouseLeave={hide}>
-        {node}
-      </span>
-    ) : (
-      node
-    );
+  const tooltip = useTipBubble(tip, disabled);
 
   return (
     <>
-      {withHoverWrapper(
+      {tooltip.wrap(
         <button
-          ref={btnRef}
+          ref={tooltip.ref}
           type={type}
           onClick={onClick}
           disabled={disabled}
           aria-label={tip}
           aria-pressed={ariaPressed}
           aria-expanded={ariaExpanded}
-          aria-describedby={open ? tooltipId : undefined}
-          onMouseEnter={show}
-          onMouseLeave={hide}
-          onFocus={show}
-          onBlur={hide}
+          aria-describedby={tooltip.describedBy}
+          {...tooltip.handlers}
           className={className}
           style={style}
         >
           {children}
         </button>,
       )}
-      {open &&
-        createPortal(
-          <div
-            ref={bubbleRef}
-            role="tooltip"
-            id={tooltipId}
-            className="glim-bubble glim-fade"
-          >
-            {tip}
-          </div>,
-          document.body,
-        )}
+      {tooltip.bubble}
     </>
   );
 }

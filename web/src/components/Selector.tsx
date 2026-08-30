@@ -274,8 +274,6 @@
 // either (see the migration commit).
 // ---------------------------------------------------------------------------
 import {
-  useEffect,
-  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -283,11 +281,10 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 import { hueVars, rainbowAt } from "../lib/appearance";
-import { computeBubblePosition } from "../lib/bubblePosition";
 import { useRainbow } from "../lib/useRainbow";
 import { useLabelMode } from "../lib/useLabelMode";
+import { useTipBubble } from "../lib/useTipBubble";
 
 export interface SelectorItem {
   /** Stable id — what onChange hands back. */
@@ -298,8 +295,13 @@ export interface SelectorItem {
    *  Settings tab strip is the one call site that actually carries these). */
   icon?: ReactNode;
   disabled?: boolean;
-  /** Native tooltip — e.g. Files.tsx's "pick a target folder first" hint on
-   *  a disabled destination chip. */
+  /** The CHANGING half of the explanation — e.g. Files.tsx's "pick a target
+   *  folder first" hint on a disabled destination chip. Appended to whatever
+   *  names the segment (`tip`, or the label once it is hidden) in the same
+   *  `.glim-bubble`; it is no longer rendered as a native `title` attribute,
+   *  which never reached the keyboard. Kept under its old name because that
+   *  is what every call site passing "why this is unavailable" already
+   *  calls it. */
   title?: string;
   /** Hides the visible text label so only `icon` shows (PathModeSwitch's
    *  Local/Remote pair, GlimStone follow-up round point 2 — "replace the
@@ -309,11 +311,15 @@ export interface SelectorItem {
    *  content that stops rendering. */
   iconOnly?: boolean;
   /** Hover/focus-revealed explanation, portal-rendered in the same
-   *  `.glim-bubble` chrome InfoBubble.tsx's (i) icon already uses (not a
-   *  second, differently-styled tooltip mechanism) — needed once `iconOnly`
-   *  strips a segment of its own visible meaning and a bare `label`/`title`
-   *  native tooltip isn't enough context on its own. Independent of `title`
-   *  (a plain native attribute, still passed straight through unchanged). */
+   *  `.glim-bubble` chrome InfoBubble.tsx's (i) icon already uses (one shared
+   *  mechanism now, lib/useTipBubble.tsx, not four look-alikes) — needed once
+   *  `iconOnly` strips a segment of its own visible meaning and the bare
+   *  label isn't enough context on its own.
+   *
+   *  OPTIONAL, and it always was: a segment whose label is hidden but which
+   *  passes no `tip` falls back to that label, so glyph mode cannot produce an
+   *  unnamed picture. Pass this when the label is too terse to stand alone
+   *  ("Local" → "Local path on this host"), not to repeat it. */
   tip?: string;
 }
 
@@ -547,14 +553,14 @@ export function rovedIndex(disabled: boolean[], activeIndex: number): number {
 // ---------------------------------------------------------------------------
 // SelectorTab — one rendered segment (GlimStone follow-up round, PathModeSwitch
 // icon-only tooltip point). Pulled out of Selector's own `.map()` into a real
-// component, rather than inline JSX, specifically so `tip`'s hover/focus
-// tooltip state below (useState/useEffect) is legal: each array item gets its
-// OWN component instance this way, which is the ordinary "list of stateful
-// components" shape — a hook called directly inside a `.map()` callback body
-// would violate the rules of hooks the moment the item count ever changed.
+// component, rather than inline JSX, specifically so the hover/focus tooltip
+// state below (useTipBubble) is legal: each array item gets its OWN component
+// instance this way, which is the ordinary "list of stateful components"
+// shape — a hook called directly inside a `.map()` callback body would violate
+// the rules of hooks the moment the item count ever changed.
 // Every other prop is threaded straight through from Selector's own render
 // loop unchanged; nothing here duplicates Selector's own selection/hue/sizing
-// logic, so an item with no `tip` renders byte-identical output to before.
+// logic.
 // ---------------------------------------------------------------------------
 interface SelectorTabProps {
   item: SelectorItem;
@@ -583,88 +589,45 @@ function SelectorTab({
   // shared setting the Settings tab strip and every other horizontal selector
   // obey, so the app has one answer rather than one per strip.
   const labelMode = useLabelMode("tabs");
-  const [tipOpen, setTipOpen] = useState(false);
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-  const bubbleRef = useRef<HTMLDivElement | null>(null);
-  const tooltipId = useId();
 
-  function showTip() {
-    if (!item.tip) return;
-    setTipOpen(true);
-  }
-  function hideTip() {
-    setTipOpen(false);
-  }
+  // Whether this segment's own words are off the screen right now — either
+  // because the call site pinned it to its glyph (`iconOnly`) or because the
+  // "tabs" axis is in glyph mode and there is a glyph to show instead.
+  const nameHidden = !!item.iconOnly || (labelMode === "glyph" && !!item.icon);
 
-  // Positions the bubble (clamped into the viewport, flipped above the
-  // trigger when opening below would clip the bottom edge) AFTER it has
-  // mounted and laid out — same fix, same shared computeBubblePosition, as
-  // InfoBubble.tsx's identical tooltip. This copy had the exact same bug:
-  // centred on the trigger with no viewport clamp and always opening
-  // downward, so an icon-only tab near a toolbar's edge (or a table's last
-  // column) could push its tip half off-screen. See InfoBubble.tsx's header
-  // comment for the full root-cause writeup.
-  useLayoutEffect(() => {
-    if (!tipOpen) return;
-    const trigger = btnRef.current;
-    const bubble = bubbleRef.current;
-    if (!trigger || !bubble) return;
-    const r = trigger.getBoundingClientRect();
-    const viewport = {
-      width: document.documentElement.clientWidth || window.innerWidth,
-      height: document.documentElement.clientHeight || window.innerHeight,
-    };
-    const { left, top } = computeBubblePosition(
-      r,
-      { width: bubble.offsetWidth, height: bubble.offsetHeight },
-      viewport,
-    );
-    bubble.style.left = `${left}px`;
-    bubble.style.top = `${top}px`;
-  }, [tipOpen]);
-
-  // Same scroll-closes / Escape-closes contract as InfoBubble.tsx's own
-  // tooltip — a floating box anchored to a live rect must not drift out of
-  // position under the trigger it's supposed to be pointing at.
-  useEffect(() => {
-    if (!tipOpen) return;
-    const onScroll = () => hideTip();
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape") hideTip();
-    };
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [tipOpen]);
-
-  // A DISABLED segment emits no mouse events and takes no focus, so its tip is
-  // unreachable — and for an iconOnly segment the tip is the only thing that
-  // names it, at exactly the moment (a short in-flight disable) when the user
-  // wants to know why it is dead. The wrapper is not disabled and still sees the
-  // pointer. Rendered ONLY when disabled, so the enabled strip's layout, which
-  // this component measures for its own sliding indicator, is untouched.
-  const wrapDisabled = (node: ReactNode) =>
-    disabled && item.tip ? (
-      <span
-        className="inline-flex"
-        onMouseEnter={showTip}
-        onMouseLeave={hideTip}
-      >
-        {node}
-      </span>
-    ) : (
-      node
-    );
+  // The tooltip, in one place, under jdp's glyph-mode ruling: a control that
+  // hides its text says what it is in a real bubble, never in a native `title`
+  // balloon (which is invisible to the keyboard and unstyleable — see
+  // lib/useTipBubble.tsx).
+  //
+  //   - An explicit `tip` WINS OUTRIGHT over the label rather than being
+  //     joined to it: these tips are already written as the fuller sentence
+  //     that replaces the label ("Local" → "Local path on this host"), so
+  //     joining would read "Local — Local path on this host".
+  //   - A segment with no `tip` whose label is hidden falls back to that
+  //     label, which is the whole point of the ruling: glyph mode must not
+  //     turn a strip into unnamed pictures.
+  //   - `title` is APPENDED, not replaced: it is the changing part (Files'
+  //     "pick a target folder first" on a disabled chip), so it belongs
+  //     alongside the name rather than instead of it. It no longer renders as
+  //     a native attribute at all.
+  //   - IDENTICAL parts collapse. Found live, not reasoned about: the Settings
+  //     tab strip passes `title: label` deliberately (equal-width segments can
+  //     truncate a long label — "Benachrichtigungen" at 1400px — and the title
+  //     was the only way to read the rest of it), so in glyph mode the naive
+  //     join produced "Allgemein — Allgemein". In text mode that same title
+  //     still stands alone and still does its truncation job, exactly as the
+  //     native balloon did before.
+  const explains = item.tip ?? (nameHidden ? item.label : undefined);
+  const tip = [...new Set([explains, item.title].filter(Boolean))].join(" — ") || undefined;
+  const tooltip = useTipBubble(tip, disabled);
 
   return (
     <>
-      {wrapDisabled(
+      {tooltip.wrap(
         <button
           ref={(el) => {
-            btnRef.current = el;
+            tooltip.ref(el);
             registerRef(el);
           }}
           type="button"
@@ -672,18 +635,14 @@ function SelectorTab({
           role={many ? undefined : "tab"}
           aria-selected={many ? undefined : on}
           aria-pressed={many ? on : undefined}
-          aria-label={item.iconOnly || (labelMode === "glyph" && item.icon) ? item.label : undefined}
-          aria-describedby={item.tip && tipOpen ? tooltipId : undefined}
-          title={item.title}
+          aria-label={nameHidden ? item.label : undefined}
+          aria-describedby={tooltip.describedBy}
           disabled={disabled}
           tabIndex={roved ? 0 : -1}
           style={style}
           className={className}
           onClick={onSelect}
-          onMouseEnter={item.tip ? showTip : undefined}
-          onMouseLeave={item.tip ? hideTip : undefined}
-          onFocus={item.tip ? showTip : undefined}
-          onBlur={item.tip ? hideTip : undefined}
+          {...tooltip.handlers}
         >
           {/* #178: a segment shows what the "tabs" axis asks for. `iconOnly`
               is still honoured as the call site's own hard choice, and a
@@ -697,19 +656,7 @@ function SelectorTab({
             )}
         </button>,
       )}
-      {item.tip &&
-        tipOpen &&
-        createPortal(
-          <div
-            ref={bubbleRef}
-            role="tooltip"
-            id={tooltipId}
-            className="glim-bubble glim-fade"
-          >
-            {item.tip}
-          </div>,
-          document.body,
-        )}
+      {tooltip.bubble}
     </>
   );
 }

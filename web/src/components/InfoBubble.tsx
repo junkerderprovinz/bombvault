@@ -1,6 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { computeBubblePosition } from "../lib/bubblePosition";
+import { useTipBubble } from "../lib/useTipBubble";
 
 // InfoBubble — a neutral (i) icon that reveals a short help text on hover AND
 // focus (keyboard-accessible). House convention (matches CannonadeCommand's
@@ -25,15 +23,14 @@ import { computeBubblePosition } from "../lib/bubblePosition";
 //     a trigger near the right edge pushed the horizontally-centred bubble
 //     half off-screen, and a trigger low on a tall page (or a long tip like
 //     recovery.why's multi-sentence explanation, which wraps to a genuinely
-//     tall box) pushed it past the bottom. Fixed by `computeBubblePosition`
-//     (lib/bubblePosition.ts, ported pixel-for-pixel from GlimStone's
-//     reference/tooltip.ts): clamps left/right into the viewport with an 8px
-//     margin, and flips the bubble above the trigger when opening below
-//     would clip the bottom edge and there's actually room above to flip
-//     into. Measured via the bubble's REAL rendered size (offsetWidth/
-//     offsetHeight after it mounts, in a `useLayoutEffect` so the corrected
-//     position lands before the first paint) rather than an assumed
-//     constant, since height depends on how many lines the tip wraps to.
+//     tall box) pushed it past the bottom.
+//
+// All of the above — the open state, the viewport clamp, the close-on-scroll
+// and Escape contract, the portal — now lives ONCE in lib/useTipBubble.tsx
+// and this file is a trigger that calls it. Having to fix that clamp twice,
+// in two files, from one bug report is precisely why: see the hook's header.
+// What stayed here is what is actually this component's own: the (i)
+// silhouette, its two colour treatments, and the <label> click fix below.
 //
 // `onAccent` (live-review follow-up: "the (i) icon is hard to see on a
 // solid-accent section-title badge, especially a light/yellow accent").
@@ -53,71 +50,16 @@ import { computeBubblePosition } from "../lib/bubblePosition";
 // plain-card Card body hint) omits this prop and keeps the exact neutral
 // look it always had.
 export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const iconRef = useRef<HTMLSpanElement>(null);
-  const bubbleRef = useRef<HTMLDivElement>(null);
-  const tooltipId = useId();
-
-  function show() {
-    if (!iconRef.current) return;
-    setOpen(true);
-  }
-  function hide() {
-    setOpen(false);
-  }
-
-  // Positions the bubble (and flips it above the trigger when needed) AFTER
-  // it has actually mounted and laid out — offsetWidth/offsetHeight only
-  // resolve once the element is in the DOM, so the real wrapped size (which
-  // depends on the tip's own length, not just the CSS max-width) is known.
-  // useLayoutEffect, not useEffect: this must run before the browser paints
-  // — matching reference/tooltip.ts's own synchronous measure-then-place —
-  // so the corrected position is what's actually painted, not a visible
-  // jump on the next frame.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const trigger = iconRef.current;
-    const bubble = bubbleRef.current;
-    if (!trigger || !bubble) return;
-    const r = trigger.getBoundingClientRect();
-    const viewport = {
-      width: document.documentElement.clientWidth || window.innerWidth,
-      height: document.documentElement.clientHeight || window.innerHeight,
-    };
-    const { left, top } = computeBubblePosition(
-      r,
-      { width: bubble.offsetWidth, height: bubble.offsetHeight },
-      viewport
-    );
-    bubble.style.left = `${left}px`;
-    bubble.style.top = `${top}px`;
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onScroll = () => hide();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") hide();
-    };
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const tooltip = useTipBubble(tip);
 
   return (
     <>
       <span
-        ref={iconRef}
+        ref={tooltip.ref}
         aria-label={tip}
-        aria-describedby={open ? tooltipId : undefined}
+        aria-describedby={tooltip.describedBy}
         tabIndex={0}
-        onMouseEnter={show}
-        onMouseLeave={hide}
-        onFocus={show}
-        onBlur={hide}
+        {...tooltip.handlers}
         // Bugfix (found live while verifying a NEW label+InfoBubble call site
         // this same round, notify.healthchecks — but the gap turned out to
         // pre-exist at every one of this component's OTHER call sites that
@@ -156,13 +98,7 @@ export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: 
           <path d="M8 7v4.4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
         </svg>
       </span>
-      {open &&
-        createPortal(
-          <div ref={bubbleRef} role="tooltip" id={tooltipId} className="glim-bubble glim-fade">
-            {tip}
-          </div>,
-          document.body
-        )}
+      {tooltip.bubble}
     </>
   );
 }
