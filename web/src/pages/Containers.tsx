@@ -2588,16 +2588,16 @@ function BackupOrderPanel({
               ))}
             </ol>
             <div className="flex items-center gap-3 flex-wrap">
-              <button
+              <Button
                 key={shakeSave}
+                label={t("backupOrder.save")}
+                labelKey="backupOrder.save"
+                tone="accent"
                 onClick={() => void persist(names, "save")}
                 disabled={saveState === "saving"}
-                className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                  shakeSave ? " glim-shake" : ""
-                }`}
-              >
-                {t("backupOrder.save")}
-              </button>
+                busy={saveState === "saving"}
+                className={shakeSave ? "glim-shake" : ""}
+              />
               <Button
                 label={t("backupOrder.reset")}
           labelKey="backupOrder.reset"

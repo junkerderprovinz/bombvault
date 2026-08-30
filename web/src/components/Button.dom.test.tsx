@@ -86,3 +86,31 @@ it("gives a longer label a wider stage", () => {
   renderButton("Kijelölés törlése");
   expect(stageClass()).toBe("bv-btn-md");
 });
+
+// Tone -> classes. ConfirmDialog used to own this table and asserted the class
+// names itself; it passes a tone NAME now, so the mapping is pinned here
+// instead of quietly losing the coverage in the move.
+//
+// `danger` and `warn` deliberately use the SOLID status tokens over
+// `carbon-background`: both themes' solid fail/warn values sit at the opposite
+// lightness to that theme's own background, so one ink stays legible in both
+// without a dedicated contrast token.
+it("resolves each tone to its own fill", () => {
+  setLabelMode("buttons", "text");
+  for (const [tone, expected] of [
+    ["accent", "bg-accent"],
+    ["neutral", "bg-carbon-surface3"],
+    ["danger", "bg-statusFailSolid"],
+    ["warn", "bg-statusWarnSolid"],
+  ] as const) {
+    cleanup();
+    render(<Button label="Delete" tone={tone} onClick={() => {}} />);
+    expect(screen.getByRole("button").className).toContain(expected);
+  }
+});
+
+it("keeps the destructive and the warning fills distinct", () => {
+  setLabelMode("buttons", "text");
+  render(<Button label="Delete" tone="warn" onClick={() => {}} />);
+  expect(screen.getByRole("button").className).not.toContain("bg-statusFailSolid");
+});

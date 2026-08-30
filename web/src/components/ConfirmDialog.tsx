@@ -68,20 +68,6 @@ export interface ConfirmDialogProps {
   /** The dialog card's root DOM node, for useConfirm.tsx's focus trap. */
   ref?: Ref<HTMLDivElement>;
 }
-
-const CONFIRM_BUTTON_TONE: Record<ConfirmTone, string> = {
-  // text-carbon-background reads correctly against BOTH themes' fail/warn
-  // solid values without a dedicated "-contrast" token: dark theme's
-  // --status-fail-solid (#ff8389) and --status-warn-solid (#f1c21b) are both
-  // light, so the DARK carbon-background (#161616 in dark theme) sits on top
-  // with good contrast; light theme's versions (#da1e28 / #b28600) are both
-  // dark, so the LIGHT carbon-background (#f4f4f4 in light theme) does the
-  // same job. This is the same "opposite ground" trick Toggle.tsx's thumb
-  // already relies on (bg-carbon-background sitting on the accent track).
-  fail: "bg-statusFailSolid text-carbon-background",
-  warn: "bg-statusWarnSolid text-carbon-background",
-};
-
 export function ConfirmDialog({
   title,
   message,
@@ -151,14 +137,12 @@ export function ConfirmDialog({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 border-t border-carbon-border px-5 py-4">
-          <button
-            type="button"
+          <Button
+            label={cancelLabel}
+            tone="neutral"
             autoFocus
             onClick={onCancel}
-            className="rounded-control bg-carbon-surface3 px-4 py-2 text-sm font-medium text-carbon-text hover:bg-carbon-hover"
-          >
-            {cancelLabel}
-          </button>
+          />
           {/* bv-convention-exception: no-status-color-on-control -- this is THE
               destructive-confirmation control, and the design language states
               the rule it is the exception to: "the destructive control is
@@ -171,13 +155,11 @@ export function ConfirmDialog({
               drift into a third shade. Invisible to the guard until it learned
               to follow a class list behind an identifier (CONFIRM_BUTTON_TONE),
               which is why the marker is only being written now. */}
-          <button
-            type="button"
+          <Button
+            label={confirmLabel}
+            tone={tone === "fail" ? "danger" : "warn"}
             onClick={onConfirm}
-            className={`rounded-control px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 ${CONFIRM_BUTTON_TONE[tone]}`}
-          >
-            {confirmLabel}
-          </button>
+          />
         </div>
       </div>
     </div>

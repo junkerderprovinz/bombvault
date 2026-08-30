@@ -50,7 +50,14 @@ function visibleText(node: unknown): string {
   if (node == null || typeof node === "boolean") return "";
   if (typeof node === "string" || typeof node === "number") return String(node);
   if (Array.isArray(node)) return node.map(visibleText).join("");
-  if (isElementNode(node) && node.props?.children !== undefined) return visibleText(node.props.children);
+  if (!isElementNode(node)) return "";
+  // A shared <Button> (#178) carries its words in the `label` PROP, not in
+  // children: this tree is inspected, never rendered, so nothing expands that
+  // prop into text on our behalf.
+  if (typeof node.type === "function" && node.type.name === "Button") {
+    return String(node.props?.label ?? "");
+  }
+  if (node.props?.children !== undefined) return visibleText(node.props.children);
   return "";
 }
 
@@ -153,15 +160,16 @@ describe("ConfirmDialog", () => {
     const tree = ConfirmDialog(baseProps);
     const buttons = findAllButtons(tree);
     const confirmBtn = buttons.find((b) => visibleText(b) === "Confirm" && b.props?.autoFocus !== true);
-    expect(confirmBtn?.props?.className).toContain("bg-statusFailSolid");
+    // The tone is a NAME now; Button owns which classes it resolves to, and
+    // Button's own test pins that mapping.
+    expect(confirmBtn?.props?.tone).toBe("danger");
   });
 
   it("renders a warn (amber) tone confirm button when tone=\"warn\" (RestoreCancelButton's light-warning branch)", () => {
     const tree = ConfirmDialog({ ...baseProps, tone: "warn" });
     const buttons = findAllButtons(tree);
     const confirmBtn = buttons.find((b) => visibleText(b) === "Confirm" && b.props?.autoFocus !== true);
-    expect(confirmBtn?.props?.className).toContain("bg-statusWarnSolid");
-    expect(confirmBtn?.props?.className).not.toContain("bg-statusFailSolid");
+    expect(confirmBtn?.props?.tone).toBe("warn");
   });
 
   it("labels the dialog via aria-labelledby pointing at the title heading's id", () => {

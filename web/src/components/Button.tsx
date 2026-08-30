@@ -42,7 +42,7 @@ const STAGE_CLASS: Record<WidthStage, string> = {
   lg: "bv-btn-lg",
 };
 
-export type ButtonTone = "accent" | "neutral" | "danger";
+export type ButtonTone = "accent" | "neutral" | "danger" | "warn";
 
 /**
  * "default" — the ordinary action button described above.
@@ -62,10 +62,17 @@ export type ButtonTone = "accent" | "neutral" | "danger";
  */
 export type ButtonVariant = "default" | "chip";
 
+// `danger`/`warn` use the SOLID status tokens over `carbon-background`, the
+// pairing ConfirmDialog worked out for itself and documented at length: both
+// themes' solid fail/warn values sit at the opposite lightness to that theme's
+// own background, so one ink is legible on both without a dedicated contrast
+// token. Adopting it here rather than inventing a second recipe means the
+// destructive-confirm button looks the same after moving into this component.
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:opacity-90",
   neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hover",
-  danger: "bg-statusFail text-white hover:opacity-90",
+  danger: "bg-statusFailSolid text-carbon-background hover:opacity-90",
+  warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
 };
 
 export function Button({
@@ -81,6 +88,7 @@ export function Button({
   title,
   hueIndex,
   busy = false,
+  autoFocus = false,
   ref,
 }: {
   /** The button's words. Always present, in every mode: visible as text, or
@@ -120,6 +128,10 @@ export function Button({
    *  `disabled`: a busy button is usually disabled too, but the two are not
    *  the same thing and a caller may want one without the other. */
   busy?: boolean;
+  /** Dialogs open with focus already on one of their buttons; that is what
+   *  makes Escape and the focus trap behave, so it has to be expressible
+   *  here rather than forcing a call site back to a raw <button>. */
+  autoFocus?: boolean;
 }) {
   const mode = useLabelMode("buttons");
   // An explicit glyph wins; otherwise the key decides, so the same verb wears
@@ -152,6 +164,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      autoFocus={autoFocus}
       title={tip || undefined}
       style={hueStyle}
       className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""} ${className}`.trim()}

@@ -251,12 +251,12 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
               {hostMountRoot}/{browsePath || ""}
             </span>
-            <button
+            <Button
+              label={t("common.close")}
+              variant="chip"
               onClick={handleClose}
-              className="text-xs text-carbon-textMuted hover:text-carbon-text shrink-0"
-            >
-              ✕
-            </button>
+              className="shrink-0"
+            />
           </div>
 
           {/* Error state with manual fallback */}

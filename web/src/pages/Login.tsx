@@ -2,6 +2,7 @@ import { useState } from "react";
 import { login } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { RevealInput } from "../components/RevealInput";
+import { Button } from "../components/Button";
 import { useReveal } from "../lib/useReveal";
 
 interface LoginPageProps {
@@ -76,23 +77,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           )}
 
           {/* Submit button */}
-          <button
+          <Button
+            label={t("auth.signIn")}
+            labelKey="auth.signIn"
+            tone="accent"
             type="submit"
             disabled={busy || password === ""}
-            className="inline-flex items-center justify-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {busy ? (
-              <>
-                <span
-                  className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                  style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                />
-                {t("auth.signingIn")}
-              </>
-            ) : (
-              t("auth.signIn")
-            )}
-          </button>
+            busy={busy}
+            title={busy ? t("auth.signingIn") : undefined}
+          />
         </form>
       </div>
     </div>
