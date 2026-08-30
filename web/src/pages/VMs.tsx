@@ -260,6 +260,7 @@ function VMMethodSelect({
       label={t("vm.method")}
       size="sm"
       select="one"
+      equalWidth
       disabled={busy}
       active={method}
       onChange={(id) => void handleChange(id)}

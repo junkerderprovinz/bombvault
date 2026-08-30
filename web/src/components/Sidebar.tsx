@@ -312,6 +312,11 @@ export function Flag({ code }: { code: string }) {
 function SidebarControls() {
   const { t } = useT();
   const { advanced, setAdvanced } = useAdvanced();
+  // #178: this row lives IN the rail, so it follows the rail's own axis. It
+  // was the one row that did not, which showed up immediately in glyph mode:
+  // five icons and one full-width label, and the rail could not narrow.
+  const labelMode = useLabelMode("sidebar");
+  const showLabel = labelMode !== "glyph";
 
   return (
     <div className="flex flex-col gap-1">
@@ -334,7 +339,10 @@ function SidebarControls() {
         className={`${navBase} bv-nav-idle ${navInactive} w-full`}
       >
         <IconLayers />
-        <span>{advanced ? t("mode.advancedView") : t("mode.simpleView")}</span>
+        {/* Hidden, never removed: the toggle keeps its accessible name. */}
+        <span className={showLabel ? undefined : "sr-only"}>
+          {advanced ? t("mode.advancedView") : t("mode.simpleView")}
+        </span>
       </button>
     </div>
   );
