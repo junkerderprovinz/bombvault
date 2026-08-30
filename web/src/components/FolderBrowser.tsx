@@ -4,6 +4,7 @@ import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
 import { IconFolder } from "./Sidebar";
+import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
 
 // ---------------------------------------------------------------------------
@@ -292,9 +293,17 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               {/* ".." go up — only when not at root */}
               {browsePath !== "" && (
                 <Button
+                  // ".." unchanged: it is the file-manager convention and was
+                  // this button's name before the engine too. There is no
+                  // translated "up one level" string to promote it to, and
+                  // inventing a 43rd locale entry for one row is not this
+                  // round's job. The glyph at least gives glyph mode something
+                  // to show instead of two dots.
                   label={".."}
+                  glyph={<IconBack />}
                   tone="neutral"
                   onClick={handleUp}
+                  className="w-full"
                 />
               )}
               {dirs.length === 0 && !browseError && (
@@ -302,9 +311,12 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               )}
               {dirs.map((d) => (
                 <Button
-                  label={"/"}
+                  key={d.path}
+                  label={d.name}
+                  glyph={<IconFolder />}
                   tone="neutral"
                   onClick={() => doFetch(d.path)}
+                  className="w-full"
                 />
               ))}
             </div>

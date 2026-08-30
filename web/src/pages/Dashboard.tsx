@@ -1859,8 +1859,8 @@ function FreshInstallNudge({
         </Link>
       </div>
       <Button
-        label={"✕"}
-        tone="neutral"
+        label={t("common.close")}
+        variant="chip"
         onClick={onDismiss}
         className="shrink-0"
       />
