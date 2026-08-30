@@ -58,6 +58,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { ToggleRow } from "./Settings";
 import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
+import { IconRestore } from "../components/Sidebar";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -359,6 +360,7 @@ function FileSetFileBrowser({
           <div className="flex items-center gap-2">
             <Button
               label={t("files.restoreSelected").replace("{n}", String(count))}
+              glyph={<IconRestore />}
               tone="accent"
               onClick={handleRestoreSelected}
               disabled={isPending || blockedByOther || !folder.trim()}

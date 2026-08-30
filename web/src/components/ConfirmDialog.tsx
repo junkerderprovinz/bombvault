@@ -38,6 +38,7 @@ import type { Ref } from "react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconClose } from "./Sidebar";
+import { IconCancel } from "./glyphs";
 
 export type ConfirmTone = "fail" | "warn";
 
@@ -139,6 +140,7 @@ export function ConfirmDialog({
         <div className="flex items-center justify-end gap-3 border-t border-carbon-border px-5 py-4">
           <Button
             label={cancelLabel}
+            glyph={<IconCancel />}
             tone="neutral"
             autoFocus
             onClick={onCancel}

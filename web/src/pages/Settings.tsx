@@ -4713,6 +4713,7 @@ function IntegrityCard({
                 <Button
                   key={shake[dKey] || 0}
                   label={kind === "dr" ? t("drill.runDR") : t("verify.now")}
+                  glyph={<IconCheckCircle />}
                   tone="neutral"
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}

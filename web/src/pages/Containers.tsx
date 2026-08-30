@@ -32,6 +32,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
+import { IconSearch } from "../components/glyphs";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -1432,6 +1433,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                 label={suggestions === null
                     ? t("excludes.assistScan")
                     : t("excludes.assistRescan")}
+                glyph={<IconSearch />}
                 tone="accent"
                 onClick={() => void scan()}
                 disabled={scanning}

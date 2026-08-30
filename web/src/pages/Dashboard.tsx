@@ -25,6 +25,7 @@ import { Selector } from "../components/Selector";
 import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/forecast";
 import type { TranslationKey } from "../lib/i18n";
 import { Button } from "../components/Button";
+import { IconCheckCircle } from "../components/Sidebar";
 
 // Same cadence as ActivityLog's own runs polling (web/src/components/ActivityLog.tsx)
 // so the summary tier's "Last result" cell and the Activity Log never disagree
@@ -873,6 +874,7 @@ function ProtectionCard({
                         label={d.lastDrDrillAt && d.lastDrDrillOK
                             ? t("drill.rerunOffsiteDr")
                             : t("drill.runOffsiteDr")}
+                        glyph={<IconCheckCircle />}
                         tone="neutral"
                         onClick={() => runOffsiteDr(d.domain)}
                         disabled={drRunning === d.domain}

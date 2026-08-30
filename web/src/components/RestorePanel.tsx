@@ -194,6 +194,7 @@ function SnapshotFileBrowser({
           <div className="flex items-center gap-2">
             <Button
               label={t("files.restoreSelected").replace("{n}", String(count))}
+              glyph={<IconRestore />}
               tone="accent"
               onClick={() => void handleRestoreSelected()}
               disabled={isPending || blockedByOther || (dest === "toFolder" && !folder.trim())}
