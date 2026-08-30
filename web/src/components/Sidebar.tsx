@@ -21,7 +21,7 @@ import {
   IconGear,
 } from "./navGlyphs";
 import { useLabelMode } from "../lib/useLabelMode";
-import { hidesLabel } from "../lib/controls";
+import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
 
 // Navigation and domain glyphs now come from Streamline's free Core Solid set
@@ -296,7 +296,12 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
         className={({ isActive }) =>
           `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " bv-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
         }
-        style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+        style={
+          {
+            ...(hueVars(rainbowAt(hueIndex)) as CSSProperties),
+            ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
+          } as CSSProperties
+        }
       >
         {showIcon && icon}
         {/* Never removed, only hidden: a nav row whose text is gone entirely
@@ -381,6 +386,7 @@ function SidebarControls() {
         // `justify-center` in glyph mode for the same reason as NavItem's —
         // this row sits in the same column and has to centre with it.
         className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " bv-reactive" : ""} bv-nav-idle ${navInactive} w-full`}
+        style={reactive ? ({ "--reactive-chars": labelWidth(view) } as CSSProperties) : undefined}
       >
         {/* One glyph per state, not one for both (jdp): the row shows the view
             it is CURRENTLY in, so a single symbol left the two states looking

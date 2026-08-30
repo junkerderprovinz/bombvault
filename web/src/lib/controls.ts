@@ -200,10 +200,48 @@ export function widthStage(label: string): WidthStage {
  * language nobody tested cannot stretch a strip until it wraps.
  */
 export function groupWidth(labels: string[]): string {
+  return `var(--btn-w-${groupStage(labels)})`;
+}
+
+/**
+ * The stage a set of labels shares: the one the LONGEST of them needs.
+ *
+ * For BUTTONS that belong together visually but are rendered by different
+ * components, so neither can see the other's label. jdp, on the Container
+ * card: "die buttons jetzt sichern und Export sollen gleich breit sein" —
+ * "Jetzt sichern" lands on `sm` and "Export (Plain-tar)" on `md`, and they sit
+ * side by side.
+ *
+ * Both components compute this from the SAME two labels rather than one
+ * passing a width to the other, so they agree in all 42 languages without a
+ * prop threaded through the card between them, and they keep agreeing when one
+ * of the two words is retranslated.
+ */
+export function groupStage(labels: string[]): WidthStage {
   let widest: WidthStage = "xs";
   for (const label of labels) {
-    const stage = widthStage(label);
+    const stage = widthStage(label + GROUP_CHROME);
     if (WIDTH_STAGES.indexOf(stage) > WIDTH_STAGES.indexOf(widest)) widest = stage;
   }
-  return `var(--btn-w-${widest})`;
+  return widest;
 }
+
+/**
+ * Padding for the things a stage table cannot see.
+ *
+ * `widthStage` measures TEXT, but a rendered button also carries a glyph, the
+ * gap beside it and its own horizontal padding — about 52px, or eight units at
+ * the ~7px per unit the stage bounds are calibrated to. For the ordinary case
+ * that gap does not matter, because a stage is a floor and a slightly wide
+ * label simply overhangs it (a known, accepted property — jdp has looked at it
+ * and left it alone).
+ *
+ * It matters here, because a group's stage is applied as an EXACT width. Left
+ * unpadded, "Diesen Ordner verwenden" lands on `md` (184px) and renders 218px,
+ * so the pair it was supposed to match would be the one thing it does not do.
+ *
+ * Eight blanks rather than a number, so it flows through the same
+ * `labelWidth`/`widthStage` pair as everything else instead of duplicating
+ * their arithmetic somewhere it can drift.
+ */
+const GROUP_CHROME = "        ";

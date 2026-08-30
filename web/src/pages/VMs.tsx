@@ -17,6 +17,7 @@ import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower,
 import { InfoBubble } from "../components/InfoBubble";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
+import { groupStage } from "../lib/controls";
 // ToggleRow, not the bare Toggle: VMIncludeToggle renders the shared row
 // (label + switch) rather than a naked switch its caller labels by hand — the
 // same import components/IncludeToggle.tsx already uses for the Container
@@ -397,6 +398,8 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
         label={t("export.button")}
         glyph={<IconDownload />}
         tone="accent"
+        // Same shared stage as BackupButton beside it — see that file.
+        stage={groupStage([t("containers.backupNow"), t("export.button")])}
         onClick={() => void run()}
         disabled={state === "pending"}
         busy={state === "pending"}

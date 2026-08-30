@@ -38,23 +38,40 @@ afterEach(() => {
   localStorage.clear();
 });
 
-it("keeps the same width stage in all three modes", () => {
+// The width rule, as it stands after jdp narrowed it (see Button.tsx's own
+// `stage` comment). It used to be "the same width in all three modes", full
+// stop. It is now "the same width in the two modes that SHOW words" — the two
+// hiding modes hug their glyph instead, on his instruction: "im glyph und
+// reaktiven modus können alle buttons ... schmaler sein und beim mouseover
+// sollen die buttons auf die benötigte größe anwachsen".
+it("keeps the same width stage in the two modes that show text", () => {
   // A label long enough to sit ABOVE the smallest stage, deliberately: with a
   // short one ("Clear"), a broken implementation that sized from the visible
   // text would still land on "xs" in every mode and this test would pass while
   // proving nothing. It has to be able to tell the two apart.
   const long = "Off-site-DR-Prüfung starten";
   const stages: string[] = [];
-  for (const mode of ["text", "textGlyph", "glyph"] as const) {
+  for (const mode of ["text", "textGlyph"] as const) {
     setLabelMode("buttons", mode);
     renderButton(long);
     stages.push(stageClass());
     cleanup();
   }
-  // One distinct stage across all three: the mode changed what is SHOWN, never
-  // how wide the control is.
+  // One distinct stage across both: adding the glyph changed what is SHOWN,
+  // never how wide the control is, so nothing reflows between them.
   expect(new Set(stages).size).toBe(1);
   expect(stages[0]).toBe("bv-btn-lg");
+});
+
+it("takes no stage at all in the two modes that hide text", () => {
+  for (const mode of ["glyph", "reactive"] as const) {
+    cleanup();
+    setLabelMode("buttons", mode);
+    renderButton("Off-site-DR-Prüfung starten");
+    // No floor means the button is as wide as its glyph, and in reactive mode
+    // it can grow out of that as the words arrive.
+    expect(stageClass()).toBe("");
+  }
 });
 
 it("still has an accessible name in glyph mode", () => {

@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode, Ref } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
-import { hidesLabel, widthStage, type WidthStage } from "../lib/controls";
+import { hidesLabel, labelWidth, widthStage, type WidthStage } from "../lib/controls";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useTipBubble } from "../lib/useTipBubble";
 import { glyphFor } from "./glyphFor";
@@ -102,6 +102,8 @@ export function Button({
   hueIndex,
   busy = false,
   autoFocus = false,
+  stage: stageOverride,
+  keepLabel = false,
   ref,
 }: {
   /** The button's words. Always present, in every mode: visible as text, or
@@ -152,6 +154,31 @@ export function Button({
    *  makes Escape and the focus trap behave, so it has to be expressible
    *  here rather than forcing a call site back to a raw <button>. */
   autoFocus?: boolean;
+  /** Forces a width stage instead of deriving one from this button's own
+   *  label. For two buttons that belong together visually but are rendered by
+   *  different components, so neither can see the other's label — pass
+   *  `groupStage([labelA, labelB])` to both (jdp: "die buttons jetzt sichern
+   *  und Export sollen gleich breit sein").
+   *
+   *  Not a general escape hatch: deriving from the label is what keeps 171
+   *  buttons tidy without anyone choosing. Use it only to make a real, visible
+   *  pair agree, and always through `groupStage` so the answer is the same in
+   *  all 42 languages. Ignored in glyph and reactive mode, where nothing takes
+   *  a stage at all. */
+  stage?: WidthStage;
+  /** Opts this button out of the label engine entirely: its text is always
+   *  shown, in every mode.
+   *
+   *  For the rare button whose label is CONTENT rather than a verb. The folder
+   *  browser's directory rows are the case this exists for — there the name IS
+   *  the row, and in reactive mode a listing you have to hover one line at a
+   *  time to read is, in jdp's words, "wahnsinnig mühsam". A glyph-only file
+   *  listing is a column of identical folder icons.
+   *
+   *  Deliberately narrow. This is not "my button looks better with text": the
+   *  test is whether the label names an ACTION (engine) or IS the data
+   *  (opt out). */
+  keepLabel?: boolean;
 }) {
   const mode = useLabelMode("buttons");
   // An explicit glyph wins; otherwise the key decides, so the same verb wears
@@ -164,7 +191,7 @@ export function Button({
   // A glyphless button falls back to its text in BOTH hiding modes: an empty
   // box is unusable, and a reactive empty box is an empty box you have to hunt
   // for with the pointer first.
-  const effective = chip ? "glyph" : hidesLabel(mode) && !hasGlyph ? "text" : mode;
+  const effective = chip ? "glyph" : keepLabel || (hidesLabel(mode) && !hasGlyph) ? "text" : mode;
   const reactive = effective === "reactive";
   // "Shown" means painted at rest. Reactive is not: its words arrive on hover,
   // which is a CSS state, so as far as this render is concerned it is a hiding
@@ -173,9 +200,29 @@ export function Button({
   const showGlyph = effective !== "text" && hasGlyph;
 
   // The stage comes from the label in the CURRENT language, never from what is
-  // rendered: the width has to survive a mode change untouched. A chip takes no
-  // stage at all: it is sized by its glyph so it fits inside its pill.
-  const stage = chip ? "bv-btn-chip" : STAGE_CLASS[widthStage(label)];
+  // The stage comes from the label in the CURRENT language, never from what is
+  // rendered. A chip takes no stage at all: it is sized by its glyph so it fits
+  // inside its pill.
+  //
+  // NEITHER DO THE TWO HIDING MODES ANY MORE, and that is a deliberate reversal
+  // of this engine's founding rule. "Alle buttons bleiben in allen drei modi
+  // auch gleich breit" was jdp's own requirement and the reason stages exist at
+  // all; he has now overridden it for exactly these two modes: "im glyph und
+  // reaktiven modus können alle buttons (außer die tabs von sidebar und
+  // settings) schmaler sein und beim mouseover sollen die buttons auf die
+  // benötigte größe anwachsen". So a glyph-only button hugs its glyph, and a
+  // reactive one grows out of it as the words arrive — the button itself
+  // animates now, not just the label inside a box that was already big enough.
+  //
+  // The rule survives where it was actually about alignment: text and
+  // text-with-glyph still take the stage, so nothing reflows between those two,
+  // and the sidebar rail and Settings tab strip keep their own fixed widths
+  // because neither is a Button.
+  const stage = chip
+    ? "bv-btn-chip"
+    : effective === "glyph" || reactive
+      ? ""
+      : STAGE_CLASS[stageOverride ?? widthStage(label)];
 
   // In glyph mode the label IS the tooltip, so the control still explains
   // itself on hover. When both exist they are joined rather than one replacing
@@ -194,7 +241,19 @@ export function Button({
   const tooltip = useTipBubble(tip, disabled);
 
   const hueOn = hueIndex !== undefined;
-  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+  // The reveal's own ceiling, in the label's visual units — see
+  // `.bv-label-reactive` in index.css for why a fixed one both clipped long
+  // labels and made short ones snap.
+  const hueStyle = {
+    ...(hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : {}),
+    ...(reactive ? ({ "--reactive-chars": labelWidth(label) } as CSSProperties) : {}),
+    // An EXPLICIT stage is a promise that two buttons match, so it is applied
+    // as a real width rather than the usual floor. A derived stage stays a
+    // floor: a label that overhangs its own stage is a known, accepted
+    // property of the engine, and turning that into a truncation everywhere
+    // would be a much bigger change than the pair that asked for this.
+    ...(stageOverride && stage ? ({ width: `var(--btn-w-${stageOverride})` } as CSSProperties) : {}),
+  };
 
   return (
     <>
@@ -215,7 +274,7 @@ export function Button({
           autoFocus={autoFocus}
           aria-describedby={tooltip.describedBy}
           {...tooltip.handlers}
-          style={hueStyle}
+          style={Object.keys(hueStyle).length ? hueStyle : undefined}
           className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""}${reactive ? " bv-reactive" : ""} ${className}`.trim()}
         >
           {showGlyph && (

@@ -68,17 +68,25 @@ it("still has its accessible name, like every other mode", () => {
   expect(screen.getByRole("button", { name: "Off-site-DR-Prüfung starten" })).toBeTruthy();
 });
 
-it("takes the same width stage as the other three, which is what makes the reveal free", () => {
-  const stages: string[] = [];
-  for (const mode of ["text", "textGlyph", "glyph", "reactive"] as const) {
-    cleanup();
-    setLabelMode("buttons", mode);
-    renderButton();
-    const el = screen.getByRole("button");
-    stages.push([...el.classList].find((c) => /^bv-btn-(xs|sm|md|lg)$/.test(c)) ?? "");
-  }
-  expect(new Set(stages).size).toBe(1);
-  expect(stages[0]).toBe("bv-btn-lg");
+// Originally this pinned "the same stage in all four modes", which was true
+// when the mode shipped. jdp then asked for the opposite in the two hiding
+// modes: narrow at rest, growing on hover. So the reveal is no longer free of
+// layout — it IS the layout, and what has to hold instead is that the button
+// takes no floor that would stop it from growing.
+it("takes no width stage, so the button itself can grow as the words arrive", () => {
+  setLabelMode("buttons", "reactive");
+  renderButton();
+  const el = screen.getByRole("button");
+  expect([...el.classList].find((c) => /^bv-btn-(xs|sm|md|lg)$/.test(c))).toBeUndefined();
+});
+
+it("carries its label's length so the reveal is neither clipped nor sluggish", () => {
+  setLabelMode("buttons", "reactive");
+  renderButton("Off-site-DR-Prüfung starten");
+  // A fixed ceiling cut this label off on hover and made short ones snap open;
+  // the ceiling is derived from the text instead. 27 visual units here.
+  const style = screen.getByRole("button").getAttribute("style") ?? "";
+  expect(style).toContain("--reactive-chars: 27");
 });
 
 it("shows its text outright when it has no glyph to fall back on", () => {

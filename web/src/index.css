@@ -146,7 +146,18 @@
    stages. min-width, not width: a stage is a floor that keeps a row tidy, not
    a cage that clips a label a translation made longer than expected. */
 :root {
-  --btn-h: 2.25rem;
+  --btn-h: 2rem;
+  /* 2rem, not 2.25 (jdp: "Ich find die ganzen buttons zb. in den container-cards
+     oder in den vm-cards etc. viel zu klobig. können wir die nicht eine größe
+     kleiner machen? zb so hoch wie die texteingabefelder. weil jetzt sind viele
+     Buttons die neben einem texteingabefeld stehen höher, das sieht blöd aus.
+     systemweit").
+
+     32px is not a taste pick: it is what the app's own text fields already
+     measure (`px-3 py-1.5 text-sm` — 20px of line box plus 12px of padding).
+     A button beside a field now matches it instead of standing 4px proud.
+     Selector segments follow automatically, since `.bv-seg` reads this token
+     rather than carrying its own number. */
   --btn-pad-x: 0.875rem;
   --btn-gap: 0.5rem;
 
@@ -305,7 +316,24 @@
 .bv-reactive:hover .bv-label-reactive,
 .bv-reactive:focus-visible .bv-label-reactive,
 .bv-reactive:focus-within .bv-label-reactive {
-  max-width: 14rem;
+  /* The ceiling comes from the label's own length, not a fixed number.
+     A fixed 14rem did two bad things at once: it CLIPPED anything longer (jdp:
+     "der überspringenbutton zeigt nicht den ganzen text bei mousover" — that
+     label is about 21rem of text), and because `max-width` animates toward the
+     ceiling while the element stops growing at its content width, a ceiling far
+     above the content makes short labels snap open and long ones crawl. Sizing
+     the ceiling to the text fixes both: nothing is cut, and the transition ends
+     exactly when the words are out, at every length.
+
+     `--reactive-chars` is the label's visual length, set inline by whoever
+     renders it. The factor is in `em`, not `ch`: `ch` is the advance of "0",
+     which in this UI face is far narrower than the average letter — measured
+     on the longest button in the app, a 1.25ch ceiling still cut 56px off a
+     47-unit label. 0.62em per unit is the average advance of proportional
+     text with room to spare, and it is deliberately generous: overshooting
+     costs a sliver of animation feel, undershooting costs a word. The 24
+     fallback covers a caller that forgets. */
+  max-width: calc(var(--reactive-chars, 24) * 0.62em + 0.75rem);
   opacity: 1;
   margin-inline-start: var(--btn-gap);
 }

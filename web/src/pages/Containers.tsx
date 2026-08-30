@@ -21,6 +21,7 @@ import { IconContainers, IconDownload, IconAdd } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
+import { groupStage } from "../lib/controls";
 import { ToggleRow } from "./Settings";
 import { ProgressBar } from "../components/ProgressBar";
 import { tLtr, withLtrFragments, withLtrPlaceholder, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -455,6 +456,8 @@ function ExportButton({ name, t }: { name: string; t: T }) {
         label={t("export.button")}
         glyph={<IconDownload />}
         tone="accent"
+        // Same shared stage as BackupButton beside it — see that file.
+        stage={groupStage([t("containers.backupNow"), t("export.button")])}
         onClick={() => void run()}
         disabled={state === "pending"}
         busy={state === "pending"}
@@ -1668,14 +1671,21 @@ function ContainerRow({
   // Selector's `select="many"` mode for exactly that shape (the SAME
   // independent-toggle-chips pattern CadenceBuilder's own weekday multi-
   // select already established on this codebase, not a tablist/accordion).
+  // ONE section at a time (jdp: "Von den tabs in der container-card ... soll
+  // immer nur einer angezeigt werden. jetzt stapeln sie sich untereinander wenn
+  // man den tab wechselt"). This reverses the original design, which made them
+  // independently openable on purpose — see the `sectionItems` comment further
+  // down, which still explains that reasoning. It reads fine on paper and
+  // stacks four editors down the card in practice.
+  //
+  // The state stays a `Set` rather than becoming `string | undefined`, because
+  // the five editors below each take an `open` boolean off `.has(...)` and the
+  // Selector stays `select="many"` — which is what keeps a section CLOSABLE by
+  // clicking its own chip again. A `select="one"` strip always has exactly one
+  // thing selected and could never close the last one.
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
   function toggleSection(id: string) {
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setOpenSections((prev) => (prev.has(id) ? new Set() : new Set([id])));
   }
 
   // "Has data configured" indicator — the same three facts

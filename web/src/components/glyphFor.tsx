@@ -78,6 +78,15 @@ const RULES: Rule[] = [
   [/back|previous|prev\b/i, () => <IconBack />],
   [/next|continue|forward|jumpToLatest/i, () => <IconForward />],
 
+  // Connections, ahead of the probing block on purpose. "Connect" is the
+  // stronger verb whenever a key carries both: `recovery.connectPreview` is a
+  // button that CONNECTS to a foreign repository, and previewing it is what
+  // follows. Below the probing rules it matched `preview` and wore an eye
+  // (jdp: "der Verbinden und prüfen button soll eine kette als glyph
+  // bekommen"). Exactly one key changes glyph by this move — the other two
+  // connect keys never matched anything above it.
+  [/connect|pair|link|reconnect/i, () => <IconLink />],
+
   // Probing and inspection.
   [/test|verify|check|drill/i, () => <IconCheckCircle />],
   [/scan|discover|browse|search/i, () => <IconSearch />],
@@ -89,8 +98,7 @@ const RULES: Rule[] = [
   [/upload|send|offer|push/i, () => <IconUpload />],
   [/copy/i, () => <IconCopy />],
 
-  // Connections and secrets.
-  [/connect|pair|link|reconnect/i, () => <IconLink />],
+  // Secrets.
   [/credential|password|secret|token|key\b/i, () => <IconKey />],
 
   // Lifecycle.

@@ -4,6 +4,7 @@ import { useBackupWatch } from "../lib/backupWatch";
 import { busyPhraseKey } from "../lib/progress";
 import type { useT } from "../lib/i18n";
 import { Button } from "./Button";
+import { groupStage } from "../lib/controls";
 import { IconBackupNow } from "./Sidebar";
 import { useToast } from "../lib/toast";
 
@@ -101,6 +102,12 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
       label={t("containers.backupNow")}
       glyph={<IconBackupNow />}
       tone="accent"
+      // Shares a width with the Export button it sits beside in every card
+      // (jdp: "die buttons jetzt sichern und Export sollen gleich breit
+      // sein"). Both compute it from the SAME two labels rather than one
+      // handing a number to the other, so they agree in all 42 languages and
+      // keep agreeing when either word is retranslated.
+      stage={groupStage([t("containers.backupNow"), t("export.button")])}
       onClick={() => void fire()}
       disabled={isPending || blockedByOther}
       busy={isPending}

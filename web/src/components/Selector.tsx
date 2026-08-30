@@ -284,7 +284,7 @@ import {
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { useLabelMode } from "../lib/useLabelMode";
-import { hidesLabel } from "../lib/controls";
+import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
 
 export interface SelectorItem {
@@ -663,7 +663,11 @@ function SelectorTab({
           aria-describedby={tooltip.describedBy}
           disabled={disabled}
           tabIndex={roved ? 0 : -1}
-          style={style}
+          style={
+            reactive
+              ? ({ ...style, "--reactive-chars": labelWidth(item.label) } as CSSProperties)
+              : style
+          }
           className={`${className}${reactive ? " bv-reactive" : ""}`}
           onClick={onSelect}
           {...tooltip.handlers}
@@ -744,7 +748,24 @@ export function Selector(props: SelectorProps) {
   // pipeline, three call sites that pass it. No `stretch` alias any more
   // either: the "chip"-only guard existed to stop `equalWidth` engaging on a
   // "track" segment, and there is no "track" to protect.
-  const pinWidth = equalWidth;
+  // The strip needs the axis too, not just each segment: whether to pin is a
+  // decision about the whole row.
+  const labelModeForStrip = useLabelMode("tabs");
+
+  //   A STRIP WHOSE LABELS ARE OFF SCREEN DOES NOT PIN AT ALL. The pinned
+  // width is measured from TEXT and floored at MIN_PINNED_WIDTH (200px) — for
+  // a strip showing nothing but two 20px glyphs that is a stretch of empty
+  // pill on either side, which is what jdp reported twice in one message
+  // ("die lokal und offsite buttons sind breiter als sie sein müssen", and
+  // again on the Container tab). Same ruling as buttons in the two hiding
+  // modes: when the words are not on screen, the control hugs its glyph.
+  //
+  // The page-level strips are exempt, and that is his exclusion, not an
+  // invention: "außer die tabs von sidebar und settings". Those are the `lg`
+  // scale, so `lg` keeps pinning whatever the mode says and the Settings tab
+  // row stays a row instead of collapsing into seven small squares.
+  const labelsOffScreen = hidesLabel(labelModeForStrip) && items.every((i) => !!i.icon);
+  const pinWidth = equalWidth && !(labelsOffScreen && size !== "lg");
 
   // Content-width measurement for `pinWidth` (item 5b, corrected — see the
   // file header): every segment gets pinned to the WIDEST segment's own

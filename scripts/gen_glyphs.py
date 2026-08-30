@@ -51,7 +51,6 @@ NAV = [
     ("IconReceiver", "interface-essential/login-1.svg", "Receiver, an incoming transfer"),
     ("IconFleet", "interface-essential/hierarchy-2.svg", "Fleet, other BombVault boxes"),
     ("IconFolder", "interface-essential/new-folder.svg", "A folder"),
-    ("IconCloud", "interface-essential/cloud.svg", "Off-site or cloud"),
     ("IconAdd", "interface-essential/add-1.svg", "Add"),
     ("IconDownload", "interface-essential/download-box-1.svg", "Download or export"),
     ("IconBackupNow", "computer-devices/database-check.svg", "Back up now"),
@@ -107,6 +106,19 @@ NAV = [
 # Each carries its own viewBox, so they do NOT go through `G` (which pins the
 # 14-unit grid). The rendered box is the same 16px either way.
 # ---------------------------------------------------------------------------
+# The one cloud in the app. jdp picked this shape from a sheet and asked for it
+# level; an arc chain has no straight edge to be level, so it is a rectangle
+# plus three circles and the base is horizontal by construction. Defined once
+# and emitted twice, because the Off-site TAB and every off-site control
+# elsewhere must not drift apart again (jdp: "Das offsite-glyph systemweit an
+# den glyph den Offsite einstellungstab angleichen").
+CLOUD = (
+    '<rect x="2.2" y="7.9" width="9.6" height="3.0" rx="1.5" />'
+    '<circle cx="4.8" cy="7.2" r="2.6" />'
+    '<circle cx="7.5" cy="5.9" r="3.2" />'
+    '<circle cx="10.2" cy="7.5" r="2.4" />'
+)
+
 EXTRA_NAV = [
     (
         "IconContainers",
@@ -120,27 +132,8 @@ EXTRA_NAV = [
         # endorsement by or affiliation with Docker, Inc.
         '<path d="%s" />' % io.open("../scripts/docker-path.txt", encoding="utf-8").read().strip(),
     ),
-    (
-        "IconTabOffsite",
-        "Off-site tab",
-        "0 0 14 14",
-        # A cloud and nothing else (jdp: "nur eine wolke aber die wolke soll
-        # eine schönere form haben"). A transfer-arrow variant was offered and
-        # turned down — the tab is already called Off-site, arrows only repeat
-        # the word.
-        #
-        # Built from a rectangle plus three circles rather than one arc path,
-        # and that is the whole point: jdp picked this shape but asked for it
-        # "waagrecht ausgerichtet", because the arc version sloped. An arc
-        # chain has no straight edge to be level; a rect does, so the base is
-        # horizontal by construction and cannot drift when the shape is
-        # tweaked. All four pieces share one fill, so they render as a single
-        # silhouette.
-        '<rect x="2.2" y="7.9" width="9.6" height="3.0" rx="1.5" />'
-        '<circle cx="4.8" cy="7.2" r="2.6" />'
-        '<circle cx="7.5" cy="5.9" r="3.2" />'
-        '<circle cx="10.2" cy="7.5" r="2.4" />',
-    ),
+    ("IconTabOffsite", "Off-site tab", "0 0 14 14", CLOUD),
+    ("IconCloud", "Off-site or cloud", "0 0 14 14", CLOUD),
 ]
 
 ATTRIBUTION = """// ---------------------------------------------------------------------------

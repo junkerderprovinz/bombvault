@@ -87,15 +87,6 @@ export function IconFolder() {
   );
 }
 
-/** Off-site or cloud. */
-export function IconCloud() {
-  return (
-    <G>
-      <path fill="currentColor" fillRule="evenodd" d="M6.91342 2.3806c-0.91363 -0.37843 -1.91896 -0.47745 -2.88887 -0.28452 -0.9699 0.19292 -1.86082 0.66913 -2.56008 1.36839C0.765206 4.16373 0.289002 5.05465 0.0960759 6.02455c-0.1929261 0.96991 -0.09390948 1.97524 0.2845291 2.88887 0.378438 0.91363 1.019305 1.69448 1.841545 2.24398C3.0444 11.7068 4.0111 12 5 12h6c0.7957 0 1.5587 -0.3161 2.1213 -0.8787C13.6839 10.5587 14 9.79565 14 9c0 -0.79565 -0.3161 -1.55871 -0.8787 -2.12132C12.5587 6.31607 11.7957 6 11 6v0.5l-0.0007 -0.5c-0.366 0.00049 -0.7264 0.0677 -1.06436 0.196 -0.11453 -0.70294 -0.37846 -1.37651 -0.77759 -1.97385 -0.54941 -0.82225 -1.3303 -1.46311 -2.24393 -1.84155Z" clipRule="evenodd" strokeWidth="1"></path>
-    </G>
-  );
-}
-
 /** Add. */
 export function IconAdd() {
   return (
@@ -297,6 +288,22 @@ export function IconContainers() {
 
 /** Off-site tab. */
 export function IconTabOffsite() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <rect x="2.2" y="7.9" width="9.6" height="3.0" rx="1.5" /><circle cx="4.8" cy="7.2" r="2.6" /><circle cx="7.5" cy="5.9" r="3.2" /><circle cx="10.2" cy="7.5" r="2.4" />
+    </svg>
+  );
+}
+
+/** Off-site or cloud. */
+export function IconCloud() {
   return (
     <svg
       width="16"

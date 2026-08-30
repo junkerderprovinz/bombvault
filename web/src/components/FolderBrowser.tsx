@@ -3,6 +3,7 @@ import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
+import { groupStage } from "../lib/controls";
 import { IconFolder } from "./Sidebar";
 import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
@@ -45,6 +46,10 @@ export interface FolderBrowserProps {
 
 export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true }: FolderBrowserProps) {
   const { t } = useT();
+  // "New folder" and "Use this folder" are the browser's two actions and sit
+  // one above the other; one stage for both so the column has a straight edge
+  // in all 42 languages.
+  const folderActionStage = groupStage([t("folder.newFolder"), t("folder.use")]);
   const { push } = useToast();
   // browsePath tracks the *current directory being listed* (not the selected value).
   // We initialise it to the current value so opening the browser starts in the right folder.
@@ -303,7 +308,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   glyph={<IconBack />}
                   tone="neutral"
                   onClick={handleUp}
-                  className="w-full"
+                  keepLabel
+                  className="w-full justify-start"
                 />
               )}
               {dirs.length === 0 && !browseError && (
@@ -316,7 +322,13 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   glyph={<IconFolder />}
                   tone="neutral"
                   onClick={() => doFetch(d.path)}
-                  className="w-full"
+                  // The folder's NAME, not a verb — the label engine has no
+                  // business hiding it (jdp: "Im fileexplorer beim hinzufügen
+                  // eines ordners sollen die ordernamen nicht reaktiv sein, das
+                  // ist wahnsinnig mühsam"). Reading a directory by hovering
+                  // one line at a time is not a listing.
+                  keepLabel
+                  className="w-full justify-start"
                 />
               ))}
             </div>
@@ -348,7 +360,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 disabled={creating || newName.trim() === ""}
                 busy={creating}
                 title={creating ? t("folder.creating") : undefined}
-                className="shrink-0"
+                stage={folderActionStage}
+                className="shrink-0 justify-start"
               />
             </div>
           )}
@@ -356,15 +369,21 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           {/* Action buttons */}
           {!manualFallback && (
             <div className="flex items-center gap-2 pt-1 border-t border-carbon-border">
-              <Button
-                label={t("folder.use")}
-          labelKey="folder.use"
-                tone="neutral"
-                onClick={handleSelect}
-              />
-              <span dir="ltr" className="text-xs text-carbon-textMuted font-mono min-w-0 truncate text-start">
+              <span dir="ltr" className="text-xs text-carbon-textMuted font-mono min-w-0 flex-1 truncate text-start">
                 {browsePath || "(root)"}
               </span>
+              {/* Right-aligned and the same width as "New folder" above it
+                  (jdp), so the two stack into a column instead of two ragged
+                  ends. `justify-start` because a button that wide would
+                  otherwise float its words in the middle of an empty pill. */}
+              <Button
+                label={t("folder.use")}
+                labelKey="folder.use"
+                tone="neutral"
+                onClick={handleSelect}
+                stage={folderActionStage}
+                className="shrink-0 justify-start"
+              />
             </div>
           )}
         </div>
