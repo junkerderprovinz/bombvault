@@ -54,7 +54,7 @@ NAV = [
     # ("IconLocal", ...) used to live here, as a folder, then hard-drive-1,
     # then hard-disk. It is hand-drawn now and sits with the cloud in
     # EXTRA_NAV below: at 20px every imported drive glyph carried interior
-    # detail finer than the raster could hold ([267]). Worth remembering in
+    # detail finer than the raster could hold ([281]). Worth remembering in
     # both directions — [242] moved a glyph OUT of a drawing and back to
     # Streamline's own, this one moved the other way, and each time the
     # deciding evidence was the same: what survives at 20px.
@@ -114,7 +114,7 @@ NAV = [
 # 14-unit grid). The rendered box is the same 16px either way.
 # ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
-# The Local / Off-site pair ([267]).
+# The Local / Off-site pair ([281]).
 #
 # jdp, looking at the deployed switch: "das offsite icon ist wenn es so klein
 # ist sehr schlecht erkennbar, es muss einfacher sein." What breaks at 20px is

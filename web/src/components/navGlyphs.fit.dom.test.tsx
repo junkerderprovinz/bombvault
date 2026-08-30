@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 // ---------------------------------------------------------------------------
-// The Local / Off-site pair, and why it is sized the way it is ([242], [267]).
+// The Local / Off-site pair, and why it is sized the way it is ([242], [281]).
 //
 // Two rounds of jdp looking at the same switch:
 //
 //   [242] "der glyph ist im vergleich zu offsite glyph viel zu groß"
-//   [267] "das offsite icon ist wenn es so klein ist sehr schlecht erkennbar,
+//   [281] "das offsite icon ist wenn es so klein ist sehr schlecht erkennbar,
 //          es muss einfacher sein"
 //
 // The first was about ink AREA: two glyphs in identical 20px boxes are not the
