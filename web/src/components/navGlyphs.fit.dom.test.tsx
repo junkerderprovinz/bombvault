@@ -1,83 +1,95 @@
 // @vitest-environment jsdom
 // ---------------------------------------------------------------------------
-// Optical sizing of the Local/Off-site pair ([242]).
+// The Local / Off-site pair, and why it is sized the way it is ([242], [267]).
 //
-// jdp: "der glyph ist im vergleich zu offsite glyph viel zu gross, können wir
-// nicht ein schönen festplatten bzw HDD glyph verwenden?"
+// Two rounds of jdp looking at the same switch:
 //
-// He was right about the symptom and it was NOT the box: both glyphs render
-// into the same 20px square. It was the ink. The cloud is hand-drawn with air
-// around it and covers 10.4 x 8.2 of the 14-unit grid; Streamline draws to the
-// edge, so hard-disk covers 12 x 14 — near enough double the ink in an
-// identical box. So IconLocal is scaled into the cloud's envelope by
-// gen_glyphs.py.
+//   [242] "der glyph ist im vergleich zu offsite glyph viel zu groß"
+//   [267] "das offsite icon ist wenn es so klein ist sehr schlecht erkennbar,
+//          es muss einfacher sein"
 //
-// Two things are worth pinning, and neither is "the file renders":
+// The first was about ink AREA: two glyphs in identical 20px boxes are not the
+// same size if one is drawn to the edge and the other has air around it. The
+// second was about FEATURE size, which no amount of scaling fixes. One unit of
+// the 14-unit grid is 1.43px at 20px, so detail thinner than roughly 1.5 units
+// merges into its neighbour: the old cloud's humps rose 1.3 units and read as
+// a dome, and Streamline's hard-disk had an interior arm well under a unit.
 //
-//   1. The transform SURVIVES a regeneration. gen_glyphs.py rewrites this file
-//      wholesale, and a swapped source file or a dropped FIT_TO_CLOUD entry
-//      would put the old, too-big drive back with nothing failing.
-//   2. The arithmetic is the one that was intended. A transform that merely
-//      EXISTS proves nothing — a wrong scale still renders. So the numbers are
-//      recomputed here from the two measured ink boxes and compared against
-//      what the generator emitted, which is what makes this a test rather than
-//      a snapshot of whatever happened to be produced.
+// Hence today's pair: Font Awesome's cloud (one closed path, deep valleys) and
+// two plain bars for local storage. What this file pins is the sizing contract
+// between them, because that is the part a regeneration can silently break:
 //
-// The ink boxes below are measurements, taken with getBBox in a browser on the
-// real markup. They are deliberately NOT derived from the viewBox: a path's
-// drawn extent has no necessary relationship to it, and assuming otherwise is
-// precisely the bug this fixes.
+//   1. The cloud carries a fit transform, recomputed here from its measured
+//      ink rather than snapshotted. A transform that merely EXISTS proves
+//      nothing, since a wrong scale renders perfectly well.
+//   2. The bars are drawn at the pair's width already, so they must NOT carry
+//      one. A transform appearing there would mean someone fitted a glyph
+//      twice.
+//   3. Both are centred on the same point and span the same width. That is
+//      what "the pair looks deliberate" reduces to in numbers, and it is the
+//      thing that broke in [242].
+//
+// jsdom has no getBBox, so the ink boxes below are measurements taken in a
+// real browser and the assertions work on attributes. That split is fine: the
+// arithmetic is what regresses, and the arithmetic is testable here.
 // ---------------------------------------------------------------------------
 import { expect, it } from "vitest";
 import { render } from "@testing-library/react";
-import { IconCloud, IconLocal } from "./navGlyphs";
+import { IconCloud, IconLocal, IconTabOffsite } from "./navGlyphs";
 
-/** Measured ink, not viewBox: [x, y, width, height] on the 14-unit grid. */
-const CLOUD_INK = [2.2, 2.7, 10.4, 8.2] as const;
-const HARD_DISK_INK = [1.0, 0.0, 12.0, 14.0] as const;
+/** Measured, not derived from any viewBox: [x, y, width, height]. */
+const FA_CLOUD_INK = [0, 32, 640, 448] as const;
 
-function expectedFit() {
-  const [sx, sy, sw, sh] = HARD_DISK_INK;
-  const [tx, ty, tw, th] = CLOUD_INK;
-  const scale = Math.min(tw / sw, th / sh);
-  return {
-    scale,
-    dx: tx + tw / 2 - (sx + sw / 2) * scale,
-    dy: ty + th / 2 - (sy + sh / 2) * scale,
-  };
-}
+/** The shared frame, mirroring gen_glyphs.py's PAIR_WIDTH / PAIR_CENTRE. */
+const PAIR_WIDTH = 9.6;
+const PAIR_CENTRE = [7, 7] as const;
 
 function transformOf(ui: React.ReactElement): string {
   const { container } = render(ui);
-  const g = container.querySelector("svg > g[transform]");
-  return g?.getAttribute("transform") ?? "";
+  return container.querySelector("svg > g[transform]")?.getAttribute("transform") ?? "";
 }
 
-it("scales the Local drive into the cloud's ink envelope", () => {
-  const t = transformOf(<IconLocal />);
+it("scales the off-site cloud onto the pair's width and centre", () => {
+  const t = transformOf(<IconCloud />);
   const m = /^translate\((-?[\d.]+) (-?[\d.]+)\) scale\(([\d.]+)\)$/.exec(t);
-  expect(m, `IconLocal lost its fit transform (got ${JSON.stringify(t)})`).not.toBeNull();
+  expect(m, `IconCloud lost its fit transform (got ${JSON.stringify(t)})`).not.toBeNull();
 
-  const want = expectedFit();
-  const [, dx, dy, scale] = m!;
+  const [sx, sy, sw, sh] = FA_CLOUD_INK;
+  const scale = PAIR_WIDTH / sw;
+  const [, dx, dy, got] = m!;
   // 1e-5 because the generator writes six decimals, not a float literal.
-  expect(Number(scale)).toBeCloseTo(want.scale, 5);
-  expect(Number(dx)).toBeCloseTo(want.dx, 5);
-  expect(Number(dy)).toBeCloseTo(want.dy, 5);
+  expect(Number(got)).toBeCloseTo(scale, 5);
+  expect(Number(dx)).toBeCloseTo(PAIR_CENTRE[0] - (sx + sw / 2) * scale, 5);
+  expect(Number(dy)).toBeCloseTo(PAIR_CENTRE[1] - (sy + sh / 2) * scale, 5);
 });
 
-it("leaves the cloud itself unscaled, since it defines the envelope", () => {
-  // Fitting the reference to itself would be a no-op transform at best and a
-  // slow drift at worst, each regeneration nudging the pair a little smaller.
-  expect(transformOf(<IconCloud />)).toBe("");
+it("emits the same cloud for the tab and for the controls", () => {
+  // These drifted apart once already, which is why the generator defines the
+  // markup once and emits it twice.
+  expect(transformOf(<IconTabOffsite />)).toBe(transformOf(<IconCloud />));
 });
 
-it("gives the pair the same drawn height", () => {
-  // The actual promise to the eye. A row of icons is read off its height, so
-  // matching heights is what "same size" means here — the fitted drive comes
-  // out NARROWER than the cloud, and that is correct, not a rounding error.
-  const { scale } = expectedFit();
-  const drawnHeight = HARD_DISK_INK[3] * scale;
-  expect(drawnHeight).toBeCloseTo(CLOUD_INK[3], 5);
-  expect(HARD_DISK_INK[2] * scale).toBeLessThan(CLOUD_INK[2]);
+it("leaves the local bars untransformed, since they are drawn to size", () => {
+  expect(transformOf(<IconLocal />)).toBe("");
+});
+
+it("gives both halves the same width and centre", () => {
+  const { container } = render(<IconLocal />);
+  const rects = [...container.querySelectorAll("rect")];
+  expect(rects.length).toBe(2);
+
+  const num = (el: Element, a: string) => Number(el.getAttribute(a));
+  const left = Math.min(...rects.map((r) => num(r, "x")));
+  const right = Math.max(...rects.map((r) => num(r, "x") + num(r, "width")));
+  const top = Math.min(...rects.map((r) => num(r, "y")));
+  const bottom = Math.max(...rects.map((r) => num(r, "y") + num(r, "height")));
+
+  expect(right - left).toBeCloseTo(PAIR_WIDTH, 5);
+  expect((left + right) / 2).toBeCloseTo(PAIR_CENTRE[0], 5);
+  expect((top + bottom) / 2).toBeCloseTo(PAIR_CENTRE[1], 5);
+
+  // And the cloud lands on that same centre, by the transform checked above.
+  const drawnHeight = FA_CLOUD_INK[3] * (PAIR_WIDTH / FA_CLOUD_INK[2]);
+  expect(drawnHeight).toBeGreaterThan(bottom - top); // a cloud is taller than two bars
+  expect(drawnHeight).toBeLessThan(14); // and still inside the grid
 });

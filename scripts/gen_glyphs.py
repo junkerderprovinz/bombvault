@@ -51,17 +51,13 @@ NAV = [
     ("IconReceiver", "interface-essential/login-1.svg", "Receiver, an incoming transfer"),
     ("IconFleet", "interface-essential/hierarchy-2.svg", "Fleet, other BombVault boxes"),
     ("IconFolder", "interface-essential/new-folder.svg", "A folder"),
-    # "Local", as opposed to off-site. Its own symbol rather than the folder
-    # (jdp: "Ist ja blöd wenn buttons mit unterschiedlicher funktion das gleiche
-    # symbol tragen" — the Local segment and the Browse button both wore a
-    # folder and mean different things). A drive against a cloud is the pairing
-    # everyone already reads, and neither half is a folder.
-    #
-    # hard-disk rather than hard-drive-1, jdp's pick from the sheet ([242]). It
-    # is scaled to the cloud's envelope on the way out — see FIT_TO_CLOUD, and
-    # note the entry there names THIS file: swapping the source without
-    # re-measuring would silently scale the wrong ink box.
-    ("IconLocal", "computer-devices/hard-disk.svg", "Local storage, as opposed to off-site"),
+    # ("IconLocal", ...) used to live here, as a folder, then hard-drive-1,
+    # then hard-disk. It is hand-drawn now and sits with the cloud in
+    # EXTRA_NAV below: at 20px every imported drive glyph carried interior
+    # detail finer than the raster could hold ([267]). Worth remembering in
+    # both directions — [242] moved a glyph OUT of a drawing and back to
+    # Streamline's own, this one moved the other way, and each time the
+    # deciding evidence was the same: what survives at 20px.
     ("IconAdd", "interface-essential/add-1.svg", "Add"),
     ("IconDownload", "interface-essential/download-box-1.svg", "Download or export"),
     ("IconBackupNow", "computer-devices/database-check.svg", "Back up now"),
@@ -117,17 +113,79 @@ NAV = [
 # Each carries its own viewBox, so they do NOT go through `G` (which pins the
 # 14-unit grid). The rendered box is the same 16px either way.
 # ---------------------------------------------------------------------------
-# The one cloud in the app. jdp picked this shape from a sheet and asked for it
-# level; an arc chain has no straight edge to be level, so it is a rectangle
-# plus three circles and the base is horizontal by construction. Defined once
-# and emitted twice, because the Off-site TAB and every off-site control
-# elsewhere must not drift apart again (jdp: "Das offsite-glyph systemweit an
-# den glyph den Offsite einstellungstab angleichen").
-CLOUD = (
-    '<rect x="2.2" y="7.9" width="9.6" height="3.0" rx="1.5" />'
-    '<circle cx="4.8" cy="7.2" r="2.6" />'
-    '<circle cx="7.5" cy="5.9" r="3.2" />'
-    '<circle cx="10.2" cy="7.5" r="2.4" />'
+# ---------------------------------------------------------------------------
+# The Local / Off-site pair ([267]).
+#
+# jdp, looking at the deployed switch: "das offsite icon ist wenn es so klein
+# ist sehr schlecht erkennbar, es muss einfacher sein." What breaks at 20px is
+# not overall size but FEATURE size. A 14-unit grid rendered into 20px makes
+# one unit 1.43px, so any detail thinner than roughly 1.5 units merges into its
+# neighbour. The cloud drawn before this was three overlapping circles whose
+# humps rose only ~1.3 units above the body: under the threshold, so they
+# merged and the silhouette read as a plain dome. Streamline's hard-disk failed
+# the same test from the other side, its interior arm being well under a unit
+# wide.
+#
+# So both halves are now built from few, large shapes:
+#
+#   - the cloud is jdp's own file, Font Awesome 5 Free's `cloud` (see the
+#     attribution block below). One closed path, deep valleys, nothing small
+#     enough to disappear.
+#   - "local" is two rounded bars and nothing else. It was picked over a disc
+#     and a slotted block precisely because it has no interior detail at all.
+#
+# WHY THEY ARE MATCHED ON WIDTH, where the round before this matched on height:
+# that earlier rule was for a nearly-square drive standing beside a wide cloud,
+# where equal height is what makes a row look level. These two are both wide
+# and their aspect ratios are close (1.43 against 1.60), so width is the shared
+# dimension; matching heights instead would leave the cloud a full unit
+# narrower than the bars and read as the smaller symbol. Both are centred on
+# (7, 7) and span 9.6 units, which is the width the bars are drawn at.
+#
+# Measured with getBBox on the real markup, never inferred from a viewBox:
+# the cloud's ink is (0, 32, 640, 448) inside its own 640x512 box, the bars'
+# is (2.2, 4, 9.6, 6). navGlyphs.fit.dom.test.tsx recomputes the transform from
+# those numbers, so a swapped path file fails instead of silently resizing.
+# ---------------------------------------------------------------------------
+PAIR_WIDTH = 9.6
+PAIR_CENTRE = (7.0, 7.0)
+
+# Ink of Font Awesome's cloud path, measured inside its 640x512 viewBox.
+FA_CLOUD_INK = (0.0, 32.0, 640.0, 448.0)
+
+
+def num(v):
+    """Shortest exact-enough decimal, so the generated file stays readable."""
+    return ("%.6f" % v).rstrip("0").rstrip(".")
+
+
+def fit_to_pair(ink):
+    """`translate(...) scale(...)` mapping a measured ink box onto the pair's
+    shared width, centred on the pair's centre."""
+    sx, sy, sw, sh = ink
+    cx, cy = PAIR_CENTRE
+    scale = PAIR_WIDTH / sw
+    return "translate(%s %s) scale(%s)" % (
+        num(cx - (sx + sw / 2) * scale),
+        num(cy - (sy + sh / 2) * scale),
+        num(scale),
+    )
+
+
+# Defined once and emitted twice, because the Off-site TAB and every off-site
+# control elsewhere must not drift apart again (jdp: "Das offsite-glyph
+# systemweit an den glyph den Offsite einstellungstab angleichen").
+CLOUD = '<g transform="%s"><path d="%s" /></g>' % (
+    fit_to_pair(FA_CLOUD_INK),
+    io.open("../scripts/cloud-path.txt", encoding="utf-8").read().strip(),
+)
+
+# "Local", as opposed to off-site. Drawn rather than imported: no free set has
+# a storage glyph this bare, and bareness is the whole requirement. Two bars,
+# no LEDs, no slot, no hole.
+LOCAL_DRIVE = (
+    '<rect x="2.2" y="4" width="9.6" height="2.6" rx="1.3" />'
+    '<rect x="2.2" y="7.4" width="9.6" height="2.6" rx="1.3" />'
 )
 
 EXTRA_NAV = [
@@ -145,6 +203,7 @@ EXTRA_NAV = [
     ),
     ("IconTabOffsite", "Off-site tab", "0 0 14 14", CLOUD),
     ("IconCloud", "Off-site or cloud", "0 0 14 14", CLOUD),
+    ("IconLocal", "Local storage, as opposed to off-site", "0 0 14 14", LOCAL_DRIVE),
 ]
 
 ATTRIBUTION = """// ---------------------------------------------------------------------------
@@ -153,13 +212,21 @@ ATTRIBUTION = """// ------------------------------------------------------------
 // GENERATED by scripts/gen_glyphs.py. Do not hand-edit: regenerate instead, or
 // the next run silently overwrites the change.
 //
-// Attribution (CC BY 4.0, required by the licence):
+// Attribution (CC BY 4.0, required by both licences):
 //   Free icons from Streamline - https://streamlinehq.com
+//   Font Awesome Free - https://fontawesome.com (icons: CC BY 4.0)
 //
 // Only the FREE 1000-icon subset is used (github.com/webalys-hq/streamline-vectors,
 // core/solid), which is CC BY 4.0 and explicitly redistributable. The larger
 // 5771-icon set sold on streamlinehq.com is a different product whose licence
 // forbids redistribution, which is exactly what a public repository does.
+//
+// One glyph comes from Font Awesome Free instead: the off-site cloud
+// (scripts/cloud-path.txt, their `cloud` solid). Font Awesome Free splits its
+// licence by asset type, and only the ICONS are CC BY 4.0 - the fonts are SIL
+// OFL and the code is MIT. A single path counts as an icon, so attribution is
+// the whole obligation here, and it is discharged by the line above plus this
+// note.
 //
 // Two changes are made on import, both load-bearing:
 //   - fill becomes `currentColor`, so a glyph inherits the ink its button or
@@ -193,55 +260,6 @@ function G({ children }: { children: ReactNode }) {
 """
 
 
-# ---------------------------------------------------------------------------
-# Optical sizing ([242]).
-#
-# What the eye compares is a glyph's INK, not its box. The cloud that means
-# "off-site" is hand-drawn with air around it and covers 10.4 x 8.2 of the
-# 14-unit grid. Streamline draws to the edge: hard-disk covers 12 x 14. In the
-# identical 20px box that is roughly double the ink, so the drive read as a far
-# bigger symbol beside the cloud it is supposed to pair with (jdp: "der glyph
-# ist im vergleich zu offsite glyph viel zu gross").
-#
-# A fitted glyph is therefore scaled into the CLOUD's envelope and centred on
-# it. Fitting by HEIGHT is what the min() below works out to here, and that is
-# the right rule for a row of icons: the eye lines them up on their height, so
-# a nearly-square drive ends up narrower than the wide cloud and still reads as
-# the same size.
-#
-# The source boxes are MEASURED, via getBBox on the real markup in a browser,
-# never derived from the viewBox — a path's drawn extent and its viewBox have
-# no necessary relationship, and this whole bug was that assumption. Re-measure
-# the same way if a source file is swapped; test glyphs.fit.test.ts pins the
-# arithmetic so a regeneration cannot drift silently.
-# ---------------------------------------------------------------------------
-CLOUD_INK = (2.2, 2.7, 10.4, 8.2)  # IconCloud's own ink, measured
-
-# glyph name -> the measured ink box of ITS source file
-FIT_TO_CLOUD = {
-    "IconLocal": (1.0, 0.0, 12.0, 14.0),  # computer-devices/hard-disk.svg
-}
-
-
-def num(v):
-    """Shortest exact-enough decimal, so the generated file stays readable."""
-    return ("%.6f" % v).rstrip("0").rstrip(".")
-
-
-def fit_transform(name):
-    """The `translate(...) scale(...)` that drops a glyph's ink inside the
-    cloud's, or None when the glyph is already drawn at its natural size."""
-    box = FIT_TO_CLOUD.get(name)
-    if box is None:
-        return None
-    sx, sy, sw, sh = box
-    tx, ty, tw, th = CLOUD_INK
-    scale = min(tw / sw, th / sh)
-    dx = (tx + tw / 2) - (sx + sw / 2) * scale
-    dy = (ty + th / 2) - (sy + sh / 2) * scale
-    return "translate(%s %s) scale(%s)" % (num(dx), num(dy), num(scale))
-
-
 def body(path):
     raw = io.open(SRC + "/" + path, encoding="utf-8").read()
     raw = re.sub(r"<desc>.*?</desc>", "", raw, flags=re.S)
@@ -268,16 +286,9 @@ def body(path):
 def write(path, headline, items, extra=()):
     out = [ATTRIBUTION % headline]
     for name, src, note in items:
-        inner = body(src)
-        transform = fit_transform(name)
-        if transform:
-            inner = '      <g transform="%s">\n%s\n      </g>' % (
-                transform,
-                "\n".join("  " + line for line in inner.split("\n")),
-            )
         out.append(
             "\n/** %s. */\nexport function %s() {\n  return (\n    <G>\n%s\n    </G>\n  );\n}\n"
-            % (note, name, inner)
+            % (note, name, body(src))
         )
     for name, note, viewbox, markup in extra:
         out.append(
