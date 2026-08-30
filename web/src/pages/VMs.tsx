@@ -1153,7 +1153,7 @@ function ScheduleIncludeAllControl({
         onClick={() => void run(true)}
         disabled={busy}
         className={`inline-flex items-center rounded-control bg-accent px-3 py-1 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-          shakeInclude ? "glim-shake" : ""
+          shakeInclude ? " glim-shake" : ""
         }`}
       />
       <Button
@@ -1163,7 +1163,7 @@ function ScheduleIncludeAllControl({
         onClick={() => void run(false)}
         disabled={busy}
         className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
-          shakeExclude ? "glim-shake" : ""
+          shakeExclude ? " glim-shake" : ""
         }`}
       />
     </div>
@@ -1491,7 +1491,7 @@ function VMBackupOrderPanel({
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
                 className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
-                  shakeReset ? "glim-shake" : ""
+                  shakeReset ? " glim-shake" : ""
                 }`}
               />
             </div>

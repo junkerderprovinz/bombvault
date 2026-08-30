@@ -2421,7 +2421,7 @@ function DashboardWidgetCard({
               onClick={() => void handleGenerate()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.generate ? "glim-shake" : ""
+                shake.generate ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
             />
             <Button
@@ -2431,7 +2431,7 @@ function DashboardWidgetCard({
               onClick={() => void handleDisable()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.disable ? "glim-shake" : ""
+                shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
             />
           </div>
@@ -2444,7 +2444,7 @@ function DashboardWidgetCard({
           onClick={() => void handleGenerate()}
           disabled={busy}
           className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake.generate ? "glim-shake" : ""
+            shake.generate ? " glim-shake" : ""
           }${hueOn ? " glim-hue" : ""}`}
         />
       )}
@@ -2688,7 +2688,7 @@ function FleetSettingsCard({
               onClick={() => void handleGenerate()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.generate ? "glim-shake" : ""
+                shake.generate ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
             />
@@ -2699,7 +2699,7 @@ function FleetSettingsCard({
               onClick={() => void handleDisable()}
               disabled={busy}
               className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                shake.disable ? "glim-shake" : ""
+                shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
             />
@@ -2713,7 +2713,7 @@ function FleetSettingsCard({
           onClick={() => void handleGenerate()}
           disabled={busy}
           className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-            shake.generate ? "glim-shake" : ""
+            shake.generate ? " glim-shake" : ""
           }${hueOn ? " glim-hue" : ""}`}
           hueIndex={hueIndex}
         />

@@ -1563,7 +1563,7 @@ export function Files() {
             onClick={() => void handleBackupAll()}
             disabled={backupAllBusy || running.active || backupableIds.length === 0}
             className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeBackupAll ? "glim-shake" : ""
+              shakeBackupAll ? " glim-shake" : ""
             }`}
           />
           {!backupAllBusy && running.active && (
