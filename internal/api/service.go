@@ -1941,6 +1941,15 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
 	}
+	return s.domainStatusFrom(settings)
+}
+
+// domainStatusFrom is DomainStatus for a caller that already holds the settings
+// row. Both status endpoints do: /api/status also serves the "Backup Everything"
+// cadence from it, and /api/fleet/status has it from the token gate. Settings is
+// an ~80-column row and nothing caches it, so handing it in saves each of them a
+// second full read of the same row.
+func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry, error) {
 	now := time.Now().Unix()
 
 	domains := []struct {

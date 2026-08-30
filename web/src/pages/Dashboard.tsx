@@ -9,9 +9,8 @@ import { useT } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import { formatCadence, parseCadenceString } from "../components/CadenceBuilder";
-import type { CadenceState } from "../components/CadenceBuilder";
-import { cronPeriodSeconds } from "../lib/cron";
+import { formatCadence } from "../components/CadenceBuilder";
+import { nextBackupCadence } from "../lib/nextBackup";
 import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
@@ -41,6 +40,14 @@ const SUMMARY_RUNS_POLL_MS = 10000;
 // display (which would otherwise show it mislabeled as "Restore" with a
 // blank/truncated target — #run-activity-log finding 1).
 // ---------------------------------------------------------------------------
+
+// viaEverythingLabel renders a cadence as belonging to the whole-server "Backup
+// Everything" pass rather than to a domain's own schedule. Both the protection
+// rows and the summary tier's "next backup" cell say this, so the {cadence}
+// placeholder contract lives in one place instead of two that can drift.
+function viaEverythingLabel(cadence: string, t: ReturnType<typeof useT>["t"], lang: string): string {
+  return t("dashboard.rpoViaEverything").replace("{cadence}", formatCadence(cadence, t, lang));
+}
 
 function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string {
   switch (domain) {
@@ -766,7 +773,7 @@ function ProtectionCard({
                           shows no schedule (#177). */}
                       <span className="col-start-3 min-w-0 truncate text-carbon-textMuted text-xs">
                         {d.coveredBy
-                          ? t("dashboard.rpoViaEverything").replace("{cadence}", formatCadence(d.coveredBy, t, lang))
+                          ? viaEverythingLabel(d.coveredBy, t, lang)
                           : formatCadence(d.schedule, t, lang)}
                       </span>
                       {/* Col 4 — last successful run. */}
@@ -1879,37 +1886,6 @@ function FreshInstallNudge({
 // listRuns entry (no extra round-trips beyond the one runs fetch in the parent).
 // ---------------------------------------------------------------------------
 
-// cadencePeriodDays approximates how often a parsed cadence fires, in days, so
-// the soonest (most frequent) enabled schedule can be picked WITHOUT a live
-// next-run timestamp (the backend has none). Smaller = fires sooner; "off"
-// yields Infinity so it never wins.
-function cadencePeriodDays(s: CadenceState): number {
-  switch (s.mode) {
-    case "daily":
-      return 1;
-    case "everyN":
-      return Math.max(1, s.intervalDays);
-    case "weekly":
-      return 7 / Math.max(1, s.weekdays.length);
-    case "cron": {
-      // Raw cron cadence (#107): approximate the fire interval from the gap
-      // between its first two fires (mirrors the backend's PeriodSeconds).
-      // 0 = not computable → Infinity so it never falsely wins "soonest".
-      const secs = cronPeriodSeconds(s.cron);
-      return secs > 0 ? secs / 86400 : Infinity;
-    }
-    default:
-      return Infinity;
-  }
-}
-
-// minutesOfDay turns "HH:MM" into minutes since midnight — a stable tiebreak
-// between two equally-frequent schedules (the earlier clock time wins).
-function minutesOfDay(hhmm: string): number {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
-  return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 24 * 60;
-}
-
 function SummaryCell({
   label,
   children,
@@ -2001,6 +1977,7 @@ function SummaryTier({
   t,
   lang,
   domains,
+  everythingSchedule,
   loading,
   newestRun,
   healthHueIndex,
@@ -2010,6 +1987,9 @@ function SummaryTier({
   t: ReturnType<typeof useT>["t"];
   lang: string;
   domains: DomainStatus[];
+  /** Cadence of the "Backup Everything" pass, "" when off — a peer of the five
+   *  domain cadences for the "next backup" cell, not a per-domain field. */
+  everythingSchedule: string;
   loading: boolean;
   newestRun: Run | null;
   /** This tier's three cells' own rainbow positions — see the main Dashboard
@@ -2056,20 +2036,21 @@ function SummaryTier({
           : t("dashboard.rpoOff");
 
   // Cell 2 — the soonest (most frequent) enabled schedule, shown as human cadence
-  // text (e.g. "Daily 03:00"). NOTE: there is no next-run timestamp on the
-  // backend and no client-side cron calculator, so this is deliberately NOT a
-  // live countdown — just which enabled schedule fires soonest. Empty when every
-  // domain is off/unscheduled, in which case we show the "not scheduled" label.
-  const scheduled = domains
-    .filter((d) => d.enabled)
-    .map((d) => ({ raw: d.schedule, s: parseCadenceString(d.schedule) }))
-    .filter((x) => x.s.mode !== "off")
-    .sort(
-      (a, b) =>
-        cadencePeriodDays(a.s) - cadencePeriodDays(b.s) ||
-        minutesOfDay(a.s.time) - minutesOfDay(b.s.time)
-    );
-  const nextCadence = scheduled.length > 0 ? formatCadence(scheduled[0].raw, t, lang) : "";
+  // text (e.g. "Daily 03:00"). NOTE: this is deliberately NOT a live countdown —
+  // just which enabled schedule fires soonest. null when nothing is scheduled at
+  // all, in which case we show the "not scheduled" label.
+  //
+  // The whole-server "Backup Everything" pass competes here as a schedule in its
+  // own right, and wins whenever it fires sooner than every domain's own cadence
+  // — including when no domain has one at all. The cell then names the pass
+  // rather than implying a domain schedules itself, the same distinction the
+  // protection rows above draw (#186, and #177 before it). See lib/nextBackup.
+  const next = nextBackupCadence(domains, everythingSchedule);
+  const nextBackupText = !next
+    ? t("dashboard.rpoOff")
+    : next.viaEverything
+      ? viaEverythingLabel(next.cadence, t, lang)
+      : formatCadence(next.cadence, t, lang);
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -2090,8 +2071,10 @@ function SummaryTier({
         {loading ? (
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>
         ) : (
-          <span className="text-sm text-carbon-text truncate min-w-0">
-            {nextCadence || t("dashboard.rpoOff")}
+          // title, because the "via Backup Everything" attribution is the tail
+          // of the string and therefore exactly what truncation eats first.
+          <span className="text-sm text-carbon-text truncate min-w-0" title={nextBackupText}>
+            {nextBackupText}
           </span>
         )}
       </SummaryCell>
@@ -2130,6 +2113,9 @@ export function Dashboard() {
   // Single /api/status fetch shared by the Protection + Ransomware cards (no
   // duplicate round-trip — both cards read the same extended domain status).
   const [statusDomains, setStatusDomains] = useState<DomainStatus[]>([]);
+  // Rides the same /api/status fetch as the domains, so the two never disagree
+  // about which schedule is current. "" while off or not yet loaded.
+  const [everythingSchedule, setEverythingSchedule] = useState("");
   const [statusLoading, setStatusLoading] = useState(true);
 
   // Newest run for the summary tier's "Last result" cell. listRuns returns
@@ -2181,7 +2167,10 @@ export function Dashboard() {
     const load = () => {
       getStatus()
         .then((res) => {
-          if (active && res.ok) setStatusDomains(res.domains ?? []);
+          if (active && res.ok) {
+            setStatusDomains(res.domains ?? []);
+            setEverythingSchedule(res.everythingSchedule ?? "");
+          }
         })
         .catch(() => {/* non-fatal */})
         .finally(() => {
@@ -2268,6 +2257,7 @@ export function Dashboard() {
           t={t}
           lang={lang}
           domains={statusDomains}
+          everythingSchedule={everythingSchedule}
           loading={statusLoading}
           newestRun={runs[0] ?? null}
           healthHueIndex={nextHue()}

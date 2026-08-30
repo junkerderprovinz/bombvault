@@ -2738,7 +2738,12 @@ func (h *Handler) handleAckRuns(w http.ResponseWriter, r *http.Request) {
 // handleStatus returns the per-domain RPO (protection) status for the dashboard's
 // "are my backups current?" indicator. GET /api/status
 func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
-	domains, err := h.svc.DomainStatus()
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	domains, err := h.svc.domainStatusFrom(settings)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -2746,7 +2751,15 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	if domains == nil {
 		domains = []DomainStatusEntry{}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
+	// everythingSchedule rides alongside the domains because the "Backup
+	// Everything" pass is not one of them: it runs on its own cadence over
+	// whichever domains are switched on. It is served verbatim, "off" included,
+	// exactly the way a domain reports its own schedule. See DomainStatusEntry's
+	// CoveredBy for why that field cannot carry it.
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"domains":            domains,
+		"everythingSchedule": strings.TrimSpace(settings.EverythingSchedule),
+	}))
 }
 
 // handleScheduleNext returns the next fire time for every currently registered

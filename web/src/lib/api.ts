@@ -417,6 +417,12 @@ export interface RestoreDrill {
 export interface StatusResponse {
   ok: boolean;
   domains?: DomainStatus[];
+  /** Cadence of the "Backup Everything" pass, verbatim — so "off" (or "") when
+   *  it is switched off, the same way a domain reports its own `schedule`. It
+   *  sits beside the domains because the pass belongs to none of them (#186).
+   *  Optional so a peer instance polled by Fleet on an older build still
+   *  parses. */
+  everythingSchedule?: string;
   error?: string;
 }
 
