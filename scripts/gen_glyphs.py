@@ -56,7 +56,12 @@ NAV = [
     # symbol tragen" — the Local segment and the Browse button both wore a
     # folder and mean different things). A drive against a cloud is the pairing
     # everyone already reads, and neither half is a folder.
-    ("IconLocal", "computer-devices/hard-drive-1.svg", "Local storage, as opposed to off-site"),
+    #
+    # hard-disk rather than hard-drive-1, jdp's pick from the sheet ([242]). It
+    # is scaled to the cloud's envelope on the way out — see FIT_TO_CLOUD, and
+    # note the entry there names THIS file: swapping the source without
+    # re-measuring would silently scale the wrong ink box.
+    ("IconLocal", "computer-devices/hard-disk.svg", "Local storage, as opposed to off-site"),
     ("IconAdd", "interface-essential/add-1.svg", "Add"),
     ("IconDownload", "interface-essential/download-box-1.svg", "Download or export"),
     ("IconBackupNow", "computer-devices/database-check.svg", "Back up now"),
@@ -188,6 +193,55 @@ function G({ children }: { children: ReactNode }) {
 """
 
 
+# ---------------------------------------------------------------------------
+# Optical sizing ([242]).
+#
+# What the eye compares is a glyph's INK, not its box. The cloud that means
+# "off-site" is hand-drawn with air around it and covers 10.4 x 8.2 of the
+# 14-unit grid. Streamline draws to the edge: hard-disk covers 12 x 14. In the
+# identical 20px box that is roughly double the ink, so the drive read as a far
+# bigger symbol beside the cloud it is supposed to pair with (jdp: "der glyph
+# ist im vergleich zu offsite glyph viel zu gross").
+#
+# A fitted glyph is therefore scaled into the CLOUD's envelope and centred on
+# it. Fitting by HEIGHT is what the min() below works out to here, and that is
+# the right rule for a row of icons: the eye lines them up on their height, so
+# a nearly-square drive ends up narrower than the wide cloud and still reads as
+# the same size.
+#
+# The source boxes are MEASURED, via getBBox on the real markup in a browser,
+# never derived from the viewBox — a path's drawn extent and its viewBox have
+# no necessary relationship, and this whole bug was that assumption. Re-measure
+# the same way if a source file is swapped; test glyphs.fit.test.ts pins the
+# arithmetic so a regeneration cannot drift silently.
+# ---------------------------------------------------------------------------
+CLOUD_INK = (2.2, 2.7, 10.4, 8.2)  # IconCloud's own ink, measured
+
+# glyph name -> the measured ink box of ITS source file
+FIT_TO_CLOUD = {
+    "IconLocal": (1.0, 0.0, 12.0, 14.0),  # computer-devices/hard-disk.svg
+}
+
+
+def num(v):
+    """Shortest exact-enough decimal, so the generated file stays readable."""
+    return ("%.6f" % v).rstrip("0").rstrip(".")
+
+
+def fit_transform(name):
+    """The `translate(...) scale(...)` that drops a glyph's ink inside the
+    cloud's, or None when the glyph is already drawn at its natural size."""
+    box = FIT_TO_CLOUD.get(name)
+    if box is None:
+        return None
+    sx, sy, sw, sh = box
+    tx, ty, tw, th = CLOUD_INK
+    scale = min(tw / sw, th / sh)
+    dx = (tx + tw / 2) - (sx + sw / 2) * scale
+    dy = (ty + th / 2) - (sy + sh / 2) * scale
+    return "translate(%s %s) scale(%s)" % (num(dx), num(dy), num(scale))
+
+
 def body(path):
     raw = io.open(SRC + "/" + path, encoding="utf-8").read()
     raw = re.sub(r"<desc>.*?</desc>", "", raw, flags=re.S)
@@ -214,9 +268,16 @@ def body(path):
 def write(path, headline, items, extra=()):
     out = [ATTRIBUTION % headline]
     for name, src, note in items:
+        inner = body(src)
+        transform = fit_transform(name)
+        if transform:
+            inner = '      <g transform="%s">\n%s\n      </g>' % (
+                transform,
+                "\n".join("  " + line for line in inner.split("\n")),
+            )
         out.append(
             "\n/** %s. */\nexport function %s() {\n  return (\n    <G>\n%s\n    </G>\n  );\n}\n"
-            % (note, name, body(src))
+            % (note, name, inner)
         )
     for name, note, viewbox, markup in extra:
         out.append(
