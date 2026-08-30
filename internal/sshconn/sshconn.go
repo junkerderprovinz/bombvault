@@ -72,7 +72,7 @@ func (c *Conn) PublicKey() (string, error) {
 // Scale, whose libvirtd runs on a non-standard socket
 // (/run/truenas_libvirt/libvirt-sock), needing an extra ?socket=... query
 // param the built qemu+ssh:// form below has no way to express (see
-// docs/superpowers/specs/2026-08-16-bombvault-platform-expansion-design.md
+// the design notes
 // §5 and docs/vm-backup-ssh-setup.md's "TrueNAS Scale" section for the exact
 // value to set: qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_
 // libvirt/libvirt-sock). Unset (the default) reproduces today's Unraid/

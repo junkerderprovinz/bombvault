@@ -782,7 +782,7 @@ func TestRestoreVMRejectsUnsafeTPMPath(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // RunTag (per-run correlation tag) tests — Task 1 of
-// docs/superpowers/plans/2026-08-18-vm-service-layer-integration.md. See
+// the design notes. See
 // VMBackupDeps.RunTag's doc comment for the full design context: when set,
 // it is appended ADDITIONALLY to every restic backup call this file makes
 // for one VM backup (the main file-backed backup + each zvol disk's own

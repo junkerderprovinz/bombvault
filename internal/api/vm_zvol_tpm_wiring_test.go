@@ -2,8 +2,8 @@ package api_test
 
 // Tests for wiring the zvol (block-device VM disk) backup path, TPM state
 // capture, and per-identity-tag retention into the REAL BackupVM/RestoreVM —
-// v8.0.0 VM service-layer integration, Task 2 (docs/superpowers/plans/
-// 2026-08-18-vm-service-layer-integration.md). Phase B (Task 10/11) built the
+// v8.0.0 VM service-layer integration, Task 2 (the design notes
+// ). Phase B (Task 10/11) built the
 // zvol backup mechanism and TPM path parsing, but internal/api/service.go's
 // actual BackupVM never populated VMBackupDeps.BlockDisks/ZFSHost/ZvolRestic
 // and never captured TPM state at all — this file proves the real caller now

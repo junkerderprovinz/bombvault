@@ -1,8 +1,8 @@
 package api
 
 // Tests for restore-side "vmrun:<runID>" correlation-tag resolution — v8.0.0
-// VM service-layer integration, Task 3 (docs/superpowers/plans/
-// 2026-08-18-vm-service-layer-integration.md). Task 1/2 tag every snapshot ONE
+// VM service-layer integration, Task 3 (the design notes
+// ). Task 1/2 tag every snapshot ONE
 // mixed file+zvol VM backup produces (the main file-backed snapshot plus one
 // per zvol disk) with a shared "vmrun:<runID>" tag; this file proves
 // prepareRestoreVMForTarget resolves that group correctly — for an explicit

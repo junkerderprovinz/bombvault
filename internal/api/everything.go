@@ -6,9 +6,7 @@ package api
 // parent run row (target_id = store.EverythingTargetID), and fires the
 // operator-configured global pre/post hooks around the whole pass — the
 // dead-man's-switch use case the feature exists for. See the design spec
-// (docs/superpowers/specs/2026-08-20-backup-everything-design.md, decisions 3,
-// 5 and 7) and the implementation plan's Task 4
-// (docs/superpowers/plans/2026-08-20-backup-everything.md) for the full
+// (decisions 3, 5 and 7) and the implementation plan's Task 4 for the full
 // rationale — this file implements that plan.
 
 import (

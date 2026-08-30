@@ -5300,8 +5300,8 @@ function RestoreChecksSection({
 // Domain section — "Backup Everything": a 6th, independent pseudo-domain
 // cadence that runs containers → VMs → flash → folders → self-backup in
 // sequence, bracketed by a global pre/post shell hook (the post-hook is the
-// dead-man's-switch ping point — see docs/superpowers/specs/
-// 2026-08-20-backup-everything-design.md). It does NOT gate or replace the
+// dead-man's-switch ping point — see the design notes
+// ). It does NOT gate or replace the
 // five domain schedules above.
 //
 // Convention pass (this branch): this card arrived from main written against

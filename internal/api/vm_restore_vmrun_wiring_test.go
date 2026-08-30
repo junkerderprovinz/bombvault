@@ -3,8 +3,8 @@ package api_test
 // End-to-end proof that the real RestoreVM (via prepareRestoreVMForTarget's
 // "vmrun:<runID>" group resolution, internal/api/service.go) actually reaches
 // the restic engine with the CORRECT values — v8.0.0 VM service-layer
-// integration, Task 3 (docs/superpowers/plans/
-// 2026-08-18-vm-service-layer-integration.md). Complements
+// integration, Task 3 (the design notes
+// ). Complements
 // vm_restore_vmrun_internal_test.go's plan-level assertions by driving a real
 // BackupVM->RestoreVM round trip through fakeResticEngine (service_test.go)
 // and confirming DumpRaw (the zvol restore-side dump, resticZvolAdapter.

@@ -4,9 +4,8 @@
 // differ by the host BombVault runs on: Unraid's array/share conventions,
 // a plain generic Docker host, and TrueNAS Scale.
 //
-// See docs/superpowers/specs/2026-08-16-bombvault-platform-expansion-design.md
-// §4 for the design rationale and docs/superpowers/plans/2026-08-16-bombvault-
-// platform-expansion.md Task 5 for the exact seam this package fills.
+// See the design notes, §4 for the design rationale and Task 5 for the
+// exact seam this package fills.
 package platform
 
 import "context"

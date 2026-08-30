@@ -1,7 +1,7 @@
 package api_test
 
 // Handler-level test for Task 5 of the "Backup Everything" plan
-// (docs/superpowers/plans/2026-08-20-backup-everything.md): POST
+// (the design notes): POST
 // /api/backup-everything (internal/api/handlers.go's handleBackupEverything).
 // Reuses everything_test.go's Task-4 harness (everythingTestService,
 // waitForEverythingDone) so the concurrency guard is exercised through the

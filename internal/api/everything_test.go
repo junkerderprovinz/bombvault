@@ -1,7 +1,7 @@
 package api_test
 
-// Tests for Task 4 of the "Backup Everything" plan (docs/superpowers/plans/
-// 2026-08-20-backup-everything.md): BackupEverything/StartBackupEverything
+// Tests for Task 4 of the "Backup Everything" plan (the design notes
+// ): BackupEverything/StartBackupEverything
 // (internal/api/everything.go), the core sequential orchestration over
 // containers → vms → flash → files → config plus the global pre/post hooks.
 //

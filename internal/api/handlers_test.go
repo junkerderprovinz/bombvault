@@ -747,7 +747,7 @@ func TestSettingsFilesImmutableRetentionWarning(t *testing.T) {
 
 // TestSettingsEverythingFieldsRoundTrip pins the settings DTO's "Backup
 // Everything" fields (Task 5 of the backup-everything plan,
-// docs/superpowers/plans/2026-08-20-backup-everything.md): a PUT carrying
+// the design notes): a PUT carrying
 // everythingSchedule/everythingPreHook/everythingPostHook is persisted and
 // comes back verbatim on the following GET — the same round-trip contract as
 // every other domain's fields (see TestSettingsConfigFieldsRoundTrip/
@@ -853,8 +853,8 @@ func TestSettingsPutRejectsBadEverythingCadence(t *testing.T) {
 // wired via LastEverythingPass, matching the five domain schedules), NOT the
 // separate loop that rejects 'everyN' for the off-site/
 // drills/tamper/digest schedules — the design spec's explicit call-out
-// ("Settings / API surface" section of docs/superpowers/specs/
-// 2026-08-20-backup-everything-design.md). Without this, a save would fail
+// ("Settings / API surface" section of the design notes
+// ). Without this, a save would fail
 // with "this schedule does not support 'everyN'".
 func TestSettingsEverythingScheduleAllowsEveryN(t *testing.T) {
 	d := &fakeServiceDocker{}

@@ -1,7 +1,7 @@
 package api_test
 
-// Tests for Task 3 of the "Backup Everything" plan (docs/superpowers/plans/
-// 2026-08-20-backup-everything.md): the runGroupKey/WithRunGroup context-flag
+// Tests for Task 3 of the "Backup Everything" plan (the design notes
+// ): the runGroupKey/WithRunGroup context-flag
 // idiom threaded through runsAdapter/startedRunsAdapter so a child run
 // produced during a "Backup Everything" pass carries group_id = the parent
 // run's id (store.SetRunGroup, Task 1). The critical regression guard is that
