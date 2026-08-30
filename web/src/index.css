@@ -147,6 +147,19 @@
    a cage that clips a label a translation made longer than expected. */
 :root {
   --btn-h: 2rem;
+
+  /* The nav rail's own row box, and the size a page-level tab strip matches
+     (jdp: "Die Tabs in den Settings sind immer noch zu klein. die sollen gleich
+     groß sein wie die tabs in der sidebar"). Tokens rather than two independent
+     numbers, because "the same size as the sidebar" is a promise that has to
+     survive someone changing the sidebar.
+
+     200px is the rail's own `w-56` (224px) minus its `p-3` on both sides;
+     43px is what its `py-2.5` plus a 15px line box came to. Both were
+     padding-derived and are stated here so a tab can be given the same box
+     without copying a magic number, and so the pair moves together. */
+  --nav-row-w: 12.5rem;
+  --nav-row-h: 2.6875rem;
   /* 2rem, not 2.25 (jdp: "Ich find die ganzen buttons zb. in den container-cards
      oder in den vm-cards etc. viel zu klobig. können wir die nicht eine größe
      kleiner machen? zb so hoch wie die texteingabefelder. weil jetzt sind viele
@@ -224,7 +237,12 @@
    its 16px glyph and the whole strip visibly shrank on switching. Height is
    also what makes a tab strip line up with a button sitting next to it. */
 .bv-seg {
-  height: var(--btn-h);
+  /* Page-level strips (Settings tabs, the Theme/Shape/Motion/Labels pickers)
+     take the RAIL's row height, not the button height — they are tabs, and
+     tabs match the tabs opposite them. The compact glyph segments that sit in
+     form rows use `.bv-seg-btn` below instead, because those stand beside
+     inputs and have to match THOSE. */
+  height: var(--nav-row-h);
   padding-block: 0;
   display: inline-flex;
   align-items: center;
@@ -241,6 +259,19 @@
    up: an SVG with only one dimension set takes its other from the viewBox, so
    glyphs whose art is wider than it is tall would each sit a different amount
    off the shared centre line. */
+/* The rail row's own box, stated rather than derived from padding, so a tab
+   strip can be given the identical one via the same token. */
+.bv-nav-row {
+  height: var(--nav-row-h);
+  box-sizing: border-box;
+}
+
+/* Same reason as `.bv-btn.bv-reactive` above: a closed reactive row must not
+   reserve a gap beside a zero-width label. */
+.bv-nav-row.bv-reactive {
+  gap: 0;
+}
+
 .bv-nav-row > svg {
   width: 1.25rem;
   height: 1.25rem;
@@ -257,10 +288,44 @@
    table) — the small `sm`/`md` segments (heatmap toggle, weekday pills,
    PathModeSwitch) sit in shorter boxes than `--btn-h` and a 20px glyph would
    burst them. Height is fixed there anyway, so nothing reflows. */
-.bv-seg > svg {
+.bv-seg > svg,
+.bv-seg-btn > svg {
   width: 1.25rem;
   height: 1.25rem;
   flex: none;
+}
+
+/* A glyph-carrying segment that lives in a FORM ROW rather than a tab strip
+   (the Local/Off-site switches). Same box as a button, because that is what it
+   stands next to — an input and a browse button, both `--btn-h`. */
+.bv-seg-btn {
+  height: var(--btn-h);
+  padding-block: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* A button's glyph is the same 20px as everywhere else (jdp: "das folder icon
+   ist auf den lokal und ordner durchsuchen buttons nicht gleich groß" — the
+   segment scaled its glyph up and the button did not, so the same symbol came
+   in two sizes on one row). */
+.bv-btn-glyph > svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+/* Reactive controls carry no gap at rest, and this is the reason the glyph
+   looked off-centre (jdp's screenshot): the collapsed label is still a flex
+   item, so the container's `gap` reserved 8px beside a zero-width box and
+   pushed the glyph left of centre — and made a reactive button wider than the
+   same button in glyph mode. The gap comes back as the LABEL's own
+   `margin-inline-start` when it opens, so the spacing is unchanged once the
+   words are out. */
+.bv-btn.bv-reactive {
+  gap: 0;
 }
 
 .bv-btn-glyph {

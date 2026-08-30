@@ -3,7 +3,7 @@ import type { Settings, PrimaryRemoteDomain } from "../lib/api";
 import { FolderBrowser } from "./FolderBrowser";
 import { OffsiteWizard } from "./OffsiteWizard";
 import { Selector } from "./Selector";
-import { IconCloud, IconFolder } from "./Sidebar";
+import { IconCloud, IconLocal } from "./Sidebar";
 import { Badge } from "./Badge";
 import { useT } from "../lib/i18n";
 
@@ -153,7 +153,7 @@ export function PathModeSwitch({
             {
               id: "local",
               label: t("settings.pathMode.local"),
-              icon: <IconFolder />,
+              icon: <IconLocal />,
               tip: t("settings.pathMode.localTip"),
             },
             {

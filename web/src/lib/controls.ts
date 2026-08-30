@@ -191,19 +191,6 @@ export function widthStage(label: string): WidthStage {
 }
 
 /**
- * The CSS width every segment of a group should take, so a tab strip is
- * uniformly wide rather than each tab hugging its own text (#178, [200]).
- *
- * The stage is the one the LONGEST label needs, in the current language, and
- * every member gets it. That is the difference from measuring: the answer is
- * known before the first paint and is bounded by the stage table, so a
- * language nobody tested cannot stretch a strip until it wraps.
- */
-export function groupWidth(labels: string[]): string {
-  return `var(--btn-w-${groupStage(labels)})`;
-}
-
-/**
  * The stage a set of labels shares: the one the LONGEST of them needs.
  *
  * For BUTTONS that belong together visually but are rendered by different

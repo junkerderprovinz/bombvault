@@ -6,7 +6,7 @@ import {
   useOffsiteTargets,
 } from "../lib/useOffsiteTargets";
 import { Selector } from "./Selector";
-import { IconFolder, IconCloud } from "./Sidebar";
+import { IconLocal, IconCloud } from "./Sidebar";
 
 /**
  * A repo source: the local repo, the domain's PRIMARY off-site target ("offsite"),
@@ -107,7 +107,7 @@ export function SourceToggle({
           {
             id: "local",
             label: t("source.local"),
-            icon: <IconFolder />,
+            icon: <IconLocal />,
             tip: t("source.localTip"),
           },
           {

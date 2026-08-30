@@ -9,7 +9,6 @@ import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import {
   CONTROL_AXES,
-  groupWidth,
   LABEL_MODES,
   getLabelMode,
   setLabelMode,
@@ -7278,7 +7277,12 @@ export function SettingsPage() {
            rather than by measurement. That also retires the failure this
            file's own header describes: the measured pin once grew to 1424px
            in German and wrapped the seven tabs onto two rows. */
-        segmentWidth={groupWidth(TAB_ORDER.map((k) => t(`settings.tab.${k}` as TranslationKey)))}
+        // The rail's own row width, via the shared token — "gleich groß wie die
+        // tabs in der sidebar" is a promise, and a promise needs one number,
+        // not two that happen to agree today. It also gives the longest label
+        // ("Benachrichtigungen") the 16px it was missing, which is why that tab
+        // clipped its own text in reactive mode.
+        segmentWidth="var(--nav-row-w)"
       />
       </div>
       </div>

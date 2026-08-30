@@ -449,8 +449,8 @@ const SIZE: Record<
   SelectorSize,
   { gap: string; padding: string; glyphPadding: string; text: string }
 > = {
-  sm: { gap: "gap-1", padding: "px-2 py-0.5", glyphPadding: "px-2 bv-seg", text: "text-xs" },
-  md: { gap: "gap-1.5", padding: "px-3 py-1", glyphPadding: "px-3 bv-seg", text: "text-xs" },
+  sm: { gap: "gap-1", padding: "px-2 py-0.5", glyphPadding: "px-2 bv-seg-btn", text: "text-xs" },
+  md: { gap: "gap-1.5", padding: "px-3 py-1", glyphPadding: "px-3 bv-seg-btn", text: "text-xs" },
   // "lg" is the page-level scale (Settings tabs, Shape/Motion/Labels pickers).
   // `bv-seg` gives it the button height instead of letting padding decide, so
   // the strip neither shrinks in glyph mode nor sits lower than a button.
@@ -644,7 +644,12 @@ function SelectorTab({
   //     native balloon did before.
   const explains = item.tip ?? (nameHidden ? item.label : undefined);
   const tip = [...new Set([explains, item.title].filter(Boolean))].join(" — ") || undefined;
-  const tooltip = useTipBubble(tip, disabled);
+  // No bubble in reactive mode (jdp: "im reaktiven modus brauchen die tabs und
+  // buttons kein mouseover infobubble") — the same hover already paints the
+  // words into the segment, so a bubble repeats them on top of the animation.
+  // A DISABLED segment is the exception and has to stay: it takes no hover, so
+  // nothing reveals, and its tip is the only thing that says why it is dead.
+  const tooltip = useTipBubble(reactive && !disabled ? undefined : tip, disabled);
 
   return (
     <>
@@ -765,6 +770,7 @@ export function Selector(props: SelectorProps) {
   // scale, so `lg` keeps pinning whatever the mode says and the Settings tab
   // row stays a row instead of collapsing into seven small squares.
   const labelsOffScreen = hidesLabel(labelModeForStrip) && items.every((i) => !!i.icon);
+  const reactiveStrip = labelModeForStrip === "reactive" && items.every((i) => !!i.icon && !i.iconOnly);
   const pinWidth = equalWidth && !(labelsOffScreen && size !== "lg");
 
   // Content-width measurement for `pinWidth` (item 5b, corrected — see the
@@ -1032,7 +1038,11 @@ export function Selector(props: SelectorProps) {
                 : raised
                   ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                   : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
-          SIZE[size].gap,
+          // No gap while a reactive segment is closed: the collapsed label is
+          // still a flex item, so the gap would sit beside a zero-width box and
+          // push the glyph off centre. The label brings its own margin when it
+          // opens.
+          reactiveStrip ? "gap-0" : SIZE[size].gap,
           SIZE[size].text,
           // The one place the two SCALES of this control differ, and the
           // only thing `equalWidth` changes (file header item 6).

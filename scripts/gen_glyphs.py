@@ -51,6 +51,12 @@ NAV = [
     ("IconReceiver", "interface-essential/login-1.svg", "Receiver, an incoming transfer"),
     ("IconFleet", "interface-essential/hierarchy-2.svg", "Fleet, other BombVault boxes"),
     ("IconFolder", "interface-essential/new-folder.svg", "A folder"),
+    # "Local", as opposed to off-site. Its own symbol rather than the folder
+    # (jdp: "Ist ja blöd wenn buttons mit unterschiedlicher funktion das gleiche
+    # symbol tragen" — the Local segment and the Browse button both wore a
+    # folder and mean different things). A drive against a cloud is the pairing
+    # everyone already reads, and neither half is a folder.
+    ("IconLocal", "computer-devices/hard-drive-1.svg", "Local storage, as opposed to off-site"),
     ("IconAdd", "interface-essential/add-1.svg", "Add"),
     ("IconDownload", "interface-essential/download-box-1.svg", "Download or export"),
     ("IconBackupNow", "computer-devices/database-check.svg", "Back up now"),

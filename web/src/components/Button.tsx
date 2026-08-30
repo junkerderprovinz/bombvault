@@ -238,7 +238,10 @@ export function Button({
     (showText || reactive
       ? title
       : [...new Set([label, title].filter(Boolean))].join(" — ")) || undefined;
-  const tooltip = useTipBubble(tip, disabled);
+  // Reactive shows nothing on hover but the words themselves (jdp). The
+  // DISABLED case keeps its bubble: it takes no hover, so the label never
+  // reveals, and the tip is the only thing left explaining why it is dead.
+  const tooltip = useTipBubble(reactive && !disabled ? undefined : tip, disabled);
 
   const hueOn = hueIndex !== undefined;
   // The reveal's own ceiling, in the label's visual units — see
