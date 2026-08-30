@@ -81,14 +81,28 @@ NAV = [
     # on its own: a sparse layout against a dense one.
     ("IconViewSimple", "interface-essential/layout-window-11.svg", "Simple view"),
     ("IconViewAdvanced", "interface-essential/layout-window-8.svg", "Advanced view"),
+    # Two of Settings' seven tab glyphs. The other five are still hand-drawn in
+    # Settings.tsx and stay that way; only these two were wrong, so only these
+    # two moved. Keeping them here rather than drawing them there also keeps the
+    # CC BY attribution in one file instead of two.
+    ("IconTabSystem", "computer-devices/computer-chip-1.svg", "System tab"),
+    # Back to Streamline's own after two hand-drawn attempts (jdp picked this
+    # one by name). Keeping it in the generated list rather than as a drawing
+    # also puts Flash back inside the one icon family.
+    ("IconFlash", "computer-devices/usb-drive.svg", "The Unraid boot flash drive"),
 ]
 
 # ---------------------------------------------------------------------------
 # Hand-authored glyphs, emitted verbatim after the generated ones.
 #
-# Two of the rail's symbols cannot come from Streamline, and both would be lost
-# on the next regeneration if they lived in the .tsx by hand — which is exactly
-# what that file's own header forbids. So they live here instead.
+# One symbol cannot come from Streamline, and it would be lost on the next
+# regeneration if it lived in the .tsx by hand — which is exactly what that
+# file's own header forbids. So it lives here instead.
+#
+# (Flash was briefly here too, as a drawing, after the free set's own USB glyph
+# was judged too plug-like. Two attempts later jdp picked Streamline's original
+# by name, so it moved back into NAV. Worth remembering: drawing a replacement
+# is the fallback, not the first move.)
 #
 # Each carries its own viewBox, so they do NOT go through `G` (which pins the
 # 14-unit grid). The rendered box is the same 16px either way.
@@ -107,16 +121,25 @@ EXTRA_NAV = [
         '<path d="%s" />' % io.open("../scripts/docker-path.txt", encoding="utf-8").read().strip(),
     ),
     (
-        "IconFlash",
-        "The Unraid boot flash drive",
+        "IconTabOffsite",
+        "Off-site tab",
         "0 0 14 14",
-        # Drawn here, on Streamline's own 14-unit grid, because the free set has
-        # exactly one USB glyph and jdp asked for a better one. Two contacts and
-        # a flat-topped body: at 20px that silhouette still reads as a stick,
-        # where a rounded blob reads as a plug.
-        '<path d="M4.9 1.0h1.25v1.9h1.7V1.0h1.25v1.9h0.5a0.9 0.9 0 0 1 0.9 0.9v1.1H3.5V3.8'
-        'a0.9 0.9 0 0 1 0.9-0.9h0.5z" />'
-        '<path d="M3.5 6.1h7v5.6a1.7 1.7 0 0 1-1.7 1.7H5.2a1.7 1.7 0 0 1-1.7-1.7z" />',
+        # A cloud and nothing else (jdp: "nur eine wolke aber die wolke soll
+        # eine schönere form haben"). A transfer-arrow variant was offered and
+        # turned down — the tab is already called Off-site, arrows only repeat
+        # the word.
+        #
+        # Built from a rectangle plus three circles rather than one arc path,
+        # and that is the whole point: jdp picked this shape but asked for it
+        # "waagrecht ausgerichtet", because the arc version sloped. An arc
+        # chain has no straight edge to be level; a rect does, so the base is
+        # horizontal by construction and cannot drift when the shape is
+        # tweaked. All four pieces share one fill, so they render as a single
+        # silhouette.
+        '<rect x="2.2" y="7.9" width="9.6" height="3.0" rx="1.5" />'
+        '<circle cx="4.8" cy="7.2" r="2.6" />'
+        '<circle cx="7.5" cy="5.9" r="3.2" />'
+        '<circle cx="10.2" cy="7.5" r="2.4" />',
     ),
 ]
 

@@ -446,15 +446,33 @@ export type SelectorProps =
 // generated CSS, so this is a pure refactor for that branch.
 const SIZE: Record<
   SelectorSize,
-  { gap: string; padding: string; text: string }
+  { gap: string; padding: string; glyphPadding: string; text: string }
 > = {
-  sm: { gap: "gap-1", padding: "px-2 py-0.5", text: "text-xs" },
-  md: { gap: "gap-1.5", padding: "px-3 py-1", text: "text-xs" },
+  sm: { gap: "gap-1", padding: "px-2 py-0.5", glyphPadding: "px-2 bv-seg", text: "text-xs" },
+  md: { gap: "gap-1.5", padding: "px-3 py-1", glyphPadding: "px-3 bv-seg", text: "text-xs" },
   // "lg" is the page-level scale (Settings tabs, Shape/Motion/Labels pickers).
   // `bv-seg` gives it the button height instead of letting padding decide, so
   // the strip neither shrinks in glyph mode nor sits lower than a button.
-  lg: { gap: "gap-2", padding: "px-3 bv-seg", text: "text-sm" },
+  lg: { gap: "gap-2", padding: "px-3 bv-seg", glyphPadding: "px-3 bv-seg", text: "text-sm" },
 };
+
+/**
+ * The padding a segment actually gets: `bv-seg`'s button height as soon as the
+ * segment CARRIES A GLYPH, the compact per-stage padding otherwise.
+ *
+ * Why the glyph is what decides, rather than the size (jdp, live: "die button
+ * von lokal und offsite sind zu niedrig im glyph only mode", and the same in
+ * the Integrity card): a padding-derived box is sized by its TEXT. Put a 20px
+ * glyph in it and the box does not grow to suit — the Backup-Paths switch
+ * measured 20px and the Integrity one 24px, against 36px for every input and
+ * button they sat beside. A glyph needs the box a button has.
+ *
+ * Text-only chips are deliberately left alone. The weekday pills and the
+ * heatmap toggle are dense on purpose and nobody has ever called them short.
+ */
+function segmentPadding(size: SelectorSize, hasGlyph: boolean): string {
+  return hasGlyph ? SIZE[size].glyphPadding : SIZE[size].padding;
+}
 
 // MIN_PINNED_WIDTH — the one standardized floor every `pinWidth` segment (both
 // "well" and "chip"'s own `equalWidth`) now measures up to (jdp, live-review
@@ -1050,10 +1068,10 @@ export function Selector(props: SelectorProps) {
           well && equalWidth
             ? `flex-none justify-center text-center h-[var(--badge-md)] ${SIZE[size].padding}`
             : equalWidth
-              ? `flex-none justify-center text-center ${SIZE[size].padding}`
+              ? `flex-none justify-center text-center ${segmentPadding(size, !!item.icon)}`
               : item.iconOnly
                 ? "justify-center h-8 w-8 p-0"
-                : SIZE[size].padding,
+                : segmentPadding(size, !!item.icon),
         ]
           .filter(Boolean)
           .join(" ");

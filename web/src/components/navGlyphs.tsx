@@ -261,6 +261,24 @@ export function IconViewAdvanced() {
   );
 }
 
+/** System tab. */
+export function IconTabSystem() {
+  return (
+    <G>
+      <path fill="currentColor" fillRule="evenodd" d="M5.85992 0.8573c0 -0.414214 -0.33578 -0.75 -0.75 -0.75 -0.41421 0 -0.75 0.335786 -0.75 0.75V2.5H4c-0.82843 0 -1.5 0.67157 -1.5 1.5v0.35992H0.8573c-0.414214 0 -0.75 0.33579 -0.75 0.75 0 0.41422 0.335786 0.75 0.75 0.75H2.5v2.28016H0.8573c-0.414214 0 -0.75 0.33578 -0.75 0.75 0 0.41421 0.335786 0.75 0.75 0.75H2.5V10c0 0.8284 0.67157 1.5 1.5 1.5h0.35992v1.6427c0 0.4142 0.33579 0.75 0.75 0.75 0.41422 0 0.75 -0.3358 0.75 -0.75V11.5h2.28016v1.6427c0 0.4142 0.33578 0.75 0.75 0.75 0.41421 0 0.75 -0.3358 0.75 -0.75V11.5H10c0.8284 0 1.5 -0.6716 1.5 -1.5v-0.35992h1.6427c0.4142 0 0.75 -0.33579 0.75 -0.75 0 -0.41422 -0.3358 -0.75 -0.75 -0.75H11.5V5.85992h1.6427c0.4142 0 0.75 -0.33578 0.75 -0.75 0 -0.41421 -0.3358 -0.75 -0.75 -0.75H11.5V4c0 -0.82843 -0.6716 -1.5 -1.5 -1.5h-0.35992V0.8573c0 -0.414214 -0.33579 -0.75 -0.75 -0.75 -0.41422 0 -0.75 0.335786 -0.75 0.75V2.5H5.85992V0.8573ZM7.40894 8.375c-0.34518 0 -0.625 0.27982 -0.625 0.625s0.27982 0.625 0.625 0.625h2c0.34517 0 0.62496 -0.27982 0.62496 -0.625s-0.27979 -0.625 -0.62496 -0.625h-2Z" clipRule="evenodd" strokeWidth="1"></path>
+    </G>
+  );
+}
+
+/** The Unraid boot flash drive. */
+export function IconFlash() {
+  return (
+    <G>
+      <path fill="currentColor" fillRule="evenodd" d="M4 0c-0.27614 0 -0.5 0.223858 -0.5 0.5v3.25h7V0.5c0 -0.276142 -0.2239 -0.5 -0.5 -0.5H4ZM2.5 6v3.5C2.5 11.9853 4.51472 14 7 14s4.5 -2.0147 4.5 -4.5V6c0 -0.55228 -0.4477 -1 -1 -1h-7c-0.55228 0 -1 0.44772 -1 1Z" clipRule="evenodd" strokeWidth="1"></path>
+    </G>
+  );
+}
+
 /** Docker containers. */
 export function IconContainers() {
   return (
@@ -277,8 +295,8 @@ export function IconContainers() {
   );
 }
 
-/** The Unraid boot flash drive. */
-export function IconFlash() {
+/** Off-site tab. */
+export function IconTabOffsite() {
   return (
     <svg
       width="16"
@@ -288,7 +306,7 @@ export function IconFlash() {
       className="shrink-0"
       aria-hidden="true"
     >
-      <path d="M4.9 1.0h1.25v1.9h1.7V1.0h1.25v1.9h0.5a0.9 0.9 0 0 1 0.9 0.9v1.1H3.5V3.8a0.9 0.9 0 0 1 0.9-0.9h0.5z" /><path d="M3.5 6.1h7v5.6a1.7 1.7 0 0 1-1.7 1.7H5.2a1.7 1.7 0 0 1-1.7-1.7z" />
+      <rect x="2.2" y="7.9" width="9.6" height="3.0" rx="1.5" /><circle cx="4.8" cy="7.2" r="2.6" /><circle cx="7.5" cy="5.9" r="3.2" /><circle cx="10.2" cy="7.5" r="2.4" />
     </svg>
   );
 }

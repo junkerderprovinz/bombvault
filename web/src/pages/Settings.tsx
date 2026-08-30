@@ -63,6 +63,10 @@ import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 import { Flag, IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose, IconCopy } from "../components/Sidebar";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
+// The two tab glyphs that are generated rather than drawn below. Aliased so the
+// wrappers further down keep their own names and TAB_ICON reads the same for
+// all seven, generated and hand-drawn alike.
+import { IconTabOffsite as IconTabOffsiteGlyph, IconTabSystem as IconTabSystemGlyph } from "../components/navGlyphs";
 
 // GlimStone version this UI is built against — bump by hand whenever
 // index.css / lib/appearance.ts / lib/shape.ts / lib/motion.ts are re-copied
@@ -5663,14 +5667,11 @@ function IconTabSchedules() {
 }
 
 function IconTabOffsite() {
-  // A cloud — the remote/off-site replica target. Already a closed
-  // silhouette under its old stroke (rule 218) — flips directly to a solid
-  // fill with the identical path data, no redraw needed.
-  return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M4.5 12.5A3 3 0 0 1 4 6.53 3.5 3.5 0 0 1 10.9 5.1 2.75 2.75 0 0 1 12.5 10.4v.1a2.25 2.25 0 0 1-2 2h-6Z" />
-    </svg>
-  );
+  // Was a hand-drawn cloud silhouette; jdp asked for a nicer one. Now the
+  // generated `cloud-data-transfer`, which is both a better-shaped cloud AND
+  // says what this tab is: a cloud something is copied TO and FROM, not just
+  // weather. See scripts/gen_glyphs.py.
+  return <IconTabOffsiteGlyph />;
 }
 
 function IconTabNotifications() {
@@ -5701,25 +5702,11 @@ function IconTabIntegrity() {
 }
 
 function IconTabSystem() {
-  // Sliders — system/advanced/SSH knobs. Distinct from IconTabGeneral's
-  // rounded toggle switches (a discrete on/off pair) — these are inline
-  // continuous sliders instead. (Sidebar.tsx's own nav-rail IconConfig used
-  // to be this same sliders motif too — GlimStone follow-up round replaced
-  // THAT one with a padlock, jdp's live review: "sieht nicht gut aus" — see
-  // that file's own IconConfig comment; this tab-strip glyph is a separate,
-  // smaller-scale icon with its own real evenodd cut-out knobs, untouched by
-  // that round, so the "distinct from a toggle switch" reasoning below still
-  // holds on its own merits without needing that now-gone precedent.) Each
-  // track + its knob is one evenodd path — the knob is a real cut-out, not
-  // a second painted colour (see the fix note above this section).
-  return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M2.65,4.35 H13.35 A0.65,0.65 0 0 1 13.35,5.65 H2.65 A0.65,0.65 0 0 1 2.65,4.35 Z M9.9,5 A1.4,1.4 0 1 0 7.1,5 A1.4,1.4 0 1 0 9.9,5 Z M2.65,10.35 H13.35 A0.65,0.65 0 0 1 13.35,11.65 H2.65 A0.65,0.65 0 0 1 2.65,10.35 Z M6.4,11 A1.4,1.4 0 1 0 3.6,11 A1.4,1.4 0 1 0 6.4,11 Z"
-      />
-    </svg>
-  );
+  // Was inline sliders, which jdp read as too close to IconTabGeneral's
+  // stacked toggles — two rounded horizontal bars with a knob each, at 20px
+  // barely tellable apart. A chip is a different shape entirely and still
+  // says "system". See scripts/gen_glyphs.py.
+  return <IconTabSystemGlyph />;
 }
 
 // "Reset to default" arrow — the Accent Card's preset-row reset button and
