@@ -10,6 +10,7 @@ import { applyStoredAccent } from "./lib/accent";
 import { applyStoredRainbow } from "./lib/appearance";
 import { applyStoredShape, armShapeTransitions } from "./lib/shape";
 import { applyStoredMotionIntensity } from "./lib/motion";
+import { applyStoredLabelModes } from "./lib/controls";
 
 // Apply persisted preferences before first paint (flash prevention).
 applyStoredTheme();
@@ -18,6 +19,7 @@ applyStoredAccent();
 applyStoredRainbow();
 applyStoredShape();
 applyStoredMotionIntensity();
+applyStoredLabelModes();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
