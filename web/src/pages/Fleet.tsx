@@ -672,16 +672,17 @@ function FleetPeerCard({
               could take a glyph precisely because they route through a
               useConfirm DIALOG instead. */}
           {confirmRemove ? (
-            <button
+            <Button
               key={shakeRemove}
+              label={t("fleet.confirmRemove")}
+              labelKey="fleet.confirmRemove"
+              tone="neutral"
               onClick={() => void handleRemove()}
               disabled={removing}
-              className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
-                shakeRemove ? " glim-shake" : ""
-              }`}
-            >
-              {removing ? t("fleet.removing") : t("fleet.confirmRemove")}
-            </button>
+              busy={removing}
+              title={removing ? t("fleet.removing") : undefined}
+              className={shakeRemove ? "glim-shake" : ""}
+            />
           ) : (
             <Button
               label={t("fleet.remove")}

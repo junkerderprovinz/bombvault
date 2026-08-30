@@ -924,22 +924,17 @@ function ForeignRestoreCard({
         </div>
 
         <div className="flex items-center gap-3 pt-1 flex-wrap">
-          <button
+          <Button
             key={shake}
+            label={t("recovery.foreignConnect")}
+            labelKey="recovery.foreignConnect"
+            tone="accent"
             onClick={() => void connect()}
             disabled={!canConnect}
-            className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shake ? " glim-shake" : ""
-            }`}
-          >
-            {phase === "connecting" && (
-              <span
-                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-            )}
-            {phase === "connecting" ? t("recovery.foreignConnecting") : t("recovery.foreignConnect")}
-          </button>
+            busy={phase === "connecting"}
+            title={phase === "connecting" ? t("recovery.foreignConnecting") : undefined}
+            className={shake ? "glim-shake" : ""}
+          />
           {phase === "connected" && (
             <>
               <span className="text-sm text-statusOk">{t("recovery.foreignConnected")}</span>
@@ -1879,19 +1874,15 @@ export default function Recovery() {
               are prose about repeating the action, not this label) refer to;
               the button's own wording is the value, and the value is now plain.
               Do not re-lengthen it. */}
-          <button
+          <Button
+            label={t("recovery.recheck")}
+            labelKey="recovery.recheck"
+            tone="accent"
             onClick={() => void checkReadable()}
             disabled={checking}
-            className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {checking && (
-              <span
-                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-            )}
-            {checking ? t("dashboard.checking") : t("recovery.recheck")}
-          </button>
+            busy={checking}
+            title={checking ? t("dashboard.checking") : undefined}
+          />
 
           {readableState === "ok" && (
             <span className="text-sm text-statusOk">{t("recovery.readable")}</span>
@@ -1988,22 +1979,17 @@ export default function Recovery() {
                       `snapshots.restore` string, verbatim, so all 42 use the
                       wording the app already ships for this verb rather than a
                       fresh translation of it. */}
-                  <button
+                  <Button
                     key={configShake}
+                    label={t("recovery.configRestore")}
+                    labelKey="recovery.configRestore"
+                    tone="accent"
                     onClick={() => void restoreOwnConfig()}
                     disabled={configPhase === "saving" || configPhase === "restarting"}
-                    className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                      configShake ? " glim-shake" : ""
-                    }`}
-                  >
-                    {(configPhase === "saving" || configPhase === "restarting") && (
-                      <span
-                        className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                        style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-                      />
-                    )}
-                    {configPhase === "saving" ? t("recovery.configRestoring") : t("recovery.configRestore")}
-                  </button>
+                    busy={(configPhase === "saving" || configPhase === "restarting")}
+                    title={(configPhase === "saving" || configPhase === "restarting") ? t("recovery.configRestoring") : undefined}
+                    className={configShake ? "glim-shake" : ""}
+                  />
                   <Button
                     label={t("recovery.configSkip")}
                     labelKey="recovery.configSkip"
@@ -2236,19 +2222,15 @@ export default function Recovery() {
       {/* Step 4 — Discover everything (rebuild targets from the backup defs) */}
       <StepCard n={4} title={t("recovery.step3")} state={discoverStepState} hueIndex={nextHue()}>
         <div className="flex items-center gap-3">
-          <button
+          <Button
+            label={t("recovery.discover")}
+            labelKey="recovery.discover"
+            tone="accent"
             onClick={() => void runDiscover()}
             disabled={discovering}
-            className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {discovering && (
-              <span
-                className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}
-              />
-            )}
-            {discovering ? t("containers.discovering") : t("recovery.discover")}
-          </button>
+            busy={discovering}
+            title={discovering ? t("containers.discovering") : undefined}
+          />
 
           {discovered && discovered.containers + discovered.vms + discovered.files > 0 && (
             <span className="text-sm text-statusOk">

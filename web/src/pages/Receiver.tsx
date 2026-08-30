@@ -334,16 +334,17 @@ function ReceivedRepoCard({
               i18n.ts's receiver.confirmRemove needs a label to flip, which an
               icon-only badge does not have). */}
           {confirmRemove ? (
-            <button
+            <Button
               key={shakeRemove}
+              label={t("receiver.confirmRemove")}
+              labelKey="receiver.confirmRemove"
+              tone="neutral"
               onClick={() => void handleRemove()}
               disabled={removing}
-              className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors disabled:opacity-50${
-                shakeRemove ? " glim-shake" : ""
-              }`}
-            >
-              {removing ? t("receiver.removing") : t("receiver.confirmRemove")}
-            </button>
+              busy={removing}
+              title={removing ? t("receiver.removing") : undefined}
+              className={shakeRemove ? "glim-shake" : ""}
+            />
           ) : (
             <Button
               label={t("receiver.remove")}

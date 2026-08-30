@@ -1879,7 +1879,6 @@ function SettingsPortabilityCard({
   // none of the four carried this Card's own `hueIndex` — flat regardless of
   // rainbow mode. Same `.glim-hue` + `hueVars(rainbowAt(hueIndex))` fix.
   const hueOn = hueIndex !== undefined;
-  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
 
   return (
     <Card title={t("settingsIO.title")} hint={t("settingsIO.desc")} hueIndex={hueIndex}>
@@ -1937,18 +1936,18 @@ function SettingsPortabilityCard({
           onChange={(e) => void handleFilePicked(e)}
           className="hidden"
         />
-        <button
-          type="button"
+        <Button
           key={shake.chooseFile || 0}
+          label={t("settingsIO.chooseFile")}
+          labelKey="settingsIO.chooseFile"
+          tone="neutral"
           onClick={() => fileInputRef.current?.click()}
           disabled={busy}
-          className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${
-            shake.chooseFile ? " glim-shake" : ""
-          }${hueOn ? " glim-hue" : ""}`}
-          style={hueStyle}
-        >
-          {importBusy === "reading" ? t("settingsIO.reading") : t("settingsIO.chooseFile")}
-        </button>
+          hueIndex={hueIndex}
+          busy={importBusy === "reading"}
+          title={importBusy === "reading" ? t("settingsIO.reading") : undefined}
+          className={`self-start${shake.chooseFile ? " glim-shake" : ""}`}
+        />
 
         {/* Preview + confirmation before anything is written. */}
         {preview && (
@@ -2009,7 +2008,7 @@ function SettingsPortabilityCard({
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
-                className={`rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? "glim-hue" : ""}`}
+                className={`rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
                 hueIndex={hueIndex}
               />
             </div>
@@ -2068,7 +2067,6 @@ function UnraidTileSection({
 }) {
   const { push } = useToast();
   const hueOn = hueIndex !== undefined;
-  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
   // `status` stays exactly as it was — GlimStone follow-up pass (v8.0.0)
   // audit note: this is a PERSISTENT "is the tile currently installed" fact
   // (plus, on failure, a possibly multi-line command `output` block), not a
@@ -2186,7 +2184,7 @@ function UnraidTileSection({
               labelKey="vm.ssh.copy"
               tone="accent"
               onClick={() => void handleCopyUrl()}
-              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? "glim-hue" : ""}`}
+              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
             />
           </div>
           <p className="text-xs text-carbon-textMuted">{t("settings.dashTileCa")}</p>
@@ -2212,18 +2210,18 @@ function UnraidTileSection({
           >
             {t("settings.dashTileRepo")} →
           </Badge>
-          <button
-            type="button"
+          <Button
             key={shake.install || 0}
+            label={t("settings.dashTileInstall")}
+            labelKey="settings.dashTileInstall"
+            tone="accent"
             onClick={() => void run("install")}
             disabled={busy !== "idle"}
-            className={`self-start rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shake.install ? " glim-shake" : ""
-            }${hueOn ? " glim-hue" : ""}`}
-            style={hueStyle}
-          >
-            {busy === "install" ? t("settings.dashTileInstalling") : t("settings.dashTileInstall")}
-          </button>
+            hueIndex={hueIndex}
+            busy={busy === "install"}
+            title={busy === "install" ? t("settings.dashTileInstalling") : undefined}
+            className={`self-start${shake.install ? " glim-shake" : ""}`}
+          />
           {/* A failed install stays right here (the button never disappears —
               see this component's own `runErr` doc comment above for why) —
               the toast already carries the one-line message; only the
@@ -2253,18 +2251,18 @@ function UnraidTileSection({
               ("Kachel entfernen") and the in-flight label are what name the
               action. `glim-shake`/`glim-hue`/hueStyle all survive unchanged —
               behaviour and colour-engine membership, not a bespoke colour. */}
-          <button
-            type="button"
+          <Button
             key={shake.remove || 0}
+            label={t("settings.dashTileRemove")}
+            labelKey="settings.dashTileRemove"
+            tone="neutral"
             onClick={() => void run("remove")}
             disabled={busy !== "idle"}
-            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-              shake.remove ? " glim-shake" : ""
-            }${hueOn ? " glim-hue" : ""}`}
-            style={hueStyle}
-          >
-            {busy === "remove" ? t("settings.dashTileRemoving") : t("settings.dashTileRemove")}
-          </button>
+            hueIndex={hueIndex}
+            busy={busy === "remove"}
+            title={busy === "remove" ? t("settings.dashTileRemoving") : undefined}
+            className={`self-start${shake.remove ? " glim-shake" : ""}`}
+          />
           {/* Same "stays put, shows the multi-line output only" treatment as
               the install button above. */}
           {runErr?.output && (
@@ -2286,7 +2284,7 @@ function UnraidTileSection({
               setStatus({ kind: "loading" });
               refresh();
             }}
-            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${hueOn ? "glim-hue" : ""}`}
+            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${hueOn ? " glim-hue" : ""}`}
           />
         </div>
       )}
@@ -2736,7 +2734,7 @@ function FleetSettingsCard({
               labelKey="vm.ssh.copy"
               tone="accent"
               onClick={() => void handleCopy()}
-              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? "glim-hue" : ""}`}
+              className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
             />
           </div>
@@ -3230,17 +3228,17 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
                 a label to flip ("Entfernen" → "Entfernen bestätigen" → "Wird
                 entfernt…"), which an icon-only badge has nowhere to put. */}
             {confirmRemove === s.id ? (
-              <button
-                type="button"
+              <Button
                 key={shake[`remove:${s.id}`] || 0}
+                label={t("offsite.targets.confirmRemove")}
+                labelKey="offsite.targets.confirmRemove"
+                tone="neutral"
                 onClick={() => void remove(s.id)}
                 disabled={removingId === s.id}
-                className={`rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs font-medium text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                  shake[`remove:${s.id}`] ? " glim-shake" : ""
-                }`}
-              >
-                {removingId === s.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
-              </button>
+                busy={removingId === s.id}
+                title={removingId === s.id ? t("offsite.targets.removing") : undefined}
+                className={shake[`remove:${s.id}`] ? "glim-shake" : ""}
+              />
             ) : (
               <Button
                 label={t("offsite.targets.remove")}
@@ -4687,17 +4685,16 @@ function IntegrityCard({
                   const k = `${domain}:${a.key}`;
                   return (
                     <span key={a.key} className="inline-flex items-center gap-1">
-                      <button
+                      <Button
                         key={shake[k] || 0}
+                        label={a.label}
+                        tone="neutral"
                         onClick={() => void run(domain, a.key)}
                         disabled={state[k] === "busy"}
+                        busy={state[k] === "busy"}
                         title={t(`integrity.${a.key}Hint`)}
-                        className={`rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
-                          shake[k] ? " glim-shake" : ""
-                        }`}
-                      >
-                        {state[k] === "busy" ? a.busy : a.label}
-                      </button>
+                        className={shake[k] ? "glim-shake" : ""}
+                      />
                       {state[k] === "ok" && (
                         <span className="inline-flex items-center gap-1 text-sm text-statusOk">
                           <CheckDraw />
