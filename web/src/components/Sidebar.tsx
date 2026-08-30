@@ -20,6 +20,7 @@ import {
   IconGear,
 } from "./navGlyphs";
 import { useLabelMode } from "../lib/useLabelMode";
+import { useTipBubble } from "../lib/useTipBubble";
 
 // Navigation and domain glyphs now come from Streamline's free Core Solid set
 // (#178, [202]) rather than being drawn here, so the whole interface reads as
@@ -259,24 +260,45 @@ const navInactive =
 // filled with that same hue never happens.
 function NavItem({ to, label, icon, hueIndex }: NavItem) {
   // #178: the sidebar has its own axis, deliberately separate from buttons and
-  // tabs, because reducing THIS rail to glyphs is a layout decision (the rail
-  // narrows and the page grows) rather than a density preference.
+  // tabs, because reducing THIS rail to glyphs is a layout decision rather
+  // than a density preference.
   const labelMode = useLabelMode("sidebar");
   const showLabel = labelMode !== "glyph";
   const showIcon = labelMode !== "text";
+  // A rail row with no visible text needs to say what it is on hover, in the
+  // app's own bubble — the same ruling that took the native `title` balloon
+  // off Button. Eleven unnamed pictures is a worse glyph mode than a slightly
+  // denser one. Nothing is passed while the label is visible: the row already
+  // says what it is, and a tooltip repeating it is noise.
+  const tooltip = useTipBubble(showLabel ? undefined : label);
   return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `${navBase} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
-      }
-      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
-    >
-      {showIcon && icon}
-      {/* Never removed, only hidden: a nav row whose text is gone entirely
-          has no accessible name, and this rail is how the app is navigated. */}
-      <span className={showLabel ? undefined : "sr-only"}>{label}</span>
-    </NavLink>
+    <>
+      <NavLink
+        to={to}
+        ref={tooltip.ref}
+        aria-describedby={tooltip.describedBy}
+        {...tooltip.handlers}
+        // `justify-center` — jdp's ruling on the rail-width question: the rail
+        // KEEPS its full 224px in glyph mode and the glyphs centre in it,
+        // rather than the rail narrowing to fit them. (The narrow-rail
+        // alternative was tried live at 6rem and needs a second, smaller logo
+        // to go with it — a separate job, not a width value.) Without this the
+        // glyphs sat hard left with 178px of empty rail beside each one.
+        className={({ isActive }) =>
+          `${navBase} ${showLabel ? "" : "justify-center"} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
+        }
+        style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+      >
+        {showIcon && icon}
+        {/* Never removed, only hidden: a nav row whose text is gone entirely
+            has no accessible name, and this rail is how the app is navigated.
+            `sr-only` is `position: absolute`, so the hidden span is not a flex
+            item and `gap-3` does not leave a phantom gap beside the centred
+            glyph. */}
+        <span className={showLabel ? undefined : "sr-only"}>{label}</span>
+      </NavLink>
+      {tooltip.bubble}
+    </>
   );
 }
 
@@ -317,6 +339,13 @@ function SidebarControls() {
   // five icons and one full-width label, and the rail could not narrow.
   const labelMode = useLabelMode("sidebar");
   const showLabel = labelMode !== "glyph";
+  const view = advanced ? t("mode.advancedView") : t("mode.simpleView");
+  // Same rule as NavItem's: the row explains itself in the real bubble, and
+  // only while its text is hidden. It used to carry the name in a native
+  // `title` in EVERY mode — the balloon on a row whose words are already
+  // printed right there, which is the pattern this round removed everywhere
+  // else.
+  const tooltip = useTipBubble(showLabel ? undefined : view);
 
   return (
     <div className="flex flex-col gap-1">
@@ -327,23 +356,27 @@ function SidebarControls() {
           one moved into Settings' General tab (ThemeCard) — see this
           function's own header comment. */}
       <button
+        ref={tooltip.ref}
         onClick={() => setAdvanced(!advanced)}
-        title={advanced ? t("mode.advancedView") : t("mode.simpleView")}
         aria-pressed={advanced}
+        aria-describedby={tooltip.describedBy}
+        {...tooltip.handlers}
         // `bv-nav-idle` stated explicitly here, not inherited from
         // `navInactive` any more (GlimStone follow-up round, rainbow
         // reversal — see `navInactive`'s own comment above): this toggle is
         // a genuine set-of-one, not a member of the now-hued nav-destination
         // list, so it keeps the old flat-accent hover-reveal marker on its
         // own call site.
-        className={`${navBase} bv-nav-idle ${navInactive} w-full`}
+        //
+        // `justify-center` in glyph mode for the same reason as NavItem's —
+        // this row sits in the same column and has to centre with it.
+        className={`${navBase} ${showLabel ? "" : "justify-center"} bv-nav-idle ${navInactive} w-full`}
       >
         <IconLayers />
         {/* Hidden, never removed: the toggle keeps its accessible name. */}
-        <span className={showLabel ? undefined : "sr-only"}>
-          {advanced ? t("mode.advancedView") : t("mode.simpleView")}
-        </span>
+        <span className={showLabel ? undefined : "sr-only"}>{view}</span>
       </button>
+      {tooltip.bubble}
     </div>
   );
 }
