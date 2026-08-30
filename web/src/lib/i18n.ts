@@ -389,7 +389,7 @@ export const en = {
   "offsite.testFailed": "not reachable",
   "offsite.repoLocalHint": "Also accepts a plain folder under the \"Host Data\" mount. Enter it relative to that mount, without the leading /mnt: a share at /mnt/remotes/nas/bombvault is entered as remotes/nas/bombvault.",
   // Off-site setup wizard (v4 ransomware protection)
-  "offsite.wizard.setup": "Set up…",
+  "offsite.wizard.setup": "Set up",
   "offsite.wizard.close": "Close",
   "offsite.wizard.step1": "1 · Choose a backend",
   "offsite.wizard.backendRest": "rest-server (recommended, append-only capable)",
@@ -1684,11 +1684,19 @@ export const en = {
   "settingsIO.credsWarning":
     "With credentials, this file is as sensitive as your recovery kit: it holds your off-site and notification secrets in readable form. Store it somewhere safe.",
   "settingsIO.exportButton": "Export settings",
+  // The import button's own label ([293]). It used to borrow chooseFile
+  // ("Choose a settings file"), which names the file dialog rather than the
+  // action, so the pair read as two unrelated controls where the ask was for
+  // one mirrored pair. chooseFile is gone from all 42 tables with it: the
+  // assumption that the hidden <input type="file"> would still want it as a
+  // name did not survive i18n.orphans.test.ts. Nothing reaches that input
+  // directly — the button clicks it — so an aria-label there would only have
+  // been a way to keep a dead key alive.
+  "settingsIO.importButton": "Import settings",
   "settingsIO.exporting": "Exporting…",
   "settingsIO.importHeading": "Import",
   "settingsIO.importHint":
     "Load a settings file exported from BombVault. You'll see a summary and a confirmation before anything changes.",
-  "settingsIO.chooseFile": "Choose a settings file",
   "settingsIO.reading": "Reading file…",
   "settingsIO.previewTitle": "This file contains",
   "settingsIO.previewExportedAt": "Exported",
@@ -2027,7 +2035,7 @@ export const de: Translations = {
   "offsite.testFailed": "nicht erreichbar",
   "offsite.repoLocalHint": "Nimmt auch einen normalen Ordner unter dem \"Host Data\"-Mount. Relativ zu diesem Mount eintragen, ohne führendes /mnt: eine Freigabe unter /mnt/remotes/nas/bombvault wird als remotes/nas/bombvault eingetragen.",
   // Off-site-Einrichtungsassistent (v4 Ransomware-Schutz)
-  "offsite.wizard.setup": "Einrichten…",
+  "offsite.wizard.setup": "Einrichten",
   "offsite.wizard.close": "Schließen",
   "offsite.wizard.step1": "1 · Backend wählen",
   "offsite.wizard.backendRest": "rest-server (empfohlen, append-only-fähig)",
@@ -3149,11 +3157,11 @@ export const de: Translations = {
   "settingsIO.credsWarning":
     "Mit Zugangsdaten ist diese Datei so sensibel wie dein Recovery-Kit: Sie enthält deine Off-site- und Benachrichtigungs-Geheimnisse im Klartext. Bewahre sie sicher auf.",
   "settingsIO.exportButton": "Einstellungen exportieren",
+  "settingsIO.importButton": "Einstellungen importieren",
   "settingsIO.exporting": "Exportiere…",
   "settingsIO.importHeading": "Import",
   "settingsIO.importHint":
     "Lade eine aus BombVault exportierte Einstellungsdatei. Du siehst eine Zusammenfassung und eine Bestätigung, bevor etwas geändert wird.",
-  "settingsIO.chooseFile": "Einstellungsdatei wählen",
   "settingsIO.reading": "Lese Datei…",
   "settingsIO.previewTitle": "Diese Datei enthält",
   "settingsIO.previewExportedAt": "Exportiert",

@@ -66,6 +66,11 @@ import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type Resolve
 // wrappers further down keep their own names and TAB_ICON reads the same for
 // all seven, generated and hand-drawn alike.
 import { IconTabOffsite as IconTabOffsiteGlyph, IconTabSystem as IconTabSystemGlyph } from "../components/navGlyphs";
+// IconUpload lives in the ACTION set while its twin IconDownload sits in the
+// nav set, so the export/import pair ([293]) has to reach across both. Worth a
+// line because the split is by generator file, not by meaning: `upload-box-1`
+// and `download-box-1` are one Streamline drawing with the arrow reversed.
+import { IconUpload } from "../components/glyphs";
 
 // GlimStone version this UI is built against — bump by hand whenever
 // index.css / lib/appearance.ts / lib/shape.ts / lib/motion.ts are re-copied
@@ -1728,7 +1733,9 @@ chmod 600 /root/.ssh/authorized_keys`
             key={shake || 0}
             label={t("vm.ssh.test")}
             labelKey="vm.ssh.test"
-            tone="neutral"
+            // Accent, not neutral ([292]): it is the one thing this card asks
+            // you to do, and the card is useless until it has been done once.
+            tone="accent"
             onClick={handleTest}
             disabled={testState === "testing"}
             busy={testState === "testing"}
@@ -1921,7 +1928,13 @@ function SettingsPortabilityCard({
           key={shake.export || 0}
           label={t("settingsIO.exportButton")}
           labelKey="settingsIO.exportButton"
-          tone="neutral"
+          // Accent, and the down-arrow half of the pair ([293]). Streamline
+          // draws download-box-1 and upload-box-1 as one box with the arrow
+          // reversed, which is exactly the "same glyph, opposite arrow" jdp
+          // asked for — no mirroring transform, and no second silhouette to
+          // keep in sync.
+          tone="accent"
+          glyph={<IconDownload />}
           onClick={() => void handleExport()}
           disabled={busy}
           busy={exporting}
@@ -1946,9 +1959,10 @@ function SettingsPortabilityCard({
         />
         <Button
           key={shake.chooseFile || 0}
-          label={t("settingsIO.chooseFile")}
-          labelKey="settingsIO.chooseFile"
-          tone="neutral"
+          label={t("settingsIO.importButton")}
+          labelKey="settingsIO.importButton"
+          tone="accent"
+          glyph={<IconUpload />}
           onClick={() => fileInputRef.current?.click()}
           disabled={busy}
           hueIndex={hueIndex}
@@ -2263,7 +2277,12 @@ function UnraidTileSection({
             key={shake.remove || 0}
             label={t("settings.dashTileRemove")}
             labelKey="settings.dashTileRemove"
-            tone="neutral"
+            // Accent ([291]). `danger` exists in the tone table and is unused
+            // anywhere in the app, so red here would be this button inventing a
+            // convention rather than following one; the confirmation dialog is
+            // what guards the removal.
+            tone="accent"
+            glyph={<IconTrash />}
             onClick={() => void run("remove")}
             disabled={busy !== "idle"}
             hueIndex={hueIndex}
@@ -3328,7 +3347,10 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         <Button
           label={t("cloud.credSets.add")}
           labelKey="cloud.credSets.add"
-          tone="neutral"
+          // Accent ([288]). This branch renders only when the list is empty, so
+          // it is the card's single call to action rather than one control
+          // among several.
+          tone="accent"
           onClick={openNew}
           className="self-start"
         />
@@ -3818,7 +3840,9 @@ function NotifyCard({
         <Button
           label={t("notify.test")}
           labelKey="notify.test"
-          tone="neutral"
+          // Accent ([289]). Sending a test is the action that tells you the
+          // channel above is actually wired up, so it carries the card.
+          tone="accent"
           onClick={() => void handleTest()}
         />
       </div>
@@ -5606,12 +5630,34 @@ const TAB_ORDER: TabKey[] = [
 // reads clearly in every theme/state/hue this control can ever carry —
 // including every rainbow-mode accent, not just the yellow default — with
 // no second token to fall out of sync again.
+// Each of these carries a viewBox cropped to its own INK, not the 0 0 16 16 it
+// was drawn on ([285], jdp: "auf den settingstabs ist das offsite icon zu
+// klein. da wirken die glyphen kleiner als auf den sidebar tabs").
+//
+// He was right and the box was not the reason: every one of these already
+// rendered into the same 20px square as a rail glyph. What differed was how
+// much of that square the drawing used. Measured live: the rail's Streamline
+// glyphs fill 98-100% of their box, while these hand-drawn ones filled 69% to
+// 88%, because each was drawn with a comfortable margin inside its 16-unit
+// grid. Two glyphs of the same nominal size, one visibly smaller.
+//
+// A cropped viewBox fixes that without touching a single path coordinate: the
+// numbers below are each glyph's measured ink box, squared off (side = the
+// larger of width and height) and centred on the ink, so the default
+// preserveAspectRatio="xMidYMid meet" scales it up to fill the box in its
+// dominant dimension and leaves the aspect ratio alone. Cropping rather than
+// redrawing also means the paths stay exactly the shapes that survived the
+// earlier legibility rounds.
+//
+// The explicit width/height="15" is gone with it: `.bv-seg > svg` has set the
+// real size since [241], so those attributes only documented a size that had
+// not been true for a while.
 function IconTabGeneral() {
   // Two stacked switches — the domain on/off toggles this tab actually holds.
   // Each pill + its knob is one evenodd path: the knob is a real cut-out,
   // not a second painted colour (see the fix note above this section).
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg viewBox="1 1 14 14" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path
         fillRule="evenodd"
         d="M3,3 H9 A2,2 0 0 1 9,7 H3 A2,2 0 0 1 3,3 Z M9.15,5 A1.15,1.15 0 1 0 6.85,5 A1.15,1.15 0 1 0 9.15,5 Z M7,9 H13 A2,2 0 0 1 13,13 H7 A2,2 0 0 1 7,9 Z M9.15,11 A1.15,1.15 0 1 0 6.85,11 A1.15,1.15 0 1 0 9.15,11 Z"
@@ -5637,7 +5683,7 @@ function IconTabStorage() {
   // not a second colour — so the cap reads as a distinct disk lid instead
   // of merging into one shapeless silhouette, in every theme/state/hue.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg viewBox="2 1.5 12 12" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path d="M2,4 V11 A6,2.2 0 0 0 14,11 V4 Z" />
       <path
         fillRule="evenodd"
@@ -5656,7 +5702,7 @@ function IconTabSchedules() {
   // needing rotated arc math — verified live, reads identically at this
   // icon's actual 15px size.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg viewBox="1.8 1.8 12.4 12.4" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path
         fillRule="evenodd"
         d="M14.2,8 A6.2,6.2 0 1 0 1.8,8 A6.2,6.2 0 1 0 14.2,8 Z M7.35,4.5 H8.65 V8.1 H7.35 Z M8.163,7.339 L11.506,9.347 L10.837,10.462 L7.494,8.453 Z"
@@ -5678,7 +5724,7 @@ function IconTabNotifications() {
   // 218 — direct flip). The clapper "ring" beneath it was a short open
   // stroke — redrawn as a small solid filled tab rather than a line.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg viewBox="2.45 2.5 11.1 11.1" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path d="M4 6.5a4 4 0 0 1 8 0c0 3 1 3.8 1 3.8H3s1-.8 1-3.8Z" />
       <path d="M6.5 12.1h3a1.5 1.5 0 0 1-3 0Z" />
     </svg>
@@ -5691,7 +5737,7 @@ function IconTabIntegrity() {
   // painted colour (see the fix note above this section); same check
   // polygon coordinates as before, now subtracted instead of painted over.
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="shrink-0" aria-hidden="true">
+    <svg viewBox="1.9 2 12.2 12.2" fill="currentColor" className="shrink-0" aria-hidden="true">
       <path
         fillRule="evenodd"
         d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z M5.2 7.85 6.9 9.55 10.55 5.6 11.65 6.6 7.15 11.5 4.15 8.5Z"

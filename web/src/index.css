@@ -1837,6 +1837,33 @@ body {
   color: var(--accent);
 }
 
+/* ...except in a form row ([290], jdp on the Integrity card: "das offsite icon
+   ist farbig").
+
+   The rule above is right where it was written: a page-level tab strip is a
+   set of destinations, and giving each idle tab its own hue is the rainbow
+   engine doing its job — that is why the Settings tabs still show pink, yellow
+   and the rest.
+
+   A Local/Off-site switch is not that. It is one binary choice inside a card
+   that already carries a hue of its own, and it has exactly two states worth
+   showing: chosen and not chosen. Painting the unchosen half in a THIRD colour
+   reads as a status the control does not have — jdp saw an orange cloud beside
+   a dark drive and took it for a signal. Measured before the fix: every one of
+   the five switches on the Paths tab painted its idle glyph rgb(255,131,43)
+   while every other icon in the same card was rgb(244,244,244).
+
+   Scoped to `.bv-seg-btn`, which is exactly the compact form-row variant and
+   never the `.bv-seg` tab strip, so the rainbow keeps the surface it was
+   designed for. The idle glyph then inherits `text-carbon-textSub` from its own
+   segment, the way the label beside it already did. */
+.bv-seg-btn.glim-hue-icon:not(.glim-active) svg,
+[data-rainbow="reactive"] .bv-seg-btn.glim-hue-icon:not(.glim-active) svg,
+[data-rainbow="reactive"] .bv-seg-btn.glim-hue-icon:not(.glim-active):hover svg,
+[data-rainbow="reactive"] .bv-seg-btn.glim-hue-icon:not(.glim-active):focus-within svg {
+  color: inherit;
+}
+
 /* Sidebar's Simple/Advanced view toggle (SidebarControls, its own
    call-site marker, NOT Sidebar.tsx's main-nav NavItem any more) — the SAME
    3-state tab-strip rule as .glim-hue-icon above (idle colourless only in

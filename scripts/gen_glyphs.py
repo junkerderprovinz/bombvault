@@ -25,7 +25,8 @@ SRC = sys.argv[1] if len(sys.argv) > 1 else "/tmp/slv/core/solid"
 # our name -> (streamline file, what it means here)
 ACTION = [
     ("IconSave", "computer-devices/floppy-disk.svg", "Save"),
-    ("IconCancel", "interface-essential/delete-1.svg", "Cancel or dismiss"),
+    # IconCancel moved to EXTRA_ACTION ([287]) — same hand-drawn cross as
+    # IconClose, so the app has one X rather than two.
     ("IconRefresh", "interface-essential/arrow-reload-horizontal-1.svg", "Refresh or reload"),
     ("IconUpload", "interface-essential/upload-box-1.svg", "Upload or send"),
     ("IconSearch", "interface-essential/magnifying-glass.svg", "Search, scan or discover"),
@@ -58,7 +59,8 @@ NAV = [
     # both directions — [242] moved a glyph OUT of a drawing and back to
     # Streamline's own, this one moved the other way, and each time the
     # deciding evidence was the same: what survives at 20px.
-    ("IconAdd", "interface-essential/add-1.svg", "Add"),
+    # IconAdd and IconClose moved to EXTRA_NAV ([287]) — hand-drawn, shorter
+    # arms and thicker bars than Streamline's full-grid ones.
     ("IconDownload", "interface-essential/download-box-1.svg", "Download or export"),
     ("IconBackupNow", "computer-devices/database-check.svg", "Back up now"),
     ("IconRestore", "interface-essential/arrow-reload-vertical-1.svg", "Restore"),
@@ -73,7 +75,6 @@ NAV = [
     # recover stay tellable apart at 20px.
     ("IconSync", "interface-essential/arrow-reload-vertical-2.svg", "Replicate or synchronise"),
     ("IconGear", "interface-essential/cog.svg", "Settings"),
-    ("IconClose", "interface-essential/delete-1.svg", "Close"),
     ("IconCopy", "interface-essential/copy-paste.svg", "Copy"),
     # The last five nav-rail glyphs. They were hand-drawn at 22x22 on a 20-unit
     # grid while everything generated here renders 16x16 on a 14-unit one, so
@@ -147,7 +148,13 @@ NAV = [
 # is (2.2, 4, 9.6, 6). navGlyphs.fit.dom.test.tsx recomputes the transform from
 # those numbers, so a swapped path file fails instead of silently resizing.
 # ---------------------------------------------------------------------------
-PAIR_WIDTH = 9.6
+# 13.8 of the 14-unit grid, so the pair fills its 20px box the way every other
+# glyph in the app does ([285]). It was 9.6 for one round, which matched the two
+# halves to each OTHER but left them the smallest things in the Settings tab
+# strip: measured against the rail's 98-100%, the cloud filled 68%. Optical
+# sizing is a comparison, and the comparison that matters is with every glyph
+# on screen, not only with the one sharing the switch.
+PAIR_WIDTH = 13.8
 PAIR_CENTRE = (7.0, 7.0)
 
 # Ink of Font Awesome's cloud path, measured inside its 640x512 viewBox.
@@ -183,10 +190,45 @@ CLOUD = '<g transform="%s"><path d="%s" /></g>' % (
 # "Local", as opposed to off-site. Drawn rather than imported: no free set has
 # a storage glyph this bare, and bareness is the whole requirement. Two bars,
 # no LEDs, no slot, no hole.
-LOCAL_DRIVE = (
+#
+# It goes through the SAME fit as the cloud rather than being redrawn at the
+# new size, so PAIR_WIDTH stays the one number that moves both halves. Redrawn
+# coordinates would be a second place to forget.
+LOCAL_DRIVE_INK = (2.2, 4.0, 9.6, 6.0)
+
+LOCAL_DRIVE = '<g transform="%s">%s</g>' % (
+    fit_to_pair(LOCAL_DRIVE_INK),
     '<rect x="2.2" y="4" width="9.6" height="2.6" rx="1.3" />'
-    '<rect x="2.2" y="7.4" width="9.6" height="2.6" rx="1.3" />'
+    '<rect x="2.2" y="7.4" width="9.6" height="2.6" rx="1.3" />',
 )
+
+# ---------------------------------------------------------------------------
+# The plus and the cross ([287]).
+#
+# jdp: "auf den schließen und hinzufügen buttons ist das plus und x zu groß.
+# können wir das ein glyph mit breiteren strichen verwenden?"
+#
+# Both are right and they are the same observation. Streamline's `add-1` and
+# `delete-1` are drawn as thin arms spanning the FULL 14-unit grid, so measured
+# in the app they filled 14x14 of 14 — 20px of drawn mark in a 20px box, edge
+# to edge. Every other glyph in the app is a recognisable object that reads at a
+# glance; a plus stretched to the same extent is just two long thin lines, and
+# thin plus long is exactly the combination that looks oversized and weak at the
+# same time.
+#
+# So: 10 units of arm instead of 14, and 2.8 units of bar instead of the
+# source's ~2. Shorter and thicker, which is what "breitere Striche" asks for.
+#
+# The cross is the plus turned 45 degrees around the grid's centre rather than a
+# second drawing. Two marks that are meant to read as a matched pair cannot
+# drift apart if there is only one of them, and the rotation is exact where
+# hand-placed diagonals would each need their own corner arithmetic.
+_CROSS_BARS = (
+    '<rect x="2" y="5.6" width="10" height="2.8" rx="1.4" />'
+    '<rect x="5.6" y="2" width="2.8" height="10" rx="1.4" />'
+)
+PLUS = _CROSS_BARS
+CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 
 EXTRA_NAV = [
     (
@@ -204,6 +246,16 @@ EXTRA_NAV = [
     ("IconTabOffsite", "Off-site tab", "0 0 14 14", CLOUD),
     ("IconCloud", "Off-site or cloud", "0 0 14 14", CLOUD),
     ("IconLocal", "Local storage, as opposed to off-site", "0 0 14 14", LOCAL_DRIVE),
+    ("IconAdd", "Add", "0 0 14 14", PLUS),
+    ("IconClose", "Close", "0 0 14 14", CROSS),
+]
+
+# Same two marks for the ACTION set, from the same constants. IconCancel is the
+# same X as IconClose and used to be the same Streamline file; leaving it on the
+# import while its twin moved would have put two different crosses on one
+# screen.
+EXTRA_ACTION = [
+    ("IconCancel", "Cancel or dismiss", "0 0 14 14", CROSS),
 ]
 
 ATTRIBUTION = """// ---------------------------------------------------------------------------
@@ -305,6 +357,7 @@ write(
     "src/components/glyphs.tsx",
     "Action glyphs (#178, [202]) - the verbs buttons wear.",
     ACTION,
+    EXTRA_ACTION,
 )
 write(
     "src/components/navGlyphs.tsx",
