@@ -16,7 +16,8 @@ import {
   IconRecovery,
   IconFlash,
   IconConfig,
-  IconLayers,
+  IconViewSimple,
+  IconViewAdvanced,
   IconGear,
 } from "./navGlyphs";
 import { useLabelMode } from "../lib/useLabelMode";
@@ -52,7 +53,8 @@ export {
   IconRecovery,
   IconFlash,
   IconConfig,
-  IconLayers,
+  IconViewSimple,
+  IconViewAdvanced,
 } from "./navGlyphs";
 
 
@@ -372,7 +374,11 @@ function SidebarControls() {
         // this row sits in the same column and has to centre with it.
         className={`${navBase} ${showLabel ? "" : "justify-center"} bv-nav-idle ${navInactive} w-full`}
       >
-        <IconLayers />
+        {/* One glyph per state, not one for both (jdp): the row shows the view
+            it is CURRENTLY in, so a single symbol left the two states looking
+            identical — in glyph mode, where the words are gone, that made the
+            row unreadable. Sparse layout for simple, dense one for advanced. */}
+        {advanced ? <IconViewAdvanced /> : <IconViewSimple />}
         {/* Hidden, never removed: the toggle keeps its accessible name. */}
         <span className={showLabel ? undefined : "sr-only"}>{view}</span>
       </button>

@@ -46,9 +46,8 @@ ACTION = [
 # The navigation and domain set Sidebar.tsx used to draw by hand. Same source
 # now, so the whole interface reads as one icon family rather than two.
 NAV = [
-    ("IconContainers", "interface-essential/layers-1.svg", "Docker containers"),
-    ("IconVM", "computer-devices/computer-pc-desktop.svg", "Virtual machines"),
-    ("IconFiles", "interface-essential/multiple-file-2.svg", "Files and folder sets"),
+    ("IconVM", "computer-devices/screen-1.svg", "Virtual machines"),
+    ("IconFiles", "interface-essential/new-folder.svg", "Files and folder sets"),
     ("IconReceiver", "interface-essential/login-1.svg", "Receiver, an incoming transfer"),
     ("IconFleet", "interface-essential/hierarchy-2.svg", "Fleet, other BombVault boxes"),
     ("IconFolder", "interface-essential/new-folder.svg", "A folder"),
@@ -62,7 +61,11 @@ NAV = [
     ("IconTrash", "interface-essential/recycle-bin-2.svg", "Delete"),
     ("IconPencil", "interface-essential/pencil.svg", "Edit"),
     ("IconCheckCircle", "interface-essential/shield-check.svg", "Verified or test connection"),
-    ("IconSync", "interface-essential/arrow-reload-horizontal-2.svg", "Replicate or synchronise"),
+    # Moved off arrow-reload-horizontal-2 when Recovery took that one (jdp asked
+    # for "zwei Pfeile die einen Kreis bilden" there, and that file IS the
+    # circle). Still a two-arrow loop, just the upright ring, so replicate and
+    # recover stay tellable apart at 20px.
+    ("IconSync", "interface-essential/arrow-reload-vertical-2.svg", "Replicate or synchronise"),
     ("IconGear", "interface-essential/cog.svg", "Settings"),
     ("IconClose", "interface-essential/delete-1.svg", "Close"),
     ("IconCopy", "interface-essential/copy-paste.svg", "Copy"),
@@ -71,10 +74,50 @@ NAV = [
     # six rows of the rail sat at one size and six at another and the labels
     # beside them did not line up. Same source now, same box, one family.
     ("IconDashboard", "interface-essential/dashboard-3.svg", "Dashboard"),
-    ("IconRecovery", "computer-devices/database-refresh.svg", "Recovery, rebuild from backups"),
-    ("IconFlash", "computer-devices/usb-drive.svg", "The Unraid boot flash drive"),
-    ("IconConfig", "interface-essential/vertical-slider-square.svg", "Configuration"),
-    ("IconLayers", "interface-essential/layout-window-2.svg", "Simple/advanced view"),
+    ("IconRecovery", "interface-essential/arrow-reload-horizontal-2.svg", "Recovery, rebuild from backups"),
+    ("IconConfig", "computer-devices/database-setting.svg", "Configuration self-backup"),
+    # The view toggle used to wear ONE glyph for both states, so the row looked
+    # identical whichever view was on. Two now, and the pair carries the meaning
+    # on its own: a sparse layout against a dense one.
+    ("IconViewSimple", "interface-essential/layout-window-11.svg", "Simple view"),
+    ("IconViewAdvanced", "interface-essential/layout-window-8.svg", "Advanced view"),
+]
+
+# ---------------------------------------------------------------------------
+# Hand-authored glyphs, emitted verbatim after the generated ones.
+#
+# Two of the rail's symbols cannot come from Streamline, and both would be lost
+# on the next regeneration if they lived in the .tsx by hand — which is exactly
+# what that file's own header forbids. So they live here instead.
+#
+# Each carries its own viewBox, so they do NOT go through `G` (which pins the
+# 14-unit grid). The rendered box is the same 16px either way.
+# ---------------------------------------------------------------------------
+EXTRA_NAV = [
+    (
+        "IconContainers",
+        "Docker containers",
+        "0 0 24 24",
+        # The Docker whale, from Simple Icons (simpleicons.org), which is CC0.
+        # The MARK ITSELF is a trademark of Docker, Inc. and is used here the
+        # one way a trademark may be used without permission: to refer to the
+        # thing it names. This row navigates to Docker containers and nothing
+        # else, the glyph is unmodified, and nothing about it claims
+        # endorsement by or affiliation with Docker, Inc.
+        '<path d="%s" />' % io.open("../scripts/docker-path.txt", encoding="utf-8").read().strip(),
+    ),
+    (
+        "IconFlash",
+        "The Unraid boot flash drive",
+        "0 0 14 14",
+        # Drawn here, on Streamline's own 14-unit grid, because the free set has
+        # exactly one USB glyph and jdp asked for a better one. Two contacts and
+        # a flat-topped body: at 20px that silhouette still reads as a stick,
+        # where a rounded blob reads as a plug.
+        '<path d="M4.9 1.0h1.25v1.9h1.7V1.0h1.25v1.9h0.5a0.9 0.9 0 0 1 0.9 0.9v1.1H3.5V3.8'
+        'a0.9 0.9 0 0 1 0.9-0.9h0.5z" />'
+        '<path d="M3.5 6.1h7v5.6a1.7 1.7 0 0 1-1.7 1.7H5.2a1.7 1.7 0 0 1-1.7-1.7z" />',
+    ),
 ]
 
 ATTRIBUTION = """// ---------------------------------------------------------------------------
@@ -146,15 +189,22 @@ def body(path):
     return "\n".join("      " + line.strip() for line in inner.split("\n"))
 
 
-def write(path, headline, items):
+def write(path, headline, items, extra=()):
     out = [ATTRIBUTION % headline]
     for name, src, note in items:
         out.append(
             "\n/** %s. */\nexport function %s() {\n  return (\n    <G>\n%s\n    </G>\n  );\n}\n"
             % (note, name, body(src))
         )
+    for name, note, viewbox, markup in extra:
+        out.append(
+            "\n/** %s. */\nexport function %s() {\n  return (\n"
+            '    <svg\n      width="16"\n      height="16"\n      viewBox="%s"\n'
+            '      fill="currentColor"\n      className="shrink-0"\n      aria-hidden="true"\n    >\n'
+            "      %s\n    </svg>\n  );\n}\n" % (note, name, viewbox, markup)
+        )
     io.open(path, "w", encoding="utf-8", newline="").write("".join(out))
-    print("wrote %d glyphs to %s" % (len(items), path))
+    print("wrote %d glyphs to %s (%d hand-authored)" % (len(items) + len(extra), path, len(extra)))
 
 
 write(
@@ -166,4 +216,5 @@ write(
     "src/components/navGlyphs.tsx",
     "Navigation and domain glyphs (#178, [202]) - re-exported by Sidebar.tsx.",
     NAV,
+    EXTRA_NAV,
 )

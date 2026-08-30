@@ -236,6 +236,22 @@
   flex: none;
 }
 
+/* Selector segments carry the SAME 20px glyph as the rail (jdp: "Die Glyphen in
+   den Tabs der Einstellungen sind viel zu klein. die sollen gleich groß sein wie
+   die glyphen der sidebar"). They come out of the same generator at 16px, and
+   only the rail scaled them up, so a Settings tab and a nav row showed the same
+   symbol at two sizes on one screen.
+
+   Scoped to `.bv-seg`, which is the `lg` page-level strip (Selector.tsx's SIZE
+   table) — the small `sm`/`md` segments (heatmap toggle, weekday pills,
+   PathModeSwitch) sit in shorter boxes than `--btn-h` and a 20px glyph would
+   burst them. Height is fixed there anyway, so nothing reflows. */
+.bv-seg > svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
 .bv-btn-glyph {
   display: inline-flex;
   flex: none;

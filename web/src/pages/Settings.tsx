@@ -1215,8 +1215,13 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   // rotated to its own 45°, same start/end points as the old stroke
   // segments — same `#FACC15` fixed fill as the disc (still deliberately
   // not `currentColor`/the accent, per this Card's own header comment).
+  // `currentColor`, not a fixed yellow and indigo (jdp: "Die glyphen von
+  // hell/dunkel modus sollen schwarz/weiß sein wie alle anderen"). These two
+  // were the only glyphs in the app painting their own colour, which also put
+  // them outside the colour engine: on a selected segment every other glyph
+  // flips to the contrast ink and these two stayed yellow and blue on the fill.
   const sunIcon = (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="#FACC15" className="shrink-0" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="shrink-0" aria-hidden="true">
       <circle cx="10" cy="10" r="4.25" />
       <rect x="9.15" y="2" width="1.7" height="2" rx="0.85" />
       <rect x="9.15" y="16" width="1.7" height="2" rx="0.85" />
@@ -1234,7 +1239,7 @@ export function ThemeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
           so a plain fill renders the correct silhouette. */}
       <path
         d="M17.5 12.5A7.5 7.5 0 017.5 2.5a7.5 7.5 0 100 15 7.5 7.5 0 0010-5z"
-        fill="#818CF8"
+        fill="currentColor"
       />
     </svg>
   );
