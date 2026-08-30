@@ -1,4 +1,4 @@
-app_version: 8.3.0
+app_version: 8.3.1
 capabilities:
 - description: BombVault is able to change file ownership arbitrarily
   name: CHOWN
