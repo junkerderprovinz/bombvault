@@ -391,6 +391,18 @@ export function Sidebar({ settings }: SidebarProps) {
   const receiverEnabled = settings?.receiverEnabled ?? false;
   const fleetEnabled = settings?.fleetEnabled ?? false;
 
+  // #178: the logo row lives IN the rail, so it follows the rail's own axis
+  // like every other row does. jdp's call after seeing the centred glyph
+  // column live: the mark centres and the wordmark goes, rather than a
+  // left-aligned 64px mark and a word sitting on top of eleven centred
+  // glyphs. Measured before the change: mark centre x=48 against a glyph
+  // column at x=112, so the two were visibly off the same axis.
+  //
+  // Nothing is lost by hiding the word: this button already carries
+  // `aria-label={t("nav.dashboard")}`, so its accessible name never depended
+  // on the wordmark being painted.
+  const railLabels = useLabelMode("sidebar") !== "glyph";
+
   // Subscribed, not read (GlimStone follow-up round, rainbow reversal — see
   // this file's own header comment): registers this component for a
   // re-render on any rainbow change (on/off/reactive/rotate/palette edit),
@@ -469,7 +481,7 @@ export function Sidebar({ settings }: SidebarProps) {
         onPointerLeave={cancelHold}
         onPointerCancel={cancelHold}
         onContextMenu={(e) => e.preventDefault()}
-        className="bv-logo-btn flex items-center gap-2.5 px-4 py-5 w-full text-start cursor-pointer select-none hover:opacity-90 transition-opacity"
+        className={`bv-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
         <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center">
           <span className={`bv-logo-mark flex h-16 w-16 items-center justify-center ${eggClass}`}>
@@ -539,9 +551,16 @@ export function Sidebar({ settings }: SidebarProps) {
             </span>
           )}
         </span>
-        <span className="text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap">
-          BombVault
-        </span>
+        {/* Removed from the DOM rather than hidden with `sr-only`, unlike every
+            other label in this rail: this one is decoration, not a name. The
+            button's own `aria-label` above is its accessible name in every
+            mode, so an `sr-only` copy would only make a screen reader read
+            "Dashboard BombVault". */}
+        {railLabels && (
+          <span className="text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap">
+            BombVault
+          </span>
+        )}
       </button>
 
       {/* hueSeq/nextHue (GlimStone follow-up round, rainbow reversal — see

@@ -106,6 +106,29 @@ describe("glyph mode names the rows in a real bubble", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Simple view");
   });
 
+  it("drops the wordmark and centres the mark, so the header sits on the glyph column's axis", () => {
+    setLabelMode("sidebar", "glyph");
+    renderSidebar();
+    const logo = screen.getByRole("button", { name: "Dashboard" });
+    expect(logo.className).toContain("justify-center");
+    expect(screen.queryByText("BombVault")).toBeNull();
+    // Removed, not `sr-only`: the button's own aria-label is the name, so a
+    // hidden copy would only make a screen reader say "Dashboard BombVault".
+    expect(logo.querySelector(".sr-only")).toBeNull();
+  });
+
+  it("keeps the wordmark in both text modes", () => {
+    for (const mode of ["text", "textGlyph"] as const) {
+      cleanup();
+      setLabelMode("sidebar", mode);
+      renderSidebar();
+      expect(screen.getByText("BombVault")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Dashboard" }).className).not.toContain(
+        "justify-center",
+      );
+    }
+  });
+
   it("says nothing on hover while the rows still show their own text", () => {
     setLabelMode("sidebar", "textGlyph");
     renderSidebar();
