@@ -8,7 +8,7 @@
 //     were a third as wide as they render.
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
-import { labelWidth, widthStage, LABEL_MODES, CONTROL_AXES } from "./controls";
+import { labelWidth, widthStage, hidesLabel, LABEL_MODES, CONTROL_AXES } from "./controls";
 
 describe("labelWidth", () => {
   it("counts latin characters singly", () => {
@@ -48,8 +48,19 @@ describe("widthStage", () => {
 });
 
 describe("the engine's shape", () => {
-  it("offers exactly the three modes jdp asked for", () => {
-    expect(LABEL_MODES).toEqual(["text", "textGlyph", "glyph"]);
+  it("offers exactly the four modes jdp asked for", () => {
+    // "reactive" joined the three later (jdp: "Ich möchte einen vierten modus
+    // implementieren"). Order matters: the Settings strip renders LABEL_MODES
+    // in sequence, and reactive belongs after glyph because it is glyph plus
+    // something, not a fourth unrelated option.
+    expect(LABEL_MODES).toEqual(["text", "textGlyph", "glyph", "reactive"]);
+  });
+
+  it("counts both hiding modes as hiding, which is the whole point of the helper", () => {
+    // Eleven call sites used to compare against "glyph" by hand. Every one of
+    // them would have had to learn about the fourth mode on its own, and the
+    // ones that forgot would have rendered a label the mode says to hide.
+    expect(LABEL_MODES.filter(hidesLabel)).toEqual(["glyph", "reactive"]);
   });
 
   it("keeps the three axes separately settable", () => {

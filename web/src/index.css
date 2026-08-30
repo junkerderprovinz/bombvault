@@ -266,6 +266,87 @@
   white-space: nowrap;
 }
 
+/* ---------------------------------------------------------------------------
+   Reactive labels (#178) — the fourth label mode. jdp: "alles buttons etc. nur
+   den Glyph zeigen aber bei mouseover der text mit eingeblendet wird durch
+   eine schöne animation."
+
+   The trick is that there is no trick: the control ALREADY reserves its
+   label's width (the width stages), so at rest a reactive control is exactly
+   as wide as the same control in every other mode, and revealing the words
+   moves nothing on the page. What animates is the label's own box inside it.
+
+   `max-width` is what animates, not `width`: the label's natural width is
+   unknown to CSS, and `width: auto` does not transition. 14rem is a ceiling
+   nothing here reaches — `.bv-btn-label`'s own ellipsis handles anything that
+   would.
+
+   `padding: 0` is load-bearing, not tidiness. `max-width: 0` clips CONTENT,
+   never padding — a padded label at max-width 0 still occupies its padding and
+   the glyph sits visibly off-centre at rest. That was a real bug in this
+   codebase once already.
+
+   The reveal is keyed off `:hover` AND `:focus-visible` on the control, so the
+   keyboard gets the same information as the mouse. Nothing here is the
+   accessible name: that is the label text itself, which stays in the DOM in
+   every mode.
+   --------------------------------------------------------------------------- */
+.bv-label-reactive {
+  display: inline-block;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0;
+  margin-inline-start: 0;
+  transform-origin: left center;
+}
+
+.bv-reactive:hover .bv-label-reactive,
+.bv-reactive:focus-visible .bv-label-reactive,
+.bv-reactive:focus-within .bv-label-reactive {
+  max-width: 14rem;
+  opacity: 1;
+  margin-inline-start: var(--btn-gap);
+}
+
+/* Motion is opt-in per intensity and strictly inside the OS gate, exactly like
+   every other animation in this file: with `prefers-reduced-motion: reduce`
+   none of the blocks below is even evaluated, so the words simply appear.
+   That is the correct behaviour for this mode rather than a degradation —
+   the information arrives either way. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Subtle: the words widen and fade in, and that is all. One easing, one
+     duration, no overshoot — this is the setting for people who want the
+     feature without the theatre. */
+  :root[data-motion="subtle"] .bv-label-reactive {
+    transition:
+      max-width 160ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 120ms ease-out,
+      margin-inline-start 160ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  /* Full: jdp said it may be wild here. The box springs open past its target
+     and settles (the overshoot lives in the easing curve, so the label's own
+     width does the bouncing and nothing else has to move), while the text
+     itself slides in from the left and unsquashes — it starts slightly
+     compressed and scales back to 1 as it lands. */
+  :root[data-motion="full"] .bv-label-reactive {
+    transition:
+      max-width 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 180ms ease-out,
+      margin-inline-start 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateX(-0.4rem) scaleX(0.82);
+  }
+
+  :root[data-motion="full"] .bv-reactive:hover .bv-label-reactive,
+  :root[data-motion="full"] .bv-reactive:focus-visible .bv-label-reactive,
+  :root[data-motion="full"] .bv-reactive:focus-within .bv-label-reactive {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
 /* Shape and type scale (GlimStone form-engine #1) — theme-invariant: radius
    and font size don't change between dark and light, only colors do, so
    these are declared ONCE on a bare :root rather than duplicated identically

@@ -21,6 +21,7 @@ import {
   IconGear,
 } from "./navGlyphs";
 import { useLabelMode } from "../lib/useLabelMode";
+import { hidesLabel } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
 
 // Navigation and domain glyphs now come from Streamline's free Core Solid set
@@ -265,14 +266,20 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
   // tabs, because reducing THIS rail to glyphs is a layout decision rather
   // than a density preference.
   const labelMode = useLabelMode("sidebar");
-  const showLabel = labelMode !== "glyph";
+  const showLabel = !hidesLabel(labelMode);
   const showIcon = labelMode !== "text";
+  // Reactive: the glyph sits centred like in glyph mode, and hovering the row
+  // slides its name back in. Nothing reflows, because the rail is a fixed
+  // 224px and the row was always that wide.
+  const reactive = labelMode === "reactive";
   // A rail row with no visible text needs to say what it is on hover, in the
   // app's own bubble — the same ruling that took the native `title` balloon
   // off Button. Eleven unnamed pictures is a worse glyph mode than a slightly
   // denser one. Nothing is passed while the label is visible: the row already
   // says what it is, and a tooltip repeating it is noise.
-  const tooltip = useTipBubble(showLabel ? undefined : label);
+  // No bubble in reactive mode: hovering already brings the word back, and a
+  // tooltip saying the same thing would land on top of the animation doing it.
+  const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
   return (
     <>
       <NavLink
@@ -287,7 +294,7 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
         // to go with it — a separate job, not a width value.) Without this the
         // glyphs sat hard left with 178px of empty rail beside each one.
         className={({ isActive }) =>
-          `${navBase} ${showLabel ? "" : "justify-center"} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
+          `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " bv-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
         }
         style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
       >
@@ -297,7 +304,7 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
             `sr-only` is `position: absolute`, so the hidden span is not a flex
             item and `gap-3` does not leave a phantom gap beside the centred
             glyph. */}
-        <span className={showLabel ? undefined : "sr-only"}>{label}</span>
+        <span className={showLabel ? undefined : reactive ? "bv-label-reactive" : "sr-only"}>{label}</span>
       </NavLink>
       {tooltip.bubble}
     </>
@@ -340,14 +347,15 @@ function SidebarControls() {
   // was the one row that did not, which showed up immediately in glyph mode:
   // five icons and one full-width label, and the rail could not narrow.
   const labelMode = useLabelMode("sidebar");
-  const showLabel = labelMode !== "glyph";
+  const showLabel = !hidesLabel(labelMode);
+  const reactive = labelMode === "reactive";
   const view = advanced ? t("mode.advancedView") : t("mode.simpleView");
   // Same rule as NavItem's: the row explains itself in the real bubble, and
   // only while its text is hidden. It used to carry the name in a native
   // `title` in EVERY mode — the balloon on a row whose words are already
   // printed right there, which is the pattern this round removed everywhere
   // else.
-  const tooltip = useTipBubble(showLabel ? undefined : view);
+  const tooltip = useTipBubble(showLabel || reactive ? undefined : view);
 
   return (
     <div className="flex flex-col gap-1">
@@ -372,7 +380,7 @@ function SidebarControls() {
         //
         // `justify-center` in glyph mode for the same reason as NavItem's —
         // this row sits in the same column and has to centre with it.
-        className={`${navBase} ${showLabel ? "" : "justify-center"} bv-nav-idle ${navInactive} w-full`}
+        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " bv-reactive" : ""} bv-nav-idle ${navInactive} w-full`}
       >
         {/* One glyph per state, not one for both (jdp): the row shows the view
             it is CURRENTLY in, so a single symbol left the two states looking
@@ -380,7 +388,7 @@ function SidebarControls() {
             row unreadable. Sparse layout for simple, dense one for advanced. */}
         {advanced ? <IconViewAdvanced /> : <IconViewSimple />}
         {/* Hidden, never removed: the toggle keeps its accessible name. */}
-        <span className={showLabel ? undefined : "sr-only"}>{view}</span>
+        <span className={showLabel ? undefined : reactive ? "bv-label-reactive" : "sr-only"}>{view}</span>
       </button>
       {tooltip.bubble}
     </div>
@@ -407,7 +415,11 @@ export function Sidebar({ settings }: SidebarProps) {
   // Nothing is lost by hiding the word: this button already carries
   // `aria-label={t("nav.dashboard")}`, so its accessible name never depended
   // on the wordmark being painted.
-  const railLabels = useLabelMode("sidebar") !== "glyph";
+  const railMode = useLabelMode("sidebar");
+  const railLabels = !hidesLabel(railMode);
+  // The wordmark comes back on hover too, so the header behaves like the
+  // rows beneath it rather than being the one thing that stays mute.
+  const railReactive = railMode === "reactive";
 
   // Subscribed, not read (GlimStone follow-up round, rainbow reversal — see
   // this file's own header comment): registers this component for a
@@ -487,7 +499,7 @@ export function Sidebar({ settings }: SidebarProps) {
         onPointerLeave={cancelHold}
         onPointerCancel={cancelHold}
         onContextMenu={(e) => e.preventDefault()}
-        className={`bv-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
+        className={`bv-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"}${railReactive ? " bv-reactive" : ""} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
         <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center">
           <span className={`bv-logo-mark flex h-16 w-16 items-center justify-center ${eggClass}`}>
@@ -561,9 +573,17 @@ export function Sidebar({ settings }: SidebarProps) {
             other label in this rail: this one is decoration, not a name. The
             button's own `aria-label` above is its accessible name in every
             mode, so an `sr-only` copy would only make a screen reader read
-            "Dashboard BombVault". */}
-        {railLabels && (
-          <span className="text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap">
+            "Dashboard BombVault".
+            Reactive keeps it in the DOM so it can slide back on hover, and
+            `aria-hidden` is what stops that from reintroducing exactly the
+            double-announcement the removal above avoids. */}
+        {(railLabels || railReactive) && (
+          <span
+            aria-hidden={railReactive || undefined}
+            className={`text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap${
+              railReactive ? " bv-label-reactive" : ""
+            }`}
+          >
             BombVault
           </span>
         )}

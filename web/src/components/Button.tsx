@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode, Ref } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
-import { widthStage, type WidthStage } from "../lib/controls";
+import { hidesLabel, widthStage, type WidthStage } from "../lib/controls";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useTipBubble } from "../lib/useTipBubble";
 import { glyphFor } from "./glyphFor";
@@ -161,8 +161,15 @@ export function Button({
   const resolved = glyph ?? (labelKey ? glyphFor(labelKey) : undefined) ?? (chip ? <IconClose /> : undefined);
   // No glyph to show means text, whatever the mode says — see the header note.
   const hasGlyph = !!resolved || busy;
-  const effective = chip ? "glyph" : mode === "glyph" && !hasGlyph ? "text" : mode;
-  const showText = effective !== "glyph";
+  // A glyphless button falls back to its text in BOTH hiding modes: an empty
+  // box is unusable, and a reactive empty box is an empty box you have to hunt
+  // for with the pointer first.
+  const effective = chip ? "glyph" : hidesLabel(mode) && !hasGlyph ? "text" : mode;
+  const reactive = effective === "reactive";
+  // "Shown" means painted at rest. Reactive is not: its words arrive on hover,
+  // which is a CSS state, so as far as this render is concerned it is a hiding
+  // mode like glyph.
+  const showText = effective !== "glyph" && !reactive;
   const showGlyph = effective !== "text" && hasGlyph;
 
   // The stage comes from the label in the CURRENT language, never from what is
@@ -175,8 +182,15 @@ export function Button({
   // the other, so neither the name nor the state explanation is lost — unless
   // they are the same words, which collapse rather than printing twice (the
   // Settings tab strip does exactly that on purpose, one component over).
+  //
+  // Reactive counts as "text is shown" here even though it is hidden at rest:
+  // hovering is exactly what reveals the words, so a bubble carrying the same
+  // words would arrive at the same moment, say the same thing, and cover the
+  // animation doing it.
   const tip =
-    (showText ? title : [...new Set([label, title].filter(Boolean))].join(" — ")) || undefined;
+    (showText || reactive
+      ? title
+      : [...new Set([label, title].filter(Boolean))].join(" — ")) || undefined;
   const tooltip = useTipBubble(tip, disabled);
 
   const hueOn = hueIndex !== undefined;
@@ -202,7 +216,7 @@ export function Button({
           aria-describedby={tooltip.describedBy}
           {...tooltip.handlers}
           style={hueStyle}
-          className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""} ${className}`.trim()}
+          className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""}${reactive ? " bv-reactive" : ""} ${className}`.trim()}
         >
           {showGlyph && (
             <span className="bv-btn-glyph">
@@ -218,8 +232,14 @@ export function Button({
           )}
           {/* Never removed from the DOM, only hidden: a button whose text is
               gone entirely has no accessible name, which is the exact defect
-              this engine could otherwise introduce 197 times over. */}
-          <span className={showText ? "bv-btn-label" : "sr-only"}>{label}</span>
+              this engine could otherwise introduce 197 times over.
+              Reactive gets a THIRD treatment: visible to everyone, but with a
+              collapsed box that opens on hover — so unlike `sr-only` it is
+              really there, and unlike `bv-btn-label` it takes no room until
+              asked. */}
+          <span className={showText ? "bv-btn-label" : reactive ? "bv-label-reactive" : "sr-only"}>
+            {label}
+          </span>
         </button>,
       )}
       {tooltip.bubble}

@@ -20,10 +20,33 @@
  * "textGlyph" — glyph next to the label (today's look, hence the default).
  * "glyph"     — glyph only; the label survives as the accessible name and the
  *               tooltip, never as nothing (see ControlLabel in Button.tsx).
+ * "reactive"  — glyph only at rest, and the words come back on hover or focus
+ *               (jdp: "reaktiver Text und Symbole").
+ *
+ * Why "reactive" costs no layout at all, which is the whole reason it can
+ * exist: every control already reserves its LABEL's width in glyph mode, so
+ * the box is wide enough for the words before they arrive. Revealing them
+ * moves nothing on the page — the text appears inside a box that was always
+ * that size. Without the width-stage engine this mode would reflow the page
+ * under the pointer, which is exactly the thing the stages exist to prevent.
  */
-export type LabelMode = "text" | "textGlyph" | "glyph";
+export type LabelMode = "text" | "textGlyph" | "glyph" | "reactive";
 
-export const LABEL_MODES: LabelMode[] = ["text", "textGlyph", "glyph"];
+export const LABEL_MODES: LabelMode[] = ["text", "textGlyph", "glyph", "reactive"];
+
+/**
+ * Whether a mode hides the label from view. Both hiding modes keep the
+ * accessible name and the hover bubble; they differ only in whether the words
+ * themselves come back.
+ *
+ * A predicate rather than `mode === "glyph"` scattered around, because that
+ * comparison lived at eleven call sites and every one of them would have had
+ * to learn about the fourth mode independently — the kind of place a new enum
+ * value gets half-adopted and nobody notices until a strip renders wrong.
+ */
+export function hidesLabel(mode: LabelMode): boolean {
+  return mode === "glyph" || mode === "reactive";
+}
 
 /**
  * The three axes. Kept as a list rather than three copies of the same code so

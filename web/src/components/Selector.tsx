@@ -284,6 +284,7 @@ import {
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { useLabelMode } from "../lib/useLabelMode";
+import { hidesLabel } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
 
 export interface SelectorItem {
@@ -610,8 +611,13 @@ function SelectorTab({
 
   // Whether this segment's own words are off the screen right now — either
   // because the call site pinned it to its glyph (`iconOnly`) or because the
-  // "tabs" axis is in glyph mode and there is a glyph to show instead.
-  const nameHidden = !!item.iconOnly || (labelMode === "glyph" && !!item.icon);
+  // "tabs" axis hides labels and there is a glyph to show instead.
+  const nameHidden = !!item.iconOnly || (hidesLabel(labelMode) && !!item.icon);
+  // Reactive brings them back on hover instead of leaving them gone. An
+  // `iconOnly` segment is excluded on purpose: that flag is the call site's own
+  // hard choice for a strip too narrow to ever hold words (PathModeSwitch sits
+  // in a path row), and a mode should not overrule it.
+  const reactive = labelMode === "reactive" && !!item.icon && !item.iconOnly;
 
   // The tooltip, in one place, under jdp's glyph-mode ruling: a control that
   // hides its text says what it is in a real bubble, never in a native `title`
@@ -658,7 +664,7 @@ function SelectorTab({
           disabled={disabled}
           tabIndex={roved ? 0 : -1}
           style={style}
-          className={className}
+          className={`${className}${reactive ? " bv-reactive" : ""}`}
           onClick={onSelect}
           {...tooltip.handlers}
         >
@@ -668,10 +674,17 @@ function SelectorTab({
               for the same reason a glyphless Button does: an empty segment
               is unusable, an inconsistent strip merely looks uneven. */}
           {labelMode !== "text" && item.icon}
-          {(labelMode === "text" || !item.iconOnly) &&
-            (labelMode !== "glyph" || !item.icon) && (
+          {reactive ? (
+            /* Reactive: really in the strip, just collapsed until hovered.
+               `truncate` is dropped here because the reveal animates
+               `max-width` and the two would fight over the same property. */
+            <span className="bv-label-reactive">{item.label}</span>
+          ) : (
+            (labelMode === "text" || !item.iconOnly) &&
+            (!hidesLabel(labelMode) || !item.icon) && (
               <span className="truncate">{item.label}</span>
-            )}
+            )
+          )}
         </button>,
       )}
       {tooltip.bubble}
