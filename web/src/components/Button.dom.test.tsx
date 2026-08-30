@@ -114,3 +114,39 @@ it("keeps the destructive and the warning fills distinct", () => {
   render(<Button label="Delete" tone="warn" onClick={() => {}} />);
   expect(screen.getByRole("button").className).not.toContain("bg-statusFailSolid");
 });
+
+// The chip variant (the remove control inside a pill). Its whole reason to
+// exist is that it must NOT take a width stage - it sits inside a 0.75rem
+// pill, and a stage would burst it - while still carrying a real accessible
+// name, which is what four of these lost when they were first converted to a
+// bare "x".
+it("a chip takes no width stage and never shows its text", () => {
+  for (const mode of ["text", "textGlyph", "glyph"] as const) {
+    cleanup();
+    setLabelMode("buttons", mode);
+    render(<Button label="Remove plex" variant="chip" onClick={() => {}} />);
+    const el = screen.getByRole("button");
+    expect(el.className).toContain("bv-btn-chip");
+    for (const stage of ["bv-btn-xs", "bv-btn-sm", "bv-btn-md", "bv-btn-lg"]) {
+      expect(el.className).not.toContain(stage);
+    }
+    // Announced and on hover, never painted next to the thing it removes.
+    expect(screen.getByText("Remove plex").className).toBe("sr-only");
+    expect(el.getAttribute("title")).toContain("Remove plex");
+  }
+});
+
+it("a chip carries the pill's own ink rather than painting a surface", () => {
+  setLabelMode("buttons", "textGlyph");
+  render(<Button label="Remove plex" variant="chip" onClick={() => {}} />);
+  const cls = screen.getByRole("button").className;
+  for (const fill of ["bg-carbon-surface3", "bg-accent", "bg-statusFailSolid"]) {
+    expect(cls).not.toContain(fill);
+  }
+});
+
+it("a chip still gets a glyph when the call site passes none", () => {
+  setLabelMode("buttons", "text");
+  render(<Button label="Remove plex" variant="chip" onClick={() => {}} />);
+  expect(screen.getByRole("button").querySelector("svg")).toBeTruthy();
+});
