@@ -12,9 +12,15 @@ func TestTagNormalizes(t *testing.T) {
 		"v5.2.1":           "v5.2.1",
 		"5.2.1":            "v5.2.1",
 		"v5.2.1+main.abc1": "v5.2.1", // :latest build metadata
-		"dev":              "",
-		"0.0.0+main.abc":   "",
-		"":                 "",
+		// The build metadata names the BRANCH now, not the hard-coded word
+		// "main" — a dispatched feature-branch build used to report itself as
+		// main, which reads like a push to main and is not one. Slashes are
+		// hyphenated in the workflow so the metadata stays parseable; this pins
+		// that the release lookup still ignores everything after the "+".
+		"v5.2.1+feature-control-engine.abc1": "v5.2.1",
+		"dev":                                "",
+		"0.0.0+main.abc":                     "",
+		"":                                   "",
 	}
 	for in, want := range cases {
 		if got := Tag(in); got != want {

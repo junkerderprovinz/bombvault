@@ -141,9 +141,23 @@ jobs:
             type=semver,pattern={{major}}
 
       # Stamp a meaningful version into the binary. Tag builds use the tag
-      # (e.g. v3.1.0); main builds (which publish :latest) use the latest release
-      # tag plus the short SHA (e.g. v3.1.0+main.4c0c987) instead of the literal
-      # "main", so the log banner + WebUI show a real version (issue #22).
+      # (e.g. v3.1.0); every other build uses the latest release tag plus the
+      # BRANCH and the short SHA (e.g. v3.1.0+main.4c0c987), so the log banner
+      # and the WebUI show a real version rather than the literal branch name
+      # (issue #22).
+      #
+      # The branch used to be the hard-coded word "main", which was true while
+      # the only non-tag builds came from main. It stopped being true the day a
+      # feature branch was built by `workflow_dispatch`, and it misled exactly
+      # as you would expect: an image built from `feature/control-engine`
+      # reported `v8.3.1+main.56dedc8`, and jdp reasonably read that as "you
+      # pushed to main". Nothing had been pushed to main; the string was simply
+      # not looking at the branch. It looks now.
+      #
+      # Slashes become hyphens because SemVer build metadata (everything after
+      # the "+") allows only alphanumerics, hyphens and dots — `feature/x` would
+      # make the whole version unparseable, and `internal/releasenotes` does
+      # parse it.
       - name: Compute version
         id: ver
         env:
@@ -154,7 +168,8 @@ jobs:
           else
             tag=$(gh release view -R "${{ github.repository }}" --json tagName --jq .tagName 2>/dev/null || true)
             sha=$(printf '%s' "${{ github.sha }}" | cut -c1-7)
-            if [ -n "$tag" ]; then v="${tag}+main.${sha}"; else v="0.0.0+main.${sha}"; fi
+            branch=$(printf '%s' "${{ github.ref_name }}" | tr '/_' '--')
+            if [ -n "$tag" ]; then v="${tag}+${branch}.${sha}"; else v="0.0.0+${branch}.${sha}"; fi
           fi
           echo "v=$v" >> "$GITHUB_OUTPUT"
           echo "computed version: $v"
