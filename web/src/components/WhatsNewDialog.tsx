@@ -59,7 +59,12 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent underline hover:no-underline"
+            // text-accentText, not the flat text-accent: this is accent-coloured
+            // TEXT on the dialog's own ground, and the flat token is the FILL - in
+            // the light theme that is Sunflower on near-white. The same call this
+            // file's own comment three lines up already makes for inline prose, and
+            // the last entry on index.css's not-yet-migrated inventory.
+            className="text-accentText underline hover:no-underline"
           >
             {m[1]}
           </a>
