@@ -1,0 +1,34 @@
+# gitleaks configuration for BombVault.
+#
+# Why this exists: the global pre-push hook runs gitleaks over the outgoing
+# commits and blocks the push on any finding. Four findings in this repo are test
+# fixtures rather than secrets, so pushing meant forcing it through with
+# --no-verify — which disables the check completely, real leaks included. A narrow
+# path allowlist keeps the guard armed where it matters.
+#
+# Verified rather than assumed: with this file in place, a commit carrying a
+# realistic AWS key pair and a GitHub token is still reported. Only the paths
+# below are exempt, and only because a test needs a value that LOOKS like a
+# credential in order to assert it is handled correctly.
+#
+# (Note when testing this yourself: gitleaks deliberately ignores the key pair AWS
+# uses throughout its own documentation, so that pair makes a useless control —
+# use an invented but realistically shaped value instead.)
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures whose values are shaped like credentials on purpose"
+paths = [
+  # TrueNAS chart test values: app_key is a throwaway 64-hex string used to render
+  # templates in CI. It never reaches a running instance.
+  '''truenas-apps/templates/test_values/.*\.yaml$''',
+  # Go tests. settings_export_gate_test.go asserts that an S3 secret is NOT
+  # emitted by the settings export; its constant is literally named
+  # S3-SECRET-THAT-MUST-NEVER-LEAK for that reason.
+  '''internal/.*_test\.go$''',
+  # Frontend tests. The match there is a test DESCRIPTION containing the word
+  # "secret", not a value at all.
+  '''web/src/.*\.test\.tsx?$''',
+]
