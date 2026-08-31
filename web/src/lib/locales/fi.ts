@@ -626,8 +626,7 @@ const fi: Partial<Translations> = {
   "recovery.stored": "Olen tallentanut sen turvallisesti",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Katastrofista toipuminen",
-  "recovery.intro": "Palauta konttisi ja VM:si olemassa olevasta varmuuskopiosta tähän asennukseen. Osoita BombVault varmuuskopioihisi, selvitä niiden sisältö ja palauta.",
+  "recovery.intro": "Palauta konttisi ja VM:si olemassa olevasta varmuuskopiosta tähän asennukseen.",
   "recovery.step1": "Voiko BombVault lukea varmuuskopioitasi?",
   "recovery.appKeyExplain": "Lukeakseen olemassa olevia varmuuskopioita tämä kontti tarvitsee SAMAN APP_KEY:n, jota se käytti aiemmin. Se on palautuspaketissasi. Aseta se Unraidin konttimalliin, ellei sitä ole jo asetettu, ja tarkista sitten uudelleen.",
   "recovery.appKeyRemedy": "Salausavain ei täsmää näiden varmuuskopioiden kanssa. Aseta alkuperäinen APP_KEY (palautuspaketistasi) konttimalliin ja tarkista sitten uudelleen.",

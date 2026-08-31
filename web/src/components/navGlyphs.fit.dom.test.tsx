@@ -1,105 +1,110 @@
 // @vitest-environment jsdom
 // ---------------------------------------------------------------------------
-// The Local / Off-site pair, and why it is sized the way it is ([242], [281]).
+// One sizing rule for every imported glyph ([242], [267], [281], [285], [305]).
 //
-// Two rounds of jdp looking at the same switch:
+// Five rounds of jdp looking at icons that were all in identically-sized boxes
+// and reporting, correctly every time, that some of them were bigger than
+// others. The rule that came out of it:
 //
-//   [242] "der glyph ist im vergleich zu offsite glyph viel zu groß"
-//   [281] "das offsite icon ist wenn es so klein ist sehr schlecht erkennbar,
-//          es muss einfacher sein"
+//   What the eye compares is a glyph's INK, not its box. Imported artwork
+//   varies wildly in how much of its own viewBox it uses — Font Awesome fills
+//   its box edge to edge, Tabler pads by two units on all four sides — so a
+//   set assembled from several sources arrives on screen at several sizes
+//   unless something normalises it.
 //
-// The first was about ink AREA: two glyphs in identical 20px boxes are not the
-// same size if one is drawn to the edge and the other has air around it. The
-// second was about FEATURE size, which no amount of scaling fixes. One unit of
-// the 14-unit grid is 1.43px at 20px, so detail thinner than roughly 1.5 units
-// merges into its neighbour: the old cloud's humps rose 1.3 units and read as
-// a dome, and Streamline's hard-disk had an interior arm well under a unit.
+// The normaliser is a viewBox cropped to the measured ink and squared off.
+// `preserveAspectRatio="xMidYMid meet"` (the default) then scales each drawing
+// until its longer side fills the box, leaving the aspect ratio alone. Square
+// rather than tight on both axes for exactly that reason: a tight rectangle
+// would stretch a wide glyph to the height of a tall one.
 //
-// Hence today's pair: Font Awesome's cloud (one closed path, deep valleys) and
-// two plain bars for local storage. What this file pins is the sizing contract
-// between them, because that is the part a regeneration can silently break:
+// What is pinned here, and why each part:
 //
-//   1. Each half carries a fit transform recomputed here from its measured
-//      ink, never snapshotted. A transform that merely EXISTS proves nothing,
-//      since a wrong scale renders perfectly well.
-//   2. Both land on the same width and the same centre. That is what "the pair
-//      looks deliberate" reduces to in numbers, and it is the thing that broke
-//      in [242].
-//   3. That shared width is close to the full grid, which is what [285] was
-//      about: matching the two halves to each other is not enough if the
-//      result is still the smallest thing in a strip of other glyphs.
+//   1. The cropped box is RECOMPUTED from the measured ink, not snapshotted.
+//      A viewBox that merely differs from the source's proves nothing — a
+//      wrong crop renders perfectly well, just at the wrong size.
+//   2. Every one of them is square. This is the whole aspect-ratio guarantee,
+//      and it is one multiplication away from being silently wrong.
+//   3. The off-site tab and the off-site control carry the identical box.
+//      Those two drifted apart once already.
 //
-// jsdom has no getBBox, so the ink boxes below are measurements taken in a
-// real browser and the assertions work on attributes. That split is fine: the
-// arithmetic is what regresses, and the arithmetic is testable here.
+// The ink boxes below are MEASUREMENTS, taken with getBBox on the real markup
+// in a browser. They are deliberately not derived from any viewBox: a path's
+// drawn extent and its viewBox have no necessary relationship, and two of the
+// source files carry a fully transparent bounding path that makes the viewBox
+// actively misleading — dropped on import, which is why `copy` measures 20 of
+// its 24 units rather than the full 24.
 // ---------------------------------------------------------------------------
 import { expect, it } from "vitest";
 import { render } from "@testing-library/react";
-import { IconCloud, IconLocal, IconTabOffsite } from "./navGlyphs";
+import {
+  IconCheckCircle,
+  IconCloud,
+  IconCopy,
+  IconLocal,
+  IconTabIntegrity,
+  IconTabOffsite,
+  IconTabStorage,
+} from "./navGlyphs";
+import { IconSave } from "./glyphs";
 
-/** Measured, not derived from any viewBox: [x, y, width, height]. */
-const FA_CLOUD_INK = [0, 32, 640, 448] as const;
-const LOCAL_DRIVE_INK = [2.2, 4, 9.6, 6] as const;
+/** Measured ink: [x, y, width, height], in each source's own units. */
+const INK: Record<string, readonly [number, number, number, number]> = {
+  IconCloud: [0, 32, 640, 448],
+  IconLocal: [0, 32, 512, 448],
+  IconCopy: [2, 2, 20, 20],
+  IconCheckCircle: [2, 2, 20, 20],
+  IconTabIntegrity: [3, 1, 18, 22],
+  IconTabStorage: [0, 0, 448, 512],
+  IconSave: [0, 32, 448, 448],
+};
 
-/** The shared frame, mirroring gen_glyphs.py's PAIR_WIDTH / PAIR_CENTRE. */
-const PAIR_WIDTH = 13.8;
-const PAIR_CENTRE = [7, 7] as const;
+/** Mirrors gen_glyphs.py's `cropped_box`. */
+function croppedBox([x, y, w, h]: readonly [number, number, number, number]) {
+  const side = Math.max(w, h);
+  return [x + w / 2 - side / 2, y + h / 2 - side / 2, side, side];
+}
 
-/** The grid both halves are drawn on, for the "fills its box" check. */
-const GRID = 14;
-
-function transformOf(ui: React.ReactElement): string {
+function viewBoxOf(ui: React.ReactElement): number[] {
   const { container } = render(ui);
-  return container.querySelector("svg > g[transform]")?.getAttribute("transform") ?? "";
+  const raw = container.querySelector("svg")?.getAttribute("viewBox") ?? "";
+  return raw.trim().split(/\s+/).map(Number);
 }
 
-/** The transform gen_glyphs.py should have emitted for a given ink box. */
-function expectFitted(t: string, ink: readonly [number, number, number, number], what: string) {
-  const m = /^translate\((-?[\d.]+) (-?[\d.]+)\) scale\(([\d.]+)\)$/.exec(t);
-  expect(m, `${what} lost its fit transform (got ${JSON.stringify(t)})`).not.toBeNull();
-  const [sx, sy, sw, sh] = ink;
-  const scale = PAIR_WIDTH / sw;
-  const [, dx, dy, got] = m!;
-  // 1e-5 because the generator writes six decimals, not a float literal.
-  expect(Number(got)).toBeCloseTo(scale, 5);
-  expect(Number(dx)).toBeCloseTo(PAIR_CENTRE[0] - (sx + sw / 2) * scale, 5);
-  expect(Number(dy)).toBeCloseTo(PAIR_CENTRE[1] - (sy + sh / 2) * scale, 5);
-}
+const GLYPHS: [string, React.ReactElement][] = [
+  ["IconCloud", <IconCloud />],
+  ["IconLocal", <IconLocal />],
+  ["IconCopy", <IconCopy />],
+  ["IconCheckCircle", <IconCheckCircle />],
+  ["IconTabIntegrity", <IconTabIntegrity />],
+  ["IconTabStorage", <IconTabStorage />],
+  ["IconSave", <IconSave />],
+];
 
-it("scales the off-site cloud onto the pair's width and centre", () => {
-  expectFitted(transformOf(<IconCloud />), FA_CLOUD_INK, "IconCloud");
+it.each(GLYPHS)("crops %s to a box recomputed from its measured ink", (name, ui) => {
+  const got = viewBoxOf(ui);
+  expect(got, `${name} has no viewBox`).toHaveLength(4);
+  const want = croppedBox(INK[name]);
+  got.forEach((v, i) => expect(v).toBeCloseTo(want[i], 5));
 });
 
-it("scales the local bars by the same rule, not by redrawn coordinates", () => {
-  // Both halves go through one constant. Hard-coding the enlarged rects would
-  // have worked too, and would have been the second place to forget when the
-  // width moves again.
-  expectFitted(transformOf(<IconLocal />), LOCAL_DRIVE_INK, "IconLocal");
+it.each(GLYPHS)("gives %s a square box, so its aspect ratio survives", (name, ui) => {
+  const [, , w, h] = viewBoxOf(ui);
+  expect(w, `${name} is not square`).toBeCloseTo(h, 5);
 });
 
-it("emits the same cloud for the tab and for the controls", () => {
-  // These drifted apart once already, which is why the generator defines the
-  // markup once and emits it twice.
-  expect(transformOf(<IconTabOffsite />)).toBe(transformOf(<IconCloud />));
+it("emits the same cloud for the off-site tab and the off-site control", () => {
+  expect(viewBoxOf(<IconTabOffsite />)).toEqual(viewBoxOf(<IconCloud />));
 });
 
-it("lands both halves on one width and one centre", () => {
-  // The promise to the eye, expressed in the grid's own units.
-  for (const ink of [FA_CLOUD_INK, LOCAL_DRIVE_INK]) {
-    const scale = PAIR_WIDTH / ink[2];
-    expect(ink[2] * scale).toBeCloseTo(PAIR_WIDTH, 5);
-    expect(ink[3] * scale).toBeLessThan(GRID); // still inside the box
+it("centres each crop on the ink, so nothing sits off to one side", () => {
+  // The half of the crop that is easy to get wrong: the SIDE can be right
+  // while the origin is not, which renders the glyph correctly sized and
+  // visibly off-centre. Checked as "ink centre equals box centre".
+  for (const [name] of GLYPHS) {
+    const [x, y, w, h] = INK[name];
+    const [bx, by, bw, bh] = croppedBox(INK[name]);
+    expect(bx + bw / 2, `${name} horizontally off-centre`).toBeCloseTo(x + w / 2, 5);
+    expect(by + bh / 2, `${name} vertically off-centre`).toBeCloseTo(y + h / 2, 5);
   }
-  // A cloud is taller than two bars, and that difference is correct: matching
-  // widths is the rule, matching heights would make the cloud the narrower one.
-  const cloudH = FA_CLOUD_INK[3] * (PAIR_WIDTH / FA_CLOUD_INK[2]);
-  const barsH = LOCAL_DRIVE_INK[3] * (PAIR_WIDTH / LOCAL_DRIVE_INK[2]);
-  expect(cloudH).toBeGreaterThan(barsH);
-});
-
-it("fills the box, so the pair is not the smallest thing in a tab strip", () => {
-  // [285]: matching the halves to each other is necessary and not sufficient.
-  // At 9.6 of 14 they agreed with each other and still read small beside the
-  // rail's glyphs, which fill 98-100%.
-  expect(PAIR_WIDTH / GRID).toBeGreaterThan(0.95);
 });

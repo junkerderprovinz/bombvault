@@ -629,8 +629,7 @@ const hu: Partial<Translations> = {
   "recovery.stored": "Biztonságosan eltároltam",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Vészhelyreállítás",
-  "recovery.intro": "Állítsd vissza a konténereidet és VM-jeidet egy meglévő biztonsági mentésből erre a telepítésre. Irányítsd a BombVaultot a mentéseidre, fedezd fel a tartalmukat, és állítsd vissza.",
+  "recovery.intro": "Állítsd vissza a konténereidet és VM-jeidet egy meglévő biztonsági mentésből erre a telepítésre.",
   "recovery.step1": "Tudja a BombVault olvasni a mentéseidet?",
   "recovery.appKeyExplain": "A meglévő mentések olvasásához ennek a konténernek UGYANARRA az APP_KEY-re van szüksége, amit korábban használt. Ez a helyreállítási csomagodban van. Állítsd be az Unraid konténer-sablonban, ha még nincs, majd ellenőrizd újra.",
   "recovery.appKeyRemedy": "A titkosítási kulcs nem egyezik ezekkel a mentésekkel. Állítsd be az eredeti APP_KEY-t (a helyreállítási csomagodból) a konténer-sablonban, majd ellenőrizd újra.",

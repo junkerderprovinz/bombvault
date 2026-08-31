@@ -1119,8 +1119,7 @@ const hr: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Oporavak",
-  "recovery.pageTitle": "Oporavak od katastrofe",
-  "recovery.intro": "Vratite svoje kontejnere i VM-ove iz postojeće sigurnosne kopije na ovu instalaciju. Usmjerite BombVault na svoje sigurnosne kopije, otkrijte što je u njima i vratite.",
+  "recovery.intro": "Vratite svoje kontejnere i VM-ove iz postojeće sigurnosne kopije na ovu instalaciju.",
   // Step 1
   "recovery.step1": "Može li BombVault pročitati vaše sigurnosne kopije?",
   "recovery.appKeyExplain": "Za čitanje postojećih sigurnosnih kopija ovom kontejneru treba ISTI APP_KEY koji je koristio prije. Nalazi se u vašem kompletu za oporavak. Postavite ga u Unraid predlošku kontejnera ako još nije postavljen, zatim ponovno provjerite.",

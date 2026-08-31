@@ -604,8 +604,7 @@ const ro: Partial<Translations> = {
   "recovery.stored": "L-am păstrat în siguranță",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Recuperare în caz de dezastru",
-  "recovery.intro": "Recuperează containerele și VM-urile dintr-o copie de rezervă existentă pe această instalare. Îndreaptă BombVault către copiile tale, descoperă ce conțin și restaurează.",
+  "recovery.intro": "Recuperează containerele și VM-urile dintr-o copie de rezervă existentă pe această instalare.",
   "recovery.step1": "Poate BombVault să-ți citească copiile de rezervă?",
   "recovery.appKeyExplain": "Pentru a citi copiile de rezervă existente, acest container are nevoie de ACELAȘI APP_KEY folosit anterior. Se află în kitul tău de recuperare. Setează-l în șablonul de container Unraid dacă nu este deja, apoi verifică din nou.",
   "recovery.appKeyRemedy": "Cheia de criptare nu corespunde acestor copii de rezervă. Setează APP_KEY original (din kitul de recuperare) în șablonul containerului, apoi verifică din nou.",

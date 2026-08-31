@@ -1113,8 +1113,7 @@ const sl: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Obnova",
-  "recovery.pageTitle": "Obnovitev po katastrofi",
-  "recovery.intro": "Obnovi svoje vsebnike in VM-je iz obstoječe varnostne kopije na to namestitev. Usmeri BombVault na svoje varnostne kopije, odkrij, kaj je v njih, in obnovi.",
+  "recovery.intro": "Obnovi svoje vsebnike in VM-je iz obstoječe varnostne kopije na to namestitev.",
   "recovery.step1": "Ali lahko BombVault prebere tvoje varnostne kopije?",
   "recovery.appKeyExplain": "Za branje obstoječih varnostnih kopij ta vsebnik potrebuje ISTI APP_KEY, kot ga je uporabljal prej. Najdeš ga v svojem obnovitvenem kompletu. Nastavi ga v Unraidovi predlogi vsebnika, če še ni, nato znova preveri.",
   "recovery.appKeyRemedy": "Šifrirni ključ se ne ujema s temi varnostnimi kopijami. V predlogi vsebnika nastavi izvirni APP_KEY (iz svojega obnovitvenega kompleta), nato znova preveri.",

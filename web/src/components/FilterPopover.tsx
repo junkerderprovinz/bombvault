@@ -56,7 +56,16 @@ export function FilterPopover({
         onClick={() => setOpen((p) => !p)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+        /* `bv-btn` rather than its own padding ([316], jdp: "Der Filter button
+           größer machen und ins größensystem einbinden"). It was `py-1.5
+           text-xs`: smaller than every real button, and sized by two literals
+           no token could ever reach — so when `--btn-h` moved from 2.25rem to
+           2rem in [233] this control did not move with it, and it has been
+           drifting quietly ever since. The class supplies height, horizontal
+           padding, gap, radius and font size from the tokens; only the surface
+           colour and its hover stay local, because this trigger opens a
+           popover and should not read as one of the page's actions. */
+        className="bv-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
       >
         {/* FILLED funnel (design-language.md "Icon glyphs", rule 218 — this
             silhouette was already closed under its old stroke, so it flips

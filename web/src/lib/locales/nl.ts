@@ -599,8 +599,7 @@ const nl: Partial<Translations> = {
   "recovery.stored": "Ik heb hem veilig bewaard",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Noodherstel",
-  "recovery.intro": "Herstel je containers en VM's uit een bestaande back-up op deze installatie. Wijs BombVault naar je back-ups, ontdek wat erin zit en herstel.",
+  "recovery.intro": "Herstel je containers en VM's uit een bestaande back-up op deze installatie.",
   "recovery.step1": "Kan BombVault je back-ups lezen?",
   "recovery.appKeyExplain": "Om bestaande back-ups te lezen heeft deze container DEZELFDE APP_KEY nodig als voorheen. Die staat in je herstelkit. Stel hem in de Unraid-containersjabloon in als dat nog niet is gebeurd en controleer opnieuw.",
   "recovery.appKeyRemedy": "De encryptiesleutel komt niet overeen met deze back-ups. Stel de originele APP_KEY (uit je herstelkit) in de containersjabloon in en controleer opnieuw.",

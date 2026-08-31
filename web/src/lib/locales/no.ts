@@ -623,8 +623,7 @@ const no: Partial<Translations> = {
   "recovery.stored": "Jeg har lagret det trygt",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Katastrofegjenoppretting",
-  "recovery.intro": "Gjenopprett containerne og VM-ene dine fra en eksisterende sikkerhetskopi til denne installasjonen. Pek BombVault mot sikkerhetskopiene dine, oppdag hva som ligger i dem, og gjenopprett.",
+  "recovery.intro": "Gjenopprett containerne og VM-ene dine fra en eksisterende sikkerhetskopi til denne installasjonen.",
   "recovery.step1": "Kan BombVault lese sikkerhetskopiene dine?",
   "recovery.appKeyExplain": "For å lese eksisterende sikkerhetskopier trenger denne containeren SAMME APP_KEY som før. Den ligger i gjenopprettingssettet ditt. Angi den i Unraid-containermalen hvis den ikke allerede er satt, og sjekk på nytt.",
   "recovery.appKeyRemedy": "Krypteringsnøkkelen stemmer ikke med disse sikkerhetskopiene. Angi den opprinnelige APP_KEY (fra gjenopprettingssettet ditt) i containermalen, og sjekk på nytt.",

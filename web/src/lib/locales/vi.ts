@@ -618,8 +618,7 @@ const vi: Partial<Translations> = {
   "recovery.stored": "Tôi đã cất giữ an toàn",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Khôi phục sau thảm họa",
-  "recovery.intro": "Khôi phục các container và VMs của bạn từ một bản sao lưu hiện có vào bản cài đặt này. Trỏ BombVault tới các bản sao lưu của bạn, khám phá những gì có trong đó, rồi khôi phục.",
+  "recovery.intro": "Khôi phục các container và VMs của bạn từ một bản sao lưu hiện có vào bản cài đặt này.",
   "recovery.step1": "BombVault có đọc được các bản sao lưu của bạn không?",
   "recovery.appKeyExplain": "Để đọc các bản sao lưu hiện có, container này cần ĐÚNG APP_KEY mà nó đã dùng trước đây. Nó nằm trong bộ khôi phục của bạn. Hãy đặt nó trong container template của Unraid nếu chưa đặt, rồi kiểm tra lại.",
   "recovery.appKeyRemedy": "Khóa mã hóa không khớp với các bản sao lưu này. Hãy đặt APP_KEY gốc (từ bộ khôi phục của bạn) trong container template, rồi kiểm tra lại.",

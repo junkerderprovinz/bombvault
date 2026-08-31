@@ -1388,8 +1388,7 @@ export const en = {
   // prefix above is the encryption *kit*; the page title uses `recovery.pageTitle`
   // to avoid colliding with the existing `recovery.title` ("Recovery kit").
   "nav.recovery": "Recovery",
-  "recovery.pageTitle": "Disaster recovery",
-  "recovery.intro": "Recover your containers and VMs from an existing backup onto this install. Point BombVault at your backups, discover what's in them, and restore.",
+  "recovery.intro": "Recover your containers and VMs from an existing backup onto this install.",
   // Step 1 — connection / APP_KEY readability check
   "recovery.step1": "Can BombVault read your backups?",
   "recovery.appKeyExplain": "To read existing backups this container needs the SAME APP_KEY it used before. It's in your recovery kit. Set it in the Unraid container template if it isn't already, then re-check.",
@@ -2880,8 +2879,7 @@ export const de: Translations = {
 
   // Guided Recovery tab (disaster-recovery walkthrough)
   "nav.recovery": "Wiederherstellung",
-  "recovery.pageTitle": "Notfall-Wiederherstellung",
-  "recovery.intro": "Stelle deine Container und VMs aus einem vorhandenen Backup auf dieser Installation wieder her. Richte BombVault auf deine Backups aus, finde heraus, was darin steckt, und stelle es wieder her.",
+  "recovery.intro": "Stelle deine Container und VMs aus einem vorhandenen Backup auf dieser Installation wieder her.",
   // Schritt 1 — Verbindungs-/APP_KEY-Lesbarkeitsprüfung
   "recovery.step1": "Kann BombVault deine Backups lesen?",
   "recovery.appKeyExplain": "Um vorhandene Backups zu lesen, braucht dieser Container denselben APP_KEY wie zuvor. Er steht in deinem Recovery-Kit. Setze ihn im Unraid-Container-Template, falls noch nicht geschehen, und prüfe erneut.",

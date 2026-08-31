@@ -624,8 +624,7 @@ const cs: Partial<Translations> = {
   "recovery.stored": "Uložil jsem ji bezpečně",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Zotavení po havárii",
-  "recovery.intro": "Obnovte své kontejnery a VM z existující zálohy do této instalace. Nasměrujte BombVault na své zálohy, zjistěte, co obsahují, a obnovte je.",
+  "recovery.intro": "Obnovte své kontejnery a VM z existující zálohy do této instalace.",
   "recovery.step1": "Může BombVault číst vaše zálohy?",
   "recovery.appKeyExplain": "Ke čtení existujících záloh potřebuje tento kontejner STEJNÝ APP_KEY, který používal dříve. Najdete jej ve své sadě pro obnovu. Nastavte jej v šabloně kontejneru Unraid, pokud ještě není, a poté proveďte opětovnou kontrolu.",
   "recovery.appKeyRemedy": "Šifrovací klíč neodpovídá těmto zálohám. Nastavte původní APP_KEY (ze své sady pro obnovu) v šabloně kontejneru a poté proveďte opětovnou kontrolu.",

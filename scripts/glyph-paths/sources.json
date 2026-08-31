@@ -1,0 +1,32 @@
+{
+  "save": {
+    "viewBox": "0 0 448 512",
+    "paths": 1,
+    "from": "save.svg"
+  },
+  "integrity": {
+    "viewBox": "0 0 24 24",
+    "paths": 1,
+    "from": "integrität.svg"
+  },
+  "verify": {
+    "viewBox": "0 0 24 24",
+    "paths": 1,
+    "from": "prüfen.svg"
+  },
+  "copy": {
+    "viewBox": "0 0 24 24",
+    "paths": 2,
+    "from": "copy.svg"
+  },
+  "storage": {
+    "viewBox": "0 0 448 512",
+    "paths": 1,
+    "from": "pfade und speicher.svg"
+  },
+  "local": {
+    "viewBox": "0 0 512 512",
+    "paths": 1,
+    "from": "lokal.svg"
+  }
+}

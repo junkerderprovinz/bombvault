@@ -1119,8 +1119,7 @@ const ca: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Recuperació",
-  "recovery.pageTitle": "Recuperació d'avaries",
-  "recovery.intro": "Recupera els teus contenidors i MV a partir d'una còpia existent en aquesta instal·lació. Apunta BombVault a les teves còpies, descobreix què hi ha dins, i restaura.",
+  "recovery.intro": "Recupera els teus contenidors i MV a partir d'una còpia existent en aquesta instal·lació.",
   // Step 1
   "recovery.step1": "Pot BombVault llegir les teves còpies?",
   "recovery.appKeyExplain": "Per llegir còpies existents, aquest contenidor necessita la MATEIXA APP_KEY que feia servir abans. És al teu kit de recuperació. Configura-la a la plantilla del contenidor Unraid si encara no ho està, i torna a comprovar.",

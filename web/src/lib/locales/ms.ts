@@ -1119,8 +1119,7 @@ const ms: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Pemulihan",
-  "recovery.pageTitle": "Pemulihan bencana",
-  "recovery.intro": "Pulihkan bekas dan VM anda daripada sandaran sedia ada pada pemasangan ini. Arahkan BombVault kepada sandaran anda, temui apa yang ada di dalamnya, dan pulihkan.",
+  "recovery.intro": "Pulihkan bekas dan VM anda daripada sandaran sedia ada pada pemasangan ini.",
   // Step 1
   "recovery.step1": "Bolehkah BombVault membaca sandaran anda?",
   "recovery.appKeyExplain": "Untuk membaca sandaran sedia ada, bekas ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelum ini. Ia ada dalam kit pemulihan anda. Tetapkannya dalam templat bekas Unraid jika belum lagi, kemudian semak semula.",

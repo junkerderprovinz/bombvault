@@ -1119,8 +1119,7 @@ const sk: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Obnova",
-  "recovery.pageTitle": "Obnova po havárii",
-  "recovery.intro": "Obnovte svoje kontajnery a VM z existujúcej zálohy na tejto inštalácii. Nasmerujte BombVault na svoje zálohy, zistite, čo v nich je, a obnovte.",
+  "recovery.intro": "Obnovte svoje kontajnery a VM z existujúcej zálohy na tejto inštalácii.",
   // Step 1
   "recovery.step1": "Dokáže BombVault prečítať vaše zálohy?",
   "recovery.appKeyExplain": "Na čítanie existujúcich záloh tento kontajner potrebuje ROVNAKÝ APP_KEY, aký sa používal predtým. Je vo vašej súprave na obnovenie. Nastavte ho v šablóne kontajnera Unraid, ak ešte nie je nastavený, potom znova skontrolujte.",

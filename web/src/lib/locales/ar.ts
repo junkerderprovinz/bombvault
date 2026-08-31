@@ -629,8 +629,7 @@ const ar: Partial<Translations> = {
   "recovery.stored": "حفظتها بأمان",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "التعافي من الكوارث",
-  "recovery.intro": "استعد الـ containers والـ VMs من نسخة احتياطية موجودة إلى هذا التثبيت. وجّه BombVault إلى نسخك الاحتياطية، واكتشف محتوياتها، ثم استعِد.",
+  "recovery.intro": "استعد الـ containers والـ VMs من نسخة احتياطية موجودة إلى هذا التثبيت.",
   "recovery.step1": "هل يستطيع BombVault قراءة نسخك الاحتياطية؟",
   "recovery.appKeyExplain": "لقراءة النسخ الاحتياطية الموجودة يحتاج هذا الـ container إلى نفس APP_KEY الذي استخدمه سابقاً. إنه في حقيبة الاستعادة الخاصة بك. اضبطه في قالب حاوية Unraid إن لم يكن مضبوطاً، ثم أعد الفحص.",
   "recovery.appKeyRemedy": "مفتاح التشفير لا يطابق هذه النسخ الاحتياطية. اضبط APP_KEY الأصلي (من حقيبة الاستعادة) في قالب الحاوية، ثم أعد الفحص.",

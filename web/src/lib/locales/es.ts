@@ -634,8 +634,7 @@ const es: Partial<Translations> = {
   "recovery.stored": "Lo he guardado de forma segura",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Recuperación ante desastres",
-  "recovery.intro": "Recupera tus contenedores y VMs desde una copia existente en esta instalación. Apunta BombVault a tus copias, descubre lo que contienen y restaura.",
+  "recovery.intro": "Recupera tus contenedores y VMs desde una copia existente en esta instalación.",
   "recovery.step1": "¿Puede BombVault leer tus copias?",
   "recovery.appKeyExplain": "Para leer copias existentes, este contenedor necesita la MISMA APP_KEY que usaba antes. Está en tu kit de recuperación. Configúrala en la plantilla del contenedor de Unraid si aún no lo está y vuelve a comprobar.",
   "recovery.appKeyRemedy": "La clave de cifrado no coincide con estas copias. Configura la APP_KEY original (de tu kit de recuperación) en la plantilla del contenedor y vuelve a comprobar.",

@@ -626,8 +626,7 @@ const it: Partial<Translations> = {
   "recovery.stored": "L'ho conservato in modo sicuro",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Ripristino di emergenza",
-  "recovery.intro": "Ripristina i tuoi container e le tue VM da un backup esistente su questa installazione. Punta BombVault ai tuoi backup, scopri cosa contengono e ripristina.",
+  "recovery.intro": "Ripristina i tuoi container e le tue VM da un backup esistente su questa installazione.",
   "recovery.step1": "BombVault può leggere i tuoi backup?",
   "recovery.appKeyExplain": "Per leggere i backup esistenti questo container ha bisogno della STESSA APP_KEY usata in precedenza. Si trova nel tuo kit di ripristino. Impostala nel template del container Unraid se non l'hai già fatto, poi riverifica.",
   "recovery.appKeyRemedy": "La chiave di crittografia non corrisponde a questi backup. Imposta l'APP_KEY originale (dal tuo kit di ripristino) nel template del container, poi riverifica.",

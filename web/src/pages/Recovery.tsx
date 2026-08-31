@@ -1851,7 +1851,14 @@ export default function Recovery() {
             explanation the "Infotexte in i Infobubbles" round is about. Folding
             it into a bubble would make Recovery the one page whose heading
             reads differently from all the others. */}
-        <h1 className="text-lg font-semibold text-carbon-text">{t("recovery.pageTitle")}</h1>
+        {/* The sidebar's own word, not a second one ([314], jdp: "Überschrift
+            soll statt Notfall-Wiederherstellung nur Wiederherstellung sein").
+            `recovery.pageTitle` carried a "disaster" qualifier the nav entry
+            never had, so the rail said one thing and the page another. Reusing
+            `nav.recovery` instead of retranslating a title in 42 locales also
+            means the two can never drift apart again — pageTitle is deleted, so
+            there is no second string left to disagree with this one. */}
+        <h1 className="text-lg font-semibold text-carbon-text">{t("nav.recovery")}</h1>
         <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.intro")}</p>
       </div>
 
@@ -2391,7 +2398,9 @@ export default function Recovery() {
         <Button
           label={t("recovery.kitDownload")}
           labelKey="recovery.kitDownload"
-          tone="neutral"
+          // Accent ([315]). The kit is the one artefact this page exists to
+          // hand over, and its card holds nothing else to do.
+          tone="accent"
           onClick={() => {
             setKitError(null);
             void downloadRecoveryKit().then((err) => {

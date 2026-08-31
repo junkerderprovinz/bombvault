@@ -1119,8 +1119,7 @@ const et: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Taastamine",
-  "recovery.pageTitle": "Õnnetusjärgne taastamine",
-  "recovery.intro": "Taasta oma konteinerid ja VM-id olemasolevast varundusest sellele paigaldusele. Suuna BombVault oma varunduste juurde, uuri, mis neis on, ja taasta.",
+  "recovery.intro": "Taasta oma konteinerid ja VM-id olemasolevast varundusest sellele paigaldusele.",
   // Step 1
   "recovery.step1": "Kas BombVault suudab su varundusi lugeda?",
   "recovery.appKeyExplain": "Olemasolevate varunduste lugemiseks vajab see konteiner SAMA APP_KEY-d, mida varem kasutati. See on sinu taastekomplektis. Määra see Unraidi konteineri mallis, kui see pole veel tehtud, ja kontrolli uuesti.",

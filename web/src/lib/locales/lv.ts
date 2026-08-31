@@ -1119,8 +1119,7 @@ const lv: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Atkopšana",
-  "recovery.pageTitle": "Katastrofu atkopšana",
-  "recovery.intro": "Atjaunojiet konteinerus un VM no esošas rezerves kopijas šajā instalācijā. Norādiet BombVault uz savām rezerves kopijām, atklājiet, kas tajās ir, un atjaunojiet.",
+  "recovery.intro": "Atjaunojiet konteinerus un VM no esošas rezerves kopijas šajā instalācijā.",
   // Step 1
   "recovery.step1": "Vai BombVault var nolasīt jūsu rezerves kopijas?",
   "recovery.appKeyExplain": "Lai nolasītu esošās rezerves kopijas, šim konteinerim nepieciešams TĀDS PATS APP_KEY, kāds izmantots iepriekš. Tas atrodas jūsu atkopšanas komplektā. Iestatiet to Unraid konteinera veidnē, ja tas vēl nav iestatīts, un pēc tam pārbaudiet vēlreiz.",

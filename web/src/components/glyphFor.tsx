@@ -8,6 +8,7 @@ import {
   IconDownload,
   IconFolder,
   IconGear,
+  IconLocal,
   IconPencil,
   IconPower,
   IconRestore,
@@ -105,6 +106,22 @@ const RULES: Rule[] = [
   [/start|run\b|play/i, () => <IconPlay />],
   [/stop|abort|halt/i, () => <IconStop />],
   [/power|shutdown|reboot/i, () => <IconPower />],
+
+  // Local storage, as opposed to off-site ([310]).
+  //
+  // Two ordering constraints, both load-bearing. It sits BELOW the probing
+  // block because `drill.checkLocal` is a button that CHECKS, and the thing it
+  // checks is a detail of the verb — above that block it would wear a drive
+  // and stop looking like its three siblings in the same row. It sits ABOVE
+  // "places and configuration" because `recovery.configLocalPath` ends in
+  // "Path" and would otherwise take the folder, which is the one glyph a local
+  // control must not wear: a Browse button already has it, and two different
+  // functions sharing a symbol is the collision jdp reported once already.
+  //
+  // Anchored to the end of the key rather than matching "local" anywhere, so
+  // it takes `source.local` and `settings.pathMode.local` — the actual
+  // switches — without swallowing every key that merely mentions locality.
+  [/\.local$|Local$/i, () => <IconLocal />],
 
   // Places and configuration, last because they are the vaguest.
   [/folder|path|directory/i, () => <IconFolder />],

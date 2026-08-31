@@ -1119,8 +1119,7 @@ const eu: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Berreskuratzea",
-  "recovery.pageTitle": "Hondamendi-berreskuratzea",
-  "recovery.intro": "Berrezarri zure edukiontziak eta MB instalazio honetan dagoen babeskopia batetik. Zuzendu BombVault zure babeskopietara, aurkitu zer duten barruan eta berrezarri.",
+  "recovery.intro": "Berrezarri zure edukiontziak eta MB instalazio honetan dagoen babeskopia batetik.",
   // Step 1
   "recovery.step1": "BombVaultek zure babeskopiak irakur ditzake?",
   "recovery.appKeyExplain": "Dauden babeskopiak irakurtzeko, edukiontzi honek lehen erabili zuen APP_KEY BERA behar du. Zure berreskuratze-kitan dago. Ezarri Unraid edukiontziaren txantiloian jada ez badago, eta egiaztatu berriz.",

@@ -1119,8 +1119,7 @@ const gl: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Recuperación",
-  "recovery.pageTitle": "Recuperación de desastres",
-  "recovery.intro": "Restaura os teus contedores e MV a partir dunha copia existente nesta instalación. Apunta BombVault ás túas copias, descobre que hai dentro, e restaura.",
+  "recovery.intro": "Restaura os teus contedores e MV a partir dunha copia existente nesta instalación.",
   // Step 1
   "recovery.step1": "Pode BombVault ler as túas copias?",
   "recovery.appKeyExplain": "Para ler copias existentes, este contedor precisa o MESMO APP_KEY que usaba antes: está no teu kit de recuperación. Configúrao no modelo de contedor de Unraid se aínda non o está, e volve comprobar.",

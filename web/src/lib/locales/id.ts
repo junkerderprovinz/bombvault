@@ -1119,8 +1119,7 @@ const id: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Pemulihan",
-  "recovery.pageTitle": "Pemulihan bencana",
-  "recovery.intro": "Pulihkan container dan VM Anda dari cadangan yang sudah ada ke instalasi ini. Arahkan BombVault ke cadangan Anda, temukan apa yang ada di dalamnya, dan pulihkan.",
+  "recovery.intro": "Pulihkan container dan VM Anda dari cadangan yang sudah ada ke instalasi ini.",
   // Step 1
   "recovery.step1": "Bisakah BombVault membaca cadangan Anda?",
   "recovery.appKeyExplain": "Untuk membaca cadangan yang ada, container ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelumnya. Ada di kit pemulihan Anda. Atur di template container Unraid jika belum, lalu periksa ulang.",

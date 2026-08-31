@@ -24,7 +24,7 @@ SRC = sys.argv[1] if len(sys.argv) > 1 else "/tmp/slv/core/solid"
 
 # our name -> (streamline file, what it means here)
 ACTION = [
-    ("IconSave", "computer-devices/floppy-disk.svg", "Save"),
+    # IconSave moved to EXTRA_ACTION ([305]) — jdp's own file.
     # IconCancel moved to EXTRA_ACTION ([287]) — same hand-drawn cross as
     # IconClose, so the app has one X rather than two.
     ("IconRefresh", "interface-essential/arrow-reload-horizontal-1.svg", "Refresh or reload"),
@@ -68,14 +68,15 @@ NAV = [
     ("IconLive", "interface-essential/live-video.svg", "Live, currently running"),
     ("IconTrash", "interface-essential/recycle-bin-2.svg", "Delete"),
     ("IconPencil", "interface-essential/pencil.svg", "Edit"),
-    ("IconCheckCircle", "interface-essential/shield-check.svg", "Verified or test connection"),
+    # IconCheckCircle moved to EXTRA_NAV ([307]) — jdp's own file, and it now
+    # covers every check/test button rather than only "verified".
     # Moved off arrow-reload-horizontal-2 when Recovery took that one (jdp asked
     # for "zwei Pfeile die einen Kreis bilden" there, and that file IS the
     # circle). Still a two-arrow loop, just the upright ring, so replicate and
     # recover stay tellable apart at 20px.
     ("IconSync", "interface-essential/arrow-reload-vertical-2.svg", "Replicate or synchronise"),
     ("IconGear", "interface-essential/cog.svg", "Settings"),
-    ("IconCopy", "interface-essential/copy-paste.svg", "Copy"),
+    # IconCopy moved to EXTRA_NAV ([308]) — jdp's own file.
     # The last five nav-rail glyphs. They were hand-drawn at 22x22 on a 20-unit
     # grid while everything generated here renders 16x16 on a 14-unit one, so
     # six rows of the rail sat at one size and six at another and the labels
@@ -148,59 +149,67 @@ NAV = [
 # is (2.2, 4, 9.6, 6). navGlyphs.fit.dom.test.tsx recomputes the transform from
 # those numbers, so a swapped path file fails instead of silently resizing.
 # ---------------------------------------------------------------------------
-# 13.8 of the 14-unit grid, so the pair fills its 20px box the way every other
-# glyph in the app does ([285]). It was 9.6 for one round, which matched the two
-# halves to each OTHER but left them the smallest things in the Settings tab
-# strip: measured against the rail's 98-100%, the cloud filled 68%. Optical
-# sizing is a comparison, and the comparison that matters is with every glyph
-# on screen, not only with the one sharing the switch.
-PAIR_WIDTH = 13.8
-PAIR_CENTRE = (7.0, 7.0)
-
-# Ink of Font Awesome's cloud path, measured inside its 640x512 viewBox.
-FA_CLOUD_INK = (0.0, 32.0, 640.0, 448.0)
-
-
 def num(v):
     """Shortest exact-enough decimal, so the generated file stays readable."""
     return ("%.6f" % v).rstrip("0").rstrip(".")
 
 
-def fit_to_pair(ink):
-    """`translate(...) scale(...)` mapping a measured ink box onto the pair's
-    shared width, centred on the pair's centre."""
-    sx, sy, sw, sh = ink
-    cx, cy = PAIR_CENTRE
-    scale = PAIR_WIDTH / sw
-    return "translate(%s %s) scale(%s)" % (
-        num(cx - (sx + sw / 2) * scale),
-        num(cy - (sy + sh / 2) * scale),
-        num(scale),
+def cropped_box(ink):
+    """A square viewBox tight to a glyph's measured INK, centred on it.
+
+    This is the one sizing mechanism ([305]-[310] unified what used to be two).
+    Everything in this set renders into the same 20px box, so what decides
+    whether two icons look the same size is how much of that box each one's
+    drawing actually uses — and imported artwork varies wildly: Font Awesome
+    fills its box edge to edge, Tabler leaves two units of padding on all four
+    sides, a hand-drawn glyph leaves whatever it was drawn with. Measured
+    across one screen that spread ran from 68% to 100%, and it read exactly as
+    "some of these icons are smaller".
+
+    Cropping the viewBox to the ink and squaring it off hands the whole
+    problem to `preserveAspectRatio="xMidYMid meet"`, which is already the
+    default: the drawing scales up until its longer side fills the box, and
+    its aspect ratio is untouched. Square rather than tight-on-both-axes for
+    exactly that reason — a tight rectangle would stretch a wide glyph to the
+    same height as a tall one.
+
+    Why this replaced the translate/scale transform the off-site pair used for
+    two rounds: a transform has to know the target grid, so it only works for
+    glyphs already living on that grid, and it needed a shared PAIR_WIDTH
+    constant to keep two of them agreeing. A cropped viewBox needs neither. It
+    works on a 24-unit Tabler icon and a 512-unit Font Awesome one without
+    either being converted first, and two glyphs agree because they follow the
+    same rule rather than because they share a number.
+
+    `ink` is always MEASURED, with getBBox on the real markup in a browser,
+    never read off the viewBox — a path's drawn extent and its viewBox have no
+    necessary relationship, and two of jdp's own files carry a fully
+    transparent bounding path that makes the viewBox actively misleading.
+    """
+    x, y, w, h = ink
+    side = max(w, h)
+    return "%s %s %s %s" % (
+        num(x + w / 2 - side / 2),
+        num(y + h / 2 - side / 2),
+        num(side),
+        num(side),
     )
+
+
+def imported(name, note, source_box, ink, path_file):
+    """One glyph imported whole from an outside set, cropped to its ink."""
+    paths = io.open(
+        "../scripts/glyph-paths/%s.txt" % path_file, encoding="utf-8"
+    ).read().strip().split("\n")
+    del source_box  # kept in the call for the record; the crop supersedes it
+    return (name, note, cropped_box(ink), "".join('<path d="%s" />' % d for d in paths))
 
 
 # Defined once and emitted twice, because the Off-site TAB and every off-site
 # control elsewhere must not drift apart again (jdp: "Das offsite-glyph
 # systemweit an den glyph den Offsite einstellungstab angleichen").
-CLOUD = '<g transform="%s"><path d="%s" /></g>' % (
-    fit_to_pair(FA_CLOUD_INK),
-    io.open("../scripts/cloud-path.txt", encoding="utf-8").read().strip(),
-)
-
-# "Local", as opposed to off-site. Drawn rather than imported: no free set has
-# a storage glyph this bare, and bareness is the whole requirement. Two bars,
-# no LEDs, no slot, no hole.
-#
-# It goes through the SAME fit as the cloud rather than being redrawn at the
-# new size, so PAIR_WIDTH stays the one number that moves both halves. Redrawn
-# coordinates would be a second place to forget.
-LOCAL_DRIVE_INK = (2.2, 4.0, 9.6, 6.0)
-
-LOCAL_DRIVE = '<g transform="%s">%s</g>' % (
-    fit_to_pair(LOCAL_DRIVE_INK),
-    '<rect x="2.2" y="4" width="9.6" height="2.6" rx="1.3" />'
-    '<rect x="2.2" y="7.4" width="9.6" height="2.6" rx="1.3" />',
-)
+CLOUD_BOX = cropped_box((0.0, 32.0, 640.0, 448.0))
+CLOUD = '<path d="%s" />' % io.open("../scripts/cloud-path.txt", encoding="utf-8").read().strip()
 
 # ---------------------------------------------------------------------------
 # The plus and the cross ([287]).
@@ -243,11 +252,37 @@ EXTRA_NAV = [
         # endorsement by or affiliation with Docker, Inc.
         '<path d="%s" />' % io.open("../scripts/docker-path.txt", encoding="utf-8").read().strip(),
     ),
-    ("IconTabOffsite", "Off-site tab", "0 0 14 14", CLOUD),
-    ("IconCloud", "Off-site or cloud", "0 0 14 14", CLOUD),
-    ("IconLocal", "Local storage, as opposed to off-site", "0 0 14 14", LOCAL_DRIVE),
+    ("IconTabOffsite", "Off-site tab", CLOUD_BOX, CLOUD),
+    ("IconCloud", "Off-site or cloud", CLOUD_BOX, CLOUD),
     ("IconAdd", "Add", "0 0 14 14", PLUS),
     ("IconClose", "Close", "0 0 14 14", CROSS),
+    # ---------------------------------------------------------------------
+    # jdp's own files ([305]-[310]), each cropped to its measured ink.
+    #
+    # Six drawings from four different sets, which is precisely why the crop
+    # exists: Font Awesome fills its box, Tabler pads it by two units on every
+    # side, and Material sits somewhere between. Left alone they would have
+    # arrived on screen at three different sizes.
+    #
+    # Sources and licences, all attributed in the header above:
+    #   save, storage, local  - Font Awesome Free (CC BY 4.0)
+    #   copy                  - Tabler Icons, filled variant (MIT)
+    #   integrity             - Material Design Icons (Apache 2.0)
+    #   verify                - shipped as an Illustrator export
+    #
+    # `copy` and `verify` each arrived with a fully transparent bounding path
+    # covering the whole viewBox. Those are dropped on import: they paint
+    # nothing, and left in place they make every ink measurement read 100%.
+    # ---------------------------------------------------------------------
+    imported("IconLocal", "Local storage, as opposed to off-site",
+             "0 0 512 512", (0.0, 32.0, 512.0, 448.0), "local"),
+    imported("IconCopy", "Copy", "0 0 24 24", (2.0, 2.0, 20.0, 20.0), "copy"),
+    imported("IconCheckCircle", "Verify, check or test a connection",
+             "0 0 24 24", (2.0, 2.0, 20.0, 20.0), "verify"),
+    imported("IconTabIntegrity", "Integrity tab", "0 0 24 24",
+             (3.0, 1.0, 18.0, 22.0), "integrity"),
+    imported("IconTabStorage", "Paths and storage tab", "0 0 448 512",
+             (0.0, 0.0, 448.0, 512.0), "storage"),
 ]
 
 # Same two marks for the ACTION set, from the same constants. IconCancel is the
@@ -256,6 +291,9 @@ EXTRA_NAV = [
 # screen.
 EXTRA_ACTION = [
     ("IconCancel", "Cancel or dismiss", "0 0 14 14", CROSS),
+    # jdp's save glyph ([305]), replacing Streamline's floppy-disk everywhere a
+    # button means "save".
+    imported("IconSave", "Save", "0 0 448 512", (0.0, 32.0, 448.0, 448.0), "save"),
 ]
 
 ATTRIBUTION = """// ---------------------------------------------------------------------------
@@ -264,9 +302,12 @@ ATTRIBUTION = """// ------------------------------------------------------------
 // GENERATED by scripts/gen_glyphs.py. Do not hand-edit: regenerate instead, or
 // the next run silently overwrites the change.
 //
-// Attribution (CC BY 4.0, required by both licences):
-//   Free icons from Streamline - https://streamlinehq.com
+// Attribution, required by the licences below:
+//   Free icons from Streamline - https://streamlinehq.com (CC BY 4.0)
 //   Font Awesome Free - https://fontawesome.com (icons: CC BY 4.0)
+//   Tabler Icons - https://tabler.io/icons (MIT)
+//   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
+//   Simple Icons - https://simpleicons.org (CC0)
 //
 // Only the FREE 1000-icon subset is used (github.com/webalys-hq/streamline-vectors,
 // core/solid), which is CC BY 4.0 and explicitly redistributable. The larger

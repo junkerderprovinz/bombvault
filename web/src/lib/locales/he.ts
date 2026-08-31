@@ -626,8 +626,7 @@ const he: Partial<Translations> = {
   "recovery.stored": "שמרתי אותה בבטחה",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "התאוששות מאסון",
-  "recovery.intro": "שחזר את הקונטיינרים וה-VMs שלך מגיבוי קיים אל התקנה זו. הפנה את BombVault אל הגיבויים שלך, גלה מה יש בהם, ושחזר.",
+  "recovery.intro": "שחזר את הקונטיינרים וה-VMs שלך מגיבוי קיים אל התקנה זו.",
   "recovery.step1": "האם BombVault יכול לקרוא את הגיבויים שלך?",
   "recovery.appKeyExplain": "כדי לקרוא גיבויים קיימים, קונטיינר זה זקוק לאותו APP_KEY שהשתמש בו קודם. הוא נמצא בערכת השחזור שלך. הגדר אותו בתבנית הקונטיינר של Unraid אם עדיין לא, ואז בדוק שוב.",
   "recovery.appKeyRemedy": "מפתח ההצפנה אינו תואם לגיבויים אלה. הגדר את ה-APP_KEY המקורי (מערכת השחזור שלך) בתבנית הקונטיינר, ואז בדוק שוב.",

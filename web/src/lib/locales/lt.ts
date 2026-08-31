@@ -1119,8 +1119,7 @@ const lt: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Atkūrimas",
-  "recovery.pageTitle": "Nelaimių atkūrimas",
-  "recovery.intro": "Atkurkite savo konteinerius ir VM iš esamos atsarginės kopijos šioje diegtyje. Nukreipkite BombVault į savo atsargines kopijas, sužinokite, kas jose yra, ir atkurkite.",
+  "recovery.intro": "Atkurkite savo konteinerius ir VM iš esamos atsarginės kopijos šioje diegtyje.",
   // Step 1
   "recovery.step1": "Ar BombVault gali perskaityti jūsų atsargines kopijas?",
   "recovery.appKeyExplain": "Norint perskaityti esamas atsargines kopijas, šiam konteineriui reikia TO PATIES APP_KEY, kurį jis naudojo anksčiau. Jis yra jūsų atkūrimo rinkinyje. Nustatykite jį Unraid konteinerio šablone, jei dar nenustatytas, tada patikrinkite dar kartą.",

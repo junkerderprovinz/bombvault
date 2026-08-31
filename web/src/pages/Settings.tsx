@@ -61,11 +61,19 @@ import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, type Motion
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 import { Flag, IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose, IconCopy } from "../components/Sidebar";
+// The integrity row's own two verbs ([313]). They live in the ACTION set
+// rather than the nav one, same split IconUpload already crosses.
+import { IconUnlock, IconPrune } from "../components/glyphs";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
 // The two tab glyphs that are generated rather than drawn below. Aliased so the
 // wrappers further down keep their own names and TAB_ICON reads the same for
 // all seven, generated and hand-drawn alike.
-import { IconTabOffsite as IconTabOffsiteGlyph, IconTabSystem as IconTabSystemGlyph } from "../components/navGlyphs";
+import {
+  IconTabOffsite as IconTabOffsiteGlyph,
+  IconTabSystem as IconTabSystemGlyph,
+  IconTabIntegrity as IconTabIntegrityGlyph,
+  IconTabStorage as IconTabStorageGlyph,
+} from "../components/navGlyphs";
 // IconUpload lives in the ACTION set while its twin IconDownload sits in the
 // nav set, so the export/import pair ([293]) has to reach across both. Worth a
 // line because the split is by generator file, not by meaning: `upload-box-1`
@@ -2711,6 +2719,10 @@ function FleetSettingsCard({
             <Button
               label={t("settings.fleetRegenerate")}
               labelKey="settings.fleetRegenerate"
+              // A circular arrow ([311]). IconSync is the vertical two-arrow
+              // ring, which is the app's established "do this again" mark;
+              // regenerating a fleet token is exactly that.
+              glyph={<IconSync />}
               tone="neutral"
               onClick={() => void handleGenerate()}
               disabled={busy}
@@ -2722,6 +2734,9 @@ function FleetSettingsCard({
             <Button
               label={t("settings.fleetDisable")}
               labelKey="settings.fleetDisable"
+              // The same X as every other dismissal ([312]) — the hand-drawn
+              // cross from [287], not a second one.
+              glyph={<IconClose />}
               tone="neutral"
               onClick={() => void handleDisable()}
               disabled={busy}
@@ -4569,11 +4584,39 @@ function IntegrityCard({
     }
   }
 
-  const actions: { key: Action; label: string; busy: string }[] = [
-    { key: "verify", label: t("integrity.verify"), busy: t("integrity.checking") },
-    { key: "unlock", label: t("integrity.unlock"), busy: "…" },
+  // Each action carries its own labelKey and glyph now ([313]). Both are what
+  // the two engines need and neither is optional: without `labelKey` a button
+  // has no width stage, so glyph and reactive modes reflow the row instead of
+  // holding it; without a glyph, those same modes fall back to showing the
+  // text, which is the one thing they exist not to do. This row had three
+  // buttons that were simply outside both engines.
+  const actions: { key: Action; label: string; labelKey: string; glyph: ReactNode; busy: string }[] = [
+    {
+      key: "verify",
+      label: t("integrity.verify"),
+      labelKey: "integrity.verify",
+      glyph: <IconCheckCircle />,
+      busy: t("integrity.checking"),
+    },
+    {
+      key: "unlock",
+      label: t("integrity.unlock"),
+      labelKey: "integrity.unlock",
+      glyph: <IconUnlock />,
+      busy: "…",
+    },
     // Prune deletes snapshots — keep it behind Advanced so novices can't reach it.
-    ...(advanced ? [{ key: "prune" as Action, label: t("integrity.prune"), busy: "…" }] : []),
+    ...(advanced
+      ? [
+          {
+            key: "prune" as Action,
+            label: t("integrity.prune"),
+            labelKey: "integrity.prune",
+            glyph: <IconPrune />,
+            busy: "…",
+          },
+        ]
+      : []),
   ];
 
   // Append-only check eligibility: only a domain whose off-site repo is set AND
@@ -4720,7 +4763,10 @@ function IntegrityCard({
                       <Button
                         key={shake[k] || 0}
                         label={a.label}
+                        labelKey={a.labelKey}
+                        glyph={a.glyph}
                         tone="neutral"
+                        hueIndex={hueIndex}
                         onClick={() => void run(domain, a.key)}
                         disabled={state[k] === "busy"}
                         busy={state[k] === "busy"}
@@ -4745,8 +4791,13 @@ function IntegrityCard({
                 <Button
                   key={shake[dKey] || 0}
                   label={kind === "dr" ? t("drill.runDR") : t("verify.now")}
+                  // Both engines here too ([313]). The labelKey follows the
+                  // same branch the label does — a stage derived from the
+                  // wrong key would size this button for the other wording.
+                  labelKey={kind === "dr" ? "drill.runDR" : "verify.now"}
                   glyph={<IconCheckCircle />}
                   tone="neutral"
+                  hueIndex={hueIndex}
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}
                   busy={state[dKey] === "busy"}
@@ -5667,30 +5718,12 @@ function IconTabGeneral() {
 }
 
 function IconTabStorage() {
-  // A drive/disk stack — backup storage paths. REDESIGNED (jdp, live review,
-  // same "unrecognizable when selected" report — this one was the odd one
-  // out: unlike the other four, it never used a second colour at all, and
-  // was still illegible in EVERY theme/state, selected or not). The a8eaa40
-  // redraw flipped the old stroke's ellipse-top + two-line-body directly to
-  // a single filled silhouette (a top semi-ellipse arced straight into a
-  // bottom semi-ellipse, no seam) — as a flat, single-colour fill that
-  // reads as a plain rounded blob with no internal structure at all, the
-  // one visual cue that actually says "disk/cylinder" (a visible rim
-  // separating the cap from the body) was lost entirely once the stroke's
-  // own line-work disappeared. Rebuilt as two shapes: a plain filled body
-  // (straight sides, curved visible-front bottom) UNDER a full top ellipse
-  // that carries its own thin evenodd cut across its middle — a real seam,
-  // not a second colour — so the cap reads as a distinct disk lid instead
-  // of merging into one shapeless silhouette, in every theme/state/hue.
-  return (
-    <svg viewBox="2 1.5 12 12" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path d="M2,4 V11 A6,2.2 0 0 0 14,11 V4 Z" />
-      <path
-        fillRule="evenodd"
-        d="M8,1.8 A6,2.2 0 0 1 14,4 A6,2.2 0 0 1 8,6.2 A6,2.2 0 0 1 2,4 A6,2.2 0 0 1 8,1.8 Z M2.6,3.5 H13.4 V3.9 H2.6 Z"
-      />
-    </svg>
-  );
+  // jdp's own file now ([309]), cropped to its measured ink like every
+  // other imported glyph. The hand-drawn disk stack it replaces went
+  // through three redraws chasing legibility; an icon needing that many
+  // attempts is a better candidate for replacing than for a fourth
+  // redraw. See scripts/gen_glyphs.py.
+  return <IconTabStorageGlyph />;
 }
 
 function IconTabSchedules() {
@@ -5732,18 +5765,10 @@ function IconTabNotifications() {
 }
 
 function IconTabIntegrity() {
-  // A checked shield — repo/backup integrity checks. Shield + checkmark as
-  // one evenodd path — the checkmark is a real cut-out, not a second
-  // painted colour (see the fix note above this section); same check
-  // polygon coordinates as before, now subtracted instead of painted over.
-  return (
-    <svg viewBox="1.9 2 12.2 12.2" fill="currentColor" className="shrink-0" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M8 2 3 3.8v3.9c0 3.4 2.3 5.6 5 6.5 2.7-.9 5-3.1 5-6.5V3.8L8 2Z M5.2 7.85 6.9 9.55 10.55 5.6 11.65 6.6 7.15 11.5 4.15 8.5Z"
-      />
-    </svg>
-  );
+  // jdp's own file now ([306]), a Material shield-check. Same silhouette
+  // idea as the hand-drawn one it replaces, drawn by people who do this
+  // for a living. See scripts/gen_glyphs.py.
+  return <IconTabIntegrityGlyph />;
 }
 
 function IconTabSystem() {

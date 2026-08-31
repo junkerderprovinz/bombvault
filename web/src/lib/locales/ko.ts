@@ -618,8 +618,7 @@ const ko: Partial<Translations> = {
   "recovery.stored": "안전하게 보관했습니다",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "재해 복구",
-  "recovery.intro": "기존 백업에서 컨테이너와 VM을 이 설치본으로 복구합니다. BombVault를 백업에 연결하고, 그 안에 무엇이 있는지 검색한 뒤 복원하세요.",
+  "recovery.intro": "기존 백업에서 컨테이너와 VM을 이 설치본으로 복구합니다.",
   "recovery.step1": "BombVault가 백업을 읽을 수 있나요?",
   "recovery.appKeyExplain": "기존 백업을 읽으려면 이 컨테이너에 이전과 동일한 APP_KEY가 필요합니다. 복구 키트에 들어 있습니다. 아직 설정하지 않았다면 Unraid 컨테이너 템플릿에서 설정한 뒤 다시 확인하세요.",
   "recovery.appKeyRemedy": "암호화 키가 이 백업과 일치하지 않습니다. 원래 APP_KEY(복구 키트에 있음)를 컨테이너 템플릿에 설정한 뒤 다시 확인하세요.",

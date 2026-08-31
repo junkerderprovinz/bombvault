@@ -626,8 +626,7 @@ const tr: Partial<Translations> = {
   "recovery.stored": "Güvenle sakladım",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
-  "recovery.pageTitle": "Felaket kurtarma",
-  "recovery.intro": "Konteynerlerinizi ve VM'lerinizi mevcut bir yedekten bu kuruluma geri yükleyin. BombVault'u yedeklerinize yönlendirin, içlerinde ne olduğunu keşfedin ve geri yükleyin.",
+  "recovery.intro": "Konteynerlerinizi ve VM'lerinizi mevcut bir yedekten bu kuruluma geri yükleyin.",
   "recovery.step1": "BombVault yedeklerinizi okuyabiliyor mu?",
   "recovery.appKeyExplain": "Mevcut yedekleri okumak için bu konteynerin daha önce kullandığı AYNI APP_KEY gerekir. Bu, kurtarma kitinizde yer alır. Henüz ayarlı değilse Unraid konteyner şablonunda ayarlayın, ardından yeniden denetleyin.",
   "recovery.appKeyRemedy": "Şifreleme anahtarı bu yedeklerle eşleşmiyor. Orijinal APP_KEY'i (kurtarma kitinizden) konteyner şablonunda ayarlayın, ardından yeniden denetleyin.",

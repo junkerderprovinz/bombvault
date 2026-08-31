@@ -1119,8 +1119,7 @@ const is: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Endurheimt",
-  "recovery.pageTitle": "Neyðarendurheimt",
-  "recovery.intro": "Endurheimtu gáma og sýndarvélar úr fyrirliggjandi afriti á þessari uppsetningu. Beindu BombVault á afritin þín, komdu að því hvað er í þeim, og endurheimtu.",
+  "recovery.intro": "Endurheimtu gáma og sýndarvélar úr fyrirliggjandi afriti á þessari uppsetningu.",
   // Step 1
   "recovery.step1": "Getur BombVault lesið afritin þín?",
   "recovery.appKeyExplain": "Til að lesa fyrirliggjandi afrit þarf þessi gámur SAMA APP_KEY og var notaður áður. Það er í endurheimtarpakkanum þínum. Stilltu það í Unraid-gámasniðmátinu ef það er ekki þegar gert, athugaðu svo aftur.",
