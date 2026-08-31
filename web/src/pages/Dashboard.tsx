@@ -600,7 +600,12 @@ function chipForRpo(status: string): string {
   }
 }
 
-function ProtectionCard({
+// Exported for Dashboard.protectionCard.dom.test.tsx ([376]). The card's own
+// page could not demonstrate the no-off-site row on the test box, because
+// nothing is scheduled there and an unscheduled domain takes the "off" branch
+// long before the badge is reached. That is correct behaviour and a bad way to
+// verify a change, so the card is rendered directly instead.
+export function ProtectionCard({
   t,
   domains,
   loading,
