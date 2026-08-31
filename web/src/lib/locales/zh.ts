@@ -24,7 +24,7 @@ const zh: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "仪表板",
   "dashboard.subtitle": "一览您的备份状态。",
-  "dashboard.summaryHealth": "整体状态",
+  "dashboard.summaryHealth": "恢复点",
   "dashboard.summaryNextBackup": "下次备份",
   "dashboard.summaryLastResult": "上次结果",
   "dashboard.lastBackups": "最近备份",
@@ -89,6 +89,7 @@ const zh: Partial<Translations> = {
   "containers.notInstalled": "未安装",
   "containers.notInstalledTitle": "未安装（仅备份）",
   "containers.notInstalledHint": "这些容器已不再安装，但仍有备份。请还原它们，或删除备份以释放空间。",
+  "containers.notInstalledSkipped": "它们仍在计划中，因此每次运行都会为每一个记录一次跳过。",
   "containers.deleteBackups": "删除所有备份",
   "containers.deleteBackupsConfirm": "删除此容器的所有备份？快照将从仓库中永久移除且无法撤销。",
   "containers.filter": "筛选:",
@@ -776,6 +777,15 @@ const zh: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "保护状态",
+  "dashboard.noOffsite": "没有异地副本",
+  "dashboard.neverExcluded": "未安排",
+  "dashboard.neverExcludedTitle": "有意排除在计划之外，因此这里没有需要备份的内容。",
+  "dashboard.neverSelf": "自身容器",
+  "dashboard.neverSelfTitle": "BombVault 从不备份自己所在的容器：中途停掉它就等于停掉备份本身。",
+  "dashboard.noOffsiteTitle": "所有副本都在这台机器上，一场火灾、一次盗窃或一块硬盘损坏就会把备份一并带走。",
+  "runReason.interrupted": "已中断（BombVault 在运行途中重启）",
+  "runReason.shutdown": "已取消（BombVault 已关闭）",
+  "runReason.containerGone": "容器已不在主机上",
   "dashboard.rpoOk": "最新",
   "dashboard.rpoWarn": "即将到期",
   "dashboard.rpoOverdue": "已逾期",

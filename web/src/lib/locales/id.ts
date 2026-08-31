@@ -27,7 +27,7 @@ const id: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Dasbor",
   "dashboard.subtitle": "Status cadangan Anda sekilas.",
-  "dashboard.summaryHealth": "Kondisi keseluruhan",
+  "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Cadangan berikutnya",
   "dashboard.summaryLastResult": "Hasil terakhir",
   "dashboard.lastBackups": "Cadangan terakhir",
@@ -93,6 +93,7 @@ const id: Partial<Translations> = {
   "containers.notInstalled": "Tidak terpasang",
   "containers.notInstalledTitle": "Tidak terpasang (hanya cadangan)",
   "containers.notInstalledHint": "Container ini sudah tidak terpasang tetapi masih memiliki cadangan. Pulihkan, atau hapus cadangannya untuk membebaskan ruang.",
+  "containers.notInstalledSkipped": "Semuanya masih dijadwalkan, jadi setiap proses mencatat satu lewatan untuk masing-masing.",
   "containers.deleteBackups": "Hapus semua cadangan",
   "containers.deleteBackupsConfirm": "Hapus SEMUA cadangan container ini? Snapshot dihapus secara permanen dari repositori dan tidak dapat dipulihkan.",
   "containers.filter": "Filter:",
@@ -693,6 +694,15 @@ const id: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Status perlindungan",
+  "dashboard.noOffsite": "Tidak ada salinan luar lokasi",
+  "dashboard.neverExcluded": "Tidak dijadwalkan",
+  "dashboard.neverExcludedTitle": "Sengaja ditinggalkan di luar jadwal, jadi tidak ada yang perlu dicadangkan di sini.",
+  "dashboard.neverSelf": "Kontainer sendiri",
+  "dashboard.neverSelfTitle": "BombVault tidak pernah mencadangkan kontainer tempatnya berjalan: menghentikannya di tengah proses akan menghentikan pencadangan itu sendiri.",
+  "dashboard.noOffsiteTitle": "Semua salinan ada di mesin ini, jadi kebakaran, pencurian, atau satu disk rusak ikut membawa cadangannya.",
+  "runReason.interrupted": "terputus (BombVault dimulai ulang di tengah proses)",
+  "runReason.shutdown": "dibatalkan (BombVault dimatikan)",
+  "runReason.containerGone": "kontainer tidak ada lagi di host",
   "dashboard.rpoOk": "Terbaru",
   "dashboard.rpoWarn": "Segera jatuh tempo",
   "dashboard.rpoOverdue": "Terlambat",

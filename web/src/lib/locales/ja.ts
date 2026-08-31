@@ -24,7 +24,7 @@ const ja: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "ダッシュボード",
   "dashboard.subtitle": "バックアップ状況を一目で。",
-  "dashboard.summaryHealth": "全体の状態",
+  "dashboard.summaryHealth": "復元ポイント",
   "dashboard.summaryNextBackup": "次回のバックアップ",
   "dashboard.summaryLastResult": "最後の結果",
   "dashboard.lastBackups": "直近のバックアップ",
@@ -89,6 +89,7 @@ const ja: Partial<Translations> = {
   "containers.notInstalled": "未インストール",
   "containers.notInstalledTitle": "未インストール（バックアップのみ）",
   "containers.notInstalledHint": "これらのコンテナはインストールされていませんが、バックアップが残っています。復元するか、バックアップを削除してスペースを解放してください。",
+  "containers.notInstalledSkipped": "まだ予定に残っているため、実行のたびにそれぞれについて省略が記録されます。",
   "containers.deleteBackups": "バックアップをすべて削除",
   "containers.deleteBackupsConfirm": "このコンテナのバックアップをすべて削除しますか？スナップショットはリポジトリから完全に削除され、元に戻せません。",
   "containers.filter": "フィルター:",
@@ -756,6 +757,15 @@ const ja: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "保護ステータス",
+  "dashboard.noOffsite": "オフサイトの複製なし",
+  "dashboard.neverExcluded": "予定なし",
+  "dashboard.neverExcludedTitle": "意図的に予定から外してあるため、ここに保存するものはありません。",
+  "dashboard.neverSelf": "自身のコンテナー",
+  "dashboard.neverSelfTitle": "BombVault は自分が動いているコンテナーを保存しません。途中で止めれば保存そのものが止まるからです。",
+  "dashboard.noOffsiteTitle": "すべての複製がこの機器の上にあるため、火災や盗難、ディスク一台の故障でバックアップも一緒に失われます。",
+  "runReason.interrupted": "中断（実行中に BombVault が再起動しました）",
+  "runReason.shutdown": "中止（BombVault が停止しました）",
+  "runReason.containerGone": "コンテナーはホスト上にもう存在しません",
   "dashboard.rpoOk": "最新",
   "dashboard.rpoWarn": "まもなく期限",
   "dashboard.rpoOverdue": "期限切れ",

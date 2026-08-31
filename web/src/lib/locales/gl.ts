@@ -27,7 +27,7 @@ const gl: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panel",
   "dashboard.subtitle": "O estado das túas copias de seguridade dunha ollada.",
-  "dashboard.summaryHealth": "Estado xeral",
+  "dashboard.summaryHealth": "Punto de recuperación",
   "dashboard.summaryNextBackup": "Próxima copia",
   "dashboard.summaryLastResult": "Último resultado",
   "dashboard.lastBackups": "Últimas copias",
@@ -93,6 +93,7 @@ const gl: Partial<Translations> = {
   "containers.notInstalled": "Non instalado",
   "containers.notInstalledTitle": "Non instalado (só copias)",
   "containers.notInstalledHint": "Estes contedores xa non están instalados pero aínda teñen copias. Restáuraos ou elimina as súas copias para liberar espazo.",
+  "containers.notInstalledSkipped": "Seguen programados, así que cada execución rexistra unha omisión para cada un.",
   "containers.deleteBackups": "Eliminar todas as copias",
   "containers.deleteBackupsConfirm": "Eliminar TODAS as copias deste contedor? As instantáneas elimínanse do repositorio para sempre e non se poden recuperar.",
   "containers.filter": "Filtro:",
@@ -693,6 +694,15 @@ const gl: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Estado de protección",
+  "dashboard.noOffsite": "Sen copia externa",
+  "dashboard.neverExcluded": "Sen programar",
+  "dashboard.neverExcludedTitle": "Deixouse fóra da programación a propósito, así que aquí non hai nada que copiar.",
+  "dashboard.neverSelf": "Contedor propio",
+  "dashboard.neverSelfTitle": "BombVault nunca copia o contedor no que se executa: detelo a metade detería a propia copia.",
+  "dashboard.noOffsiteTitle": "Todas as copias están nesta máquina, así que un incendio, un roubo ou un disco avariado leva tamén as copias de seguridade.",
+  "runReason.interrupted": "interrompido (BombVault reiniciouse a metade da execución)",
+  "runReason.shutdown": "cancelado (BombVault detívose)",
+  "runReason.containerGone": "o contedor xa non existe no anfitrión",
   "dashboard.rpoOk": "Ao día",
   "dashboard.rpoWarn": "Vence pronto",
   "dashboard.rpoOverdue": "Vencido",

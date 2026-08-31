@@ -24,7 +24,7 @@ const es: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panel",
   "dashboard.subtitle": "El estado de tus copias de seguridad de un vistazo.",
-  "dashboard.summaryHealth": "Estado general",
+  "dashboard.summaryHealth": "Punto de recuperación",
   "dashboard.summaryNextBackup": "Próxima copia",
   "dashboard.summaryLastResult": "Último resultado",
   "dashboard.lastBackups": "Últimas copias",
@@ -89,6 +89,7 @@ const es: Partial<Translations> = {
   "containers.notInstalled": "No instalado",
   "containers.notInstalledTitle": "No instalado (solo copias)",
   "containers.notInstalledHint": "Estos contenedores ya no están instalados pero aún tienen copias. Restáuralos o elimina sus copias para liberar espacio.",
+  "containers.notInstalledSkipped": "Siguen programados, así que cada ejecución registra una omisión para cada uno.",
   "containers.deleteBackups": "Eliminar todas las copias",
   "containers.deleteBackupsConfirm": "¿Eliminar TODAS las copias de este contenedor? Las instantáneas se eliminan permanentemente del repositorio y no se puede deshacer.",
   "containers.filter": "Filtro:",
@@ -782,6 +783,15 @@ const es: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Estado de protección",
+  "dashboard.noOffsite": "Sin copia externa",
+  "dashboard.neverExcluded": "Sin programar",
+  "dashboard.neverExcludedTitle": "Se dejó fuera de la programación a propósito, así que aquí no hay nada que copiar.",
+  "dashboard.neverSelf": "Contenedor propio",
+  "dashboard.neverSelfTitle": "BombVault nunca copia el contenedor en el que se ejecuta: detenerlo a mitad de la copia detendría la copia misma.",
+  "dashboard.noOffsiteTitle": "Todas las copias están en esta máquina, así que un incendio, un robo o un disco averiado se lleva también las copias de seguridad.",
+  "runReason.interrupted": "interrumpido (BombVault se reinició a mitad de la ejecución)",
+  "runReason.shutdown": "cancelado (BombVault se detuvo)",
+  "runReason.containerGone": "el contenedor ya no existe en el anfitrión",
   "dashboard.rpoOk": "Al día",
   "dashboard.rpoWarn": "Pronto vence",
   "dashboard.rpoOverdue": "Atrasado",

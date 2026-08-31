@@ -27,7 +27,7 @@ const is: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Stjórnborð",
   "dashboard.subtitle": "Staða afritanna þinna í hnotskurn.",
-  "dashboard.summaryHealth": "Almennt ástand",
+  "dashboard.summaryHealth": "Endurheimtupunktur",
   "dashboard.summaryNextBackup": "Næsta afritun",
   "dashboard.summaryLastResult": "Síðasta niðurstaða",
   "dashboard.lastBackups": "Síðustu afrit",
@@ -93,6 +93,7 @@ const is: Partial<Translations> = {
   "containers.notInstalled": "Ekki uppsettur",
   "containers.notInstalledTitle": "Ekki uppsettur (aðeins afrit)",
   "containers.notInstalledHint": "Þessir gámar eru ekki lengur uppsettir en eiga samt afrit. Endurheimtu þá eða eyddu afritum þeirra til að losa pláss.",
+  "containers.notInstalledSkipped": "Þau eru enn á áætlun, svo hver keyrsla skráir sleppingu fyrir hvert þeirra.",
   "containers.deleteBackups": "Eyða öllum afritum",
   "containers.deleteBackupsConfirm": "Eyða ÖLLUM afritum þessa gáms? Snapshottin eru fjarlægð varanlega úr geymslusafninu og verður ekki afturkallað.",
   "containers.filter": "Sía:",
@@ -693,6 +694,15 @@ const is: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Verndarstaða",
+  "dashboard.noOffsite": "Ekkert afrit utan staðar",
+  "dashboard.neverExcluded": "Ekki á áætlun",
+  "dashboard.neverExcludedTitle": "Vísvitandi skilið eftir utan áætlunar, svo hér er ekkert að afrita.",
+  "dashboard.neverSelf": "Eigin gámur",
+  "dashboard.neverSelfTitle": "BombVault afritar aldrei gáminn sem það keyrir í: að stöðva hann í miðri keyrslu myndi stöðva afritunina sjálfa.",
+  "dashboard.noOffsiteTitle": "Öll afrit eru á þessari vél, svo eldur, þjófnaður eða einn bilaður diskur tekur afritin líka.",
+  "runReason.interrupted": "rofið (BombVault endurræstist í miðri keyrslu)",
+  "runReason.shutdown": "hætt við (BombVault var slökkt)",
+  "runReason.containerGone": "gámurinn er ekki lengur til á hýsilnum",
   "dashboard.rpoOk": "Uppfært",
   "dashboard.rpoWarn": "Rennur út bráðum",
   "dashboard.rpoOverdue": "Á gjalddaga",

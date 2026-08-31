@@ -23,7 +23,7 @@ const no: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Sikkerhetskopieringsstatusen din med ett blikk.",
-  "dashboard.summaryHealth": "Samlet status",
+  "dashboard.summaryHealth": "Gjenopprettingspunkt",
   "dashboard.summaryNextBackup": "Neste sikkerhetskopi",
   "dashboard.summaryLastResult": "Siste resultat",
   "dashboard.lastBackups": "Siste sikkerhetskopier",
@@ -88,6 +88,7 @@ const no: Partial<Translations> = {
   "containers.notInstalled": "Ikke installert",
   "containers.notInstalledTitle": "Ikke installert (kun sikkerhetskopier)",
   "containers.notInstalledHint": "Disse kontainerne er ikke lenger installert, men har fortsatt sikkerhetskopier. Gjenopprett dem, eller slett sikkerhetskopiene for å frigjøre plass.",
+  "containers.notInstalledSkipped": "De er fortsatt planlagt, så hver kjøring registrerer en overhopping for hver av dem.",
   "containers.deleteBackups": "Slett alle sikkerhetskopier",
   "containers.deleteBackupsConfirm": "Slette ALLE sikkerhetskopier av denne kontaineren? Snapshotene fjernes permanent fra repositoriet og kan ikke angres.",
   "containers.filter": "Filter:",
@@ -761,6 +762,15 @@ const no: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Beskyttelsesstatus",
+  "dashboard.noOffsite": "Ingen ekstern kopi",
+  "dashboard.neverExcluded": "Ikke planlagt",
+  "dashboard.neverExcludedTitle": "Bevisst holdt utenfor planen, så her er det ingenting å sikkerhetskopiere.",
+  "dashboard.neverSelf": "Egen beholder",
+  "dashboard.neverSelfTitle": "BombVault sikkerhetskopierer aldri beholderen den kjører i: å stoppe den underveis ville stoppe selve kopieringen.",
+  "dashboard.noOffsiteTitle": "Alle kopiene ligger på denne maskinen, så brann, tyveri eller én ødelagt disk tar med seg sikkerhetskopiene også.",
+  "runReason.interrupted": "avbrutt (BombVault startet på nytt underveis)",
+  "runReason.shutdown": "avbrutt av nedstenging (BombVault ble slått av)",
+  "runReason.containerGone": "beholderen finnes ikke lenger på verten",
   "dashboard.rpoOk": "Oppdatert",
   "dashboard.rpoWarn": "Snart forfalt",
   "dashboard.rpoOverdue": "Forfalt",

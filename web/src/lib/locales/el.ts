@@ -24,7 +24,7 @@ const el: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Πίνακας ελέγχου",
   "dashboard.subtitle": "Η κατάσταση των αντιγράφων σας με μια ματιά.",
-  "dashboard.summaryHealth": "Γενική κατάσταση",
+  "dashboard.summaryHealth": "Σημείο επαναφοράς",
   "dashboard.summaryNextBackup": "Επόμενο αντίγραφο ασφαλείας",
   "dashboard.summaryLastResult": "Τελευταίο αποτέλεσμα",
   "dashboard.lastBackups": "Τελευταία αντίγραφα ασφαλείας",
@@ -89,6 +89,7 @@ const el: Partial<Translations> = {
   "containers.notInstalled": "Μη εγκατεστημένο",
   "containers.notInstalledTitle": "Μη εγκατεστημένο (μόνο αντίγραφα)",
   "containers.notInstalledHint": "Αυτά τα containers δεν είναι πλέον εγκατεστημένα αλλά έχουν αντίγραφα ασφαλείας. Επαναφέρετέ τα ή διαγράψτε τα αντίγραφα για να ελευθερώσετε χώρο.",
+  "containers.notInstalledSkipped": "Εξακολουθούν να είναι προγραμματισμένα, οπότε κάθε εκτέλεση καταγράφει μια παράλειψη για καθένα.",
   "containers.deleteBackups": "Διαγραφή όλων των αντιγράφων",
   "containers.deleteBackupsConfirm": "Διαγραφή ΟΛΩΝ των αντιγράφων αυτού του container; Τα στιγμιότυπα αφαιρούνται μόνιμα από το αποθετήριο και δεν μπορούν να ανακτηθούν.",
   "containers.filter": "Φίλτρο:",
@@ -784,6 +785,15 @@ const el: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Κατάσταση προστασίας",
+  "dashboard.noOffsite": "Κανένα αντίγραφο εκτός τοποθεσίας",
+  "dashboard.neverExcluded": "Δεν έχει προγραμματιστεί",
+  "dashboard.neverExcludedTitle": "Εξαιρέθηκε σκόπιμα από το πρόγραμμα, οπότε δεν υπάρχει τίποτα να αντιγραφεί εδώ.",
+  "dashboard.neverSelf": "Δικό του κοντέινερ",
+  "dashboard.neverSelfTitle": "Το BombVault δεν αντιγράφει ποτέ το κοντέινερ στο οποίο τρέχει: αν το σταματούσε στη μέση, θα σταματούσε και η ίδια η αντιγραφή.",
+  "dashboard.noOffsiteTitle": "Όλα τα αντίγραφα βρίσκονται σε αυτό το μηχάνημα, οπότε μια φωτιά, μια κλοπή ή ένας χαλασμένος δίσκος παίρνει μαζί και τα αντίγραφα ασφαλείας.",
+  "runReason.interrupted": "διακόπηκε (το BombVault επανεκκινήθηκε στη μέση)",
+  "runReason.shutdown": "ματαιώθηκε (το BombVault τερματίστηκε)",
+  "runReason.containerGone": "το κοντέινερ δεν υπάρχει πλέον στον κεντρικό υπολογιστή",
   "dashboard.rpoOk": "Ενημερωμένο",
   "dashboard.rpoWarn": "Λήγει σύντομα",
   "dashboard.rpoOverdue": "Εκπρόθεσμο",

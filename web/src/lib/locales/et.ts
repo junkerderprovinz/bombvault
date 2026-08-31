@@ -27,7 +27,7 @@ const et: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Töölaud",
   "dashboard.subtitle": "Sinu varunduse olek ühe pilguga.",
-  "dashboard.summaryHealth": "Üldine seisund",
+  "dashboard.summaryHealth": "Taastepunkt",
   "dashboard.summaryNextBackup": "Järgmine varundus",
   "dashboard.summaryLastResult": "Viimane tulemus",
   "dashboard.lastBackups": "Viimased varundused",
@@ -93,6 +93,7 @@ const et: Partial<Translations> = {
   "containers.notInstalled": "Pole paigaldatud",
   "containers.notInstalledTitle": "Pole paigaldatud (ainult varundused)",
   "containers.notInstalledHint": "Need konteinerid pole enam paigaldatud, kuid neil on ikka varundusi. Taasta need või kustuta nende varundused ruumi vabastamiseks.",
+  "containers.notInstalledSkipped": "Need on endiselt ajastatud, nii et iga käivitus salvestab igaühe kohta vahelejätmise.",
   "containers.deleteBackups": "Kustuta kõik varundused",
   "containers.deleteBackupsConfirm": "Kas kustutada selle konteineri KÕIK varundused? Hetktõmmised eemaldatakse hoidlast jäädavalt ja neid ei saa taastada.",
   "containers.filter": "Filter:",
@@ -693,6 +694,15 @@ const et: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Kaitse olek",
+  "dashboard.noOffsite": "Väliskoopiat pole",
+  "dashboard.neverExcluded": "Pole ajastatud",
+  "dashboard.neverExcludedTitle": "Teadlikult ajakavast välja jäetud, siin pole midagi varundada.",
+  "dashboard.neverSelf": "Enda konteiner",
+  "dashboard.neverSelfTitle": "BombVault ei varunda kunagi konteinerit, milles ta töötab: selle peatamine töö ajal peataks varunduse enda.",
+  "dashboard.noOffsiteTitle": "Kõik koopiad on selles masinas, nii et tulekahju, vargus või üks rikkis ketas viib ka varukoopiad.",
+  "runReason.interrupted": "katkestatud (BombVault taaskäivitus töö ajal)",
+  "runReason.shutdown": "tühistatud (BombVault suleti)",
+  "runReason.containerGone": "konteinerit pole hostis enam olemas",
   "dashboard.rpoOk": "Ajakohane",
   "dashboard.rpoWarn": "Peagi tähtaeg",
   "dashboard.rpoOverdue": "Tähtaeg möödas",

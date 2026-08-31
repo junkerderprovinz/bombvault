@@ -24,7 +24,7 @@ const vi: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Tổng quan",
   "dashboard.subtitle": "Trạng thái sao lưu của bạn trong nháy mắt.",
-  "dashboard.summaryHealth": "Tình trạng tổng thể",
+  "dashboard.summaryHealth": "Điểm khôi phục",
   "dashboard.summaryNextBackup": "Bản sao lưu tiếp theo",
   "dashboard.summaryLastResult": "Kết quả gần nhất",
   "dashboard.lastBackups": "Bản sao lưu gần đây",
@@ -89,6 +89,7 @@ const vi: Partial<Translations> = {
   "containers.notInstalled": "Chưa cài đặt",
   "containers.notInstalledTitle": "Chưa cài đặt (chỉ có bản sao lưu)",
   "containers.notInstalledHint": "Các containers này không còn được cài đặt nhưng vẫn còn bản sao lưu. Hãy khôi phục hoặc xóa bản sao lưu để giải phóng dung lượng.",
+  "containers.notInstalledSkipped": "Chúng vẫn còn trong lịch, nên mỗi lần chạy đều ghi lại một mục bỏ qua cho từng cái.",
   "containers.deleteBackups": "Xóa tất cả bản sao lưu",
   "containers.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu của container này? Các snapshot sẽ bị xóa vĩnh viễn khỏi kho và không thể hoàn tác.",
   "containers.filter": "Lọc:",
@@ -776,6 +777,15 @@ const vi: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Trạng thái bảo vệ",
+  "dashboard.noOffsite": "Không có bản sao ngoài site",
+  "dashboard.neverExcluded": "Không có lịch",
+  "dashboard.neverExcludedTitle": "Được cố ý để ngoài lịch, nên ở đây không có gì để sao lưu.",
+  "dashboard.neverSelf": "Vùng chứa của chính nó",
+  "dashboard.neverSelfTitle": "BombVault không bao giờ sao lưu vùng chứa mà nó đang chạy: dừng nó giữa chừng sẽ dừng luôn bản sao lưu.",
+  "dashboard.noOffsiteTitle": "Mọi bản sao đều nằm trên máy này, nên một đám cháy, một vụ trộm hay một ổ đĩa hỏng sẽ mang theo cả bản sao lưu.",
+  "runReason.interrupted": "bị gián đoạn (BombVault khởi động lại giữa chừng)",
+  "runReason.shutdown": "đã hủy (BombVault đã tắt)",
+  "runReason.containerGone": "vùng chứa không còn trên máy chủ",
   "dashboard.rpoOk": "Cập nhật",
   "dashboard.rpoWarn": "Sắp đến hạn",
   "dashboard.rpoOverdue": "Quá hạn",

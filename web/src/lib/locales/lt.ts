@@ -27,7 +27,7 @@ const lt: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Skydelis",
   "dashboard.subtitle": "Atsarginių kopijų būsena vienu žvilgsniu.",
-  "dashboard.summaryHealth": "Bendra būklė",
+  "dashboard.summaryHealth": "Atkūrimo taškas",
   "dashboard.summaryNextBackup": "Kita atsarginė kopija",
   "dashboard.summaryLastResult": "Paskutinis rezultatas",
   "dashboard.lastBackups": "Paskutinės kopijos",
@@ -93,6 +93,7 @@ const lt: Partial<Translations> = {
   "containers.notInstalled": "Neįdiegtas",
   "containers.notInstalledTitle": "Neįdiegtas (tik kopijos)",
   "containers.notInstalledHint": "Šie konteineriai jau nebeįdiegti, bet vis dar turi atsarginių kopijų. Atkurkite juos arba ištrinkite jų kopijas, kad atlaisvintumėte vietos.",
+  "containers.notInstalledSkipped": "Jie vis dar suplanuoti, todėl kiekvienas vykdymas kiekvienam jų įrašo praleidimą.",
   "containers.deleteBackups": "Ištrinti visas kopijas",
   "containers.deleteBackupsConfirm": "Ištrinti VISAS šio konteinerio atsargines kopijas? Momentinės kopijos negrįžtamai pašalinamos iš saugyklos ir jų nebus galima atkurti.",
   "containers.filter": "Filtras:",
@@ -693,6 +694,15 @@ const lt: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Apsaugos būsena",
+  "dashboard.noOffsite": "Nėra kopijos kitoje vietoje",
+  "dashboard.neverExcluded": "Nesuplanuota",
+  "dashboard.neverExcludedTitle": "Sąmoningai palikta už tvarkaraščio ribų, tad čia nėra ko kurti atsarginės kopijos.",
+  "dashboard.neverSelf": "Savas konteineris",
+  "dashboard.neverSelfTitle": "BombVault niekada nekopijuoja konteinerio, kuriame veikia: sustabdžius jį įpusėjus, sustotų ir pati kopija.",
+  "dashboard.noOffsiteTitle": "Visos kopijos yra šiame kompiuteryje, tad gaisras, vagystė ar vienas sugedęs diskas pasiima ir atsargines kopijas.",
+  "runReason.interrupted": "nutraukta (BombVault buvo paleistas iš naujo vykdymo metu)",
+  "runReason.shutdown": "atšaukta (BombVault buvo išjungtas)",
+  "runReason.containerGone": "konteinerio kompiuteryje nebėra",
   "dashboard.rpoOk": "Atnaujinta",
   "dashboard.rpoWarn": "Netrukus terminas",
   "dashboard.rpoOverdue": "Vėluojama",

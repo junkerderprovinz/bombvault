@@ -24,7 +24,7 @@ const ko: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "대시보드",
   "dashboard.subtitle": "백업 상태를 한눈에.",
-  "dashboard.summaryHealth": "전체 상태",
+  "dashboard.summaryHealth": "복원 지점",
   "dashboard.summaryNextBackup": "다음 백업",
   "dashboard.summaryLastResult": "마지막 결과",
   "dashboard.lastBackups": "최근 백업",
@@ -89,6 +89,7 @@ const ko: Partial<Translations> = {
   "containers.notInstalled": "설치되지 않음",
   "containers.notInstalledTitle": "설치되지 않음 (백업만)",
   "containers.notInstalledHint": "이 컨테이너는 더 이상 설치되지 않았지만 백업이 있습니다. 복원하거나 공간을 확보하려면 백업을 삭제하세요.",
+  "containers.notInstalledSkipped": "여전히 예약되어 있어 실행할 때마다 각각에 대해 건너뜀이 기록됩니다.",
   "containers.deleteBackups": "모든 백업 삭제",
   "containers.deleteBackupsConfirm": "이 컨테이너의 모든 백업을 삭제하시겠습니까? 스냅샷이 리포지토리에서 영구적으로 제거되며 되돌릴 수 없습니다.",
   "containers.filter": "필터:",
@@ -756,6 +757,15 @@ const ko: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "보호 상태",
+  "dashboard.noOffsite": "외부 사본 없음",
+  "dashboard.neverExcluded": "예약 안 됨",
+  "dashboard.neverExcludedTitle": "의도적으로 일정에서 제외했으므로 여기서 백업할 것은 없습니다.",
+  "dashboard.neverSelf": "자기 컨테이너",
+  "dashboard.neverSelfTitle": "BombVault는 자신이 실행 중인 컨테이너를 백업하지 않습니다. 도중에 멈추면 백업 자체가 멈추기 때문입니다.",
+  "dashboard.noOffsiteTitle": "모든 사본이 이 장비에 있어 화재나 도난, 디스크 한 대의 고장으로 백업까지 함께 사라집니다.",
+  "runReason.interrupted": "중단됨 (실행 중 BombVault가 다시 시작됨)",
+  "runReason.shutdown": "취소됨 (BombVault가 종료됨)",
+  "runReason.containerGone": "컨테이너가 호스트에 더 이상 없습니다",
   "dashboard.rpoOk": "최신",
   "dashboard.rpoWarn": "곧 예정",
   "dashboard.rpoOverdue": "기한 초과",

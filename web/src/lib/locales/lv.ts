@@ -27,7 +27,7 @@ const lv: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Vadības panelis",
   "dashboard.subtitle": "Jūsu rezerves kopiju statuss vienā skatā.",
-  "dashboard.summaryHealth": "Vispārējais stāvoklis",
+  "dashboard.summaryHealth": "Atjaunošanas punkts",
   "dashboard.summaryNextBackup": "Nākamā rezerves kopija",
   "dashboard.summaryLastResult": "Pēdējais rezultāts",
   "dashboard.lastBackups": "Pēdējās rezerves kopijas",
@@ -93,6 +93,7 @@ const lv: Partial<Translations> = {
   "containers.notInstalled": "Nav instalēts",
   "containers.notInstalledTitle": "Nav instalēts (tikai rezerves kopijas)",
   "containers.notInstalledHint": "Šie konteineri vairs nav instalēti, bet joprojām satur rezerves kopijas. Atjaunojiet tos vai izdzēsiet to rezerves kopijas, lai atbrīvotu vietu.",
+  "containers.notInstalledSkipped": "Tie joprojām ir ieplānoti, tāpēc katrā palaišanā katram no tiem tiek reģistrēta izlaišana.",
   "containers.deleteBackups": "Dzēst visas rezerves kopijas",
   "containers.deleteBackupsConfirm": "Dzēst VISAS šī konteinera rezerves kopijas? Momentuzņēmumi tiek neatgriezeniski noņemti no repozitorija, un tos nevarēs atjaunot.",
   "containers.filter": "Filtrs:",
@@ -693,6 +694,15 @@ const lv: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Aizsardzības statuss",
+  "dashboard.noOffsite": "Nav kopijas ārpus vietas",
+  "dashboard.neverExcluded": "Nav ieplānots",
+  "dashboard.neverExcludedTitle": "Apzināti atstāts ārpus grafika, tāpēc te nav ko dublēt.",
+  "dashboard.neverSelf": "Savs konteiners",
+  "dashboard.neverSelfTitle": "BombVault nekad nedublē konteineru, kurā tas darbojas: apturot to pusceļā, apstātos pati dublēšana.",
+  "dashboard.noOffsiteTitle": "Visas kopijas ir šajā datorā, tāpēc ugunsgrēks, zādzība vai viens bojāts disks paņem līdzi arī dublējumus.",
+  "runReason.interrupted": "pārtraukts (BombVault tika restartēts izpildes laikā)",
+  "runReason.shutdown": "atcelts (BombVault tika izslēgts)",
+  "runReason.containerGone": "konteinera resursdatorā vairs nav",
   "dashboard.rpoOk": "Aktuāls",
   "dashboard.rpoWarn": "Drīz jāatjauno",
   "dashboard.rpoOverdue": "Nokavēts",

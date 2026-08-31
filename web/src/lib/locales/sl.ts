@@ -27,7 +27,7 @@ const sl: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Nadzorna plošča",
   "dashboard.subtitle": "Stanje varnostnega kopiranja na en pogled.",
-  "dashboard.summaryHealth": "Splošno stanje",
+  "dashboard.summaryHealth": "Obnovitvena točka",
   "dashboard.summaryNextBackup": "Naslednja varnostna kopija",
   "dashboard.summaryLastResult": "Zadnji rezultat",
   "dashboard.lastBackups": "Zadnje varnostne kopije",
@@ -93,6 +93,7 @@ const sl: Partial<Translations> = {
   "containers.notInstalled": "Ni nameščeno",
   "containers.notInstalledTitle": "Ni nameščeno (samo varnostne kopije)",
   "containers.notInstalledHint": "Ti vsebniki niso več nameščeni, a imajo še vedno varnostne kopije. Obnovi jih ali izbriši njihove varnostne kopije, da sprostiš prostor.",
+  "containers.notInstalledSkipped": "Še vedno so načrtovani, zato vsak zagon za vsakega od njih zabeleži preskok.",
   "containers.deleteBackups": "Izbriši vse varnostne kopije",
   "containers.deleteBackupsConfirm": "Izbrišem VSE varnostne kopije tega vsebnika? Posnetki se trajno odstranijo iz repozitorija in tega ni mogoče razveljaviti.",
   "containers.filter": "Filter:",
@@ -691,6 +692,15 @@ const sl: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stanje zaščite",
+  "dashboard.noOffsite": "Ni kopije zunaj lokacije",
+  "dashboard.neverExcluded": "Ni načrtovano",
+  "dashboard.neverExcludedTitle": "Namenoma izpuščeno iz urnika, zato tu ni ničesar za varnostno kopiranje.",
+  "dashboard.neverSelf": "Lastni vsebnik",
+  "dashboard.neverSelfTitle": "BombVault nikoli ne kopira vsebnika, v katerem teče: če bi ga ustavil sredi opravila, bi ustavil kopiranje samo.",
+  "dashboard.noOffsiteTitle": "Vse kopije so na tem računalniku, zato požar, kraja ali en pokvarjen disk odnese tudi varnostne kopije.",
+  "runReason.interrupted": "prekinjeno (BombVault se je znova zagnal med izvajanjem)",
+  "runReason.shutdown": "preklicano (BombVault je bil zaustavljen)",
+  "runReason.containerGone": "vsebnika na gostitelju ni več",
   "dashboard.rpoOk": "Posodobljeno",
   "dashboard.rpoWarn": "Kmalu zapade",
   "dashboard.rpoOverdue": "Zamujeno",

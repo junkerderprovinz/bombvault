@@ -27,7 +27,7 @@ const sk: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Prehľad",
   "dashboard.subtitle": "Stav vašich záloh na jeden pohľad.",
-  "dashboard.summaryHealth": "Celkový stav",
+  "dashboard.summaryHealth": "Bod obnovenia",
   "dashboard.summaryNextBackup": "Ďalšia záloha",
   "dashboard.summaryLastResult": "Posledný výsledok",
   "dashboard.lastBackups": "Posledné zálohy",
@@ -93,6 +93,7 @@ const sk: Partial<Translations> = {
   "containers.notInstalled": "Nenainštalovaný",
   "containers.notInstalledTitle": "Nenainštalovaný (iba zálohy)",
   "containers.notInstalledHint": "Tieto kontajnery už nie sú nainštalované, no stále majú zálohy. Obnovte ich alebo odstráňte ich zálohy, aby ste uvoľnili miesto.",
+  "containers.notInstalledSkipped": "Sú stále naplánované, takže každý beh pre každý z nich zaznamená preskočenie.",
   "containers.deleteBackups": "Odstrániť všetky zálohy",
   "containers.deleteBackupsConfirm": "Odstrániť VŠETKY zálohy tohto kontajnera? Snímky sa natrvalo odstránia z repozitára a nebude ich možné obnoviť.",
   "containers.filter": "Filter:",
@@ -693,6 +694,15 @@ const sk: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stav ochrany",
+  "dashboard.noOffsite": "Žiadna kópia mimo lokality",
+  "dashboard.neverExcluded": "Nie je naplánované",
+  "dashboard.neverExcludedTitle": "Zámerne vynechané z plánu, takže tu nie je čo zálohovať.",
+  "dashboard.neverSelf": "Vlastný kontajner",
+  "dashboard.neverSelfTitle": "BombVault nikdy nezálohuje kontajner, v ktorom beží: zastaviť ho uprostred by zastavilo samotné zálohovanie.",
+  "dashboard.noOffsiteTitle": "Všetky kópie sú na tomto počítači, takže požiar, krádež alebo jeden pokazený disk vezme aj zálohy.",
+  "runReason.interrupted": "prerušené (BombVault sa reštartoval počas behu)",
+  "runReason.shutdown": "zrušené (BombVault bol ukončený)",
+  "runReason.containerGone": "kontajner už na hostiteľovi neexistuje",
   "dashboard.rpoOk": "Aktuálne",
   "dashboard.rpoWarn": "Čoskoro splatné",
   "dashboard.rpoOverdue": "Po termíne",

@@ -24,7 +24,7 @@ const tr: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Kontrol Paneli",
   "dashboard.subtitle": "Yedekleme durumunuz bir bakışta.",
-  "dashboard.summaryHealth": "Genel durum",
+  "dashboard.summaryHealth": "Kurtarma noktası",
   "dashboard.summaryNextBackup": "Sonraki yedek",
   "dashboard.summaryLastResult": "Son sonuç",
   "dashboard.lastBackups": "Son Yedeklemeler",
@@ -89,6 +89,7 @@ const tr: Partial<Translations> = {
   "containers.notInstalled": "Kurulu değil",
   "containers.notInstalledTitle": "Kurulu değil (yalnızca yedekler)",
   "containers.notInstalledHint": "Bu konteynerler artık kurulu değil ancak yedekleri mevcut. Geri yükleyin veya alan açmak için yedeklerini silin.",
+  "containers.notInstalledSkipped": "Hâlâ zamanlanmış durumdalar, bu yüzden her çalışma her biri için bir atlama kaydeder.",
   "containers.deleteBackups": "Tüm yedekleri sil",
   "containers.deleteBackupsConfirm": "Bu konteynerin TÜM yedekleri silinsin mi? Anlık görüntüler depodan kalıcı olarak kaldırılır ve geri alınamaz.",
   "containers.filter": "Filtre:",
@@ -784,6 +785,15 @@ const tr: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Koruma durumu",
+  "dashboard.noOffsite": "Tesis dışı kopya yok",
+  "dashboard.neverExcluded": "Zamanlanmadı",
+  "dashboard.neverExcludedTitle": "Bilerek zamanlamanın dışında bırakıldı, burada yedeklenecek bir şey yok.",
+  "dashboard.neverSelf": "Kendi kapsayıcısı",
+  "dashboard.neverSelfTitle": "BombVault içinde çalıştığı kapsayıcıyı asla yedeklemez: onu yarıda durdurmak yedeklemenin kendisini durdururdu.",
+  "dashboard.noOffsiteTitle": "Tüm kopyalar bu makinede, bu yüzden bir yangın, bir hırsızlık ya da bozulan tek bir disk yedekleri de alıp götürür.",
+  "runReason.interrupted": "kesildi (BombVault çalışma sırasında yeniden başladı)",
+  "runReason.shutdown": "iptal edildi (BombVault kapatıldı)",
+  "runReason.containerGone": "kapsayıcı artık ana makinede yok",
   "dashboard.rpoOk": "Güncel",
   "dashboard.rpoWarn": "Yakında gerekli",
   "dashboard.rpoOverdue": "Gecikmiş",

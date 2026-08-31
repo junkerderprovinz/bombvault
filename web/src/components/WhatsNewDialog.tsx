@@ -61,7 +61,14 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent underline hover:no-underline"
+            // text-accentText, not the flat text-accent ([381]). The same
+            // measurement the charts cite applies here and applies harder,
+            // because this is real text: flat accent gold is 1.61:1 on the
+            // light background, against the 4.5 WCAG asks of body copy. The
+            // token exists and four other places already use it; this inline
+            // link was the one the sweep missed, which is the ordinary way a
+            // rule ends up applied everywhere except once.
+            className="text-accentText underline hover:no-underline"
           >
             {m[1]}
           </a>

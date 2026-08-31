@@ -6,6 +6,7 @@ import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, ge
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
+import { isOwnReason, runReason } from "../lib/runReason";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -791,6 +792,29 @@ function ProtectionCard({
                           </Badge>
                         </div>
                       ) : null}
+                      {/* Cols 6+7 — NO off-site repo at all ([376]).
+                          Both off-site columns below are driven by a RECORDED
+                          run, so a domain that has no second copy anywhere
+                          renders neither, and the row goes quiet at exactly the
+                          point where it has the most to say. Measured on jdp's
+                          box: protectionLevel returned "red" for all five
+                          domains ("enabled but no off-site copy — unprotected by
+                          design") while the page never printed the words
+                          off-site, append-only or 3-2-1 once.
+
+                          The detailed scorecard lives in RansomwareCard, which
+                          is advancedOnly and therefore right to be hidden here.
+                          This is not that. "There is no second copy" is not an
+                          advanced detail about a backup, it is the first fact
+                          about one, so it belongs in the view most people
+                          actually run. */}
+                      {!d.offsiteConfigured ? (
+                        <div className="col-start-6 @[44rem]:col-span-2 min-w-0">
+                          <Badge tone="fail" wrap className="max-w-full" title={t("dashboard.noOffsiteTitle")}>
+                            ✗ {t("dashboard.noOffsite")}
+                          </Badge>
+                        </div>
+                      ) : null}
                       {/* Col 6 — Off-site SUBSET badge (#63) — the off-site integrity
                           check (`restic check --read-data-subset` against the off-site
                           repo). Mirrors the local-verify shield above (same pills)
@@ -1213,11 +1237,25 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
                     </span>
                   </span>
                 </div>
+                {/* dir stays "ltr" for a restic/rclone/Docker message (Latin
+                    technical text, which has to read left-to-right even on an
+                    Arabic page) and follows the page for one of OUR sentences,
+                    which is now actually in the reader's language ([377]). */}
                 {run.status === "failed" && run.error && (
-                  <p dir="ltr" className="ps-16 text-xs text-statusFail wrap-break-word text-start">{run.error}</p>
+                  <p
+                    dir={isOwnReason(run.error) ? undefined : "ltr"}
+                    className="ps-16 text-xs text-statusFail wrap-break-word text-start"
+                  >
+                    {runReason(run.error, t)}
+                  </p>
                 )}
                 {run.status === "skipped" && run.error && (
-                  <p dir="ltr" className="ps-16 text-xs text-carbon-textMuted wrap-break-word text-start">{run.error}</p>
+                  <p
+                    dir={isOwnReason(run.error) ? undefined : "ltr"}
+                    className="ps-16 text-xs text-carbon-textMuted wrap-break-word text-start"
+                  >
+                    {runReason(run.error, t)}
+                  </p>
                 )}
               </div>
               );
@@ -1300,15 +1338,36 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
 
       {noBackups.length > 0 && (
         <div className="divide-y divide-carbon-border">
-          {noBackups.map((c) => (
-            <div key={c.name} className="flex items-center gap-3 py-2.5 text-sm">
-              <div className="w-2 h-2 rounded-full bg-carbon-surface3 shrink-0" />
-              <span className="text-carbon-textMuted flex-1 truncate">{c.name}</span>
-              <span className="text-carbon-textMuted text-xs shrink-0">
-                {t("containers.never")}
-              </span>
-            </div>
-          ))}
+          {/* "Never" said two different things at once ([379]). A container
+              nobody scheduled has never been backed up and that is the plan; a
+              container that IS scheduled and still shows "never" is a gap. Both
+              rendered the same word, so the list could not be read: on jdp's
+              box four rows said "Nie" and there was no way to tell, from the
+              dashboard, which of them were meant to.
+
+              includeInSchedule already carries the answer, and `self` carries
+              the one case that is not a choice at all: BombVault refuses to
+              back up its own container (stopping it mid-run is suicide), so
+              that row must not read as an omission somebody could correct. */}
+          {noBackups.map((c) => {
+            const deliberate = c.self || !c.includeInSchedule;
+            return (
+              <div key={c.name} className="flex items-center gap-3 py-2.5 text-sm">
+                <div className="w-2 h-2 rounded-full bg-carbon-surface3 shrink-0" />
+                <span className="text-carbon-textMuted flex-1 truncate">{c.name}</span>
+                <span
+                  className="text-carbon-textMuted text-xs shrink-0"
+                  title={c.self ? t("dashboard.neverSelfTitle") : deliberate ? t("dashboard.neverExcludedTitle") : undefined}
+                >
+                  {c.self
+                    ? t("dashboard.neverSelf")
+                    : deliberate
+                      ? t("dashboard.neverExcluded")
+                      : t("containers.never")}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </Card>

@@ -22,6 +22,7 @@ import type { Run, ScheduleNext } from "./api";
 import type { ProgressMap, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
+import { RUN_REASONS } from "./runReason";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -73,6 +74,29 @@ export interface LogLine {
  * `useT()`'s `t`; a test can pass a trivial stub instead.
  */
 export type ResolveName = (key: string, params?: Record<string, string>) => string;
+
+/**
+ * A run's reason, in the reader's language where it is one of ours ([377]).
+ *
+ * Every "…failed: {error}" and "…skipped: {error}" line below fills that
+ * placeholder from runs.error, so before this the log read half-translated:
+ * "MinIO-Backup übersprungen: container no longer exists on the host", a German
+ * sentence finished in English. Measured on jdp's dashboard, where three
+ * definitions produced exactly that line twelve times over.
+ *
+ * Translating HERE rather than in each of the thirteen call sites keeps the fix
+ * in one place, and keeps buildLogLines pure: RUN_REASONS maps our sentences to
+ * keys, and resolveName is already the injected way this module turns a key
+ * into text.
+ *
+ * A message from restic, rclone or Docker is passed through untouched, which is
+ * the correct outcome for all of them.
+ */
+function reasonText(raw: string | undefined, resolveName: ResolveName): string {
+  if (!raw) return "";
+  const key = RUN_REASONS[raw.trim()];
+  return key ? resolveName(key) : raw;
+}
 
 // ---------------------------------------------------------------------------
 // Domain / job literal → translation key
@@ -395,7 +419,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.linePruneSuccess", { domain: domainText }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.linePruneFailed", { domain: domainText, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.linePruneFailed", { domain: domainText, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
@@ -403,7 +427,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineVerifySuccess", { domain: domainText }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineVerifyFailed", { domain: domainText, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineVerifyFailed", { domain: domainText, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
@@ -411,7 +435,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "offsite", text: resolveName("activityLog.lineOffsiteSuccess", { domain: domainText, duration }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineOffsiteFailed", { domain: domainText, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineOffsiteFailed", { domain: domainText, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
@@ -419,7 +443,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineDrillSuccess", { domain: domainText }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineDrillFailed", { domain: domainText, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineDrillFailed", { domain: domainText, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
@@ -427,7 +451,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineDRDrillSuccess", { domain: domainText }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineDRDrillFailed", { domain: domainText, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineDRDrillFailed", { domain: domainText, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
@@ -438,9 +462,9 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineTamperSuccess", { domain: domainText }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineTamperFailed", { domain: domainText, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineTamperFailed", { domain: domainText, error: reasonText(run.error, resolveName) }) }
         : run.status === "skipped"
-          ? { status: "info", text: resolveName("activityLog.lineTamperSkipped", { domain: domainText, error: run.error }) }
+          ? { status: "info", text: resolveName("activityLog.lineTamperSkipped", { domain: domainText, error: reasonText(run.error, resolveName) }) }
           : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
@@ -448,7 +472,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineExportSuccess", { bytes: formatBytesShort(run.bytes), duration }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineExportFailed", { error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineExportFailed", { error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
@@ -456,7 +480,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineRestoreSuccess", { name, duration }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineRestoreFailed", { name, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineRestoreFailed", { name, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
@@ -464,7 +488,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineUpdateSuccess", { name, duration }) }
       : run.status === "failed"
-        ? { status: "failed", text: resolveName("activityLog.lineUpdateFailed", { name, error: run.error }) }
+        ? { status: "failed", text: resolveName("activityLog.lineUpdateFailed", { name, error: reasonText(run.error, resolveName) }) }
         : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
@@ -473,10 +497,10 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return { status: "success", text: resolveName("activityLog.lineBackupSuccess", { name, bytes: formatBytesShort(run.bytes), duration }) };
   }
   if (run.status === "failed") {
-    return { status: "failed", text: resolveName("activityLog.lineBackupFailed", { name, error: run.error }) };
+    return { status: "failed", text: resolveName("activityLog.lineBackupFailed", { name, error: reasonText(run.error, resolveName) }) };
   }
   if (run.status === "skipped") {
-    return { status: "info", text: resolveName("activityLog.lineBackupSkipped", { name, error: run.error }) };
+    return { status: "info", text: resolveName("activityLog.lineBackupSkipped", { name, error: reasonText(run.error, resolveName) }) };
   }
   return { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
 }

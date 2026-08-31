@@ -23,7 +23,7 @@ const ro: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panou principal",
   "dashboard.subtitle": "Starea backupurilor tale dintr-o privire.",
-  "dashboard.summaryHealth": "Stare generală",
+  "dashboard.summaryHealth": "Punct de restaurare",
   "dashboard.summaryNextBackup": "Următorul backup",
   "dashboard.summaryLastResult": "Ultimul rezultat",
   "dashboard.lastBackups": "Ultimele copii de rezervă",
@@ -88,6 +88,7 @@ const ro: Partial<Translations> = {
   "containers.notInstalled": "Neinstalat",
   "containers.notInstalledTitle": "Neinstalat (numai copii de rezervă)",
   "containers.notInstalledHint": "Aceste containere nu mai sunt instalate, dar încă au copii de rezervă. Restaurați-le sau ștergeți copiile de rezervă pentru a elibera spațiu.",
+  "containers.notInstalledSkipped": "Sunt încă programate, așa că fiecare rulare înregistrează o omitere pentru fiecare.",
   "containers.deleteBackups": "Șterge toate copiile de rezervă",
   "containers.deleteBackupsConfirm": "Ștergeți TOATE copiile de rezervă ale acestui container? Instantaneele sunt eliminate permanent din depozit și nu pot fi anulate.",
   "containers.filter": "Filtrare:",
@@ -764,6 +765,15 @@ const ro: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stare protecție",
+  "dashboard.noOffsite": "Fără copie în afara locației",
+  "dashboard.neverExcluded": "Neprogramat",
+  "dashboard.neverExcludedTitle": "Lăsat intenționat în afara programării, așa că nu este nimic de salvat aici.",
+  "dashboard.neverSelf": "Container propriu",
+  "dashboard.neverSelfTitle": "BombVault nu salvează niciodată containerul în care rulează: oprirea lui la mijloc ar opri salvarea însăși.",
+  "dashboard.noOffsiteTitle": "Toate copiile sunt pe această mașină, așa că un incendiu, un furt sau un disc defect ia cu el și copiile de rezervă.",
+  "runReason.interrupted": "întrerupt (BombVault a repornit în timpul rulării)",
+  "runReason.shutdown": "anulat (BombVault a fost oprit)",
+  "runReason.containerGone": "containerul nu mai există pe gazdă",
   "dashboard.rpoOk": "La zi",
   "dashboard.rpoWarn": "Scadent curând",
   "dashboard.rpoOverdue": "Restant",

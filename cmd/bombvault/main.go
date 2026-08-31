@@ -11,7 +11,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
@@ -466,6 +468,35 @@ func run() error {
 	// Sample existing repos' size shortly after boot so the dashboard Storage card
 	// shows data for repos that already have backups (no wait for the next backup).
 	go svc.CollectStatsOnStartup()
+	// Stopping on purpose ([375]). Until this, nothing in the project caught a
+	// signal: `docker stop` killed the process outright, restic's child died with
+	// it, and the run row stayed 'running' until the next boot's
+	// ReapInterruptedRuns wrote "interrupted (BombVault restarted mid-run)" -- a
+	// sentence that cannot tell an update from a crash, because it is written by
+	// the lifetime AFTER the one that ended.
+	//
+	// Order matters on the way out and is the reverse of the way in:
+	//
+	//  1. Stop serving. New requests would only start work we are about to kill.
+	//  2. Then cancel the backups and wait for their rows to be written. Doing
+	//     this first would leave the UI cheerfully accepting a new backup while
+	//     the process is leaving.
+	//
+	// SIGINT as well as SIGTERM, so a foreground `go run` behaves like the
+	// container does. NotifyContext also restores the default handler on stop(),
+	// which is what makes a SECOND Ctrl-C kill immediately rather than being
+	// swallowed by a shutdown that is taking too long.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
-	return server.Run()
+	runErr := server.Run(ctx)
+
+	if ctx.Err() != nil {
+		log.Printf("shutdown: signal received, stopping")
+		stop() // a second signal now kills, instead of waiting behind this
+		svc.BeginShutdown()
+		log.Printf("shutdown: done")
+	}
+	return runErr
 }

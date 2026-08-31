@@ -27,7 +27,7 @@ const hi: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "डैशबोर्ड",
   "dashboard.subtitle": "आपके बैकअप की स्थिति एक नज़र में।",
-  "dashboard.summaryHealth": "समग्र स्थिति",
+  "dashboard.summaryHealth": "पुनर्प्राप्ति बिंदु",
   "dashboard.summaryNextBackup": "अगला बैकअप",
   "dashboard.summaryLastResult": "आख़िरी परिणाम",
   "dashboard.lastBackups": "हाल के बैकअप",
@@ -93,6 +93,7 @@ const hi: Partial<Translations> = {
   "containers.notInstalled": "इंस्टॉल नहीं है",
   "containers.notInstalledTitle": "इंस्टॉल नहीं है (केवल बैकअप)",
   "containers.notInstalledHint": "ये कंटेनर अब इंस्टॉल नहीं हैं लेकिन इनके बैकअप अभी भी मौजूद हैं। इन्हें रीस्टोर करें या जगह खाली करने के लिए इनके बैकअप हटाएँ।",
+  "containers.notInstalledSkipped": "ये अब भी निर्धारित हैं, इसलिए हर बार चलने पर हर एक के लिए एक छोड़ी गई प्रविष्टि दर्ज होती है।",
   "containers.deleteBackups": "सभी बैकअप हटाएँ",
   "containers.deleteBackupsConfirm": "इस कंटेनर के सभी बैकअप हटाएँ? स्नैपशॉट रिपॉज़िटरी से स्थायी रूप से हटा दिए जाते हैं और इन्हें वापस नहीं लाया जा सकता।",
   "containers.filter": "फ़िल्टर:",
@@ -693,6 +694,15 @@ const hi: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "सुरक्षा स्थिति",
+  "dashboard.noOffsite": "कोई ऑफ़-साइट प्रति नहीं",
+  "dashboard.neverExcluded": "निर्धारित नहीं",
+  "dashboard.neverExcludedTitle": "जानबूझकर समय-सारणी से बाहर रखा गया है, इसलिए यहाँ बैकअप के लिए कुछ नहीं है।",
+  "dashboard.neverSelf": "अपना कंटेनर",
+  "dashboard.neverSelfTitle": "BombVault उस कंटेनर का बैकअप कभी नहीं लेता जिसमें वह चलता है: उसे बीच में रोकना बैकअप को ही रोक देता।",
+  "dashboard.noOffsiteTitle": "सभी प्रतियाँ इसी मशीन पर हैं, इसलिए आग, चोरी या एक ख़राब डिस्क बैकअप भी ले जाती है।",
+  "runReason.interrupted": "बाधित (BombVault चलते-चलते पुनः आरंभ हुआ)",
+  "runReason.shutdown": "रद्द (BombVault बंद कर दिया गया)",
+  "runReason.containerGone": "कंटेनर अब होस्ट पर मौजूद नहीं है",
   "dashboard.rpoOk": "अद्यतन",
   "dashboard.rpoWarn": "जल्द ही देय",
   "dashboard.rpoOverdue": "समय सीमा बीत गई",

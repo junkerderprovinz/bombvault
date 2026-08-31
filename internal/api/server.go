@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -8,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	_ "embed"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/fs"
 	"math/big"
@@ -119,34 +121,71 @@ func securityHeaders(next http.Handler) http.Handler {
 	})
 }
 
-// Run starts the server, blocking until it stops. It serves HTTPS with a
-// self-signed cert by default, or plain HTTP when cfg.HTTPOnly is set.
-func (s *Server) Run() error {
+// httpShutdownGrace bounds how long Run waits for in-flight HTTP requests after
+// the context is cancelled. Short on purpose: by the time we get here the
+// backups have already been dealt with (api.Service.BeginShutdown), so what is
+// left is browser traffic and the SSE progress stream, and an SSE connection
+// never closes on its own — waiting on it would mean always waiting the full
+// grace, every single stop.
+const httpShutdownGrace = 3 * time.Second
+
+// Run starts the server, blocking until it stops or ctx is cancelled. It serves
+// HTTPS with a self-signed cert by default, or plain HTTP when cfg.HTTPOnly is
+// set.
+//
+// On ctx cancellation it calls srv.Shutdown, which stops accepting new
+// connections and lets in-flight requests finish ([375]). ErrServerClosed is
+// then the EXPECTED outcome, not a failure, so it is swallowed: reporting it
+// would turn every clean stop into a non-zero exit and an error in the log.
+func (s *Server) Run(ctx context.Context) error {
+	var srv *http.Server
+	var serve func() error
+
 	if s.cfg.HTTPOnly {
 		addr := net.JoinHostPort(bindHost, strconv.Itoa(s.cfg.Port))
-		printBanner()
-		printReady("HTTP", s.cfg.Port)
-		srv := &http.Server{
+		srv = &http.Server{
 			Addr:              addr,
 			Handler:           s.handler,
 			ReadHeaderTimeout: 15 * time.Second,
 		}
-		return srv.ListenAndServe()
+		printBanner()
+		printReady("HTTP", s.cfg.Port)
+		serve = srv.ListenAndServe
+	} else {
+		certPath, keyPath, err := EnsureSelfSigned(s.cfg.DataDir)
+		if err != nil {
+			return fmt.Errorf("server: ensure cert: %w", err)
+		}
+		addr := net.JoinHostPort(bindHost, strconv.Itoa(s.cfg.HTTPSPort))
+		srv = &http.Server{
+			Addr:              addr,
+			Handler:           s.handler,
+			ReadHeaderTimeout: 15 * time.Second,
+		}
+		printBanner()
+		printReady("HTTPS", s.cfg.HTTPSPort)
+		serve = func() error { return srv.ListenAndServeTLS(certPath, keyPath) }
 	}
 
-	certPath, keyPath, err := EnsureSelfSigned(s.cfg.DataDir)
-	if err != nil {
-		return fmt.Errorf("server: ensure cert: %w", err)
+	errCh := make(chan error, 1)
+	go func() { errCh <- serve() }()
+
+	select {
+	case err := <-errCh:
+		// The listener died on its own (port taken, cert unreadable). That is a
+		// real error and must surface.
+		return err
+	case <-ctx.Done():
+		shutCtx, cancel := context.WithTimeout(context.Background(), httpShutdownGrace)
+		defer cancel()
+		if err := srv.Shutdown(shutCtx); err != nil {
+			return fmt.Errorf("server: shutdown: %w", err)
+		}
+		if err := <-errCh; err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		return nil
 	}
-	addr := net.JoinHostPort(bindHost, strconv.Itoa(s.cfg.HTTPSPort))
-	printBanner()
-	printReady("HTTPS", s.cfg.HTTPSPort)
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           s.handler,
-		ReadHeaderTimeout: 15 * time.Second,
-	}
-	return srv.ListenAndServeTLS(certPath, keyPath)
 }
 
 // EnsureSelfSigned generates a self-signed ECDSA (P-256) certificate in PURE GO

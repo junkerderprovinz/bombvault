@@ -128,4 +128,48 @@ describe("buttons", () => {
       .map((b) => `${b.file}:${b.line}`);
     expect(missing, "Buttons without labelKey cannot pick a glyph.").toEqual([]);
   });
+
+  it("never paints text or graphics with the flat accent ([381])", () => {
+    // accentText and accent are not two shades of one idea, they are opposites:
+    // `accent` is a FILL, meant to have text on top of it, and `accentText` is
+    // the accent mixed toward the ink so it can BE the text.
+    //
+    // Using the fill as text is not a taste question, it is measured: flat
+    // accent gold sits at 1.61:1 on the light background, against 4.5 for body
+    // copy and 3:1 for a graphic. The charts carry that measurement in their
+    // own comment and four call sites were converted then.
+    //
+    // One was not. WhatsNewDialog's inline link kept `text-accent` and stayed
+    // unreadable, which is the ordinary shape of this miss: the rule got
+    // applied everywhere the sweep looked, and afterwards nobody could tell
+    // which places it had not looked at. So the sweep is a test now, which is
+    // the only version of it that runs again next time.
+    const offenders: string[] = [];
+    for (const file of walk(SRC)) {
+      // Comments have to go BEFORE the split into lines, not after. Several of
+      // them quote the flat name while explaining why not to use it, and the
+      // longest — Recovery.tsx's, which carries the original measurement —
+      // spans ten lines of a JSX {/* … */} block. A per-line strip cannot see
+      // that it is inside one, so it flagged the very comment that documents
+      // the rule. A guard that trips on its own rationale teaches people to
+      // delete the rationale.
+      //
+      // Comment bodies become blank lines rather than disappearing, so the
+      // reported line numbers still point at the real file.
+      const src = readFileSync(file, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, (m) => "\n".repeat((m.match(/\n/g) ?? []).length))
+        .replace(/\/\/.*$/gm, "");
+      src.split("\n").forEach((line, i) => {
+        // The exact utility only: `text-accent` with nothing appended, so
+        // text-accentText and text-accentContrast (the deliberate ones) pass.
+        if (/\btext-accent(?![A-Za-z-])/.test(line)) {
+          offenders.push(`${file.slice(SRC.length + 1)}:${i + 1}`);
+        }
+      });
+    }
+    expect(
+      offenders,
+      "text-accent is a fill, not a text colour (1.61:1). Use text-accentText."
+    ).toEqual([]);
+  });
 });

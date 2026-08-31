@@ -27,7 +27,7 @@ const hr: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Nadzorna ploča",
   "dashboard.subtitle": "Stanje vaših sigurnosnih kopija na jedan pogled.",
-  "dashboard.summaryHealth": "Opće stanje",
+  "dashboard.summaryHealth": "Točka vraćanja",
   "dashboard.summaryNextBackup": "Sljedeća sigurnosna kopija",
   "dashboard.summaryLastResult": "Posljednji rezultat",
   "dashboard.lastBackups": "Posljednje sigurnosne kopije",
@@ -93,6 +93,7 @@ const hr: Partial<Translations> = {
   "containers.notInstalled": "Nije instaliran",
   "containers.notInstalledTitle": "Nije instaliran (samo sigurnosne kopije)",
   "containers.notInstalledHint": "Ovi kontejneri više nisu instalirani, ali još imaju sigurnosne kopije. Vratite ih ili izbrišite njihove sigurnosne kopije da oslobodite prostor.",
+  "containers.notInstalledSkipped": "I dalje su zakazani, pa svako izvođenje bilježi preskakanje za svaki od njih.",
   "containers.deleteBackups": "Izbriši sve sigurnosne kopije",
   "containers.deleteBackupsConfirm": "Izbrisati SVE sigurnosne kopije ovog kontejnera? Snimke se trajno uklanjaju iz repozitorija i ne mogu se vratiti.",
   "containers.filter": "Filtar:",
@@ -693,6 +694,15 @@ const hr: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Status zaštite",
+  "dashboard.noOffsite": "Nema kopije izvan lokacije",
+  "dashboard.neverExcluded": "Nije zakazano",
+  "dashboard.neverExcludedTitle": "Namjerno izostavljeno iz rasporeda, pa ovdje nema što sigurnosno kopirati.",
+  "dashboard.neverSelf": "Vlastiti spremnik",
+  "dashboard.neverSelfTitle": "BombVault nikad ne kopira spremnik u kojem radi: zaustaviti ga usred posla zaustavilo bi samu kopiju.",
+  "dashboard.noOffsiteTitle": "Sve su kopije na ovom računalu, pa požar, krađa ili jedan neispravan disk odnosi i sigurnosne kopije.",
+  "runReason.interrupted": "prekinuto (BombVault se ponovno pokrenuo usred izvođenja)",
+  "runReason.shutdown": "otkazano (BombVault je zaustavljen)",
+  "runReason.containerGone": "spremnik više ne postoji na domaćinu",
   "dashboard.rpoOk": "Ažurno",
   "dashboard.rpoWarn": "Uskoro dospijeva",
   "dashboard.rpoOverdue": "Zakašnjelo",

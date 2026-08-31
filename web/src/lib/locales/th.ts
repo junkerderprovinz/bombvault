@@ -24,7 +24,7 @@ const th: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "แดชบอร์ด",
   "dashboard.subtitle": "สถานะการสำรองข้อมูลของคุณในพริบตา",
-  "dashboard.summaryHealth": "สถานะโดยรวม",
+  "dashboard.summaryHealth": "จุดกู้คืน",
   "dashboard.summaryNextBackup": "การสำรองข้อมูลครั้งถัดไป",
   "dashboard.summaryLastResult": "ผลลัพธ์ล่าสุด",
   "dashboard.lastBackups": "การสำรองข้อมูลล่าสุด",
@@ -89,6 +89,7 @@ const th: Partial<Translations> = {
   "containers.notInstalled": "ไม่ได้ติดตั้ง",
   "containers.notInstalledTitle": "ไม่ได้ติดตั้ง (เฉพาะการสำรองข้อมูล)",
   "containers.notInstalledHint": "Containers เหล่านี้ไม่ได้ติดตั้งแล้ว แต่ยังมีการสำรองข้อมูลอยู่ กู้คืนหรือลบการสำรองข้อมูลเพื่อเพิ่มพื้นที่",
+  "containers.notInstalledSkipped": "รายการเหล่านี้ยังอยู่ในกำหนดการ ทุกรอบการทำงานจึงบันทึกการข้ามไว้สำหรับแต่ละรายการ",
   "containers.deleteBackups": "ลบการสำรองข้อมูลทั้งหมด",
   "containers.deleteBackupsConfirm": "ลบการสำรองข้อมูลทั้งหมดของ container นี้? สแนปช็อตจะถูกลบออกจากรีพอสิทอรีอย่างถาวรและไม่สามารถยกเลิกได้",
   "containers.filter": "กรอง:",
@@ -787,6 +788,15 @@ const th: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "สถานะการป้องกัน",
+  "dashboard.noOffsite": "ไม่มีสำเนานอกสถานที่",
+  "dashboard.neverExcluded": "ไม่ได้อยู่ในกำหนดการ",
+  "dashboard.neverExcludedTitle": "เว้นไว้นอกกำหนดการโดยตั้งใจ จึงไม่มีอะไรต้องสำรองที่นี่",
+  "dashboard.neverSelf": "คอนเทนเนอร์ของตัวเอง",
+  "dashboard.neverSelfTitle": "BombVault จะไม่สำรองคอนเทนเนอร์ที่ตัวเองทำงานอยู่ เพราะการหยุดมันกลางคันจะหยุดการสำรองไปด้วย",
+  "dashboard.noOffsiteTitle": "สำเนาทั้งหมดอยู่บนเครื่องนี้ ไฟไหม้ การโจรกรรม หรือดิสก์เสียหนึ่งลูกจึงพาข้อมูลสำรองไปด้วย",
+  "runReason.interrupted": "ถูกขัดจังหวะ (BombVault เริ่มทำงานใหม่ระหว่างรอบ)",
+  "runReason.shutdown": "ยกเลิก (BombVault ถูกปิด)",
+  "runReason.containerGone": "คอนเทนเนอร์ไม่มีอยู่บนโฮสต์แล้ว",
   "dashboard.rpoOk": "เป็นปัจจุบัน",
   "dashboard.rpoWarn": "ใกล้ถึงกำหนด",
   "dashboard.rpoOverdue": "เกินกำหนด",

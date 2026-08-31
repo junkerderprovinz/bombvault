@@ -24,7 +24,7 @@ const fr: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Tableau de bord",
   "dashboard.subtitle": "Votre état de sauvegarde en un coup d'œil.",
-  "dashboard.summaryHealth": "État général",
+  "dashboard.summaryHealth": "Point de restauration",
   "dashboard.summaryNextBackup": "Prochaine sauvegarde",
   "dashboard.summaryLastResult": "Dernier résultat",
   "dashboard.lastBackups": "Dernières sauvegardes",
@@ -89,6 +89,7 @@ const fr: Partial<Translations> = {
   "containers.notInstalled": "Non installé",
   "containers.notInstalledTitle": "Non installé (sauvegardes uniquement)",
   "containers.notInstalledHint": "Ces conteneurs ne sont plus installés mais ont encore des sauvegardes. Restaurez-les ou supprimez leurs sauvegardes pour libérer de l'espace.",
+  "containers.notInstalledSkipped": "Ils restent planifiés, donc chaque exécution enregistre un saut pour chacun.",
   "containers.deleteBackups": "Supprimer toutes les sauvegardes",
   "containers.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de ce conteneur ? Les instantanés sont supprimés définitivement du dépôt et cette action est irréversible.",
   "containers.filter": "Filtre :",
@@ -764,6 +765,15 @@ const fr: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "État de protection",
+  "dashboard.noOffsite": "Aucune copie hors site",
+  "dashboard.neverExcluded": "Non planifié",
+  "dashboard.neverExcludedTitle": "Volontairement laissé hors de la planification : il n'y a rien à sauvegarder ici.",
+  "dashboard.neverSelf": "Conteneur propre",
+  "dashboard.neverSelfTitle": "BombVault ne sauvegarde jamais le conteneur dans lequel il tourne : l'arrêter en cours arrêterait la sauvegarde elle-même.",
+  "dashboard.noOffsiteTitle": "Toutes les copies sont sur cette machine : un incendie, un vol ou un disque défaillant emporte aussi les sauvegardes.",
+  "runReason.interrupted": "interrompu (BombVault a redémarré en cours d'exécution)",
+  "runReason.shutdown": "annulé (BombVault a été arrêté)",
+  "runReason.containerGone": "le conteneur n'existe plus sur l'hôte",
   "dashboard.rpoOk": "À jour",
   "dashboard.rpoWarn": "Bientôt dû",
   "dashboard.rpoOverdue": "En retard",

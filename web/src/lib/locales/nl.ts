@@ -23,7 +23,7 @@ const nl: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Je back-upstatus in één oogopslag.",
-  "dashboard.summaryHealth": "Algehele status",
+  "dashboard.summaryHealth": "Herstelpunt",
   "dashboard.summaryNextBackup": "Volgende back-up",
   "dashboard.summaryLastResult": "Laatste resultaat",
   "dashboard.lastBackups": "Laatste back-ups",
@@ -88,6 +88,7 @@ const nl: Partial<Translations> = {
   "containers.notInstalled": "Niet geïnstalleerd",
   "containers.notInstalledTitle": "Niet geïnstalleerd (alleen back-ups)",
   "containers.notInstalledHint": "Deze containers zijn niet meer geïnstalleerd, maar hebben nog back-ups. Herstel ze of verwijder hun back-ups om ruimte vrij te maken.",
+  "containers.notInstalledSkipped": "Ze staan nog steeds ingepland, dus elke uitvoering legt voor elk van hen een overslag vast.",
   "containers.deleteBackups": "Alle back-ups verwijderen",
   "containers.deleteBackupsConfirm": "ALLE back-ups van deze container verwijderen? De snapshots worden permanent uit de repository verwijderd en kunnen niet ongedaan worden gemaakt.",
   "containers.filter": "Filter:",
@@ -758,6 +759,15 @@ const nl: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Beschermingsstatus",
+  "dashboard.noOffsite": "Geen kopie op afstand",
+  "dashboard.neverExcluded": "Niet ingepland",
+  "dashboard.neverExcludedTitle": "Bewust buiten de planning gelaten, dus hier valt niets te back-uppen.",
+  "dashboard.neverSelf": "Eigen container",
+  "dashboard.neverSelfTitle": "BombVault back-upt nooit de container waarin het draait: die halverwege stoppen zou de back-up zelf stoppen.",
+  "dashboard.noOffsiteTitle": "Alle kopieën staan op deze machine, dus brand, diefstal of één kapotte schijf neemt ook de back-ups mee.",
+  "runReason.interrupted": "onderbroken (BombVault is halverwege opnieuw gestart)",
+  "runReason.shutdown": "afgebroken (BombVault is afgesloten)",
+  "runReason.containerGone": "container bestaat niet meer op de host",
   "dashboard.rpoOk": "Up-to-date",
   "dashboard.rpoWarn": "Binnenkort nodig",
   "dashboard.rpoOverdue": "Te laat",

@@ -23,7 +23,7 @@ const pl: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panel",
   "dashboard.subtitle": "Stan Twoich kopii zapasowych w skrócie.",
-  "dashboard.summaryHealth": "Ogólny stan",
+  "dashboard.summaryHealth": "Punkt przywracania",
   "dashboard.summaryNextBackup": "Następna kopia zapasowa",
   "dashboard.summaryLastResult": "Ostatni wynik",
   "dashboard.lastBackups": "Ostatnie kopie zapasowe",
@@ -88,6 +88,7 @@ const pl: Partial<Translations> = {
   "containers.notInstalled": "Niezainstalowany",
   "containers.notInstalledTitle": "Niezainstalowany (tylko kopie zapasowe)",
   "containers.notInstalledHint": "Te containers nie są już zainstalowane, ale nadal mają kopie zapasowe. Przywróć je lub usuń ich kopie zapasowe, aby zwolnić miejsce.",
+  "containers.notInstalledSkipped": "Nadal są zaplanowane, więc każde uruchomienie zapisuje pominięcie dla każdego z nich.",
   "containers.deleteBackups": "Usuń wszystkie kopie zapasowe",
   "containers.deleteBackupsConfirm": "Usunąć WSZYSTKIE kopie zapasowe tego kontenera? Migawki zostaną trwale usunięte z repozytorium i nie można tego cofnąć.",
   "containers.filter": "Filtr:",
@@ -756,6 +757,15 @@ const pl: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stan ochrony",
+  "dashboard.noOffsite": "Brak kopii poza lokalizacją",
+  "dashboard.neverExcluded": "Niezaplanowane",
+  "dashboard.neverExcludedTitle": "Celowo pominięte w harmonogramie, więc nie ma tu czego kopiować.",
+  "dashboard.neverSelf": "Własny kontener",
+  "dashboard.neverSelfTitle": "BombVault nigdy nie kopiuje kontenera, w którym działa: zatrzymanie go w trakcie zatrzymałoby samą kopię.",
+  "dashboard.noOffsiteTitle": "Wszystkie kopie są na tej maszynie, więc pożar, kradzież albo jeden uszkodzony dysk zabiera też kopie zapasowe.",
+  "runReason.interrupted": "przerwane (BombVault uruchomił się ponownie w trakcie)",
+  "runReason.shutdown": "anulowane (BombVault został zatrzymany)",
+  "runReason.containerGone": "kontener już nie istnieje na hoście",
   "dashboard.rpoOk": "Aktualne",
   "dashboard.rpoWarn": "Wkrótce wymagane",
   "dashboard.rpoOverdue": "Zaległe",

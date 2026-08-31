@@ -3206,6 +3206,19 @@ export function Containers() {
             <p className="mt-1 text-xs text-carbon-textMuted">
               {t("containers.notInstalledHint")}
             </p>
+            {/* The operational half the hint above never said ([378]).
+                "They still have backups" explains the disk space. It does not
+                explain the LOG, and the log is where these are actually
+                noticed: measured on jdp's box, three definitions here
+                (OpenRGB, QDirStat, MinIO) had produced twelve skipped runs in
+                the visible window, one per definition per scheduled run,
+                forever, and nothing connected those lines to this page. A skip
+                is cheap and correct, so the fix is not to stop skipping - it is
+                to say out loud that it will keep happening until somebody
+                decides otherwise. */}
+            <p className="mt-1 text-xs text-carbon-textMuted">
+              {t("containers.notInstalledSkipped")}
+            </p>
           </div>
           {/* Continues the live list's index sequence (live.length + i)
               instead of restarting at 0. Both sections render on the same

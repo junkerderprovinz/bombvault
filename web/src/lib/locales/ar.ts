@@ -24,7 +24,7 @@ const ar: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "لوحة التحكم",
   "dashboard.subtitle": "حالة النسخ الاحتياطي لديك في لمحة.",
-  "dashboard.summaryHealth": "الحالة العامة",
+  "dashboard.summaryHealth": "نقطة الاستعادة",
   "dashboard.summaryNextBackup": "النسخة الاحتياطية التالية",
   "dashboard.summaryLastResult": "آخر نتيجة",
   "dashboard.lastBackups": "آخر النسخ الاحتياطية",
@@ -89,6 +89,7 @@ const ar: Partial<Translations> = {
   "containers.notInstalled": "غير مثبّت",
   "containers.notInstalledTitle": "غير مثبّت (النسخ الاحتياطية فقط)",
   "containers.notInstalledHint": "هذه الـ containers لم تعد مثبّتة لكنها لا تزال تحتوي على نسخ احتياطية. استعدها أو احذف نسخها الاحتياطية لتوفير المساحة.",
+  "containers.notInstalledSkipped": "لا تزال مجدولة، لذا يسجل كل تشغيل تخطياً لكل واحدة منها.",
   "containers.deleteBackups": "حذف جميع النسخ الاحتياطية",
   "containers.deleteBackupsConfirm": "حذف جميع النسخ الاحتياطية لهذا الـ container؟ ستُزال اللقطات نهائياً من المستودع ولا يمكن التراجع عن ذلك.",
   "containers.filter": "تصفية:",
@@ -787,6 +788,15 @@ const ar: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "حالة الحماية",
+  "dashboard.noOffsite": "لا توجد نسخة خارج الموقع",
+  "dashboard.neverExcluded": "غير مجدول",
+  "dashboard.neverExcludedTitle": "استُثني من الجدول عن قصد، فلا شيء هنا لنسخه احتياطياً.",
+  "dashboard.neverSelf": "الحاوية الخاصة",
+  "dashboard.neverSelfTitle": "لا ينسخ BombVault الحاوية التي يعمل داخلها: إيقافها أثناء التنفيذ يوقف النسخ نفسه.",
+  "dashboard.noOffsiteTitle": "كل النسخ على هذا الجهاز، لذا فإن حريقاً أو سرقة أو عطل قرص واحد يأخذ النسخ الاحتياطية أيضاً.",
+  "runReason.interrupted": "انقطع (أُعيد تشغيل BombVault أثناء التنفيذ)",
+  "runReason.shutdown": "أُلغي (تم إيقاف BombVault)",
+  "runReason.containerGone": "الحاوية لم تعد موجودة على المضيف",
   "dashboard.rpoOk": "محدَّث",
   "dashboard.rpoWarn": "مستحق قريباً",
   "dashboard.rpoOverdue": "متأخر",

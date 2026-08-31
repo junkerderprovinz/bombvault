@@ -24,7 +24,7 @@ const hu: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Irányítópult",
   "dashboard.subtitle": "Biztonsági mentéseid állapota egy pillantással.",
-  "dashboard.summaryHealth": "Általános állapot",
+  "dashboard.summaryHealth": "Visszaállítási pont",
   "dashboard.summaryNextBackup": "Következő mentés",
   "dashboard.summaryLastResult": "Utolsó eredmény",
   "dashboard.lastBackups": "Utolsó biztonsági mentések",
@@ -89,6 +89,7 @@ const hu: Partial<Translations> = {
   "containers.notInstalled": "Nincs telepítve",
   "containers.notInstalledTitle": "Nincs telepítve (csak mentések)",
   "containers.notInstalledHint": "Ezek a konténerek már nincsenek telepítve, de még vannak biztonsági mentéseik. Állítsa vissza őket, vagy törölje a mentéseket a hely felszabadításához.",
+  "containers.notInstalledSkipped": "Továbbra is ütemezve vannak, így minden futás mindegyikhez rögzít egy kihagyást.",
   "containers.deleteBackups": "Összes mentés törlése",
   "containers.deleteBackupsConfirm": "Törli a konténer ÖSSZES biztonsági mentését? A pillanatképek véglegesen eltávolításra kerülnek a tárolóból, és nem lehet visszavonni.",
   "containers.filter": "Szűrő:",
@@ -767,6 +768,15 @@ const hu: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Védelmi állapot",
+  "dashboard.noOffsite": "Nincs telephelyen kívüli másolat",
+  "dashboard.neverExcluded": "Nincs ütemezve",
+  "dashboard.neverExcludedTitle": "Szándékosan kimaradt az ütemezésből, így itt nincs mit menteni.",
+  "dashboard.neverSelf": "Saját konténer",
+  "dashboard.neverSelfTitle": "A BombVault soha nem menti azt a konténert, amelyben fut: futás közben leállítani magát a mentést állítaná le.",
+  "dashboard.noOffsiteTitle": "Minden másolat ezen a gépen van, így egy tűz, egy lopás vagy egy meghibásodott lemez a mentéseket is elviszi.",
+  "runReason.interrupted": "megszakadt (a BombVault futás közben újraindult)",
+  "runReason.shutdown": "megszakítva (a BombVault leállt)",
+  "runReason.containerGone": "a konténer már nem létezik a gazdagépen",
   "dashboard.rpoOk": "Naprakész",
   "dashboard.rpoWarn": "Hamarosan esedékes",
   "dashboard.rpoOverdue": "Lejárt",

@@ -27,7 +27,7 @@ const sr: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Контролна табла",
   "dashboard.subtitle": "Стање резервних копија на један поглед.",
-  "dashboard.summaryHealth": "Опште стање",
+  "dashboard.summaryHealth": "Тачка враћања",
   "dashboard.summaryNextBackup": "Следећа резервна копија",
   "dashboard.summaryLastResult": "Последњи резултат",
   "dashboard.lastBackups": "Последње резервне копије",
@@ -93,6 +93,7 @@ const sr: Partial<Translations> = {
   "containers.notInstalled": "Није инсталирано",
   "containers.notInstalledTitle": "Није инсталирано (само резервне копије)",
   "containers.notInstalledHint": "Ови контејнери више нису инсталирани, али и даље имају резервне копије. Врати их или избриши њихове резервне копије да ослободиш простор.",
+  "containers.notInstalledSkipped": "И даље су заказани, па свако извршавање бележи прескакање за сваки од њих.",
   "containers.deleteBackups": "Избриши све резервне копије",
   "containers.deleteBackupsConfirm": "Избришем СВЕ резервне копије овог контејнера? Снимци се трајно уклањају из репозиторијума и то се не може поништити.",
   "containers.filter": "Филтер:",
@@ -691,6 +692,15 @@ const sr: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Стање заштите",
+  "dashboard.noOffsite": "Нема копије ван локације",
+  "dashboard.neverExcluded": "Није заказано",
+  "dashboard.neverExcludedTitle": "Намерно изостављено из распореда, па овде нема шта да се копира.",
+  "dashboard.neverSelf": "Сопствени контејнер",
+  "dashboard.neverSelfTitle": "BombVault никада не копира контејнер у коме ради: зауставити га усред посла зауставило би саму копију.",
+  "dashboard.noOffsiteTitle": "Све копије су на овој машини, па пожар, крађа или један неисправан диск односи и резервне копије.",
+  "runReason.interrupted": "прекинуто (BombVault се поново покренуо усред извршавања)",
+  "runReason.shutdown": "отказано (BombVault је заустављен)",
+  "runReason.containerGone": "контејнер више не постоји на домаћину",
   "dashboard.rpoOk": "Ажурно",
   "dashboard.rpoWarn": "Ускоро доспева",
   "dashboard.rpoOverdue": "Закашњело",

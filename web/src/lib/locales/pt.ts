@@ -23,7 +23,7 @@ const pt: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Painel",
   "dashboard.subtitle": "O estado dos seus backups num relance.",
-  "dashboard.summaryHealth": "Estado geral",
+  "dashboard.summaryHealth": "Ponto de recuperação",
   "dashboard.summaryNextBackup": "Próximo backup",
   "dashboard.summaryLastResult": "Último resultado",
   "dashboard.lastBackups": "Últimos backups",
@@ -88,6 +88,7 @@ const pt: Partial<Translations> = {
   "containers.notInstalled": "Não instalado",
   "containers.notInstalledTitle": "Não instalado (apenas backups)",
   "containers.notInstalledHint": "Estes containers já não estão instalados mas ainda têm backups. Restaure-os ou elimine os seus backups para libertar espaço.",
+  "containers.notInstalledSkipped": "Continuam agendados, por isso cada execução regista uma omissão para cada um.",
   "containers.deleteBackups": "Eliminar todos os backups",
   "containers.deleteBackupsConfirm": "Eliminar TODOS os backups deste container? Os instantâneos são removidos permanentemente do repositório e a ação não pode ser revertida.",
   "containers.filter": "Filtro:",
@@ -761,6 +762,15 @@ const pt: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Estado de proteção",
+  "dashboard.noOffsite": "Sem cópia externa",
+  "dashboard.neverExcluded": "Sem agendamento",
+  "dashboard.neverExcludedTitle": "Ficou de fora do agendamento de propósito, por isso não há nada para copiar aqui.",
+  "dashboard.neverSelf": "Contentor próprio",
+  "dashboard.neverSelfTitle": "O BombVault nunca copia o contentor em que corre: pará-lo a meio pararia a própria cópia.",
+  "dashboard.noOffsiteTitle": "Todas as cópias estão nesta máquina, por isso um incêndio, um roubo ou um disco avariado leva também as cópias de segurança.",
+  "runReason.interrupted": "interrompido (o BombVault reiniciou a meio da execução)",
+  "runReason.shutdown": "cancelado (o BombVault foi encerrado)",
+  "runReason.containerGone": "o contentor já não existe no anfitrião",
   "dashboard.rpoOk": "Atualizado",
   "dashboard.rpoWarn": "Em breve",
   "dashboard.rpoOverdue": "Em atraso",

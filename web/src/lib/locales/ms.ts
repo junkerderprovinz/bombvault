@@ -27,7 +27,7 @@ const ms: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Papan Pemuka",
   "dashboard.subtitle": "Status sandaran anda sepintas lalu.",
-  "dashboard.summaryHealth": "Keadaan keseluruhan",
+  "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Sandaran seterusnya",
   "dashboard.summaryLastResult": "Keputusan terakhir",
   "dashboard.lastBackups": "Sandaran terkini",
@@ -93,6 +93,7 @@ const ms: Partial<Translations> = {
   "containers.notInstalled": "Tidak dipasang",
   "containers.notInstalledTitle": "Tidak dipasang (hanya sandaran)",
   "containers.notInstalledHint": "Bekas ini tidak lagi dipasang tetapi masih mempunyai sandaran. Pulihkan mereka atau padamkan sandaran mereka untuk membebaskan ruang.",
+  "containers.notInstalledSkipped": "Semuanya masih dijadualkan, jadi setiap larian merekodkan satu langkauan bagi setiap satu.",
   "containers.deleteBackups": "Padam semua sandaran",
   "containers.deleteBackupsConfirm": "Padam SEMUA sandaran bekas ini? Snapshot dipadamkan secara kekal daripada repositori dan tidak boleh dipulihkan.",
   "containers.filter": "Penapis:",
@@ -693,6 +694,15 @@ const ms: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Status perlindungan",
+  "dashboard.noOffsite": "Tiada salinan luar tapak",
+  "dashboard.neverExcluded": "Tidak dijadualkan",
+  "dashboard.neverExcludedTitle": "Sengaja ditinggalkan di luar jadual, jadi tiada apa untuk disandarkan di sini.",
+  "dashboard.neverSelf": "Bekas sendiri",
+  "dashboard.neverSelfTitle": "BombVault tidak pernah menyandarkan bekas tempat ia berjalan: menghentikannya di tengah jalan akan menghentikan sandaran itu sendiri.",
+  "dashboard.noOffsiteTitle": "Semua salinan berada pada mesin ini, jadi kebakaran, kecurian atau satu cakera rosak turut membawa sandaran.",
+  "runReason.interrupted": "terganggu (BombVault dimulakan semula di tengah larian)",
+  "runReason.shutdown": "dibatalkan (BombVault telah dimatikan)",
+  "runReason.containerGone": "bekas tidak lagi wujud pada hos",
   "dashboard.rpoOk": "Terkini",
   "dashboard.rpoWarn": "Akan tamat tempoh tidak lama lagi",
   "dashboard.rpoOverdue": "Tertunggak",

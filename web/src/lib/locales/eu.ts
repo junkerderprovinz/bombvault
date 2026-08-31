@@ -27,7 +27,7 @@ const eu: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Panela",
   "dashboard.subtitle": "Zure babeskopien egoera begirada batean.",
-  "dashboard.summaryHealth": "Egoera orokorra",
+  "dashboard.summaryHealth": "Berreskuratze-puntua",
   "dashboard.summaryNextBackup": "Hurrengo babeskopia",
   "dashboard.summaryLastResult": "Azken emaitza",
   "dashboard.lastBackups": "Azken babeskopiak",
@@ -93,6 +93,7 @@ const eu: Partial<Translations> = {
   "containers.notInstalled": "Instalatu gabe",
   "containers.notInstalledTitle": "Instalatu gabe (babeskopiak bakarrik)",
   "containers.notInstalledHint": "Edukiontzi hauek jada ez daude instalatuta baina oraindik badituzte babeskopiak. Berrezarri itzazu edo ezabatu haien babeskopiak lekua askatzeko.",
+  "containers.notInstalledSkipped": "Oraindik programatuta daude, beraz exekuzio bakoitzak saltatze bat gordetzen du bakoitzarentzat.",
   "containers.deleteBackups": "Ezabatu babeskopia guztiak",
   "containers.deleteBackupsConfirm": "Edukiontzi honen babeskopia GUZTIAK ezabatu nahi dituzu? Argazkiak betiko ezabatzen dira biltegitik eta ezin dira berreskuratu.",
   "containers.filter": "Iragazkia:",
@@ -693,6 +694,15 @@ const eu: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Babes-egoera",
+  "dashboard.noOffsite": "Kanpoko kopiarik ez",
+  "dashboard.neverExcluded": "Programatu gabe",
+  "dashboard.neverExcludedTitle": "Nahita utzi da egutegitik kanpo, beraz hemen ez dago ezer babesteko.",
+  "dashboard.neverSelf": "Bere edukiontzia",
+  "dashboard.neverSelfTitle": "BombVault-ek ez du inoiz babesten bera exekutatzen den edukiontzia: erdian gelditzeak babeskopia bera geldituko luke.",
+  "dashboard.noOffsiteTitle": "Kopia guztiak makina honetan daude, beraz sute batek, lapurreta batek edo disko matxura batek babeskopiak ere eramaten ditu.",
+  "runReason.interrupted": "etenda (BombVault berrabiarazi da exekuzioaren erdian)",
+  "runReason.shutdown": "bertan behera utzia (BombVault itzali da)",
+  "runReason.containerGone": "edukiontzia ez dago jada ostalarian",
   "dashboard.rpoOk": "Eguneratuta",
   "dashboard.rpoWarn": "Laster bete beharra",
   "dashboard.rpoOverdue": "Epea gaindituta",

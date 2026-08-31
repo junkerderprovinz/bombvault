@@ -23,7 +23,7 @@ const ru: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Панель",
   "dashboard.subtitle": "Состояние ваших резервных копий с первого взгляда.",
-  "dashboard.summaryHealth": "Общее состояние",
+  "dashboard.summaryHealth": "Точка восстановления",
   "dashboard.summaryNextBackup": "Следующая резервная копия",
   "dashboard.summaryLastResult": "Последний результат",
   "dashboard.lastBackups": "Последние резервные копии",
@@ -88,6 +88,7 @@ const ru: Partial<Translations> = {
   "containers.notInstalled": "Не установлен",
   "containers.notInstalledTitle": "Не установлен (только резервные копии)",
   "containers.notInstalledHint": "Эти контейнеры больше не установлены, но резервные копии сохранились. Восстановите их или удалите резервные копии, чтобы освободить место.",
+  "containers.notInstalledSkipped": "Они по-прежнему запланированы, поэтому каждый запуск записывает пропуск для каждого из них.",
   "containers.deleteBackups": "Удалить все резервные копии",
   "containers.deleteBackupsConfirm": "Удалить ВСЕ резервные копии этого контейнера? Снимки будут безвозвратно удалены из репозитория.",
   "containers.filter": "Фильтр:",
@@ -756,6 +757,15 @@ const ru: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Состояние защиты",
+  "dashboard.noOffsite": "Нет внешней копии",
+  "dashboard.neverExcluded": "Не запланировано",
+  "dashboard.neverExcludedTitle": "Намеренно оставлено вне расписания, поэтому здесь нечего копировать.",
+  "dashboard.neverSelf": "Собственный контейнер",
+  "dashboard.neverSelfTitle": "BombVault никогда не копирует контейнер, в котором работает: остановить его на полпути значило бы остановить саму копию.",
+  "dashboard.noOffsiteTitle": "Все копии находятся на этой машине, поэтому пожар, кража или один вышедший из строя диск заберут и резервные копии.",
+  "runReason.interrupted": "прервано (BombVault перезапустился во время выполнения)",
+  "runReason.shutdown": "отменено (BombVault был остановлен)",
+  "runReason.containerGone": "контейнера больше нет на хосте",
   "dashboard.rpoOk": "Актуально",
   "dashboard.rpoWarn": "Скоро истекает",
   "dashboard.rpoOverdue": "Просрочено",

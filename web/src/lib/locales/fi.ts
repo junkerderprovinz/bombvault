@@ -24,7 +24,7 @@ const fi: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Kojelauta",
   "dashboard.subtitle": "Varmuuskopioidesi tila yhdellä silmäyksellä.",
-  "dashboard.summaryHealth": "Yleistila",
+  "dashboard.summaryHealth": "Palautuspiste",
   "dashboard.summaryNextBackup": "Seuraava varmuuskopio",
   "dashboard.summaryLastResult": "Viimeisin tulos",
   "dashboard.lastBackups": "Viimeisimmät varmuuskopiot",
@@ -89,6 +89,7 @@ const fi: Partial<Translations> = {
   "containers.notInstalled": "Ei asennettu",
   "containers.notInstalledTitle": "Ei asennettu (vain varmuuskopiot)",
   "containers.notInstalledHint": "Näitä kontteja ei enää ole asennettu, mutta niillä on edelleen varmuuskopioita. Palauta ne tai poista niiden varmuuskopiot vapauttaaksesi tilaa.",
+  "containers.notInstalledSkipped": "Ne ovat yhä ajastettuja, joten jokainen ajo kirjaa kullekin ohituksen.",
   "containers.deleteBackups": "Poista kaikki varmuuskopiot",
   "containers.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kontin varmuuskopiot? Tilannekuvat poistetaan pysyvästi arkistosta, eikä toimintoa voi peruuttaa.",
   "containers.filter": "Suodatin:",
@@ -784,6 +785,15 @@ const fi: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Suojaustila",
+  "dashboard.noOffsite": "Ei etäkopiota",
+  "dashboard.neverExcluded": "Ei ajastettu",
+  "dashboard.neverExcludedTitle": "Jätetty tarkoituksella pois aikataulusta, joten täällä ei ole mitään varmuuskopioitavaa.",
+  "dashboard.neverSelf": "Oma säiliö",
+  "dashboard.neverSelfTitle": "BombVault ei varmuuskopioi koskaan säiliötä, jossa se itse ajetaan: sen pysäyttäminen kesken keskeyttäisi varmuuskopioinnin.",
+  "dashboard.noOffsiteTitle": "Kaikki kopiot ovat tällä koneella, joten tulipalo, varkaus tai yksi rikkoutunut levy vie myös varmuuskopiot.",
+  "runReason.interrupted": "keskeytyi (BombVault käynnistyi uudelleen kesken ajon)",
+  "runReason.shutdown": "peruttu (BombVault sammutettiin)",
+  "runReason.containerGone": "säiliötä ei enää ole isäntäkoneella",
   "dashboard.rpoOk": "Ajan tasalla",
   "dashboard.rpoWarn": "Pian erääntyvä",
   "dashboard.rpoOverdue": "Myöhässä",

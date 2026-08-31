@@ -24,7 +24,7 @@ const uk: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Панель",
   "dashboard.subtitle": "Стан ваших резервних копій з першого погляду.",
-  "dashboard.summaryHealth": "Загальний стан",
+  "dashboard.summaryHealth": "Точка відновлення",
   "dashboard.summaryNextBackup": "Наступна резервна копія",
   "dashboard.summaryLastResult": "Останній результат",
   "dashboard.lastBackups": "Останні резервні копії",
@@ -89,6 +89,7 @@ const uk: Partial<Translations> = {
   "containers.notInstalled": "Не встановлено",
   "containers.notInstalledTitle": "Не встановлено (лише резервні копії)",
   "containers.notInstalledHint": "Ці контейнери більше не встановлені, але резервні копії збереглися. Відновіть їх або видаліть резервні копії, щоб звільнити місце.",
+  "containers.notInstalledSkipped": "Вони досі заплановані, тож кожен запуск записує пропуск для кожного з них.",
   "containers.deleteBackups": "Видалити всі резервні копії",
   "containers.deleteBackupsConfirm": "Видалити ВСІ резервні копії цього контейнера? Знімки будуть безповоротно видалені з репозиторію.",
   "containers.filter": "Фільтр:",
@@ -779,6 +780,15 @@ const uk: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Стан захисту",
+  "dashboard.noOffsite": "Немає зовнішньої копії",
+  "dashboard.neverExcluded": "Не заплановано",
+  "dashboard.neverExcludedTitle": "Свідомо залишено поза розкладом, тож тут нема чого копіювати.",
+  "dashboard.neverSelf": "Власний контейнер",
+  "dashboard.neverSelfTitle": "BombVault ніколи не копіює контейнер, у якому працює: зупинити його на середині означало б зупинити саму копію.",
+  "dashboard.noOffsiteTitle": "Усі копії на цій машині, тож пожежа, крадіжка чи один несправний диск заберуть і резервні копії.",
+  "runReason.interrupted": "перервано (BombVault перезапустився під час виконання)",
+  "runReason.shutdown": "скасовано (BombVault було зупинено)",
+  "runReason.containerGone": "контейнера більше немає на хості",
   "dashboard.rpoOk": "Актуально",
   "dashboard.rpoWarn": "Скоро потрібно",
   "dashboard.rpoOverdue": "Прострочено",

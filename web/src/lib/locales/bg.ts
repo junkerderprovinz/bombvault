@@ -27,7 +27,7 @@ const bg: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Табло",
   "dashboard.subtitle": "Състоянието на резервните ти копия с един поглед.",
-  "dashboard.summaryHealth": "Общо състояние",
+  "dashboard.summaryHealth": "Точка за възстановяване",
   "dashboard.summaryNextBackup": "Следващо архивиране",
   "dashboard.summaryLastResult": "Последен резултат",
   "dashboard.lastBackups": "Последни архивирания",
@@ -93,6 +93,7 @@ const bg: Partial<Translations> = {
   "containers.notInstalled": "Не е инсталиран",
   "containers.notInstalledTitle": "Не е инсталиран (само архивирания)",
   "containers.notInstalledHint": "Тези контейнери вече не са инсталирани, но все още имат архивирания. Възстанови ги или изтрий архивиранията им, за да освободиш място.",
+  "containers.notInstalledSkipped": "Те все още са планирани, така че всяко изпълнение записва по едно пропускане за всяка от тях.",
   "containers.deleteBackups": "Изтрий всички архивирания",
   "containers.deleteBackupsConfirm": "Да изтрия ли ВСИЧКИ архивирания на този контейнер? Снапшотите се премахват завинаги от хранилището и не могат да бъдат възстановени.",
   "containers.filter": "Филтър:",
@@ -693,6 +694,15 @@ const bg: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Статус на защитата",
+  "dashboard.noOffsite": "Няма външно копие",
+  "dashboard.neverExcluded": "Не е планирано",
+  "dashboard.neverExcludedTitle": "Съзнателно е извън графика, така че тук няма какво да се архивира.",
+  "dashboard.neverSelf": "Собствен контейнер",
+  "dashboard.neverSelfTitle": "BombVault никога не архивира контейнера, в който работи: спирането му по време на изпълнение би спряло самото архивиране.",
+  "dashboard.noOffsiteTitle": "Всички копия са на тази машина, така че пожар, кражба или един отказал диск отнася и архивите.",
+  "runReason.interrupted": "прекъснато (BombVault се рестартира по време на изпълнение)",
+  "runReason.shutdown": "прекратено (BombVault беше спрян)",
+  "runReason.containerGone": "контейнерът вече не съществува на хоста",
   "dashboard.rpoOk": "Актуално",
   "dashboard.rpoWarn": "Скоро предстои",
   "dashboard.rpoOverdue": "Просрочено",

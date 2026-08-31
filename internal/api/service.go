@@ -249,6 +249,28 @@ type Service struct {
 	cancelMu   sync.Mutex
 	runCancels map[string]context.CancelFunc
 
+	// backupCancels is the SAME idea for backups, deliberately kept as a second
+	// map rather than folded into runCancels ([375]). Shutdown must be able to
+	// stop one kind and never the other, and that distinction is not cosmetic:
+	//
+	//   - Interrupting a BACKUP is safe. restic writes a snapshot as its last
+	//     act, so an aborted run leaves unreferenced data and no snapshot; the
+	//     next prune collects it. Nothing on the host was touched.
+	//   - Interrupting a RESTORE is destructive. By then the container is gone
+	//     and its appdata is half-written (see restoreTimeout's comment, which
+	//     is generous for exactly this reason).
+	//
+	// So on SIGTERM we cancel backups and leave restores alone. One map with a
+	// key prefix would work too, right up to the first caller that forgets the
+	// prefix and quietly cancels a restore.
+	backupCancels map[string]context.CancelFunc
+
+	// shuttingDown is set once, by BeginShutdown, and never cleared: the process
+	// is on its way out. runsAdapter.Finish reads it to tell a run we ABORTED
+	// from a run that FAILED, which is the difference between a red row nobody
+	// can explain and an honest "the server went down".
+	shuttingDown atomic.Bool
+
 	// self-container detection (resolved once, cached): the name of BombVault's
 	// OWN container, so a backup never stops the process doing the backing up.
 	selfMu       sync.Mutex
@@ -3726,6 +3748,13 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// hard cap so a wedged run can't hold the domain lock forever.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
+	// Detached from the CALLER, reachable by SHUTDOWN ([375]). Those are not the
+	// same thing, and the distinction is the whole point of the line above: a
+	// closing browser tab must not stop a backup, while the process itself
+	// leaving must — otherwise the run is killed anyway, just without anyone
+	// writing down that it happened.
+	s.registerBackupCancel("container:"+name, cancel)
+	defer s.unregisterBackupCancel("container:" + name)
 	// Never back up our own container: stopping it mid-run is suicide.
 	if self := s.selfContainerName(ctx); self != "" && name == self {
 		return backup.Summary{}, ErrSelfBackup
@@ -3886,7 +3915,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		Docker:                 s.docker,
 		Restic:                 &resticAdapter{engine: s.engine, mode: mode},
 		Templates:              templatesAdapter{},
-		Runs:                   runsAdapter{st: s.store, ctx: ctx},
+		Runs:                   runsAdapter{st: s.store, ctx: ctx, svc: s},
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
@@ -6530,6 +6559,11 @@ func (templatesAdapter) Write(dir, name, xml string) error           { return te
 type runsAdapter struct {
 	st  *store.Repo
 	ctx context.Context
+	// svc is read ONLY to ask whether the process is shutting down ([375]).
+	// Optional on purpose: the bookkeeping-only call sites below pass nil, and a
+	// nil here costs nothing but the shutdown relabel, which those sites do not
+	// need because they are not the run a backup finishes on.
+	svc *Service
 }
 
 var _ backup.Runs = runsAdapter{}
@@ -6550,7 +6584,39 @@ func (r runsAdapter) Start(targetID, kind string) (string, error) {
 	return id, nil
 }
 
+// shutdownStatus rewrites a failure that is really a shutdown ([375]).
+//
+// The orchestrator has no idea why its context died; it sees a cancelled
+// context and reports "failed", which is right for every other cause. On the
+// way out of the process it is wrong in the way that matters most: a red row
+// with a context error is indistinguishable from a backup that genuinely broke,
+// and the dashboard counts it, the notification fires for it, and somebody goes
+// looking for a fault that was a `docker stop`.
+//
+// This is the one place with both facts in hand — that the run failed, and that
+// we are leaving — so it is the one place that can tell the difference. The
+// "cancelled" status already exists and already fires no failure alert; user
+// cancellation has used it since the restore work.
+//
+// Deliberately narrow. It only ever downgrades a FAILED run, and only while
+// shutting down, so a real failure that happens to land in the same second
+// keeps its status. Errors are not inspected for cancellation: by the time
+// BeginShutdown has cancelled the context, every failure from that run is
+// downstream of it, and matching on error text would just be a second, weaker
+// guess at something the flag already knows.
+func (s *Service) shutdownStatus(status string) (string, string, bool) {
+	if status != "failed" || !s.shuttingDown.Load() {
+		return status, "", false
+	}
+	return "cancelled", store.ReasonShutdown, true
+}
+
 func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+	if r.svc != nil {
+		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
+			status, errMsg = newStatus, newMsg
+		}
+	}
 	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
 }
 
@@ -6568,6 +6634,11 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 type startedRunsAdapter struct {
 	st    *store.Repo
 	runID string
+	// svc: same role as runsAdapter.svc, and it has to be here too ([375]).
+	// A VM backup is a backup, so a shutdown mid-run must read as an abort on
+	// this path as well; the two adapters differ only in where the run id comes
+	// from, never in what a finished run means.
+	svc *Service
 }
 
 var _ backup.Runs = startedRunsAdapter{}
@@ -6575,6 +6646,11 @@ var _ backup.Runs = startedRunsAdapter{}
 func (r startedRunsAdapter) Start(string, string) (string, error) { return r.runID, nil }
 
 func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+	if r.svc != nil {
+		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
+			status, errMsg = newStatus, newMsg
+		}
+	}
 	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
 }
 
@@ -6895,6 +6971,8 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
+	s.registerBackupCancel("vm:"+name, cancel) // reachable by shutdown ([375])
+	defer s.unregisterBackupCancel("vm:" + name)
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -7129,7 +7207,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 			log.Printf("api: BackupVM: run %s: stamp group %s failed: %v", runID, gid, serr) //nolint:gosec // G706: runID/gid are internal ids, not user input
 		}
 	}
-	deps.Runs = startedRunsAdapter{st: s.store, runID: runID}
+	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s}
 	// RunTag correlates every snapshot ONE backup invocation produces — only
 	// meaningful (and only set) when this backup will actually produce MORE
 	// than one restic snapshot (a file-only VM's single snapshot is already
@@ -8007,6 +8085,10 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
+	// [375]: this is one of the two runs jdp's 31.08. log shows cut off within
+	// 30 seconds of the 04:00 schedule.
+	s.registerBackupCancel("flash", cancel)
+	defer s.unregisterBackupCancel("flash")
 	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -8036,7 +8118,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx},
+		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
@@ -8190,6 +8272,8 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
+	s.registerBackupCancel("files:"+id, cancel) // reachable by shutdown ([375])
+	defer s.unregisterBackupCancel("files:" + id)
 	defer s.lockDomain("files")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -8250,7 +8334,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		SetName:   set.Name,
 		Excludes:  set.Excludes,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx},
+		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
@@ -9006,6 +9090,8 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
+	s.registerBackupCancel("config", cancel) // reachable by shutdown ([375])
+	defer s.unregisterBackupCancel("config")
 	defer s.lockDomain("config")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -9039,7 +9125,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		Repo:      repo,
 		TargetID:  store.ConfigTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx},
+		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "config", "", err == nil, sum, err)
@@ -11383,7 +11469,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	// trail) rather than the removed target silently vanishing from the dashboard.
 	if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr != nil {
 		log.Printf("api: Backup: skip %q: start skipped run: %v", name, sErr) //nolint:gosec // G706: name is %q-quoted
-	} else if fErr := s.store.FinishRun(runID, statusSkipped, "", 0, "container no longer exists on the host"); fErr != nil {
+	} else if fErr := s.store.FinishRun(runID, statusSkipped, "", 0, store.ReasonContainerGone); fErr != nil {
 		log.Printf("api: Backup: skip %q: finish skipped run: %v", name, fErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	if !firstMiss {

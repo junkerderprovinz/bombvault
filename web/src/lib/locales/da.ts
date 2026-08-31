@@ -24,7 +24,7 @@ const da: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Oversigt",
   "dashboard.subtitle": "Din sikkerhedskopieringsstatus med et blik.",
-  "dashboard.summaryHealth": "Samlet status",
+  "dashboard.summaryHealth": "Gendannelsespunkt",
   "dashboard.summaryNextBackup": "Næste sikkerhedskopi",
   "dashboard.summaryLastResult": "Seneste resultat",
   "dashboard.lastBackups": "Seneste sikkerhedskopier",
@@ -89,6 +89,7 @@ const da: Partial<Translations> = {
   "containers.notInstalled": "Ikke installeret",
   "containers.notInstalledTitle": "Ikke installeret (kun sikkerhedskopier)",
   "containers.notInstalledHint": "Disse containers er ikke længere installeret, men har stadig sikkerhedskopier. Gendan dem, eller slet deres sikkerhedskopier for at frigøre plads.",
+  "containers.notInstalledSkipped": "De er stadig planlagt, så hver kørsel registrerer en oversprunget post for hver af dem.",
   "containers.deleteBackups": "Slet alle sikkerhedskopier",
   "containers.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af denne container? Øjebliksbillederne fjernes permanent fra arkivet og kan ikke fortrydes.",
   "containers.filter": "Filter:",
@@ -784,6 +785,15 @@ const da: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Beskyttelsesstatus",
+  "dashboard.noOffsite": "Ingen ekstern kopi",
+  "dashboard.neverExcluded": "Ikke planlagt",
+  "dashboard.neverExcludedTitle": "Bevidst udeladt af planen, så der er intet at sikkerhedskopiere her.",
+  "dashboard.neverSelf": "Egen container",
+  "dashboard.neverSelfTitle": "BombVault sikkerhedskopierer aldrig den container, den kører i: at stoppe den undervejs ville stoppe selve sikkerhedskopieringen.",
+  "dashboard.noOffsiteTitle": "Alle kopier ligger på denne maskine, så brand, tyveri eller én defekt disk tager også sikkerhedskopierne.",
+  "runReason.interrupted": "afbrudt (BombVault blev genstartet undervejs)",
+  "runReason.shutdown": "annulleret (BombVault blev lukket ned)",
+  "runReason.containerGone": "containeren findes ikke længere på værten",
   "dashboard.rpoOk": "Opdateret",
   "dashboard.rpoWarn": "Forfalder snart",
   "dashboard.rpoOverdue": "Forfalden",

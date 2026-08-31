@@ -24,7 +24,7 @@ const he: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "לוח בקרה",
   "dashboard.subtitle": "מצב הגיבוי שלך במבט אחד.",
-  "dashboard.summaryHealth": "מצב כללי",
+  "dashboard.summaryHealth": "נקודת שחזור",
   "dashboard.summaryNextBackup": "הגיבוי הבא",
   "dashboard.summaryLastResult": "התוצאה האחרונה",
   "dashboard.lastBackups": "גיבויים אחרונים",
@@ -89,6 +89,7 @@ const he: Partial<Translations> = {
   "containers.notInstalled": "לא מותקן",
   "containers.notInstalledTitle": "לא מותקן (גיבויים בלבד)",
   "containers.notInstalledHint": "ה-containers האלו אינם מותקנים עוד אך עדיין קיימים להם גיבויים. שחזר אותם או מחק את הגיבויים לפינוי מקום.",
+  "containers.notInstalledSkipped": "הם עדיין מתוזמנים, ולכן כל ריצה רושמת דילוג עבור כל אחד מהם.",
   "containers.deleteBackups": "מחק את כל הגיבויים",
   "containers.deleteBackupsConfirm": "למחוק את כל הגיבויים של ה-container הזה? ה-snapshots יוסרו לצמיתות מהמאגר ולא ניתן לבטל פעולה זו.",
   "containers.filter": "סינון:",
@@ -764,6 +765,15 @@ const he: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "מצב הגנה",
+  "dashboard.noOffsite": "אין עותק מחוץ לאתר",
+  "dashboard.neverExcluded": "לא מתוזמן",
+  "dashboard.neverExcludedTitle": "הושאר מחוץ ללוח הזמנים בכוונה, ולכן אין כאן מה לגבות.",
+  "dashboard.neverSelf": "המכולה שלו",
+  "dashboard.neverSelfTitle": "BombVault לעולם אינו מגבה את המכולה שבה הוא רץ: עצירתה באמצע הייתה עוצרת את הגיבוי עצמו.",
+  "dashboard.noOffsiteTitle": "כל העותקים נמצאים במכונה הזו, כך ששריפה, גניבה או כונן תקול לוקחים גם את הגיבויים.",
+  "runReason.interrupted": "הופסק (BombVault הופעל מחדש באמצע הריצה)",
+  "runReason.shutdown": "בוטל (BombVault כובה)",
+  "runReason.containerGone": "המכולה כבר לא קיימת במארח",
   "dashboard.rpoOk": "עדכני",
   "dashboard.rpoWarn": "צפוי בקרוב",
   "dashboard.rpoOverdue": "באיחור",

@@ -24,7 +24,7 @@ const it: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Lo stato dei tuoi backup a colpo d'occhio.",
-  "dashboard.summaryHealth": "Stato generale",
+  "dashboard.summaryHealth": "Punto di ripristino",
   "dashboard.summaryNextBackup": "Prossimo backup",
   "dashboard.summaryLastResult": "Ultimo risultato",
   "dashboard.lastBackups": "Ultimi backup",
@@ -89,6 +89,7 @@ const it: Partial<Translations> = {
   "containers.notInstalled": "Non installato",
   "containers.notInstalledTitle": "Non installato (solo backup)",
   "containers.notInstalledHint": "Questi container non sono più installati ma hanno ancora dei backup. Ripristinali o elimina i loro backup per liberare spazio.",
+  "containers.notInstalledSkipped": "Restano pianificati, quindi ogni esecuzione registra un salto per ciascuno.",
   "containers.deleteBackups": "Elimina tutti i backup",
   "containers.deleteBackupsConfirm": "Eliminare TUTTI i backup di questo container? Gli snapshot verranno rimossi definitivamente dal repository e l'operazione non è reversibile.",
   "containers.filter": "Filtro:",
@@ -754,6 +755,15 @@ const it: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stato di protezione",
+  "dashboard.noOffsite": "Nessuna copia off-site",
+  "dashboard.neverExcluded": "Non pianificato",
+  "dashboard.neverExcludedTitle": "Lasciato fuori dalla pianificazione di proposito: qui non c'è nulla da salvare.",
+  "dashboard.neverSelf": "Contenitore proprio",
+  "dashboard.neverSelfTitle": "BombVault non salva mai il contenitore in cui gira: fermarlo a metà fermerebbe il backup stesso.",
+  "dashboard.noOffsiteTitle": "Tutte le copie sono su questa macchina: un incendio, un furto o un disco guasto porta via anche i backup.",
+  "runReason.interrupted": "interrotto (BombVault è stato riavviato durante l'esecuzione)",
+  "runReason.shutdown": "annullato (BombVault è stato arrestato)",
+  "runReason.containerGone": "il contenitore non esiste più sull'host",
   "dashboard.rpoOk": "Aggiornato",
   "dashboard.rpoWarn": "In scadenza",
   "dashboard.rpoOverdue": "In ritardo",

@@ -136,6 +136,38 @@ func (r *Repo) SetRunGroup(runID, groupID string) error {
 	return nil
 }
 
+// The reasons BombVault writes into runs.error ITSELF ([377]).
+//
+// Everything else in that column is a message from restic, rclone or Docker,
+// and translating those would mean translating three other projects. These
+// three are ours: we chose the words, so we own the fact that the interface
+// shows them in English to somebody reading it in one of 41 other languages.
+//
+// They stay ENGLISH SENTENCES rather than becoming codes like
+// "bv:interrupted". The column is read by people too, in `docker logs`, in a
+// support paste, in a sqlite3 shell, and a code is worse everywhere except in
+// the one place that can be fixed at the other end instead: web/src/lib/
+// runReason.ts matches these exact strings and renders the translation, falling
+// back to the raw text so a run recorded by an older version keeps reading the
+// way it always did. TestRunReasonsMatchTheFrontend pins the pairing, so the
+// two halves cannot drift apart in silence.
+const (
+	// ReasonInterrupted is written by the startup sweep, about a PREVIOUS
+	// lifetime. It cannot say more than this: the process that could have
+	// explained itself is gone. That is exactly why ReasonShutdown exists.
+	ReasonInterrupted = "interrupted (BombVault restarted mid-run)"
+
+	// ReasonShutdown is written by the process that is LEAVING, so it knows
+	// ([375]). The difference between the two is the difference between a
+	// stopped container and a crash, which is the first thing worth knowing and
+	// the one thing the sweep can never tell you.
+	ReasonShutdown = "aborted: BombVault was shut down"
+
+	// ReasonContainerGone marks a definition whose container is no longer on the
+	// host. Not a failure: BombVault deliberately did not run.
+	ReasonContainerGone = "container no longer exists on the host"
+)
+
 // ReapInterruptedRuns marks any run still in 'running' as failed. It is meant to
 // be called once at startup: BombVault is a single process, so a run left in
 // 'running' is necessarily an orphan from a previous lifetime (the process
@@ -151,8 +183,8 @@ func (r *Repo) SetRunGroup(runID, groupID string) error {
 func (r *Repo) ReapInterruptedRuns() (int64, error) {
 	res, err := r.db.Exec(`
 		UPDATE runs
-		SET status = 'failed', finished_at = ?, error = 'interrupted (BombVault restarted mid-run)'
-		WHERE status = 'running'`, time.Now().Unix())
+		SET status = 'failed', finished_at = ?, error = ?
+		WHERE status = 'running'`, time.Now().Unix(), ReasonInterrupted)
 	if err != nil {
 		return 0, fmt.Errorf("ReapInterruptedRuns: %w", err)
 	}

@@ -27,7 +27,7 @@ const fa: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "داشبورد",
   "dashboard.subtitle": "وضعیت پشتیبان‌گیری شما در یک نگاه.",
-  "dashboard.summaryHealth": "وضعیت کلی",
+  "dashboard.summaryHealth": "نقطه بازیابی",
   "dashboard.summaryNextBackup": "پشتیبان بعدی",
   "dashboard.summaryLastResult": "آخرین نتیجه",
   "dashboard.lastBackups": "آخرین پشتیبان‌ها",
@@ -93,6 +93,7 @@ const fa: Partial<Translations> = {
   "containers.notInstalled": "نصب‌نشده",
   "containers.notInstalledTitle": "نصب‌نشده (فقط پشتیبان‌ها)",
   "containers.notInstalledHint": "این کانتینرها دیگر نصب نیستند اما همچنان پشتیبان دارند. آن‌ها را بازیابی کنید یا پشتیبان‌هایشان را حذف کنید تا فضا آزاد شود.",
+  "containers.notInstalledSkipped": "هنوز زمان‌بندی شده‌اند، پس هر اجرا برای هرکدام یک رد شدن ثبت می‌کند.",
   "containers.deleteBackups": "حذف همه پشتیبان‌ها",
   "containers.deleteBackupsConfirm": "همه پشتیبان‌های این کانتینر حذف شوند؟ اسنپ‌شات‌ها برای همیشه از مخزن حذف می‌شوند و قابل بازگردانی نیستند.",
   "containers.filter": "فیلتر:",
@@ -693,6 +694,15 @@ const fa: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "وضعیت محافظت",
+  "dashboard.noOffsite": "بدون نسخه خارج از محل",
+  "dashboard.neverExcluded": "زمان‌بندی نشده",
+  "dashboard.neverExcludedTitle": "به‌عمد از زمان‌بندی کنار گذاشته شده، پس اینجا چیزی برای پشتیبان‌گیری نیست.",
+  "dashboard.neverSelf": "کانتینر خودش",
+  "dashboard.neverSelfTitle": "BombVault هرگز کانتینری را که در آن اجرا می‌شود پشتیبان نمی‌گیرد: توقف آن در میانه کار خودِ پشتیبان‌گیری را متوقف می‌کند.",
+  "dashboard.noOffsiteTitle": "همه نسخه‌ها روی همین دستگاه هستند، پس آتش‌سوزی، سرقت یا خرابی یک دیسک پشتیبان‌ها را هم می‌برد.",
+  "runReason.interrupted": "قطع شد (BombVault در میانه اجرا دوباره راه‌اندازی شد)",
+  "runReason.shutdown": "لغو شد (BombVault خاموش شد)",
+  "runReason.containerGone": "کانتینر دیگر روی میزبان وجود ندارد",
   "dashboard.rpoOk": "به‌روز",
   "dashboard.rpoWarn": "به‌زودی موعدش می‌رسد",
   "dashboard.rpoOverdue": "معوق",

@@ -24,7 +24,7 @@ const sv: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Översikt",
   "dashboard.subtitle": "Din säkerhetskopieringsstatus med en blick.",
-  "dashboard.summaryHealth": "Övergripande status",
+  "dashboard.summaryHealth": "Återställningspunkt",
   "dashboard.summaryNextBackup": "Nästa säkerhetskopia",
   "dashboard.summaryLastResult": "Senaste resultat",
   "dashboard.lastBackups": "Senaste säkerhetskopior",
@@ -89,6 +89,7 @@ const sv: Partial<Translations> = {
   "containers.notInstalled": "Inte installerad",
   "containers.notInstalledTitle": "Inte installerad (enbart säkerhetskopior)",
   "containers.notInstalledHint": "Dessa containers är inte längre installerade men har fortfarande säkerhetskopior. Återställ dem eller ta bort deras säkerhetskopior för att frigöra utrymme.",
+  "containers.notInstalledSkipped": "De är fortfarande schemalagda, så varje körning registrerar ett överhopp för var och en.",
   "containers.deleteBackups": "Ta bort alla säkerhetskopior",
   "containers.deleteBackupsConfirm": "Ta bort ALLA säkerhetskopior för den här containern? Ögonblicksbilderna tas bort permanent från arkivet och kan inte ångras.",
   "containers.filter": "Filter:",
@@ -784,6 +785,15 @@ const sv: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Skyddsstatus",
+  "dashboard.noOffsite": "Ingen kopia utanför platsen",
+  "dashboard.neverExcluded": "Inte schemalagt",
+  "dashboard.neverExcludedTitle": "Medvetet utelämnat ur schemat, så här finns inget att säkerhetskopiera.",
+  "dashboard.neverSelf": "Egen behållare",
+  "dashboard.neverSelfTitle": "BombVault säkerhetskopierar aldrig behållaren den körs i: att stoppa den mitt i skulle stoppa själva kopieringen.",
+  "dashboard.noOffsiteTitle": "Alla kopior ligger på den här maskinen, så en brand, en stöld eller en trasig disk tar med sig säkerhetskopiorna också.",
+  "runReason.interrupted": "avbröts (BombVault startade om mitt i körningen)",
+  "runReason.shutdown": "avbruten (BombVault stängdes av)",
+  "runReason.containerGone": "behållaren finns inte längre på värden",
   "dashboard.rpoOk": "Aktuell",
   "dashboard.rpoWarn": "Snart dags",
   "dashboard.rpoOverdue": "Försenad",

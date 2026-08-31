@@ -27,7 +27,7 @@ const ca: Partial<Translations> = {
   // Dashboard
   "dashboard.title": "Tauler",
   "dashboard.subtitle": "L'estat de les còpies de seguretat d'un cop d'ull.",
-  "dashboard.summaryHealth": "Estat general",
+  "dashboard.summaryHealth": "Punt de recuperació",
   "dashboard.summaryNextBackup": "Pròxima còpia",
   "dashboard.summaryLastResult": "Últim resultat",
   "dashboard.lastBackups": "Últimes còpies",
@@ -93,6 +93,7 @@ const ca: Partial<Translations> = {
   "containers.notInstalled": "No instal·lat",
   "containers.notInstalledTitle": "No instal·lat (només còpies)",
   "containers.notInstalledHint": "Aquests contenidors ja no estan instal·lats però encara tenen còpies. Restaura'ls o elimina les seves còpies per alliberar espai.",
+  "containers.notInstalledSkipped": "Encara estan programats, així que cada execució registra una omissió per a cadascun.",
   "containers.deleteBackups": "Elimina totes les còpies",
   "containers.deleteBackupsConfirm": "Vols eliminar TOTES les còpies d'aquest contenidor? Els instantanis s'eliminen permanentment del repositori i no es poden recuperar.",
   "containers.filter": "Filtre:",
@@ -693,6 +694,15 @@ const ca: Partial<Translations> = {
 
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Estat de protecció",
+  "dashboard.noOffsite": "Cap còpia externa",
+  "dashboard.neverExcluded": "No programat",
+  "dashboard.neverExcludedTitle": "Deixat fora de la planificació a propòsit, així que aquí no hi ha res per copiar.",
+  "dashboard.neverSelf": "Contenidor propi",
+  "dashboard.neverSelfTitle": "BombVault mai no copia el contenidor on s'executa: aturar-lo enmig de l'execució aturaria la còpia mateixa.",
+  "dashboard.noOffsiteTitle": "Totes les còpies són en aquesta màquina, així un incendi, un robatori o un disc avariat s'emporta també les còpies de seguretat.",
+  "runReason.interrupted": "interromput (BombVault s'ha reiniciat durant l'execució)",
+  "runReason.shutdown": "cancel·lat (BombVault s'ha aturat)",
+  "runReason.containerGone": "el contenidor ja no existeix a l'amfitrió",
   "dashboard.rpoOk": "Al dia",
   "dashboard.rpoWarn": "Aviat vencerà",
   "dashboard.rpoOverdue": "Vençuda",
