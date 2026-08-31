@@ -24,7 +24,7 @@ SRC = sys.argv[1] if len(sys.argv) > 1 else "/tmp/slv/core/solid"
 
 # our name -> (streamline file, what it means here)
 ACTION = [
-    # IconSave moved to EXTRA_ACTION ([305]) — jdp's own file.
+    # IconSave moved to EXTRA_ACTION ([316]) — jdp's own file.
     # IconCancel moved to EXTRA_ACTION ([287]) — same hand-drawn cross as
     # IconClose, so the app has one X rather than two.
     ("IconRefresh", "interface-essential/arrow-reload-horizontal-1.svg", "Refresh or reload"),
@@ -68,7 +68,7 @@ NAV = [
     ("IconLive", "interface-essential/live-video.svg", "Live, currently running"),
     ("IconTrash", "interface-essential/recycle-bin-2.svg", "Delete"),
     ("IconPencil", "interface-essential/pencil.svg", "Edit"),
-    # IconCheckCircle moved to EXTRA_NAV ([307]) — jdp's own file, and it now
+    # IconCheckCircle moved to EXTRA_NAV ([318]) — jdp's own file, and it now
     # covers every check/test button rather than only "verified".
     # Moved off arrow-reload-horizontal-2 when Recovery took that one (jdp asked
     # for "zwei Pfeile die einen Kreis bilden" there, and that file IS the
@@ -76,7 +76,7 @@ NAV = [
     # recover stay tellable apart at 20px.
     ("IconSync", "interface-essential/arrow-reload-vertical-2.svg", "Replicate or synchronise"),
     ("IconGear", "interface-essential/cog.svg", "Settings"),
-    # IconCopy moved to EXTRA_NAV ([308]) — jdp's own file.
+    # IconCopy moved to EXTRA_NAV ([319]) — jdp's own file.
     # The last five nav-rail glyphs. They were hand-drawn at 22x22 on a 20-unit
     # grid while everything generated here renders 16x16 on a 14-unit one, so
     # six rows of the rail sat at one size and six at another and the labels
@@ -157,7 +157,7 @@ def num(v):
 def cropped_box(ink):
     """A square viewBox tight to a glyph's measured INK, centred on it.
 
-    This is the one sizing mechanism ([305]-[310] unified what used to be two).
+    This is the one sizing mechanism ([316]-[321] unified what used to be two).
     Everything in this set renders into the same 20px box, so what decides
     whether two icons look the same size is how much of that box each one's
     drawing actually uses — and imported artwork varies wildly: Font Awesome
@@ -257,7 +257,7 @@ EXTRA_NAV = [
     ("IconAdd", "Add", "0 0 14 14", PLUS),
     ("IconClose", "Close", "0 0 14 14", CROSS),
     # ---------------------------------------------------------------------
-    # jdp's own files ([305]-[310]), each cropped to its measured ink.
+    # jdp's own files ([316]-[321]), each cropped to its measured ink.
     #
     # Six drawings from four different sets, which is precisely why the crop
     # exists: Font Awesome fills its box, Tabler pads it by two units on every
@@ -291,7 +291,7 @@ EXTRA_NAV = [
 # screen.
 EXTRA_ACTION = [
     ("IconCancel", "Cancel or dismiss", "0 0 14 14", CROSS),
-    # jdp's save glyph ([305]), replacing Streamline's floppy-disk everywhere a
+    # jdp's save glyph ([316]), replacing Streamline's floppy-disk everywhere a
     # button means "save".
     imported("IconSave", "Save", "0 0 448 512", (0.0, 32.0, 448.0, 448.0), "save"),
 ]

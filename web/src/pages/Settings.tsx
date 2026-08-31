@@ -61,7 +61,7 @@ import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, type Motion
 import { Selector } from "../components/Selector";
 import { relativeTime } from "../lib/reltime";
 import { Flag, IconAdd, IconBackupNow, IconDownload, IconTrash, IconCheckCircle, IconSync, IconGear, IconClose, IconCopy } from "../components/Sidebar";
-// The integrity row's own two verbs ([313]). They live in the ACTION set
+// The integrity row's own two verbs ([324]). They live in the ACTION set
 // rather than the nav one, same split IconUpload already crosses.
 import { IconUnlock, IconPrune } from "../components/glyphs";
 import { getResolvedTheme, getTheme, onSystemThemeChange, setTheme, type ResolvedTheme } from "../lib/theme";
@@ -2719,7 +2719,7 @@ function FleetSettingsCard({
             <Button
               label={t("settings.fleetRegenerate")}
               labelKey="settings.fleetRegenerate"
-              // A circular arrow ([311]). IconSync is the vertical two-arrow
+              // A circular arrow ([322]). IconSync is the vertical two-arrow
               // ring, which is the app's established "do this again" mark;
               // regenerating a fleet token is exactly that.
               glyph={<IconSync />}
@@ -2734,7 +2734,7 @@ function FleetSettingsCard({
             <Button
               label={t("settings.fleetDisable")}
               labelKey="settings.fleetDisable"
-              // The same X as every other dismissal ([312]) — the hand-drawn
+              // The same X as every other dismissal ([323]) — the hand-drawn
               // cross from [287], not a second one.
               glyph={<IconClose />}
               tone="neutral"
@@ -4584,7 +4584,7 @@ function IntegrityCard({
     }
   }
 
-  // Each action carries its own labelKey and glyph now ([313]). Both are what
+  // Each action carries its own labelKey and glyph now ([324]). Both are what
   // the two engines need and neither is optional: without `labelKey` a button
   // has no width stage, so glyph and reactive modes reflow the row instead of
   // holding it; without a glyph, those same modes fall back to showing the
@@ -4791,7 +4791,7 @@ function IntegrityCard({
                 <Button
                   key={shake[dKey] || 0}
                   label={kind === "dr" ? t("drill.runDR") : t("verify.now")}
-                  // Both engines here too ([313]). The labelKey follows the
+                  // Both engines here too ([324]). The labelKey follows the
                   // same branch the label does — a stage derived from the
                   // wrong key would size this button for the other wording.
                   labelKey={kind === "dr" ? "drill.runDR" : "verify.now"}
@@ -5718,7 +5718,7 @@ function IconTabGeneral() {
 }
 
 function IconTabStorage() {
-  // jdp's own file now ([309]), cropped to its measured ink like every
+  // jdp's own file now ([320]), cropped to its measured ink like every
   // other imported glyph. The hand-drawn disk stack it replaces went
   // through three redraws chasing legibility; an icon needing that many
   // attempts is a better candidate for replacing than for a fourth
@@ -5765,7 +5765,7 @@ function IconTabNotifications() {
 }
 
 function IconTabIntegrity() {
-  // jdp's own file now ([306]), a Material shield-check. Same silhouette
+  // jdp's own file now ([317]), a Material shield-check. Same silhouette
   // idea as the hand-drawn one it replaces, drawn by people who do this
   // for a living. See scripts/gen_glyphs.py.
   return <IconTabIntegrityGlyph />;

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // ---------------------------------------------------------------------------
-// One sizing rule for every imported glyph ([242], [267], [281], [285], [305]).
+// One sizing rule for every imported glyph ([242], [267], [281], [285], [316]).
 //
 // Five rounds of jdp looking at icons that were all in identically-sized boxes
 // and reporting, correctly every time, that some of them were bigger than

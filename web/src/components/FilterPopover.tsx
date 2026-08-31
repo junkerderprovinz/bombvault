@@ -56,7 +56,7 @@ export function FilterPopover({
         onClick={() => setOpen((p) => !p)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        /* `bv-btn` rather than its own padding ([316], jdp: "Der Filter button
+        /* `bv-btn` rather than its own padding ([327], jdp: "Der Filter button
            größer machen und ins größensystem einbinden"). It was `py-1.5
            text-xs`: smaller than every real button, and sized by two literals
            no token could ever reach — so when `--btn-h` moved from 2.25rem to

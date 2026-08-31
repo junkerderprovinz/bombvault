@@ -107,7 +107,7 @@ const RULES: Rule[] = [
   [/stop|abort|halt/i, () => <IconStop />],
   [/power|shutdown|reboot/i, () => <IconPower />],
 
-  // Local storage, as opposed to off-site ([310]).
+  // Local storage, as opposed to off-site ([321]).
   //
   // Two ordering constraints, both load-bearing. It sits BELOW the probing
   // block because `drill.checkLocal` is a button that CHECKS, and the thing it
