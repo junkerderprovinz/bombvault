@@ -15,7 +15,10 @@ const gl: Partial<Translations> = {
   "nav.receiver": "Receptor",
   "nav.fleet": "Frota",
   "nav.settings": "Configuración",
-  "nav.reportBug": "Informar dun erro",
+  "about.title": "Sobre BombVault",
+  "about.report": "Atopaches algo ou bótas algo en falta? Abre unha incidencia en GitHub ou envía un correo. A versión de arriba axuda nos dous casos.",
+  "about.repo": "Repositorio",
+  "about.mail": "Escribir un correo",
 
   // Mode toggle
   "mode.simpleView": "Vista sinxela",

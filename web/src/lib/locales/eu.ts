@@ -15,7 +15,10 @@ const eu: Partial<Translations> = {
   "nav.receiver": "Hartzailea",
   "nav.fleet": "Flota",
   "nav.settings": "Ezarpenak",
-  "nav.reportBug": "Jakinarazi akats bat",
+  "about.title": "BombVault-i buruz",
+  "about.report": "Zerbait aurkitu duzu edo zerbait falta da? Ireki gai bat GitHuben edo bidali mezu bat. Goiko bertsioak bi kasuetan laguntzen du.",
+  "about.repo": "Biltegia",
+  "about.mail": "Idatzi mezua",
 
   // Mode toggle
   "mode.simpleView": "Ikuspegi soila",

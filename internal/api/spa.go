@@ -34,6 +34,24 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 				fileServer.ServeHTTP(w, r)
 				return
 			}
+
+			// A MISSING file under /assets/ is a 404, never the SPA index
+			// ([345]). Everything under that prefix is build output with a
+			// content hash in its name; none of it is ever a client-side
+			// route, so falling back there cannot be right and is actively
+			// harmful: a browser holding a stale index.html asks for a chunk
+			// that no longer exists, gets 200 with HTML, and tries to parse
+			// markup as JavaScript. That is where "Unexpected token '<'"
+			// comes from - an error that reads like a broken app and is a
+			// broken deploy. Measured before this: /assets/anything returned
+			// 200 text/html, 1862 bytes.
+			//
+			// It also makes the failure legible to a cache and to anyone
+			// reading a network log, which a 200 never can.
+			if strings.HasPrefix(p, "assets/") {
+				http.NotFound(w, r)
+				return
+			}
 		}
 
 		// Fallback: serve index.html for client-side routes.

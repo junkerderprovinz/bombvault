@@ -15,7 +15,10 @@ const ms: Partial<Translations> = {
   "nav.receiver": "Penerima",
   "nav.fleet": "Armada",
   "nav.settings": "Tetapan",
-  "nav.reportBug": "Laporkan pepijat",
+  "about.title": "Perihal BombVault",
+  "about.report": "Menemui sesuatu atau ada yang kurang? Buka isu di GitHub atau hantar e-mel. Versi di atas membantu dalam kedua-dua kes.",
+  "about.repo": "Repositori",
+  "about.mail": "Tulis e-mel",
 
   // Mode toggle
   "mode.simpleView": "Paparan ringkas",

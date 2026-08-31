@@ -11,7 +11,8 @@
 // DOM access in that module lives inside functions).
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
-import { de, en, LANGUAGES, locales } from "./i18n";
+import { de, en, LANGUAGES } from "./i18n";
+import { allLocales as locales } from "./localesForTests";
 
 const EN_KEYS = Object.keys(en).sort();
 

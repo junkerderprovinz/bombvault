@@ -15,7 +15,10 @@ const ca: Partial<Translations> = {
   "nav.receiver": "Receptor",
   "nav.fleet": "Flota",
   "nav.settings": "Configuració",
-  "nav.reportBug": "Informa d'un error",
+  "about.title": "Quant a BombVault",
+  "about.report": "Has trobat alguna cosa o en trobes a faltar alguna? Obre una incidència a GitHub o envia un correu. La versió de dalt ajuda en tots dos casos.",
+  "about.repo": "Repositori",
+  "about.mail": "Escriure un correu",
 
   // Mode toggle
   "mode.simpleView": "Vista senzilla",

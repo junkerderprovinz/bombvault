@@ -15,7 +15,10 @@ const hi: Partial<Translations> = {
   "nav.receiver": "रिसीवर",
   "nav.fleet": "फ़्लीट",
   "nav.settings": "सेटिंग्स",
-  "nav.reportBug": "बग की रिपोर्ट करें",
+  "about.title": "BombVault के बारे में",
+  "about.report": "कुछ मिला या कुछ छूट रहा है? GitHub पर समस्या दर्ज करें या मेल भेजें। ऊपर दिया गया संस्करण दोनों ही स्थितियों में मदद करता है।",
+  "about.repo": "रिपॉज़िटरी",
+  "about.mail": "मेल लिखें",
 
   // Mode toggle
   "mode.simpleView": "सरल दृश्य",

@@ -15,7 +15,10 @@ const is: Partial<Translations> = {
   "nav.receiver": "Móttakandi",
   "nav.fleet": "Floti",
   "nav.settings": "Stillingar",
-  "nav.reportBug": "Tilkynna villu",
+  "about.title": "Um BombVault",
+  "about.report": "Fannstu eitthvað eða vantar eitthvað? Stofnaðu mál á GitHub eða sendu tölvupóst. Útgáfan hér að ofan hjálpar í báðum tilvikum.",
+  "about.repo": "Geymsla",
+  "about.mail": "Skrifa tölvupóst",
 
   // Mode toggle
   "mode.simpleView": "Einföld sýn",

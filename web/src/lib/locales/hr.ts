@@ -15,7 +15,10 @@ const hr: Partial<Translations> = {
   "nav.receiver": "Prijamnik",
   "nav.fleet": "Flota",
   "nav.settings": "Postavke",
-  "nav.reportBug": "Prijavi grešku",
+  "about.title": "O aplikaciji BombVault",
+  "about.report": "Jeste li nešto pronašli ili nešto nedostaje? Otvorite problem na GitHubu ili pošaljite e-poštu. Verzija iznad pomaže u oba slučaja.",
+  "about.repo": "Repozitorij",
+  "about.mail": "Napiši e-poštu",
 
   // Mode toggle
   "mode.simpleView": "Jednostavan prikaz",

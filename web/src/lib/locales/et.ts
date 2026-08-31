@@ -15,7 +15,10 @@ const et: Partial<Translations> = {
   "nav.receiver": "Vastuvõtja",
   "nav.fleet": "Laevastik",
   "nav.settings": "Seaded",
-  "nav.reportBug": "Teata veast",
+  "about.title": "Teave BombVaulti kohta",
+  "about.report": "Leidsite midagi või on midagi puudu? Avage GitHubis probleem või saatke e-kiri. Ülal olev versioon aitab mõlemal juhul.",
+  "about.repo": "Hoidla",
+  "about.mail": "Kirjuta e-kiri",
 
   // Mode toggle
   "mode.simpleView": "Lihtvaade",

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getRclone, setRclone, getCloud, setCloud, replicateOffsite, testOffsite, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, importSettingsApply, getHealth, backupEverythingNow, ApiError } from "../lib/api";
+import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getRclone, setRclone, getCloud, setCloud, replicateOffsite, testOffsite, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, importSettingsApply, backupEverythingNow, ApiError } from "../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { OffsiteWizard } from "../components/OffsiteWizard";
@@ -78,122 +78,9 @@ import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
 import { CloudCredSetsCard } from "./settings/CloudCredSetsCard";
 import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
+import { AboutCard } from "./settings/AboutCard";
 import { DashboardWidgetCard } from "./settings/DashboardWidgetCard";
 
-// GlimStone version this UI is built against — bump by hand whenever
-// index.css / lib/appearance.ts / lib/shape.ts / lib/motion.ts are re-copied
-// from a newer github.com/junkerderprovinz/glimstone release (same
-// convention KnightLoader's own Settings.tsx uses for its GLIMSTONE_VERSION
-// constant — see that file for the precedent). Check that repo's
-// CHANGELOG.md for the current number before bumping this by hand.
-const GLIMSTONE_VERSION = "1.2.0";
-
-// AboutFooter shows the running BombVault version (+ the GlimStone version
-// this UI targets, both linking to BombVault's releases page) and a
-// "Report a bug" link, at the bottom of the Settings page so it reads on
-// every Settings tab without being wired into each tab body individually
-// (jdp, live review: "Die Versionsnummer soll in allen Tabs ganz unten
-// stehen, auch die GlimStone-Version soll da stehen" — moved here from a
-// single Card on the System tab, which only ever showed it on that one tab).
-// See GlimStone's own docs/design-language.md, "The version footer", for
-// the full cross-app rationale (first built for KnightLoader).
-//
-// A genuine sticky FOOTER now (jdp, live review, follow-up round — "Die
-// Versionsnummer soll ganz unten auf der Seite stehen, unterhalb der
-// untersten Card, oder am unteren Fensterrand wenn die Cards nicht bis
-// ganz nach unten reichen — jetzt fahren die Cards hinten durch"): a
-// PRIOR pass made this `position: fixed` (rendered through a portal onto
-// document.body — see git history) specifically to dodge the tab-slide
-// wrapper's `transform` animation, which per the CSS spec briefly turns an
-// animated ancestor into the containing block for any `fixed` descendant
-// (exactly the bug KnightLoader's own VersionFooter comment documents
-// hitting first). That fix traded one bug for another: pinned to the
-// viewport regardless of scroll position, it made every Settings tab long
-// enough to scroll (Storage, Schedules) scroll its OWN Cards visually
-// behind/through the footer instead of the footer sitting after them.
-//
-// The actual fix is the classic flexbox "sticky footer" page shell, not a
-// fixed overlay: SettingsPage's own root (below, its return's top-level
-// div) is now itself a flex column that FILLS the scrollable viewport
-// (`main` in app/Layout.tsx, whose own child chain was given `flex-1 flex
-// flex-col` for exactly this — see that file's own comments), and the one
-// `key={tab}` tab-panels wrapper between the heading and this footer is
-// `flex-1` (SettingsPage's return, that wrapper's own className) — it
-// absorbs whatever spare height is left over, pushing THIS footer, a
-// perfectly ordinary last child with no special positioning, down to the
-// bottom of that column: right after the last Card when there are enough
-// of them to fill (or exceed, and scroll) the window, or flush with the
-// window's bottom edge when there are only a few. No portal, no `fixed`,
-// no transform-containing-block edge case to dodge in the first place —
-// the tab-slide wrapper's animated `transform` only ever mattered for a
-// `position: fixed` descendant; a normal-flow sibling rendered AFTER that
-// wrapper (never inside it) was never subject to that rule to begin with,
-// confirmed live by switching tabs rapidly: the footer holds still at the
-// bottom of the window while only the tab content slides.
-function AboutFooter() {
-  const { t } = useT();
-  const [version, setVersion] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    getHealth()
-      .then((h) => { if (active) setVersion(h.version ?? null); })
-      .catch(() => { /* version is best-effort; ignore */ });
-    return () => { active = false; };
-  }, []);
-  return (
-    <div className="flex justify-center">
-      {/* Task 5 (rule 13, "everything clickable is a badge — including
-          links"): both footer links are real anchors (as="a", not "button")
-          — right-click "copy link", middle-click to open in a new tab, the
-          browser's own status-bar URL preview — none of which a synthetic
-          onClick reproduces. No `pointer-events-none`/`-auto` split needed
-          any more (unlike the old fixed-overlay version): a normal-flow row
-          only ever occupies its own content box, so there is nothing behind
-          it for stray pointer-events to accidentally block. */}
-      <div className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
-        {version && (
-          // tone="muted" (GlimStone follow-up round, jdp's live review: "Die
-          // Versionsnummern sollen keinen hellen Hintergrund haben" — this was
-          // tone="neutral", i.e. a bg-carbon-surface2 pill, a visibly pale
-          // #e8e8e8 chip against the near-white page ground in light theme.
-          // See Badge.tsx's own `muted` tone comment for the full reasoning —
-          // a version number is a plain metadata caption, the same register
-          // as Fleet.tsx's peer-version text or this Card's own Import-preview
-          // `<dd>` rows, not a status chip that needs a tinted surface.
-          //
-          // GlimStone version appended to the SAME badge/link, "BombVault
-          // {v} · GlimStone {v}" (KnightLoader's own VersionFooter separator
-          // — see that file's precedent — over jdp's other suggested comma;
-          // picked for cross-app consistency with the actual shipped
-          // reference implementation, not a new delimiter invented here):
-          // one quiet line, not a second badge competing for the same
-          // corner of the window.
-          <Badge
-            as="a"
-            href="https://github.com/junkerderprovinz/bombvault/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            tone="muted"
-            size="small"
-            title={`BombVault ${version} · GlimStone ${GLIMSTONE_VERSION}`}
-          >
-            BombVault {version} · GlimStone {GLIMSTONE_VERSION}
-          </Badge>
-        )}
-        <Badge
-          as="a"
-          href="https://github.com/junkerderprovinz/bombvault/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          tone="neutral"
-          size="small"
-        >
-          {t("nav.reportBug")}
-        </Badge>
-      </div>
-    </div>
-  );
-}
 
 
 export function SaveBar({
@@ -6267,19 +6154,21 @@ export function SettingsPage() {
       {tab === "system" && (
         <SettingsPortabilityCard t={t} hueIndex={nextHue()} applyImport={applyImportedSettings} />
       )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* SYSTEM — About                                                      */}
+      {/* Both versions, each linking to its own release, and the two routes  */}
+      {/* for saying something about them. Replaces the old version footer    */}
+      {/* rather than joining it ([363]) — shipping both is the failure the   */}
+      {/* design language names by name: one number in two type sizes twelve  */}
+      {/* pixels apart. jdp asked for the System tab specifically, which is   */}
+      {/* the right reading of "the end of Settings" on a tabbed page.        */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "system" && (
+        <AboutCard hueIndex={nextHue()} />
+      )}
       </div>
 
-      {/* Version + report-a-bug footer. Rendered ONCE, unconditionally, here
-          — outside the `key={tab}` tab-panels wrapper above (so it doesn't
-          remount, and re-fetch the version, on every tab switch) and outside
-          every `{tab === "x" && ...}` conditional (so it's not tied to any
-          one tab at all). A perfectly ordinary last child of the page root
-          now, in normal document flow — no portal, no `position: fixed` —
-          the tab-panels wrapper's own `flex-1` (its comment above) is what
-          pushes it down to the bottom of the column; see AboutFooter's own
-          header comment for the full sticky-footer mechanism and why that
-          replaces the earlier fixed+portal version. */}
-      <AboutFooter />
     </div>
   );
 }

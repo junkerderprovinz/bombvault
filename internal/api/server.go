@@ -42,8 +42,13 @@ type Server struct {
 // NewServer wires the SPA handler over the embedded FS and the API router.
 // The combined handler is wrapped in securityHeaders so every response —
 // both API and SPA — carries the baseline HTTP security headers.
+//
+// Compression sits INSIDE securityHeaders ([364]): the security headers are
+// then written by the outermost wrapper, where nothing below can drop or
+// reorder them, and the encoding layer only ever sees a response whose headers
+// are already settled.
 func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
-	return &Server{cfg: cfg, handler: securityHeaders(NewSPAHandler(spaFS, apiRouter))}
+	return &Server{cfg: cfg, handler: securityHeaders(withCompression(NewSPAHandler(spaFS, apiRouter)))}
 }
 
 // securityHeaders is a middleware that sets baseline HTTP security headers on

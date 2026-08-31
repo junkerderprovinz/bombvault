@@ -72,7 +72,7 @@ describe("LanguageCard", () => {
     expect(within(listbox).getByRole("option", { name: /Deutsch/ })).toBeTruthy();
   });
 
-  it("picking a different language calls through to setLanguage and updates the trigger", () => {
+  it("picking a different language calls through to setLanguage and updates the trigger", async () => {
     localStorage.setItem(STORAGE_KEY, "en");
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: /English/ }));
@@ -80,7 +80,14 @@ describe("LanguageCard", () => {
 
     // The whole I18nProvider tree re-renders on setLanguage, so the trigger
     // itself now reads the new language, and the choice persisted.
-    expect(screen.getByRole("button", { name: /Deutsch/ })).toBeTruthy();
+    //
+    // `findBy`, not `getBy`, since locales became lazy chunks ([344]):
+    // setLanguage now fetches the table BEFORE it moves the state, so that
+    // switching shows the new language rather than a beat of English on the
+    // way to it. That is one microtask, and the assertion has to allow for
+    // it. Waiting here is not papering over a race - the alternative,
+    // setting the state first, is the visible flash this ordering avoids.
+    expect(await screen.findByRole("button", { name: /Deutsch/ })).toBeTruthy();
     expect(localStorage.getItem(STORAGE_KEY)).toBe("de");
     expect(document.documentElement.getAttribute("lang")).toBe("de");
   });

@@ -139,3 +139,35 @@ func TestSPACacheHeaders(t *testing.T) {
 		t.Errorf("favicon Cache-Control = %q, want it left alone", got)
 	}
 }
+
+// TestAssetsMissDoesNotFallBack pins [345]: a missing file under /assets/ is a
+// 404, not the SPA index.
+//
+// The failure it prevents is specific and was measured on the deployed build:
+// every /assets/<anything> returned 200 with text/html, so a browser holding a
+// stale index.html asked for a chunk that no longer existed, received markup,
+// and tried to parse it as JavaScript.
+func TestAssetsMissDoesNotFallBack(t *testing.T) {
+	h := api.NewSPAHandler(testSPAFS(), http.NewServeMux())
+
+	for _, path := range []string{"/assets/gone.js", "/assets/index-abc123.js.map", "/assets/style.css"} {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+		if w.Code != http.StatusNotFound {
+			t.Errorf("%s: status = %d, want 404 rather than the SPA index", path, w.Code)
+		}
+	}
+
+	// An asset that DOES exist is unaffected, and so is a client-side route
+	// that merely happens to sit at the top level.
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/assets/app.js", nil))
+	if w.Code != http.StatusOK {
+		t.Errorf("existing asset: status = %d, want 200", w.Code)
+	}
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/dashboard", nil))
+	if w.Code != http.StatusOK {
+		t.Errorf("client route: status = %d, want the SPA index", w.Code)
+	}
+}

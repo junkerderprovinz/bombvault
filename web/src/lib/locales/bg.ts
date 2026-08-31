@@ -15,7 +15,10 @@ const bg: Partial<Translations> = {
   "nav.receiver": "Приемник",
   "nav.fleet": "Флот",
   "nav.settings": "Настройки",
-  "nav.reportBug": "Докладвай грешка",
+  "about.title": "Относно BombVault",
+  "about.report": "Открихте нещо или нещо липсва? Отворете проблем в GitHub или изпратете имейл. Версията по-горе помага и в двата случая.",
+  "about.repo": "Хранилище",
+  "about.mail": "Напишете имейл",
 
   // Mode toggle
   "mode.simpleView": "Опростен изглед",

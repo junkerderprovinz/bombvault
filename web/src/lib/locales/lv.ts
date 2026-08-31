@@ -15,7 +15,10 @@ const lv: Partial<Translations> = {
   "nav.receiver": "Uztvērējs",
   "nav.fleet": "Flote",
   "nav.settings": "Iestatījumi",
-  "nav.reportBug": "Ziņot par kļūdu",
+  "about.title": "Par BombVault",
+  "about.report": "Kaut ko atradāt vai kaut kā trūkst? Izveidojiet problēmu GitHub vai nosūtiet e-pastu. Iepriekš minētā versija palīdz abos gadījumos.",
+  "about.repo": "Krātuve",
+  "about.mail": "Rakstīt e-pastu",
 
   // Mode toggle
   "mode.simpleView": "Vienkāršs skats",

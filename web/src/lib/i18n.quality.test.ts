@@ -23,7 +23,8 @@
 // somebody made and wrote down.
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
-import { en, locales } from "./i18n";
+import { en } from "./i18n";
+import { allLocales as locales } from "./localesForTests";
 
 /**
  * Values that are legitimately identical to English in some languages.

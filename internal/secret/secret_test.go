@@ -8,7 +8,15 @@ import (
 	"time"
 )
 
-const appKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+// Not a secret: the hex digits in order, repeated to 32 bytes. Annotated
+// because the SHAPE alone satisfies gitleaks' generic-api-key rule, and a scan
+// that reports it costs somebody the same investigation twice ([366]).
+//
+// The first version of this comment spelled the pattern out and called it "not
+// a key" - and became a finding of its own, on the very next line, because that
+// rule looks for the word next to hex. An annotation suppresses the line it
+// sits on, so prose ABOUT a fixture needs the same care as the fixture.
+const appKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" //gitleaks:allow
 
 func TestEncryptDecryptRoundtrip(t *testing.T) {
 	plain := []byte(`{"inspect":{"Image":"x"},"template_xml":"<xml/>"}`)

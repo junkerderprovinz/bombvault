@@ -24,7 +24,8 @@ import {
   EXCLUDES_HINT_LTR_FRAGMENTS,
   FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS,
 } from "./ltrFragments";
-import { locales, type TranslationKey } from "./i18n";
+import { type TranslationKey } from "./i18n";
+import { allLocales as locales } from "./localesForTests";
 
 interface ElementNode {
   type?: unknown;

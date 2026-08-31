@@ -2,51 +2,49 @@
 // i18n — React Context-based, 42 locales, flag switcher support
 // ---------------------------------------------------------------------------
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import { createElement } from "react";
 
 // Translated locales (en + de are defined inline below as the source of truth).
-import fr from "./locales/fr";
-import es from "./locales/es";
-import it from "./locales/it";
-import pt from "./locales/pt";
-import nl from "./locales/nl";
-import pl from "./locales/pl";
-import ru from "./locales/ru";
-import uk from "./locales/uk";
-import cs from "./locales/cs";
-import sv from "./locales/sv";
-import da from "./locales/da";
-import fi from "./locales/fi";
-import no from "./locales/no";
-import tr from "./locales/tr";
-import el from "./locales/el";
-import hu from "./locales/hu";
-import ro from "./locales/ro";
-import ja from "./locales/ja";
-import ko from "./locales/ko";
-import zh from "./locales/zh";
-import ar from "./locales/ar";
-import he from "./locales/he";
-import th from "./locales/th";
-import vi from "./locales/vi";
-import bg from "./locales/bg";
-import sk from "./locales/sk";
-import sl from "./locales/sl";
-import hr from "./locales/hr";
-import sr from "./locales/sr";
-import lt from "./locales/lt";
-import lv from "./locales/lv";
-import et from "./locales/et";
-import is from "./locales/is";
-import ca from "./locales/ca";
-import gl from "./locales/gl";
-import eu from "./locales/eu";
-import id from "./locales/id";
-import ms from "./locales/ms";
-import hi from "./locales/hi";
-import fa from "./locales/fa";
+// The 40 translated locales are LOADED ON DEMAND, one chunk each ([344]).
+//
+// They used to be forty static imports, which put every one of them in the
+// main bundle: measured, the locale sources are 4,624 kB of a 5,172 kB
+// bundle, so roughly nine tenths of the JavaScript a first visit downloads
+// is translations for languages that visitor is not reading.
+//
+// `en` stays static on purpose and is not in this map. It is the fallback
+// behind every missing key, so it has to be present before any chunk
+// resolves - a lazily-loaded fallback is not a fallback.
+//
+// import.meta.glob rather than a hand-written map of 40 arrow functions:
+// Vite resolves the pattern at build time, so adding a locale file is the
+// whole of adding a locale, and a map that has to be edited in step is a
+// map that will not be.
+const localeChunks = import.meta.glob<{ default: Partial<Translations> }>("./locales/*.ts");
+
+// Resolved tables, kept so switching back to a language does not fetch it
+// again. `en` is there from the start.
+const loaded: Record<string, Partial<Translations>> = {};
+
+/** The table for one language, fetching its chunk the first time. */
+export async function loadLocale(code: string): Promise<Partial<Translations>> {
+  if (loaded[code]) return loaded[code];
+  const chunk = localeChunks[`./locales/${code}.ts`];
+  if (!chunk) return {};
+  try {
+    const mod = await chunk();
+    loaded[code] = mod.default;
+    return mod.default;
+  } catch {
+    // A chunk that fails to arrive (offline, a stale index asking for a
+    // hash that no longer exists) must not take the interface down with
+    // it: English is a worse experience than German and a far better one
+    // than a blank page.
+    return {};
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Translation key set — en is the source of truth
@@ -68,7 +66,10 @@ export const en = {
   "nav.receiver": "Receiver",
   "nav.fleet": "Fleet",
   "nav.settings": "Settings",
-  "nav.reportBug": "Report a bug",
+  "about.title": "About BombVault",
+  "about.report": "Found something, or missing something? Open an issue on GitHub or send a mail. The version above helps either way.",
+  "about.repo": "Repository",
+  "about.mail": "Write a mail",
 
   // Mode toggle
   "mode.simpleView": "Simple view",
@@ -1773,7 +1774,10 @@ export const de: Translations = {
   "nav.receiver": "Empfänger",
   "nav.fleet": "Flotte",
   "nav.settings": "Einstellungen",
-  "nav.reportBug": "Fehler melden",
+  "about.title": "Über BombVault",
+  "about.report": "Etwas gefunden oder vermisst? Melde es auf GitHub oder schreib eine Mail. Die Version oben hilft in beiden Fällen.",
+  "about.repo": "Repository",
+  "about.mail": "Mail schreiben",
 
   "mode.simpleView": "Einfache Ansicht",
   "mode.advancedView": "Erweiterte Ansicht",
@@ -3296,50 +3300,15 @@ export const isRtl = (code: string): boolean =>
 // en + de are the complete source of truth; the other 40 are Partial and fall
 // back to en at runtime for any missing key (see the t() lookup).
 // (exported so the locale-parity test can iterate the full registry)
-export const locales: Record<string, Partial<Translations>> = {
-  en,
-  de,
-  fr,
-  es,
-  it,
-  pt,
-  nl,
-  pl,
-  ru,
-  uk,
-  cs,
-  sv,
-  da,
-  fi,
-  no,
-  tr,
-  el,
-  hu,
-  ro,
-  ja,
-  ko,
-  zh,
-  ar,
-  he,
-  th,
-  vi,
-  bg,
-  sk,
-  sl,
-  hr,
-  sr,
-  lt,
-  lv,
-  et,
-  is,
-  ca,
-  gl,
-  eu,
-  id,
-  ms,
-  hi,
-  fa,
-};
+// `locales` used to hold all 42 tables at once. It now holds only the two
+// that are always present ([344]): `en` as the fallback and `de` as the
+// other inline source of truth. Everything else arrives through
+// loadLocale() and lands in `loaded` above.
+//
+// The parity, orphan and quality tests still need every table at once, and
+// they build it themselves with an eager glob in localesForTests.ts - a file
+// no application code imports, so nothing it pulls in reaches the bundle.
+export const locales: Record<string, Partial<Translations>> = { en, de };
 
 /** Resolve a raw locale code to one offered in the switcher (else the default). */
 function resolveCode(raw: string | null): string {
@@ -3383,6 +3352,27 @@ const I18nContext = createContext<I18nContextValue>({
 /** Mount once at the app root (Layout or main). Children share one language state. */
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<string>(storedCode);
+  // The table actually in use. It starts at whatever is already resident -
+  // `en` and `de` are inline - so a German or English reader never waits, and
+  // every other language fills in when its chunk lands ([344]).
+  const [table, setTable] = useState<Partial<Translations>>(() => locales[storedCode()] ?? en);
+
+  useEffect(() => {
+    if (locales[lang]) {
+      setTable(locales[lang]);
+      return;
+    }
+    let current = true;
+    // `current` rather than an AbortController: two quick switches would
+    // otherwise race, and the LAST one has to win regardless of which chunk
+    // happens to arrive first.
+    void loadLocale(lang).then((t) => {
+      if (current) setTable(t);
+    });
+    return () => {
+      current = false;
+    };
+  }, [lang]);
 
   const setLanguage = useCallback((code: string) => {
     const offered = OFFERED_LANGUAGES.map((l) => l.code);
@@ -3390,15 +3380,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, code);
     document.documentElement.setAttribute("lang", code);
     document.documentElement.setAttribute("dir", isRtl(code) ? "rtl" : "ltr");
-    setLangState(code);
+    // Fetch before the state change where possible, so the switch shows the
+    // new language rather than a beat of English on the way to it.
+    void loadLocale(code).then(() => setLangState(code));
   }, []);
 
   const t = useCallback(
-    (key: TranslationKey): string => {
-      const locale = locales[lang] ?? locales[DEFAULT_CODE];
-      return locale[key] ?? en[key] ?? key;
-    },
-    [lang]
+    (key: TranslationKey): string => table[key] ?? en[key] ?? key,
+    [table]
   );
 
   return createElement(
