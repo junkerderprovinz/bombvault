@@ -10,6 +10,7 @@ import { Receiver } from "../pages/Receiver";
 import { Fleet } from "../pages/Fleet";
 import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
+import { GlyphSheet } from "../pages/Glyphs";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
@@ -36,6 +37,11 @@ export function AppRouter() {
                   as a redirect so old links/bookmarks land on the Schedules tab. */}
               <Route path="/jobs" element={<Navigate to="/settings#schedules" replace />} />
               <Route path="/settings" element={<SettingsPage />} />
+              {/* The glyph contact sheet ([330]) — every icon at its real size
+                  with its measured fill, so a mis-sized import is visible
+                  before it reaches a card. Deliberately unlisted: no nav entry,
+                  no translation, reachable by whoever maintains the icons. */}
+              <Route path="/glyphs" element={<GlyphSheet />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>

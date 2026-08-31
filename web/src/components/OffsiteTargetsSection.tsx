@@ -594,6 +594,7 @@ export function OffsiteTargetsSection({
       {!draft && (
         <Button
           label={t("offsite.targets.add")}
+          labelKey="offsite.targets.add"
           glyph={<IconAdd />}
           tone="accent"
           onClick={openNew}

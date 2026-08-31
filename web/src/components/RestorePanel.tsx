@@ -194,6 +194,7 @@ function SnapshotFileBrowser({
           <div className="flex items-center gap-2">
             <Button
               label={t("files.restoreSelected").replace("{n}", String(count))}
+              labelKey="files.restoreSelected"
               glyph={<IconRestore />}
               tone="accent"
               onClick={() => void handleRestoreSelected()}
@@ -773,6 +774,7 @@ function SnapshotRow({
             this replaces, which never set one either — no regression.) */}
         <Button
           label={t("restore.open")}
+          labelKey="restore.open"
           glyph={<IconRestore />}
           tone="accent"
           onClick={() => setShowRestore((p) => !p)}
@@ -811,6 +813,7 @@ function SnapshotRow({
         <Button
           key={shake}
           label={t("snapshots.delete")}
+          labelKey="snapshots.delete"
           glyph={<IconTrash />}
           tone="accent"
           onClick={() => void handleDelete()}

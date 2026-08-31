@@ -51,6 +51,9 @@ export interface ConfirmDialogProps {
    *  unchanged copy, per Task 7's scope (mechanism swap only). */
   message: string;
   confirmLabel: string;
+  /** Translation key behind `confirmLabel`, so the confirm button can pick
+   *  a glyph. Optional: a caller passing a composed or data label has none. */
+  confirmLabelKey?: string;
   cancelLabel: string;
   /** Accessible name for the header close (X) button — DELIBERATELY separate
    *  from cancelLabel: they are two distinct controls that both cancel, and
@@ -73,6 +76,7 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel,
+  confirmLabelKey,
   cancelLabel,
   closeLabel,
   tone = "fail",
@@ -120,6 +124,7 @@ export function ConfirmDialog({
               being a permanently glyph-only square of its own. */}
           <Button
             label={closeLabel}
+            labelKey="common.close"
             glyph={<IconClose />}
             tone="neutral"
             onClick={onCancel}
@@ -140,6 +145,7 @@ export function ConfirmDialog({
         <div className="flex items-center justify-end gap-3 border-t border-carbon-border px-5 py-4">
           <Button
             label={cancelLabel}
+            labelKey="common.cancel"
             glyph={<IconCancel />}
             tone="neutral"
             autoFocus
@@ -159,6 +165,11 @@ export function ConfirmDialog({
               which is why the marker is only being written now. */}
           <Button
             label={confirmLabel}
+            // The confirm button's meaning changes with the action it confirms
+            // (delete, prune, overwrite), so its glyph cannot come from a fixed
+            // key the way close and cancel above do. `null` where the caller
+            // gave none is the deliberate 'no key' answer, not an oversight.
+            labelKey={confirmLabelKey ?? null}
             tone={tone === "fail" ? "danger" : "warn"}
             onClick={onConfirm}
           />

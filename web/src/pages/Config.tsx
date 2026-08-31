@@ -115,6 +115,7 @@ function ConfigBackupButton({
     <Button
       key={shake}
       label={t("config.backupNow")}
+      labelKey="config.backupNow"
       glyph={<IconBackupNow />}
       tone="accent"
       onClick={() => void fire()}
@@ -402,6 +403,7 @@ function ConfigSnapshotRow({
         <Button
           key={shake}
           label={t("snapshots.delete")}
+          labelKey="snapshots.delete"
           glyph={<IconTrash />}
           tone="accent"
           onClick={() => void handleDelete()}

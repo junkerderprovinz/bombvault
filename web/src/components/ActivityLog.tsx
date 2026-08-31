@@ -369,6 +369,7 @@ export function ActivityLog({
             })}
             <Button
               label={t("activityLog.clearDayFilter")}
+              labelKey="activityLog.clearDayFilter"
               variant="chip"
               onClick={onClearDayFilter}
             />

@@ -55,7 +55,20 @@ const STAGE_CLASS: Record<WidthStage, string> = {
   lg: "bv-btn-lg",
 };
 
-export type ButtonTone = "accent" | "neutral" | "danger" | "warn";
+/**
+ * "subtle" joins the table for [332], and it is not a new look — it is a look
+ * the app already had, written out by hand at five call sites as
+ * `bg-carbon-surface2` in a `className`. That is the shape of thing this tone
+ * table exists to stop: a background set beside `tone` rather than by it wins
+ * or loses purely by where the two utilities land in the compiled stylesheet,
+ * so the class list reads correctly and the button paints wrong. It cost a
+ * round already ([326], set to accent, shipped grey).
+ *
+ * The lesson generalises past this one class: if a control needs a surface the
+ * table does not have, the answer is to add it here, not to write it at the
+ * call site.
+ */
+export type ButtonTone = "accent" | "neutral" | "subtle" | "danger" | "warn";
 
 /**
  * "default" — the ordinary action button described above.
@@ -84,6 +97,7 @@ export type ButtonVariant = "default" | "chip";
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:opacity-90",
   neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hover",
+  subtle: "bg-carbon-surface2 text-carbon-text hover:bg-carbon-hover",
   danger: "bg-statusFailSolid text-carbon-background hover:opacity-90",
   warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
 };
@@ -113,11 +127,26 @@ export function Button({
    *  up…") would resize the control mid-action, which is exactly what the
    *  width stages exist to prevent — pass that through `title` instead. */
   label: string;
-  /** The translation key behind `label`. Passing it lets the component pick a
-   *  glyph by MEANING (glyphFor), so a call site does not have to choose one,
-   *  and so the same verb wears the same symbol everywhere. An explicit
-   *  `glyph` always wins over it. */
-  labelKey?: string;
+  /** The translation key behind `label`, or `null` when the label is DATA — a
+   *  directory name, a path — and so has no key.
+   *
+   *  It lets the component pick a glyph by MEANING (glyphFor), so a call site
+   *  does not have to choose one and the same verb wears the same symbol
+   *  everywhere. An explicit `glyph` always wins over it.
+   *
+   *  REQUIRED, and `null` is a real answer rather than a way out ([329]).
+   *  Optional, it was quietly missing on 49 of the app's 171 buttons — 29% of
+   *  them, each unable to pick a glyph, so glyph and reactive mode fell back
+   *  to text for exactly those. Nothing failed and no test went red; the
+   *  buttons simply never joined the engine, and the only way to find them was
+   *  to go looking. Required, the compiler asks once per call site and the
+   *  author answers either "this key" or "there isn't one" — both useful, and
+   *  neither skippable by accident.
+   *
+   *  When the label branches, the key branches with it. A fixed key on a
+   *  button whose wording flips between two states names the wrong one half
+   *  the time, which picks the wrong glyph exactly when the state changed. */
+  labelKey: string | null;
   /** Optional icon, overriding whatever `labelKey` would have chosen. Without
    *  either, glyph mode shows this button's text instead of an empty box. */
   glyph?: ReactNode;

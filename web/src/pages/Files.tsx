@@ -216,6 +216,7 @@ function FileSetBackupButton({
     <div className="flex flex-col gap-1 items-end">
       <Button
         label={t("containers.backupNow")}
+        labelKey="containers.backupNow"
         glyph={<IconBackupNow />}
         tone="accent"
         onClick={() => void fire()}
@@ -360,6 +361,7 @@ function FileSetFileBrowser({
           <div className="flex items-center gap-2">
             <Button
               label={t("files.restoreSelected").replace("{n}", String(count))}
+              labelKey="files.restoreSelected"
               glyph={<IconRestore />}
               tone="accent"
               onClick={handleRestoreSelected}
@@ -641,6 +643,7 @@ function FileSetSnapshotRow({
         <Button
           key={shake}
           label={t("snapshots.delete")}
+          labelKey="snapshots.delete"
           glyph={<IconTrash />}
           tone="accent"
           onClick={() => void handleDelete()}
@@ -1215,6 +1218,7 @@ function FileSetRow({
           <div className="flex items-center gap-1.5">
             <Button
               label={t("files.editSet")}
+              labelKey="files.editSet"
               glyph={<IconPencil />}
               tone="accent"
               onClick={onEdit}
@@ -1222,6 +1226,7 @@ function FileSetRow({
             <Button
               key={shake}
               label={t("files.deleteSet")}
+              labelKey="files.deleteSet"
               glyph={<IconTrash />}
               tone="accent"
               onClick={() => void handleRemove()}

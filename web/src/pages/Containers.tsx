@@ -454,6 +454,7 @@ function ExportButton({ name, t }: { name: string; t: T }) {
       <Button
         key={shake}
         label={t("export.button")}
+        labelKey="export.button"
         glyph={<IconDownload />}
         tone="accent"
         // Same shared stage as BackupButton beside it — see that file.
@@ -861,6 +862,7 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
               in all 42 locales, so this adds no new key. */}
           <Button
             label={t("offsite.targets.remove")}
+            labelKey="offsite.targets.remove"
             variant="chip"
             onClick={() => removeCustomPath(cp.path)}
           />
@@ -900,6 +902,7 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
             icon-only. */}
         <Button
           label={t("folders.add")}
+          labelKey="folders.add"
           glyph={<IconAdd />}
           tone="accent"
           onClick={addCustom}
@@ -1144,6 +1147,7 @@ function StopContainersEditor({
               {n}
               <Button
                 label={t("stophook.remove").replace("{name}", n)}
+                labelKey="stophook.remove"
                 variant="chip"
                 onClick={() => void toggle(n)}
                 disabled={!!rowBusy[n]}
@@ -1436,6 +1440,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                 label={suggestions === null
                     ? t("excludes.assistScan")
                     : t("excludes.assistRescan")}
+                labelKey={suggestions === null ? "excludes.assistScan" : "excludes.assistRescan"}
                 glyph={<IconSearch />}
                 tone="accent"
                 onClick={() => void scan()}
@@ -1591,6 +1596,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                     {line}
                     <Button
                       label={t("excludes.assistRemoveLine").replace("{line}", line)}
+                      labelKey="excludes.assistRemoveLine"
                       variant="chip"
                       onClick={() => void removeExclude(line)}
                       disabled={state === "saving"}
@@ -1974,10 +1980,10 @@ function ScheduleIncludeAllControl({
       <Button
         label={t("schedule.excludeAll")}
         labelKey="schedule.excludeAll"
-        tone="neutral"
+        tone="subtle"
         onClick={() => void run(false)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+        className={`inline-flex items-center rounded-control px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
           shakeExclude ? " glim-shake" : ""
         }`}
       />
@@ -2613,10 +2619,10 @@ function BackupOrderPanel({
               <Button
                 label={t("backupOrder.reset")}
           labelKey="backupOrder.reset"
-                tone="neutral"
+                tone="subtle"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+                className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
                   shakeReset ? " glim-shake" : ""
                 }`}
               />

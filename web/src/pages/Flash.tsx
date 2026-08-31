@@ -129,6 +129,7 @@ function FlashBackupButton({
     <Button
       key={shake}
       label={t("flash.backupNow")}
+      labelKey="flash.backupNow"
       glyph={<IconBackupNow />}
       tone="accent"
       onClick={() => void fire()}
@@ -251,6 +252,7 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
             make. */}
         <Button
           label={t("flash.download")}
+          labelKey="flash.download"
           glyph={<IconDownload />}
           tone="accent"
           onClick={handleDownload}
@@ -261,6 +263,7 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
         <Button
           key={shake}
           label={t("snapshots.delete")}
+          labelKey="snapshots.delete"
           glyph={<IconTrash />}
           tone="accent"
           onClick={() => void handleDelete()}

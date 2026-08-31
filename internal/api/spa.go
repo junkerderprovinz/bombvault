@@ -30,6 +30,7 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 		if p := strings.TrimPrefix(r.URL.Path, "/"); p != "" {
 			if f, err := spaFS.Open(p); err == nil {
 				_ = f.Close()
+				setCacheHeaders(w, p)
 				fileServer.ServeHTTP(w, r)
 				return
 			}
@@ -40,6 +41,35 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 	})
 }
 
+// setCacheHeaders splits the bundle into the two things it actually is ([333]).
+//
+// Vite gives every built asset a content hash in its name, so
+// `assets/index-B7f2c9.js` is immutable by construction: a new build produces a
+// new NAME, never new bytes under the old one. Those can be cached for a year
+// and it is free.
+//
+// index.html is the opposite and must never be cached. It is the one file whose
+// name never changes and whose content changes on every deploy, since it
+// carries the script tags naming the current hashed bundles. Cached, a browser
+// keeps loading yesterday's shell, which asks for yesterday's bundles, and the
+// app looks not-updated in a way no amount of deploying fixes.
+//
+// This is not hypothetical here. Verifying a deploy on 2026-08-31, the page
+// reported sha-9f627b5 while sha-f745c04 was demonstrably running and healthy,
+// and the same confusion had already cost a round of chasing a "bug" that was a
+// stale page ([266]). Without an explicit header a browser applies its own
+// heuristic to a 200 with a Last-Modified and no max-age, which is precisely
+// where "it works on my machine after a hard reload" comes from.
+func setCacheHeaders(w http.ResponseWriter, path string) {
+	if path == "index.html" {
+		w.Header().Set("Cache-Control", "no-store, must-revalidate")
+		return
+	}
+	if strings.HasPrefix(path, "assets/") {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	}
+}
+
 // serveIndex writes index.html from spaFS as the SPA entry point.
 func serveIndex(w http.ResponseWriter, spaFS fs.FS) {
 	data, err := fs.ReadFile(spaFS, "index.html")
@@ -48,5 +78,9 @@ func serveIndex(w http.ResponseWriter, spaFS fs.FS) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// Every client-side route lands here, so this is the path that actually
+	// serves the shell in normal use - /index.html by name is the rarer one.
+	// Both need it; setting it in only one was the first cut of this fix.
+	setCacheHeaders(w, "index.html")
 	_, _ = w.Write(data)
 }

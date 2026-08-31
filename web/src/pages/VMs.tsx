@@ -396,6 +396,7 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
       <Button
         key={shake}
         label={t("export.button")}
+        labelKey="export.button"
         glyph={<IconDownload />}
         tone="accent"
         // Same shared stage as BackupButton beside it — see that file.
@@ -506,6 +507,7 @@ function VMBackupButton({
     <Button
       key={shake}
       label={t("containers.backupNow")}
+      labelKey="containers.backupNow"
       glyph={<IconBackupNow />}
       tone="accent"
       onClick={() => void fire()}
@@ -632,6 +634,7 @@ function VMSnapshotRow({
             feedback, the same call RestorePanel's converted toggle made. */}
         <Button
           label={t("restore.open")}
+          labelKey="restore.open"
           glyph={<IconRestore />}
           tone="accent"
           onClick={() => setShowRestore((p) => !p)}
@@ -640,6 +643,7 @@ function VMSnapshotRow({
         <Button
           key={shake}
           label={t("snapshots.delete")}
+          labelKey="snapshots.delete"
           glyph={<IconTrash />}
           tone="accent"
           onClick={() => void handleDelete()}
@@ -1162,10 +1166,10 @@ function ScheduleIncludeAllControl({
       <Button
         label={t("schedule.excludeAll")}
         labelKey="schedule.excludeAll"
-        tone="neutral"
+        tone="subtle"
         onClick={() => void run(false)}
         disabled={busy}
-        className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+        className={`inline-flex items-center rounded-control px-3 py-1 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
           shakeExclude ? " glim-shake" : ""
         }`}
       />
@@ -1490,10 +1494,10 @@ function VMBackupOrderPanel({
               <Button
                 label={t("backupOrder.reset")}
           labelKey="backupOrder.reset"
-                tone="neutral"
+                tone="subtle"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
-                className={`inline-flex items-center rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-50${
+                className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs font-medium text-carbon-textSub hover:text-carbon-text transition-colors disabled:opacity-50${
                   shakeReset ? " glim-shake" : ""
                 }`}
               />

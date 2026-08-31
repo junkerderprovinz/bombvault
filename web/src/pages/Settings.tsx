@@ -1671,6 +1671,7 @@ chmod 600 /root/.ssh/authorized_keys`
                 measured to, so the footprint is unchanged. */}
             <Button
               label={t("vm.ssh.copy")}
+              labelKey="vm.ssh.copy"
               glyph={<IconCopy />}
               tone="accent"
               onClick={() => void handleCopy()}
@@ -1702,6 +1703,7 @@ chmod 600 /root/.ssh/authorized_keys`
                 as a plain button before either round. */}
             <Button
               label={t("vm.ssh.copyCmd")}
+              labelKey="vm.ssh.copyCmd"
               glyph={<IconCopy />}
               tone="accent"
               onClick={() => void handleCopyCmd()}
@@ -2038,7 +2040,7 @@ function SettingsPortabilityCard({
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}
-                className={`rounded-control bg-carbon-surface3 hover:bg-carbon-border px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
+                className={`rounded-control px-4 py-1.5 text-sm text-carbon-text transition-colors disabled:opacity-50${hueOn ? " glim-hue" : ""}`}
                 hueIndex={hueIndex}
               />
             </div>
@@ -2319,7 +2321,7 @@ function UnraidTileSection({
               setStatus({ kind: "loading" });
               refresh();
             }}
-            className={`self-start rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${hueOn ? " glim-hue" : ""}`}
+            className={`self-start rounded-control px-3 py-2 text-xs text-carbon-text${hueOn ? " glim-hue" : ""}`}
           />
         </div>
       )}
@@ -2455,7 +2457,7 @@ function DashboardWidgetCard({
               tone="neutral"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
                 shake.generate ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
             />
@@ -2465,7 +2467,7 @@ function DashboardWidgetCard({
               tone="neutral"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
             />
@@ -2726,7 +2728,7 @@ function FleetSettingsCard({
               tone="neutral"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
                 shake.generate ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
@@ -2740,7 +2742,7 @@ function FleetSettingsCard({
               tone="neutral"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
@@ -3285,9 +3287,9 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
               <Button
                 label={t("offsite.targets.remove")}
                 labelKey="offsite.targets.remove"
-                tone="neutral"
+                tone="subtle"
                 onClick={() => setConfirmRemove(s.id)}
-                className={`rounded-control bg-carbon-surface2 px-2.5 py-1 text-xs text-carbon-text hover:bg-carbon-hover${
+                className={`rounded-control px-2.5 py-1 text-xs text-carbon-text${
                   shake[`remove:${s.id}`] ? " glim-shake" : ""
                 }`}
               />
@@ -4251,6 +4253,7 @@ function ReplicateNowButton({
     // exist to prevent (#178).
     <Button
       label={t("offsite.replicateNow")}
+      labelKey="offsite.replicateNow"
       glyph={<IconSync />}
       tone="accent"
       hueIndex={hueIndex}
@@ -4309,6 +4312,7 @@ function TestConnectionButton({
   return (
     <Button
       label={t("offsite.test")}
+      labelKey="offsite.test"
       glyph={<IconCheckCircle />}
       tone="accent"
       hueIndex={hueIndex}
@@ -4584,12 +4588,16 @@ function IntegrityCard({
     }
   }
 
-  // Each action carries its own labelKey and glyph now ([324]). Both are what
-  // the two engines need and neither is optional: without `labelKey` a button
-  // has no width stage, so glyph and reactive modes reflow the row instead of
-  // holding it; without a glyph, those same modes fall back to showing the
-  // text, which is the one thing they exist not to do. This row had three
-  // buttons that were simply outside both engines.
+  // Each action carries its own labelKey and glyph now ([324]). This row had
+  // three buttons outside both engines: no key, no hue index, no glyph.
+  //
+  // Correcting what an earlier version of this comment claimed: a missing
+  // `labelKey` does NOT cost the width stage — that is derived from `label`,
+  // which is always present. What it costs is the GLYPH, since the key is
+  // what glyphFor looks up, and a button with no glyph falls back to showing
+  // its text in exactly the two modes that exist to hide it. Bad enough on
+  // its own, and worth stating accurately: the same wrong reasoning would
+  // have justified leaving a data-labelled button keyless.
   const actions: { key: Action; label: string; labelKey: string; glyph: ReactNode; busy: string }[] = [
     {
       key: "verify",
@@ -5587,6 +5595,7 @@ export function EverythingSection({
         <Button
           key={shake}
           label={t("settings.everythingRunNow")}
+          labelKey="settings.everythingRunNow"
           glyph={<IconBackupNow />}
           tone="accent"
           onClick={() => void runNow()}
@@ -8178,6 +8187,7 @@ export function SettingsPage() {
                   every other icon in that file's icon-only-badge set. */}
               <Button
                 label={t("settings.registryRemove")}
+                labelKey="settings.registryRemove"
                 glyph={<IconTrash />}
                 tone="accent"
                 onClick={() => {
@@ -8227,6 +8237,7 @@ export function SettingsPage() {
           <div className="flex justify-end">
             <Button
               label={t("settings.registryAdd")}
+              labelKey="settings.registryAdd"
               glyph={<IconAdd />}
               tone="accent"
               onClick={() => {
@@ -8518,6 +8529,7 @@ export function SettingsPage() {
                   unnecessary here. */}
               <Button
                 label={t("recovery.download")}
+                labelKey="recovery.download"
                 glyph={<IconDownload />}
                 tone="accent"
                 onClick={() => {
@@ -8651,6 +8663,7 @@ export function SettingsPage() {
                     share a width stage, so the control does not jump. */}
                 <Button
                   label={wizardOpen ? t("offsite.wizard.close") : t("offsite.wizard.setup")}
+                  labelKey={wizardOpen ? "offsite.wizard.close" : "offsite.wizard.setup"}
                   glyph={wizardOpen ? <IconClose /> : <IconGear />}
                   tone="accent"
                   hueIndex={hueIdx}

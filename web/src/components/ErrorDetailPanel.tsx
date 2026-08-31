@@ -208,6 +208,7 @@ export function ErrorDetailPanel({
             <Button
               ref={closeRef}
               label={t("common.close")}
+              labelKey="common.close"
               glyph={<IconClose />}
               tone="neutral"
               onClick={onClose}

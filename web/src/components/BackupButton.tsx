@@ -100,6 +100,7 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
     <Button
       key={shake}
       label={t("containers.backupNow")}
+      labelKey="containers.backupNow"
       glyph={<IconBackupNow />}
       tone="accent"
       // Shares a width with the Export button it sits beside in every card

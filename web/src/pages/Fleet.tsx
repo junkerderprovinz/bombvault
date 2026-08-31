@@ -85,7 +85,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
         labelKey="vm.ssh.copy"
         tone="neutral"
         onClick={() => void copy()}
-        className={`shrink-0 rounded-control bg-carbon-surface3 px-3 py-2 text-xs text-carbon-text hover:bg-carbon-hover${
+        className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text${
           shake ? " glim-shake" : ""
         }`}
       />
@@ -288,7 +288,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             tone="neutral"
             onClick={() => void handleDecline()}
             disabled={busy}
-            className={`inline-flex items-center rounded-control bg-carbon-surface3 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover disabled:opacity-50${
+            className={`inline-flex items-center rounded-control px-3 py-1.5 text-xs text-carbon-text disabled:opacity-50${
               shakeDecline ? " glim-shake" : ""
             }`}
           />

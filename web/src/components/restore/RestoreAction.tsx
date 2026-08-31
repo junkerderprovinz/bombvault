@@ -206,6 +206,7 @@ export function RestoreAction({
   const trigger = iconBadge ? (
     <Button
       label={label ?? t("snapshots.restore")}
+      labelKey="snapshots.restore"
       glyph={<IconRestore />}
       tone="accent"
       onClick={() => void handleRestore()}

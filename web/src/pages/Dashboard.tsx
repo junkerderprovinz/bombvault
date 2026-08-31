@@ -874,6 +874,7 @@ function ProtectionCard({
                         label={d.lastDrDrillAt && d.lastDrDrillOK
                             ? t("drill.rerunOffsiteDr")
                             : t("drill.runOffsiteDr")}
+                        labelKey={d.lastDrDrillAt && d.lastDrDrillOK ? "drill.rerunOffsiteDr" : "drill.runOffsiteDr"}
                         glyph={<IconCheckCircle />}
                         tone="neutral"
                         onClick={() => runOffsiteDr(d.domain)}
@@ -1862,6 +1863,7 @@ function FreshInstallNudge({
       </div>
       <Button
         label={t("common.close")}
+        labelKey="common.close"
         variant="chip"
         onClick={onDismiss}
         className="shrink-0"

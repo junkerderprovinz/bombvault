@@ -261,6 +261,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
           <Button
             ref={closeRef}
             label={t("whatsnew.close")}
+            labelKey="whatsnew.close"
             glyph={<IconClose />}
             tone="neutral"
             onClick={onClose}

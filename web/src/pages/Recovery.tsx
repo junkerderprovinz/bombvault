@@ -269,6 +269,7 @@ function FileSetRecoveryRow({
         <Button
           key={shake}
           label={t("snapshots.restore")}
+          labelKey="snapshots.restore"
           glyph={<IconRestore />}
           tone="accent"
           onClick={() => void handleRestore()}
@@ -550,6 +551,7 @@ function ForeignItemRow({
         <Button
           key={shake}
           label={t("recovery.foreignRestore")}
+          labelKey="recovery.foreignRestore"
           glyph={<IconRestore />}
           tone="accent"
           onClick={() => void handleRestore()}
@@ -2400,7 +2402,7 @@ export default function Recovery() {
           labelKey="recovery.kitDownload"
           // Accent ([326]). The kit is the one artefact this page exists to
           // hand over, and its card holds nothing else to do.
-          tone="accent"
+          tone="neutral"
           onClick={() => {
             setKitError(null);
             void downloadRecoveryKit().then((err) => {
@@ -2416,7 +2418,7 @@ export default function Recovery() {
           // already, and restating them was not merely redundant: Tailwind
           // resolves two competing background utilities by their order in the
           // compiled stylesheet, not by the order they appear in the
-          // attribute, so `bg-carbon-surface3` quietly beat the `bg-accent`
+          // attribute, so `` quietly beat the `bg-accent`
           // the tone had added. Measured on the deployed build: both classes
           // sat on the element and the wrong one was painting.
           className={`self-start${kitShake ? " glim-shake" : ""}`}

@@ -232,6 +232,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             `tip` branch through that very component. */}
         <Button
           label={t("folder.browseTitle")}
+          labelKey="folder.browseTitle"
           glyph={<IconFolder />}
           tone="accent"
           onClick={handleOpen}
@@ -259,6 +260,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             </span>
             <Button
               label={t("common.close")}
+              labelKey="common.close"
               variant="chip"
               onClick={handleClose}
               className="shrink-0"
@@ -305,6 +307,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   // round's job. The glyph at least gives glyph mode something
                   // to show instead of two dots.
                   label={".."}
+                  // the parent-directory row: its label is a path, not a phrase
+                  labelKey={null}
                   glyph={<IconBack />}
                   tone="neutral"
                   onClick={handleUp}
@@ -319,6 +323,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 <Button
                   key={d.path}
                   label={d.name}
+                  // a directory's own name; there is no key for user data
+                  labelKey={null}
                   glyph={<IconFolder />}
                   tone="neutral"
                   onClick={() => doFetch(d.path)}
