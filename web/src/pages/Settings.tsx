@@ -7427,6 +7427,31 @@ export function SettingsPage() {
               hueIndex={1}
             />
           </Card>
+
+          {/* Backup Everything (schedulesEverything): a 6th, independent pass over
+              all five domains BELOW + a manual trigger. See EverythingSection's
+              own doc comment for the convention pass this card needed after the
+              merge, the conditional overlap warning included.
+                It sits here, second on the tab, rather than last: a reader who
+              wants "back the whole server up on one schedule" should meet that
+              before the five per-domain cadences, not after scrolling past them
+              and two unrelated detail cards. It shipped last, and a user on the
+              forum could not find it at all (2026-09-01) even after being told
+              it was "in Settings" — with seven tabs, the bottom of the third one
+              is not somewhere anybody lands by accident.
+                `update={scheduleUpdate}` rather than the bare setSettings merge
+              this shipped with on main: the Schedules tab has no Save button any
+              more (jdp: cadences "sollen live gespeichert werden"), so a patch
+              that only touched local state here would look saved and be lost on
+              reload. scheduleUpdate keeps the same Partial<Settings> shape and
+              debounces each key through the shared save(), which is what the
+              cadence editor and the two hook text inputs want.
+                `hueIndex={nextHue()}` — the counter runs in render order, so
+              moving this card up shifts every rainbow position after it by one
+              and needs no manual renumbering anywhere (that is the whole point
+              of the counter; see its own doc). */}
+          <EverythingSection settings={settings} update={scheduleUpdate} t={t} hueIndex={nextHue()} />
+
           <ContainersSection
             settings={settings}
             containers={containers}
@@ -7629,23 +7654,6 @@ export function SettingsPage() {
               same "belongs with WHAT/how-often gets verified, not WHEN
               backup jobs run" reasoning). See the `tab === "integrity"`
               block below for its new call site. */}
-
-          {/* Backup Everything (schedulesEverything): a 6th, independent pass over
-              all five domains above + a manual trigger. See EverythingSection's
-              own doc comment for the convention pass this card needed after the
-              merge, the conditional overlap warning included.
-                `update={scheduleUpdate}` rather than the bare setSettings merge
-              this shipped with on main: the Schedules tab has no Save button any
-              more (jdp: cadences "sollen live gespeichert werden"), so a patch
-              that only touched local state here would look saved and be lost on
-              reload. scheduleUpdate keeps the same Partial<Settings> shape and
-              debounces each key through the shared save(), which is what the
-              cadence editor and the two hook text inputs want.
-                `hueIndex={nextHue()}` — this is the LAST Card on the tab, so it
-              appends a new rainbow position and shifts none of the ones above
-              it (see the counter's own doc for why no manual renumbering is
-              ever needed here). */}
-          <EverythingSection settings={settings} update={scheduleUpdate} t={t} hueIndex={nextHue()} />
 
           {/* No SaveBar: every field in this tab auto-saves — see scheduleField
               / autoSaveScheduleField. main's buildSchedulePatch() is gone. */}
