@@ -406,7 +406,7 @@ const th: Partial<Translations> = {
   "settings.retentionCombineInfo": "กฎทั้งสี่รวมกันแบบ OR: สแนปช็อตจะยังอยู่หากมีกฎใดกฎหนึ่งที่จะเก็บมันไว้ ไม่ได้รวมกันเป็นจำนวนคงที่ ใช้แยกกันสำหรับแต่ละรายการที่สำรองข้อมูล",
 
   // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
+  "rclone.title": "นอกสถานที่ (rclone)",
   "rclone.hint": "วาง rclone config เพื่อสำรองข้อมูลไปยังคลาวด์ (Backblaze B2, S3, Google Drive, …) จัดเก็บแบบเข้ารหัส SMB/NFS ไม่ต้องใช้ rclone: เมานต์แชร์บน Unraid แล้วตั้งพาธการสำรองข้อมูลไปยังแชร์นั้น",
   "rclone.configured": "รีโมตที่กำหนดค่าแล้ว",
   "rclone.pathHint": "จากนั้นตั้งพาธการสำรองข้อมูลเป็น «rclone:<remote>:<bucket>/path» เพื่อส่งโดเมนนี้ไปนอกสถานที่",

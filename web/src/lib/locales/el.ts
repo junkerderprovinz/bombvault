@@ -406,7 +406,7 @@ const el: Partial<Translations> = {
   "settings.retentionCombineInfo": "Οι τέσσερις κανόνες συνδυάζονται με Ή: ένα στιγμιότυπο επιβιώνει αν έστω ένας κανόνας το διατηρούσε. Δεν αθροίζονται σε σταθερό αριθμό. Ισχύει ξεχωριστά για κάθε στοιχείο που αντιγράφεται.",
 
   // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
+  "rclone.title": "Εκτός τόπου (rclone)",
   "rclone.hint": "Επικολλήστε μια διαμόρφωση rclone για αντίγραφα στο cloud (Backblaze B2, S3, Google Drive, …). Αποθηκεύεται κρυπτογραφημένη. SMB/NFS δεν χρειάζονται rclone: προσαρτήστε τον κοινόχρηστο πόρο στο Unraid και ορίστε μια διαδρομή αντιγράφων προς αυτόν.",
   "rclone.configured": "Διαμορφωμένα remotes",
   "rclone.pathHint": "Έπειτα ορίστε μια διαδρομή αντιγράφων σε «rclone:<remote>:<bucket>/path» για να στείλετε αυτόν τον τομέα εκτός τοποθεσίας.",
@@ -874,7 +874,7 @@ const el: Partial<Translations> = {
   "offsite.wizard.close": "Κλείσιμο",
   "offsite.wizard.step1": "1 · Επιλογή backend",
   "offsite.wizard.backendRest": "rest-server (συνιστάται, υποστηρίζει append-only)",
-  "offsite.wizard.backendRclone": "rclone remote",
+  "offsite.wizard.backendRclone": "Απομακρυσμένο rclone",
   "offsite.wizard.backendS3": "Amazon S3 / συμβατό με S3",
   "offsite.wizard.step2": "2 · Ανάπτυξη του διακομιστή append-only",
   "offsite.wizard.step2Hint": "Εκτελέστε το στο storage box σας για να στήσετε έναν restic rest-server με --append-only. Ο παραγόμενος κωδικός εμφανίζεται μόνο μία φορά.",

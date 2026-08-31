@@ -169,7 +169,22 @@ export function Button({
    *  useTipBubble's `wrap`, which is why the native balloon could go without
    *  losing the "why is this dead" hint 54 of those call sites pass. */
   title?: string;
-  /** This button's rainbow position, same meaning as Badge's own prop. */
+  /** This button's OWN rainbow position, same meaning as Badge's own prop.
+   *
+   *  Usually unnecessary, and worth knowing why before adding one ([340]). A
+   *  Card carrying a `hueIndex` already renders `.glim-hue`, which rebinds
+   *  `--accent` for its whole subtree — and custom properties inherit, so
+   *  every control inside it is already painting in that card's colour with
+   *  no prop at all. That is the design language's own rule: the position
+   *  belongs on the CONTAINER, because a per-control list is one somebody has
+   *  to maintain against a growing page.
+   *
+   *  Pass it only when this button needs a colour DIFFERENT from its card's —
+   *  a row in a list where each row owns its position. Passing the card's own
+   *  index back in resolves to the identical colour and changes nothing;
+   *  measured, not assumed, after a round where three buttons were "fixed"
+   *  that way and the fix turned out to be a no-op. The real defects that
+   *  round were the missing glyphs beside it. */
   hueIndex?: number;
   /** Forwarded to the underlying <button>. Dialogs need it: they move focus
    *  to their close control on open, which is what makes the Escape key and

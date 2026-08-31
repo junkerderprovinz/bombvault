@@ -40,6 +40,7 @@ import { Button } from "../Button";
 import { IconRestore } from "../Sidebar";
 import { useConfirm } from "../../lib/useConfirm";
 
+import { Toggle } from "../Toggle";
 type T = ReturnType<typeof useT>["t"];
 
 interface RestoreActionProps {
@@ -232,17 +233,13 @@ export function RestoreAction({
       <div className="flex items-center gap-3 flex-wrap">
         {leading}
         {requireConfirm && (
-          <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer shrink-0">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-              disabled={isPending || done}
-              className="rounded-control border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-              style={{ accentColor: "var(--accent)" }}
-            />
-            {t("common.confirm")}
-          </label>
+          <Toggle
+            checked={confirmed}
+            onChange={setConfirmed}
+            disabled={isPending || done}
+            label={t("common.confirm")}
+            className="shrink-0"
+          />
         )}
         {iconBadge ? (
           <>
@@ -258,17 +255,12 @@ export function RestoreAction({
       </div>
       {/* Leave stopped: recreate/restore but don't start (rebuild a stack in order). */}
       {showLeaveStopped && (
-        <label className="flex items-center gap-1.5 text-caption text-carbon-textSub cursor-pointer">
-          <input
-            type="checkbox"
-            checked={leaveStopped}
-            onChange={(e) => setLeaveStopped(e.target.checked)}
-            disabled={isPending || done}
-            className="rounded-control border-carbon-border bg-carbon-surface2 focus:ring-offset-0"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("restore.leaveStopped")}
-        </label>
+        <Toggle
+          checked={leaveStopped}
+          onChange={setLeaveStopped}
+          disabled={isPending || done}
+          label={t("restore.leaveStopped")}
+        />
       )}
       <RestoreProgress
         state={state}

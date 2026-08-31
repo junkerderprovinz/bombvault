@@ -398,7 +398,7 @@ const ru: Partial<Translations> = {
   "settings.retentionCombineInfo": "Четыре правила комбинируются через ИЛИ: снимок сохраняется, если его сохранило бы хотя бы одно правило — они не суммируются в фиксированное число. Применяется отдельно к каждому резервируемому объекту.",
 
   // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
+  "rclone.title": "Внешнее (rclone)",
   "rclone.hint": "Вставьте конфигурацию rclone для резервного копирования в облако (Backblaze B2, S3, Google Drive, …). Хранится в зашифрованном виде. SMB/NFS не требуют rclone: смонтируйте общий ресурс в Unraid и укажите на него Путь резервных копий.",
   "rclone.configured": "Настроенные удалённые хранилища",
   "rclone.pathHint": "Затем установите Путь резервных копий на «rclone:<remote>:<bucket>/path», чтобы отправлять этот домен off-site.",

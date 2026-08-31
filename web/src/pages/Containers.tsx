@@ -22,7 +22,7 @@ import { IncludeToggle } from "../components/IncludeToggle";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
 import { groupStage } from "../lib/controls";
-import { ToggleRow } from "./Settings";
+import { ToggleRow } from "./settings/shared";
 import { ProgressBar } from "../components/ProgressBar";
 import { tLtr, withLtrFragments, withLtrPlaceholder, EXCLUDES_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -35,6 +35,7 @@ import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { IconSearch } from "../components/glyphs";
 
+import { Toggle } from "../components/Toggle";
 type T = ReturnType<typeof useT>["t"];
 
 // ---------------------------------------------------------------------------
@@ -2189,16 +2190,7 @@ function StackCard({
             <span className="text-xs text-carbon-textMuted">{t("source.label")}</span>
             <SourceToggle source={source} onChange={setSource} disabled={busy} domain="containers" />
           </div>
-          <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
-            <input
-              type="checkbox"
-              checked={startInOrder}
-              onChange={(e) => setStartInOrder(e.target.checked)}
-              className="h-4 w-4 cursor-pointer"
-              style={{ accentColor: "var(--accent)" }}
-            />
-            {t("stack.startInOrder")}
-          </label>
+          <Toggle checked={startInOrder} onChange={setStartInOrder} label={t("stack.startInOrder")} />
           <div className="flex items-center gap-3 pt-0.5">
             <Button
               key={shake}

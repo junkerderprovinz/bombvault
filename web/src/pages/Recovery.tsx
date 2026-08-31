@@ -13,7 +13,8 @@ import { IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
-import { CloudCard, RcloneCard, ToggleRow } from "./Settings";
+import { CloudCard, RcloneCard } from "./Settings";
+import { ToggleRow } from "./settings/shared";
 import { Selector } from "../components/Selector";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
@@ -58,6 +59,7 @@ import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 
+import { Toggle } from "../components/Toggle";
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
 // (they read the mirrored, restic-encrypted definitions), so they are the
 // cleanest "can BombVault read your backups?" check with no backend change:
@@ -657,16 +659,12 @@ function ForeignItemRow({
               FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS
             )}
           />
-          <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer">
-            <input
-              type="checkbox"
-              checked={overwrite}
-              onChange={(e) => setOverwrite(e.target.checked)}
-              disabled={busy}
-              className="accent-accent"
-            />
-            <span className="text-carbon-text">{t("recovery.foreignOverwrite")}</span>
-          </label>
+          <Toggle
+            checked={overwrite}
+            onChange={setOverwrite}
+            disabled={busy}
+            label={t("recovery.foreignOverwrite")}
+          />
           {warnings.length > 0 && (
             <div className="rounded-card bg-carbon-surface2 px-3 py-2 text-xs text-carbon-textMuted max-w-2xl">
               <p className="text-statusWarn">{t("recovery.foreignBindWarning")}</p>

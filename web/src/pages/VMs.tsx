@@ -22,7 +22,7 @@ import { groupStage } from "../lib/controls";
 // (label + switch) rather than a naked switch its caller labels by hand — the
 // same import components/IncludeToggle.tsx already uses for the Container
 // tab's copy of that control.
-import { ToggleRow } from "./Settings";
+import { ToggleRow } from "./settings/shared";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";

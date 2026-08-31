@@ -41,6 +41,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Button } from "../components/Button";
 
+import { Toggle } from "../components/Toggle";
 type T = ReturnType<typeof useT>["t"];
 
 // The sending APP_KEY shape guard mirrors the backend foreignKeyRe (64 lowercase
@@ -301,17 +302,12 @@ function ReceivedRepoCard({
           title={checking ? t("dashboard.checking") : undefined}
           className={shakeCheck ? "glim-shake" : ""}
         />
-        <label className="flex items-center gap-1.5 text-xs text-carbon-textSub cursor-pointer">
-          <input
-            type="checkbox"
-            checked={deepCheck}
-            onChange={(e) => setDeepCheck(e.target.checked)}
-            disabled={checking}
-            className="h-3.5 w-3.5 cursor-pointer"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("receiver.deepCheck")}
-        </label>
+        <Toggle
+          checked={deepCheck}
+          onChange={setDeepCheck}
+          disabled={checking}
+          label={t("receiver.deepCheck")}
+        />
 
         <div className="ms-auto flex items-center gap-2">
           <Button
@@ -590,16 +586,7 @@ function ReceiverDialog({
         </div>
 
         {/* Monitor toggle */}
-        <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="h-4 w-4 cursor-pointer"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("receiver.enabledLabel")}
-        </label>
+        <Toggle checked={enabled} onChange={setEnabled} label={t("receiver.enabledLabel")} />
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button

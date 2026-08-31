@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { setInclude } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { ToggleRow } from "../pages/Settings";
+import { ToggleRow } from "../pages/settings/shared";
 import { useToast } from "../lib/toast";
 
 interface IncludeToggleProps {

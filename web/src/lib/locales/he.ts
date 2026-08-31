@@ -406,7 +406,7 @@ const he: Partial<Translations> = {
   "settings.retentionCombineInfo": "ארבעת הכללים משולבים באו: גיבוי נשמר אם כלל כלשהו היה שומר אותו. הם לא מצטברים למספר קבוע. חל בנפרד על כל פריט מגובה.",
 
   // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
+  "rclone.title": "מחוץ לאתר (rclone)",
   "rclone.hint": "הדבק תצורת rclone כדי לגבות לענן (Backblaze B2, S3, Google Drive, …). נשמרת מוצפנת. SMB/NFS אינם צריכים rclone: עגן את השיתוף ב-Unraid והצבע אליו בנתיב גיבוי.",
   "rclone.configured": "יעדים מרוחקים מוגדרים",
   "rclone.pathHint": "ואז הגדר נתיב גיבוי אל „rclone:<remote>:<bucket>/path‟ כדי לשלוח דומיין זה מחוץ לאתר.",
@@ -854,7 +854,7 @@ const he: Partial<Translations> = {
   "offsite.wizard.close": "סגור",
   "offsite.wizard.step1": "1 · בחר backend",
   "offsite.wizard.backendRest": "rest-server (מומלץ, תומך append-only)",
-  "offsite.wizard.backendRclone": "rclone remote",
+  "offsite.wizard.backendRclone": "מרוחק rclone",
   "offsite.wizard.backendS3": "Amazon S3 / תואם S3",
   "offsite.wizard.step2": "2 · פריסת שרת append-only",
   "offsite.wizard.step2Hint": "הרץ זאת על מכונת האחסון שלך כדי להקים restic rest-server עם --append-only. הסיסמה שנוצרת מוצגת פעם אחת בלבד.",

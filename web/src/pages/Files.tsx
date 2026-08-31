@@ -55,11 +55,12 @@ import { InfoBubble } from "../components/InfoBubble";
 // (label + switch) rather than a naked switch its caller labels by hand — the
 // same import components/IncludeToggle.tsx already uses for the Container
 // tab's copy of that control.
-import { ToggleRow } from "./Settings";
+import { ToggleRow } from "./settings/shared";
 import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
 import { IconRestore } from "../components/Sidebar";
 
+import { Toggle } from "../components/Toggle";
 type T = ReturnType<typeof useT>["t"];
 
 // ---------------------------------------------------------------------------
@@ -1005,16 +1006,7 @@ function FileSetDialog({
         </div>
 
         {/* Include in schedule */}
-        <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="h-4 w-4 cursor-pointer"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("files.enabled")}
-        </label>
+        <Toggle checked={enabled} onChange={setEnabled} label={t("files.enabled")} />
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button

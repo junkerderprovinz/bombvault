@@ -406,7 +406,7 @@ const ar: Partial<Translations> = {
   "settings.retentionCombineInfo": "تتحد القواعد الأربع بمنطق أو (OR): تبقى النسخة إذا احتفظت بها أي قاعدة واحدة. لا تُجمع إلى عدد ثابت. تُطبَّق بشكل منفصل على كل عنصر تم نسخه احتياطياً.",
 
   // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
+  "rclone.title": "خارج الموقع (rclone)",
   "rclone.hint": "ألصق إعداد rclone للنسخ الاحتياطي إلى السحابة (Backblaze B2 وS3 وGoogle Drive …). يُخزَّن مشفَّراً. لا يحتاج SMB/NFS إلى rclone: ركِّب المشاركة على Unraid واضبط مسار نسخ احتياطي عليها.",
   "rclone.configured": "الوجهات البعيدة المُعدَّة",
   "rclone.pathHint": "ثم اضبط مسار نسخ احتياطي على «rclone:<remote>:<bucket>/path» لإرسال هذا النطاق خارج الموقع.",

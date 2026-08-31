@@ -14,7 +14,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
-import { ToggleRow } from "./Settings";
+import { ToggleRow } from "./settings/shared";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { Badge } from "../components/Badge";

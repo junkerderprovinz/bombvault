@@ -26,7 +26,7 @@
 // can see) — see the live-verification notes for that proof.
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
-import { ToggleRow } from "./Settings";
+import { ToggleRow } from "./settings/shared";
 import { Toggle } from "../components/Toggle";
 
 interface ElementNode {

@@ -401,7 +401,7 @@ const uk: Partial<Translations> = {
   "settings.retentionCombineInfo": "Чотири правила поєднуються через АБО: знімок зберігається, якщо його зберегло б хоча б одне правило — вони не підсумовуються до фіксованої кількості. Застосовується окремо до кожного резервованого елемента.",
 
   // Off-site (rclone)
-  "rclone.title": "Off-site (rclone)",
+  "rclone.title": "Зовнішнє (rclone)",
   "rclone.hint": "Вставте конфігурацію rclone для резервного копіювання в хмару (Backblaze B2, S3, Google Drive, …). Зберігається у зашифрованому вигляді. SMB/NFS не потребують rclone: змонтуйте спільний ресурс в Unraid і вкажіть на нього Шлях резервних копій.",
   "rclone.configured": "Налаштовані віддалені сховища",
   "rclone.pathHint": "Потім встановіть Шлях резервних копій на «rclone:<remote>:<bucket>/path», щоб надсилати цей домен off-site.",
@@ -869,7 +869,7 @@ const uk: Partial<Translations> = {
   "offsite.wizard.close": "Закрити",
   "offsite.wizard.step1": "1 · Виберіть бекенд",
   "offsite.wizard.backendRest": "rest-server (рекомендовано — підтримує append-only)",
-  "offsite.wizard.backendRclone": "rclone remote",
+  "offsite.wizard.backendRclone": "Віддалений rclone",
   "offsite.wizard.backendS3": "Amazon S3 / сумісні з S3",
   "offsite.wizard.step2": "2 · Розгорніть append-only сервер",
   "offsite.wizard.step2Hint": "Виконайте це на вашому сховищі, щоб підняти restic rest-server із --append-only. Згенерований пароль показується лише один раз.",

@@ -46,6 +46,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Button } from "../components/Button";
 
+import { Toggle } from "../components/Toggle";
 type T = ReturnType<typeof useT>["t"];
 
 // CopyBlock mirrors OffsiteWizard's copy pattern (module-private there too): a
@@ -847,16 +848,7 @@ function FleetDialog({
           <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="h-4 w-4 cursor-pointer"
-            style={{ accentColor: "var(--accent)" }}
-          />
-          {t("fleet.enabledLabel")}
-        </label>
+        <Toggle checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button
