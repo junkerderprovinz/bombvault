@@ -134,7 +134,7 @@ export function Button({
    *  does not have to choose one and the same verb wears the same symbol
    *  everywhere. An explicit `glyph` always wins over it.
    *
-   *  REQUIRED, and `null` is a real answer rather than a way out ([329]).
+   *  REQUIRED, and `null` is a real answer rather than a way out ([335]).
    *  Optional, it was quietly missing on 49 of the app's 171 buttons — 29% of
    *  them, each unable to pick a glyph, so glyph and reactive mode fell back
    *  to text for exactly those. Nothing failed and no test went red; the

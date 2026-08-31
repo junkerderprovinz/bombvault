@@ -119,7 +119,7 @@ describe("buttons", () => {
   });
 
   it("gives every button a labelKey, even if the answer is null", () => {
-    // TypeScript already requires the prop ([329]); this catches the other
+    // TypeScript already requires the prop ([335]); this catches the other
     // half — a call site that satisfies the compiler by writing `null` where a
     // real key exists. It cannot know the intent, so it only checks the prop
     // is present, and stands as the record of why it is required at all.
