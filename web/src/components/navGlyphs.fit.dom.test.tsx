@@ -53,7 +53,11 @@ const INK: Record<string, readonly [number, number, number, number]> = {
   IconCloud: [0, 32, 640, 448],
   IconLocal: [0, 32, 512, 448],
   IconCopy: [2, 2, 20, 20],
-  IconCheckCircle: [2, 2, 20, 20],
+  // Re-measured after the drawing was revised; kept at the precision getBBox
+  // reported rather than rounded to the tidy 2/20 it nearly is, because a
+  // declared ink that is only approximately the measured one gives the next
+  // re-measure nothing to compare against.
+  IconCheckCircle: [2, 1.9934, 20.0078, 20.0143],
   IconTabIntegrity: [3, 1, 18, 22],
   IconTabStorage: [0, 0, 448, 512],
   IconSave: [0, 32, 448, 448],

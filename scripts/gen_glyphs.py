@@ -277,8 +277,13 @@ EXTRA_NAV = [
     imported("IconLocal", "Local storage, as opposed to off-site",
              "0 0 512 512", (0.0, 32.0, 512.0, 448.0), "local"),
     imported("IconCopy", "Copy", "0 0 24 24", (2.0, 2.0, 20.0, 20.0), "copy"),
+    # Re-measured after jdp revised the drawing. The envelope barely moved
+    # (2, 1.9934, 20.0078, 20.0143 against the previous 2, 2, 20, 20) and the
+    # numbers are carried at full precision anyway: the declared ink has to be
+    # the MEASURED ink, or the discipline the whole crop rests on is already
+    # gone, and the next re-measure has nothing trustworthy to compare against.
     imported("IconCheckCircle", "Verify, check or test a connection",
-             "0 0 24 24", (2.0, 2.0, 20.0, 20.0), "verify"),
+             "0 0 24 24", (2.0, 1.9934, 20.0078, 20.0143), "verify"),
     imported("IconTabIntegrity", "Integrity tab", "0 0 24 24",
              (3.0, 1.0, 18.0, 22.0), "integrity"),
     imported("IconTabStorage", "Paths and storage tab", "0 0 448 512",

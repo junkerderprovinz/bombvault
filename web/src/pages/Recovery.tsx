@@ -2411,9 +2411,15 @@ export default function Recovery() {
               }
             });
           }}
-          className={`self-start rounded-control bg-carbon-surface3 hover:bg-carbon-border px-3 py-1.5 text-sm text-carbon-text transition-colors${
-            kitShake ? " glim-shake" : ""
-          }`}
+          // Only the layout stays here ([326]). Surface, hover, radius,
+          // padding, text size and colour all come from `tone` and `.bv-btn`
+          // already, and restating them was not merely redundant: Tailwind
+          // resolves two competing background utilities by their order in the
+          // compiled stylesheet, not by the order they appear in the
+          // attribute, so `bg-carbon-surface3` quietly beat the `bg-accent`
+          // the tone had added. Measured on the deployed build: both classes
+          // sat on the element and the wrong one was painting.
+          className={`self-start${kitShake ? " glim-shake" : ""}`}
         />
         {kitError && (
           // Backend-provided error text shown verbatim BY DESIGN (e.g. the
