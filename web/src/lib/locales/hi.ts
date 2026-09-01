@@ -17,7 +17,7 @@ const hi: Partial<Translations> = {
   "nav.settings": "सेटिंग्स",
   "about.title": "BombVault के बारे में",
   "about.report": "समस्याएँ, इच्छाएँ या सुधार के सुझाव? GitHub पर एक issue खोलें।",
-  "about.repo": "रिपॉज़िटरी",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "सरल दृश्य",

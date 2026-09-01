@@ -68,7 +68,7 @@ export const en = {
   "nav.settings": "Settings",
   "about.title": "About BombVault",
   "about.report": "Problems, wishes or ideas for improvement? Open an issue on GitHub.",
-  "about.repo": "Repository",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Simple view",
@@ -1784,7 +1784,7 @@ export const de: Translations = {
   "nav.settings": "Einstellungen",
   "about.title": "Über BombVault",
   "about.report": "Probleme, Wünsche oder Verbesserungsvorschläge? Schreib es auf GitHub als Issue.",
-  "about.repo": "Repository",
+  "about.repo": "GitHub",
 
   "mode.simpleView": "Einfache Ansicht",
   "mode.advancedView": "Erweiterte Ansicht",

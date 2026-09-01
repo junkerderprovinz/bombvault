@@ -14,7 +14,7 @@ const hu: Partial<Translations> = {
   "nav.settings": "Beállítások",
   "about.title": "A BombVault névjegye",
   "about.report": "Problémák, kívánságok vagy fejlesztési javaslatok? Nyiss egy issue-t a GitHubon.",
-  "about.repo": "Tároló",
+  "about.repo": "GitHub",
   "mode.simpleView": "Egyszerű nézet",
   "mode.advancedView": "Speciális nézet",
   "nav.recovery": "Helyreállítás",

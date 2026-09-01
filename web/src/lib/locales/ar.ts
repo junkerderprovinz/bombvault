@@ -14,7 +14,7 @@ const ar: Partial<Translations> = {
   "nav.settings": "الإعدادات",
   "about.title": "حول BombVault",
   "about.report": "مشاكل أو أمنيات أو اقتراحات للتحسين؟ افتح مشكلة على GitHub.",
-  "about.repo": "المستودع",
+  "about.repo": "GitHub",
   "mode.simpleView": "عرض بسيط",
   "mode.advancedView": "عرض متقدم",
   "nav.recovery": "الاستعادة",

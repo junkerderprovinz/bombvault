@@ -17,7 +17,7 @@ const lt: Partial<Translations> = {
   "nav.settings": "Nustatymai",
   "about.title": "Apie BombVault",
   "about.report": "Problemos, pageidavimai ar tobulinimo pasiūlymai? Sukurkite issue GitHub'e.",
-  "about.repo": "Saugykla",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Paprastas rodinys",

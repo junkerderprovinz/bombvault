@@ -204,10 +204,18 @@ export function FleetSettingsCard({
               // height, and is lighter at 38.5%. It was otherwise reachable
               // only through glyphFor's refresh|reload rule.
               glyph={<IconRefresh />}
-              tone="neutral"
+              // accent, not neutral ([515]). jdp: "Die beiden buttons sind
+              // auch nicht farbig". Regenerating the token is the action this
+              // row is for, and the accent is what this app spends on exactly
+              // that. It never competes with "Token erzeugen": that button is
+              // for when there is no token, this pair for when there is.
+              tone="accent"
               onClick={() => void handleGenerate()}
               disabled={busy}
-              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
+              // text-carbon-text dropped with the tone change ([515]): accent brings
+              // its own ink, and restating the neutral one here would paint the
+              // wrong colour on the accent fill.
+              className={`shrink-0 rounded-control px-3 py-2 text-xs disabled:opacity-50${
                 shake.generate ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}
@@ -215,13 +223,20 @@ export function FleetSettingsCard({
             <Button
               label={t("settings.fleetDisable")}
               labelKey="settings.fleetDisable"
+              // danger ([515]). Not decoration: the card's own sentence says
+              // "Deaktivieren widerruft ihn sofort", and a control that revokes
+              // access without warning should not look like the one beside it
+              // that hands out a new key.
+              tone="danger"
               // The same X as every other dismissal ([323]) — the hand-drawn
               // cross from [287], not a second one.
               glyph={<IconClose />}
-              tone="neutral"
               onClick={() => void handleDisable()}
               disabled={busy}
-              className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text disabled:opacity-50${
+              // text-carbon-text dropped with the tone change ([515]): danger
+              // brings its own ink, and a call site restating the neutral one
+              // would paint dark text on the fail fill.
+              className={`shrink-0 rounded-control px-3 py-2 text-xs disabled:opacity-50${
                 shake.disable ? " glim-shake" : ""
               }${hueOn ? " glim-hue" : ""}`}
               hueIndex={hueIndex}

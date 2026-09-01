@@ -14,7 +14,7 @@ const zh: Partial<Translations> = {
   "nav.settings": "设置",
   "about.title": "关于 BombVault",
   "about.report": "有问题、需求或改进建议？请在 GitHub 上开一个 issue。",
-  "about.repo": "代码仓库",
+  "about.repo": "GitHub",
   "mode.simpleView": "简单视图",
   "mode.advancedView": "高级视图",
   "nav.recovery": "恢复",

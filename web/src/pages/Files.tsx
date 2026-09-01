@@ -982,6 +982,7 @@ function FileSetDialog({
         {/* Source folder (relative subpath under the host mount root) */}
         <div className="flex flex-col gap-1.5">
           <FolderBrowser
+            inDialog
             label={t("files.path")}
             value={path}
             hostMountRoot={hostMountRoot}

@@ -14,7 +14,7 @@ const vi: Partial<Translations> = {
   "nav.settings": "Cài đặt",
   "about.title": "Giới thiệu về BombVault",
   "about.report": "Có vấn đề, mong muốn hay đề xuất cải tiến? Hãy mở một issue trên GitHub.",
-  "about.repo": "Kho mã",
+  "about.repo": "GitHub",
   "mode.simpleView": "Chế độ xem đơn giản",
   "mode.advancedView": "Chế độ xem nâng cao",
   "nav.recovery": "Khôi phục",

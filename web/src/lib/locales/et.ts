@@ -17,7 +17,7 @@ const et: Partial<Translations> = {
   "nav.settings": "Seaded",
   "about.title": "Teave BombVaulti kohta",
   "about.report": "Probleemid, soovid või parendusettepanekud? Ava GitHubis issue.",
-  "about.repo": "Hoidla",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Lihtvaade",

@@ -14,7 +14,7 @@ const th: Partial<Translations> = {
   "nav.settings": "การตั้งค่า",
   "about.title": "เกี่ยวกับ BombVault",
   "about.report": "พบปัญหา มีคำขอ หรือข้อเสนอแนะเพื่อการปรับปรุง? เปิด issue บน GitHub",
-  "about.repo": "ที่เก็บโค้ด",
+  "about.repo": "GitHub",
   "mode.simpleView": "มุมมองแบบง่าย",
   "mode.advancedView": "มุมมองขั้นสูง",
   "nav.recovery": "การกู้คืน",

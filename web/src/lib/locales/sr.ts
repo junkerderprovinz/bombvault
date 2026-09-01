@@ -17,7 +17,7 @@ const sr: Partial<Translations> = {
   "nav.settings": "Подешавања",
   "about.title": "О програму BombVault",
   "about.report": "Проблеми, жеље или предлози за побољшање? Отвори issue на GitHub-у.",
-  "about.repo": "Спремиште",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Једноставан приказ",

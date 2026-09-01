@@ -14,7 +14,7 @@ const fi: Partial<Translations> = {
   "nav.settings": "Asetukset",
   "about.title": "Tietoja BombVaultista",
   "about.report": "Ongelmia, toiveita tai parannusehdotuksia? Avaa issue GitHubissa.",
-  "about.repo": "Repositorio",
+  "about.repo": "GitHub",
   "mode.simpleView": "Yksinkertainen näkymä",
   "mode.advancedView": "Edistynyt näkymä",
   "nav.recovery": "Palautus",

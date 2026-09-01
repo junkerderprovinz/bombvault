@@ -17,7 +17,7 @@ const lv: Partial<Translations> = {
   "nav.settings": "Iestatījumi",
   "about.title": "Par BombVault",
   "about.report": "Problēmas, vēlmes vai uzlabojumu ieteikumi? Izveido issue GitHub.",
-  "about.repo": "Krātuve",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Vienkāršs skats",

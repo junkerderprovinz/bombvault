@@ -201,12 +201,12 @@ export function IconCancel() {
     <svg
       width="16"
       height="16"
-      viewBox="2.94 2.94 8.12 8.12"
+      viewBox="3.3 3.3 7.4 7.4"
       fill="currentColor"
       className="shrink-0"
       aria-hidden="true"
     >
-      <g transform="rotate(45 7 7)"><rect x="2" y="5.6" width="10" height="2.8" rx="1.4" /><rect x="5.6" y="2" width="2.8" height="10" rx="1.4" /></g>
+      <g transform="rotate(45 7 7)"><rect x="2" y="6.2" width="10" height="1.6" rx="0.8" /><rect x="6.2" y="2" width="1.6" height="10" rx="0.8" /></g>
     </svg>
   );
 }

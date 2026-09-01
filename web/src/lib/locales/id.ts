@@ -17,7 +17,7 @@ const id: Partial<Translations> = {
   "nav.settings": "Pengaturan",
   "about.title": "Tentang BombVault",
   "about.report": "Ada masalah, permintaan, atau usulan perbaikan? Buka issue di GitHub.",
-  "about.repo": "Repositori",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Tampilan sederhana",

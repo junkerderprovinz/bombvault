@@ -232,11 +232,31 @@ CLOUD = '<path d="%s" />' % io.open("../scripts/cloud-path.txt", encoding="utf-8
 # second drawing. Two marks that are meant to read as a matched pair cannot
 # drift apart if there is only one of them, and the rotation is exact where
 # hand-placed diagonals would each need their own corner arithmetic.
-_CROSS_BARS = (
+_PLUS_BARS = (
     '<rect x="2" y="5.6" width="10" height="2.8" rx="1.4" />'
     '<rect x="5.6" y="2" width="2.8" height="10" rx="1.4" />'
 )
-PLUS = _CROSS_BARS
+
+# The cross needs THINNER bars than the plus, and that is the correction [514]
+# makes to [426].
+#
+# [426] cropped the cross's viewBox so a rotated mark would stop reading as the
+# smallest thing in the set. That fixed the size and broke the weight: the bars
+# stayed 2.8 units while the box they are measured against went from 14 to 8.12,
+# so a stroke that was a fifth of its glyph became a third of it. jdp, next
+# look: "Der X Glyph auf dem Deaktivieren button wirkt viel zu klobig."
+#
+# The lesson is worth more than the numbers: SCALING A DRAWING SCALES ITS
+# STROKE, and a crop is a scale. Matching one dimension between two marks by
+# changing the frame silently changes the other.
+#
+# 1.6 keeps the cross at the plus's own ratio (2.8/14 = 20%, 1.6/8 = 20%), and
+# the box shrinks with it because thinner arms reach less far once turned.
+_CROSS_BARS = (
+    '<rect x="2" y="6.2" width="10" height="1.6" rx="0.8" />'
+    '<rect x="6.2" y="2" width="1.6" height="10" rx="0.8" />'
+)
+PLUS = _PLUS_BARS
 CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 
 # The cross needs its OWN box, and that is the whole of [426].
@@ -252,7 +272,7 @@ CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 # so the ink does not move and only the frame around it does. The bars are
 # untouched, which is the point of one drawing serving both marks.
 PLUS_BOX = "0 0 14 14"
-CROSS_BOX = "2.94 2.94 8.12 8.12"
+CROSS_BOX = "3.3 3.3 7.4 7.4"
 
 EXTRA_NAV = [
     (

@@ -14,7 +14,7 @@ const ro: Partial<Translations> = {
   "nav.settings": "Setări",
   "about.title": "Despre BombVault",
   "about.report": "Probleme, dorințe sau sugestii de îmbunătățire? Deschide un issue pe GitHub.",
-  "about.repo": "Depozit",
+  "about.repo": "GitHub",
   "mode.simpleView": "Vizualizare simplă",
   "mode.advancedView": "Vizualizare avansată",
   "nav.recovery": "Recuperare",

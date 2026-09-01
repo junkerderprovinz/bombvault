@@ -14,7 +14,7 @@ const no: Partial<Translations> = {
   "nav.settings": "Innstillinger",
   "about.title": "Om BombVault",
   "about.report": "Problemer, ønsker eller forbedringsforslag? Opprett et issue på GitHub.",
-  "about.repo": "Kodelager",
+  "about.repo": "GitHub",
   "mode.simpleView": "Enkel visning",
   "mode.advancedView": "Avansert visning",
   "nav.recovery": "Gjenoppretting",

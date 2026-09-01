@@ -14,7 +14,7 @@ const ko: Partial<Translations> = {
   "nav.settings": "설정",
   "about.title": "BombVault 정보",
   "about.report": "문제나 바람, 개선 제안이 있으면 GitHub에 이슈를 남겨 주세요.",
-  "about.repo": "저장소",
+  "about.repo": "GitHub",
   "mode.simpleView": "간단히 보기",
   "mode.advancedView": "고급 보기",
   "nav.recovery": "복구",

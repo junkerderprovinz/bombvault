@@ -14,7 +14,7 @@ const es: Partial<Translations> = {
   "nav.settings": "Ajustes",
   "about.title": "Acerca de BombVault",
   "about.report": "¿Problemas, deseos o sugerencias de mejora? Abre una incidencia en GitHub.",
-  "about.repo": "Repositorio",
+  "about.repo": "GitHub",
   "mode.simpleView": "Vista simple",
   "mode.advancedView": "Vista avanzada",
   "nav.recovery": "Recuperación",

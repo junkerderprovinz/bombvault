@@ -17,7 +17,7 @@ const fa: Partial<Translations> = {
   "nav.settings": "تنظیمات",
   "about.title": "درباره BombVault",
   "about.report": "مشکل، درخواست یا پیشنهاد بهبود دارید؟ در GitHub یک issue باز کنید.",
-  "about.repo": "مخزن",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "نمای ساده",

@@ -17,7 +17,7 @@ const gl: Partial<Translations> = {
   "nav.settings": "Configuración",
   "about.title": "Sobre BombVault",
   "about.report": "Problemas, desexos ou suxestións de mellora? Abre unha incidencia en GitHub.",
-  "about.repo": "Repositorio",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Vista sinxela",

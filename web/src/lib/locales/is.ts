@@ -17,7 +17,7 @@ const is: Partial<Translations> = {
   "nav.settings": "Stillingar",
   "about.title": "Um BombVault",
   "about.report": "Vandamál, óskir eða tillögur að úrbótum? Opnaðu issue á GitHub.",
-  "about.repo": "Geymsla",
+  "about.repo": "GitHub",
 
   // Mode toggle
   "mode.simpleView": "Einföld sýn",
