@@ -307,6 +307,15 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               min-h and max-h at the same value means the panel is one size for
               the whole walk, and a short directory simply leaves space below
               its last row instead of dragging the dialog shut. */}
+          {/* min-h-8 on every row, and it has to be stated rather than
+              inherited ([469]). `.bv-btn-xs` sets a min-WIDTH and no height, so
+              a row is as tall as whatever it happens to contain: measured after
+              the glyph fix, a folder row came out at 20px (exactly its glyph)
+              while the ".." row above it was 32px, with identical classes and
+              zero padding on both. A list whose rows are two different heights
+              is not a list, and chasing the last twelve pixels through the
+              button internals is worse value than saying the height out loud
+              where the list is defined. 32px is this app's control height. */}
           {!loading && !manualFallback && (
             <div className="flex flex-col gap-0.5 h-48 min-h-48 max-h-48 overflow-y-auto">
               {/* ".." go up — only when not at root */}
@@ -325,7 +334,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   tone="neutral"
                   onClick={handleUp}
                   keepLabel
-                  className="w-full justify-start"
+                  className="w-full justify-start min-h-8"
                 />
               )}
               {dirs.length === 0 && !browseError && (
@@ -346,7 +355,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   // ist wahnsinnig mühsam"). Reading a directory by hovering
                   // one line at a time is not a listing.
                   keepLabel
-                  className="w-full justify-start"
+                  className="w-full justify-start min-h-8"
                 />
               ))}
             </div>
