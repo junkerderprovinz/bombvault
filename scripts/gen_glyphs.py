@@ -292,6 +292,15 @@ CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 # edge midpoints where a circle also sits, so it needs no correction, while the
 # cross points at the corners and does. Give both the same frame and one of them
 # is wrong; this is which.
+#
+# LEAVE THE 8% GAP TO THE RELOAD GLYPH ALONE. Measured live on the Fleet card,
+# where the two sit side by side: the cross reaches 10.03px and its neighbour
+# 10.96px at a 20px render. The neighbour is over 10 because ONE arrowhead runs
+# into a corner, which is a property of that drawing and not of the set — a
+# frame-filling circle measures 10.02. Tuning the cross to 10.96 would need a
+# 9.12 box and would then read oversized beside the other 46 glyphs, which is
+# the complaint this whole line of work started from. A diagonal mark sitting a
+# little inside the circle keyline is also what icon sets do on purpose.
 PLUS_BOX = "0 0 14 14"
 CROSS_BOX = "2 2 10 10"
 
