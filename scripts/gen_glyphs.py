@@ -237,47 +237,63 @@ _PLUS_BARS = (
     '<rect x="5.6" y="2" width="2.8" height="10" rx="1.4" />'
 )
 
-# The cross needs THINNER bars than the plus, and that is the correction [514]
-# makes to [426].
+# The cross is the plus rotated, and a rotated mark needs its own frame AND its
+# own bar. Three rounds got here, and each one measured a different quantity:
 #
-# [426] cropped the cross's viewBox so a rotated mark would stop reading as the
-# smallest thing in the set. That fixed the size and broke the weight: the bars
-# stayed 2.8 units while the box they are measured against went from 14 to 8.12,
-# so a stroke that was a fifth of its glyph became a third of it. jdp, next
-# look: "Der X Glyph auf dem Deaktivieren button wirkt viel zu klobig."
+#   [426] measured EXTENT. The turned cross filled 58% of its box where 45 of 48
+#         glyphs filled 100%, so it read as the smallest mark in the set. Fixed
+#         by cropping the box to 8.12.
+#   [514] measured AREA. The crop had left 2.8-unit bars against a box that went
+#         14 -> 8.12, turning a stroke that was a fifth of its glyph into a
+#         third. jdp: "wirkt viel zu klobig". Bars thinned to 1.0, which put the
+#         painted area at 37.7% against the neighbour's 36.6%.
+#   [526] measured REACH, and that is the one that was wrong all along. jdp,
+#         with the areas matched: "das X Glyph ist zu groß."
 #
-# The lesson is worth more than the numbers: SCALING A DRAWING SCALES ITS
-# STROKE, and a crop is a scale. Matching one dimension between two marks by
-# changing the frame silently changes the other.
+# REACH is the distance from the centre to the furthest ink, and it is what the
+# eye calls "size" for marks of different shape. A CROSS PUTS ITS FOUR TIPS ON
+# THE CORNERS OF ITS BOUNDING BOX; a circular glyph puts its ink on the edge
+# midpoints. Fill the same box with both and the cross reaches sqrt(2) further —
+# 14.1px against 10px at a 20px render. Area can match exactly while that holds,
+# because the cross spends its ink thinly along four diagonals and the loop
+# packs the same ink into a ring. Both of my earlier measurements were true and
+# neither was the complaint.
 #
-# 1.0, and the number comes from MEASURING the neighbour rather than from a
-# ratio. Matching stroke-to-box (1.6) still painted 53.5% of the box against the
-# 36.6% of the glyph beside it, because a cross is two solid bars and its
-# neighbour is an open loop: two marks of different character do not match on
-# weight just because they match on proportion. Area is what reads as "chunky",
-# so area is what was matched. The box shrinks with the bars, since thinner arms
-# reach less far once turned.
+# The general lesson, which cost three rounds: A MEASUREMENT THAT AGREES WITH
+# ITSELF IS NOT A FINDING. Extent, area and reach are three different questions,
+# and matching two of them says nothing about the third.
+#
+# So: tip radius 5 units in a 10-unit box = 10px at a 20px render, exactly the
+# neighbour's radius. Bars back up to 2.2 because the glyph itself shrank by
+# 1/sqrt(2) and area goes with the square of that; 2.2 solves
+# 20t - 1.4292t^2 = 36.35 units^2, which is the neighbour's 145.4px^2. That
+# also lands the bar at 22% of its box, within a whisker of the plus's 20%, so
+# the two marks read as the siblings they are drawn from.
 _CROSS_BARS = (
-    '<rect x="2" y="6.5" width="10" height="1" rx="0.5" />'
-    '<rect x="6.5" y="2" width="1" height="10" rx="0.5" />'
+    '<rect x="2" y="5.9" width="10" height="2.2" rx="1.1" />'
+    '<rect x="5.9" y="2" width="2.2" height="10" rx="1.1" />'
 )
 PLUS = _PLUS_BARS
 CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 
-# The cross needs its OWN box, and that is the whole of [426].
+# The cross needs its OWN box — [426] was right about that and wrong about the
+# number, see the bars above.
 #
-# Turning the plus keeps its arms and loses its extent: the axis-aligned box of
-# a diagonal cross is smaller than the arms that make it. The plus reads at 72%
-# of the 14-unit grid, the same drawing rotated at 58%. Rasterised across all 48
-# glyphs, 45 fill their box and these two crosses were the smallest marks in the
-# set, which is why jdp saw one as undersized the moment it sat beside a
-# full-size glyph.
+# 10 units, centred on (7,7): the same point the rotation turns about, so the
+# ink does not move and only the frame around it does. That puts the arm tips
+# (radius 5 units) at 10px on a 20px render, which is exactly where a glyph that
+# fills the 14-unit grid puts its outermost ink. The bounding box of the turned
+# cross then measures 8.6 units, comfortably inside the frame — the 7.1 box
+# before this was narrower than its own drawing and CLIPPED all four tips
+# (measured: 21.9px of ink in a 20px frame).
 #
-# 8.12 = 14 x 0.58, centred on (7,7) — the same point the rotation turns about,
-# so the ink does not move and only the frame around it does. The bars are
-# untouched, which is the point of one drawing serving both marks.
+# The plus keeps the full 14-unit grid and reads at 72% of it. That is a real
+# difference from the cross's 86%, and it is deliberate: the plus points at the
+# edge midpoints where a circle also sits, so it needs no correction, while the
+# cross points at the corners and does. Give both the same frame and one of them
+# is wrong; this is which.
 PLUS_BOX = "0 0 14 14"
-CROSS_BOX = "3.45 3.45 7.1 7.1"
+CROSS_BOX = "2 2 10 10"
 
 EXTRA_NAV = [
     (

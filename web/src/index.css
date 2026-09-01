@@ -391,7 +391,13 @@
    Sidebar on the current destination, so this needs no new marker and covers
    both strips at once. Nothing about the resting layout changes either: the
    width stages already reserve every label's own width in every mode, which is
-   the whole reason words can appear here without moving the page. */
+   the whole reason words can appear here without moving the page.
+
+   ANY STATE ADDED HERE MUST ALSO BE ADDED to the `full` motion block's
+   transform reset further down — this rule hands back width, opacity and
+   margin, that one hands back the resting `translateX`/`scaleX`. Adding a
+   state to one list and not the other leaves the label revealed but still
+   displaced, which is what [527] had to repair. */
 .bv-reactive.glim-active .bv-label-reactive,
 .bv-reactive:hover .bv-label-reactive,
 .bv-reactive:focus-visible .bv-label-reactive,
@@ -448,6 +454,24 @@
     transform: translateX(-0.4rem) scaleX(0.82);
   }
 
+  /* `.glim-active` belongs in THIS list too, and leaving it out was [467]'s
+     bug ([527]).
+     -------------------------------------------------------------------------
+     The reveal above hands the active label its width, its opacity and its
+     `margin-inline-start`. It does not hand back the resting TRANSFORM, and in
+     `full` motion that transform is `translateX(-0.4rem) scaleX(0.82)`. So the
+     active tab's words sat 6.4px left of where its 8px margin put them —
+     measured gap glyph-to-text 1.6px, not 8 — and squashed to 82% besides.
+     jdp: "Der Text der im aktiven Tab bleibt rutscht zu nah an den glyph".
+
+     The state was reachable only by adding a FOURTH way to reveal a label to a
+     rule that had three, which is exactly the shape of
+     `guard-applied-once-is-a-guard-missing-twice`: the reveal and the transform
+     reset are two lists that must always name the same states, and nothing in
+     the file made them move together. They are adjacent and cross-referenced
+     now, which is the cheapest guard available short of merging them — and they
+     cannot merge, because one is inside the reduced-motion gate and one is not. */
+  :root[data-motion="full"] .bv-reactive.glim-active .bv-label-reactive,
   :root[data-motion="full"] .bv-reactive:hover .bv-label-reactive,
   :root[data-motion="full"] .bv-reactive:focus-visible .bv-label-reactive,
   :root[data-motion="full"] .bv-reactive:focus-within .bv-label-reactive {

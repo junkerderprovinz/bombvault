@@ -20,7 +20,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { Selector } from "../../components/Selector";
 import { IconCheckCircle } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
-import { IconPrune, IconUnlock } from "../../components/glyphs";
+import { IconKey, IconPrune } from "../../components/glyphs";
 import { useAdvanced } from "../../lib/advanced";
 import { Container, RestoreDrill, Settings, VM, checkDomain, getDrills, getStatus, listContainers, listVMs, pruneDomain, runDrill, tamperTest, unlockDomain } from "../../lib/api";
 import { useT } from "../../lib/i18n";
@@ -301,7 +301,13 @@ export function IntegrityCard({
       key: "unlock",
       label: t("integrity.unlock"),
       labelKey: "integrity.unlock",
-      glyph: <IconUnlock />,
+      // A key, not the open padlock this label otherwise resolves to ([528],
+      // jdp's call at the live review). `glyphFor` still maps /unlock/ to
+      // `IconUnlock` and still keeps it distinct from the credentials key, and
+      // that rule is deliberately left alone: it is the fallback for labels
+      // nobody has looked at, while this button HAS been looked at. Overriding
+      // at the call site is exactly what the `glyph` prop exists for.
+      glyph: <IconKey />,
       busy: "…",
     },
     // Prune deletes snapshots — keep it behind Advanced so novices can't reach it.

@@ -182,6 +182,77 @@ describe("buttons", () => {
     ).toEqual([]);
   });
 
+  it("crops a rotated glyph to its REACH, not past it ([526])", () => {
+    // The test above knows that a rotated glyph must be cropped. It does not
+    // know how far, and "how far" is where the next two rounds went.
+    //
+    // [426] cropped to the axis-aligned EXTENT of the turned drawing, which
+    // makes the ink fill its box like the other 45 glyphs. That is the wrong
+    // target, and the reason is worth the paragraph: A CROSS PUTS ITS FOUR TIPS
+    // ON THE CORNERS OF ITS BOUNDING BOX, while a circular glyph puts its ink on
+    // the edge midpoints. Fill the same box with both and the cross reaches
+    // sqrt(2) further from centre — 14.1px against 10px at a 20px render. jdp
+    // saw it twice ("wirkt viel zu klobig", then "das X Glyph ist zu groß")
+    // while three separate measurements said the pair matched.
+    //
+    // They did match, on the things they measured. Extent matched. Area matched
+    // (37.7% against 36.6%). REACH — the distance from centre to furthest ink —
+    // was never asked, and reach is what the eye calls size across marks of
+    // different shape. THREE MEASUREMENTS THAT AGREE ARE ONE MEASUREMENT IF
+    // THEY ASK THE SAME QUESTION.
+    //
+    // So the invariant is reach: an arm tip must land exactly where a full-grid
+    // glyph puts its outermost ink, which is half the viewBox from the centre.
+    // Checkable from source, immune to the transform blind spot that defeated
+    // getBBox, and it fails in BOTH directions — a box that is too wide makes
+    // the mark small, too narrow makes it big and clips the tips besides (the
+    // 7.1 box before this one held 21.9px of ink in a 20px frame).
+    const offenders: string[] = [];
+    for (const file of walk(SRC)) {
+      const src = readFileSync(file, "utf8");
+      for (const m of src.matchAll(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/g)) {
+        const [, attrs, rawBody] = m;
+        const body = rawBody.trim();
+        const whole = /^<g\b[^>]*transform\s*=\s*"([^"]*)"[^>]*>([\s\S]*)<\/g>$/.exec(body);
+        if (!whole || /<\/g>/.test(whole[2])) continue;
+        const spin = /rotate\(\s*[-\d.]+\s+([-\d.]+)\s+([-\d.]+)\s*\)/.exec(whole[1]);
+        if (!spin) continue;
+        const [cx, cy] = [Number(spin[1]), Number(spin[2])];
+        const vb = /viewBox\s*=\s*"([^"]+)"/.exec(attrs)?.[1]?.trim();
+        if (!vb) continue;
+        const half = Number(vb.split(/\s+/)[2]) / 2;
+
+        // The tip of an arm is the midpoint of its SHORT end. Corners would
+        // measure the drawing's diagonal instead, which is the same mistake one
+        // dimension down: a bar's corner is not where the arm points.
+        let reach = 0;
+        for (const r of whole[2].matchAll(/<rect\b([^>]*)>/g)) {
+          const at = (k: string) =>
+            Number(new RegExp(`\\b${k}\\s*=\\s*"([-\\d.]+)"`).exec(r[1])?.[1] ?? NaN);
+          const [x, y, w, h] = [at("x"), at("y"), at("width"), at("height")];
+          if ([x, y, w, h].some(Number.isNaN)) continue;
+          const tips: [number, number][] =
+            w >= h
+              ? [[x, y + h / 2], [x + w, y + h / 2]]
+              : [[x + w / 2, y], [x + w / 2, y + h]];
+          for (const [tx, ty] of tips) reach = Math.max(reach, Math.hypot(tx - cx, ty - cy));
+        }
+        if (!reach) continue;
+        // A tenth of a unit is a fifth of a pixel at the 20px these render at.
+        if (Math.abs(reach - half) > 0.1) {
+          const line = src.slice(0, m.index).split("\n").length;
+          offenders.push(
+            `${file.slice(SRC.length + 1).replace(/\\/g, "/")}:${line} reach ${reach.toFixed(2)} vs half-box ${half.toFixed(2)}`
+          );
+        }
+      }
+    }
+    expect(
+      offenders,
+      "A rotated glyph's arm tips must land at half its viewBox: nearer reads small, further reads oversized and clips."
+    ).toEqual([]);
+  });
+
   it("never paints text or graphics with the flat accent ([381])", () => {
     // accentText and accent are not two shades of one idea, they are opposites:
     // `accent` is a FILL, meant to have text on top of it, and `accentText` is
