@@ -16,7 +16,7 @@
 // ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { LanguageCard } from "./Settings";
+import { LanguageCard } from "./settings/LanguageCard";
 import { I18nProvider, useT } from "../lib/i18n";
 
 const STORAGE_KEY = "bv-lang";

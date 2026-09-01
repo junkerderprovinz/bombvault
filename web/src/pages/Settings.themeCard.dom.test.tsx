@@ -24,7 +24,7 @@
 // ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { ThemeCard } from "./Settings";
+import { ThemeCard } from "./settings/ThemeCard";
 import { I18nProvider, useT } from "../lib/i18n";
 
 const STORAGE_KEY = "bv-theme";

@@ -16,7 +16,7 @@
 // ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { AccentCard } from "./Settings";
+import { AccentCard } from "./settings/AccentCard";
 import { I18nProvider, useT } from "../lib/i18n";
 import { DEFAULT_ACCENT, DEFAULT_ACCENT_PRESETS } from "../lib/accent";
 

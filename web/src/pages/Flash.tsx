@@ -13,7 +13,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { useToast } from "../lib/toast";
-import { FlashZipExportCard } from "./Settings";
+import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";

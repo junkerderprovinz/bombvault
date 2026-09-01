@@ -55,7 +55,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 // Imported AFTER vi.mock so the component picks up the mocked client.
-const { CloudCard } = await import("./Settings");
+const { CloudCard } = await import("./settings/CloudCard");
 
 function Harness() {
   const { t } = useT();

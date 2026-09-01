@@ -110,18 +110,25 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
     sync();
   };
 
+  /**
+   * A SOLID triangle, not an outlined chevron ([451]).
+   *
+   * jdp: "die pfeile sollen solide dreiecke sein, damit es zum style passt" —
+   * and the style is the point. Every one of the 48 glyphs in this app is a
+   * filled shape; a two-stroke chevron is the only outlined mark in the
+   * interface, so it reads as borrowed from somewhere else at exactly the size
+   * where that is most obvious. The same reasoning that removed the OS spinner
+   * applies to its replacement: a control does not get to be from another
+   * design system just because it is small.
+   */
   const Arrow = ({ up }: { up: boolean }) => (
     <svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true">
       {/* bv-convention-exception: user-message-is-translated -- SVG path data,
-          not prose. "M1 5 L5 1 L9 5" is a chevron; there is nothing here for a
-          translator to translate. */}
+          not prose. "M5 0.9 L9.4 5.3 L0.6 5.3 Z" is a triangle; there is
+          nothing here for a translator to translate. */}
       <path
-        d={up ? "M1 5 L5 1 L9 5" : "M1 1 L5 5 L9 1"}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d={up ? "M5 0.9 L9.4 5.3 L0.6 5.3 Z" : "M5 5.3 L0.6 0.9 L9.4 0.9 Z"}
+        fill="currentColor"
       />
     </svg>
   );
