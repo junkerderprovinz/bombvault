@@ -32,3 +32,11 @@ paths = [
   # "secret", not a value at all.
   '''web/src/.*\.test\.tsx?$''',
 ]
+regexes = [
+  # CadenceBuilder's cron presets are written as { expr: "0 */6 * * *", key:
+  # "cadence.cronExEvery6h" }. The generic-api-key rule sees a field literally
+  # named `key` next to a high-entropy string and fires. The value is a
+  # translation key, and the exemption is written against THAT shape rather than
+  # against the file, so a real credential in the same file is still reported.
+  '''cadence\.cronEx[A-Za-z0-9]+''',
+]
