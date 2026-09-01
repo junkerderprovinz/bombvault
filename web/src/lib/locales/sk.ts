@@ -640,7 +640,6 @@ const sk: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Farby",
   "settings.accentColor": "Zvýrazňujúca farba",
-  "settings.accentPresets": "Predvoľby",
   "settings.accentPreset": "Predvoľba",
   "settings.accentReset": "Obnoviť zvýrazňujúcu farbu a predvoľby",
   "settings.shape": "Rohy",

@@ -207,7 +207,6 @@ const el: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Χρώματα",
   "settings.accentColor": "Χρώμα επισήμανσης",
-  "settings.accentPresets": "Προεπιλογές",
   "settings.accentPreset": "Προεπιλογή",
   "settings.accentReset": "Επαναφορά χρώματος επισήμανσης και προεπιλογών",
   "settings.shape": "Γωνίες",

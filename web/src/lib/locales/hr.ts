@@ -640,7 +640,6 @@ const hr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Boje",
   "settings.accentColor": "Naglasna boja",
-  "settings.accentPresets": "Predlošci",
   "settings.accentPreset": "Predložak",
   "settings.accentReset": "Vrati naglasnu boju i predloške na zadano",
   "settings.shape": "Kutovi",

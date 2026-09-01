@@ -640,7 +640,6 @@ const is: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Litir",
   "settings.accentColor": "Áherslulitur",
-  "settings.accentPresets": "Forstillingar",
   "settings.accentPreset": "Forstilling",
   "settings.accentReset": "Endurstilla áherslulit og forstillingar",
   "settings.shape": "Horn",

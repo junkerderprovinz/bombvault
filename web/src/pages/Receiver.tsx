@@ -31,6 +31,7 @@ import { PAGE_SHELL } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { humanBytes } from "../lib/forecast";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
+import { NumberField } from "../components/NumberField";
 import { IconReceiver } from "../components/Sidebar";
 import { Badge } from "../components/Badge";
 import { InfoBubble } from "../components/InfoBubble";
@@ -547,8 +548,7 @@ function ReceiverDialog({
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
-            <input
-              type="number"
+            <NumberField
               min={1}
               value={deadManHours}
               onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
@@ -557,8 +557,7 @@ function ReceiverDialog({
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
-            <input
-              type="number"
+            <NumberField
               min={0}
               max={100}
               value={readDataPercent}

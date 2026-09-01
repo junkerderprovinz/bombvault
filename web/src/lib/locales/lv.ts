@@ -640,7 +640,6 @@ const lv: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Krāsas",
   "settings.accentColor": "Akcenta krāsa",
-  "settings.accentPresets": "Sākotnējie iestatījumi",
   "settings.accentPreset": "Sākotnējais iestatījums",
   "settings.accentReset": "Atiestatīt akcenta krāsu un sākotnējos iestatījumus",
   "settings.shape": "Stūri",

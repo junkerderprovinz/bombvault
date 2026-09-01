@@ -640,7 +640,6 @@ const gl: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Cores",
   "settings.accentColor": "Cor de acento",
-  "settings.accentPresets": "Predefinicións",
   "settings.accentPreset": "Predefinición",
   "settings.accentReset": "Restaurar a cor de acento e as predefinicións",
   "settings.shape": "Esquinas",

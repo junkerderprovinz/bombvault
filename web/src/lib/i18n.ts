@@ -784,7 +784,6 @@ export const en = {
   // "colour, broadly" word that doesn't collide with either.
   "settings.colors": "Colors",
   "settings.accentColor": "Accent color",
-  "settings.accentPresets": "Presets",
   // New in the GlimStone follow-up pass, live-review round 6 (presets became
   // individually editable + resettable, and the count grew from 5 to 8):
   // "accentPreset" (singular) numbers each swatch's own accessible name
@@ -2409,7 +2408,6 @@ export const de: Translations = {
   // Appearance / Accent
   "settings.colors": "Farben",
   "settings.accentColor": "Akzentfarbe",
-  "settings.accentPresets": "Voreinstellungen",
   "settings.accentPreset": "Voreinstellung",
   "settings.accentReset": "Akzentfarbe und Voreinstellungen zurücksetzen",
   "settings.shape": "Ecken",

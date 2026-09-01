@@ -207,7 +207,6 @@ const fi: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Värit",
   "settings.accentColor": "Korostusväri",
-  "settings.accentPresets": "Esiasetukset",
   "settings.accentPreset": "Esiasetus",
   "settings.accentReset": "Palauta korostusväri ja esiasetukset",
   "settings.shape": "Kulmat",

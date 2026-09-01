@@ -640,7 +640,6 @@ const bg: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Цветове",
   "settings.accentColor": "Акцентен цвят",
-  "settings.accentPresets": "Готови настройки",
   "settings.accentPreset": "Готова настройка",
   "settings.accentReset": "Възстанови акцентния цвят и готовите настройки",
   "settings.shape": "Ъгли",

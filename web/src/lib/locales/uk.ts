@@ -205,7 +205,6 @@ const uk: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Кольори",
   "settings.accentColor": "Акцентний колір",
-  "settings.accentPresets": "Передустановки",
   "settings.accentPreset": "Передустановка",
   "settings.accentReset": "Скинути акцентний колір і передустановки",
   "settings.shape": "Кути",

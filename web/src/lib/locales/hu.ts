@@ -207,7 +207,6 @@ const hu: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Színek",
   "settings.accentColor": "Kiemelőszín",
-  "settings.accentPresets": "Előbeállítások",
   "settings.accentPreset": "Előbeállítás",
   "settings.accentReset": "Kiemelőszín és előbeállítások visszaállítása",
   "settings.shape": "Sarkok",

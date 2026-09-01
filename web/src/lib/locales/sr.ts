@@ -638,7 +638,6 @@ const sr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Боје",
   "settings.accentColor": "Истакнута боја",
-  "settings.accentPresets": "Претподешавања",
   "settings.accentPreset": "Претподешавање",
   "settings.accentReset": "Ресетуј истакнуту боју и претподешавања",
   "settings.shape": "Углови",

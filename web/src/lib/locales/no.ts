@@ -204,7 +204,6 @@ const no: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Farger",
   "settings.accentColor": "Aksentfarge",
-  "settings.accentPresets": "Forhåndsinnstillinger",
   "settings.accentPreset": "Forhåndsinnstilling",
   "settings.accentReset": "Tilbakestill aksentfarge og forhåndsinnstillinger",
   "settings.shape": "Hjørner",

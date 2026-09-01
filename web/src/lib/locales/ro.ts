@@ -204,7 +204,6 @@ const ro: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Culori",
   "settings.accentColor": "Culoare de accent",
-  "settings.accentPresets": "Presetări",
   "settings.accentPreset": "Presetare",
   "settings.accentReset": "Resetează culoarea de accent și presetările",
   "settings.shape": "Colțuri",

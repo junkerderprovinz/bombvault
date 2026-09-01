@@ -640,7 +640,6 @@ const hi: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "रंग",
   "settings.accentColor": "एक्सेंट रंग",
-  "settings.accentPresets": "प्रीसेट",
   "settings.accentPreset": "प्रीसेट",
   "settings.accentReset": "एक्सेंट रंग और प्रीसेट रीसेट करें",
   "settings.shape": "कोने",

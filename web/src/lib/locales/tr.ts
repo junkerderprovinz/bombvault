@@ -207,7 +207,6 @@ const tr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Renkler",
   "settings.accentColor": "Vurgu rengi",
-  "settings.accentPresets": "Ön ayarlar",
   "settings.accentPreset": "Ön ayar",
   "settings.accentReset": "Vurgu rengini ve ön ayarları sıfırla",
   "settings.shape": "Köşeler",

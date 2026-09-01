@@ -202,7 +202,6 @@ const nl: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Kleuren",
   "settings.accentColor": "Accentkleur",
-  "settings.accentPresets": "Voorinstellingen",
   "settings.accentPreset": "Voorinstelling",
   "settings.accentReset": "Accentkleur en voorinstellingen herstellen",
   "settings.shape": "Hoeken",

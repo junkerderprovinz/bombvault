@@ -2758,3 +2758,30 @@ body {
      side-to-side motion component). */
   .glim-shake { animation: bv-egg-fade-pulse 300ms ease-in-out; }
 }
+
+/* The native number spinner is gone ([411]).
+   ---------------------------------------------------------------------------
+   GlimStone, "Never a native number spinner either": the two arrows the browser
+   paints come from the OS widget set, on their OWN background, and the only
+   property that reaches them is accent-color. jdp, live: "jetzt haben sie einen
+   dunklen hintergrund. der soll weg".
+
+   BOTH properties, not only the -webkit- one. Chrome hides its spinner through
+   the pseudo-elements below; Firefox draws its own through a different
+   mechanism and ignores them entirely, so a WebKit-only rule leaves those
+   arrows exactly where they were. That is the specific mistake the rule calls
+   out by name.
+
+   The replacement lives in components/NumberField.tsx, and it owes the arrows
+   back in the same breath: removing a native widget without replacing it is
+   what produced "jetzt sind keine pfeiltasten mehr da" in another app. */
+.bv-num {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.bv-num::-webkit-outer-spin-button,
+.bv-num::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}

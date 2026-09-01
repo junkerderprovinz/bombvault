@@ -56,6 +56,7 @@
 // reference" and "already covered by the field's own placeholder + caption"
 // and was left as-is with its own comment rather than force that call here.
 import { Button } from "../../components/Button";
+import { NumberField } from "../../components/NumberField";
 import { Card, ToggleRow, type SaveState } from "./shared";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
@@ -678,8 +679,10 @@ export function NotifyCard({
             </label>
             <label className={labelCls}>
               {t("notify.smtpPort")}
-              <input key={fieldShake.smtpPort} value={cfg.smtpPort} onChange={(e) => set("smtpPort", Number(e.target.value) || 0)} spellCheck={false}
-                type="number" placeholder="587" className={`${inputCls}${fieldShake.smtpPort ? " glim-shake" : ""}`} />
+              {/* min/max are not decoration ([411]): the steppers read them to
+                  know when to grey out, and they are the port range anyway. */}
+              <NumberField key={fieldShake.smtpPort} value={cfg.smtpPort} onChange={(e) => set("smtpPort", Number(e.target.value) || 0)} spellCheck={false}
+                min={1} max={65535} placeholder="587" className={`${inputCls}${fieldShake.smtpPort ? " glim-shake" : ""}`} />
             </label>
             <label className={labelCls}>
               {t("notify.smtpTls")}

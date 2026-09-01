@@ -207,7 +207,6 @@ const zh: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "颜色",
   "settings.accentColor": "强调色",
-  "settings.accentPresets": "预设",
   "settings.accentPreset": "预设",
   "settings.accentReset": "重置强调色和预设",
   "settings.shape": "圆角",

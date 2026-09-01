@@ -640,7 +640,6 @@ const lt: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Spalvos",
   "settings.accentColor": "Akcentinė spalva",
-  "settings.accentPresets": "Išankstiniai nustatymai",
   "settings.accentPreset": "Išankstinis nustatymas",
   "settings.accentReset": "Atkurti akcentinę spalvą ir išankstinius nustatymus",
   "settings.shape": "Kampai",

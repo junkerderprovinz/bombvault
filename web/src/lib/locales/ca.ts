@@ -640,7 +640,6 @@ const ca: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Colors",
   "settings.accentColor": "Color d'accent",
-  "settings.accentPresets": "Predefinits",
   "settings.accentPreset": "Predefinit",
   "settings.accentReset": "Restableix el color d'accent i els predefinits",
   "settings.shape": "Cantonades",

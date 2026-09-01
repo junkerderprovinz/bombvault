@@ -207,7 +207,6 @@ const ja: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "カラー",
   "settings.accentColor": "アクセントカラー",
-  "settings.accentPresets": "プリセット",
   "settings.accentPreset": "プリセット",
   "settings.accentReset": "アクセントカラーとプリセットをリセット",
   "settings.shape": "角の形状",

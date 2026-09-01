@@ -207,7 +207,6 @@ const ko: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "색상",
   "settings.accentColor": "강조 색상",
-  "settings.accentPresets": "프리셋",
   "settings.accentPreset": "프리셋",
   "settings.accentReset": "강조 색상 및 프리셋 재설정",
   "settings.shape": "모서리",

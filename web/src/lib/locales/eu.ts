@@ -640,7 +640,6 @@ const eu: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Koloreak",
   "settings.accentColor": "Azentu-kolorea",
-  "settings.accentPresets": "Aurrezarpenak",
   "settings.accentPreset": "Aurrezarpena",
   "settings.accentReset": "Berrezarri azentu-kolorea eta aurrezarpenak",
   "settings.shape": "Ertzak",

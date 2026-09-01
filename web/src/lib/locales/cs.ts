@@ -207,7 +207,6 @@ const cs: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Barvy",
   "settings.accentColor": "Barva zvýraznění",
-  "settings.accentPresets": "Předvolby",
   "settings.accentPreset": "Předvolba",
   "settings.accentReset": "Obnovit barvu zvýraznění a předvolby",
   "settings.shape": "Rohy",

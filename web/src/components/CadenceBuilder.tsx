@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useT } from "../lib/i18n";
 import { isValidCronExpression, nextCronFires } from "../lib/cron";
 import { Selector } from "./Selector";
+import { NumberField } from "./NumberField";
 import { TimePicker } from "./TimePicker";
 import { tLtr } from "../lib/ltrFragments";
 
@@ -475,8 +476,7 @@ export function CadenceBuilder({
       {state.mode === "everyN" && (
         <div className="flex items-center gap-3">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.every")}</label>
-          <input
-            type="number"
+          <NumberField
             min={1}
             value={state.intervalDays}
             onChange={(e) => {

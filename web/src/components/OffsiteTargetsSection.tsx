@@ -11,6 +11,7 @@ import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged, subscribeOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { useT } from "../lib/i18n";
 import { Toggle } from "./Toggle";
+import { NumberField } from "./NumberField";
 import { Badge, type BadgeSize } from "./Badge";
 import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
@@ -518,8 +519,7 @@ export function OffsiteTargetsSection({
               ] as const).map(([key, label]) => (
                 <label key={key} className="flex flex-col gap-1">
                   <span className="text-xs text-carbon-textSub">{t(label)}</span>
-                  <input
-                    type="number"
+                  <NumberField
                     min={0}
                     value={draft[key]}
                     onChange={(e) => {
@@ -536,8 +536,7 @@ export function OffsiteTargetsSection({
           {/* Growth budget */}
           <label className="flex flex-col gap-1 max-w-56">
             <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
-            <input
-              type="number"
+            <NumberField
               min={0}
               value={draft.growthBudgetGb}
               onChange={(e) => {

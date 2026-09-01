@@ -640,7 +640,6 @@ const fa: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "رنگ‌ها",
   "settings.accentColor": "رنگ تأکیدی",
-  "settings.accentPresets": "پیش‌تنظیم‌ها",
   "settings.accentPreset": "پیش‌تنظیم",
   "settings.accentReset": "بازنشانی رنگ تأکیدی و پیش‌تنظیم‌ها",
   "settings.shape": "گوشه‌ها",

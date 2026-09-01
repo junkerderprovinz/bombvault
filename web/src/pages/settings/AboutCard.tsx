@@ -41,9 +41,10 @@ import { Card } from "./shared";
  * re-copied from a newer release; check that repo's CHANGELOG before moving
  * it. Raised 1.2.0 -> 1.6.0 in [362] after an audit found it four releases
  * behind while the engines themselves had been kept current - a number that
- * had come to say the opposite of what it is for.
+ * had come to say the opposite of what it is for. 1.7.0 in [411], the release
+ * this app's own number field was built from.
  */
-export const GLIMSTONE_VERSION = "1.6.0";
+export const GLIMSTONE_VERSION = "1.7.0";
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 const SUPPORT_MAIL = "jdp@braethoria.com";

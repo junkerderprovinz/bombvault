@@ -15,6 +15,7 @@ import type { OffsiteTarget } from "../lib/api";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
+import { NumberField } from "./NumberField";
 import { Toggle } from "./Toggle";
 import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -991,8 +992,7 @@ export function OffsiteWizard({
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("settings.limitUpload")}</span>
-              <input
-                type="number"
+              <NumberField
                 min={0}
                 value={pLimitUpload}
                 onChange={(e) => {
@@ -1005,8 +1005,7 @@ export function OffsiteWizard({
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t("settings.limitDownload")}</span>
-              <input
-                type="number"
+              <NumberField
                 min={0}
                 value={pLimitDownload}
                 onChange={(e) => {
@@ -1020,8 +1019,7 @@ export function OffsiteWizard({
           </div>
           <label className="flex flex-col gap-1 max-w-48">
             <span className="text-xs text-carbon-textSub">{t("offsite.retention.budget")}</span>
-            <input
-              type="number"
+            <NumberField
               min={0}
               value={pBudget}
               onChange={(e) => {
@@ -1078,8 +1076,7 @@ export function OffsiteWizard({
               {t("offsite.retention.budget")}
               <InfoBubble tip={t("offsite.prune.budgetInfo")} />
             </span>
-            <input
-              type="number"
+            <NumberField
               min={0}
               value={settings.offsiteGrowthBudgetGB}
               onChange={(e) => {

@@ -640,7 +640,6 @@ const ms: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Warna",
   "settings.accentColor": "Warna aksen",
-  "settings.accentPresets": "Praset",
   "settings.accentPreset": "Praset",
   "settings.accentReset": "Set semula warna aksen dan praset",
   "settings.shape": "Sudut",

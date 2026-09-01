@@ -207,7 +207,6 @@ const fr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Couleurs",
   "settings.accentColor": "Couleur d'accentuation",
-  "settings.accentPresets": "Préréglages",
   "settings.accentPreset": "Préréglage",
   "settings.accentReset": "Réinitialiser la couleur d'accentuation et les préréglages",
   "settings.shape": "Angles",

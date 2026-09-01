@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { getSettings, putSettings, getAuth, setAuthPassword, logout, logoutAll, getRclone, setRclone, getCloud, setCloud, replicateOffsite, testOffsite, listContainers, listVMs, setScheduleCadence, setVMScheduleCadence, listFileSets, patchFileSet, downloadRecoveryKit, importSettingsApply, backupEverythingNow, ApiError } from "../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
+import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import {
@@ -219,41 +220,33 @@ export function AccentCard({
           locales, none bakes a colon into the translated text either, so
           dropping the literal ":" here is the complete, single-source fix. */}
       <span className="text-sm text-carbon-text">{t("settings.accentColor")}</span>
-      {/* EVERYTHING else on this row — custom-colour swatch, presets, both
-          resets — is now ONE right-aligned group (jdp, live-review: "Das
-          Akzentfarbeauswahlfeld auch nach rechts"). A prior round's `ms-auto`
-          only wrapped the presets+reset sub-group, leaving this
-          ColorPickerSwatch behind at the row's start next to the label; jdp
-          reviewed that live and wants the swatch pulled into the same
-          right-aligned cluster, not left as the one holdout. Same `ms-auto`
-          idiom this app already uses everywhere else for "push this to the
-          row's own far right" (Containers.tsx/Fleet.tsx's own trailing
-          metadata, and the rainbow-reset-badge row a few hundred lines
-          below) — the wrapper just moved up to include one more child,
-          nothing new invented. */}
+      {/* EVERYTHING else on this row — the presets and their reset — is one
+          right-aligned group (jdp, live-review: "Das Akzentfarbeauswahlfeld
+          auch nach rechts"). Same `ms-auto` idiom this app uses everywhere
+          else for "push this to the row's own far right"
+          (Containers.tsx/Fleet.tsx's trailing metadata, and the
+          rainbow-reset-badge row a few hundred lines below).
+            The group used to hold a standalone custom-colour swatch and a
+          "Voreinstellungen:" caption as well; both are gone ([429]) and the
+          reasoning is at the next comment down. */}
       <div className="flex items-center gap-2 flex-wrap ms-auto">
-        {/* Custom-colour trigger — a flat swatch, same size/shape as the
-            preset swatches beside it (design-language.md, "The user-owned
-            axes" > Accent: every custom colour value gets the SAME
-            trigger). Opens the shared GlimStone picker popover instead of
-            a native <input type="color"> — see ColorPickerPopover.tsx's
-            own header comment for why (jdp: "kein eigenes Fenster welches
-            sich öffnet" — no separate window opening).
-              w-8 h-8 (32px outer, 28px disc inside the 2px ring): the doc
-            above says "same size as the preset swatches beside it", but the
-            code did not deliver that — this was `w-6 h-6`, which with
-            border-box sizing is a 24px OUTER box against the presets' own 28px
-            (measured live: "Akzentfarbe" 24x24, "Voreinstellung 1..8" 28x28).
-            A pre-existing 4px mismatch, now closed on the 32px the whole row
-            moved to when every square icon badge in the app was unified — see
-            Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES". */}
-        <ColorPickerSwatch
-          value={accentHex}
-          onChange={selectAccent}
-          label={t("settings.accentColor")}
-          className="w-8 h-8 rounded-pill border-2 border-carbon-border transition-transform hover:scale-110"
-        />
-        <span className="text-xs text-carbon-textMuted">{t("settings.accentPresets")}:</span>
+        {/* The standalone custom-colour swatch and the "Voreinstellungen:"
+            caption are GONE ([429], jdp: "das Farbpickerfeld und der text
+            Voreinstellungen soll weg").
+              Both were redundant rather than wrong. Every one of the eight
+            swatches below already OPENS the same picker — that is what
+            AccentPresetSwatch's wrapper does — so a ninth swatch whose only
+            job was "open the picker" offered nothing the row did not already
+            offer, while looking like a colour you could select. Two controls
+            that do the same thing, one of which also lies about what it is.
+              The caption went with it for the ordinary reason: a row of
+            coloured discs in a card titled Akzentfarbe does not need a word
+            telling you it is a row of colours. Naming the obvious is the kind
+            of text that survives because nobody re-reads it, not because
+            anybody needed it.
+              Nothing is lost: a custom colour is still reachable, by opening
+            any preset and changing it, which is also the only way it ever
+            persisted. */}
         {presets.map((hex, i) => (
           <AccentPresetSwatch
             key={i}
@@ -841,8 +834,7 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
                 {t("flash.zipExport.keepN")}
                 <InfoBubble tip={t("flash.zipExport.keepNHint")} />
               </span>
-              <input
-                type="number"
+              <NumberField
                 min={1}
                 value={keep}
                 onChange={(e) => {
@@ -1693,8 +1685,7 @@ function RestoreChecksSection({
       </div>
       <label className="flex flex-col gap-1 max-w-40">
         <span className="text-xs text-carbon-textSub">{t("verify.subsetPct")}</span>
-        <input
-          type="number"
+        <NumberField
           min={1}
           max={100}
           value={settings.drillsSubsetPct}
@@ -4041,8 +4032,7 @@ export function SettingsPage() {
                   {t("settings.restartHealthTimeoutLabel")}
                   <InfoBubble tip={t("settings.restartHealthTimeoutHint")} />
                 </span>
-                <input
-                  type="number"
+                <NumberField
                   min={5}
                   max={3600}
                   value={settings.restartHealthTimeoutSec}
@@ -4322,8 +4312,7 @@ export function SettingsPage() {
                 {t(label)}
                 <InfoBubble tip={t(info)} />
               </span>
-              <input
-                type="number"
+              <NumberField
                 min={0}
                 value={settings[key]}
                 onChange={(e) => {
@@ -4632,8 +4621,7 @@ export function SettingsPage() {
       <Card title={t("settings.cacheTitle")} hint={tLtr(t, "settings.cacheHint")} hueIndex={nextHue()}>
         <label className="flex flex-col gap-1 sm:w-1/2">
           <span className="text-xs text-carbon-textSub">{t("settings.cacheLimitLabel")}</span>
-          <input
-            type="number"
+          <NumberField
             min={0}
             value={settings.resticCacheMaxMB}
             onChange={(e) => {
@@ -5093,8 +5081,7 @@ export function SettingsPage() {
                 {t(label)}
                 <InfoBubble tip={t(info)} />
               </span>
-              <input
-                type="number"
+              <NumberField
                 min={0}
                 value={settings[key]}
                 onChange={(e) => {
@@ -5126,8 +5113,7 @@ export function SettingsPage() {
           ] as const).map(([key, label]) => (
             <label key={key} className="flex flex-col gap-1">
               <span className="text-xs text-carbon-textSub">{t(label)}</span>
-              <input
-                type="number"
+              <NumberField
                 min={0}
                 value={settings[key]}
                 onChange={(e) => {

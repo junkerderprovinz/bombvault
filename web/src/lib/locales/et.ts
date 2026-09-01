@@ -640,7 +640,6 @@ const et: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Värvid",
   "settings.accentColor": "Aktsendivärv",
-  "settings.accentPresets": "Eelseaded",
   "settings.accentPreset": "Eelseade",
   "settings.accentReset": "Lähtesta aktsendivärv ja eelseaded",
   "settings.shape": "Nurgad",
