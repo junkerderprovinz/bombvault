@@ -28,6 +28,7 @@ const ms: Partial<Translations> = {
   "dashboard.subtitle": "Status sandaran anda sepintas lalu.",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Sandaran seterusnya",
+  "dashboard.summaryNextIn": "dalam {countdown}",
   "dashboard.summaryLastResult": "Keputusan terakhir",
   "dashboard.lastBackups": "Sandaran terkini",
   "dashboard.recentRuns": "Larian terkini",

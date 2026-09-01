@@ -28,6 +28,7 @@ const id: Partial<Translations> = {
   "dashboard.subtitle": "Status cadangan Anda sekilas.",
   "dashboard.summaryHealth": "Titik pemulihan",
   "dashboard.summaryNextBackup": "Cadangan berikutnya",
+  "dashboard.summaryNextIn": "dalam {countdown}",
   "dashboard.summaryLastResult": "Hasil terakhir",
   "dashboard.lastBackups": "Cadangan terakhir",
   "dashboard.recentRuns": "Eksekusi terbaru",

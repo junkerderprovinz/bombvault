@@ -25,6 +25,7 @@ const el: Partial<Translations> = {
   "dashboard.subtitle": "Η κατάσταση των αντιγράφων σας με μια ματιά.",
   "dashboard.summaryHealth": "Σημείο επαναφοράς",
   "dashboard.summaryNextBackup": "Επόμενο αντίγραφο ασφαλείας",
+  "dashboard.summaryNextIn": "σε {countdown}",
   "dashboard.summaryLastResult": "Τελευταίο αποτέλεσμα",
   "dashboard.lastBackups": "Τελευταία αντίγραφα ασφαλείας",
   "dashboard.recentRuns": "Πρόσφατες εκτελέσεις",

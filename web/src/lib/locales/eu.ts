@@ -28,6 +28,7 @@ const eu: Partial<Translations> = {
   "dashboard.subtitle": "Zure babeskopien egoera begirada batean.",
   "dashboard.summaryHealth": "Berreskuratze-puntua",
   "dashboard.summaryNextBackup": "Hurrengo babeskopia",
+  "dashboard.summaryNextIn": "{countdown} barru",
   "dashboard.summaryLastResult": "Azken emaitza",
   "dashboard.lastBackups": "Azken babeskopiak",
   "dashboard.recentRuns": "Azken exekuzioak",

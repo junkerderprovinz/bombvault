@@ -25,6 +25,7 @@ const fr: Partial<Translations> = {
   "dashboard.subtitle": "Votre état de sauvegarde en un coup d'œil.",
   "dashboard.summaryHealth": "Point de restauration",
   "dashboard.summaryNextBackup": "Prochaine sauvegarde",
+  "dashboard.summaryNextIn": "dans {countdown}",
   "dashboard.summaryLastResult": "Dernier résultat",
   "dashboard.lastBackups": "Dernières sauvegardes",
   "dashboard.recentRuns": "Exécutions récentes",

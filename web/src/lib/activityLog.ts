@@ -328,17 +328,50 @@ function offsiteLiveLineText(resolveName: ResolveName, domain: LogDomain, state:
  * finally ticked. `liveNow` is a separate, faster-ticking clock the caller
  * only runs while a live line is on screen.
  */
-function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now: number, liveNow: number = now): LiveResult {
+function buildLiveLines(
+  progressMap: ProgressMap,
+  resolveName: ResolveName,
+  now: number,
+  liveNow: number = now,
+  stillRunning: ReadonlySet<string> = new Set()
+): LiveResult {
   const lines: LogLine[] = [];
   const signatures = new Set<string>();
 
   for (const key of Object.keys(progressMap)) {
     const state = progressMap[key];
-    // A terminal SSE frame lost in transit can leave active:true stuck
-    // forever (see progress.ts STALE_MS/anyActive) — treat a stale entry as
-    // no longer live so it can't wedge a "running…" line in place forever.
+    if (!state.active) continue;
+
+    // A terminal SSE frame lost in transit can leave active:true stuck forever
+    // (see progress.ts STALE_MS/anyActive), so silence has to be able to end a
+    // live line. Silence alone must NOT end it, though — that was issue #188.
+    // -----------------------------------------------------------------------
+    // Reported as "a minute in it will update with different information and no
+    // longer show the progress of the current backup. If I refresh, it starts
+    // all over again", against a folder backup sitting at 18%.
+    //
+    // Both halves of that are this test. restic streams at 3fps WHILE IT HAS
+    // something to report; scanning a large folder tree it goes quiet for
+    // minutes, so `lastSeen` ages past STALE_MS while the run is perfectly
+    // healthy. And `now` ticks at a 60s cadence in ActivityLog.tsx, so the drop
+    // lands on a minute boundary — the exact cadence the report describes. A
+    // reload then repopulates `lastSeen` from the backend's snapshot replay and
+    // the line comes back, which is the "starts all over again" half.
+    //
+    // The mistake was treating one signal as the whole answer. STALE_MS asks
+    // "have we heard from the stream lately", which is a fine question and a
+    // bad way to ask "is this run alive" — and the app already knows the
+    // second one: the runs list is polled every 10s and each run carries its
+    // own status. So a stale line is dropped only when the runs list ALSO stops
+    // calling that target running. A lost terminal frame still ends the line
+    // (its run has finished by then and drops out of `stillRunning`), and a
+    // quiet but living run keeps it.
     const stale = now - state.lastSeen > STALE_MS;
-    if (!state.active || stale) continue;
+    /** Keep this line unless it is stale AND nothing in the runs list still
+     *  reports it running. `null` means "no Run row is ever attributed to this
+     *  key", so staleness is the only signal available for it. */
+    const keep = (signature: string | null) =>
+      !stale || (signature !== null && stillRunning.has(signature));
 
     const parsed = parseProgressKey(key);
     if (!parsed) continue; // unrecognized key shape — skip defensively
@@ -352,7 +385,9 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
         kind === "restore"
           ? resolveName("activityLog.lineRestoringItem", { name, percent: String(pct) })
           : resolveName("activityLog.lineBackingUpItem", { name, percent: String(pct) });
-      signatures.add(itemSignature(kind, domain, name));
+      const sig = itemSignature(kind, domain, name);
+      if (!keep(sig)) continue;
+      signatures.add(sig);
       lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind, live: true });
       continue;
     }
@@ -365,7 +400,10 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
         percent: String(pct),
       });
       // No Run row is ever attributed to a "batch:*" key itself (each member
-      // item gets its own backup run) — nothing to dedupe against.
+      // item gets its own backup run) — nothing to dedupe against, and by the
+      // same token nothing in the runs list can vouch for it, so staleness
+      // stays its only liveness signal ([545] passes null for exactly this).
+      if (!keep(null)) continue;
       lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: "backup", live: true });
       continue;
     }
@@ -384,7 +422,9 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
       // Off-site replication now DOES write a Run row (kind="offsite" on the
       // domain target) — register the domain-op signature so the finished-run
       // line can't briefly double up with this live tail line.
-      signatures.add(domainOpSignature("offsite", domain));
+      const offsiteSig = domainOpSignature("offsite", domain);
+      if (!keep(offsiteSig)) continue;
+      signatures.add(offsiteSig);
       lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "offsite", text, domain, kind: "offsite", live: true });
       continue;
     }
@@ -397,7 +437,9 @@ function buildLiveLines(progressMap: ProgressMap, resolveName: ResolveName, now:
     // finished-run line supersede this live tail line without doubling up.
     const domain = normalizeDomain(parsed.domain);
     const text = resolveName(DOMAIN_OP_RUNNING_KEYS[parsed.scope], { domain: domainLabel(resolveName, domain) });
-    signatures.add(domainOpSignature(parsed.scope, domain));
+    const opSig = domainOpSignature(parsed.scope, domain);
+    if (!keep(opSig)) continue;
+    signatures.add(opSig);
     lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: parsed.scope, live: true });
   }
 
@@ -604,7 +646,23 @@ export function buildLogLines(
   now: number,
   liveNow: number = now
 ): LogLine[] {
-  const { lines: liveLines, signatures } = buildLiveLines(progressMap, resolveName, now, liveNow);
+  // The second liveness signal a live line gets to consult ([545], issue #188):
+  // the runs the backend still calls "running". Built with the SAME signature
+  // functions buildHistoryLines uses, so a live line and its run row agree on
+  // what identifies them — including the flash/config case, where the two sides
+  // genuinely disagree on a display name and itemSignature keys by domain alone
+  // to make them meet.
+  const stillRunning = new Set<string>();
+  for (const run of runs) {
+    if (run.status !== "running") continue;
+    const isDomainOp = isDomainOpKind(run.kind);
+    const domain: LogDomain = isDomainOp ? normalizeDomain(run.targetId) : normalizeDomain(run.domain);
+    stillRunning.add(
+      isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, run.target)
+    );
+  }
+
+  const { lines: liveLines, signatures } = buildLiveLines(progressMap, resolveName, now, liveNow, stillRunning);
   const historyLines = buildHistoryLines(runs, resolveName, signatures);
 
   const orderedHistory = historyLines.slice().sort((a, b) => a.atMs - b.atMs);

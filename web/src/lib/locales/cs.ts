@@ -25,6 +25,7 @@ const cs: Partial<Translations> = {
   "dashboard.subtitle": "Stav vašich záloh na první pohled.",
   "dashboard.summaryHealth": "Bod obnovení",
   "dashboard.summaryNextBackup": "Další záloha",
+  "dashboard.summaryNextIn": "za {countdown}",
   "dashboard.summaryLastResult": "Poslední výsledek",
   "dashboard.lastBackups": "Poslední zálohy",
   "dashboard.recentRuns": "Nedávné běhy",

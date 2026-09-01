@@ -25,6 +25,7 @@ const hu: Partial<Translations> = {
   "dashboard.subtitle": "Biztonsági mentéseid állapota egy pillantással.",
   "dashboard.summaryHealth": "Visszaállítási pont",
   "dashboard.summaryNextBackup": "Következő mentés",
+  "dashboard.summaryNextIn": "{countdown} múlva",
   "dashboard.summaryLastResult": "Utolsó eredmény",
   "dashboard.lastBackups": "Utolsó biztonsági mentések",
   "dashboard.recentRuns": "Legutóbbi futások",

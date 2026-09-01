@@ -28,6 +28,7 @@ const is: Partial<Translations> = {
   "dashboard.subtitle": "Staða afritanna þinna í hnotskurn.",
   "dashboard.summaryHealth": "Endurheimtupunktur",
   "dashboard.summaryNextBackup": "Næsta afritun",
+  "dashboard.summaryNextIn": "eftir {countdown}",
   "dashboard.summaryLastResult": "Síðasta niðurstaða",
   "dashboard.lastBackups": "Síðustu afrit",
   "dashboard.recentRuns": "Nýlegar keyrslur",

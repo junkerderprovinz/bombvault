@@ -25,6 +25,7 @@ const tr: Partial<Translations> = {
   "dashboard.subtitle": "Yedekleme durumunuz bir bakışta.",
   "dashboard.summaryHealth": "Kurtarma noktası",
   "dashboard.summaryNextBackup": "Sonraki yedek",
+  "dashboard.summaryNextIn": "{countdown} sonra",
   "dashboard.summaryLastResult": "Son sonuç",
   "dashboard.lastBackups": "Son Yedeklemeler",
   "dashboard.recentRuns": "Son Çalışmalar",

@@ -253,6 +253,71 @@ describe("buttons", () => {
     ).toEqual([]);
   });
 
+  it("gives a dialog heading outside its padded box the box's own inset ([542])", () => {
+    // The heading notch carries NO left offset of its own, by design: it is
+    // `position: absolute` with both left and right `auto`, so it falls back to
+    // its static position and inherits whatever padding surrounds it. That one
+    // decision is why every Card's badge sits 20px in from the card edge with
+    // no per-call-site class, and why it is automatically RTL-correct.
+    //
+    // It also means the padding has to actually BE there. Five dialogs put the
+    // <h2> OUTSIDE their padded box — they have to, because the box scrolls and
+    // an absolute notch inside a scrolling box gets clipped — so their badge
+    // inherited the unpadded shell and sat flush with the card's own edge. jdp:
+    // "ist mit der card links buendig. soll ja etwas nach rechts verrueckt
+    // sein".
+    //
+    // Worth a test rather than five comments because the failure is invisible
+    // in the file: nothing about `<h2 className="flex items-center">` looks
+    // wrong, and the class that makes it right lives one line away from the
+    // `p-5` it has to agree with. This checks the agreement itself.
+    // JSX comments are blanked BEFORE the scan, keeping the line count so the
+    // reported numbers stay real. The first draft of this test scanned six raw
+    // lines above the <h2> for the shell, which silently stopped finding it the
+    // moment a call site grew a ten-line comment between the two — the comment
+    // this very fix added. It then passed on the broken markup, which is the
+    // failure mode a guard exists to prevent: verified by reverting the class
+    // and watching it stay green.
+    const blankComments = (s: string) =>
+      s.replace(/\{\/\*[\s\S]*?\*\/\}/g, (m) => "\n".repeat(m.split("\n").length - 1));
+    const offenders: string[] = [];
+    for (const file of walk(SRC)) {
+      const lines = blankComments(readFileSync(file, "utf8")).split("\n");
+      for (let i = 0; i < lines.length; i++) {
+        if (!/<h2\b/.test(lines[i])) continue;
+        const head = lines.slice(i, i + 4).join("\n");
+        if (!/tone="heading" size="heading"/.test(head)) continue;
+        // Is this <h2> a sibling of the padded dialog box rather than a child?
+        // The shell is the nearest `relative … max-w-*` wrapper above it; the
+        // box is the `p-N rounded-card` element below.
+        // The previous few NON-BLANK lines, not the previous few lines. Blanking
+        // the comments leaves holes exactly where a well-commented call site has
+        // its explanation, so a fixed-size window measured in raw lines is the
+        // second way this test managed to find nothing and pass.
+        const above: string[] = [];
+        for (let j = i - 1; j >= 0 && above.length < 3; j--) {
+          if (lines[j].trim()) above.unshift(lines[j]);
+        }
+        const shell = /className=[`"]([^`"]*\brelative\b[^`"]*\bmax-w-[^`"]*)/.exec(above.join("\n"));
+        if (!shell || /\bp[xl]?-\d/.test(shell[1])) continue;
+        const box = /\bp-(\d+)\b/.exec(
+          lines.slice(i, i + 16).filter((l) => /rounded-card|bg-carbon-surface/.test(l)).join("\n")
+        );
+        if (!box) continue;
+        const inset = new RegExp(`\\bpx-${box[1]}\\b`).test(lines[i]);
+        if (!inset) {
+          offenders.push(
+            `${file.slice(SRC.length + 1).replace(/\\/g, "/")}:${i + 1} needs px-${box[1]} to match its box's p-${box[1]}`
+          );
+        }
+      }
+    }
+    expect(
+      offenders,
+      "A dialog heading rendered outside its padded box must repeat that box's horizontal padding, or its notch sits flush with the card edge."
+    ).toEqual([]);
+  });
+
   it("never paints text or graphics with the flat accent ([381])", () => {
     // accentText and accent are not two shades of one idea, they are opposites:
     // `accent` is a FILL, meant to have text on top of it, and `accentText` is

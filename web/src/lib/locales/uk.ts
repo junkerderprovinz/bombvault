@@ -25,6 +25,7 @@ const uk: Partial<Translations> = {
   "dashboard.subtitle": "Стан ваших резервних копій з першого погляду.",
   "dashboard.summaryHealth": "Точка відновлення",
   "dashboard.summaryNextBackup": "Наступна резервна копія",
+  "dashboard.summaryNextIn": "через {countdown}",
   "dashboard.summaryLastResult": "Останній результат",
   "dashboard.lastBackups": "Останні резервні копії",
   "dashboard.recentRuns": "Останні запуски",

@@ -28,6 +28,7 @@ const sr: Partial<Translations> = {
   "dashboard.subtitle": "Стање резервних копија на један поглед.",
   "dashboard.summaryHealth": "Тачка враћања",
   "dashboard.summaryNextBackup": "Следећа резервна копија",
+  "dashboard.summaryNextIn": "за {countdown}",
   "dashboard.summaryLastResult": "Последњи резултат",
   "dashboard.lastBackups": "Последње резервне копије",
   "dashboard.recentRuns": "Недавна извршавања",

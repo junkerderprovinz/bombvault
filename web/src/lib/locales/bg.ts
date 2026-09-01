@@ -28,6 +28,7 @@ const bg: Partial<Translations> = {
   "dashboard.subtitle": "Състоянието на резервните ти копия с един поглед.",
   "dashboard.summaryHealth": "Точка за възстановяване",
   "dashboard.summaryNextBackup": "Следващо архивиране",
+  "dashboard.summaryNextIn": "след {countdown}",
   "dashboard.summaryLastResult": "Последен резултат",
   "dashboard.lastBackups": "Последни архивирания",
   "dashboard.recentRuns": "Последни изпълнения",

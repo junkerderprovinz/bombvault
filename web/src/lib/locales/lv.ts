@@ -28,6 +28,7 @@ const lv: Partial<Translations> = {
   "dashboard.subtitle": "Jūsu rezerves kopiju statuss vienā skatā.",
   "dashboard.summaryHealth": "Atjaunošanas punkts",
   "dashboard.summaryNextBackup": "Nākamā rezerves kopija",
+  "dashboard.summaryNextIn": "pēc {countdown}",
   "dashboard.summaryLastResult": "Pēdējais rezultāts",
   "dashboard.lastBackups": "Pēdējās rezerves kopijas",
   "dashboard.recentRuns": "Nesenie izpildījumi",

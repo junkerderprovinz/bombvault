@@ -587,3 +587,66 @@ describe("formatLogDate with omitted locale (#108)", () => {
     expect(formatLogDate(ts)).toBe(expected);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Issue #188 — a quiet run is not a finished run ([545])
+// ---------------------------------------------------------------------------
+describe("a live line whose stream has gone quiet", () => {
+  // Reported against a folder backup sitting at 18%: "a minute in it will
+  // update with different information and no longer show the progress of the
+  // current backup. If I refresh, it starts all over again."
+  //
+  // restic streams at 3fps WHILE it has something to report and goes quiet for
+  // minutes scanning a large tree, so `lastSeen` ages past STALE_MS on a
+  // perfectly healthy run. ActivityLog.tsx ticks `now` once a minute, which is
+  // why the drop lands on the minute boundary the report describes.
+  const quiet = {
+    "files:Documents": { phase: "backup", percent: 18, active: true, lastSeen: 1_000_000 },
+  };
+  // Well past STALE_MS (15s) since the last frame.
+  const muchLater = 1_000_000 + 120_000;
+
+  it("survives while the runs list still calls that target running", () => {
+    const running = makeRun({
+      id: "r-live",
+      kind: "backup",
+      status: "running",
+      target: "Documents",
+      domain: "files",
+      finishedAt: null,
+    });
+    const lines = buildLogLines([running], quiet, [], resolveName, muchLater);
+    const live = lines.filter((l) => l.live);
+    expect(live).toHaveLength(1);
+    expect(live[0].id).toBe("live:files:Documents");
+  });
+
+  it("still disappears once no run reports it running", () => {
+    // The original protection, unchanged: a terminal frame lost in transit
+    // must not wedge a "running…" line in place forever. By the time that
+    // matters the run has finished, so nothing vouches for it.
+    const finished = makeRun({
+      id: "r-done",
+      kind: "backup",
+      status: "success",
+      target: "Documents",
+      domain: "files",
+      finishedAt: 1001,
+    });
+    const lines = buildLogLines([finished], quiet, [], resolveName, muchLater);
+    expect(lines.filter((l) => l.live)).toHaveLength(0);
+  });
+
+  it("is not kept alive by some OTHER target's running run", () => {
+    const otherRunning = makeRun({
+      id: "r-other",
+      kind: "backup",
+      status: "running",
+      target: "Photos",
+      domain: "files",
+      finishedAt: null,
+    });
+    const lines = buildLogLines([otherRunning], quiet, [], resolveName, muchLater);
+    expect(lines.filter((l) => l.live)).toHaveLength(0);
+  });
+});

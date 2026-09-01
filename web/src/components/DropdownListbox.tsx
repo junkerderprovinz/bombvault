@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { computeBubblePosition } from "../lib/bubblePosition";
+import { usePortalHue } from "../lib/portalHue";
 
 // ---------------------------------------------------------------------------
 // DropdownListbox — the shared `role="listbox"` panel every button-opens-a-
@@ -62,18 +63,6 @@ import { computeBubblePosition } from "../lib/bubblePosition";
  *  the helper's own 8px default, so the gap stays exactly the `mt-1` the two
  *  pre-portal listboxes rendered with. */
 const DROPDOWN_GAP = 4;
-
-/** The exact set lib/appearance.ts's own `hueVars()` writes — kept in step
- *  with it by hand, the same way index.css's rules that consume these names
- *  are. Copied from the trigger onto the portalled panel so the rainbow
- *  engine survives the portal boundary (see the effect that reads them). */
-const HUE_VARS = [
-  "--item-hue",
-  "--item-hue-ink",
-  "--item-hue-soft",
-  "--item-hue-wash",
-  "--item-hue-ring",
-] as const;
 
 export interface DropdownListboxProps {
   /** Whether the panel is mounted. Owned by the caller — the trigger button
@@ -147,24 +136,15 @@ export function DropdownListbox({
   // `[data-rainbow] .glim-hue` / `[data-rainbow="reactive"] .glim-hue:hover`
   // rules do the actual --accent derivation, in every rainbow mode, instead
   // of this component hard-coding one mode's answer. With rainbow off there
-  // are no --item-hue* values to copy, `hue` stays null, and the panel keeps
+  // are no --item-hue* values to copy, `hue` stays empty, and the panel keeps
   // the global accent exactly as before.
-  const [hue, setHue] = useState<Record<string, string> | null>(null);
-  useLayoutEffect(() => {
-    if (!open) {
-      setHue(null);
-      return;
-    }
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-    const cs = getComputedStyle(trigger);
-    const vars: Record<string, string> = {};
-    for (const name of HUE_VARS) {
-      const value = cs.getPropertyValue(name).trim();
-      if (value) vars[name] = value;
-    }
-    setHue(Object.keys(vars).length > 0 ? vars : null);
-  }, [open, triggerRef]);
+  //   The implementation moved to lib/portalHue.ts in [543], unchanged in
+  // behaviour: FolderBrowser's dialog needed the identical thing and had gone
+  // without it since [478] portalled it, so the second occurrence became a
+  // shared hook rather than a second copy. The hand-kept property list went
+  // with it — it is derived from `hueVars()` now, which is the function that
+  // writes the properties in the first place.
+  const hue = usePortalHue(open, triggerRef);
 
   // Measure, then place — in a useLayoutEffect so the corrected position
   // lands before the browser's next paint rather than as a visible jump from
@@ -352,7 +332,7 @@ export function DropdownListbox({
       aria-multiselectable={multiselectable ? "true" : undefined}
       aria-label={label}
       className={`fixed z-50 max-h-60 overflow-y-auto rounded-card bg-carbon-surface shadow-xl glim-fade${
-        hue ? " glim-hue" : ""
+        hue.className ? ` ${hue.className}` : ""
       }`}
       style={{
         // Parked off-screen until the layout effect above has measured: the
@@ -367,7 +347,7 @@ export function DropdownListbox({
         // Spread LAST so the rainbow position the trigger stands in reaches
         // the options across the portal boundary (see the effect that reads
         // these). Spreading `null` would be a type error, `{}` is a no-op.
-        ...(hue ?? {}),
+        ...(hue.style ?? {}),
       } as CSSProperties}
     >
       {children}

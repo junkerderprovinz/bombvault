@@ -25,6 +25,7 @@ const fi: Partial<Translations> = {
   "dashboard.subtitle": "Varmuuskopioidesi tila yhdellä silmäyksellä.",
   "dashboard.summaryHealth": "Palautuspiste",
   "dashboard.summaryNextBackup": "Seuraava varmuuskopio",
+  "dashboard.summaryNextIn": "{countdown} kuluttua",
   "dashboard.summaryLastResult": "Viimeisin tulos",
   "dashboard.lastBackups": "Viimeisimmät varmuuskopiot",
   "dashboard.recentRuns": "Viimeisimmät ajot",

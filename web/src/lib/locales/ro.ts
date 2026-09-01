@@ -24,6 +24,7 @@ const ro: Partial<Translations> = {
   "dashboard.subtitle": "Starea backupurilor tale dintr-o privire.",
   "dashboard.summaryHealth": "Punct de restaurare",
   "dashboard.summaryNextBackup": "Următorul backup",
+  "dashboard.summaryNextIn": "în {countdown}",
   "dashboard.summaryLastResult": "Ultimul rezultat",
   "dashboard.lastBackups": "Ultimele copii de rezervă",
   "dashboard.recentRuns": "Rulări recente",

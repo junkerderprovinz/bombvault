@@ -24,6 +24,7 @@ const nl: Partial<Translations> = {
   "dashboard.subtitle": "Je back-upstatus in één oogopslag.",
   "dashboard.summaryHealth": "Herstelpunt",
   "dashboard.summaryNextBackup": "Volgende back-up",
+  "dashboard.summaryNextIn": "over {countdown}",
   "dashboard.summaryLastResult": "Laatste resultaat",
   "dashboard.lastBackups": "Laatste back-ups",
   "dashboard.recentRuns": "Recente uitvoeringen",

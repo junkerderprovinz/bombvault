@@ -28,6 +28,7 @@ const gl: Partial<Translations> = {
   "dashboard.subtitle": "O estado das túas copias de seguridade dunha ollada.",
   "dashboard.summaryHealth": "Punto de recuperación",
   "dashboard.summaryNextBackup": "Próxima copia",
+  "dashboard.summaryNextIn": "en {countdown}",
   "dashboard.summaryLastResult": "Último resultado",
   "dashboard.lastBackups": "Últimas copias",
   "dashboard.recentRuns": "Execucións recentes",

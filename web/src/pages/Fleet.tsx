@@ -46,7 +46,7 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Button } from "../components/Button";
 
-import { Toggle } from "../components/Toggle";
+import { ToggleRow } from "./settings/shared";
 type T = ReturnType<typeof useT>["t"];
 
 // CopyBlock mirrors OffsiteWizard's copy pattern (module-private there too): a
@@ -365,7 +365,8 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
           `relative` shell wraps the scrollable dialog box, same split as
           Receiver.tsx's ReceiverDialog — see that call site's comment. */}
       <div className="relative w-full max-w-lg">
-      <h2 className="flex items-center">
+      {/* `px-5` matches the box's `p-5` so the heading notch lands where a Card's does ([542]) — see FolderBrowser.tsx for why the notch has no offset of its own. */}
+      <h2 className="flex items-center px-5">
         <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
       </h2>
       <div
@@ -795,7 +796,8 @@ function FleetDialog({
           Receiver.tsx's ReceiverDialog and this file's own proposeTitle
           dialog above for the identical split. */}
       <div className="relative w-full max-w-lg">
-      <h2 className="flex items-center">
+      {/* `px-5` matches the box's `p-5` so the heading notch lands where a Card's does ([542]) — see FolderBrowser.tsx for why the notch has no offset of its own. */}
+      <h2 className="flex items-center px-5">
         <Badge tone="heading" size="heading" wrap>{editing ? t("fleet.editTitle") : t("fleet.addTitle")}</Badge>
       </h2>
       <div
@@ -848,7 +850,14 @@ function FleetDialog({
           <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
         </div>
 
-        <Toggle checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
+        {/* ToggleRow, not a bare Toggle ([544]). A bare Toggle sets its label
+            immediately beside the switch; every setting row in this app puts the
+            words at the start and the switch at the end, which is what ToggleRow
+            renders (`flex items-start justify-between`). jdp: "der toggle soll
+            rechtsbuendig sein, der text linksbuendig". Fixed at the shared
+            component rather than by hand-matching classes here, the same reason
+            IncludeToggle.tsx gives for its own switch to ToggleRow. */}
+<ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button

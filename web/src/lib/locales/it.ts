@@ -25,6 +25,7 @@ const it: Partial<Translations> = {
   "dashboard.subtitle": "Lo stato dei tuoi backup a colpo d'occhio.",
   "dashboard.summaryHealth": "Punto di ripristino",
   "dashboard.summaryNextBackup": "Prossimo backup",
+  "dashboard.summaryNextIn": "tra {countdown}",
   "dashboard.summaryLastResult": "Ultimo risultato",
   "dashboard.lastBackups": "Ultimi backup",
   "dashboard.recentRuns": "Esecuzioni recenti",

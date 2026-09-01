@@ -25,6 +25,7 @@ const zh: Partial<Translations> = {
   "dashboard.subtitle": "一览您的备份状态。",
   "dashboard.summaryHealth": "恢复点",
   "dashboard.summaryNextBackup": "下次备份",
+  "dashboard.summaryNextIn": "{countdown}后",
   "dashboard.summaryLastResult": "上次结果",
   "dashboard.lastBackups": "最近备份",
   "dashboard.recentRuns": "最近运行",

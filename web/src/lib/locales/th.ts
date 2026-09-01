@@ -25,6 +25,7 @@ const th: Partial<Translations> = {
   "dashboard.subtitle": "สถานะการสำรองข้อมูลของคุณในพริบตา",
   "dashboard.summaryHealth": "จุดกู้คืน",
   "dashboard.summaryNextBackup": "การสำรองข้อมูลครั้งถัดไป",
+  "dashboard.summaryNextIn": "ในอีก {countdown}",
   "dashboard.summaryLastResult": "ผลลัพธ์ล่าสุด",
   "dashboard.lastBackups": "การสำรองข้อมูลล่าสุด",
   "dashboard.recentRuns": "การทำงานล่าสุด",

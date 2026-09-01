@@ -24,6 +24,7 @@ const pl: Partial<Translations> = {
   "dashboard.subtitle": "Stan Twoich kopii zapasowych w skrócie.",
   "dashboard.summaryHealth": "Punkt przywracania",
   "dashboard.summaryNextBackup": "Następna kopia zapasowa",
+  "dashboard.summaryNextIn": "za {countdown}",
   "dashboard.summaryLastResult": "Ostatni wynik",
   "dashboard.lastBackups": "Ostatnie kopie zapasowe",
   "dashboard.recentRuns": "Ostatnie uruchomienia",

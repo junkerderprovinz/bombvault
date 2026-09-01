@@ -28,6 +28,7 @@ const hi: Partial<Translations> = {
   "dashboard.subtitle": "आपके बैकअप की स्थिति एक नज़र में।",
   "dashboard.summaryHealth": "पुनर्प्राप्ति बिंदु",
   "dashboard.summaryNextBackup": "अगला बैकअप",
+  "dashboard.summaryNextIn": "{countdown} में",
   "dashboard.summaryLastResult": "आख़िरी परिणाम",
   "dashboard.lastBackups": "हाल के बैकअप",
   "dashboard.recentRuns": "हाल के रन",

@@ -2,17 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { hueVars, rainbowAt } from "../lib/appearance";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill } from "../lib/api";
-import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { isOwnReason, runReason } from "../lib/runReason";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import { formatCadence, parseCadenceString } from "../components/CadenceBuilder";
-import type { CadenceState } from "../components/CadenceBuilder";
-import { cronPeriodSeconds } from "../lib/cron";
+import { formatCadence } from "../components/CadenceBuilder";
 import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
@@ -32,6 +30,9 @@ import { IconCheckCircle } from "../components/Sidebar";
 // so the summary tier's "Last result" cell and the Activity Log never disagree
 // about which domain is currently running.
 const SUMMARY_RUNS_POLL_MS = 10000;
+// Same cadence ActivityLog.tsx polls /api/schedule/next at, deliberately: two
+// widgets reading one endpoint at different rates can show two answers.
+const SUMMARY_SCHEDULE_POLL_MS = 30000;
 
 // ---------------------------------------------------------------------------
 // Run kind/target label helpers — shared by every dashboard card that renders
@@ -1943,37 +1944,6 @@ function FreshInstallNudge({
 // listRuns entry (no extra round-trips beyond the one runs fetch in the parent).
 // ---------------------------------------------------------------------------
 
-// cadencePeriodDays approximates how often a parsed cadence fires, in days, so
-// the soonest (most frequent) enabled schedule can be picked WITHOUT a live
-// next-run timestamp (the backend has none). Smaller = fires sooner; "off"
-// yields Infinity so it never wins.
-function cadencePeriodDays(s: CadenceState): number {
-  switch (s.mode) {
-    case "daily":
-      return 1;
-    case "everyN":
-      return Math.max(1, s.intervalDays);
-    case "weekly":
-      return 7 / Math.max(1, s.weekdays.length);
-    case "cron": {
-      // Raw cron cadence (#107): approximate the fire interval from the gap
-      // between its first two fires (mirrors the backend's PeriodSeconds).
-      // 0 = not computable → Infinity so it never falsely wins "soonest".
-      const secs = cronPeriodSeconds(s.cron);
-      return secs > 0 ? secs / 86400 : Infinity;
-    }
-    default:
-      return Infinity;
-  }
-}
-
-// minutesOfDay turns "HH:MM" into minutes since midnight — a stable tiebreak
-// between two equally-frequent schedules (the earlier clock time wins).
-function minutesOfDay(hhmm: string): number {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
-  return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 24 * 60;
-}
-
 function SummaryCell({
   label,
   children,
@@ -2063,8 +2033,8 @@ function SummaryCell({
 
 function SummaryTier({
   t,
-  lang,
   domains,
+  scheduleNext,
   loading,
   newestRun,
   healthHueIndex,
@@ -2072,7 +2042,6 @@ function SummaryTier({
   lastResultHueIndex,
 }: {
   t: ReturnType<typeof useT>["t"];
-  lang: string;
   domains: DomainStatus[];
   loading: boolean;
   newestRun: Run | null;
@@ -2096,6 +2065,10 @@ function SummaryTier({
   healthHueIndex?: number;
   nextBackupHueIndex?: number;
   lastResultHueIndex?: number;
+  /** GET /api/schedule/next, soonest first — the scheduler's own answer to
+   *  "what fires next", the same source the activity log below already reads
+   *  and the Unraid widget uses (issue #187, [545]). */
+  scheduleNext: ScheduleNext[];
 }) {
   // Cell 1 — worst RPO status across enabled, non-off domains: any overdue/never
   // is red, else any warn is amber, else any ok is green, else all off = neutral.
@@ -2119,21 +2092,36 @@ function SummaryTier({
           ? t("dashboard.rpoOk")
           : t("dashboard.rpoOff");
 
-  // Cell 2 — the soonest (most frequent) enabled schedule, shown as human cadence
-  // text (e.g. "Daily 03:00"). NOTE: there is no next-run timestamp on the
-  // backend and no client-side cron calculator, so this is deliberately NOT a
-  // live countdown — just which enabled schedule fires soonest. Empty when every
-  // domain is off/unscheduled, in which case we show the "not scheduled" label.
-  const scheduled = domains
-    .filter((d) => d.enabled)
-    .map((d) => ({ raw: d.schedule, s: parseCadenceString(d.schedule) }))
-    .filter((x) => x.s.mode !== "off")
-    .sort(
-      (a, b) =>
-        cadencePeriodDays(a.s) - cadencePeriodDays(b.s) ||
-        minutesOfDay(a.s.time) - minutesOfDay(b.s.time)
-    );
-  const nextCadence = scheduled.length > 0 ? formatCadence(scheduled[0].raw, t, lang) : "";
+  // Cell 2 — when the next backup actually fires, from the scheduler ([545],
+  // issue #187).
+  // ------------------------------------------------------------------------
+  // The note that used to sit here said "there is no next-run timestamp on the
+  // backend and no client-side cron calculator", and it had outlived its truth:
+  // GET /api/schedule/next has existed for a while, the activity log a few
+  // hundred pixels below already reads it, and so does the Unraid widget. This
+  // cell was the last consumer still deriving the answer itself, by ranking
+  // cadence STRINGS on an approximate period.
+  //
+  // The approximation could not be made right, only less wrong. It ranks
+  // "weekly Sun 04:00" as seven days out whatever today is, and it cannot walk
+  // an `everyN` entry through its due gate, so an `everyN 7` pass that last ran
+  // three days ago is four days out to the scheduler and seven to this tile.
+  // Two issues came out of that (#177, #186), both patched by teaching the
+  // weaker mechanism about the case rather than retiring it. This retires it.
+  //
+  // The cell now names a MOMENT rather than a schedule, which is jdp's call at
+  // the review: "Täglich um 05:00" describes a rule, and the question a
+  // dashboard is asked is when the next one runs. Filtered to job "backup" —
+  // the list also carries offsite/drill/tamper/digest/watchdog fires, and this
+  // cell is labelled "Next backup".
+  const nextBackupAt = scheduleNext.find((n) => n.job === "backup");
+  const nextBackupMs = nextBackupAt ? new Date(nextBackupAt.next).getTime() : NaN;
+  const nextCadence = Number.isFinite(nextBackupMs)
+    ? t("dashboard.summaryNextIn").replace(
+        "{countdown}",
+        formatDuration(Math.max(0, Math.round((nextBackupMs - Date.now()) / 1000)))
+      )
+    : "";
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -2188,7 +2176,7 @@ function SummaryTier({
 // ---------------------------------------------------------------------------
 
 export function Dashboard() {
-  const { t, lang } = useT();
+  const { t } = useT();
   const { advanced } = useAdvanced();
 
   // Single /api/status fetch shared by the Protection + Ransomware cards (no
@@ -2214,6 +2202,29 @@ export function Dashboard() {
     };
     load();
     const id = setInterval(load, SUMMARY_RUNS_POLL_MS);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, []);
+
+  // The scheduler's own "what fires next" list, for the summary tier's Next
+  // backup cell ([545], issue #187). Polled on the same 30s cadence
+  // ActivityLog uses for the identical endpoint — the two read the same source
+  // and must not be able to disagree with each other on screen, which was the
+  // whole complaint.
+  const [scheduleNext, setScheduleNext] = useState<ScheduleNext[]>([]);
+  useEffect(() => {
+    let active = true;
+    const load = () => {
+      getScheduleNext()
+        .then((next) => {
+          if (active) setScheduleNext(next);
+        })
+        .catch(() => {/* non-fatal — the cell falls back to "not scheduled" */});
+    };
+    load();
+    const id = setInterval(load, SUMMARY_SCHEDULE_POLL_MS);
     return () => {
       active = false;
       clearInterval(id);
@@ -2330,8 +2341,8 @@ export function Dashboard() {
       render: (nextHue) => (
         <SummaryTier
           t={t}
-          lang={lang}
           domains={statusDomains}
+          scheduleNext={scheduleNext}
           loading={statusLoading}
           newestRun={runs[0] ?? null}
           healthHueIndex={nextHue()}

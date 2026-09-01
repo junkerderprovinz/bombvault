@@ -25,6 +25,7 @@ const ja: Partial<Translations> = {
   "dashboard.subtitle": "バックアップ状況を一目で。",
   "dashboard.summaryHealth": "復元ポイント",
   "dashboard.summaryNextBackup": "次回のバックアップ",
+  "dashboard.summaryNextIn": "{countdown}後",
   "dashboard.summaryLastResult": "最後の結果",
   "dashboard.lastBackups": "直近のバックアップ",
   "dashboard.recentRuns": "最近の実行",

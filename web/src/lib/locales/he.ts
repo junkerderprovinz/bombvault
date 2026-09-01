@@ -25,6 +25,7 @@ const he: Partial<Translations> = {
   "dashboard.subtitle": "מצב הגיבוי שלך במבט אחד.",
   "dashboard.summaryHealth": "נקודת שחזור",
   "dashboard.summaryNextBackup": "הגיבוי הבא",
+  "dashboard.summaryNextIn": "בעוד {countdown}",
   "dashboard.summaryLastResult": "התוצאה האחרונה",
   "dashboard.lastBackups": "גיבויים אחרונים",
   "dashboard.recentRuns": "הרצות אחרונות",

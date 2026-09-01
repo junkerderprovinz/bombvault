@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
@@ -9,6 +9,7 @@ import { groupStage } from "../lib/controls";
 import { IconCheckCircle, IconFolder } from "./Sidebar";
 import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
+import { usePortalHue } from "../lib/portalHue";
 
 // ---------------------------------------------------------------------------
 // Folder browser (shared)
@@ -65,6 +66,14 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   const { push } = useToast();
   // browsePath tracks the *current directory being listed* (not the selected value).
   // We initialise it to the current value so opening the browser starts in the right folder.
+  // The rainbow position this control stands in, carried across the portal
+  // boundary ([543]). Without it the dialog is a child of <body>, has no
+  // `.glim-hue` ancestor left, and every hued colour inside it falls back to
+  // the single global accent — measured live: a browser opened from a card
+  // tinted #FF8389 painted its "use this folder" button #BE95FF. See
+  // lib/portalHue.ts, which also records why this is a shared hook rather than
+  // a third hand-written copy.
+  const triggerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [browsePath, setBrowsePath] = useState(value);
   const [dirs, setDirs] = useState<{ name: string; path: string }[]>([]);
@@ -335,7 +344,16 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 <Button
                   label={t("folder.newFolder")}
                   labelKey="folder.newFolder"
-                  tone="neutral"
+                  // Accent, like the other action in this dialog ([543]). jdp
+                  // counted the colours: "in dem fenster sind nicht alle buttons
+                  // farbig". Measured, the page behind this dialog had not one
+                  // flat-grey button — every control on it wore its own card's
+                  // rainbow position — while the dialog had fourteen of fifteen.
+                  //   The two ACTIONS take the accent; the twelve directory rows
+                  // and Close stay neutral, jdp's call at the same review. A list
+                  // of twelve identical accent pills stops reading as a list, and
+                  // Close is the one control here that undoes rather than does.
+                  tone="accent"
                   onClick={handleCreate}
                   disabled={creating || newName.trim() === ""}
                   busy={creating}
@@ -381,8 +399,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
     </>
   );
 
+  const hue = usePortalHue(open, triggerRef);
+
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5" ref={triggerRef}>
       {renderLabel && (
         <label className="flex items-center gap-1 text-xs text-carbon-textSub">
           {label}
@@ -531,7 +551,10 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         </div>
       ) : createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+          className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4${
+            hue.className ? ` ${hue.className}` : ""
+          }`}
+          style={hue.style}
           onClick={handleClose}
         >
           {/* The `relative` shell and the heading badge that straddles its edge
@@ -544,7 +567,17 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               window's height, and a tall narrow column of directory names reads
               worse than a short wide one. */}
           <div className="relative w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="flex items-center">
+            {/* `px-5` matches the dialog box's own `p-5`, and it is load-bearing ([542]).
+              The heading notch carries NO left offset of its own by design: it is
+              `position: absolute` with both left and right `auto`, so it falls back to
+              its static position and inherits whatever padding the box around it uses.
+              That is what puts every Card's badge 20px in from the card edge. These
+              dialogs put the <h2> OUTSIDE the padded box (the box scrolls, and an
+              absolute notch inside a scrolling box gets clipped), so without this the
+              badge inherits the unpadded shell and sits flush with the card edge.
+              jdp: "ist mit der card links buendig. soll ja etwas nach rechts verrueckt
+              sein". Pinned by dialogHeadingInset in glyphs.hygiene.test.ts. */}
+            <h2 className="flex items-center px-5">
               <Badge tone="heading" size="heading" wrap>{label}</Badge>
             </h2>
             <div

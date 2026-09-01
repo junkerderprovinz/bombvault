@@ -24,6 +24,7 @@ const no: Partial<Translations> = {
   "dashboard.subtitle": "Sikkerhetskopieringsstatusen din med ett blikk.",
   "dashboard.summaryHealth": "Gjenopprettingspunkt",
   "dashboard.summaryNextBackup": "Neste sikkerhetskopi",
+  "dashboard.summaryNextIn": "om {countdown}",
   "dashboard.summaryLastResult": "Siste resultat",
   "dashboard.lastBackups": "Siste sikkerhetskopier",
   "dashboard.recentRuns": "Siste kjøringer",

@@ -28,6 +28,7 @@ const et: Partial<Translations> = {
   "dashboard.subtitle": "Sinu varunduse olek ühe pilguga.",
   "dashboard.summaryHealth": "Taastepunkt",
   "dashboard.summaryNextBackup": "Järgmine varundus",
+  "dashboard.summaryNextIn": "{countdown} pärast",
   "dashboard.summaryLastResult": "Viimane tulemus",
   "dashboard.lastBackups": "Viimased varundused",
   "dashboard.recentRuns": "Hiljutised käivitused",

@@ -25,6 +25,7 @@ const ar: Partial<Translations> = {
   "dashboard.subtitle": "حالة النسخ الاحتياطي لديك في لمحة.",
   "dashboard.summaryHealth": "نقطة الاستعادة",
   "dashboard.summaryNextBackup": "النسخة الاحتياطية التالية",
+  "dashboard.summaryNextIn": "خلال {countdown}",
   "dashboard.summaryLastResult": "آخر نتيجة",
   "dashboard.lastBackups": "آخر النسخ الاحتياطية",
   "dashboard.recentRuns": "آخر التشغيلات",

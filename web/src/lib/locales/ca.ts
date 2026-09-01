@@ -28,6 +28,7 @@ const ca: Partial<Translations> = {
   "dashboard.subtitle": "L'estat de les còpies de seguretat d'un cop d'ull.",
   "dashboard.summaryHealth": "Punt de recuperació",
   "dashboard.summaryNextBackup": "Pròxima còpia",
+  "dashboard.summaryNextIn": "d’aquí a {countdown}",
   "dashboard.summaryLastResult": "Últim resultat",
   "dashboard.lastBackups": "Últimes còpies",
   "dashboard.recentRuns": "Execucions recents",

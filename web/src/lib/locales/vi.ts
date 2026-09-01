@@ -25,6 +25,7 @@ const vi: Partial<Translations> = {
   "dashboard.subtitle": "Trạng thái sao lưu của bạn trong nháy mắt.",
   "dashboard.summaryHealth": "Điểm khôi phục",
   "dashboard.summaryNextBackup": "Bản sao lưu tiếp theo",
+  "dashboard.summaryNextIn": "sau {countdown}",
   "dashboard.summaryLastResult": "Kết quả gần nhất",
   "dashboard.lastBackups": "Bản sao lưu gần đây",
   "dashboard.recentRuns": "Lần chạy gần đây",

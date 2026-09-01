@@ -25,6 +25,7 @@ const ko: Partial<Translations> = {
   "dashboard.subtitle": "백업 상태를 한눈에.",
   "dashboard.summaryHealth": "복원 지점",
   "dashboard.summaryNextBackup": "다음 백업",
+  "dashboard.summaryNextIn": "{countdown} 후",
   "dashboard.summaryLastResult": "마지막 결과",
   "dashboard.lastBackups": "최근 백업",
   "dashboard.recentRuns": "최근 실행",

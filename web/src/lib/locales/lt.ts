@@ -28,6 +28,7 @@ const lt: Partial<Translations> = {
   "dashboard.subtitle": "Atsarginių kopijų būsena vienu žvilgsniu.",
   "dashboard.summaryHealth": "Atkūrimo taškas",
   "dashboard.summaryNextBackup": "Kita atsarginė kopija",
+  "dashboard.summaryNextIn": "po {countdown}",
   "dashboard.summaryLastResult": "Paskutinis rezultatas",
   "dashboard.lastBackups": "Paskutinės kopijos",
   "dashboard.recentRuns": "Naujausi vykdymai",

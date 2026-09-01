@@ -28,6 +28,7 @@ const fa: Partial<Translations> = {
   "dashboard.subtitle": "وضعیت پشتیبان‌گیری شما در یک نگاه.",
   "dashboard.summaryHealth": "نقطه بازیابی",
   "dashboard.summaryNextBackup": "پشتیبان بعدی",
+  "dashboard.summaryNextIn": "تا {countdown} دیگر",
   "dashboard.summaryLastResult": "آخرین نتیجه",
   "dashboard.lastBackups": "آخرین پشتیبان‌ها",
   "dashboard.recentRuns": "اجراهای اخیر",

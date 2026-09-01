@@ -28,6 +28,7 @@ const sl: Partial<Translations> = {
   "dashboard.subtitle": "Stanje varnostnega kopiranja na en pogled.",
   "dashboard.summaryHealth": "Obnovitvena točka",
   "dashboard.summaryNextBackup": "Naslednja varnostna kopija",
+  "dashboard.summaryNextIn": "čez {countdown}",
   "dashboard.summaryLastResult": "Zadnji rezultat",
   "dashboard.lastBackups": "Zadnje varnostne kopije",
   "dashboard.recentRuns": "Nedavni zagoni",
