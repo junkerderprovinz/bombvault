@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
@@ -99,6 +100,21 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
     setOpen(false);
     setBrowseError(null);
   }
+
+  // Escape closes it, which an inline panel never had to offer and a dialog
+  // does ([478]). Bound only while open, so nineteen mounted browsers do not
+  // each keep a listener on the document for a dialog nobody opened.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        handleClose();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   function handleUp() {
     const parts = browsePath.split("/").filter(Boolean);
@@ -250,9 +266,35 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         </p>
       )}
 
-      {/* Browser panel */}
-      {open && (
-        <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+      {/* Browser panel — a real DIALOG now, not a panel that unfolds in place
+          ([478]).
+          jdp: "Können wir diese ordner durchsuchen fenster alle gleich machen.
+          also alle als popupfenster wie im ordnertab?" The thing he likes in
+          the Ordner tab was never this component: it is the add-folder-set
+          dialog that HAPPENS to contain one of these. This browser expanded
+          inline at all nineteen of its call sites, so the same control looked
+          like two different things depending on where it was opened from, and
+          on a long Settings tab it also pushed everything below it down the
+          page while somebody was reading it.
+
+          Exactly the shell every other dialog in this app uses — the backdrop
+          in Files.tsx carries a note that the whole app was swept to
+          `items-center` and that no other copy remains, so this reuses that one
+          rather than becoming a third. Portalled to <body>, which is also what
+          lets it open from INSIDE another dialog (Files.tsx does exactly that)
+          and paint above it instead of inside its scroll box. */}
+      {open && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+          onClick={handleClose}
+        >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={label}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl flex flex-col gap-2"
+        >
           {/* Header: current path + close */}
           <div className="flex items-center justify-between gap-2">
             <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
@@ -423,6 +465,8 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             </div>
           )}
         </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
