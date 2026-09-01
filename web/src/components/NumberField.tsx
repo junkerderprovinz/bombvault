@@ -111,24 +111,36 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
   };
 
   /**
-   * A SOLID triangle, not an outlined chevron ([451]).
+   * A solid triangle with ROUNDED corners ([457]).
    *
-   * jdp: "die pfeile sollen solide dreiecke sein, damit es zum style passt" —
-   * and the style is the point. Every one of the 48 glyphs in this app is a
-   * filled shape; a two-stroke chevron is the only outlined mark in the
-   * interface, so it reads as borrowed from somewhere else at exactly the size
-   * where that is most obvious. The same reasoning that removed the OS spinner
-   * applies to its replacement: a control does not get to be from another
-   * design system just because it is small.
+   * This took three goes, and the last correction is the one worth writing
+   * down. jdp: "eigentlich wollte ich einfach nur die ursprünglichen dreicke
+   * wie sie waren, nur ohne den dunklen hintergrund". The browser's own spinner
+   * was already the right MARK — small solid triangles — and the complaint was
+   * only ever about the ground under them and the space they stole. I read
+   * "remove the widget" as "design a replacement", and drew chevrons ([451]
+   * corrected those to triangles, sharp ones).
+   *
+   * The general form, since it will happen again: **when somebody asks for one
+   * property of a thing to change, the rest of the thing is the specification.**
+   * Redrawing it is not a neutral act, and each redraw costs a round.
+   *
+   * Rounded via a matched stroke with `strokeLinejoin="round"` rather than arcs
+   * in the path: three corners, three radii, and the shape stays one triangle
+   * anybody can read. The base path is inset by the stroke's half-width so the
+   * painted result lands where the sharp version did, instead of growing.
    */
   const Arrow = ({ up }: { up: boolean }) => (
     <svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true">
       {/* bv-convention-exception: user-message-is-translated -- SVG path data,
-          not prose. "M5 0.9 L9.4 5.3 L0.6 5.3 Z" is a triangle; there is
+          not prose. "M5 1.7 L8.6 4.6 L1.4 4.6 Z" is a triangle; there is
           nothing here for a translator to translate. */}
       <path
-        d={up ? "M5 0.9 L9.4 5.3 L0.6 5.3 Z" : "M5 5.3 L0.6 0.9 L9.4 0.9 Z"}
+        d={up ? "M5 1.7 L8.6 4.6 L1.4 4.6 Z" : "M5 4.3 L1.4 1.4 L8.6 1.4 Z"}
         fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
       />
     </svg>
   );

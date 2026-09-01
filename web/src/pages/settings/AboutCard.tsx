@@ -44,7 +44,7 @@ import { Card } from "./shared";
  * had come to say the opposite of what it is for. 1.7.0 in [411], the release
  * this app's own number field was built from.
  */
-export const GLIMSTONE_VERSION = "1.7.1";
+export const GLIMSTONE_VERSION = "1.7.2";
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 const SUPPORT_MAIL = "jdp@braethoria.com";
