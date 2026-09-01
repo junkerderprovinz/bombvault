@@ -306,13 +306,36 @@ export function IconAdd() {
   );
 }
 
-/** Close. */
+/**
+ * Close.
+ *
+ * The viewBox is CROPPED to the ink, and that is the whole fix ([421]).
+ *
+ * This is IconAdd's plus turned 45 degrees, and turning it cost size nobody
+ * chose to give up: a plus whose arms span 10 of 14 units reads at 72% of its
+ * box, and the same drawing rotated reads at 58%, because the axis-aligned
+ * extent of a diagonal cross is smaller than the arms that make it. Rasterised
+ * and measured across all 48 glyphs, 45 fill their box; IconAdd sits at 72% and
+ * these two crosses at 58%, the smallest marks in the set by some way.
+ *
+ * jdp saw it as soon as one sat beside a full-size glyph ("die beiden glyphen
+ * von erneuern und deaktivieren sind unterschiedlich groß"), and he was right
+ * twice over, because my first three measurements said the two were identical.
+ * They used getBBox/getBoundingClientRect, and BOTH report a rotated group's
+ * PRE-rotation extent, so a rotated glyph measures as though it were never
+ * turned. The contact sheet at /glyphs had the same blind spot and rated this
+ * one 101% filled; it now rasterises instead ([422]).
+ *
+ * 8.12 = 14 x 0.58, centred on the same (7,7) the rotation uses, so the ink is
+ * untouched and only the frame around it moves. No path data changes, which is
+ * the point of making the viewBox the one sizing mechanism.
+ */
 export function IconClose() {
   return (
     <svg
       width="16"
       height="16"
-      viewBox="0 0 14 14"
+      viewBox="2.94 2.94 8.12 8.12"
       fill="currentColor"
       className="shrink-0"
       aria-hidden="true"

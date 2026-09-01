@@ -188,13 +188,20 @@ export function IconInfo() {
   );
 }
 
-/** Cancel or dismiss. */
+/**
+ * Cancel or dismiss.
+ *
+ * Same drawing and the same cropped viewBox as navGlyphs' IconClose, for the
+ * same reason ([421]): rotating the plus 45 degrees dropped it from 72% of its
+ * box to 58%, the two smallest marks among 48. See IconClose for the full note,
+ * including why three separate measurements failed to notice.
+ */
 export function IconCancel() {
   return (
     <svg
       width="16"
       height="16"
-      viewBox="0 0 14 14"
+      viewBox="2.94 2.94 8.12 8.12"
       fill="currentColor"
       className="shrink-0"
       aria-hidden="true"

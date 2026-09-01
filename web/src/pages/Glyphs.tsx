@@ -58,23 +58,75 @@ function Cell({ row }: { row: Row }) {
   const [fill, setFill] = useState<number | null>(null);
   const [ratio, setRatio] = useState<number | null>(null);
 
+  // The number is RASTERISED, not read from geometry ([422]).
+  //
+  // It used to come from getBBox on the glyph's outermost <g>, which is wrong
+  // for exactly one shape and wrong badly: getBBox reports a transformed group's
+  // PRE-transform extent, so IconClose — a plus turned 45 degrees — measured as
+  // the plus it was before the rotation and scored 101% while painting 58% of
+  // its box. The two smallest marks in the set read as the two largest, and the
+  // "under 90%" flag below, which exists to catch precisely this, pointed the
+  // other way.
+  //
+  // It stayed hidden because every cheap way of asking is the same way of
+  // asking: getBoundingClientRect on the group has the identical blind spot, so
+  // a second and a third measurement agreed with the first. jdp saw it by eye
+  // instead ("die beiden glyphen ... sind unterschiedlich groß").
+  //
+  // Drawing it and counting the pixels cannot be fooled by a transform, because
+  // it measures the result rather than the recipe. It costs one off-screen
+  // 128x128 raster per glyph, on a page that exists to be looked at once.
   useEffect(() => {
     const svg = box.current?.querySelector("svg");
     if (!svg) return;
-    // getBBox throws in a detached or display:none subtree; a glyph that cannot
-    // be measured shows no number rather than a wrong one.
-    try {
-      // The drawn extent, in the glyph's OWN units, against its viewBox — the
-      // same comparison gen_glyphs.py's crop is built on.
-      const target = (svg.querySelector("g") ?? svg) as SVGGraphicsElement;
-      const b = target.getBBox();
-      const vb = (svg.getAttribute("viewBox") ?? "0 0 1 1").trim().split(/\s+/).map(Number);
-      if (!vb[2] || !vb[3] || !b.width || !b.height) return;
-      setFill(Math.max(b.width / vb[2], b.height / vb[3]));
-      setRatio(b.width / b.height);
-    } catch {
-      /* unmeasurable; leave the number blank */
-    }
+    let cancelled = false;
+
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute("width", "128");
+    clone.setAttribute("height", "128");
+    // currentColor has no meaning inside an <img>; pin it so the ink is opaque.
+    clone.querySelectorAll("*").forEach((e) => {
+      if (e.getAttribute("fill") === "currentColor") e.setAttribute("fill", "#000");
+      if (e.getAttribute("stroke") === "currentColor") e.setAttribute("stroke", "#000");
+    });
+    clone.setAttribute("fill", "#000");
+
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      const c = document.createElement("canvas");
+      c.width = c.height = 128;
+      const ctx = c.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, 128, 128);
+      let minX = 128, minY = 128, maxX = -1, maxY = -1;
+      const d = ctx.getImageData(0, 0, 128, 128).data;
+      for (let y = 0; y < 128; y++) {
+        for (let x = 0; x < 128; x++) {
+          if (d[(y * 128 + x) * 4 + 3] > 24) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < 0) return; // nothing drawn
+      const w = maxX - minX + 1;
+      const h = maxY - minY + 1;
+      setFill(Math.max(w, h) / 128);
+      setRatio(w / h);
+    };
+    // A data: URI, not a blob:. The app's own CSP allows img-src 'self' data:
+    // and nothing else, so a blob: URL loads nowhere and this silently measures
+    // nothing — which is how the first attempt at this failed.
+    img.src =
+      "data:image/svg+xml;base64," +
+      btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(clone))));
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Under 90% is the threshold the sizing rules put the crop there to hold. It

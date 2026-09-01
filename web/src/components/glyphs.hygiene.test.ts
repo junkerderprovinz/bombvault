@@ -129,6 +129,59 @@ describe("buttons", () => {
     expect(missing, "Buttons without labelKey cannot pick a glyph.").toEqual([]);
   });
 
+  it("crops the viewBox of any rotated glyph ([421])", () => {
+    // A rotated drawing does not fill the box its own numbers say it does.
+    // IconClose is IconAdd's plus turned 45 degrees: the plus reads at 72% of
+    // its 14-unit box, the cross at 58%, because the axis-aligned extent of a
+    // diagonal is smaller than the arms making it. Both crosses were the
+    // smallest marks among 48 while their geometry claimed otherwise.
+    //
+    // Nothing caught it, and could not have: getBBox and getBoundingClientRect
+    // BOTH report a transformed group's pre-transform extent, so every cheap
+    // measurement agreed with every other cheap measurement. The contact sheet
+    // rated the glyph 101% filled while it painted 58%.
+    //
+    // So the rule is structural rather than measured: if a glyph rotates, its
+    // viewBox has to be cropped to what the rotation actually leaves, which
+    // means it cannot still be the full nominal grid. That is checkable in the
+    // source and cannot be fooled by the same blind spot twice.
+    // Only a WHOLLY rotated glyph is affected, and the distinction is the
+    // difference between a real guard and a nuisance. Six drawings rotate a
+    // DETAIL inside themselves — a tick inside a circle, a strike-through
+    // across an eye — while an unrotated outer shape still fills the box. Those
+    // lose nothing and must not be flagged, or the rule gets switched off.
+    //
+    // The case that loses size is the one where every mark sits inside a single
+    // rotated group: then the group IS the glyph, and turning it shrinks the
+    // whole thing.
+    const offenders: string[] = [];
+    for (const file of walk(SRC)) {
+      const src = readFileSync(file, "utf8");
+      // Each <svg …> element with everything up to its closing bracket, plus
+      // the body that follows, so the viewBox and the transform are compared
+      // within one glyph rather than across neighbours.
+      for (const m of src.matchAll(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/g)) {
+        const [, attrs, rawBody] = m;
+        const body = rawBody.trim();
+        // One top-level <g> carrying the rotation, and nothing outside it.
+        const whole = /^<g\b[^>]*transform\s*=\s*"[^"]*rotate\([^>]*>([\s\S]*)<\/g>$/.exec(body);
+        if (!whole || /<\/g>/.test(whole[1])) continue;
+        const vb = /viewBox\s*=\s*"([^"]+)"/.exec(attrs)?.[1]?.trim();
+        if (!vb) continue;
+        const [minX, minY] = vb.split(/\s+/).map(Number);
+        // An uncropped box starts at the origin. A cropped one cannot.
+        if (minX === 0 && minY === 0) {
+          const line = src.slice(0, m.index).split("\n").length;
+          offenders.push(`${file.slice(SRC.length + 1)}:${line}`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      "A rotated glyph keeps an uncropped viewBox, so it renders smaller than every glyph beside it."
+    ).toEqual([]);
+  });
+
   it("never paints text or graphics with the flat accent ([381])", () => {
     // accentText and accent are not two shades of one idea, they are opposites:
     // `accent` is a FILL, meant to have text on top of it, and `accentText` is
