@@ -140,7 +140,13 @@ func (s *Service) OpenForeign(ctx context.Context, location, foreignKey string) 
 	case s.engine.RepoOpens(ctx, repo, plainMode):
 		mode = plainMode
 	default:
-		return "", ForeignInventory{}, errors.New("could not open the repository: wrong APP_KEY, or the location is not a BombVault/restic repository")
+		// Deliberately "BombVault or restic", not "BombVault/restic" ([584]): the
+		// scrubber that runs over every error on its way out redacts absolute paths
+		// with absPathRe, which cannot tell a filesystem path from a slash inside a
+		// word. It turned this sentence into "not a BombVault[path] repository" for
+		// every user who ever saw it, which is how it came back from the forum. The
+		// redaction is right; the slash was ours to remove.
+		return "", ForeignInventory{}, errors.New("could not open the repository: wrong APP_KEY, or the location is not a BombVault or restic repository")
 	}
 
 	inv, err := s.foreignInventory(ctx, repo, mode)
