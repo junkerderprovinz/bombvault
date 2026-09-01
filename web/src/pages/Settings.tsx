@@ -3832,6 +3832,36 @@ export function SettingsPage() {
               hueIndex={1}
             />
           </Card>
+          {/* Backup Everything (schedulesEverything): a 6th, independent pass over
+              all five domains BELOW + a manual trigger. See EverythingSection's
+              own doc comment for the convention pass this card needed after the
+              merge, the conditional overlap warning included.
+                `update={scheduleUpdate}` rather than the bare setSettings merge
+              this shipped with on main: the Schedules tab has no Save button any
+              more (jdp: cadences "sollen live gespeichert werden"), so a patch
+              that only touched local state here would look saved and be lost on
+              reload. scheduleUpdate keeps the same Partial<Settings> shape and
+              debounces each key through the shared save(), which is what the
+              cadence editor and the two hook text inputs want.
+
+              SECOND on the tab, not last ([413]). It shipped at the bottom,
+              below five per-domain cadences, the off-site and self-backup
+              schedules and two detail cards, and a forum user could not find it
+              at all after being told it was "in Settings" — with seven tabs, the
+              bottom of the third is not somewhere anybody lands by accident.
+              Someone who wants "back the whole server up on one schedule" now
+              meets that before the parts it is made of.
+
+              A parallel session made this same move on feature/accent-ink-
+              whatsnew (f23cc8e1). It is repeated here because this branch has
+              been beside main since 2026-07-18, and its version of this file
+              wins for this region on merge: leaving it would have silently
+              undone their fix.
+
+                `hueIndex={nextHue()}` — the counter runs in RENDER order, so
+              moving the call shifts every rainbow position after it by one and
+              needs no renumbering anywhere. That is what the counter is for. */}
+          <EverythingSection settings={settings} update={scheduleUpdate} t={t} hueIndex={nextHue()} />
           <ContainersSection
             settings={settings}
             containers={containers}
@@ -4035,22 +4065,9 @@ export function SettingsPage() {
               backup jobs run" reasoning). See the `tab === "integrity"`
               block below for its new call site. */}
 
-          {/* Backup Everything (schedulesEverything): a 6th, independent pass over
-              all five domains above + a manual trigger. See EverythingSection's
-              own doc comment for the convention pass this card needed after the
-              merge, the conditional overlap warning included.
-                `update={scheduleUpdate}` rather than the bare setSettings merge
-              this shipped with on main: the Schedules tab has no Save button any
-              more (jdp: cadences "sollen live gespeichert werden"), so a patch
-              that only touched local state here would look saved and be lost on
-              reload. scheduleUpdate keeps the same Partial<Settings> shape and
-              debounces each key through the shared save(), which is what the
-              cadence editor and the two hook text inputs want.
-                `hueIndex={nextHue()}` — this is the LAST Card on the tab, so it
-              appends a new rainbow position and shifts none of the ones above
-              it (see the counter's own doc for why no manual renumbering is
-              ever needed here). */}
-          <EverythingSection settings={settings} update={scheduleUpdate} t={t} hueIndex={nextHue()} />
+          {/* Backup Everything used to be here, as the last card on the tab.
+              It now renders SECOND, right after Schedule options — see its call
+              site up there for why ([413]). */}
 
           {/* No SaveBar: every field in this tab auto-saves — see scheduleField
               / autoSaveScheduleField. main's buildSchedulePatch() is gone. */}

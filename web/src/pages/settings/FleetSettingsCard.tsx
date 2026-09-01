@@ -9,7 +9,10 @@
 // (generate/rotate/disable, never echoed back after the fact).
 import { Button } from "../../components/Button";
 import { RevealInput } from "../../components/RevealInput";
-import { IconClose, IconSync } from "../../components/Sidebar";
+import { IconClose } from "../../components/Sidebar";
+// From glyphs, where glyphFor gets it too: Sidebar re-exports a hand-picked
+// subset of navGlyphs and IconRefresh is in neither ([412]).
+import { IconRefresh } from "../../components/glyphs";
 import { Settings, disableFleetToken, generateFleetToken } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
@@ -181,10 +184,26 @@ export function FleetSettingsCard({
             <Button
               label={t("settings.fleetRegenerate")}
               labelKey="settings.fleetRegenerate"
-              // A circular arrow ([322]). IconSync is the vertical two-arrow
-              // ring, which is the app's established "do this again" mark;
-              // regenerating a fleet token is exactly that.
-              glyph={<IconSync />}
+              // A circular arrow. Was IconSync ([322]); IconRefresh since
+              // jdp read it as too big next to the ✕ beside it ([412]).
+              //
+              // The sizing system was not at fault and scaling would have been
+              // the wrong fix. Measured on the live card: both buttons are
+              // 48x32 with identical 6px margins, and every glyph on the page
+              // fills ~100% of its viewBox, which is exactly what the contact
+              // sheet at /glyphs checks for (it flags anything under 90%).
+              //
+              // What differs is MASS, which that check cannot see. Painted
+              // area at equal size: IconSync 41.2%, IconClose 24.5% — the ✕ is
+              // a thin diagonal, the sync ring a dense full-height vertical
+              // form, so side by side one outweighs the other by 1.7x while
+              // both measure "100% of the box".
+              //
+              // IconRefresh says the same thing (two arrows, a loop, do it
+              // again), lies horizontally rather than filling the button's
+              // height, and is lighter at 38.5%. It was otherwise reachable
+              // only through glyphFor's refresh|reload rule.
+              glyph={<IconRefresh />}
               tone="neutral"
               onClick={() => void handleGenerate()}
               disabled={busy}
