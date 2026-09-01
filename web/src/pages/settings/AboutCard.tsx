@@ -43,8 +43,22 @@ import { Card } from "./shared";
  * behind while the engines themselves had been kept current - a number that
  * had come to say the opposite of what it is for. 1.7.0 in [411], the release
  * this app's own number field was built from.
+ *
+ * BACK to 1.6.0 in [552], and the reason is the rule this card is built on.
+ * -------------------------------------------------------------------------
+ * Every version here links to ITS OWN tag's release page. 1.7.0 through 1.7.3
+ * were four same-day versions in GlimStone's changelog that were never cut as
+ * releases; GlimStone has since folded all four into the 1.6.0 that actually
+ * ships (its own commit puts it as "The version on screen must be a published
+ * release, not a tag"). So this card was linking to
+ * /releases/tag/v1.7.2 - measured, HTTP 404, while v1.6.0 answers 200.
+ *
+ * The failure is worth naming because nothing local could catch it: the string
+ * was accurate about a CHANGELOG heading and wrong about the world, and a
+ * version number is only as good as the page it opens. Read the RELEASE list
+ * when moving this, not the changelog - `gh release list` is the check.
  */
-export const GLIMSTONE_VERSION = "1.7.2";
+export const GLIMSTONE_VERSION = "1.6.0";
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 
