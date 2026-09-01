@@ -10,12 +10,17 @@ package api_test
 // configuration had no overdue alerting on any domain, and nothing said so.
 
 import (
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -163,18 +168,93 @@ func TestDomainStatusSwitchedOffDomainIgnoresEverything(t *testing.T) {
 	}
 }
 
-// TestStatusEndpointCarriesEverythingSchedule pins the second half of #186. The
-// dashboard's "next backup" cell has to weigh the pass against the five domain
-// cadences, and CoveredBy cannot carry it: domainCoverage empties CoveredBy the
+// TestScheduleNextRanksEverythingAgainstADomain pins how the pass is weighed
+// against a domain's own cadence now that #187 retired the cadence-string
+// approximation the "next backup" cell used to run in the browser.
+//
+// GET /api/status used to carry a separate `everythingSchedule` field for that
+// cell, because CoveredBy cannot carry it: domainCoverage empties CoveredBy the
 // moment a domain has a schedule of its own, which is exactly the comparison
-// that matters. So GET /api/status serves the pass's cadence beside the domains.
-func TestStatusEndpointCarriesEverythingSchedule(t *testing.T) {
+// that matters. The cell now reads real fire times from GET /api/schedule/next
+// instead, so the field is gone and this is the contract that replaced it.
+//
+// The configuration is the one that produced #186: a weekly domain cadence plus
+// a nightly pass. Ranking the strings put Sunday first; ranking the scheduler's
+// actual fire times must put the pass first on any day that is not a Sunday.
+func TestScheduleNextRanksEverythingAgainstADomain(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	d := &fakeServiceDocker{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	settings := store.Settings{
+		ContainersEnabled:  true,
+		ContainersSchedule: "weekly Sun 04:00",
+		EverythingSchedule: "daily 05:00",
+	}
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	if err := sched.Reload(settings); err != nil {
+		t.Fatalf("Reload: %v", err)
+	}
+	sched.Start()
+	defer sched.Stop()
+
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/schedule/next", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	var got struct {
+		Runs []struct {
+			Job    string    `json:"job"`
+			Domain string    `json:"domain"`
+			Next   time.Time `json:"next"`
+		} `json:"runs"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+
+	// Both entries have to be there at all: the cell filters on job=="backup",
+	// and an absent pass is precisely the blindness #186 reported.
+	var pass, containers bool
+	for _, r := range got.Runs {
+		if r.Job != "backup" {
+			continue
+		}
+		switch r.Domain {
+		case "everything":
+			pass = true
+		case "containers":
+			containers = true
+		}
+	}
+	if !pass || !containers {
+		t.Fatalf("want a backup entry for both the pass and containers, got %+v", got.Runs)
+	}
+
+	// Soonest-first, and on any day but Sunday the nightly pass is soonest. Guard
+	// the exception rather than skipping, so the test still asserts on a Sunday.
+	first := got.Runs[0]
+	if first.Next.Weekday() == time.Sunday && first.Domain == "containers" {
+		return
+	}
+	if first.Job != "backup" || first.Domain != "everything" {
+		t.Fatalf("weekly domain plus a nightly pass: soonest must be the pass, got %+v", got.Runs)
+	}
+}
+
+// TestStatusEndpointDropsEverythingSchedule holds the removal down. The field
+// existed for one consumer, that consumer is gone (#187), and a field nothing
+// reads is one more shape a peer or a future page can be tempted to rank by.
+func TestStatusEndpointDropsEverythingSchedule(t *testing.T) {
 	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
 	s := mustSettings(t, st)
 	s.ContainersEnabled = true
-	// A weekly cadence of its own plus a nightly pass: the shape where the cell
-	// used to name Sunday while the real next backup was that night.
 	s.ContainersSchedule = "weekly Sun 04:00"
 	s.EverythingSchedule = "daily 05:00"
 	if err := st.UpdateSettings(s); err != nil {
@@ -185,12 +265,14 @@ func TestStatusEndpointCarriesEverythingSchedule(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d", w.Code)
 	}
-	if m["everythingSchedule"] != "daily 05:00" {
-		t.Fatalf("everythingSchedule = %v, want %q", m["everythingSchedule"], "daily 05:00")
+	if _, present := m["everythingSchedule"]; present {
+		t.Errorf("everythingSchedule is retired, still served as %v", m["everythingSchedule"])
 	}
 
-	// The contract this test leans on: containers reports its OWN cadence and an
-	// empty CoveredBy, so without the field above the pass is genuinely invisible.
+	// The domains themselves are untouched: containers still reports its OWN
+	// cadence and an empty CoveredBy, which is what made the separate field
+	// necessary in the first place and is why the answer had to move rather than
+	// be folded into this payload.
 	domains, ok := m["domains"].([]any)
 	if !ok || len(domains) == 0 {
 		t.Fatalf("domains missing from the envelope: %v", m["domains"])
@@ -213,26 +295,3 @@ func TestStatusEndpointCarriesEverythingSchedule(t *testing.T) {
 		t.Fatal("containers domain not present in the status envelope")
 	}
 }
-
-// TestStatusEndpointEverythingScheduleOffIsVerbatim keeps the off case honest: a
-// client must be able to tell "no pass" from "a pass I cannot see", and it reads
-// that the same way it reads a domain's own schedule — the stored cadence
-// verbatim, "off" included, not a normalised empty string.
-func TestStatusEndpointEverythingScheduleOffIsVerbatim(t *testing.T) {
-	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
-
-	s := mustSettings(t, st)
-	s.ContainersEnabled = true
-	s.ContainersSchedule = "daily 02:00"
-	s.EverythingSchedule = "off"
-	if err := st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
-
-	_, m := doJSON(t, h, http.MethodGet, "/api/status", "")
-	if m["everythingSchedule"] != "off" {
-		t.Fatalf("everythingSchedule = %v, want %q for a pass that is off", m["everythingSchedule"], "off")
-	}
-}
-
-var _ = store.Settings{}

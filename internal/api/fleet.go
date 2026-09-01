@@ -72,11 +72,10 @@ type fleetStatusResponse struct {
 	InstanceName string              `json:"instanceName"`
 	Version      string              `json:"version"`
 	Domains      []DomainStatusEntry `json:"domains"`
-	// EverythingSchedule mirrors the field of the same name on GET /api/status.
-	// The shapes are documented as interchangeable so a Fleet page can reuse the
-	// dashboard's rendering, and a peer column that reads only the per-domain
-	// schedules would reproduce #186 exactly.
-	EverythingSchedule string `json:"everythingSchedule"`
+	// The shape stays interchangeable with GET /api/status, so a Fleet page can
+	// reuse the dashboard's rendering. Both dropped their `everythingSchedule`
+	// field together (#187): each DomainStatusEntry already reports whether the
+	// "Backup Everything" pass is what covers it, via CoveredBy.
 }
 
 // fleetTokenOK reports whether the request carries the stored fleet token, via
@@ -129,11 +128,10 @@ func (h *Handler) handleFleetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, fleetStatusResponse{
-		OK:                 true,
-		InstanceName:       s.InstanceName,
-		Version:            Version,
-		Domains:            domains,
-		EverythingSchedule: strings.TrimSpace(s.EverythingSchedule),
+		OK:           true,
+		InstanceName: s.InstanceName,
+		Version:      Version,
+		Domains:      domains,
 	})
 }
 

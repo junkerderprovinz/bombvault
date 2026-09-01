@@ -2763,15 +2763,13 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	if domains == nil {
 		domains = []DomainStatusEntry{}
 	}
-	// everythingSchedule rides alongside the domains because the "Backup
-	// Everything" pass is not one of them: it runs on its own cadence over
-	// whichever domains are switched on. It is served verbatim, "off" included,
-	// exactly the way a domain reports its own schedule. See DomainStatusEntry's
-	// CoveredBy for why that field cannot carry it.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"domains":            domains,
-		"everythingSchedule": strings.TrimSpace(settings.EverythingSchedule),
-	}))
+	// The "Backup Everything" pass used to ride alongside the domains here, as
+	// its own `everythingSchedule` field, so the dashboard's "next backup" cell
+	// could weigh it against the five domain cadences (#186). That cell no longer
+	// ranks cadence strings at all — it reads the scheduler's real fire times
+	// from GET /api/schedule/next, where the pass is already one entry among the
+	// rest (#187) — and nothing else ever read the field, so it is gone.
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
 }
 
 // handleScheduleNext returns the next fire time for every currently registered

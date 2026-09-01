@@ -2114,10 +2114,13 @@ function SummaryTier({
   // dashboard is asked is when the next one runs. Filtered to job "backup" —
   // the list also carries offsite/drill/tamper/digest/watchdog fires, and this
   // cell is labelled "Next backup".
-  // mains Tor aus #177/#186, in unsere Struktur nachgezogen: der Scheduler
-  // registriert den "Backup Everything"-Durchlauf auch dann, wenn alle fuenf
-  // Domaenen aus sind, denn sein Eintrag hat kein off-Feld. Ohne diese Bedingung
-  // nennt die Kachel einen Termin, an dem nichts gesichert wird.
+  //
+  // The gate main learned in #177/#186, carried over: the scheduler registers
+  // the "Backup Everything" pass even when all five domains are switched off,
+  // because its entry has no off field of its own. A pass over zero enabled
+  // domains backs nothing up (internal/api/everything.go logs exactly that and
+  // writes no snapshot), so without this condition the cell names a moment at
+  // which nothing gets backed up.
   const anyDomainOn = domains.some((d) => d.enabled);
   const nextBackupAt = scheduleNext.find(
     (n) => n.job === "backup" && (n.domain !== "everything" || anyDomainOn)
@@ -2144,7 +2147,7 @@ function SummaryTier({
         )}
       </SummaryCell>
 
-      {/* Next backup — soonest scheduled cadence as human text (not a countdown) */}
+      {/* Next backup — the soonest real fire time from the scheduler, as a countdown */}
       <SummaryCell label={t("dashboard.summaryNextBackup")} hueIndex={nextBackupHueIndex}>
         {loading ? (
           <span className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</span>

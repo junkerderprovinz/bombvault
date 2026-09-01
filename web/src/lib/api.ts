@@ -417,15 +417,15 @@ export interface RestoreDrill {
   kind: string;
 }
 
+/** The "Backup Everything" pass used to ride along here as its own
+ *  `everythingSchedule`, for the dashboard's "next backup" cell to rank against
+ *  the five domain cadences (#186). That cell reads GET /api/schedule/next now,
+ *  where the pass is one entry among the rest (#187), so the field is gone from
+ *  both this payload and /api/fleet/status. Each DomainStatus still reports
+ *  whether the pass is what covers it, via `coveredBy`. */
 export interface StatusResponse {
   ok: boolean;
   domains?: DomainStatus[];
-  /** Cadence of the "Backup Everything" pass, verbatim — so "off" (or "") when
-   *  it is switched off, the same way a domain reports its own `schedule`. It
-   *  sits beside the domains because the pass belongs to none of them (#186).
-   *  Optional so a peer instance polled by Fleet on an older build still
-   *  parses. */
-  everythingSchedule?: string;
   error?: string;
 }
 
