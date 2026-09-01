@@ -335,12 +335,12 @@ export function IconClose() {
     <svg
       width="16"
       height="16"
-      viewBox="3.3 3.3 7.4 7.4"
+      viewBox="3.45 3.45 7.1 7.1"
       fill="currentColor"
       className="shrink-0"
       aria-hidden="true"
     >
-      <g transform="rotate(45 7 7)"><rect x="2" y="6.2" width="10" height="1.6" rx="0.8" /><rect x="6.2" y="2" width="1.6" height="10" rx="0.8" /></g>
+      <g transform="rotate(45 7 7)"><rect x="2" y="6.5" width="10" height="1" rx="0.5" /><rect x="6.5" y="2" width="1" height="10" rx="0.5" /></g>
     </svg>
   );
 }

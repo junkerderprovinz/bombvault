@@ -250,11 +250,16 @@ _PLUS_BARS = (
 # STROKE, and a crop is a scale. Matching one dimension between two marks by
 # changing the frame silently changes the other.
 #
-# 1.6 keeps the cross at the plus's own ratio (2.8/14 = 20%, 1.6/8 = 20%), and
-# the box shrinks with it because thinner arms reach less far once turned.
+# 1.0, and the number comes from MEASURING the neighbour rather than from a
+# ratio. Matching stroke-to-box (1.6) still painted 53.5% of the box against the
+# 36.6% of the glyph beside it, because a cross is two solid bars and its
+# neighbour is an open loop: two marks of different character do not match on
+# weight just because they match on proportion. Area is what reads as "chunky",
+# so area is what was matched. The box shrinks with the bars, since thinner arms
+# reach less far once turned.
 _CROSS_BARS = (
-    '<rect x="2" y="6.2" width="10" height="1.6" rx="0.8" />'
-    '<rect x="6.2" y="2" width="1.6" height="10" rx="0.8" />'
+    '<rect x="2" y="6.5" width="10" height="1" rx="0.5" />'
+    '<rect x="6.5" y="2" width="1" height="10" rx="0.5" />'
 )
 PLUS = _PLUS_BARS
 CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
@@ -272,7 +277,7 @@ CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 # so the ink does not move and only the frame around it does. The bars are
 # untouched, which is the point of one drawing serving both marks.
 PLUS_BOX = "0 0 14 14"
-CROSS_BOX = "3.3 3.3 7.4 7.4"
+CROSS_BOX = "3.45 3.45 7.1 7.1"
 
 EXTRA_NAV = [
     (
