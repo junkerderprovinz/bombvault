@@ -15,6 +15,24 @@ Behold den hurtige lokale sikkerhedskopi, og tilføj en eller flere off-site-rep
 !!! note "Gendan direkte fra off-site"
     Hver sikkerhedskopi-browser har en **Lokal / Off-site**-kontakt, så hvis et lokalt repo går tabt eller bliver beskadiget, kan du liste og gendanne direkte fra off-site-replikaen. Sletning er pr. kilde: at fjerne en sikkerhedskopi påvirker kun den kopi, du ser på.
 
+## Fjernbetjente primære arkiver {#remote-primary-repositories}
+
+Et domænes sti til sikkerhedskopi (Indstillinger, Stier og lager) er ikke begrænset til en lokal mappe: peg den direkte på et restic-fjernarkiv (`s3:...`, `rest:http://vært:8000/arkiv`, `b2:...`, `sftp:bruger@vært:/arkiv`, `rclone:fjern:bucket/sti`), så sikkerhedskopierer BombVault direkte dertil, uden separat lokal kopi og uden replikeringstrin. Det er en virkelig anden form end off-site-replikeringen ovenfor: dér er det lokale arkiv det primære, og off-site-arkivet er et arkiv af det efter bedste evne; her **er** fjernarkivet det primære, og det er den eneste kopi, så længe du ikke også opsætter off-site-replikering (eller et andet fjernarkiv) for det domæne.
+
+Hvert af de fem stifelter (Containere, Virtuelle maskiner, Flash, Konfiguration, Filer) har en kontakt **Lokal / Fjern** lige ved siden af:
+
+- **Lokal** viser den velkendte mappebrowser.
+- **Fjern** bytter den ud med et almindeligt URL-felt plus en knap, der åbner den samme dialog til forbindelsestest og adgangsoplysninger, som off-site-destinationer bruger, blot indstillet til dette primære arkiv. Derfra får du:
+    - **En forbindelsestest** mod den rigtige sti, før du forlader dig på den.
+    - **Båndbreddegrænser** (upload og download), så en planlagt sikkerhedskopi til et fjernprimært arkiv ikke mætter din WAN-forbindelse: de samme restic-flag `--limit-upload` og `--limit-download`, som off-site-replikeringen bruger, nu anvendt på selve sikkerhedskopien.
+    - **Append-only-beskyttelse (uforanderlighed)**, efterprøvet med den samme aktive manipulationstest (en rigtig DELETE-sonde mod den anden ende), som off-site-destinationer får. Er den slået til, nægter BombVault selv at beskære arkivet: da der ikke står en separat lokal kopi bag, må adgangsoplysningerne på denne maskine ikke kunne slette sikkerhedskopiens eneste kopi.
+    - **En alarm for vækstbudgettet**, taget fra den samme udvikling i arkivets størrelse, som Lagerkortet allerede følger.
+
+Intet af dette er påkrævet: en håndskrevet fjernsti uden gemte sikkerhedsindstillinger sikkerhedskopierer nøjagtig som før (ubegrænset båndbredde, kan beskæres, ingen budgetalarm). Sikkerhedsdialogen er der til, når du vil have den samme beskyttelse, som en off-site-kopi får, uden at skulle oprette en off-site-destination alene af den grund.
+
+!!! note "Sky- og REST-adgangsoplysninger deles"
+    Et fjernprimært arkiv godkendes med de samme S3-/REST-adgangsoplysninger, der er sat op under Indstillinger, Off-site, Skyadgangsoplysninger. Der findes ikke et separat sted til adgangsoplysninger for primære arkiver.
+
 ## Uforanderlig (append-only) off-site
 
 Flag et off-site-repo append-only, så ransomware eller en kompromitteret vært ikke kan slette eller omskrive dine sikkerhedskopier. Den anden side (en `restic/rest-server`, der kører i `--append-only`-tilstand) **håndhæver** det. BombVault **verificerer** det kun altid og viser aldrig grønt alene på en konfigurationspåstand.

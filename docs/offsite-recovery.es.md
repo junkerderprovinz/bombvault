@@ -15,6 +15,24 @@ Conserva la copia local rápida y añade una o varias réplicas externas. Define
 !!! note "Restaurar directamente desde externo"
     Cada navegador de copias tiene un conmutador **Local / Externo**, de modo que si un repo local se pierde o se corrompe puedes listar y restaurar directamente desde la réplica externa. Eliminar es por fuente: quitar una copia solo afecta a la copia que estás viendo.
 
+## Repositorios primarios remotos {#remote-primary-repositories}
+
+La ruta de copia de un dominio (Ajustes, Rutas y almacenamiento) no se limita a una carpeta local: apúntala directamente a un remoto de restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:usuario@host:/repo`, `rclone:remoto:bucket/ruta`) y BombVault copia allí directamente, sin copia local aparte y sin paso de replicación. Es una forma realmente distinta de la replicación fuera de sede de más arriba: allí el repositorio local es el primario y el de fuera de sede es un archivo suyo en la medida de lo posible; aquí el repositorio remoto **es** el primario, y es la única copia mientras no configures además una replicación fuera de sede (o un segundo remoto) para ese dominio.
+
+Cada uno de los cinco campos de ruta (Contenedores, Máquinas virtuales, Flash, Configuración, Ficheros) lleva justo al lado un conmutador **Local / Remoto**:
+
+- **Local** muestra el explorador de carpetas de siempre.
+- **Remoto** lo cambia por un campo de URL sencillo, más un botón que abre el mismo diálogo de prueba de conexión y credenciales que usan los destinos fuera de sede, configurado para este primario. Desde ahí obtienes:
+    - **Una prueba de conexión** contra la ruta real, antes de confiar en ella.
+    - **Límites de ancho de banda** (subida y bajada) para que una copia programada hacia un primario remoto no sature tu enlace WAN: los mismos parámetros de restic `--limit-upload` y `--limit-download` que usa la replicación fuera de sede, aplicados a la propia copia.
+    - **Protección append-only (inmutabilidad)**, verificada con la misma prueba activa de manipulación (una sonda DELETE real contra el otro extremo) que reciben los destinos fuera de sede. Con ella activada, BombVault se niega a podar el repositorio: como detrás no hay copia local aparte, las credenciales de esta máquina no deben poder borrar la única copia de la copia de seguridad.
+    - **Una alarma de presupuesto de crecimiento**, tomada de la misma tendencia de tamaño del repositorio que la tarjeta Almacenamiento ya sigue.
+
+Nada de esto es obligatorio: una ruta remota escrita a mano y sin ajustes de seguridad guardados copia exactamente como siempre (ancho de banda ilimitado, podable, sin alarma de presupuesto). El diálogo de seguridad está ahí para cuando quieras las mismas protecciones que recibe una copia fuera de sede, sin tener que crear un destino fuera de sede solo para eso.
+
+!!! note "Las credenciales de nube y REST se comparten"
+    Un primario remoto se autentica con las mismas credenciales S3/REST configuradas en Ajustes, Fuera de sede, Credenciales de nube. No hay un almacén de credenciales aparte para los repositorios primarios.
+
 ## Externo inmutable (append-only)
 
 Marca un repo externo como append-only para que el ransomware, o un host comprometido, no puedan eliminar ni reescribir tus copias. El otro extremo (un `restic/rest-server` ejecutándose en modo `--append-only`) lo **impone**. BombVault solo lo **verifica** y nunca muestra verde basándose únicamente en una afirmación de configuración.

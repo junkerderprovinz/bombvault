@@ -30,6 +30,15 @@ Repository-stier for sikkerhedskopier defaulter til `/mnt/user/bombvault/{contai
 !!! note "Vært-integrationstjek"
     Åbn `/spike` i web-UI'en, når containeren er startet. Den prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele.
 
+## Genkendelse af sikkerhedskopiernes kilder {#backup-source-detection}
+
+For hver container vælger BombVault selv, hvilke bind-monteringer og navngivne diskenheder der sikkerhedskopieres. En sti tages med, så snart et af følgende punkter gælder (resultatet kan altid tilsidesættes for den enkelte container under dens **Stier til sikkerhedskopi**):
+
+- **Match på et datarod-segment:** bindets værtskilde indeholder et af segmenterne i `DATA_ROOT_SEGMENTS` som en hel stikomponent (som standard kun `appdata`).
+- **Navngivne Docker-diskenheder** tages altid med, fordi de ikke har nogen engangsudgave, og der derfor ikke er noget at filtrere fra, **men kun når diskenhedens rigtige lagersti på værten selv kan nås gennem Host Data-monteringen**, nøjagtig som enhver anden værtssti, BombVault sikkerhedskopierer. Standarddriveren til lokale diskenheder lægger en diskenhed under dæmonens egen datarod, altså `/var/lib/docker/volumes/<navn>/_data`, medmindre det er ændret (tjek med `docker info -f '{{.DockerRootDir}}'`). Det sted er IKKE dækket af den smalle Host Data-montering med én enkelt mappe, som den generiske `docker-compose.yml` bruger som standard. En diskenhed, der ikke kan nås, springes stiltiende over, det er ikke en fejl. For rent faktisk at sikkerhedskopiere navngivne diskenheder på en generisk vært skal du pege Host Data (og `HOST_SOURCE_ROOT`) på en fælles overordnet mappe, der også dækker Dockers datarod: afvejningen står i Host Data-kommentaren i compose-filen (Unraid går uden om det ved af samme grund at montere hele `/mnt`, sin egen almengyldige konvention på øverste niveau).
+- **Projektmappe for Docker Compose:** bærer containeren den sædvanlige etiket `com.docker.compose.project.working_dir` (sættes automatisk af `docker compose up`), kommer den mappe også med, uanset om en bind ramte et datarod-segment.
+- **Tilsidesættelse med etiketten `bombvault.data`:** sæt etiketten `bombvault.data=true` på en container for at tage ALLE dens bind-monteringer med, til en opsætning som ingen af de to konventioner ovenfor fanger (for eksempel en enkelt bind `/srv/plex/config` uden Compose-projekt). Enhver ikke-tom værdi ud over `false` tæller som sand; en manglende etiket eller `bombvault.data=false` ændrer ingenting.
+
 ## Sikkerhedsmodel
 
 !!! warning "Root-ækvivalent kontrol over værten"

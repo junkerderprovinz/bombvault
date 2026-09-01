@@ -30,6 +30,20 @@
     2. Templates で **BombVault** を検索します。
     3. 必要な変数を設定して **Apply** をクリックします。
 
+## 一般的な Docker ホスト
+
+Unraid ではない場合。BombVault はどの Docker ホストでも通常のコンテナとして動きます（TrueNAS Scale でのコンテナ対応も、独自のアプリカタログ掲載に先立ってこれで動いています）。
+
+1. リポジトリからそのまま編集できる [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) を取得します。
+2. `APP_KEY`（下記参照）を設定し、Host Data ボリュームを実際のデータルートに向けます。どちらもファイル内のコメントが案内します。
+3. `docker compose up -d` を実行し、`https://<host-ip>:3443/` を開きます。
+
+Unraid との違い:
+
+- **flash/USB ドメインがありません。** 取り込んだり復元したりする起動 USB が存在しないため、設定の Flash ドメインはここでは出番がありません。代わりにファイルドメインが、ワンクリックの提案 **プリセットを追加: ホストのシステム設定**（保存前に確認して編集する `/etc` の初期ファイルセット）を、実用的な汎用の代替として用意しています。
+- **Unraid 独自の通知がありません。** BombVault 自身の通知チャネル（Webhook、オフサイト失敗の警告など）は通常どおり動きます。省かれるのは Unraid 固有の通知システムへの送信だけで、ここにはその仕組みがないからです。
+- **VM のバックアップは任意で、SSH で届く別の libvirtd ホストが必要です。** compose ファイル内のコメントアウトされたブロックを参照してください。一般的な Docker ホスト自体には VM 管理機能はありません。
+
 ## 必須設定はひとつだけ
 
 設定が必須の変数は `APP_KEY` だけです。これは restic リポジトリのパスワードを導出するために使われる 32 バイトの 16 進シークレット（16 進数 64 文字）です。

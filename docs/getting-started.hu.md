@@ -30,6 +30,20 @@ A legegyszerűbb út a **Community Applications**.
     2. Keress rá a **BombVault** kifejezésre a Templates alatt.
     3. Állítsd be a szükséges változókat, és kattints az **Apply** gombra.
 
+## Általános Docker-gazdagép
+
+Nem Unraid? A BombVault sima konténerként is fut bármelyik Docker-gazdagépen (ez hordozza a TrueNAS Scale konténertámogatását is, még az ottani alkalmazáskatalógus saját bejegyzése előtt).
+
+1. Töltsd le a tárolóból a szerkesztésre kész [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) fájlt.
+2. Állítsd be az `APP_KEY` értékét (lásd lent), és irányítsd a Host Data kötetet a valódi adatgyökeredre: a fájl megjegyzései mindkettőt végigvezetik.
+3. `docker compose up -d`, majd nyisd meg a `https://<gazdagép-ip>:3443/` címet.
+
+Miben más ez, mint az Unraid:
+
+- **Nincs flash/USB tartomány.** Nincs indító pendrive, amit el kellene menteni vagy vissza kellene állítani, így a beállítások Flash tartományának itt nincs dolga. Helyette a Fájlok tartomány egy kattintással felkínálja az **Előbeállítás hozzáadása: gazdagép rendszerkonfigurációja** javaslatot (egy induló `/etc` fájlkészlet, amit mentés előtt átnézel és szerkesztesz), gyakorlatias általános megfelelőként.
+- **Nincsenek Unraid-natív értesítések.** A BombVault saját értesítési csatornái (webhook, külső telephelyi hiba riasztásai és így tovább) a szokott módon működnek; csak az Unraid saját értesítési rendszerébe küldés marad el, mert ilyen rendszer itt nincs.
+- **A virtuális gépek mentése választható, és külön, SSH-n elérhető libvirtd gazdagépet igényel.** Lásd a compose fájl kikommentezett blokkját. Egy általános Docker-gazdagépben magában nincs virtuálisgép-kezelő.
+
 ## Az egyetlen kötelező beállítás
 
 Az egyetlen változó, amelyet be kell állítanod, az `APP_KEY`, egy 32 bájtos hexadecimális titok (64 hexadecimális karakter), amely a restic tároló jelszavának származtatására szolgál.

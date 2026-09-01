@@ -30,6 +30,20 @@
     2. 在 Templates 中搜索 **BombVault**。
     3. 设置必需的变量并点击 **Apply**。
 
+## 通用 Docker 主机
+
+不是 Unraid？BombVault 也能在任意 Docker 主机上以普通容器运行（TrueNAS Scale 上的容器支持，在它拥有自己的应用目录条目之前，也是靠这个跑起来的）。
+
+1. 从仓库取得可直接编辑的 [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml)。
+2. 设置 `APP_KEY`（见下文），并把 Host Data 卷指向你真正的数据根目录，文件里的注释会把这两件事都讲清楚。
+3. 执行 `docker compose up -d`，然后打开 `https://<host-ip>:3443/`。
+
+与 Unraid 的不同之处：
+
+- **没有 flash/USB 域。** 这里没有要采集或还原的启动 U 盘，所以设置里的 Flash 域无事可做。作为替代，文件域提供了一键建议 **添加预设：主机系统配置**（一份起步的 `/etc` 文件集，保存前由你审阅和修改），作为实用的通用等价物。
+- **没有 Unraid 原生通知。** BombVault 自己的通知渠道（Webhook、异地失败告警等）照常工作；略过的只是向 Unraid 自身通知系统的推送，因为这里根本没有那套系统。
+- **虚拟机备份是可选的，且需要一台通过 SSH 可达的独立 libvirtd 主机。** 见 compose 文件里被注释掉的那段。通用 Docker 主机本身并不自带虚拟机管理。
+
 ## 唯一必需的设置
 
 您唯一必须设置的变量是 `APP_KEY`，一个 32 字节的十六进制密钥（64 个十六进制字符），用于派生 restic 仓库密码。

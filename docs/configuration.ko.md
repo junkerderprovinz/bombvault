@@ -30,6 +30,15 @@ CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data*
 !!! note "호스트 통합 확인"
     컨테이너가 시작된 후 웹 UI에서 `/spike`를 엽니다. 모든 마운트와 CLI(Docker 소켓, libvirt, restic, qemu-img, rclone)를 검사하고 누락된 부분을 보고합니다.
 
+## 백업 원본 자동 판별 {#backup-source-detection}
+
+컨테이너마다 어떤 바인드 마운트와 명명된 볼륨을 백업할지는 BombVault가 스스로 고릅니다. 다음 중 하나에 해당하면 경로가 채택됩니다(결과는 컨테이너별 **백업 경로**에서 언제든 덮어쓸 수 있습니다).
+
+- **데이터 루트 구간 일치:** 바인드의 호스트 원본이 `DATA_ROOT_SEGMENTS`의 구간 중 하나를 온전한 경로 요소로 포함하는 경우(기본값은 `appdata`뿐).
+- **Docker의 명명된 볼륨**은 항상 포함됩니다. 버려도 되는 대응물이 없어 걸러낼 것이 없기 때문입니다. **다만 그 볼륨의 실제 호스트 저장 경로 자체가 Host Data 마운트를 통해 닿을 수 있을 때만** 해당하며, 이는 BombVault가 백업하는 다른 호스트 경로와 똑같은 조건입니다. 기본 로컬 볼륨 드라이버는 볼륨을 데몬 자신의 데이터 루트 아래, 즉 바꾸지 않았다면 `/var/lib/docker/volumes/<name>/_data`에 둡니다(`docker info -f '{{.DockerRootDir}}'`로 확인하세요). 이 위치는 일반 `docker-compose.yml`이 기본으로 쓰는 단일 디렉터리의 좁은 Host Data 마운트에 포함되지 않습니다. 닿을 수 없는 볼륨은 조용히 건너뛰며 오류가 아닙니다. 일반 호스트에서 명명된 볼륨을 실제로 백업하려면 Host Data(그리고 `HOST_SOURCE_ROOT`)를 Docker 데이터 루트까지 아우르는 공통 상위 디렉터리로 지정하세요. 그 대가는 compose 파일의 Host Data 주석을 보십시오(Unraid는 같은 이유로 자체 최상위 관례인 `/mnt` 전체를 마운트해 이 문제를 비껴갑니다).
+- **Docker Compose 프로젝트 디렉터리:** 컨테이너에 표준 레이블 `com.docker.compose.project.working_dir`(`docker compose up`이 자동으로 붙임)이 있으면, 어떤 바인드가 데이터 루트 구간에 맞았는지와 무관하게 그 디렉터리도 추가됩니다.
+- **레이블 `bombvault.data`로 덮어쓰기:** 컨테이너에 `bombvault.data=true` 레이블을 붙이면 그 바인드 마운트를 전부 포함합니다. 위 두 관례 어느 쪽도 잡지 못하는 구성(예: Compose 프로젝트 없이 `/srv/plex/config` 바인드 하나만 있는 경우)을 위한 것입니다. `false`가 아닌 비어 있지 않은 값은 모두 참으로 치며, 레이블이 없거나 `bombvault.data=false`이면 아무것도 달라지지 않습니다.
+
 ## 보안 모델
 
 !!! warning "호스트에 대한 root에 준하는 제어 권한"

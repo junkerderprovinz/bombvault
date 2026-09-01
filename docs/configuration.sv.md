@@ -30,6 +30,15 @@ Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bomb
 !!! note "Värdintegrationskontroll"
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar.
 
+## Igenkänning av säkerhetskopieringens källor {#backup-source-detection}
+
+För varje container väljer BombVault själv vilka bind-monteringar och namngivna volymer som ska säkerhetskopieras. En sökväg tas med så snart någon av följande punkter gäller (resultatet kan alltid skrivas över per container under dess **Säkerhetskopieringssökvägar**):
+
+- **Träff på ett datarot-segment:** bindens värdkälla innehåller något av segmenten i `DATA_ROOT_SEGMENTS` som en fullständig sökvägsdel (som standard endast `appdata`).
+- **Namngivna Docker-volymer** tas alltid med, eftersom de saknar en slängbar motsvarighet och det därmed inte finns något att filtrera bort, **men bara när volymens verkliga lagringssökväg på värden själv går att nå genom Host Data-monteringen**, precis som varje annan värdsökväg BombVault säkerhetskopierar. Standarddrivrutinen för lokala volymer lägger en volym under demonens egen datarot, alltså `/var/lib/docker/volumes/<namn>/_data` om inget ändrats (kontrollera med `docker info -f '{{.DockerRootDir}}'`). Den platsen omfattas INTE av den smala Host Data-monteringen med en enda katalog som den generiska `docker-compose.yml` använder som standard. En onåbar volym hoppas tyst över, det är inget fel. För att verkligen säkerhetskopiera namngivna volymer på en generisk värd, rikta Host Data (och `HOST_SOURCE_ROOT`) mot en gemensam överordnad katalog som även täcker Dockers datarot: avvägningen står i Host Data-kommentaren i compose-filen (Unraid kringgår detta genom att av samma skäl montera hela `/mnt`, sin egen allmängiltiga konvention på översta nivån).
+- **Projektkatalog för Docker Compose:** bär containern den vanliga etiketten `com.docker.compose.project.working_dir` (sätts automatiskt av `docker compose up`) läggs även den katalogen till, oavsett om någon bind matchade ett datarot-segment.
+- **Åsidosättning med etiketten `bombvault.data`:** sätt etiketten `bombvault.data=true` på en container för att ta med ALLA dess bind-monteringar, för en uppställning som ingen av konventionerna ovan fångar (till exempel en enda bind `/srv/plex/config` utan Compose-projekt). Varje icke-tomt värde utom `false` räknas som sant; en saknad etikett eller `bombvault.data=false` ändrar ingenting.
+
 ## Säkerhetsmodell
 
 !!! warning "Root-likvärdig kontroll över värden"

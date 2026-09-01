@@ -15,6 +15,24 @@ Giữ bản sao lưu cục bộ nhanh và thêm một hoặc nhiều bản sao o
 !!! note "Khôi phục thẳng từ off-site"
     Mọi trình duyệt sao lưu đều có công tắc **Local / Off-site**, nên nếu một kho cục bộ bị mất hay hỏng, bạn có thể liệt kê và khôi phục trực tiếp từ bản sao off-site. Việc xóa là theo từng nguồn: xóa một bản sao lưu chỉ ảnh hưởng đến bản sao bạn đang xem.
 
+## Kho chính từ xa {#remote-primary-repositories}
+
+Đường dẫn sao lưu của một miền (Cài đặt, Đường dẫn và lưu trữ) không giới hạn ở thư mục cục bộ: trỏ thẳng nó tới một kho restic từ xa (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:nguoidung@host:/repo`, `rclone:remote:bucket/duong-dan`) và BombVault sao lưu thẳng tới đó, không cần bản sao cục bộ riêng và không có bước nhân bản. Đây thực sự là một hình thái khác với nhân bản ngoại vi ở trên: ở đó kho cục bộ là kho chính còn kho ngoại vi là bản lưu trữ của nó trong khả năng có thể; ở đây kho từ xa **chính là** kho chính, và là bản duy nhất chừng nào bạn chưa cấu hình thêm nhân bản ngoại vi (hoặc một kho từ xa thứ hai) cho miền đó.
+
+Mỗi trong năm ô đường dẫn (Container, Máy ảo, Flash, Cấu hình, Tệp) đều có ngay bên cạnh một công tắc **Cục bộ / Từ xa**:
+
+- **Cục bộ** hiển thị trình duyệt thư mục quen thuộc.
+- **Từ xa** đổi nó thành một ô URL đơn giản, kèm một nút mở đúng hộp thoại kiểm tra kết nối và thông tin đăng nhập mà các đích ngoại vi vẫn dùng, chỉ khác là được cấu hình cho kho chính này. Từ đó bạn có:
+    - **Một lần kiểm tra kết nối** với đường dẫn thật, trước khi bạn trông cậy vào nó.
+    - **Giới hạn băng thông** (tải lên và tải xuống) để một bản sao lưu theo lịch tới kho chính từ xa không làm nghẽn đường WAN của bạn: đúng những tùy chọn restic `--limit-upload` và `--limit-download` mà nhân bản ngoại vi dùng, nay áp lên chính việc sao lưu.
+    - **Bảo vệ chỉ-ghi-thêm (bất biến)**, được xác minh bằng đúng bài kiểm tra can thiệp chủ động (một phép thử DELETE thật tới đầu bên kia) mà các đích ngoại vi nhận được. Khi bật, BombVault từ chối tự cắt tỉa kho: vì phía sau không có bản sao cục bộ riêng, thông tin đăng nhập trên máy này không được phép xóa bản sao lưu duy nhất.
+    - **Cảnh báo ngân sách tăng trưởng**, lấy từ chính xu hướng kích thước kho mà thẻ Lưu trữ vốn đã theo dõi.
+
+Không điều nào trong số này là bắt buộc: một đường dẫn từ xa gõ tay, không lưu thiết lập an toàn nào, vẫn sao lưu y như trước (băng thông không giới hạn, cắt tỉa được, không cảnh báo ngân sách). Hộp thoại an toàn có ở đó cho lúc bạn muốn đúng những lớp bảo vệ mà một bản sao ngoại vi nhận được, mà không phải tạo riêng một đích ngoại vi chỉ để có chúng.
+
+!!! note "Thông tin đăng nhập đám mây và REST dùng chung"
+    Kho chính từ xa xác thực bằng đúng thông tin đăng nhập S3/REST đã cấu hình ở Cài đặt, Ngoại vi, Thông tin đăng nhập đám mây. Không có kho thông tin đăng nhập riêng cho các kho chính.
+
 ## Off-site bất biến (append-only)
 
 Đánh dấu một kho off-site là append-only để ransomware, hoặc một máy chủ bị xâm nhập, không thể xóa hay ghi lại các bản sao lưu của bạn. Phía bên kia (một `restic/rest-server` chạy ở chế độ `--append-only`) **thực thi** điều đó. BombVault chỉ luôn **xác minh** nó và không bao giờ hiển thị xanh chỉ dựa trên một tuyên bố cấu hình.

@@ -15,6 +15,24 @@ Mantenha o backup local rápido e adicione uma ou mais réplicas externas. Defin
 !!! note "Restaurar diretamente do externo"
     Cada navegador de backups tem um interruptor **Local / Externo**, por isso, se um repo local se perder ou corromper, pode listar e restaurar diretamente a partir da réplica externa. A eliminação é por origem: remover um backup afeta apenas a cópia que está a ver.
 
+## Repositórios primários remotos {#remote-primary-repositories}
+
+O caminho de cópia de um domínio (Definições, Caminhos e armazenamento) não se limita a uma pasta local: aponta-o diretamente para um remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utilizador@host:/repo`, `rclone:remoto:bucket/caminho`) e o BombVault copia diretamente para lá, sem cópia local separada e sem passo de replicação. É uma forma verdadeiramente diferente da replicação fora do local acima: ali o repositório local é o primário e o de fora do local é um arquivo dele na medida do possível; aqui o repositório remoto **é** o primário, e é a única cópia enquanto não configurares também uma replicação fora do local (ou um segundo remoto) para esse domínio.
+
+Cada um dos cinco campos de caminho (Contentores, Máquinas virtuais, Flash, Configuração, Ficheiros) tem mesmo ao lado um interruptor **Local / Remoto**:
+
+- **Local** mostra o explorador de pastas do costume.
+- **Remoto** troca-o por um simples campo de URL, mais um botão que abre a mesma janela de teste de ligação e credenciais que os destinos fora do local usam, configurada para este primário. A partir daí obténs:
+    - **Um teste de ligação** contra o caminho real, antes de dependeres dele.
+    - **Limites de largura de banda** (envio e receção), para que uma cópia agendada para um primário remoto não sature a tua ligação WAN: os mesmos parâmetros restic `--limit-upload` e `--limit-download` que a replicação fora do local usa, aplicados à própria cópia.
+    - **Proteção append-only (imutabilidade)**, verificada com o mesmo teste ativo de adulteração (uma sonda DELETE real contra o outro lado) que os destinos fora do local recebem. Com ela ligada, o BombVault recusa-se a podar o repositório: como atrás dele não há cópia local separada, as credenciais nesta máquina não podem ser capazes de apagar a única cópia da salvaguarda.
+    - **Um alarme de orçamento de crescimento**, tirado da mesma tendência de tamanho do repositório que o cartão Armazenamento já acompanha.
+
+Nada disto é obrigatório: um caminho remoto escrito à mão e sem definições de segurança guardadas copia exatamente como sempre (largura de banda ilimitada, podável, sem alarme de orçamento). A janela de segurança existe para quando quiseres as mesmas proteções que uma cópia fora do local recebe, sem teres de criar um destino fora do local só para isso.
+
+!!! note "As credenciais de nuvem e REST são partilhadas"
+    Um primário remoto autentica-se com as mesmas credenciais S3/REST configuradas em Definições, Fora do local, Credenciais de nuvem. Não há um cofre de credenciais separado para repositórios primários.
+
 ## Externo imutável (append-only)
 
 Marque um repo externo como append-only para que ransomware, ou um host comprometido, não possa eliminar ou reescrever os seus backups. O lado remoto (um `restic/rest-server` a correr em modo `--append-only`) **impõe-no**. O BombVault apenas o **verifica** e nunca mostra verde só com base numa afirmação de configuração.

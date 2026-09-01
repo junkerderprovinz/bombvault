@@ -30,6 +30,15 @@ Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bomb
 !!! note "Vérification de l'intégration hôte"
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante.
 
+## Détection des sources de sauvegarde {#backup-source-detection}
+
+Pour chaque conteneur, BombVault choisit lui-même les montages bind et les volumes nommés à sauvegarder. Un chemin est retenu dès que l'un des points suivants s'applique (vous pouvez toujours corriger le résultat par conteneur dans ses **Chemins de sauvegarde**) :
+
+- **Correspondance d'un segment de racine de données :** la source hôte du bind contient l'un des segments de `DATA_ROOT_SEGMENTS` comme composant de chemin complet (par défaut `appdata` uniquement).
+- **Les volumes Docker nommés** sont toujours inclus, car ils n'ont pas d'équivalent jetable et il n'y a donc rien à filtrer, **mais seulement si le chemin de stockage hôte réel du volume est lui-même accessible via le montage Host Data**, exactement comme tout autre chemin hôte sauvegardé par BombVault. Le pilote de volumes locaux par défaut range un volume sous la racine de données du démon, soit `/var/lib/docker/volumes/<nom>/_data` sauf personnalisation (à vérifier avec `docker info -f '{{.DockerRootDir}}'`). Cet emplacement n'est PAS couvert par le montage Host Data étroit, à répertoire unique, que le `docker-compose.yml` générique utilise par défaut. Un volume inaccessible est ignoré en silence, ce n'est pas une erreur. Pour réellement sauvegarder les volumes nommés sur un hôte générique, pointez Host Data (et `HOST_SOURCE_ROOT`) vers un ancêtre commun qui couvre aussi la racine de données de Docker : voyez le commentaire Host Data du fichier compose pour le compromis (Unraid contourne le problème en montant tout `/mnt`, sa propre convention universelle de premier niveau, pour la même raison).
+- **Répertoire de projet Docker Compose :** si le conteneur porte le label standard `com.docker.compose.project.working_dir` (posé automatiquement par `docker compose up`), ce répertoire est ajouté lui aussi, qu'un bind ait correspondu ou non à un segment de racine de données.
+- **Dérogation par le label `bombvault.data` :** posez le label `bombvault.data=true` sur un conteneur pour inclure TOUS ses montages bind, pour une organisation qu'aucune des deux conventions ci-dessus ne rattrape (par exemple un unique bind `/srv/plex/config` sans projet Compose). Toute valeur non vide autre que `false` compte comme vraie ; un label absent ou `bombvault.data=false` ne change rien.
+
 ## Modèle de sécurité
 
 !!! warning "Contrôle de l'hôte équivalent à root"

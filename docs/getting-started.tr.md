@@ -30,6 +30,20 @@ En kolay yol **Community Applications**'tır.
     2. Templates içinde **BombVault** araması yapın.
     3. Gerekli değişkenleri ayarlayın ve **Apply**'a tıklayın.
 
+## Genel Docker ana makinesi
+
+Unraid değil mi? BombVault herhangi bir Docker ana makinesinde sıradan bir kapsayıcı olarak da çalışır (TrueNAS Scale üzerindeki kapsayıcı desteği de, oradaki uygulama kataloğunda kendi kaydı olana dek buna dayanır).
+
+1. Depodan, düzenlemeye hazır [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) dosyasını alın.
+2. `APP_KEY` değerini ayarlayın (aşağıya bakın) ve Host Data birimini gerçek veri kökünüze yöneltin: dosyadaki yorumlar ikisini de adım adım anlatıyor.
+3. `docker compose up -d`, ardından `https://<ana-makine-ip>:3443/` adresini açın.
+
+Unraid'e göre neler değişiyor:
+
+- **flash/USB alanı yok.** Yakalanacak ya da geri yüklenecek bir açılış USB'si bulunmadığından, ayarlardaki Flash alanının burada yapacağı bir şey yok. Onun yerine Dosyalar alanı, pratik bir genel karşılık olarak tek tıklamalık **Hazır ayar ekle: ana makine sistem yapılandırması** önerisini sunuyor (kaydetmeden önce gözden geçirip düzenlediğiniz bir başlangıç `/etc` dosya kümesi).
+- **Unraid'e özgü bildirimler yok.** BombVault'un kendi bildirim kanalları (webhook, saha dışı başarısızlık uyarıları ve benzeri) her zamanki gibi çalışır; yalnızca Unraid'in kendi bildirim sistemine gönderim atlanır, çünkü burada öyle bir sistem yoktur.
+- **Sanal makine yedeklemesi isteğe bağlıdır ve SSH ile erişilebilen ayrı bir libvirtd ana makinesi gerektirir.** compose dosyasındaki yorum satırına alınmış bloğa bakın. Genel bir Docker ana makinesinin kendisinde sanal makine yönetimi yoktur.
+
 ## Gereken tek ayar
 
 Ayarlamanız gereken tek değişken, restic depo parolasını türetmek için kullanılan 32 baytlık bir onaltılık gizli anahtar olan (64 onaltılık karakter) `APP_KEY`'dir.

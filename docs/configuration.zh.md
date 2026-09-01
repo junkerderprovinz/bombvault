@@ -30,6 +30,15 @@
 !!! note "主机集成检查"
     容器启动后在 Web 界面打开 `/spike`。它会探测每个挂载和 CLI（Docker 套接字、libvirt、restic、qemu-img、rclone）并报告任何缺失的部分。
 
+## 备份来源的自动识别 {#backup-source-detection}
+
+对每个容器，BombVault 会自行挑选要备份哪些绑定挂载和具名卷。只要符合下列任意一条，路径就会被采纳（结果随时可在该容器的 **备份路径** 中逐个覆盖）：
+
+- **命中数据根目录片段：** 绑定在宿主机上的来源，把 `DATA_ROOT_SEGMENTS` 里的某个片段作为完整的一级路径包含在内（默认只有 `appdata`）。
+- **Docker 具名卷** 一律纳入，因为它们没有可丢弃的对应物，也就没什么可过滤的，**但仅当该卷在宿主机上的真实存储路径本身能通过 Host Data 挂载抵达时才算**，这和 BombVault 备份的其他宿主机路径条件完全一致。默认的本地卷驱动会把卷放在守护进程自己的数据根目录下，即未做修改时的 `/var/lib/docker/volumes/<name>/_data`（可用 `docker info -f '{{.DockerRootDir}}'` 查看）。这个位置并不在通用 `docker-compose.yml` 默认使用的那个只含单个目录的窄 Host Data 挂载里。抵达不到的卷会被静默跳过，这不算错误。要在通用主机上真正备份具名卷，请把 Host Data（以及 `HOST_SOURCE_ROOT`）指向一个同时覆盖 Docker 数据根目录的共同上级目录，取舍见 compose 文件里的 Host Data 注释（Unraid 出于同样的原因，直接挂载整个 `/mnt`，也就是它自己的顶层通用约定，从而绕开了这个问题）。
+- **Docker Compose 项目目录：** 若容器带有标准标签 `com.docker.compose.project.working_dir`（由 `docker compose up` 自动设置），该目录也会一并加入，无论是否有绑定命中了数据根目录片段。
+- **用标签 `bombvault.data` 覆盖：** 给容器设上标签 `bombvault.data=true`，即可纳入它的全部绑定挂载，适用于上面两条约定都抓不到的布局（例如没有 Compose 项目、只有单个 `/srv/plex/config` 绑定）。除 `false` 之外任何非空值都算作真；没有该标签或 `bombvault.data=false` 则什么也不改变。
+
 ## 安全模型
 
 !!! warning "对主机的等同于 root 的控制权"

@@ -30,6 +30,20 @@ Nejsnazší cestou je **Community Applications**.
     2. Vyhledejte **BombVault** v Templates.
     3. Nastavte požadované proměnné a klikněte na **Apply**.
 
+## Obecný hostitel Dockeru
+
+Nemáte Unraid? BombVault běží i jako prostý kontejner na libovolném hostiteli Dockeru (na tom stojí také podpora kontejnerů na TrueNAS Scale, ještě před vlastní položkou v tamním katalogu aplikací).
+
+1. Stáhněte si z repozitáře soubor [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), připravený k úpravám.
+2. Nastavte `APP_KEY` (viz níže) a nasměrujte svazek Host Data na svůj skutečný kořen dat: komentáře v souboru provedou obojím.
+3. `docker compose up -d`, poté otevřete `https://<ip-hostitele>:3443/`.
+
+V čem se to liší od Unraidu:
+
+- **Žádná doména flash/USB.** Není tu žádný zaváděcí USB disk, který by se dal zachytit nebo obnovit, doména Flash v nastavení tedy nemá co dělat. Místo toho doména Soubory nabízí návrh na jedno kliknutí **Přidat přednastavení: konfigurace hostitelského systému** (výchozí sada souborů `/etc`, kterou si před uložením projdete a upravíte), jako praktický obecný protějšek.
+- **Žádná nativní oznámení Unraidu.** Vlastní oznamovací kanály BombVaultu (webhook, upozornění na selhání mimo lokalitu a podobně) fungují normálně; vynechává se jen odeslání do oznamovacího systému Unraidu, protože takový systém tu není.
+- **Záloha virtuálních strojů je volitelná a potřebuje samostatného hostitele libvirtd dostupného přes SSH.** Viz zakomentovaný blok v souboru compose. Obecný hostitel Dockeru sám o sobě žádného správce virtuálních strojů nemá.
+
 ## Jediné povinné nastavení
 
 Jedinou proměnnou, kterou musíte nastavit, je `APP_KEY`, 32bajtové hex tajemství (64 hex znaků) použité k odvození hesla k restic repozitáři.

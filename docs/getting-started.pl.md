@@ -30,6 +30,20 @@ Najprostsza droga to **Community Applications**.
     2. Wyszukaj **BombVault** w Templates.
     3. Ustaw wymagane zmienne i kliknij **Apply**.
 
+## Zwykły host Dockera
+
+Nie Unraid? BombVault działa też jako zwykły kontener na dowolnym hoście Dockera (na tym opiera się również obsługa kontenerów na TrueNAS Scale, zanim pojawi się tam własny wpis w katalogu aplikacji).
+
+1. Pobierz z repozytorium gotowy do edycji plik [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml).
+2. Ustaw `APP_KEY` (patrz niżej) i skieruj wolumen Host Data na swój prawdziwy katalog danych: komentarze w pliku prowadzą przez jedno i drugie.
+3. `docker compose up -d`, a następnie otwórz `https://<ip-hosta>:3443/`.
+
+Czym różni się to od Unraida:
+
+- **Brak domeny flash/USB.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc domena Flash w ustawieniach nie ma tu nic do roboty. Zamiast tego domena Pliki proponuje jednym kliknięciem **Dodaj predefiniowany zestaw: konfiguracja systemu hosta** (początkowy zestaw plików `/etc`, który przeglądasz i poprawiasz przed zapisaniem), jako praktyczny ogólny odpowiednik.
+- **Brak natywnych powiadomień Unraida.** Własne kanały powiadomień BombVaulta (webhook, alerty o nieudanej replikacji poza siedzibę i tak dalej) działają normalnie; pomijane jest tylko wysłanie do systemu powiadomień Unraida, bo takiego systemu tutaj nie ma.
+- **Kopia maszyn wirtualnych jest opcjonalna i wymaga osobnego hosta libvirtd dostępnego przez SSH.** Zobacz zakomentowany blok w pliku compose. Zwykły host Dockera sam w sobie nie ma menedżera maszyn wirtualnych.
+
 ## Jedno wymagane ustawienie
 
 Jedyną zmienną, którą musisz ustawić, jest `APP_KEY`, 32-bajtowy sekret w formacie hex (64 znaki hex) używany do wyprowadzenia hasła repozytorium restic.

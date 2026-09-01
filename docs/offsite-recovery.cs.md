@@ -15,6 +15,24 @@ Ponechte rychlou místní zálohu a přidejte jednu nebo více replik mimo lokal
 !!! note "Obnova přímo z mimo lokalitu"
     Každý prohlížeč záloh má přepínač **Místní / Mimo lokalitu**, takže pokud se místní repozitář ztratí nebo poškodí, můžete vypsat a obnovit přímo z repliky mimo lokalitu. Mazání je pro každý zdroj zvlášť: odstranění zálohy ovlivní jen kopii, kterou si prohlížíte.
 
+## Vzdálené primární repozitáře {#remote-primary-repositories}
+
+Cesta zálohy domény (Nastavení, Cesty a úložiště) se neomezuje na místní složku: nasměrujte ji rovnou na vzdálený repozitář resticu (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:uživatel@host:/repo`, `rclone:remote:bucket/cesta`) a BombVault zálohuje přímo tam, bez samostatné místní kopie a bez kroku replikace. Je to opravdu jiný tvar než replikace mimo lokalitu výše: tam je primární místní repozitář a ten mimo lokalitu je jeho archivem podle možností; zde **je** primární ten vzdálený a je jedinou kopií, dokud pro tuto doménu nenastavíte i replikaci mimo lokalitu (nebo druhý vzdálený repozitář).
+
+Každé z pěti polí cesty (Kontejnery, Virtuální stroje, Flash, Konfigurace, Soubory) má hned vedle přepínač **Místní / Vzdálené**:
+
+- **Místní** zobrazí známý prohlížeč složek.
+- **Vzdálené** jej vymění za prosté pole URL a tlačítko, které otevře stejné okno testu připojení a přihlašovacích údajů, jaké používají cíle mimo lokalitu, jen nastavené pro tento primární repozitář. Odtud získáte:
+    - **Test připojení** proti skutečné cestě, dřív než se na ni spolehnete.
+    - **Omezení šířky pásma** (odesílání a stahování), aby plánovaná záloha do vzdáleného primárního repozitáře nezahltila vaši linku WAN: tytéž přepínače resticu `--limit-upload` a `--limit-download`, které používá replikace mimo lokalitu, uplatněné na zálohu samotnou.
+    - **Ochranu append-only (neměnnost)**, ověřenou stejným aktivním testem manipulace (skutečná sonda DELETE proti druhé straně), jaký dostávají cíle mimo lokalitu. Když je zapnutá, BombVault odmítne repozitář prořezávat: protože za ním není samostatná místní kopie, přihlašovací údaje na tomto stroji nesmějí být schopné smazat jedinou kopii zálohy.
+    - **Výstrahu rozpočtu růstu**, odvozenou ze stejného trendu velikosti repozitáře, který karta Úložiště už sleduje.
+
+Nic z toho není povinné: ručně zadaná vzdálená cesta bez uložených bezpečnostních nastavení zálohuje přesně jako dosud (neomezená šířka pásma, lze prořezávat, žádná výstraha rozpočtu). Bezpečnostní okno je tu pro chvíli, kdy chcete stejnou ochranu, jakou dostává kopie mimo lokalitu, aniž byste kvůli tomu museli zakládat samostatný cíl mimo lokalitu.
+
+!!! note "Přihlašovací údaje ke cloudu a REST jsou sdílené"
+    Vzdálený primární repozitář se ověřuje stejnými údaji S3/REST, které jsou nastavené v Nastavení, Mimo lokalitu, Přihlašovací údaje ke cloudu. Samostatné úložiště údajů pro primární repozitáře neexistuje.
+
 ## Neměnné (append-only) mimo lokalitu
 
 Označte repozitář mimo lokalitu jako append-only, aby ransomware nebo kompromitovaný hostitel nemohl smazat nebo přepsat vaše zálohy. Druhá strana (`restic/rest-server` běžící v režimu `--append-only`) to **vynucuje**. BombVault to pouze **ověřuje** a nikdy nezobrazí zelenou jen na základě konfiguračního tvrzení.

@@ -15,6 +15,24 @@ Säilytä nopea paikallinen varmuuskopio ja lisää yksi tai useampi etäreplika
 !!! note "Palautus suoraan etäsijainnista"
     Jokaisessa varmuuskopioselaimessa on **Paikallinen / Etä** -kytkin, joten jos paikallinen repo katoaa tai vioittuu, voit listata ja palauttaa suoraan etäreplikasta. Poisto on lähdekohtainen: varmuuskopion poistaminen vaikuttaa vain katselemaasi kopioon.
 
+## Etäsijaintiset ensisijaiset arkistot {#remote-primary-repositories}
+
+Alueen varmuuskopiopolku (Asetukset, Polut ja tallennus) ei rajoitu paikalliseen kansioon: osoita se suoraan restic-etäarkistoon (`s3:...`, `rest:http://isanta:8000/arkisto`, `b2:...`, `sftp:kayttaja@isanta:/arkisto`, `rclone:etä:bucket/polku`), niin BombVault varmuuskopioi suoraan sinne, ilman erillistä paikallista kopiota ja ilman replikointivaihetta. Tämä on aidosti eri muoto kuin yllä kuvattu off-site-replikointi: siellä paikallinen arkisto on ensisijainen ja off-site-arkisto sen paras mahdollinen arkistokopio; täällä etäarkisto **on** ensisijainen ja ainoa kopio, ellet määritä kyseiselle alueelle lisäksi off-site-replikointia (tai toista etäarkistoa).
+
+Kussakin viidestä polkukentästä (Kontit, Virtuaalikoneet, Flash, Kokoonpano, Tiedostot) on aivan vieressä kytkin **Paikallinen / Etä**:
+
+- **Paikallinen** näyttää tutun kansioselaimen.
+- **Etä** vaihtaa sen tavalliseen URL-kenttään ja lisää painikkeen, joka avaa saman yhteystestin ja tunnusten valintaikkunan kuin off-site-kohteet käyttävät, mutta tälle ensisijaiselle arkistolle säädettynä. Sieltä saat:
+    - **Yhteystestin** todellista polkua vasten, ennen kuin luotat siihen.
+    - **Kaistarajat** (lähetys ja lataus), jottei ajastettu varmuuskopiointi etäensisijaiseen arkistoon täytä WAN-yhteyttäsi: samat restic-valitsimet `--limit-upload` ja `--limit-download`, joita off-site-replikointi käyttää, nyt itse varmuuskopiointiin sovellettuina.
+    - **Append-only-suojan (muuttumattomuus)**, varmennettuna samalla aktiivisella peukalointitestillä (aito DELETE-koetus vastapuolta vastaan), jonka off-site-kohteet saavat. Päällä ollessaan BombVault kieltäytyy karsimasta arkistoa itse: koska takana ei ole erillistä paikallista kopiota, tämän koneen tunnukset eivät saa kyetä poistamaan varmuuskopion ainoaa kappaletta.
+    - **Kasvubudjetin hälytyksen**, joka johdetaan samasta arkiston koon kehityksestä, jota Tallennus-kortti jo seuraa.
+
+Mikään tästä ei ole pakollista: käsin kirjoitettu etäpolku ilman tallennettuja turva-asetuksia varmuuskopioi täsmälleen kuten ennenkin (rajaton kaista, karsittavissa, ei budjettihälytystä). Turvavalintaikkuna on siltä varalta, että haluat samat suojaukset kuin off-site-kopio saa, ilman että sinun tarvitsee luoda erillistä off-site-kohdetta vain sitä varten.
+
+!!! note "Pilvi- ja REST-tunnukset ovat yhteiset"
+    Etäensisijainen arkisto tunnistautuu samoilla S3-/REST-tunnuksilla, jotka on määritetty kohdassa Asetukset, Off-site, Pilvitunnukset. Ensisijaisille arkistoille ei ole erillistä tunnusvarastoa.
+
 ## Muuttumaton (append-only) etäsijainti
 
 Merkitse etärepo append-only-tilaan, jotta kiristysohjelma, tai vaarantunut isäntä, ei voi poistaa tai uudelleenkirjoittaa varmuuskopioitasi. Vastapuoli (`restic/rest-server`, joka pyörii `--append-only`-tilassa) **valvoo** sitä. BombVault vain aina **todentaa** sen eikä koskaan näytä vihreää pelkän kokoonpanoväitteen perusteella.

@@ -30,6 +30,15 @@ Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{contai
 !!! note "Kiểm tra tích hợp máy chủ"
     Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu.
 
+## Nhận diện nguồn sao lưu {#backup-source-detection}
+
+Với mỗi container, BombVault tự chọn những bind mount và volume có tên nào sẽ được sao lưu. Một đường dẫn được nhận ngay khi một trong các điểm sau đúng (bạn luôn có thể ghi đè kết quả cho từng container trong mục **Đường dẫn sao lưu** của nó):
+
+- **Khớp một đoạn gốc dữ liệu:** nguồn trên máy chủ của bind chứa một trong các đoạn của `DATA_ROOT_SEGMENTS` như một thành phần đường dẫn trọn vẹn (mặc định chỉ `appdata`).
+- **Volume Docker có tên** luôn được đưa vào, vì chúng không có bản tương đương dùng một lần nên chẳng có gì để lọc bỏ, **nhưng chỉ khi đường dẫn lưu trữ thật của volume trên máy chủ tự nó tới được qua điểm gắn Host Data**, đúng như mọi đường dẫn máy chủ khác mà BombVault sao lưu. Trình điều khiển volume cục bộ mặc định đặt volume dưới gốc dữ liệu của chính daemon, tức `/var/lib/docker/volumes/<tên>/_data` nếu bạn chưa đổi (kiểm tra bằng `docker info -f '{{.DockerRootDir}}'`). Vị trí đó KHÔNG nằm trong điểm gắn Host Data hẹp, chỉ một thư mục, mà tệp `docker-compose.yml` chung dùng theo mặc định. Volume không tới được sẽ bị bỏ qua lặng lẽ, đó không phải lỗi. Để thật sự sao lưu volume có tên trên một máy chủ thông thường, hãy trỏ Host Data (và `HOST_SOURCE_ROOT`) tới một thư mục cha chung bao trùm cả gốc dữ liệu của Docker: đánh đổi được nêu trong ghi chú Host Data của tệp compose (Unraid né chuyện này bằng cách gắn toàn bộ `/mnt`, quy ước cấp cao nhất của riêng nó, cũng vì cùng lý do).
+- **Thư mục dự án Docker Compose:** nếu container mang nhãn tiêu chuẩn `com.docker.compose.project.working_dir` (do `docker compose up` tự đặt), thư mục đó cũng được thêm vào, bất kể có bind nào khớp một đoạn gốc dữ liệu hay không.
+- **Ghi đè bằng nhãn `bombvault.data`:** đặt nhãn `bombvault.data=true` lên container để đưa vào TẤT CẢ bind mount của nó, dành cho bố cục mà cả hai quy ước trên đều không bắt được (ví dụ một bind `/srv/plex/config` đơn lẻ, không có dự án Compose). Mọi giá trị không rỗng khác `false` đều tính là đúng; thiếu nhãn hoặc `bombvault.data=false` thì không thay đổi gì.
+
 ## Mô hình bảo mật
 
 !!! warning "Quyền kiểm soát máy chủ tương đương root"

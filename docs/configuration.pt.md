@@ -30,6 +30,15 @@ Os caminhos de repositório de backup assumem por predefinição `/mnt/user/bomb
 !!! note "Verificação de integração com o host"
     Abra `/spike` na interface web depois de o container arrancar. Sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta.
 
+## Deteção das fontes de cópia {#backup-source-detection}
+
+Para cada contentor, o BombVault escolhe por si que bind mounts e volumes nomeados são copiados. Um caminho é aceite assim que um dos pontos seguintes se aplique (o resultado pode sempre ser corrigido por contentor nos seus **Caminhos de cópia**):
+
+- **Correspondência de um segmento de raiz de dados:** a origem no anfitrião do bind contém um dos segmentos de `DATA_ROOT_SEGMENTS` como componente completo do caminho (por omissão apenas `appdata`).
+- **Os volumes Docker nomeados** são sempre incluídos, porque não têm equivalente descartável e portanto não há nada a filtrar, **mas só quando o caminho real de armazenamento do volume no anfitrião é alcançável através da montagem Host Data**, tal como qualquer outro caminho do anfitrião que o BombVault copia. O controlador local por omissão guarda um volume sob a raiz de dados do próprio daemon, ou seja `/var/lib/docker/volumes/<nome>/_data` salvo personalização (confirma com `docker info -f '{{.DockerRootDir}}'`). Esse local NÃO está coberto pela montagem Host Data estreita, de um único diretório, que o `docker-compose.yml` genérico usa por omissão. Um volume inalcançável é ignorado em silêncio, não é um erro. Para copiar mesmo os volumes nomeados num anfitrião genérico, aponta o Host Data (e `HOST_SOURCE_ROOT`) para um antecessor comum que cubra também a raiz de dados do Docker: vê o comentário Host Data no ficheiro compose para o compromisso (o Unraid contorna isto montando todo o `/mnt`, a sua própria convenção universal de topo, pela mesma razão).
+- **Diretório de projeto do Docker Compose:** se o contentor tiver a etiqueta padrão `com.docker.compose.project.working_dir` (posta automaticamente pelo `docker compose up`), esse diretório é acrescentado também, independentemente de algum bind ter correspondido a um segmento de raiz de dados.
+- **Substituição pela etiqueta `bombvault.data`:** põe a etiqueta `bombvault.data=true` num contentor para incluir TODOS os seus bind mounts, para uma disposição que nenhuma das duas convenções acima apanha (por exemplo um único bind `/srv/plex/config` sem projeto Compose). Qualquer valor não vazio diferente de `false` conta como verdadeiro; uma etiqueta ausente ou `bombvault.data=false` não muda nada.
+
 ## Modelo de segurança
 
 !!! warning "Controlo do host equivalente a root"

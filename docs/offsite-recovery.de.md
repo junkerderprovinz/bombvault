@@ -15,6 +15,24 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 !!! note "Direkt aus dem Off-site wiederherstellen"
     Jeder Backup-Browser hat einen Schalter **Lokal / Off-site**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.
 
+## Entfernte primäre Repositories {#remote-primary-repositories}
+
+Der Sicherungspfad einer Domäne (Einstellungen, Pfade & Speicher) ist nicht auf einen lokalen Ordner beschränkt: richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/pfad`), und BombVault sichert unmittelbar dorthin, ohne getrennte lokale Kopie und ohne Replikationsschritt. Das ist eine wirklich andere Form als die Off-site-Replikation weiter oben: dort ist das lokale Repo primär und das Off-site-Repo ein Archiv davon nach bestem Bemühen; hier **ist** das entfernte Repo das primäre und die einzige Kopie, solange du für diese Domäne nicht zusätzlich eine Off-site-Replikation (oder ein zweites Remote) einrichtest.
+
+Jedes der fünf Pfadfelder (Container, VMs, Flash, Konfiguration, Dateien) hat direkt daneben einen Schalter **Lokal / Entfernt**:
+
+- **Lokal** zeigt den gewohnten Ordner-Browser.
+- **Entfernt** tauscht ihn gegen ein einfaches URL-Feld, dazu eine Schaltfläche, die denselben Dialog für Verbindungstest und Zugangsdaten öffnet, den auch Off-site-Ziele verwenden, nur eben für dieses primäre Repo. Von dort bekommst du:
+    - **Einen Verbindungstest** gegen den echten Pfad, bevor du dich darauf verlässt.
+    - **Bandbreitengrenzen** (Hoch- und Herunterladen), damit eine geplante Sicherung auf ein entferntes primäres Repo nicht deine WAN-Leitung auslastet: dieselben restic-Schalter `--limit-upload` und `--limit-download`, die die Off-site-Replikation nutzt, angewandt auf die Sicherung selbst.
+    - **Append-only-Schutz (Unveränderlichkeit)**, geprüft mit demselben aktiven Manipulationstest (eine echte DELETE-Probe gegen die Gegenseite), den auch Off-site-Ziele bekommen. Ist er an, weigert sich BombVault, das Repo selbst zu bereinigen: weil dahinter keine getrennte lokale Kopie steht, dürfen die Zugangsdaten auf dieser Kiste nicht in der Lage sein, die einzige Kopie der Sicherung zu löschen.
+    - **Einen Alarm für das Wachstumsbudget**, abgeleitet aus demselben Trend der Repo-Größe, den die Speicher-Karte ohnehin verfolgt.
+
+Nichts davon ist Pflicht: ein von Hand eingetragener entfernter Pfad ohne gespeicherte Sicherheitseinstellungen sichert genau so wie bisher (unbegrenzte Bandbreite, bereinigbar, kein Budgetalarm). Der Sicherheitsdialog ist für den Fall da, dass du dieselben Schutzmaßnahmen willst, die eine Off-site-Kopie bekommt, ohne dafür extra ein Off-site-Ziel einrichten zu müssen.
+
+!!! note "Cloud- und REST-Zugangsdaten werden geteilt"
+    Ein entferntes primäres Repo meldet sich mit denselben S3-/REST-Zugangsdaten an, die unter Einstellungen, Off-site, Cloud-Zugangsdaten hinterlegt sind. Einen getrennten Speicher für Zugangsdaten primärer Repos gibt es nicht.
+
 ## Unveränderliches (Append-only) Off-site
 
 Markiere ein Off-site-Repo als Append-only, sodass Ransomware oder ein kompromittierter Host deine Backups nicht löschen oder überschreiben kann. Die Gegenseite (ein `restic/rest-server`, der im `--append-only`-Modus läuft) **erzwingt** es. BombVault **verifiziert** es nur und zeigt niemals grün allein auf eine Konfigurationsbehauptung hin.

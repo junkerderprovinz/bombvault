@@ -30,6 +30,15 @@ CA テンプレートに示されているとおり、Docker ソケット、フ�
 !!! note "Host integration check"
     コンテナが起動したあと、Web UI で `/spike` を開いてください。これはすべてのマウントと CLI（Docker ソケット、libvirt、restic、qemu-img、rclone）をプローブし、欠けている部分を報告します。
 
+## バックアップ元の自動判定 {#backup-source-detection}
+
+コンテナごとに、どのバインドマウントと名前付きボリュームをバックアップするかは BombVault が自動で選びます。次のいずれかに当てはまるとパスが採用されます（結果はコンテナごとに **バックアップパス** でいつでも上書きできます）。
+
+- **データルート区切りの一致:** バインドのホスト側ソースが `DATA_ROOT_SEGMENTS` の区切りのいずれかをパス要素まるごととして含む場合（既定は `appdata` のみ）。
+- **Docker の名前付きボリューム** は常に対象になります。使い捨ての相当物が存在せず、除外すべきものがないからです。**ただし、そのボリュームの実際のホスト保存パス自体が Host Data マウント経由で到達できる場合に限ります**。BombVault がバックアップする他のホストパスとまったく同じ条件です。既定のローカルボリュームドライバはボリュームをデーモン自身のデータルート配下、つまり変更していなければ `/var/lib/docker/volumes/<name>/_data` に置きます（`docker info -f '{{.DockerRootDir}}'` で確認できます）。その場所は、汎用の `docker-compose.yml` が既定で使う単一ディレクトリの狭い Host Data マウントには含まれません。到達できないボリュームは黙って飛ばされ、エラーにはなりません。汎用ホストで名前付きボリュームを実際にバックアップするには、Host Data（および `HOST_SOURCE_ROOT`）を Docker のデータルートも含む共通の上位ディレクトリに向けてください。その代償については compose ファイルの Host Data コメントを参照してください（Unraid は同じ理由から、独自の全体規約である `/mnt` をまるごとマウントすることでこれを回避しています）。
+- **Docker Compose のプロジェクトディレクトリ:** コンテナが標準のラベル `com.docker.compose.project.working_dir`（`docker compose up` が自動で付けます）を持つ場合、いずれかのバインドがデータルート区切りに一致したかどうかに関係なく、そのディレクトリも追加されます。
+- **ラベル `bombvault.data` による上書き:** コンテナにラベル `bombvault.data=true` を付けると、そのバインドマウントを全部含めます。上の二つの規約のどちらにも当てはまらない構成（たとえば Compose プロジェクトのない `/srv/plex/config` 単独のバインド）向けです。`false` 以外の空でない値はすべて真とみなされ、ラベルがない場合や `bombvault.data=false` では何も変わりません。
+
 ## セキュリティモデル
 
 !!! warning "Root-equivalent control of the host"

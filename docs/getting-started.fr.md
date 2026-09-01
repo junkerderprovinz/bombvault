@@ -30,6 +30,20 @@ Le chemin le plus simple est **Community Applications**.
     2. Cherchez **BombVault** dans Templates.
     3. Définissez les variables requises et cliquez sur **Apply**.
 
+## Hôte Docker générique
+
+Pas sur Unraid ? BombVault fonctionne aussi comme simple conteneur sur n'importe quel hôte Docker (c'est également ce qui assure la prise en charge des conteneurs sur TrueNAS Scale, avant son entrée dédiée au catalogue d'applications).
+
+1. Récupérez le fichier [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), prêt à éditer, depuis le dépôt.
+2. Définissez `APP_KEY` (voir plus bas) et pointez le volume Host Data vers votre véritable racine de données : les commentaires du fichier détaillent les deux.
+3. `docker compose up -d`, puis ouvrez `https://<ip-hôte>:3443/`.
+
+Ce qui change par rapport à Unraid :
+
+- **Pas de domaine flash/USB.** Il n'y a pas de clé de démarrage à capturer ou à restaurer, le domaine Flash des paramètres n'a donc rien à faire ici. À la place, le domaine Fichiers propose une suggestion en un clic, **Ajouter un préréglage : configuration système de l'hôte** (un jeu de fichiers `/etc` de départ, que vous relisez et modifiez avant d'enregistrer), comme équivalent générique utile.
+- **Pas de notifications natives Unraid.** Les canaux de notification propres à BombVault (webhook, alertes d'échec hors site, etc.) fonctionnent normalement ; seule la remontée spécifique au système de notification d'Unraid est omise, puisqu'un tel système n'existe pas ici.
+- **La sauvegarde de VM est optionnelle et exige un hôte libvirtd distinct joignable en SSH.** Voyez le bloc commenté du fichier compose. Un hôte Docker générique n'embarque aucun gestionnaire de VM.
+
 ## L'unique réglage requis
 
 La seule variable que vous devez définir est `APP_KEY`, un secret hexadécimal de 32 octets (64 caractères hexadécimaux) utilisé pour dériver le mot de passe du dépôt restic.

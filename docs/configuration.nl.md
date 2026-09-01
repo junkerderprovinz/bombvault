@@ -30,6 +30,15 @@ Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,
 !!! note "Controle van hostintegratie"
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen.
 
+## Herkenning van de back-upbronnen {#backup-source-detection}
+
+Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes worden meegenomen. Een pad wordt opgepikt zodra een van de volgende punten geldt (het resultaat kun je per container altijd overschrijven bij zijn **Back-uppaden**):
+
+- **Treffer op een datawortel-segment:** de hostbron van de bind bevat een van de segmenten uit `DATA_ROOT_SEGMENTS` als volledige padcomponent (standaard alleen `appdata`).
+- **Benoemde Docker-volumes** worden altijd meegenomen, want er is geen wegwerpbaar equivalent en dus niets te filteren, **maar alleen wanneer het echte opslagpad van het volume op de host zelf bereikbaar is via de Host Data-koppeling**, net als elk ander hostpad dat BombVault back-upt. Het standaard stuurprogramma voor lokale volumes legt een volume onder de datawortel van de daemon zelf, dus `/var/lib/docker/volumes/<naam>/_data` tenzij dat is aangepast (controleer met `docker info -f '{{.DockerRootDir}}'`). Die plek valt NIET binnen de smalle Host Data-koppeling van één map die de generieke `docker-compose.yml` standaard gebruikt. Een onbereikbaar volume wordt stilzwijgend overgeslagen, dat is geen fout. Om benoemde volumes op een generieke host echt te back-uppen, richt je Host Data (en `HOST_SOURCE_ROOT`) op een gemeenschappelijke bovenliggende map die ook de datawortel van Docker omvat: zie de Host Data-opmerking in het compose-bestand voor de afweging (Unraid omzeilt dit door om dezelfde reden heel `/mnt` te koppelen, zijn eigen universele conventie op het hoogste niveau).
+- **Projectmap van Docker Compose:** draagt de container het gebruikelijke label `com.docker.compose.project.working_dir` (automatisch gezet door `docker compose up`), dan komt die map er ook bij, ongeacht of een bind op een datawortel-segment paste.
+- **Overschrijven met het label `bombvault.data`:** zet het label `bombvault.data=true` op een container om ALLE bind mounts mee te nemen, voor een indeling die geen van beide conventies hierboven vangt (bijvoorbeeld één enkele bind `/srv/plex/config` zonder Compose-project). Elke niet-lege waarde behalve `false` telt als waar; een ontbrekend label of `bombvault.data=false` verandert niets.
+
 ## Beveiligingsmodel
 
 !!! warning "Root-gelijkwaardige controle over de host"

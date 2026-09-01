@@ -15,6 +15,24 @@ Behåll den snabba lokala säkerhetskopian och lägg till en eller flera off-sit
 !!! note "Återställ direkt från off-site"
     Varje säkerhetskopieringsläsare har en omkopplare **Lokal / Off-site**, så om ett lokalt repo förloras eller skadas kan du lista och återställa direkt från off-site-repliken. Radering sker per källa: att ta bort en säkerhetskopia påverkar bara den kopia du tittar på.
 
+## Fjärranslutna primära arkiv {#remote-primary-repositories}
+
+En domäns säkerhetskopieringssökväg (Inställningar, Sökvägar och lagring) är inte begränsad till en lokal mapp: rikta den direkt mot ett restic-fjärrarkiv (`s3:...`, `rest:http://värd:8000/arkiv`, `b2:...`, `sftp:användare@värd:/arkiv`, `rclone:fjärr:bucket/sökväg`) så säkerhetskopierar BombVault dit direkt, utan separat lokal kopia och utan replikeringssteg. Det är en verkligt annan form än off-site-replikeringen ovan: där är det lokala arkivet primärt och off-site-arkivet ett arkiv av det efter bästa förmåga; här **är** fjärrarkivet det primära, och det är den enda kopian så länge du inte också ställer in off-site-replikering (eller ett andra fjärrarkiv) för den domänen.
+
+Vart och ett av de fem sökvägsfälten (Containrar, Virtuella maskiner, Flash, Konfiguration, Filer) har en omkopplare **Lokal / Fjärr** alldeles intill:
+
+- **Lokal** visar den vanliga mappbläddraren.
+- **Fjärr** byter ut den mot ett enkelt URL-fält, plus en knapp som öppnar samma dialog för anslutningstest och inloggningsuppgifter som off-site-destinationer använder, fast inställd för det här primära arkivet. Därifrån får du:
+    - **Ett anslutningstest** mot den verkliga sökvägen, innan du förlitar dig på den.
+    - **Bandbreddsgränser** (uppladdning och nedladdning) så att en schemalagd säkerhetskopiering till ett fjärrprimärt arkiv inte mättar din WAN-länk: samma restic-flaggor `--limit-upload` och `--limit-download` som off-site-replikeringen använder, nu tillämpade på själva säkerhetskopieringen.
+    - **Append-only-skydd (oföränderlighet)**, verifierat med samma aktiva manipulationstest (en riktig DELETE-sond mot andra sidan) som off-site-destinationer får. Med det påslaget vägrar BombVault att själv gallra arkivet: eftersom ingen separat lokal kopia står bakom, får inloggningsuppgifterna på den här maskinen inte kunna radera säkerhetskopians enda kopia.
+    - **Ett larm för tillväxtbudgeten**, hämtat ur samma trend för arkivets storlek som Lagringskortet redan följer.
+
+Inget av detta är obligatoriskt: en handskriven fjärrsökväg utan sparade säkerhetsinställningar säkerhetskopierar precis som förut (obegränsad bandbredd, gallringsbar, inget budgetlarm). Säkerhetsdialogen finns där för när du vill ha samma skydd som en off-site-kopia får, utan att behöva skapa en off-site-destination bara för det.
+
+!!! note "Moln- och REST-uppgifter delas"
+    Ett fjärrprimärt arkiv autentiserar med samma S3-/REST-uppgifter som ställts in under Inställningar, Off-site, Molnuppgifter. Det finns ingen separat uppgiftslagring för primära arkiv.
+
 ## Oföränderligt (append-only) off-site
 
 Flagga ett off-site-repo append-only så att ransomware, eller en komprometterad värd, inte kan radera eller skriva om dina säkerhetskopior. Den bortre sidan (en `restic/rest-server` som körs i `--append-only`-läge) **upprätthåller** det. BombVault **verifierar** det bara och visar aldrig grönt enbart på ett konfigurationspåstående.

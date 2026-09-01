@@ -30,6 +30,15 @@ Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container
 !!! note "Sjekk av host-integrasjon"
     Åpne `/spike` i webgrensesnittet etter at containeren har startet. Den sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler.
 
+## Gjenkjenning av sikkerhetskopiens kilder {#backup-source-detection}
+
+For hver container velger BombVault selv hvilke bind-monteringer og navngitte volumer som sikkerhetskopieres. En sti tas med så snart ett av punktene nedenfor gjelder (resultatet kan alltid overstyres per container under dens **Stier for sikkerhetskopi**):
+
+- **Treff på et datarot-segment:** bindens vertskilde inneholder ett av segmentene i `DATA_ROOT_SEGMENTS` som en hel stikomponent (som standard bare `appdata`).
+- **Navngitte Docker-volumer** tas alltid med, fordi de ikke har noen engangsutgave og det dermed ikke er noe å filtrere bort, **men bare når volumets virkelige lagringssti på verten selv er nåbar gjennom Host Data-monteringen**, akkurat som enhver annen vertssti BombVault sikkerhetskopierer. Standarddriveren for lokale volumer legger et volum under selve demonens datarot, altså `/var/lib/docker/volumes/<navn>/_data` med mindre det er endret (sjekk med `docker info -f '{{.DockerRootDir}}'`). Det stedet er IKKE dekket av den smale Host Data-monteringen med én enkelt katalog som den generiske `docker-compose.yml` bruker som standard. Et volum som ikke kan nås, hoppes stille over, det er ingen feil. For faktisk å sikkerhetskopiere navngitte volumer på en generisk vert må du peke Host Data (og `HOST_SOURCE_ROOT`) mot en felles overordnet katalog som også dekker Dockers datarot: avveiningen står i Host Data-kommentaren i compose-filen (Unraid går utenom dette ved av samme grunn å montere hele `/mnt`, sin egen allmenngyldige konvensjon på øverste nivå).
+- **Prosjektkatalog for Docker Compose:** bærer containeren den vanlige etiketten `com.docker.compose.project.working_dir` (settes automatisk av `docker compose up`), blir den katalogen også lagt til, uavhengig av om noen bind traff et datarot-segment.
+- **Overstyring med etiketten `bombvault.data`:** sett etiketten `bombvault.data=true` på en container for å ta med ALLE dens bind-monteringer, for et oppsett som ingen av konvensjonene over fanger opp (for eksempel én enkelt bind `/srv/plex/config` uten Compose-prosjekt). Enhver ikke-tom verdi utenom `false` teller som sann; en manglende etikett eller `bombvault.data=false` endrer ingenting.
+
 ## Sikkerhetsmodell
 
 !!! warning "Root-ekvivalent kontroll over hosten"

@@ -30,6 +30,20 @@ De makkelijkste weg is **Community Applications**.
     2. Zoek naar **BombVault** in Templates.
     3. Stel de vereiste variabelen in en klik op **Apply**.
 
+## Generieke Docker-host
+
+Geen Unraid? BombVault draait ook als gewone container op elke Docker-host (dat is ook waar de containerondersteuning op TrueNAS Scale op rust, vooruitlopend op een eigen vermelding in de app-catalogus daar).
+
+1. Haal het kant-en-klaar te bewerken bestand [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) uit de repository.
+2. Stel `APP_KEY` in (zie hieronder) en richt het Host Data-volume op je echte datawortel: de opmerkingen in het bestand lopen beide door.
+3. `docker compose up -d`, open daarna `https://<host-ip>:3443/`.
+
+Wat er anders is dan bij Unraid:
+
+- **Geen flash-/USB-domein.** Er is geen opstart-USB om vast te leggen of terug te zetten, dus het Flash-domein in de instellingen heeft hier niets te doen. In plaats daarvan biedt het Bestanden-domein de suggestie met één klik **Voorinstelling toevoegen: hostsysteemconfiguratie** (een eerste set `/etc`-bestanden die je nakijkt en aanpast voor je opslaat), als praktisch generiek equivalent.
+- **Geen Unraid-eigen meldingen.** BombVaults eigen meldingskanalen (webhook, waarschuwingen bij mislukte off-site en dergelijke) werken gewoon; alleen de Unraid-specifieke melding aan diens eigen meldingssysteem blijft achterwege, omdat zo'n systeem hier niet bestaat.
+- **Back-up van virtuele machines is optioneel en vraagt een aparte libvirtd-host die via SSH bereikbaar is.** Zie het uitgecommentarieerde blok in het compose-bestand. Een generieke Docker-host heeft zelf geen VM-beheer.
+
 ## De ene vereiste instelling
 
 De enige variabele die je moet instellen is `APP_KEY`, een 32-byte hex-geheim (64 hex-tekens) dat wordt gebruikt om het wachtwoord van de restic-repository af te leiden.

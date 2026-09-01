@@ -15,6 +15,24 @@ Mantieni il backup locale veloce e aggiungi una o più repliche off-site. Impost
 !!! note "Ripristina direttamente da off-site"
     Ogni browser dei backup ha un interruttore **Locale / Off-site**, così se un repo locale è perso o corrotto puoi elencare e ripristinare direttamente dalla replica off-site. L'eliminazione è per sorgente: rimuovere un backup interessa solo la copia che stai visualizzando.
 
+## Repository primari remoti {#remote-primary-repositories}
+
+Il percorso di backup di un dominio (Impostazioni, Percorsi e archiviazione) non si limita a una cartella locale: puntalo direttamente a un remoto restic (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:utente@host:/repo`, `rclone:remoto:bucket/percorso`) e BombVault salva lì direttamente, senza copia locale separata e senza passo di replica. È una forma davvero diversa dalla replica off-site vista sopra: là il repository locale è il primario e quello off-site ne è un archivio per quanto possibile; qui il repository remoto **è** il primario, ed è l'unica copia finché non configuri anche una replica off-site (o un secondo remoto) per quel dominio.
+
+Ognuno dei cinque campi di percorso (Contenitori, Macchine virtuali, Flash, Configurazione, File) ha subito accanto un interruttore **Locale / Remoto**:
+
+- **Locale** mostra il consueto sfoglia-cartelle.
+- **Remoto** lo sostituisce con un semplice campo URL, più un pulsante che apre la stessa finestra di test connessione e credenziali usata dalle destinazioni off-site, configurata però per questo primario. Da lì ottieni:
+    - **Un test di connessione** contro il percorso reale, prima di farci affidamento.
+    - **Limiti di banda** (invio e ricezione), perché un backup pianificato verso un primario remoto non saturi la tua linea WAN: le stesse opzioni restic `--limit-upload` e `--limit-download` usate dalla replica off-site, applicate al backup stesso.
+    - **Protezione append-only (immutabilità)**, verificata con lo stesso test di manomissione attivo (una vera sonda DELETE verso l'altro capo) che ricevono le destinazioni off-site. Con essa attiva, BombVault si rifiuta di potare il repository: poiché dietro non c'è una copia locale separata, le credenziali su questa macchina non devono poter cancellare l'unica copia del backup.
+    - **Un allarme sul budget di crescita**, ricavato dallo stesso andamento della dimensione del repository che la scheda Archiviazione già segue.
+
+Niente di tutto questo è obbligatorio: un percorso remoto scritto a mano senza impostazioni di sicurezza salvate esegue il backup esattamente come sempre (banda illimitata, potabile, nessun allarme di budget). La finestra di sicurezza serve per quando vuoi le stesse protezioni che ottiene una copia off-site, senza dover creare una destinazione off-site solo per quello.
+
+!!! note "Le credenziali cloud e REST sono condivise"
+    Un primario remoto si autentica con le stesse credenziali S3/REST configurate in Impostazioni, Off-site, Credenziali cloud: non esiste un archivio di credenziali separato per i repository primari.
+
 ## Off-site immutabile (append-only)
 
 Contrassegna un repo off-site come append-only così ransomware, o un host compromesso, non possano eliminare o riscrivere i tuoi backup. L'altro lato (un `restic/rest-server` in esecuzione in modalità `--append-only`) lo **impone**. BombVault lo **verifica** soltanto e non mostra mai verde sulla sola affermazione di una configurazione.

@@ -15,6 +15,24 @@ Conservez la sauvegarde locale rapide et ajoutez un ou plusieurs réplicas hors 
 !!! note "Restaurer directement depuis le hors site"
     Chaque navigateur de sauvegardes dispose d'un commutateur **Local / Hors site**, de sorte que si un dépôt local est perdu ou corrompu, vous pouvez lister et restaurer directement depuis le réplica hors site. La suppression est par source : retirer une sauvegarde n'affecte que la copie que vous consultez.
 
+## Dépôts primaires distants {#remote-primary-repositories}
+
+Le chemin de sauvegarde d'un domaine (Paramètres, Chemins et stockage) ne se limite pas à un dossier local : pointez-le directement vers un dépôt restic distant (`s3:...`, `rest:http://hôte:8000/depot`, `b2:...`, `sftp:utilisateur@hôte:/depot`, `rclone:remote:bucket/chemin`) et BombVault y sauvegarde directement, sans copie locale séparée ni étape de réplication. C'est une forme vraiment différente de la réplication hors site vue plus haut : là, le dépôt local est primaire et le dépôt hors site en est une archive au mieux ; ici, le dépôt distant **est** le primaire, et c'est la seule copie tant que vous n'ajoutez pas aussi une réplication hors site (ou un second dépôt distant) pour ce domaine.
+
+Chacun des cinq champs de chemin (Conteneurs, VM, Flash, Configuration, Fichiers) porte juste à côté un commutateur **Local / Distant** :
+
+- **Local** affiche l'explorateur de dossiers habituel.
+- **Distant** le remplace par un simple champ d'URL, plus un bouton qui ouvre la même boîte de dialogue de test de connexion et d'identifiants que les destinations hors site, mais configurée pour ce dépôt primaire. Vous y trouvez :
+    - **Un test de connexion** contre le chemin réel, avant de vous y fier.
+    - **Des limites de bande passante** (envoi et réception) pour qu'une sauvegarde planifiée vers un primaire distant ne sature pas votre liaison WAN : les mêmes options restic `--limit-upload` et `--limit-download` qu'utilise la réplication hors site, appliquées cette fois à la sauvegarde elle-même.
+    - **Une protection append-only (immuabilité)**, vérifiée par le même test d'altération actif (une véritable sonde DELETE contre l'autre bout) dont bénéficient les destinations hors site. Activée, elle interdit à BombVault d'élaguer le dépôt lui-même : comme aucune copie locale séparée ne se trouve derrière, les identifiants de cette machine ne doivent pas pouvoir supprimer l'unique copie de la sauvegarde.
+    - **Une alerte de budget de croissance**, tirée de la même tendance de taille du dépôt que suit déjà la carte Stockage.
+
+Rien de tout cela n'est obligatoire : un chemin distant saisi à la main, sans réglages de sécurité enregistrés, sauvegarde exactement comme avant (bande passante illimitée, élagage possible, pas d'alerte de budget). La boîte de dialogue de sécurité est là pour le jour où vous voulez les mêmes protections qu'une copie hors site, sans devoir créer une destination hors site rien que pour cela.
+
+!!! note "Les identifiants cloud et REST sont partagés"
+    Un dépôt primaire distant s'authentifie avec les mêmes identifiants S3/REST configurés sous Paramètres, Hors site, Identifiants cloud. Il n'existe pas de magasin d'identifiants distinct pour les dépôts primaires.
+
 ## Hors site immuable (append-only)
 
 Marquez un dépôt hors site en append-only afin qu'un rançongiciel, ou un hôte compromis, ne puisse ni supprimer ni réécrire vos sauvegardes. Le côté distant (un `restic/rest-server` s'exécutant en mode `--append-only`) l'**impose**. BombVault ne fait que le **vérifier** et n'affiche jamais du vert sur la seule foi d'une déclaration de configuration.

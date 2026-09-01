@@ -15,6 +15,24 @@ Houd de snelle lokale back-up en voeg een of meer off-site replica's toe. Stel e
 !!! note "Herstel rechtstreeks vanaf off-site"
     Elke back-upbrowser heeft een schakelaar **Lokaal / Off-site**, zodat je bij een verloren of corrupte lokale repo direct vanaf de off-site replica kunt lijsten en herstellen. Verwijderen gaat per bron: een back-up verwijderen raakt alleen de kopie die je bekijkt.
 
+## Externe primaire repositories {#remote-primary-repositories}
+
+Het back-uppad van een domein (Instellingen, Paden en opslag) is niet beperkt tot een lokale map: richt het rechtstreeks op een restic-remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:gebruiker@host:/repo`, `rclone:remote:bucket/pad`) en BombVault back-upt daar direct naartoe, zonder aparte lokale kopie en zonder replicatiestap. Dat is een werkelijk andere vorm dan de off-sitereplicatie hierboven: daar is het lokale repository primair en is het off-site-repository er een archief van naar beste vermogen; hier **is** het externe repository het primaire, en is het de enige kopie zolang je voor dat domein niet ook off-sitereplicatie (of een tweede remote) instelt.
+
+Elk van de vijf padvelden (Containers, Virtuele machines, Flash, Configuratie, Bestanden) heeft er direct naast een schakelaar **Lokaal / Extern**:
+
+- **Lokaal** toont de vertrouwde mappenbrowser.
+- **Extern** vervangt hem door een eenvoudig URL-veld, plus een knop die hetzelfde venster voor verbindingstest en inloggegevens opent dat off-sitebestemmingen gebruiken, maar dan ingesteld voor dit primaire repository. Daar krijg je:
+    - **Een verbindingstest** tegen het echte pad, voordat je erop vertrouwt.
+    - **Bandbreedtelimieten** (upload en download), zodat een geplande back-up naar een extern primair repository je WAN-lijn niet dichtslibt: dezelfde restic-opties `--limit-upload` en `--limit-download` die off-sitereplicatie gebruikt, nu toegepast op de back-up zelf.
+    - **Append-only-bescherming (onveranderlijkheid)**, gecontroleerd met dezelfde actieve manipulatietest (een echte DELETE-sonde naar de overkant) die off-sitebestemmingen krijgen. Staat die aan, dan weigert BombVault het repository zelf op te schonen: omdat er geen aparte lokale kopie achter zit, mogen de inloggegevens op deze machine niet in staat zijn de enige kopie van de back-up te wissen.
+    - **Een alarm voor het groeibudget**, afgeleid van dezelfde trend in repositorygrootte die de Opslag-kaart al bijhoudt.
+
+Niets hiervan is verplicht: een met de hand ingetypt extern pad zonder opgeslagen veiligheidsinstellingen back-upt precies zoals altijd (onbeperkte bandbreedte, opschoonbaar, geen budgetalarm). Het veiligheidsvenster is er voor als je dezelfde bescherming wilt die een off-sitekopie krijgt, zonder daarvoor apart een off-sitebestemming te moeten aanmaken.
+
+!!! note "Cloud- en REST-inloggegevens worden gedeeld"
+    Een extern primair repository meldt zich aan met dezelfde S3-/REST-inloggegevens die onder Instellingen, Off-site, Cloud-inloggegevens staan. Een aparte opslag voor inloggegevens van primaire repositories bestaat niet.
+
 ## Onveranderlijk (append-only) off-site
 
 Vlag een off-site repo als append-only zodat ransomware, of een gecompromitteerde host, je back-ups niet kan verwijderen of herschrijven. De andere kant (een `restic/rest-server` in `--append-only`-modus) **dwingt** het af. BombVault **verifieert** het alleen en toont nooit groen op basis van louter een configuratie-claim.

@@ -30,6 +30,20 @@
     2. Templates에서 **BombVault**를 검색합니다.
     3. 필수 변수를 설정하고 **Apply**를 클릭합니다.
 
+## 일반 Docker 호스트
+
+Unraid가 아니라면? BombVault는 어떤 Docker 호스트에서도 평범한 컨테이너로 돌아갑니다(TrueNAS Scale의 컨테이너 지원도, 그쪽 앱 카탈로그에 자체 항목이 생기기 전까지는 이것으로 굴러갑니다).
+
+1. 저장소에서 바로 편집할 수 있는 [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml)을 가져옵니다.
+2. `APP_KEY`(아래 참조)를 설정하고 Host Data 볼륨을 실제 데이터 루트로 지정합니다. 파일의 주석이 둘 다 안내합니다.
+3. `docker compose up -d` 후 `https://<host-ip>:3443/`을 엽니다.
+
+Unraid와 다른 점:
+
+- **flash/USB 도메인이 없습니다.** 담거나 되살릴 부팅 USB가 없으므로 설정의 Flash 도메인은 여기서 할 일이 없습니다. 대신 파일 도메인이 한 번의 클릭으로 **프리셋 추가: 호스트 시스템 구성**(저장 전에 살펴보고 손질하는 `/etc` 시작 파일 묶음)을 실용적인 일반 대응물로 제안합니다.
+- **Unraid 자체 알림이 없습니다.** BombVault 자신의 알림 채널(웹훅, 원격지 실패 경고 등)은 평소대로 동작합니다. 빠지는 것은 Unraid 고유 알림 시스템으로 보내는 것뿐이며, 여기에는 그런 시스템이 없기 때문입니다.
+- **VM 백업은 선택 사항이며 SSH로 닿는 별도의 libvirtd 호스트가 필요합니다.** compose 파일의 주석 처리된 블록을 보십시오. 일반 Docker 호스트 자체에는 VM 관리자가 들어 있지 않습니다.
+
 ## 유일한 필수 설정
 
 반드시 설정해야 하는 유일한 변수는 `APP_KEY`이며, restic 저장소 비밀번호를 파생하는 데 사용되는 32바이트 16진수 비밀 값(64개의 16진수 문자)입니다.

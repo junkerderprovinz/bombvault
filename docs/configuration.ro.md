@@ -30,6 +30,15 @@ Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,f
 !!! note "Verificarea integrării cu gazda"
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă.
 
+## Detectarea surselor de copie de rezervă {#backup-source-detection}
+
+Pentru fiecare container, BombVault alege singur ce montări bind și ce volume denumite intră în copie. O cale este preluată de îndată ce se aplică oricare dintre punctele următoare (rezultatul poate fi oricând suprascris per container, în **Căile de copiere** ale acestuia):
+
+- **Potrivire cu un segment al rădăcinii de date:** sursa de pe gazdă a montării bind conține unul dintre segmentele din `DATA_ROOT_SEGMENTS` ca element complet de cale (implicit doar `appdata`).
+- **Volumele Docker denumite** sunt incluse întotdeauna, pentru că nu au un echivalent de unică folosință și deci nu e nimic de filtrat, **dar numai atunci când calea reală de stocare a volumului pe gazdă este ea însăși accesibilă prin montarea Host Data**, exact ca orice altă cale de gazdă pe care BombVault o salvează. Driverul implicit pentru volume locale așază un volum sub rădăcina de date a demonului însuși, adică `/var/lib/docker/volumes/<nume>/_data` dacă nu ai schimbat nimic (verifică cu `docker info -f '{{.DockerRootDir}}'`). Acel loc NU este acoperit de montarea Host Data îngustă, cu un singur director, pe care fișierul `docker-compose.yml` generic o folosește implicit. Un volum inaccesibil este sărit în tăcere, nu este o eroare. Ca volumele denumite să fie salvate cu adevărat pe o gazdă generică, îndreaptă Host Data (și `HOST_SOURCE_ROOT`) către un director părinte comun care acoperă și rădăcina de date a Docker: compromisul este descris în comentariul Host Data din fișierul compose (Unraid ocolește asta montând, din același motiv, întregul `/mnt`, propria sa convenție universală de nivel superior).
+- **Directorul de proiect Docker Compose:** dacă containerul poartă eticheta obișnuită `com.docker.compose.project.working_dir` (pusă automat de `docker compose up`), și acel director este adăugat, indiferent dacă vreo montare bind a potrivit un segment al rădăcinii de date.
+- **Suprascriere prin eticheta `bombvault.data`:** pune pe container eticheta `bombvault.data=true` pentru a include TOATE montările sale bind, pentru o organizare pe care niciuna dintre cele două convenții de mai sus nu o prinde (de exemplu o singură montare `/srv/plex/config` fără proiect Compose). Orice valoare nevidă în afară de `false` contează ca adevărată; o etichetă absentă sau `bombvault.data=false` nu schimbă nimic.
+
 ## Model de securitate
 
 !!! warning "Control al gazdei echivalent cu root"

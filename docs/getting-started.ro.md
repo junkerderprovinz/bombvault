@@ -30,6 +30,20 @@ Calea cea mai simplă este prin **Community Applications**.
     2. Caută **BombVault** în Templates.
     3. Setează variabilele necesare și apasă **Apply**.
 
+## Gazdă Docker generică
+
+Nu ești pe Unraid? BombVault rulează și ca un container obișnuit pe orice gazdă Docker (tot pe asta se sprijină și suportul pentru containere pe TrueNAS Scale, până la o intrare proprie în catalogul de aplicații de acolo).
+
+1. Ia din depozit fișierul [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml), gata de editat.
+2. Setează `APP_KEY` (vezi mai jos) și îndreaptă volumul Host Data către rădăcina ta reală de date: comentariile din fișier le parcurg pe amândouă.
+3. `docker compose up -d`, apoi deschide `https://<ip-gazdă>:3443/`.
+
+Ce este diferit față de Unraid:
+
+- **Nu există domeniu flash/USB.** Nu există un stick de pornire de capturat sau de restaurat, așa că domeniul Flash din setări nu are ce face aici. În schimb, domeniul Fișiere oferă sugestia dintr-un clic **Adaugă presetare: configurația sistemului gazdă** (un set inițial de fișiere `/etc` pe care îl revizuiești și îl modifici înainte de salvare), ca echivalent generic practic.
+- **Nu există notificări native Unraid.** Canalele proprii de notificare ale BombVault (webhook, alerte de eșec în afara sediului și așa mai departe) funcționează ca de obicei; se omite doar trimiterea specifică sistemului de notificări al Unraid, întrucât aici nu există un asemenea sistem.
+- **Copierea mașinilor virtuale este opțională și are nevoie de o gazdă libvirtd separată, accesibilă prin SSH.** Vezi blocul comentat din fișierul compose. O gazdă Docker generică nu vine cu niciun administrator de mașini virtuale.
+
 ## Singura setare obligatorie
 
 Singura variabilă pe care trebuie să o setezi este `APP_KEY`, un secret hex de 32 de octeți (64 de caractere hex) folosit pentru a deriva parola depozitului restic.

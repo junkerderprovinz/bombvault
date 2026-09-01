@@ -30,6 +30,15 @@ Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{contain
 !!! note "Kontrola integrace hostitele"
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části.
 
+## Rozpoznávání zdrojů zálohy {#backup-source-detection}
+
+Pro každý kontejner si BombVault sám vybírá, která připojení bind a pojmenované svazky se zálohují. Cesta se převezme, jakmile platí kterýkoli z následujících bodů (výsledek lze u každého kontejneru kdykoli přepsat v jeho **Cestách zálohy**):
+
+- **Shoda se segmentem kořene dat:** hostitelský zdroj bindu obsahuje jeden ze segmentů `DATA_ROOT_SEGMENTS` jako celou složku cesty (ve výchozím stavu pouze `appdata`).
+- **Pojmenované svazky Dockeru** se zahrnují vždy, protože k nim neexistuje jednorázový protějšek, a není tedy co filtrovat, **ale jen tehdy, když je skutečná úložná cesta svazku na hostiteli dosažitelná přes připojení Host Data**, přesně jako každá jiná hostitelská cesta, kterou BombVault zálohuje. Výchozí ovladač místních svazků ukládá svazek pod kořen dat samotného démona, tedy `/var/lib/docker/volumes/<název>/_data`, pokud to nebylo upraveno (ověříte příkazem `docker info -f '{{.DockerRootDir}}'`). Toto místo NENÍ pokryto úzkým, jednoadresářovým připojením Host Data, které obecný `docker-compose.yml` ve výchozím stavu používá. Nedosažitelný svazek se tiše přeskočí, není to chyba. Aby se pojmenované svazky na obecném hostiteli opravdu zálohovaly, nasměrujte Host Data (a `HOST_SOURCE_ROOT`) na společného předka, který pokrývá i kořen dat Dockeru: kompromis popisuje komentář Host Data v souboru compose (Unraid to obchází tím, že ze stejného důvodu připojí celé `/mnt`, svou vlastní univerzální konvenci nejvyšší úrovně).
+- **Adresář projektu Docker Compose:** nese-li kontejner obvyklý štítek `com.docker.compose.project.working_dir` (nastavuje jej automaticky `docker compose up`), přidá se i tento adresář, bez ohledu na to, zda některý bind odpovídal segmentu kořene dat.
+- **Přepis štítkem `bombvault.data`:** nastavte kontejneru štítek `bombvault.data=true`, aby se zahrnula VŠECHNA jeho připojení bind, pro uspořádání, které nezachytí ani jedna z výše uvedených konvencí (například jediný bind `/srv/plex/config` bez projektu Compose). Jakákoli neprázdná hodnota jiná než `false` platí jako pravda; chybějící štítek nebo `bombvault.data=false` nemění nic.
+
 ## Bezpečnostní model
 
 !!! warning "Kontrola nad hostitelem na úrovni root"

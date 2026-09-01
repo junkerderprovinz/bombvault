@@ -15,6 +15,24 @@ Hızlı yerel yedeği tutun ve bir veya daha fazla site dışı kopya ekleyin. *
 !!! note "Doğrudan site dışından geri yükleyin"
     Her yedekleme tarayıcısında bir **Yerel / Site dışı** anahtarı vardır, böylece bir yerel depo kaybolur ya da bozulursa doğrudan site dışı kopyadan listeleyip geri yükleyebilirsiniz. Silme kaynağa özeldir: bir yedeği kaldırmak yalnızca görüntülediğiniz kopyayı etkiler.
 
+## Uzak birincil depolar {#remote-primary-repositories}
+
+Bir alanın yedekleme yolu (Ayarlar, Yollar ve depolama) yerel bir klasörle sınırlı değildir: doğrudan bir restic uzak deposuna yöneltin (`s3:...`, `rest:http://host:8000/depo`, `b2:...`, `sftp:kullanici@host:/depo`, `rclone:remote:bucket/yol`), BombVault ayrı bir yerel kopya ve çoğaltma adımı olmadan doğrudan oraya yedekler. Bu, yukarıdaki saha dışı çoğaltmadan gerçekten farklı bir biçimdir: orada yerel depo birincildir ve saha dışı depo onun elden geldiğince tutulan arşividir; burada uzak depo birincilin **kendisidir** ve o alan için ayrıca bir saha dışı çoğaltma (ya da ikinci bir uzak depo) kurmadığınız sürece tek kopyadır.
+
+Beş yol alanının her birinin (Kapsayıcılar, Sanal makineler, Flash, Yapılandırma, Dosyalar) hemen yanında bir **Yerel / Uzak** anahtarı vardır:
+
+- **Yerel** alışılmış klasör tarayıcısını gösterir.
+- **Uzak** onu yalın bir URL alanıyla değiştirir; yanına da, saha dışı hedeflerin kullandığı bağlantı testi ve kimlik bilgileri penceresinin aynısını bu birincil depo için ayarlanmış olarak açan bir düğme koyar. Oradan şunları elde edersiniz:
+    - **Bir bağlantı testi**, gerçek yola karşı, ona güvenmeden önce.
+    - **Bant genişliği sınırları** (gönderme ve alma), böylece uzak bir birincil depoya yapılan zamanlanmış yedekleme WAN hattınızı doldurmaz: saha dışı çoğaltmanın kullandığı `--limit-upload` ve `--limit-download` restic seçeneklerinin aynısı, bu kez yedeklemenin kendisine uygulanır.
+    - **Yalnızca-ekleme (değiştirilemezlik) koruması**, saha dışı hedeflerin aldığı etkin kurcalama testinin aynısıyla doğrulanır (karşı tarafa gerçek bir DELETE denemesi). Açıkken BombVault deponun kendisini budamayı reddeder: arkasında ayrı bir yerel kopya bulunmadığına göre, bu makinedeki kimlik bilgileri yedeğin tek kopyasını silebilecek durumda olmamalıdır.
+    - **Bir büyüme bütçesi uyarısı**, Depolama kartının zaten izlediği depo boyutu eğiliminin aynısından türetilir.
+
+Bunların hiçbiri zorunlu değildir: elle yazılmış, kayıtlı güvenlik ayarı olmayan bir uzak yol tam da eskisi gibi yedekler (sınırsız bant genişliği, budanabilir, bütçe uyarısı yok). Güvenlik penceresi, saha dışı bir kopyanın aldığı korumaların aynısını, salt bunun için ayrı bir saha dışı hedef kurmak zorunda kalmadan istediğiniz durum içindir.
+
+!!! note "Bulut ve REST kimlik bilgileri ortaktır"
+    Uzak bir birincil depo, Ayarlar, Saha dışı, Bulut kimlik bilgileri altında yapılandırılan S3/REST kimlik bilgilerinin aynısıyla kimlik doğrular. Birincil depolar için ayrı bir kimlik bilgisi deposu yoktur.
+
 ## Değiştirilemez (yalnızca ekleme) site dışı
 
 Fidye yazılımı ya da ele geçirilmiş bir host yedeklerinizi silemesin veya yeniden yazamasın diye bir site dışı depoyu yalnızca ekleme olarak işaretleyin. Karşı taraf (`--append-only` modunda çalışan bir `restic/rest-server`) bunu **uygular**. BombVault yalnızca bunu **doğrular** ve asla yalnızca bir yapılandırma iddiası üzerine yeşil göstermez.

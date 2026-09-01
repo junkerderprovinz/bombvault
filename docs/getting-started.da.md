@@ -30,6 +30,20 @@ Den nemmeste vej er **Community Applications**.
     2. Søg efter **BombVault** under Templates.
     3. Angiv de nødvendige variabler, og klik på **Apply**.
 
+## Generisk Docker-vært
+
+Ikke Unraid? BombVault kører også som almindelig container på enhver Docker-vært (det er også det, der bærer containerunderstøttelsen på TrueNAS Scale, forud for en egen post i dens app-katalog).
+
+1. Hent den redigeringsklare [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) fra arkivet.
+2. Sæt `APP_KEY` (se nedenfor) og peg Host Data-diskenheden på din rigtige datarod: kommentarerne i filen gennemgår begge dele.
+3. `docker compose up -d`, åbn derefter `https://<vært-ip>:3443/`.
+
+Hvad der er anderledes end på Unraid:
+
+- **Intet flash-/USB-domæne.** Der er ingen boot-USB at indfange eller genskabe, så Flash-domænet i indstillingerne har intet at lave her. I stedet tilbyder Fil-domænet etklik-forslaget **Tilføj forudindstilling: værtssystemets konfiguration** (et sæt `/etc`-filer til at begynde med, som du gennemgår og retter, før du gemmer) som praktisk generisk modstykke.
+- **Ingen Unraid-egne meddelelser.** BombVaults egne meddelelseskanaler (webhook, advarsler om mislykket off-site og lignende) virker som sædvanlig; kun den Unraid-specifikke besked til dens eget meddelelsessystem udelades, da et sådant system ikke findes her.
+- **Sikkerhedskopiering af virtuelle maskiner er valgfri og kræver en separat libvirtd-vært, der kan nås over SSH.** Se den udkommenterede blok i compose-filen. En generisk Docker-vært har ingen indbygget VM-styring.
+
 ## Den ene påkrævede indstilling
 
 Den eneste variabel, du skal angive, er `APP_KEY`, en 32-byte hex-hemmelighed (64 hex-tegn), der bruges til at udlede restic-repositoriets adgangskode.

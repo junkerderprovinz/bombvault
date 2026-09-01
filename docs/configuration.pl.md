@@ -30,6 +30,15 @@ Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/
 !!! note "Kontrola integracji z hostem"
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy.
 
+## Wykrywanie źródeł kopii zapasowej {#backup-source-detection}
+
+Dla każdego kontenera BombVault sam wybiera, które montowania bind i wolumeny nazwane trafiają do kopii. Ścieżka zostaje przyjęta, gdy zachodzi którykolwiek z poniższych warunków (wynik zawsze można nadpisać dla danego kontenera w jego **Ścieżkach kopii**):
+
+- **Trafienie na segment katalogu danych:** źródło bindu na hoście zawiera jeden z segmentów `DATA_ROOT_SEGMENTS` jako pełny człon ścieżki (domyślnie tylko `appdata`).
+- **Nazwane wolumeny Dockera** są dołączane zawsze, bo nie mają jednorazowego odpowiednika, więc nie ma czego filtrować, **ale tylko wtedy, gdy rzeczywista ścieżka wolumenu na hoście jest osiągalna przez montowanie Host Data**, dokładnie tak jak każda inna ścieżka hosta, którą BombVault archiwizuje. Domyślny sterownik wolumenów lokalnych umieszcza wolumen pod katalogiem danych samego demona, czyli `/var/lib/docker/volumes/<nazwa>/_data`, o ile nie zostało to zmienione (sprawdź poleceniem `docker info -f '{{.DockerRootDir}}'`). To miejsce NIE jest objęte wąskim, jednokatalogowym montowaniem Host Data, którego domyślnie używa ogólny `docker-compose.yml`. Nieosiągalny wolumen jest po cichu pomijany, to nie jest błąd. Aby naprawdę archiwizować nazwane wolumeny na zwykłym hoście, skieruj Host Data (oraz `HOST_SOURCE_ROOT`) na wspólny katalog nadrzędny obejmujący także katalog danych Dockera: kompromis opisuje komentarz Host Data w pliku compose (Unraid omija to, montując z tego samego powodu całe `/mnt`, własną uniwersalną konwencję najwyższego poziomu).
+- **Katalog projektu Docker Compose:** jeśli kontener nosi standardową etykietę `com.docker.compose.project.working_dir` (ustawianą automatycznie przez `docker compose up`), ten katalog również zostaje dodany, niezależnie od tego, czy któryś bind pasował do segmentu katalogu danych.
+- **Nadpisanie etykietą `bombvault.data`:** ustaw na kontenerze etykietę `bombvault.data=true`, aby objąć WSZYSTKIE jego montowania bind, dla układu, którego nie łapie żadna z powyższych konwencji (na przykład pojedynczy bind `/srv/plex/config` bez projektu Compose). Każda niepusta wartość inna niż `false` liczy się jako prawda; brak etykiety lub `bombvault.data=false` niczego nie zmienia.
+
 ## Model bezpieczeństwa
 
 !!! warning "Kontrola nad hostem równoważna uprawnieniom root"

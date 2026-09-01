@@ -30,6 +30,15 @@ Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,
 !!! note "Isäntäintegraation tarkistus"
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset.
 
+## Varmuuskopion lähteiden tunnistus {#backup-source-detection}
+
+Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt taltiot varmuuskopioidaan. Polku otetaan mukaan heti, kun jokin seuraavista pätee (tuloksen voi aina ohittaa konttikohtaisesti sen **Varmuuskopiopoluissa**):
+
+- **Osuma datajuuren osaan:** liitoksen isäntälähde sisältää jonkin `DATA_ROOT_SEGMENTS`-osista täytenä polun osana (oletuksena vain `appdata`).
+- **Nimetyt Docker-taltiot** otetaan aina mukaan, koska niillä ei ole kertakäyttöistä vastinetta eikä siten mitään suodatettavaa, **mutta vain silloin, kun taltion todellinen tallennuspolku isännässä on itse tavoitettavissa Host Data -liitoksen kautta**, aivan kuten mikä tahansa muu isäntäpolku, jonka BombVault varmuuskopioi. Paikallisten taltioiden oletusajuri sijoittaa taltion demonin oman datajuuren alle, siis polkuun `/var/lib/docker/volumes/<nimi>/_data`, ellei sitä ole muutettu (tarkista komennolla `docker info -f '{{.DockerRootDir}}'`). Tuo paikka EI kuulu siihen kapeaan, yhden hakemiston Host Data -liitokseen, jota yleinen `docker-compose.yml` oletuksena käyttää. Tavoittamaton taltio ohitetaan äänettömästi, se ei ole virhe. Jotta nimetyt taltiot todella varmuuskopioituvat yleisessä isännässä, osoita Host Data (ja `HOST_SOURCE_ROOT`) yhteiseen ylempään hakemistoon, joka kattaa myös Dockerin datajuuren: kompromissi on kuvattu compose-tiedoston Host Data -kommentissa (Unraid kiertää tämän liittämällä samasta syystä koko `/mnt`-hakemiston, oman ylimmän tason yleiskäytäntönsä).
+- **Docker Composen projektihakemisto:** jos kontissa on vakiotunniste `com.docker.compose.project.working_dir` (jonka `docker compose up` asettaa automaattisesti), myös tuo hakemisto lisätään riippumatta siitä, osuiko jokin liitos datajuuren osaan.
+- **Ohitus tunnisteella `bombvault.data`:** aseta konttiin tunniste `bombvault.data=true`, niin KAIKKI sen bind-liitokset otetaan mukaan. Tämä on tarkoitettu kokoonpanolle, jota kumpikaan yllä olevista käytännöistä ei nappaa (esimerkiksi yksittäinen liitos `/srv/plex/config` ilman Compose-projektia). Mikä tahansa ei-tyhjä arvo paitsi `false` lasketaan todeksi; puuttuva tunniste tai `bombvault.data=false` ei muuta mitään.
+
 ## Turvallisuusmalli
 
 !!! warning "Root-tasoinen isännän hallinta"

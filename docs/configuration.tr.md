@@ -30,6 +30,15 @@ Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,f
 !!! note "Host entegrasyon denetimi"
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir.
 
+## Yedekleme kaynaklarının belirlenmesi {#backup-source-detection}
+
+Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin yedekleneceğini BombVault kendisi seçer. Aşağıdakilerden herhangi biri geçerli olur olmaz bir yol alınır (sonucu kapsayıcı bazında her zaman **Yedekleme yolları** altından değiştirebilirsiniz):
+
+- **Veri kökü parçası eşleşmesi:** bind bağının ana makinedeki kaynağı, `DATA_ROOT_SEGMENTS` parçalarından birini tam bir yol bileşeni olarak içeriyor (varsayılan olarak yalnızca `appdata`).
+- **Adlandırılmış Docker birimleri** her zaman dahil edilir, çünkü atılabilir bir karşılıkları yoktur ve süzülecek bir şey kalmaz, **ama yalnızca birimin ana makinedeki gerçek depolama yolunun kendisi Host Data bağı üzerinden erişilebilir olduğunda**, tıpkı BombVault'un yedeklediği diğer her ana makine yolu gibi. Varsayılan yerel birim sürücüsü bir birimi arka planın kendi veri kökünün altına, yani değiştirilmediyse `/var/lib/docker/volumes/<ad>/_data` yoluna koyar (`docker info -f '{{.DockerRootDir}}'` ile bakabilirsiniz). Bu konum, genel `docker-compose.yml` dosyasının varsayılan olarak kullandığı tek dizinlik dar Host Data bağının kapsamında DEĞİLDİR. Erişilemeyen birim sessizce atlanır, bu bir hata değildir. Genel bir ana makinede adlandırılmış birimlerin gerçekten yedeklenmesi için Host Data'yı (ve `HOST_SOURCE_ROOT` değerini) Docker'ın veri kökünü de kapsayan ortak bir üst dizine yöneltin: ödünleşim compose dosyasının Host Data yorumunda anlatılıyor (Unraid, aynı nedenle kendi en üst düzey genel geleneği olan `/mnt` dizininin tamamını bağlayarak bunu aşar).
+- **Docker Compose proje dizini:** kapsayıcı olağan `com.docker.compose.project.working_dir` etiketini taşıyorsa (`docker compose up` bunu kendiliğinden koyar), herhangi bir bind bağının veri kökü parçasıyla eşleşip eşleşmediğine bakılmaksızın o dizin de eklenir.
+- **`bombvault.data` etiketiyle geçersiz kılma:** yukarıdaki iki geleneğin de yakalayamadığı bir düzen için (örneğin Compose projesi olmayan tek bir `/srv/plex/config` bağı) kapsayıcıya `bombvault.data=true` etiketini koyarak TÜM bind bağlarını dahil edin. `false` dışındaki boş olmayan her değer doğru sayılır; etiketin bulunmaması ya da `bombvault.data=false` hiçbir şeyi değiştirmez.
+
 ## Güvenlik modeli
 
 !!! warning "Host üzerinde root eşdeğeri denetim"

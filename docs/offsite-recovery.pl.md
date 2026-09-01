@@ -15,6 +15,24 @@ Zachowaj szybką kopię lokalną i dodaj jedną lub więcej replik poza siedzib�
 !!! note "Przywracanie prosto z kopii poza siedzibą"
     Każda przeglądarka kopii ma przełącznik **Lokalne / Poza siedzibą**, więc jeśli repozytorium lokalne zostanie utracone lub uszkodzone, możesz wylistować i przywrócić bezpośrednio z repliki poza siedzibą. Usuwanie działa per źródło: usunięcie kopii dotyczy tylko oglądanej właśnie kopii.
 
+## Zdalne repozytoria podstawowe {#remote-primary-repositories}
+
+Ścieżka kopii domeny (Ustawienia, Ścieżki i magazyn) nie ogranicza się do lokalnego katalogu: skieruj ją wprost na zdalne repozytorium restica (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:użytkownik@host:/repo`, `rclone:remote:bucket/ścieżka`), a BombVault będzie archiwizował prosto tam, bez osobnej kopii lokalnej i bez kroku replikacji. To naprawdę inny układ niż replikacja poza siedzibę powyżej: tam repozytorium lokalne jest podstawowe, a zewnętrzne jest jego archiwum w miarę możliwości; tutaj repozytorium zdalne **jest** podstawowe i jest jedyną kopią, dopóki nie skonfigurujesz dla tej domeny również replikacji poza siedzibę (albo drugiego repozytorium zdalnego).
+
+Każde z pięciu pól ścieżki (Kontenery, Maszyny wirtualne, Flash, Konfiguracja, Pliki) ma tuż obok przełącznik **Lokalne / Zdalne**:
+
+- **Lokalne** pokazuje znaną przeglądarkę katalogów.
+- **Zdalne** zamienia ją na zwykłe pole URL oraz przycisk otwierający to samo okno testu połączenia i danych logowania, którego używają cele poza siedzibą, tyle że skonfigurowane dla tego repozytorium podstawowego. Dostajesz stamtąd:
+    - **Test połączenia** z rzeczywistą ścieżką, zanim na niej polegniesz.
+    - **Ograniczenia pasma** (wysyłanie i pobieranie), żeby zaplanowana kopia do zdalnego repozytorium podstawowego nie zapchała łącza WAN: te same przełączniki restica `--limit-upload` i `--limit-download`, których używa replikacja poza siedzibę, zastosowane do samej kopii.
+    - **Ochronę append-only (niezmienność)**, sprawdzaną tym samym aktywnym testem manipulacji (prawdziwa próba DELETE po drugiej stronie), który dostają cele poza siedzibą. Gdy jest włączona, BombVault odmawia przycinania repozytorium: skoro nie stoi za nim osobna kopia lokalna, dane logowania na tej maszynie nie mogą być w stanie usunąć jedynej kopii zapasowej.
+    - **Alarm budżetu wzrostu**, wyliczany z tego samego trendu rozmiaru repozytorium, który karta Magazyn i tak już śledzi.
+
+Nic z tego nie jest obowiązkowe: wpisana ręcznie ścieżka zdalna bez zapisanych ustawień bezpieczeństwa archiwizuje dokładnie tak jak dotąd (nieograniczone pasmo, możliwe przycinanie, brak alarmu budżetu). Okno bezpieczeństwa jest na wypadek, gdy chcesz te same zabezpieczenia, jakie dostaje kopia poza siedzibą, bez zakładania osobnego celu zewnętrznego tylko po to.
+
+!!! note "Dane logowania do chmury i REST są wspólne"
+    Zdalne repozytorium podstawowe uwierzytelnia się tymi samymi danymi S3/REST, które są ustawione w Ustawienia, Poza siedzibą, Dane logowania do chmury. Osobnego magazynu danych logowania dla repozytoriów podstawowych nie ma.
+
 ## Niezmienna (append-only) kopia poza siedzibą
 
 Oznacz repozytorium poza siedzibą jako append-only, aby ransomware lub skompromitowany host nie mogły usunąć ani nadpisać Twoich kopii. Druga strona (`restic/rest-server` działający w trybie `--append-only`) **wymusza** to. BombVault jedynie to **weryfikuje** i nigdy nie pokazuje zielonego na podstawie samej deklaracji konfiguracji.

@@ -30,6 +30,20 @@ Cách dễ nhất là qua **Community Applications**.
     2. Tìm kiếm **BombVault** trong Templates.
     3. Đặt các biến bắt buộc và nhấp **Apply**.
 
+## Máy chủ Docker thông thường
+
+Không dùng Unraid? BombVault cũng chạy như một container bình thường trên bất kỳ máy chủ Docker nào (đây cũng là nền cho hỗ trợ container trên TrueNAS Scale, trước khi có mục riêng trong danh mục ứng dụng ở đó).
+
+1. Lấy tệp [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml) đã sẵn sàng chỉnh sửa từ kho mã.
+2. Đặt `APP_KEY` (xem bên dưới) và trỏ volume Host Data tới gốc dữ liệu thật của bạn: các ghi chú trong tệp hướng dẫn cả hai.
+3. `docker compose up -d`, rồi mở `https://<ip-máy-chủ>:3443/`.
+
+Khác gì so với Unraid:
+
+- **Không có miền flash/USB.** Không có USB khởi động để thu giữ hay khôi phục, nên miền Flash trong phần cài đặt ở đây không có việc gì làm. Thay vào đó, miền Tệp đưa ra gợi ý một cú nhấp **Thêm bộ định sẵn: cấu hình hệ thống máy chủ** (một bộ tệp `/etc` khởi đầu để bạn xem lại và sửa trước khi lưu), như bản tương đương chung và thiết thực.
+- **Không có thông báo gốc của Unraid.** Các kênh thông báo riêng của BombVault (webhook, cảnh báo hỏng bản sao ngoại vi và những thứ tương tự) vẫn chạy bình thường; chỉ việc đẩy sang hệ thống thông báo riêng của Unraid là được bỏ qua, vì ở đây không có hệ thống đó.
+- **Sao lưu máy ảo là tùy chọn và cần một máy chủ libvirtd riêng, tới được qua SSH.** Xem khối bị chú thích trong tệp compose. Bản thân một máy chủ Docker thông thường không có sẵn trình quản lý máy ảo.
+
 ## Cài đặt bắt buộc duy nhất
 
 Biến duy nhất bạn phải đặt là `APP_KEY`, một bí mật hex 32 byte (64 ký tự hex) dùng để dẫn xuất mật khẩu kho lưu trữ restic.

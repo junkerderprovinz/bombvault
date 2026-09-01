@@ -30,6 +30,20 @@ Helpoin reitti on **Community Applications**.
     2. Hae **BombVault** kohdasta Templates.
     3. Aseta vaaditut muuttujat ja napsauta **Apply**.
 
+## Yleinen Docker-isäntä
+
+Ei Unraidia? BombVault toimii myös tavallisena konttina millä tahansa Docker-isännällä (tämä kannattelee myös TrueNAS Scalen konttituen, ennen kuin sillä on oma merkintänsä sikäläisessä sovelluskatalogissa).
+
+1. Nouda arkistosta valmiiksi muokattava [`deploy/docker-compose.generic.yml`](https://github.com/junkerderprovinz/bombvault/blob/main/deploy/docker-compose.generic.yml).
+2. Aseta `APP_KEY` (katso alta) ja osoita Host Data -taltio todelliseen datajuureesi: tiedoston kommentit käyvät läpi molemmat.
+3. `docker compose up -d`, avaa sitten `https://<isännän-ip>:3443/`.
+
+Mikä poikkeaa Unraidista:
+
+- **Ei flash/USB-aluetta.** Käynnistys-USB:tä ei ole talteen otettavaksi tai palautettavaksi, joten asetusten Flash-alueella ei ole täällä tehtävää. Sen sijaan Tiedostot-alue tarjoaa yhden napsautuksen ehdotuksen **Lisää esiasetus: isäntäjärjestelmän kokoonpano** (aloittava `/etc`-tiedostojoukko, jonka käyt läpi ja muokkaat ennen tallennusta) käytännöllisenä yleisenä vastineena.
+- **Ei Unraidin omia ilmoituksia.** BombVaultin omat ilmoituskanavat (webhook, off-site-epäonnistumisen varoitukset ja niin edelleen) toimivat tavalliseen tapaan; pois jää vain Unraid-kohtainen lähetys sen omaan ilmoitusjärjestelmään, koska sellaista järjestelmää ei täällä ole.
+- **Virtuaalikoneiden varmuuskopiointi on valinnaista ja vaatii erillisen, SSH:n yli tavoitettavan libvirtd-isännän.** Katso compose-tiedoston kommentoitu lohko. Yleisessä Docker-isännässä ei ole omaa virtuaalikoneiden hallintaa.
+
 ## Ainoa vaadittu asetus
 
 Ainoa muuttuja, joka sinun on asetettava, on `APP_KEY`, 32-tavuinen heksadesimaalisalaisuus (64 heksamerkkiä), jota käytetään restic-arkiston salasanan johtamiseen.

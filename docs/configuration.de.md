@@ -30,6 +30,15 @@ Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms
 !!! note "Prüfung der Host-Integration"
     Öffne `/spike` in der Web-Oberfläche, nachdem der Container gestartet ist. Es prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile.
 
+## Erkennung der Sicherungsquellen {#backup-source-detection}
+
+Für jeden Container wählt BombVault selbst aus, welche Bind-Mounts und benannten Volumes gesichert werden. Ein Pfad wird übernommen, sobald einer der folgenden Punkte zutrifft (das Ergebnis lässt sich pro Container jederzeit unter **Sicherungspfade** überschreiben):
+
+- **Treffer auf ein Datenwurzel-Segment:** die Host-Quelle des Binds enthält eines der Segmente aus `DATA_ROOT_SEGMENTS` als vollständige Pfadkomponente (voreingestellt nur `appdata`).
+- **Benannte Docker-Volumes** werden immer eingeschlossen, denn zu ihnen gibt es kein wegwerfbares Gegenstück und damit nichts zu filtern, **aber nur, wenn der echte Host-Speicherpfad des Volumes selbst über den Host-Data-Mount erreichbar ist**, genau wie jeder andere Host-Pfad, den BombVault sichert. Der Standardtreiber für lokale Volumes legt ein Volume unterhalb der Datenwurzel des Docker-Daemons ab, also `/var/lib/docker/volumes/<name>/_data`, sofern das nicht angepasst wurde (nachsehen mit `docker info -f '{{.DockerRootDir}}'`). Dieser Ort liegt NICHT im schmalen Ein-Verzeichnis-Host-Data-Mount, den die generische `docker-compose.yml` standardmäßig verwendet. Ein nicht erreichbares Volume wird stillschweigend übersprungen und nicht als Fehler gemeldet. Damit benannte Volumes auf einem generischen Host wirklich gesichert werden, richte Host Data (und `HOST_SOURCE_ROOT`) auf einen gemeinsamen übergeordneten Ordner, der auch die Docker-Datenwurzel abdeckt. Die Abwägung dazu steht im Host-Data-Kommentar der Compose-Datei (Unraid umgeht das, indem es aus demselben Grund gleich ganz `/mnt` einhängt, seine eigene allgemeingültige Konvention auf oberster Ebene).
+- **Projektverzeichnis von Docker Compose:** trägt der Container das übliche Label `com.docker.compose.project.working_dir` (von `docker compose up` automatisch gesetzt), kommt dieses Verzeichnis ebenfalls dazu, unabhängig davon, ob irgendein Bind auf ein Datenwurzel-Segment gepasst hat.
+- **Label-Übersteuerung `bombvault.data`:** setze am Container das Label `bombvault.data=true`, um ALLE seine Bind-Mounts einzuschließen, für ein Layout, das keine der beiden Konventionen oben erfasst (etwa ein einzelner Bind `/srv/plex/config` ohne Compose-Projekt). Jeder nicht leere Wert außer `false` gilt als wahr; ein fehlendes Label oder `bombvault.data=false` ändert nichts.
+
 ## Sicherheitsmodell
 
 !!! warning "Root-äquivalente Kontrolle über den Host"

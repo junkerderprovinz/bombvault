@@ -15,6 +15,24 @@ Tartsd meg a gyors helyi mentést, és adj hozzá egy vagy több telephelyen kí
 !!! note "Visszaállítás közvetlenül telephelyen kívülről"
     Minden mentésböngészőben van egy **Helyi / Telephelyen kívüli** kapcsoló, így ha egy helyi tároló elveszik vagy megsérül, közvetlenül a telephelyen kívüli replikából listázhatsz és állíthatsz vissza. A törlés forrásonkénti: egy mentés eltávolítása csak azt a másolatot érinti, amelyet éppen nézel.
 
+## Távoli elsődleges tárolók {#remote-primary-repositories}
+
+Egy tartomány mentési útvonala (Beállítások, Útvonalak és tárolás) nem korlátozódik helyi mappára: irányítsd egyenesen egy restic távoli tárolóra (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:felhasznalo@host:/repo`, `rclone:remote:bucket/utvonal`), és a BombVault közvetlenül oda ment, külön helyi másolat és replikációs lépés nélkül. Ez valóban más alak, mint a fenti külső telephelyi replikáció: ott a helyi tároló az elsődleges, a külső pedig annak legjobb tudás szerinti archívuma; itt a távoli tároló **maga** az elsődleges, és ez az egyetlen példány, amíg az adott tartományhoz nem állítasz be külső telephelyi replikációt is (vagy egy második távoli tárolót).
+
+Az öt útvonalmező (Konténerek, Virtuális gépek, Flash, Konfiguráció, Fájlok) mindegyike mellett közvetlenül ott áll egy **Helyi / Távoli** kapcsoló:
+
+- **Helyi** a megszokott mappaböngészőt mutatja.
+- **Távoli** ezt egy egyszerű URL-mezőre cseréli, plusz egy gombra, amely ugyanazt a kapcsolatteszt és hitelesítőadat párbeszédet nyitja meg, amit a külső telephelyi célok használnak, csak épp ehhez az elsődleges tárolóhoz beállítva. Onnan a következőket kapod:
+    - **Kapcsolattesztet** a valódi útvonal ellen, mielőtt rábíznád magad.
+    - **Sávszélesség-korlátokat** (fel- és letöltés), hogy egy ütemezett mentés a távoli elsődleges tárolóba ne telítse a WAN-vonaladat: ugyanazok a restic kapcsolók, `--limit-upload` és `--limit-download`, amiket a külső telephelyi replikáció használ, most magára a mentésre alkalmazva.
+    - **Append-only védelmet (változtathatatlanság)**, ugyanazzal az aktív manipulációs teszttel ellenőrizve (valódi DELETE próba a túloldal ellen), amit a külső telephelyi célok kapnak. Bekapcsolva a BombVault megtagadja a tároló saját nyesését: mivel mögötte nincs külön helyi másolat, az ezen a gépen lévő hitelesítő adatok nem lehetnek képesek törölni a mentés egyetlen példányát.
+    - **Növekedési keret riasztást**, ugyanabból a tárolóméret-trendből számolva, amit a Tárolás kártya amúgy is követ.
+
+Ezek közül semmi sem kötelező: egy kézzel beírt távoli útvonal mentett biztonsági beállítások nélkül pontosan úgy ment, ahogy eddig (korlátlan sávszélesség, nyesehető, nincs keretriasztás). A biztonsági párbeszéd arra az esetre van, amikor ugyanazt a védelmet szeretnéd, amit egy külső telephelyi másolat kap, anélkül hogy pusztán ezért külön külső célt kellene létrehoznod.
+
+!!! note "A felhő- és REST-hitelesítő adatok közösek"
+    Egy távoli elsődleges tároló ugyanazokkal az S3/REST hitelesítő adatokkal azonosít, amelyek a Beállítások, Külső telephely, Felhő hitelesítő adatok alatt vannak beállítva. Az elsődleges tárolóknak nincs külön hitelesítőadat-tárolójuk.
+
 ## Módosíthatatlan (append-only) telephelyen kívüli
 
 Jelölj egy telephelyen kívüli tárolót append-only-ként, hogy a zsarolóvírus vagy egy feltört hoszt ne tudja törölni vagy átírni a mentéseidet. A túloldal (egy `restic/rest-server` `--append-only` módban futva) **érvényesíti**. A BombVault csak **ellenőrzi**, és soha nem mutat zöldet pusztán egy konfigurációs állítás alapján.

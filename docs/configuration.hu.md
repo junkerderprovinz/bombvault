@@ -30,6 +30,15 @@ A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{contai
 !!! note "Hosztintegráció-ellenőrzés"
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat.
 
+## A mentési források felismerése {#backup-source-detection}
+
+Minden konténernél a BombVault maga választja ki, mely bind csatolások és nevesített kötetek kerülnek mentésre. Egy útvonal akkor kerül be, ha az alábbiak bármelyike teljesül (az eredményt konténerenként bármikor felülírhatod a **Mentési útvonalak** alatt):
+
+- **Találat egy adatgyökér-szakaszra:** a bind gazdagép oldali forrása a `DATA_ROOT_SEGMENTS` valamelyik szakaszát teljes útvonalelemként tartalmazza (alapértelmezés szerint csak `appdata`).
+- **A nevesített Docker-kötetek** mindig bekerülnek, mert nincs eldobható megfelelőjük, így nincs mit kiszűrni, **de csak akkor, ha a kötet valódi tárolási útvonala a gazdagépen maga is elérhető a Host Data csatoláson át**, pontosan úgy, mint bármely más gazdagép-útvonal, amit a BombVault ment. A helyi kötetek alapértelmezett meghajtója a kötetet a démon saját adatgyökere alá teszi, vagyis a `/var/lib/docker/volumes/<név>/_data` helyre, hacsak nem módosítottad (ellenőrizd a `docker info -f '{{.DockerRootDir}}'` paranccsal). Ezt a helyet NEM fedi le az az egyetlen könyvtárból álló szűk Host Data csatolás, amit az általános `docker-compose.yml` alapból használ. Az elérhetetlen kötet csendben kimarad, ez nem hiba. Ahhoz, hogy általános gazdagépen a nevesített kötetek tényleg mentésre kerüljenek, irányítsd a Host Data csatolást (és a `HOST_SOURCE_ROOT` értéket) egy olyan közös szülőkönyvtárra, amely a Docker adatgyökerét is lefedi: a mérlegelést a compose fájl Host Data megjegyzése írja le (az Unraid ezt úgy kerüli meg, hogy ugyanezért az egész `/mnt` könyvtárat csatolja, a saját, legfelső szintű általános szokása szerint).
+- **Docker Compose projektkönyvtár:** ha a konténeren ott a szokásos `com.docker.compose.project.working_dir` címke (a `docker compose up` automatikusan felteszi), az a könyvtár is bekerül, függetlenül attól, hogy bármelyik bind illeszkedett-e egy adatgyökér-szakaszra.
+- **Felülbírálás a `bombvault.data` címkével:** tedd a konténerre a `bombvault.data=true` címkét, hogy MINDEN bind csatolása bekerüljön, olyan elrendezéshez, amit a fenti két szokás egyike sem fog meg (például egyetlen `/srv/plex/config` bind Compose projekt nélkül). Minden nem üres, `false`-tól különböző érték igaznak számít; hiányzó címke vagy `bombvault.data=false` semmit nem változtat.
+
 ## Biztonsági modell
 
 !!! warning "Root-szintű vezérlés a hoszt felett"

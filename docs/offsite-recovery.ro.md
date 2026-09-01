@@ -15,6 +15,24 @@ Păstrează backupul local rapid și adaugă una sau mai multe replici off-site.
 !!! note "Restaurează direct din off-site"
     Fiecare browser de backup are un comutator **Local / Off-site**, așa că dacă un depozit local este pierdut sau corupt poți lista și restaura direct din replica off-site. Ștergerea este per sursă: eliminarea unui backup afectează doar copia pe care o vizualizezi.
 
+## Depozite primare la distanță {#remote-primary-repositories}
+
+Calea de copiere a unui domeniu (Setări, Căi și stocare) nu se limitează la un dosar local: îndreapt-o direct către un depozit restic la distanță (`s3:...`, `rest:http://gazda:8000/depozit`, `b2:...`, `sftp:utilizator@gazda:/depozit`, `rclone:remote:bucket/cale`) și BombVault salvează direct acolo, fără copie locală separată și fără pas de replicare. Este o formă cu adevărat diferită de replicarea în afara sediului de mai sus: acolo depozitul local este cel primar, iar cel din afara sediului este o arhivă a lui, pe cât posibil; aici depozitul la distanță **este** cel primar și este singura copie, atâta timp cât nu configurezi și o replicare în afara sediului (sau un al doilea depozit la distanță) pentru acel domeniu.
+
+Fiecare dintre cele cinci câmpuri de cale (Containere, Mașini virtuale, Flash, Configurație, Fișiere) are chiar alături un comutator **Local / La distanță**:
+
+- **Local** arată exploratorul de dosare obișnuit.
+- **La distanță** îl schimbă cu un simplu câmp de URL, plus un buton care deschide același dialog de test al conexiunii și de acreditări folosit de destinațiile din afara sediului, configurat însă pentru acest depozit primar. De acolo obții:
+    - **Un test de conexiune** pe calea reală, înainte să te bazezi pe ea.
+    - **Limite de lățime de bandă** (încărcare și descărcare), ca o copie programată către un depozit primar la distanță să nu îți sature legătura WAN: aceleași opțiuni restic `--limit-upload` și `--limit-download` folosite de replicarea în afara sediului, aplicate acum copiei înseși.
+    - **Protecție append-only (imutabilitate)**, verificată cu același test activ de alterare (o sondă DELETE reală către cealaltă parte) pe care îl primesc destinațiile din afara sediului. Cu ea pornită, BombVault refuză să curețe el însuși depozitul: cum în spate nu există o copie locală separată, acreditările de pe această mașină nu trebuie să poată șterge singura copie a datelor salvate.
+    - **O alarmă de buget al creșterii**, luată din aceeași tendință a dimensiunii depozitului pe care fișa Stocare o urmărește deja.
+
+Nimic din toate acestea nu este obligatoriu: o cale la distanță scrisă de mână, fără setări de siguranță salvate, salvează exact ca înainte (lățime de bandă nelimitată, se poate curăța, fără alarmă de buget). Dialogul de siguranță este acolo pentru când vrei aceleași protecții pe care le primește o copie din afara sediului, fără să fii nevoit să creezi o destinație în afara sediului doar pentru asta.
+
+!!! note "Acreditările pentru cloud și REST sunt comune"
+    Un depozit primar la distanță se autentifică cu aceleași acreditări S3/REST configurate la Setări, În afara sediului, Acreditări cloud. Nu există un depozit separat de acreditări pentru depozitele primare.
+
 ## Off-site imuabil (append-only)
 
 Marchează un depozit off-site ca append-only astfel încât ransomware-ul, sau o gazdă compromisă, să nu poată șterge sau rescrie backupurile tale. Partea îndepărtată (un `restic/rest-server` rulând în mod `--append-only`) **o impune**. BombVault doar **o verifică** și nu arată niciodată verde doar pe baza unei afirmații de configurare.
