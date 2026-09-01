@@ -192,7 +192,7 @@ export function IconInfo() {
  * Cancel or dismiss.
  *
  * Same drawing and the same cropped viewBox as navGlyphs' IconClose, for the
- * same reason ([421]): rotating the plus 45 degrees dropped it from 72% of its
+ * same reason ([426]): rotating the plus 45 degrees dropped it from 72% of its
  * box to 58%, the two smallest marks among 48. See IconClose for the full note,
  * including why three separate measurements failed to notice.
  */

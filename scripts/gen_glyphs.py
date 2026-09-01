@@ -239,6 +239,21 @@ _CROSS_BARS = (
 PLUS = _CROSS_BARS
 CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 
+# The cross needs its OWN box, and that is the whole of [426].
+#
+# Turning the plus keeps its arms and loses its extent: the axis-aligned box of
+# a diagonal cross is smaller than the arms that make it. The plus reads at 72%
+# of the 14-unit grid, the same drawing rotated at 58%. Rasterised across all 48
+# glyphs, 45 fill their box and these two crosses were the smallest marks in the
+# set, which is why jdp saw one as undersized the moment it sat beside a
+# full-size glyph.
+#
+# 8.12 = 14 x 0.58, centred on (7,7) — the same point the rotation turns about,
+# so the ink does not move and only the frame around it does. The bars are
+# untouched, which is the point of one drawing serving both marks.
+PLUS_BOX = "0 0 14 14"
+CROSS_BOX = "2.94 2.94 8.12 8.12"
+
 EXTRA_NAV = [
     (
         "IconContainers",
@@ -254,8 +269,8 @@ EXTRA_NAV = [
     ),
     ("IconTabOffsite", "Off-site tab", CLOUD_BOX, CLOUD),
     ("IconCloud", "Off-site or cloud", CLOUD_BOX, CLOUD),
-    ("IconAdd", "Add", "0 0 14 14", PLUS),
-    ("IconClose", "Close", "0 0 14 14", CROSS),
+    ("IconAdd", "Add", PLUS_BOX, PLUS),
+    ("IconClose", "Close", CROSS_BOX, CROSS),
     # ---------------------------------------------------------------------
     # jdp's own files ([316]-[321]), each cropped to its measured ink.
     #
@@ -295,7 +310,7 @@ EXTRA_NAV = [
 # import while its twin moved would have put two different crosses on one
 # screen.
 EXTRA_ACTION = [
-    ("IconCancel", "Cancel or dismiss", "0 0 14 14", CROSS),
+    ("IconCancel", "Cancel or dismiss", CROSS_BOX, CROSS),
     # jdp's save glyph ([316]), replacing Streamline's floppy-disk everywhere a
     # button means "save".
     imported("IconSave", "Save", "0 0 448 512", (0.0, 32.0, 448.0, 448.0), "save"),

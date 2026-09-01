@@ -129,7 +129,7 @@ describe("buttons", () => {
     expect(missing, "Buttons without labelKey cannot pick a glyph.").toEqual([]);
   });
 
-  it("crops the viewBox of any rotated glyph ([421])", () => {
+  it("crops the viewBox of any rotated glyph ([426])", () => {
     // A rotated drawing does not fill the box its own numbers say it does.
     // IconClose is IconAdd's plus turned 45 degrees: the plus reads at 72% of
     // its 14-unit box, the cross at 58%, because the axis-aligned extent of a

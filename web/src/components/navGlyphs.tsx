@@ -309,7 +309,7 @@ export function IconAdd() {
 /**
  * Close.
  *
- * The viewBox is CROPPED to the ink, and that is the whole fix ([421]).
+ * The viewBox is CROPPED to the ink, and that is the whole fix ([426]).
  *
  * This is IconAdd's plus turned 45 degrees, and turning it cost size nobody
  * chose to give up: a plus whose arms span 10 of 14 units reads at 72% of its
@@ -324,7 +324,7 @@ export function IconAdd() {
  * They used getBBox/getBoundingClientRect, and BOTH report a rotated group's
  * PRE-rotation extent, so a rotated glyph measures as though it were never
  * turned. The contact sheet at /glyphs had the same blind spot and rated this
- * one 101% filled; it now rasterises instead ([422]).
+ * one 101% filled; it now rasterises instead ([427]).
  *
  * 8.12 = 14 x 0.58, centred on the same (7,7) the rotation uses, so the ink is
  * untouched and only the frame around it moves. No path data changes, which is

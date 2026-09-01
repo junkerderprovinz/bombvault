@@ -58,7 +58,7 @@ function Cell({ row }: { row: Row }) {
   const [fill, setFill] = useState<number | null>(null);
   const [ratio, setRatio] = useState<number | null>(null);
 
-  // The number is RASTERISED, not read from geometry ([422]).
+  // The number is RASTERISED, not read from geometry ([427]).
   //
   // It used to come from getBBox on the glyph's outermost <g>, which is wrong
   // for exactly one shape and wrong badly: getBBox reports a transformed group's
