@@ -57,6 +57,39 @@ Slå **Receiver**-omskifteren til i Indstillinger for at afsløre en **Receiver*
 
 Modtageren er strengt skrivebeskyttet. Den skriver aldrig til det modtagne repository, så den kan aldrig bryde append-only-garantien, afsenderen forlader sig på.
 
+## Gennemgået eksempel: to Unraid-maskiner, hele vejen
+
+Ovenfor beskrives delene. Her er én komplet opsætning med rigtige værdier, for dele er nemmere at samle, når man har set dem samlet én gang.
+
+To maskiner: **TOWER** kører containerne og sender sikkerhedskopierne, **VAULT** modtager dem og håndhæver uforanderligheden. Udskift med dine egne navne, adresser og delingsstier.
+
+**1. Rejs append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Indstillinger → Eksternt → guidet opsætning*, vælg **rest-server** og generér opskriften. Kopiér fanen **Unraid-skabelon (XML)**, gem den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og vælg derefter *Docker → Add Container* og **rest-server** fra skabelonlisten. Skriv den viste `htpasswd`-linje ind i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT, før du starter den. Engangsadgangskoden vises én gang og gemmes aldrig, så kopiér den nu.
+
+    Lad `--append-only` blive stående i OPTIONS-feltet. Det er hele pointen: uden det er VAULT en almindelig deling igen.
+
+**2. Peg det eksterne arkiv derhen på TOWER.** Arkivets adresse følger mønstret, som opskriften skriver ud:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Første led i stien er htpasswd-brugeren, det andet er arkivet. Indtast den genererede bruger og adgangskode som destinationens REST-legitimation, og kør **forbindelsestesten**.
+
+**3. Slå ”Uforanderlig” til på TOWER.** Manipulationstesten kører med det samme og skal sige *beskyttet*. Hvad svarene betyder:
+
+| Resultat | Hvad der skete |
+| --- | --- |
+| **beskyttet** | VAULT afviste sletningen. Det er den eneste beståede tilstand. |
+| **IKKE beskyttet** | VAULT accepterede en sletning. `--append-only` mangler eller er fjernet. |
+| **ikke entydigt** | Hverken eller. Som regel er adressen ikke den, restic selv bruger, eller legitimationen er ændret. Intet registreres, og ingen advarsel udløses. |
+
+**4. Se på VAULT, hvad der kommer ind.** Slå *Indstillinger → Modtager* til, åbn fanen **Modtager**, og registrér arkivet skrivebeskyttet.
+
+!!! warning "Placeringen er en sti **inde i** containeren, skrevet relativt til værtsmonteringen"
+    Indtast `user/appdata/rest-server/bombvault-containers/containers`, **ikke** `/mnt/user/appdata/…`. BombVault kører i en container, hvor værtens `/mnt` er monteret et andet sted; en absolut værtssti findes ikke derinde. Indsætter du en, fortæller BombVault dig nu den relative sti, du skal bruge i stedet.
+
+    **Afsendende APP_KEY** er TOWERs nøgle, ikke VAULTs. Du finder den på TOWER under *Indstillinger → System*.
+
+**5. Gør det gensidigt, hvis du vil.** Gentag de samme fem trin den anden vej: en rest-server på TOWER, der modtager VAULTs kopi. Så håndhæver hver maskine uforanderligheden for den anden, og ingen kan slette den andens sikkerhedskopier.
+
 ## Guidet gendannelse
 
 En dedikeret **Recovery**-fane fører en frisk eller genopbygget installation gennem katastrofetilfældet, ét sted:

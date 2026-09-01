@@ -57,6 +57,39 @@ BombVault 提供两个层级的证明，证明您的备份确实可还原，而�
 
 接收方严格只读。它绝不会写入已接收的仓库，因此绝不会破坏发送方所依赖的 append-only 保证。
 
+## 完整示例：两台 Unraid，从头到尾
+
+上面讲的是各个部件。这里给出一整套带真实取值的配置，因为部件只要见过一次装配好的样子，就容易装配得多。
+
+两台机器：**TOWER** 运行容器并推送备份，**VAULT** 接收备份并强制不可变。请把名称、地址和共享路径换成你自己的。
+
+**1. 在 VAULT 上架设仅追加服务器。** 在 TOWER 的 BombVault 中进入 *设置 → 异地 → 引导式设置*，选择 **rest-server** 并生成配方。复制 **Unraid 模板 (XML)** 标签页，在 VAULT 上保存为 `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`，然后 *Docker → Add Container*，从模板下拉列表中选择 **rest-server**。启动之前，把显示的 `htpasswd` 行写入 VAULT 的 `/mnt/user/appdata/rest-server/.htpasswd`。一次性密码只显示一次且从不保存，请现在复制。
+
+    请保留 OPTIONS 字段中的 `--append-only`。这正是关键所在：去掉它，VAULT 就又变回普通共享了。
+
+**2. 在 TOWER 上把异地仓库指向它。** 仓库 URL 遵循配方打印出的格式：
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+路径的第一段是 htpasswd 用户，第二段是仓库。把生成的用户名和密码填为该目标的 REST 凭据，然后运行**连接测试**。
+
+**3. 在 TOWER 上打开「不可变」。** 篡改测试会立即运行，必须显示*受保护*。各结果的含义：
+
+| 结果 | 发生了什么 |
+| --- | --- |
+| **受保护** | VAULT 拒绝了删除。这是唯一通过的状态。 |
+| **未受保护** | VAULT 接受了删除。`--append-only` 缺失或已被移除。 |
+| **无法判定** | 两者都不是。通常是 URL 与 restic 自己使用的不一致，或者凭据已更改。不会记录任何结果，也不会触发告警。 |
+
+**4. 在 VAULT 上查看收到了什么。** 打开 *设置 → 接收端*，进入**接收端**标签页，以只读方式注册该仓库。
+
+!!! warning "位置是容器**内部**的路径，相对于主机挂载点书写"
+    请输入 `user/appdata/rest-server/bombvault-containers/containers`，而**不是** `/mnt/user/appdata/…`。BombVault 运行在容器中，主机的 `/mnt` 挂载在别处，主机绝对路径在容器里并不存在。若你粘贴了绝对路径，BombVault 现在会告诉你应改用的相对路径。
+
+    **发送方 APP_KEY** 是 TOWER 的密钥，不是 VAULT 的。可在 TOWER 的 *设置 → 系统* 中找到。
+
+**5. 如果需要，可以做成双向。** 把同样的五个步骤反向再做一遍：TOWER 上的 rest-server 接收 VAULT 的副本。这样每台机器都为对方强制不可变，谁也删不掉对方的备份。
+
 ## 引导式恢复
 
 一个专门的**恢复**标签页在一处引导全新或重建的安装走完灾难场景：

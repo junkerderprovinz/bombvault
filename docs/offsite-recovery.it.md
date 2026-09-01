@@ -57,6 +57,39 @@ Attiva l'interruttore **Ricevente** in Impostazioni per rivelare una scheda **Ri
 
 Il Ricevente è rigorosamente in sola lettura. Non scrive mai nel repository ricevuto, così non può mai rompere la garanzia append-only su cui il mittente fa affidamento.
 
+## Esempio completo: due macchine Unraid, dall'inizio alla fine
+
+Sopra sono descritti i pezzi. Questa è un'installazione completa con valori reali, perché i pezzi si montano meglio dopo averli visti montati una volta.
+
+Due macchine: **TOWER** esegue i container e invia i backup, **VAULT** li riceve e impone l'immutabilità. Sostituisci con i tuoi nomi, indirizzi e percorsi di condivisione.
+
+**1. Su VAULT, avvia il server append-only.** In BombVault su TOWER vai su *Impostazioni → Off-site → configurazione guidata*, scegli **rest-server** e genera la ricetta. Copia la scheda **Modello Unraid (XML)**, salvala su VAULT come `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, poi *Docker → Add Container* e scegli **rest-server** dall'elenco dei modelli. Prima di avviarlo, scrivi la riga `htpasswd` mostrata in `/mnt/user/appdata/rest-server/.htpasswd` su VAULT. La password monouso viene mostrata una sola volta e non viene mai conservata: copiala ora.
+
+    Lascia `--append-only` nel campo OPTIONS. È tutto il senso della cosa: senza, VAULT torna a essere una normale condivisione.
+
+**2. Su TOWER, punta il repository off-site su di esso.** L'URL del repository segue lo schema stampato dalla ricetta:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Il primo segmento del percorso è l'utente htpasswd, il secondo il repository. Inserisci l'utente e la password generati come credenziali REST della destinazione, poi esegui il **test di connessione**.
+
+**3. Su TOWER, attiva «Immutabile».** Il test di manomissione parte subito e deve dire *protetto*. Cosa significano le risposte:
+
+| Risultato | Cosa è successo |
+| --- | --- |
+| **protetto** | VAULT ha rifiutato la cancellazione. È l'unico stato che passa. |
+| **NON protetto** | VAULT ha accettato una cancellazione. Manca `--append-only` oppure è stato rimosso. |
+| **non conclusivo** | Né l'uno né l'altro. Di solito l'URL non è quello che usa restic, oppure le credenziali sono cambiate. Non viene registrato nulla e non scatta alcun avviso. |
+
+**4. Su VAULT, guarda cosa arriva.** Attiva *Impostazioni → Ricevitore*, apri la scheda **Ricevitore** e registra il repository in sola lettura.
+
+!!! warning "La posizione è un percorso **dentro** il container, scritto relativo al mount dell'host"
+    Inserisci `user/appdata/rest-server/bombvault-containers/containers`, **non** `/mnt/user/appdata/…`. BombVault gira in un container in cui il `/mnt` dell'host è montato altrove; un percorso host assoluto lì non esiste. Se ne incolli uno, BombVault ora ti indica il percorso relativo da usare.
+
+    L'**APP_KEY di invio** è la chiave di TOWER, non quella di VAULT. La trovi su TOWER in *Impostazioni → Sistema*.
+
+**5. Rendilo reciproco, se vuoi.** Ripeti gli stessi cinque passi nella direzione opposta: un rest-server su TOWER che riceve la copia di VAULT. Ogni macchina impone allora l'immutabilità all'altra, e nessuna può cancellare i backup dell'altra.
+
 ## Ripristino guidato
 
 Una scheda **Ripristino** dedicata accompagna un'installazione pulita o ricostruita attraverso il caso di disastro, in un unico posto:

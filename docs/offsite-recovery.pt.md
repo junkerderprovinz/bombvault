@@ -57,6 +57,39 @@ Ligue o interruptor **Recetor** em Definições para revelar um separador **Rece
 
 O Recetor é estritamente só de leitura. Nunca escreve no repositório recebido, por isso nunca pode quebrar a garantia append-only da qual o emissor depende.
 
+## Exemplo completo: duas máquinas Unraid, de ponta a ponta
+
+Acima estão as peças. Isto é uma instalação completa com valores reais, porque as peças montam-se melhor depois de as termos visto montadas uma vez.
+
+Duas máquinas: **TOWER** executa os contentores e envia as cópias, **VAULT** recebe-as e impõe a imutabilidade. Substitua pelos seus próprios nomes, endereços e caminhos de partilha.
+
+**1. No VAULT, monte o servidor append-only.** No BombVault em TOWER vá a *Definições → Externo → configuração guiada*, escolha **rest-server** e gere a receita. Copie o separador **Modelo Unraid (XML)**, guarde-o no VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, depois *Docker → Add Container* e escolha **rest-server** na lista de modelos. Antes de o iniciar, escreva a linha `htpasswd` mostrada em `/mnt/user/appdata/rest-server/.htpasswd` no VAULT. A palavra-passe de uso único é mostrada uma vez e nunca guardada: copie-a agora.
+
+    Deixe `--append-only` no campo OPTIONS. É esse o objetivo: sem ele, o VAULT volta a ser uma partilha comum.
+
+**2. No TOWER, aponte o repositório externo para ele.** O URL do repositório segue o padrão que a receita imprime:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+O primeiro segmento do caminho é o utilizador htpasswd, o segundo é o repositório. Introduza o utilizador e a palavra-passe gerados como credenciais REST do destino e execute o **teste de ligação**.
+
+**3. No TOWER, ative «Imutável».** O teste de adulteração corre de imediato e tem de dizer *protegido*. O que significam as respostas:
+
+| Resultado | O que aconteceu |
+| --- | --- |
+| **protegido** | O VAULT recusou a eliminação. É o único estado que passa. |
+| **NÃO protegido** | O VAULT aceitou uma eliminação. Falta `--append-only` ou foi retirado. |
+| **inconclusivo** | Nem uma coisa nem outra. Normalmente o URL não é o que o restic usa, ou as credenciais mudaram. Nada é registado e nenhum alerta é disparado. |
+
+**4. No VAULT, veja o que chega.** Ative *Definições → Recetor*, abra o separador **Recetor** e registe o repositório em apenas leitura.
+
+!!! warning "A localização é um caminho **dentro** do contentor, escrito relativamente à montagem do anfitrião"
+    Introduza `user/appdata/rest-server/bombvault-containers/containers`, e **não** `/mnt/user/appdata/…`. O BombVault corre num contentor onde o `/mnt` do anfitrião está montado noutro sítio; um caminho absoluto do anfitrião não existe lá. Se colar um, o BombVault indica-lhe agora o caminho relativo a usar.
+
+    A **APP_KEY emissora** é a chave do TOWER, não a do VAULT. Encontra-a no TOWER em *Definições → Sistema*.
+
+**5. Torne-o mútuo, se quiser.** Repita os mesmos cinco passos no sentido inverso: um rest-server no TOWER a receber a cópia do VAULT. Cada máquina impõe então a imutabilidade à outra, e nenhuma pode apagar as cópias da outra.
+
 ## Recuperação guiada
 
 Um separador **Recuperação** dedicado acompanha uma instalação de raiz ou reconstruída pelo caso de desastre, num só lugar:

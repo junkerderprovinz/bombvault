@@ -57,6 +57,39 @@ Kapcsold be a **Fogadó** kapcsolót a Beállításokban egy **Fogadó** fül fe
 
 A Fogadó szigorúan csak olvasható. Soha nem ír a fogadott tárolóba, így soha nem tudja megtörni az append-only garanciát, amelyre a küldő támaszkodik.
 
+## Végigvezetett példa: két Unraid gép, elejétől a végéig
+
+Fent az alkatrészek szerepelnek. Itt egy teljes összeállítás valódi értékekkel, mert az alkatrészeket könnyebb összerakni, ha az ember egyszer már látta őket összerakva.
+
+Két gép: a **TOWER** futtatja a konténereket és küldi a mentéseket, a **VAULT** fogadja őket és kikényszeríti a változtathatatlanságot. Cseréld a saját neveidre, címeidre és megosztási útvonalaidra.
+
+**1. A VAULT gépen állítsd fel az append-only kiszolgálót.** A TOWER BombVaultjában menj a *Beállítások → Külső telephely → vezetett beállítás* pontra, válaszd a **rest-server** lehetőséget, és készítsd el a receptet. Másold ki az **Unraid sablon (XML)** fület, mentsd a VAULT gépen `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` néven, majd *Docker → Add Container*, és válaszd a **rest-server** elemet a sablonlistából. Indítás előtt írd be a megjelenített `htpasswd` sort a VAULT gépen a `/mnt/user/appdata/rest-server/.htpasswd` fájlba. Az egyszer használatos jelszó egyszer jelenik meg és sosem kerül tárolásra, másold ki most.
+
+    Hagyd bent a `--append-only` kapcsolót az OPTIONS mezőben. Ez az egésznek a lényege: nélküle a VAULT megint csak egy hétköznapi megosztás.
+
+**2. A TOWER gépen irányítsd oda a külső tárolót.** A tároló címe azt a mintát követi, amit a recept kiír:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Az útvonal első szakasza a htpasswd felhasználó, a második a tároló. Add meg a generált felhasználót és jelszót a cél REST hitelesítő adataiként, majd futtasd a **kapcsolatellenőrzést**.
+
+**3. A TOWER gépen kapcsold be a „Változtathatatlan” beállítást.** A manipulációs teszt azonnal lefut, és *védett* eredményt kell adnia. Mit jelentenek a válaszok:
+
+| Eredmény | Mi történt |
+| --- | --- |
+| **védett** | A VAULT elutasította a törlést. Ez az egyetlen megfelelő állapot. |
+| **NEM védett** | A VAULT elfogadott egy törlést. Hiányzik a `--append-only`, vagy eltávolították. |
+| **nem egyértelmű** | Egyik sem. Általában a cím nem az, amit maga a restic használ, vagy megváltoztak a hitelesítő adatok. Semmi nem kerül rögzítésre, és nem indul riasztás. |
+
+**4. A VAULT gépen nézd meg, mi érkezik.** Kapcsold be a *Beállítások → Fogadó* pontot, nyisd meg a **Fogadó** fület, és regisztráld a tárolót csak olvasható módon.
+
+!!! warning "A hely a konténeren **belüli** útvonal, a gazdagép csatolási pontjához képest megadva"
+    Ezt add meg: `user/appdata/rest-server/bombvault-containers/containers`, és **ne** ezt: `/mnt/user/appdata/…`. A BombVault konténerben fut, ahol a gazdagép `/mnt` könyvtára máshová van csatolva; abszolút gazdagép-útvonal ott nem létezik. Ha mégis beilleszted, a BombVault mostantól megmondja a helyette használandó relatív útvonalat.
+
+    A **küldő APP_KEY** a TOWER kulcsa, nem a VAULT-é. A TOWER gépen a *Beállítások → Rendszer* alatt találod.
+
+**5. Ha akarod, tedd kölcsönössé.** Ismételd meg ugyanazt az öt lépést a másik irányban: egy rest-server a TOWER gépen, amely a VAULT másolatát fogadja. Ekkor mindkét gép kikényszeríti a másik változtathatatlanságát, és egyik sem tudja törölni a másik mentéseit.
+
 ## Vezetett helyreállítás
 
 Egy dedikált **Helyreállítás** fül egy helyen végigvezet egy friss vagy újraépített telepítést a katasztrófaeseten:

@@ -57,6 +57,39 @@ Bir **Alıcı** sekmesini ortaya çıkarmak için Ayarlar'da **Alıcı** geçiş
 
 Alıcı kesinlikle salt okunurdur. Alınan depoya asla yazmaz, böylece göndericinin dayandığı yalnızca ekleme garantisini asla bozamaz.
 
+## Baştan sona örnek: iki Unraid makinesi
+
+Yukarıda parçalar anlatılıyor. Burada gerçek değerlerle tek bir eksiksiz kurulum var, çünkü parçaları bir kez birleştirilmiş halde görmek işi çok kolaylaştırır.
+
+İki makine: **TOWER** kapsayıcıları çalıştırır ve yedekleri gönderir, **VAULT** onları alır ve değiştirilemezliği dayatır. Kendi adlarınızı, adreslerinizi ve paylaşım yollarınızı koyun.
+
+**1. VAULT üzerinde append-only sunucusunu kurun.** TOWER üzerindeki BombVault'ta *Ayarlar → Saha dışı → rehberli kurulum* bölümüne gidin, **rest-server** seçin ve tarifi oluşturun. **Unraid şablonu (XML)** sekmesini kopyalayın, VAULT üzerinde `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` olarak kaydedin, sonra *Docker → Add Container* deyip şablon listesinden **rest-server** seçin. Başlatmadan önce gösterilen `htpasswd` satırını VAULT üzerinde `/mnt/user/appdata/rest-server/.htpasswd` dosyasına yazın. Tek kullanımlık parola bir kez gösterilir ve hiç saklanmaz, şimdi kopyalayın.
+
+    OPTIONS alanındaki `--append-only` kalsın. Bütün mesele bu: onsuz VAULT yine sıradan bir paylaşıma döner.
+
+**2. TOWER üzerinde saha dışı depoyu oraya yönlendirin.** Depo adresi, tarifin yazdırdığı kalıbı izler:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Yolun ilk parçası htpasswd kullanıcısı, ikincisi depodur. Oluşturulan kullanıcı ve parolayı hedefin REST kimlik bilgileri olarak girin ve **bağlantı testini** çalıştırın.
+
+**3. TOWER üzerinde „Değiştirilemez” seçeneğini açın.** Kurcalama testi hemen çalışır ve *korunuyor* demelidir. Yanıtların anlamı:
+
+| Sonuç | Ne oldu |
+| --- | --- |
+| **korunuyor** | VAULT silmeyi reddetti. Geçer durum yalnızca budur. |
+| **KORUNMUYOR** | VAULT bir silmeyi kabul etti. `--append-only` yok ya da kaldırılmış. |
+| **belirsiz** | İkisi de değil. Genelde adres restic'in kendi kullandığı adres değildir ya da kimlik bilgileri değişmiştir. Hiçbir şey kaydedilmez ve uyarı verilmez. |
+
+**4. VAULT üzerinde neyin geldiğini izleyin.** *Ayarlar → Alıcı* seçeneğini açın, **Alıcı** sekmesini açın ve depoyu salt okunur olarak kaydedin.
+
+!!! warning "Konum, kapsayıcının **içindeki** bir yoldur ve ana makine bağlama noktasına göre yazılır"
+    `user/appdata/rest-server/bombvault-containers/containers` girin, `/mnt/user/appdata/…` **değil**. BombVault, ana makinenin `/mnt` dizininin başka yere bağlandığı bir kapsayıcıda çalışır; mutlak ana makine yolu orada yoktur. Yapıştırırsanız BombVault artık kullanmanız gereken göreli yolu söyler.
+
+    **Gönderen APP_KEY**, VAULT'un değil TOWER'ın anahtarıdır. TOWER üzerinde *Ayarlar → Sistem* altında bulunur.
+
+**5. İsterseniz karşılıklı yapın.** Aynı beş adımı ters yönde yineleyin: TOWER üzerinde VAULT'un kopyasını alan bir rest-server. Böylece her makine diğeri için değiştirilemezliği dayatır ve hiçbiri diğerinin yedeklerini silemez.
+
 ## Rehberli kurtarma
 
 Özel bir **Kurtarma** sekmesi, sıfırdan ya da yeniden oluşturulmuş bir kurulumu felaket durumundan tek bir yerde geçirir:

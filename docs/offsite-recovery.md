@@ -75,6 +75,39 @@ Turn on the **Receiver** toggle in Settings to reveal a **Receiver** tab. It is 
 
 The Receiver is strictly read-only. It never writes to the received repository, so it can never break the append-only guarantee the sender relies on.
 
+## Worked example: two Unraid boxes, end to end
+
+Everything above describes the parts. This is one complete setup with real values, because the parts are easier to assemble when you have seen them assembled once.
+
+Two boxes: **TOWER** runs the containers and pushes backups; **VAULT** receives them and enforces immutability. Substitute your own names, addresses and share paths.
+
+**1. On VAULT, stand up the append-only server.** In BombVault on TOWER, go to *Settings → Off-site → guided setup*, pick **rest-server**, and generate the deploy recipe. Copy the **Unraid template (XML)** tab, save it on VAULT as `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, then *Docker → Add Container* and pick **rest-server** from the template dropdown. Before starting it, write the shown `htpasswd` line into `/mnt/user/appdata/rest-server/.htpasswd` on VAULT. The one-time password is displayed once and never stored, so copy it now.
+
+    Leave `--append-only` in the OPTIONS field. It is the whole point: without it VAULT is an ordinary share again.
+
+**2. On TOWER, point the off-site repo at it.** The repo URL follows the pattern the recipe prints:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+The first path segment is the htpasswd user, the second is the repository. Enter the generated user and password as the destination's REST credentials, then run the **connection test**.
+
+**3. On TOWER, turn on Immutable.** The tamper test runs immediately and must say *protected*. What the answers mean:
+
+| Result | What happened |
+| --- | --- |
+| **protected** | VAULT refused the delete. This is the only passing state. |
+| **NOT protected** | VAULT accepted a delete. `--append-only` is missing or was removed. |
+| **inconclusive** | Neither. Usually the URL is not the one restic itself uses, or the credentials changed. Nothing is recorded and no alert fires. |
+
+**4. On VAULT, watch what arrives.** Turn on *Settings → Receiver*, open the **Receiver** tab and register the repository read-only.
+
+!!! warning "The location is a path **inside** the container, written relative to the host mount"
+    Enter `user/appdata/rest-server/bombvault-containers/containers`, **not** `/mnt/user/appdata/...`. BombVault runs in a container, where the host's `/mnt` is mounted elsewhere; an absolute host path does not exist inside it. If you paste one, BombVault now tells you the relative path to use instead.
+
+    The **Sending APP_KEY** is TOWER's key, not VAULT's. Find it on TOWER under *Settings → System*.
+
+**5. Make it mutual, if you want.** Repeat the same five steps in the other direction: a rest-server on TOWER receiving VAULT's copy. Each box then enforces immutability for the other, and neither can delete the other's backups.
+
 ## Guided recovery
 
 A dedicated **Recovery** tab walks a fresh or rebuilt install through the disaster case, in one place:

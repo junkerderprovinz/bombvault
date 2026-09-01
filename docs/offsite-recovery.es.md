@@ -57,6 +57,39 @@ Activa el conmutador **Receptor** en Ajustes para revelar una pestaña **Recepto
 
 El Receptor es estrictamente de solo lectura. Nunca escribe en el repositorio recibido, de modo que nunca puede romper la garantía append-only en la que confía el emisor.
 
+## Ejemplo completo: dos equipos Unraid, de principio a fin
+
+Lo anterior describe las piezas. Esto es una instalación completa con valores reales, porque las piezas se montan mejor cuando uno las ha visto montadas una vez.
+
+Dos equipos: **TOWER** ejecuta los contenedores y envía las copias, **VAULT** las recibe e impone la inmutabilidad. Sustituye por tus propios nombres, direcciones y rutas de recurso compartido.
+
+**1. En VAULT, levanta el servidor append-only.** En BombVault en TOWER ve a *Ajustes → Externo → configuración guiada*, elige **rest-server** y genera la receta. Copia la pestaña **Plantilla de Unraid (XML)**, guárdala en VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, luego *Docker → Add Container* y elige **rest-server** en la lista de plantillas. Antes de arrancarlo, escribe la línea `htpasswd` mostrada en `/mnt/user/appdata/rest-server/.htpasswd` en VAULT. La contraseña de un solo uso se muestra una vez y nunca se guarda: cópiala ahora.
+
+    Deja `--append-only` en el campo OPTIONS. Es el sentido de todo esto: sin él, VAULT vuelve a ser un recurso compartido normal.
+
+**2. En TOWER, apunta el repositorio externo hacia él.** La URL del repositorio sigue el patrón que imprime la receta:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+El primer segmento de la ruta es el usuario htpasswd, el segundo el repositorio. Introduce el usuario y la contraseña generados como credenciales REST del destino y ejecuta la **prueba de conexión**.
+
+**3. En TOWER, activa «Inmutable».** La prueba de manipulación se ejecuta de inmediato y debe decir *protegido*. Qué significan las respuestas:
+
+| Resultado | Qué ocurrió |
+| --- | --- |
+| **protegido** | VAULT rechazó el borrado. Es el único estado que aprueba. |
+| **NO protegido** | VAULT aceptó un borrado. Falta `--append-only` o se ha quitado. |
+| **no concluyente** | Ninguna de las dos. Normalmente la URL no es la que usa restic, o las credenciales han cambiado. No se registra nada ni se dispara ninguna alerta. |
+
+**4. En VAULT, observa lo que llega.** Activa *Ajustes → Receptor*, abre la pestaña **Receptor** y registra el repositorio en solo lectura.
+
+!!! warning "La ubicación es una ruta **dentro** del contenedor, escrita relativa al montaje del host"
+    Introduce `user/appdata/rest-server/bombvault-containers/containers`, **no** `/mnt/user/appdata/…`. BombVault se ejecuta en un contenedor donde el `/mnt` del host está montado en otro sitio; una ruta absoluta del host no existe ahí. Si pegas una, BombVault ahora te indica la ruta relativa que debes usar.
+
+    La **APP_KEY emisora** es la clave de TOWER, no la de VAULT. La encuentras en TOWER en *Ajustes → Sistema*.
+
+**5. Hazlo mutuo, si quieres.** Repite los mismos cinco pasos en sentido contrario: un rest-server en TOWER que reciba la copia de VAULT. Entonces cada equipo impone la inmutabilidad al otro, y ninguno puede borrar las copias del otro.
+
 ## Recuperación guiada
 
 Una pestaña **Recuperación** dedicada guía una instalación nueva o reconstruida a través del caso de desastre, en un solo lugar:

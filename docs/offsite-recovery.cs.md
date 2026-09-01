@@ -57,6 +57,39 @@ Zapněte přepínač **Příjemce** v Nastavení k odhalení záložky **Příje
 
 Příjemce je striktně jen pro čtení. Nikdy nezapisuje do přijatého repozitáře, takže nikdy nemůže porušit záruku append-only, na kterou se odesílatel spoléhá.
 
+## Kompletní příklad: dva stroje Unraid, od začátku do konce
+
+Výše jsou popsány jednotlivé díly. Tohle je jedno úplné nastavení se skutečnými hodnotami, protože díly se skládají snáz, když je člověk jednou viděl složené.
+
+Dva stroje: **TOWER** provozuje kontejnery a posílá zálohy, **VAULT** je přijímá a vynucuje neměnnost. Dosaďte vlastní názvy, adresy a cesty ke sdílení.
+
+**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo pracoviště → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď.
+
+    Nechte `--append-only` v poli OPTIONS. O to tu celou dobu jde: bez toho je VAULT zase obyčejné sdílení.
+
+**2. Na TOWER na něj nasměrujte vzdálený repozitář.** URL repozitáře má tvar, který recept vypíše:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+První část cesty je uživatel htpasswd, druhá je repozitář. Zadejte vygenerovaného uživatele a heslo jako přihlašovací údaje REST pro cíl a spusťte **test připojení**.
+
+**3. Na TOWER zapněte «Neměnné».** Test manipulace proběhne hned a musí hlásit *chráněno*. Co odpovědi znamenají:
+
+| Výsledek | Co se stalo |
+| --- | --- |
+| **chráněno** | VAULT smazání odmítl. To je jediný vyhovující stav. |
+| **NENÍ chráněno** | VAULT smazání přijal. Chybí `--append-only`, nebo byl odebrán. |
+| **neprůkazné** | Ani jedno. Obvykle URL není ta, kterou používá sám restic, nebo se změnily přihlašovací údaje. Nic se nezaznamená a nespustí se žádné upozornění. |
+
+**4. Na VAULT sledujte, co přichází.** Zapněte *Nastavení → Příjemce*, otevřete kartu **Příjemce** a zaregistrujte repozitář jen pro čtení.
+
+!!! warning "Umístění je cesta **uvnitř** kontejneru, zapsaná relativně k připojení hostitele"
+    Zadejte `user/appdata/rest-server/bombvault-containers/containers`, **ne** `/mnt/user/appdata/…`. BombVault běží v kontejneru, kde je `/mnt` hostitele připojeno jinde; absolutní cesta hostitele tam neexistuje. Když ji vložíte, BombVault vám nyní sdělí relativní cestu, kterou máte použít.
+
+    **Odesílající APP_KEY** je klíč stroje TOWER, ne VAULT. Najdete jej na TOWER v *Nastavení → Systém*.
+
+**5. Pokud chcete, udělejte to oboustranně.** Zopakujte stejných pět kroků opačným směrem: rest-server na TOWER přijímající kopii z VAULT. Každý stroj pak vynucuje neměnnost pro ten druhý a ani jeden nemůže smazat zálohy toho druhého.
+
 ## Řízená obnova
 
 Vyhrazená záložka **Obnova** provede čistou nebo znovu sestavenou instalaci havarijním případem, na jednom místě:

@@ -57,6 +57,39 @@ Zet de schakelaar **Ontvanger** in Instellingen aan om een tabblad **Ontvanger**
 
 De Ontvanger is strikt alleen-lezen. Het schrijft nooit naar de ontvangen repository, dus het kan nooit de append-only-garantie breken waar de zender op vertrouwt.
 
+## Uitgewerkt voorbeeld: twee Unraid-machines, van begin tot eind
+
+Hierboven staan de onderdelen. Dit is één volledige opstelling met echte waarden, want onderdelen zijn makkelijker samen te voegen als je ze één keer samengevoegd hebt gezien.
+
+Twee machines: **TOWER** draait de containers en stuurt de back-ups, **VAULT** ontvangt ze en dwingt onveranderlijkheid af. Vul je eigen namen, adressen en sharepaden in.
+
+**1. Zet op VAULT de append-only-server op.** Ga in BombVault op TOWER naar *Instellingen → Extern → begeleide installatie*, kies **rest-server** en genereer het recept. Kopieer het tabblad **Unraid-sjabloon (XML)**, sla het op VAULT op als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, dan *Docker → Add Container* en kies **rest-server** uit de sjabloonlijst. Schrijf vóór het starten de getoonde `htpasswd`-regel op VAULT in `/mnt/user/appdata/rest-server/.htpasswd`. Het eenmalige wachtwoord wordt één keer getoond en nooit bewaard: kopieer het nu.
+
+    Laat `--append-only` in het OPTIONS-veld staan. Daar draait alles om: zonder dat is VAULT weer een gewone share.
+
+**2. Richt op TOWER de externe repo erop.** De repo-URL volgt het patroon dat het recept afdrukt:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Het eerste padsegment is de htpasswd-gebruiker, het tweede de repository. Vul de gegenereerde gebruiker en het wachtwoord in als REST-inloggegevens van de bestemming en voer de **verbindingstest** uit.
+
+**3. Zet op TOWER «Onveranderlijk» aan.** De manipulatietest loopt meteen en moet *beschermd* melden. Wat de antwoorden betekenen:
+
+| Resultaat | Wat er gebeurde |
+| --- | --- |
+| **beschermd** | VAULT weigerde de verwijdering. Dit is de enige geslaagde toestand. |
+| **NIET beschermd** | VAULT accepteerde een verwijdering. `--append-only` ontbreekt of is verwijderd. |
+| **niet doorslaggevend** | Geen van beide. Meestal is de URL niet die welke restic zelf gebruikt, of de inloggegevens zijn gewijzigd. Er wordt niets vastgelegd en geen waarschuwing gegeven. |
+
+**4. Kijk op VAULT wat er binnenkomt.** Zet *Instellingen → Ontvanger* aan, open het tabblad **Ontvanger** en registreer de repository alleen-lezen.
+
+!!! warning "De locatie is een pad **binnen** de container, geschreven ten opzichte van de host-mount"
+    Vul `user/appdata/rest-server/bombvault-containers/containers` in, **niet** `/mnt/user/appdata/…`. BombVault draait in een container waar de `/mnt` van de host elders is gemount; een absoluut hostpad bestaat daar niet. Plak je er toch een, dan noemt BombVault nu het relatieve pad dat je nodig hebt.
+
+    De **verzendende APP_KEY** is de sleutel van TOWER, niet die van VAULT. Je vindt hem op TOWER onder *Instellingen → Systeem*.
+
+**5. Maak het wederzijds, als je wilt.** Herhaal dezelfde vijf stappen in de andere richting: een rest-server op TOWER die de kopie van VAULT ontvangt. Elke machine dwingt dan onveranderlijkheid af voor de andere, en geen van beide kan de back-ups van de ander verwijderen.
+
 ## Begeleid herstel
 
 Een speciaal tabblad **Herstel** leidt een verse of herbouwde installatie op één plek door het noodgeval:

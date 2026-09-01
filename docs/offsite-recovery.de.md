@@ -57,6 +57,39 @@ Schalte den **Empfänger**-Schalter in den Einstellungen ein, um einen **Empfän
 
 Der Empfänger ist strikt schreibgeschützt. Er schreibt niemals in das empfangene Repository, sodass er die Append-only-Garantie, auf die sich der Sender verlässt, nie brechen kann.
 
+## Durchgerechnetes Beispiel: zwei Unraid-Kisten, Ende zu Ende
+
+Oben stehen die Einzelteile. Hier ist ein vollständiger Aufbau mit echten Werten, weil sich Teile leichter zusammensetzen lassen, wenn man sie einmal zusammengesetzt gesehen hat.
+
+Zwei Kisten: **TOWER** betreibt die Container und schiebt die Backups, **VAULT** nimmt sie an und erzwingt die Unveränderlichkeit. Setze deine eigenen Namen, Adressen und Freigabepfade ein.
+
+**1. Auf VAULT den Append-only-Server aufsetzen.** In BombVault auf TOWER unter *Einstellungen → Off-site → geführte Einrichtung* **rest-server** wählen und das Rezept erzeugen. Den Reiter **Unraid-Vorlage (XML)** kopieren, auf VAULT als `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` speichern, dann *Docker → Add Container* und **rest-server** aus der Vorlagenliste wählen. Vor dem Start die angezeigte `htpasswd`-Zeile auf VAULT in `/mnt/user/appdata/rest-server/.htpasswd` schreiben. Das Einmal-Passwort wird nur einmal angezeigt und nie gespeichert, kopiere es jetzt.
+
+    `--append-only` im OPTIONS-Feld stehen lassen. Es ist der ganze Sinn der Sache: ohne das ist VAULT wieder eine gewöhnliche Freigabe.
+
+**2. Auf TOWER das Off-site-Repo darauf richten.** Die Repo-URL folgt dem Muster, das das Rezept ausgibt:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Das erste Pfadsegment ist der htpasswd-Benutzer, das zweite das Repository. Trage den erzeugten Benutzer und das Passwort als REST-Zugangsdaten des Ziels ein und führe den **Verbindungstest** aus.
+
+**3. Auf TOWER „“ einschalten.** Der Manipulationstest läuft sofort und muss *geschützt* melden. Was die Antworten bedeuten:
+
+| Ergebnis | Was passiert ist |
+| --- | --- |
+| **geschützt** | VAULT hat das Löschen verweigert. Das ist der einzige bestandene Zustand. |
+| **NICHT geschützt** | VAULT hat ein Löschen angenommen. `--append-only` fehlt oder wurde entfernt. |
+| **unentschieden** | Weder noch. Meist ist die URL nicht die, die restic selbst benutzt, oder die Zugangsdaten haben sich geändert. Es wird nichts vermerkt und kein Alarm ausgelöst. |
+
+**4. Auf VAULT ansehen, was ankommt.** *Einstellungen → Empfänger* einschalten, den Reiter **Empfänger** öffnen und das Repository schreibgeschützt registrieren.
+
+!!! warning "Der Ort ist ein Pfad **innerhalb** des Containers, relativ zum Host-Mount geschrieben"
+    Trage `user/appdata/rest-server/bombvault-containers/containers` ein, **nicht** `/mnt/user/appdata/…`. BombVault läuft in einem Container, in dem das `/mnt` des Hosts an anderer Stelle eingehängt ist; ein absoluter Host-Pfad existiert dort nicht. Fügst du trotzdem einen ein, nennt BombVault dir jetzt den relativen Pfad, den du stattdessen brauchst.
+
+    Der **sendende APP_KEY** ist der Schlüssel von TOWER, nicht der von VAULT. Du findest ihn auf TOWER unter *Einstellungen → System*.
+
+**5. Wenn du magst, mach es gegenseitig.** Dieselben fünf Schritte in die andere Richtung: ein rest-server auf TOWER, der VAULTs Kopie annimmt. Dann erzwingt jede Kiste die Unveränderlichkeit für die andere, und keine kann die Backups der anderen löschen.
+
 ## Geführte Wiederherstellung
 
 Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installation durch den Katastrophenfall, an einem Ort:

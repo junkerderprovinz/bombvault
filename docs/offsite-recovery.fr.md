@@ -57,6 +57,39 @@ Activez la bascule **Récepteur** dans les Paramètres pour révéler un onglet 
 
 Le récepteur est strictement en lecture seule. Il n'écrit jamais dans le dépôt reçu, il ne peut donc jamais briser la garantie append-only sur laquelle l'émetteur compte.
 
+## Exemple complet : deux machines Unraid, de bout en bout
+
+Ce qui précède décrit les pièces. Voici une installation complète avec de vraies valeurs, parce que les pièces s'assemblent plus facilement quand on les a vues assemblées une fois.
+
+Deux machines : **TOWER** fait tourner les conteneurs et envoie les sauvegardes, **VAULT** les reçoit et impose l'immuabilité. Remplacez par vos propres noms, adresses et chemins de partage.
+
+**1. Sur VAULT, mettez en place le serveur append-only.** Dans BombVault sur TOWER, allez dans *Paramètres → Hors site → configuration guidée*, choisissez **rest-server** et générez la recette. Copiez l'onglet **Modèle Unraid (XML)**, enregistrez-le sur VAULT sous `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, puis *Docker → Add Container* et choisissez **rest-server** dans la liste des modèles. Avant de le démarrer, écrivez la ligne `htpasswd` affichée dans `/mnt/user/appdata/rest-server/.htpasswd` sur VAULT. Le mot de passe à usage unique n'est affiché qu'une fois et n'est jamais conservé : copiez-le maintenant.
+
+    Laissez `--append-only` dans le champ OPTIONS. C'est tout l'intérêt : sans lui, VAULT redevient un partage ordinaire.
+
+**2. Sur TOWER, pointez le dépôt hors site dessus.** L'URL du dépôt suit le modèle imprimé par la recette :
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Le premier segment du chemin est l'utilisateur htpasswd, le second le dépôt. Saisissez l'utilisateur et le mot de passe générés comme identifiants REST de la destination, puis lancez le **test de connexion**.
+
+**3. Sur TOWER, activez « Immuable ».** Le test d'altération s'exécute immédiatement et doit indiquer *protégé*. Ce que signifient les réponses :
+
+| Résultat | Ce qui s'est passé |
+| --- | --- |
+| **protégé** | VAULT a refusé la suppression. C'est le seul état qui passe. |
+| **NON protégé** | VAULT a accepté une suppression. `--append-only` manque ou a été retiré. |
+| **non concluant** | Ni l'un ni l'autre. En général, l'URL n'est pas celle qu'utilise restic lui-même, ou les identifiants ont changé. Rien n'est enregistré et aucune alerte n'est déclenchée. |
+
+**4. Sur VAULT, regardez ce qui arrive.** Activez *Paramètres → Récepteur*, ouvrez l'onglet **Récepteur** et enregistrez le dépôt en lecture seule.
+
+!!! warning "L'emplacement est un chemin **à l'intérieur** du conteneur, écrit relativement au montage hôte"
+    Saisissez `user/appdata/rest-server/bombvault-containers/containers`, et **non** `/mnt/user/appdata/…`. BombVault s'exécute dans un conteneur où le `/mnt` de l'hôte est monté ailleurs ; un chemin hôte absolu n'y existe pas. Si vous en collez un, BombVault vous indique désormais le chemin relatif à utiliser.
+
+    L'**APP_KEY d'envoi** est la clé de TOWER, pas celle de VAULT. Vous la trouvez sur TOWER sous *Paramètres → Système*.
+
+**5. Rendez-le mutuel, si vous le souhaitez.** Répétez les mêmes cinq étapes dans l'autre sens : un rest-server sur TOWER qui reçoit la copie de VAULT. Chaque machine impose alors l'immuabilité à l'autre, et aucune ne peut supprimer les sauvegardes de l'autre.
+
 ## Récupération guidée
 
 Un onglet **Récupération** dédié accompagne une installation neuve ou reconstruite à travers le cas de sinistre, au même endroit :

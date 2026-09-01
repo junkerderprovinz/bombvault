@@ -57,6 +57,39 @@ Kytke **Vastaanottaja**-kytkin päälle Asetuksissa paljastaaksesi **Vastaanotta
 
 Vastaanottaja on ehdottoman vain luku -tilainen. Se ei koskaan kirjoita vastaanotettuun repositorioon, joten se ei voi koskaan rikkoa append-only-takuuta, johon lähettäjä nojaa.
 
+## Läpikäyty esimerkki: kaksi Unraid-konetta, päästä päähän
+
+Yllä kuvataan osat. Tässä on yksi kokonainen kokoonpano oikeilla arvoilla, sillä osat on helpompi koota, kun ne on kerran nähnyt koottuina.
+
+Kaksi konetta: **TOWER** ajaa kontit ja lähettää varmuuskopiot, **VAULT** ottaa ne vastaan ja pakottaa muuttumattomuuden. Korvaa omilla nimillä, osoitteilla ja jakopoluilla.
+
+**1. Pystytä append-only-palvelin VAULTiin.** Mene TOWERin BombVaultissa kohtaan *Asetukset → Etäkohde → ohjattu asennus*, valitse **rest-server** ja luo resepti. Kopioi välilehti **Unraid-malli (XML)**, tallenna se VAULTiin nimellä `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, valitse sitten *Docker → Add Container* ja mallilistasta **rest-server**. Kirjoita näytetty `htpasswd`-rivi VAULTissa tiedostoon `/mnt/user/appdata/rest-server/.htpasswd` ennen käynnistystä. Kertakäyttösalasana näytetään kerran eikä sitä tallenneta, joten kopioi se nyt.
+
+    Jätä `--append-only` OPTIONS-kenttään. Se on koko juju: ilman sitä VAULT on taas tavallinen jako.
+
+**2. Osoita etävarasto sinne TOWERissa.** Varaston osoite noudattaa reseptin tulostamaa muotoa:
+
+    rest:http://VAULT:8000/bombvault-containers/containers
+
+Polun ensimmäinen osa on htpasswd-käyttäjä, toinen on varasto. Syötä luotu käyttäjä ja salasana kohteen REST-tunnuksiksi ja aja **yhteystesti**.
+
+**3. Kytke TOWERissa ”Muuttumaton” päälle.** Peukalointitesti ajetaan heti ja sen on sanottava *suojattu*. Mitä vastaukset tarkoittavat:
+
+| Tulos | Mitä tapahtui |
+| --- | --- |
+| **suojattu** | VAULT kieltäytyi poistosta. Tämä on ainoa hyväksytty tila. |
+| **EI suojattu** | VAULT hyväksyi poiston. `--append-only` puuttuu tai se on poistettu. |
+| **ei ratkaiseva** | Ei kumpikaan. Yleensä osoite ei ole se, jota restic itse käyttää, tai tunnukset ovat muuttuneet. Mitään ei kirjata eikä hälytystä laukaista. |
+
+**4. Katso VAULTissa, mitä saapuu.** Kytke päälle *Asetukset → Vastaanotin*, avaa **Vastaanotin**-välilehti ja rekisteröi varasto vain luku -tilassa.
+
+!!! warning "Sijainti on polku kontin **sisällä**, kirjoitettuna suhteessa isäntäliitokseen"
+    Syötä `user/appdata/rest-server/bombvault-containers/containers`, **ei** `/mnt/user/appdata/…`. BombVault ajetaan kontissa, jossa isännän `/mnt` on liitetty muualle; isännän absoluuttista polkua ei siellä ole. Jos liität sellaisen, BombVault kertoo nyt käytettävän suhteellisen polun.
+
+    **Lähettävä APP_KEY** on TOWERin avain, ei VAULTin. Löydät sen TOWERista kohdasta *Asetukset → Järjestelmä*.
+
+**5. Tee siitä molemminpuolinen, jos haluat.** Toista samat viisi vaihetta toiseen suuntaan: rest-server TOWERissa vastaanottamassa VAULTin kopiota. Silloin kumpikin kone pakottaa muuttumattomuuden toiselle, eikä kumpikaan voi poistaa toisen varmuuskopioita.
+
 ## Ohjattu palautus
 
 Erillinen **Palautus**-välilehti opastaa tuoreen tai uudelleenrakennetun asennuksen läpi katastrofitilanteen, yhdessä paikassa:
