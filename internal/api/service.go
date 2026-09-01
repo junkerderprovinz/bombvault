@@ -1845,6 +1845,13 @@ func replicationState(now int64, in protInputs) string {
 //     concern, so the chip can't read green over the red "failed" drill row, but
 //     it stays amber (not full red) because other protections may still be fine.
 //   - green otherwise.
+//
+// An off-site copy that is simply not flagged immutable stays green here: it is
+// a real copy, and whether the far side can enforce append-only is a property of
+// the destination the user picked, not a check that failed. The dashboard's
+// scorecard still marks that row amber rather than grey, so the gap is visible
+// without the chip nagging about a deliberate choice — the one place a row's
+// colour and this chip deliberately differ (see appendOnlyRow in Dashboard.tsx).
 func protectionLevel(now int64, in protInputs) string {
 	if !in.enabled {
 		return "" // disabled domains carry no protection posture

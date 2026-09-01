@@ -950,7 +950,11 @@ function protectionChip(level: string): string {
 // or "muted" (not applicable / never run — no claim made, so not a failure).
 type RowState = "ok" | "amber" | "bad" | "muted";
 
-function RansomwareCard({
+// Exported for Dashboard.ransomwareCard.dom.test.tsx, the same way
+// ProtectionCard above is: the page cannot reach this card on a test box (an
+// unscheduled domain carries no protection posture, so `shown` is empty and the
+// card renders nothing), which makes the page a useless place to verify from.
+export function RansomwareCard({
   t,
   domains,
   loading,
@@ -1000,7 +1004,9 @@ function RansomwareCard({
 
   // appendOnly/replication/drill rows are pure maps of the backend state string
   // (which is kept consistent with the chip). The ✓/!/✗/— icon + label + color all
-  // follow the state, so a red/never row never reads "verified".
+  // follow the state, so a red/never row never reads "verified". The single
+  // documented divergence is appendOnlyRow's "" arm — see the comment there for
+  // why that one colours the row without moving the chip.
   const appendOnlyRow = (d: DomainStatus): { label: string; state: RowState; at?: number } => {
     switch (d.tamperState) {
       case "ok":
@@ -1012,7 +1018,30 @@ function RansomwareCard({
       case "never":
         return { label: t("ransomware.appendOnlyNever"), state: "bad" };
       default:
-        return { label: t("ransomware.appendOnlyOff"), state: "muted" };
+        // "" — the off-site copy carries no append-only flag, so the backend
+        // makes no claim to prove (protectionChecks sets Tamper="" exactly when
+        // !offsiteImmutable). This row used to be a grey dash for that, which on
+        // a card titled "ransomware protection" reads as "does not apply". It
+        // does apply: a deletable off-site copy is deletable by whatever reaches
+        // the credentials on this box, which is the whole scenario the card is
+        // about. Amber says "gap" without claiming a failure.
+        //
+        // Deliberately amber WITHOUT downgrading the chip, which is the one
+        // place a row's colour and the chip's diverge. Every other amber row is
+        // a currency signal — something that was supposed to happen and has not
+        // — and protectionLevel is right to fold those in. This one reports a
+        // configuration the user may well have chosen on purpose (plenty of
+        // cloud targets cannot do append-only at all), and a chip that reads
+        // "Needs attention" forever over a deliberate choice stops being a
+        // health signal and becomes a preference nag.
+        //
+        // Only once an off-site copy actually exists: with none configured the
+        // row above is already red and links to the same settings page, and
+        // "append-only not enabled" underneath it would be noise.
+        return {
+          label: t("ransomware.appendOnlyOff"),
+          state: d.offsiteConfigured ? "amber" : "muted",
+        };
     }
   };
   const replicationRow = (d: DomainStatus): { label: string; state: RowState; at?: number } => {
