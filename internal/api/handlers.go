@@ -27,6 +27,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"runtime"
 )
 
 // ---------------------------------------------------------------------------
@@ -1333,6 +1334,9 @@ type settingsView struct {
 	// Off-site transfer bandwidth caps (KiB/s; 0 = unlimited).
 	OffsiteLimitUpload   int `json:"offsiteLimitUpload"`
 	OffsiteLimitDownload int `json:"offsiteLimitDownload"`
+	// BackupCores caps the CPU threads each restic child uses (GOMAXPROCS).
+	// 0 = every core, restic's own default ([558], issue #189).
+	BackupCores int `json:"backupCores"`
 	// Opt-in Prometheus /metrics endpoint + its optional bearer scrape token.
 	// The token is a secret and follows the house blank-and-report-is-set
 	// contract (see handleGetNotify/handleGetCloud): GET always returns
@@ -1521,6 +1525,7 @@ func toView(s store.Settings) settingsView {
 		OffsiteRetentionKeepMonthly: s.OffsiteRetentionKeepMonthly,
 		OffsiteLimitUpload:          s.OffsiteLimitUpload,
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
+		BackupCores:                 s.BackupCores,
 		MetricsEnabled:              s.MetricsEnabled,
 		MetricsToken:                "", // secret — never echoed; MetricsTokenSet reports presence
 		MetricsTokenSet:             s.MetricsToken != "",
@@ -1889,6 +1894,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
 		cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 		cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
+		// Clamped to the machine's own thread count: a number above it is not a
+		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
+		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())
 		cur.MetricsEnabled = v.MetricsEnabled
 		cur.DrillsEnabled = v.DrillsEnabled
 		cur.DrillsSchedule = v.DrillsSchedule
@@ -1990,6 +1998,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// offsite_targets row so the replication path (which now reads those rows) sees
 	// the change. Settings stays authoritative for the fallback/rollback path.
 	h.svc.syncAllPrimaryOffsiteTargets(s)
+	// The CPU cap reaches restic through the process environment of the NEXT
+	// child it starts ([558]), so applying it here takes effect without a
+	// restart — a backup already in flight keeps the value it began with.
+	restic.SetMaxProcs(s.BackupCores)
 	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})

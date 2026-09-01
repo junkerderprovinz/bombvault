@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"sync/atomic"
 )
 
 // remoteRepoRe matches a restic remote-backend repo location (vs. a local path).
@@ -844,6 +845,40 @@ func CacheCleanupArgs() []string {
 // for mode m: the repo password (or insecure-no-password), the rclone config when
 // the file exists, and any backend creds (S3 AWS_*, REST RESTIC_REST_*) in m.Env.
 // Credentials travel via env, never argv/logs. Shared by run() and DumpZip.
+// maxProcs caps how many CPU threads each restic CHILD PROCESS uses, exported to
+// it as GOMAXPROCS ([558], issue #189).
+// ---------------------------------------------------------------------------
+// restic is a Go program, so with no GOMAXPROCS it takes every core the host has
+// for compression and encryption. Reported from a 12-thread i5-1235U that sat at
+// 93-99% on every core and 100 °C for the length of a backup, summarised by its
+// owner as "Makes backups slow." Nothing capped it: the only throttles this
+// engine had were --limit-upload/--limit-download, which is bandwidth, not CPU.
+//
+// Zero means "every core", restic's own default, so an installation that never
+// touches the setting behaves exactly as before.
+//
+// PACKAGE-LEVEL rather than a field on Restic, deliberately. Every method here
+// takes a VALUE receiver, so an atomic inside the struct would be copied on
+// every call — `go vet` rejects that outright (copylocks), and converting some
+// thirty methods plus every construction site to pointers is a far larger change
+// than this warrants. It is also the honest model: this is not state belonging
+// to one repository handle, it is a policy about how much of THIS PROCESS's
+// machine its children may use, and there is exactly one such process.
+var maxProcs atomic.Int64
+
+// SetMaxProcs caps the CPU threads each restic child may use (0 = every core).
+// Safe to call while a backup is running: the next child picks it up, the one in
+// flight keeps the value it started with.
+func SetMaxProcs(n int) {
+	if n < 0 {
+		n = 0
+	}
+	maxProcs.Store(int64(n))
+}
+
+// MaxProcs reports the current cap (0 = every core).
+func MaxProcs() int { return int(maxProcs.Load()) }
+
 func (r Restic) authEnv(m Mode) []string {
 	env := os.Environ()
 	if m.Encrypted {
@@ -858,6 +893,11 @@ func (r Restic) authEnv(m Mode) []string {
 	}
 	if r.CacheDir != "" {
 		env = append(env, "RESTIC_CACHE_DIR="+r.CacheDir)
+	}
+	// GOMAXPROCS caps restic's own worker parallelism ([558]). Appended before
+	// m.Env so a caller could still override it deliberately.
+	if n := maxProcs.Load(); n > 0 {
+		env = append(env, "GOMAXPROCS="+strconv.FormatInt(n, 10))
 	}
 	env = append(env, m.Env...)
 	return env

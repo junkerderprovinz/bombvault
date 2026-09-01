@@ -430,6 +430,8 @@ func run() error {
 	everythingLastRun := schedule.LastRunFunc(st.LastEverythingPass)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
+		// Apply the saved CPU cap before anything can start a restic child ([558]).
+		restic.SetMaxProcs(settings.BackupCores)
 		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}

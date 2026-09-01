@@ -1240,6 +1240,14 @@ UPDATE runs SET completed = 0
  WHERE completed = 1
    AND error LIKE 'internal error (recovered panic):%';`,
 	},
+	{
+		// backup_cores caps the CPU threads each restic child may use ([558],
+		// issue #189). 0 = every core, which is restic's own default, so every
+		// existing installation keeps behaving exactly as it did.
+		version: 96, name: "settings_backup_cores",
+		alreadySatisfied: columnPresent("settings", "backup_cores"),
+		sql:              "ALTER TABLE settings ADD COLUMN backup_cores INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

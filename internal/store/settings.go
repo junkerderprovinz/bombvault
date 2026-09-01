@@ -81,6 +81,13 @@ type Settings struct {
 	// the user opts in.
 	OffsiteLimitUpload   int
 	OffsiteLimitDownload int
+	// BackupCores caps the CPU threads each restic child process may use, handed
+	// to it as GOMAXPROCS ([558], issue #189). 0 = every core, restic's own
+	// default, so an installation that never touches this behaves as before.
+	// The bandwidth caps above throttle the WAN; this one throttles the CPU, and
+	// until now nothing did — a 12-thread box sat at 99% on every core and 100 °C
+	// for the length of a backup.
+	BackupCores int
 	// RcloneConf is the rclone configuration (INI) for off-site repos, stored
 	// AES-256-GCM-encrypted at rest. Empty means no rclone backends configured.
 	RcloneConf string
@@ -306,7 +313,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       per_item_schedules,
 		       cloud_cred_sets,
 		       fleet_enabled, instance_name, fleet_token,
-		       everything_schedule, everything_pre_hook, everything_post_hook
+		       everything_schedule, everything_pre_hook, everything_post_hook,
+		       backup_cores
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -344,6 +352,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.CloudCredSets,
 		&fleetEnabled, &s.InstanceName, &s.FleetToken,
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
+		&s.BackupCores,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -535,7 +544,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  fleet_token                  = ?,
 		  everything_schedule          = ?,
 		  everything_pre_hook          = ?,
-		  everything_post_hook         = ?
+		  everything_post_hook         = ?,
+		  backup_cores                 = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -573,6 +583,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.EverythingSchedule,
 		s.EverythingPreHook,
 		s.EverythingPostHook,
+		s.BackupCores,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

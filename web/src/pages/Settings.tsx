@@ -1352,6 +1352,8 @@ export function SettingsPage() {
   // these values back; save()'s own toast already reports the outcome.
   const [, setCacheSaveState] = useState<SaveState>("idle");
   const [, setCacheSaveError] = useState<string | null>(null);
+  const [, setCoresSaveState] = useState<SaveState>("idle");
+  const [, setCoresSaveError] = useState<string | null>(null);
 
   const [, setOffRetSaveState] = useState<SaveState>("idle");
   const [, setOffRetSaveError] = useState<string | null>(null);
@@ -3474,6 +3476,40 @@ export function SettingsPage() {
               // Full-page Speichern-Button sweep: was its own bottom SaveBar.
               debouncedSave("resticCacheMaxMB", () =>
                 void save({ resticCacheMaxMB: n }, setCacheSaveState, setCacheSaveError)
+              );
+            }}
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+          />
+        </label>
+      </Card>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* STORAGE — How much CPU a backup may take ([558], issue #189)        */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Sits beside the cache card because both answer the same question:
+          how much of this machine BombVault is allowed to use. The cap is
+          handed to each restic child as GOMAXPROCS; restic is a Go program and
+          without it takes every core there is. Reported from a 12-thread box
+          that sat at 99% on every core and 100 °C for a whole backup, with the
+          reporter's own summary: "Makes backups slow."
+
+          `advanced &&` inline rather than the <Advanced> wrapper, and the
+          reason is in the cache card's comment above: the wrapper builds its
+          children before deciding to render them, so a hueIndex={nextHue()}
+          inside it spends a hue slot on a card that never paints. */}
+      {tab === "storage" && advanced && (
+      <Card title={t("settings.coresTitle")} hint={t("settings.coresHint")} hueIndex={nextHue()}>
+        <label className="flex flex-col gap-1 sm:w-1/2">
+          <span className="text-xs text-carbon-textSub">{t("settings.coresLabel")}</span>
+          <NumberField
+            min={0}
+            value={settings.backupCores}
+            onChange={(e) => {
+              const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+              setSettings((prev) => (prev ? { ...prev, backupCores: n } : prev));
+              debouncedSave("backupCores", () =>
+                void save({ backupCores: n }, setCoresSaveState, setCoresSaveError)
               );
             }}
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"

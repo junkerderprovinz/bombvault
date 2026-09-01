@@ -180,6 +180,9 @@ export interface Settings {
   offsiteRetentionKeepWeekly: number;
   offsiteRetentionKeepMonthly: number;
   offsiteLimitUpload: number;
+  /** CPU threads each restic child may use, as GOMAXPROCS. 0 = every core,
+   *  restic's own default ([558], issue #189). */
+  backupCores: number;
   offsiteLimitDownload: number;
   metricsEnabled: boolean;
   /** Write-only secret: GET always returns "" (blank-on-save keeps the stored
