@@ -872,6 +872,7 @@ const it: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Distribuisci il server append-only",
   "offsite.wizard.step2Hint": "Esegui questo sulla tua storage box per avviare un restic rest-server con --append-only. La password generata viene mostrata una sola volta.",
   "offsite.wizard.generate": "Genera snippet di deployment",
+  "offsite.wizard.unraidTemplate": "Modello Unraid (XML)",
   "offsite.wizard.regenerate": "Rigenera (nuova password)",
   "offsite.wizard.snippetError": "Impossibile generare lo snippet",
   "offsite.wizard.passwordWarning": "Questa password viene mostrata UNA SOLA VOLTA e non viene mai salvata da BombVault. Salvala ora. Ti serve per le credenziali qui sotto e non può essere recuperata.",

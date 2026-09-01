@@ -875,6 +875,7 @@ const hu: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Az append-only szerver üzembe helyezése",
   "offsite.wizard.step2Hint": "Futtasd ezt a tárolószerveren, hogy elindíts egy restic rest-server példányt --append-only kapcsolóval. A generált jelszó csak egyszer jelenik meg.",
   "offsite.wizard.generate": "Telepítési kódrészlet generálása",
+  "offsite.wizard.unraidTemplate": "Unraid sablon (XML)",
   "offsite.wizard.regenerate": "Újragenerálás (új jelszó)",
   "offsite.wizard.snippetError": "A kódrészletet nem sikerült generálni",
   "offsite.wizard.passwordWarning": "Ez a jelszó csak EGYSZER jelenik meg, és a BombVault soha nem tárolja. Mentsd el most. Szükséged lesz rá az alábbi hitelesítő adatokhoz, és nem állítható helyre.",

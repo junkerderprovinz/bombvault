@@ -863,6 +863,7 @@ const pl: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Wdróż serwer append-only",
   "offsite.wizard.step2Hint": "Uruchom to na swoim serwerze magazynu, aby postawić restic rest-server z --append-only. Wygenerowane hasło jest pokazywane tylko raz.",
   "offsite.wizard.generate": "Wygeneruj fragment wdrożenia",
+  "offsite.wizard.unraidTemplate": "Szablon Unraid (XML)",
   "offsite.wizard.regenerate": "Wygeneruj ponownie (nowe hasło)",
   "offsite.wizard.snippetError": "Nie udało się wygenerować fragmentu",
   "offsite.wizard.passwordWarning": "To hasło jest pokazywane TYLKO RAZ i nigdy nie jest przechowywane przez BombVault. Zapisz je teraz. Jest potrzebne do poświadczeń poniżej i nie można go odzyskać.",

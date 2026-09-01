@@ -292,6 +292,7 @@ const hi: Partial<Translations> = {
   "offsite.wizard.step2": "2 · अपेंड-ओनली सर्वर तैनात करें",
   "offsite.wizard.step2Hint": "अपने स्टोरेज बॉक्स पर --append-only के साथ restic rest-server खड़ा करने के लिए इसे चलाएँ। जनरेट किया गया पासवर्ड केवल एक बार दिखाया जाता है।",
   "offsite.wizard.generate": "तैनाती स्निपेट बनाएँ",
+  "offsite.wizard.unraidTemplate": "Unraid टेम्पलेट (XML)",
   "offsite.wizard.regenerate": "फिर से बनाएँ (नया पासवर्ड)",
   "offsite.wizard.snippetError": "स्निपेट नहीं बन पाया",
   "offsite.wizard.passwordWarning": "यह पासवर्ड केवल एक बार दिखाया जाता है और BombVault इसे कभी सहेजता नहीं है। इसे अभी सहेज लें। नीचे दिए गए क्रेडेंशियल्स के लिए यह ज़रूरी है और इसे वापस नहीं पाया जा सकता।",

@@ -292,6 +292,7 @@ const bg: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Разположи сървъра само-добавяне",
   "offsite.wizard.step2Hint": "Изпълни това на твоята хранилищна кутия, за да вдигнеш restic rest-server с --append-only. Генерираната парола се показва само веднъж.",
   "offsite.wizard.generate": "Генерирай откъс за разгръщане",
+  "offsite.wizard.unraidTemplate": "Unraid шаблон (XML)",
   "offsite.wizard.regenerate": "Генерирай наново (нова парола)",
   "offsite.wizard.snippetError": "Откъсът не можа да бъде генериран",
   "offsite.wizard.passwordWarning": "Тази парола се показва САМО ВЕДНЪЖ и никога не се съхранява от BombVault. Запази я сега — нужна ти е за данните за достъп по-долу и не може да бъде възстановена.",

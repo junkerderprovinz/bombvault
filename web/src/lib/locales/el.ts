@@ -892,6 +892,7 @@ const el: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Ανάπτυξη του διακομιστή append-only",
   "offsite.wizard.step2Hint": "Εκτελέστε το στο storage box σας για να στήσετε έναν restic rest-server με --append-only. Ο παραγόμενος κωδικός εμφανίζεται μόνο μία φορά.",
   "offsite.wizard.generate": "Δημιουργία snippet ανάπτυξης",
+  "offsite.wizard.unraidTemplate": "Πρότυπο Unraid (XML)",
   "offsite.wizard.regenerate": "Αναδημιουργία (νέος κωδικός)",
   "offsite.wizard.snippetError": "Δεν ήταν δυνατή η δημιουργία του snippet",
   "offsite.wizard.passwordWarning": "Αυτός ο κωδικός εμφανίζεται ΜΙΑ ΦΟΡΑ και δεν αποθηκεύεται ποτέ από το BombVault. Αποθηκεύστε τον τώρα. Τον χρειάζεστε για τα διαπιστευτήρια παρακάτω και δεν μπορεί να ανακτηθεί.",

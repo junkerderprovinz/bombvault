@@ -292,6 +292,7 @@ const lt: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Įdiekite tik-pridėjimo serverį",
   "offsite.wizard.step2Hint": "Paleiskite tai savo saugyklos dėžėje, kad iškeltumėte restic rest-server su --append-only. Sugeneruotas slaptažodis rodomas tik vieną kartą.",
   "offsite.wizard.generate": "Generuoti diegimo fragmentą",
+  "offsite.wizard.unraidTemplate": "Unraid šablonas (XML)",
   "offsite.wizard.regenerate": "Generuoti iš naujo (naujas slaptažodis)",
   "offsite.wizard.snippetError": "Nepavyko sugeneruoti fragmento",
   "offsite.wizard.passwordWarning": "Šis slaptažodis rodomas TIK VIENĄ KARTĄ ir BombVault jo niekada neišsaugo. Išsaugokite jį dabar. Jo prireiks toliau pateiktiems prisijungimo duomenims ir jo negalima atkurti.",

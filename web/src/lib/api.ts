@@ -1619,6 +1619,9 @@ export interface DeploySnippetData {
   htpasswd: string;
   dockerRun: string;
   compose: string;
+  /** The same recipe as an Unraid container template (XML), so the far side is
+   *  something the Docker tab can EDIT rather than an orphan container ([601]). */
+  unraid: string;
 }
 
 /**

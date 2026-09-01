@@ -863,6 +863,7 @@ const ru: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Разверните append-only-сервер",
   "offsite.wizard.step2Hint": "Выполните это на вашем сервере хранения, чтобы запустить restic rest-server с --append-only. Сгенерированный пароль показывается только один раз.",
   "offsite.wizard.generate": "Сгенерировать сниппет развёртывания",
+  "offsite.wizard.unraidTemplate": "Шаблон Unraid (XML)",
   "offsite.wizard.regenerate": "Сгенерировать заново (новый пароль)",
   "offsite.wizard.snippetError": "Не удалось сгенерировать сниппет",
   "offsite.wizard.passwordWarning": "Этот пароль показывается ОДИН раз и никогда не сохраняется BombVault. Сохраните его сейчас — он нужен для учётных данных ниже и не может быть восстановлен.",

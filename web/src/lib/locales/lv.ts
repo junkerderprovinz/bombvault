@@ -292,6 +292,7 @@ const lv: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Izvietojiet tikai-pievienot serveri",
   "offsite.wizard.step2Hint": "Palaidiet šo savā krātuves ierīcē, lai uzstādītu restic rest-server ar --append-only. Ģenerētā parole tiek parādīta tikai vienreiz.",
   "offsite.wizard.generate": "Ģenerēt izvietošanas fragmentu",
+  "offsite.wizard.unraidTemplate": "Unraid veidne (XML)",
   "offsite.wizard.regenerate": "Ģenerēt no jauna (jauna parole)",
   "offsite.wizard.snippetError": "Neizdevās ģenerēt fragmentu",
   "offsite.wizard.passwordWarning": "Šī parole tiek parādīta TIKAI VIENREIZ, un BombVault to nekad nesaglabā. Saglabājiet to tagad. Tā ir nepieciešama zemāk norādītajiem akreditācijas datiem, un to nevar atgūt.",

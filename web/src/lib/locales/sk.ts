@@ -292,6 +292,7 @@ const sk: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Nasadiť server len-na-pridávanie",
   "offsite.wizard.step2Hint": "Spustite toto vo svojom úložnom boxe, aby ste spustili restic rest-server s parametrom --append-only. Vygenerované heslo sa zobrazí iba raz.",
   "offsite.wizard.generate": "Vygenerovať úryvok nasadenia",
+  "offsite.wizard.unraidTemplate": "Šablóna Unraid (XML)",
   "offsite.wizard.regenerate": "Vygenerovať znova (nové heslo)",
   "offsite.wizard.snippetError": "Úryvok sa nepodarilo vygenerovať",
   "offsite.wizard.passwordWarning": "Toto heslo sa zobrazí IBA RAZ a BombVault ho nikdy neuloží. Uložte si ho teraz. Budete ho potrebovať pre poverenia nižšie a nebude ho možné obnoviť.",

@@ -292,6 +292,7 @@ const gl: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Despregar o servidor de só-engadir",
   "offsite.wizard.step2Hint": "Executa isto na túa caixa de almacenamento para levantar un restic rest-server con --append-only. O contrasinal xerado só se mostra unha vez.",
   "offsite.wizard.generate": "Xerar fragmento de despregamento",
+  "offsite.wizard.unraidTemplate": "Modelo de Unraid (XML)",
   "offsite.wizard.regenerate": "Xerar de novo (novo contrasinal)",
   "offsite.wizard.snippetError": "Non se puido xerar o fragmento",
   "offsite.wizard.passwordWarning": "Este contrasinal móstrase SÓ UNHA VEZ e BombVault nunca o garda. Gárdao agora: necesítalo para as credenciais de abaixo e non se pode recuperar.",

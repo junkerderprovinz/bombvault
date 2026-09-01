@@ -292,6 +292,7 @@ const sl: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Namesti strežnik s samo-dodajanjem",
   "offsite.wizard.step2Hint": "To zaženi na svoji shrambi, da postaviš restic rest-server z --append-only. Ustvarjeno geslo je prikazano samo enkrat.",
   "offsite.wizard.generate": "Ustvari izsek za namestitev",
+  "offsite.wizard.unraidTemplate": "Predloga Unraid (XML)",
   "offsite.wizard.regenerate": "Ponovno ustvari (novo geslo)",
   "offsite.wizard.snippetError": "Izseka ni bilo mogoče ustvariti",
   "offsite.wizard.passwordWarning": "To geslo je prikazano SAMO ENKRAT in ga BombVault nikoli ne shrani. Shrani ga zdaj. Potrebuješ ga za spodnje poverilnice in ga ni mogoče obnoviti.",

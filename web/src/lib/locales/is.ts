@@ -292,6 +292,7 @@ const is: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Setja upp aðeins-bæta-við netþjón",
   "offsite.wizard.step2Hint": "Keyrðu þetta á geymslutækinu þínu til að setja upp restic rest-server með --append-only. Lykilorðið sem er búið til birtist aðeins einu sinni.",
   "offsite.wizard.generate": "Búa til uppsetningarbrot",
+  "offsite.wizard.unraidTemplate": "Unraid sniðmát (XML)",
   "offsite.wizard.regenerate": "Búa til aftur (nýtt lykilorð)",
   "offsite.wizard.snippetError": "Ekki tókst að búa til brotið",
   "offsite.wizard.passwordWarning": "Þetta lykilorð birtist AÐEINS EINU SINNI og BombVault vistar það aldrei. Vistaðu það núna. Þú þarft það fyrir aðgangsgögnin hér fyrir neðan og það verður ekki endurheimt.",

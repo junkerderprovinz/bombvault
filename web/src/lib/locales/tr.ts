@@ -892,6 +892,7 @@ const tr: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Append-only sunucusunu kur",
   "offsite.wizard.step2Hint": "Bunu, --append-only ile bir restic rest-server başlatmak için depolama sunucunuzda çalıştırın. Oluşturulan parola yalnızca bir kez gösterilir.",
   "offsite.wizard.generate": "Dağıtım kod parçacığı oluştur",
+  "offsite.wizard.unraidTemplate": "Unraid şablonu (XML)",
   "offsite.wizard.regenerate": "Yeniden oluştur (yeni parola)",
   "offsite.wizard.snippetError": "Kod parçacığı oluşturulamadı",
   "offsite.wizard.passwordWarning": "Bu parola YALNIZCA BİR KEZ gösterilir ve BombVault tarafından asla saklanmaz. Şimdi kaydedin. Aşağıdaki kimlik bilgileri için gereklidir ve kurtarılamaz.",

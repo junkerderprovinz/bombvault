@@ -884,6 +884,7 @@ const vi: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Triển khai máy chủ append-only",
   "offsite.wizard.step2Hint": "Chạy lệnh này trên storage box của bạn để dựng một restic rest-server với --append-only. Mật khẩu được tạo chỉ hiển thị một lần.",
   "offsite.wizard.generate": "Tạo đoạn lệnh triển khai",
+  "offsite.wizard.unraidTemplate": "Mẫu Unraid (XML)",
   "offsite.wizard.regenerate": "Tạo lại (mật khẩu mới)",
   "offsite.wizard.snippetError": "Không thể tạo đoạn lệnh",
   "offsite.wizard.passwordWarning": "Mật khẩu này chỉ hiển thị MỘT LẦN và không bao giờ được BombVault lưu trữ. Hãy lưu lại ngay. Bạn cần nó cho thông tin đăng nhập bên dưới và không thể khôi phục.",

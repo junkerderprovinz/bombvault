@@ -753,6 +753,25 @@ export function OffsiteWizard({
                 <span className="text-xs text-carbon-textMuted">docker-compose</span>
                 <CopyBlock text={snippet.compose} t={t} />
               </div>
+              {/* The Unraid template, and it is FIRST among equals for this
+                  audience ([601]). Reported from the forum: "I couldn't get the
+                  scripted deployment of a restic docker functional, and it
+                  couldn't be edited in the docker UI, so I used one from CA
+                  instead."
+
+                  The docker run line above is not broken — verified end to end
+                  against a real rest-server, where restic init created a
+                  repository through it. What it cannot do is survive on Unraid
+                  as something you can EDIT: a container Unraid did not create
+                  from a template has no template behind it, so changing the
+                  port or the path means deleting it and retyping the command.
+                  BombVault is an Unraid application. Handing its users only a
+                  bare docker run asks them to give up their platform's one
+                  management surface. */}
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.unraidTemplate")}</span>
+                <CopyBlock text={snippet.unraid} t={t} />
+              </div>
               <div className="rounded-card bg-carbon-surface px-3 py-2 text-xs text-carbon-textSub leading-relaxed">
                 {t("offsite.wizard.tlsNote")}
               </div>

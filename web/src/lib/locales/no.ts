@@ -868,6 +868,7 @@ const no: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Rull ut append-only-serveren",
   "offsite.wizard.step2Hint": "Kjør dette på lagringsboksen din for å sette opp en restic rest-server med --append-only. Det genererte passordet vises bare én gang.",
   "offsite.wizard.generate": "Generer utrullingssnutt",
+  "offsite.wizard.unraidTemplate": "Unraid-mal (XML)",
   "offsite.wizard.regenerate": "Generer på nytt (nytt passord)",
   "offsite.wizard.snippetError": "Kunne ikke generere snutten",
   "offsite.wizard.passwordWarning": "Dette passordet vises bare ÉN gang og lagres aldri av BombVault. Lagre det nå. Du trenger det for legitimasjonen nedenfor, og det kan ikke gjenopprettes.",

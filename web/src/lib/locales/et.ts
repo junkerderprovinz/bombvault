@@ -292,6 +292,7 @@ const et: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Paigalda ainult-lisamise server",
   "offsite.wizard.step2Hint": "Käivita see oma salvestuskastis, et püsti panna restic rest-server valikuga --append-only. Loodud parool kuvatakse ainult üks kord.",
   "offsite.wizard.generate": "Loo juurutuslõik",
+  "offsite.wizard.unraidTemplate": "Unraidi mall (XML)",
   "offsite.wizard.regenerate": "Loo uuesti (uus parool)",
   "offsite.wizard.snippetError": "Lõiku ei õnnestunud luua",
   "offsite.wizard.passwordWarning": "See parool kuvatakse AINULT ÜKS KORD ja BombVault ei salvesta seda kunagi. Salvesta see kohe. Vajad seda allolevate mandaatide jaoks ja seda ei saa taastada.",

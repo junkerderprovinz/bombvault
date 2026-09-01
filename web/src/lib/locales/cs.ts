@@ -890,6 +890,7 @@ const cs: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Nasaďte append-only server",
   "offsite.wizard.step2Hint": "Spusťte na svém úložném serveru pro zprovoznění restic rest-serveru s --append-only. Vygenerované heslo se zobrazí pouze jednou.",
   "offsite.wizard.generate": "Vygenerovat úryvek pro nasazení",
+  "offsite.wizard.unraidTemplate": "Šablona Unraid (XML)",
   "offsite.wizard.regenerate": "Vygenerovat znovu (nové heslo)",
   "offsite.wizard.snippetError": "Úryvek se nepodařilo vygenerovat",
   "offsite.wizard.passwordWarning": "Toto heslo se zobrazí POUZE JEDNOU a BombVault jej nikde neukládá. Uložte si jej teď. Budete jej potřebovat pro přihlašovací údaje níže a nelze jej obnovit.",

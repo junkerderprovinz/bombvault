@@ -292,6 +292,7 @@ const hr: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Postavi poslužitelj samo-dodavanja",
   "offsite.wizard.step2Hint": "Pokrenite ovo na svom pohranskom uređaju kako biste podigli restic rest-server s opcijom --append-only. Generirana lozinka prikazuje se samo jednom.",
   "offsite.wizard.generate": "Generiraj isječak za postavljanje",
+  "offsite.wizard.unraidTemplate": "Unraid predložak (XML)",
   "offsite.wizard.regenerate": "Ponovno generiraj (nova lozinka)",
   "offsite.wizard.snippetError": "Isječak nije mogao biti generiran",
   "offsite.wizard.passwordWarning": "Ova lozinka prikazuje se SAMO JEDNOM i BombVault je nikada ne sprema. Spremite je sada. Potrebna je za vjerodajnice u nastavku i ne može se oporaviti.",

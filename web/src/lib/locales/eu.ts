@@ -292,6 +292,7 @@ const eu: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Zabaldu gehitu-soilik zerbitzaria",
   "offsite.wizard.step2Hint": "Exekutatu hau zure biltegiratze-kutxan restic rest-server bat --append-only aukerarekin altxatzeko. Sortutako pasahitza behin bakarrik erakusten da.",
   "offsite.wizard.generate": "Sortu zabalkuntza-zatia",
+  "offsite.wizard.unraidTemplate": "Unraid txantiloia (XML)",
   "offsite.wizard.regenerate": "Sortu berriz (pasahitz berria)",
   "offsite.wizard.snippetError": "Ezin izan da zatia sortu",
   "offsite.wizard.passwordWarning": "Pasahitz hau BEHIN BAKARRIK erakusten da eta BombVaultek ez du inoiz gordetzen. Gorde orain. Beheko kredentzialetarako beharko duzu eta ezin da berreskuratu.",

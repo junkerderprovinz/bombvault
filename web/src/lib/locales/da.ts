@@ -892,6 +892,7 @@ const da: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Udrul append-only-serveren",
   "offsite.wizard.step2Hint": "Kør dette på din storage-boks for at starte en restic rest-server med --append-only. Den genererede adgangskode vises kun én gang.",
   "offsite.wizard.generate": "Generér udrulningssnippet",
+  "offsite.wizard.unraidTemplate": "Unraid-skabelon (XML)",
   "offsite.wizard.regenerate": "Generér igen (ny adgangskode)",
   "offsite.wizard.snippetError": "Kunne ikke generere snippet",
   "offsite.wizard.passwordWarning": "Denne adgangskode vises KUN ÉN GANG og gemmes aldrig af BombVault. Gem den nu. Du skal bruge den til legitimationsoplysningerne nedenfor, og den kan ikke gendannes.",

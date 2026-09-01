@@ -19,6 +19,7 @@ type DeploySnippet struct {
 	Htpasswd  string `json:"htpasswd"`  // "bombvault-<domain>:<bcrypt-hash>"
 	DockerRun string `json:"dockerRun"` // docker run recipe (+ echo pre-step + repo-URL hint)
 	Compose   string `json:"compose"`   // docker-compose equivalent, same values
+	Unraid    string `json:"unraid"`    // Unraid container template (XML), same values
 }
 
 // bcryptDeployCost is the bcrypt work factor for the generated htpasswd hash.
@@ -104,5 +105,65 @@ services:
 		Htpasswd:  htpasswd,
 		DockerRun: dockerRun,
 		Compose:   compose,
+		Unraid:    unraidTemplate(htpasswd, repoHint),
 	}, nil
+}
+
+// unraidTemplate renders the same rest-server recipe as an Unraid container
+// template ([601]).
+// ---------------------------------------------------------------------------
+// Why this exists, in the reporter's own words: "I couldn't get the scripted
+// deployment of a restic docker functional, and it couldn't be edited in the
+// docker UI, so I used one from CA instead."
+//
+// The docker-run recipe is not broken. Verified end to end against a real
+// rest-server: the container starts, loads the htpasswd, reports "Append only
+// mode enabled" and "Private repositories enabled", and `restic init` creates
+// the repository through it. The defect is the FORMAT, not the command.
+//
+// A container Unraid did not create from a template has no template. It shows
+// up in the Docker tab with no Edit form behind it, so the port, the path and
+// the options can only ever be changed by deleting it and retyping the whole
+// command. BombVault is an Unraid application; handing its users a bare
+// `docker run` asks them to give up the one management surface their platform
+// has. This is the same rule the project already applies to its OWN containers.
+//
+// Saved as /boot/config/plugins/dockerMan/templates-user/my-rest-server.xml,
+// the Docker tab's "Add Container" template dropdown picks it up, and every
+// value below becomes an editable field.
+//
+// The htpasswd line still has to be written by hand: it carries a bcrypt hash
+// of a password shown exactly once, and a template that embedded it would put
+// that credential into a file Unraid keeps on the flash drive forever.
+func unraidTemplate(htpasswd, repoHint string) string {
+	// The declaration comes FIRST. An XML comment before it is not valid XML,
+	// and this text is meant to be saved verbatim as a file that Unraid parses.
+	return fmt.Sprintf(`<?xml version="1.0"?>
+<!--
+  1) create the append-only credential on the storage box FIRST:
+     echo '%s' >> /mnt/user/appdata/rest-server/.htpasswd
+
+  2) save this file on the storage box as
+     /boot/config/plugins/dockerMan/templates-user/my-rest-server.xml
+     then Docker tab, Add Container, and pick "rest-server" from the
+     template dropdown. Every field below is editable there.
+-->
+<Container version="2">
+  <Name>rest-server</Name>
+  <Repository>restic/rest-server:0.14.0</Repository>
+  <Registry>https://hub.docker.com/r/restic/rest-server</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/junkerderprovinz/bombvault</Support>
+  <Overview>Append-only restic REST server. Receives immutable off-site copies from BombVault: the DESTINATION refuses deletes and overwrites, so a compromised or misconfigured sender cannot reach the copy that is meant to be the last line of defence.</Overview>
+  <Category>Backup:</Category>
+  <WebUI/>
+  <Icon>https://raw.githubusercontent.com/restic/restic/master/doc/logo/logo.png</Icon>
+  <Config Name="Port" Target="8000" Default="8000" Mode="tcp" Description="Port BombVault connects to." Type="Port" Display="always" Required="true" Mask="false">8000</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/rest-server" Mode="rw" Description="Where the repositories and the .htpasswd file live." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/rest-server</Config>
+  <Config Name="OPTIONS" Target="OPTIONS" Default="--append-only --private-repos --htpasswd-file /data/.htpasswd" Description="Leave --append-only in place: it is what makes this an immutable destination. Removing it turns the box back into an ordinary share." Type="Variable" Display="always" Required="true" Mask="false">--append-only --private-repos --htpasswd-file /data/.htpasswd</Config>
+</Container>
+
+%s
+%s`, htpasswd, tlsGuidance, repoHint)
 }

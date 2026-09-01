@@ -872,6 +872,7 @@ const fr: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Déployer le serveur append-only",
   "offsite.wizard.step2Hint": "Exécutez ceci sur votre serveur de stockage pour lancer un restic rest-server avec --append-only. Le mot de passe généré n'est affiché qu'une seule fois.",
   "offsite.wizard.generate": "Générer l'extrait de déploiement",
+  "offsite.wizard.unraidTemplate": "Modèle Unraid (XML)",
   "offsite.wizard.regenerate": "Régénérer (nouveau mot de passe)",
   "offsite.wizard.snippetError": "Impossible de générer l'extrait",
   "offsite.wizard.passwordWarning": "Ce mot de passe est affiché UNE SEULE FOIS et n'est jamais conservé par BombVault. Enregistrez-le maintenant : il est requis pour les identifiants ci-dessous et ne peut pas être récupéré.",

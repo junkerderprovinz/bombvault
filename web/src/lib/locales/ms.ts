@@ -292,6 +292,7 @@ const ms: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Sediakan pelayan tambah-sahaja",
   "offsite.wizard.step2Hint": "Jalankan ini pada kotak storan anda untuk menyediakan restic rest-server dengan --append-only. Kata laluan yang dijana hanya dipaparkan sekali.",
   "offsite.wizard.generate": "Jana cebisan penyediaan",
+  "offsite.wizard.unraidTemplate": "Templat Unraid (XML)",
   "offsite.wizard.regenerate": "Jana semula (kata laluan baharu)",
   "offsite.wizard.snippetError": "Cebisan tidak dapat dijana",
   "offsite.wizard.passwordWarning": "Kata laluan ini hanya dipaparkan SEKALI dan tidak pernah disimpan oleh BombVault. Simpan sekarang. Anda memerlukannya untuk kelayakan di bawah dan ia tidak boleh dipulihkan.",

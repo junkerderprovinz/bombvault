@@ -872,6 +872,7 @@ const he: Partial<Translations> = {
   "offsite.wizard.step2": "2 · פריסת שרת append-only",
   "offsite.wizard.step2Hint": "הרץ זאת על מכונת האחסון שלך כדי להקים restic rest-server עם --append-only. הסיסמה שנוצרת מוצגת פעם אחת בלבד.",
   "offsite.wizard.generate": "צור קטע פריסה",
+  "offsite.wizard.unraidTemplate": "תבנית Unraid (XML)",
   "offsite.wizard.regenerate": "צור מחדש (סיסמה חדשה)",
   "offsite.wizard.snippetError": "לא ניתן ליצור את הקטע",
   "offsite.wizard.passwordWarning": "סיסמה זו מוצגת פעם אחת בלבד ו-BombVault לעולם אינו שומר אותה. שמור אותה כעת: היא נחוצה עבור פרטי ההתחברות שלמטה ולא ניתן לשחזר אותה.",

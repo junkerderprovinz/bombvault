@@ -890,6 +890,7 @@ const es: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Despliega el servidor append-only",
   "offsite.wizard.step2Hint": "Ejecuta esto en tu servidor de almacenamiento para levantar un restic rest-server con --append-only. La contraseña generada se muestra una sola vez.",
   "offsite.wizard.generate": "Generar fragmento de despliegue",
+  "offsite.wizard.unraidTemplate": "Plantilla de Unraid (XML)",
   "offsite.wizard.regenerate": "Regenerar (nueva contraseña)",
   "offsite.wizard.snippetError": "No se pudo generar el fragmento",
   "offsite.wizard.passwordWarning": "Esta contraseña se muestra UNA sola vez y BombVault nunca la almacena. Guárdala ahora. La necesitas para las credenciales de abajo y no se puede recuperar.",

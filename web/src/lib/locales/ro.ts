@@ -871,6 +871,7 @@ const ro: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Implementează serverul append-only",
   "offsite.wizard.step2Hint": "Rulează asta pe storage box-ul tău pentru a porni un restic rest-server cu --append-only. Parola generată este afișată o singură dată.",
   "offsite.wizard.generate": "Generează fragmentul de implementare",
+  "offsite.wizard.unraidTemplate": "Șablon Unraid (XML)",
   "offsite.wizard.regenerate": "Regenerează (parolă nouă)",
   "offsite.wizard.snippetError": "Fragmentul nu a putut fi generat",
   "offsite.wizard.passwordWarning": "Această parolă este afișată O SINGURĂ DATĂ și nu este niciodată stocată de BombVault. Salveaz-o acum. Ai nevoie de ea pentru credențialele de mai jos și nu poate fi recuperată.",

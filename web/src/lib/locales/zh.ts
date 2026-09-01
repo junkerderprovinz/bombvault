@@ -884,6 +884,7 @@ const zh: Partial<Translations> = {
   "offsite.wizard.step2": "2 · 部署 append-only 服务器",
   "offsite.wizard.step2Hint": "在你的存储主机上运行此命令，以启动一个带 --append-only 的 restic rest-server。生成的密码仅显示一次。",
   "offsite.wizard.generate": "生成部署片段",
+  "offsite.wizard.unraidTemplate": "Unraid 模板 (XML)",
   "offsite.wizard.regenerate": "重新生成（新密码）",
   "offsite.wizard.snippetError": "无法生成片段",
   "offsite.wizard.passwordWarning": "此密码仅显示一次，BombVault 绝不会存储它。请立即保存，下方的凭据需要用到它，且无法恢复。",

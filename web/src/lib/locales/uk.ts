@@ -887,6 +887,7 @@ const uk: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Розгорніть append-only сервер",
   "offsite.wizard.step2Hint": "Виконайте це на вашому сховищі, щоб підняти restic rest-server із --append-only. Згенерований пароль показується лише один раз.",
   "offsite.wizard.generate": "Згенерувати фрагмент розгортання",
+  "offsite.wizard.unraidTemplate": "Шаблон Unraid (XML)",
   "offsite.wizard.regenerate": "Згенерувати знову (новий пароль)",
   "offsite.wizard.snippetError": "Не вдалося згенерувати фрагмент",
   "offsite.wizard.passwordWarning": "Цей пароль показується ОДИН раз і ніколи не зберігається BombVault. Збережіть його зараз — він потрібен для облікових даних нижче і його неможливо відновити.",

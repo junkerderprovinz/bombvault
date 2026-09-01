@@ -864,6 +864,7 @@ const ko: Partial<Translations> = {
   "offsite.wizard.step2": "2 · append-only 서버 배포",
   "offsite.wizard.step2Hint": "스토리지 박스에서 이 명령을 실행하여 --append-only가 적용된 restic rest-server를 구축하세요. 생성된 비밀번호는 한 번만 표시됩니다.",
   "offsite.wizard.generate": "배포 스니펫 생성",
+  "offsite.wizard.unraidTemplate": "Unraid 템플릿 (XML)",
   "offsite.wizard.regenerate": "다시 생성 (새 비밀번호)",
   "offsite.wizard.snippetError": "스니펫을 생성할 수 없습니다",
   "offsite.wizard.passwordWarning": "이 비밀번호는 단 한 번만 표시되며 BombVault에 저장되지 않습니다. 지금 저장하세요. 아래 자격 증명에 필요하며 복구할 수 없습니다.",

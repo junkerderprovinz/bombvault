@@ -292,6 +292,7 @@ const sr: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Постави сервер са само додавањем",
   "offsite.wizard.step2Hint": "Ово покрени на својој складишној кутији да поставиш restic rest-server са --append-only. Генерисана лозинка се приказује само једном.",
   "offsite.wizard.generate": "Направи испис за постављање",
+  "offsite.wizard.unraidTemplate": "Unraid шаблон (XML)",
   "offsite.wizard.regenerate": "Поново направи (нова лозинка)",
   "offsite.wizard.snippetError": "Испис није могао да се направи",
   "offsite.wizard.passwordWarning": "Ова лозинка се приказује САМО ЈЕДНОМ и BombVault је никада не чува. Сачувај је сада — треба ти за доњи акредитив и не може се повратити.",

@@ -292,6 +292,7 @@ const id: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Terapkan server append-only",
   "offsite.wizard.step2Hint": "Jalankan ini di storage box Anda untuk menyiapkan restic rest-server dengan --append-only. Kata sandi yang dihasilkan hanya ditampilkan sekali.",
   "offsite.wizard.generate": "Buat cuplikan penerapan",
+  "offsite.wizard.unraidTemplate": "Templat Unraid (XML)",
   "offsite.wizard.regenerate": "Buat ulang (kata sandi baru)",
   "offsite.wizard.snippetError": "Cuplikan tidak dapat dibuat",
   "offsite.wizard.passwordWarning": "Kata sandi ini hanya ditampilkan SEKALI dan tidak pernah disimpan oleh BombVault. Simpan sekarang. Anda membutuhkannya untuk kredensial di bawah dan tidak dapat dipulihkan.",

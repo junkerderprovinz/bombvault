@@ -892,6 +892,7 @@ const sv: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Driftsätt append-only-servern",
   "offsite.wizard.step2Hint": "Kör detta på din lagringsserver för att starta en restic rest-server med --append-only. Det genererade lösenordet visas bara en gång.",
   "offsite.wizard.generate": "Generera distributionssnutt",
+  "offsite.wizard.unraidTemplate": "Unraid-mall (XML)",
   "offsite.wizard.regenerate": "Generera om (nytt lösenord)",
   "offsite.wizard.snippetError": "Det gick inte att generera snutten",
   "offsite.wizard.passwordWarning": "Det här lösenordet visas EN gång och lagras aldrig av BombVault. Spara det nu. Du behöver det för uppgifterna nedan och det kan inte återställas.",

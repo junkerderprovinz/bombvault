@@ -292,6 +292,7 @@ const fa: Partial<Translations> = {
   "offsite.wizard.step2": "۲ · استقرار سرور فقط-افزودنی",
   "offsite.wizard.step2Hint": "این را روی جعبه ذخیره‌سازی خود اجرا کنید تا یک restic rest-server با گزینه --append-only بالا بیاید. رمز عبور تولیدشده فقط یک بار نشان داده می‌شود.",
   "offsite.wizard.generate": "تولید قطعه‌کد استقرار",
+  "offsite.wizard.unraidTemplate": "قالب Unraid (XML)",
   "offsite.wizard.regenerate": "تولید دوباره (رمز عبور جدید)",
   "offsite.wizard.snippetError": "قطعه‌کد ساخته نشد",
   "offsite.wizard.passwordWarning": "این رمز عبور فقط یک‌بار نشان داده می‌شود و هرگز توسط BombVault ذخیره نمی‌شود. همین حالا آن را ذخیره کنید. برای اطلاعات ورود زیر لازم است و قابل بازیابی نیست.",

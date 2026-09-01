@@ -892,6 +892,7 @@ const fi: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Ota append-only-palvelin käyttöön",
   "offsite.wizard.step2Hint": "Suorita tämä tallennuspalvelimellasi käynnistääksesi restic rest-serverin --append-only-tilassa. Luotu salasana näytetään vain kerran.",
   "offsite.wizard.generate": "Luo käyttöönotto-snippet",
+  "offsite.wizard.unraidTemplate": "Unraid-malli (XML)",
   "offsite.wizard.regenerate": "Luo uudelleen (uusi salasana)",
   "offsite.wizard.snippetError": "Snippetin luonti epäonnistui",
   "offsite.wizard.passwordWarning": "Tämä salasana näytetään vain KERRAN, eikä BombVault tallenna sitä. Tallenna se nyt: tarvitset sitä alla oleviin tunnuksiin, eikä sitä voi palauttaa.",

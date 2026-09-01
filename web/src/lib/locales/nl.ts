@@ -865,6 +865,7 @@ const nl: Partial<Translations> = {
   "offsite.wizard.step2": "2 · De append-only-server uitrollen",
   "offsite.wizard.step2Hint": "Voer dit uit op je storage box om een restic rest-server met --append-only op te zetten. Het gegenereerde wachtwoord wordt maar één keer getoond.",
   "offsite.wizard.generate": "Deployment-snippet genereren",
+  "offsite.wizard.unraidTemplate": "Unraid-sjabloon (XML)",
   "offsite.wizard.regenerate": "Opnieuw genereren (nieuw wachtwoord)",
   "offsite.wizard.snippetError": "Kon het snippet niet genereren",
   "offsite.wizard.passwordWarning": "Dit wachtwoord wordt slechts ÉÉN KEER getoond en wordt nooit door BombVault opgeslagen. Sla het nu op. Je hebt het nodig voor de inloggegevens hieronder en het kan niet worden hersteld.",

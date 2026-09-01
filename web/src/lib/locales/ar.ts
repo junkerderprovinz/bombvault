@@ -895,6 +895,7 @@ const ar: Partial<Translations> = {
   "offsite.wizard.step2": "2 · نشر خادم append-only",
   "offsite.wizard.step2Hint": "شغّل هذا على صندوق التخزين الخاص بك لتشغيل restic rest-server مع --append-only. تُعرض كلمة المرور المُولَّدة مرة واحدة فقط.",
   "offsite.wizard.generate": "توليد مقتطف النشر",
+  "offsite.wizard.unraidTemplate": "قالب Unraid (XML)",
   "offsite.wizard.regenerate": "إعادة التوليد (كلمة مرور جديدة)",
   "offsite.wizard.snippetError": "تعذّر توليد المقتطف",
   "offsite.wizard.passwordWarning": "تُعرض كلمة المرور هذه مرة واحدة فقط ولا يخزّنها BombVault إطلاقاً. احفظها الآن. ستحتاجها لبيانات الاعتماد أدناه ولا يمكن استرجاعها.",

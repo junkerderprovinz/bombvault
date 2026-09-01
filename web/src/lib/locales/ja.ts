@@ -864,6 +864,7 @@ const ja: Partial<Translations> = {
   "offsite.wizard.step2": "2 · append-only サーバーをデプロイ",
   "offsite.wizard.step2Hint": "ストレージボックス上でこれを実行して、--append-only 付きの restic rest-server を起動します。生成されるパスワードは一度だけ表示されます。",
   "offsite.wizard.generate": "デプロイ用スニペットを生成",
+  "offsite.wizard.unraidTemplate": "Unraid テンプレート (XML)",
   "offsite.wizard.regenerate": "再生成（新しいパスワード）",
   "offsite.wizard.snippetError": "スニペットを生成できませんでした",
   "offsite.wizard.passwordWarning": "このパスワードは一度だけ表示され、BombVault には保存されません。今すぐ保存してください。下の認証情報で必要になり、後から復元することはできません。",

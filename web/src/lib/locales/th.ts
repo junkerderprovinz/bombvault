@@ -895,6 +895,7 @@ const th: Partial<Translations> = {
   "offsite.wizard.step2": "2 · ติดตั้งเซิร์ฟเวอร์ append-only",
   "offsite.wizard.step2Hint": "เรียกใช้คำสั่งนี้บนกล่องจัดเก็บข้อมูลของคุณเพื่อตั้ง restic rest-server ด้วย --append-only รหัสผ่านที่สร้างขึ้นจะแสดงเพียงครั้งเดียว",
   "offsite.wizard.generate": "สร้างสนิปเพ็ตการติดตั้ง",
+  "offsite.wizard.unraidTemplate": "เทมเพลต Unraid (XML)",
   "offsite.wizard.regenerate": "สร้างใหม่ (รหัสผ่านใหม่)",
   "offsite.wizard.snippetError": "สร้างสนิปเพ็ตไม่สำเร็จ",
   "offsite.wizard.passwordWarning": "รหัสผ่านนี้จะแสดงเพียงครั้งเดียวและ BombVault จะไม่จัดเก็บไว้ บันทึกไว้ตอนนี้ คุณต้องใช้สำหรับข้อมูลรับรองด้านล่างและไม่สามารถกู้คืนได้",

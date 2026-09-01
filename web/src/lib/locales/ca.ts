@@ -292,6 +292,7 @@ const ca: Partial<Translations> = {
   "offsite.wizard.step2": "2 · Desplega el servidor de només-afegir",
   "offsite.wizard.step2Hint": "Executa això a la teva caixa d'emmagatzematge per aixecar un restic rest-server amb --append-only. La contrasenya generada només es mostra un cop.",
   "offsite.wizard.generate": "Genera el fragment de desplegament",
+  "offsite.wizard.unraidTemplate": "Plantilla Unraid (XML)",
   "offsite.wizard.regenerate": "Regenera (contrasenya nova)",
   "offsite.wizard.snippetError": "No s'ha pogut generar el fragment",
   "offsite.wizard.passwordWarning": "Aquesta contrasenya es mostra NOMÉS UN COP i BombVault mai la desa. Guarda-la ara. La necessitaràs per a les credencials de sota i no es pot recuperar.",
