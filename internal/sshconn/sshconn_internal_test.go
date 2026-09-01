@@ -136,7 +136,7 @@ func TestWriteSSHConfigPointsAtOurOwnKeyAndHosts(t *testing.T) {
 	if err := c.WriteSSHConfig(); err != nil {
 		t.Fatalf("WriteSSHConfig: %v", err)
 	}
-	raw, err := os.ReadFile(filepath.Join(home, ".ssh", "config"))
+	raw, err := os.ReadFile(filepath.Join(home, ".ssh", "config")) //nolint:gosec // G304: home is this test's own t.TempDir(), not input
 	if err != nil {
 		t.Fatalf("no config written: %v", err)
 	}

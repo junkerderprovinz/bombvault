@@ -19,7 +19,7 @@ import (
 
 func TestRunReasonsMatchTheFrontend(t *testing.T) {
 	path := filepath.Join("..", "..", "web", "src", "lib", "runReason.ts")
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: fixed repo-relative path built one line above, not input
 	if err != nil {
 		t.Fatalf("cannot read %s: %v", path, err)
 	}

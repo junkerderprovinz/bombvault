@@ -100,7 +100,10 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 	// An already-absolute path INSIDE the host mount is accepted as-is: repos
 	// added before this change may have been stored that way, and rejecting
 	// them would break a working configuration to fix a broken one.
-	repo := loc
+	// Declared, not initialised: both arms below assign it, and seeding it with
+	// loc only looked like a safe default while hiding that one arm never used
+	// the seed.
+	var repo string
 	// The "already absolute and inside the mount" test is a plain prefix check on
 	// slash-normalised copies rather than paths.Within, which requires a leading
 	// "/" and so can never be true on a Windows dev box. Only the COMPARISON is
