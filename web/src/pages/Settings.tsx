@@ -227,11 +227,11 @@ export function AccentCard({
           (Containers.tsx/Fleet.tsx's trailing metadata, and the
           rainbow-reset-badge row a few hundred lines below).
             The group used to hold a standalone custom-colour swatch and a
-          "Voreinstellungen:" caption as well; both are gone ([429]) and the
+          "Voreinstellungen:" caption as well; both are gone ([432]) and the
           reasoning is at the next comment down. */}
       <div className="flex items-center gap-2 flex-wrap ms-auto">
         {/* The standalone custom-colour swatch and the "Voreinstellungen:"
-            caption are GONE ([429], jdp: "das Farbpickerfeld und der text
+            caption are GONE ([432], jdp: "das Farbpickerfeld und der text
             Voreinstellungen soll weg").
               Both were redundant rather than wrong. Every one of the eight
             swatches below already OPENS the same picker — that is what
