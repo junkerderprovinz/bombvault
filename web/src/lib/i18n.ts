@@ -1398,6 +1398,7 @@ export const en = {
   // prefix above is the encryption *kit*; the page title uses `recovery.pageTitle`
   // to avoid colliding with the existing `recovery.title` ("Recovery kit").
   "nav.recovery": "Recovery",
+  "recovery.pageTitle": "Disaster recovery",
   "recovery.intro": "Recover your containers and VMs from an existing backup onto this install.",
   // Step 1 — connection / APP_KEY readability check
   "recovery.step1": "Can BombVault read your backups?",
@@ -1576,7 +1577,14 @@ export const en = {
   "recovery.foreignStepConnect": "Connect to the other repository",
   "recovery.foreignStepBrowse": "Browse & restore",
   "recovery.foreignLocation": "Repository location",
-  "recovery.foreignLocationHint": "A folder under the host mount. Mount the other server's backup share on this host and point this at it. The repository must be locally mounted (remote repo URLs aren't accepted here).",
+  "recovery.foreignLocationHint": "A folder under the host mount, or a restic remote URL (s3:…, rest:…, sftp:…, b2:…). Mount the other server's backup share and point at it, or enter its remote repository directly. A remote one then asks for its own credentials below. An rclone remote is not accepted here: it would authenticate with THIS server's rclone configuration, so use the repository's native URL instead.",
+  "recovery.foreignCredsIntro": "This looks like a remote repository, so it needs the credentials of the OTHER server's backend. They are used for this session only and are never saved. Your own off-site credentials are deliberately not reused here: they would be sent to an address you just typed in.",
+  "recovery.foreignS3KeyId": "Access key ID (S3/B2)",
+  "recovery.foreignS3Secret": "Secret access key (S3/B2)",
+  "recovery.foreignS3Region": "Region (optional)",
+  "recovery.foreignRestUser": "REST username",
+  "recovery.foreignRestPassword": "REST password",
+  "recovery.foreignRestHint": "Only for a rest: repository (a restic REST server). Leave empty for S3, B2 or SFTP.",
   "recovery.foreignKey": "APP_KEY of the other instance",
   "recovery.foreignKeyHint": "The 64-character key from the OTHER instance's recovery kit. Your own key stays untouched.",
   "recovery.foreignConnect": "Connect",
@@ -2904,6 +2912,7 @@ export const de: Translations = {
 
   // Guided Recovery tab (disaster-recovery walkthrough)
   "nav.recovery": "Wiederherstellung",
+  "recovery.pageTitle": "Notfall-Wiederherstellung",
   "recovery.intro": "Stelle deine Container und VMs aus einem vorhandenen Backup auf dieser Installation wieder her.",
   // Schritt 1 — Verbindungs-/APP_KEY-Lesbarkeitsprüfung
   "recovery.step1": "Kann BombVault deine Backups lesen?",
@@ -3074,7 +3083,14 @@ export const de: Translations = {
   "recovery.foreignStepConnect": "Mit dem anderen Repository verbinden",
   "recovery.foreignStepBrowse": "Durchstöbern & wiederherstellen",
   "recovery.foreignLocation": "Repository-Speicherort",
-  "recovery.foreignLocationHint": "Ein Ordner unter dem Host-Mount. Hänge die Backup-Freigabe des anderen Servers auf diesem Host ein und richte dies darauf aus. Das Repository muss lokal eingebunden sein (Remote-Repo-URLs werden hier nicht akzeptiert).",
+  "recovery.foreignLocationHint": "Ein Ordner unter dem Host-Mount oder eine restic-Remote-URL (s3:…, rest:…, sftp:…, b2:…). Hänge die Backup-Freigabe des anderen Servers ein und richte dies darauf aus, oder gib sein Remote-Repository direkt an. Bei einem Remote-Repository werden unten dessen eigene Zugangsdaten abgefragt. Ein rclone-Remote wird hier nicht angenommen: Es würde sich mit der rclone-Konfiguration DIESES Servers anmelden, nutze deshalb die native URL des Repositories.",
+  "recovery.foreignCredsIntro": "Das sieht nach einem Remote-Repository aus, dafür werden die Zugangsdaten des Backends vom ANDEREN Server gebraucht. Sie gelten nur für diese Sitzung und werden nicht gespeichert. Deine eigenen Off-Site-Zugangsdaten werden hier bewusst nicht wiederverwendet: Sie gingen sonst an eine Adresse, die gerade erst eingetippt wurde.",
+  "recovery.foreignS3KeyId": "Zugriffsschlüssel-ID (S3/B2)",
+  "recovery.foreignS3Secret": "Geheimer Zugriffsschlüssel (S3/B2)",
+  "recovery.foreignS3Region": "Region (optional)",
+  "recovery.foreignRestUser": "REST-Benutzername",
+  "recovery.foreignRestPassword": "REST-Passwort",
+  "recovery.foreignRestHint": "Nur für ein rest:-Repository (einen restic-REST-Server). Bei S3, B2 oder SFTP leer lassen.",
   "recovery.foreignKey": "APP_KEY der anderen Instanz",
   "recovery.foreignKeyHint": "Der 64-stellige Schlüssel aus dem Recovery-Kit der ANDEREN Instanz. Dein eigener Schlüssel bleibt unberührt.",
   "recovery.foreignConnect": "Verbinden",

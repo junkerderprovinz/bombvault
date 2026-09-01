@@ -15,6 +15,8 @@ const hi: Partial<Translations> = {
   "nav.receiver": "रिसीवर",
   "nav.fleet": "फ़्लीट",
   "nav.settings": "सेटिंग्स",
+
+  // Mode toggle
   "about.title": "BombVault के बारे में",
   "about.report": "समस्याएँ, इच्छाएँ या सुधार के सुझाव? GitHub पर एक issue खोलें।",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const hi: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "रिकवरी",
+  "recovery.pageTitle": "डिज़ास्टर रिकवरी",
   "recovery.intro": "इस इंस्टॉलेशन पर मौजूद बैकअप से अपने कंटेनर और VM रिकवर करें।",
   // Step 1
   "recovery.step1": "क्या BombVault आपके बैकअप पढ़ सकता है?",
@@ -1297,6 +1300,13 @@ const hi: Partial<Translations> = {
   "recovery.foreignLocationHint": "होस्ट माउंट के अंतर्गत एक फ़ोल्डर। दूसरे सर्वर के बैकअप शेयर को इस होस्ट पर माउंट करें और इसे उस पर इंगित करें। रिपॉज़िटरी लोकल रूप से माउंट होनी चाहिए (यहाँ रिमोट रिपॉज़िटरी URL स्वीकार नहीं किए जाते)।",
   "recovery.foreignKey": "दूसरे इंस्टेंस का APP_KEY",
   "recovery.foreignKeyHint": "दूसरे इंस्टेंस की रिकवरी किट से 64-अक्षर वाली कुंजी। आपकी अपनी कुंजी को छुआ नहीं जाता।",
+  "recovery.foreignCredsIntro": "यह एक रिमोट रिपॉज़िटरी लगती है, इसलिए इसके लिए दूसरे सर्वर के बैकएंड के अपने क्रेडेंशियल्स चाहिए। ये सिर्फ़ इसी सेशन के लिए इस्तेमाल होते हैं और कभी सहेजे नहीं जाते। आपके अपने ऑफ़-साइट क्रेडेंशियल्स यहाँ जानबूझकर दोबारा इस्तेमाल नहीं किए जाते: वे उस पते पर भेजे जाते जो आपने अभी-अभी टाइप किया है।",
+  "recovery.foreignS3KeyId": "एक्सेस कुंजी ID (S3/B2)",
+  "recovery.foreignS3Secret": "गुप्त एक्सेस कुंजी (S3/B2)",
+  "recovery.foreignS3Region": "रीजन (वैकल्पिक)",
+  "recovery.foreignRestUser": "REST उपयोगकर्ता नाम",
+  "recovery.foreignRestPassword": "REST पासवर्ड",
+  "recovery.foreignRestHint": "केवल rest: रिपॉज़िटरी (एक restic REST सर्वर) के लिए। S3, B2 या SFTP के लिए खाली छोड़ें।",
   "recovery.foreignConnect": "कनेक्ट करें",
   "recovery.foreignConnecting": "कनेक्ट हो रहा है…",
   "recovery.foreignConnected": "कनेक्ट हो गया। रिपॉज़िटरी पढ़ी जा सकती है।",

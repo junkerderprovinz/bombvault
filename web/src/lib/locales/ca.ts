@@ -15,6 +15,8 @@ const ca: Partial<Translations> = {
   "nav.receiver": "Receptor",
   "nav.fleet": "Flota",
   "nav.settings": "Configuració",
+
+  // Mode toggle
   "about.title": "Quant a BombVault",
   "about.report": "Problemes, desitjos o suggeriments de millora? Obre una incidència a GitHub.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const ca: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Recuperació",
+  "recovery.pageTitle": "Recuperació d'avaries",
   "recovery.intro": "Recupera els teus contenidors i MV a partir d'una còpia existent en aquesta instal·lació.",
   // Step 1
   "recovery.step1": "Pot BombVault llegir les teves còpies?",
@@ -1297,6 +1300,13 @@ const ca: Partial<Translations> = {
   "recovery.foreignLocationHint": "Una carpeta sota el muntatge de l'amfitrió. Munta la compartició de còpies de l'altre servidor en aquest amfitrió i apunta-ho cap a ella. El repositori ha d'estar muntat localment (aquí no s'accepten URL de repositoris remots).",
   "recovery.foreignKey": "APP_KEY de l'altra instància",
   "recovery.foreignKeyHint": "La clau de 64 caràcters del kit de recuperació de L'ALTRA instància. La teva pròpia clau no es toca.",
+  "recovery.foreignCredsIntro": "Això sembla un repositori remot, així que calen les credencials del backend de L'ALTRE servidor. Només s'utilitzen en aquesta sessió i mai es desen. Les teves pròpies credencials externes no es reutilitzen aquí a propòsit: s'enviarien a una adreça que acabes d'escriure.",
+  "recovery.foreignS3KeyId": "ID de clau d'accés (S3/B2)",
+  "recovery.foreignS3Secret": "Clau d'accés secreta (S3/B2)",
+  "recovery.foreignS3Region": "Regió (opcional)",
+  "recovery.foreignRestUser": "Usuari REST",
+  "recovery.foreignRestPassword": "Contrasenya REST",
+  "recovery.foreignRestHint": "Només per a un repositori «rest:» (un servidor restic REST). Deixa-ho buit per a S3, B2 o SFTP.",
   "recovery.foreignConnect": "Connecta",
   "recovery.foreignConnecting": "Connectant…",
   "recovery.foreignConnected": "Connectat. El repositori és llegible.",

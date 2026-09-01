@@ -627,6 +627,7 @@ const cs: Partial<Translations> = {
   "recovery.stored": "Uložil jsem ji bezpečně",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Zotavení po havárii",
   "recovery.intro": "Obnovte své kontejnery a VM z existující zálohy do této instalace.",
   "recovery.step1": "Může BombVault číst vaše zálohy?",
   "recovery.appKeyExplain": "Ke čtení existujících záloh potřebuje tento kontejner STEJNÝ APP_KEY, který používal dříve. Najdete jej ve své sadě pro obnovu. Nastavte jej v šabloně kontejneru Unraid, pokud ještě není, a poté proveďte opětovnou kontrolu.",
@@ -1128,6 +1129,13 @@ const cs: Partial<Translations> = {
   "recovery.foreignLocationHint": "Složka pod připojením hosta. Připojte na tomto hostiteli sdílení se zálohami druhého serveru a odkažte sem na něj. Repozitář musí být připojen lokálně (URL vzdálených repozitářů se zde nepřijímají).",
   "recovery.foreignKey": "APP_KEY druhé instance",
   "recovery.foreignKeyHint": "64znakový klíč ze záchranné sady DRUHÉ instance. Váš vlastní klíč zůstane nedotčen.",
+  "recovery.foreignCredsIntro": "Vypadá to na vzdálený repozitář, proto jsou potřeba přihlašovací údaje k backendu DRUHÉHO serveru. Použijí se jen pro tuto relaci a nikdy se neukládají. Vaše vlastní přihlašovací údaje mimo lokalitu se zde záměrně znovu nepoužívají: odeslaly by se na adresu, kterou jste právě zadali.",
+  "recovery.foreignS3KeyId": "ID přístupového klíče (S3/B2)",
+  "recovery.foreignS3Secret": "Tajný přístupový klíč (S3/B2)",
+  "recovery.foreignS3Region": "Region (volitelné)",
+  "recovery.foreignRestUser": "Uživatelské jméno REST",
+  "recovery.foreignRestPassword": "Heslo REST",
+  "recovery.foreignRestHint": "Platí jen pro repozitář rest: (server restic REST). Pro S3, B2 nebo SFTP ponechte prázdné.",
   "recovery.foreignConnect": "Připojit",
   "recovery.foreignConnecting": "Připojování…",
   "recovery.foreignConnected": "Připojeno. Repozitář je čitelný.",

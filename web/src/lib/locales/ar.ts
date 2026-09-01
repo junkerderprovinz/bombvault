@@ -632,6 +632,7 @@ const ar: Partial<Translations> = {
   "recovery.stored": "حفظتها بأمان",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "التعافي من الكوارث",
   "recovery.intro": "استعد الـ containers والـ VMs من نسخة احتياطية موجودة إلى هذا التثبيت.",
   "recovery.step1": "هل يستطيع BombVault قراءة نسخك الاحتياطية؟",
   "recovery.appKeyExplain": "لقراءة النسخ الاحتياطية الموجودة يحتاج هذا الـ container إلى نفس APP_KEY الذي استخدمه سابقاً. إنه في حقيبة الاستعادة الخاصة بك. اضبطه في قالب حاوية Unraid إن لم يكن مضبوطاً، ثم أعد الفحص.",
@@ -1133,6 +1134,13 @@ const ar: Partial<Translations> = {
   "recovery.foreignLocationHint": "مجلد تحت نقطة تحميل المضيف. حمّل على هذا المضيف المشاركة التي تحتوي نسخ الخادم الآخر ثم وجّه هذا إليها. يجب أن يكون المستودع محمّلاً محلياً (روابط المستودعات البعيدة غير مقبولة هنا).",
   "recovery.foreignKey": "APP_KEY الخاص بالنسخة الأخرى",
   "recovery.foreignKeyHint": "المفتاح المكوّن من 64 حرفًا من حزمة استرداد النسخة الأخرى. يبقى مفتاحك الخاص دون مساس.",
+  "recovery.foreignCredsIntro": "يبدو أن هذا مستودع بعيد، لذا يحتاج إلى بيانات اعتماد الخلفية الخاصة بالخادم الآخر. تُستخدم في هذه الجلسة فقط ولا تُحفظ أبدًا. بيانات اعتمادك أنت للتخزين خارج الموقع لا يُعاد استخدامها هنا عن قصد: فلولا ذلك لأُرسلت إلى عنوان كتبته للتو.",
+  "recovery.foreignS3KeyId": "معرّف مفتاح الوصول (S3/B2)",
+  "recovery.foreignS3Secret": "مفتاح الوصول السري (S3/B2)",
+  "recovery.foreignS3Region": "المنطقة (اختياري)",
+  "recovery.foreignRestUser": "اسم مستخدم REST",
+  "recovery.foreignRestPassword": "كلمة مرور REST",
+  "recovery.foreignRestHint": "فقط للمستودعات التي تبدأ بـ rest: (خادم restic REST). اتركها فارغة مع S3 أو B2 أو SFTP.",
   "recovery.foreignConnect": "اتصال",
   "recovery.foreignConnecting": "جارٍ الاتصال…",
   "recovery.foreignConnected": "تم الاتصال. يمكن قراءة المستودع.",

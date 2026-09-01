@@ -626,6 +626,7 @@ const no: Partial<Translations> = {
   "recovery.stored": "Jeg har lagret det trygt",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Katastrofegjenoppretting",
   "recovery.intro": "Gjenopprett containerne og VM-ene dine fra en eksisterende sikkerhetskopi til denne installasjonen.",
   "recovery.step1": "Kan BombVault lese sikkerhetskopiene dine?",
   "recovery.appKeyExplain": "For å lese eksisterende sikkerhetskopier trenger denne containeren SAMME APP_KEY som før. Den ligger i gjenopprettingssettet ditt. Angi den i Unraid-containermalen hvis den ikke allerede er satt, og sjekk på nytt.",
@@ -1130,6 +1131,13 @@ const no: Partial<Translations> = {
   "recovery.foreignLocationHint": "En mappe under vertsmonteringen. Monter den andre serverens delte ressurs med sikkerhetskopier på denne verten og pek hit mot den. Repositoriet må være lokalt montert (eksterne repo-URL-er godtas ikke her).",
   "recovery.foreignKey": "Den andre instansens APP_KEY",
   "recovery.foreignKeyHint": "Nøkkelen på 64 tegn fra den ANDRE instansens redningssett. Din egen nøkkel forblir urørt.",
+  "recovery.foreignCredsIntro": "Dette ser ut som et fjern-repo, så det trengs legitimasjon for den ANDRE serverens backend. Den brukes bare for denne økten og lagres aldri. Din egen off-site-legitimasjon gjenbrukes bevisst ikke her: den ville blitt sendt til en adresse du nettopp tastet inn.",
+  "recovery.foreignS3KeyId": "Tilgangsnøkkel-ID (S3/B2)",
+  "recovery.foreignS3Secret": "Hemmelig tilgangsnøkkel (S3/B2)",
+  "recovery.foreignS3Region": "Region (valgfritt)",
+  "recovery.foreignRestUser": "REST-brukernavn",
+  "recovery.foreignRestPassword": "REST-passord",
+  "recovery.foreignRestHint": "Kun for et rest:-repository (en restic REST-server). La stå tomt for S3, B2 eller SFTP.",
   "recovery.foreignConnect": "Koble til",
   "recovery.foreignConnecting": "Kobler til…",
   "recovery.foreignConnected": "Tilkoblet. Repoet er lesbart.",

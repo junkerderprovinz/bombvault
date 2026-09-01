@@ -632,6 +632,7 @@ const th: Partial<Translations> = {
   "recovery.stored": "ฉันเก็บไว้อย่างปลอดภัยแล้ว",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "การกู้คืนจากภัยพิบัติ",
   "recovery.intro": "กู้คืนคอนเทนเนอร์และ VMs ของคุณจากการสำรองข้อมูลที่มีอยู่มายังการติดตั้งนี้",
   "recovery.step1": "BombVault อ่านการสำรองข้อมูลของคุณได้หรือไม่?",
   "recovery.appKeyExplain": "ในการอ่านการสำรองข้อมูลที่มีอยู่ คอนเทนเนอร์นี้ต้องใช้ APP_KEY เดิมที่เคยใช้ ซึ่งอยู่ในชุดกู้คืนของคุณ ตั้งค่าใน container template ของ Unraid หากยังไม่ได้ตั้ง แล้วตรวจสอบอีกครั้ง",
@@ -1133,6 +1134,13 @@ const th: Partial<Translations> = {
   "recovery.foreignLocationHint": "โฟลเดอร์ใต้จุดเมานต์ของโฮสต์ เมานต์แชร์ที่มีข้อมูลสำรองของเซิร์ฟเวอร์อีกเครื่องไว้บนโฮสต์นี้แล้วชี้มาที่โฟลเดอร์นั้น ที่เก็บต้องถูกเมานต์ในเครื่อง (ไม่รองรับ URL ที่เก็บระยะไกลที่นี่)",
   "recovery.foreignKey": "APP_KEY ของอินสแตนซ์อีกตัว",
   "recovery.foreignKeyHint": "คีย์ 64 ตัวอักษรจากชุดกู้คืนของอินสแตนซ์อีกตัว คีย์ของคุณเองไม่ถูกแตะต้อง",
+  "recovery.foreignCredsIntro": "รายการนี้ดูเหมือนที่เก็บระยะไกล จึงต้องใช้ข้อมูลรับรองของแบ็กเอนด์บนเซิร์ฟเวอร์อีกเครื่องหนึ่ง ข้อมูลนี้ใช้เฉพาะในเซสชันนี้และจะไม่ถูกบันทึกไว้ ข้อมูลรับรองสำหรับที่เก็บนอกสถานที่ของคุณเองจะไม่ถูกนำมาใช้ซ้ำที่นี่โดยเจตนา เพราะจะถูกส่งไปยังที่อยู่ที่คุณเพิ่งพิมพ์ลงไป",
+  "recovery.foreignS3KeyId": "รหัสคีย์การเข้าถึง (S3/B2)",
+  "recovery.foreignS3Secret": "คีย์การเข้าถึงลับ (S3/B2)",
+  "recovery.foreignS3Region": "ภูมิภาค (ไม่บังคับ)",
+  "recovery.foreignRestUser": "ชื่อผู้ใช้ REST",
+  "recovery.foreignRestPassword": "รหัสผ่าน REST",
+  "recovery.foreignRestHint": "ใช้เฉพาะกับที่เก็บแบบ rest: (เซิร์ฟเวอร์ restic REST) หากใช้ S3 B2 หรือ SFTP ให้เว้นว่างไว้",
   "recovery.foreignConnect": "เชื่อมต่อ",
   "recovery.foreignConnecting": "กำลังเชื่อมต่อ…",
   "recovery.foreignConnected": "เชื่อมต่อแล้ว อ่านรีพอสิทอรีได้",

@@ -15,6 +15,8 @@ const bg: Partial<Translations> = {
   "nav.receiver": "Приемник",
   "nav.fleet": "Флот",
   "nav.settings": "Настройки",
+
+  // Mode toggle
   "about.title": "Относно BombVault",
   "about.report": "Проблеми, желания или предложения за подобрение? Отворете issue в GitHub.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const bg: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Възстановяване",
+  "recovery.pageTitle": "Възстановяване при срив",
   "recovery.intro": "Възстанови контейнерите и ВМ-те си от съществуващо архивиране на тази инсталация.",
   // Step 1
   "recovery.step1": "Може ли BombVault да прочете архивиранията ти?",
@@ -1297,6 +1300,13 @@ const bg: Partial<Translations> = {
   "recovery.foreignLocationHint": "Папка под монтирането на хоста. Монтирай споделянето за архиви на другия сървър на този хост и насочи това към него — хранилището трябва да е локално монтирано (URL адреси на отдалечени хранилища не се приемат тук).",
   "recovery.foreignKey": "APP_KEY на другата инстанция",
   "recovery.foreignKeyHint": "64-символният ключ от комплекта за възстановяване на ДРУГАТА инстанция — собственият ти ключ остава непроменен.",
+  "recovery.foreignCredsIntro": "Това изглежда като отдалечено хранилище, затова са нужни данните за достъп до бекенда на ДРУГИЯ сървър. Те важат само за тази сесия и никога не се запазват. Собствените ти данни за достъп до копието извън обекта нарочно не се използват повторно тук: те биха били изпратени към адрес, който току-що си въвел.",
+  "recovery.foreignS3KeyId": "ID на ключа за достъп (S3/B2)",
+  "recovery.foreignS3Secret": "Таен ключ за достъп (S3/B2)",
+  "recovery.foreignS3Region": "Регион (по избор)",
+  "recovery.foreignRestUser": "Потребителско име за REST",
+  "recovery.foreignRestPassword": "Парола за REST",
+  "recovery.foreignRestHint": "Само за хранилище от тип rest: (restic REST сървър). Остави празно за S3, B2 или SFTP.",
   "recovery.foreignConnect": "Свържи се",
   "recovery.foreignConnecting": "Свързване…",
   "recovery.foreignConnected": "Свързано — хранилището е четимо.",

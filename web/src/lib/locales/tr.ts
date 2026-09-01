@@ -629,6 +629,7 @@ const tr: Partial<Translations> = {
   "recovery.stored": "Güvenle sakladım",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Felaket kurtarma",
   "recovery.intro": "Konteynerlerinizi ve VM'lerinizi mevcut bir yedekten bu kuruluma geri yükleyin.",
   "recovery.step1": "BombVault yedeklerinizi okuyabiliyor mu?",
   "recovery.appKeyExplain": "Mevcut yedekleri okumak için bu konteynerin daha önce kullandığı AYNI APP_KEY gerekir. Bu, kurtarma kitinizde yer alır. Henüz ayarlı değilse Unraid konteyner şablonunda ayarlayın, ardından yeniden denetleyin.",
@@ -1130,6 +1131,13 @@ const tr: Partial<Translations> = {
   "recovery.foreignLocationHint": "Ana makine bağlama noktası altındaki bir klasör. Diğer sunucunun yedeklerini içeren paylaşımı bu ana makineye bağlayın ve burayı ona yönlendirin. Depo yerel olarak bağlanmış olmalıdır (uzak depo URL'leri burada kabul edilmez).",
   "recovery.foreignKey": "Diğer örneğin APP_KEY'i",
   "recovery.foreignKeyHint": "DİĞER örneğin kurtarma kitindeki 64 karakterlik anahtar. Kendi anahtarınız olduğu gibi kalır.",
+  "recovery.foreignCredsIntro": "Bu uzak bir depo gibi görünüyor, bu yüzden DİĞER sunucunun arka ucuna ait kimlik bilgileri gerekiyor. Yalnızca bu oturum boyunca kullanılır ve hiçbir zaman kaydedilmez. Kendi site dışı kimlik bilgileriniz burada bilinçli olarak yeniden kullanılmaz: az önce yazdığınız bir adrese gönderilirlerdi.",
+  "recovery.foreignS3KeyId": "Erişim anahtarı kimliği (S3/B2)",
+  "recovery.foreignS3Secret": "Gizli erişim anahtarı (S3/B2)",
+  "recovery.foreignS3Region": "Bölge (isteğe bağlı)",
+  "recovery.foreignRestUser": "REST kullanıcı adı",
+  "recovery.foreignRestPassword": "REST parolası",
+  "recovery.foreignRestHint": "Yalnızca rest: deposu (bir restic REST sunucusu) için. S3, B2 veya SFTP kullanıyorsanız boş bırakın.",
   "recovery.foreignConnect": "Bağlan",
   "recovery.foreignConnecting": "Bağlanıyor…",
   "recovery.foreignConnected": "Bağlandı. Depo okunabilir.",

@@ -1424,6 +1424,11 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
           labelKey="excludes.assistTitle"
           tone="neutral"
           onClick={toggleAssistant}
+          glyph={
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${assistOpen ? "rotate-90" : "rtl:rotate-180"}`}>
+              <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+            </svg>
+          }
         />
         {assistOpen && (
           <div className="flex flex-col gap-2">
@@ -1969,6 +1974,7 @@ function ScheduleIncludeAllControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <Button
+        key={shakeInclude}
         label={t("schedule.includeAll")}
         labelKey="schedule.includeAll"
         tone="accent"
@@ -1979,6 +1985,7 @@ function ScheduleIncludeAllControl({
         }`}
       />
       <Button
+        key={shakeExclude}
         label={t("schedule.excludeAll")}
         labelKey="schedule.excludeAll"
         tone="subtle"
@@ -2609,7 +2616,8 @@ function BackupOrderPanel({
                 className={shakeSave ? "glim-shake" : ""}
               />
               <Button
-                label={t("backupOrder.reset")}
+                key={shakeReset}
+        label={t("backupOrder.reset")}
           labelKey="backupOrder.reset"
                 tone="subtle"
                 onClick={clearOrder}
@@ -2959,7 +2967,7 @@ export function Containers() {
             onClick={() => void handleDiscover()}
             disabled={discovering}
             busy={discovering}
-            title={tLtr(t, "containers.discoverHint")}
+            title={discovering ? t("containers.discovering") : tLtr(t, "containers.discoverHint")}
             className={shakeDiscover ? "glim-shake" : ""}
           />
         </div>
@@ -3120,7 +3128,8 @@ export function Containers() {
             {selected.size} {t("containers.selectedCount")}
           </span>
           <Button
-            label={t("containers.backupSelected")}
+            key={shakeBackupSelected}
+        label={t("containers.backupSelected")}
             labelKey="containers.backupSelected"
             tone="accent"
             onClick={() => void backupSelected()}

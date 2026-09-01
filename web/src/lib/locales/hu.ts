@@ -632,6 +632,7 @@ const hu: Partial<Translations> = {
   "recovery.stored": "Biztonságosan eltároltam",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Vészhelyreállítás",
   "recovery.intro": "Állítsd vissza a konténereidet és VM-jeidet egy meglévő biztonsági mentésből erre a telepítésre.",
   "recovery.step1": "Tudja a BombVault olvasni a mentéseidet?",
   "recovery.appKeyExplain": "A meglévő mentések olvasásához ennek a konténernek UGYANARRA az APP_KEY-re van szüksége, amit korábban használt. Ez a helyreállítási csomagodban van. Állítsd be az Unraid konténer-sablonban, ha még nincs, majd ellenőrizd újra.",
@@ -1133,6 +1134,13 @@ const hu: Partial<Translations> = {
   "recovery.foreignLocationHint": "Egy mappa a gazdagép csatolási pontja alatt. Csatold ezen a gazdagépen a másik szerver mentéseit tartalmazó megosztást, és erre mutass rá. A tárolónak helyben csatoltnak kell lennie (távoli tároló URL-ek itt nem elfogadottak).",
   "recovery.foreignKey": "A másik példány APP_KEY-e",
   "recovery.foreignKeyHint": "A 64 karakteres kulcs a MÁSIK példány helyreállítási készletéből. Az Ön saját kulcsa érintetlen marad.",
+  "recovery.foreignCredsIntro": "Ez távoli repónak tűnik, ezért a MÁSIK szerver backendjének hitelesítő adatai kellenek hozzá. Ezeket csak ebben a munkamenetben használjuk, és soha nem mentjük el. Az Ön saját telephelyen kívüli hitelesítő adatait itt szándékosan nem használjuk újra: egy olyan címre mennének, amelyet Ön épp most írt be.",
+  "recovery.foreignS3KeyId": "Hozzáférési kulcs azonosítója (S3/B2)",
+  "recovery.foreignS3Secret": "Titkos hozzáférési kulcs (S3/B2)",
+  "recovery.foreignS3Region": "Régió (opcionális)",
+  "recovery.foreignRestUser": "REST-felhasználónév",
+  "recovery.foreignRestPassword": "REST-jelszó",
+  "recovery.foreignRestHint": "Csak rest: kezdetű repóhoz kell (restic REST kiszolgáló). S3, B2 vagy SFTP esetén hagyja üresen.",
   "recovery.foreignConnect": "Csatlakozás",
   "recovery.foreignConnecting": "Csatlakozás…",
   "recovery.foreignConnected": "Csatlakozva. A repó olvasható.",

@@ -131,7 +131,6 @@ markdown_extensions:
 # part of the published site, so they are excluded from the build (keeps
 # mkdocs build --strict clean instead of warning on pages missing from nav).
 exclude_docs: |
-  superpowers/
   vm-backup-ssh-setup.md
 
 # No explicit titles: each page's (translated) H1 becomes its nav label, so the

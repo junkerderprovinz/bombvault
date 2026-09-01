@@ -718,7 +718,21 @@ function ForeignRestoreCard({
   // holding the other server's backups) — no remote-URL / off-site option here.
   const [localPath, setLocalPath] = useState("");
   const [key, setKey] = useState("");
+  // The FOREIGN repository's own backend credentials, for a remote location
+  // (#185). Kept in component state only: the server uses them for that one
+  // session and never persists them, and neither do we. This instance's stored
+  // cloud credentials are deliberately NOT offered as a default — lending them
+  // to a user-supplied URL is exactly the confused-deputy disclosure that #61
+  // closed, and typing the foreign repo's own credentials is what keeps a remote
+  // foreign restore free of borrowed authority.
+  const [foreignS3KeyId, setForeignS3KeyId] = useState("");
+  const [foreignS3Secret, setForeignS3Secret] = useState("");
+  const [foreignS3Region, setForeignS3Region] = useState("");
+  const [foreignRestUser, setForeignRestUser] = useState("");
+  const [foreignRestPassword, setForeignRestPassword] = useState("");
   const revealKey = useReveal();
+  const revealForeignS3Secret = useReveal();
+  const revealForeignRestPassword = useReveal();
 
   const [phase, setPhase] = useState<"idle" | "connecting" | "connected" | "error">("idle");
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -762,7 +776,26 @@ function ForeignRestoreCard({
   );
 
   const location = localPath.trim();
-  const canConnect = location !== "" && key.trim() !== "" && phase !== "connecting";
+  // A remote location is anything restic would treat as a backend rather than a
+  // path: a known scheme prefix, or the unprefixed rclone remote name ("name:bucket")
+  // that is the common typo. Mirrors restic.IsRemoteRepo / LooksLikeUnprefixedRemote
+  // server-side — this only decides which fields to SHOW; the server re-checks and
+  // is the authority.
+  const isRemoteLocation = /^(rest|s3|sftp|rclone|b2|gs|azure|swift):/i.test(location) ||
+    /^[A-Za-z0-9_-]+:[^/\\]/.test(location);
+  // A remote repo needs at least one usable credential, otherwise the server
+  // refuses it. Which kind depends on the backend, so any one of them unlocks
+  // Connect and the server reports precisely what is missing.
+  const hasForeignCreds =
+    foreignS3KeyId.trim() !== "" ||
+    foreignS3Secret.trim() !== "" ||
+    foreignRestUser.trim() !== "" ||
+    foreignRestPassword.trim() !== "";
+  const canConnect =
+    location !== "" &&
+    key.trim() !== "" &&
+    phase !== "connecting" &&
+    (!isRemoteLocation || hasForeignCreds);
 
   const connect = useCallback(async () => {
     if (location === "" || key.trim() === "") return;
@@ -776,7 +809,22 @@ function ForeignRestoreCard({
       setInventory(null);
     }
     try {
-      const res = await foreignOpen(location, key.trim());
+      // Credentials ride along only for a remote location; a mounted path needs
+      // none, and sending them anyway would put secrets on the wire for nothing.
+      const res = await foreignOpen(
+        location,
+        key.trim(),
+        isRemoteLocation
+          ? {
+              s3KeyId: foreignS3KeyId.trim(),
+              s3Secret: foreignS3Secret,
+              s3Region: foreignS3Region.trim(),
+              restUser: foreignRestUser.trim(),
+              restPassword: foreignRestPassword,
+              s3StorageClass: "",
+            }
+          : undefined,
+      );
       if (!res.ok || !res.session) {
         const message = res.error ?? t("settings.error");
         setConnectError(message);
@@ -826,7 +874,18 @@ function ForeignRestoreCard({
       push(message, "fail");
       setShake((n) => n + 1);
     }
-  }, [location, key, t, push]);
+  }, [
+    location,
+    key,
+    isRemoteLocation,
+    foreignS3KeyId,
+    foreignS3Secret,
+    foreignS3Region,
+    foreignRestUser,
+    foreignRestPassword,
+    t,
+    push,
+  ]);
 
   const disconnect = useCallback(() => {
     if (sessionRef.current) {
@@ -923,6 +982,88 @@ function ForeignRestoreCard({
             className={offsiteInput}
           />
         </div>
+
+        {/* Remote location -> the OTHER repository's own backend credentials
+            (#185). Only rendered for a remote location: a mounted path needs
+            none. These are never pre-filled from this instance's own off-site
+            credentials and never persisted — see the state declaration. */}
+        {isRemoteLocation && (
+          <div className="flex flex-col gap-3 rounded-control border border-carbon-line/60 p-3">
+            <p className="text-xs text-carbon-textSub">{t("recovery.foreignCredsIntro")}</p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("recovery.foreignS3KeyId")}
+                </label>
+                <input
+                  value={foreignS3KeyId}
+                  spellCheck={false}
+                  autoComplete="off"
+                  onChange={(e) => setForeignS3KeyId(e.target.value)}
+                  className={offsiteInput}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("recovery.foreignS3Region")}
+                </label>
+                <input
+                  value={foreignS3Region}
+                  spellCheck={false}
+                  autoComplete="off"
+                  onChange={(e) => setForeignS3Region(e.target.value)}
+                  className={offsiteInput}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                {t("recovery.foreignS3Secret")}
+              </label>
+              <RevealInput
+                {...revealForeignS3Secret}
+                value={foreignS3Secret}
+                spellCheck={false}
+                autoComplete="off"
+                onChange={(e) => setForeignS3Secret(e.target.value)}
+                wrapperClassName="w-full"
+                className={offsiteInput}
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("recovery.foreignRestUser")}
+                  <InfoBubble tip={t("recovery.foreignRestHint")} />
+                </label>
+                <input
+                  value={foreignRestUser}
+                  spellCheck={false}
+                  autoComplete="off"
+                  onChange={(e) => setForeignRestUser(e.target.value)}
+                  className={offsiteInput}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+                  {t("recovery.foreignRestPassword")}
+                </label>
+                <RevealInput
+                  {...revealForeignRestPassword}
+                  value={foreignRestPassword}
+                  spellCheck={false}
+                  autoComplete="off"
+                  onChange={(e) => setForeignRestPassword(e.target.value)}
+                  wrapperClassName="w-full"
+                  className={offsiteInput}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-3 pt-1 flex-wrap">
           <Button
@@ -1859,7 +2000,7 @@ export default function Recovery() {
             `nav.recovery` instead of retranslating a title in 42 locales also
             means the two can never drift apart again — pageTitle is deleted, so
             there is no second string left to disagree with this one. */}
-        <h1 className="text-lg font-semibold text-carbon-text">{t("nav.recovery")}</h1>
+        <h1 className="text-lg font-semibold text-carbon-text">{t("recovery.pageTitle")}</h1>
         <p className="text-sm text-carbon-textMuted mt-1 max-w-2xl">{t("recovery.intro")}</p>
       </div>
 
@@ -2211,14 +2352,14 @@ export default function Recovery() {
                 the StepCard's own `hint` above.) */}
             <div className="flex items-center gap-3 pt-1">
               <Button
+                key={connectPreviewShake}
                 label={t("recovery.connectPreview")}
                 labelKey="recovery.connectPreview"
                 tone="accent"
                 onClick={() => void connectPreview()}
                 disabled={attachState === "saving"}
-                className={`inline-flex items-center gap-2 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-                  connectPreviewShake ? " glim-shake" : ""
-                }`}
+                busy={attachState === "saving"}
+                className={connectPreviewShake ? "glim-shake" : ""}
               />
             </div>
           </>
@@ -2308,6 +2449,7 @@ export default function Recovery() {
                 tone="accent"
                 onClick={() => void restoreAll()}
                 disabled={restoreAllBusy || running.active}
+                busy={restoreAllBusy}
                 className="ms-auto"
               />
             </div>
@@ -2397,6 +2539,7 @@ export default function Recovery() {
           refusal text, shown only when a download is actually refused. */}
       <StepCard n={6} title={t("recovery.step5")} hint={t("recovery.kitHint")} state="idle" hueIndex={nextHue()}>
         <Button
+          key={kitShake}
           label={t("recovery.kitDownload")}
           labelKey="recovery.kitDownload"
           // Accent ([326]). The kit is the one artefact this page exists to

@@ -602,6 +602,7 @@ const nl: Partial<Translations> = {
   "recovery.stored": "Ik heb hem veilig bewaard",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Noodherstel",
   "recovery.intro": "Herstel je containers en VM's uit een bestaande back-up op deze installatie.",
   "recovery.step1": "Kan BombVault je back-ups lezen?",
   "recovery.appKeyExplain": "Om bestaande back-ups te lezen heeft deze container DEZELFDE APP_KEY nodig als voorheen. Die staat in je herstelkit. Stel hem in de Unraid-containersjabloon in als dat nog niet is gebeurd en controleer opnieuw.",
@@ -1127,6 +1128,13 @@ const nl: Partial<Translations> = {
   "recovery.foreignLocationHint": "Een map onder de host-mount. Koppel op deze host de share met de back-ups van de andere server en verwijs hier ernaar. De repository moet lokaal gekoppeld zijn (externe repo-URL's worden hier niet geaccepteerd).",
   "recovery.foreignKey": "APP_KEY van de andere instantie",
   "recovery.foreignKeyHint": "De sleutel van 64 tekens uit het recovery-kit van de ANDERE instantie. Uw eigen sleutel blijft onaangeroerd.",
+  "recovery.foreignCredsIntro": "Dit ziet eruit als een externe repository, dus zijn de inloggegevens van de backend van de ANDERE server nodig. Ze worden alleen voor deze sessie gebruikt en nooit opgeslagen. Je eigen off-site inloggegevens worden hier bewust niet hergebruikt: die zouden naar een adres gaan dat je zojuist zelf hebt ingetypt.",
+  "recovery.foreignS3KeyId": "Toegangssleutel-ID (S3/B2)",
+  "recovery.foreignS3Secret": "Geheime toegangssleutel (S3/B2)",
+  "recovery.foreignS3Region": "Regio (optioneel)",
+  "recovery.foreignRestUser": "REST-gebruikersnaam",
+  "recovery.foreignRestPassword": "REST-wachtwoord",
+  "recovery.foreignRestHint": "Alleen voor een rest:-repository (een restic REST-server). Laat leeg voor S3, B2 of SFTP.",
   "recovery.foreignConnect": "Verbinden",
   "recovery.foreignConnecting": "Verbinden…",
   "recovery.foreignConnected": "Verbonden, de repository is leesbaar.",

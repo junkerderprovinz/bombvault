@@ -15,6 +15,8 @@ const eu: Partial<Translations> = {
   "nav.receiver": "Hartzailea",
   "nav.fleet": "Flota",
   "nav.settings": "Ezarpenak",
+
+  // Mode toggle
   "about.title": "BombVault-i buruz",
   "about.report": "Arazoak, nahiak edo hobekuntza-proposamenak? Ireki issue bat GitHuben.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const eu: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Berreskuratzea",
+  "recovery.pageTitle": "Hondamendi-berreskuratzea",
   "recovery.intro": "Berrezarri zure edukiontziak eta MB instalazio honetan dagoen babeskopia batetik.",
   // Step 1
   "recovery.step1": "BombVaultek zure babeskopiak irakur ditzake?",
@@ -1297,6 +1300,13 @@ const eu: Partial<Translations> = {
   "recovery.foreignLocationHint": "Ostalariaren muntaketaren azpiko karpeta bat. Muntatu beste zerbitzariaren babeskopia-partekatzea ostalari honetan eta zuzendu hori haren gainera. Biltegia lokalki muntatuta egon behar du (kanpoko biltegi-URLak ez dira onartzen hemen).",
   "recovery.foreignKey": "Beste instantziaren APP_KEY",
   "recovery.foreignKeyHint": "BESTE instantziaren berreskuratze-kiteko 64 karaktereko gakoa. Zure gakoa ukitu gabe geratzen da.",
+  "recovery.foreignCredsIntro": "Urruneko biltegi bat dirudi, beraz BESTE zerbitzariaren backend-eko kredentzialak behar ditu. Saio honetan bakarrik erabiltzen dira, eta ez dira inoiz gordetzen. Zure kanpoko kredentzialak nahita ez dira hemen berrerabiltzen: oraintxe idatzi duzun helbide batera bidaliko lirateke.",
+  "recovery.foreignS3KeyId": "Sarbide-gakoaren IDa (S3/B2)",
+  "recovery.foreignS3Secret": "Sarbide-gako sekretua (S3/B2)",
+  "recovery.foreignS3Region": "Eskualdea (aukerakoa)",
+  "recovery.foreignRestUser": "REST erabiltzaile-izena",
+  "recovery.foreignRestPassword": "REST pasahitza",
+  "recovery.foreignRestHint": "«rest:» motako biltegi baterako soilik (restic REST zerbitzari bat). S3, B2 edo SFTP bada, utzi hutsik.",
   "recovery.foreignConnect": "Konektatu",
   "recovery.foreignConnecting": "Konektatzen…",
   "recovery.foreignConnected": "Konektatuta: biltegia irakurgarria da.",

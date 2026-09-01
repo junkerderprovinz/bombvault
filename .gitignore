@@ -29,7 +29,8 @@ web/dist/*
 /config/
 
 # Brainstorm / tooling
-.superpowers/
+
+# Agent worktree scratch space (isolated Agent-tool dispatches)
 
 # Agent worktree scratch space (isolated Agent-tool dispatches)
 .claude/worktrees/

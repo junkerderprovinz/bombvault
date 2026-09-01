@@ -15,6 +15,8 @@ const is: Partial<Translations> = {
   "nav.receiver": "Móttakandi",
   "nav.fleet": "Floti",
   "nav.settings": "Stillingar",
+
+  // Mode toggle
   "about.title": "Um BombVault",
   "about.report": "Vandamál, óskir eða tillögur að úrbótum? Opnaðu issue á GitHub.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const is: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Endurheimt",
+  "recovery.pageTitle": "Neyðarendurheimt",
   "recovery.intro": "Endurheimtu gáma og sýndarvélar úr fyrirliggjandi afriti á þessari uppsetningu.",
   // Step 1
   "recovery.step1": "Getur BombVault lesið afritin þín?",
@@ -1297,6 +1300,13 @@ const is: Partial<Translations> = {
   "recovery.foreignLocationHint": "Mappa undir tengipunkti hýsilsins. Tengdu afritunarsameign hins netþjónsins á þennan hýsil og beindu þessu á hana. Geymslusafnið verður að vera staðbundið tengt (fjarlægar geymslusafnsslóðir eru ekki teknar hér).",
   "recovery.foreignKey": "APP_KEY hins tilviksins",
   "recovery.foreignKeyHint": "64 stafa lykillinn úr endurheimtarpakka HINS tilviksins. Þinn eigin lykill helst óáreittur.",
+  "recovery.foreignCredsIntro": "Þetta virðist vera fjarlægt geymslusafn, svo það þarf aðgangsgögn fyrir bakenda HINS netþjónsins. Þau eru aðeins notuð í þessari setu og eru aldrei vistuð. Þín eigin aðgangsgögn fyrir fjarlæga afritið eru viljandi ekki endurnýtt hér: þau yrðu send á slóð sem þú slóst inn rétt í þessu.",
+  "recovery.foreignS3KeyId": "Auðkenni aðgangslykils (S3/B2)",
+  "recovery.foreignS3Secret": "Leynilegur aðgangslykill (S3/B2)",
+  "recovery.foreignS3Region": "Svæði (valfrjálst)",
+  "recovery.foreignRestUser": "REST-notandanafn",
+  "recovery.foreignRestPassword": "REST-lykilorð",
+  "recovery.foreignRestHint": "Aðeins fyrir geymslusafn sem byrjar á rest: (restic REST-netþjónn). Skildu eftir autt fyrir S3, B2 eða SFTP.",
   "recovery.foreignConnect": "Tengjast",
   "recovery.foreignConnecting": "Tengist…",
   "recovery.foreignConnected": "Tengt. Geymslusafnið er læsilegt.",

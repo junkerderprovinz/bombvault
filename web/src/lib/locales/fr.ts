@@ -629,6 +629,7 @@ const fr: Partial<Translations> = {
   "recovery.stored": "Je l'ai conservé en lieu sûr",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Récupération après sinistre",
   "recovery.intro": "Récupérez vos conteneurs et VMs depuis une sauvegarde existante vers cette installation.",
   "recovery.step1": "BombVault peut-il lire vos sauvegardes ?",
   "recovery.appKeyExplain": "Pour lire des sauvegardes existantes, ce conteneur a besoin de la MÊME APP_KEY qu'auparavant : elle figure dans votre kit de récupération. Définissez-la dans le modèle de conteneur Unraid si ce n'est pas déjà fait, puis relancez la vérification.",
@@ -1130,6 +1131,13 @@ const fr: Partial<Translations> = {
   "recovery.foreignLocationHint": "Un dossier sous le montage hôte. Montez sur cet hôte le partage contenant les sauvegardes de l'autre serveur et pointez ceci dessus : le dépôt doit être monté localement (les URL de dépôt distant ne sont pas acceptées ici).",
   "recovery.foreignKey": "APP_KEY de l'autre instance",
   "recovery.foreignKeyHint": "La clé de 64 caractères du kit de récupération de l'AUTRE instance. Votre propre clé reste intacte.",
+  "recovery.foreignCredsIntro": "Cela ressemble à un dépôt distant, il faut donc les identifiants du backend de l'AUTRE serveur. Ils ne servent que pour cette session et ne sont jamais enregistrés. Vos propres identifiants hors site ne sont volontairement pas réutilisés ici : ils seraient envoyés à une adresse que vous venez de saisir.",
+  "recovery.foreignS3KeyId": "ID de clé d'accès (S3/B2)",
+  "recovery.foreignS3Secret": "Clé d'accès secrète (S3/B2)",
+  "recovery.foreignS3Region": "Région (facultatif)",
+  "recovery.foreignRestUser": "Nom d'utilisateur REST",
+  "recovery.foreignRestPassword": "Mot de passe REST",
+  "recovery.foreignRestHint": "Uniquement pour un dépôt « rest: » (un serveur restic REST). Laissez vide pour S3, B2 ou SFTP.",
   "recovery.foreignConnect": "Se connecter",
   "recovery.foreignConnecting": "Connexion…",
   "recovery.foreignConnected": "Connecté : le dépôt est lisible.",

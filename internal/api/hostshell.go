@@ -2,7 +2,7 @@ package api
 
 // HostShell runs a shell command in BombVault's OWN container — the seam
 // behind the "Backup Everything" global pre/post hooks (design spec:
-// docs/superpowers/specs/2026-08-20-backup-everything-design.md, decision 6).
+// the design notes, decision 6).
 // Unlike the existing per-container PreHook/PostHook, which exec INSIDE the
 // target container via the Docker API (internal/backup/orchestrator.go's
 // `Docker.Exec(ctx, ref, []string{"sh", "-c", d.PreHook})`), a whole-pass hook

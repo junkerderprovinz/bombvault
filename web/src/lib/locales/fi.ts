@@ -629,6 +629,7 @@ const fi: Partial<Translations> = {
   "recovery.stored": "Olen tallentanut sen turvallisesti",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Katastrofista toipuminen",
   "recovery.intro": "Palauta konttisi ja VM:si olemassa olevasta varmuuskopiosta tähän asennukseen.",
   "recovery.step1": "Voiko BombVault lukea varmuuskopioitasi?",
   "recovery.appKeyExplain": "Lukeakseen olemassa olevia varmuuskopioita tämä kontti tarvitsee SAMAN APP_KEY:n, jota se käytti aiemmin. Se on palautuspaketissasi. Aseta se Unraidin konttimalliin, ellei sitä ole jo asetettu, ja tarkista sitten uudelleen.",
@@ -1130,6 +1131,13 @@ const fi: Partial<Translations> = {
   "recovery.foreignLocationHint": "Kansio isännän liitospisteen alla. Liitä tähän isäntään jako, jossa toisen palvelimen varmuuskopiot ovat, ja osoita tämä siihen. Repon on oltava paikallisesti liitetty (etärepojen URL-osoitteita ei hyväksytä tässä).",
   "recovery.foreignKey": "Toisen instanssin APP_KEY",
   "recovery.foreignKeyHint": "64 merkin avain TOISEN instanssin palautuspaketista. Oma avaimesi pysyy koskemattomana.",
+  "recovery.foreignCredsIntro": "Tämä näyttää etärepolta, joten se tarvitsee TOISEN palvelimen taustajärjestelmän tunnukset. Niitä käytetään vain tässä istunnossa, eikä niitä tallenneta koskaan. Omia off-site-tunnuksiasi ei tarkoituksella käytetä tässä uudelleen: ne lähetettäisiin osoitteeseen, jonka juuri itse kirjoitit.",
+  "recovery.foreignS3KeyId": "Käyttöavaimen tunnus (S3/B2)",
+  "recovery.foreignS3Secret": "Salainen käyttöavain (S3/B2)",
+  "recovery.foreignS3Region": "Alue (valinnainen)",
+  "recovery.foreignRestUser": "REST-käyttäjätunnus",
+  "recovery.foreignRestPassword": "REST-salasana",
+  "recovery.foreignRestHint": "Vain repolle, joka alkaa rest: (restic REST -palvelin). Jätä tyhjäksi, jos kohteena on S3, B2 tai SFTP.",
   "recovery.foreignConnect": "Yhdistä",
   "recovery.foreignConnecting": "Yhdistetään…",
   "recovery.foreignConnected": "Yhdistetty: repo on luettavissa.",

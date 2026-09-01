@@ -15,6 +15,8 @@ const sr: Partial<Translations> = {
   "nav.receiver": "Пријемник",
   "nav.fleet": "Флота",
   "nav.settings": "Подешавања",
+
+  // Mode toggle
   "about.title": "О програму BombVault",
   "about.report": "Проблеми, жеље или предлози за побољшање? Отвори issue на GitHub-у.",
   "about.repo": "GitHub",
@@ -1125,6 +1127,7 @@ const sr: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Опоравак",
+  "recovery.pageTitle": "Опоравак од катастрофе",
   "recovery.intro": "Опорави своје контејнере и ВМ-ове из постојеће резервне копије на ову инсталацију.",
   "recovery.step1": "Може ли BombVault да прочита твоје резервне копије?",
   "recovery.appKeyExplain": "Да прочита постојеће резервне копије, овом контејнеру треба ИСТИ APP_KEY који је коришћен раније — налази се у твом комплету за опоравак. Подеси га у Unraid шаблону контејнера ако већ није, па поново провери.",
@@ -1281,6 +1284,13 @@ const sr: Partial<Translations> = {
   "recovery.foreignLocationHint": "Фасцикла под тачком монтирања хоста. Монтирај дељени ресурс резервних копија другог сервера на овај хост и усмери овде — репозиторијум мора бити локално монтиран (удаљени URL-ови репозиторијума овде се не прихватају).",
   "recovery.foreignKey": "APP_KEY друге инстанце",
   "recovery.foreignKeyHint": "64-знаковни кључ из комплета за опоравак ДРУГЕ инстанце — твој сопствени кључ остаје нетакнут.",
+  "recovery.foreignCredsIntro": "Ово изгледа као удаљено спремиште, па су потребни подаци за пријаву на бекенд ДРУГОГ сервера. Користе се само током ове сесије и никада се не чувају. Твоји сопствени подаци за удаљену локацију се овде намерно не користе поново: били би послати на адресу коју си управо уписао.",
+  "recovery.foreignS3KeyId": "ID приступног кључа (S3/B2)",
+  "recovery.foreignS3Secret": "Тајни приступни кључ (S3/B2)",
+  "recovery.foreignS3Region": "Регион (необавезно)",
+  "recovery.foreignRestUser": "REST корисничко име",
+  "recovery.foreignRestPassword": "REST лозинка",
+  "recovery.foreignRestHint": "Само за rest: спремиште (restic REST сервер). За S3, B2 или SFTP остави празно.",
   "recovery.foreignConnect": "Повежи се",
   "recovery.foreignConnecting": "Повезивање…",
   "recovery.foreignConnected": "Повезано — репозиторијум је читљив.",

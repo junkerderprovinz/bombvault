@@ -621,6 +621,7 @@ const ko: Partial<Translations> = {
   "recovery.stored": "안전하게 보관했습니다",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "재해 복구",
   "recovery.intro": "기존 백업에서 컨테이너와 VM을 이 설치본으로 복구합니다.",
   "recovery.step1": "BombVault가 백업을 읽을 수 있나요?",
   "recovery.appKeyExplain": "기존 백업을 읽으려면 이 컨테이너에 이전과 동일한 APP_KEY가 필요합니다. 복구 키트에 들어 있습니다. 아직 설정하지 않았다면 Unraid 컨테이너 템플릿에서 설정한 뒤 다시 확인하세요.",
@@ -1122,6 +1123,13 @@ const ko: Partial<Translations> = {
   "recovery.foreignLocationHint": "호스트 마운트 아래의 폴더. 상대 서버의 백업이 담긴 공유를 이 호스트에 마운트한 뒤 여기서 지정하세요. 저장소는 로컬에 마운트되어 있어야 합니다(원격 저장소 URL은 여기서 허용되지 않습니다).",
   "recovery.foreignKey": "상대 인스턴스의 APP_KEY",
   "recovery.foreignKeyHint": "상대 인스턴스의 복구 키트에 있는 64자 키. 내 키는 그대로 유지됩니다.",
+  "recovery.foreignCredsIntro": "원격 저장소로 보이므로 상대 서버 백엔드의 자격 증명이 필요합니다. 이 자격 증명은 이번 세션에만 사용되며 절대 저장되지 않습니다. 내 오프사이트 자격 증명은 여기서 일부러 재사용하지 않습니다. 방금 입력한 주소로 전송되기 때문입니다.",
+  "recovery.foreignS3KeyId": "액세스 키 ID(S3/B2)",
+  "recovery.foreignS3Secret": "비밀 액세스 키(S3/B2)",
+  "recovery.foreignS3Region": "리전(선택 사항)",
+  "recovery.foreignRestUser": "REST 사용자 이름",
+  "recovery.foreignRestPassword": "REST 비밀번호",
+  "recovery.foreignRestHint": "rest: 저장소(restic REST 서버)에만 해당합니다. S3, B2 또는 SFTP에서는 비워 두세요.",
   "recovery.foreignConnect": "연결",
   "recovery.foreignConnecting": "연결 중…",
   "recovery.foreignConnected": "연결됨. 저장소를 읽을 수 있습니다.",

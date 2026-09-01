@@ -15,6 +15,8 @@ const ms: Partial<Translations> = {
   "nav.receiver": "Penerima",
   "nav.fleet": "Armada",
   "nav.settings": "Tetapan",
+
+  // Mode toggle
   "about.title": "Perihal BombVault",
   "about.report": "Masalah, permintaan atau cadangan penambahbaikan? Buka issue di GitHub.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const ms: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Pemulihan",
+  "recovery.pageTitle": "Pemulihan bencana",
   "recovery.intro": "Pulihkan bekas dan VM anda daripada sandaran sedia ada pada pemasangan ini.",
   // Step 1
   "recovery.step1": "Bolehkah BombVault membaca sandaran anda?",
@@ -1297,6 +1300,13 @@ const ms: Partial<Translations> = {
   "recovery.foreignLocationHint": "Folder di bawah mount hos. Mount perkongsian sandaran pelayan lain pada hos ini dan arahkan ini kepadanya. Repositori mesti dimount secara setempat (URL repositori jauh tidak diterima di sini).",
   "recovery.foreignKey": "APP_KEY instans lain",
   "recovery.foreignKeyHint": "Kunci 64 aksara daripada kit pemulihan instans LAIN. Kunci anda sendiri kekal utuh.",
+  "recovery.foreignCredsIntro": "Ini kelihatan seperti repositori jauh, jadi ia memerlukan kelayakan backend pelayan LAIN itu. Kelayakan itu digunakan untuk sesi ini sahaja dan tidak pernah disimpan. Kelayakan luar tapak anda sendiri sengaja tidak digunakan semula di sini: ia akan dihantar ke alamat yang baru sahaja anda taip.",
+  "recovery.foreignS3KeyId": "ID kunci akses (S3/B2)",
+  "recovery.foreignS3Secret": "Kunci akses rahsia (S3/B2)",
+  "recovery.foreignS3Region": "Wilayah (pilihan)",
+  "recovery.foreignRestUser": "Nama pengguna REST",
+  "recovery.foreignRestPassword": "Kata laluan REST",
+  "recovery.foreignRestHint": "Hanya untuk repositori rest: (pelayan restic REST). Biarkan kosong untuk S3, B2 atau SFTP.",
   "recovery.foreignConnect": "Sambung",
   "recovery.foreignConnecting": "Menyambung…",
   "recovery.foreignConnected": "Bersambung, repositori boleh dibaca.",

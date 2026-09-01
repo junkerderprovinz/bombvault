@@ -15,6 +15,8 @@ const hr: Partial<Translations> = {
   "nav.receiver": "Prijamnik",
   "nav.fleet": "Flota",
   "nav.settings": "Postavke",
+
+  // Mode toggle
   "about.title": "O aplikaciji BombVault",
   "about.report": "Problemi, želje ili prijedlozi za poboljšanje? Otvori issue na GitHubu.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const hr: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Oporavak",
+  "recovery.pageTitle": "Oporavak od katastrofe",
   "recovery.intro": "Vratite svoje kontejnere i VM-ove iz postojeće sigurnosne kopije na ovu instalaciju.",
   // Step 1
   "recovery.step1": "Može li BombVault pročitati vaše sigurnosne kopije?",
@@ -1297,6 +1300,13 @@ const hr: Partial<Translations> = {
   "recovery.foreignLocationHint": "Mapa ispod montiranja hosta. Montirajte dijeljenu mapu sigurnosne kopije drugog poslužitelja na ovaj host i usmjerite ovo prema njoj. Repozitorij mora biti lokalno montiran (URL-ovi udaljenih repozitorija ovdje se ne prihvaćaju).",
   "recovery.foreignKey": "APP_KEY druge instance",
   "recovery.foreignKeyHint": "64-znamenkasti ključ iz kompleta za oporavak DRUGE instance. Vaš vlastiti ključ ostaje netaknut.",
+  "recovery.foreignCredsIntro": "Ovo izgleda kao udaljeni repozitorij, pa su potrebne vjerodajnice backenda DRUGOG poslužitelja. Koriste se samo za ovu sesiju i nikad se ne spremaju. Vaše vlastite izvanmrežne vjerodajnice ovdje se namjerno ne koriste ponovno: bile bi poslane na adresu koju ste upravo upisali.",
+  "recovery.foreignS3KeyId": "ID pristupnog ključa (S3/B2)",
+  "recovery.foreignS3Secret": "Tajni pristupni ključ (S3/B2)",
+  "recovery.foreignS3Region": "Regija (neobavezno)",
+  "recovery.foreignRestUser": "Korisničko ime za REST",
+  "recovery.foreignRestPassword": "Lozinka za REST",
+  "recovery.foreignRestHint": "Samo za repozitorij rest: (poslužitelj restic REST). Ostavite prazno za S3, B2 ili SFTP.",
   "recovery.foreignConnect": "Poveži se",
   "recovery.foreignConnecting": "Povezivanje…",
   "recovery.foreignConnected": "Povezano. Repozitorij je čitljiv.",

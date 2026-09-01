@@ -15,6 +15,8 @@ const gl: Partial<Translations> = {
   "nav.receiver": "Receptor",
   "nav.fleet": "Frota",
   "nav.settings": "Configuración",
+
+  // Mode toggle
   "about.title": "Sobre BombVault",
   "about.report": "Problemas, desexos ou suxestións de mellora? Abre unha incidencia en GitHub.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const gl: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Recuperación",
+  "recovery.pageTitle": "Recuperación de desastres",
   "recovery.intro": "Restaura os teus contedores e MV a partir dunha copia existente nesta instalación.",
   // Step 1
   "recovery.step1": "Pode BombVault ler as túas copias?",
@@ -1297,6 +1300,13 @@ const gl: Partial<Translations> = {
   "recovery.foreignLocationHint": "Un cartafol baixo a montaxe do host. Monta a comparticón de copia do outro servidor neste host e apunta isto cara a el: o repositorio debe estar montado localmente (aquí non se aceptan URL de repositorios remotos).",
   "recovery.foreignKey": "APP_KEY da outra instancia",
   "recovery.foreignKeyHint": "A clave de 64 caracteres do kit de recuperación da OUTRA instancia. A túa propia clave non se toca.",
+  "recovery.foreignCredsIntro": "Isto parece un repositorio remoto, así que precisa as credenciais do backend do OUTRO servidor. Só se usan nesta sesión e nunca se gardan. As túas propias credenciais externas non se reutilizan aquí a propósito: enviaríanse a un enderezo que acabas de escribir.",
+  "recovery.foreignS3KeyId": "ID de clave de acceso (S3/B2)",
+  "recovery.foreignS3Secret": "Clave de acceso secreta (S3/B2)",
+  "recovery.foreignS3Region": "Rexión (opcional)",
+  "recovery.foreignRestUser": "Nome de usuario REST",
+  "recovery.foreignRestPassword": "Contrasinal REST",
+  "recovery.foreignRestHint": "Só para un repositorio «rest:» (un servidor restic REST). Déixao baleiro para S3, B2 ou SFTP.",
   "recovery.foreignConnect": "Conectar",
   "recovery.foreignConnecting": "Conectando…",
   "recovery.foreignConnected": "Conectado: o repositorio é lexible.",

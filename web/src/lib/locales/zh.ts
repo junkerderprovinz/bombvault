@@ -621,6 +621,7 @@ const zh: Partial<Translations> = {
   "recovery.stored": "我已妥善保存",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "灾难恢复",
   "recovery.intro": "将你的容器和虚拟机从现有备份恢复到此安装。",
   "recovery.step1": "BombVault 能读取你的备份吗？",
   "recovery.appKeyExplain": "要读取现有备份，此容器需要与之前相同的 APP_KEY，它就在你的恢复工具包中。若尚未设置，请在 Unraid 容器模板中设置它，然后重新检查。",
@@ -1122,6 +1123,13 @@ const zh: Partial<Translations> = {
   "recovery.foreignLocationHint": "主机挂载点下的文件夹。请将对方服务器的备份共享挂载到本主机，然后在此指向它。仓库必须为本地挂载（此处不接受远程仓库 URL）。",
   "recovery.foreignKey": "对方实例的 APP_KEY",
   "recovery.foreignKeyHint": "对方实例恢复工具包中的 64 位密钥，您自己的密钥保持不变。",
+  "recovery.foreignCredsIntro": "这看起来是一个远程仓库，因此需要对方服务器后端的凭据。凭据仅在本次会话中使用，绝不会被保存。此处刻意不复用您自己的异地凭据：它们会被发送到您刚刚输入的地址。",
+  "recovery.foreignS3KeyId": "访问密钥 ID（S3/B2）",
+  "recovery.foreignS3Secret": "私有访问密钥（S3/B2）",
+  "recovery.foreignS3Region": "区域（可选）",
+  "recovery.foreignRestUser": "REST 用户名",
+  "recovery.foreignRestPassword": "REST 密码",
+  "recovery.foreignRestHint": "仅适用于 rest: 开头的仓库（restic REST 服务器）。使用 S3、B2 或 SFTP 时请留空。",
   "recovery.foreignConnect": "连接",
   "recovery.foreignConnecting": "连接中…",
   "recovery.foreignConnected": "已连接，仓库可读取。",

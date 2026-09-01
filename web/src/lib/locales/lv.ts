@@ -15,6 +15,8 @@ const lv: Partial<Translations> = {
   "nav.receiver": "Uztvērējs",
   "nav.fleet": "Flote",
   "nav.settings": "Iestatījumi",
+
+  // Mode toggle
   "about.title": "Par BombVault",
   "about.report": "Problēmas, vēlmes vai uzlabojumu ieteikumi? Izveido issue GitHub.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const lv: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Atkopšana",
+  "recovery.pageTitle": "Katastrofu atkopšana",
   "recovery.intro": "Atjaunojiet konteinerus un VM no esošas rezerves kopijas šajā instalācijā.",
   // Step 1
   "recovery.step1": "Vai BombVault var nolasīt jūsu rezerves kopijas?",
@@ -1297,6 +1300,13 @@ const lv: Partial<Translations> = {
   "recovery.foreignLocationHint": "Mape zem saimniekdatora piesaistes. Piesaistiet otra servera rezerves kopēšanas koplietojumu šim saimniekdatoram un norādiet to uz to. Repozitorijam jābūt piesaistītam vietēji (attālinātu repozitoriju URL šeit netiek pieņemti).",
   "recovery.foreignKey": "Citas instances APP_KEY",
   "recovery.foreignKeyHint": "64 rakstzīmju atslēga no CITAS instances atkopšanas komplekta. Jūsu pašu atslēga paliek neskarta.",
+  "recovery.foreignCredsIntro": "Šķiet, ka šis ir attālināts repozitorijs, tāpēc ir nepieciešami OTRA servera aizmugursistēmas akreditācijas dati. Tie tiek izmantoti tikai šajā sesijā un nekad netiek saglabāti. Jūsu pašu attālinātie akreditācijas dati šeit apzināti netiek izmantoti atkārtoti: tie tiktu nosūtīti uz adresi, kuru tikko ievadījāt.",
+  "recovery.foreignS3KeyId": "Piekļuves atslēgas ID (S3/B2)",
+  "recovery.foreignS3Secret": "Slepenā piekļuves atslēga (S3/B2)",
+  "recovery.foreignS3Region": "Reģions (neobligāti)",
+  "recovery.foreignRestUser": "REST lietotājvārds",
+  "recovery.foreignRestPassword": "REST parole",
+  "recovery.foreignRestHint": "Tikai rest: veida repozitorijam (restic REST serverim). S3, B2 vai SFTP gadījumā atstājiet tukšu.",
   "recovery.foreignConnect": "Izveidot savienojumu",
   "recovery.foreignConnecting": "Izveido savienojumu…",
   "recovery.foreignConnected": "Savienojums izveidots, repozitorijs ir nolasāms.",

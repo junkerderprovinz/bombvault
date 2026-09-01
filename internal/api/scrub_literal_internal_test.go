@@ -45,7 +45,7 @@ func TestOurOwnSentencesSurviveTheScrubber(t *testing.T) {
 	}
 
 	// The foreign flow carries the same sentence and the same hazard.
-	_, _, ferr := svc.OpenForeign(context.Background(), "no-such-repo-here", strings.Repeat("b", 64))
+	_, _, ferr := svc.OpenForeign(context.Background(), "no-such-repo-here", strings.Repeat("b", 64), nil)
 	if ferr == nil {
 		t.Fatal("opening a non-existent foreign repo must fail")
 	}

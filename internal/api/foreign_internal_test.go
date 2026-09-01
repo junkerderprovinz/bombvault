@@ -338,7 +338,7 @@ func TestOpenForeignLeavesSettingsUntouched(t *testing.T) {
 	if err != nil {
 		t.Fatalf("settings before: %v", err)
 	}
-	if _, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey); err != nil {
+	if _, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil); err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
 	after, err := s.store.GetSettings()
@@ -361,7 +361,7 @@ func TestOpenForeignIsReadOnly(t *testing.T) {
 	}
 	s := newForeignTestService(t, eng)
 
-	if _, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey); err != nil {
+	if _, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil); err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
 	if bad := eng.calledForbidden(); len(bad) > 0 {
@@ -391,7 +391,7 @@ func TestOpenForeignValidation(t *testing.T) {
 	for _, key := range badKeys {
 		eng := &foreignRecordingEngine{}
 		s := newForeignTestService(t, eng)
-		if _, _, err := s.OpenForeign(context.Background(), "backups/other", key); err == nil || !strings.Contains(err.Error(), "64 lowercase hex") {
+		if _, _, err := s.OpenForeign(context.Background(), "backups/other", key, nil); err == nil || !strings.Contains(err.Error(), "64 lowercase hex") {
 			t.Fatalf("key %q: want the key-shape error, got %v", key, err)
 		}
 		if len(eng.calls) != 0 {
@@ -400,13 +400,13 @@ func TestOpenForeignValidation(t *testing.T) {
 	}
 
 	s := newForeignTestService(t, &foreignRecordingEngine{})
-	if _, _, err := s.OpenForeign(context.Background(), "   ", foreignTestKey); err == nil || !strings.Contains(err.Error(), "location") {
+	if _, _, err := s.OpenForeign(context.Background(), "   ", foreignTestKey, nil); err == nil || !strings.Contains(err.Error(), "location") {
 		t.Fatalf("empty location: want the missing-location error, got %v", err)
 	}
 
 	eng := &foreignRecordingEngine{} // opens nothing
 	s = newForeignTestService(t, eng)
-	_, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	_, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err == nil || !strings.Contains(err.Error(), "could not open the repository") {
 		t.Fatalf("unopenable repo: want the wrong-key/not-a-repo error, got %v", err)
 	}
@@ -425,7 +425,7 @@ func TestOpenForeignModeDetection(t *testing.T) {
 	// Encrypted repo.
 	eng := &foreignRecordingEngine{opens: opensEncrypted}
 	s := newForeignTestService(t, eng)
-	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign (encrypted): %v", err)
 	}
@@ -446,7 +446,7 @@ func TestOpenForeignModeDetection(t *testing.T) {
 	// Plain repo (encrypted probe fails, plain succeeds).
 	eng = &foreignRecordingEngine{opens: func(m restic.Mode) bool { return !m.Encrypted }}
 	s = newForeignTestService(t, eng)
-	id, _, err = s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err = s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign (plain): %v", err)
 	}
@@ -470,7 +470,7 @@ func TestForeignSessionLifecycle(t *testing.T) {
 		t.Fatalf("unknown session: want errForeignSession, got %v", err)
 	}
 
-	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -500,7 +500,7 @@ func TestForeignSessionLifecycle(t *testing.T) {
 	}
 
 	// Close drops a live session immediately; closing again is a no-op.
-	id, _, err = s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err = s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -527,7 +527,7 @@ func TestForeignInventoryGrouping(t *testing.T) {
 	eng := &foreignRecordingEngine{opens: opensEncrypted, snaps: snaps}
 	s := newForeignTestService(t, eng)
 
-	_, inv, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	_, inv, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -547,7 +547,7 @@ func TestForeignInventoryGrouping(t *testing.T) {
 	// JSON contract for the frontend: exact keys, [] (never null) when a repo
 	// holds no snapshots at all.
 	sEmpty := newForeignTestService(t, &foreignRecordingEngine{opens: opensEncrypted})
-	_, invEmpty, err := sEmpty.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	_, invEmpty, err := sEmpty.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign (empty repo): %v", err)
 	}
@@ -689,7 +689,7 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 	}
 
 	before, beforeRaw := settingsSnapshot(t, s)
-	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -963,7 +963,7 @@ func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 	s := newForeignTestService(t, eng)
 	sessionRepo := seedForeignRepoMarker(t, s, location)
 
-	id, inv, err := s.OpenForeign(context.Background(), location, foreignTestKey)
+	id, inv, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1051,7 +1051,7 @@ func TestForeignRestoreFileSetSelectiveUsesSubtreeInclude(t *testing.T) {
 	s := newForeignTestService(t, eng)
 	sessionRepo := seedForeignRepoMarker(t, s, location)
 
-	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1140,7 +1140,7 @@ func TestForeignRestoreFileSetSelectiveGuards(t *testing.T) {
 	seedForeignRepoMarker(t, s, location)
 	ctx := context.Background()
 
-	id, _, err := s.OpenForeign(ctx, location, foreignTestKey)
+	id, _, err := s.OpenForeign(ctx, location, foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1180,7 +1180,7 @@ func TestForeignRestoreFileSetSelectiveDeepSelectionNoTree(t *testing.T) {
 	}
 	s := newForeignTestService(t, eng)
 	sessionRepo := seedForeignRepoMarker(t, s, location)
-	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1228,7 +1228,7 @@ func TestListForeignFiles(t *testing.T) {
 	seedForeignRepoMarker(t, s, location)
 	ctx := context.Background()
 
-	id, _, err := s.OpenForeign(ctx, location, foreignTestKey)
+	id, _, err := s.OpenForeign(ctx, location, foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1278,7 +1278,7 @@ func TestForeignRestoreLeavesSettingsUntouched(t *testing.T) {
 	seedForeignRepoMarker(t, s, "backups/other")
 
 	before, beforeRaw := settingsSnapshot(t, s)
-	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1324,7 +1324,7 @@ func TestForeignRestoreValidation(t *testing.T) {
 		t.Fatalf("unknown session: want errForeignSession, got started=%v err=%v", started, err)
 	}
 
-	id, _, err := s.OpenForeign(ctx, "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(ctx, "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1374,7 +1374,7 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 	seedForeignRepoMarker(t, s, "backups/other")
 	ctx := context.Background()
 
-	id, _, err := s.OpenForeign(ctx, "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(ctx, "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1410,30 +1410,190 @@ func TestForeignRestoreVMNameIsLibvirtAware(t *testing.T) {
 	}
 }
 
-// TestOpenForeignRejectsRemoteLocation pins the confused-deputy fix (#61): a
-// remote-backend location (or an unprefixed rclone remote name) is rejected
-// BEFORE any engine call, so restic never contacts a third-party server carrying
-// THIS instance's off-site credentials. Only a locally mounted path is allowed.
-func TestOpenForeignRejectsRemoteLocation(t *testing.T) {
-	remote := []string{
-		"rest:http://10.0.0.9:8000/repo",
-		"s3:s3.amazonaws.com/bucket",
-		"sftp:user@host:/srv/repo",
-		"rclone:remote:path",
-		"b2:bucket/path",
-		"gs:bucket/path",
-		"azure:container/path",
-		"BackBlaze:bucket", // unprefixed rclone remote name (the common typo)
+// remoteForeignLocations are the remote-backend spellings a foreign session may
+// open once the caller supplies that repository's own credentials. rclone is NOT
+// here — it is refused outright, see TestOpenForeignRefusesRclone.
+var remoteForeignLocations = []string{
+	"rest:http://10.0.0.9:8000/repo",
+	"s3:s3.amazonaws.com/bucket",
+	"sftp:user@host:/srv/repo",
+	"b2:bucket/path",
+	"gs:bucket/path",
+	"azure:container/path",
+}
+
+// foreignCredsFor returns credentials satisfying the backend in loc, so a test
+// exercises the path under review rather than the credential gate.
+func foreignCredsFor(loc string) *CloudCreds {
+	if strings.HasPrefix(loc, "rest:") {
+		return &CloudCreds{RESTUser: "FOREIGNUSER", RESTPassword: "FOREIGNSECRET"}
 	}
-	for _, loc := range remote {
+	return &CloudCreds{S3KeyID: "FOREIGNKEY", S3Secret: "FOREIGNSECRET", S3Region: "eu-central-1"}
+}
+
+// TestOpenForeignRefusesRclone pins the second half of the confused-deputy fix:
+// an rclone location can NEVER be made safe by supplying credentials, because
+// rclone reads its remotes from THIS instance's RCLONE_CONFIG and ignores the
+// process env the caller can influence. Opening one would authenticate to a
+// caller-chosen endpoint with our own stored remote secrets, so it is refused
+// before any engine call — with or without credentials.
+func TestOpenForeignRefusesRclone(t *testing.T) {
+	rcloneLocations := []string{
+		"rclone:remote:path",
+		"RCLONE:remote:path", // scheme match is case-insensitive
+		"BackBlaze:bucket",   // unprefixed rclone remote name
+	}
+	for _, loc := range rcloneLocations {
+		for _, creds := range []*CloudCreds{nil, {S3KeyID: "K", S3Secret: "S"}} {
+			eng := &foreignRecordingEngine{opens: opensEncrypted}
+			s := newForeignTestService(t, eng)
+			_, _, err := s.OpenForeign(context.Background(), loc, foreignTestKey, creds)
+			if err == nil {
+				t.Fatalf("location %q: an rclone remote must be refused", loc)
+			}
+			if len(eng.calls) != 0 {
+				t.Fatalf("location %q: refusal must precede any engine call, got %v", loc, eng.calls)
+			}
+		}
+	}
+}
+
+// TestOpenForeignRequiresBackendSpecificCreds pins that the gate checks the
+// credentials the backend actually uses, not merely that some field is set. A
+// presence-only check would let {"s3Region":"x"} open a remote session while
+// contributing no authority, so the request would ride on whatever happened to
+// be ambient — exactly what must not happen.
+func TestOpenForeignRequiresBackendSpecificCreds(t *testing.T) {
+	cases := []struct {
+		loc   string
+		creds *CloudCreds
+	}{
+		{"s3:s3.amazonaws.com/bucket", &CloudCreds{S3Region: "eu-central-1"}},        // region only
+		{"s3:s3.amazonaws.com/bucket", &CloudCreds{S3KeyID: "K"}},                    // no secret
+		{"b2:bucket/path", &CloudCreds{S3Secret: "S"}},                               // no key id
+		{"rest:http://10.0.0.9:8000/repo", &CloudCreds{S3KeyID: "K", S3Secret: "S"}}, // S3 creds for a REST repo
+		{"rest:http://10.0.0.9:8000/repo", &CloudCreds{RESTUser: "u"}},               // no password
+	}
+	for _, c := range cases {
 		eng := &foreignRecordingEngine{opens: opensEncrypted}
 		s := newForeignTestService(t, eng)
-		_, _, err := s.OpenForeign(context.Background(), loc, foreignTestKey)
-		if err == nil || !strings.Contains(err.Error(), "locally mounted") {
-			t.Fatalf("location %q: want the locally-mounted rejection, got %v", loc, err)
+		_, _, err := s.OpenForeign(context.Background(), c.loc, foreignTestKey, c.creds)
+		if err == nil {
+			t.Fatalf("location %q with %+v: want a credential rejection", c.loc, c.creds)
 		}
 		if len(eng.calls) != 0 {
-			t.Fatalf("location %q: rejection must precede any engine call (cloudEnv never used), got %v", loc, eng.calls)
+			t.Fatalf("location %q: rejection must precede any engine call, got %v", c.loc, eng.calls)
+		}
+	}
+}
+
+// TestOpenForeignRejectsRemoteLocationWithoutCreds pins the confused-deputy fix
+// (#61): a remote-backend location with NO credentials of its own is rejected
+// BEFORE any engine call, so restic never contacts a third-party server carrying
+// THIS instance's off-site credentials. Supplying the foreign repo's own
+// credentials is the only way through (#185) — see the test below.
+func TestOpenForeignRejectsRemoteLocationWithoutCreds(t *testing.T) {
+	for _, loc := range remoteForeignLocations {
+		eng := &foreignRecordingEngine{opens: opensEncrypted}
+		s := newForeignTestService(t, eng)
+		_, _, err := s.OpenForeign(context.Background(), loc, foreignTestKey, nil)
+		if err == nil || !strings.Contains(err.Error(), "credentials") {
+			t.Fatalf("location %q: want the missing-credentials rejection, got %v", loc, err)
+		}
+		if len(eng.calls) != 0 {
+			t.Fatalf("location %q: rejection must precede any engine call (own cloudEnv never used), got %v", loc, eng.calls)
+		}
+	}
+}
+
+// TestOpenForeignRemoteUsesSuppliedCredsOnly is the heart of #185: a remote
+// foreign repo opens when the user supplies THAT repo's credentials, and the
+// engine sees exactly those — never this instance's own. Passing the foreign
+// credentials explicitly is what dissolves the confused-deputy problem: the
+// local instance is no longer lending authority it was never asked to lend.
+func TestOpenForeignRemoteUsesSuppliedCredsOnly(t *testing.T) {
+	const ownSecret = "OWN-INSTANCE-SECRET-MUST-NOT-LEAK"
+
+	for _, loc := range remoteForeignLocations {
+		eng := &foreignRecordingEngine{opens: opensEncrypted}
+		s := newForeignTestService(t, eng)
+		// Give the local instance its own off-site credentials, so a leak would show.
+		if err := s.SetCloudCreds(CloudCreds{S3KeyID: "OWNKEY", S3Secret: ownSecret, S3Region: "us-east-1"}); err != nil {
+			t.Fatalf("seed own creds: %v", err)
+		}
+
+		if _, _, err := s.OpenForeign(context.Background(), loc, foreignTestKey, foreignCredsFor(loc)); err != nil {
+			t.Fatalf("location %q: want the remote repo to open with supplied creds, got %v", loc, err)
+		}
+		if len(eng.calls) == 0 {
+			t.Fatalf("location %q: expected the engine to be reached", loc)
+		}
+		for _, m := range eng.modes {
+			env := strings.Join(m.Env, " ")
+			if strings.Contains(env, ownSecret) || strings.Contains(env, "OWNKEY") {
+				t.Fatalf("location %q: this instance's own credentials leaked into the foreign session: %q", loc, env)
+			}
+			if !strings.Contains(env, "FOREIGNSECRET") {
+				t.Fatalf("location %q: the supplied foreign credentials must reach restic, got %q", loc, env)
+			}
+			if !m.NoLock {
+				t.Fatalf("location %q: a foreign session must stay lock-free even when remote", loc)
+			}
+			// The ambient credential this instance holds (RCLONE_CONFIG) must be
+			// withheld too — Env alone is not the whole story, see Mode.NoAmbientCreds.
+			if !m.NoAmbientCreds {
+				t.Fatalf("location %q: a remote foreign session must withhold ambient credentials", loc)
+			}
+		}
+	}
+}
+
+// TestOpenForeignAlwaysWithholdsAmbientCreds pins the defence that does not
+// depend on classifying the location correctly. RCLONE_CONFIG is attached by the
+// restic adapter to every run, holds THIS instance's remote secrets, and is read
+// by rclone regardless of the process env a caller can influence — so a foreign
+// session must never carry it, whatever the location looks like.
+//
+// Gating this on remote-detection was not enough: "MyB2,endpoint=http://…:b/r"
+// matches neither IsRemoteRepo nor LooksLikeUnprefixedRemote (the comma breaks
+// the scheme pattern), so it was classified local and kept the config attached.
+// The case is included below for exactly that reason.
+func TestOpenForeignAlwaysWithholdsAmbientCreds(t *testing.T) {
+	locations := []string{
+		"backups/other",               // plainly local
+		"MyB2,endpoint=http://x/:b/r", // classified local, but rclone would take it
+	}
+	for _, loc := range locations {
+		eng := &foreignRecordingEngine{opens: opensEncrypted}
+		s := newForeignTestService(t, eng)
+		if _, _, err := s.OpenForeign(context.Background(), loc, foreignTestKey, nil); err != nil {
+			t.Fatalf("location %q: %v", loc, err)
+		}
+		if len(eng.modes) == 0 {
+			t.Fatalf("location %q: expected the engine to be reached", loc)
+		}
+		for _, m := range eng.modes {
+			if !m.NoAmbientCreds {
+				t.Fatalf("location %q: a foreign session must withhold ambient credentials (RCLONE_CONFIG)", loc)
+			}
+		}
+	}
+}
+
+// TestOpenForeignLocalIgnoresSuppliedCreds keeps the local path unchanged: a
+// locally mounted repo needs no backend credentials, so none are attached even
+// if the caller sends some. Nothing should travel that the location cannot use.
+func TestOpenForeignLocalIgnoresSuppliedCreds(t *testing.T) {
+	eng := &foreignRecordingEngine{opens: opensEncrypted}
+	s := newForeignTestService(t, eng)
+	creds := &CloudCreds{S3KeyID: "K", S3Secret: "S", S3Region: "r"}
+
+	if _, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, creds); err != nil {
+		t.Fatalf("local location with stray creds: %v", err)
+	}
+	for _, m := range eng.modes {
+		if len(m.Env) != 0 {
+			t.Fatalf("a local foreign session must attach no backend env, got %v", m.Env)
 		}
 	}
 }
@@ -1448,7 +1608,7 @@ func TestForeignJanitorSweepsExpiredSessions(t *testing.T) {
 	s := newForeignTestService(t, eng)
 	s.foreignSweepEvery = 5 * time.Millisecond // fast tick for the test
 
-	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}
@@ -1524,7 +1684,7 @@ func TestForeignRestoreValidationFailureLeavesLocalTargetIntact(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey)
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
 	if err != nil {
 		t.Fatalf("OpenForeign: %v", err)
 	}

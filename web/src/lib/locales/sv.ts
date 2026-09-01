@@ -629,6 +629,7 @@ const sv: Partial<Translations> = {
   "recovery.stored": "Jag har förvarat det säkert",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Katastrofåterställning",
   "recovery.intro": "Återställ dina containrar och VMs från en befintlig säkerhetskopia till den här installationen.",
   "recovery.step1": "Kan BombVault läsa dina säkerhetskopior?",
   "recovery.appKeyExplain": "För att läsa befintliga säkerhetskopior behöver den här containern SAMMA APP_KEY som den använde tidigare. Den finns i ditt återställningskit. Ange den i Unraid-containermallen om den inte redan är satt, och kontrollera sedan igen.",
@@ -1130,6 +1131,13 @@ const sv: Partial<Translations> = {
   "recovery.foreignLocationHint": "En mapp under värdmonteringen. Montera den andra serverns säkerhetskopieringsdelning på den här värden och peka hit mot den. Förvaret måste vara lokalt monterat (fjärrförvars-URL:er accepteras inte här).",
   "recovery.foreignKey": "Den andra instansens APP_KEY",
   "recovery.foreignKeyHint": "Nyckeln på 64 tecken från den ANDRA instansens räddningspaket, din egen nyckel förblir orörd.",
+  "recovery.foreignCredsIntro": "Det här ser ut som ett fjärrförvar, så det behöver autentiseringsuppgifterna till den ANDRA serverns backend. De används bara under den här sessionen och sparas aldrig. Dina egna offsite-uppgifter återanvänds medvetet inte här: de skulle skickas till en adress du just har skrivit in.",
+  "recovery.foreignS3KeyId": "Åtkomstnyckel-ID (S3/B2)",
+  "recovery.foreignS3Secret": "Hemlig åtkomstnyckel (S3/B2)",
+  "recovery.foreignS3Region": "Region (valfritt)",
+  "recovery.foreignRestUser": "REST-användarnamn",
+  "recovery.foreignRestPassword": "REST-lösenord",
+  "recovery.foreignRestHint": "Endast för ett rest:-förvar (en restic REST-server). Lämna tomt för S3, B2 eller SFTP.",
   "recovery.foreignConnect": "Anslut",
   "recovery.foreignConnecting": "Ansluter…",
   "recovery.foreignConnected": "Ansluten, repot är läsbart.",

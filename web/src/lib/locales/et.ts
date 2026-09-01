@@ -15,6 +15,8 @@ const et: Partial<Translations> = {
   "nav.receiver": "Vastuvõtja",
   "nav.fleet": "Laevastik",
   "nav.settings": "Seaded",
+
+  // Mode toggle
   "about.title": "Teave BombVaulti kohta",
   "about.report": "Probleemid, soovid või parendusettepanekud? Ava GitHubis issue.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const et: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Taastamine",
+  "recovery.pageTitle": "Õnnetusjärgne taastamine",
   "recovery.intro": "Taasta oma konteinerid ja VM-id olemasolevast varundusest sellele paigaldusele.",
   // Step 1
   "recovery.step1": "Kas BombVault suudab su varundusi lugeda?",
@@ -1297,6 +1300,13 @@ const et: Partial<Translations> = {
   "recovery.foreignLocationHint": "Kaust hosti haakepunkti all. Haagi teise serveri varunduse jagatud kaust sellele hostile ja suuna see selle peale. Hoidla peab olema kohapeal haagitud (kaug-hoidla URL-id siin ei sobi).",
   "recovery.foreignKey": "Teise eksemplari APP_KEY",
   "recovery.foreignKeyHint": "64-märgiline võti TEISE eksemplari taastekomplektist. Sinu enda võtit ei puudutata.",
+  "recovery.foreignCredsIntro": "See paistab olevat kaughoidla, seega on vaja TEISE serveri taustasüsteemi mandaate. Neid kasutatakse ainult selle seansi jooksul ja kunagi ei salvestata. Sinu enda välise koopia mandaate siin meelega uuesti ei kasutata: need saadetaks aadressile, mille sa just ise sisestasid.",
+  "recovery.foreignS3KeyId": "Pääsuvõtme ID (S3/B2)",
+  "recovery.foreignS3Secret": "Salajane pääsuvõti (S3/B2)",
+  "recovery.foreignS3Region": "Piirkond (valikuline)",
+  "recovery.foreignRestUser": "REST kasutajanimi",
+  "recovery.foreignRestPassword": "REST parool",
+  "recovery.foreignRestHint": "Ainult rest:-hoidla jaoks (restic REST server). S3, B2 või SFTP puhul jäta tühjaks.",
   "recovery.foreignConnect": "Ühenda",
   "recovery.foreignConnecting": "Ühendumine…",
   "recovery.foreignConnected": "Ühendatud: hoidla on loetav.",

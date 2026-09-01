@@ -67,6 +67,17 @@ type Mode struct {
 	// hard-codes --no-lock, see its own doc comment, #138), same as snapshot
 	// listings (SnapshotsArgs), stats (StatsArgs) and diff (DiffArgs).
 	NoLock bool
+	// NoAmbientCreds, when true, withholds every credential this instance holds
+	// AMBIENTLY — currently RCLONE_CONFIG — from the run, so only what the caller
+	// put in Env reaches restic. Set for a foreign read-only session against a
+	// remote repository (#185): the location comes from the user, and the whole
+	// point of making them supply that repository's own credentials is that this
+	// instance lends none of its own. RCLONE_CONFIG is exactly such lending —
+	// rclone reads its stored remotes from that file and ignores Env entirely, so
+	// without this flag a `rclone:` foreign location would authenticate to a
+	// caller-chosen endpoint using OUR remotes' secrets. Local repos and the
+	// settings-driven backup/restore paths leave it false and keep the config.
+	NoAmbientCreds bool
 	// StorageClass is the S3 storage class for restic writes to a NATIVE s3:
 	// backend (empty = the provider default). It is emitted as
 	// `-o s3.storage-class=<class>` only for s3: repos AND only for a whitelisted,
@@ -886,7 +897,10 @@ func (r Restic) authEnv(m Mode) []string {
 	} else {
 		env = append(env, "RESTIC_INSECURE_NO_PASSWORD=true")
 	}
-	if r.RcloneConfig != "" {
+	// Withheld when the mode asks for no ambient credentials: this file holds THIS
+	// instance's rclone remotes, and rclone would use them for whatever endpoint
+	// the location names, regardless of Env. See Mode.NoAmbientCreds.
+	if r.RcloneConfig != "" && !m.NoAmbientCreds {
 		if _, statErr := os.Stat(r.RcloneConfig); statErr == nil {
 			env = append(env, "RCLONE_CONFIG="+r.RcloneConfig)
 		}

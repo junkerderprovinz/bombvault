@@ -1154,6 +1154,7 @@ function ScheduleIncludeAllControl({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <Button
+        key={shakeInclude}
         label={t("schedule.includeAll")}
         labelKey="schedule.includeAll"
         tone="accent"
@@ -1164,6 +1165,7 @@ function ScheduleIncludeAllControl({
         }`}
       />
       <Button
+        key={shakeExclude}
         label={t("schedule.excludeAll")}
         labelKey="schedule.excludeAll"
         tone="subtle"
@@ -1492,6 +1494,7 @@ function VMBackupOrderPanel({
                 className={shakeSave ? "glim-shake" : ""}
               />
               <Button
+                key={shakeReset}
                 label={t("backupOrder.reset")}
           labelKey="backupOrder.reset"
                 tone="subtle"

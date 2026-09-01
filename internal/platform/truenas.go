@@ -6,7 +6,7 @@ package platform
 // specific appdata-fallback or restore-destination convention is needed, and
 // there is no TrueNAS UI update-status step to reconcile the way Unraid's
 // dynamix.docker.manager has one (#116). See
-// docs/superpowers/specs/2026-08-16-bombvault-platform-expansion-design.md §5
+// the design notes §5
 // for the full TrueNAS-fit rationale, including what this type deliberately
 // does NOT attempt (zvol-aware VM disk backup, NVRAM/TPM, domain-name
 // versioning — separate, VM-domain-specific work, not part of the Platform

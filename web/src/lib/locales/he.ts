@@ -629,6 +629,7 @@ const he: Partial<Translations> = {
   "recovery.stored": "שמרתי אותה בבטחה",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "התאוששות מאסון",
   "recovery.intro": "שחזר את הקונטיינרים וה-VMs שלך מגיבוי קיים אל התקנה זו.",
   "recovery.step1": "האם BombVault יכול לקרוא את הגיבויים שלך?",
   "recovery.appKeyExplain": "כדי לקרוא גיבויים קיימים, קונטיינר זה זקוק לאותו APP_KEY שהשתמש בו קודם. הוא נמצא בערכת השחזור שלך. הגדר אותו בתבנית הקונטיינר של Unraid אם עדיין לא, ואז בדוק שוב.",
@@ -1130,6 +1131,13 @@ const he: Partial<Translations> = {
   "recovery.foreignLocationHint": "תיקייה תחת נקודת העיגון של המארח. עגנו במארח זה את השיתוף עם הגיבויים של השרת האחר והפנו לכאן אליו: המאגר חייב להיות מעוגן מקומית (כתובות URL של מאגרים מרוחקים אינן נתמכות כאן).",
   "recovery.foreignKey": "ה-APP_KEY של המופע האחר",
   "recovery.foreignKeyHint": "המפתח בן 64 התווים מערכת השחזור של המופע האחר. המפתח שלכם נשאר ללא שינוי.",
+  "recovery.foreignCredsIntro": "נראה שזהו מאגר מרוחק, ולכן דרושים פרטי ההתחברות ל-backend של השרת האחר. הם משמשים להפעלה הזו בלבד ואינם נשמרים לעולם. במכוון אין כאן שימוש חוזר בפרטי ההתחברות שלכם ליעד שמחוץ לאתר: הם היו נשלחים לכתובת שהרגע הקלדתם.",
+  "recovery.foreignS3KeyId": "מזהה מפתח גישה (S3/B2)",
+  "recovery.foreignS3Secret": "מפתח גישה סודי (S3/B2)",
+  "recovery.foreignS3Region": "אזור (אופציונלי)",
+  "recovery.foreignRestUser": "שם משתמש ל-REST",
+  "recovery.foreignRestPassword": "סיסמה ל-REST",
+  "recovery.foreignRestHint": "רק עבור מאגרים שמתחילים ב-rest: (שרת restic REST). השאירו ריק עבור S3, B2 או SFTP.",
   "recovery.foreignConnect": "התחבר",
   "recovery.foreignConnecting": "מתחבר…",
   "recovery.foreignConnected": "מחובר: ניתן לקרוא את המאגר.",

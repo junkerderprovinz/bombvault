@@ -10,6 +10,7 @@ package api_test
 // configuration had no overdue alerting on any domain, and nothing said so.
 
 import (
+	"net/http"
 	"strings"
 	"testing"
 
@@ -159,6 +160,78 @@ func TestDomainStatusSwitchedOffDomainIgnoresEverything(t *testing.T) {
 		if d.Domain == "vms" && d.Status != "off" {
 			t.Fatalf("vms is switched off, status = %q, want %q", d.Status, "off")
 		}
+	}
+}
+
+// TestStatusEndpointCarriesEverythingSchedule pins the second half of #186. The
+// dashboard's "next backup" cell has to weigh the pass against the five domain
+// cadences, and CoveredBy cannot carry it: domainCoverage empties CoveredBy the
+// moment a domain has a schedule of its own, which is exactly the comparison
+// that matters. So GET /api/status serves the pass's cadence beside the domains.
+func TestStatusEndpointCarriesEverythingSchedule(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	// A weekly cadence of its own plus a nightly pass: the shape where the cell
+	// used to name Sunday while the real next backup was that night.
+	s.ContainersSchedule = "weekly Sun 04:00"
+	s.EverythingSchedule = "daily 05:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/status", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+	if m["everythingSchedule"] != "daily 05:00" {
+		t.Fatalf("everythingSchedule = %v, want %q", m["everythingSchedule"], "daily 05:00")
+	}
+
+	// The contract this test leans on: containers reports its OWN cadence and an
+	// empty CoveredBy, so without the field above the pass is genuinely invisible.
+	domains, ok := m["domains"].([]any)
+	if !ok || len(domains) == 0 {
+		t.Fatalf("domains missing from the envelope: %v", m["domains"])
+	}
+	var seen bool
+	for _, raw := range domains {
+		d, ok := raw.(map[string]any)
+		if !ok || d["domain"] != "containers" {
+			continue
+		}
+		seen = true
+		if d["coveredBy"] != "" {
+			t.Errorf("containers has its own schedule, coveredBy must stay empty, got %v", d["coveredBy"])
+		}
+		if d["schedule"] != "weekly Sun 04:00" {
+			t.Errorf("containers schedule = %v, want its own cadence", d["schedule"])
+		}
+	}
+	if !seen {
+		t.Fatal("containers domain not present in the status envelope")
+	}
+}
+
+// TestStatusEndpointEverythingScheduleOffIsVerbatim keeps the off case honest: a
+// client must be able to tell "no pass" from "a pass I cannot see", and it reads
+// that the same way it reads a domain's own schedule — the stored cadence
+// verbatim, "off" included, not a normalised empty string.
+func TestStatusEndpointEverythingScheduleOffIsVerbatim(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.ContainersSchedule = "daily 02:00"
+	s.EverythingSchedule = "off"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/status", "")
+	if m["everythingSchedule"] != "off" {
+		t.Fatalf("everythingSchedule = %v, want %q for a pass that is off", m["everythingSchedule"], "off")
 	}
 }
 

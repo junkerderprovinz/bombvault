@@ -15,6 +15,8 @@ const sk: Partial<Translations> = {
   "nav.receiver": "Prijímač",
   "nav.fleet": "Flotila",
   "nav.settings": "Nastavenia",
+
+  // Mode toggle
   "about.title": "O aplikácii BombVault",
   "about.report": "Problémy, želania alebo návrhy na zlepšenie? Založ issue na GitHube.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const sk: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Obnova",
+  "recovery.pageTitle": "Obnova po havárii",
   "recovery.intro": "Obnovte svoje kontajnery a VM z existujúcej zálohy na tejto inštalácii.",
   // Step 1
   "recovery.step1": "Dokáže BombVault prečítať vaše zálohy?",
@@ -1297,6 +1300,13 @@ const sk: Partial<Translations> = {
   "recovery.foreignLocationHint": "Priečinok pod pripojením hostiteľa. Pripojte zdieľanie zálohy druhého servera na tohto hostiteľa a nasmerujte to naň. Repozitár musí byť pripojený lokálne (URL vzdialených repozitárov sa tu neprijímajú).",
   "recovery.foreignKey": "APP_KEY druhej inštancie",
   "recovery.foreignKeyHint": "64-znakový kľúč zo súpravy na obnovenie DRUHEJ inštancie, váš vlastný kľúč zostane nedotknutý.",
+  "recovery.foreignCredsIntro": "Vyzerá to na vzdialený repozitár, takže sú potrebné poverenia backendu DRUHÉHO servera. Použijú sa len pre túto reláciu a nikdy sa neukladajú. Vaše vlastné externé poverenia sa tu zámerne opätovne nepoužívajú: odoslali by sa na adresu, ktorú ste práve zadali.",
+  "recovery.foreignS3KeyId": "ID prístupového kľúča (S3/B2)",
+  "recovery.foreignS3Secret": "Tajný prístupový kľúč (S3/B2)",
+  "recovery.foreignS3Region": "Región (voliteľné)",
+  "recovery.foreignRestUser": "Používateľské meno REST",
+  "recovery.foreignRestPassword": "Heslo REST",
+  "recovery.foreignRestHint": "Platí len pre repozitár rest: (server restic REST). Pre S3, B2 alebo SFTP nechajte prázdne.",
   "recovery.foreignConnect": "Pripojiť",
   "recovery.foreignConnecting": "Pripája sa…",
   "recovery.foreignConnected": "Pripojené, repozitár je čitateľný.",

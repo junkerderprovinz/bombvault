@@ -15,6 +15,8 @@ const id: Partial<Translations> = {
   "nav.receiver": "Penerima",
   "nav.fleet": "Armada",
   "nav.settings": "Pengaturan",
+
+  // Mode toggle
   "about.title": "Tentang BombVault",
   "about.report": "Ada masalah, permintaan, atau usulan perbaikan? Buka issue di GitHub.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const id: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Pemulihan",
+  "recovery.pageTitle": "Pemulihan bencana",
   "recovery.intro": "Pulihkan container dan VM Anda dari cadangan yang sudah ada ke instalasi ini.",
   // Step 1
   "recovery.step1": "Bisakah BombVault membaca cadangan Anda?",
@@ -1297,6 +1300,13 @@ const id: Partial<Translations> = {
   "recovery.foreignLocationHint": "Folder di bawah mount host. Mount share cadangan server lain di host ini dan arahkan ini ke sana. Repositori harus di-mount secara lokal (URL repositori remote tidak diterima di sini).",
   "recovery.foreignKey": "APP_KEY instance lain",
   "recovery.foreignKeyHint": "Kunci 64 karakter dari kit pemulihan instance LAIN. Kunci Anda sendiri tetap tidak tersentuh.",
+  "recovery.foreignCredsIntro": "Ini tampak seperti repositori remote, jadi dibutuhkan kredensial backend server LAIN itu. Kredensial ini hanya dipakai untuk sesi ini dan tidak pernah disimpan. Kredensial off-site Anda sendiri sengaja tidak dipakai ulang di sini: kredensial itu akan dikirim ke alamat yang baru saja Anda ketik.",
+  "recovery.foreignS3KeyId": "ID kunci akses (S3/B2)",
+  "recovery.foreignS3Secret": "Kunci akses rahasia (S3/B2)",
+  "recovery.foreignS3Region": "Region (opsional)",
+  "recovery.foreignRestUser": "Nama pengguna REST",
+  "recovery.foreignRestPassword": "Kata sandi REST",
+  "recovery.foreignRestHint": "Hanya untuk repositori rest: (server restic REST). Biarkan kosong untuk S3, B2, atau SFTP.",
   "recovery.foreignConnect": "Hubungkan",
   "recovery.foreignConnecting": "Menghubungkan…",
   "recovery.foreignConnected": "Terhubung. Repositori dapat dibaca.",

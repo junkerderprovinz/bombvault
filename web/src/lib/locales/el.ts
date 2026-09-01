@@ -629,6 +629,7 @@ const el: Partial<Translations> = {
   "recovery.stored": "Το αποθήκευσα με ασφάλεια",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Ανάκτηση από καταστροφή",
   "recovery.intro": "Ανακτήστε τα containers και τα VMs σας από ένα υπάρχον αντίγραφο ασφαλείας σε αυτή την εγκατάσταση.",
   "recovery.step1": "Μπορεί το BombVault να διαβάσει τα αντίγραφά σας;",
   "recovery.appKeyExplain": "Για να διαβάσει υπάρχοντα αντίγραφα, αυτό το container χρειάζεται το ΙΔΙΟ APP_KEY που χρησιμοποιούσε πριν. Βρίσκεται στο κιτ ανάκτησής σας. Ορίστε το στο πρότυπο container του Unraid αν δεν έχει ήδη οριστεί και μετά ελέγξτε ξανά.",
@@ -1130,6 +1131,13 @@ const el: Partial<Translations> = {
   "recovery.foreignLocationHint": "Ένας φάκελος κάτω από την προσάρτηση του host. Προσαρτήστε σε αυτόν τον host τον κοινόχρηστο φάκελο με τα αντίγραφα του άλλου διακομιστή και δείξτε εδώ σε αυτόν. Το αποθετήριο πρέπει να είναι προσαρτημένο τοπικά (URL απομακρυσμένων αποθετηρίων δεν γίνονται δεκτά εδώ).",
   "recovery.foreignKey": "APP_KEY της άλλης εγκατάστασης",
   "recovery.foreignKeyHint": "Το κλειδί 64 χαρακτήρων από το κιτ ανάκτησης της ΑΛΛΗΣ εγκατάστασης. Το δικό σας κλειδί παραμένει ανέγγιχτο.",
+  "recovery.foreignCredsIntro": "Αυτό μοιάζει με απομακρυσμένο αποθετήριο, οπότε χρειάζονται τα διαπιστευτήρια του backend του ΑΛΛΟΥ διακομιστή. Χρησιμοποιούνται μόνο για αυτή τη συνεδρία και δεν αποθηκεύονται ποτέ. Τα δικά σας διαπιστευτήρια εκτός τόπου σκόπιμα δεν επαναχρησιμοποιούνται εδώ: θα στέλνονταν σε μια διεύθυνση που μόλις πληκτρολογήσατε.",
+  "recovery.foreignS3KeyId": "Αναγνωριστικό κλειδιού πρόσβασης (S3/B2)",
+  "recovery.foreignS3Secret": "Μυστικό κλειδί πρόσβασης (S3/B2)",
+  "recovery.foreignS3Region": "Περιοχή (προαιρετικό)",
+  "recovery.foreignRestUser": "Όνομα χρήστη REST",
+  "recovery.foreignRestPassword": "Κωδικός πρόσβασης REST",
+  "recovery.foreignRestHint": "Μόνο για αποθετήριο rest: (έναν διακομιστή restic REST). Αφήστε το κενό για S3, B2 ή SFTP.",
   "recovery.foreignConnect": "Σύνδεση",
   "recovery.foreignConnecting": "Σύνδεση…",
   "recovery.foreignConnected": "Συνδέθηκε. Το αποθετήριο είναι αναγνώσιμο.",

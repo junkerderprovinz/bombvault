@@ -82,6 +82,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
         {text}
       </pre>
       <Button
+        key={shake}
         label={t("vm.ssh.copy")}
         labelKey="vm.ssh.copy"
         tone="neutral"
@@ -274,6 +275,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             </select>
           </label>
           <Button
+            key={shakeAccept}
             label={t("fleet.mesh.accept")}
             labelKey="fleet.mesh.accept"
             tone="accent"
@@ -284,6 +286,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
             }`}
           />
           <Button
+            key={shakeDecline}
             label={t("fleet.mesh.decline")}
             labelKey="fleet.mesh.decline"
             tone="neutral"
@@ -620,6 +623,7 @@ function FleetPeerCard({
 
       <div className="flex items-center gap-3 flex-wrap">
         <Button
+          key={shakePoll}
           label={t("fleet.pollNow")}
           labelKey="fleet.pollNow"
           title={polling ? t("fleet.polling") : undefined}
@@ -644,6 +648,11 @@ function FleetPeerCard({
             labelKey="fleet.details"
             tone="neutral"
             onClick={() => toggleDetails()}
+            glyph={
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}>
+                <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+              </svg>
+            }
           />
           <Button
             label={t("fleet.edit")}

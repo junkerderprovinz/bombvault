@@ -15,6 +15,8 @@ const sl: Partial<Translations> = {
   "nav.receiver": "Sprejemnik",
   "nav.fleet": "Flota",
   "nav.settings": "Nastavitve",
+
+  // Mode toggle
   "about.title": "O programu BombVault",
   "about.report": "Težave, želje ali predlogi za izboljšave? Odpri issue na GitHubu.",
   "about.repo": "GitHub",
@@ -1125,6 +1127,7 @@ const sl: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Obnova",
+  "recovery.pageTitle": "Obnovitev po katastrofi",
   "recovery.intro": "Obnovi svoje vsebnike in VM-je iz obstoječe varnostne kopije na to namestitev.",
   "recovery.step1": "Ali lahko BombVault prebere tvoje varnostne kopije?",
   "recovery.appKeyExplain": "Za branje obstoječih varnostnih kopij ta vsebnik potrebuje ISTI APP_KEY, kot ga je uporabljal prej. Najdeš ga v svojem obnovitvenem kompletu. Nastavi ga v Unraidovi predlogi vsebnika, če še ni, nato znova preveri.",
@@ -1281,6 +1284,13 @@ const sl: Partial<Translations> = {
   "recovery.foreignLocationHint": "Mapa pod priklopno točko gostitelja. Priklopi souporabo za varnostne kopije drugega strežnika na tega gostitelja in usmeri sem. Repozitorij mora biti lokalno priklopljen (oddaljeni URL-ji repozitorijev tukaj niso sprejeti).",
   "recovery.foreignKey": "APP_KEY druge instance",
   "recovery.foreignKeyHint": "64-znakovni ključ iz obnovitvenega kompleta DRUGE instance, tvoj lastni ključ ostane nedotaknjen.",
+  "recovery.foreignCredsIntro": "To je videti kot oddaljen repozitorij, zato so potrebne poverilnice zaledja DRUGEGA strežnika. Uporabijo se samo za to sejo in se nikoli ne shranijo. Tvoje lastne poverilnice za zunanjo kopijo se tukaj namenoma ne uporabijo znova: poslane bi bile na naslov, ki si ga pravkar vnesel.",
+  "recovery.foreignS3KeyId": "ID dostopnega ključa (S3/B2)",
+  "recovery.foreignS3Secret": "Skrivni dostopni ključ (S3/B2)",
+  "recovery.foreignS3Region": "Regija (neobvezno)",
+  "recovery.foreignRestUser": "Uporabniško ime za REST",
+  "recovery.foreignRestPassword": "Geslo za REST",
+  "recovery.foreignRestHint": "Velja samo za repozitorij rest: (strežnik restic REST). Za S3, B2 ali SFTP pusti prazno.",
   "recovery.foreignConnect": "Poveži se",
   "recovery.foreignConnecting": "Povezovanje…",
   "recovery.foreignConnected": "Povezano, repozitorij je berljiv.",

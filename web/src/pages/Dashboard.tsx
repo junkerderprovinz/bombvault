@@ -2114,7 +2114,14 @@ function SummaryTier({
   // dashboard is asked is when the next one runs. Filtered to job "backup" —
   // the list also carries offsite/drill/tamper/digest/watchdog fires, and this
   // cell is labelled "Next backup".
-  const nextBackupAt = scheduleNext.find((n) => n.job === "backup");
+  // mains Tor aus #177/#186, in unsere Struktur nachgezogen: der Scheduler
+  // registriert den "Backup Everything"-Durchlauf auch dann, wenn alle fuenf
+  // Domaenen aus sind, denn sein Eintrag hat kein off-Feld. Ohne diese Bedingung
+  // nennt die Kachel einen Termin, an dem nichts gesichert wird.
+  const anyDomainOn = domains.some((d) => d.enabled);
+  const nextBackupAt = scheduleNext.find(
+    (n) => n.job === "backup" && (n.domain !== "everything" || anyDomainOn)
+  );
   const nextBackupMs = nextBackupAt ? new Date(nextBackupAt.next).getTime() : NaN;
   const nextCadence = Number.isFinite(nextBackupMs)
     ? t("dashboard.summaryNextIn").replace(
@@ -2711,7 +2718,7 @@ export function Dashboard() {
                   {b.label}
                 </span>
                 <Button
-                  label={t("dashboard.showCard")}
+                  label={`${t("dashboard.showCard")} ${b.label}`}
                   labelKey="dashboard.showCard"
                   tone="neutral"
                   onClick={() => toggleHidden(b.id)}

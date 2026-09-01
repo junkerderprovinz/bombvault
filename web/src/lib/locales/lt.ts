@@ -15,6 +15,8 @@ const lt: Partial<Translations> = {
   "nav.receiver": "Imtuvas",
   "nav.fleet": "Parkas",
   "nav.settings": "Nustatymai",
+
+  // Mode toggle
   "about.title": "Apie BombVault",
   "about.report": "Problemos, pageidavimai ar tobulinimo pasiūlymai? Sukurkite issue GitHub'e.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const lt: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "Atkūrimas",
+  "recovery.pageTitle": "Nelaimių atkūrimas",
   "recovery.intro": "Atkurkite savo konteinerius ir VM iš esamos atsarginės kopijos šioje diegtyje.",
   // Step 1
   "recovery.step1": "Ar BombVault gali perskaityti jūsų atsargines kopijas?",
@@ -1297,6 +1300,13 @@ const lt: Partial<Translations> = {
   "recovery.foreignLocationHint": "Aplankas po pagrindinio kompiuterio prijungimu. Prijunkite kito serverio atsarginio kopijavimo bendrinamą aplanką prie šio pagrindinio kompiuterio ir nukreipkite tai į jį. Saugykla turi būti prijungta vietiniu būdu (nuotolinės saugyklos URL čia nepriimami).",
   "recovery.foreignKey": "Kito egzemplioriaus APP_KEY",
   "recovery.foreignKeyHint": "64 simbolių raktas iš KITO egzemplioriaus atkūrimo rinkinio. Jūsų paties raktas lieka nepaliestas.",
+  "recovery.foreignCredsIntro": "Panašu, kad tai nuotolinė saugykla, todėl reikia KITO serverio programinės sąsajos prisijungimo duomenų. Jie naudojami tik šiam seansui ir niekada neišsaugomi. Jūsų pačių nuotolinės saugyklos prisijungimo duomenys čia sąmoningai nenaudojami pakartotinai: jie būtų išsiųsti adresu, kurį ką tik įvedėte.",
+  "recovery.foreignS3KeyId": "Prieigos rakto ID (S3/B2)",
+  "recovery.foreignS3Secret": "Slaptasis prieigos raktas (S3/B2)",
+  "recovery.foreignS3Region": "Regionas (neprivaloma)",
+  "recovery.foreignRestUser": "REST naudotojo vardas",
+  "recovery.foreignRestPassword": "REST slaptažodis",
+  "recovery.foreignRestHint": "Tik rest: tipo saugyklai (restic REST serveriui). S3, B2 ar SFTP atveju palikite tuščią.",
   "recovery.foreignConnect": "Prisijungti",
   "recovery.foreignConnecting": "Jungiamasi…",
   "recovery.foreignConnected": "Prisijungta, saugykla skaitoma.",

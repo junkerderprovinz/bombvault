@@ -109,8 +109,7 @@ type VMBackupDeps struct {
 	// why, and see withRunTag for the exact append-not-replace mechanics).
 	// Actually persisting a run's tag and querying restic by it at restore
 	// time is a real caller's job (internal/api/service.go, out of this
-	// file's scope; see docs/superpowers/plans/
-	// 2026-08-18-vm-service-layer-integration.md's Task 2/3).
+	// file's scope; see the design notes' Task 2/3).
 	//
 	// Empty (the default, and what every existing caller/test uses today) is
 	// a byte-identical no-op: every tags slice this file builds stays EXACTLY
@@ -222,7 +221,7 @@ type VMBlockDisk struct {
 	// Dev is this disk's libvirt target device name (e.g. "vdb"), used ONLY
 	// to give this disk's own restic snapshot a distinct identity tag
 	// "vm:<name>:zvol:<dev>" (see backupBlockDisksAndLog) — the tag scheme
-	// docs/superpowers/plans/2026-08-18-vm-service-layer-integration.md's
+	// the design notes
 	// "Design decision" section settled on, so retention can be applied per
 	// disk instead of lumping every zvol disk's history in with the
 	// file-backed snapshot's. Optional/empty-safe: when empty, this disk's
@@ -335,8 +334,7 @@ type VMRestoreDeps struct {
 	// SnapshotID/StdinPath stay at zero value on every entry, EXACTLY the
 	// pre-Task-3 fallback: RestoreZvolDisk then reaches restic with an empty
 	// SnapshotID and fails loudly there rather than silently skipping the
-	// disk. See docs/superpowers/plans/
-	// 2026-08-18-vm-service-layer-integration.md's Task 3.
+	// disk. See the design notes' Task 3.
 	BlockDisks []VMRestoreBlockDisk
 	// ZFSHost / ZvolRestic are RestoreZvolDisk's own dependencies — required
 	// only when BlockDisks is non-empty.
@@ -821,8 +819,7 @@ func isFreezeErr(err error) bool {
 //
 // UPDATE (v8.0.0 VM service-layer integration, Task 2): the design decision
 // this section originally deferred HAS now been made and wired end to end on
-// the BACKUP side — see docs/superpowers/plans/
-// 2026-08-18-vm-service-layer-integration.md's "Design decision" section: a
+// the BACKUP side — see the design notes' "Design decision" section: a
 // shared "vmrun:<runID>" correlation tag, additive to each snapshot's own
 // identity tag, resolved at restore time by querying restic directly (no DB
 // migration). internal/api/service.go's real BackupVM now reads

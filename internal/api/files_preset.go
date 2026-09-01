@@ -11,7 +11,7 @@ import (
 // Unraid's flash-USB backup, for generic Docker hosts and TrueNAS Scale,
 // which have no boot-USB device to capture. Unraid keeps using its dedicated
 // flash domain for this purpose, so the preset is never offered there. See
-// docs/superpowers/plans/2026-08-16-bombvault-platform-expansion.md Task 7
+// the design notes Task 7
 // and the design spec's flash-domain analogue section for the rationale.
 //
 // This is a suggested STARTING POINT, not a discovery result and not a claim

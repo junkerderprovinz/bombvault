@@ -1,5 +1,5 @@
 # BombVault task runner — run `just` to list recipes.
-# Recipes use sh (Git Bash on Windows). See CLAUDE.md for the full guide.
+# Recipes use sh (Git Bash on Windows).
 
 # List available recipes
 default:

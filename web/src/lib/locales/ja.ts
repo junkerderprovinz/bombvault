@@ -621,6 +621,7 @@ const ja: Partial<Translations> = {
   "recovery.stored": "安全に保管しました",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "災害復旧",
   "recovery.intro": "既存のバックアップからコンテナと VM をこのインストールに復元します。",
   "recovery.step1": "BombVault はバックアップを読み取れますか？",
   "recovery.appKeyExplain": "既存のバックアップを読み取るには、このコンテナに以前と同じ APP_KEY が必要です。リカバリーキットに記載されています。まだ設定していなければ Unraid のコンテナテンプレートで設定し、再確認してください。",
@@ -1122,6 +1123,13 @@ const ja: Partial<Translations> = {
   "recovery.foreignLocationHint": "ホストマウント配下のフォルダー。相手サーバーのバックアップを含む共有をこのホストにマウントし、ここでそれを指定してください。リポジトリはローカルにマウントされている必要があります（リモートリポジトリの URL はここでは受け付けません）。",
   "recovery.foreignKey": "相手インスタンスの APP_KEY",
   "recovery.foreignKeyHint": "相手インスタンスのリカバリキットに記載された 64 文字のキー。自分のキーはそのまま変わりません。",
+  "recovery.foreignCredsIntro": "これはリモートリポジトリのようなので、相手サーバーのバックエンドの認証情報が必要です。認証情報はこのセッションの間だけ使われ、保存されることはありません。自分のオフサイトの認証情報をここで再利用しないのは意図的です: 入力したばかりのアドレスに送信されてしまうからです。",
+  "recovery.foreignS3KeyId": "アクセスキー ID（S3/B2）",
+  "recovery.foreignS3Secret": "シークレットアクセスキー（S3/B2）",
+  "recovery.foreignS3Region": "リージョン（任意）",
+  "recovery.foreignRestUser": "REST のユーザー名",
+  "recovery.foreignRestPassword": "REST のパスワード",
+  "recovery.foreignRestHint": "rest: で始まるリポジトリ（restic REST サーバー）の場合にのみ使用します。S3、B2、SFTP では空欄のままにしてください。",
   "recovery.foreignConnect": "接続",
   "recovery.foreignConnecting": "接続中…",
   "recovery.foreignConnected": "接続しました。リポジトリを読み取れます。",

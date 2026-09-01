@@ -607,6 +607,7 @@ const ro: Partial<Translations> = {
   "recovery.stored": "L-am păstrat în siguranță",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Recuperare în caz de dezastru",
   "recovery.intro": "Recuperează containerele și VM-urile dintr-o copie de rezervă existentă pe această instalare.",
   "recovery.step1": "Poate BombVault să-ți citească copiile de rezervă?",
   "recovery.appKeyExplain": "Pentru a citi copiile de rezervă existente, acest container are nevoie de ACELAȘI APP_KEY folosit anterior. Se află în kitul tău de recuperare. Setează-l în șablonul de container Unraid dacă nu este deja, apoi verifică din nou.",
@@ -1133,6 +1134,13 @@ const ro: Partial<Translations> = {
   "recovery.foreignLocationHint": "Un folder sub punctul de montare al gazdei. Montează pe această gazdă partajarea cu copiile celuilalt server și indică aici către ea. Depozitul trebuie să fie montat local (URL-urile de repo la distanță nu sunt acceptate aici).",
   "recovery.foreignKey": "APP_KEY al celeilalte instanțe",
   "recovery.foreignKeyHint": "Cheia de 64 de caractere din kitul de recuperare al CELEILALTE instanțe. Propria dvs. cheie rămâne neatinsă.",
+  "recovery.foreignCredsIntro": "Acesta pare un repo la distanță, așa că are nevoie de credențialele backendului CELUILALT server. Se folosesc doar pentru această sesiune și nu sunt salvate niciodată. Propriile dvs. credențiale externe nu sunt refolosite aici în mod intenționat: ar fi trimise către o adresă pe care tocmai ați introdus-o.",
+  "recovery.foreignS3KeyId": "ID cheie de acces (S3/B2)",
+  "recovery.foreignS3Secret": "Cheie de acces secretă (S3/B2)",
+  "recovery.foreignS3Region": "Regiune (opțional)",
+  "recovery.foreignRestUser": "Nume de utilizator REST",
+  "recovery.foreignRestPassword": "Parolă REST",
+  "recovery.foreignRestHint": "Doar pentru un repo „rest:” (un server restic REST). Lăsați gol pentru S3, B2 sau SFTP.",
   "recovery.foreignConnect": "Conectare",
   "recovery.foreignConnecting": "Se conectează…",
   "recovery.foreignConnected": "Conectat. Repo-ul poate fi citit.",

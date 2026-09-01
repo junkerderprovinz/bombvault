@@ -295,6 +295,7 @@ function ReceivedRepoCard({
       {/* Actions row */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button
+          key={shakeCheck}
           label={t("receiver.checkNow")}
           labelKey="receiver.checkNow"
           tone="accent"

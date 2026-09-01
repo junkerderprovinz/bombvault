@@ -626,6 +626,7 @@ const pt: Partial<Translations> = {
   "recovery.stored": "Já o guardei em segurança",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Recuperação de desastres",
   "recovery.intro": "Recupere os seus containers e VMs de um backup existente para esta instalação.",
   "recovery.step1": "O BombVault consegue ler os seus backups?",
   "recovery.appKeyExplain": "Para ler backups existentes, este container precisa da MESMA APP_KEY que usava antes. Está no seu kit de recuperação. Defina-a no modelo de container do Unraid caso ainda não esteja, e verifique novamente.",
@@ -1130,6 +1131,13 @@ const pt: Partial<Translations> = {
   "recovery.foreignLocationHint": "Uma pasta sob a montagem do host. Monte neste host a partilha com os backups do outro servidor e aponte isto para ela. O repositório tem de estar montado localmente (aqui não são aceites URLs de repositórios remotos).",
   "recovery.foreignKey": "APP_KEY da outra instância",
   "recovery.foreignKeyHint": "A chave de 64 caracteres do kit de recuperação da OUTRA instância. A sua própria chave fica intacta.",
+  "recovery.foreignCredsIntro": "Isto parece um repositório remoto, por isso são necessárias as credenciais do backend do OUTRO servidor. Só são usadas nesta sessão e nunca são guardadas. As suas próprias credenciais externas não são reutilizadas aqui de propósito: seriam enviadas para um endereço que acabou de escrever.",
+  "recovery.foreignS3KeyId": "ID da chave de acesso (S3/B2)",
+  "recovery.foreignS3Secret": "Chave de acesso secreta (S3/B2)",
+  "recovery.foreignS3Region": "Região (opcional)",
+  "recovery.foreignRestUser": "Nome de utilizador REST",
+  "recovery.foreignRestPassword": "Palavra-passe REST",
+  "recovery.foreignRestHint": "Apenas para um repositório «rest:» (um servidor restic REST). Deixe vazio para S3, B2 ou SFTP.",
   "recovery.foreignConnect": "Ligar",
   "recovery.foreignConnecting": "A ligar…",
   "recovery.foreignConnected": "Ligado. O repositório é legível.",

@@ -494,12 +494,13 @@ function FileSetRestoreControl({
             mode renders its own controls below (FileSetFileBrowser). */}
         {dest !== "select" && (
           <Button
-            label={t("common.restoring")}
-            labelKey="common.restoring"
+            label={t("snapshots.restore")}
+            labelKey="snapshots.restore"
             tone="accent"
             onClick={() => void handleRestore()}
             disabled={isPending || blockedByOther || (dest === "folder" && targetPath.trim() === "")}
             busy={isPending}
+            title={isPending ? t("common.restoring") : undefined}
             className="shrink-0"
           />
         )}
@@ -1562,14 +1563,13 @@ export function Files() {
       {!loading && sets.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
           <Button
+            key={shakeBackupAll}
             label={t("files.backupAll")}
             labelKey="files.backupAll"
             tone="accent"
             onClick={() => void handleBackupAll()}
             disabled={backupAllBusy || running.active || backupableIds.length === 0}
-            className={`inline-flex items-center rounded-control bg-accent px-3 py-1.5 text-xs font-medium text-accentContrast hover:opacity-90 transition-opacity disabled:opacity-50${
-              shakeBackupAll ? " glim-shake" : ""
-            }`}
+            className={shakeBackupAll ? "glim-shake" : ""}
           />
           {!backupAllBusy && running.active && (
             <span className="text-xs text-carbon-textMuted">

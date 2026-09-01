@@ -621,6 +621,7 @@ const pl: Partial<Translations> = {
   "recovery.stored": "Bezpiecznie zapisałem",
 
   // Guided Recovery tab (disaster-recovery walkthrough)
+  "recovery.pageTitle": "Odzyskiwanie po awarii",
   "recovery.intro": "Odzyskaj swoje kontenery i maszyny wirtualne z istniejącej kopii zapasowej na tę instalację.",
   "recovery.step1": "Czy BombVault może odczytać Twoje kopie zapasowe?",
   "recovery.appKeyExplain": "Aby odczytać istniejące kopie zapasowe, ten kontener potrzebuje TEGO SAMEGO APP_KEY, którego używał wcześniej. Znajdziesz go w swoim zestawie odzyskiwania. Ustaw go w szablonie kontenera Unraid, jeśli jeszcze go nie ma, a następnie sprawdź ponownie.",
@@ -1125,6 +1126,13 @@ const pl: Partial<Translations> = {
   "recovery.foreignLocationHint": "Folder pod punktem montowania hosta. Zamontuj na tym hoście udział z kopiami drugiego serwera i wskaż go tutaj. Repozytorium musi być zamontowane lokalnie (zdalne adresy URL repo nie są tu akceptowane).",
   "recovery.foreignKey": "APP_KEY drugiej instancji",
   "recovery.foreignKeyHint": "64-znakowy klucz z zestawu ratunkowego DRUGIEJ instancji. Twój własny klucz pozostaje nietknięty.",
+  "recovery.foreignCredsIntro": "Wygląda to na zdalne repozytorium, więc potrzebne są poświadczenia backendu DRUGIEGO serwera. Są używane tylko w tej sesji i nigdy nie są zapisywane. Twoje własne poświadczenia off-site celowo nie są tu wykorzystywane ponownie: zostałyby wysłane na adres, który dopiero co wpisałeś.",
+  "recovery.foreignS3KeyId": "ID klucza dostępu (S3/B2)",
+  "recovery.foreignS3Secret": "Tajny klucz dostępu (S3/B2)",
+  "recovery.foreignS3Region": "Region (opcjonalnie)",
+  "recovery.foreignRestUser": "Nazwa użytkownika REST",
+  "recovery.foreignRestPassword": "Hasło REST",
+  "recovery.foreignRestHint": "Dotyczy tylko repozytorium rest: (serwer restic REST). Dla S3, B2 lub SFTP pozostaw puste.",
   "recovery.foreignConnect": "Połącz",
   "recovery.foreignConnecting": "Łączenie…",
   "recovery.foreignConnected": "Połączono. Repozytorium jest czytelne.",

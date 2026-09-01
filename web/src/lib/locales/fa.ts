@@ -15,6 +15,8 @@ const fa: Partial<Translations> = {
   "nav.receiver": "گیرنده",
   "nav.fleet": "ناوگان",
   "nav.settings": "تنظیمات",
+
+  // Mode toggle
   "about.title": "درباره BombVault",
   "about.report": "مشکل، درخواست یا پیشنهاد بهبود دارید؟ در GitHub یک issue باز کنید.",
   "about.repo": "GitHub",
@@ -1131,6 +1133,7 @@ const fa: Partial<Translations> = {
 
   // Guided Recovery tab
   "nav.recovery": "بازیابی",
+  "recovery.pageTitle": "بازیابی از فاجعه",
   "recovery.intro": "کانتینرها و ماشین‌های مجازی خود را از یک پشتیبان موجود روی این نصب بازیابی کنید.",
   // Step 1
   "recovery.step1": "آیا BombVault می‌تواند پشتیبان‌های شما را بخواند؟",
@@ -1297,6 +1300,13 @@ const fa: Partial<Translations> = {
   "recovery.foreignLocationHint": "پوشه‌ای زیر اتصال میزبان. اشتراک پشتیبان سرور دیگر را روی همین میزبان متصل کنید و اینجا را به آن اشاره دهید. مخزن باید به‌صورت محلی متصل باشد (نشانی‌های مخزن راه‌دور اینجا پذیرفته نمی‌شوند).",
   "recovery.foreignKey": "APP_KEY نمونه دیگر",
   "recovery.foreignKeyHint": "کلید ۶۴ کاراکتری از کیت بازیابی نمونه دیگر. کلید خودتان دست‌نخورده باقی می‌ماند.",
+  "recovery.foreignCredsIntro": "به نظر می‌رسد این یک مخزن راه‌دور است، پس به اطلاعات ورود بک‌اند سرور دیگر نیاز دارد. این اطلاعات فقط برای همین نشست به کار می‌رود و هرگز ذخیره نمی‌شود. اطلاعات ورود خارج از محل خودتان عمداً اینجا دوباره استفاده نمی‌شود: در غیر این صورت به نشانی‌ای فرستاده می‌شد که همین حالا تایپ کرده‌اید.",
+  "recovery.foreignS3KeyId": "شناسه کلید دسترسی (S3/B2)",
+  "recovery.foreignS3Secret": "کلید دسترسی مخفی (S3/B2)",
+  "recovery.foreignS3Region": "منطقه (اختیاری)",
+  "recovery.foreignRestUser": "نام کاربری REST",
+  "recovery.foreignRestPassword": "رمز عبور REST",
+  "recovery.foreignRestHint": "فقط برای مخزن‌هایی که با rest: شروع می‌شوند (یک سرور restic REST). برای S3، B2 یا SFTP خالی بگذارید.",
   "recovery.foreignConnect": "اتصال",
   "recovery.foreignConnecting": "در حال اتصال…",
   "recovery.foreignConnected": "متصل شد: مخزن قابل خواندن است.",
