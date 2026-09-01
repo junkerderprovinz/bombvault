@@ -4,7 +4,7 @@ import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
 import { groupStage } from "../lib/controls";
-import { IconFolder } from "./Sidebar";
+import { IconCheckCircle, IconFolder } from "./Sidebar";
 import { IconBack } from "./glyphs";
 import { useToast } from "../lib/toast";
 
@@ -294,9 +294,21 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             </div>
           )}
 
-          {/* Directory listing */}
+          {/* Directory listing, at a FIXED height rather than a maximum ([469]).
+
+              Measured while browsing: the top level filled the 192px cap with
+              twelve entries, one step down held a single ".." row and the panel
+              collapsed to 50px. Every step in or out therefore moved everything
+              below it — the path line, the new-folder field, the two buttons —
+              and jdp put it plainly: "wenn man die ordnerstruktur durchsucht
+              passt sich die größe des fensters immer an die ordnerliste an. das
+              ist super unangenehm."
+
+              min-h and max-h at the same value means the panel is one size for
+              the whole walk, and a short directory simply leaves space below
+              its last row instead of dragging the dialog shut. */}
           {!loading && !manualFallback && (
-            <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">
+            <div className="flex flex-col gap-0.5 h-48 min-h-48 max-h-48 overflow-y-auto">
               {/* ".." go up — only when not at root */}
               {browsePath !== "" && (
                 <Button
@@ -382,10 +394,19 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   (jdp), so the two stack into a column instead of two ragged
                   ends. `justify-start` because a button that wide would
                   otherwise float its words in the middle of an empty pill. */}
+              {/* The dialog's PRIMARY action, and now dressed as one ([470]).
+                  It sat here as a neutral, glyphless pill beside "New folder",
+                  so the one button that finishes the job looked exactly like
+                  the one that does not. jdp: "Der Ordner-auswählen-button soll
+                  der Kreis mit Haken sein. der button ist nicht farbig."
+                  IconCheckCircle is this app's confirm mark everywhere else,
+                  and tone="accent" is what the accent is FOR — the one action
+                  a screen is asking for. */}
               <Button
                 label={t("folder.use")}
                 labelKey="folder.use"
-                tone="neutral"
+                glyph={<IconCheckCircle />}
+                tone="accent"
                 onClick={handleSelect}
                 stage={folderActionStage}
                 className="shrink-0 justify-start"

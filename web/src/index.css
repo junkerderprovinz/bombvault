@@ -378,6 +378,21 @@
   transform-origin: left center;
 }
 
+/* The ACTIVE one keeps its words, in every reactive strip ([467]).
+   ---------------------------------------------------------------------------
+   Reactive mode trades labels for space and hands them back on hover, which is
+   a fair trade for the seven things somebody is NOT looking at. It is a poor
+   one for the one they are: "which tab am I on" is the question a tab strip
+   exists to answer, and answering it only while the pointer happens to rest on
+   the right tab answers it for nobody. jdp, live review: "Im reaktiven modus
+   soll der aktive tab seinen text behalten".
+
+   `.glim-active` is already what Selector puts on the chosen segment and
+   Sidebar on the current destination, so this needs no new marker and covers
+   both strips at once. Nothing about the resting layout changes either: the
+   width stages already reserve every label's own width in every mode, which is
+   the whole reason words can appear here without moving the page. */
+.bv-reactive.glim-active .bv-label-reactive,
 .bv-reactive:hover .bv-label-reactive,
 .bv-reactive:focus-visible .bv-label-reactive,
 .bv-reactive:focus-within .bv-label-reactive {

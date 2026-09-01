@@ -108,12 +108,23 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
 
   return (
     <Card title={t("about.title")} hueIndex={hueIndex}>
-      <div className="flex flex-col gap-1">
-        {version && <VersionLink label="BombVault" version={version} repo={REPO} />}
-        <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
-      </div>
+      {/* Sentence FIRST, then the versions on ONE line — the same card as
+          KnightLoader's extension, which jdp asked this to match exactly
+          ([466]). The order is not arbitrary: the sentence says what the card
+          is for, and the numbers are a detail it hands you on the way to the
+          two buttons. Leading with two stacked version strings makes a reader
+          work out what they are looking at before being told.
 
+          One line with a middle dot, not two rows. Two rows read as two facts
+          of equal weight that happen to sit together; "BombVault X · GlimStone
+          Y" reads as one fact about one build, which is what it is. */}
       <p className="max-w-2xl text-sm text-carbon-textSub">{t("about.report")}</p>
+
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {version && <VersionLink label="BombVault" version={version} repo={REPO} />}
+        {version && <span aria-hidden="true" className="text-carbon-textMuted">·</span>}
+        <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
+      </p>
 
       <div className="flex flex-wrap items-center gap-2">
         <Button

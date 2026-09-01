@@ -235,7 +235,29 @@ export function Button({
   // A glyphless button falls back to its text in BOTH hiding modes: an empty
   // box is unusable, and a reactive empty box is an empty box you have to hunt
   // for with the pointer first.
-  const effective = chip ? "glyph" : keepLabel || (hidesLabel(mode) && !hasGlyph) ? "text" : mode;
+  //
+  // keepLabel means the LABEL never hides. It used to mean "text only", which
+  // threw the GLYPH away as well ([469]) — and silently, because a call site
+  // that passes both `keepLabel` and `glyph={…}` gets no warning that one of
+  // the two was ignored. The folder browser's rows do exactly that, and
+  // rendered as bare words 14.2px tall: no icon, no padding, less than half the
+  // height of the `..` row above them. jdp saw the symptom, not the cause:
+  // "die listeneinträge sind in unterschiedlichen ebenen unterschiedlich groß.
+  // in der obersten ebene sind sie zu klein".
+  //
+  // A prop that says "keep this" must not remove that. keepLabel now lands on
+  // textGlyph when there is a glyph, and only falls back to plain text when
+  // there is none — which is the same fallback the line above already makes for
+  // the hiding modes, applied consistently.
+  const effective = chip
+    ? "glyph"
+    : keepLabel
+      ? hasGlyph
+        ? "textGlyph"
+        : "text"
+      : hidesLabel(mode) && !hasGlyph
+        ? "text"
+        : mode;
   const reactive = effective === "reactive";
   // "Shown" means painted at rest. Reactive is not: its words arrive on hover,
   // which is a CSS state, so as far as this render is concerned it is a hiding
