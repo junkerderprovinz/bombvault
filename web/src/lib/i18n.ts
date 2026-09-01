@@ -67,9 +67,8 @@ export const en = {
   "nav.fleet": "Fleet",
   "nav.settings": "Settings",
   "about.title": "About BombVault",
-  "about.report": "Found something, or missing something? Open an issue on GitHub or send a mail. The version above helps either way.",
+  "about.report": "Problems, wishes or ideas for improvement? Open an issue on GitHub.",
   "about.repo": "Repository",
-  "about.mail": "Write a mail",
 
   // Mode toggle
   "mode.simpleView": "Simple view",
@@ -1784,9 +1783,8 @@ export const de: Translations = {
   "nav.fleet": "Flotte",
   "nav.settings": "Einstellungen",
   "about.title": "Über BombVault",
-  "about.report": "Etwas gefunden oder vermisst? Melde es auf GitHub oder schreib eine Mail. Die Version oben hilft in beiden Fällen.",
+  "about.report": "Probleme, Wünsche oder Verbesserungsvorschläge? Schreib es auf GitHub als Issue.",
   "about.repo": "Repository",
-  "about.mail": "Mail schreiben",
 
   "mode.simpleView": "Einfache Ansicht",
   "mode.advancedView": "Erweiterte Ansicht",

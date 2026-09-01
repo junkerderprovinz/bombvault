@@ -16,9 +16,8 @@ const sl: Partial<Translations> = {
   "nav.fleet": "Flota",
   "nav.settings": "Nastavitve",
   "about.title": "O programu BombVault",
-  "about.report": "Ste kaj našli ali kaj pogrešate? Odprite težavo na GitHubu ali pošljite e-pošto. Različica zgoraj pomaga v obeh primerih.",
+  "about.report": "Težave, želje ali predlogi za izboljšave? Odpri issue na GitHubu.",
   "about.repo": "Repozitorij",
-  "about.mail": "Napiši e-pošto",
 
   // Mode toggle
   "mode.simpleView": "Enostaven prikaz",

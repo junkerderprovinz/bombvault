@@ -16,9 +16,8 @@ const lt: Partial<Translations> = {
   "nav.fleet": "Parkas",
   "nav.settings": "Nustatymai",
   "about.title": "Apie BombVault",
-  "about.report": "Ką nors radote ar ko nors trūksta? Sukurkite problemą GitHub arba parašykite el. laišką. Aukščiau nurodyta versija padeda abiem atvejais.",
+  "about.report": "Problemos, pageidavimai ar tobulinimo pasiūlymai? Sukurkite issue GitHub'e.",
   "about.repo": "Saugykla",
-  "about.mail": "Rašyti el. laišką",
 
   // Mode toggle
   "mode.simpleView": "Paprastas rodinys",

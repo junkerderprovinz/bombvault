@@ -16,9 +16,8 @@ const lv: Partial<Translations> = {
   "nav.fleet": "Flote",
   "nav.settings": "Iestatījumi",
   "about.title": "Par BombVault",
-  "about.report": "Kaut ko atradāt vai kaut kā trūkst? Izveidojiet problēmu GitHub vai nosūtiet e-pastu. Iepriekš minētā versija palīdz abos gadījumos.",
+  "about.report": "Problēmas, vēlmes vai uzlabojumu ieteikumi? Izveido issue GitHub.",
   "about.repo": "Krātuve",
-  "about.mail": "Rakstīt e-pastu",
 
   // Mode toggle
   "mode.simpleView": "Vienkāršs skats",

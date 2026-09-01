@@ -16,9 +16,8 @@ const eu: Partial<Translations> = {
   "nav.fleet": "Flota",
   "nav.settings": "Ezarpenak",
   "about.title": "BombVault-i buruz",
-  "about.report": "Zerbait aurkitu duzu edo zerbait falta da? Ireki gai bat GitHuben edo bidali mezu bat. Goiko bertsioak bi kasuetan laguntzen du.",
+  "about.report": "Arazoak, nahiak edo hobekuntza-proposamenak? Ireki issue bat GitHuben.",
   "about.repo": "Biltegia",
-  "about.mail": "Idatzi mezua",
 
   // Mode toggle
   "mode.simpleView": "Ikuspegi soila",

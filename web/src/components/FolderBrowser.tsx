@@ -300,10 +300,16 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
             <span dir="ltr" className="text-xs font-mono text-carbon-textSub min-w-0 truncate text-start">
               {hostMountRoot}/{browsePath || ""}
             </span>
+            {/* A real button, not a chip ([499]). jdp: "Schließen ist kein
+                button" — and it measured 18×18px with no surface at all,
+                because `variant="chip"` is the REMOVE control that lives inside
+                a pill, not a dialog's own close. Every other dialog in this app
+                closes with a plain neutral Button (Files.tsx's own), so this
+                one does too. */}
             <Button
               label={t("common.close")}
               labelKey="common.close"
-              variant="chip"
+              tone="neutral"
               onClick={handleClose}
               className="shrink-0"
             />
@@ -346,9 +352,19 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               passt sich die größe des fensters immer an die ordnerliste an. das
               ist super unangenehm."
 
-              min-h and max-h at the same value means the panel is one size for
-              the whole walk, and a short directory simply leaves space below
-              its last row instead of dragging the dialog shut. */}
+              One value for height means the panel is one size for the whole
+              walk, and a short directory simply leaves space below its last row
+              instead of dragging the dialog shut.
+
+              clamp(12rem, 55vh, 32rem) rather than a flat 12rem ([497]). At
+              192px the list showed SIX of twelve entries while 982px of the
+              window sat empty below the dialog — jdp: "können wir das fenster
+              größer bzw. standardmäßig länger machen damit man nicht so viel
+              scrollen muss?". Tying it to the viewport spends the space that is
+              actually there; the floor keeps it usable on a short window and
+              the ceiling stops it from becoming a full-height wall on a tall
+              one. It is still ONE value per viewport, so nothing about the
+              no-jumping property changes. */}
           {/* min-h-8 on every row, and it has to be stated rather than
               inherited ([469]). `.bv-btn-xs` sets a min-WIDTH and no height, so
               a row is as tall as whatever it happens to contain: measured after
@@ -372,7 +388,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               that a className on a shared component is a request, not a
               guarantee. */}
           {!loading && !manualFallback && (
-            <div className="flex flex-col gap-0.5 h-48 min-h-48 max-h-48 overflow-y-auto">
+            <div className="flex flex-col gap-0.5 h-[clamp(12rem,55vh,32rem)] overflow-y-auto">
               {/* ".." go up — only when not at root */}
               {browsePath !== "" && (
                 <Button
@@ -432,7 +448,14 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 spellCheck={false}
                 placeholder={t("folder.newFolderPlaceholder")}
                 dir="ltr"
-                className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2.5 py-1 bv-field-focus text-start"
+                // text-sm px-3 py-1.5 — the house field, and the reason is a
+                // measurement ([498]). This was text-xs px-2.5 py-1 and
+                // rendered 24px tall beside a 32px button, which jdp saw
+                // straight away: "das eingabefeld für einen neuen ordner ist
+                // niedriger als der button daneben". Every field in every other
+                // dialog already uses these three, and they come to exactly the
+                // 32px this app gives a control.
+                className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
               />
               <Button
                 label={t("folder.newFolder")}

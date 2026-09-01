@@ -21,9 +21,9 @@
 //     index. A version string answers "which build is this"; the question
 //     straight after is "and what changed", and a number nobody can follow
 //     makes somebody search a repository for a tag they then retype.
-//   - One sentence inviting a report, naming both routes.
-//   - Two buttons: the repository, and a mailto with the subject prefilled and
-//     NO body, because a prefilled body reads as a form to fill in.
+//   - One sentence inviting a report, naming the route it actually has.
+//   - One button: the repository. There was a second, a mailto, and it is gone
+//     with the mail clause of that sentence — see [501] at the call site.
 //
 // This is also the one card in the language whose body is prose rather than an
 // info bubble, and that is deliberate: a bubble hangs an explanation off a
@@ -47,7 +47,6 @@ import { Card } from "./shared";
 export const GLIMSTONE_VERSION = "1.7.2";
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
-const SUPPORT_MAIL = "jdp@braethoria.com";
 
 /**
  * The tag behind a running version string.
@@ -75,11 +74,18 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
     );
   }
   return (
+    // No underline ([500]). KnightLoader's card gives its version links no
+    // decoration at all — `.versionLink` and `.aboutVersions` carry no CSS
+    // rules there, only `.glim-num` for tabular figures on the line — and jdp
+    // asked for this card to match that one. The affordance is carried by the
+    // ink lifting on hover, which is enough for a number nobody is hunting for:
+    // a dotted rule under a version string reads as an annotation, and there is
+    // nothing here to annotate.
     <a
       href={`${repo}/releases/tag/${encodeURIComponent(tag)}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-mono tabular-nums text-carbon-textMuted underline decoration-dotted underline-offset-4 hover:text-carbon-text"
+      className="font-mono tabular-nums text-carbon-textMuted no-underline hover:text-carbon-text"
     >
       {label} {version}
     </a>
@@ -104,7 +110,6 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
     };
   }, []);
 
-  const subject = encodeURIComponent(`BombVault ${version ?? ""}`.trim());
 
   return (
     <Card title={t("about.title")} hueIndex={hueIndex}>
@@ -126,23 +131,25 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
         <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
       </p>
 
+      {/* ONE button, because there is one route ([501]). The mail button is
+          gone: jdp, "Die email option bitte raus in BV weil wir dafür keine
+          Email haben". It pointed at KnightLoader's address, which is a
+          different product's inbox — a contact route that reaches the wrong
+          place is worse than no contact route, because somebody writes and
+          then waits.
+
+          The sentence lost its mail clause in the same change. Offering a
+          channel in prose that no control on the card can reach is the same
+          broken promise one line up.
+
+          Putting it back is two lines here plus one key, if an address is ever
+          set up for this product. */}
       <div className="flex flex-wrap items-center gap-2">
         <Button
           label={t("about.repo")}
           labelKey="about.repo"
           tone="neutral"
           onClick={() => window.open(REPO, "_blank", "noopener,noreferrer")}
-        />
-        <Button
-          label={t("about.mail")}
-          labelKey="about.mail"
-          tone="neutral"
-          // No body, only a subject: the mail should arrive already saying
-          // which product and build it is about, and then leave the writing to
-          // the person writing it.
-          onClick={() => {
-            window.location.href = `mailto:${SUPPORT_MAIL}?subject=${subject}`;
-          }}
         />
       </div>
     </Card>
