@@ -358,6 +358,19 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               is not a list, and chasing the last twelve pixels through the
               button internals is worse value than saying the height out loud
               where the list is defined. 32px is this app's control height. */}
+          {/* `!justify-start` with the important modifier, and it is not a
+              shortcut ([496]). `.bv-btn` sets `justify-content: center` and
+              wins on specificity, so the plain utility these rows already
+              carried was being dropped: measured in the live dialog, the
+              computed value was `center` and each folder name sat 191px into a
+              457px row. Centred names in a directory listing cannot be scanned
+              — the eye needs one left edge, not one per name length.
+
+              Same family as [332], the other way round: there a call site's
+              class silently BEAT the component's tone, here the component
+              silently beats the call site. Both are the same trap, which is
+              that a className on a shared component is a request, not a
+              guarantee. */}
           {!loading && !manualFallback && (
             <div className="flex flex-col gap-0.5 h-48 min-h-48 max-h-48 overflow-y-auto">
               {/* ".." go up — only when not at root */}
@@ -376,7 +389,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   tone="neutral"
                   onClick={handleUp}
                   keepLabel
-                  className="w-full justify-start min-h-8"
+                  className="w-full !justify-start min-h-8"
                 />
               )}
               {dirs.length === 0 && !browseError && (
@@ -397,7 +410,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   // ist wahnsinnig mühsam"). Reading a directory by hovering
                   // one line at a time is not a listing.
                   keepLabel
-                  className="w-full justify-start min-h-8"
+                  className="w-full !justify-start min-h-8"
                 />
               ))}
             </div>
