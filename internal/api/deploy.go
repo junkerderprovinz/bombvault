@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -135,6 +136,15 @@ services:
 // The htpasswd line still has to be written by hand: it carries a bcrypt hash
 // of a password shown exactly once, and a template that embedded it would put
 // that credential into a file Unraid keeps on the flash drive forever.
+//
+// EVERY note belongs inside the leading comment, and nothing may follow the root
+// element. The first version appended the shared `# ...` guidance lines after
+// </Container>, the way the docker-run and compose snippets carry them, which
+// made the whole file invalid XML: shell comments are not XML comments, and
+// nothing but whitespace may follow a root element. It got that far because the
+// test truncated the string at </Container> before parsing, so it proved that a
+// PREFIX parsed rather than the file the user actually saves. Caught by asking
+// the deployed instance for a real recipe and parsing what came back.
 func unraidTemplate(htpasswd, repoHint string) string {
 	// The declaration comes FIRST. An XML comment before it is not valid XML,
 	// and this text is meant to be saved verbatim as a file that Unraid parses.
@@ -147,6 +157,10 @@ func unraidTemplate(htpasswd, repoHint string) string {
      /boot/config/plugins/dockerMan/templates-user/my-rest-server.xml
      then Docker tab, Add Container, and pick "rest-server" from the
      template dropdown. Every field below is editable there.
+
+  3) %s
+
+  4) %s
 -->
 <Container version="2">
   <Name>rest-server</Name>
@@ -163,7 +177,25 @@ func unraidTemplate(htpasswd, repoHint string) string {
   <Config Name="Data" Target="/data" Default="/mnt/user/appdata/rest-server" Mode="rw" Description="Where the repositories and the .htpasswd file live." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/rest-server</Config>
   <Config Name="OPTIONS" Target="OPTIONS" Default="--append-only --private-repos --htpasswd-file /data/.htpasswd" Description="Leave --append-only in place: it is what makes this an immutable destination. Removing it turns the box back into an ordinary share." Type="Variable" Display="always" Required="true" Mask="false">--append-only --private-repos --htpasswd-file /data/.htpasswd</Config>
 </Container>
+`, xmlCommentSafe(htpasswd), xmlCommentSafe(noteText(tlsGuidance)), xmlCommentSafe(noteText(repoHint)))
+}
 
-%s
-%s`, htpasswd, tlsGuidance, repoHint)
+// noteText strips the leading "# " the shared guidance lines carry for the
+// shell snippets. Inside an XML comment the hash is just noise.
+func noteText(s string) string { return strings.TrimPrefix(s, "# ") }
+
+// xmlCommentSafe makes text safe to sit inside an XML comment: a comment may
+// not contain "--", and may not end with "-" (XML 1.0 §2.5). Neither the
+// generated repo URL nor a bcrypt hash produces those today, which is exactly
+// why this belongs in the code rather than in a reviewer's memory. A value that
+// grew a double dash later would otherwise turn the whole template into a file
+// Unraid drops from the dropdown without saying why.
+func xmlCommentSafe(s string) string {
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "- -")
+	}
+	if strings.HasSuffix(s, "-") {
+		s += " "
+	}
+	return s
 }

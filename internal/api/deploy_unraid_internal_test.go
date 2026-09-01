@@ -34,10 +34,19 @@ func TestUnraidTemplateParsesAndStaysAppendOnly(t *testing.T) {
 		t.Errorf("the XML declaration must come first, got %.40q", snip.Unraid)
 	}
 
-	// Everything up to the trailing guidance comments is the document itself.
+	// Parse THE WHOLE STRING, never a prefix of it. The first version of this
+	// test truncated at </Container> before parsing, on the assumption that the
+	// trailing guidance lines were not part of the document. They were: the
+	// generator appended the shared `# ...` notes after the root element, which
+	// is not valid XML, and the whole file Unraid reads was broken while this
+	// test stayed green. It measured a prefix and reported on a file.
 	doc := snip.Unraid
-	if i := strings.Index(doc, "</Container>"); i >= 0 {
-		doc = doc[:i+len("</Container>")]
+	i := strings.Index(doc, "</Container>")
+	if i < 0 {
+		t.Fatal("template has no </Container> close tag")
+	}
+	if tail := strings.TrimSpace(doc[i+len("</Container>"):]); tail != "" {
+		t.Errorf("nothing may follow the root element, got %q after </Container>", tail)
 	}
 	var parsed struct {
 		XMLName xml.Name `xml:"Container"`
@@ -87,5 +96,27 @@ func TestUnraidTemplateParsesAndStaysAppendOnly(t *testing.T) {
 	// And the one-time plaintext password must not be anywhere in the file.
 	if strings.Contains(snip.Unraid, snip.Password) {
 		t.Error("the plaintext password must never reach the template")
+	}
+
+	// The two shared notes moved INTO the leading comment when the trailing
+	// lines were removed. Without this, deleting them would silently satisfy
+	// the "nothing follows the root element" check above.
+	for _, want := range []string{"terminate TLS", "repo URL for BombVault"} {
+		if !strings.Contains(snip.Unraid, want) {
+			t.Errorf("the template lost its %q guidance", want)
+		}
+	}
+
+	// An XML comment may not contain "--". The OPTIONS flags legitimately do,
+	// but they live in an element; the comment block must stay clean, or the
+	// file stops parsing for a reason nobody would look for.
+	if start := strings.Index(snip.Unraid, "<!--"); start >= 0 {
+		end := strings.Index(snip.Unraid[start:], "-->")
+		if end < 0 {
+			t.Fatal("the leading comment is never closed")
+		}
+		if body := snip.Unraid[start+len("<!--") : start+end]; strings.Contains(body, "--") {
+			t.Errorf("the comment block contains a double dash and will not parse: %q", body)
+		}
 	}
 }
