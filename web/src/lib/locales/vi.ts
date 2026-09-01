@@ -903,7 +903,7 @@ const vi: Partial<Translations> = {
   "offsite.tamperTestNow": "Kiểm tra append-only ngay",
   "offsite.tamperTesting": "Đang kiểm tra…",
   "offsite.tamperOk": "xóa bị từ chối, chế độ chỉ ghi thêm đang hoạt động",
-  "offsite.tamperFail": "máy chủ ĐÃ CHẤP NHẬN việc xóa, KHÔNG được bảo vệ",
+  "offsite.tamperFail": "KHÔNG được bảo vệ",
   "offsite.tamperUnverifiable": "không thể xác minh với loại kho này",
   "offsite.tamperError": "Phép thử giả mạo không có kết luận (không thể truy cập máy chủ)",
   "offsite.retention.budget": "Hạn mức tăng trưởng (GB, 0 = tắt)",

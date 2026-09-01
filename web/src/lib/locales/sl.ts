@@ -310,7 +310,7 @@ const sl: Partial<Translations> = {
   "offsite.tamperTestNow": "Preizkusi samo-dodajanje zdaj",
   "offsite.tamperTesting": "Preizkušanje…",
   "offsite.tamperOk": "brisanje zavrnjeno, samo-dodajanje aktivno",
-  "offsite.tamperFail": "strežnik je SPREJEL brisanje, NI zaščiteno",
+  "offsite.tamperFail": "NI zaščiteno",
   "offsite.tamperUnverifiable": "za to vrsto repozitorija ni mogoče preveriti",
   "offsite.tamperError": "Preizkus nespremenljivosti ni bil dokončan (strežnik ni dosegljiv)",
   "offsite.retention.budget": "Proračun rasti (GB, 0 = izklopljeno)",

@@ -882,7 +882,7 @@ const pl: Partial<Translations> = {
   "offsite.tamperTestNow": "Przetestuj append-only teraz",
   "offsite.tamperTesting": "Testowanie…",
   "offsite.tamperOk": "usunięcie odrzucone, tryb append-only aktywny",
-  "offsite.tamperFail": "serwer ZAAKCEPTOWAŁ usunięcie, BRAK ochrony",
+  "offsite.tamperFail": "NIE chronione",
   "offsite.tamperUnverifiable": "nie do zweryfikowania dla tego typu repozytorium",
   "offsite.tamperError": "Test manipulacji niejednoznaczny (serwer niedostępny)",
   "offsite.retention.budget": "Budżet wzrostu (GB, 0 = wył.)",

@@ -911,7 +911,7 @@ const sv: Partial<Translations> = {
   "offsite.tamperTestNow": "Testa append-only nu",
   "offsite.tamperTesting": "Testar…",
   "offsite.tamperOk": "radering nekad, append-only aktivt",
-  "offsite.tamperFail": "servern GODTOG raderingen, INTE skyddat",
+  "offsite.tamperFail": "EJ skyddat",
   "offsite.tamperUnverifiable": "kan inte verifieras för denna repotyp",
   "offsite.tamperError": "Manipuleringstest ej entydigt (servern inte nåbar)",
   "offsite.retention.budget": "Tillväxtbudget (GB, 0 = av)",

@@ -914,7 +914,7 @@ const th: Partial<Translations> = {
   "offsite.tamperTestNow": "ทดสอบ append-only เดี๋ยวนี้",
   "offsite.tamperTesting": "กำลังทดสอบ…",
   "offsite.tamperOk": "การลบถูกปฏิเสธ โหมดเขียนต่อท้ายเท่านั้นทำงานอยู่",
-  "offsite.tamperFail": "เซิร์ฟเวอร์ยอมรับการลบ ไม่ได้รับการป้องกัน",
+  "offsite.tamperFail": "ไม่ได้รับการป้องกัน",
   "offsite.tamperUnverifiable": "ไม่สามารถตรวจสอบได้สำหรับรีพอสิทอรีประเภทนี้",
   "offsite.tamperError": "การทดสอบ append-only ไม่ชัดเจน (เข้าถึงเซิร์ฟเวอร์ไม่ได้)",
   "offsite.retention.budget": "งบประมาณการเติบโต (GB, 0 = ปิด)",

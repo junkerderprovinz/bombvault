@@ -310,7 +310,7 @@ const lt: Partial<Translations> = {
   "offsite.tamperTestNow": "Tikrinti tik-pridėjimą dabar",
   "offsite.tamperTesting": "Tikrinama…",
   "offsite.tamperOk": "trynimas atmestas, tik-pridėjimas aktyvus",
-  "offsite.tamperFail": "serveris SUTIKO su trynimu, NĖRA apsaugotas",
+  "offsite.tamperFail": "NEAPSAUGOTA",
   "offsite.tamperUnverifiable": "šiam saugyklos tipui neįmanoma patikrinti",
   "offsite.tamperError": "Klastojimo testas neįtikinamas (serveris nepasiekiamas)",
   "offsite.retention.budget": "Augimo biudžetas (GB, 0 = išjungta)",

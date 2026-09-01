@@ -229,7 +229,12 @@ func TestRunTamperTestEmitsLiveProgress(t *testing.T) {
 // was protected — fires exactly one protection-loss notification.
 func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 	var seen []string
-	srv := httptest.NewServer(deleteRecorder(http.StatusNotFound, &seen))
+	// 200, not 404 ([556]). A server that ACCEPTS a delete is what "unprotected"
+	// actually looks like; measured against a real rest-server, a DELETE for a
+	// non-existent 64-hex object answers 200 without --append-only and 403 with
+	// it, and never 404. A 404 is now inconclusive and records no verdict, so it
+	// can no longer stand in for an unprotected far side here.
+	srv := httptest.NewServer(deleteRecorder(http.StatusOK, &seen))
 	defer srv.Close()
 
 	ssh := &fakeHostSSH{}
@@ -248,10 +253,12 @@ func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 		t.Fatalf("RunTamperTest: %v", err)
 	}
 	if !v.Testable || v.Protected {
-		t.Fatalf("404 must be testable + NOT protected, got %+v", v)
+		t.Fatalf("an accepted delete must be testable + NOT protected, got %+v", v)
 	}
-	if !strings.Contains(v.Detail, "404") {
-		t.Fatalf("detail should mention the 404 verdict, got %q", v.Detail)
+	// The detail must quote what the far side actually did, since [557] renders it
+	// in the UI instead of a fixed "server ACCEPTED the delete" sentence.
+	if !strings.Contains(v.Detail, "200") {
+		t.Fatalf("detail must name the status the far side returned, got %q", v.Detail)
 	}
 	// Recorded as unprotected.
 	last, found, err := st.LatestTamperTest("containers")
@@ -415,7 +422,7 @@ func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 // no flip. Without the per-domain lock both could read the old PROTECTED verdict
 // and double-alarm.
 func TestRunTamperTestConcurrentFlipNotifiesOnce(t *testing.T) {
-	srv := httptest.NewServer(deleteRecorder(http.StatusNotFound, new([]string))) // 404 = would delete = unprotected
+	srv := httptest.NewServer(deleteRecorder(http.StatusOK, new([]string))) // accepted delete = unprotected ([556])
 	defer srv.Close()
 
 	ssh := &fakeHostSSH{}
@@ -443,5 +450,84 @@ func TestRunTamperTestConcurrentFlipNotifiesOnce(t *testing.T) {
 
 	if len(ssh.runs) != 1 {
 		t.Fatalf("a concurrent protected→unprotected flip must notify exactly once, got %d", len(ssh.runs))
+	}
+}
+
+// TestTamperProbeIDsAreFullLength pins the object-id length both probes use ([555]).
+//
+// rest-server names EVERY object it serves — data, index, keys, snapshots alike —
+// by its full 64-hex id, and a name of any other length is not an object path at
+// all. The snapshot probe used to send the 8-hex SHORT id restic prints. Measured
+// against a real rest-server, with and without --append-only:
+//
+//	DELETE /repo/data/<64 hex>        403 (append-only)   200 (plain)
+//	DELETE /repo/snapshots/<64 hex>   403 (append-only)   200 (plain)
+//	DELETE /repo/snapshots/<8 hex>    404                 404
+//
+// So the short id made the second probe blind, and because a 404 counted as "not
+// protected" and the verdict is AND-ed across both probes, the tamper test could
+// never pass on ANY rest-server. This test fails against that build.
+func TestTamperProbeIDsAreFullLength(t *testing.T) {
+	var seen []string
+	srv := httptest.NewServer(deleteRecorder(http.StatusForbidden, &seen))
+	defer srv.Close()
+
+	st := stage4Store(t)
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: "t1", Domain: "containers", Name: "t1", Repo: "rest:" + srv.URL, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st, ssh: &fakeHostSSH{}}
+	if _, err := svc.RunTamperTest(context.Background(), "containers"); err != nil {
+		t.Fatalf("RunTamperTest: %v", err)
+	}
+	if len(seen) != 2 {
+		t.Fatalf("both probes must run, saw %d: %v", len(seen), seen)
+	}
+	for _, p := range seen {
+		id := p[strings.LastIndex(p, "/")+1:]
+		if len(id) != 64 {
+			t.Errorf("probe %q uses a %d-character id; rest-server only recognises 64-hex object names", p, len(id))
+		}
+	}
+	// And never /locks/: measured 200 even under --append-only, because deleting
+	// locks is rest-server's one documented append-only exception, so a locks
+	// probe would report every protected server as unprotected.
+	for _, p := range seen {
+		if strings.Contains(p, "/locks/") {
+			t.Errorf("probe %q targets locks, which append-only deliberately still allows", p)
+		}
+	}
+}
+
+// TestTamperProbe404IsInconclusive: a 404 is not a verdict ([556]).
+//
+// The old mapping read it as "the object did not exist, so the server would have
+// deleted a real one — not append-only". A rest-server refuses on append-only
+// BEFORE it looks for the object: a plain server answers a DELETE for a
+// non-existent 64-hex object with 200, an append-only one with 403, and neither
+// answers 404. A 404 therefore means the URL was not an object path at all.
+//
+// Reading that as "unprotected" does not merely mislead — it fires the
+// protection-lost alert. RunTamperTest must return an error and record nothing.
+func TestTamperProbe404IsInconclusive(t *testing.T) {
+	var seen []string
+	srv := httptest.NewServer(deleteRecorder(http.StatusNotFound, &seen))
+	defer srv.Close()
+
+	st := stage4Store(t)
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: "t404", Domain: "containers", Name: "t404", Repo: "rest:" + srv.URL, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st, ssh: &fakeHostSSH{}}
+
+	if _, err := svc.RunTamperTest(context.Background(), "containers"); err == nil {
+		t.Fatal("a 404 must be inconclusive (non-nil error), not a NOT-protected verdict")
+	}
+	if _, found, err := st.LatestTamperTestForTarget("containers", "t404"); err != nil || found {
+		t.Fatalf("an inconclusive probe must record NO verdict, found=%v err=%v", found, err)
 	}
 }

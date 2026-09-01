@@ -914,7 +914,7 @@ const ar: Partial<Translations> = {
   "offsite.tamperTestNow": "اختبر append-only الآن",
   "offsite.tamperTesting": "جارٍ الاختبار…",
   "offsite.tamperOk": "رُفض الحذف: وضع الإلحاق فقط نشط",
-  "offsite.tamperFail": "قبل الخادم الحذف: غير محمي",
+  "offsite.tamperFail": "غير محمي",
   "offsite.tamperUnverifiable": "غير قابل للتحقق لهذا النوع من المستودعات",
   "offsite.tamperError": "اختبار العبث غير حاسم (تعذّر الوصول إلى الخادم)",
   "offsite.retention.budget": "ميزانية النمو (GB، 0 = إيقاف)",

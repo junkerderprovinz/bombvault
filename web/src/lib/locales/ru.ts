@@ -882,7 +882,7 @@ const ru: Partial<Translations> = {
   "offsite.tamperTestNow": "Проверить append-only сейчас",
   "offsite.tamperTesting": "Проверка…",
   "offsite.tamperOk": "удаление отклонено — режим append-only активен",
-  "offsite.tamperFail": "сервер ПРИНЯЛ удаление — НЕ защищено",
+  "offsite.tamperFail": "НЕ защищено",
   "offsite.tamperUnverifiable": "невозможно проверить для этого типа репозитория",
   "offsite.tamperError": "Проверка защиты от изменений неубедительна (сервер недоступен)",
   "offsite.retention.budget": "Бюджет роста (ГБ, 0 = выкл.)",

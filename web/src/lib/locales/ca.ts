@@ -310,7 +310,7 @@ const ca: Partial<Translations> = {
   "offsite.tamperTestNow": "Prova ara el només-afegir",
   "offsite.tamperTesting": "Provant…",
   "offsite.tamperOk": "esborrat rebutjat, només-afegir actiu",
-  "offsite.tamperFail": "el servidor ha ACCEPTAT l'esborrat, NO protegit",
+  "offsite.tamperFail": "NO protegit",
   "offsite.tamperUnverifiable": "no verificable per a aquest tipus de repositori",
   "offsite.tamperError": "La prova de manipulació no és concloent (servidor inaccessible)",
   "offsite.retention.budget": "Pressupost de creixement (GB, 0 = desactivat)",

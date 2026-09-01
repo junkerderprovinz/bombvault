@@ -310,7 +310,7 @@ const id: Partial<Translations> = {
   "offsite.tamperTestNow": "Uji append-only sekarang",
   "offsite.tamperTesting": "Menguji…",
   "offsite.tamperOk": "penghapusan ditolak: append-only aktif",
-  "offsite.tamperFail": "server MENERIMA penghapusan: TIDAK dilindungi",
+  "offsite.tamperFail": "TIDAK terlindungi",
   "offsite.tamperUnverifiable": "tidak dapat diverifikasi untuk jenis repositori ini",
   "offsite.tamperError": "Uji sabotase tidak meyakinkan (server tidak dapat dijangkau)",
   "offsite.retention.budget": "Anggaran pertumbuhan (GB, 0 = mati)",

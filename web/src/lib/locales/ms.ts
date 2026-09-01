@@ -310,7 +310,7 @@ const ms: Partial<Translations> = {
   "offsite.tamperTestNow": "Uji tambah-sahaja sekarang",
   "offsite.tamperTesting": "Menguji…",
   "offsite.tamperOk": "pemadaman ditolak, tambah-sahaja aktif",
-  "offsite.tamperFail": "pelayan TELAH MENERIMA pemadaman, TIDAK dilindungi",
+  "offsite.tamperFail": "TIDAK dilindungi",
   "offsite.tamperUnverifiable": "tidak boleh disahkan untuk jenis repositori ini",
   "offsite.tamperError": "Ujian gangguan tidak meyakinkan (pelayan tidak boleh dicapai)",
   "offsite.retention.budget": "Bajet pertumbuhan (GB, 0 = mati)",

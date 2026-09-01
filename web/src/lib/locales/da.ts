@@ -911,7 +911,7 @@ const da: Partial<Translations> = {
   "offsite.tamperTestNow": "Test append-only nu",
   "offsite.tamperTesting": "Tester…",
   "offsite.tamperOk": "sletning afvist, append-only aktiv",
-  "offsite.tamperFail": "serveren ACCEPTEREDE sletningen, IKKE beskyttet",
+  "offsite.tamperFail": "IKKE beskyttet",
   "offsite.tamperUnverifiable": "kan ikke verificeres for denne repo-type",
   "offsite.tamperError": "Manipulationstest uafklaret (server ikke tilgængelig)",
   "offsite.retention.budget": "Vækstbudget (GB, 0 = fra)",

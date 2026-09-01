@@ -654,12 +654,22 @@ export function OffsiteWizard({
   --keep-within 14d --keep-weekly 8 --keep-monthly 12 --prune
 # note: watch for a sudden snapshot-count drop (retention-policy timestamp attack)`;
 
+  // The verdict names the OUTCOME; the server's own words carry the reason
+  // ([557]). This used to print a fixed "server ACCEPTED the delete" for every
+  // unprotected verdict, including the ones where the far side had said no such
+  // thing — a user whose rest-server answered 404 read a sentence claiming it
+  // had accepted a delete. `detail` has always travelled in the response and was
+  // simply never rendered. It stays untranslated on purpose: it quotes an HTTP
+  // status and the far side's behaviour, the same way restic and rclone messages
+  // pass through the activity log verbatim.
   const verdictText = verdict
     ? !verdict.testable
       ? t("offsite.tamperUnverifiable")
       : verdict.protected
         ? t("offsite.tamperOk")
-        : t("offsite.tamperFail")
+        : verdict.detail
+          ? `${t("offsite.tamperFail")} — ${verdict.detail}`
+          : t("offsite.tamperFail")
     : "";
   // The ✓/✗ glyph is rendered as its own JSX node (not baked into the i18n
   // string) so RTL locales (ar/he) place it on the correct side via bidi.

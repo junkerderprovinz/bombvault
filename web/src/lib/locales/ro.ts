@@ -890,7 +890,7 @@ const ro: Partial<Translations> = {
   "offsite.tamperTestNow": "Testează append-only acum",
   "offsite.tamperTesting": "Se testează…",
   "offsite.tamperOk": "ștergerea a fost refuzată, append-only activ",
-  "offsite.tamperFail": "serverul a ACCEPTAT ștergerea, NEPROTEJAT",
+  "offsite.tamperFail": "NU este protejat",
   "offsite.tamperUnverifiable": "nu poate fi verificat pentru acest tip de depozit",
   "offsite.tamperError": "Test tamper neconcludent (server inaccesibil)",
   "offsite.retention.budget": "Buget de creștere (GB, 0 = oprit)",

@@ -208,13 +208,32 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 	// rest-server serves; a trailing slash is trimmed so path joins are clean).
 	base := strings.TrimRight(strings.TrimPrefix(loc, "rest:"), "/")
 
-	// Two provably non-existent object IDs: a 64-hex data blob id and an 8-hex
-	// snapshot id. Deleting them can never touch real repo data.
+	// Two provably non-existent object IDs, BOTH 64 hex characters ([555]).
+	// Deleting them can never touch real repo data.
+	//
+	// The snapshot id used to be 8 hex, mirroring the short id restic prints.
+	// rest-server does not accept that: every object it serves — data, index,
+	// keys, snapshots alike — is named by its full 64-hex id, and a name of any
+	// other length is not an object path at all. Measured against a real
+	// rest-server, both with and without --append-only:
+	//
+	//   DELETE /repo/data/<64 hex>        403 (append-only)   200 (plain)
+	//   DELETE /repo/snapshots/<64 hex>   403 (append-only)   200 (plain)
+	//   DELETE /repo/snapshots/<8 hex>    404                 404
+	//
+	// So the short id made the second probe blind, and because a 404 was read as
+	// "not protected" and the verdict is AND-ed across both probes, THE TAMPER
+	// TEST COULD NEVER PASS on any rest-server, correctly configured or not.
+	// Reported from a server whose own log said "Append only mode enabled".
+	//
+	// Never probe /locks/: measured 200 even under --append-only, because
+	// deleting locks is rest-server's one documented append-only exception.
+	// A locks probe would report every protected server as unprotected.
 	dataID, err := randomHex(32) // 64 hex chars
 	if err != nil {
 		return TamperVerdict{}, err
 	}
-	snapID, err := randomHex(4) // 8 hex chars
+	snapID, err := randomHex(32) // 64 hex chars — see above
 	if err != nil {
 		return TamperVerdict{}, err
 	}
@@ -261,12 +280,22 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 // than flip a stored verdict on an ambiguous response.
 //
 //   - 403 / 405 → protected (the delete was refused — append-only enforced)
-//   - 404       → NOT protected (the object did not exist; the server would have
-//     deleted a real one — not append-only)
 //   - 2xx       → NOT protected (the server accepted a delete)
-//   - 401 / 3xx / 5xx / anything else → INCONCLUSIVE (non-nil error): auth
+//   - 404 / 401 / 3xx / 5xx / anything else → INCONCLUSIVE (non-nil error): auth
 //     failure (rotated creds), a redirect, or far-side/proxy maintenance is not a
 //     delete verdict and must never be read as "not protected".
+//
+// 404 moved from "NOT protected" to inconclusive in [556], and the old reading
+// was wrong on its own terms. It argued "the object did not exist, so the server
+// would have deleted a real one" — but a rest-server refuses on append-only
+// BEFORE it looks for the object, which is measurable: a plain server answers a
+// DELETE for a non-existent 64-hex object with 200, an append-only one with 403.
+// Neither answers 404. A 404 therefore means the URL was not an object path at
+// all, which is the one thing we cannot draw a verdict from.
+//
+// Reading "I do not recognise that" as "you are unprotected" is the worst
+// available default here: it does not merely mislead, it fires the
+// protection-lost alert. An unknown answer must stay unknown.
 func tamperProbe(ctx context.Context, url, user, pass string) (protected bool, detail string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
@@ -287,10 +316,14 @@ func tamperProbe(ctx context.Context, url, user, pass string) (protected bool, d
 	switch {
 	case resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusMethodNotAllowed:
 		return true, "", nil
-	case resp.StatusCode == http.StatusNotFound:
-		return false, "server would have deleted (404) — not append-only", nil
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:
-		return false, "server accepted a delete", nil
+		return false, fmt.Sprintf("the server accepted a delete (HTTP %d)", resp.StatusCode), nil
+	case resp.StatusCode == http.StatusNotFound:
+		// Not a verdict — see the doc comment. A rest-server answers a DELETE for a
+		// non-existent object with 200 (plain) or 403 (append-only), never 404, so a
+		// 404 says the URL was not an object path rather than anything about
+		// protection.
+		return false, "", fmt.Errorf("inconclusive tamper probe: the far side does not serve this path (HTTP 404) — check that the repository URL is the one restic itself uses")
 	default:
 		// 401/3xx/5xx/unexpected: not a delete verdict → inconclusive, like a
 		// transport error. Returning an error makes RunTamperTest record no verdict

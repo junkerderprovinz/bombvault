@@ -310,7 +310,7 @@ const bg: Partial<Translations> = {
   "offsite.tamperTestNow": "Провери само-добавянето сега",
   "offsite.tamperTesting": "Проверка…",
   "offsite.tamperOk": "изтриването е отказано — само-добавянето е активно",
-  "offsite.tamperFail": "сървърът ПРИЕ изтриването — НЕ Е защитено",
+  "offsite.tamperFail": "НЕ е защитено",
   "offsite.tamperUnverifiable": "не може да бъде проверено за този тип хранилище",
   "offsite.tamperError": "Проверката за манипулация е неубедителна (сървърът е недостъпен)",
   "offsite.retention.budget": "Бюджет за растеж (GB, 0 = изключено)",

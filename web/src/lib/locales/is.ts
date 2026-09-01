@@ -310,7 +310,7 @@ const is: Partial<Translations> = {
   "offsite.tamperTestNow": "Prófa aðeins-bæta-við núna",
   "offsite.tamperTesting": "Prófa…",
   "offsite.tamperOk": "eyðingu hafnað, aðeins-bæta-við virkt",
-  "offsite.tamperFail": "netþjónninn SAMÞYKKTI eyðinguna, er EKKI varið",
+  "offsite.tamperFail": "EKKI varið",
   "offsite.tamperUnverifiable": "ekki hægt að staðfesta fyrir þessa tegund geymslusafns",
   "offsite.tamperError": "Prófun á átroðslu er óvissuþrungin (netþjónn ekki aðgengilegur)",
   "offsite.retention.budget": "Vaxtarfjárhagsáætlun (GB, 0 = slökkt)",

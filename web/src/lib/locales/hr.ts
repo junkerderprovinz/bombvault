@@ -310,7 +310,7 @@ const hr: Partial<Translations> = {
   "offsite.tamperTestNow": "Testiraj samo-dodavanje sada",
   "offsite.tamperTesting": "Testiranje…",
   "offsite.tamperOk": "brisanje odbijeno: samo-dodavanje aktivno",
-  "offsite.tamperFail": "poslužitelj je PRIHVATIO brisanje: NIJE zaštićeno",
+  "offsite.tamperFail": "NIJE zaštićeno",
   "offsite.tamperUnverifiable": "nije provjerljivo za ovu vrstu repozitorija",
   "offsite.tamperError": "Test neovlaštene izmjene nije uvjerljiv (poslužitelj nedostupan)",
   "offsite.retention.budget": "Proračun rasta (GB, 0 = isključeno)",

@@ -310,7 +310,7 @@ const et: Partial<Translations> = {
   "offsite.tamperTestNow": "Testi ainult-lisamist kohe",
   "offsite.tamperTesting": "Testimine…",
   "offsite.tamperOk": "kustutamine tagasi lükatud, ainult-lisamine aktiivne",
-  "offsite.tamperFail": "server AKTSEPTEERIS kustutamise, POLE kaitstud",
+  "offsite.tamperFail": "EI ole kaitstud",
   "offsite.tamperUnverifiable": "seda hoidla tüüpi ei saa kontrollida",
   "offsite.tamperError": "Manipuleerimistest ebamäärane (server pole kättesaadav)",
   "offsite.retention.budget": "Kasvueelarve (GB, 0 = väljas)",

@@ -423,7 +423,7 @@ export const en = {
   // Tamper verdicts carry NO ✓/✗ glyph — OffsiteWizard.tsx renders the glyph
   // as its own JSX node so RTL locales (ar/he) place it correctly.
   "offsite.tamperOk": "delete refused, append-only active",
-  "offsite.tamperFail": "server ACCEPTED the delete, NOT protected",
+  "offsite.tamperFail": "NOT protected",
   "offsite.tamperUnverifiable": "not verifiable for this repo type",
   "offsite.tamperError": "Tamper test inconclusive (server unreachable)",
   "offsite.retention.budget": "Growth budget (GB, 0 = off)",
@@ -2078,7 +2078,7 @@ export const de: Translations = {
   "offsite.tamperTestNow": "Append-only jetzt testen",
   "offsite.tamperTesting": "Teste…",
   "offsite.tamperOk": "Löschen verweigert, Append-only aktiv",
-  "offsite.tamperFail": "Server hat das Löschen AKZEPTIERT, NICHT geschützt",
+  "offsite.tamperFail": "NICHT geschützt",
   "offsite.tamperUnverifiable": "für diesen Repository-Typ nicht überprüfbar",
   "offsite.tamperError": "Tamper-Test nicht eindeutig (Server nicht erreichbar)",
   "offsite.retention.budget": "Wachstumsbudget (GB, 0 = aus)",

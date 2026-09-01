@@ -310,7 +310,7 @@ const sk: Partial<Translations> = {
   "offsite.tamperTestNow": "Otestovať len-na-pridávanie teraz",
   "offsite.tamperTesting": "Testuje sa…",
   "offsite.tamperOk": "odstránenie odmietnuté, len-na-pridávanie je aktívne",
-  "offsite.tamperFail": "server odstránenie PRIJAL, NIE JE chránený",
+  "offsite.tamperFail": "NIE je chránené",
   "offsite.tamperUnverifiable": "pre tento typ repozitára nemožno overiť",
   "offsite.tamperError": "Test neoprávnenej manipulácie nie je jednoznačný (server nedostupný)",
   "offsite.retention.budget": "Rozpočet rastu (GB, 0 = vypnuté)",

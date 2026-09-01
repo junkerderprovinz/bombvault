@@ -310,7 +310,7 @@ const eu: Partial<Translations> = {
   "offsite.tamperTestNow": "Probatu gehitu-soilik orain",
   "offsite.tamperTesting": "Probatzen…",
   "offsite.tamperOk": "ezabatzea ukatuta, gehitu-soilik aktibo",
-  "offsite.tamperFail": "zerbitzariak ezabatzea ONARTU DU, EZ dago babestuta",
+  "offsite.tamperFail": "EZ dago babestuta",
   "offsite.tamperUnverifiable": "biltegi mota honentzat ezin da egiaztatu",
   "offsite.tamperError": "Manipulazio-proba ez da erabakigarria (zerbitzaria ez dago eskuragarri)",
   "offsite.retention.budget": "Hazkunde-aurrekontua (GB, 0 = itzalita)",

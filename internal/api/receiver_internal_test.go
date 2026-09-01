@@ -20,7 +20,11 @@ import (
 // sending key). No store/docker/ssh is needed: the receiver engine is read-only.
 func receiverTestService(appKey string) *Service {
 	return &Service{
-		cfg:    config.Config{AppKey: appKey},
+		// HostMountRoot is the OS temp root so a t.TempDir() repo counts as a path
+		// INSIDE the mount, which is the only shape a container can reach ([554]).
+		// Before that change this field was unused here and the location was taken
+		// verbatim — the very gap the receiver had against every other repo field.
+		cfg:    config.Config{AppKey: appKey, HostMountRoot: os.TempDir()},
 		engine: restic.Restic{Bin: "restic"},
 	}
 }
@@ -185,5 +189,61 @@ func TestReceiverEnabledInSettingsView(t *testing.T) {
 	}
 	if !buildSettingsView(store.Settings{ReceiverEnabled: true}).ReceiverEnabled {
 		t.Fatal("buildSettingsView must carry ReceiverEnabled through to the export")
+	}
+}
+
+// TestReceiverOpenResolvesTheHostPath: a received repo's location goes through the
+// same path resolution as every other repo field in this app ([554]).
+//
+// Reported from a working setup: the user entered the path Unraid shows them,
+// /mnt/user/<share>/<repo>, and got "could not open the received repository: wrong
+// APP_KEY, or the location is not a BombVault/restic repository". The key was
+// fine. BombVault runs in a container, where /mnt/user does not exist — this was
+// the ONE repo location taken verbatim instead of resolved, while the field's own
+// hint has always ended "…or a subpath under the host mount".
+//
+// The message must name the path problem and suggest what to type, which is what
+// repoPathError already produces for every other field. Against the old build the
+// error is the APP_KEY sentence and this test fails.
+func TestReceiverOpenResolvesTheHostPath(t *testing.T) {
+	appKey := strings.Repeat("a", 64)
+	svc := receiverTestService(appKey)
+	svc.cfg.HostMountRoot = "/host/user"
+	svc.cfg.HostSourceRoot = "/mnt"
+
+	rr := makeReceivedRepo(t, appKey, strings.Repeat("b", 64), "/mnt/user/LJSNAS01_restic_repo/LJSNAS01/folders/", 0)
+	_, _, err := svc.receiverOpen(context.Background(), rr)
+	if err == nil {
+		t.Fatal("an absolute host path must be rejected with an explanation, not opened")
+	}
+	msg := err.Error()
+	if strings.Contains(msg, "APP_KEY") {
+		t.Fatalf("the path is the problem; the message must not blame the key: %q", msg)
+	}
+	if !strings.Contains(msg, "absolute host path") {
+		t.Fatalf("the message must name the path problem, got %q", msg)
+	}
+	// And it must hand the user the line to type instead, not just say no.
+	if !strings.Contains(msg, "user/LJSNAS01_restic_repo/LJSNAS01/folders") {
+		t.Fatalf("the message must suggest the relative path, got %q", msg)
+	}
+}
+
+// TestReceiverOpenKeepsRemoteLocations: rest:/s3:/rclone: locations are backends,
+// not paths, and must reach restic untouched ([554]). Resolving one would mangle
+// it into a subpath of the host mount.
+func TestReceiverOpenKeepsRemoteLocations(t *testing.T) {
+	appKey := strings.Repeat("a", 64)
+	svc := receiverTestService(appKey)
+	svc.cfg.HostMountRoot = "/host/user"
+
+	for _, loc := range []string{"rest:http://box:8000/repo", "s3:s3.example.com/bucket", "rclone:remote:path"} {
+		rr := makeReceivedRepo(t, appKey, strings.Repeat("b", 64), loc, 0)
+		_, _, err := svc.receiverOpen(context.Background(), rr)
+		// The repo does not exist, so opening fails — but it must fail at the OPEN,
+		// never at path resolution.
+		if err != nil && strings.Contains(err.Error(), "absolute host path") {
+			t.Errorf("%q is a backend URL and must not be path-resolved: %v", loc, err)
+		}
 	}
 }

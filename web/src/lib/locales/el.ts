@@ -911,7 +911,7 @@ const el: Partial<Translations> = {
   "offsite.tamperTestNow": "Δοκιμή append-only τώρα",
   "offsite.tamperTesting": "Δοκιμή…",
   "offsite.tamperOk": "η διαγραφή απορρίφθηκε, append-only ενεργό",
-  "offsite.tamperFail": "ο διακομιστής ΑΠΟΔΕΧΘΗΚΕ τη διαγραφή, ΧΩΡΙΣ προστασία",
+  "offsite.tamperFail": "ΔΕΝ προστατεύεται",
   "offsite.tamperUnverifiable": "μη επαληθεύσιμο για αυτόν τον τύπο αποθετηρίου",
   "offsite.tamperError": "Η δοκιμή παραποίησης δεν ήταν σαφής (ο διακομιστής δεν είναι προσβάσιμος)",
   "offsite.retention.budget": "Προϋπολογισμός ανάπτυξης (GB, 0 = ανενεργό)",

@@ -883,7 +883,7 @@ const ko: Partial<Translations> = {
   "offsite.tamperTestNow": "지금 append-only 테스트",
   "offsite.tamperTesting": "테스트 중…",
   "offsite.tamperOk": "삭제가 거부됨, 추가 전용 활성",
-  "offsite.tamperFail": "서버가 삭제를 수락함, 보호되지 않음",
+  "offsite.tamperFail": "보호되지 않음",
   "offsite.tamperUnverifiable": "이 저장소 유형에서는 검증할 수 없음",
   "offsite.tamperError": "변조 테스트 결과 불확실 (서버 도달 불가)",
   "offsite.retention.budget": "증가 예산 (GB, 0 = 끔)",

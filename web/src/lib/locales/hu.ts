@@ -894,7 +894,7 @@ const hu: Partial<Translations> = {
   "offsite.tamperTestNow": "Append-only tesztelése most",
   "offsite.tamperTesting": "Tesztelés…",
   "offsite.tamperOk": "a törlés elutasítva: append-only aktív",
-  "offsite.tamperFail": "a szerver ELFOGADTA a törlést: NEM védett",
+  "offsite.tamperFail": "NINCS védve",
   "offsite.tamperUnverifiable": "ennél a tárolótípusnál nem ellenőrizhető",
   "offsite.tamperError": "A manipulációs teszt nem egyértelmű (a szerver nem érhető el)",
   "offsite.retention.budget": "Növekedési keret (GB, 0 = ki)",

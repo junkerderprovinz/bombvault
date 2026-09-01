@@ -911,7 +911,7 @@ const tr: Partial<Translations> = {
   "offsite.tamperTestNow": "Append-only'yi şimdi test et",
   "offsite.tamperTesting": "Test ediliyor…",
   "offsite.tamperOk": "silme reddedildi, salt-ekleme etkin",
-  "offsite.tamperFail": "sunucu silmeyi KABUL ETTİ, korunmuyor",
+  "offsite.tamperFail": "KORUMASIZ",
   "offsite.tamperUnverifiable": "bu depo türü için doğrulanamaz",
   "offsite.tamperError": "Kurcalama testi sonuçsuz (sunucuya erişilemiyor)",
   "offsite.retention.budget": "Büyüme bütçesi (GB, 0 = kapalı)",

@@ -78,7 +78,10 @@ export function IntegrityCard({
   // "append-only protection · Last checked …" caption from /api/status.
   type TamperRes =
     | { kind: "busy" }
-    | { kind: "verdict"; testable: boolean; protected: boolean }
+    // `detail` carries the far side's own answer ([557]); it was dropped here
+    // while the API had been sending it all along, which is how the UI came to
+    // print a claim the server never made.
+    | { kind: "verdict"; testable: boolean; protected: boolean; detail?: string }
     | { kind: "error"; message: string };
   const [tamper, setTamper] = useState<Record<string, TamperRes | undefined>>({});
   const [lastTamper, setLastTamper] = useState<Record<string, { at: number; ok: boolean } | null>>({});
@@ -191,7 +194,7 @@ export function IntegrityCard({
       if (r.ok) {
         setTamper((m) => ({
           ...m,
-          [domain]: { kind: "verdict", testable: !!r.testable, protected: !!r.protected },
+          [domain]: { kind: "verdict", testable: !!r.testable, protected: !!r.protected, detail: r.detail },
         }));
         // A decisive verdict is also the new "last checked" fact; a not-testable
         // repo records no verdict server-side, so leave the caption untouched.
@@ -582,11 +585,15 @@ export function IntegrityCard({
                           {tRes.protected ? <CheckDraw /> : "✗"}&nbsp;
                         </span>
                       )}
+                      {/* The server's own words, not a fixed sentence ([557]) —
+                          see OffsiteWizard.tsx's identical branch for why. */}
                       {!tRes.testable
                         ? t("offsite.tamperUnverifiable")
                         : tRes.protected
                           ? t("offsite.tamperOk")
-                          : t("offsite.tamperFail")}
+                          : tRes.detail
+                            ? `${t("offsite.tamperFail")} — ${tRes.detail}`
+                            : t("offsite.tamperFail")}
                     </span>
                   )}
                   {/* The test itself failing to run (network/server error) is the

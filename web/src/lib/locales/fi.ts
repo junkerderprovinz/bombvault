@@ -911,7 +911,7 @@ const fi: Partial<Translations> = {
   "offsite.tamperTestNow": "Testaa append-only nyt",
   "offsite.tamperTesting": "Testataan…",
   "offsite.tamperOk": "poisto estetty, append-only käytössä",
-  "offsite.tamperFail": "palvelin HYVÄKSYI poiston, EI suojattu",
+  "offsite.tamperFail": "EI suojattu",
   "offsite.tamperUnverifiable": "ei todennettavissa tälle repotyypille",
   "offsite.tamperError": "Peukalointitesti epäselvä (palvelin ei tavoitettavissa)",
   "offsite.retention.budget": "Kasvubudjetti (GB, 0 = pois)",

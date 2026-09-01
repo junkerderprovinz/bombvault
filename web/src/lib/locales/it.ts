@@ -891,7 +891,7 @@ const it: Partial<Translations> = {
   "offsite.tamperTestNow": "Prova append-only ora",
   "offsite.tamperTesting": "Prova in corso…",
   "offsite.tamperOk": "eliminazione rifiutata, append-only attivo",
-  "offsite.tamperFail": "il server ha ACCETTATO l'eliminazione, NON protetto",
+  "offsite.tamperFail": "NON protetto",
   "offsite.tamperUnverifiable": "non verificabile per questo tipo di repository",
   "offsite.tamperError": "Test di manomissione non conclusivo (server non raggiungibile)",
   "offsite.retention.budget": "Budget di crescita (GB, 0 = disattivato)",

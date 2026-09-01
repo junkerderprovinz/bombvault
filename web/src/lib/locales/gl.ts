@@ -310,7 +310,7 @@ const gl: Partial<Translations> = {
   "offsite.tamperTestNow": "Probar só-engadir agora",
   "offsite.tamperTesting": "Probando…",
   "offsite.tamperOk": "borrado rexeitado, só-engadir activo",
-  "offsite.tamperFail": "o servidor ACEPTOU o borrado, NON está protexido",
+  "offsite.tamperFail": "NON protexido",
   "offsite.tamperUnverifiable": "non verificable para este tipo de repositorio",
   "offsite.tamperError": "A proba de manipulación non é concluínte (servidor non accesible)",
   "offsite.retention.budget": "Orzamento de crecemento (GB, 0 = desactivado)",

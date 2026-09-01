@@ -903,7 +903,7 @@ const zh: Partial<Translations> = {
   "offsite.tamperTestNow": "立即测试 append-only",
   "offsite.tamperTesting": "测试中…",
   "offsite.tamperOk": "删除被拒绝，仅追加模式已生效",
-  "offsite.tamperFail": "服务器接受了删除，未受保护",
+  "offsite.tamperFail": "未受保护",
   "offsite.tamperUnverifiable": "此仓库类型无法验证",
   "offsite.tamperError": "篡改测试结果不明确（服务器不可达）",
   "offsite.retention.budget": "增长预算（GB，0 = 关闭）",

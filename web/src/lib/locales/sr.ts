@@ -310,7 +310,7 @@ const sr: Partial<Translations> = {
   "offsite.tamperTestNow": "Тестирај само додавање сада",
   "offsite.tamperTesting": "Тестирање…",
   "offsite.tamperOk": "брисање одбијено — само додавање активно",
-  "offsite.tamperFail": "сервер је ПРИХВАТИО брисање — НИЈЕ заштићено",
+  "offsite.tamperFail": "НИЈЕ заштићено",
   "offsite.tamperUnverifiable": "није проверљиво за ову врсту репозиторијума",
   "offsite.tamperError": "Тест непроменљивости није завршен (сервер недоступан)",
   "offsite.retention.budget": "Буџет раста (GB, 0 = искључено)",

@@ -21,6 +21,8 @@ package api
 import (
 	"context"
 	"errors"
+	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -63,18 +65,57 @@ type ReceiverCheckResult struct {
 	At          int64  `json:"at"` // Unix time the check finished
 }
 
-// receiverOpen opens a received repository READ-ONLY and returns the repo location
-// (verbatim — a received repo may be any restic backend: rest://, s3:, rclone:, or
-// a local path) plus the resolved read-only Mode. The stored SENDING APP_KEY is
+// receiverOpen opens a received repository READ-ONLY and returns the RESOLVED repo
+// location (a received repo may be any restic backend: rest://, s3:, rclone: — all
+// passed through untouched — or a path under the host mount, which is resolved
+// like every other repo path in this app) plus the read-only Mode. The stored
+// SENDING APP_KEY is
 // decrypted in-engine with THIS instance's APP_KEY, its shape is guarded (64 hex,
 // the same foreignKeyRe the foreign flow uses), and the repo is probed with the
 // key-derived encrypted mode first, then the plain (unencrypted) mode — every
 // probe lock-free. EnsureRepo is deliberately NOT used: opening never initializes
 // a missing repo. Nothing is logged.
 func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (string, restic.Mode, error) {
-	repo := strings.TrimSpace(rr.Repo)
-	if repo == "" {
+	loc := strings.TrimSpace(rr.Repo)
+	if loc == "" {
 		return "", restic.Mode{}, errors.New("missing repository location")
+	}
+	// Resolve the location the way EVERY other repo field in this app resolves
+	// one ([554]). This was the single repo location taken verbatim, and the
+	// field's own hint has always ended "…or a subpath under the host mount" —
+	// a promise nothing here kept.
+	//
+	// What that cost: BombVault runs in a container, so a host path like
+	// /mnt/user/backups does not exist inside it. restic could not open it, and
+	// the only message the user got was this function's fallback — "wrong
+	// APP_KEY, or the location is not a BombVault/restic repository". The path
+	// was the problem and the message blamed the key. Reported from a working
+	// setup where the key was fine.
+	//
+	// resolveRepo passes rest:/s3:/rclone: through untouched and sends anything
+	// else through paths.Resolve, whose errors repoPathError turns into the
+	// message that names the host root AND suggests the relative path to type
+	// instead — which is exactly the help this report asked for.
+	//
+	// An already-absolute path INSIDE the host mount is accepted as-is: repos
+	// added before this change may have been stored that way, and rejecting
+	// them would break a working configuration to fix a broken one.
+	repo := loc
+	// The "already absolute and inside the mount" test is a plain prefix check on
+	// slash-normalised copies rather than paths.Within, which requires a leading
+	// "/" and so can never be true on a Windows dev box. Only the COMPARISON is
+	// normalised — restic still receives the location exactly as configured.
+	mountRoot := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
+	inMount := mountRoot != "." && mountRoot != "/" &&
+		strings.HasPrefix(path.Clean(filepath.ToSlash(loc)), mountRoot+"/")
+	if !restic.IsRemoteRepo(loc) && inMount {
+		repo = loc
+	} else {
+		resolved, err := s.resolveRepo(loc)
+		if err != nil {
+			return "", restic.Mode{}, err
+		}
+		repo = resolved
 	}
 	keyBytes, err := secret.Decrypt(s.cfg.AppKey, rr.AppKeyEnc)
 	if err != nil {

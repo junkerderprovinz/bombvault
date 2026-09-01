@@ -884,7 +884,7 @@ const nl: Partial<Translations> = {
   "offsite.tamperTestNow": "Append-only nu testen",
   "offsite.tamperTesting": "Testen…",
   "offsite.tamperOk": "verwijderen geweigerd, append-only actief",
-  "offsite.tamperFail": "de server heeft het verwijderen GEACCEPTEERD, NIET beschermd",
+  "offsite.tamperFail": "NIET beschermd",
   "offsite.tamperUnverifiable": "niet verifieerbaar voor dit type repository",
   "offsite.tamperError": "Tamper-test niet doorslaggevend (server onbereikbaar)",
   "offsite.retention.budget": "Groeibudget (GB, 0 = uit)",

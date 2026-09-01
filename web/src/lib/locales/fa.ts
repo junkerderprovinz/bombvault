@@ -310,7 +310,7 @@ const fa: Partial<Translations> = {
   "offsite.tamperTestNow": "آزمایش فقط-افزودنی همین حالا",
   "offsite.tamperTesting": "در حال آزمایش…",
   "offsite.tamperOk": "حذف رد شد، فقط-افزودنی فعال است",
-  "offsite.tamperFail": "سرور حذف را پذیرفت، محافظت‌نشده است",
+  "offsite.tamperFail": "محافظت‌نشده",
   "offsite.tamperUnverifiable": "برای این نوع مخزن قابل تأیید نیست",
   "offsite.tamperError": "نتیجه آزمایش دستکاری قطعی نیست (سرور در دسترس نیست)",
   "offsite.retention.budget": "بودجه رشد (گیگابایت، ۰ = خاموش)",

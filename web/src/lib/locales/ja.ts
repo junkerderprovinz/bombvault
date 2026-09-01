@@ -883,7 +883,7 @@ const ja: Partial<Translations> = {
   "offsite.tamperTestNow": "append-only を今すぐテスト",
   "offsite.tamperTesting": "テスト中…",
   "offsite.tamperOk": "削除は拒否されました。追記専用が有効",
-  "offsite.tamperFail": "サーバーは削除を受け入れました。保護されていません",
+  "offsite.tamperFail": "保護されていません",
   "offsite.tamperUnverifiable": "このリポジトリ種別では検証できません",
   "offsite.tamperError": "改ざんテストの結果が不明確です（サーバーに到達できません）",
   "offsite.retention.budget": "増加予算（GB、0 = オフ）",

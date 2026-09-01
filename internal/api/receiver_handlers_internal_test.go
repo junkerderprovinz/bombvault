@@ -31,7 +31,9 @@ func receiverHandlerFixture(t *testing.T, appKey string) (*Handler, *store.Repo)
 		t.Fatal(err)
 	}
 	st := store.New(db)
-	cfg := config.Config{AppKey: appKey}
+	// HostMountRoot: a received repo lives under the mount like every other repo
+	// path ([554]); a t.TempDir() location is inside the OS temp root.
+	cfg := config.Config{AppKey: appKey, HostMountRoot: os.TempDir()}
 	svc := &Service{cfg: cfg, store: st, engine: restic.Restic{Bin: "restic"}}
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
 }

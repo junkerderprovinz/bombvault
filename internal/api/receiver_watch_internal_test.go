@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -109,7 +110,9 @@ func receiverWatchService(t *testing.T, appKey string) (*Service, *store.Repo, f
 		t.Fatal(err)
 	}
 	st := store.New(db)
-	svc := &Service{cfg: config.Config{AppKey: appKey}, store: st, engine: restic.Restic{Bin: "restic"}}
+	// HostMountRoot: a received repo lives under the mount like every other repo
+	// path ([554]); a t.TempDir() location is inside the OS temp root.
+	svc := &Service{cfg: config.Config{AppKey: appKey, HostMountRoot: os.TempDir()}, store: st, engine: restic.Restic{Bin: "restic"}}
 	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
 		t.Fatal(err)
 	}

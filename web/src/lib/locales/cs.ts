@@ -909,7 +909,7 @@ const cs: Partial<Translations> = {
   "offsite.tamperTestNow": "Otestovat append-only nyní",
   "offsite.tamperTesting": "Testuji…",
   "offsite.tamperOk": "smazání odmítnuto, append-only aktivní",
-  "offsite.tamperFail": "server smazání PŘIJAL, NENÍ chráněno",
+  "offsite.tamperFail": "NENÍ chráněno",
   "offsite.tamperUnverifiable": "u tohoto typu repozitáře nelze ověřit",
   "offsite.tamperError": "Test manipulace neprůkazný (server nedostupný)",
   "offsite.retention.budget": "Rozpočet růstu (GB, 0 = vypnuto)",

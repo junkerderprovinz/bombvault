@@ -310,7 +310,7 @@ const hi: Partial<Translations> = {
   "offsite.tamperTestNow": "अभी अपेंड-ओनली जाँचें",
   "offsite.tamperTesting": "जाँचा जा रहा है…",
   "offsite.tamperOk": "हटाना अस्वीकार हुआ: अपेंड-ओनली सक्रिय है",
-  "offsite.tamperFail": "सर्वर ने हटाने को स्वीकार कर लिया: सुरक्षित नहीं है",
+  "offsite.tamperFail": "सुरक्षित नहीं",
   "offsite.tamperUnverifiable": "इस तरह की रिपॉज़िटरी के लिए सत्यापित नहीं किया जा सकता",
   "offsite.tamperError": "छेड़छाड़ जाँच अनिर्णायक रही (सर्वर पहुँच योग्य नहीं)",
   "offsite.retention.budget": "ग्रोथ बजट (GB, 0 = बंद)",

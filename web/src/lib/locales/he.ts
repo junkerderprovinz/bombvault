@@ -891,7 +891,7 @@ const he: Partial<Translations> = {
   "offsite.tamperTestNow": "בדוק append-only עכשיו",
   "offsite.tamperTesting": "בודק…",
   "offsite.tamperOk": "המחיקה נדחתה, מצב הוספה-בלבד פעיל",
-  "offsite.tamperFail": "השרת קיבל את המחיקה, לא מוגן",
+  "offsite.tamperFail": "לא מוגן",
   "offsite.tamperUnverifiable": "לא ניתן לאימות עבור סוג מאגר זה",
   "offsite.tamperError": "בדיקת החבלה לא חד-משמעית (השרת אינו נגיש)",
   "offsite.retention.budget": "תקציב גדילה (GB, 0 = כבוי)",

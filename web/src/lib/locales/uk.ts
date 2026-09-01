@@ -906,7 +906,7 @@ const uk: Partial<Translations> = {
   "offsite.tamperTestNow": "Перевірити append-only зараз",
   "offsite.tamperTesting": "Перевірка…",
   "offsite.tamperOk": "видалення відхилено — режим append-only активний",
-  "offsite.tamperFail": "сервер ПРИЙНЯВ видалення — НЕ захищено",
+  "offsite.tamperFail": "НЕ захищено",
   "offsite.tamperUnverifiable": "неможливо перевірити для цього типу репозиторію",
   "offsite.tamperError": "Тест на втручання непереконливий (сервер недоступний)",
   "offsite.retention.budget": "Бюджет зростання (ГБ, 0 = вимк)",

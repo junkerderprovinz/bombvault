@@ -310,7 +310,7 @@ const lv: Partial<Translations> = {
   "offsite.tamperTestNow": "Pārbaudīt tikai-pievienot tagad",
   "offsite.tamperTesting": "Pārbauda…",
   "offsite.tamperOk": "dzēšana noraidīta, tikai-pievienot ir aktīvs",
-  "offsite.tamperFail": "serveris PIEŅĒMA dzēšanu, NAV aizsargāts",
+  "offsite.tamperFail": "NAV aizsargāts",
   "offsite.tamperUnverifiable": "šim repozitorija veidam nav pārbaudāms",
   "offsite.tamperError": "Manipulācijas tests nav pārliecinošs (serveris nav sasniedzams)",
   "offsite.retention.budget": "Pieauguma budžets (GB, 0 = izslēgts)",
