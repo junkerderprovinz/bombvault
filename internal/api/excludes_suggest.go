@@ -840,6 +840,23 @@ func (s *Service) suggestSnapshotAggregate(ctx context.Context, name string, roo
 	}
 	defer s.suggestFlightDone(key, fl)
 
+	// Cache check AGAIN, now that this caller owns the flight. The check above is
+	// a check-then-act with a real window in it: a straggler can miss the cache,
+	// lose its slice while the leader finishes and retires the flight, and then
+	// register as a NEW leader for an answer that is already cached. It listed
+	// the repository a second time to compute something it could have read.
+	//
+	// The window is narrow but not theoretical. Six concurrent scans released
+	// from one barrier produced two listings reproducibly at GOMAXPROCS=2, which
+	// is what a loaded CI runner and a small NAS both look like, and is exactly
+	// the burst this singleflight exists for. Writing the cache before retiring
+	// the flight (further down) is what makes the recheck reliable: by the time a
+	// straggler can become leader, the entry is already there.
+	if hit, hitOK := s.suggestCacheGet(name, key); hitOK {
+		fl.cands, fl.snapTime, fl.err = hit.cands, hit.snapshotTime, nil
+		return hit.cands, hit.snapshotTime, true, "", nil
+	}
+
 	// DETACHED from the leader's request, the same way the encryption-detect
 	// singleflight next door does it (encryption_detect.go, which has a test
 	// pinning exactly this). The pass is SHARED and the leader is merely whoever
