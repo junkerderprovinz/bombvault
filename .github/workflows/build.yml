@@ -133,9 +133,30 @@ jobs:
           images: |
             ${{ env.IMAGE }}
             name=docker.io/${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }},enable=${{ vars.DOCKERHUB_USERNAME != '' }}
+          # `latest` is pushed by BRANCH builds only, never by a tag build.
+          #
+          # It used to say enable={{is_default_branch}}, which reads like it
+          # means that and does not: metadata-action counts a tag on the default
+          # branch as the default branch, so EVERY tag build pushed `latest`.
+          # Harmless while tags only ever move forward. Not harmless the day an
+          # older version is re-cut: on 2026-09-02 a re-cut of v8.3.0, long after
+          # v8.4.0 shipped, moved `latest` back onto 8.3.0 for everyone pulling
+          # it. Gating on ref_type makes the tag list say what the comment says.
+          #
+          # main is at or ahead of the newest tag whenever a release is cut (the
+          # release-notes commit lands there first), so `latest` still tracks the
+          # newest code without help from the tag build.
+          #
+          # STILL SHARP, deliberately: {{major}} and {{major}}.{{minor}} below
+          # are moved by whichever tag built last, so re-cutting an old version
+          # drags `8` back with it. That is correct for a normal forward release
+          # and wrong only while folding, which is rare enough to handle by hand.
+          # After folding, re-run the NEWEST tag's build and check that
+          # latest/8/8.<minor> all resolve to the same digest as the newest
+          # version before calling it done.
           tags: |
             type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
