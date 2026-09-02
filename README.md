@@ -109,8 +109,8 @@ Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifre
 ## 2. Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/restore-demo.gif" alt="One-click restore — a deleted container is back and running in seconds" width="90%">
-  <br><em>One click: a deleted container is restored from its backup and running again in seconds.</em>
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/restore-demo.gif" alt="Restoring a deleted container from its backup, back and running in seconds" width="90%">
+  <br><em>A container that no longer exists, restored from its backup and running again in seconds. The confirm switch is deliberate: a restore in place recreates the container, so it asks before it does.</em>
 </p>
 
 <br>
