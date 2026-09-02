@@ -186,15 +186,20 @@ func TestResolveAppdataPathsConfigurableSegmentMatches(t *testing.T) {
 	}
 }
 
-// TestResolveAppdataPathsComposeWorkingDirLabelAddsCandidate: a container
-// carrying the standard com.docker.compose.project.working_dir label gets that
-// directory added as a data path even when NONE of its bind mounts match any
-// configured segment — the compose-label discovery source is always-on and
-// additive, not gated by the segment filter.
-func TestResolveAppdataPathsComposeWorkingDirLabelAddsCandidate(t *testing.T) {
+// TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack: the compose
+// working_dir is NOT a per-member path. It used to be added to every member,
+// which stored one copy (restic deduplicates) but re-read and re-hashed the
+// whole project folder once per service — invisible in the size column, very
+// visible in CPU, and the cause of issue #189's slower container backups.
+//
+// It is backed up once per project instead (stack_backup.go). This pins both
+// halves: the member no longer carries it, and stackDirFor still finds it, so
+// "moved" cannot silently become "lost".
+func TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack(t *testing.T) {
 	s := svcWithMount()
 	in := model.Inspect{
 		Config: model.Config{Labels: map[string]string{
+			"com.docker.compose.project":             "myapp",
 			"com.docker.compose.project.working_dir": "/mnt/opt/stacks/myapp",
 		}},
 		Mounts: []model.Mount{
@@ -202,10 +207,49 @@ func TestResolveAppdataPathsComposeWorkingDirLabelAddsCandidate(t *testing.T) {
 			{Type: "bind", Source: "/mnt/data/media", Destination: "/media"},
 		},
 	}
-	got := s.resolveAppdataPaths("myapp", in)
-	want := "/host/user/opt/stacks/myapp"
-	if len(got) != 1 || got[0] != want {
-		t.Fatalf("resolveAppdataPaths = %v, want [%q] (compose working_dir label must be added regardless of bind matches)", got, want)
+	if got := s.resolveAppdataPaths("myapp", in); len(got) != 0 {
+		t.Errorf("resolveAppdataPaths = %v, want none: the project directory is the stack's, not the member's", got)
+	}
+
+	project, dir, ok := s.stackDirFor(in)
+	if !ok {
+		t.Fatal("stackDirFor found nothing: the directory moved out of the member and nowhere else")
+	}
+	if project != "myapp" {
+		t.Errorf("project = %q, want %q", project, "myapp")
+	}
+	if want := "/host/user/opt/stacks/myapp"; dir != want {
+		t.Errorf("dir = %q, want %q", dir, want)
+	}
+}
+
+// TestStackDirForIgnoresNonComposeAndUnreachable: a container that is not part
+// of a compose project has no stack directory, and neither does one whose
+// project folder lies outside the host mount — the same containment rule every
+// other path obeys, rather than a guess at where it might be.
+func TestStackDirForIgnoresNonComposeAndUnreachable(t *testing.T) {
+	s := svcWithMount()
+
+	// No compose labels at all.
+	if _, _, ok := s.stackDirFor(model.Inspect{}); ok {
+		t.Error("a container with no compose labels must have no stack directory")
+	}
+
+	// A project, but the working dir is outside the host mount.
+	outside := model.Inspect{Config: model.Config{Labels: map[string]string{
+		"com.docker.compose.project":             "myapp",
+		"com.docker.compose.project.working_dir": "/somewhere/else/myapp",
+	}}}
+	if _, _, ok := s.stackDirFor(outside); ok {
+		t.Error("a project directory outside the host mount is unreachable and must be skipped, not guessed")
+	}
+
+	// A project label without a working_dir label: nothing to back up.
+	noDir := model.Inspect{Config: model.Config{Labels: map[string]string{
+		"com.docker.compose.project": "myapp",
+	}}}
+	if _, _, ok := s.stackDirFor(noDir); ok {
+		t.Error("no working_dir label means no stack directory")
 	}
 }
 

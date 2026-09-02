@@ -827,13 +827,20 @@ type Scheduler struct {
 	// SetPruneAfterBulkJob wires it; then it is a no-op for domains without a
 	// retention policy (the callee gates that).
 	pruneAfterBulkFn func(domain string)
-	drillFn          func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
-	tamperFn         func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
-	digestFn         func() error                            // nil until SetDigestJob wires the weekly digest notification
-	watchdogFn       func() error                            // nil until SetWatchdogJob wires the overdue-backup watchdog
-	receiverFn       func() error                            // nil until SetReceiverJob wires the receiver watch (dead-mans-switch + integrity checks)
-	fleetFn          func() error                            // nil until SetFleetJob wires the fleet peer sweep
-	everythingFn     func() error                            // nil until SetEverythingJob wires the "Backup Everything" pass
+	// stacksAfterBulkFn backs up each Docker Compose project's working directory
+	// ONCE after a scheduled container round, instead of once per member. The
+	// directory used to ride along in every member's own snapshot: restic
+	// deduplicated the stored bytes, so it looked free, while every service still
+	// walked and hashed the whole folder on every run. nil until
+	// SetStacksAfterBulkJob wires it, so a scheduler without it behaves as before.
+	stacksAfterBulkFn func(names []string)
+	drillFn           func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
+	tamperFn          func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
+	digestFn          func() error                            // nil until SetDigestJob wires the weekly digest notification
+	watchdogFn        func() error                            // nil until SetWatchdogJob wires the overdue-backup watchdog
+	receiverFn        func() error                            // nil until SetReceiverJob wires the receiver watch (dead-mans-switch + integrity checks)
+	fleetFn           func() error                            // nil until SetFleetJob wires the fleet peer sweep
+	everythingFn      func() error                            // nil until SetEverythingJob wires the "Backup Everything" pass
 	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
 	// multi-item domain run (containers/VMs): one /start before the first item and
 	// one success/fail after the last, instead of once per item (#49). nil until
@@ -1134,6 +1141,13 @@ func (s *Scheduler) SetPruneAfterBulkJob(pruneFn func(domain string)) {
 	s.pruneAfterBulkFn = pruneFn
 }
 
+// SetStacksAfterBulkJob wires the once-per-round compose-stack backup. Called
+// with the container names the round attempted, so it can visit each distinct
+// project exactly once regardless of how many of its services took part.
+func (s *Scheduler) SetStacksAfterBulkJob(fn func(names []string)) {
+	s.stacksAfterBulkFn = fn
+}
+
 // SetDrillJob wires scheduled restore-verification drills so the single drill
 // schedule actually runs. drillFn is called with (domain, source, kind) for each
 // scheduled drill task when the drill schedule fires — a local "subset" integrity
@@ -1375,6 +1389,17 @@ func (s *Scheduler) ReloadWithDueChecks(
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
+				// Each compose stack's project directory, once for the whole
+				// round, before the prune so it lands in the same retention pass.
+				if s.stacksAfterBulkFn != nil {
+					names := make([]string, 0, len(targets))
+					for _, t := range targets {
+						if t.IncludeInSchedule {
+							names = append(names, t.ContainerName)
+						}
+					}
+					s.stacksAfterBulkFn(names)
+				}
 				// Retention first: ONE local prune for the whole loop (each item's
 				// forget ran without --prune under the bulk flag), then the batched
 				// off-site copy — fewer snapshots left to replicate.

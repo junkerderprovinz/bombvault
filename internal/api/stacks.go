@@ -145,6 +145,25 @@ func (s *Service) restoreStackMember(ctx context.Context, name, source string) (
 // records its own kindRestore run via the orchestrator, so per-member outcomes
 // stay discoverable even when this runs detached from the request.
 func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, source string, startAfter bool) StackRestoreResult {
+	// The project's own working directory FIRST, before any member comes back.
+	// -------------------------------------------------------------------------
+	// It is where the compose file and the stack's shared files live, so a member
+	// that reads them on start must find them already in place. It is restored
+	// once here because it is backed up once (see stack_backup.go); before that
+	// change it travelled inside every member's snapshot, and for those older
+	// backups this is a no-op that reports nothing — the folder still arrives
+	// with the first member, exactly as it used to.
+	if len(members) > 0 {
+		if project := s.projectOfMember(ctx, members[0].name); project != "" {
+			if _, err := s.RestoreStackDir(ctx, project, source); err != nil {
+				// Logged, not fatal: the members are the point of a stack
+				// restore, and failing all of them over the shared folder would
+				// turn a partial problem into a total one.
+				log.Printf("api: restore stack: %v", err)
+			}
+		}
+	}
+
 	// Restore every member from its latest snapshot, leaving it stopped so a
 	// dependent can't come up before its dependency is restored + started.
 	results := make([]StackMemberResult, len(members))

@@ -3393,14 +3393,26 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 		}
 	}
 
-	// Docker Compose project working directory: an always-on additional
-	// candidate, independent of whether any bind matched above.
-	if dir, ok := composeProjectDataDir(in.Config.Labels); ok {
-		if container, ok := s.toContainerPath(dir); ok && !seen[container] {
-			out = append(out, container)
-			seen[container] = true
-		}
-	}
+	// The Docker Compose project working directory is NOT here any more. It
+	// belongs to the STACK, and is backed up once per project by backupStackDir
+	// rather than once per member.
+	// -------------------------------------------------------------------------
+	// It used to be an always-on candidate on every member, which is correct
+	// about what needs backing up and wrong about how often. restic deduplicates
+	// the stored bytes, so a five-service stack cost one copy on disk and looked
+	// free; what it did not deduplicate is the READING. Every member walked,
+	// chunked and hashed the whole project directory on every run, so the CPU
+	// cost scaled with the number of services while the stored size did not.
+	// Measured on a two-service stack: the project folder appeared in both
+	// members' snapshot paths, and the second member reported 0 new bytes after
+	// spending the same time computing them.
+	//
+	// Reported as container backups getting slower and hotter after v8.0.0
+	// (issue #189), which is exactly when the compose directory was added here.
+	//
+	// A member whose ONLY data was the project directory therefore ends up with
+	// no paths of its own. That is honest rather than broken: the data is in the
+	// stack's snapshot, and stackDirFor lets the UI and the restore path say so.
 
 	if len(out) == 0 {
 		// Last resort: the platform's conventional appdata dir for this
@@ -3950,6 +3962,22 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// so a recreate of the target completes BEFORE its dependents are restarted
 	// (#119). The backup + fresh snapshot are its safety net; any failure there is
 	// logged + recorded as a failed "update" run, but never fails the backup.
+	// This container's compose stack, if it has one and if this is a SINGLE
+	// backup rather than one item of a round.
+	// -------------------------------------------------------------------------
+	// The project directory no longer travels inside a member's own snapshot
+	// (see resolveAppdataPaths), so backing up one member by hand would
+	// otherwise leave the shared folder unprotected until the next full round.
+	// A round suppresses this and does it once at the end instead, which is the
+	// whole point of the change: the folder is walked once per project, not once
+	// per service. Same flag the batched off-site replication already keys on,
+	// so there is one notion of "part of a round" rather than two.
+	if !bulkReplicateSuppressed(ctx) {
+		if err := s.BackupStacks(ctx, []string{name}); err != nil {
+			// Logged, never fatal: the container's own data is already safe.
+			log.Printf("api: backup: %v", err)
+		}
+	}
 	s.applyRetention(ctx, repo, settings, mode, "container:"+name, "containers")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
@@ -4198,6 +4226,19 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
 		}
 		s.publishBatch(key, 100, false)
+		// Each compose stack's project directory, ONCE for the whole batch.
+		// -------------------------------------------------------------------
+		// It used to ride along in every member's own snapshot, which stored one
+		// copy (restic deduplicates) but re-read and re-hashed the whole folder
+		// per service. Doing it here, after the members and before the prune,
+		// keeps it in the same retention pass as everything else and costs one
+		// walk per project instead of one per container.
+		if err := s.BackupStacks(bctx, queue); err != nil {
+			// Never fails the batch: the members are already safely backed up,
+			// and a project folder that could not be read is its own problem to
+			// report rather than a reason to call the whole round failed.
+			log.Printf("api: backup-all: %v", err)
+		}
 		// Retention first: ONE local prune for the whole batch (each container's
 		// forget ran WITHOUT --prune under the bulk flag), BEFORE the batched
 		// off-site replication — fewer snapshots left to copy.
