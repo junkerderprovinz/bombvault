@@ -583,6 +583,8 @@ const gl: Partial<Translations> = {
   "folders.title": "Cartafoles da copia",
   "folders.hint": "Escolle cales dos cartafoles mapeados deste contedor se copian. O cartafol appdata está seleccionado por defecto. Marca outros para incluílos, ou engade un camiño propio baixo a montaxe do host. Se desmarcas todo, vólvese á detección automática de appdata.",
   "folders.appdataDefault": "appdata (por defecto)",
+  "folders.stackNote":
+    "Este contedor pertence á pila Compose {stack}. O cartafol do proxecto cópiase unha vez para toda a pila, non unha vez por servizo, polo que non aparece aquí.",
   "folders.notReachable": "non está baixo a montaxe do host, non se pode copiar",
   "folders.customMissing": "non se detectou ningún cartafol de datos (aquí non hai nada que copiar)",
   "folders.customPlaceholder": "/mnt/user/algún/cartafol",

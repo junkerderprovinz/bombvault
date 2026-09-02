@@ -546,6 +546,8 @@ const vi: Partial<Translations> = {
   "folders.title": "Thư mục sao lưu",
   "folders.hint": "Chọn những thư mục được ánh xạ của container này để sao lưu. Thư mục appdata được chọn theo mặc định. Đánh dấu các thư mục khác để bao gồm chúng, hoặc thêm một đường dẫn tùy chỉnh bên trong điểm gắn kết của host. Bỏ chọn tất cả sẽ trở về mặc định appdata tự động.",
   "folders.appdataDefault": "appdata (mặc định)",
+  "folders.stackNote":
+    "Container này thuộc stack Compose {stack}. Thư mục dự án được sao lưu một lần cho cả stack, không phải mỗi dịch vụ một lần, nên không có trong danh sách này.",
   "folders.notReachable": "không nằm trong điểm gắn kết của host, không thể sao lưu",
   "folders.customMissing": "không tìm thấy thư mục dữ liệu (không có gì để sao lưu ở đây)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

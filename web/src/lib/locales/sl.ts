@@ -583,6 +583,8 @@ const sl: Partial<Translations> = {
   "folders.title": "Mape za varnostno kopiranje",
   "folders.hint": "Izberi, katere od map vsebnika, ki so preslikane na gostitelja, se varnostno kopirajo. Mapa appdata je izbrana privzeto. Označi druge, da jih vključiš, ali dodaj svojo pot pod priklopno točko gostitelja. Če odznačiš vse, se povrne samodejni privzeti appdata.",
   "folders.appdataDefault": "appdata (privzeto)",
+  "folders.stackNote":
+    "Ta vsebnik pripada skladu Compose {stack}. Mapa projekta se varnostno kopira enkrat za ves sklad, ne enkrat na storitev, zato je tu ni.",
   "folders.notReachable": "ni pod priklopno točko gostitelja, ni je mogoče varnostno kopirati",
   "folders.customMissing": "ni zaznane podatkovne mape (tukaj ni ničesar za kopiranje)",
   "folders.customPlaceholder": "/mnt/user/neka/mapa",

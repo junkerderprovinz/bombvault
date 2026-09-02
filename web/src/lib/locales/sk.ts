@@ -583,6 +583,8 @@ const sk: Partial<Translations> = {
   "folders.title": "Zálohované priečinky",
   "folders.hint": "Vyberte, ktoré z namapovaných priečinkov tohto kontajnera sa majú zálohovať. Priečinok appdata je predvolene vybraný. Zaškrtnite ostatné, aby ste ich zahrnuli, alebo pridajte vlastnú cestu pod pripojením hostiteľa. Zrušením zaškrtnutia všetkého sa vrátite k automatickej predvolenej hodnote appdata.",
   "folders.appdataDefault": "appdata (predvolené)",
+  "folders.stackNote":
+    "Tento kontajner patrí do Compose stacku {stack}. Priečinok projektu sa zálohuje raz pre celý stack, nie raz na službu, preto tu nie je uvedený.",
   "folders.notReachable": "nie je pod pripojením hostiteľa, nemožno zálohovať",
   "folders.customMissing": "nezistil sa žiadny dátový priečinok (tu nie je čo zálohovať)",
   "folders.customPlaceholder": "/mnt/user/nejaky/priecinok",

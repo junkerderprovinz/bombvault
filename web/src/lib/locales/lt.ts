@@ -583,6 +583,8 @@ const lt: Partial<Translations> = {
   "folders.title": "Atsarginio kopijavimo aplankai",
   "folders.hint": "Pasirinkite, kurie iš šio konteinerio susietų aplankų bus kopijuojami. Aplankas appdata pasirinktas pagal numatytuosius nustatymus. Pažymėkite kitus, kad juos įtrauktumėte, arba pridėkite pasirinktinį kelią po pagrindinio kompiuterio prijungimu. Nužymėjus viską, grįžtama prie automatinio numatytojo appdata.",
   "folders.appdataDefault": "appdata (numatytoji)",
+  "folders.stackNote":
+    "Šis konteineris priklauso Compose kaminui {stack}. Projekto katalogas kopijuojamas kartą visam kaminui, o ne po kartą kiekvienai tarnybai, todėl čia nerodomas.",
   "folders.notReachable": "nėra po pagrindinio kompiuterio prijungimu, negalima kopijuoti",
   "folders.customMissing": "duomenų aplankas neaptiktas (čia nėra ko kopijuoti)",
   "folders.customPlaceholder": "/mnt/user/koks/nors/aplankas",

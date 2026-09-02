@@ -583,6 +583,8 @@ const id: Partial<Translations> = {
   "folders.title": "Folder pencadangan",
   "folders.hint": "Pilih folder terpetakan mana dari container ini yang akan dicadangkan. Folder appdata dipilih secara bawaan. Centang lainnya untuk menyertakannya, atau tambahkan jalur khusus di bawah mount host. Menghapus semua centang akan mengembalikan ke bawaan appdata otomatis.",
   "folders.appdataDefault": "appdata (bawaan)",
+  "folders.stackNote":
+    "Kontainer ini termasuk stack Compose {stack}. Folder proyeknya dicadangkan sekali untuk seluruh stack, bukan sekali per layanan, jadi tidak tercantum di sini.",
   "folders.notReachable": "tidak di bawah mount host, tidak dapat dicadangkan",
   "folders.customMissing": "tidak ada folder data yang terdeteksi (tidak ada yang bisa dicadangkan di sini)",
   "folders.customPlaceholder": "/mnt/user/beberapa/folder",

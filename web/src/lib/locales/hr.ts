@@ -583,6 +583,8 @@ const hr: Partial<Translations> = {
   "folders.title": "Mape sigurnosne kopije",
   "folders.hint": "Odaberite koje od mapiranih mapa ovog kontejnera sigurnosno kopirati. Mapa appdata odabrana je zadano. Označite ostale za uključivanje, ili dodajte prilagođenu putanju ispod montiranja hosta. Odznačivanje svega vraća automatski zadani appdata.",
   "folders.appdataDefault": "appdata (zadano)",
+  "folders.stackNote":
+    "Ovaj spremnik pripada Compose stogu {stack}. Mapa projekta sigurnosno se kopira jednom za cijeli stog, a ne jednom po usluzi, pa nije navedena ovdje.",
   "folders.notReachable": "nije ispod montiranja hosta, ne može se sigurnosno kopirati",
   "folders.customMissing": "nije otkrivena mapa s podacima (ovdje nema što sigurnosno kopirati)",
   "folders.customPlaceholder": "/mnt/user/neka/mapa",

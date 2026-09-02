@@ -583,6 +583,8 @@ const eu: Partial<Translations> = {
   "folders.title": "Babeskopiaren karpetak",
   "folders.hint": "Aukeratu edukiontzi honen zein karpeta mapatu babestuko diren. appdata karpeta lehenespenez hautatuta dago. Markatu besterik sartzeko, edo gehitu ostalariaren muntaketaren azpian bide pertsonalizatu bat. Guztiak desmarkatzeak appdata-ren lehenespen automatikora itzultzen du.",
   "folders.appdataDefault": "appdata (lehenetsia)",
+  "folders.stackNote":
+    "Edukiontzi hau {stack} Compose pilakoa da. Proiektuaren karpeta pila osorako behin egiten da babeskopia, ez zerbitzu bakoitzeko, eta horregatik ez da hemen agertzen.",
   "folders.notReachable": "ez dago ostalariaren muntaketaren azpian, ezin da babestu",
   "folders.customMissing": "ez da daturik duen karpetarik detektatu (hemen ez dago babesteko ezer)",
   "folders.customPlaceholder": "/mnt/user/nolabaiteko/karpeta",

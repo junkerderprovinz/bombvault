@@ -706,6 +706,8 @@ export const en = {
   "folders.title": "Backup folders",
   "folders.hint": "Choose which of this container's mapped folders to back up. The appdata folder is selected by default. Tick others to include them, or add a custom path under the host mount. Unticking everything reverts to the automatic appdata default.",
   "folders.appdataDefault": "appdata (default)",
+  "folders.stackNote":
+    "This container belongs to the Compose stack {stack}. Its project folder is backed up once for the whole stack, not once per service, so it is not listed here.",
   "folders.notReachable": "not under the host mount, can't be backed up",
   "folders.customMissing": "no data folder detected (nothing to back up here)",
   "folders.customPlaceholder": "/mnt/user/some/folder",
@@ -2366,6 +2368,8 @@ export const de: Translations = {
   "folders.title": "Gesicherte Ordner",
   "folders.hint": "Wähle, welche gemappten Ordner dieses Containers gesichert werden. Der appdata-Ordner ist standardmäßig ausgewählt. Hake weitere an, um sie einzuschließen, oder füge einen eigenen Pfad unterhalb des Host-Mounts hinzu. Hakst du alles ab, gilt wieder die automatische appdata-Erkennung.",
   "folders.appdataDefault": "appdata (Standard)",
+  "folders.stackNote":
+    "Dieser Container gehört zum Compose-Stack {stack}. Sein Projektordner wird einmal für den ganzen Stack gesichert, nicht einmal je Dienst, und steht deshalb nicht in dieser Liste.",
   "folders.notReachable": "nicht unter dem Host-Mount, kann nicht gesichert werden",
   "folders.customMissing": "kein Datenordner gefunden (hier gibt es nichts zu sichern)",
   "folders.customPlaceholder": "/mnt/user/irgendein/ordner",

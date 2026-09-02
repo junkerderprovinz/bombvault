@@ -583,6 +583,8 @@ const ca: Partial<Translations> = {
   "folders.title": "Carpetes de la còpia",
   "folders.hint": "Tria quines de les carpetes mapejades d'aquest contenidor es copien. La carpeta appdata està seleccionada per defecte. Marca'n d'altres per incloure-les, o afegeix un camí propi sota el muntatge de l'amfitrió. Si desmarques tot, es torna a la detecció automàtica d'appdata.",
   "folders.appdataDefault": "appdata (per defecte)",
+  "folders.stackNote":
+    "Aquest contenidor pertany a la pila Compose {stack}. La carpeta del projecte es còpia un cop per a tota la pila, no un cop per servei, i per això no apareix aquí.",
   "folders.notReachable": "no està sota el muntatge de l'amfitrió, no es pot copiar",
   "folders.customMissing": "no s'ha detectat cap carpeta de dades (aquí no hi ha res a copiar)",
   "folders.customPlaceholder": "/mnt/user/alguna/carpeta",

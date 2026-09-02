@@ -583,6 +583,8 @@ const lv: Partial<Translations> = {
   "folders.title": "Rezerves kopēšanas mapes",
   "folders.hint": "Izvēlieties, kuras no šī konteinera piesaistītajām mapēm dublēt. Mape appdata ir izvēlēta pēc noklusējuma. Atzīmējiet citas, lai tās iekļautu, vai pievienojiet pielāgotu ceļu zem saimniekdatora piesaistes. Noņemot visas atzīmes, atgriežas automātiskais appdata noklusējums.",
   "folders.appdataDefault": "appdata (noklusējums)",
+  "folders.stackNote":
+    "Šis konteiners pieder Compose kaudzei {stack}. Projekta mape tiek dublēta vienreiz visai kaudzei, nevis vienreiz katram pakalpojumam, tāpēc tā šeit nav norādīta.",
   "folders.notReachable": "nav zem saimniekdatora piesaistes, nevar dublēt",
   "folders.customMissing": "nav atklāta datu mape (šeit nav ko dublēt)",
   "folders.customPlaceholder": "/mnt/user/kāda/mape",

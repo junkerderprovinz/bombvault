@@ -686,7 +686,7 @@ function UpdateAfterBackupRow({
 // `open` is controlled by the caller (ContainerRow's shared five-chip
 // Selector strip) — see HooksEditor's own comment for the full "why" this and
 // its three siblings dropped their own internal useState.
-function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T }) {
+function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; open: boolean; t: T }) {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounts, setMounts] = useState<MountInfo[]>([]);
@@ -813,6 +813,15 @@ function FoldersEditor({ name, open, t }: { name: string; open: boolean; t: T })
   return (
     <div className="mt-2 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
       <p className="text-xs text-carbon-textMuted">{t("folders.hint")}</p>
+      {/* A compose member's project folder is NOT in this list, and its absence
+          would otherwise read as "nothing to back up". It is backed up once for
+          the whole stack instead of once per service (issue #189), so it needs
+          saying exactly where someone would look for it and not find it. */}
+      {stack !== "" && (
+        <p className="text-xs text-carbon-textSub">
+          {t("folders.stackNote").replace("{stack}", stack)}
+        </p>
+      )}
       {loading && <p className="text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
       {!loading && mounts.length === 0 && custom.length === 0 && (
         <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
@@ -1899,7 +1908,7 @@ function ContainerRow({
             unmounted (no wasted fetches/effects) whenever their chip
             couldn't have been clicked in the first place. */}
         <Advanced when={installed}>
-          <FoldersEditor name={container.name} open={openSections.has("folders")} t={t} />
+          <FoldersEditor name={container.name} stack={container.stack} open={openSections.has("folders")} t={t} />
           <StopContainersEditor
             name={container.name}
             initial={container.stopContainers ?? []}

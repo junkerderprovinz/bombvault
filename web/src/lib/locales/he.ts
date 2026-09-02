@@ -554,6 +554,8 @@ const he: Partial<Translations> = {
   "folders.title": "תיקיות לגיבוי",
   "folders.hint": "בחר אילו מהתיקיות הממופות של מכל זה לגבות. תיקיית appdata נבחרת כברירת מחדל. סמן אחרות כדי לכלול אותן, או הוסף נתיב מותאם אישית תחת נקודת העיגון של המארח. ביטול הסימון של הכול חוזר לברירת המחדל האוטומטית של appdata.",
   "folders.appdataDefault": "appdata (ברירת מחדל)",
+  "folders.stackNote":
+    "מכולה זו שייכת למקבץ Compose ‏{stack}. תיקיית הפרויקט מגובה פעם אחת עבור כל המקבץ, לא פעם לכל שירות, ולכן אינה מופיעה כאן.",
   "folders.notReachable": "אינו תחת נקודת העיגון של המארח, לא ניתן לגבות",
   "folders.customMissing": "לא נמצאה תיקיית נתונים (אין מה לגבות כאן)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

@@ -583,6 +583,8 @@ const et: Partial<Translations> = {
   "folders.title": "Varundatavad kaustad",
   "folders.hint": "Vali, millised selle konteineri kaardistatud kaustadest varundatakse. Kaust appdata on vaikimisi valitud. Märgi teisi kaasamiseks või lisa oma rada hosti haakepunkti all. Kõigi märke eemaldamine taastab automaatse appdata vaikeväärtuse.",
   "folders.appdataDefault": "appdata (vaikimisi)",
+  "folders.stackNote":
+    "See konteiner kuulub Compose'i virna {stack}. Projektikaust varundatakse korra kogu virna jaoks, mitte korra teenuse kohta, seetõttu seda siin ei ole.",
   "folders.notReachable": "pole hosti haakepunkti all, ei saa varundada",
   "folders.customMissing": "andmekausta ei leitud (siin pole midagi varundada)",
   "folders.customPlaceholder": "/mnt/user/mingi/kaust",

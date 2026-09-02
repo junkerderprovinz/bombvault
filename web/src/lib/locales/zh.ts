@@ -546,6 +546,8 @@ const zh: Partial<Translations> = {
   "folders.title": "备份文件夹",
   "folders.hint": "选择此容器映射的哪些文件夹进行备份。appdata 文件夹默认已选中。勾选其他文件夹以将其包含在内，或在主机挂载下添加自定义路径。取消所有勾选将恢复到自动的 appdata 默认值。",
   "folders.appdataDefault": "appdata（默认）",
+  "folders.stackNote":
+    "此容器属于 Compose 堆栈 {stack}。项目文件夹按整个堆栈备份一次，而不是每个服务各备份一次，因此不在此列表中。",
   "folders.notReachable": "不在主机挂载范围内，无法备份",
   "folders.customMissing": "未检测到数据文件夹 (这里没有可备份的内容)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

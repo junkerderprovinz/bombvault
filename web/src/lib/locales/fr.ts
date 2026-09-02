@@ -554,6 +554,8 @@ const fr: Partial<Translations> = {
   "folders.title": "Dossiers à sauvegarder",
   "folders.hint": "Choisissez quels dossiers mappés de ce conteneur sauvegarder. Le dossier appdata est sélectionné par défaut. Cochez-en d'autres pour les inclure, ou ajoutez un chemin personnalisé sous le montage de l'hôte. Tout décocher revient au comportement automatique du dossier appdata.",
   "folders.appdataDefault": "appdata (par défaut)",
+  "folders.stackNote":
+    "Ce conteneur appartient à la pile Compose {stack}. Son dossier de projet est sauvegardé une fois pour toute la pile, et non une fois par service, il n'apparaît donc pas ici.",
   "folders.notReachable": "n'est pas sous le montage de l'hôte, ne peut pas être sauvegardé",
   "folders.customMissing": "aucun dossier de données détecté (rien à sauvegarder ici)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

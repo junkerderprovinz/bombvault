@@ -546,6 +546,8 @@ const pl: Partial<Translations> = {
   "folders.title": "Foldery do kopii",
   "folders.hint": "Wybierz, które z zamapowanych folderów tego kontenera mają być kopiowane. Folder appdata jest zaznaczony domyślnie. Zaznacz inne, aby je dołączyć, lub dodaj własną ścieżkę w obrębie montowania hosta. Odznaczenie wszystkiego przywraca automatyczne domyślne ustawienie appdata.",
   "folders.appdataDefault": "appdata (domyślnie)",
+  "folders.stackNote":
+    "Ten kontener należy do stosu Compose {stack}. Katalog projektu jest kopiowany raz dla całego stosu, a nie raz na usługę, dlatego nie ma go na tej liście.",
   "folders.notReachable": "nie znajduje się w montowaniu hosta, nie można utworzyć kopii",
   "folders.customMissing": "nie wykryto folderu danych (nie ma czego kopiować)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

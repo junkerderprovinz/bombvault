@@ -552,6 +552,8 @@ const cs: Partial<Translations> = {
   "folders.title": "Zálohované složky",
   "folders.hint": "Vyberte, které z namapovaných složek tohoto kontejneru se mají zálohovat. Složka appdata je vybrána ve výchozím nastavení. Zaškrtnutím zahrnete další, nebo přidejte vlastní cestu v rámci připojení hostitele. Odškrtnutí všeho se vrátí k automatickému výchozímu nastavení appdata.",
   "folders.appdataDefault": "appdata (výchozí)",
+  "folders.stackNote":
+    "Tento kontejner patří do Compose stacku {stack}. Adresář projektu se zálohuje jednou pro celý stack, ne jednou za službu, proto zde není uveden.",
   "folders.notReachable": "není v rámci připojení hostitele, nelze zálohovat",
   "folders.customMissing": "nenalezena žádná datová složka (není co zálohovat)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

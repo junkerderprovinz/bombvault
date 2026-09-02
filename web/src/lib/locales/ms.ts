@@ -583,6 +583,8 @@ const ms: Partial<Translations> = {
   "folders.title": "Folder sandaran",
   "folders.hint": "Pilih folder terpeta bekas ini yang mana hendak disandarkan. Folder appdata dipilih secara lalai. Tandakan yang lain untuk memasukkannya, atau tambah laluan tersuai di bawah mount hos. Menyahtanda semua akan kembali kepada lalai appdata automatik.",
   "folders.appdataDefault": "appdata (lalai)",
+  "folders.stackNote":
+    "Bekas ini tergolong dalam tindanan Compose {stack}. Folder projeknya disandarkan sekali untuk keseluruhan tindanan, bukan sekali bagi setiap perkhidmatan, jadi ia tidak disenaraikan di sini.",
   "folders.notReachable": "tidak di bawah mount hos, tidak boleh disandarkan",
   "folders.customMissing": "tiada folder data dikesan (tiada apa untuk disandarkan di sini)",
   "folders.customPlaceholder": "/mnt/user/beberapa/folder",

@@ -554,6 +554,8 @@ const hu: Partial<Translations> = {
   "folders.title": "Mentett mappák",
   "folders.hint": "Válaszd ki, hogy a konténer leképezett mappái közül melyeket szeretnéd menteni. Az appdata mappa alapértelmezetten ki van jelölve. Pipáld ki a többit a felvételhez, vagy adj hozzá egyéni elérési utat a gazdagép csatolásán belül. Ha mindent kiveszel, visszaáll az automatikus appdata alapértelmezés.",
   "folders.appdataDefault": "appdata (alapértelmezett)",
+  "folders.stackNote":
+    "Ez a konténer a(z) {stack} Compose veremhez tartozik. A projektmappa az egész veremhez egyszer kerül mentésre, nem szolgáltatásonként, ezért nem szerepel itt.",
   "folders.notReachable": "nincs a gazdagép csatolásán belül, nem menthető",
   "folders.customMissing": "nem található adatmappa (nincs mit menteni)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

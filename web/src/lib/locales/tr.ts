@@ -554,6 +554,8 @@ const tr: Partial<Translations> = {
   "folders.title": "Yedeklenecek klasörler",
   "folders.hint": "Bu kapsayıcının eşlenen klasörlerinden hangilerinin yedekleneceğini seçin. appdata klasörü varsayılan olarak seçilidir. Diğerlerini dahil etmek için işaretleyin veya host bağlama noktası altında özel bir yol ekleyin. Tüm işaretleri kaldırmak otomatik appdata varsayılanına döner.",
   "folders.appdataDefault": "appdata (varsayılan)",
+  "folders.stackNote":
+    "Bu kapsayıcı {stack} Compose yığınına aittir. Proje klasörü her hizmet için değil, tüm yığın için bir kez yedeklenir, bu yüzden burada listelenmez.",
   "folders.notReachable": "host bağlama noktası altında değil, yedeklenemez",
   "folders.customMissing": "veri klasörü bulunamadı (burada yedeklenecek bir şey yok)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

@@ -554,6 +554,8 @@ const it: Partial<Translations> = {
   "folders.title": "Cartelle da salvare",
   "folders.hint": "Scegli quali cartelle mappate di questo contenitore salvare. La cartella appdata è selezionata per impostazione predefinita. Spunta le altre per includerle, oppure aggiungi un percorso personalizzato sotto il mount dell'host. Deselezionando tutto si torna al valore automatico di appdata.",
   "folders.appdataDefault": "appdata (predefinita)",
+  "folders.stackNote":
+    "Questo contenitore appartiene allo stack Compose {stack}. La cartella del progetto viene salvata una volta per l'intero stack, non una per servizio, quindi non compare qui.",
   "folders.notReachable": "non si trova sotto il mount dell'host, non può essere salvata",
   "folders.customMissing": "nessuna cartella dati rilevata (niente da salvare qui)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

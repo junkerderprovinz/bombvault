@@ -546,6 +546,8 @@ const ja: Partial<Translations> = {
   "folders.title": "バックアップ対象フォルダ",
   "folders.hint": "このコンテナのマッピング済みフォルダのうち、どれをバックアップするか選択します。appdata フォルダはデフォルトで選択されています。他のフォルダを含めるにはチェックを入れるか、ホストマウント配下のカスタムパスを追加してください。すべてのチェックを外すと、自動の appdata デフォルトに戻ります。",
   "folders.appdataDefault": "appdata（デフォルト）",
+  "folders.stackNote":
+    "このコンテナは Compose スタック {stack} に属します。プロジェクトフォルダーはサービスごとではなくスタック全体で一度だけバックアップされるため、ここには表示されません。",
   "folders.notReachable": "ホストマウント配下にないため、バックアップできません",
   "folders.customMissing": "データフォルダーが見つかりません (バックアップ対象なし)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

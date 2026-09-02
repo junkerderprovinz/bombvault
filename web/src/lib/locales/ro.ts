@@ -551,6 +551,8 @@ const ro: Partial<Translations> = {
   "folders.title": "Foldere de salvat",
   "folders.hint": "Alege care dintre folderele mapate ale acestui container să fie salvate. Folderul appdata este selectat implicit. Bifează altele pentru a le include sau adaugă o cale personalizată sub montarea gazdei. Debifarea tuturor revine la valoarea implicită automată appdata.",
   "folders.appdataDefault": "appdata (implicit)",
+  "folders.stackNote":
+    "Acest container aparține stivei Compose {stack}. Dosarul proiectului este copiat o dată pentru toată stiva, nu o dată per serviciu, de aceea nu apare aici.",
   "folders.notReachable": "nu se află sub montarea gazdei, nu poate fi salvat",
   "folders.customMissing": "niciun folder de date detectat (nimic de salvat aici)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

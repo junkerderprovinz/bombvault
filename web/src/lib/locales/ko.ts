@@ -546,6 +546,8 @@ const ko: Partial<Translations> = {
   "folders.title": "백업 폴더",
   "folders.hint": "이 컨테이너의 매핑된 폴더 중 백업할 폴더를 선택하세요. appdata 폴더는 기본으로 선택되어 있습니다. 다른 폴더를 포함하려면 체크하거나, 호스트 마운트 아래에 사용자 지정 경로를 추가하세요. 모든 체크를 해제하면 자동 appdata 기본값으로 돌아갑니다.",
   "folders.appdataDefault": "appdata (기본값)",
+  "folders.stackNote":
+    "이 컨테이너는 Compose 스택 {stack}에 속합니다. 프로젝트 폴더는 서비스마다가 아니라 스택 전체에 대해 한 번만 백업되므로 여기에는 나오지 않습니다.",
   "folders.notReachable": "호스트 마운트 아래에 없어 백업할 수 없습니다",
   "folders.customMissing": "데이터 폴더를 찾을 수 없습니다 (백업할 항목 없음)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

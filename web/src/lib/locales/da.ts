@@ -554,6 +554,8 @@ const da: Partial<Translations> = {
   "folders.title": "Sikkerhedskopierede mapper",
   "folders.hint": "Vælg hvilke af denne containers tilknyttede mapper der skal sikkerhedskopieres. appdata-mappen er valgt som standard. Sæt flueben ved andre for at inkludere dem, eller tilføj en brugerdefineret sti under host-monteringen. Fjernes alle flueben, vendes der tilbage til den automatiske appdata-standard.",
   "folders.appdataDefault": "appdata (standard)",
+  "folders.stackNote":
+    "Denne container hører til Compose-stakken {stack}. Projektmappen sikkerhedskopieres én gang for hele stakken, ikke én gang pr. tjeneste, og står derfor ikke her.",
   "folders.notReachable": "ligger ikke under host-monteringen, kan ikke sikkerhedskopieres",
   "folders.customMissing": "ingen datamappe fundet (intet at sikkerhedskopiere her)",
   "folders.customPlaceholder": "/mnt/user/some/folder",

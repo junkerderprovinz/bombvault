@@ -583,6 +583,8 @@ const is: Partial<Translations> = {
   "folders.title": "Afritaðar möppur",
   "folders.hint": "Veldu hvaða af skjalfestum möppum þessa gáms á að afrita. Appdata-mappan er valin sjálfgefið. Merktu aðrar til að bæta þeim við, eða bættu við sérsniðinni slóð undir tengipunkti hýsilsins. Ef allt er afmerkt fer það aftur í sjálfvirku appdata-sjálfgefna stillinguna.",
   "folders.appdataDefault": "appdata (sjálfgefið)",
+  "folders.stackNote":
+    "Þessi gámur tilheyrir Compose-staflanum {stack}. Verkefnamappan er afrituð einu sinni fyrir allan staflann, ekki einu sinni fyrir hverja þjónustu, og birtist því ekki hér.",
   "folders.notReachable": "er ekki undir tengipunkti hýsilsins, ekki hægt að afrita",
   "folders.customMissing": "engin gagnamappa fannst (ekkert að afrita hér)",
   "folders.customPlaceholder": "/mnt/user/einhver/mappa",
