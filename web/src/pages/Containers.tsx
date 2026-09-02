@@ -2712,6 +2712,28 @@ export function Containers() {
     void loadContainers().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
+  // Reload when the last operation finishes.
+  // ---------------------------------------------------------------------------
+  // The fetch above ran once, on mount, and nothing refreshed it afterwards. So
+  // restoring a container that was no longer installed worked, the daemon had it
+  // running again, and this page went on saying "Not installed" until the user
+  // navigated away or reloaded. Measured on a demo instance: GET /api/containers
+  // reported state=running and installed=true while the card had been claiming
+  // the opposite for over a minute. That reads as "the restore did nothing",
+  // which is the one conclusion it must not invite.
+  //
+  // Keyed on the falling edge of `running` rather than a timer: the list only
+  // changes as a result of an operation, so polling it would spend requests to
+  // learn nothing, and reloading on the RISING edge would fetch the state we
+  // already have.
+  // anyActive returns {active, phase}; only the boolean matters here.
+  const busy = running.active;
+  const wasBusy = useRef(false);
+  useEffect(() => {
+    if (wasBusy.current && !busy) void loadContainers();
+    wasBusy.current = busy;
+  }, [busy]); // eslint-disable-line react-hooks/exhaustive-deps -- loadContainers is stable for this page's lifetime; adding it would re-run the effect on every render
+
   function handleSortChange(k: SortKey) {
     setSortKey(k);
     localStorage.setItem(SORT_STORAGE_KEY, k);
