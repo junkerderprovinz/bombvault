@@ -292,6 +292,20 @@ function ReceivedRepoCard({
         </p>
       )}
 
+      {/* What to do about a failed check.
+          ------------------------------------------------------------------
+          Reported from the support forum: a received repo came back "restic
+          check failed: repository contains errors", and the page said nothing
+          beyond the restic message. The reporter went to the receiving box,
+          opened a shell in the container and could not get past restic's
+          password prompt, because the password for a RECEIVED repo is derived
+          from the SENDING instance's APP_KEY, not from this one's. Nothing on
+          this page said so, and that is the whole reason the detour happened.
+          Shown only on a failure, so a healthy list stays quiet. */}
+      {repo.lastCheckOk === false && (
+        <p className="text-xs text-carbon-textSub wrap-break-word">{t("receiver.checkFailedHelp")}</p>
+      )}
+
       {/* Actions row */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button

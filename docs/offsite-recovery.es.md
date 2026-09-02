@@ -134,4 +134,19 @@ Un clic descarga la **clave maestra**, la **contraseña restic derivada** y las 
 !!! danger "Guarda el kit de recuperación fuera del servidor"
     El kit contiene el secreto que descifra tus copias. Guárdalo en un lugar seguro y separado del servidor (un gestor de contraseñas, una copia impresa en una caja fuerte). Si pierdes tanto BombVault como `APP_KEY` sin kit de recuperación, tus copias cifradas no se pueden recuperar.
 
+### Si no tienes el kit a mano
+
+La contraseña no se guarda en ningún sitio, se **calcula** a partir de la `APP_KEY`. Con la clave y una shell puedes reproducirla tú mismo:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Es un HMAC-SHA256 sobre la cadena fija `bombvault:restic-repo`, con los bytes crudos de la `APP_KEY` hexadecimal como clave, impreso como 64 caracteres hexadecimales en minúscula. El mismo valor está en el kit, como contraseña restic derivada; esto es para el día en que el kit esté en otro sitio que tú.
+
+!!! warning "Para un repositorio recibido, usa la clave de la instancia EMISORA"
+    Un repositorio que llegó aquí por replicación fuera de sede lo creó la máquina que lo envió, con **su** `APP_KEY`. Derivar desde la clave de la máquina receptora produce una contraseña que restic rechaza, lo que se lee exactamente como un repositorio corrupto sin serlo. Esa es la razón habitual de que `restic check` sobre un repositorio recibido pida la contraseña una y otra vez.
+
 Como las definiciones de recuperación viven **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), una carpeta de repo copiada es totalmente autocontenida, de modo que el kit más el repo es todo lo que una restauración desde cero necesita.

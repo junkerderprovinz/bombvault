@@ -230,6 +230,8 @@ const is: Partial<Translations> = {
   "settings.encryptionLabel": "Lykilorð",
   "settings.encryptionOn": "Virkt (lykilorð fengið úr APP_KEY)",
   "settings.encryptionOff": "Óvirkt (ekkert lykilorð)",
+  "settings.encryptionPasswordWhere":
+    "Þetta lykilorð slærð þú aldrei inn: BombVault leiðir það af APP_KEY í hvert sinn. Gildið sjálft er í endurheimtarpakkanum þínum, skráð sem leitt restic-lykilorð, og það er einmitt það sem þarf til að keyra restic handvirkt á safn.",
   "settings.encryptionHint": "Dulkóðunin er ákveðin fyrir hvert safn þegar það er búið til, svo þessi stilling ræður aðeins hvernig NÝTT safn verður til. Fyrir safn sem er þegar til les BombVault haminn beint af safninu. Sjá Endurheimt-síðuna. Að breyta þessu gagnvart safni sem er til gerir aðeins að verkum að restic getur ekki opnað það.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const is: Partial<Translations> = {
   "receiver.checkOk": "Athugun í lagi",
   "receiver.checkFailed": "Athugun mistókst",
   "receiver.checkNever": "Ekki athugað ennþá",
+  "receiver.checkFailedHelp":
+    "BombVault les aðeins móttekið safn og gerir því ekki við það fyrir þig. Viljir þú gera við það sjálf, keyrðu restic á staðsetninguna hér að ofan með lykilorðinu sem leitt er af APP_KEY SENDANDA tilviksins, sem er í endurheimtarpakka ÞESS tilviks en ekki þessarar vélar. Prófaðu fyrst `restic repair index` og svo `restic repair snapshots` ef skyndimyndir eru enn ólæsilegar.",
   "receiver.lastChecked": "Síðast athugað {time}",
   "receiver.checkNow": "Athuga núna",
   "receiver.deepCheck": "Djúp athugun (les gögn)",

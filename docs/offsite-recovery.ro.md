@@ -134,4 +134,19 @@ Un clic descarcă **cheia principală**, **parola restic derivată** și **loca�
 !!! danger "Stochează kitul de recuperare în afara serverului"
     Kitul conține secretul care decriptează backupurile tale. Păstrează-l undeva în siguranță și separat de server (un manager de parole, o copie printată într-un seif). Dacă pierzi atât BombVault cât și `APP_KEY` fără niciun kit de recuperare, backupurile tale criptate nu pot fi recuperate.
 
+### Când kitul nu e la îndemână
+
+Parola nu este stocată nicăieri, se **calculează** din `APP_KEY`. Cu cheia și un shell o poți reproduce singur:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Este HMAC-SHA256 peste șirul fix `bombvault:restic-repo`, cu octeții bruți ai `APP_KEY` hexazecimal drept cheie, tipărit ca 64 de caractere hexazecimale mici. Aceeași valoare se află în kit, ca parolă restic derivată; secțiunea asta e pentru ziua în care kitul e în altă parte decât tine.
+
+!!! warning "Pentru un depozit primit, folosește cheia instanței EXPEDITOARE"
+    Un depozit ajuns aici prin replicare în afara sediului a fost creat de mașina care l-a trimis, cu `APP_KEY`-ul **ei**. Derivarea din cheia mașinii care primește dă o parolă pe care restic o refuză, ceea ce arată exact ca un depozit corupt fără să fie. Acesta e motivul obișnuit pentru care `restic check` pe un depozit primit cere parola iar și iar.
+
 Deoarece definițiile de recuperare se află **în interiorul** fiecărui depozit (`<repo>/def`, `<repo>/vm-def`), un folder de depozit copiat este complet autonom, așa că kitul plus depozitul este tot ce are nevoie o restaurare bare-metal.

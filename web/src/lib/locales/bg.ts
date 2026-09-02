@@ -230,6 +230,8 @@ const bg: Partial<Translations> = {
   "settings.encryptionLabel": "Парола",
   "settings.encryptionOn": "Активирано (парола, извлечена от APP_KEY)",
   "settings.encryptionOff": "Деактивирано (без парола)",
+  "settings.encryptionPasswordWhere":
+    "Тази парола никога не я въвеждате: BombVault я извежда от APP_KEY при всяко извикване. Самата стойност е в комплекта ви за възстановяване като изведената restic парола и точно тя ви трябва, за да пуснете restic ръчно срещу хранилище.",
   "settings.encryptionHint": "Криптирането се фиксира за всяко хранилище при създаването му, така че тази настройка решава само как се създава НОВО хранилище. За вече съществуващо BombVault чете режима от самото хранилище — виж страницата Възстановяване. Промяната ѝ срещу съществуващо хранилище просто пречи на restic да го отвори.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const bg: Partial<Translations> = {
   "receiver.checkOk": "Проверката е успешна",
   "receiver.checkFailed": "Проверката е неуспешна",
   "receiver.checkNever": "Все още не е проверено",
+  "receiver.checkFailedHelp":
+    "BombVault само чете получено хранилище, така че няма да го поправи вместо вас. За да го поправите сами, стартирайте restic срещу пътя по-горе с паролата, изведена от APP_KEY на ИЗПРАЩАЩИЯ екземпляр, която е в комплекта за възстановяване на ОНЗИ екземпляр, а не на тази машина. Опитайте първо `restic repair index`, после `restic repair snapshots`, ако снимките още не се четат.",
   "receiver.lastChecked": "Последно проверено {time}",
   "receiver.checkNow": "Провери сега",
   "receiver.deepCheck": "Дълбока проверка (чете данни)",

@@ -134,4 +134,19 @@ Egy kattintás letölti a **mesterkulcsot**, a **származtatott restic jelszót*
 !!! danger "Tárold a helyreállítási csomagot a szerveren kívül"
     A csomag azt a titkot tartalmazza, amely visszafejti a mentéseidet. Tartsd biztonságos, a szervertől elkülönített helyen (egy jelszókezelő, egy nyomtatott példány egy széfben). Ha elveszíted a BombVaultot és az `APP_KEY`-t is, helyreállítási csomag nélkül, a titkosított mentéseid nem állíthatók helyre.
 
+### Ha a csomag épp nincs kéznél
+
+A jelszó sehol nincs tárolva, az `APP_KEY` értékéből **számolódik**. A kulccsal és egy shellel tehát magad is előállíthatod:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Ez HMAC-SHA256 a rögzített `bombvault:restic-repo` karakterlánc fölött, kulcsként a hexadecimális `APP_KEY` nyers bájtjaival, kimenetként 64 kisbetűs hexadecimális karakter. Ugyanez az érték szerepel a csomagban származtatott restic jelszóként; ez a szakasz arra a napra való, amikor a csomag máshol van, mint te.
+
+!!! warning "Fogadott tárolónál a KÜLDŐ példány kulcsát használd"
+    Az a tároló, amely külső telephelyi replikációval érkezett ide, a küldő gépen jött létre, annak **saját** `APP_KEY` kulcsával. A fogadó gép kulcsából származtatva olyan jelszót kapsz, amelyet a restic elutasít, és ez pontosan úgy néz ki, mint egy sérült tároló, holott nem az. Ez a szokásos oka annak, hogy a `restic check` egy fogadott tárolón újra és újra jelszót kér.
+
 Mivel a helyreállítási definíciók minden tárolón **belül** élnek (`<repo>/def`, `<repo>/vm-def`), egy másolt tárolómappa teljesen önálló, így a csomag plusz a tároló minden, amire egy bare-metal visszaállításnak szüksége van.

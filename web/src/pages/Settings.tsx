@@ -3682,7 +3682,14 @@ export function SettingsPage() {
                 ? t("settings.encryptionOn")
                 : t("settings.encryptionOff")
             }
-            hint={t("settings.encryptionHint")}
+            // The label says "password derived from APP_KEY" and used to stop
+            // there, which reads as an explanation and lands as a riddle: a
+            // reporter on the support forum went looking for that password to
+            // run restic by hand, could not find it, and only worked out that
+            // it sits in the recovery kit after a detour through a container
+            // shell. The kit is named here now, at the one place that raises
+            // the question.
+            hint={`${t("settings.encryptionHint")} ${t("settings.encryptionPasswordWhere")}`}
             checked={settings.encryptionEnabled}
             onChange={(v) => void autoSaveField("encryptionEnabled", v, setEncSaveState, setEncSaveError)}
             disabled={mergedFieldBusy.encryptionEnabled}

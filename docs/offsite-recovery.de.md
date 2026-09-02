@@ -134,4 +134,19 @@ Ein Klick lädt den **Master-Key**, das **abgeleitete restic-Passwort** und die 
 !!! danger "Bewahre das Recovery-Kit off-box auf"
     Das Kit enthält das Geheimnis, das deine Backups entschlüsselt. Bewahre es an einem sicheren Ort getrennt vom Server auf (ein Passwortmanager, eine gedruckte Kopie im Safe). Wenn du sowohl BombVault als auch `APP_KEY` ohne Recovery-Kit verlierst, können deine verschlüsselten Backups nicht wiederhergestellt werden.
 
+### Wenn das Kit gerade nicht zur Hand ist
+
+Das Passwort ist nirgends gespeichert, es wird aus dem `APP_KEY` **berechnet**. Mit dem Schlüssel und einer Shell kannst du es also selbst nachbilden:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Das ist HMAC-SHA256 über die feste Zeichenkette `bombvault:restic-repo`, als Schlüssel die rohen Bytes des hexadezimalen `APP_KEY`, ausgegeben als 64 Hex-Zeichen in Kleinschreibung. Derselbe Wert steht im Kit als abgeleitetes restic-Passwort; das hier ist für den Tag, an dem das Kit woanders liegt als du.
+
+!!! warning "Bei einem empfangenen Repository den Schlüssel der SENDENDEN Instanz nehmen"
+    Ein Repository, das über die Off-site-Replikation hier gelandet ist, wurde von der sendenden Maschine mit **deren** `APP_KEY` angelegt. Leitest du aus dem Schlüssel der empfangenden Kiste ab, kommt ein Passwort heraus, das restic ablehnt. Das liest sich genau wie ein kaputtes Repository und ist keines. Das ist der übliche Grund, warum `restic check` auf einem empfangenen Repo immer wieder nach dem Passwort fragt.
+
 Weil Recovery-Definitionen **in** jedem Repo liegen (`<repo>/def`, `<repo>/vm-def`), ist ein kopierter Repo-Ordner vollständig eigenständig, sodass das Kit plus das Repo alles ist, was eine Bare-Metal-Wiederherstellung braucht.

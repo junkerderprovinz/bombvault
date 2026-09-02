@@ -134,4 +134,19 @@ Jedno kliknutí stáhne **hlavní klíč**, **odvozené heslo restic** a **přes
 !!! danger "Uložte sadu pro obnovu mimo server"
     Sada obsahuje tajemství, které dešifruje vaše zálohy. Uchovejte ji na bezpečném místě odděleně od serveru (správce hesel, tištěná kopie v trezoru). Pokud ztratíte jak BombVault, tak `APP_KEY` bez sady pro obnovu, vaše šifrované zálohy nelze obnovit.
 
+### Když sada není po ruce
+
+Heslo není nikde uloženo, **počítá se** z `APP_KEY`. S klíčem a shellem si je tedy dokážete odvodit sami:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Je to HMAC-SHA256 nad pevným řetězcem `bombvault:restic-repo`, klíčem jsou syrové bajty šestnáctkového `APP_KEY`, výstup je 64 malých šestnáctkových znaků. Stejná hodnota je v sadě jako odvozené heslo restic; tohle je pro den, kdy sada leží jinde než vy.
+
+!!! warning "U přijatého úložiště použijte klíč ODESÍLAJÍCÍ instance"
+    Úložiště, které sem přišlo replikací mimo lokalitu, vytvořil stroj, který je odeslal, svým **vlastním** `APP_KEY`. Odvození z klíče přijímajícího stroje dá heslo, které restic odmítne, což vypadá přesně jako poškozené úložiště, aniž by jím bylo. To je obvyklý důvod, proč se `restic check` na přijatém úložišti stále dokola ptá na heslo.
+
 Protože definice pro obnovu žijí **uvnitř** každého repozitáře (`<repo>/def`, `<repo>/vm-def`), je zkopírovaná složka repozitáře plně soběstačná, takže sada plus repozitář jsou vším, co obnova na holém železe potřebuje.

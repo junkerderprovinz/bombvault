@@ -159,6 +159,8 @@ const ro: Partial<Translations> = {
   "settings.encryptionLabel": "Parolă",
   "settings.encryptionOn": "Activată (parolă derivată din APP_KEY)",
   "settings.encryptionOff": "Dezactivată (fără parolă)",
+  "settings.encryptionPasswordWhere":
+    "Parola aceasta nu o tastezi niciodată: BombVault o derivă din APP_KEY la fiecare apel. Valoarea în sine este în kitul tău de recuperare, ca parolă restic derivată, și exact ea îți trebuie ca să rulezi restic manual pe un depozit.",
   "settings.encryptionHint":
     "Criptarea este fixată pentru fiecare depozit la crearea lui, deci această setare decide doar pentru un depozit NOU. Pentru unul care există deja, BombVault citește modul chiar de pe depozit. Vezi pagina Recuperare. Schimbarea ei în dreptul unui depozit existent doar împiedică restic să îl deschidă.",
   "settings.paths": "Căi de copiere de rezervă",
@@ -1332,6 +1334,8 @@ const ro: Partial<Translations> = {
   "receiver.checkOk": "Verificare OK",
   "receiver.checkFailed": "Verificare eșuată",
   "receiver.checkNever": "Neverificat încă",
+  "receiver.checkFailedHelp":
+    "BombVault doar citește un depozit primit, deci nu îl va repara în locul tău. Ca să îl repari singur, rulează restic pe locația de mai sus cu parola derivată din APP_KEY al instanței EXPEDITOARE, care se află în kitul de recuperare al ACELEI instanțe, nu al acestei mașini. Încearcă întâi `restic repair index`, apoi `restic repair snapshots` dacă instantaneele rămân ilizibile.",
   "receiver.lastChecked": "Verificat ultima dată {time}",
   "receiver.checkNow": "Verifică acum",
   "receiver.deepCheck": "Verificare profundă (citește datele)",

@@ -134,4 +134,19 @@ Dette er den brik, der gør katastrofegendannelse mulig, selv når der ikke er n
 !!! danger "Opbevar gendannelseskittet uden for serveren"
     Kittet indeholder hemmeligheden, der dekrypterer dine sikkerhedskopier. Hold det et sikkert sted adskilt fra serveren (en adgangskodemanager, en printet kopi i en boks). Hvis du mister både BombVault og `APP_KEY` uden noget gendannelseskit, kan dine krypterede sikkerhedskopier ikke gendannes.
 
+### Når sættet ikke er ved hånden
+
+Adgangskoden gemmes ingen steder, den **beregnes** ud fra `APP_KEY`. Med nøglen og en shell kan du altså genskabe den selv:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Det er HMAC-SHA256 over den faste streng `bombvault:restic-repo`, med de rå bytes i den hexadecimale `APP_KEY` som nøgle, skrevet ud som 64 små hexadecimale tegn. Samme værdi står i sættet som den udledte restic-adgangskode; dette er til den dag, hvor sættet ligger et andet sted end dig.
+
+!!! warning "Brug den AFSENDENDE instans' nøgle ved et modtaget arkiv"
+    Et arkiv, der er landet her via off-site-replikering, blev oprettet af maskinen, der sendte det, med **dens** `APP_KEY`. Udleder du fra den modtagende maskines nøgle, får du en adgangskode, restic afviser, hvilket ligner et ødelagt arkiv til forveksling uden at være det. Det er den sædvanlige grund til, at `restic check` på et modtaget arkiv bliver ved med at spørge om adgangskoden.
+
 Fordi gendannelsesdefinitioner lever **inde** i hvert repo (`<repo>/def`, `<repo>/vm-def`), er en kopieret repo-mappe fuldt selvstændig, så kittet plus repoet er alt, hvad en bare-metal-gendannelse har brug for.

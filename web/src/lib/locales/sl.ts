@@ -230,6 +230,8 @@ const sl: Partial<Translations> = {
   "settings.encryptionLabel": "Geslo",
   "settings.encryptionOn": "Omogočeno (geslo izpeljano iz APP_KEY)",
   "settings.encryptionOff": "Onemogočeno (brez gesla)",
+  "settings.encryptionPasswordWhere":
+    "Tega gesla nikoli ne vnašate: BombVault ga ob vsakem klicu izpelje iz APP_KEY. Sama vrednost je v vašem kompletu za obnovitev kot izpeljano geslo restic in prav to potrebujete za ročni zagon restic nad shrambo.",
   "settings.encryptionHint": "Šifriranje se za repozitorij določi ob njegovem nastanku, zato ta nastavitev odloča le o NOVEM repozitoriju. Pri že obstoječem BombVault način prebere kar iz repozitorija. Glej stran Obnovitev. Sprememba nasproti obstoječemu repozitoriju povzroči le, da ga restic ne more odpreti.",
 
   // Encryption-key recovery kit
@@ -991,6 +993,8 @@ const sl: Partial<Translations> = {
   "receiver.checkOk": "Preverjanje v redu",
   "receiver.checkFailed": "Preverjanje ni uspelo",
   "receiver.checkNever": "Še ni preverjeno",
+  "receiver.checkFailedHelp":
+    "BombVault prejeto shrambo samo bere, zato je namesto vas ne bo popravil. Če jo želite popraviti sami, zaženite restic nad zgornjo lokacijo z geslom, izpeljanim iz APP_KEY POŠILJAJOČE instance, ki je v kompletu za obnovitev TISTE instance in ne tega računalnika. Najprej poskusite `restic repair index`, nato `restic repair snapshots`, če posnetki ostanejo neberljivi.",
   "receiver.lastChecked": "Nazadnje preverjeno {time}",
   "receiver.checkNow": "Preveri zdaj",
   "receiver.deepCheck": "Globinsko preverjanje (branje podatkov)",

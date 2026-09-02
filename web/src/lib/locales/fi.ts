@@ -160,6 +160,8 @@ const fi: Partial<Translations> = {
   "settings.encryptionLabel": "Salasana",
   "settings.encryptionOn": "Käytössä (salasana johdettu APP_KEY:stä)",
   "settings.encryptionOff": "Ei käytössä (ei salasanaa)",
+  "settings.encryptionPasswordWhere":
+    "Tätä salasanaa et koskaan kirjoita: BombVault johtaa sen APP_KEY-avaimesta jokaisella kutsulla. Arvo itsessään on palautuspaketissasi johdettuna restic-salasanana, ja juuri sitä tarvitset ajaaksesi resticiä käsin arkistoa vasten.",
   "settings.encryptionHint":
     "Salaus lukitaan varastokohtaisesti sen luontihetkellä, joten tämä asetus ratkaisee vain UUDEN varaston. Jo olemassa olevan kohdalla BombVault lukee tilan suoraan varastosta. Katso Palautus-sivu. Tämän muuttaminen olemassa olevaa varastoa vasten estää vain resticia avaamasta sitä.",
   "settings.paths": "Varmuuskopiopolut",
@@ -1329,6 +1331,8 @@ const fi: Partial<Translations> = {
   "receiver.checkOk": "Tarkistus OK",
   "receiver.checkFailed": "Tarkistus epäonnistui",
   "receiver.checkNever": "Ei vielä tarkistettu",
+  "receiver.checkFailedHelp":
+    "BombVault vain lukee vastaanotettua arkistoa, joten se ei korjaa tätä puolestasi. Jos haluat korjata sen itse, aja restic yllä olevaa sijaintia vasten salasanalla, joka on johdettu LÄHETTÄVÄN instanssin APP_KEY-avaimesta. Se on kyseisen instanssin palautuspaketissa, ei tämän koneen. Kokeile ensin `restic repair index` ja sitten `restic repair snapshots`, jos tilannevedokset eivät vieläkään aukea.",
   "receiver.lastChecked": "Tarkistettu {time}",
   "receiver.checkNow": "Tarkista nyt",
   "receiver.deepCheck": "Syvätarkistus (lue data)",

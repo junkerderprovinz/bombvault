@@ -160,6 +160,8 @@ const cs: Partial<Translations> = {
   "settings.encryptionLabel": "Heslo",
   "settings.encryptionOn": "Povoleno (heslo odvozeno z APP_KEY)",
   "settings.encryptionOff": "Vypnuto (bez hesla)",
+  "settings.encryptionPasswordWhere":
+    "Toto heslo nikdy nezadáváte: BombVault je při každém volání odvozuje z APP_KEY. Samotná hodnota je ve vaší sadě pro obnovu jako odvozené heslo restic a právě tu potřebujete, chcete-li restic spustit nad úložištěm ručně.",
   "settings.encryptionHint":
     "Šifrování je pro repozitář dané při jeho vytvoření, takže toto nastavení rozhoduje jen o NOVÉM repozitáři. U už existujícího si BombVault režim přečte přímo z repozitáře. Viz stránka Obnova. Změna proti existujícímu repozitáři jen způsobí, že ho restic neotevře.",
   "settings.paths": "Zálohovací cesty",
@@ -1327,6 +1329,8 @@ const cs: Partial<Translations> = {
   "receiver.checkOk": "Kontrola OK",
   "receiver.checkFailed": "Kontrola selhala",
   "receiver.checkNever": "Zatím nezkontrolováno",
+  "receiver.checkFailedHelp":
+    "BombVault přijaté úložiště pouze čte, takže je za vás neopraví. Chcete-li je opravit sami, spusťte restic na výše uvedené umístění s heslem odvozeným z APP_KEY ODESÍLAJÍCÍ instance, které je v sadě pro obnovu TÉ instance, nikoli tohoto stroje. Zkuste nejprve `restic repair index` a poté `restic repair snapshots`, pokud snímky zůstanou nečitelné.",
   "receiver.lastChecked": "Zkontrolováno {time}",
   "receiver.checkNow": "Zkontrolovat nyní",
   "receiver.deepCheck": "Hloubková kontrola (číst data)",

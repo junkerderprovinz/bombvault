@@ -160,6 +160,8 @@ const th: Partial<Translations> = {
   "settings.encryptionLabel": "รหัสผ่าน",
   "settings.encryptionOn": "เปิดใช้งาน (รหัสผ่านนำมาจาก APP_KEY)",
   "settings.encryptionOff": "ปิดใช้งาน (ไม่มีรหัสผ่าน)",
+  "settings.encryptionPasswordWhere":
+    "คุณไม่ต้องพิมพ์รหัสผ่านนี้เลย BombVault อนุมานมันจาก APP_KEY ทุกครั้งที่เรียกใช้ ตัวค่าอยู่ในชุดกู้คืนของคุณ ระบุไว้เป็นรหัสผ่าน restic ที่อนุมานได้ และนั่นคือสิ่งที่ต้องใช้เมื่อจะรัน restic กับที่เก็บด้วยมือ",
   "settings.encryptionHint":
     "การเข้ารหัสถูกกำหนดตายตัวต่อที่เก็บข้อมูลตั้งแต่ตอนสร้าง การตั้งค่านี้จึงกำหนดเฉพาะวิธีสร้างที่เก็บข้อมูล “ใหม่” เท่านั้น สำหรับที่เก็บข้อมูลที่มีอยู่แล้ว BombVault จะอ่านโหมดจากตัวที่เก็บข้อมูลเอง ดูหน้ากู้คืน การเปลี่ยนค่านี้กับที่เก็บข้อมูลที่มีอยู่ จะทำให้ restic เปิดมันไม่ได้เท่านั้น",
   "settings.paths": "พาธการสำรองข้อมูล",
@@ -1332,6 +1334,8 @@ const th: Partial<Translations> = {
   "receiver.checkOk": "ตรวจสอบผ่าน",
   "receiver.checkFailed": "ตรวจสอบล้มเหลว",
   "receiver.checkNever": "ยังไม่ได้ตรวจสอบ",
+  "receiver.checkFailedHelp":
+    "BombVault อ่านที่เก็บที่รับมาเท่านั้น จึงจะไม่ซ่อมให้คุณ หากต้องการซ่อมเอง ให้รัน restic กับตำแหน่งด้านบน โดยรหัสผ่านมาจากการอนุมานจาก APP_KEY ของอินสแตนซ์ฝั่งส่ง ซึ่งอยู่ในชุดกู้คืนของอินสแตนซ์นั้น ไม่ใช่ของเครื่องนี้ ลอง `restic repair index` ก่อน แล้วจึง `restic repair snapshots` หากสแนปช็อตยังอ่านไม่ได้",
   "receiver.lastChecked": "ตรวจสอบล่าสุด {time}",
   "receiver.checkNow": "ตรวจสอบทันที",
   "receiver.deepCheck": "ตรวจสอบเชิงลึก (อ่านข้อมูล)",

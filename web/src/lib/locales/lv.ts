@@ -230,6 +230,8 @@ const lv: Partial<Translations> = {
   "settings.encryptionLabel": "Parole",
   "settings.encryptionOn": "Iespējota (parole iegūta no APP_KEY)",
   "settings.encryptionOff": "Atspējota (bez paroles)",
+  "settings.encryptionPasswordWhere":
+    "Šo paroli jūs nekad neievadāt: BombVault to katrā izsaukumā atvasina no APP_KEY. Pati vērtība ir jūsu atkopšanas komplektā kā atvasinātā restic parole, un tieši tā ir vajadzīga, lai restic palaistu pret krātuvi manuāli.",
   "settings.encryptionHint": "Šifrēšana krātuvei tiek noteikta tās izveides brīdī, tāpēc šis iestatījums nosaka tikai to, kā tiek izveidota JAUNA krātuve. Jau esošai krātuvei BombVault režīmu nolasa no pašas krātuves. Skati Atjaunošanas lapu. Mainot to esošai krātuvei, restic to vienkārši vairs nevarēs atvērt.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const lv: Partial<Translations> = {
   "receiver.checkOk": "Pārbaude veiksmīga",
   "receiver.checkFailed": "Pārbaude neizdevās",
   "receiver.checkNever": "Vēl nav pārbaudīts",
+  "receiver.checkFailedHelp":
+    "BombVault saņemto krātuvi tikai lasa, tāpēc to jūsu vietā nelabos. Ja vēlaties labot pats, palaidiet restic pret iepriekš norādīto atrašanās vietu ar paroli, kas atvasināta no SŪTĪTĀJA instances APP_KEY un atrodas TĀS instances atkopšanas komplektā, nevis šīs mašīnas. Vispirms izmēģiniet `restic repair index`, pēc tam `restic repair snapshots`, ja momentuzņēmumi joprojām nav lasāmi.",
   "receiver.lastChecked": "Pēdējo reizi pārbaudīts {time}",
   "receiver.checkNow": "Pārbaudīt tagad",
   "receiver.deepCheck": "Padziļināta pārbaude (nolasa datus)",

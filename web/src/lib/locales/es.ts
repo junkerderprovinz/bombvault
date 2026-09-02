@@ -160,6 +160,8 @@ const es: Partial<Translations> = {
   "settings.encryptionLabel": "Contraseña",
   "settings.encryptionOn": "Habilitado (contraseña derivada de APP_KEY)",
   "settings.encryptionOff": "Deshabilitado (sin contraseña)",
+  "settings.encryptionPasswordWhere":
+    "Nunca escribes esa contraseña: BombVault la deriva de la APP_KEY en cada llamada. El valor está en tu kit de recuperación, como la contraseña restic derivada, y es lo que necesitas para ejecutar restic a mano contra un repositorio.",
   "settings.encryptionHint":
     "El cifrado se fija por repositorio al crearlo, así que este ajuste solo decide cómo se crea un repositorio NUEVO. Para uno que ya existe, BombVault lee el modo del propio repositorio: mira la página de Recuperación. Cambiarlo frente a un repositorio existente solo impide que restic lo abra.",
   "settings.paths": "Rutas de copia",
@@ -1327,6 +1329,8 @@ const es: Partial<Translations> = {
   "receiver.checkOk": "Comprobación OK",
   "receiver.checkFailed": "Comprobación fallida",
   "receiver.checkNever": "Aún sin comprobar",
+  "receiver.checkFailedHelp":
+    "BombVault solo lee un repositorio recibido, así que no lo reparará por ti. Para repararlo tú mismo, ejecuta restic contra la ubicación de arriba con la contraseña derivada de la APP_KEY de la instancia EMISORA, que está en el kit de recuperación de ESA instancia, no en el de esta máquina. Prueba primero `restic repair index` y luego `restic repair snapshots` si algún snapshot sigue ilegible.",
   "receiver.lastChecked": "Comprobado {time}",
   "receiver.checkNow": "Comprobar ahora",
   "receiver.deepCheck": "Comprobación profunda (leer datos)",

@@ -134,4 +134,19 @@ Ett klikk laster ned **hovednøkkelen**, det **utledede restic-passordet** og de
 !!! danger "Oppbevar gjenopprettingssettet bort fra serveren"
     Settet inneholder hemmeligheten som dekrypterer sikkerhetskopiene dine. Oppbevar det et trygt sted og adskilt fra serveren (en passordbehandler, en utskrevet kopi i et safe). Mister du både BombVault og `APP_KEY` uten et gjenopprettingssett, kan ikke de krypterte sikkerhetskopiene dine gjenopprettes.
 
+### Når settet ikke er for hånden
+
+Passordet lagres ingen steder, det **beregnes** ut fra `APP_KEY`. Med nøkkelen og et skall kan du altså gjenskape det selv:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Det er HMAC-SHA256 over den faste strengen `bombvault:restic-repo`, med de rå bytene i den heksadesimale `APP_KEY` som nøkkel, skrevet ut som 64 små heksadesimale tegn. Samme verdi står i settet som det utledede restic-passordet; dette er for dagen da settet ligger et annet sted enn deg.
+
+!!! warning "For et mottatt arkiv, bruk den SENDENDE instansens nøkkel"
+    Et arkiv som havnet her via off-site-replikering, ble opprettet av maskinen som sendte det, med **dens** `APP_KEY`. Å utlede fra den mottakende maskinens nøkkel gir et passord restic avviser, noe som ser nøyaktig ut som et ødelagt arkiv uten å være det. Det er den vanlige grunnen til at `restic check` på et mottatt arkiv spør om passordet igjen og igjen.
+
 Fordi gjenopprettingsdefinisjoner ligger **inne i** hvert repo (`<repo>/def`, `<repo>/vm-def`), er en kopiert repo-mappe fullstendig selvstendig, så settet pluss repoet er alt en bare-metal-gjenoppretting trenger.

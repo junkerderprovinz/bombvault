@@ -160,6 +160,8 @@ const tr: Partial<Translations> = {
   "settings.encryptionLabel": "Parola",
   "settings.encryptionOn": "Etkin (parola APP_KEY'den türetildi)",
   "settings.encryptionOff": "Devre dışı (parola yok)",
+  "settings.encryptionPasswordWhere":
+    "Bu parolayı hiçbir zaman yazmazsınız: BombVault her çağrıda APP_KEY değerinden türetir. Değerin kendisi kurtarma setinizde, türetilmiş restic parolası olarak durur ve bir depoya elle restic çalıştırmak için gereken tam olarak budur.",
   "settings.encryptionHint":
     "Şifreleme, depo oluşturulurken sabitlenir; bu nedenle bu ayar yalnızca YENİ bir deponun nasıl oluşturulacağını belirler. Zaten var olan bir depo için BombVault kipi doğrudan deponun kendisinden okur. Kurtarma sayfasına bak. Var olan bir depoya karşı bunu değiştirmek yalnızca restic'in onu açamamasına yol açar.",
   "settings.paths": "Yedekleme Yolları",
@@ -1329,6 +1331,8 @@ const tr: Partial<Translations> = {
   "receiver.checkOk": "Denetim OK",
   "receiver.checkFailed": "Denetim başarısız",
   "receiver.checkNever": "Henüz denetlenmedi",
+  "receiver.checkFailedHelp":
+    "BombVault alınan bir depoyu yalnızca okur, yani onu sizin yerinize onarmaz. Kendiniz onarmak isterseniz, yukarıdaki konuma karşı restic çalıştırın; parola GÖNDEREN örneğin APP_KEY değerinden türetilmiştir ve bu makinenin değil, O örneğin kurtarma setinde bulunur. Önce `restic repair index`, anlık görüntüler hâlâ okunamıyorsa `restic repair snapshots` deneyin.",
   "receiver.lastChecked": "Son denetim {time}",
   "receiver.checkNow": "Şimdi denetle",
   "receiver.deepCheck": "Derin denetim (veri oku)",

@@ -230,6 +230,8 @@ const hi: Partial<Translations> = {
   "settings.encryptionLabel": "पासवर्ड",
   "settings.encryptionOn": "सक्षम (APP_KEY से बना पासवर्ड)",
   "settings.encryptionOff": "अक्षम (कोई पासवर्ड नहीं)",
+  "settings.encryptionPasswordWhere":
+    "यह पासवर्ड आप कभी टाइप नहीं करते: BombVault हर कॉल पर इसे APP_KEY से व्युत्पन्न करता है। मान स्वयं आपकी रिकवरी किट में व्युत्पन्न restic पासवर्ड के रूप में है, और रिपॉज़िटरी पर restic को हाथ से चलाने के लिए यही चाहिए।",
   "settings.encryptionHint": "एन्क्रिप्शन हर रिपॉज़िटरी के लिए उसके बनने के समय तय हो जाता है, इसलिए यह सेटिंग केवल यह तय करती है कि नई रिपॉज़िटरी कैसे बनेगी। जो पहले से मौजूद है, उसके लिए BombVault मोड सीधे रिपॉज़िटरी से पढ़ लेता है। पुनर्प्राप्ति पृष्ठ देखें। मौजूदा रिपॉज़िटरी के विरुद्ध इसे बदलने से बस restic उसे खोल नहीं पाएगा।",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const hi: Partial<Translations> = {
   "receiver.checkOk": "जाँच ठीक रही",
   "receiver.checkFailed": "जाँच विफल हुई",
   "receiver.checkNever": "अभी तक नहीं जाँचा गया",
+  "receiver.checkFailedHelp":
+    "BombVault प्राप्त रिपॉज़िटरी को केवल पढ़ता है, इसलिए वह इसे आपके लिए ठीक नहीं करेगा। स्वयं ठीक करने के लिए ऊपर दिए स्थान पर restic चलाएँ; पासवर्ड भेजने वाले इंस्टेंस की APP_KEY से व्युत्पन्न होता है और उसी इंस्टेंस की रिकवरी किट में होता है, इस मशीन की नहीं। पहले `restic repair index` आज़माएँ, फिर `restic repair snapshots` यदि स्नैपशॉट अब भी न पढ़े जाएँ।",
   "receiver.lastChecked": "आख़िरी जाँच {time}",
   "receiver.checkNow": "अभी जाँचें",
   "receiver.deepCheck": "गहरी जाँच (डेटा पढ़ता है)",

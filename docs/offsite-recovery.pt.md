@@ -134,4 +134,19 @@ Um clique transfere a **chave mestra**, a **palavra-passe restic derivada**, e a
 !!! danger "Guarde o kit de recuperação fora do servidor"
     O kit contém o segredo que decifra os seus backups. Guarde-o num local seguro e separado do servidor (um gestor de palavras-passe, uma cópia impressa num cofre). Se perder ambos o BombVault e a `APP_KEY` sem kit de recuperação, os seus backups encriptados não podem ser recuperados.
 
+### Se não tiveres o kit à mão
+
+A palavra-passe não está guardada em lado nenhum, é **calculada** a partir da `APP_KEY`. Com a chave e uma shell podes reproduzi-la tu próprio:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+É um HMAC-SHA256 sobre a cadeia fixa `bombvault:restic-repo`, com os bytes crus da `APP_KEY` hexadecimal como chave, impresso como 64 caracteres hexadecimais minúsculos. O mesmo valor está no kit, como palavra-passe restic derivada; isto serve para o dia em que o kit esteja noutro sítio que não contigo.
+
+!!! warning "Para um repositório recebido, usa a chave da instância REMETENTE"
+    Um repositório que chegou aqui por replicação fora do local foi criado pela máquina que o enviou, com a **sua** `APP_KEY`. Derivar a partir da chave da máquina recetora dá uma palavra-passe que o restic recusa, o que se lê exatamente como um repositório corrompido sem o ser. É a razão habitual para o `restic check` num repositório recebido pedir a palavra-passe vezes sem conta.
+
 Como as definições de recuperação vivem **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), uma pasta de repo copiada é totalmente autossuficiente, por isso o kit mais o repo é tudo o que um restauro em bare-metal precisa.

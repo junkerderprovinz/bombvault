@@ -230,6 +230,8 @@ const lt: Partial<Translations> = {
   "settings.encryptionLabel": "Slaptažodis",
   "settings.encryptionOn": "Įjungta (slaptažodis gaunamas iš APP_KEY)",
   "settings.encryptionOff": "Išjungta (be slaptažodžio)",
+  "settings.encryptionPasswordWhere":
+    "Šio slaptažodžio niekada nerašote: BombVault jį išveda iš APP_KEY kiekvieno iškvietimo metu. Pati reikšmė yra jūsų atkūrimo rinkinyje kaip išvestas restic slaptažodis, ir būtent jo reikia norint paleisti restic rankiniu būdu prieš saugyklą.",
   "settings.encryptionHint": "Šifravimas saugyklai nustatomas ją kuriant, todėl šis nustatymas lemia tik NAUJOS saugyklos sukūrimą. Jau esamai saugyklai BombVault režimą nuskaito iš pačios saugyklos. Žr. Atkūrimo puslapį. Pakeitus tai esamos saugyklos atžvilgiu, restic tiesiog nebegalės jos atverti.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const lt: Partial<Translations> = {
   "receiver.checkOk": "Patikra sėkminga",
   "receiver.checkFailed": "Patikra nepavyko",
   "receiver.checkNever": "Dar netikrinta",
+  "receiver.checkFailedHelp":
+    "BombVault gautą saugyklą tik skaito, todėl jos už jus nesutvarkys. Jei norite pataisyti patys, paleiskite restic prieš aukščiau nurodytą vietą su slaptažodžiu, išvestu iš SIUNČIANČIOS instancijos APP_KEY, kuris yra TOS instancijos atkūrimo rinkinyje, o ne šios mašinos. Pirmiausia pabandykite `restic repair index`, tada `restic repair snapshots`, jei momentinės kopijos vis dar neperskaitomos.",
   "receiver.lastChecked": "Paskutinį kartą patikrinta {time}",
   "receiver.checkNow": "Tikrinti dabar",
   "receiver.deepCheck": "Gilioji patikra (skaito duomenis)",

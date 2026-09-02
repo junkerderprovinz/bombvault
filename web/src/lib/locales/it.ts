@@ -160,6 +160,8 @@ const it: Partial<Translations> = {
   "settings.encryptionLabel": "Password",
   "settings.encryptionOn": "Abilitata (password derivata da APP_KEY)",
   "settings.encryptionOff": "Disabilitata (nessuna password)",
+  "settings.encryptionPasswordWhere":
+    "Questa password non la digiti mai: BombVault la deriva dall'APP_KEY a ogni chiamata. Il valore sta nel tuo kit di ripristino, come password restic derivata, ed è ciò che serve per lanciare restic a mano su un repository.",
   "settings.encryptionHint":
     "La cifratura è fissata per repository al momento della creazione, quindi questa impostazione decide solo per un repository NUOVO. Per uno già esistente BombVault legge la modalità dal repository stesso. Vedi la pagina Ripristino. Cambiarla contro un repository esistente impedisce semplicemente a restic di aprirlo.",
   "settings.paths": "Percorsi di backup",
@@ -1329,6 +1331,8 @@ const it: Partial<Translations> = {
   "receiver.checkOk": "Controllo OK",
   "receiver.checkFailed": "Controllo fallito",
   "receiver.checkNever": "Non ancora controllato",
+  "receiver.checkFailedHelp":
+    "BombVault legge soltanto un repository ricevuto, quindi non lo riparerà al posto tuo. Per ripararlo tu, esegui restic sulla posizione qui sopra con la password derivata dall'APP_KEY dell'istanza MITTENTE, che si trova nel kit di ripristino di QUELL'istanza, non in quello di questa macchina. Prova prima `restic repair index`, poi `restic repair snapshots` se gli snapshot restano illeggibili.",
   "receiver.lastChecked": "Controllato {time}",
   "receiver.checkNow": "Controlla ora",
   "receiver.deepCheck": "Controllo approfondito (leggi dati)",

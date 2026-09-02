@@ -134,4 +134,19 @@ Un clic scarica la **chiave master**, la **password restic derivata** e le **pos
 !!! danger "Conserva il kit di ripristino fuori dal server"
     Il kit contiene il segreto che decifra i tuoi backup. Tienilo in un luogo sicuro e separato dal server (un password manager, una copia stampata in una cassaforte). Se perdi sia BombVault che `APP_KEY` senza kit di ripristino, i tuoi backup cifrati non possono essere recuperati.
 
+### Se il kit non è a portata di mano
+
+La password non è memorizzata da nessuna parte, viene **calcolata** dall'`APP_KEY`. Con la chiave e una shell puoi quindi riprodurla da solo:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+È un HMAC-SHA256 sulla stringa fissa `bombvault:restic-repo`, con i byte grezzi dell'`APP_KEY` esadecimale come chiave, stampato come 64 caratteri esadecimali minuscoli. Lo stesso valore è nel kit, come password restic derivata; questo serve per il giorno in cui il kit si trova altrove rispetto a te.
+
+!!! warning "Per un repository ricevuto, usa la chiave dell'istanza MITTENTE"
+    Un repository arrivato qui tramite replica off-site è stato creato dalla macchina che lo ha inviato, con la **sua** `APP_KEY`. Derivare dalla chiave della macchina ricevente produce una password che restic rifiuta, il che sembra esattamente un repository corrotto senza esserlo. È il motivo abituale per cui `restic check` su un repository ricevuto continua a chiedere la password.
+
 Poiché le definizioni di ripristino risiedono **dentro** ogni repo (`<repo>/def`, `<repo>/vm-def`), una cartella di repo copiata è completamente autonoma, così il kit più il repo sono tutto ciò che serve per un ripristino bare-metal.

@@ -230,6 +230,8 @@ const eu: Partial<Translations> = {
   "settings.encryptionLabel": "Pasahitza",
   "settings.encryptionOn": "Gaituta (APP_KEY-tik eratorritako pasahitza)",
   "settings.encryptionOff": "Desgaituta (pasahitzik gabe)",
+  "settings.encryptionPasswordWhere":
+    "Pasahitz hori ez duzu inoiz idazten: BombVault-ek APP_KEY-tik eratortzen du dei bakoitzean. Balioa bera zure berreskurapen-kitean dago, eratorritako restic pasahitz gisa, eta hori behar duzu restic eskuz exekutatzeko biltegi baten aurka.",
   "settings.encryptionHint": "Zifratzea biltegi bakoitzeko finkatzen da sortzean, beraz ezarpen honek biltegi BERRI bat nola sortzen den baino ez du erabakitzen. Dagoeneko dagoen batentzat, BombVault-ek modua biltegitik bertatik irakurtzen du. Ikus Berreskuratze orria. Hau dagoen biltegi baten aurka aldatzeak restic-ek ireki ez dezan eragiten du, besterik ez.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const eu: Partial<Translations> = {
   "receiver.checkOk": "Egiaztapena ondo",
   "receiver.checkFailed": "Egiaztapenak huts egin du",
   "receiver.checkNever": "Oraindik egiaztatu gabe",
+  "receiver.checkFailedHelp":
+    "BombVault-ek jasotako biltegia irakurri baino ez du egiten, beraz ez dizu konponduko. Zeuk konpondu nahi baduzu, exekutatu restic goiko kokalekuaren aurka BIDALTZAILE instantziaren APP_KEY-tik eratorritako pasahitzarekin; instantzia horren berreskurapen-kitean dago, ez makina honenean. Saiatu lehenik `restic repair index` eta gero `restic repair snapshots` argazkiak irakurgaitz jarraitzen badute.",
   "receiver.lastChecked": "Azken egiaztapena {time}",
   "receiver.checkNow": "Egiaztatu orain",
   "receiver.deepCheck": "Egiaztapen sakona (datuak irakurtzen ditu)",

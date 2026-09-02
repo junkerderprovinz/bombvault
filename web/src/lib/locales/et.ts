@@ -230,6 +230,8 @@ const et: Partial<Translations> = {
   "settings.encryptionLabel": "Parool",
   "settings.encryptionOn": "Lubatud (parool tuletatud APP_KEY-st)",
   "settings.encryptionOff": "Keelatud (parooli pole)",
+  "settings.encryptionPasswordWhere":
+    "Seda parooli sa kunagi ei sisesta: BombVault tuletab selle igal kutsel APP_KEY-st. Väärtus ise on sinu taastekomplektis tuletatud restic paroolina ja just seda on vaja, et resticit käsitsi hoidla vastu käivitada.",
   "settings.encryptionHint": "Krüpteerimine määratakse hoidlale selle loomisel, seega otsustab see säte ainult UUE hoidla üle. Juba olemasoleva puhul loeb BombVault režiimi hoidlast endast. Vaata Taastamise lehte. Selle muutmine olemasoleva hoidla suhtes lihtsalt takistab resticul seda avada.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const et: Partial<Translations> = {
   "receiver.checkOk": "Kontroll õnnestus",
   "receiver.checkFailed": "Kontroll ebaõnnestus",
   "receiver.checkNever": "Pole veel kontrollitud",
+  "receiver.checkFailedHelp":
+    "BombVault ainult loeb vastuvõetud hoidlat, seega ta seda sinu eest ei paranda. Kui soovid ise parandada, käivita restic ülal oleva asukoha vastu parooliga, mis on tuletatud SAATVA eksemplari APP_KEY-st ja asub selle eksemplari taastekomplektis, mitte selle masina omas. Proovi kõigepealt `restic repair index` ja seejärel `restic repair snapshots`, kui hetktõmmised jäävad loetamatuks.",
   "receiver.lastChecked": "Viimati kontrollitud {time}",
   "receiver.checkNow": "Kontrolli kohe",
   "receiver.deepCheck": "Sügavkontroll (loeb andmeid)",

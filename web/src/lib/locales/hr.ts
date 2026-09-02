@@ -230,6 +230,8 @@ const hr: Partial<Translations> = {
   "settings.encryptionLabel": "Lozinka",
   "settings.encryptionOn": "Omogućeno (lozinka izvedena iz APP_KEY)",
   "settings.encryptionOff": "Onemogućeno (bez lozinke)",
+  "settings.encryptionPasswordWhere":
+    "Tu lozinku nikada ne upisujete: BombVault je pri svakom pozivu izvodi iz APP_KEY. Sama vrijednost nalazi se u vašem kompletu za oporavak kao izvedena restic lozinka i upravo je ona potrebna za ručno pokretanje restic nad spremištem.",
   "settings.encryptionHint": "Šifriranje se za repozitorij utvrđuje pri njegovu stvaranju, pa ova postavka odlučuje samo o NOVOM repozitoriju. Za već postojeći BombVault način očitava s samog repozitorija. Vidi stranicu Oporavak. Promjena nasuprot postojećem repozitoriju samo sprječava restic da ga otvori.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const hr: Partial<Translations> = {
   "receiver.checkOk": "Provjera uspješna",
   "receiver.checkFailed": "Provjera nije uspjela",
   "receiver.checkNever": "Još nije provjereno",
+  "receiver.checkFailedHelp":
+    "BombVault primljeno spremište samo čita, pa ga neće popraviti umjesto vas. Želite li ga popraviti sami, pokrenite restic nad gornjom lokacijom s lozinkom izvedenom iz APP_KEY POŠILJATELJSKE instance, koja se nalazi u kompletu za oporavak TE instance, a ne ovog stroja. Prvo pokušajte `restic repair index`, a zatim `restic repair snapshots` ako snimke i dalje nisu čitljive.",
   "receiver.lastChecked": "Posljednja provjera {time}",
   "receiver.checkNow": "Provjeri sada",
   "receiver.deepCheck": "Duboka provjera (čita podatke)",

@@ -230,6 +230,8 @@ const ca: Partial<Translations> = {
   "settings.encryptionLabel": "Contrasenya",
   "settings.encryptionOn": "Activat (contrasenya derivada de APP_KEY)",
   "settings.encryptionOff": "Desactivat (sense contrasenya)",
+  "settings.encryptionPasswordWhere":
+    "Aquesta contrasenya no la escrius mai: BombVault la deriva de l'APP_KEY a cada crida. El valor és al teu kit de recuperació, com a contrasenya restic derivada, i és el que necessites per executar restic a mà contra un dipòsit.",
   "settings.encryptionHint": "El xifratge es fixa per repositori quan es crea, així que aquest paràmetre només decideix com es fa un repositori NOU. Per a un que ja existeix, BombVault llegeix el mode del repositori mateix. Mira la pàgina de Recuperació. Canviar-ho davant d'un repositori existent només impedeix que restic l'obri.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const ca: Partial<Translations> = {
   "receiver.checkOk": "Comprovació correcta",
   "receiver.checkFailed": "Comprovació fallida",
   "receiver.checkNever": "Encara no comprovat",
+  "receiver.checkFailedHelp":
+    "BombVault només llegeix un dipòsit rebut, així que no el repararà per tu. Per reparar-lo tu mateix, executa restic contra la ubicació de dalt amb la contrasenya derivada de l'APP_KEY de la instància EMISSORA, que és al kit de recuperació d'AQUELLA instància, no al d'aquesta màquina. Prova primer `restic repair index` i després `restic repair snapshots` si les instantànies segueixen sense llegir-se.",
   "receiver.lastChecked": "Última comprovació {time}",
   "receiver.checkNow": "Comprova ara",
   "receiver.deepCheck": "Comprovació profunda (llegeix dades)",

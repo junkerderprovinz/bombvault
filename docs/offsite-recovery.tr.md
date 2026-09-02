@@ -134,4 +134,19 @@ Tek tık, **ana anahtarı**, **türetilen restic parolasını** ve **tam depo ko
 !!! danger "Kurtarma kitini sunucu dışında saklayın"
     Kit, yedeklerinizin şifresini çözen gizli anahtarı içerir. Onu güvenli ve sunucudan ayrı bir yerde tutun (bir parola yöneticisi, bir kasada basılı bir kopya). Hem BombVault'u hem de `APP_KEY`'i kurtarma kiti olmadan kaybederseniz, şifreli yedekleriniz kurtarılamaz.
 
+### Kurtarma seti elinizin altında değilse
+
+Parola hiçbir yerde saklanmaz, `APP_KEY` değerinden **hesaplanır**. Anahtar ve bir kabuk varsa onu kendiniz de üretebilirsiniz:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Bu, sabit `bombvault:restic-repo` dizgesi üzerinde HMAC-SHA256'dır; anahtar olarak onaltılık `APP_KEY` değerinin ham baytları kullanılır ve çıktı 64 küçük harfli onaltılık karakterdir. Aynı değer sette türetilmiş restic parolası olarak durur; burası, setin sizinle aynı yerde olmadığı gün içindir.
+
+!!! warning "Alınan bir depoda GÖNDEREN örneğin anahtarını kullanın"
+    Saha dışı çoğaltmayla buraya ulaşan bir depo, onu gönderen makinede **kendi** `APP_KEY` değeriyle oluşturulmuştur. Alan makinenin anahtarından türetmek, restic'in reddettiği bir parola verir; bu tam olarak bozuk bir depo gibi görünür ama değildir. Alınan bir depoda `restic check` komutunun parolayı defalarca sormasının olağan nedeni budur.
+
 Kurtarma tanımları her deponun **içinde** yer aldığı için (`<repo>/def`, `<repo>/vm-def`), kopyalanan bir depo klasörü tamamen bağımsızdır, böylece kit ile birlikte depo, çıplak makine geri yüklemesinin ihtiyaç duyduğu her şeydir.

@@ -160,6 +160,8 @@ const he: Partial<Translations> = {
   "settings.encryptionLabel": "סיסמה",
   "settings.encryptionOn": "מופעל (סיסמה נגזרת מ-APP_KEY)",
   "settings.encryptionOff": "מושבת (ללא סיסמה)",
+  "settings.encryptionPasswordWhere":
+    "את הסיסמה הזו אינך מקליד לעולם: BombVault גוזר אותה מה-APP_KEY בכל קריאה. הערך עצמו נמצא בערכת השחזור שלך, כסיסמת restic הנגזרת, וזה בדיוק מה שדרוש כדי להריץ restic ידנית מול מאגר.",
   "settings.encryptionHint":
     "ההצפנה נקבעת לכל מאגר בעת יצירתו, ולכן ההגדרה הזו קובעת רק כיצד ייווצר מאגר חדש. עבור מאגר שכבר קיים, BombVault קורא את המצב מהמאגר עצמו. ראה עמוד השחזור. שינוי ההגדרה מול מאגר קיים רק גורם ל‑restic לא להצליח לפתוח אותו.",
   "settings.paths": "נתיבי גיבוי",
@@ -1329,6 +1331,8 @@ const he: Partial<Translations> = {
   "receiver.checkOk": "בדיקה תקינה",
   "receiver.checkFailed": "הבדיקה נכשלה",
   "receiver.checkNever": "טרם נבדק",
+  "receiver.checkFailedHelp":
+    "BombVault רק קורא מאגר שהתקבל, ולכן לא יתקן אותו עבורך. כדי לתקן אותו בעצמך, הרץ restic על המיקום שלמעלה עם הסיסמה הנגזרת מה-APP_KEY של המופע השולח, שנמצאת בערכת השחזור של אותו מופע ולא של המכונה הזו. נסה תחילה `restic repair index`, ואז `restic repair snapshots` אם תצלומי המצב עדיין אינם קריאים.",
   "receiver.lastChecked": "נבדק לאחרונה {time}",
   "receiver.checkNow": "בדוק עכשיו",
   "receiver.deepCheck": "בדיקה עמוקה (קריאת נתונים)",

@@ -134,4 +134,19 @@ Yksi napsautus lataa **pääavaimen**, **johdetun restic-salasanan** ja **tarkat
 !!! danger "Säilytä palautuspaketti palvelimen ulkopuolella"
     Paketti sisältää salaisuuden, joka purkaa varmuuskopiosi salauksen. Pidä se turvallisessa paikassa erillään palvelimesta (salasananhallinta, tulostettu kopio kassakaapissa). Jos menetät sekä BombVaultin että `APP_KEY`:n ilman palautuspakettia, salattuja varmuuskopioitasi ei voi palauttaa.
 
+### Kun paketti ei ole käsillä
+
+Salasanaa ei ole tallennettu mihinkään, se **lasketaan** `APP_KEY`-avaimesta. Avaimen ja komentotulkin avulla voit siis muodostaa sen itse:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Kyseessä on HMAC-SHA256 kiinteästä merkkijonosta `bombvault:restic-repo`, avaimena heksadesimaalisen `APP_KEY`-arvon raakatavut, tulostettuna 64 pienenä heksamerkkinä. Sama arvo on paketissa johdettuna restic-salasanana; tämä on sitä päivää varten, jona paketti on jossain muualla kuin sinä.
+
+!!! warning "Vastaanotetussa arkistossa käytä LÄHETTÄVÄN instanssin avainta"
+    Arkisto, joka päätyi tänne off-site-replikoinnilla, luotiin sen lähettäneellä koneella **sen omalla** `APP_KEY`-avaimella. Vastaanottavan koneen avaimesta johtaminen tuottaa salasanan, jonka restic hylkää, ja se näyttää täsmälleen rikkinäiseltä arkistolta olematta sitä. Tämä on tavallisin syy siihen, että `restic check` kyselee vastaanotetulla arkistolla salasanaa yhä uudelleen.
+
 Koska palautusmääritykset asuvat kunkin repon **sisällä** (`<repo>/def`, `<repo>/vm-def`), kopioitu repokansio on täysin itsenäinen, joten paketti plus repo on kaikki mitä paljasrautainen palautus tarvitsee.

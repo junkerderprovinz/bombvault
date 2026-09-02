@@ -160,6 +160,8 @@ const hu: Partial<Translations> = {
   "settings.encryptionLabel": "Jelszó",
   "settings.encryptionOn": "Engedélyezett (jelszó az APP_KEY-ből)",
   "settings.encryptionOff": "Letiltott (nincs jelszó)",
+  "settings.encryptionPasswordWhere":
+    "Ezt a jelszót sosem gépeled be: a BombVault minden hívásnál az APP_KEY kulcsból származtatja. Maga az érték a helyreállítási csomagodban van, származtatott restic jelszóként, és épp erre van szükséged, ha kézzel futtatnád a resticet egy tárolón.",
   "settings.encryptionHint":
     "A titkosítás a tároló létrehozásakor rögzül, így ez a beállítás csak ÚJ tárolóról dönt. Egy már meglévőnél a BombVault magáról a tárolóról olvassa le a módot. Lásd a Helyreállítás oldalt. Ha ezt egy meglévő tárolóval szemben megváltoztatod, a restic egyszerűen nem tudja megnyitni.",
   "settings.paths": "Mentési útvonalak",
@@ -1332,6 +1334,8 @@ const hu: Partial<Translations> = {
   "receiver.checkOk": "Ellenőrzés OK",
   "receiver.checkFailed": "Ellenőrzés sikertelen",
   "receiver.checkNever": "Még nincs ellenőrizve",
+  "receiver.checkFailedHelp":
+    "A BombVault csak olvassa a fogadott tárolót, tehát nem javítja meg helyetted. Ha magad javítanád, futtasd a resticet a fenti helyre a KÜLDŐ példány APP_KEY kulcsából származtatott jelszóval, amely ANNAK a példánynak a helyreállítási csomagjában van, nem ezé a gépé. Először a `restic repair index` parancsot próbáld, majd a `restic repair snapshots` parancsot, ha a pillanatképek továbbra sem olvashatók.",
   "receiver.lastChecked": "Utoljára ellenőrizve {time}",
   "receiver.checkNow": "Ellenőrzés most",
   "receiver.deepCheck": "Mély ellenőrzés (adat olvasása)",

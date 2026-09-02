@@ -160,6 +160,8 @@ const ko: Partial<Translations> = {
   "settings.encryptionLabel": "비밀번호",
   "settings.encryptionOn": "활성화됨 (APP_KEY에서 파생된 비밀번호)",
   "settings.encryptionOff": "비활성화됨 (비밀번호 없음)",
+  "settings.encryptionPasswordWhere":
+    "이 비밀번호를 직접 입력할 일은 없습니다. BombVault가 호출할 때마다 APP_KEY에서 파생합니다. 값 자체는 복구 키트에 '파생된 restic 비밀번호'로 적혀 있으며, 저장소에 restic을 손으로 실행할 때 필요한 것이 바로 이것입니다.",
   "settings.encryptionHint":
     "암호화는 저장소를 만들 때 확정되므로, 이 설정은 '새' 저장소를 어떻게 만들지만 결정합니다. 이미 있는 저장소에 대해서는 BombVault가 저장소 자체에서 방식을 읽습니다(복구 페이지 참고). 기존 저장소를 두고 이 값을 바꾸면 restic이 그것을 열지 못하게 될 뿐입니다.",
   "settings.paths": "백업 경로",
@@ -1321,6 +1323,8 @@ const ko: Partial<Translations> = {
   "receiver.checkOk": "검사 OK",
   "receiver.checkFailed": "검사 실패",
   "receiver.checkNever": "아직 검사 안 함",
+  "receiver.checkFailedHelp":
+    "BombVault은 받은 저장소를 읽기만 하므로 대신 복구해 주지 않습니다. 직접 복구하려면 위 위치에 대해 restic을 실행하세요. 비밀번호는 '보내는 쪽' 인스턴스의 APP_KEY에서 파생된 값이며, 이 기기가 아니라 그 인스턴스의 복구 키트에 들어 있습니다. 먼저 `restic repair index`를, 스냅숏이 계속 읽히지 않으면 `restic repair snapshots`를 시도하세요.",
   "receiver.lastChecked": "마지막 검사 {time}",
   "receiver.checkNow": "지금 검사",
   "receiver.deepCheck": "심층 검사(데이터 읽기)",

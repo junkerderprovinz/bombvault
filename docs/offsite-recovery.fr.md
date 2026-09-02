@@ -134,4 +134,19 @@ Un clic télécharge la **clé maîtresse**, le **mot de passe restic dérivé**
 !!! danger "Conservez le kit de récupération hors du serveur"
     Le kit contient le secret qui déchiffre vos sauvegardes. Gardez-le en lieu sûr et à l'écart du serveur (un gestionnaire de mots de passe, une copie imprimée dans un coffre). Si vous perdez à la fois BombVault et `APP_KEY` sans kit de récupération, vos sauvegardes chiffrées ne peuvent pas être récupérées.
 
+### Si le kit n'est pas sous la main
+
+Le mot de passe n'est stocké nulle part, il est **calculé** à partir de l'`APP_KEY`. Avec la clé et un shell, vous pouvez donc le reproduire vous-même :
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+C'est un HMAC-SHA256 sur la chaîne fixe `bombvault:restic-repo`, avec pour clé les octets bruts de l'`APP_KEY` hexadécimale, affiché en 64 caractères hexadécimaux minuscules. La même valeur figure dans le kit sous le mot de passe restic dérivé ; ceci sert pour le jour où le kit est ailleurs que vous.
+
+!!! warning "Pour un dépôt reçu, utilisez la clé de l'instance ÉMETTRICE"
+    Un dépôt arrivé ici par réplication hors site a été créé par la machine qui l'a envoyé, avec **son** `APP_KEY`. Dériver depuis la clé de la machine réceptrice donne un mot de passe que restic refuse, ce qui ressemble exactement à un dépôt corrompu sans en être un. C'est la raison habituelle pour laquelle `restic check` sur un dépôt reçu redemande le mot de passe encore et encore.
+
 Parce que les définitions de récupération vivent **à l'intérieur** de chaque dépôt (`<repo>/def`, `<repo>/vm-def`), un dossier de dépôt copié est entièrement autonome, de sorte que le kit plus le dépôt sont tout ce dont une restauration sur machine nue a besoin.

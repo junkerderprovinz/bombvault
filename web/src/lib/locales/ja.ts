@@ -160,6 +160,8 @@ const ja: Partial<Translations> = {
   "settings.encryptionLabel": "パスワード",
   "settings.encryptionOn": "有効（APP_KEY からパスワードを導出）",
   "settings.encryptionOff": "無効（パスワードなし）",
+  "settings.encryptionPasswordWhere":
+    "このパスワードを入力することはありません。BombVault が呼び出しのたびに APP_KEY から導出します。値そのものはリカバリキットに「導出された restic パスワード」として載っており、リポジトリに対して restic を手動で実行するときに必要になるのはこれです。",
   "settings.encryptionHint":
     "暗号化はリポジトリの作成時に確定するため、この設定が決めるのは「新規」リポジトリの作り方だけです。すでにあるリポジトリについては、BombVault がリポジトリ自体から方式を読み取ります (復旧ページを参照)。既存のリポジトリに対してここを変更すると、restic が開けなくなるだけです。",
   "settings.paths": "バックアップパス",
@@ -1321,6 +1323,8 @@ const ja: Partial<Translations> = {
   "receiver.checkOk": "チェック OK",
   "receiver.checkFailed": "チェック失敗",
   "receiver.checkNever": "未チェック",
+  "receiver.checkFailedHelp":
+    "BombVault は受信したリポジトリを読むだけなので、代わりに修復することはありません。自分で修復するには、上の場所に対して restic を実行してください。パスワードは「送信側」インスタンスの APP_KEY から導出されたもので、そのインスタンスのリカバリキットに入っています。この機体のものではありません。まず `restic repair index`、スナップショットが読めないままなら `restic repair snapshots` を試してください。",
   "receiver.lastChecked": "最終チェック {time}",
   "receiver.checkNow": "今すぐチェック",
   "receiver.deepCheck": "ディープチェック（データ読み取り）",

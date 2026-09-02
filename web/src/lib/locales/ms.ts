@@ -230,6 +230,8 @@ const ms: Partial<Translations> = {
   "settings.encryptionLabel": "Kata laluan",
   "settings.encryptionOn": "Diaktifkan (kata laluan diperoleh daripada APP_KEY)",
   "settings.encryptionOff": "Dinyahaktifkan (tiada kata laluan)",
+  "settings.encryptionPasswordWhere":
+    "Kata laluan itu tidak pernah anda taip: BombVault menerbitkannya daripada APP_KEY pada setiap panggilan. Nilainya sendiri ada dalam kit pemulihan anda, disenaraikan sebagai kata laluan restic terbitan, dan itulah yang diperlukan untuk menjalankan restic secara manual terhadap sesebuah repositori.",
   "settings.encryptionHint": "Penyulitan ditetapkan bagi setiap repositori semasa ia dicipta, jadi tetapan ini hanya menentukan bagaimana repositori BAHARU dibuat. Bagi yang sedia ada, BombVault membaca modnya terus daripada repositori itu. Lihat halaman Pemulihan. Mengubahnya terhadap repositori sedia ada hanya menyebabkan restic tidak dapat membukanya.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const ms: Partial<Translations> = {
   "receiver.checkOk": "Semakan OK",
   "receiver.checkFailed": "Semakan gagal",
   "receiver.checkNever": "Belum disemak",
+  "receiver.checkFailedHelp":
+    "BombVault hanya membaca repositori yang diterima, jadi ia tidak akan membaikinya untuk anda. Untuk membaikinya sendiri, jalankan restic terhadap lokasi di atas dengan kata laluan yang diterbitkan daripada APP_KEY contoh PENGHANTAR, yang berada dalam kit pemulihan contoh ITU, bukan mesin ini. Cuba `restic repair index` dahulu, kemudian `restic repair snapshots` jika syot kilat masih tidak boleh dibaca.",
   "receiver.lastChecked": "Terakhir disemak {time}",
   "receiver.checkNow": "Semak sekarang",
   "receiver.deepCheck": "Semakan mendalam (membaca data)",

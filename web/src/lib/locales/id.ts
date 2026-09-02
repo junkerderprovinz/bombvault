@@ -230,6 +230,8 @@ const id: Partial<Translations> = {
   "settings.encryptionLabel": "Kata sandi",
   "settings.encryptionOn": "Diaktifkan (kata sandi diturunkan dari APP_KEY)",
   "settings.encryptionOff": "Dinonaktifkan (tanpa kata sandi)",
+  "settings.encryptionPasswordWhere":
+    "Kata sandi itu tidak pernah Anda ketik: BombVault menurunkannya dari APP_KEY pada setiap panggilan. Nilainya sendiri ada di kit pemulihan Anda, tercantum sebagai kata sandi restic turunan, dan itulah yang diperlukan untuk menjalankan restic secara manual terhadap sebuah repositori.",
   "settings.encryptionHint": "Enkripsi ditetapkan per repositori saat dibuat, jadi pengaturan ini hanya menentukan bagaimana repositori BARU dibuat. Untuk yang sudah ada, BombVault membaca modenya langsung dari repositori itu. Lihat halaman Pemulihan. Mengubahnya terhadap repositori yang sudah ada hanya membuat restic tidak bisa membukanya.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const id: Partial<Translations> = {
   "receiver.checkOk": "Pemeriksaan OK",
   "receiver.checkFailed": "Pemeriksaan gagal",
   "receiver.checkNever": "Belum diperiksa",
+  "receiver.checkFailedHelp":
+    "BombVault hanya membaca repositori yang diterima, jadi ia tidak akan memperbaikinya untuk Anda. Untuk memperbaikinya sendiri, jalankan restic terhadap lokasi di atas dengan kata sandi yang diturunkan dari APP_KEY instansi PENGIRIM, yang ada di kit pemulihan instansi ITU, bukan mesin ini. Coba `restic repair index` dulu, lalu `restic repair snapshots` jika snapshot tetap tidak terbaca.",
   "receiver.lastChecked": "Terakhir diperiksa {time}",
   "receiver.checkNow": "Periksa sekarang",
   "receiver.deepCheck": "Pemeriksaan mendalam (membaca data)",

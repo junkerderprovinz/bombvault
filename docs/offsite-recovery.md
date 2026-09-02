@@ -134,4 +134,17 @@ One click downloads the **master key**, the **derived restic password**, and the
 !!! danger "Store the recovery kit off the server"
     The kit contains the secret that decrypts your backups. Keep it somewhere safe and separate from the server (a password manager, a printed copy in a safe). If you lose both BombVault and `APP_KEY` with no recovery kit, your encrypted backups cannot be recovered.
 
+### If you do not have the kit to hand
+
+The password is not stored anywhere, it is **computed** from `APP_KEY`, so you can reproduce it yourself with nothing but the key and a shell:
+
+```sh
+printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r   | cut -d' ' -f1
+```
+
+That is HMAC-SHA256 over the fixed string `bombvault:restic-repo`, keyed with the raw bytes of the hex `APP_KEY`, printed as 64 lowercase hex characters. The same value is in the kit, listed as the derived restic password; this is for the day the kit is somewhere you are not.
+
+!!! warning "For a received repository, use the SENDING instance's key"
+    A repository that arrived here through off-site replication was created by the machine that sent it, with **its** `APP_KEY`. Deriving from the receiving box's key produces a password restic will reject, which reads exactly like a corrupt repository and is not. This is the usual reason `restic check` on a received repo asks for a password over and over.
+
 Because recovery definitions live **inside** each repo (`<repo>/def`, `<repo>/vm-def`), a copied repo folder is fully self-contained, so the kit plus the repo is everything a bare-metal restore needs.

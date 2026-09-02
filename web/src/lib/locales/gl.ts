@@ -230,6 +230,8 @@ const gl: Partial<Translations> = {
   "settings.encryptionLabel": "Contrasinal",
   "settings.encryptionOn": "Activado (contrasinal derivado de APP_KEY)",
   "settings.encryptionOff": "Desactivado (sen contrasinal)",
+  "settings.encryptionPasswordWhere":
+    "Esa contrasinal nunca a escribes: BombVault derívaa da APP_KEY en cada chamada. O valor está no teu kit de recuperación, como contrasinal restic derivada, e é o que precisas para executar restic a man contra un repositorio.",
   "settings.encryptionHint": "O cifrado fíxase por repositorio ao crealo, así que este axuste só decide como se fai un repositorio NOVO. Para un que xa existe, BombVault le o modo do propio repositorio. Mira a páxina de Recuperación. Cambialo fronte a un repositorio existente só impide que restic o abra.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const gl: Partial<Translations> = {
   "receiver.checkOk": "Comprobación correcta",
   "receiver.checkFailed": "Comprobación fallida",
   "receiver.checkNever": "Aínda non comprobado",
+  "receiver.checkFailedHelp":
+    "BombVault só le un repositorio recibido, así que non o reparará por ti. Para reparalo ti mesmo, executa restic contra a localización de arriba coa contrasinal derivada da APP_KEY da instancia EMISORA, que está no kit de recuperación DESA instancia e non no desta máquina. Proba primeiro `restic repair index` e despois `restic repair snapshots` se as instantáneas seguen ilexibles.",
   "receiver.lastChecked": "Última comprobación {time}",
   "receiver.checkNow": "Comprobar agora",
   "receiver.deepCheck": "Comprobación profunda (le datos)",

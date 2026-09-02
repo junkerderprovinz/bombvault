@@ -160,6 +160,8 @@ const fr: Partial<Translations> = {
   "settings.encryptionLabel": "Mot de passe",
   "settings.encryptionOn": "Activé (mot de passe dérivé de APP_KEY)",
   "settings.encryptionOff": "Désactivé (sans mot de passe)",
+  "settings.encryptionPasswordWhere":
+    "Vous ne saisissez jamais ce mot de passe : BombVault le dérive de l'APP_KEY à chaque appel. La valeur elle-même figure dans votre kit de récupération, sous le mot de passe restic dérivé, et c'est ce qu'il vous faut pour lancer restic à la main sur un dépôt.",
   "settings.encryptionHint":
     "Le chiffrement est fixé par dépôt au moment de sa création : ce réglage ne décide donc que pour un NOUVEAU dépôt. Pour un dépôt existant, BombVault lit le mode directement sur le dépôt, voir la page Récupération. Modifier ceci face à un dépôt existant empêche simplement restic de l'ouvrir.",
   "settings.paths": "Chemins de sauvegarde",
@@ -1329,6 +1331,8 @@ const fr: Partial<Translations> = {
   "receiver.checkOk": "Vérification OK",
   "receiver.checkFailed": "Vérification échouée",
   "receiver.checkNever": "Pas encore vérifié",
+  "receiver.checkFailedHelp":
+    "BombVault ne fait que lire un dépôt reçu, il ne le réparera donc pas à votre place. Pour le réparer vous-même, lancez restic sur l'emplacement ci-dessus avec le mot de passe dérivé de l'APP_KEY de l'instance ÉMETTRICE, qui se trouve dans le kit de récupération de CETTE instance-là, pas dans celui de cette machine. Essayez d'abord `restic repair index`, puis `restic repair snapshots` si des instantanés restent illisibles.",
   "receiver.lastChecked": "Vérifié {time}",
   "receiver.checkNow": "Vérifier maintenant",
   "receiver.deepCheck": "Vérification approfondie (lire les données)",

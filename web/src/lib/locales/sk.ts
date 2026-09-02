@@ -230,6 +230,8 @@ const sk: Partial<Translations> = {
   "settings.encryptionLabel": "Heslo",
   "settings.encryptionOn": "Zapnuté (heslo odvodené z APP_KEY)",
   "settings.encryptionOff": "Vypnuté (bez hesla)",
+  "settings.encryptionPasswordWhere":
+    "Toto heslo nikdy nezadávate: BombVault ho pri každom volaní odvodzuje z APP_KEY. Samotná hodnota je vo vašej sade na obnovu ako odvodené restic heslo a práve tú potrebujete na ručné spustenie restic nad repozitárom.",
   "settings.encryptionHint": "Šifrovanie je pre repozitár dané pri jeho vytvorení, takže toto nastavenie rozhoduje len o NOVOM repozitári. Pri už existujúcom si BombVault režim prečíta priamo z repozitára. Pozri stránku Obnova. Zmena oproti existujúcemu repozitáru len spôsobí, že ho restic neotvorí.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const sk: Partial<Translations> = {
   "receiver.checkOk": "Kontrola v poriadku",
   "receiver.checkFailed": "Kontrola zlyhala",
   "receiver.checkNever": "Zatiaľ neskontrolované",
+  "receiver.checkFailedHelp":
+    "BombVault prijatý repozitár iba číta, takže ho za vás neopraví. Ak ho chcete opraviť sami, spustite restic na uvedené umiestnenie s heslom odvodeným z APP_KEY ODOSIELAJÚCEJ inštancie, ktoré je v sade na obnovu TEJ inštancie, nie tohto stroja. Skúste najprv `restic repair index` a potom `restic repair snapshots`, ak snímky zostanú nečitateľné.",
   "receiver.lastChecked": "Naposledy skontrolované {time}",
   "receiver.checkNow": "Skontrolovať teraz",
   "receiver.deepCheck": "Hĺbková kontrola (číta dáta)",

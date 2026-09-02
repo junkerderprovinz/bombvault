@@ -160,6 +160,8 @@ const zh: Partial<Translations> = {
   "settings.encryptionLabel": "密码",
   "settings.encryptionOn": "已启用（密码来自 APP_KEY）",
   "settings.encryptionOff": "已禁用（无密码）",
+  "settings.encryptionPasswordWhere":
+    "这个密码你从不需要输入：BombVault 每次调用时都从 APP_KEY 派生它。值本身写在你的恢复包里，标为派生的 restic 密码，手动对仓库运行 restic 时需要的正是它。",
   "settings.encryptionHint":
     "加密在仓库创建时就已固定，因此该设置只决定“新”仓库的创建方式。对于已存在的仓库，BombVault 会直接从仓库本身读取方式。见“恢复”页面。对着已有仓库改动此项，只会让 restic 无法打开它。",
   "settings.paths": "备份路径",
@@ -1321,6 +1323,8 @@ const zh: Partial<Translations> = {
   "receiver.checkOk": "检查通过",
   "receiver.checkFailed": "检查失败",
   "receiver.checkNever": "尚未检查",
+  "receiver.checkFailedHelp":
+    "BombVault 只会读取接收到的仓库，不会替你修复它。若要自行修复，请对上面的位置运行 restic，密码是从「发送方」实例的 APP_KEY 派生出来的，它在那台实例的恢复包里，而不是本机的。先试 `restic repair index`，如果快照仍然读不出来，再试 `restic repair snapshots`。",
   "receiver.lastChecked": "最后检查 {time}",
   "receiver.checkNow": "立即检查",
   "receiver.deepCheck": "深度检查（读取数据）",

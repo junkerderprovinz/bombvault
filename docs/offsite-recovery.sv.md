@@ -134,4 +134,19 @@ Ett klick laddar ner **huvudnyckeln**, det **härledda restic-lösenordet** och 
 !!! danger "Förvara återställningskitet bort från servern"
     Kitet innehåller hemligheten som dekrypterar dina säkerhetskopior. Förvara det på en säker plats åtskild från servern (en lösenordshanterare, en utskriven kopia i ett kassaskåp). Om du förlorar både BombVault och `APP_KEY` utan något återställningskit kan dina krypterade säkerhetskopior inte återställas.
 
+### När paketet inte finns till hands
+
+Lösenordet lagras ingenstans, det **beräknas** ur `APP_KEY`. Med nyckeln och ett skal kan du alltså återskapa det själv:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+Det är HMAC-SHA256 över den fasta strängen `bombvault:restic-repo`, med de råa byten i den hexadecimala `APP_KEY` som nyckel, utskrivet som 64 gemena hexadecimala tecken. Samma värde står i paketet som det härledda restic-lösenordet; det här är för dagen då paketet ligger någon annanstans än du.
+
+!!! warning "För ett mottaget arkiv, använd den SÄNDANDE instansens nyckel"
+    Ett arkiv som kommit hit via off-site-replikering skapades av maskinen som skickade det, med **dess** `APP_KEY`. Att härleda ur den mottagande maskinens nyckel ger ett lösenord som restic avvisar, vilket ser ut precis som ett trasigt arkiv utan att vara det. Det är den vanliga anledningen till att `restic check` på ett mottaget arkiv frågar efter lösenordet gång på gång.
+
 Eftersom återställningsdefinitioner ligger **inuti** varje repo (`<repo>/def`, `<repo>/vm-def`) är en kopierad repo-mapp helt självständig, så kitet plus repot är allt en bare-metal-återställning behöver.

@@ -159,6 +159,8 @@ const pt: Partial<Translations> = {
   "settings.encryptionLabel": "Palavra-passe",
   "settings.encryptionOn": "Ativada (palavra-passe derivada de APP_KEY)",
   "settings.encryptionOff": "Desativada (sem palavra-passe)",
+  "settings.encryptionPasswordWhere":
+    "Nunca escreves essa palavra-passe: o BombVault deriva-a da APP_KEY em cada chamada. O valor está no teu kit de recuperação, como palavra-passe restic derivada, e é o que precisas para correr o restic à mão sobre um repositório.",
   "settings.encryptionHint":
     "A cifra é fixada por repositório no momento da criação, por isso esta definição só decide como se cria um repositório NOVO. Para um que já existe, o BombVault lê o modo do próprio repositório. Vê a página de Recuperação. Alterá-la contra um repositório existente apenas impede o restic de o abrir.",
   "settings.paths": "Caminhos de backup",
@@ -1329,6 +1331,8 @@ const pt: Partial<Translations> = {
   "receiver.checkOk": "Verificação OK",
   "receiver.checkFailed": "Verificação falhou",
   "receiver.checkNever": "Ainda não verificado",
+  "receiver.checkFailedHelp":
+    "O BombVault apenas lê um repositório recebido, por isso não o vai reparar por ti. Para o reparares tu, corre o restic sobre a localização acima com a palavra-passe derivada da APP_KEY da instância REMETENTE, que está no kit de recuperação DESSA instância e não no desta máquina. Tenta primeiro `restic repair index` e depois `restic repair snapshots` se algum instantâneo continuar ilegível.",
   "receiver.lastChecked": "Verificado {time}",
   "receiver.checkNow": "Verificar agora",
   "receiver.deepCheck": "Verificação profunda (ler dados)",

@@ -158,6 +158,8 @@ const nl: Partial<Translations> = {
   "settings.encryptionLabel": "Wachtwoord",
   "settings.encryptionOn": "Ingeschakeld (wachtwoord afgeleid van APP_KEY)",
   "settings.encryptionOff": "Uitgeschakeld (geen wachtwoord)",
+  "settings.encryptionPasswordWhere":
+    "Dat wachtwoord typ je nooit: BombVault leidt het bij elke aanroep af uit de APP_KEY. De waarde zelf staat in je herstelpakket, als het afgeleide restic-wachtwoord, en dat heb je nodig om restic met de hand op een repository te draaien.",
   "settings.encryptionHint": "Versleuteling ligt per repository vast bij het aanmaken, dus deze instelling bepaalt alleen hoe een NIEUWE repository wordt gemaakt. Voor een bestaande leest BombVault de modus van de repository zelf. Zie de pagina Herstel. Dit wijzigen bij een bestaande repository zorgt er alleen voor dat restic hem niet meer kan openen.",
   "settings.paths": "Back-uppaden",
   "settings.pathsHint": "Relatieve subpaden onder de host-mount-root ({root}). Klik op Bladeren om door mappen te navigeren, of typ een pad rechtstreeks in.",
@@ -1326,6 +1328,8 @@ const nl: Partial<Translations> = {
   "receiver.checkOk": "Controle OK",
   "receiver.checkFailed": "Controle mislukt",
   "receiver.checkNever": "Nog niet gecontroleerd",
+  "receiver.checkFailedHelp":
+    "BombVault leest een ontvangen repository alleen, het zal deze dus niet voor je repareren. Wil je hem zelf repareren, draai restic dan tegen de locatie hierboven met het wachtwoord dat is afgeleid van de APP_KEY van de VERZENDENDE instantie, dat in het herstelpakket van DIE instantie zit en niet in dat van deze machine. Probeer eerst `restic repair index` en daarna `restic repair snapshots` als snapshots onleesbaar blijven.",
   "receiver.lastChecked": "Laatst gecontroleerd {time}",
   "receiver.checkNow": "Nu controleren",
   "receiver.deepCheck": "Diepe controle (data lezen)",

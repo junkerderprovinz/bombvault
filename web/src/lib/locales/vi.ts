@@ -160,6 +160,8 @@ const vi: Partial<Translations> = {
   "settings.encryptionLabel": "Mật khẩu",
   "settings.encryptionOn": "Bật (mật khẩu lấy từ APP_KEY)",
   "settings.encryptionOff": "Tắt (không có mật khẩu)",
+  "settings.encryptionPasswordWhere":
+    "Bạn không bao giờ phải gõ mật khẩu đó: BombVault suy ra nó từ APP_KEY ở mỗi lần gọi. Giá trị nằm trong bộ khôi phục của bạn, ghi là mật khẩu restic được suy ra, và đó chính là thứ cần để chạy restic bằng tay trên một kho.",
   "settings.encryptionHint":
     "Mã hoá được cố định cho từng kho ngay khi tạo, nên thiết lập này chỉ quyết định cách tạo một kho MỚI. Với kho đã tồn tại, BombVault đọc chế độ ngay từ chính kho đó. Xem trang Khôi phục. Đổi giá trị này khi đã có kho chỉ khiến restic không mở được nó.",
   "settings.paths": "Đường dẫn sao lưu",
@@ -1321,6 +1323,8 @@ const vi: Partial<Translations> = {
   "receiver.checkOk": "Kiểm tra OK",
   "receiver.checkFailed": "Kiểm tra thất bại",
   "receiver.checkNever": "Chưa kiểm tra",
+  "receiver.checkFailedHelp":
+    "BombVault chỉ đọc kho đã nhận, nên sẽ không sửa hộ bạn. Muốn tự sửa, hãy chạy restic trên vị trí ở trên với mật khẩu suy ra từ APP_KEY của bản chạy GỬI, nằm trong bộ khôi phục của bản chạy ĐÓ chứ không phải của máy này. Thử `restic repair index` trước, rồi `restic repair snapshots` nếu ảnh chụp vẫn không đọc được.",
   "receiver.lastChecked": "Kiểm tra lần cuối {time}",
   "receiver.checkNow": "Kiểm tra ngay",
   "receiver.deepCheck": "Kiểm tra sâu (đọc dữ liệu)",

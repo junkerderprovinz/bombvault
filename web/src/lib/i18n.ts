@@ -292,6 +292,8 @@ export const en = {
   "settings.encryptionLabel": "Password",
   "settings.encryptionOn": "Enabled (password derived from APP_KEY)",
   "settings.encryptionOff": "Disabled (no password)",
+  "settings.encryptionPasswordWhere":
+    "You never type that password: BombVault derives it from the APP_KEY on every call. The value itself is in your recovery kit, listed as the derived restic password, which is what you need to run restic against a repository by hand.",
   "settings.encryptionHint":
     "Encryption is fixed per repository when it is created, so this only decides how a NEW repository is made. For a repository that already exists BombVault reads the mode off the repository itself. See the Recovery page. Changing this against an existing repository just stops restic from opening it.",
 
@@ -1251,6 +1253,8 @@ export const en = {
   "receiver.checkOk": "Check OK",
   "receiver.checkFailed": "Check failed",
   "receiver.checkNever": "Not checked yet",
+  "receiver.checkFailedHelp":
+    "BombVault only ever reads a received repository, so it will not repair this one for you. To repair it yourself, run restic against the location above with the password derived from the SENDING instance's APP_KEY, which is in THAT instance's recovery kit, not this box's. Try `restic repair index` first, then `restic repair snapshots` if snapshots stay unreadable.",
   "receiver.lastChecked": "Last checked {time}",
   "receiver.checkNow": "Check now",
   "receiver.deepCheck": "Deep check (read data)",
@@ -2005,6 +2009,8 @@ export const de: Translations = {
   "settings.encryptionLabel": "Passwort",
   "settings.encryptionOn": "Aktiviert (Passwort aus APP_KEY)",
   "settings.encryptionOff": "Deaktiviert (kein Passwort)",
+  "settings.encryptionPasswordWhere":
+    "Dieses Passwort tippst du nie: BombVault leitet es bei jedem Aufruf aus dem APP_KEY ab. Der Wert selbst steht in deinem Wiederherstellungspaket als abgeleitetes restic-Passwort, und genau den brauchst du, um restic von Hand auf ein Repository loszulassen.",
   "settings.encryptionHint":
     "Die Verschlüsselung wird beim Anlegen eines Repositorys festgelegt, diese Einstellung entscheidet also nur über NEUE Repositorys. Bei einem bereits vorhandenen Repository liest BombVault den Modus direkt am Repository ab. Siehe Seite „Wiederherstellung“. Änderst du das gegen ein bestehendes Repository, kann restic es schlicht nicht mehr öffnen.",
 
@@ -2777,6 +2783,8 @@ export const de: Translations = {
   "receiver.checkOk": "Prüfung OK",
   "receiver.checkFailed": "Prüfung fehlgeschlagen",
   "receiver.checkNever": "Noch nicht geprüft",
+  "receiver.checkFailedHelp":
+    "BombVault liest ein empfangenes Repository nur, es repariert dieses hier also nicht für dich. Willst du selbst reparieren, lass restic auf den Ort oben laufen, mit dem Passwort, das aus dem APP_KEY der SENDENDEN Instanz abgeleitet ist. Es steht im Wiederherstellungspaket JENER Instanz, nicht in dem dieser Kiste. Zuerst `restic repair index` versuchen, danach `restic repair snapshots`, falls Snapshots weiter unlesbar bleiben.",
   "receiver.lastChecked": "Zuletzt geprüft {time}",
   "receiver.checkNow": "Jetzt prüfen",
   "receiver.deepCheck": "Tiefenprüfung (Daten lesen)",

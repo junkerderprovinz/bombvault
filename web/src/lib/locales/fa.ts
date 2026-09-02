@@ -230,6 +230,8 @@ const fa: Partial<Translations> = {
   "settings.encryptionLabel": "رمز عبور",
   "settings.encryptionOn": "فعال (رمز عبور برگرفته از APP_KEY)",
   "settings.encryptionOff": "غیرفعال (بدون رمز عبور)",
+  "settings.encryptionPasswordWhere":
+    "این گذرواژه را هرگز تایپ نمی‌کنید: BombVault آن را در هر فراخوانی از APP_KEY مشتق می‌کند. خود مقدار در بستهٔ بازیابی شما با عنوان گذرواژهٔ مشتق‌شدهٔ restic آمده است و برای اجرای دستی restic روی یک مخزن به همان نیاز دارید.",
   "settings.encryptionHint": "رمزگذاری هنگام ساخت هر مخزن تثبیت می‌شود، بنابراین این تنظیم فقط تعیین می‌کند مخزن «جدید» چگونه ساخته شود. برای مخزنی که از پیش وجود دارد، BombVault حالت را از خود مخزن می‌خواند. صفحهٔ بازیابی را ببینید. تغییر این گزینه در برابر مخزن موجود تنها باعث می‌شود restic نتواند آن را باز کند.",
 
   // Encryption-key recovery kit
@@ -997,6 +999,8 @@ const fa: Partial<Translations> = {
   "receiver.checkOk": "بررسی موفق",
   "receiver.checkFailed": "بررسی ناموفق بود",
   "receiver.checkNever": "هنوز بررسی نشده",
+  "receiver.checkFailedHelp":
+    "BombVault فقط مخزن دریافت‌شده را می‌خواند و آن را برای شما تعمیر نمی‌کند. برای تعمیر دستی، restic را روی مسیر بالا اجرا کنید؛ گذرواژه از APP_KEY نمونهٔ فرستنده مشتق می‌شود و در بستهٔ بازیابی همان نمونه است، نه این دستگاه. ابتدا `restic repair index` و سپس در صورت خوانده‌نشدن اسنپ‌شات‌ها `restic repair snapshots` را امتحان کنید.",
   "receiver.lastChecked": "آخرین بررسی {time}",
   "receiver.checkNow": "بررسی همین حالا",
   "receiver.deepCheck": "بررسی عمیق (خواندن داده)",

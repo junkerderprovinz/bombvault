@@ -134,4 +134,19 @@ Jedno kliknięcie pobiera **klucz główny**, **wyprowadzone hasło restic** ora
 !!! danger "Przechowuj zestaw odzyskiwania poza serwerem"
     Zestaw zawiera sekret, który odszyfrowuje Twoje kopie. Trzymaj go w bezpiecznym miejscu, oddzielnie od serwera (menedżer haseł, wydrukowana kopia w sejfie). Jeśli stracisz zarówno BombVault, jak i `APP_KEY` bez zestawu odzyskiwania, Twoich zaszyfrowanych kopii nie da się odzyskać.
 
+### Gdy zestawu nie ma pod ręką
+
+Hasło nie jest nigdzie zapisane, jest **wyliczane** z `APP_KEY`. Mając klucz i powłokę, możesz je odtworzyć samodzielnie:
+
+```sh
+printf 'bombvault:restic-repo' \
+  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
+  | cut -d' ' -f1
+```
+
+To HMAC-SHA256 po stałym ciągu `bombvault:restic-repo`, z surowymi bajtami szesnastkowego `APP_KEY` jako kluczem, wypisany jako 64 małe znaki szesnastkowe. Ta sama wartość jest w zestawie jako wyprowadzone hasło restic; to tutaj jest na dzień, w którym zestaw leży gdzie indziej niż ty.
+
+!!! warning "Dla otrzymanego repozytorium użyj klucza instancji WYSYŁAJĄCEJ"
+    Repozytorium, które trafiło tu przez replikację poza siedzibę, utworzyła maszyna, która je wysłała, swoim **własnym** `APP_KEY`. Wyprowadzenie z klucza maszyny odbierającej daje hasło, które restic odrzuca, co wygląda dokładnie jak uszkodzone repozytorium, choć nim nie jest. To zwykły powód, dla którego `restic check` na otrzymanym repozytorium wciąż pyta o hasło.
+
 Ponieważ definicje odzyskiwania znajdują się **wewnątrz** każdego repozytorium (`<repo>/def`, `<repo>/vm-def`), skopiowany folder repozytorium jest w pełni samowystarczalny, więc zestaw plus repozytorium to wszystko, czego potrzebuje przywracanie na goły metal.

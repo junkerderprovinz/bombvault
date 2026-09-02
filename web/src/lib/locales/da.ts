@@ -160,6 +160,8 @@ const da: Partial<Translations> = {
   "settings.encryptionLabel": "Adgangskode",
   "settings.encryptionOn": "Aktiveret (adgangskode afledt fra APP_KEY)",
   "settings.encryptionOff": "Deaktiveret (ingen adgangskode)",
+  "settings.encryptionPasswordWhere":
+    "Den adgangskode skriver du aldrig: BombVault udleder den af APP_KEY ved hvert kald. Selve værdien står i dit gendannelsessæt som den udledte restic-adgangskode, og det er den, du skal bruge for at køre restic manuelt mod et arkiv.",
   "settings.encryptionHint":
     "Krypteringen ligger fast pr. arkiv, når det oprettes, så denne indstilling afgør kun, hvordan et NYT arkiv laves. For et arkiv, der allerede findes, læser BombVault tilstanden af selve arkivet. Se siden Gendannelse. At ændre dette over for et eksisterende arkiv gør blot, at restic ikke kan åbne det.",
   "settings.paths": "Sikkerhedskopistier",
@@ -1329,6 +1331,8 @@ const da: Partial<Translations> = {
   "receiver.checkOk": "Kontrol OK",
   "receiver.checkFailed": "Kontrol mislykkedes",
   "receiver.checkNever": "Endnu ikke kontrolleret",
+  "receiver.checkFailedHelp":
+    "BombVault læser kun et modtaget arkiv, så det reparerer det ikke for dig. Vil du reparere det selv, så kør restic mod placeringen ovenfor med adgangskoden udledt af APP_KEY på den AFSENDENDE instans, som ligger i DEN instans' gendannelsessæt, ikke i denne maskines. Prøv først `restic repair index` og derefter `restic repair snapshots`, hvis snapshots stadig ikke kan læses.",
   "receiver.lastChecked": "Sidst kontrolleret {time}",
   "receiver.checkNow": "Kontrollér nu",
   "receiver.deepCheck": "Dybdekontrol (læs data)",

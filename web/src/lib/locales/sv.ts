@@ -160,6 +160,8 @@ const sv: Partial<Translations> = {
   "settings.encryptionLabel": "Lösenord",
   "settings.encryptionOn": "Aktiverad (lösenord härlett från APP_KEY)",
   "settings.encryptionOff": "Inaktiverad (inget lösenord)",
+  "settings.encryptionPasswordWhere":
+    "Det lösenordet skriver du aldrig: BombVault härleder det ur APP_KEY vid varje anrop. Själva värdet står i ditt återställningspaket som det härledda restic-lösenordet, och det är det du behöver för att köra restic för hand mot ett arkiv.",
   "settings.encryptionHint":
     "Krypteringen bestäms per arkiv när det skapas, så den här inställningen avgör bara hur ett NYTT arkiv skapas. För ett som redan finns läser BombVault läget direkt ur arkivet. Se sidan Återställning. Att ändra detta mot ett befintligt arkiv gör bara att restic inte kan öppna det.",
   "settings.paths": "Säkerhetskopiesökvägar",
@@ -1329,6 +1331,8 @@ const sv: Partial<Translations> = {
   "receiver.checkOk": "Kontroll OK",
   "receiver.checkFailed": "Kontroll misslyckades",
   "receiver.checkNever": "Inte kontrollerat ännu",
+  "receiver.checkFailedHelp":
+    "BombVault läser bara ett mottaget arkiv och reparerar det alltså inte åt dig. Vill du reparera det själv kör du restic mot platsen ovan med lösenordet som härletts ur APP_KEY på den SÄNDANDE instansen, vilket ligger i DEN instansens återställningspaket, inte i den här maskinens. Prova först `restic repair index` och sedan `restic repair snapshots` om ögonblicksbilder fortfarande inte går att läsa.",
   "receiver.lastChecked": "Senast kontrollerad {time}",
   "receiver.checkNow": "Kontrollera nu",
   "receiver.deepCheck": "Djupkontroll (läs data)",

@@ -160,6 +160,8 @@ const ar: Partial<Translations> = {
   "settings.encryptionLabel": "كلمة المرور",
   "settings.encryptionOn": "مفعّل (كلمة المرور مشتقة من APP_KEY)",
   "settings.encryptionOff": "معطّل (بدون كلمة مرور)",
+  "settings.encryptionPasswordWhere":
+    "أنت لا تكتب كلمة المرور هذه أبدًا: يشتقها BombVault من APP_KEY في كل استدعاء. القيمة نفسها موجودة في حقيبة الاسترداد باسم كلمة مرور restic المشتقة، وهي ما تحتاجه لتشغيل restic يدويًا على مستودع.",
   "settings.encryptionHint":
     "يُثبَّت التشفير لكل مستودع عند إنشائه، لذا يقرّر هذا الإعداد كيفية إنشاء مستودع جديد فقط. أما المستودع الموجود بالفعل فيقرأ BombVault وضعه من المستودع نفسه. انظر صفحة الاسترداد. وتغيير هذا الإعداد بوجود مستودع قائم لا يؤدي إلا إلى منع restic من فتحه.",
   "settings.paths": "مسارات النسخ الاحتياطي",
@@ -1332,6 +1334,8 @@ const ar: Partial<Translations> = {
   "receiver.checkOk": "الفحص سليم",
   "receiver.checkFailed": "فشل الفحص",
   "receiver.checkNever": "لم يُفحص بعد",
+  "receiver.checkFailedHelp":
+    "لا يقوم BombVault إلا بقراءة المستودع المستلَم، ولذلك لن يصلحه نيابةً عنك. لإصلاحه بنفسك، شغّل restic على الموقع أعلاه بكلمة المرور المشتقة من APP_KEY الخاص بالنسخة المُرسِلة، وهي موجودة في حقيبة استرداد تلك النسخة لا حقيبة هذا الجهاز. جرّب أولًا `restic repair index` ثم `restic repair snapshots` إذا بقيت اللقطات غير قابلة للقراءة.",
   "receiver.lastChecked": "آخر فحص {time}",
   "receiver.checkNow": "افحص الآن",
   "receiver.deepCheck": "فحص عميق (قراءة البيانات)",
