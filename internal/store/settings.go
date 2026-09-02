@@ -88,6 +88,14 @@ type Settings struct {
 	// until now nothing did — a 12-thread box sat at 99% on every core and 100 °C
 	// for the length of a backup.
 	BackupCores int
+	// DisplayPrefs is the look of the interface (theme, accent, palette, motion,
+	// shape, the three label modes, language, advanced view) as one opaque JSON
+	// object, so it survives a browser (issue #191). The server never reads
+	// inside it: the shape belongs to the frontend and gains an axis whenever the
+	// interface does, and a column per axis would mean a migration per axis for
+	// data nothing here queries. Empty means nothing stored yet, which is what
+	// lets a first load seed this from the browser instead of resetting the user.
+	DisplayPrefs string
 	// RcloneConf is the rclone configuration (INI) for off-site repos, stored
 	// AES-256-GCM-encrypted at rest. Empty means no rclone backends configured.
 	RcloneConf string
@@ -314,7 +322,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       cloud_cred_sets,
 		       fleet_enabled, instance_name, fleet_token,
 		       everything_schedule, everything_pre_hook, everything_post_hook,
-		       backup_cores
+		       backup_cores, display_prefs
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -352,7 +360,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.CloudCredSets,
 		&fleetEnabled, &s.InstanceName, &s.FleetToken,
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
-		&s.BackupCores,
+		&s.BackupCores, &s.DisplayPrefs,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -545,7 +553,8 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  everything_schedule          = ?,
 		  everything_pre_hook          = ?,
 		  everything_post_hook         = ?,
-		  backup_cores                 = ?
+		  backup_cores                 = ?,
+		  display_prefs                = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -584,6 +593,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.EverythingPreHook,
 		s.EverythingPostHook,
 		s.BackupCores,
+		s.DisplayPrefs,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

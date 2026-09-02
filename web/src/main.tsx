@@ -11,6 +11,7 @@ import { applyStoredRainbow } from "./lib/appearance";
 import { applyStoredShape, armShapeTransitions } from "./lib/shape";
 import { applyStoredMotionIntensity } from "./lib/motion";
 import { applyStoredLabelModes } from "./lib/controls";
+import { sync as syncDisplayPrefs } from "./lib/displayPrefs";
 
 // Apply persisted preferences before first paint (flash prevention).
 applyStoredTheme();
@@ -20,6 +21,14 @@ applyStoredRainbow();
 applyStoredShape();
 applyStoredMotionIntensity();
 applyStoredLabelModes();
+
+// Then reconcile with the server, which is where the look actually lives
+// (#191). Deliberately AFTER the calls above and deliberately not awaited: the
+// point of those is that they are synchronous, so the page paints in the right
+// theme instead of flashing the default one, and no network round trip can be.
+// On a browser that still has its cache this changes nothing; on one that was
+// cleared it brings the stored look back a moment after paint.
+void syncDisplayPrefs();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

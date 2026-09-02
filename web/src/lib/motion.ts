@@ -1,3 +1,4 @@
+import { save as saveDisplayPrefs } from "./displayPrefs";
 // ---------------------------------------------------------------------------
 // Motion intensity — off / subtle / full via data-motion on <html> +
 // localStorage.
@@ -83,6 +84,7 @@ export function applyMotionIntensity(intensity: MotionIntensity | string | undef
  * setAccent()). */
 export function setMotionIntensity(intensity: MotionIntensity): void {
   localStorage.setItem(STORAGE_KEY, intensity);
+  saveDisplayPrefs();
   applyMotionIntensity(intensity);
 }
 

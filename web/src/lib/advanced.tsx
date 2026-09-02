@@ -4,6 +4,7 @@
 // ---------------------------------------------------------------------------
 
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { save as saveDisplayPrefs } from "./displayPrefs";
 
 const KEY = "bombvault.advanced";
 
@@ -25,6 +26,7 @@ export function AdvancedProvider({ children }: { children: ReactNode }) {
     setState(v);
     try {
       localStorage.setItem(KEY, v ? "1" : "0");
+      saveDisplayPrefs();
     } catch {
       /* ignore */
     }

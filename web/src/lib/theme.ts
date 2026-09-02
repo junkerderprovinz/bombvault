@@ -1,3 +1,4 @@
+import { save as saveDisplayPrefs } from "./displayPrefs";
 // ---------------------------------------------------------------------------
 // Theme — dark / light / system via data-theme on <html> + localStorage
 //
@@ -47,6 +48,7 @@ function paint(theme: Theme): void {
 
 export function setTheme(theme: Theme): void {
   localStorage.setItem(STORAGE_KEY, theme);
+  saveDisplayPrefs();
   paint(theme);
 }
 

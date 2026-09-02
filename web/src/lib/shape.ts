@@ -1,3 +1,4 @@
+import { save as saveDisplayPrefs } from "./displayPrefs";
 // ---------------------------------------------------------------------------
 // Shape — round / soft / square via data-shape on <html> + localStorage.
 //
@@ -56,6 +57,7 @@ export function applyShape(shape: Shape | string | undefined): void {
  * "Save" step, matching accent.ts's setAccent()/theme.ts's setTheme()). */
 export function setShape(shape: Shape): void {
   localStorage.setItem(STORAGE_KEY, shape);
+  saveDisplayPrefs();
   applyShape(shape);
 }
 

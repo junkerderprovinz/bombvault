@@ -1248,6 +1248,24 @@ UPDATE runs SET completed = 0
 		alreadySatisfied: columnPresent("settings", "backup_cores"),
 		sql:              "ALTER TABLE settings ADD COLUMN backup_cores INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// display_prefs holds the look of the interface (theme, accent, palette,
+		// motion, shape, the three label modes, language, advanced view) so it
+		// survives a browser (issue #191). Reported by manilx, who clears
+		// Firefox's site data to fix an unrelated VNC problem and had to rebuild
+		// his view every time.
+		//
+		// ONE column holding a JSON object, not ten columns. These values are
+		// only ever read and written as a set by one client, none of them is
+		// queried, and the set grows whenever the interface gains an axis; ten
+		// columns would mean a migration per axis for data the server never
+		// looks inside. Empty string means "nothing stored yet", which is what
+		// lets a first load seed the server from whatever the browser already
+		// had instead of resetting the user to factory settings.
+		version: 97, name: "settings_display_prefs",
+		alreadySatisfied: columnPresent("settings", "display_prefs"),
+		sql:              "ALTER TABLE settings ADD COLUMN display_prefs TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

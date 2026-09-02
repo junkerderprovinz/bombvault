@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { save as saveDisplayPrefs } from "./displayPrefs";
 import type { ReactNode } from "react";
 import { createElement } from "react";
 
@@ -3428,6 +3429,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const offered = OFFERED_LANGUAGES.map((l) => l.code);
     if (!offered.includes(code)) return;
     localStorage.setItem(STORAGE_KEY, code);
+    saveDisplayPrefs();
     document.documentElement.setAttribute("lang", code);
     document.documentElement.setAttribute("dir", isRtl(code) ? "rtl" : "ltr");
     // Fetch before the state change where possible, so the switch shows the

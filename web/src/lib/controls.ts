@@ -1,3 +1,4 @@
+import { save as saveDisplayPrefs } from "./displayPrefs";
 // ---------------------------------------------------------------------------
 // Control label engine (#178) — how much of a control's identity is shown:
 // its text, its glyph, or both.
@@ -106,6 +107,7 @@ export function applyLabelMode(axis: ControlAxis, mode: LabelMode | string | und
 export function setLabelMode(axis: ControlAxis, mode: LabelMode): void {
   try {
     localStorage.setItem(STORAGE_KEY[axis], mode);
+    saveDisplayPrefs();
   } catch {
     // Not being able to remember the choice is not a reason to refuse it for
     // this session.

@@ -180,6 +180,11 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PATCH /api/containers/{name}", h.handlePatchContainer)
 	mux.HandleFunc("GET /api/settings", h.handleGetSettings)
 	mux.HandleFunc("PUT /api/settings", h.handlePutSettings)
+	// Separate from /api/settings on purpose: that one is a full-object replace
+	// over ~86 fields, and a theme toggle must not have to send the whole
+	// configuration back. See displayprefs.go.
+	mux.HandleFunc("GET /api/display-prefs", h.handleGetDisplayPrefs)
+	mux.HandleFunc("PUT /api/display-prefs", h.handlePutDisplayPrefs)
 	// Portable settings export / import (a JSON file to move a configuration
 	// between instances; no live link). Session-protected like every other /api
 	// route, and — because the credentialed export IS the recovery kit's class of

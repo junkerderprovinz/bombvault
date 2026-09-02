@@ -29,6 +29,7 @@
 // ---------------------------------------------------------------------------
 
 import { contrastOn, parseHex } from "./accent";
+import { save as saveDisplayPrefs } from "./displayPrefs";
 
 /**
  * RAINBOW is the default palette: a full turn of the wheel, tuned to the
@@ -382,6 +383,7 @@ export function setRainbow(patch: Partial<RainbowState>): RainbowState {
   applyRainbow(merged);
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    saveDisplayPrefs();
   } catch {
     // A browser with storage disabled simply pays one flash per load; the
     // in-memory apply above still makes this load correct.

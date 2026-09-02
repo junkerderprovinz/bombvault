@@ -1,3 +1,4 @@
+import { save as saveDisplayPrefs } from "./displayPrefs";
 // ---------------------------------------------------------------------------
 // Accent color — persisted in localStorage, applied as CSS custom properties
 // --accent / --accent-contrast / --accent-soft.
@@ -21,6 +22,7 @@ export function getAccent(): string {
 
 export function setAccent(hex: string): void {
   localStorage.setItem(STORAGE_KEY, hex);
+  saveDisplayPrefs();
   applyAccent(hex);
 }
 
@@ -197,6 +199,7 @@ export function setAccentPresets(next: string[]): string[] {
   const usable = usablePresets(next);
   try {
     localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(usable));
+    saveDisplayPrefs();
   } catch {
     // A browser with storage disabled simply pays one flash per load; the
     // in-memory value returned below still makes this call correct.
