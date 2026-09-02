@@ -1,0 +1,95 @@
+# One-off, manually dispatched: delete a single tag from the Docker Hub mirror.
+#
+# The Docker Hub token lives only as a repository secret, so a tag can only be
+# retired from inside Actions. This workflow exists for the folding of a
+# published version into an earlier one, where the image tag has to go with the
+# git tag and the release, otherwise the version stays pullable after it has
+# stopped existing everywhere else.
+#
+# Deliberately narrow, because deleting a published image tag cannot be undone:
+#   - manual dispatch only, never on push
+#   - the tag has to be typed, there is no default
+#   - "latest", "8" and any bare major.minor are refused, since those are the
+#     floating tags every installation follows
+#   - a confirmation string has to match the tag exactly
+name: Delete a Docker Hub tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to delete, e.g. 8.3.1"
+        required: true
+      confirm:
+        description: "Type the same tag again to confirm"
+        required: true
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse anything but a deliberate, non-floating tag
+        env:
+          TAG: ${{ inputs.tag }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          if [ "$TAG" != "$CONFIRM" ]; then
+            echo "::error::confirmation does not match the tag" >&2
+            exit 1
+          fi
+          case "$TAG" in
+            latest|main|[0-9]|[0-9][0-9]|[0-9].[0-9]|[0-9][0-9].[0-9]|[0-9].[0-9][0-9])
+              echo "::error::$TAG is a floating tag that installations follow, refusing" >&2
+              exit 1 ;;
+          esac
+          if ! printf '%s' "$TAG" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::expected an exact version like 8.3.1, got '$TAG'" >&2
+            exit 1
+          fi
+
+      - name: Delete the tag
+        env:
+          USER_NAME: ${{ vars.DOCKERHUB_USERNAME }}
+          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          # The registry token used for pushing cannot delete through the Hub
+          # API, so this authenticates against hub.docker.com itself.
+          SECRET="${PASSWORD:-$TOKEN}"
+          JWT=$(curl -sS -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg u "$USER_NAME" --arg p "$SECRET" '{username:$u,password:$p}')" \
+            https://hub.docker.com/v2/users/login/ | jq -r '.token // empty')
+          if [ -z "$JWT" ]; then
+            echo "::error::Docker Hub login failed" >&2
+            exit 1
+          fi
+          CODE=$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE \
+            -H "Authorization: JWT $JWT" \
+            "https://hub.docker.com/v2/repositories/$USER_NAME/$REPO/tags/$TAG/")
+          echo "DELETE $USER_NAME/$REPO:$TAG -> HTTP $CODE"
+          case "$CODE" in
+            204|202) echo "deleted" ;;
+            404) echo "::notice::tag was already gone" ;;
+            *) echo "::error::unexpected status $CODE" >&2; exit 1 ;;
+          esac
+
+      - name: Confirm it is gone from the registry
+        env:
+          USER_NAME: ${{ vars.DOCKERHUB_USERNAME }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          T=$(curl -sS "https://auth.docker.io/token?service=registry.docker.io&scope=repository:$USER_NAME/$REPO:pull" | jq -r .token)
+          CODE=$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $T" \
+            -H 'Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json' \
+            "https://registry-1.docker.io/v2/$USER_NAME/$REPO/manifests/$TAG")
+          echo "registry says HTTP $CODE for :$TAG"
+          if [ "$CODE" != "404" ]; then
+            echo "::error::tag still resolves, deletion did not take" >&2
+            exit 1
+          fi
