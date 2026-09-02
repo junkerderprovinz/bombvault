@@ -63,6 +63,10 @@ BombVault nabízí dvě úrovně důkazu, že vaše zálohy jsou skutečně obno
 
 ## Řídicí panel příjemce (přijímací strana)
 
+![Přijímající strana, sledovaná jen pro čtení, s kontrolou integrity na tomto stroji.](assets/screenshots/receiver.png)
+
+*Přijímající strana, sledovaná jen pro čtení, s kontrolou integrity na tomto stroji.*
+
 Vše výše je *odesílající* strana. Na stroji, který **přijímá** neměnné kopie mimo lokalitu z jiného BombVaultu, vám řídicí panel příjemce dává nezávislé monitorování těchto repozitářů jen pro čtení na přijímacím hardwaru, takže tiché selhání na druhém konci nezůstane bez povšimnutí.
 
 Zapněte přepínač **Příjemce** v Nastavení k odhalení záložky **Příjemce**. Ve výchozím stavu je vypnuto; zapněte jej jen na stroji, který skutečně přijímá neměnné zálohy mimo lokalitu. Poté zaregistrujte přijatý repozitář (jen pro čtení, otevřený klíčem odesílající instance) pro získání:

@@ -63,6 +63,10 @@ Kontrol Paneli'ndeki **fidye yazılımı koruması karnesi** bunu etki alanı ba
 
 ## Alıcı kontrol paneli (alan taraf)
 
+![Alıcı taraf, salt okunur izlenir, bütünlük kontrolü bu makinede çalıştırılır.](assets/screenshots/receiver.png)
+
+*Alıcı taraf, salt okunur izlenir, bütünlük kontrolü bu makinede çalıştırılır.*
+
 Yukarıdaki her şey *gönderen* taraftır. Başka bir BombVault'tan değiştirilemez site dışı kopyalar **alan** makinede, Alıcı kontrol paneli size o depoların alan donanımda bağımsız, salt okunur izlemesini verir, böylece karşı uçtaki sessiz bir hata fark edilmeden kalmaz.
 
 Bir **Alıcı** sekmesini ortaya çıkarmak için Ayarlar'da **Alıcı** geçişini açın. Varsayılan olarak kapalıdır; onu yalnızca gerçekten değiştirilemez site dışı yedekler alan bir makinede etkinleştirin. Ardından şunları elde etmek için alınan bir depoyu (salt okunur, gönderen örneğin anahtarıyla açılmış) kaydedin:

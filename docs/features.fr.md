@@ -4,6 +4,10 @@ BombVault est simple par défaut et profond quand vous en avez besoin. L'interfa
 
 ## Périmètre de sauvegarde
 
+![Les conteneurs, chacun avec son interrupteur de planification, son ordre de sauvegarde et son historique.](assets/screenshots/containers.png)
+
+*Les conteneurs, chacun avec son interrupteur de planification, son ordre de sauvegarde et son historique.*
+
 | Quoi | Ce qui est enregistré |
 |---|---|
 | **Conteneurs Docker** | Le répertoire appdata plus la définition du conteneur (image, variables d'environnement, ports, labels, volumes). |
@@ -13,6 +17,10 @@ BombVault est simple par défaut et profond quand vous en avez besoin. L'interfa
 | **Fichiers et dossiers** | Des **jeux de fichiers** nommés : n'importe quel dossier du serveur (un partage, vos documents, une bibliothèque de photos), chacun avec des motifs d'exclusion optionnels par jeu. Parité complète avec les autres domaines (plannings, rétention, copie hors site, vérifications d'intégrité et essais de restauration). |
 
 ## Restauration
+
+![La récupération guidée fait passer une installation neuve par le cas catastrophe, au même endroit.](assets/screenshots/recovery.png)
+
+*La récupération guidée fait passer une installation neuve par le cas catastrophe, au même endroit.*
 
 - **Restauration complète en un clic.** Choisissez un instantané, cliquez sur Restaurer. Terminé.
 - **Restauration depuis le local ou le hors site.** Chaque navigateur de sauvegardes dispose d'un commutateur **Local / Hors site**, de sorte que si un dépôt local est perdu ou corrompu, vous pouvez lister et restaurer directement depuis le réplica hors site. La suppression est par source : retirer une sauvegarde n'affecte que la copie que vous consultez.

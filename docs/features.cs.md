@@ -4,6 +4,10 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 
 ## Rozsah zálohování
 
+![Kontejnery, každý s vlastním přepínačem plánu, pořadím záloh a vlastní historií.](assets/screenshots/containers.png)
+
+*Kontejnery, každý s vlastním přepínačem plánu, pořadím záloh a vlastní historií.*
+
 | Co | Co se ukládá |
 |---|---|
 | **Docker kontejnery** | Adresář appdata plus definice kontejneru (image, proměnné prostředí, porty, štítky, svazky). |
@@ -13,6 +17,10 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 | **Soubory a složky** | Pojmenované **sady souborů**: libovolná složka na serveru (sdílená složka, vaše dokumenty, knihovna fotek), každá s volitelnými vylučovacími vzory pro danou sadu. Plná rovnocennost s ostatními doménami (plány, uchovávání, kopie mimo lokalitu, kontroly integrity a cvičné obnovy). |
 
 ## Obnova
+
+![Vedená obnova provede čerstvou instalaci havarijním případem na jednom místě.](assets/screenshots/recovery.png)
+
+*Vedená obnova provede čerstvou instalaci havarijním případem na jednom místě.*
 
 - **Plná obnova na jedno kliknutí.** Vyberte snímek, klikněte na Obnovit. Hotovo.
 - **Obnova z místní nebo mimo lokalitu.** Každý prohlížeč záloh má přepínač **Místní / Mimo lokalitu**, takže pokud se místní repozitář ztratí nebo poškodí, můžete vypsat a obnovit přímo z repliky mimo lokalitu. Mazání je pro každý zdroj zvlášť: odstranění zálohy ovlivní jen kopii, kterou si prohlížíte.

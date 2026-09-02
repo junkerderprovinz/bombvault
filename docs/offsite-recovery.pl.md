@@ -63,6 +63,10 @@ BombVault oferuje dwa poziomy dowodu, że Twoje kopie są faktycznie przywracaln
 
 ## Panel odbiorcy (strona odbierająca)
 
+![Strona odbierająca, obserwowana tylko do odczytu, z kontrolą spójności na tej maszynie.](assets/screenshots/receiver.png)
+
+*Strona odbierająca, obserwowana tylko do odczytu, z kontrolą spójności na tej maszynie.*
+
 Wszystko powyżej to strona *wysyłająca*. Na maszynie, która **odbiera** niezmienne kopie poza siedzibą od innego BombVault, panel odbiorcy daje Ci niezależne, tylko do odczytu monitorowanie tych repozytoriów na sprzęcie odbierającym, więc ciche niepowodzenie po drugiej stronie nie pozostaje niezauważone.
 
 Włącz przełącznik **Odbiorca** w Ustawieniach, aby odsłonić zakładkę **Odbiorca**. Jest domyślnie wyłączony; włącz go tylko na maszynie, która faktycznie odbiera niezmienne kopie poza siedzibą. Następnie zarejestruj otrzymane repozytorium (tylko do odczytu, otwarte kluczem instancji wysyłającej), aby uzyskać:

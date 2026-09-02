@@ -63,6 +63,10 @@ The template also mounts the Docker socket, the flash (`/boot`) and the **Host D
 
 ## First run
 
+![The dashboard after a first backup: what is protected, what runs next, and a live log.](assets/screenshots/dashboard.png)
+
+*The dashboard after a first backup: what is protected, what runs next, and a live log.*
+
 1. Open the web UI at `https://<your-unraid-ip>:3443` (self-signed certificate out of the box).
 2. In **Settings**, enable the backup domains you want (Containers, VMs, Flash, Config, Files) and pick an accent colour.
 3. On the **Containers** tab, pick a container and click **Back up** to make your first restore point. Repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files}` and are created on the first backup.
@@ -75,6 +79,10 @@ The template also mounts the Docker socket, the flash (`/boot`) and the **Host D
     Open `/spike` in the web UI after the container starts. It probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces, so you can confirm the container is wired up correctly before you rely on it.
 
 ## Simple vs Advanced
+
+![Settings has no Save button: every change is written as you make it.](assets/screenshots/settings.png)
+
+*Settings has no Save button: every change is written as you make it.*
 
 By default the interface shows only the essentials (back up, restore, schedule). Use the **Simple / Advanced** switch in the sidebar to reveal the expert controls: retention, off-site copy, pre/post hooks, file-level restore, notifications, Prometheus metrics and the integrity/maintenance tools. It is a per-browser preference and off by default, so newcomers get a clean UI and power users get everything.
 

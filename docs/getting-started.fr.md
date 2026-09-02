@@ -63,6 +63,10 @@ Le modèle monte aussi pour vous le socket Docker, la flash (`/boot`) et la raci
 
 ## Première exécution
 
+![Le tableau de bord après une première sauvegarde : ce qui est protégé, ce qui suit, et un journal en direct.](assets/screenshots/dashboard.png)
+
+*Le tableau de bord après une première sauvegarde : ce qui est protégé, ce qui suit, et un journal en direct.*
+
 1. Ouvrez l'interface web à `https://<votre-ip-unraid>:3443` (certificat auto-signé par défaut).
 2. Dans **Paramètres**, activez les domaines de sauvegarde souhaités (Conteneurs, VMs, Flash, Config, Fichiers) et choisissez une couleur d'accentuation.
 3. Dans l'onglet **Conteneurs**, choisissez un conteneur et cliquez sur **Sauvegarder** pour créer votre premier point de restauration. Les chemins de dépôt ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files}` et sont créés à la première sauvegarde.
@@ -75,6 +79,10 @@ Le modèle monte aussi pour vous le socket Docker, la flash (`/boot`) et la raci
     Ouvrez `/spike` dans l'interface web après le démarrage du conteneur. Il sonde chaque montage et CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale toute pièce manquante, afin que vous puissiez confirmer que le conteneur est correctement branché avant de vous y fier.
 
 ## Simple vs Avancé
+
+![Les réglages n'ont pas de bouton Enregistrer : chaque changement est écrit au moment où vous le faites.](assets/screenshots/settings.png)
+
+*Les réglages n'ont pas de bouton Enregistrer : chaque changement est écrit au moment où vous le faites.*
 
 Par défaut, l'interface ne montre que l'essentiel (sauvegarder, restaurer, planifier). Utilisez le commutateur **Simple / Avancé** dans la barre latérale pour révéler les contrôles experts : rétention, copie hors site, hooks pré/post, restauration au niveau fichier, notifications, métriques Prometheus et les outils d'intégrité/maintenance. C'est une préférence par navigateur, désactivée par défaut, afin que les nouveaux venus obtiennent une interface épurée et que les utilisateurs avancés obtiennent tout.
 

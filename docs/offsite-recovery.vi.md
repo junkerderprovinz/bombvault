@@ -63,6 +63,10 @@ BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu c
 
 ## Bảng điều khiển bên nhận (phía nhận)
 
+![Phía nhận, được theo dõi ở chế độ chỉ đọc, với kiểm tra toàn vẹn chạy trên máy này.](assets/screenshots/receiver.png)
+
+*Phía nhận, được theo dõi ở chế độ chỉ đọc, với kiểm tra toàn vẹn chạy trên máy này.*
+
 Mọi thứ ở trên là phía *gửi*. Trên máy **nhận** các bản sao off-site bất biến từ một BombVault khác, bảng điều khiển bên nhận cho bạn giám sát độc lập, chỉ đọc các kho đó trên phần cứng bên nhận, nên một lần thất bại âm thầm ở đầu xa không bị bỏ qua.
 
 Bật công tắc **Receiver** trong Settings để hé lộ một tab **Receiver**. Nó mặc định tắt; chỉ bật nó trên một máy thực sự nhận các bản sao lưu off-site bất biến. Sau đó đăng ký một kho đã nhận (chỉ đọc, mở bằng khóa của phiên bản gửi) để có được:

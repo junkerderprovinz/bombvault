@@ -63,6 +63,10 @@ BombVault tarjoaa kaksi tasoa todisteita siitä, että varmuuskopiosi ovat tosia
 
 ## Vastaanottajan kojelauta (vastaanottava puoli)
 
+![Vastaanottava puoli, vain luku -tilassa valvottuna, ja eheystarkistus ajetaan tällä koneella.](assets/screenshots/receiver.png)
+
+*Vastaanottava puoli, vain luku -tilassa valvottuna, ja eheystarkistus ajetaan tällä koneella.*
+
 Kaikki yllä oleva on *lähettävä* puoli. Laatikossa, joka **vastaanottaa** muuttumattomia etäkopioita toisesta BombVaultista, Vastaanottajan kojelauta antaa sinulle riippumattoman, vain luku -tilaisen valvonnan noista repositorioista vastaanottavalla laitteistolla, jotta hiljainen epäonnistuminen vastapäässä ei jää huomaamatta.
 
 Kytke **Vastaanottaja**-kytkin päälle Asetuksissa paljastaaksesi **Vastaanottaja**-välilehden. Se on oletuksena pois päältä; ota se käyttöön vain laatikossa, joka tosiasiassa vastaanottaa muuttumattomia etävarmuuskopioita. Rekisteröi sitten vastaanotettu repositorio (vain luku, avattuna lähettävän instanssin avaimella) saadaksesi:

@@ -63,6 +63,10 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
 
 ## Lần chạy đầu tiên
 
+![Bảng điều khiển sau bản sao lưu đầu tiên: cái gì được bảo vệ, cái gì chạy tiếp, và một nhật ký trực tiếp.](assets/screenshots/dashboard.png)
+
+*Bảng điều khiển sau bản sao lưu đầu tiên: cái gì được bảo vệ, cái gì chạy tiếp, và một nhật ký trực tiếp.*
+
 1. Mở giao diện web tại `https://<your-unraid-ip>:3443` (chứng chỉ tự ký ngay từ đầu).
 2. Trong **Settings**, bật các miền sao lưu bạn muốn (Containers, VMs, Flash, Config, Files) và chọn một màu nhấn.
 3. Ở tab **Containers**, chọn một container và nhấp **Back up** để tạo điểm khôi phục đầu tiên của bạn. Các đường dẫn kho mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files}` và được tạo ở lần sao lưu đầu tiên.
@@ -75,6 +79,10 @@ Template cũng gắn kết Docker socket, flash (`/boot`) và gốc **Host Data*
     Mở `/spike` trong giao diện web sau khi container khởi động. Nó kiểm thử mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu, để bạn có thể xác nhận container được kết nối đúng cách trước khi tin cậy nó.
 
 ## Đơn giản so với Nâng cao
+
+![Phần cài đặt không có nút Lưu: mỗi thay đổi được ghi ngay khi bạn thực hiện.](assets/screenshots/settings.png)
+
+*Phần cài đặt không có nút Lưu: mỗi thay đổi được ghi ngay khi bạn thực hiện.*
 
 Theo mặc định, giao diện chỉ hiển thị những thứ thiết yếu (sao lưu, khôi phục, lên lịch). Dùng công tắc **Simple / Advanced** trong thanh bên để hé lộ các điều khiển chuyên gia: lưu giữ, bản sao off-site, hook trước/sau, khôi phục ở cấp tập tin, thông báo, số liệu Prometheus và các công cụ toàn vẹn/bảo trì. Đây là một tùy chọn theo từng trình duyệt và tắt theo mặc định, nên người mới có giao diện gọn gàng còn người dùng chuyên sâu có đủ mọi thứ.
 

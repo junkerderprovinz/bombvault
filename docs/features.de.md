@@ -4,6 +4,10 @@ BombVault ist standardmäßig einfach und tiefgehend, wenn du es brauchst. Die O
 
 ## Backup-Umfang
 
+![Container, jeder mit eigenem Zeitplan-Schalter, Sicherungsreihenfolge und eigener Historie.](assets/screenshots/containers.png)
+
+*Container, jeder mit eigenem Zeitplan-Schalter, Sicherungsreihenfolge und eigener Historie.*
+
 | Was | Was gesichert wird |
 |---|---|
 | **Docker-Container** | Appdata-Verzeichnis plus die Container-Definition (Image, Umgebungsvariablen, Ports, Labels, Volumes). |
@@ -13,6 +17,10 @@ BombVault ist standardmäßig einfach und tiefgehend, wenn du es brauchst. Die O
 | **Dateien & Ordner** | Benannte **Dateisätze**: jeder beliebige Ordner auf dem Server (eine Freigabe, deine Dokumente, eine Fotobibliothek), jeweils mit optionalen Ausschlussmustern pro Satz. Volle Gleichwertigkeit mit den anderen Bereichen (Zeitpläne, Aufbewahrung, Off-site-Kopie, Integritätsprüfungen und Wiederherstellungsübungen). |
 
 ## Wiederherstellung
+
+![Die geführte Wiederherstellung nimmt eine frische Installation an einer Stelle durch den Ernstfall.](assets/screenshots/recovery.png)
+
+*Die geführte Wiederherstellung nimmt eine frische Installation an einer Stelle durch den Ernstfall.*
 
 - **Ein-Klick-Vollwiederherstellung.** Snapshot wählen, auf Wiederherstellen klicken. Fertig.
 - **Wiederherstellung von lokal oder Off-site.** Jeder Backup-Browser hat einen Schalter **Lokal / Off-site**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.

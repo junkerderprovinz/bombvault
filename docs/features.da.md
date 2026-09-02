@@ -4,6 +4,10 @@ BombVault er simpel som standard og dyb, når du har brug for det. Grænsefladen
 
 ## Sikkerhedskopiets omfang
 
+![Containere, hver med egen planlægningskontakt, sikkerhedskopieringsrækkefølge og egen historik.](assets/screenshots/containers.png)
+
+*Containere, hver med egen planlægningskontakt, sikkerhedskopieringsrækkefølge og egen historik.*
+
 | Hvad | Hvad der gemmes |
 |---|---|
 | **Docker-containere** | Appdata-mappen plus containerdefinitionen (image, env-variabler, porte, labels, volumener). |
@@ -13,6 +17,10 @@ BombVault er simpel som standard og dyb, når du har brug for det. Grænsefladen
 | **Filer og mapper** | Navngivne **filsæt**: en hvilken som helst mappe på serveren (en share, dine dokumenter, et fotobibliotek), hver med valgfrie udelukkelsesmønstre pr. sæt. Fuld paritet med de andre domæner (tidsplaner, opbevaring, off-site-kopi, integritetstjek og gendannelsesøvelser). |
 
 ## Gendannelse
+
+![Den guidede gendannelse fører en frisk installation gennem katastrofetilfældet ét sted.](assets/screenshots/recovery.png)
+
+*Den guidede gendannelse fører en frisk installation gennem katastrofetilfældet ét sted.*
 
 - **Ét-klik fuld gendannelse.** Vælg et øjebliksbillede, klik Gendan. Færdig.
 - **Gendan fra lokal eller off-site.** Hver sikkerhedskopi-browser har en **Lokal / Off-site**-kontakt, så hvis et lokalt repo går tabt eller bliver beskadiget, kan du liste og gendanne direkte fra off-site-replikaen. Sletning er pr. kilde: at fjerne en sikkerhedskopi påvirker kun den kopi, du ser på.

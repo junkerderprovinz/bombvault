@@ -63,6 +63,10 @@ Výsledek vložte do pole `APP_KEY` v šabloně.
 
 ## První spuštění
 
+![Přehled po první záloze: co je chráněno, co poběží dál a živý protokol.](assets/screenshots/dashboard.png)
+
+*Přehled po první záloze: co je chráněno, co poběží dál a živý protokol.*
+
 1. Otevřete webové rozhraní na `https://<your-unraid-ip>:3443` (samopodepsaný certifikát rovnou z krabice).
 2. V **Nastavení** povolte zálohovací domény, které chcete (Kontejnery, VM, Flash, Config, Soubory), a vyberte barvu zvýraznění.
 3. V záložce **Kontejnery** vyberte kontejner a klikněte na **Zálohovat** pro vytvoření svého prvního bodu obnovení. Cesty repozitářů mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files}` a vytvoří se při první záloze.
@@ -75,6 +79,10 @@ Výsledek vložte do pole `APP_KEY` v šabloně.
     Po spuštění kontejneru otevřete `/spike` ve webovém rozhraní. Prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části, takže si můžete potvrdit, že je kontejner správně zapojen, dříve než se na něj budete spoléhat.
 
 ## Jednoduché vs. pokročilé
+
+![Nastavení nemá tlačítko Uložit: každá změna se zapíše hned.](assets/screenshots/settings.png)
+
+*Nastavení nemá tlačítko Uložit: každá změna se zapíše hned.*
 
 Ve výchozím nastavení rozhraní zobrazuje jen to nejnutnější (zálohovat, obnovit, plánovat). Použijte přepínač **Jednoduché / Pokročilé** v postranním panelu k odhalení expertních ovládacích prvků: uchovávání, kopie mimo lokalitu, pre/post hooky, obnova na úrovni souborů, oznámení, metriky Prometheus a nástroje integrity/údržby. Jde o předvolbu na úrovni prohlížeče, ve výchozím stavu vypnutou, takže nováčci dostanou čisté UI a pokročilí uživatelé dostanou vše.
 

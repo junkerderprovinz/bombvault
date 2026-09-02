@@ -63,6 +63,10 @@ BombVault tilbyder to niveauer af bevis for, at dine sikkerhedskopier faktisk ka
 
 ## Modtager-dashboard (den modtagende side)
 
+![Den modtagende side, overvåget skrivebeskyttet, med en integritetskontrol kørt på denne maskine.](assets/screenshots/receiver.png)
+
+*Den modtagende side, overvåget skrivebeskyttet, med en integritetskontrol kørt på denne maskine.*
+
 Alt ovenstående er den *afsendende* side. På den boks, der **modtager** uforanderlige off-site-kopier fra en anden BombVault, giver modtager-dashboardet dig uafhængig, skrivebeskyttet overvågning af disse repositorier på den modtagende hardware, så en tavs fejl i den anden ende ikke går ubemærket hen.
 
 Slå **Receiver**-omskifteren til i Indstillinger for at afsløre en **Receiver**-fane. Den er som standard fra; aktivér den kun på en boks, der faktisk modtager uforanderlige off-site-sikkerhedskopier. Registrer så et modtaget repository (skrivebeskyttet, åbnet med den afsendende instans' nøgle) for at få:

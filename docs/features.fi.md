@@ -4,6 +4,10 @@ BombVault on oletuksena yksinkertainen ja syvä silloin kun tarvitset. Käyttöl
 
 ## Varmuuskopioinnin laajuus
 
+![Kontit, kullakin oma aikataulukytkin, varmuuskopiointijärjestys ja oma historia.](assets/screenshots/containers.png)
+
+*Kontit, kullakin oma aikataulukytkin, varmuuskopiointijärjestys ja oma historia.*
+
 | Mitä | Mitä tallennetaan |
 |---|---|
 | **Docker-kontit** | Appdata-hakemisto sekä kontin määritys (image, ympäristömuuttujat, portit, tunnisteet, taltiot). |
@@ -13,6 +17,10 @@ BombVault on oletuksena yksinkertainen ja syvä silloin kun tarvitset. Käyttöl
 | **Tiedostot ja kansiot** | Nimetyt **tiedostojoukot**: mikä tahansa palvelimen kansio (jako, asiakirjasi, valokuvakirjasto), kukin valinnaisin joukkokohtaisin poissulkukuvioin. Täysi pariteetti muiden toimialueiden kanssa (aikataulut, säilytys, etäkopio, eheystarkistukset ja palautusharjoitukset). |
 
 ## Palautus
+
+![Opastettu palautus vie tuoreen asennuksen läpi katastrofitilanteen yhdessä paikassa.](assets/screenshots/recovery.png)
+
+*Opastettu palautus vie tuoreen asennuksen läpi katastrofitilanteen yhdessä paikassa.*
 
 - **Yhden napsautuksen täyspalautus.** Valitse tilannevedos, napsauta Palauta. Valmis.
 - **Palautus paikallisesta tai etäsijainnista.** Jokaisessa varmuuskopioselaimessa on **Paikallinen / Etä** -kytkin, joten jos paikallinen repo katoaa tai vioittuu, voit listata ja palauttaa suoraan etäreplikasta. Poisto on lähdekohtainen: varmuuskopion poistaminen vaikuttaa vain katselemaasi kopioon.

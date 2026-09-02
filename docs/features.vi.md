@@ -4,6 +4,10 @@ BombVault đơn giản theo mặc định và sâu sắc khi bạn cần. Giao d
 
 ## Phạm vi sao lưu
 
+![Các container, mỗi cái có công tắc lịch riêng, thứ tự sao lưu và lịch sử riêng.](assets/screenshots/containers.png)
+
+*Các container, mỗi cái có công tắc lịch riêng, thứ tự sao lưu và lịch sử riêng.*
+
 | Cái gì | Những gì được lưu |
 |---|---|
 | **Docker container** | Thư mục appdata cùng với định nghĩa container (image, biến môi trường, cổng, nhãn, volume). |
@@ -13,6 +17,10 @@ BombVault đơn giản theo mặc định và sâu sắc khi bạn cần. Giao d
 | **Tập tin & thư mục** | Các **bộ tập tin** có tên: bất kỳ thư mục nào trên máy chủ (một share, tài liệu của bạn, một thư viện ảnh), mỗi bộ có tùy chọn mẫu loại trừ riêng. Ngang hàng đầy đủ với các miền khác (lịch trình, lưu giữ, bản sao off-site, kiểm tra toàn vẹn và diễn tập khôi phục). |
 
 ## Khôi phục
+
+![Khôi phục có hướng dẫn đưa một bản cài mới đi qua tình huống thảm họa, tại một chỗ.](assets/screenshots/recovery.png)
+
+*Khôi phục có hướng dẫn đưa một bản cài mới đi qua tình huống thảm họa, tại một chỗ.*
 
 - **Khôi phục toàn bộ một cú nhấp.** Chọn một snapshot, nhấp Restore. Xong.
 - **Khôi phục từ cục bộ hoặc off-site.** Mọi trình duyệt sao lưu đều có công tắc **Local / Off-site**, nên nếu một kho cục bộ bị mất hay hỏng, bạn có thể liệt kê và khôi phục thẳng từ bản sao off-site. Việc xóa là theo từng nguồn: xóa một bản sao lưu chỉ ảnh hưởng đến bản sao bạn đang xem.

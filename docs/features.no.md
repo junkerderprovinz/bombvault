@@ -4,6 +4,10 @@ BombVault er enkel som standard og dyp når du trenger det. Grensesnittet viser 
 
 ## Sikkerhetskopieringsomfang
 
+![Containere, hver med egen planbryter, sikkerhetskopieringsrekkefølge og egen historikk.](assets/screenshots/containers.png)
+
+*Containere, hver med egen planbryter, sikkerhetskopieringsrekkefølge og egen historikk.*
+
 | Hva | Hva som lagres |
 |---|---|
 | **Docker-containere** | Appdata-katalogen pluss container-definisjonen (image, miljøvariabler, porter, etiketter, volumer). |
@@ -13,6 +17,10 @@ BombVault er enkel som standard og dyp når du trenger det. Grensesnittet viser 
 | **Filer og mapper** | Navngitte **filsett**: en hvilken som helst mappe på serveren (en deling, dokumentene dine, et fotobibliotek), hver med valgfrie ekskluderingsmønstre per sett. Full paritet med de andre domenene (tidsplaner, oppbevaring, ekstern kopi, integritetssjekker og gjenopprettingsøvelser). |
 
 ## Gjenoppretting
+
+![Den veiledede gjenopprettingen tar en fersk installasjon gjennom katastrofetilfellet ett sted.](assets/screenshots/recovery.png)
+
+*Den veiledede gjenopprettingen tar en fersk installasjon gjennom katastrofetilfellet ett sted.*
 
 - **Ett-klikks full gjenoppretting.** Velg et øyeblikksbilde, klikk Gjenopprett. Ferdig.
 - **Gjenopprett fra lokal eller ekstern.** Hver sikkerhetskopileser har en **Lokal / Ekstern**-bryter, så hvis et lokalt repo går tapt eller blir korrupt, kan du liste og gjenopprette rett fra den eksterne replikaen. Sletting er per kilde: å fjerne en sikkerhetskopi påvirker bare kopien du ser på.

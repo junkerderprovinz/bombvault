@@ -4,6 +4,10 @@ BombVault varsayılan olarak basit, ihtiyaç duyduğunuzda ise derindir. **Basit
 
 ## Yedekleme kapsamı
 
+![Kapsayıcılar, her biri kendi zamanlama anahtarı, yedekleme sırası ve kendi geçmişiyle.](assets/screenshots/containers.png)
+
+*Kapsayıcılar, her biri kendi zamanlama anahtarı, yedekleme sırası ve kendi geçmişiyle.*
+
 | Ne | Neler kaydedilir |
 |---|---|
 | **Docker konteynerleri** | Appdata dizini ile birlikte konteyner tanımı (image, ortam değişkenleri, portlar, etiketler, birimler). |
@@ -13,6 +17,10 @@ BombVault varsayılan olarak basit, ihtiyaç duyduğunuzda ise derindir. **Basit
 | **Dosyalar ve klasörler** | **Dosya kümeleri** olarak adlandırılan: sunucudaki herhangi bir klasör (bir paylaşım, belgeleriniz, bir fotoğraf kitaplığı), her biri isteğe bağlı küme başına hariç tutma desenleriyle. Diğer etki alanlarıyla tam eşdeğerlik (zamanlamalar, saklama, site dışı kopya, bütünlük denetimleri ve geri yükleme tatbikatları). |
 
 ## Geri yükleme
+
+![Rehberli kurtarma, taze bir kurulumu tek yerden felaket senaryosundan geçirir.](assets/screenshots/recovery.png)
+
+*Rehberli kurtarma, taze bir kurulumu tek yerden felaket senaryosundan geçirir.*
 
 - **Tek tıklamalık tam geri yükleme.** Bir anlık görüntü seçin, Geri yükle'ye tıklayın. Bitti.
 - **Yerelden ya da site dışından geri yükleyin.** Her yedekleme tarayıcısında bir **Yerel / Site dışı** anahtarı vardır; böylece bir yerel depo kaybolur ya da bozulursa, doğrudan site dışı kopyadan listeleyip geri yükleyebilirsiniz. Silme kaynağa özeldir: bir yedeği kaldırmak yalnızca görüntülediğiniz kopyayı etkiler.

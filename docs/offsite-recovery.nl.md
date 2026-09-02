@@ -63,6 +63,10 @@ De **ransomwarebeschermings-scorecard** op het Dashboard vat dit samen tot een g
 
 ## Ontvanger-dashboard (de ontvangende kant)
 
+![De ontvangende kant, alleen-lezen bewaakt, met een integriteitscontrole op deze machine.](assets/screenshots/receiver.png)
+
+*De ontvangende kant, alleen-lezen bewaakt, met een integriteitscontrole op deze machine.*
+
 Alles hierboven is de *zendende* kant. Op de machine die onveranderlijke off-site kopieën van een andere BombVault **ontvangt**, geeft het Ontvanger-dashboard je onafhankelijke, alleen-lezen monitoring van die repositories op de ontvangende hardware, zodat een stille fout aan de andere kant niet onopgemerkt blijft.
 
 Zet de schakelaar **Ontvanger** in Instellingen aan om een tabblad **Ontvanger** te onthullen. Het is standaard uit; schakel het alleen in op een machine die daadwerkelijk onveranderlijke off-site back-ups ontvangt. Registreer daarna een ontvangen repository (alleen-lezen, geopend met de sleutel van de zendende instantie) om te krijgen:

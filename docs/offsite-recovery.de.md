@@ -63,6 +63,10 @@ Die **Ransomware-Schutz-Scorecard** im Dashboard fasst dies zu einer grün / gel
 
 ## Empfänger-Dashboard (die empfangende Seite)
 
+![Die empfangende Seite, nur lesend beobachtet, mit einer Integritätsprüfung auf dieser Hardware.](assets/screenshots/receiver.png)
+
+*Die empfangende Seite, nur lesend beobachtet, mit einer Integritätsprüfung auf dieser Hardware.*
+
 Alles oben ist die *sendende* Seite. Auf der Box, die unveränderliche Off-site-Kopien von einem anderen BombVault **empfängt**, gibt dir das Empfänger-Dashboard eine unabhängige, schreibgeschützte Überwachung dieser Repositorys auf der empfangenden Hardware, sodass ein stiller Fehler am fernen Ende nicht unbemerkt bleibt.
 
 Schalte den **Empfänger**-Schalter in den Einstellungen ein, um einen **Empfänger**-Tab freizulegen. Er ist standardmäßig aus; aktiviere ihn nur auf einer Box, die tatsächlich unveränderliche Off-site-Backups empfängt. Registriere dann ein empfangenes Repository (schreibgeschützt, geöffnet mit dem Schlüssel der sendenden Instanz), um zu erhalten:

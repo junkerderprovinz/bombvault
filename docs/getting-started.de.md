@@ -63,6 +63,10 @@ Das Template hängt außerdem den Docker-Socket, den Flash (`/boot`) und das Wur
 
 ## Erster Start
 
+![Das Dashboard nach der ersten Sicherung: was geschützt ist, was als Nächstes läuft, und ein mitlaufendes Protokoll.](assets/screenshots/dashboard.png)
+
+*Das Dashboard nach der ersten Sicherung: was geschützt ist, was als Nächstes läuft, und ein mitlaufendes Protokoll.*
+
 1. Öffne die Web-Oberfläche unter `https://<your-unraid-ip>:3443` (selbstsigniertes Zertifikat von Haus aus).
 2. Aktiviere in den **Einstellungen** die gewünschten Backup-Bereiche (Container, VMs, Flash, Config, Dateien) und wähle eine Akzentfarbe.
 3. Wähle im **Container**-Tab einen Container und klicke auf **Back up**, um deinen ersten Wiederherstellungspunkt zu erstellen. Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files}` und werden beim ersten Backup angelegt.
@@ -75,6 +79,10 @@ Das Template hängt außerdem den Docker-Socket, den Flash (`/boot`) und das Wur
     Öffne `/spike` in der Web-Oberfläche, nachdem der Container gestartet ist. Es prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile, sodass du bestätigen kannst, dass der Container korrekt verdrahtet ist, bevor du dich darauf verlässt.
 
 ## Einfach vs. Erweitert
+
+![Die Einstellungen haben keinen Speichern-Knopf: jede Änderung wird sofort geschrieben.](assets/screenshots/settings.png)
+
+*Die Einstellungen haben keinen Speichern-Knopf: jede Änderung wird sofort geschrieben.*
 
 Standardmäßig zeigt die Oberfläche nur das Wesentliche (sichern, wiederherstellen, planen). Nutze den Schalter **Einfach / Erweitert** in der Seitenleiste, um die Expertensteuerung freizuschalten: Aufbewahrung, Off-site-Kopie, Pre/Post-Hooks, Wiederherstellung auf Dateiebene, Benachrichtigungen, Prometheus-Metriken und die Integritäts-/Wartungswerkzeuge. Es ist eine Einstellung pro Browser und standardmäßig aus, sodass Einsteiger eine aufgeräumte Oberfläche bekommen und Power-User alles.
 

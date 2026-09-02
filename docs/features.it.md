@@ -4,6 +4,10 @@ BombVault è semplice di default e profondo quando serve. L'interfaccia mostra s
 
 ## Ambito del backup
 
+![I contenitori, ciascuno con il proprio interruttore di pianificazione, ordine di backup e cronologia.](assets/screenshots/containers.png)
+
+*I contenitori, ciascuno con il proprio interruttore di pianificazione, ordine di backup e cronologia.*
+
 | Cosa | Cosa viene salvato |
 |---|---|
 | **Container Docker** | La directory appdata più la definizione del container (immagine, variabili d'ambiente, porte, label, volumi). |
@@ -13,6 +17,10 @@ BombVault è semplice di default e profondo quando serve. L'interfaccia mostra s
 | **File e cartelle** | **Set di file** con nome: qualsiasi cartella sul server (una condivisione, i tuoi documenti, una libreria di foto), ciascuno con pattern di esclusione opzionali per set. Piena parità con gli altri domini (calendari, conservazione, copia off-site, controlli di integrità ed esercitazioni di ripristino). |
 
 ## Ripristino
+
+![Il ripristino guidato porta un'installazione nuova attraverso il caso disastro, in un unico posto.](assets/screenshots/recovery.png)
+
+*Il ripristino guidato porta un'installazione nuova attraverso il caso disastro, in un unico posto.*
 
 - **Ripristino completo con un clic.** Scegli uno snapshot, clicca Ripristina. Fatto.
 - **Ripristino da locale o off-site.** Ogni browser dei backup ha un interruttore **Locale / Off-site**, così se un repo locale è perso o corrotto puoi elencare e ripristinare direttamente dalla replica off-site. L'eliminazione è per sorgente: rimuovere un backup interessa solo la copia che stai visualizzando.

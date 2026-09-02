@@ -4,6 +4,10 @@ BombVault jest domyślnie prosty i głęboki, gdy tego potrzebujesz. Interfejs p
 
 ## Zakres kopii zapasowej
 
+![Kontenery, każdy z własnym przełącznikiem harmonogramu, kolejnością kopii i własną historią.](assets/screenshots/containers.png)
+
+*Kontenery, każdy z własnym przełącznikiem harmonogramu, kolejnością kopii i własną historią.*
+
 | Co | Co jest zapisywane |
 |---|---|
 | **Kontenery Docker** | Katalog appdata wraz z definicją kontenera (obraz, zmienne środowiskowe, porty, etykiety, wolumeny). |
@@ -13,6 +17,10 @@ BombVault jest domyślnie prosty i głęboki, gdy tego potrzebujesz. Interfejs p
 | **Pliki i foldery** | Nazwane **zestawy plików**: dowolny folder na serwerze (udział, Twoje dokumenty, biblioteka zdjęć), każdy z opcjonalnymi wzorcami wykluczeń per zestaw. Pełna równorzędność z pozostałymi domenami (harmonogramy, przechowywanie, kopia poza siedzibą, kontrole integralności i próby przywracania). |
 
 ## Przywracanie
+
+![Odzyskiwanie krok po kroku prowadzi świeżą instalację przez awarię, w jednym miejscu.](assets/screenshots/recovery.png)
+
+*Odzyskiwanie krok po kroku prowadzi świeżą instalację przez awarię, w jednym miejscu.*
 
 - **Pełne przywracanie za jednym kliknięciem.** Wybierz migawkę, kliknij Przywróć. Gotowe.
 - **Przywracanie z kopii lokalnej lub poza siedzibą.** Każda przeglądarka kopii ma przełącznik **Lokalne / Poza siedzibą**, więc jeśli repozytorium lokalne zostanie utracone lub uszkodzone, możesz wylistować i przywrócić prosto z repliki poza siedzibą. Usuwanie działa per źródło: usunięcie kopii dotyczy tylko oglądanej właśnie kopii.

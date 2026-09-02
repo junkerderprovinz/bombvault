@@ -63,6 +63,10 @@ BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gj
 
 ## Mottaker-dashboard (mottakssiden)
 
+![Den mottakende siden, overvåket skrivebeskyttet, med en integritetssjekk kjørt på denne maskinen.](assets/screenshots/receiver.png)
+
+*Den mottakende siden, overvåket skrivebeskyttet, med en integritetssjekk kjørt på denne maskinen.*
+
 Alt ovenfor er *sende*-siden. På boksen som **mottar** uforanderlige eksterne kopier fra en annen BombVault, gir Mottaker-dashboardet deg uavhengig, skrivebeskyttet overvåking av disse repositoriene på mottaks-maskinvaren, så en stille feil i den andre enden ikke går ubemerket hen.
 
 Slå på **Mottaker**-bryteren i Innstillinger for å avdekke en **Mottaker**-fane. Den er av som standard; aktiver den kun på en boks som faktisk mottar uforanderlige eksterne sikkerhetskopier. Registrer deretter et mottatt repository (skrivebeskyttet, åpnet med den sendende instansens nøkkel) for å få:

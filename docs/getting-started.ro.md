@@ -63,6 +63,10 @@ Lipește rezultatul în câmpul `APP_KEY` al șablonului.
 
 ## Prima rulare
 
+![Tabloul după prima copie: ce e protejat, ce rulează în continuare și un jurnal viu.](assets/screenshots/dashboard.png)
+
+*Tabloul după prima copie: ce e protejat, ce rulează în continuare și un jurnal viu.*
+
 1. Deschide interfața web la `https://<your-unraid-ip>:3443` (certificat auto-semnat implicit).
 2. În **Setări**, activează domeniile de backup dorite (Containere, VM-uri, Flash, Config, Fișiere) și alege o culoare de accent.
 3. În fila **Containere**, alege un container și apasă **Back up** pentru a-ți crea primul punct de restaurare. Căile depozitelor implicite sunt `/mnt/user/bombvault/{container,vms,flash,config,files}` și sunt create la primul backup.
@@ -75,6 +79,10 @@ Lipește rezultatul în câmpul `APP_KEY` al șablonului.
     Deschide `/spike` în interfața web după ce containerul pornește. Sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă, astfel încât să poți confirma că containerul este cablat corect înainte să te bazezi pe el.
 
 ## Simplu vs Avansat
+
+![Setările nu au buton de Salvare: fiecare modificare se scrie pe loc.](assets/screenshots/settings.png)
+
+*Setările nu au buton de Salvare: fiecare modificare se scrie pe loc.*
 
 Implicit, interfața arată doar elementele esențiale (backup, restaurare, programare). Folosește comutatorul **Simplu / Avansat** din bara laterală pentru a dezvălui controalele pentru experți: retenție, copie off-site, hook-uri pre/post, restaurare la nivel de fișier, notificări, metrici Prometheus și instrumentele de integritate/mentenanță. Este o preferință per browser și oprită implicit, așa că noii veniți primesc o interfață curată, iar utilizatorii avansați primesc totul.
 

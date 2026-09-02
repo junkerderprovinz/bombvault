@@ -63,6 +63,10 @@ O template também monta o socket Docker, o flash (`/boot`) e a raiz **Host Data
 
 ## Primeira execução
 
+![O painel após a primeira cópia: o que está protegido, o que corre a seguir e um registo ao vivo.](assets/screenshots/dashboard.png)
+
+*O painel após a primeira cópia: o que está protegido, o que corre a seguir e um registo ao vivo.*
+
 1. Abra a interface web em `https://<your-unraid-ip>:3443` (certificado autoassinado logo de início).
 2. Em **Definições**, ative os domínios de backup que pretende (Containers, VMs, Flash, Config, Files) e escolha uma cor de destaque.
 3. No separador **Containers**, escolha um container e clique em **Fazer backup** para criar o seu primeiro ponto de restauro. Os caminhos do repositório assumem por predefinição `/mnt/user/bombvault/{container,vms,flash,config,files}` e são criados no primeiro backup.
@@ -75,6 +79,10 @@ O template também monta o socket Docker, o flash (`/boot`) e a raiz **Host Data
     Abra `/spike` na interface web depois de o container arrancar. Sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e reporta quaisquer peças em falta, para que possa confirmar que o container está corretamente ligado antes de depender dele.
 
 ## Simples vs Avançado
+
+![As definições não têm botão Guardar: cada alteração é escrita no momento.](assets/screenshots/settings.png)
+
+*As definições não têm botão Guardar: cada alteração é escrita no momento.*
 
 Por predefinição, a interface mostra apenas o essencial (fazer backup, restaurar, agendar). Use o interruptor **Simples / Avançado** na barra lateral para revelar os controlos de especialista: retenção, cópia externa, hooks pré/pós, restauro ao nível do ficheiro, notificações, métricas Prometheus e as ferramentas de integridade/manutenção. É uma preferência por navegador e está desligada por predefinição, para que os recém-chegados tenham uma interface limpa e os utilizadores avançados tenham tudo.
 

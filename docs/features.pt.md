@@ -4,6 +4,10 @@ O BombVault é simples por predefinição e profundo quando precisa. A interface
 
 ## Âmbito do backup
 
+![Os contentores, cada um com o seu interruptor de agendamento, ordem de cópia e histórico próprio.](assets/screenshots/containers.png)
+
+*Os contentores, cada um com o seu interruptor de agendamento, ordem de cópia e histórico próprio.*
+
 | O quê | O que é guardado |
 |---|---|
 | **Containers Docker** | Diretório appdata mais a definição do container (imagem, variáveis de ambiente, portas, etiquetas, volumes). |
@@ -13,6 +17,10 @@ O BombVault é simples por predefinição e profundo quando precisa. A interface
 | **Ficheiros e pastas** | **Conjuntos de ficheiros** nomeados: qualquer pasta no servidor (uma partilha, os seus documentos, uma biblioteca de fotos), cada um com padrões de exclusão opcionais por conjunto. Paridade total com os outros domínios (agendamentos, retenção, cópia externa, verificações de integridade e ensaios de restauro). |
 
 ## Restauro
+
+![A recuperação guiada leva uma instalação nova pelo caso de desastre, tudo no mesmo sítio.](assets/screenshots/recovery.png)
+
+*A recuperação guiada leva uma instalação nova pelo caso de desastre, tudo no mesmo sítio.*
 
 - **Restauro completo com um clique.** Escolha um instantâneo, clique em Restaurar. Feito.
 - **Restaurar a partir de local ou externo.** Cada navegador de backups tem um interruptor **Local / Externo**, por isso, se um repo local se perder ou corromper, pode listar e restaurar diretamente a partir da réplica externa. A eliminação é por origem: remover um backup afeta apenas a cópia que está a ver.

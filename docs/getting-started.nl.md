@@ -63,6 +63,10 @@ De template mount ook de Docker-socket, de flash (`/boot`) en de root **Host Dat
 
 ## Eerste keer draaien
 
+![Het dashboard na een eerste back-up: wat beschermd is, wat er volgt en een live logboek.](assets/screenshots/dashboard.png)
+
+*Het dashboard na een eerste back-up: wat beschermd is, wat er volgt en een live logboek.*
+
 1. Open de web-UI op `https://<jouw-unraid-ip>:3443` (out-of-the-box een zelfondertekend certificaat).
 2. Schakel bij **Instellingen** de back-updomeinen in die je wilt (Containers, VM's, Flash, Config, Bestanden) en kies een accentkleur.
 3. Kies op het tabblad **Containers** een container en klik op **Back-up maken** om je eerste herstelpunt te maken. Repository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files}` en worden bij de eerste back-up aangemaakt.
@@ -75,6 +79,10 @@ De template mount ook de Docker-socket, de flash (`/boot`) en de root **Host Dat
     Open `/spike` in de web-UI nadat de container is gestart. Het test elke mount en CLI (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt eventuele ontbrekende onderdelen, zodat je kunt bevestigen dat de container correct is aangesloten voordat je erop vertrouwt.
 
 ## Simpel vs Geavanceerd
+
+![Instellingen hebben geen Opslaan-knop: elke wijziging wordt meteen weggeschreven.](assets/screenshots/settings.png)
+
+*Instellingen hebben geen Opslaan-knop: elke wijziging wordt meteen weggeschreven.*
 
 Standaard toont de interface alleen de essentie (back-uppen, herstellen, plannen). Gebruik de schakelaar **Simpel / Geavanceerd** in de zijbalk om de expertbediening te onthullen: retentie, off-site kopie, pre/post-hooks, herstel op bestandsniveau, meldingen, Prometheus-metrics en de integriteits-/onderhoudstools. Het is een voorkeur per browser en standaard uit, zodat nieuwkomers een schone UI krijgen en poweruser alles.
 

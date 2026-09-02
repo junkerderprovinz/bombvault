@@ -4,6 +4,10 @@ A BombVault alapból egyszerű, és mély, amikor szükséged van rá. A felüle
 
 ## Mentési hatókör
 
+![A konténerek, mindegyik saját ütemezőkapcsolóval, mentési sorrenddel és saját előzményekkel.](assets/screenshots/containers.png)
+
+*A konténerek, mindegyik saját ütemezőkapcsolóval, mentési sorrenddel és saját előzményekkel.*
+
 | Mi | Mi kerül mentésre |
 |---|---|
 | **Docker-konténerek** | Az appdata könyvtár, valamint a konténer definíciója (image, környezeti változók, portok, címkék, kötetek). |
@@ -13,6 +17,10 @@ A BombVault alapból egyszerű, és mély, amikor szükséged van rá. A felüle
 | **Fájlok és mappák** | Elnevezett **fájlkészletek**: a szerver bármely mappája (egy megosztás, a dokumentumaid, egy fotókönyvtár), mindegyik opcionális, készletenkénti kizárási mintákkal. Teljes paritás a többi tartománnyal (ütemezések, megőrzés, telephelyen kívüli másolat, integritásellenőrzések és visszaállítási próbák). |
 
 ## Visszaállítás
+
+![A vezetett helyreállítás egy friss telepítést egy helyen vezet át a katasztrófahelyzeten.](assets/screenshots/recovery.png)
+
+*A vezetett helyreállítás egy friss telepítést egy helyen vezet át a katasztrófahelyzeten.*
 
 - **Egykattintásos teljes visszaállítás.** Válassz egy pillanatképet, kattints a Visszaállításra. Kész.
 - **Visszaállítás helyi vagy telephelyen kívüli forrásból.** Minden mentésböngészőben van egy **Helyi / Telephelyen kívüli** kapcsoló, így ha egy helyi tároló elveszik vagy megsérül, közvetlenül a telephelyen kívüli replikából listázhatsz és állíthatsz vissza. A törlés forrásonkénti: egy mentés eltávolítása csak azt a másolatot érinti, amelyet éppen nézel.

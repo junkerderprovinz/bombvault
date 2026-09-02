@@ -117,7 +117,7 @@ Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifre
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/dashboard.png" alt="BombVault Dashboard — health summary, protection status per domain, run history and backup-health heatmap" width="90%">
-  <br><em>Dashboard — a compact health summary (overall status, next backup, last result) above protection status per domain, last backups, run history and a backup-health heatmap.</em>
+  <br><em>Dashboard — a compact health summary (overall status, next backup, last result) above a live activity log, protection status per domain, run history and a backup-health heatmap. The log carries off-site replication and the tamper test that proves the far side refuses a delete.</em>
 </p>
 
 <br>
@@ -139,6 +139,13 @@ Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifre
 <p align="center">
   <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/settings.png" alt="BombVault Settings — tabbed configuration for domains, paths, schedules, off-site, notifications and integrity" width="90%">
   <br><em>Settings — organised into tabs (General · Paths &amp; Storage · Schedules · Off-site · Notifications · Integrity · System). General turns each backup domain on or off and holds the look of the app: language, theme, colours, corners, animations and quiet toasts. Nothing here has a Save button; every change is written as you make it.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/receiver.png" alt="BombVault Receiver — the receiving side of an off-site copy, watched read-only" width="90%">
+  <br><em>Receiver — the other end of an off-site copy. It watches what other instances push to this box, read-only: what arrived, when the last backup came in, and an independent integrity check run on this hardware rather than trusted from the sender.</em>
 </p>
 
 <br>

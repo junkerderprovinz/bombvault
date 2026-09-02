@@ -4,6 +4,10 @@ BombVault is simple by default and deep when you need it. The interface shows on
 
 ## Backup scope
 
+![Containers, each with its own schedule toggle, backup order and per-container history.](assets/screenshots/containers.png)
+
+*Containers, each with its own schedule toggle, backup order and per-container history.*
+
 | What | What is saved |
 |---|---|
 | **Docker containers** | Appdata directory plus the container definition (image, env vars, ports, labels, volumes). |
@@ -13,6 +17,10 @@ BombVault is simple by default and deep when you need it. The interface shows on
 | **Files & folders** | Named **file sets**: any folder on the server (a share, your documents, a photo library), each with optional per-set exclude patterns. Full parity with the other domains (schedules, retention, off-site copy, integrity checks and restore drills). |
 
 ## Restore
+
+![Guided recovery walks a fresh install through the disaster case in one place.](assets/screenshots/recovery.png)
+
+*Guided recovery walks a fresh install through the disaster case in one place.*
 
 - **One-click full restore.** Pick a snapshot, click Restore. Done.
 - **Restore from local or off-site.** Every backup browser has a **Local / Off-site** switch, so if a local repo is lost or corrupt you can list and restore straight from the off-site replica. Delete is per-source: removing a backup only affects the copy you are viewing.

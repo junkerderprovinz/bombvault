@@ -63,6 +63,10 @@ Skabelonen monterer også Docker-socket'en, flashen (`/boot`) og **Host Data**-r
 
 ## Første kørsel
 
+![Instrumentpanelet efter en første sikkerhedskopi: hvad der er beskyttet, hvad der kører nu, og en levende log.](assets/screenshots/dashboard.png)
+
+*Instrumentpanelet efter en første sikkerhedskopi: hvad der er beskyttet, hvad der kører nu, og en levende log.*
+
 1. Åbn web-UI'en på `https://<your-unraid-ip>:3443` (selvsigneret certifikat fra start).
 2. Aktivér i **Indstillinger** de sikkerhedskopidomæner, du vil have (Containers, VMs, Flash, Config, Files), og vælg en accentfarve.
 3. Vælg en container på fanen **Containers**, og klik på **Sikkerhedskopier** for at oprette dit første gendannelsespunkt. Repository-stier defaulter til `/mnt/user/bombvault/{container,vms,flash,config,files}` og oprettes ved den første sikkerhedskopi.
@@ -75,6 +79,10 @@ Skabelonen monterer også Docker-socket'en, flashen (`/boot`) og **Host Data**-r
     Åbn `/spike` i web-UI'en, når containeren er startet. Den prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele, så du kan bekræfte, at containeren er korrekt forbundet, før du forlader dig på den.
 
 ## Simpel vs. Avanceret
+
+![Indstillingerne har ingen Gem-knap: hver ændring skrives, mens du laver den.](assets/screenshots/settings.png)
+
+*Indstillingerne har ingen Gem-knap: hver ændring skrives, mens du laver den.*
 
 Som standard viser grænsefladen kun det væsentlige (sikkerhedskopier, gendan, planlæg). Brug **Simpel / Avanceret**-kontakten i sidebjælken for at afsløre ekspertkontrollerne: opbevaring, off-site-kopi, pre/post-hooks, gendannelse på filniveau, notifikationer, Prometheus-metrics og integritets-/vedligeholdelsesværktøjerne. Det er en præference pr. browser og slået fra som standard, så nybegyndere får en ren UI, og power-brugere får det hele.
 

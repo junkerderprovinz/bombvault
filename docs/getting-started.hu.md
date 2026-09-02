@@ -63,6 +63,10 @@ A sablon ezen felül csatolja a Docker socketet, a flasht (`/boot`) és a **Host
 
 ## Első futtatás
 
+![A műszerfal az első mentés után: mi védett, mi fut legközelebb, és egy élő napló.](assets/screenshots/dashboard.png)
+
+*A műszerfal az első mentés után: mi védett, mi fut legközelebb, és egy élő napló.*
+
 1. Nyisd meg a webes felületet a `https://<your-unraid-ip>:3443` címen (alapból önaláírt tanúsítvánnyal).
 2. A **Beállításokban** engedélyezd a kívánt mentési tartományokat (Konténerek, VM-ek, Flash, Config, Fájlok), és válassz egy kiemelőszínt.
 3. A **Konténerek** fülön válassz egy konténert, és kattints a **Mentés** gombra az első visszaállítási pont létrehozásához. A tároló útvonalai alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files}` útvonalra mutatnak, és az első mentéskor jönnek létre.
@@ -75,6 +79,10 @@ A sablon ezen felül csatolja a Docker socketet, a flasht (`/boot`) és a **Host
     A konténer elindulása után nyisd meg a `/spike` oldalt a webes felületen. Ez minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat, így megbizonyosodhatsz róla, hogy a konténer helyesen van bekötve, mielőtt rá hagyatkoznál.
 
 ## Egyszerű vs Speciális
+
+![A beállításoknak nincs Mentés gombja: minden változás azonnal kiíródik.](assets/screenshots/settings.png)
+
+*A beállításoknak nincs Mentés gombja: minden változás azonnal kiíródik.*
 
 Alapértelmezetten a felület csak a lényeget mutatja (mentés, visszaállítás, ütemezés). Használd az **Egyszerű / Speciális** kapcsolót az oldalsávban a szakértői vezérlők felfedéséhez: megőrzés, telephelyen kívüli másolat, mentés előtti/utáni horgok, fájlszintű visszaállítás, értesítések, Prometheus-metrikák és az integritási/karbantartási eszközök. Ez böngészőnkénti beállítás, és alapból ki van kapcsolva, így az újoncok tiszta felületet, a haladók pedig mindent megkapnak.
 

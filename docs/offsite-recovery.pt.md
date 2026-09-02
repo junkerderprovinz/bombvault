@@ -63,6 +63,10 @@ O **scorecard de proteção contra ransomware** no Painel resume isto numa postu
 
 ## Painel recetor (o lado que recebe)
 
+![O lado recetor, vigiado apenas para leitura, com uma verificação de integridade feita nesta máquina.](assets/screenshots/receiver.png)
+
+*O lado recetor, vigiado apenas para leitura, com uma verificação de integridade feita nesta máquina.*
+
 Tudo acima é o lado *emissor*. Na máquina que **recebe** cópias externas imutáveis de outro BombVault, o painel Recetor dá-lhe monitorização independente e só de leitura desses repositórios no hardware recetor, para que uma falha silenciosa no lado remoto não passe despercebida.
 
 Ligue o interruptor **Recetor** em Definições para revelar um separador **Recetor**. Está desligado por predefinição; ative-o apenas numa máquina que de facto recebe backups externos imutáveis. Depois registe um repositório recebido (só de leitura, aberto com a chave da instância emissora) para obter:

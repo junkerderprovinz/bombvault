@@ -63,6 +63,10 @@ La plantilla también monta por ti el socket de Docker, el flash (`/boot`) y la 
 
 ## Primera ejecución
 
+![El panel tras una primera copia: qué está protegido, qué toca a continuación y un registro en vivo.](assets/screenshots/dashboard.png)
+
+*El panel tras una primera copia: qué está protegido, qué toca a continuación y un registro en vivo.*
+
 1. Abre la interfaz web en `https://<your-unraid-ip>:3443` (certificado autofirmado de fábrica).
 2. En **Ajustes**, habilita los dominios de copia que quieras (Contenedores, VMs, Flash, Config, Archivos) y elige un color de acento.
 3. En la pestaña **Contenedores**, elige un contenedor y haz clic en **Copiar** para crear tu primer punto de restauración. Las rutas de repositorio predeterminadas son `/mnt/user/bombvault/{container,vms,flash,config,files}` y se crean en la primera copia.
@@ -75,6 +79,10 @@ La plantilla también monta por ti el socket de Docker, el flash (`/boot`) y la 
     Abre `/spike` en la interfaz web después de que arranque el contenedor. Sondea cada montaje y CLI (socket de Docker, libvirt, restic, qemu-img, rclone) e informa de cualquier pieza que falte, para que puedas confirmar que el contenedor está bien conectado antes de confiar en él.
 
 ## Simple frente a Avanzado
+
+![Los ajustes no tienen botón Guardar: cada cambio se escribe en el momento.](assets/screenshots/settings.png)
+
+*Los ajustes no tienen botón Guardar: cada cambio se escribe en el momento.*
 
 Por defecto, la interfaz muestra solo lo esencial (copiar, restaurar, programar). Usa el conmutador **Simple / Avanzado** de la barra lateral para revelar los controles de experto: retención, copia externa, hooks pre/post, restauración a nivel de archivo, notificaciones, métricas de Prometheus y las herramientas de integridad/mantenimiento. Es una preferencia por navegador y está desactivada por defecto, de modo que los recién llegados obtienen una interfaz limpia y los usuarios avanzados lo tienen todo.
 

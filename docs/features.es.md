@@ -4,6 +4,10 @@ BombVault es simple por defecto y profundo cuando lo necesitas. La interfaz mues
 
 ## Alcance de la copia
 
+![Los contenedores, cada uno con su interruptor de programación, su orden de copia y su historial.](assets/screenshots/containers.png)
+
+*Los contenedores, cada uno con su interruptor de programación, su orden de copia y su historial.*
+
 | Qué | Qué se guarda |
 |---|---|
 | **Contenedores Docker** | El directorio appdata más la definición del contenedor (imagen, variables de entorno, puertos, etiquetas, volúmenes). |
@@ -13,6 +17,10 @@ BombVault es simple por defecto y profundo cuando lo necesitas. La interfaz mues
 | **Archivos y carpetas** | **Conjuntos de archivos** con nombre: cualquier carpeta del servidor (un recurso compartido, tus documentos, una biblioteca de fotos), cada uno con patrones de exclusión opcionales por conjunto. Paridad completa con los demás dominios (calendarios, retención, copia externa, comprobaciones de integridad y ensayos de restauración). |
 
 ## Restauración
+
+![La recuperación guiada lleva una instalación nueva por el caso de desastre, todo en un sitio.](assets/screenshots/recovery.png)
+
+*La recuperación guiada lleva una instalación nueva por el caso de desastre, todo en un sitio.*
 
 - **Restauración completa de un clic.** Elige una instantánea, haz clic en Restaurar. Listo.
 - **Restaurar desde local o externo.** Cada navegador de copias tiene un conmutador **Local / Externo**, de modo que si un repo local se pierde o se corrompe puedes listar y restaurar directamente desde la réplica externa. Eliminar es por fuente: quitar una copia solo afecta a la copia que estás viendo.

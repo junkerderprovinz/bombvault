@@ -4,6 +4,10 @@ BombVault este simplu implicit și profund atunci când ai nevoie. Interfața ar
 
 ## Sfera backupului
 
+![Containerele, fiecare cu propriul comutator de programare, ordine de copiere și istoric propriu.](assets/screenshots/containers.png)
+
+*Containerele, fiecare cu propriul comutator de programare, ordine de copiere și istoric propriu.*
+
 | Ce | Ce se salvează |
 |---|---|
 | **Containere Docker** | Directorul appdata plus definiția containerului (imagine, variabile de mediu, porturi, etichete, volume). |
@@ -13,6 +17,10 @@ BombVault este simplu implicit și profund atunci când ai nevoie. Interfața ar
 | **Fișiere și foldere** | **Seturi de fișiere** denumite: orice folder de pe server (o partajare, documentele tale, o bibliotecă foto), fiecare cu tipare de excludere opționale per set. Paritate completă cu celelalte domenii (programări, retenție, copie off-site, verificări de integritate și exerciții de restaurare). |
 
 ## Restaurare
+
+![Recuperarea ghidată duce o instalare nouă prin cazul de dezastru, într-un singur loc.](assets/screenshots/recovery.png)
+
+*Recuperarea ghidată duce o instalare nouă prin cazul de dezastru, într-un singur loc.*
 
 - **Restaurare completă cu un singur clic.** Alege un instantaneu, apasă Restaurare. Gata.
 - **Restaurare din local sau off-site.** Fiecare browser de backup are un comutator **Local / Off-site**, așa că dacă un depozit local este pierdut sau corupt poți lista și restaura direct din replica off-site. Ștergerea este per sursă: eliminarea unui backup afectează doar copia pe care o vizualizezi.

@@ -63,6 +63,10 @@ A **zsarolóvírus-védelmi eredménytábla** az irányítópulton mindezt tarto
 
 ## Fogadó irányítópult (a fogadó oldal)
 
+![A fogadó oldal, csak olvasható módon figyelve, integritás-ellenőrzéssel ezen a gépen.](assets/screenshots/receiver.png)
+
+*A fogadó oldal, csak olvasható módon figyelve, integritás-ellenőrzéssel ezen a gépen.*
+
 Minden fenti a *küldő* oldal. Azon a gépen, amely módosíthatatlan telephelyen kívüli másolatokat **fogad** egy másik BombVaulttól, a Fogadó irányítópult független, csak olvasható monitorozást ad azokról a tárolókról a fogadó hardveren, így egy csendes hiba a túlsó végen nem marad észrevétlen.
 
 Kapcsold be a **Fogadó** kapcsolót a Beállításokban egy **Fogadó** fül felfedéséhez. Alapból ki van kapcsolva; csak olyan gépen engedélyezd, amely ténylegesen fogad módosíthatatlan telephelyen kívüli mentéseket. Ezután regisztrálj egy fogadott tárolót (csak olvasható, a küldő példány kulcsával megnyitva), hogy megkapd:

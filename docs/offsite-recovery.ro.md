@@ -63,6 +63,10 @@ BombVault oferă două niveluri de dovadă că backupurile tale sunt efectiv res
 
 ## Panou de recepție (partea de recepție)
 
+![Partea care primește, urmărită doar în citire, cu o verificare de integritate rulată pe această mașină.](assets/screenshots/receiver.png)
+
+*Partea care primește, urmărită doar în citire, cu o verificare de integritate rulată pe această mașină.*
+
 Tot ce este mai sus este partea de *trimitere*. Pe stația care **primește** copii off-site imuabile de la un alt BombVault, panoul de recepție îți oferă monitorizare independentă, doar în citire, a acelor depozite pe hardware-ul care primește, astfel încât o eșuare tăcută la capătul îndepărtat să nu treacă neobservată.
 
 Activează comutatorul **Receiver** în Setări pentru a dezvălui o filă **Receiver**. Este oprit implicit; activează-l doar pe o stație care primește efectiv backupuri off-site imuabile. Apoi înregistrează un depozit primit (doar în citire, deschis cu cheia instanței care trimite) pentru a obține:

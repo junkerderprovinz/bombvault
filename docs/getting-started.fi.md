@@ -63,6 +63,10 @@ Malli liittää myös Docker-soketin, flashin (`/boot`) ja **Host Data** -juuren
 
 ## Ensimmäinen ajo
 
+![Koontinäyttö ensimmäisen varmuuskopion jälkeen: mikä on suojattu, mikä ajetaan seuraavaksi ja elävä loki.](assets/screenshots/dashboard.png)
+
+*Koontinäyttö ensimmäisen varmuuskopion jälkeen: mikä on suojattu, mikä ajetaan seuraavaksi ja elävä loki.*
+
 1. Avaa verkkokäyttöliittymä osoitteessa `https://<your-unraid-ip>:3443` (itse allekirjoitettu varmenne valmiiksi).
 2. Ota **Asetuksissa** käyttöön haluamasi varmuuskopioinnin toimialueet (Kontit, Virtuaalikoneet, Flash, Config, Tiedostot) ja valitse korostusväri.
 3. Valitse **Kontit**-välilehdellä kontti ja napsauta **Varmuuskopioi** tehdäksesi ensimmäisen palautuspisteesi. Repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files}` ja ne luodaan ensimmäisen varmuuskopion yhteydessä.
@@ -75,6 +79,10 @@ Malli liittää myös Docker-soketin, flashin (`/boot`) ja **Host Data** -juuren
     Avaa `/spike` verkkokäyttöliittymässä kontin käynnistyttyä. Se koettaa jokaista liitosta ja komentorivityökalua (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat palaset, joten voit vahvistaa, että kontti on kytketty oikein ennen kuin luotat siihen.
 
 ## Yksinkertainen vs Edistynyt
+
+![Asetuksissa ei ole Tallenna-painiketta: jokainen muutos kirjoitetaan heti.](assets/screenshots/settings.png)
+
+*Asetuksissa ei ole Tallenna-painiketta: jokainen muutos kirjoitetaan heti.*
 
 Oletuksena käyttöliittymä näyttää vain olennaiset (varmuuskopiointi, palautus, ajastus). Käytä sivupalkin **Yksinkertainen / Edistynyt** -kytkintä paljastaaksesi asiantuntijasäätimet: säilytys, etäkopio, ennen/jälkeen-koukut, tiedostotason palautus, ilmoitukset, Prometheus-mittarit sekä eheys- ja ylläpitotyökalut. Se on selainkohtainen asetus ja oletuksena pois päältä, joten uudet käyttäjät saavat siistin käyttöliittymän ja tehokäyttäjät kaiken.
 

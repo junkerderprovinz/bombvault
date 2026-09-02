@@ -63,6 +63,10 @@ Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog gł�
 
 ## Pierwsze uruchomienie
 
+![Pulpit po pierwszej kopii: co jest chronione, co uruchomi się dalej i dziennik na żywo.](assets/screenshots/dashboard.png)
+
+*Pulpit po pierwszej kopii: co jest chronione, co uruchomi się dalej i dziennik na żywo.*
+
 1. Otwórz interfejs webowy pod adresem `https://<your-unraid-ip>:3443` (certyfikat samopodpisany od razu po instalacji).
 2. W **Ustawieniach** włącz domeny kopii zapasowych, których chcesz używać (Kontenery, VM, Flash, Config, Pliki) i wybierz kolor akcentu.
 3. W zakładce **Kontenery** wybierz kontener i kliknij **Utwórz kopię**, aby stworzyć swój pierwszy punkt przywracania. Ścieżki repozytoriów domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files}` i są tworzone przy pierwszej kopii.
@@ -75,6 +79,10 @@ Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog gł�
     Otwórz `/spike` w interfejsie webowym po uruchomieniu kontenera. Sonduje ono każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, więc możesz potwierdzić, że kontener jest poprawnie połączony, zanim na nim polegasz.
 
 ## Prosty vs Zaawansowany
+
+![Ustawienia nie mają przycisku Zapisz: każda zmiana jest zapisywana od razu.](assets/screenshots/settings.png)
+
+*Ustawienia nie mają przycisku Zapisz: każda zmiana jest zapisywana od razu.*
 
 Domyślnie interfejs pokazuje tylko rzeczy podstawowe (tworzenie kopii, przywracanie, harmonogram). Użyj przełącznika **Prosty / Zaawansowany** w panelu bocznym, aby odsłonić kontrolki dla ekspertów: przechowywanie, kopię poza siedzibą, haki pre/post, przywracanie na poziomie plików, powiadomienia, metryki Prometheus oraz narzędzia integralności/konserwacji. To preferencja per przeglądarka, domyślnie wyłączona, więc nowicjusze dostają czysty interfejs, a użytkownicy zaawansowani mają wszystko.
 

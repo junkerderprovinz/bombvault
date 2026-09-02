@@ -63,6 +63,10 @@ Mallen monterar också Docker-socketen, flashen (`/boot`) och **Host Data**-rote
 
 ## Första körningen
 
+![Instrumentpanelen efter en första säkerhetskopia: vad som skyddas, vad som kör härnäst och en levande logg.](assets/screenshots/dashboard.png)
+
+*Instrumentpanelen efter en första säkerhetskopia: vad som skyddas, vad som kör härnäst och en levande logg.*
+
 1. Öppna webbgränssnittet på `https://<din-unraid-ip>:3443` (självsignerat certifikat direkt ur lådan).
 2. I **Inställningar**, aktivera de säkerhetskopieringsdomäner du vill ha (Containers, VMs, Flash, Config, Files) och välj en accentfärg.
 3. På fliken **Containers**, välj en container och klicka på **Säkerhetskopiera** för att skapa din första återställningspunkt. Repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files}` och skapas vid den första säkerhetskopieringen.
@@ -75,6 +79,10 @@ Mallen monterar också Docker-socketen, flashen (`/boot`) och **Host Data**-rote
     Öppna `/spike` i webbgränssnittet efter att containern startat. Den sonderar varje montering och CLI (Docker-socket, libvirt, restic, qemu-img, rclone) och rapporterar eventuella saknade delar, så att du kan bekräfta att containern är korrekt inkopplad innan du förlitar dig på den.
 
 ## Enkel kontra Avancerad
+
+![Inställningarna har ingen Spara-knapp: varje ändring skrivs medan du gör den.](assets/screenshots/settings.png)
+
+*Inställningarna har ingen Spara-knapp: varje ändring skrivs medan du gör den.*
 
 Som standard visar gränssnittet endast det väsentliga (säkerhetskopiera, återställa, schemalägga). Använd omkopplaren **Enkel / Avancerad** i sidofältet för att avslöja expertkontrollerna: retention, off-site-kopia, pre/post-hooks, återställning på filnivå, aviseringar, Prometheus-mätvärden och integritets-/underhållsverktygen. Det är en inställning per webbläsare och avstängd som standard, så nykomlingar får ett rent gränssnitt och avancerade användare får allt.
 

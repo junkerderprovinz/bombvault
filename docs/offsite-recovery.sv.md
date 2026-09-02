@@ -63,6 +63,10 @@ BombVault erbjuder två nivåer av bevis på att dina säkerhetskopior faktiskt 
 
 ## Mottagarpanel (den mottagande sidan)
 
+![Den mottagande sidan, bevakad skrivskyddat, med en integritetskontroll körd på denna maskin.](assets/screenshots/receiver.png)
+
+*Den mottagande sidan, bevakad skrivskyddat, med en integritetskontroll körd på denna maskin.*
+
 Allt ovan är den *sändande* sidan. På boxen som **tar emot** oföränderliga off-site-kopior från en annan BombVault ger mottagarpanelen dig oberoende, skrivskyddad övervakning av de repositorierna på den mottagande hårdvaran, så att ett tyst fel i den bortre änden inte förblir obemärkt.
 
 Slå på **Mottagare**-växeln i Inställningar för att avslöja en **Mottagare**-flik. Den är av som standard; aktivera den endast på en box som faktiskt tar emot oföränderliga off-site-säkerhetskopior. Registrera sedan ett mottaget repository (skrivskyddat, öppnat med den sändande instansens nyckel) för att få:

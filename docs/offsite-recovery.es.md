@@ -63,6 +63,10 @@ El **cuadro de mando de protección contra ransomware** en el Panel lo resume en
 
 ## Panel receptor (el lado receptor)
 
+![El lado receptor, vigilado en solo lectura, con una comprobación de integridad hecha en esta máquina.](assets/screenshots/receiver.png)
+
+*El lado receptor, vigilado en solo lectura, con una comprobación de integridad hecha en esta máquina.*
+
 Todo lo anterior es el lado *emisor*. En la máquina que **recibe** copias externas inmutables de otro BombVault, el panel receptor te ofrece monitorización independiente y de solo lectura de esos repositorios en el hardware receptor, de modo que un fallo silencioso en el otro extremo no pase desapercibido.
 
 Activa el conmutador **Receptor** en Ajustes para revelar una pestaña **Receptor**. Está desactivado por defecto; actívalo solo en una máquina que realmente reciba copias externas inmutables. Después registra un repositorio recibido (de solo lectura, abierto con la clave de la instancia emisora) para obtener:

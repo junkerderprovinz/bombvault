@@ -4,6 +4,10 @@ BombVault is standaard simpel en diepgaand wanneer je het nodig hebt. De interfa
 
 ## Back-upbereik
 
+![Containers, elk met een eigen planningsschakelaar, back-upvolgorde en eigen geschiedenis.](assets/screenshots/containers.png)
+
+*Containers, elk met een eigen planningsschakelaar, back-upvolgorde en eigen geschiedenis.*
+
 | Wat | Wat wordt opgeslagen |
 |---|---|
 | **Docker-containers** | Appdata-map plus de containerdefinitie (image, env-variabelen, poorten, labels, volumes). |
@@ -13,6 +17,10 @@ BombVault is standaard simpel en diepgaand wanneer je het nodig hebt. De interfa
 | **Bestanden en mappen** | Benoemde **bestandssets**: elke map op de server (een share, je documenten, een fotobibliotheek), elk met optionele exclude-patronen per set. Volledige gelijkheid met de andere domeinen (planningen, retentie, off-site kopie, integriteitscontroles en hersteloefeningen). |
 
 ## Herstel
+
+![Het begeleide herstel loodst een verse installatie op één plek door het rampscenario.](assets/screenshots/recovery.png)
+
+*Het begeleide herstel loodst een verse installatie op één plek door het rampscenario.*
 
 - **Volledig herstel met één klik.** Kies een snapshot, klik op Herstellen. Klaar.
 - **Herstellen vanaf lokaal of off-site.** Elke back-upbrowser heeft een schakelaar **Lokaal / Off-site**, zodat je bij een verloren of corrupte lokale repo direct vanaf de off-site replica kunt lijsten en herstellen. Verwijderen gaat per bron: een back-up verwijderen raakt alleen de kopie die je bekijkt.

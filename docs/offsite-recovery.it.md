@@ -63,6 +63,10 @@ La **scorecard della protezione dal ransomware** sulla Dashboard riassume tutto 
 
 ## Dashboard ricevente (il lato ricevente)
 
+![Il lato ricevente, osservato in sola lettura, con un controllo di integrità eseguito su questa macchina.](assets/screenshots/receiver.png)
+
+*Il lato ricevente, osservato in sola lettura, con un controllo di integrità eseguito su questa macchina.*
+
 Tutto quanto sopra è il lato *mittente*. Sulla macchina che **riceve** copie off-site immutabili da un altro BombVault, la dashboard Ricevente ti offre un monitoraggio indipendente e in sola lettura di quei repository sull'hardware ricevente, così un fallimento silenzioso all'altra estremità non passa inosservato.
 
 Attiva l'interruttore **Ricevente** in Impostazioni per rivelare una scheda **Ricevente**. È disattivato di default; abilitalo solo su una macchina che riceve effettivamente backup off-site immutabili. Poi registra un repository ricevuto (in sola lettura, aperto con la chiave dell'istanza mittente) per ottenere:

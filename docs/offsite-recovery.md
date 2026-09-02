@@ -63,6 +63,10 @@ The **ransomware-protection scorecard** on the Dashboard rolls this up into a gr
 
 ## Receiver dashboard (the receiving side)
 
+![The receiving side, watched read-only, with an integrity check run on this hardware.](assets/screenshots/receiver.png)
+
+*The receiving side, watched read-only, with an integrity check run on this hardware.*
+
 Everything above is the *sending* side. On the box that **receives** immutable off-site copies from another BombVault, the Receiver dashboard gives you independent, read-only monitoring of those repositories on the receiving hardware, so a silent failure at the far end does not go unnoticed.
 
 Turn on the **Receiver** toggle in Settings to reveal a **Receiver** tab. It is off by default; enable it only on a box that actually receives immutable off-site backups. Then register a received repository (read-only, opened with the sending instance's key) to get:

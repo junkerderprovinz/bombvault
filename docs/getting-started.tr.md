@@ -63,6 +63,10 @@ Sonucu şablonun `APP_KEY` alanına yapıştırın.
 
 ## İlk çalıştırma
 
+![İlk yedekten sonraki panel: neyin korunduğu, sırada ne olduğu ve canlı bir günlük.](assets/screenshots/dashboard.png)
+
+*İlk yedekten sonraki panel: neyin korunduğu, sırada ne olduğu ve canlı bir günlük.*
+
 1. Web arayüzünü `https://<your-unraid-ip>:3443` adresinde açın (kutudan çıktığı gibi kendinden imzalı sertifika).
 2. **Ayarlar**'da istediğiniz yedekleme etki alanlarını etkinleştirin (Konteynerler, VM'ler, Flash, Config, Dosyalar) ve bir vurgu rengi seçin.
 3. **Konteynerler** sekmesinde bir konteyner seçin ve ilk geri yükleme noktanızı oluşturmak için **Yedekle**'ye tıklayın. Depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files}` şeklindedir ve ilk yedeklemede oluşturulur.
@@ -75,6 +79,10 @@ Sonucu şablonun `APP_KEY` alanına yapıştırın.
     Konteyner başladıktan sonra web arayüzünde `/spike`'ı açın. Her bağlamayı ve CLI'ı (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir; böylece ona güvenmeden önce konteynerin doğru bağlandığını onaylayabilirsiniz.
 
 ## Basit ve Gelişmiş karşılaştırması
+
+![Ayarlarda Kaydet düğmesi yoktur: her değişiklik yaptığınız anda yazılır.](assets/screenshots/settings.png)
+
+*Ayarlarda Kaydet düğmesi yoktur: her değişiklik yaptığınız anda yazılır.*
 
 Varsayılan olarak arayüz yalnızca temel unsurları gösterir (yedekle, geri yükle, zamanla). Uzman denetimlerini ortaya çıkarmak için kenar çubuğundaki **Basit / Gelişmiş** anahtarını kullanın: saklama, site dışı kopya, ön/son kancalar, dosya düzeyinde geri yükleme, bildirimler, Prometheus metrikleri ve bütünlük/bakım araçları. Bu, tarayıcı başına bir tercihtir ve varsayılan olarak kapalıdır; böylece yeni gelenler temiz bir arayüz, güçlü kullanıcılar ise her şeyi elde eder.
 

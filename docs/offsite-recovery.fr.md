@@ -63,6 +63,10 @@ Le **tableau de bord de protection contre les rançongiciels** du tableau de bor
 
 ## Tableau de bord récepteur (le côté réception)
 
+![Le côté récepteur, surveillé en lecture seule, avec un contrôle d'intégrité exécuté sur cette machine.](assets/screenshots/receiver.png)
+
+*Le côté récepteur, surveillé en lecture seule, avec un contrôle d'intégrité exécuté sur cette machine.*
+
 Tout ce qui précède est le côté *émetteur*. Sur la machine qui **reçoit** des copies hors site immuables d'un autre BombVault, le tableau de bord récepteur vous donne une surveillance indépendante et en lecture seule de ces dépôts sur le matériel de réception, afin qu'une défaillance silencieuse à l'autre bout ne passe pas inaperçue.
 
 Activez la bascule **Récepteur** dans les Paramètres pour révéler un onglet **Récepteur**. Il est désactivé par défaut ; ne l'activez que sur une machine qui reçoit réellement des sauvegardes hors site immuables. Enregistrez ensuite un dépôt reçu (en lecture seule, ouvert avec la clé de l'instance émettrice) pour obtenir :
