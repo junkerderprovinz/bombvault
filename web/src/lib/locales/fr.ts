@@ -140,7 +140,7 @@ const fr: Partial<Translations> = {
   "update.afterBackup": "Mettre à jour après une sauvegarde réussie",
   "update.afterBackupHint": "Récupère l'image et recrée ce conteneur juste après une sauvegarde réussie, pour que vous ayez toujours d'abord un point de restauration récent. Il s'exécute au moment de la sauvegarde (les sauvegardes s'enchaînent l'une après l'autre), pas à une heure fixe. Pour des mises à jour à horaire fixe, avec gestion des versions, voir ShipLog.",
   "update.afterBackupOrphans":
-    "Docker conserve l'image sur laquelle le conteneur tournait avant, désormais sans étiquette, et Unraid la range parmi les images orphelines. C'est le résidu normal d'une mise à jour RÉUSSIE, pas la trace d'un échec, et c'est exactement ce qu'un retour rapide à l'image précédente demande. Supprimez-les quand vous voulez.",
+    "Docker conserve l'image sur laquelle le conteneur tournait avant, désormais sans étiquette, et Unraid la range parmi les images orphelines. C'est le résidu normal d'une mise à jour RÉUSSIE, pas la trace d'un échec, et c'est exactement ce qu'un retour rapide à l'image précédente demande. Si vous préférez ne pas la garder, Paramètres → Chemins et stockage → Nettoyage des images et statut de mise à jour propose un interrupteur qui supprime l'image remplacée juste après la mise à jour.",
   "run.statusRunning": "En cours",
   "run.statusSuccess": "Réussi",
   "run.statusFailed": "Échoué",

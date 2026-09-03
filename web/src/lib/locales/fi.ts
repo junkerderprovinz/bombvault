@@ -140,7 +140,7 @@ const fi: Partial<Translations> = {
   "update.afterBackup": "Päivitä onnistuneen varmuuskopioinnin jälkeen",
   "update.afterBackupHint": "Hakee imagen ja luo tämän kontin uudelleen heti onnistuneen varmuuskopioinnin jälkeen, joten sinulla on aina ensin tuore palautuspiste. Se ajetaan varmuuskopioinnin ajankohtana (varmuuskopiot ajetaan peräkkäin), ei kiinteänä kellonaikana. Jos haluat päivitykset kiinteän aikataulun mukaan, versioperusteisesti, katso ShipLog.",
   "update.afterBackupOrphans":
-    "Docker säilyttää levykuvan, jolla kontti aiemmin ajoi, nyt ilman tunnistetta, ja Unraid listaa sen orvoksi levykuvaksi. Se on ONNISTUNEEN päivityksen normaali jäänne, ei merkki epäonnistuneesta, ja juuri sitä nopea paluu edelliseen levykuvaan tarvitsee. Siivoa ne milloin haluat.",
+    "Docker säilyttää levykuvan, jolla kontti aiemmin ajoi, nyt ilman tunnistetta, ja Unraid listaa sen orvoksi levykuvaksi. Se on ONNISTUNEEN päivityksen normaali jäänne, ei merkki epäonnistuneesta, ja juuri sitä nopea paluu edelliseen levykuvaan tarvitsee. Jos et halua säilyttää sitä, kohdassa Asetukset → Polut ja tallennus → Image-siivous ja päivitystila on kytkin, joka poistaa korvatun levykuvan heti päivityksen jälkeen.",
   "run.statusRunning": "Käynnissä",
   "run.statusSuccess": "Onnistui",
   "run.statusFailed": "Epäonnistui",

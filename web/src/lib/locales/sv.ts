@@ -140,7 +140,7 @@ const sv: Partial<Translations> = {
   "update.afterBackup": "Uppdatera efter lyckad säkerhetskopiering",
   "update.afterBackupHint": "Hämtar imagen och återskapar den här containern direkt efter en lyckad säkerhetskopiering, så du alltid har en färsk återställningspunkt först. Den körs vid tidpunkten för säkerhetskopieringen (säkerhetskopior körs en efter en), inte vid en fast klockslag. För uppdateringar enligt ett fast schema, versionsstyrt, se ShipLog.",
   "update.afterBackupOrphans":
-    "Docker behåller avbildningen som containern tidigare kördes på, nu utan tagg, och Unraid listar den som en orphan image. Det är den normala resten av en LYCKAD uppdatering, inte tecknet på en misslyckad, och det är precis vad en snabb återgång till den förra avbildningen behöver. Rensa dem när du vill.",
+    "Docker behåller avbildningen som containern tidigare kördes på, nu utan tagg, och Unraid listar den som en orphan image. Det är den normala resten av en LYCKAD uppdatering, inte tecknet på en misslyckad, och det är precis vad en snabb återgång till den förra avbildningen behöver. Vill du inte behålla den finns det en brytare under Inställningar → Sökvägar och lagring → Image-uppstädning & uppdateringsstatus som tar bort den ersatta avbildningen direkt efter uppdateringen.",
   "run.statusRunning": "Körs",
   "run.statusSuccess": "Lyckades",
   "run.statusFailed": "Misslyckades",

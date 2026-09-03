@@ -210,7 +210,7 @@ const lv: Partial<Translations> = {
   "update.afterBackup": "Atjaunināt pēc veiksmīgas rezerves kopijas",
   "update.afterBackupHint": "Ievelk attēlu un izveido šo konteineru no jauna uzreiz pēc veiksmīgas rezerves kopijas, lai jums vienmēr vispirms būtu svaigs atjaunošanas punkts. Darbojas rezerves kopēšanas laikā (rezerves kopijas notiek cita pēc citas), nevis fiksētā pulksteņa laikā. Atjauninājumiem pēc fiksēta, versijas atkarīga grafika skatiet ShipLog.",
   "update.afterBackupOrphans":
-    "Docker patur attēlu, uz kura konteiners darbojās iepriekš, tagad bez birkas, un Unraid to uzskaita kā bāreņa attēlu. Tas ir VEIKSMĪGA atjauninājuma parastais paliekas, nevis neveiksmīga pazīme, un tieši tas nepieciešams, lai ātri atgrieztos pie iepriekšējā attēla. Notīriet tos, kad vēlaties.",
+    "Docker patur attēlu, uz kura konteiners darbojās iepriekš, tagad bez birkas, un Unraid to uzskaita kā bāreņa attēlu. Tas ir VEIKSMĪGA atjauninājuma parastais paliekas, nevis neveiksmīga pazīme, un tieši tas nepieciešams, lai ātri atgrieztos pie iepriekšējā attēla. Ja nevēlaties to paturēt, sadaļā Iestatījumi → Ceļi un krātuve → Attēlu tīrīšana un atjaunināšanas statuss ir slēdzis, kas nomainīto attēlu izdzēš uzreiz pēc atjaunināšanas.",
   "run.statusRunning": "Notiek",
   "run.statusSuccess": "Veiksmīgi",
   "run.statusFailed": "Neveiksmīgi",

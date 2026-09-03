@@ -210,7 +210,7 @@ const gl: Partial<Translations> = {
   "update.afterBackup": "Actualizar despois dunha copia correcta",
   "update.afterBackupHint": "Descarga a imaxe e recrea este contedor xusto despois dunha copia correcta, así sempre tes primeiro un punto de restauración recente. Execútase á hora da copia (as copias van unha tras outra), non a unha hora fixa. Para actualizacións nun horario fixo segundo versión, consulta ShipLog.",
   "update.afterBackupOrphans":
-    "Docker mantén a imaxe na que o contedor se executaba antes, agora sen etiqueta, e Unraid lístaa como imaxe orfa. É o residuo normal dunha actualización CORRECTA, non o sinal dunha fallida, e é xustamente o que precisa unha volta rápida á imaxe anterior. Bórraas cando queiras.",
+    "Docker mantén a imaxe na que o contedor se executaba antes, agora sen etiqueta, e Unraid lístaa como imaxe orfa. É o residuo normal dunha actualización CORRECTA, non o sinal dunha fallida, e é xustamente o que precisa unha volta rápida á imaxe anterior. Se preferes non conservala, en Configuración → Camiños e almacenamento → Limpeza de imaxes e estado de actualizacións hai un interruptor que borra a imaxe substituída xusto despois da actualización.",
   "run.statusRunning": "En execución",
   "run.statusSuccess": "Correcto",
   "run.statusFailed": "Fallido",

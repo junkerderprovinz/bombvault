@@ -266,7 +266,7 @@ export const en = {
   "update.afterBackup": "Update after successful backup",
   "update.afterBackupHint": "Pull the image and recreate this container right after a successful backup, so you always have a fresh restore point first. It runs at the backup's time (backups run one after another), not a fixed clock time. For updates on a set schedule instead, version-gated, see ShipLog.",
   "update.afterBackupOrphans":
-    "Docker keeps the image the container ran on before, now untagged, which Unraid lists as an orphan image. That is the normal residue of a SUCCESSFUL update, not the sign of a failed one, and it is what a quick rollback to the previous image needs. Remove them whenever you like.",
+    "Docker keeps the image the container ran on before, now untagged, which Unraid lists as an orphan image. That is the normal residue of a SUCCESSFUL update, not the sign of a failed one, and it is what a quick rollback to the previous image needs. If you would rather not keep it, Settings → Paths & Storage → Image Cleanup & Update Status has a switch that deletes the superseded image right after the update.",
   "run.statusRunning": "Running",
   "run.statusSuccess": "Success",
   "run.statusFailed": "Failed",
@@ -1995,7 +1995,7 @@ export const de: Translations = {
   "update.afterBackup": "Nach erfolgreichem Backup updaten",
   "update.afterBackupHint": "Zieht das Image und baut diesen Container direkt nach einem erfolgreichen Backup neu, du hast also immer zuerst einen frischen Wiederherstellungspunkt. Läuft zur Backup-Zeit (Backups laufen nacheinander), nicht zu einer festen Uhrzeit. Für Updates nach festem Zeitplan (nach Version gestaffelt) gibt es ShipLog.",
   "update.afterBackupOrphans":
-    "Docker behält das Image, auf dem der Container vorher lief, jetzt ohne Tag, und Unraid führt es als verwaistes Image. Das ist der normale Rest eines ERFOLGREICHEN Updates und nicht die Spur eines fehlgeschlagenen; es ist genau das, was ein schnelles Zurückrollen auf das vorherige Image braucht. Aufräumen kannst du sie, wann du willst.",
+    "Docker behält das Image, auf dem der Container vorher lief, jetzt ohne Tag, und Unraid führt es als verwaistes Image. Das ist der normale Rest eines ERFOLGREICHEN Updates und nicht die Spur eines fehlgeschlagenen; es ist genau das, was ein schnelles Zurückrollen auf das vorherige Image braucht. Wenn du es nicht behalten willst: Einstellungen → Pfade & Speicher → Image-Bereinigung & Update-Status hat einen Schalter, der das abgelöste Image direkt nach dem Update löscht.",
   "run.statusRunning": "Läuft",
   "run.statusSuccess": "Erfolgreich",
   "run.statusFailed": "Fehlgeschlagen",

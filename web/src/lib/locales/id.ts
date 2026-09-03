@@ -210,7 +210,7 @@ const id: Partial<Translations> = {
   "update.afterBackup": "Perbarui setelah pencadangan berhasil",
   "update.afterBackupHint": "Menarik image dan membuat ulang container ini tepat setelah pencadangan berhasil, sehingga Anda selalu punya titik pemulihan yang segar terlebih dahulu. Berjalan pada waktu pencadangan (pencadangan berjalan satu per satu), bukan pada jam tetap. Untuk pembaruan pada jadwal tetap, berbasis versi, lihat ShipLog.",
   "update.afterBackupOrphans":
-    "Docker menyimpan image yang sebelumnya dijalankan kontainer, sekarang tanpa tag, dan Unraid mencantumkannya sebagai orphan image. Itu sisa normal dari pembaruan yang BERHASIL, bukan tanda kegagalan, dan justru itulah yang dibutuhkan untuk kembali cepat ke image sebelumnya. Bersihkan kapan saja.",
+    "Docker menyimpan image yang sebelumnya dijalankan kontainer, sekarang tanpa tag, dan Unraid mencantumkannya sebagai orphan image. Itu sisa normal dari pembaruan yang BERHASIL, bukan tanda kegagalan, dan justru itulah yang dibutuhkan untuk kembali cepat ke image sebelumnya. Kalau tidak ingin menyimpannya, di Pengaturan → Jalur & Penyimpanan → Pembersihan image & status pembaruan ada sakelar yang menghapus image yang digantikan tepat setelah pembaruan.",
   "run.statusRunning": "Sedang berjalan",
   "run.statusSuccess": "Berhasil",
   "run.statusFailed": "Gagal",

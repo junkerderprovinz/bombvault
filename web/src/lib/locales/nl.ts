@@ -138,7 +138,7 @@ const nl: Partial<Translations> = {
   "update.afterBackup": "Bijwerken na een geslaagde back-up",
   "update.afterBackupHint": "Haalt de image op en maakt deze container direct na een geslaagde back-up opnieuw aan, zodat je altijd eerst een vers herstelpunt hebt. Dit gebeurt op het moment van de back-up (back-ups lopen na elkaar), niet op een vast tijdstip. Voor updates volgens een vast schema, per versie, zie ShipLog.",
   "update.afterBackupOrphans":
-    "Docker houdt de image waarop de container eerder liep, nu zonder tag, en Unraid noemt die een orphan image. Dat is het normale restant van een GESLAAGDE update, niet het teken van een mislukte, en het is precies wat een snelle terugval naar de vorige image nodig heeft. Ruim ze op wanneer je wilt.",
+    "Docker houdt de image waarop de container eerder liep, nu zonder tag, en Unraid noemt die een orphan image. Dat is het normale restant van een GESLAAGDE update, niet het teken van een mislukte, en het is precies wat een snelle terugval naar de vorige image nodig heeft. Wil je die niet bewaren, dan staat er in Instellingen → Paden en opslag → Image-opschoning & updatestatus een schakelaar die de vervangen image direct na de update verwijdert.",
   "run.statusRunning": "Actief",
   "run.statusSuccess": "Geslaagd",
   "run.statusFailed": "Mislukt",

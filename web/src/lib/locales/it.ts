@@ -140,7 +140,7 @@ const it: Partial<Translations> = {
   "update.afterBackup": "Aggiorna dopo un backup riuscito",
   "update.afterBackupHint": "Scarica l'immagine e ricrea questo container subito dopo un backup riuscito, così hai sempre prima un punto di ripristino fresco. Viene eseguito all'orario del backup (i backup vengono eseguiti uno dopo l'altro), non a un orario fisso. Per aggiornamenti secondo una pianificazione fissa, basati sulla versione, vedi ShipLog.",
   "update.afterBackupOrphans":
-    "Docker conserva l'immagine su cui il contenitore girava prima, ora senza tag, e Unraid la elenca come immagine orfana. È il residuo normale di un aggiornamento RIUSCITO, non il segno di uno fallito, ed è proprio ciò che serve per tornare rapidamente all'immagine precedente. Rimuovile quando vuoi.",
+    "Docker conserva l'immagine su cui il contenitore girava prima, ora senza tag, e Unraid la elenca come immagine orfana. È il residuo normale di un aggiornamento RIUSCITO, non il segno di uno fallito, ed è proprio ciò che serve per tornare rapidamente all'immagine precedente. Se preferisci non conservarla, Impostazioni → Percorsi e archiviazione → Pulizia immagini e stato aggiornamenti ha un interruttore che elimina l'immagine sostituita subito dopo l'aggiornamento.",
   "run.statusRunning": "In corso",
   "run.statusSuccess": "Riuscito",
   "run.statusFailed": "Fallito",

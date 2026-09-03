@@ -210,7 +210,7 @@ const hr: Partial<Translations> = {
   "update.afterBackup": "Ažuriraj nakon uspješne sigurnosne kopije",
   "update.afterBackupHint": "Povlači sliku i ponovno stvara ovaj kontejner odmah nakon uspješne sigurnosne kopije, tako da uvijek prvo imate svježu točku vraćanja. Izvršava se u vrijeme sigurnosne kopije (sigurnosne kopije se izvršavaju jedna za drugom), ne u fiksno vrijeme. Za ažuriranja prema fiksnom rasporedu, prema verziji, pogledajte ShipLog.",
   "update.afterBackupOrphans":
-    "Docker zadržava sliku na kojoj je spremnik prije radio, sada bez oznake, a Unraid je prikazuje kao siročad sliku. To je normalan ostatak USPJEŠNOG ažuriranja, a ne znak neuspjelog, i upravo je to ono što treba za brzo vraćanje na prethodnu sliku. Očistite ih kad želite.",
+    "Docker zadržava sliku na kojoj je spremnik prije radio, sada bez oznake, a Unraid je prikazuje kao siročad sliku. To je normalan ostatak USPJEŠNOG ažuriranja, a ne znak neuspjelog, i upravo je to ono što treba za brzo vraćanje na prethodnu sliku. Ako je ne želite zadržati, u Postavke → Putanje i pohrana → Čišćenje slika i status ažuriranja postoji prekidač koji zamijenjenu sliku briše odmah nakon ažuriranja.",
   "run.statusRunning": "U tijeku",
   "run.statusSuccess": "Uspješno",
   "run.statusFailed": "Neuspješno",

@@ -210,7 +210,7 @@ const is: Partial<Translations> = {
   "update.afterBackup": "Uppfæra eftir árangursríka afritun",
   "update.afterBackupHint": "Sækir ímyndina og endurgerir þennan gám strax eftir árangursríka afritun, svo þú hefur alltaf ferskan endurheimtarpunkt fyrst. Keyrir á tíma afritunar (afrit keyra hvert á eftir öðru), ekki á föstum klukkutíma. Fyrir uppfærslur á föstu tímaáætlunarkerfi, útgáfustýrðar, sjá ShipLog.",
   "update.afterBackupOrphans":
-    "Docker heldur myndinni sem gámurinn keyrði á áður, nú án merkis, og Unraid skráir hana sem föðurlausa mynd. Það er eðlilegur eftirstöður HEPPNAÐRAR uppfærslu, ekki merki um mistök, og einmitt það sem þarf til að fara hratt til baka í fyrri mynd. Hreinsaðu þær hvenær sem þú vilt.",
+    "Docker heldur myndinni sem gámurinn keyrði á áður, nú án merkis, og Unraid skráir hana sem föðurlausa mynd. Það er eðlilegur eftirstöður HEPPNAÐRAR uppfærslu, ekki merki um mistök, og einmitt það sem þarf til að fara hratt til baka í fyrri mynd. Ef þú vilt ekki halda henni er rofi undir Stillingar → Slóðir og geymsla → Ímyndahreinsun og uppfærslustaða sem eyðir myndinni sem var leyst af hólmi rétt eftir uppfærsluna.",
   "run.statusRunning": "Í gangi",
   "run.statusSuccess": "Tókst",
   "run.statusFailed": "Mistókst",

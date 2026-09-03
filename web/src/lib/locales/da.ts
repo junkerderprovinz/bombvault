@@ -140,7 +140,7 @@ const da: Partial<Translations> = {
   "update.afterBackup": "Opdater efter vellykket sikkerhedskopiering",
   "update.afterBackupHint": "Henter imaget og genskaber denne container lige efter en vellykket sikkerhedskopiering, så du altid har et frisk gendannelsespunkt først. Den kører på tidspunktet for sikkerhedskopieringen (sikkerhedskopier kører en ad gangen), ikke på et fast klokkeslæt. For opdateringer efter en fast tidsplan, versionsstyret, se ShipLog.",
   "update.afterBackupOrphans":
-    "Docker beholder det image, containeren kørte på før, nu uden tag, og Unraid viser det som et forældreløst image. Det er den normale rest af en LYKKET opdatering, ikke tegnet på en mislykket, og det er netop hvad en hurtig tilbagerulning til det forrige image kræver. Ryd dem op, når du vil.",
+    "Docker beholder det image, containeren kørte på før, nu uden tag, og Unraid viser det som et forældreløst image. Det er den normale rest af en LYKKET opdatering, ikke tegnet på en mislykket, og det er netop hvad en hurtig tilbagerulning til det forrige image kræver. Vil du ikke beholde det, findes der under Indstillinger → Stier og lagring → Oprydning af images & opdateringsstatus en kontakt, der sletter det erstattede image lige efter opdateringen.",
   "run.statusRunning": "Kører",
   "run.statusSuccess": "Gennemført",
   "run.statusFailed": "Mislykkedes",
