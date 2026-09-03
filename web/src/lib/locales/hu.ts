@@ -139,6 +139,8 @@ const hu: Partial<Translations> = {
   "run.kindUpdate": "Frissítés",
   "update.afterBackup": "Frissítés sikeres mentés után",
   "update.afterBackupHint": "Lehúzza a képet, és újra létrehozza ezt a konténert közvetlenül egy sikeres mentés után, így mindig van előbb friss visszaállítási pont. A mentés időpontjában fut (a mentések egymás után futnak), nem egy rögzített időpontban. Ha rögzített ütemterv szerinti, verzióalapú frissítést szeretnél, nézd meg a ShipLogot.",
+  "update.afterBackupOrphans":
+    "A Docker megtartja azt a lemezképet, amelyen a konténer korábban futott, immár címke nélkül, és az Unraid árva lemezképként listázza. Ez egy SIKERES frissítés szokásos maradéka, nem egy elrontott nyoma, és épp erre van szükség a korábbi lemezképre való gyors visszatéréshez. Bármikor törölheted őket.",
   "run.statusRunning": "Fut",
   "run.statusSuccess": "Sikeres",
   "run.statusFailed": "Sikertelen",

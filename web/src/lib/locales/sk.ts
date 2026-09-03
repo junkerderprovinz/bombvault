@@ -209,6 +209,8 @@ const sk: Partial<Translations> = {
   "run.kindDRDrill": "DR test",
   "update.afterBackup": "Aktualizovať po úspešnej zálohe",
   "update.afterBackupHint": "Stiahne obraz a znova vytvorí tento kontajner hneď po úspešnej zálohe, takže vždy máte najprv čerstvý bod obnovenia. Beží v čase zálohovania (zálohy bežia jedna za druhou), nie o pevnom čase. Aktualizácie podľa pevného plánu, viazané na verziu, nájdete v ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker si ponechá obraz, na ktorom kontejner bežal predtým, teraz bez značky, a Unraid ho vypisuje ako osirelý obraz. Je to normálny zvyšok ÚSPEŠNEJ aktualizácie, nie znak neúspešnej, a je to presne to, čo potrebuje rýchly návrat k predošlému obrazu. Vymažte ich kedykoľvek.",
   "run.statusRunning": "Prebieha",
   "run.statusSuccess": "Úspešné",
   "run.statusFailed": "Zlyhalo",

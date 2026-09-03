@@ -209,6 +209,8 @@ const sl: Partial<Translations> = {
   "run.kindDRDrill": "DR preverjanje",
   "update.afterBackup": "Posodobi po uspešni varnostni kopiji",
   "update.afterBackupHint": "Takoj po uspešni varnostni kopiji povleci sliko in ponovno ustvari ta vsebnik, tako da vedno najprej dobiš svežo točko za obnovitev. Zgodi se ob času varnostnega kopiranja (varnostne kopije tečejo ena za drugo), ne ob fiksni uri. Za posodobitve po lastnem urniku, vezane na različico, glej ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker ohrani sliko, na kateri je vsebnik tekel prej, zdaj brez oznake, in Unraid jo navede kot osirotelo sliko. To je običajni ostanek USPEŠNE nadgradnje, ne znak neuspele, in prav to potrebuje hitra vrnitev na prejšnjo sliko. Počistite jih, kadar želite.",
   "run.statusRunning": "Teče",
   "run.statusSuccess": "Uspešno",
   "run.statusFailed": "Neuspešno",

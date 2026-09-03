@@ -139,6 +139,8 @@ const zh: Partial<Translations> = {
   "run.kindUpdate": "更新",
   "update.afterBackup": "备份成功后更新",
   "update.afterBackupHint": "在备份成功后立即拉取镜像并重建此容器，因此你总是先有一个新的恢复点。它在备份的时间运行（备份是依次运行的），而不是固定的时钟时间。如果需要按固定计划、按版本进行更新，请查看 ShipLog。",
+  "update.afterBackupOrphans":
+    "Docker 会保留容器此前运行的镜像，此时它已没有标签，Unraid 就把它列为孤立镜像。这是一次「成功」更新的正常残留，不是失败的迹象，也正是快速回退到上一个镜像所需要的。你可以随时清理它们。",
   "run.statusRunning": "运行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失败",

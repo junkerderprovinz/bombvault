@@ -209,6 +209,8 @@ const lt: Partial<Translations> = {
   "run.kindDRDrill": "DR patikra",
   "update.afterBackup": "Atnaujinti po sėkmingos atsarginės kopijos",
   "update.afterBackupHint": "Ištraukia atvaizdą ir iš naujo sukuria šį konteinerį iškart po sėkmingos atsarginės kopijos, todėl visada pirmiausia turėsite šviežią atkūrimo tašką. Vykdoma kopijavimo metu (kopijos vykdomos viena po kitos), o ne fiksuotu laiku. Atnaujinimams pagal fiksuotą tvarkaraštį, pagal versiją, žr. ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker pasilieka vaizdą, su kuriuo konteineris veikė anksčiau, dabar be žymos, o Unraid rodo jį kaip apleistą vaizdą. Tai normali PAVYKUSIO atnaujinimo liekana, o ne nepavykusio žymė, ir būtent jos reikia norint greitai grįžti prie ankstesnio vaizdo. Šalinkite juos kada norite.",
   "run.statusRunning": "Vykdoma",
   "run.statusSuccess": "Sėkminga",
   "run.statusFailed": "Nepavyko",

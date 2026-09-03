@@ -209,6 +209,8 @@ const et: Partial<Translations> = {
   "run.kindDRDrill": "DR-kontroll",
   "update.afterBackup": "Uuenda pärast õnnestunud varundust",
   "update.afterBackupHint": "Tõmbab tõmmise ja loob selle konteineri kohe pärast õnnestunud varundust uuesti, nii on sul alati enne olemas värske taastamispunkt. Töötab varunduse ajal (varundused käivad üksteise järel), mitte kindlal kellaajal. Kindla, versioonipõhise ajakavaga uuenduste jaoks vaata ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker hoiab alles tõmmise, millel konteiner varem töötas, nüüd sildita, ja Unraid näitab seda orvuks jäänud tõmmisena. See on ÕNNESTUNUD uuenduse tavaline jääk, mitte ebaõnnestunu märk, ja just seda on vaja kiireks naasmiseks eelmise tõmmise juurde. Koristage need millal soovite.",
   "run.statusRunning": "Töötab",
   "run.statusSuccess": "Õnnestus",
   "run.statusFailed": "Ebaõnnestus",

@@ -139,6 +139,8 @@ const cs: Partial<Translations> = {
   "run.kindUpdate": "Aktualizace",
   "update.afterBackup": "Aktualizovat po úspěšné záloze",
   "update.afterBackupHint": "Stáhne image a znovu vytvoří tento kontejner hned po úspěšné záloze, takže máte vždy nejdřív čerstvý bod obnovení. Spouští se v čase zálohy (zálohy běží jedna po druhé), ne v pevně stanovený čas. Pro aktualizace podle pevného harmonogramu, podle verze, viz ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker si nechává obraz, na kterém kontejner běžel dříve, teď bez značky, a Unraid jej vypisuje jako osiřelý obraz. To je normální zbytek ÚSPĚŠNÉ aktualizace, ne známka neúspěšné, a je to přesně to, co potřebuje rychlý návrat k předchozímu obrazu. Smažte je, kdykoli chcete.",
   "run.statusRunning": "Probíhá",
   "run.statusSuccess": "Úspěch",
   "run.statusFailed": "Selhalo",

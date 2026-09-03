@@ -138,6 +138,8 @@ const ro: Partial<Translations> = {
   "run.kindUpdate": "Actualizare",
   "update.afterBackup": "Actualizează după o copie de rezervă reușită",
   "update.afterBackupHint": "Descarcă imaginea și recreează acest container imediat după o copie de rezervă reușită, ca să ai mereu mai întâi un punct de restaurare proaspăt. Rulează la ora copiei de rezervă (copiile de rezervă rulează una după alta), nu la o oră fixă. Pentru actualizări după un program fix, în funcție de versiune, vezi ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker păstrează imaginea pe care containerul rula înainte, acum fără etichetă, iar Unraid o listează ca imagine orfană. Este reziduul normal al unei actualizări REUȘITE, nu semnul uneia eșuate, și este exact ce îi trebuie unei reveniri rapide la imaginea anterioară. Șterge-le când vrei.",
   "run.statusRunning": "În rulare",
   "run.statusSuccess": "Succes",
   "run.statusFailed": "Eșuat",

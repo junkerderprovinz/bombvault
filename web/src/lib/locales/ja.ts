@@ -139,6 +139,8 @@ const ja: Partial<Translations> = {
   "run.kindUpdate": "更新",
   "update.afterBackup": "バックアップ成功後に更新",
   "update.afterBackupHint": "バックアップが成功した直後にイメージを取得してこのコンテナを再作成するため、常に先に新しい復元ポイントが確保されます。実行タイミングはバックアップの時刻に依存し（バックアップは順番に実行されます）、固定の時刻ではありません。バージョンに応じて固定スケジュールで更新したい場合は、ShipLog をご覧ください。",
+  "update.afterBackupOrphans":
+    "Docker は更新前にコンテナが動いていたイメージをタグなしで残し、Unraid はそれを孤立イメージとして表示します。これは更新が「成功した」ときの普通の残りかすで、失敗の痕ではありません。直前のイメージへ素早く戻すために必要なものでもあります。消すのはいつでもかまいません。",
   "run.statusRunning": "実行中",
   "run.statusSuccess": "成功",
   "run.statusFailed": "失敗",

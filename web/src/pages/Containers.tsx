@@ -665,7 +665,13 @@ function UpdateAfterBackupRow({
     <div className="flex flex-col items-end gap-1">
       <ToggleRow
         label={t("update.afterBackup")}
-        hint={t("update.afterBackupHint")}
+        // The old image is left behind on purpose, and Unraid's Docker page
+        // lists it as an "orphan image". A successful update therefore looks
+        // like wreckage from a failed one, and that is how it was reported
+        // (issue #193, after a first night with this on for every container).
+        // Said here rather than only in the docs, because this toggle is where
+        // someone decides to switch it on.
+        hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}`}
         checked={enabled}
         onChange={(next) => void handle(next)}
         disabled={busy}

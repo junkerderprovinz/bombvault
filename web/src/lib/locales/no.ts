@@ -138,6 +138,8 @@ const no: Partial<Translations> = {
   "run.kindUpdate": "Oppdatering",
   "update.afterBackup": "Oppdater etter vellykket sikkerhetskopiering",
   "update.afterBackupHint": "Henter imaget og gjenskaper denne containeren rett etter en vellykket sikkerhetskopiering, så du alltid har et ferskt gjenopprettingspunkt først. Den kjører på tidspunktet for sikkerhetskopieringen (sikkerhetskopier kjøres en etter en), ikke på et fast klokkeslett. For oppdateringer på en fast tidsplan, versjonsstyrt, se ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker beholder avbildningen containeren kjørte på før, nå uten merke, og Unraid viser den som et foreldreløst bilde. Det er den normale resten av en VELLYKKET oppdatering, ikke tegnet på en mislykket, og det er nettopp det en rask tilbakerulling til forrige avbildning trenger. Rydd dem når du vil.",
   "run.statusRunning": "Kjører",
   "run.statusSuccess": "Vellykket",
   "run.statusFailed": "Mislyktes",

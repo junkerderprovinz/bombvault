@@ -139,6 +139,8 @@ const ko: Partial<Translations> = {
   "run.kindUpdate": "업데이트",
   "update.afterBackup": "백업 성공 후 업데이트",
   "update.afterBackupHint": "백업이 성공한 직후에 이미지를 가져와 이 컨테이너를 다시 만들므로 항상 먼저 최신 복원 지점이 확보됩니다. 백업 시각에 실행되며(백업은 차례로 실행됩니다), 고정된 시각에 실행되는 것은 아닙니다. 버전 기준의 고정 일정 업데이트를 원하시면 ShipLog를 확인하세요.",
+  "update.afterBackupOrphans":
+    "Docker는 컨테이너가 이전에 실행하던 이미지를 태그 없이 남겨 두고, Unraid는 그것을 고아 이미지로 표시합니다. 이는 업데이트가 '성공했을' 때 남는 정상적인 잔여물이며 실패의 흔적이 아닙니다. 직전 이미지로 빠르게 되돌릴 때 필요한 것이기도 합니다. 지우는 것은 언제든 자유입니다.",
   "run.statusRunning": "실행 중",
   "run.statusSuccess": "성공",
   "run.statusFailed": "실패",

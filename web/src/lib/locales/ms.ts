@@ -209,6 +209,8 @@ const ms: Partial<Translations> = {
   "run.kindDRDrill": "Semakan DR",
   "update.afterBackup": "Kemas kini selepas sandaran berjaya",
   "update.afterBackupHint": "Menarik imej dan mencipta semula bekas ini sejurus selepas sandaran berjaya, jadi anda sentiasa mempunyai titik pemulihan terkini dahulu. Berjalan pada masa sandaran (sandaran berjalan satu demi satu), bukan pada waktu tetap. Untuk kemas kini pada jadual tetap, mengikut versi, lihat ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker menyimpan imej yang bekas itu jalankan sebelum ini, kini tanpa tag, dan Unraid menyenaraikannya sebagai imej yatim. Itu sisa biasa bagi kemas kini yang BERJAYA, bukan tanda kegagalan, dan itulah yang diperlukan untuk kembali pantas ke imej sebelumnya. Bersihkan bila-bila anda mahu.",
   "run.statusRunning": "Sedang berjalan",
   "run.statusSuccess": "Berjaya",
   "run.statusFailed": "Gagal",

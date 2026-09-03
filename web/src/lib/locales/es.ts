@@ -139,6 +139,8 @@ const es: Partial<Translations> = {
   "run.kindUpdate": "Actualización",
   "update.afterBackup": "Actualizar tras una copia de seguridad correcta",
   "update.afterBackupHint": "Descarga la imagen y recrea este contenedor justo después de una copia de seguridad correcta, para que siempre tengas primero un punto de restauración reciente. Se ejecuta a la hora de la copia de seguridad (las copias se ejecutan una tras otra), no a una hora fija. Para actualizaciones en un horario fijo, según la versión, consulta ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker conserva la imagen sobre la que el contenedor corría antes, ahora sin etiqueta, y Unraid la lista como imagen huérfana. Es el residuo normal de una actualización CORRECTA, no la señal de una fallida, y es justo lo que necesita una vuelta rápida a la imagen anterior. Bórralas cuando quieras.",
   "run.statusRunning": "En curso",
   "run.statusSuccess": "Completado",
   "run.statusFailed": "Fallido",

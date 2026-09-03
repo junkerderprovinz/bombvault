@@ -139,6 +139,8 @@ const vi: Partial<Translations> = {
   "run.kindUpdate": "Cập nhật",
   "update.afterBackup": "Cập nhật sau khi sao lưu thành công",
   "update.afterBackupHint": "Kéo image và tạo lại container này ngay sau khi sao lưu thành công, nên bạn luôn có sẵn một điểm khôi phục mới trước. Nó chạy vào thời điểm sao lưu (các bản sao lưu chạy lần lượt), không phải vào một giờ cố định. Để cập nhật theo lịch cố định, dựa trên phiên bản, hãy xem ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker giữ lại ảnh mà container chạy trước đó, giờ không còn thẻ, và Unraid liệt kê nó là ảnh mồ côi. Đó là phần còn lại bình thường của một lần cập nhật THÀNH CÔNG, không phải dấu vết của lần thất bại, và cũng chính là thứ cần để quay nhanh về ảnh trước. Bạn có thể dọn chúng bất cứ lúc nào.",
   "run.statusRunning": "Đang chạy",
   "run.statusSuccess": "Thành công",
   "run.statusFailed": "Thất bại",

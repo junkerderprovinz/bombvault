@@ -139,6 +139,8 @@ const tr: Partial<Translations> = {
   "run.kindUpdate": "Güncelleme",
   "update.afterBackup": "Başarılı yedeklemeden sonra güncelle",
   "update.afterBackupHint": "İmajı çeker ve bu konteyneri başarılı bir yedeklemeden hemen sonra yeniden oluşturur, böylece her zaman önce taze bir geri yükleme noktanız olur. Yedekleme zamanında çalışır (yedeklemeler birbiri ardına çalışır), sabit bir saatte değil. Sabit bir zamanlamaya göre, sürüme dayalı güncellemeler için ShipLog'a bakın.",
+  "update.afterBackupOrphans":
+    "Docker, kapsayıcının önceden çalıştığı imajı etiketsiz olarak saklar ve Unraid onu artık sahipsiz imaj olarak listeler. Bu, BAŞARILI bir güncellemenin normal artığıdır, başarısız olanın izi değil, ve önceki imaja hızlıca dönmek için gereken tam olarak budur. Onları istediğiniz zaman temizleyebilirsiniz.",
   "run.statusRunning": "Çalışıyor",
   "run.statusSuccess": "Başarılı",
   "run.statusFailed": "Başarısız",

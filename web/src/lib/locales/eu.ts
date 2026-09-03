@@ -209,6 +209,8 @@ const eu: Partial<Translations> = {
   "run.kindDRDrill": "DR egiaztapena",
   "update.afterBackup": "Eguneratu babeskopia arrakastatsua egin ondoren",
   "update.afterBackupHint": "Irudia deskargatu eta edukiontzi hau berriz sortzen du babeskopia arrakastatsu baten ondoren berehala, horrela beti izango duzu lehenik berrezarpen-puntu freskoa. Babeskopiaren orduan exekutatzen da (babeskopiak bata bestearen atzetik doaz), ez ordu finko batean. Bertsioaren araberako ordutegi finkoko eguneraketetarako, ikusi ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker-ek edukiontzia lehen exekutatzen zen irudia gordetzen du, orain etiketarik gabe, eta Unraid-ek irudi umezurtz gisa zerrendatzen du. Eguneratze ARRAKASTATSU baten hondar arrunta da, ez huts egindako baten seinalea, eta hori bera behar da aurreko irudira azkar itzultzeko. Nahi duzunean garbitu ditzakezu.",
   "run.statusRunning": "Exekutatzen",
   "run.statusSuccess": "Arrakastatsua",
   "run.statusFailed": "Huts egin du",

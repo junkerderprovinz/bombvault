@@ -209,6 +209,8 @@ const ca: Partial<Translations> = {
   "run.kindDRDrill": "Prova DR",
   "update.afterBackup": "Actualitza després d'una còpia correcta",
   "update.afterBackupHint": "Descarrega la imatge i recrea aquest contenidor just després d'una còpia correcta, així sempre tens primer un punt de restauració recent. S'executa a l'hora de la còpia (les còpies van una darrere l'altra), no a una hora fixa. Per a actualitzacions en un horari fix segons versió, consulta ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker manté la imatge en què el contenidor s'executava abans, ara sense etiqueta, i l'Unraid la llista com a imatge òrfena. És el residu normal d'una actualització CORRECTA, no el senyal d'una de fallida, i és just el que necessita una tornada ràpida a la imatge anterior. Esborra-les quan vulguis.",
   "run.statusRunning": "En execució",
   "run.statusSuccess": "Correcte",
   "run.statusFailed": "Fallit",

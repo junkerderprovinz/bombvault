@@ -138,6 +138,8 @@ const pt: Partial<Translations> = {
   "run.kindUpdate": "Atualização",
   "update.afterBackup": "Atualizar após um backup bem-sucedido",
   "update.afterBackupHint": "Baixa a imagem e recria este contêiner logo após um backup bem-sucedido, para você ter sempre antes um ponto de restauração recente. Ele é executado no horário do backup (os backups são executados um após o outro), não em um horário fixo. Para atualizações em um horário fixo, com base na versão, veja o ShipLog.",
+  "update.afterBackupOrphans":
+    "O Docker mantém a imagem em que o contentor corria antes, agora sem etiqueta, e o Unraid lista-a como imagem órfã. É o resíduo normal de uma atualização BEM-SUCEDIDA, não o sinal de uma falhada, e é exatamente o que um regresso rápido à imagem anterior precisa. Apaga-as quando quiseres.",
   "run.statusRunning": "Em curso",
   "run.statusSuccess": "Concluído",
   "run.statusFailed": "Falhado",

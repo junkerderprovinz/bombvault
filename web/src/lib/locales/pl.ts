@@ -137,6 +137,8 @@ const pl: Partial<Translations> = {
   "run.kindUpdate": "Aktualizacja",
   "update.afterBackup": "Aktualizuj po udanej kopii zapasowej",
   "update.afterBackupHint": "Pobiera obraz i odtwarza ten kontener zaraz po udanej kopii zapasowej, więc zawsze masz najpierw świeży punkt przywracania. Działa o czasie kopii zapasowej (kopie zapasowe wykonywane są jedna po drugiej), a nie o stałej porze. Aby aktualizować według stałego harmonogramu, według wersji, zobacz ShipLog.",
+  "update.afterBackupOrphans":
+    "Docker zachowuje obraz, na którym kontener działał wcześniej, teraz bez znacznika, a Unraid pokazuje go jako obraz osierocony. To normalna pozostałość UDANEJ aktualizacji, a nie ślad nieudanej, i właśnie tego wymaga szybki powrót do poprzedniego obrazu. Usuwaj je, kiedy chcesz.",
   "run.statusRunning": "W toku",
   "run.statusSuccess": "Sukces",
   "run.statusFailed": "Niepowodzenie",
