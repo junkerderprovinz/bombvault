@@ -271,7 +271,9 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
   const showIcon = labelMode !== "text";
   // Reactive: the glyph sits centred like in glyph mode, and hovering the row
   // slides its name back in. Nothing reflows, because the rail is a fixed
-  // 224px and the row was always that wide.
+  // 224px and the row was always that wide. That fixed width is also why
+  // reactive is the one hiding mode the narrow rail leaves alone (see the
+  // <aside>'s own comment).
   const reactive = labelMode === "reactive";
   // A rail row with no visible text needs to say what it is on hover, in the
   // app's own bubble — the same ruling that took the native `title` balloon
@@ -288,12 +290,12 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
         ref={tooltip.ref}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
-        // `justify-center` — jdp's ruling on the rail-width question: the rail
-        // KEEPS its full 224px in glyph mode and the glyphs centre in it,
-        // rather than the rail narrowing to fit them. (The narrow-rail
-        // alternative was tried live at 6rem and needs a second, smaller logo
-        // to go with it — a separate job, not a width value.) Without this the
-        // glyphs sat hard left with 178px of empty rail beside each one.
+        // `justify-center` — the glyph centres in whatever column it is given.
+        // That started as the answer to the rail-width question (the rail kept
+        // its 224px and the glyphs centred in it) and it is still what the
+        // narrowed 6rem rail needs, since the row is wider than the glyph in
+        // both. Without it the glyphs sat hard left with 178px of empty rail
+        // beside each one.
         className={({ isActive }) =>
           `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " bv-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
         }
@@ -427,6 +429,13 @@ export function Sidebar({ settings }: SidebarProps) {
   // The wordmark comes back on hover too, so the header behaves like the
   // rows beneath it rather than being the one thing that stays mute.
   const railReactive = railMode === "reactive";
+  // Glyph mode, and only glyph mode, narrows the rail — see the <aside>'s own
+  // comment for why reactive is excluded rather than overlooked.
+  const railNarrow = railMode === "glyph";
+  // One string for all four boxes the mark is drawn in (wrapper, egg mark and
+  // the two theme images): they have to agree, or the shatter grid and the
+  // image sit in differently sized boxes.
+  const markBox = railNarrow ? "h-12 w-12" : "h-16 w-16";
 
   // Subscribed, not read (GlimStone follow-up round, rainbow reversal — see
   // this file's own header comment): registers this component for a
@@ -491,7 +500,20 @@ export function Sidebar({ settings }: SidebarProps) {
     eggState === "wobble" ? "bv-egg-wobble" : eggState === "boom" ? "bv-egg-boom" : "bv-logo-idle";
 
   return (
-    <aside className="flex flex-col w-56 shrink-0 h-full bg-carbon-sidebar">
+    // Glyph mode is the one mode that narrows the rail (#178, manilx: "When
+    // using only buttons in sidebar it should shrink in width"). The other
+    // three keep 224px, and that is not timidity:
+    //   - text and text+glyph obviously need the words' width;
+    //   - REACTIVE cannot narrow, because its words slide back INSIDE the row
+    //     (`--reactive-chars` on a `max-width` transition) and because the
+    //     ACTIVE row keeps its words permanently (`.bv-reactive.glim-active`).
+    //     A 96px rail would clip the one row that must always stay readable,
+    //     and the alternative, expanding the whole rail on hover, either shoves
+    //     the page sideways or turns into the tooltip reactive mode exists to
+    //     avoid.
+    // 6rem holds the 48px mark plus the row's own `px-3.5`, with the glyph
+    // column still centred in it.
+    <aside className={`flex flex-col ${railNarrow ? "w-24" : "w-56"} shrink-0 h-full bg-carbon-sidebar`}>
       {/* Logo + wordmark → Dashboard. Two theme-specific marks auto-switch via the
           `dark:` variant (dark mark on the light surface, light mark on the dark
           surface). A short click navigates to the Dashboard; press-and-hold fires
@@ -508,19 +530,29 @@ export function Sidebar({ settings }: SidebarProps) {
         onContextMenu={(e) => e.preventDefault()}
         className={`bv-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"}${railReactive ? " bv-reactive" : ""} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
-        <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center">
-          <span className={`bv-logo-mark flex h-16 w-16 items-center justify-center ${eggClass}`}>
+        {/* The narrow rail gets the smaller mark, which is the second logo the
+            rail-width question always needed: 64px in a 96px column leaves 16px
+            of air either side and reads as a mark wedged into a gap. 48px sits
+            in it. `--egg-mark` carries the size into CSS, because the shatter
+            tiles paint slices of a background sized to the WHOLE mark while each
+            tile is a sixth of it, so a hard-coded 64px there would cut the wrong
+            slices as soon as the mark changed size. */}
+        <span
+          className={`relative inline-flex ${markBox} shrink-0 items-center justify-center`}
+          style={{ "--egg-mark": railNarrow ? "48px" : "64px" } as CSSProperties}
+        >
+          <span className={`bv-logo-mark flex ${markBox} items-center justify-center ${eggClass}`}>
             <img
               src="/logo.svg"
               alt="BombVault"
               draggable={false}
-              className="bv-logo-img h-16 w-16 object-contain shrink-0 block dark:hidden"
+              className={`bv-logo-img ${markBox} object-contain shrink-0 block dark:hidden`}
             />
             <img
               src="/logo-light.svg"
               alt="BombVault"
               draggable={false}
-              className="bv-logo-img h-16 w-16 object-contain shrink-0 hidden dark:block"
+              className={`bv-logo-img ${markBox} object-contain shrink-0 hidden dark:block`}
             />
             {/* At boom the <img> is hidden (CSS) and the mark shatters into flying
                 tiles, each showing its own slice of the current logo. */}

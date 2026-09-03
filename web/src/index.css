@@ -154,7 +154,10 @@
      numbers, because "the same size as the sidebar" is a promise that has to
      survive someone changing the sidebar.
 
-     200px is the rail's own `w-56` (224px) minus its `p-3` on both sides;
+     200px is the rail's own `w-56` (224px) minus its `p-3` on both sides. The
+     rail narrows to 6rem in glyph mode and this token deliberately does not
+     follow it: what a settings tab matches is the rail's row box, not whichever
+     label mode the rail happens to be in, and the tabs have their own axis.
      43px is what its `py-2.5` plus a 15px line box came to. Both were
      padding-derived and are stated here so a tab can be given the same box
      without copying a magic number, and so the pair moves together. */
@@ -2547,7 +2550,12 @@ body {
 .bv-frag {
   position: absolute;
   background-image: var(--egg-logo);
-  background-size: 64px 64px;
+  /* Each tile is a sixth of the mark and paints its own slice, so the
+     background has to be sized to the WHOLE mark, not to the tile. The size
+     comes from the logo row inline (`--egg-mark`), because the narrow glyph
+     rail draws a 48px mark and a hard-coded 64px here cut slices from an image
+     scaled to a box the tiles were no longer in. */
+  background-size: var(--egg-mark, 64px) var(--egg-mark, 64px);
   background-repeat: no-repeat;
   transform-origin: center;
   will-change: transform, opacity;

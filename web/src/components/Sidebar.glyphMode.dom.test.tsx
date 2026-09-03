@@ -3,11 +3,14 @@
 // Sidebar — what the rail does once the "sidebar" axis is set to glyphs, which
 // is where jdp's two standing decisions for this round land:
 //
-//   1. THE RAIL KEEPS ITS WIDTH and the glyphs centre in it ("Glyphen
-//      zentriert in voller Breite lassen"). The narrow-rail alternative was
-//      measured live and needs its own smaller logo — a separate job. What
-//      this file guards is the half that IS decided: every row that has lost
-//      its text centres, and no row is left hard-left in a 224px column.
+//   1. THE RAIL NARROWS, AND ONLY IN THIS MODE. Glyph mode drops to 6rem with
+//      the smaller mark (#178, manilx: "When using only buttons in sidebar it
+//      should shrink in width"); text and text+glyph need the words' width,
+//      and REACTIVE keeps 224px because its words slide back inside the row
+//      and its active row keeps them permanently, so a narrow rail would clip
+//      the one row that must stay readable. The glyphs still centre in
+//      whatever column they are given, which is what the second half of this
+//      file's first describe guards.
 //
 //   2. A ROW WITH NO VISIBLE TEXT EXPLAINS ITSELF IN THE REAL BUBBLE, never
 //      in a native `title=` balloon (design-language's anti-pattern, the one
@@ -74,6 +77,40 @@ describe("glyph mode centres the rail", () => {
       setLabelMode("sidebar", mode);
       renderSidebar();
       for (const row of railRows()) expect(row.className).not.toContain("justify-center");
+    }
+  });
+});
+
+describe("glyph mode is the only mode that narrows the rail", () => {
+  function rail(): HTMLElement {
+    const el = document.querySelector<HTMLElement>("aside");
+    if (!el) throw new Error("no rail rendered");
+    return el;
+  }
+
+  it("drops the rail to 6rem and the mark to 48px in glyph mode", () => {
+    setLabelMode("sidebar", "glyph");
+    renderSidebar();
+    expect(rail().className).toContain("w-24");
+    expect(rail().className).not.toContain("w-56");
+    // The mark's own box, and the size the shatter tiles read for their
+    // background: both have to move, or the tiles slice an image scaled to a
+    // box they are no longer in.
+    const mark = document.querySelector<HTMLElement>(".bv-logo-mark");
+    expect(mark?.className).toContain("h-12 w-12");
+    expect(mark?.parentElement?.style.getPropertyValue("--egg-mark")).toBe("48px");
+  });
+
+  it("keeps 224px and the 64px mark in the other three modes, reactive included", () => {
+    for (const mode of ["text", "textGlyph", "reactive"] as const) {
+      cleanup();
+      setLabelMode("sidebar", mode);
+      renderSidebar();
+      expect(rail().className, mode).toContain("w-56");
+      expect(rail().className, mode).not.toContain("w-24");
+      const mark = document.querySelector<HTMLElement>(".bv-logo-mark");
+      expect(mark?.className, mode).toContain("h-16 w-16");
+      expect(mark?.parentElement?.style.getPropertyValue("--egg-mark"), mode).toBe("64px");
     }
   });
 });
