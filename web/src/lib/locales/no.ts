@@ -1270,7 +1270,7 @@ const no: Partial<Translations> = {
   "settings.watchdogToggle": "Varsle når sikkerhetskopier er forsinket",
   "settings.coresTitle": "Sikkerhetskopi-CPU",
   "settings.coresLabel": "CPU-tråder (0 = alle)",
-  "settings.coresHint": "Hvor mange CPU-tråder en sikkerhetskopi kan bruke. 0 betyr alle kjerner.",
+  "settings.coresHint": "Hvor mange CPU-tråder en sikkerhetskopi kan bruke. 0 betyr alle kjerner. Tallet begrenser hvor mye som kjører samtidig, ikke hvor mange tråder top eller btop viser: restic har alltid flere enn grensen, og de fleste venter på disken i stedet for å oppta en kjerne.",
   "settings.cacheTitle": "Backupmotorens hurtigbuffer",
   "settings.cacheHint": "Backupmotoren holder en hurtigbuffer med repositorydata under /config slik at inkrementelle og off-site-kjøringer forblir raske. Når den vokser forbi denne grensen, fjernes de minst nylig brukte per-repo-bufrene etter planlagte kjøringer.",
   "settings.cacheLimitLabel": "Grense for bufferstørrelse (MB, 0 = ubegrenset)",

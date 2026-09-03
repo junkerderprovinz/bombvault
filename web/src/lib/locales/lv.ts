@@ -1245,7 +1245,7 @@ const lv: Partial<Translations> = {
   "settings.watchdogToggle": "Paziņot, kad rezerves kopijas ir nokavētas",
   "settings.coresTitle": "Dublējuma CPU",
   "settings.coresLabel": "CPU pavedieni (0 = visi)",
-  "settings.coresHint": "Cik CPU pavedienus drīkst izmantot dublēšana. 0 nozīmē visus kodolus.",
+  "settings.coresHint": "Cik CPU pavedienus drīkst izmantot dublēšana. 0 nozīmē visus kodolus. Skaitlis ierobežo, cik daudz darbojas vienlaikus, nevis cik pavedienus rāda top vai btop: restic vienmēr tur vairāk par ierobežojumu, un lielākā daļa gaida disku, nevis aizņem kodolu.",
   "settings.cacheTitle": "Rezerves kopēšanas dzinēja kešatmiņa",
   "settings.cacheHint": "Rezerves kopēšanas dzinējs uztur repozitorija datu kešatmiņu zem /config, lai pieaugoši un attālināti izpildījumi paliktu ātri. Kad tā pārsniedz šo ierobežojumu, pēc ieplānotajiem izpildījumiem tiek noņemtas mazāk izmantotās kešatmiņas katram repozitorijam.",
   "settings.cacheLimitLabel": "Kešatmiņas izmēra ierobežojums (MB, 0 = neierobežots)",

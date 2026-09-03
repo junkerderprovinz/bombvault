@@ -1273,7 +1273,7 @@ const hu: Partial<Translations> = {
   "settings.watchdogToggle": "Értesítés, ha a mentések késnek",
   "settings.coresTitle": "Mentés CPU",
   "settings.coresLabel": "CPU szálak (0 = mind)",
-  "settings.coresHint": "Hány CPU szálat használhat egy mentés. A 0 az összes magot jelenti.",
+  "settings.coresHint": "Hány CPU szálat használhat egy mentés. A 0 az összes magot jelenti. A szám azt korlátozza, mennyi fut egyszerre, nem azt, hány szálat mutat a top vagy a btop: a restic mindig többet tart a korlátnál, és a legtöbb a lemezre vár ahelyett, hogy magot foglalna.",
   "settings.cacheTitle": "A mentőmotor gyorsítótára",
   "settings.cacheHint": "A mentőmotor a /config alatt gyorsítótárat tart a tároló adatairól, hogy a növekményes és a telephelyen kívüli futások gyorsak maradjanak. Ha ezt a korlátot túllépi, az ütemezett futások után a legrégebben használt tárolónkénti gyorsítótárak törlődnek.",
   "settings.cacheLimitLabel": "Gyorsítótár-méretkorlát (MB, 0 = korlátlan)",

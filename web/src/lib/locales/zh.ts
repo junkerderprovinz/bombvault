@@ -1262,7 +1262,7 @@ const zh: Partial<Translations> = {
   "settings.watchdogToggle": "备份逾期时通知",
   "settings.coresTitle": "备份 CPU",
   "settings.coresLabel": "CPU 线程数 (0 = 全部)",
-  "settings.coresHint": "备份可使用的 CPU 线程数。0 表示使用所有核心。",
+  "settings.coresHint": "备份可使用的 CPU 线程数。0 表示使用所有核心。这个数字限制的是同时运行的量，不是 top 或 btop 里列出的线程数：restic 始终保有多于上限的线程，其中大多数在等待磁盘，而不是占用核心。",
   "settings.cacheTitle": "备份引擎缓存",
   "settings.cacheHint": "备份引擎在 /config 下保留仓库数据缓存，使增量和异地运行保持快速。当缓存超过此限制时，计划任务运行后会删除最久未使用的各仓库缓存。",
   "settings.cacheLimitLabel": "缓存大小限制（MB，0 = 不限）",

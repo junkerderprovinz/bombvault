@@ -1270,7 +1270,7 @@ const pt: Partial<Translations> = {
   "settings.watchdogToggle": "Notificar quando houver backups atrasados",
   "settings.coresTitle": "CPU da cópia",
   "settings.coresLabel": "Threads de CPU (0 = todos)",
-  "settings.coresHint": "Quantos threads de CPU uma cópia pode usar. 0 significa todos os núcleos.",
+  "settings.coresHint": "Quantos threads de CPU uma cópia pode usar. 0 significa todos os núcleos. O número limita quanto corre ao mesmo tempo, não quantos fios o top ou o btop mostram: o restic mantém sempre mais do que o limite, a maioria à espera do disco em vez de ocupar um núcleo.",
   "settings.cacheTitle": "Cache do motor de backup",
   "settings.cacheHint": "O motor de backup mantém uma cache de dados do repositório em /config para que as execuções incrementais e externas continuem rápidas. Quando ultrapassa este limite, as caches por repositório menos usadas recentemente são removidas após as execuções agendadas.",
   "settings.cacheLimitLabel": "Limite de tamanho da cache (MB, 0 = ilimitado)",

@@ -1270,7 +1270,7 @@ const sv: Partial<Translations> = {
   "settings.watchdogToggle": "Avisera när säkerhetskopior är försenade",
   "settings.coresTitle": "Säkerhetskopierings-CPU",
   "settings.coresLabel": "CPU-trådar (0 = alla)",
-  "settings.coresHint": "Hur många CPU-trådar en säkerhetskopiering får använda. 0 betyder alla kärnor.",
+  "settings.coresHint": "Hur många CPU-trådar en säkerhetskopiering får använda. 0 betyder alla kärnor. Talet begränsar hur mycket som körs samtidigt, inte hur många trådar top eller btop listar: restic har alltid fler än gränsen, och de flesta väntar på disken i stället för att uppta en kärna.",
   "settings.cacheTitle": "Backupmotorns cache",
   "settings.cacheHint": "Backupmotorn håller en cache med repositorydata under /config så att inkrementella och off-site-körningar förblir snabba. När den växer över denna gräns tas de minst nyligen använda per-repo-cacharna bort efter schemalagda körningar.",
   "settings.cacheLimitLabel": "Gräns för cachestorlek (MB, 0 = obegränsat)",

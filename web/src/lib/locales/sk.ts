@@ -1245,7 +1245,7 @@ const sk: Partial<Translations> = {
   "settings.watchdogToggle": "Upozorniť, keď sú zálohy po termíne",
   "settings.coresTitle": "CPU pre zálohy",
   "settings.coresLabel": "Vlákna CPU (0 = všetky)",
-  "settings.coresHint": "Koľko vlákien CPU smie záloha použiť. 0 znamená všetky jadrá.",
+  "settings.coresHint": "Koľko vlákien CPU smie záloha použiť. 0 znamená všetky jadrá. Číslo obmedzuje, koľko beží naraz, nie koľko vlákien ukáže top alebo btop: restic ich vždy drží viac ako limit a väčšina čaká na disk, namiesto toho aby zaberala jadro.",
   "settings.cacheTitle": "Vyrovnávacia pamäť zálohovacej jednotky",
   "settings.cacheHint": "Zálohovacia jednotka udržiava vyrovnávaciu pamäť dát repozitára pod /config, aby prírastkové a externé behy zostali rýchle. Keď prekročí tento limit, po naplánovaných behoch sa odstránia najmenej používané vyrovnávacie pamäte pre jednotlivé repozitáre.",
   "settings.cacheLimitLabel": "Limit veľkosti vyrovnávacej pamäte (MB, 0 = bez obmedzenia)",

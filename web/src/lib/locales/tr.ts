@@ -1270,7 +1270,7 @@ const tr: Partial<Translations> = {
   "settings.watchdogToggle": "Yedeklemeler geciktiğinde bildir",
   "settings.coresTitle": "Yedekleme CPU",
   "settings.coresLabel": "CPU iş parçacığı (0 = tümü)",
-  "settings.coresHint": "Bir yedeklemenin kullanabileceği CPU iş parçacığı sayısı. 0 tüm çekirdekler demektir.",
+  "settings.coresHint": "Bir yedeklemenin kullanabileceği CPU iş parçacığı sayısı. 0 tüm çekirdekler demektir. Bu sayı aynı anda ne kadarının çalıştığını sınırlar, top veya btop'un listelediği iş parçacığı sayısını değil: restic her zaman sınırdan fazlasını tutar ve çoğu çekirdek işgal etmek yerine diski bekler.",
   "settings.cacheTitle": "Yedekleme motoru önbelleği",
   "settings.cacheHint": "Yedekleme motoru, artımlı ve site dışı çalıştırmalar hızlı kalsın diye /config altında depo verilerinin bir önbelleğini tutar. Bu sınırı aşınca, zamanlanmış çalıştırmalardan sonra en uzun süredir kullanılmayan depo önbellekleri kaldırılır.",
   "settings.cacheLimitLabel": "Önbellek boyutu sınırı (MB, 0 = sınırsız)",

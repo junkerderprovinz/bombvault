@@ -1245,7 +1245,7 @@ const ms: Partial<Translations> = {
   "settings.watchdogToggle": "Beritahu apabila sandaran tertunggak",
   "settings.coresTitle": "CPU sandaran",
   "settings.coresLabel": "Benang CPU (0 = semua)",
-  "settings.coresHint": "Berapa banyak benang CPU boleh digunakan sandaran. 0 bermaksud semua teras.",
+  "settings.coresHint": "Berapa banyak benang CPU boleh digunakan sandaran. 0 bermaksud semua teras. Nombor ini mengehadkan berapa banyak yang berjalan serentak, bukan berapa banyak bebenang yang disenaraikan top atau btop: restic sentiasa menyimpan lebih daripada had itu, dan kebanyakannya menunggu cakera dan bukannya menggunakan teras.",
   "settings.cacheTitle": "Cache enjin sandaran",
   "settings.cacheHint": "Enjin sandaran mengekalkan cache data repositori di bawah /config supaya larian tokokan dan luar tapak kekal pantas. Apabila ia melebihi had ini, cache setiap repositori yang paling kurang digunakan dialih keluar selepas larian berjadual.",
   "settings.cacheLimitLabel": "Had saiz cache (MB, 0 = tanpa had)",

@@ -1245,7 +1245,7 @@ const et: Partial<Translations> = {
   "settings.watchdogToggle": "Teavita hilinenud varundustest",
   "settings.coresTitle": "Varunduse CPU",
   "settings.coresLabel": "CPU lõimed (0 = kõik)",
-  "settings.coresHint": "Mitu CPU lõime võib varundus kasutada. 0 tähendab kõiki tuumasid.",
+  "settings.coresHint": "Mitu CPU lõime võib varundus kasutada. 0 tähendab kõiki tuumasid. Arv piirab seda, kui palju korraga töötab, mitte seda, mitu lõime top või btop näitab: restic hoiab neid alati piirist rohkem ja enamik ootab ketast, mitte ei hõiva tuuma.",
   "settings.cacheTitle": "Varundusmootori vahemälu",
   "settings.cacheHint": "Varundusmootor hoiab kausta /config all hoidla andmete vahemälu, et järkjärgulised ja välised käivitused püsiksid kiired. Kui see ületab selle piiri, eemaldatakse vähim kasutatud hoidla vahemälud pärast plaanitud käivitusi.",
   "settings.cacheLimitLabel": "Vahemälu suuruse piirang (MB, 0 = piiramatu)",

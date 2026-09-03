@@ -1268,7 +1268,7 @@ const cs: Partial<Translations> = {
   "settings.watchdogToggle": "Upozornit, když jsou zálohy po termínu",
   "settings.coresTitle": "CPU pro zálohy",
   "settings.coresLabel": "Vlákna CPU (0 = vše)",
-  "settings.coresHint": "Kolik vláken CPU smí záloha použít. 0 znamená všechna jádra.",
+  "settings.coresHint": "Kolik vláken CPU smí záloha použít. 0 znamená všechna jádra. Číslo omezuje, kolik běží najednou, ne kolik vláken ukáže top nebo btop: restic jich vždy drží víc než limit a většina čeká na disk, místo aby zabírala jádro.",
   "settings.cacheTitle": "Mezipaměť zálohovacího enginu",
   "settings.cacheHint": "Zálohovací engine udržuje v /config mezipaměť dat repozitáře, aby přírůstkové běhy a běhy mimo lokalitu zůstaly rychlé. Když překročí tento limit, po plánovaných bězích se odstraní nejdéle nepoužité mezipaměti jednotlivých repozitářů.",
   "settings.cacheLimitLabel": "Limit velikosti mezipaměti (MB, 0 = bez limitu)",

@@ -1267,7 +1267,7 @@ const nl: Partial<Translations> = {
   "settings.watchdogToggle": "Melden wanneer back-ups achterstallig zijn",
   "settings.coresTitle": "Back-up-CPU",
   "settings.coresLabel": "CPU-threads (0 = alle)",
-  "settings.coresHint": "Hoeveel CPU-threads een back-up mag gebruiken. 0 betekent alle cores.",
+  "settings.coresHint": "Hoeveel CPU-threads een back-up mag gebruiken. 0 betekent alle cores. Het getal begrenst hoeveel er tegelijk draait, niet hoeveel threads top of btop toont: restic houdt er altijd meer dan de limiet, de meeste wachtend op de schijf in plaats van een core bezet.",
   "settings.cacheTitle": "Cache van de back-upengine",
   "settings.cacheHint": "De back-upengine houdt onder /config een cache van repositorygegevens bij zodat incrementele en off-site runs snel blijven. Groeit die boven deze limiet, dan worden na geplande runs de minst recent gebruikte caches per repository verwijderd.",
   "settings.cacheLimitLabel": "Cachegroottelimiet (MB, 0 = onbeperkt)",

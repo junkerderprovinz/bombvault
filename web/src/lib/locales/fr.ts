@@ -1270,7 +1270,7 @@ const fr: Partial<Translations> = {
   "settings.watchdogToggle": "Notifier quand des sauvegardes sont en retard",
   "settings.coresTitle": "Processeur de sauvegarde",
   "settings.coresLabel": "Threads CPU (0 = tous)",
-  "settings.coresHint": "Combien de threads CPU une sauvegarde peut utiliser. 0 signifie tous les cœurs.",
+  "settings.coresHint": "Combien de threads CPU une sauvegarde peut utiliser. 0 signifie tous les cœurs. Le nombre limite ce qui tourne en même temps, pas le nombre de fils que top ou btop affiche : restic en garde toujours plus que la limite, la plupart en attente du disque plutôt qu'occupant un cœur.",
   "settings.cacheTitle": "Cache du moteur de sauvegarde",
   "settings.cacheHint": "Le moteur de sauvegarde conserve un cache des données du dépôt sous /config afin que les exécutions incrémentales et hors site restent rapides. Quand il dépasse cette limite, les caches par dépôt les moins récemment utilisés sont supprimés après les exécutions planifiées.",
   "settings.cacheLimitLabel": "Limite de taille du cache (Mo, 0 = illimité)",

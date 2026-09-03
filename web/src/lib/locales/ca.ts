@@ -1245,7 +1245,7 @@ const ca: Partial<Translations> = {
   "settings.watchdogToggle": "Notifica quan les còpies estiguin vençudes",
   "settings.coresTitle": "CPU de còpia",
   "settings.coresLabel": "Fils de CPU (0 = tots)",
-  "settings.coresHint": "Quants fils de CPU pot fer servir una còpia. 0 vol dir tots els nuclis.",
+  "settings.coresHint": "Quants fils de CPU pot fer servir una còpia. 0 vol dir tots els nuclis. El número limita quant s'executa alhora, no quants fils mostra el top o el btop: el restic sempre en manté més que el límit, i la majoria esperen el disc en comptes d'ocupar un nucli.",
   "settings.cacheTitle": "Caché del motor de còpies",
   "settings.cacheHint": "El motor de còpies manté una caché de dades de repositori sota /config perquè les execucions incrementals i externes es mantinguin ràpides. Quan supera aquest límit, les cachés de repositori menys usades recentment s'eliminen després de les execucions programades.",
   "settings.cacheLimitLabel": "Límit de mida de la caché (MB, 0 = sense límit)",

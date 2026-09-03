@@ -1270,7 +1270,7 @@ const da: Partial<Translations> = {
   "settings.watchdogToggle": "Giv besked, når sikkerhedskopier er forsinkede",
   "settings.coresTitle": "Backup-CPU",
   "settings.coresLabel": "CPU-tråde (0 = alle)",
-  "settings.coresHint": "Hvor mange CPU-tråde en sikkerhedskopi må bruge. 0 betyder alle kerner.",
+  "settings.coresHint": "Hvor mange CPU-tråde en sikkerhedskopi må bruge. 0 betyder alle kerner. Tallet begrænser, hvor meget der kører på én gang, ikke hvor mange tråde top eller btop viser: restic har altid flere end grænsen, og de fleste venter på disken i stedet for at optage en kerne.",
   "settings.cacheTitle": "Backupmotorens cache",
   "settings.cacheHint": "Backupmotoren holder en cache med repositorydata under /config, så inkrementelle og off-site-kørsler forbliver hurtige. Når den vokser ud over denne grænse, fjernes de mindst nyligt brugte caches pr. repository efter planlagte kørsler.",
   "settings.cacheLimitLabel": "Grænse for cachestørrelse (MB, 0 = ubegrænset)",

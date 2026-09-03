@@ -1245,7 +1245,7 @@ const lt: Partial<Translations> = {
   "settings.watchdogToggle": "Pranešti, kai atsarginės kopijos vėluoja",
   "settings.coresTitle": "Atsarginių kopijų CPU",
   "settings.coresLabel": "CPU gijos (0 = visos)",
-  "settings.coresHint": "Kiek CPU gijų gali naudoti atsarginė kopija. 0 reiškia visus branduolius.",
+  "settings.coresHint": "Kiek CPU gijų gali naudoti atsarginė kopija. 0 reiškia visus branduolius. Skaičius riboja, kiek dirbama vienu metu, o ne kiek gijų rodo top ar btop: restic visada laiko jų daugiau nei riba, ir dauguma laukia disko, o ne užima branduolį.",
   "settings.cacheTitle": "Atsarginio kopijavimo variklio talpykla",
   "settings.cacheHint": "Atsarginio kopijavimo variklis palaiko saugyklos duomenų talpyklą po /config, kad prieauginiai ir nuotoliniai vykdymai išliktų greiti. Kai ji viršija šią ribą, po suplanuotų vykdymų pašalinamos mažiausiai naudotos kiekvienos saugyklos talpyklos.",
   "settings.cacheLimitLabel": "Talpyklos dydžio riba (MB, 0 = neribota)",

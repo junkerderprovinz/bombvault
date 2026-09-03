@@ -1245,7 +1245,7 @@ const is: Partial<Translations> = {
   "settings.watchdogToggle": "Tilkynna þegar afrit eru á gjalddaga",
   "settings.coresTitle": "Öryggisafrit CPU",
   "settings.coresLabel": "CPU þræðir (0 = allir)",
-  "settings.coresHint": "Hversu marga CPU þræði afritun má nota. 0 þýðir alla kjarna.",
+  "settings.coresHint": "Hversu marga CPU þræði afritun má nota. 0 þýðir alla kjarna. Talan takmarkar hversu mikið keyrir í einu, ekki hversu marga þræði top eða btop sýnir: restic heldur alltaf fleirum en markinu, og flestir bíða eftir disknum í stað þess að taka kjarna.",
   "settings.cacheTitle": "Skyndiminni afritunarvélarinnar",
   "settings.cacheHint": "Afritunarvélin heldur skyndiminni af gögnum geymslusafns undir /config svo að stigvaxandi og fjarlægar keyrslur haldist hraðar. Þegar það fer yfir þessa mörk eru minnst notuðu skyndiminnin fyrir hvert geymslusafn fjarlægð eftir áætlaðar keyrslur.",
   "settings.cacheLimitLabel": "Stærðarmörk skyndiminnis (MB, 0 = ótakmarkað)",

@@ -1262,7 +1262,7 @@ const vi: Partial<Translations> = {
   "settings.watchdogToggle": "Thông báo khi sao lưu quá hạn",
   "settings.coresTitle": "CPU sao lưu",
   "settings.coresLabel": "Luồng CPU (0 = tất cả)",
-  "settings.coresHint": "Bản sao lưu được dùng bao nhiêu luồng CPU. 0 nghĩa là mọi nhân.",
+  "settings.coresHint": "Bản sao lưu được dùng bao nhiêu luồng CPU. 0 nghĩa là mọi nhân. Con số này giới hạn lượng công việc chạy cùng lúc, không phải số luồng mà top hay btop liệt kê: restic luôn giữ nhiều hơn mức giới hạn, và phần lớn đang chờ đĩa chứ không chiếm lõi.",
   "settings.cacheTitle": "Bộ nhớ đệm của công cụ sao lưu",
   "settings.cacheHint": "Công cụ sao lưu giữ bộ nhớ đệm dữ liệu kho dưới /config để các lần chạy tăng dần và off-site luôn nhanh. Khi vượt quá giới hạn này, các bộ nhớ đệm theo kho ít dùng nhất sẽ bị xóa sau các lần chạy theo lịch.",
   "settings.cacheLimitLabel": "Giới hạn kích thước bộ nhớ đệm (MB, 0 = không giới hạn)",

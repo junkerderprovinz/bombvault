@@ -1270,7 +1270,7 @@ const fi: Partial<Translations> = {
   "settings.watchdogToggle": "Ilmoita, kun varmuuskopiot ovat myöhässä",
   "settings.coresTitle": "Varmuuskopioinnin CPU",
   "settings.coresLabel": "CPU-säikeet (0 = kaikki)",
-  "settings.coresHint": "Kuinka monta CPU-säiettä varmuuskopiointi saa käyttää. 0 tarkoittaa kaikkia ytimiä.",
+  "settings.coresHint": "Kuinka monta CPU-säiettä varmuuskopiointi saa käyttää. 0 tarkoittaa kaikkia ytimiä. Luku rajoittaa sitä, kuinka paljon ajetaan yhtä aikaa, ei sitä montako säiettä top tai btop listaa: resticillä on aina enemmän kuin raja, ja useimmat odottavat levyä sen sijaan että veisivät ytimen.",
   "settings.cacheTitle": "Varmuuskopiointimoottorin välimuisti",
   "settings.cacheHint": "Varmuuskopiointimoottori pitää /config-hakemistossa välimuistia repositorion tiedoista, jotta inkrementaaliset ja etäajot pysyvät nopeina. Kun se kasvaa tämän rajan yli, vähiten käytetyt repositoriokohtaiset välimuistit poistetaan ajastettujen ajojen jälkeen.",
   "settings.cacheLimitLabel": "Välimuistin kokoraja (Mt, 0 = rajaton)",

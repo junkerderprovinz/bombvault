@@ -1265,7 +1265,7 @@ const pl: Partial<Translations> = {
   "settings.watchdogToggle": "Powiadamiaj o zaległych kopiach zapasowych",
   "settings.coresTitle": "CPU kopii zapasowej",
   "settings.coresLabel": "Wątki CPU (0 = wszystkie)",
-  "settings.coresHint": "Ile wątków CPU może użyć kopia zapasowa. 0 oznacza wszystkie rdzenie.",
+  "settings.coresHint": "Ile wątków CPU może użyć kopia zapasowa. 0 oznacza wszystkie rdzenie. Liczba ogranicza to, ile pracuje jednocześnie, a nie ile wątków pokazuje top czy btop: restic zawsze trzyma ich więcej niż limit, a większość czeka na dysk zamiast zajmować rdzeń.",
   "settings.cacheTitle": "Pamięć podręczna silnika kopii zapasowych",
   "settings.cacheHint": "Silnik kopii zapasowych utrzymuje w /config pamięć podręczną danych repozytorium, aby przyrostowe i zdalne uruchomienia pozostały szybkie. Gdy przekroczy ten limit, po zaplanowanych uruchomieniach usuwane są najdawniej używane pamięci podręczne poszczególnych repozytoriów.",
   "settings.cacheLimitLabel": "Limit rozmiaru pamięci podręcznej (MB, 0 = bez limitu)",

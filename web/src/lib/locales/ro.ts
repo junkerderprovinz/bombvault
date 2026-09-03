@@ -1273,7 +1273,7 @@ const ro: Partial<Translations> = {
   "settings.watchdogToggle": "Notifică atunci când backupurile sunt întârziate",
   "settings.coresTitle": "CPU pentru copii",
   "settings.coresLabel": "Fire CPU (0 = toate)",
-  "settings.coresHint": "Câte fire CPU poate folosi o copie de siguranță. 0 înseamnă toate nucleele.",
+  "settings.coresHint": "Câte fire CPU poate folosi o copie de siguranță. 0 înseamnă toate nucleele. Numărul limitează cât rulează în același timp, nu câte fire afișează top sau btop: restic ține mereu mai multe decât limita, iar cele mai multe așteaptă discul în loc să ocupe un nucleu.",
   "settings.cacheTitle": "Cache-ul motorului de backup",
   "settings.cacheHint": "Motorul de backup păstrează sub /config un cache cu date din depozit, ca rulările incrementale și externe să rămână rapide. Când depășește această limită, cache-urile per-depozit cel mai demult folosite sunt eliminate după rulările programate.",
   "settings.cacheLimitLabel": "Limita dimensiunii cache-ului (MB, 0 = nelimitat)",

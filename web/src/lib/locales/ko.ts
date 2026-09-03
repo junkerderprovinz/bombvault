@@ -1262,7 +1262,7 @@ const ko: Partial<Translations> = {
   "settings.watchdogToggle": "백업이 지연되면 알림",
   "settings.coresTitle": "백업 CPU",
   "settings.coresLabel": "CPU 스레드 (0 = 전체)",
-  "settings.coresHint": "백업이 사용할 수 있는 CPU 스레드 수. 0은 모든 코어를 뜻합니다.",
+  "settings.coresHint": "백업이 사용할 수 있는 CPU 스레드 수. 0은 모든 코어를 뜻합니다. 이 숫자는 동시에 실행되는 양의 상한이며, top이나 btop에 표시되는 스레드 수의 상한이 아닙니다. restic은 항상 상한보다 많은 스레드를 유지하지만 대부분은 코어를 쓰지 않고 디스크를 기다립니다.",
   "settings.cacheTitle": "백업 엔진 캐시",
   "settings.cacheHint": "백업 엔진은 증분 및 오프사이트 실행이 빠르게 유지되도록 /config 아래에 저장소 데이터 캐시를 보관합니다. 이 제한을 초과하면 예약 실행 후 가장 오래 사용되지 않은 저장소별 캐시가 제거됩니다.",
   "settings.cacheLimitLabel": "캐시 크기 제한 (MB, 0 = 무제한)",
