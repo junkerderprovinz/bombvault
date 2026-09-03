@@ -317,6 +317,27 @@ type Service struct {
 	budgetMu          sync.Mutex
 	offsiteOverBudget map[string]bool
 
+	// statsMu guards statsRunning, the in-flight set for repo-size sampling, keyed
+	// "<domain>/<source>". The 20-hour throttle above every sampling path reads the
+	// newest repo_stats row, and that row is only written when a sample FINISHES
+	// (CollectStats' AddRepoStat, after `snapshots` + two `stats` runs). So while
+	// one sample is walking a repo, the throttle still sees the old timestamp and
+	// waves every other caller through. On a container round that is one detached
+	// three-command probe per container, all against the repo the round is writing
+	// to, all with --no-lock so nothing ever blocks and nothing appears in the log:
+	// reported as a box pinned at 90-100% CPU for the whole round, with `ps` showing
+	// nine concurrent restic processes (issue #189).
+	//
+	// Deliberately an in-flight SET and not a singleflight: no caller anywhere reads
+	// a sample's return value (they read the row later), so there are no followers
+	// to hand a result to, and therefore none of the shared-context trap that
+	// excludes_suggest.go and encryption_detect.go each carry a paragraph about. A
+	// loser simply skips. A finished sample writes its row and the ordinary throttle
+	// takes over; a FAILED one writes nothing and releases, so the next backup
+	// retries immediately, exactly as it does today.
+	statsMu      sync.Mutex
+	statsRunning map[string]bool
+
 	// tamperMu serialises RunTamperTest per domain so the read-prev → record →
 	// notify sequence is atomic: two concurrent tamper tests can't both observe the
 	// old verdict and double-fire (or interleave and drop) the protection-loss
@@ -2310,6 +2331,59 @@ func (s *Service) CollectStats(ctx context.Context, domain, source string) error
 	})
 }
 
+// claimStatsRun takes the in-flight slot for domain+source, reporting false when
+// someone else already holds it. See statsMu's own comment for why this is a set
+// rather than a singleflight.
+func (s *Service) claimStatsRun(key string) bool {
+	s.statsMu.Lock()
+	defer s.statsMu.Unlock()
+	if s.statsRunning[key] {
+		return false
+	}
+	if s.statsRunning == nil {
+		s.statsRunning = map[string]bool{}
+	}
+	s.statsRunning[key] = true
+	return true
+}
+
+// releaseStatsRun frees the slot. Deferred by every claimant, so a panic in a
+// sampling goroutine cannot wedge sampling for the life of the process.
+func (s *Service) releaseStatsRun(key string) {
+	s.statsMu.Lock()
+	delete(s.statsRunning, key)
+	s.statsMu.Unlock()
+}
+
+// collectStatsGuarded runs one sample unless one is already running for this
+// domain+source. The throttle is re-read AFTER the slot is taken, which is the
+// half that is easy to leave out: a caller that missed the throttle, then waited
+// on the mutex while the holder finished and wrote its row, would otherwise go on
+// to re-measure a repo that had just been measured. Same lesson the exclusion
+// assistant's singleflight learned the hard way.
+func (s *Service) collectStatsGuarded(ctx context.Context, domain, source string) error {
+	key := domain + "/" + source
+	if !s.claimStatsRun(key) {
+		return nil
+	}
+	defer s.releaseStatsRun(key)
+	if s.statsSampledRecently(domain, source) {
+		return nil
+	}
+	return s.CollectStats(ctx, domain, source)
+}
+
+// statsSampledRecently reports whether domain+source already has a sample younger
+// than repoStatsMinInterval. A read error is NOT "recently sampled": sampling is
+// best-effort and a broken read should not silently stop it forever.
+func (s *Service) statsSampledRecently(domain, source string) bool {
+	latest, found, err := s.store.LatestRepoStat(domain, source)
+	if err != nil || !found {
+		return false
+	}
+	return time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval
+}
+
 // RepoStats returns the recorded repo-size samples for a domain + source
 // (ascending by time), a thin passthrough to the store.
 func (s *Service) RepoStats(domain, source string, limit int) ([]store.RepoStat, error) {
@@ -2322,10 +2396,7 @@ func (s *Service) RepoStats(domain, source string, limit int) ([]store.RepoStat,
 // goroutine (request values kept, cancellation dropped, with its own timeout)
 // and any error is only logged. Call this on each domain's success path.
 func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
-	if latest, found, err := s.store.LatestRepoStat(domain, "local"); err != nil {
-		log.Printf("api: stats: %s: could not read latest sample (skipping): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
-		return
-	} else if found && time.Since(time.Unix(latest.At, 0)) < repoStatsMinInterval {
+	if s.statsSampledRecently(domain, "local") {
 		return // sampled recently enough
 	}
 	// Detach from the request (keep its values) so the sampling survives the
@@ -2334,10 +2405,38 @@ func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
 	go func() {
 		cctx, cancel := context.WithTimeout(bg, 5*time.Minute)
 		defer cancel()
-		if err := s.CollectStats(cctx, domain, "local"); err != nil {
+		// Guarded, not bare: the check above reads a row this work only writes at
+		// the end, so it is the throttle that cannot see a sample in progress.
+		if err := s.collectStatsGuarded(cctx, domain, "local"); err != nil {
 			log.Printf("api: stats: %s: collect failed (backup is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
+}
+
+// collectStatsAfterItem is the per-item success hook: it samples after a single
+// backup, and does nothing when that backup is one item of a round.
+//
+// A round measures ONCE, at the end, next to the batched prune and the batched
+// off-site copy — the same "part of a round" flag those two already key on, so
+// there is one notion of it rather than a third. Measuring per item was both a
+// pile of concurrent restic processes (see statsMu) and the wrong measurement:
+// the size of a repo halfway through being written to, recorded N times a night
+// into a series the Storage card plots as one point per day.
+func (s *Service) collectStatsAfterItem(ctx context.Context, domain string) {
+	if bulkReplicateSuppressed(ctx) {
+		return
+	}
+	s.maybeCollectStats(ctx, domain)
+}
+
+// MaybeCollectStatsAfterBulk is the round's own sampling point, for the scheduler
+// to call once a domain's loop is done. Exported for the same reason
+// PruneAfterBulk and ReplicateOffsiteAfterBulk are: the after-bulk hooks are wired
+// from main. Still throttled and still guarded, so a domain whose items run on
+// their own per-item cadences cannot turn this into the per-item sampling it
+// replaces.
+func (s *Service) MaybeCollectStatsAfterBulk(ctx context.Context, domain string) {
+	s.maybeCollectStats(ctx, domain)
 }
 
 // CollectStatsAsync samples a domain+source repo size in the background (detached,
@@ -2354,7 +2453,12 @@ func (s *Service) CollectStatsAsync(domain, source string) {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
-		if err := s.CollectStats(ctx, domain, source); err != nil {
+		// Guarded: this is the one sampling path a browser can drive without
+		// bound. The Storage card asks for four domains on every mount, and the
+		// throttle above cannot fire at all while a repo has no sample yet
+		// (found=false), so every tab and every remount used to start another
+		// fan-out.
+		if err := s.collectStatsGuarded(ctx, domain, source); err != nil {
 			log.Printf("api: stats: %s/%s: async collect failed: %v", domain, source, err) //nolint:gosec // G706: domain/source are fixed-whitelist values
 		}
 	}()
@@ -2754,13 +2858,29 @@ func (s *Service) checkPrimaryRemoteBudget(ctx context.Context, domain, repo str
 	if !ok || !t.Enabled || t.GrowthBudgetGB <= 0 {
 		return
 	}
-	// Sample synchronously (mirroring copyToOffsiteTarget's budget-set path) so
-	// the very first remote-primary backup after the safety settings are saved
-	// is judged against a fresh size, not a stale/missing sample.
-	if serr := s.CollectStats(ctx, domain, "local"); serr != nil {
-		log.Printf("api: primary-remote %s: budget size sample failed (backup is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
+	// Measure synchronously, so the very first remote-primary backup after the
+	// safety settings are saved is judged against a fresh size rather than a
+	// stale or missing sample.
+	//
+	// ONE restic run, not the three a full sample costs. This used to call
+	// CollectStats, which runs `snapshots`, `stats --mode raw-data` AND
+	// `stats --mode restore-size`, then writes a repo_stats row — for a check that
+	// reads exactly one number, RawSize. Two thirds of that was computed and
+	// thrown away on every container of every round, against a REMOTE repo, each
+	// run re-opening it and reloading its index, and `restore-size` (which walks
+	// every snapshot tree) was the expensive one. The discarded row mattered too:
+	// N rows a night landed in the series the Storage card plots as one point per
+	// day, and they closed the 20-hour throttle on the real sample (issue #189).
+	settingsMode := s.ModeFor(settings)
+	raw, serr := s.engine.Stats(ctx, repo, "raw-data", settingsMode)
+	if serr != nil {
+		log.Printf("api: primary-remote %s: budget size measurement failed (backup is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
+		return
 	}
-	s.checkGrowthBudget(ctx, domain, "local", "primary:"+domain, t.GrowthBudgetGB, "primary")
+	// Compared straight through rather than round-tripped via the store, which is
+	// also what makes the first-backup case work: there is no "no sample yet" to
+	// fall through any more.
+	s.applyGrowthBudget(ctx, domain, "primary:"+domain, t.GrowthBudgetGB, "primary", raw.TotalSize)
 }
 
 // checkGrowthBudget is the shared compare-latch-notify core behind
@@ -2787,8 +2907,20 @@ func (s *Service) checkGrowthBudget(ctx context.Context, domain, source, latchKe
 	if !found {
 		return // no sample yet — nothing to compare
 	}
+	s.applyGrowthBudget(ctx, domain, latchKey, budgetGB, kind, stat.RawSize)
+}
+
+// applyGrowthBudget is checkGrowthBudget's compare-latch-notify half, split out
+// so a caller that has just MEASURED a size can use it without writing that size
+// to repo_stats and reading it back (checkPrimaryRemoteBudget's path). The split
+// is deliberate: the row is a user-visible series, not a scratch pad, and the
+// budget check is the one caller that needs a number now rather than a sample.
+func (s *Service) applyGrowthBudget(ctx context.Context, domain, latchKey string, budgetGB int, kind string, rawSize int64) {
+	if budgetGB <= 0 {
+		return // budget disabled
+	}
 	budgetBytes := int64(budgetGB) * 1024 * 1024 * 1024
-	over := stat.RawSize > budgetBytes
+	over := rawSize > budgetBytes
 
 	// Latch the state under the mutex and detect the false→true crossing so the
 	// alarm fires exactly once per breach (not on every backup/replication while
@@ -2802,7 +2934,7 @@ func (s *Service) checkGrowthBudget(ctx context.Context, domain, source, latchKe
 	s.budgetMu.Unlock()
 
 	if over && !prev {
-		s.notifyOverBudget(ctx, domain, stat.RawSize, budgetBytes, kind)
+		s.notifyOverBudget(ctx, domain, rawSize, budgetBytes, kind)
 	}
 }
 
@@ -3981,7 +4113,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	s.applyRetention(ctx, repo, settings, mode, "container:"+name, "containers")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
-	s.maybeCollectStats(ctx, "containers")
+	s.collectStatsAfterItem(ctx, "containers")
 	s.checkPrimaryRemoteBudget(ctx, "containers", repo, settings)
 	return sum, nil
 }
@@ -4247,6 +4379,11 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 		// unless containers replicate on a blank/coupled schedule with an off-site
 		// repo). The per-container inline copy was suppressed via the bulk flag on bctx.
 		s.ReplicateOffsiteAfterBulk(bctx, "containers")
+		// One repo-size sample for the whole round, here rather than after every
+		// container (see collectStatsAfterItem). Last, so it measures the repo the
+		// round actually left behind: after the prune reclaimed space and after the
+		// off-site copy, not somewhere in the middle of both.
+		s.maybeCollectStats(bctx, "containers")
 		log.Printf("api: backup-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(names))
 	}()
 	return true, nil
@@ -4481,6 +4618,8 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 		// unless files replicate on a blank/coupled schedule with an off-site
 		// repo). The per-set inline copy was suppressed via the bulk flag on bctx.
 		s.ReplicateOffsiteAfterBulk(bctx, "files")
+		// One sample for the whole round, exactly as the container batch does.
+		s.maybeCollectStats(bctx, "files")
 		log.Printf("api: backup-files-all done: %d ok, %d failed (of %d requested %d)", ok, fail, total, len(ids))
 	}()
 	return true, nil
@@ -7322,7 +7461,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	}
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, mode, repo)
-	s.maybeCollectStats(ctx, "vms")
+	s.collectStatsAfterItem(ctx, "vms")
 	s.checkPrimaryRemoteBudget(ctx, "vms", repo, settings)
 	return sum, nil
 }
@@ -8185,7 +8324,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	s.applyRetention(ctx, repo, settings, mode, "flash", "flash")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
-	s.maybeCollectStats(ctx, "flash")
+	s.collectStatsAfterItem(ctx, "flash")
 	s.checkPrimaryRemoteBudget(ctx, "flash", repo, settings)
 	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
 		log.Printf("flash zip export failed (backup is still valid): %v", err)
@@ -8401,7 +8540,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	s.applyRetention(ctx, repo, settings, mode, "fileset:"+set.Name, "files")
 	makeRepoReadable(repo) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, mode, repo)
-	s.maybeCollectStats(ctx, "files")
+	s.collectStatsAfterItem(ctx, "files")
 	s.checkPrimaryRemoteBudget(ctx, "files", repo, settings)
 	return sum, nil
 }
@@ -9191,7 +9330,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	}
 	s.applyRetention(ctx, repo, settings, mode, "config", "config")
 	s.replicateOffsite(ctx, "config", settings, mode, repo)
-	s.maybeCollectStats(ctx, "config")
+	s.collectStatsAfterItem(ctx, "config")
 	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
 	return sum, nil
 }

@@ -386,6 +386,11 @@ func run() error {
 		// `cache --cleanup` janitor + the ResticCacheMaxMB LRU eviction). Riding the
 		// existing after-bulk hook needs no new cron plumbing; best-effort and cheap.
 		svc.TrimResticCache(context.Background())
+		// One repo-size sample for the whole scheduled run, the counterpart to the
+		// one StartBackupAll takes at the end of a manual batch. The per-item hook
+		// declines while the bulk flag is set, so without this a scheduled night
+		// would stop sampling entirely (issue #189).
+		svc.MaybeCollectStatsAfterBulk(context.Background(), domain)
 	})
 	scheduler.SetDrillJob(func(domain, source, kind string) error {
 		// Scheduled: wait for the domain lock so a nightly backup/replication co-fire
