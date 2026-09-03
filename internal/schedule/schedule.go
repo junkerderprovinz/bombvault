@@ -1223,6 +1223,21 @@ func (s *Scheduler) jobLastRun(job string) LastRunFunc {
 // the only consequence is that the next daily trigger sees a stale (or absent)
 // timestamp and runs the pass again. That is the safe direction for a
 // verification job — repeat the check rather than silently drop it.
+//
+// THE INVARIANT THAT MAKES THIS SAFE, written down because it is not obvious and
+// is not enforced anywhere: jobLastRun's due-gate reads a timestamp that this
+// function writes only AFTER the pass has run, so it cannot see a pass that is
+// still running. That is the exact shape which, elsewhere in this product, let a
+// repo-size sample start once per container instead of once per round (#189).
+// It is safe HERE for two reasons that both belong to the call site rather than
+// to the gate: recordJobRun is the last statement of a single cron entry, which
+// cron's own SkipIfStillRunning serialises against itself, and nothing else in
+// the tree calls it (the manual drill endpoint records into restore_drills, a
+// different table). Add a second caller — a "run drills now" button that also
+// records a job run, drills wired into CatchUpMissed, or the drills pass split
+// into per-domain entries the way containers are — and the gate stops holding,
+// with a nightly DR restore behind it. Any such change needs an in-flight guard
+// first.
 func (s *Scheduler) recordJobRun(job string) {
 	store := s.jobRuns
 	if store == nil {

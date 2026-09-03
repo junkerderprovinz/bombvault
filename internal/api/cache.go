@@ -35,6 +35,25 @@ func (s *Service) SetResticCacheDir(dir string) { s.resticCacheDir = dir }
 //     to belong to a currently-running or just-finished operation, and evicting
 //     the hottest cache would defeat the point of persisting it.
 func (s *Service) TrimResticCache(ctx context.Context) {
+	// One trim at a time, and a second caller is turned away rather than queued.
+	// -----------------------------------------------------------------------
+	// This rides the after-bulk hook, and that hook is not fired once per night:
+	// the scheduler calls it from the containers, vms and files rounds AND from
+	// every per-item cron entry, one of which exists per container on its own
+	// cadence. Ten containers firing in the same minute gave ten independent
+	// goroutines here, each running its own `restic cache --cleanup` and each
+	// measuring the whole cache and evicting enough to fit — so the cache was
+	// trimmed roughly ten times over, and the "never evict the most recently used
+	// subdirectory" rule protects exactly ONE repo while a round can have a local,
+	// an off-site and a received cache all live.
+	//
+	// Queueing would be no better: by the time a waiting trim ran, its measurement
+	// would describe a cache the previous one had already cut. Found while
+	// auditing for siblings of the repo-size fan-out (#189).
+	if !s.cacheTrimming.CompareAndSwap(false, true) {
+		return
+	}
+	defer s.cacheTrimming.Store(false)
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 	if err := s.engine.CacheCleanup(ctx); err != nil {

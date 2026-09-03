@@ -312,7 +312,15 @@ func (h *Handler) handleReceiverCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	readData := r.URL.Query().Get("readData") == "true"
-	res := h.svc.receiverCheck(r.Context(), rr, readData)
+	// Refused, not queued, when one is already running — a second click used to
+	// start a second `restic check` on the same repository, and with
+	// --read-data-subset that is a second pack-data read. Received repos are
+	// outside repoMu, so nothing else was stopping it.
+	res, ran := h.svc.receiverCheckExclusive(r.Context(), rr, readData)
+	if !ran {
+		writeJSON(w, http.StatusConflict, failEnvelope(errReceiverCheckBusy))
+		return
+	}
 	if err := h.store.UpdateReceivedRepoCheckResult(rr.ID, res.At, nullCheckOK(res.OK), res.Error, res.RanReadData); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

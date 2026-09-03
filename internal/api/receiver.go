@@ -246,6 +246,54 @@ func (s *Service) receiverInventory(ctx context.Context, rr store.ReceivedRepo) 
 // forget) and returns a typed result rather than a bare error so a failed check is
 // a recorded verdict, not an exception. The returned Error is scrubbed; the
 // sending key is never logged.
+// claimReceiverCheck takes the in-flight slot for one received repo, reporting
+// false when a check is already running on it. See the receiverCheckMu field for
+// why this exists at all: the scheduled gate reads a timestamp its own work only
+// writes at the end, and the manual endpoint had no gate whatsoever.
+func (s *Service) claimReceiverCheck(id string) bool {
+	s.receiverCheckMu.Lock()
+	defer s.receiverCheckMu.Unlock()
+	if s.receiverChecking[id] {
+		return false
+	}
+	if s.receiverChecking == nil {
+		s.receiverChecking = map[string]bool{}
+	}
+	s.receiverChecking[id] = true
+	return true
+}
+
+// releaseReceiverCheck frees the slot. Deferred by every claimant, so a panic
+// inside a check cannot wedge that repo's checking for the life of the process.
+func (s *Service) releaseReceiverCheck(id string) {
+	s.receiverCheckMu.Lock()
+	delete(s.receiverChecking, id)
+	s.receiverCheckMu.Unlock()
+}
+
+// errReceiverCheckBusy is what a caller is told when one is already running.
+// A refusal, deliberately, rather than a queue: the second `restic check` would
+// re-read the pack data the first one is reading, so waiting for a turn buys
+// nothing and doubles the load in the meantime.
+var errReceiverCheckBusy = errors.New("a check is already running on this repository")
+
+// receiverCheckExclusive is receiverCheck behind the in-flight slot. ok=false
+// means someone else holds it and NOTHING was run.
+//
+// The guard lives here rather than inside receiverCheck on purpose. A busy
+// refusal must never travel as a ReceiverCheckResult: both call sites persist
+// whatever they get via UpdateReceivedRepoCheckResult, so a result carrying
+// "a check is already running" would be written down as a FAILED integrity
+// check, and the scheduled path would then fire an integrity alert off it. A
+// concurrency refusal is not a verdict about the repository.
+func (s *Service) receiverCheckExclusive(ctx context.Context, rr store.ReceivedRepo, readData bool) (ReceiverCheckResult, bool) {
+	if !s.claimReceiverCheck(rr.ID) {
+		return ReceiverCheckResult{}, false
+	}
+	defer s.releaseReceiverCheck(rr.ID)
+	return s.receiverCheck(ctx, rr, readData), true
+}
+
 func (s *Service) receiverCheck(ctx context.Context, rr store.ReceivedRepo, readData bool) ReceiverCheckResult {
 	res := ReceiverCheckResult{At: time.Now().Unix()}
 	repo, mode, err := s.receiverOpen(ctx, rr)

@@ -229,7 +229,16 @@ func (s *Service) receiverScheduledCheck(ctx context.Context, c notify.Config, a
 		return // not due yet
 	}
 	prev := rr.LastCheckOK // the verdict BEFORE this check, for the transition test
-	res := s.receiverCheck(ctx, rr, rr.ReadDataPercent > 0)
+	// Nothing is recorded when a check is already running on this repo: the gate
+	// above reads LastCheckAt, which is stamped when a check FINISHES, so a manual
+	// check still in flight is invisible to it. Skipping leaves the timestamp
+	// alone, and the next sweep finds the repo due again if that check failed to
+	// land.
+	res, ran := s.receiverCheckExclusive(ctx, rr, rr.ReadDataPercent > 0)
+	if !ran {
+		log.Printf("api: receiver: %q is already being checked, skipping the scheduled one", rr.Name) //nolint:gosec // G706: rr.Name is %q-quoted
+		return
+	}
 	if err := s.store.UpdateReceivedRepoCheckResult(rr.ID, res.At, nullCheckOK(res.OK), res.Error, res.RanReadData); err != nil {
 		log.Printf("api: receiver: persist check result for %q failed: %v", rr.Name, err) //nolint:gosec // G706: rr.Name is %q-quoted
 	}

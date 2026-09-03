@@ -338,6 +338,27 @@ type Service struct {
 	statsMu      sync.Mutex
 	statsRunning map[string]bool
 
+	// receiverCheckMu guards receiverChecking, the in-flight set of received-repo
+	// integrity checks keyed by repo id. Same shape as statsRunning and the same
+	// reason, one layer more dangerous: the work behind this gate is
+	// `restic check`, optionally with --read-data-subset, which re-reads pack data.
+	//
+	// The scheduled sweep gates on ReceivedRepo.LastCheckAt, and that field is
+	// stamped when the previous check FINISHED. Received repos are also outside
+	// repoMu entirely (their location is none of the five domains), so nothing
+	// else serialises them. The sweep does not race itself — it is sequential and
+	// its `now` is fixed — but the manual POST /api/receiver/repos/{id}/check had
+	// no gate at all, so a second click, a second tab, or a manual check landing
+	// on the nightly sweep gave two full pack-data reads of the same repository at
+	// once. Found while auditing for siblings of the repo-size fan-out (#189).
+	receiverCheckMu  sync.Mutex
+	receiverChecking map[string]bool
+
+	// cacheTrimming is TrimResticCache's own one-at-a-time flag. See its comment:
+	// the after-bulk hook it rides fires once per per-item cron entry, not once
+	// per night.
+	cacheTrimming atomic.Bool
+
 	// tamperMu serialises RunTamperTest per domain so the read-prev → record →
 	// notify sequence is atomic: two concurrent tamper tests can't both observe the
 	// old verdict and double-fire (or interleave and drop) the protection-loss
