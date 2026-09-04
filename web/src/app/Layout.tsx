@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
+import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
 
 // Per-browser record of the last BombVault version this browser saw. When the
 // running version differs, the "What's new" dialog (#48) is shown once.
@@ -69,6 +70,33 @@ export function Layout() {
     if (authGate !== "pass") return;
     loadSettings();
   }, [authGate, loadSettings]);
+
+  // The look, once auth is cleared — and this is the whole of issue #191 on an
+  // instance with a password set.
+  //
+  // main.tsx calls sync() as the page boots, which is right for an instance
+  // with no password and for a session that is already valid. On a PASSWORD-
+  // PROTECTED instance whose cookie is gone, that call lands on the login
+  // screen: /api/display-prefs is not in the auth gate's public list, so it
+  // answers 401, sync() sees a non-ok response and returns. Signing in then
+  // flips this state and renders the app WITHOUT reloading the page, so nothing
+  // ever asked again. The server had every setting the whole time and the
+  // browser never received one.
+  //
+  // That is why clearing site data reset everything for the reporter three
+  // times over: clearing cookies signs you out, and signing back in was the
+  // step that skipped the reconcile. It is also why it never reproduced here
+  // until an instance with a password was tried, and why the two earlier fixes,
+  // both real bugs, changed nothing for him: neither was on a path his browser
+  // reached.
+  //
+  // Running for every "pass" is deliberate rather than only after a login: it
+  // costs one GET, it is idempotent, and a state machine that has to know WHY
+  // it opened is the kind of thing that quietly stops being true.
+  useEffect(() => {
+    if (authGate !== "pass") return;
+    void syncDisplayPrefs();
+  }, [authGate]);
 
   // Live-refresh when settings change elsewhere (e.g. enabling a domain on the
   // Settings page) so a newly-enabled tab appears immediately — no page reload.
