@@ -163,4 +163,17 @@ describe("save", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     expect(() => save()).not.toThrow();
   });
+
+  // The half of #191 that reopened it. A tab whose site data was cleared
+  // underneath it keeps running with an empty localStorage, and the next change
+  // anywhere used to publish that emptiness. The server merges now, so this is
+  // the second lock on the same door rather than the only one.
+  it("says nothing when this browser has nothing to say", () => {
+    const fetchMock = vi.fn().mockResolvedValue(antwort({ ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    save(); // localStorage is empty: cleared in beforeEach
+
+    expect(fetchMock, "an empty browser must not announce its emptiness").not.toHaveBeenCalled();
+  });
 });

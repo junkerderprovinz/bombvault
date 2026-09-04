@@ -66,20 +66,52 @@ func TestDisplayPrefsRoundTrip(t *testing.T) {
 		}
 	}
 
-	// A second save replaces rather than merges: the client always sends the
-	// whole look, so a key it dropped must not survive on the server and come
-	// back to haunt the next load.
+	// A second save MERGES. This test used to assert the opposite, on the
+	// assumption that "the client always sends the whole look" — and that
+	// assumption is what reopened #191. A browser sends what it HAS, and a
+	// browser whose site data was just cleared has nothing, so replacing let it
+	// publish its own emptiness and wipe the stored look for good.
 	w, _ = doJSON(t, h, http.MethodPut, "/api/display-prefs", `{"bv-theme":"dark"}`)
 	if w.Code != http.StatusOK {
 		t.Fatalf("second PUT status = %d", w.Code)
 	}
 	_, m = doJSON(t, h, http.MethodGet, "/api/display-prefs", "")
 	prefs, _ = m["prefs"].(map[string]any)
-	if _, present := prefs["bv-accent"]; present {
-		t.Errorf("a key absent from the new payload survived: %v", prefs)
-	}
 	if prefs["bv-theme"] != "dark" {
-		t.Errorf("bv-theme = %v, want dark", prefs["bv-theme"])
+		t.Errorf("bv-theme = %v, want dark: the axis that WAS sent must change", prefs["bv-theme"])
+	}
+	for k, want := range map[string]string{
+		"bv-accent":          "#1D99F3",
+		"bv-labels-buttons":  "textGlyph",
+		"bombvault.advanced": "1",
+	} {
+		if got := prefs[k]; got != want {
+			t.Errorf("prefs[%q] = %v, want %q: an axis the payload did not mention must survive", k, got, want)
+		}
+	}
+}
+
+// The exact shape that cost manilx his settings three times over: a browser
+// with nothing left in it must not be able to clear the server. An empty object
+// is a valid payload and a no-op, not a reset.
+func TestDisplayPrefsEmptyPayloadKeepsTheStoredLook(t *testing.T) {
+	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	if w, _ := doJSON(t, h, http.MethodPut, "/api/display-prefs",
+		`{"bv-theme":"light","bv-lang":"de"}`); w.Code != http.StatusOK {
+		t.Fatalf("setup PUT status = %d", w.Code)
+	}
+	if w, _ := doJSON(t, h, http.MethodPut, "/api/display-prefs", `{}`); w.Code != http.StatusOK {
+		t.Fatalf("empty PUT status = %d, an empty object is a valid payload", w.Code)
+	}
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/display-prefs", "")
+	if m["stored"] != true {
+		t.Fatalf("stored = %v, want true: an empty payload must not erase the record", m["stored"])
+	}
+	prefs, _ := m["prefs"].(map[string]any)
+	if prefs["bv-theme"] != "light" || prefs["bv-lang"] != "de" {
+		t.Errorf("an empty payload wiped the stored look: %v", prefs)
 	}
 }
 

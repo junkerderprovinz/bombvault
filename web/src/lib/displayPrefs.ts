@@ -90,7 +90,14 @@ function write(prefs: DisplayPrefs): boolean {
  *  theme toggle must not wait on the network or fail visibly if the server is
  *  briefly unreachable, and the browser has already applied it. */
 export function save(): void {
-  const body = JSON.stringify(collect());
+  const prefs = collect();
+  // A browser with nothing to say says nothing. The server merges what it is
+  // given, so an empty object is already harmless there, but this is the half
+  // that also covers a page still running in a tab whose storage was cleared
+  // underneath it: it would otherwise announce its emptiness on the next
+  // change, and it has nothing anyone wants (issue #191).
+  if (Object.keys(prefs).length === 0) return;
+  const body = JSON.stringify(prefs);
   void fetch("/api/display-prefs", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
