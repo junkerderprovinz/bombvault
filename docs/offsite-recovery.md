@@ -39,6 +39,9 @@ Flag an off-site repo append-only so ransomware, or a compromised host, cannot d
 
 The **guided off-site setup** wizard walks you from backend choice (rest-server / rclone / S3) through a ready-to-paste rest-server deploy snippet, a connection test, the immutable toggle (which runs the tamper test immediately) and a retention strategy, so append-only off-site is reachable without hand-editing configs.
 
+!!! note "A successful delete under `/locks/` is expected"
+    Append-only does not mean nothing can ever be removed. restic has to take and release its own locks, so `/locks/` stays writable and deletable by design. Snapshots and the data behind them, which is what ransomware would go after, cannot be removed. If you probe the far side yourself, a delete that succeeds under `/locks/` is correct behaviour and not a hole in the protection.
+
 !!! warning "Immutable repos are never pruned from this box"
     An immutable off-site deliberately never prunes old snapshots. Set a **growth-budget alarm** for it so you are alerted before the repo size runs away.
 

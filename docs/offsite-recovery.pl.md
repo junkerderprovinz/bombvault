@@ -39,6 +39,9 @@ Oznacz repozytorium poza siedzibą jako append-only, aby ransomware lub skomprom
 
 Kreator **konfiguracji poza siedzibą z przewodnikiem** prowadzi Cię od wyboru backendu (rest-server / rclone / S3) przez gotowy do wklejenia fragment wdrożenia rest-server, test połączenia, przełącznik niezmienności (który natychmiast uruchamia tamper test) i strategię przechowywania, więc kopia poza siedzibą w trybie append-only jest osiągalna bez ręcznej edycji konfiguracji.
 
+!!! note "Udane usunięcie w `/locks/` jest oczekiwane"
+    Append-only nie oznacza, że nic już nie da się usunąć. restic musi zakładać i zwalniać własne blokady, więc `/locks/` celowo pozostaje zapisywalny i usuwalny. Migawki i stojące za nimi dane, czyli dokładnie to, na co celowałoby ransomware, nie dają się usunąć. Jeśli sam sprawdzisz zdalną stronę, udane usunięcie w `/locks/` jest poprawnym zachowaniem, a nie luką.
+
 !!! warning "Niezmienne repozytoria nigdy nie są przycinane z tej maszyny"
     Niezmienna kopia poza siedzibą celowo nigdy nie przycina starych migawek. Ustaw dla niej **alarm budżetu wzrostu**, aby otrzymać alert, zanim rozmiar repozytorium wymknie się spod kontroli.
 

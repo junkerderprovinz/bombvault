@@ -39,6 +39,9 @@ Vlag een off-site repo als append-only zodat ransomware, of een gecompromitteerd
 
 De wizard **begeleide off-site setup** leidt je van de backendkeuze (rest-server / rclone / S3) via een kant-en-klaar rest-server-deploysnippet, een verbindingstest, de onveranderlijk-schakelaar (die meteen de tamper-test draait) en een retentiestrategie, zodat append-only off-site bereikbaar is zonder configs met de hand te bewerken.
 
+!!! note "Een geslaagde verwijdering onder `/locks/` is verwacht"
+    Append-only betekent niet dat er niets meer verwijderd kan worden. restic moet zijn eigen locks zetten en weer vrijgeven, dus `/locks/` blijft met opzet schrijfbaar en verwijderbaar. Snapshots en de data erachter, precies waar ransomware op mikt, kunnen niet worden verwijderd. Als je de andere kant zelf test, is een geslaagde verwijdering onder `/locks/` correct gedrag en geen gat in de bescherming.
+
 !!! warning "Onveranderlijke repo's worden nooit vanaf deze machine geprund"
     Een onveranderlijke off-site prunt bewust nooit oude snapshots. Stel er een **groeibudget-alarm** voor in zodat je gewaarschuwd wordt voordat de repo-grootte uit de hand loopt.
 

@@ -39,6 +39,9 @@ Flagg et eksternt repo append-only så løsepengevirus, eller en kompromittert h
 
 **Veiledet ekstern-oppsett**-veiviseren leder deg fra backend-valg (rest-server / rclone / S3) gjennom et klar-til-lim rest-server-deploysnippet, en tilkoblingstest, uforanderlig-bryteren (som kjører tamper-testen umiddelbart) og en oppbevaringsstrategi, så append-only ekstern er tilgjengelig uten å håndredigere konfigurasjoner.
 
+!!! note "En vellykket sletting under `/locks/` er forventet"
+    Append-only betyr ikke at ingenting kan slettes lenger. restic må ta og frigi sine egne låser, så `/locks/` forblir bevisst skrivbar og slettbar. Øyeblikksbilder og dataene bak dem, altså nettopp det løsepengevirus ville gå etter, kan ikke fjernes. Tester du motparten selv, er en sletting som lykkes under `/locks/` korrekt oppførsel og ikke et hull i beskyttelsen.
+
 !!! warning "Uforanderlige repoer beskjæres aldri fra denne boksen"
     En uforanderlig ekstern beskjærer bevisst aldri gamle øyeblikksbilder. Sett en **vekstbudsjett-alarm** for den så du blir varslet før repo-størrelsen løper løpsk.
 

@@ -39,6 +39,9 @@ Označte repozitář mimo lokalitu jako append-only, aby ransomware nebo komprom
 
 Průvodce **řízeného nastavení mimo lokalitu** vás provede od volby backendu (rest-server / rclone / S3) přes připravený úryvek pro nasazení rest-serveru, test připojení, přepínač neměnnosti (který spustí test odolnosti okamžitě) a strategii uchovávání, takže append-only mimo lokalitu je dosažitelné bez ručního editování konfigurací.
 
+!!! note "Úspěšné smazání v `/locks/` je očekávané"
+    Append-only neznamená, že už nelze nic smazat. restic musí zakládat a uvolňovat vlastní zámky, proto `/locks/` záměrně zůstává zapisovatelný a smazatelný. Snapshoty a data za nimi, tedy přesně to, na co by mířil ransomware, odstranit nelze. Pokud si vzdálenou stranu ověříš sám, úspěšné smazání v `/locks/` je správné chování, ne díra v ochraně.
+
 !!! warning "Neměnné repozitáře se z tohoto stroje nikdy neprořezávají"
     Neměnné mimo lokalitu záměrně nikdy neprořezává staré snímky. Nastavte pro něj **alarm rozpočtu růstu**, abyste byli upozorněni dříve, než se velikost repozitáře vymkne kontrole.
 

@@ -39,6 +39,9 @@ Markiere ein Off-site-Repo als Append-only, sodass Ransomware oder ein kompromit
 
 Der Assistent der **geführten Off-site-Einrichtung** führt dich von der Backend-Wahl (rest-server / rclone / S3) über ein einsatzbereites rest-server-Deploy-Snippet, einen Verbindungstest, den Unveränderlichkeits-Schalter (der den Manipulationstest sofort ausführt) bis zu einer Aufbewahrungsstrategie, sodass Append-only-Off-site ohne Handbearbeitung von Konfigurationen erreichbar ist.
 
+!!! note "Eine erfolgreiche Löschung unter `/locks/` ist erwartet"
+    Append-only heißt nicht, dass gar nichts mehr entfernt werden kann. restic muss seine eigenen Sperren setzen und wieder lösen, deshalb bleibt `/locks/` absichtlich schreib- und löschbar. Snapshots und die Daten dahinter, also genau das, worauf Ransomware zielt, lassen sich nicht entfernen. Wer die Gegenseite selbst abklopft, bekommt unter `/locks/` eine erfolgreiche Löschung: das ist richtig so und kein Loch im Schutz.
+
 !!! warning "Unveränderliche Repos werden von dieser Box aus nie gekürzt"
     Ein unveränderliches Off-site kürzt bewusst nie alte Snapshots. Setze einen **Wachstumsbudget-Alarm** dafür, damit du alarmiert wirst, bevor die Repo-Größe außer Kontrolle gerät.
 

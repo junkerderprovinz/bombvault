@@ -39,6 +39,9 @@ Marchează un depozit off-site ca append-only astfel încât ransomware-ul, sau 
 
 Asistentul de **configurare off-site ghidată** te conduce de la alegerea backend-ului (rest-server / rclone / S3) printr-un fragment de deploy rest-server gata de lipit, un test de conexiune, comutatorul de imuabilitate (care rulează imediat testul de manipulare) și o strategie de retenție, astfel încât off-site-ul append-only este accesibil fără editarea manuală a configurațiilor.
 
+!!! note "O ștergere reușită sub `/locks/` este așteptată"
+    Append-only nu înseamnă că nu se mai poate șterge nimic. restic trebuie să își creeze și să își elibereze propriile blocaje, așa că `/locks/` rămâne intenționat inscriptibil și șterjibil. Instantaneele și datele din spatele lor, adică exact ținta unui ransomware, nu pot fi eliminate. Dacă testezi singur partea de la distanță, o ștergere reușită sub `/locks/` este comportament corect și nu o breșă.
+
 !!! warning "Depozitele imuabile nu sunt niciodată curățate de pe această stație"
     Un off-site imuabil nu curăță niciodată în mod deliberat instantaneele vechi. Setează o **alarmă de buget de creștere** pentru el astfel încât să fii alertat înainte ca dimensiunea depozitului să scape de sub control.
 

@@ -39,6 +39,9 @@ Flagga ett off-site-repo append-only så att ransomware, eller en komprometterad
 
 Guiden **guidad off-site-uppsättning** lotsar dig från val av backend (rest-server / rclone / S3) genom ett färdigt-att-klistra-in rest-server-deploy-utdrag, ett anslutningstest, den oföränderliga växeln (som kör manipulationstestet omedelbart) och en retention-strategi, så att append-only off-site är nåbar utan att handredigera konfigurationer.
 
+!!! note "En lyckad radering under `/locks/` är förväntad"
+    Append-only betyder inte att ingenting längre kan raderas. restic måste ta och släppa sina egna lås, så `/locks/` förblir avsiktligt skrivbar och raderbar. Ögonblicksbilder och datan bakom dem, alltså precis det som utpressningsprogram skulle gå efter, går inte att ta bort. Testar du motparten själv är en radering som lyckas under `/locks/` korrekt beteende och inte ett hål i skyddet.
+
 !!! warning "Oföränderliga repos rensas aldrig från den här boxen"
     Ett oföränderligt off-site rensar avsiktligt aldrig gamla ögonblicksbilder. Sätt ett **tillväxtbudget-alarm** för det så att du varnas innan repo-storleken skenar iväg.
 

@@ -39,6 +39,9 @@ Marque um repo externo como append-only para que ransomware, ou um host comprome
 
 O assistente de **configuração guiada do externo** acompanha-o desde a escolha do backend (rest-server / rclone / S3), passando por um snippet de implementação de rest-server pronto a colar, um teste de ligação, o interruptor de imutabilidade (que corre o teste de adulteração de imediato) e uma estratégia de retenção, para que o externo append-only seja alcançável sem editar configs à mão.
 
+!!! note "Uma exclusão bem-sucedida em `/locks/` é esperada"
+    Append-only não significa que nada mais possa ser removido. O restic precisa criar e liberar os próprios bloqueios, por isso `/locks/` continua gravável e removível de propósito. Os snapshots e os dados por trás deles, exatamente o alvo de um ransomware, não podem ser removidos. Se você mesmo testar o lado remoto, uma exclusão bem-sucedida em `/locks/` é o comportamento correto e não uma falha.
+
 !!! warning "Os repos imutáveis nunca são podados a partir desta máquina"
     Um externo imutável deliberadamente nunca poda instantâneos antigos. Defina um **alarme de orçamento de crescimento** para ele para ser alertado antes de o tamanho do repo descontrolar.
 

@@ -39,6 +39,9 @@ Jelölj egy telephelyen kívüli tárolót append-only-ként, hogy a zsarolóví
 
 A **vezetett telephelyen kívüli beállítás** varázsló végigvezet a backend választásától (rest-server / rclone / S3) egészen egy beilleszthető rest-server telepítési kódrészletig, egy kapcsolattesztig, a módosíthatatlan kapcsolóig (amely azonnal lefuttatja a manipulációs tesztet) és egy megőrzési stratégiáig, így az append-only telephelyen kívüli mentés elérhető a konfigok kézi szerkesztése nélkül.
 
+!!! note "A `/locks/` alatti sikeres törlés várt viselkedés"
+    Az append-only nem azt jelenti, hogy semmit sem lehet többé törölni. A resticnek fel kell vennie és el kell engednie a saját zárait, ezért a `/locks/` szándékosan írható és törölhető marad. A pillanatfelvételek és a mögöttük lévő adatok, vagyis pontosan az, amit egy zsarolóvírus célba venne, nem távolíthatók el. Ha magad próbálod ki a túloldalt, a `/locks/` alatt sikeres törlés helyes viselkedés, nem rés a védelemben.
+
 !!! warning "A módosíthatatlan tárolók soha nem nyesődnek erről a gépről"
     Egy módosíthatatlan telephelyen kívüli tároló szándékosan soha nem nyesi a régi pillanatképeket. Állíts be egy **növekedési keret riasztást** hozzá, hogy értesülj, mielőtt a tárolóméret elszabadulna.
 

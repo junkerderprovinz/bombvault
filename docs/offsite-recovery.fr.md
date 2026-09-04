@@ -39,6 +39,9 @@ Marquez un dépôt hors site en append-only afin qu'un rançongiciel, ou un hôt
 
 L'assistant de **configuration hors site guidée** vous accompagne du choix du backend (rest-server / rclone / S3) jusqu'à un extrait de déploiement rest-server prêt à coller, un test de connexion, la bascule d'immuabilité (qui lance le test de sabotage immédiatement) et une stratégie de rétention, de sorte que le hors site append-only soit accessible sans édition manuelle des configs.
 
+!!! note "Une suppression réussie sous `/locks/` est attendue"
+    Append-only ne signifie pas que plus rien ne peut être supprimé. restic doit poser et relâcher ses propres verrous, `/locks/` reste donc volontairement accessible en écriture et en suppression. Les snapshots et les données derrière eux, précisément ce que viserait un rançongiciel, ne peuvent pas être supprimés. Si vous sondez vous-même le serveur distant, une suppression qui réussit sous `/locks/` est le comportement correct et non une faille.
+
 !!! warning "Les dépôts immuables ne sont jamais élagués depuis cette machine"
     Un hors site immuable n'élague délibérément jamais les anciens instantanés. Définissez une **alarme de budget de croissance** pour lui afin d'être alerté avant que la taille du dépôt ne s'emballe.
 
