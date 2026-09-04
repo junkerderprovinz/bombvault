@@ -3,8 +3,8 @@
 // Default OFF (clean/simple UI); ON reveals expert/advanced controls.
 // ---------------------------------------------------------------------------
 
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { save as saveDisplayPrefs } from "./displayPrefs";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { ADOPTED_EVENT, save as saveDisplayPrefs } from "./displayPrefs";
 
 const KEY = "bombvault.advanced";
 
@@ -21,6 +21,23 @@ export function AdvancedProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
+
+  // The initial read above happens once, at mount. A browser that adopts the
+  // server's look a moment later changes this key underneath that read, and
+  // without this the page would sit in the simple view with "1" in storage —
+  // one half of what #191 looked like. Reading storage again is enough; this
+  // must not save, or adopting would echo straight back to the server.
+  useEffect(() => {
+    const onAdopted = () => {
+      try {
+        setState(localStorage.getItem(KEY) === "1");
+      } catch {
+        /* storage disabled: nothing to adopt */
+      }
+    };
+    window.addEventListener(ADOPTED_EVENT, onAdopted);
+    return () => window.removeEventListener(ADOPTED_EVENT, onAdopted);
+  }, []);
 
   const setAdvanced = (v: boolean) => {
     setState(v);

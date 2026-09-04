@@ -1,13 +1,11 @@
 // @vitest-environment jsdom
 // The look of the interface lives on the server so it survives a browser
 // (issue #191). Two of the three paths here are the ones that can go wrong in a
-// way the user notices: seeding on upgrade, and the reload that adopts a stored
-// look without turning into a loop.
+// way the user notices: seeding on upgrade, and adopting a stored look in a
+// page that has already booted.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { collect, save, sync } from "./displayPrefs";
-
-const RELOAD_GUARD = "bv-display-prefs-reloaded";
+import { ADOPTED_EVENT, collect, save, sync } from "./displayPrefs";
 
 function antwort(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as unknown as Response;
@@ -75,43 +73,57 @@ describe("sync", () => {
     expect(reloads).toBe(0);
   });
 
-  it("adopts a stored look and reloads once", async () => {
+  it("adopts a stored look and announces it, without reloading", async () => {
+    // This used to reload the page, and a session-scoped guard made sure it
+    // happened at most once. The guard then blocked the one reload that
+    // mattered whenever sessionStorage already carried it — a restored tab, or
+    // a tab open while its site data was cleared — and the page sat on
+    // defaults with the right values already in storage (#191, second report).
     localStorage.setItem("bv-theme", "dark");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
       antwort({ ok: true, stored: true, prefs: { "bv-theme": "light", "bv-lang": "fr" } })
     ));
+    let announced = 0;
+    window.addEventListener(ADOPTED_EVENT, () => { announced += 1; });
 
     await sync();
 
     expect(localStorage.getItem("bv-theme")).toBe("light");
     expect(localStorage.getItem("bv-lang")).toBe("fr");
-    expect(reloads).toBe(1);
+    expect(announced, "the axes that read storage once have to be told").toBe(1);
+    expect(reloads, "a reload can be suppressed; an event cannot").toBe(0);
   });
 
-  it("never reloads twice, even if the server keeps disagreeing", async () => {
-    // The failure this guard exists for: a value the server returns and the
-    // browser cannot keep would otherwise reload the page forever.
+  it("announces every time it has something to adopt, however often that is", async () => {
+    // The old guard's whole reason for existing was a reload loop. There is no
+    // loop to guard against any more, so a browser that cannot keep what the
+    // server sends is told again rather than silently left wrong.
     localStorage.setItem("bv-theme", "dark");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
       antwort({ ok: true, stored: true, prefs: { "bv-theme": "light" } })
     ));
+    let announced = 0;
+    window.addEventListener(ADOPTED_EVENT, () => { announced += 1; });
 
     await sync();
     localStorage.setItem("bv-theme", "dark"); // pretend the write did not stick
     await sync();
 
-    expect(reloads).toBe(1);
-    expect(sessionStorage.getItem(RELOAD_GUARD)).toBe("1");
+    expect(announced).toBe(2);
+    expect(reloads).toBe(0);
   });
 
-  it("does nothing when the browser and the server already agree", async () => {
+  it("says nothing when the browser and the server already agree", async () => {
     localStorage.setItem("bv-theme", "light");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
       antwort({ ok: true, stored: true, prefs: { "bv-theme": "light" } })
     ));
+    let announced = 0;
+    window.addEventListener(ADOPTED_EVENT, () => { announced += 1; });
 
     await sync();
 
+    expect(announced, "nothing changed, so nothing has to be re-applied").toBe(0);
     expect(reloads).toBe(0);
   });
 

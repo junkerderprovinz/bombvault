@@ -39,12 +39,31 @@ const KEYS = [
   "bv-labels-tabs",
   "bv-lang",
   "bombvault.advanced",
+  // Whether a Fleet peer card shows its scorecard. It sits on this side of the
+  // line and not with the filters: it was asked for in #179 by the same person,
+  // for the same reason ("have to open it every time"), and losing it on a new
+  // browser is the same annoyance as losing the theme. It is also the setting
+  // he had just changed when the look went missing again in #191.
+  "bombvault.fleetDetailsOpen",
 ] as const;
 
-/** Set once per page load, so a disagreement between server and browser can
- *  cost at most ONE reload. Without it a value the server keeps returning and
- *  the browser keeps rejecting would reload forever. */
-const RELOAD_GUARD = "bv-display-prefs-reloaded";
+/** Fired on `window` once this browser has adopted the server's look.
+ *
+ *  Everything that reads localStorage ONCE has to listen: main.tsx re-applies
+ *  the axes that live on the document element, I18nProvider re-reads the
+ *  language, AdvancedProvider the advanced view. Between them they cover every
+ *  key in KEYS, which is what makes the reload below unnecessary.
+ *
+ *  This replaces a `location.reload()` and the session-scoped guard around it.
+ *  The guard existed so a value the server keeps returning and the browser
+ *  keeps rejecting could not reload forever — but it also blocked the ONE
+ *  legitimate reload whenever sessionStorage already carried it, which is the
+ *  case for a restored tab and for a tab that was open while its site data was
+ *  cleared. The page then sat on defaults with the correct values already in
+ *  localStorage: white background, English, simple view, exactly as reported
+ *  in #191, and only a manual reload fixed it. An event has no such failure
+ *  mode: nothing to loop, nothing to suppress. */
+export const ADOPTED_EVENT = "bv-display-prefs-adopted";
 
 export type DisplayPrefs = Record<string, string>;
 
@@ -112,8 +131,8 @@ export function save(): void {
  *
  *  Three cases, and the third is the one that matters on upgrade:
  *    - the server has a look and it matches → nothing happens
- *    - the server has a look and it differs → adopt it, then reload once so the
- *      axes React holds (language, advanced view) follow too
+ *    - the server has a look and it differs → adopt it and announce it, so
+ *      every axis follows, including the two React holds
  *    - the server has NO look yet → seed it from this browser, so the first
  *      load after upgrading keeps what the user already had instead of
  *      resetting them to factory settings
@@ -141,17 +160,9 @@ export async function sync(): Promise<void> {
 
   if (!write(body.prefs)) return; // Already in agreement.
 
-  // Theme, accent, palette, shape, motion and the label modes are read off
-  // localStorage by their own apply* functions and could be re-applied in
-  // place. Language and the advanced view are React state, read once when the
-  // tree mounts, and threading a listener through both to catch a case that
-  // happens on one load after a browser was cleared would be more machinery
-  // than the problem. One reload, guarded so it can never repeat.
-  try {
-    if (sessionStorage.getItem(RELOAD_GUARD) === "1") return;
-    sessionStorage.setItem(RELOAD_GUARD, "1");
-  } catch {
-    return; // No sessionStorage means no guard, and no guard means no reload.
-  }
-  location.reload();
+  // The values are in localStorage now, and every axis reads them from there —
+  // but only ever ONCE, at boot, which is why writing them is not enough on a
+  // page that has already booted. Saying so out loud is: main.tsx re-applies
+  // the document-element axes, and the two providers re-read theirs.
+  window.dispatchEvent(new Event(ADOPTED_EVENT));
 }

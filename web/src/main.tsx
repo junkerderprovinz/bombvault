@@ -11,7 +11,7 @@ import { applyStoredRainbow } from "./lib/appearance";
 import { applyStoredShape, armShapeTransitions } from "./lib/shape";
 import { applyStoredMotionIntensity } from "./lib/motion";
 import { applyStoredLabelModes } from "./lib/controls";
-import { sync as syncDisplayPrefs } from "./lib/displayPrefs";
+import { ADOPTED_EVENT, sync as syncDisplayPrefs } from "./lib/displayPrefs";
 
 // Apply persisted preferences before first paint (flash prevention).
 applyStoredTheme();
@@ -21,6 +21,20 @@ applyStoredRainbow();
 applyStoredShape();
 applyStoredMotionIntensity();
 applyStoredLabelModes();
+
+// Every axis above reads localStorage exactly once, which is all a page needs
+// while nothing changes underneath it. When the server hands this browser a
+// different look a moment from now, the values in localStorage change and
+// nobody is looking, so each one has to be applied again — the same calls, in
+// the same order (#191). Registered BEFORE the sync that can fire it.
+window.addEventListener(ADOPTED_EVENT, () => {
+  applyStoredTheme();
+  applyStoredAccent();
+  applyStoredRainbow();
+  applyStoredShape();
+  applyStoredMotionIntensity();
+  applyStoredLabelModes();
+});
 
 // Then reconcile with the server, which is where the look actually lives
 // (#191). Deliberately AFTER the calls above and deliberately not awaited: the

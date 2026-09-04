@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { save as saveDisplayPrefs } from "./displayPrefs";
+import { ADOPTED_EVENT, save as saveDisplayPrefs } from "./displayPrefs";
 import type { ReactNode } from "react";
 import { createElement } from "react";
 
@@ -3433,17 +3433,40 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     };
   }, [lang]);
 
-  const setLanguage = useCallback((code: string) => {
+  // Switch the running tree to a language. Everything setLanguage does EXCEPT
+  // writing it down, because this same path also runs when the language is
+  // adopted FROM the server, where writing it back would echo it straight
+  // home again.
+  const adopt = useCallback((code: string) => {
     const offered = OFFERED_LANGUAGES.map((l) => l.code);
     if (!offered.includes(code)) return;
-    localStorage.setItem(STORAGE_KEY, code);
-    saveDisplayPrefs();
     document.documentElement.setAttribute("lang", code);
     document.documentElement.setAttribute("dir", isRtl(code) ? "rtl" : "ltr");
     // Fetch before the state change where possible, so the switch shows the
     // new language rather than a beat of English on the way to it.
     void loadLocale(code).then(() => setLangState(code));
   }, []);
+
+  const setLanguage = useCallback(
+    (code: string) => {
+      const offered = OFFERED_LANGUAGES.map((l) => l.code);
+      if (!offered.includes(code)) return;
+      localStorage.setItem(STORAGE_KEY, code);
+      saveDisplayPrefs();
+      adopt(code);
+    },
+    [adopt]
+  );
+
+  // `lang` was read once, at mount. When this browser adopts the server's look
+  // afterwards the stored code changes with nobody watching, and the tree would
+  // stay in the language it booted in — English, on a browser whose data was
+  // just cleared, which is half of what #191 looked like.
+  useEffect(() => {
+    const onAdopted = () => adopt(storedCode());
+    window.addEventListener(ADOPTED_EVENT, onAdopted);
+    return () => window.removeEventListener(ADOPTED_EVENT, onAdopted);
+  }, [adopt]);
 
   const t = useCallback(
     (key: TranslationKey): string => table[key] ?? en[key] ?? key,
