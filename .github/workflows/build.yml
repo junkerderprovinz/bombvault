@@ -212,26 +212,28 @@ jobs:
           provenance: true
           sbom: true
 
-      # Mirror the GitHub README to the Docker Hub repo's full description (same
-      # text as on GitHub; relative image/link paths completed to absolute so they
-      # render on Docker Hub). Editing the description needs a credential the push
-      # token (DOCKERHUB_TOKEN) lacks — it returns 403 — so this uses a separate
-      # DOCKERHUB_PASSWORD secret (Docker Hub account password, or a PAT scoped to
-      # edit repos). Skipped until that secret is set, so a missing credential
-      # never fails the build.
+      # Mirror the GitHub README to the Docker Hub repo's Overview.
+      #
+      # This uses DOCKERHUB_TOKEN, the same access token the push above uses.
+      # It used to use a separate DOCKERHUB_PASSWORD, on the belief that a push
+      # token cannot edit a description. That was measured wrong on 2026-09-05:
+      # an access token with read, write and delete scope edits it fine, while
+      # the account password is refused outright with 401, because Docker Hub's
+      # legacy login endpoint rejects a password once 2FA is on. One secret,
+      # and the one that actually works.
       - name: Docker Hub description sync ready?
         id: dhdesc
         if: ${{ vars.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request' }}
         env:
-          PW: ${{ secrets.DOCKERHUB_PASSWORD }}
+          PW: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          if [ -n "$PW" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "DOCKERHUB_PASSWORD not set — skipping Docker Hub description sync"; echo "go=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$PW" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "DOCKERHUB_TOKEN not set — skipping Docker Hub description sync"; echo "go=false" >> "$GITHUB_OUTPUT"; fi
       - name: Sync README to Docker Hub
         if: ${{ steps.dhdesc.outputs.go == 'true' }}
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           short-description: "Backup and full disaster recovery for Unraid: Docker containers, KVM VMs and the USB flash."
           # The full README exceeds Docker Hub's 25000-byte description limit (it
