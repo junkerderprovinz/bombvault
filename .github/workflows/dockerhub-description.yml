@@ -1,18 +1,15 @@
+# Push the README to the Docker Hub repo's Overview, on demand and nothing else.
+#
+# build.yml already does this after every image push, but only after a full
+# multi-arch build. That makes it useless for answering the one question worth
+# answering when the sync starts failing: is the credential broken, or is this
+# repo's secret wrong? A run that builds nothing isolates the credential.
+#
+# Manual only. It never builds, never pushes an image, and touches nothing but
+# the description text on Docker Hub.
 name: Docker Hub description
 
-# Sync the README as the Docker Hub page description + a keyword-rich short
-# description (helps Docker Hub search / SEO). Runs only when the Docker Hub
-# mirror is configured (DOCKERHUB_USERNAME variable) and a DOCKERHUB_PASSWORD
-# secret is set (peter-evans needs the account password or a repo-scoped PAT,
-# which the push token DOCKERHUB_TOKEN does not cover). Skips cleanly otherwise,
-# so a missing credential never fails.
-
 on:
-  push:
-    branches: [main]
-    paths:
-      - README.md
-      - .github/workflows/dockerhub-description.yml
   workflow_dispatch:
 
 permissions:
@@ -20,27 +17,19 @@ permissions:
 
 jobs:
   sync:
+    name: Sync README to Docker Hub
     runs-on: ubuntu-latest
-    if: ${{ vars.DOCKERHUB_USERNAME != '' }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Docker Hub description sync ready?
-        id: ready
-        env:
-          PW: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: |
-          if [ -n "$PW" ]; then
-            echo "go=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "DOCKERHUB_PASSWORD not set — skipping Docker Hub description sync"
-            echo "go=false" >> "$GITHUB_OUTPUT"
-          fi
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v5
+
+      # No gate and no continue-on-error here, unlike build.yml: this workflow
+      # exists to make a failure visible, so a missing secret or a refused
+      # login must turn the run red instead of passing quietly.
       - name: Sync README to Docker Hub
-        if: ${{ steps.ready.outputs.go == 'true' }}
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/bombvault
-          short-description: "Unraid backup & full disaster recovery: Docker containers, KVM VMs, flash config, restic-powered. Drop a backup, detonate a restore."
+          short-description: "Backup and full disaster recovery for Unraid: Docker containers, KVM VMs and the USB flash."
           enable-url-completion: true
