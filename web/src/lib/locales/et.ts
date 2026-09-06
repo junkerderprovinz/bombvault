@@ -22,8 +22,10 @@ const et: Partial<Translations> = {
   "about.coffee": "BombVault on tasuta ja jääb selleks. Annetus hoiab projekti elus ja katab selle kulud: domeeni, serveri ja õhtud, mis sellesse lähevad.",
   "about.coffeeButton": "Osta mulle kohv",
   "about.version": "Versioon",
-  "about.report": "Probleemid, soovid või parendusettepanekud? Ava GitHubis issue.",
+  "about.report": "Probleeme, soove või ettepanekuid? Ava GitHubis teema või saada e-kiri.",
   "about.repo": "GitHub",
+  "about.mailSubject": "Tagasiside",
+  "about.mail": "Saada e-kiri",
 
   // Mode toggle
   "mode.simpleView": "Lihtvaade",

@@ -22,8 +22,10 @@ const is: Partial<Translations> = {
   "about.coffee": "BombVault er ókeypis og verður það áfram. Framlag heldur verkefninu á lífi og stendur undir því sem það kostar: léninu, þjóninum og kvöldunum sem fara í það.",
   "about.coffeeButton": "Bjóddu mér kaffi",
   "about.version": "Útgáfa",
-  "about.report": "Vandamál, óskir eða tillögur að úrbótum? Opnaðu issue á GitHub.",
+  "about.report": "Vandamál, óskir eða ábendingar? Opnaðu mál á GitHub, eða sendu tölvupóst.",
   "about.repo": "GitHub",
+  "about.mailSubject": "Ábendingar",
+  "about.mail": "Senda tölvupóst",
 
   // Mode toggle
   "mode.simpleView": "Einföld sýn",

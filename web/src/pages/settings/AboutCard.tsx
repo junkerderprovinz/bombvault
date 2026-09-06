@@ -63,6 +63,9 @@ const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 /** The handle from .github/FUNDING.yml, so one place in the product knows it. */
 const COFFEE = "https://buymeacoffee.com/junkerderprovinz";
+/** The workshop's own mailbox, shared by every tool in it: the subject carries
+ *  the product name, so one inbox can tell them apart. */
+const MAIL = "hello@halleluja.design";
 
 /**
  * The tag behind a running version string.
@@ -168,21 +171,37 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           belongs to, so the eye pairs it with the wrong text. */}
       <p className="mt-2 max-w-2xl text-sm text-carbon-textSub">{t("about.report")}</p>
 
-      {/* ONE button, because there is one route ([501]). The mail button is
-          gone: jdp, "Die email option bitte raus in BV weil wir dafür keine
-          Email haben". It pointed at KnightLoader's address, which is a
-          different product's inbox — a contact route that reaches the wrong
-          place is worse than no contact route, because somebody writes and
-          then waits. Asked again on 2026-09-06 while adopting KnightLoader's
-          card, and the answer was to set up an address of BombVault's own
-          first, so the sentence still names GitHub alone until there is one.
-          Putting it back is one button here plus two keys. */}
+      {/* Two buttons again, and the sentence names both routes again.
+          The mail button had been removed ([501]) for one reason: it pointed at
+          KnightLoader's address, a different product's inbox, and a contact
+          route that reaches the wrong place is worse than none, because
+          somebody writes and then waits. That reason is gone. hello@ on the
+          workshop's own domain exists as of 2026-09-06 and is a real mailbox,
+          not a forward, so the card may offer it. The rule it was obeying all
+          along still stands unchanged: never name a route no control here can
+          reach. */}
       <div className="flex flex-wrap items-center gap-2">
         <Button
           label={t("about.repo")}
           labelKey="about.repo"
           tone="neutral"
           onClick={() => window.open(REPO, "_blank", "noopener,noreferrer")}
+        />
+        {/* Subject only, never a body: a prefilled body reads as a form to fill
+            in, and this is meant to be a message somebody writes. The product
+            name rides in the subject so a mail arrives already saying which of
+            the workshop's tools it is about — one inbox serves them all. */}
+        <Button
+          label={t("about.mail")}
+          labelKey="about.mail"
+          tone="neutral"
+          onClick={() =>
+            window.open(
+              `mailto:${MAIL}?subject=${encodeURIComponent(`BombVault ${t("about.mailSubject")}`)}`,
+              "_blank",
+              "noopener,noreferrer"
+            )
+          }
         />
       </div>
 

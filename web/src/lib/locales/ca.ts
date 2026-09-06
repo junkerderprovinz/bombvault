@@ -22,8 +22,10 @@ const ca: Partial<Translations> = {
   "about.coffee": "BombVault és gratuït i ho seguirà sent. Un donatiu manté viu el projecte i cobreix el que costa: el domini, el servidor i els vespres que hi van.",
   "about.coffeeButton": "Convida’m a un cafè",
   "about.version": "Versió",
-  "about.report": "Problemes, desitjos o suggeriments de millora? Obre una incidència a GitHub.",
+  "about.report": "Problemes, desitjos o suggeriments? Obre una incidència a GitHub, o envia un correu.",
   "about.repo": "GitHub",
+  "about.mailSubject": "Comentaris",
+  "about.mail": "Envia un correu",
 
   // Mode toggle
   "mode.simpleView": "Vista senzilla",

@@ -22,8 +22,10 @@ const id: Partial<Translations> = {
   "about.coffee": "BombVault gratis dan akan tetap begitu. Donasi menjaga proyek ini tetap hidup dan menutup biayanya: domain, server, dan malam-malam yang tercurah ke dalamnya.",
   "about.coffeeButton": "Traktir saya kopi",
   "about.version": "Versi",
-  "about.report": "Ada masalah, permintaan, atau usulan perbaikan? Buka issue di GitHub.",
+  "about.report": "Masalah, keinginan, atau saran? Buka isu di GitHub, atau kirim surel.",
   "about.repo": "GitHub",
+  "about.mailSubject": "Masukan",
+  "about.mail": "Kirim surel",
 
   // Mode toggle
   "mode.simpleView": "Tampilan sederhana",

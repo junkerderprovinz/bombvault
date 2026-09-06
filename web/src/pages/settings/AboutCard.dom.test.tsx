@@ -89,8 +89,17 @@ it("gives the report sentence the extra line above it, and only that one", () =>
   expect(coffee.className).not.toContain("mt-2");
 });
 
-it("names no route this product cannot reach", () => {
-  const { container } = renderCard();
-  expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
-  expect(container.textContent ?? "").not.toMatch(/e-?mail/i);
+it("names no route without a control, and offers no control the sentence does not name", () => {
+  renderCard();
+  const sentence = en["about.report"];
+  // The rule rather than today's answer: whichever routes this product has,
+  // the sentence and the buttons under it have to agree. It has been wrong in
+  // both directions already — a mail button pointing at another product's
+  // inbox, and later a sentence that would have promised a mailbox that did
+  // not exist yet. Either way somebody writes and then waits.
+  const has = (label: string) =>
+    Boolean(screen.queryByRole("button", { name: new RegExp(label, "i") }));
+
+  expect(has(en["about.mail"])).toBe(/e-?mail/i.test(sentence));
+  expect(has(en["about.repo"])).toBe(/github/i.test(sentence));
 });

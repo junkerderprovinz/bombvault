@@ -22,8 +22,10 @@ const eu: Partial<Translations> = {
   "about.coffee": "BombVault doakoa da eta hala jarraituko du. Dohaintza batek proiektua bizirik mantentzen du eta kostuak estaltzen ditu: domeinua, zerbitzaria eta bertan sartzen diren arratsaldeak.",
   "about.coffeeButton": "Erosi kafe bat",
   "about.version": "Bertsioa",
-  "about.report": "Arazoak, nahiak edo hobekuntza-proposamenak? Ireki issue bat GitHuben.",
+  "about.report": "Arazoak, nahiak edo iradokizunak? Ireki gai bat GitHuben, edo bidali mezu bat.",
   "about.repo": "GitHub",
+  "about.mailSubject": "Iritzia",
+  "about.mail": "Bidali mezu bat",
 
   // Mode toggle
   "mode.simpleView": "Ikuspegi soila",

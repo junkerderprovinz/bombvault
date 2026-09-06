@@ -73,8 +73,10 @@ export const en = {
   "about.coffee":
     "BombVault is free and stays free. A donation keeps the project alive and covers what it costs: the domain, the server, and the evenings that go into it.",
   "about.coffeeButton": "Buy me a coffee",
-  "about.report": "Problems, wishes or ideas for improvement? Open an issue on GitHub.",
+  "about.report": "Problems, wishes or suggestions? Open an issue on GitHub, or send an email.",
   "about.repo": "GitHub",
+  "about.mail": "Send an email",
+  "about.mailSubject": "Feedback",
   "about.version": "Version",
 
   // Mode toggle
@@ -1816,8 +1818,10 @@ export const de: Translations = {
   "about.coffee":
     "BombVault ist kostenlos und bleibt es. Eine Spende hält das Projekt am Leben und deckt, was es kostet: Domain, Server und die Abende, an denen weitergebaut wird.",
   "about.coffeeButton": "Kaffee spendieren",
-  "about.report": "Probleme, Wünsche oder Verbesserungsvorschläge? Schreib es auf GitHub als Issue.",
+  "about.report": "Probleme, Wünsche oder Verbesserungsvorschläge? Schreib es auf GitHub als Issue, oder schick eine E-Mail.",
   "about.repo": "GitHub",
+  "about.mail": "E-Mail schreiben",
+  "about.mailSubject": "Rückmeldung",
   "about.version": "Version",
 
   "mode.simpleView": "Einfache Ansicht",

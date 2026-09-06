@@ -22,8 +22,10 @@ const fa: Partial<Translations> = {
   "about.coffee": "BombVault رایگان است و رایگان می‌ماند. یک کمک مالی پروژه را زنده نگه می‌دارد و هزینه‌هایش را می‌پوشاند: دامنه، سرور و شب‌هایی که صرفش می‌شود.",
   "about.coffeeButton": "یک قهوه مهمانم کن",
   "about.version": "نسخه",
-  "about.report": "مشکل، درخواست یا پیشنهاد بهبود دارید؟ در GitHub یک issue باز کنید.",
+  "about.report": "مشکل، خواسته یا پیشنهادی دارید؟ در GitHub مسئله‌ای باز کنید یا ایمیل بفرستید.",
   "about.repo": "GitHub",
+  "about.mailSubject": "بازخورد",
+  "about.mail": "ارسال ایمیل",
 
   // Mode toggle
   "mode.simpleView": "نمای ساده",

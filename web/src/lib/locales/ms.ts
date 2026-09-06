@@ -22,8 +22,10 @@ const ms: Partial<Translations> = {
   "about.coffee": "BombVault percuma dan akan kekal begitu. Derma memastikan projek ini terus hidup dan menampung kosnya: domain, pelayan dan malam-malam yang dicurahkan padanya.",
   "about.coffeeButton": "Belanja saya kopi",
   "about.version": "Versi",
-  "about.report": "Masalah, permintaan atau cadangan penambahbaikan? Buka issue di GitHub.",
+  "about.report": "Masalah, kehendak atau cadangan? Buka isu di GitHub, atau hantar e-mel.",
   "about.repo": "GitHub",
+  "about.mailSubject": "Maklum balas",
+  "about.mail": "Hantar e-mel",
 
   // Mode toggle
   "mode.simpleView": "Paparan ringkas",

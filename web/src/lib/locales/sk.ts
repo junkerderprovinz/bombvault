@@ -22,8 +22,10 @@ const sk: Partial<Translations> = {
   "about.coffee": "BombVault je zadarmo a zostane. Dar drží projekt nažive a pokryje, čo stojí: doménu, server a večery, ktoré doň idú.",
   "about.coffeeButton": "Kúp mi kávu",
   "about.version": "Verzia",
-  "about.report": "Problémy, želania alebo návrhy na zlepšenie? Založ issue na GitHube.",
+  "about.report": "Problémy, želania alebo návrhy? Založ issue na GitHube, alebo pošli e-mail.",
   "about.repo": "GitHub",
+  "about.mailSubject": "Spätná väzba",
+  "about.mail": "Poslať e-mail",
 
   // Mode toggle
   "mode.simpleView": "Jednoduché zobrazenie",
