@@ -18,6 +18,10 @@ const lt: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Apie BombVault",
+  "about.body": "Vienas riteris, vienas žygis: laisvi, atvirojo kodo įrankiai, kokių tokių nebuvo. Jokių paskyrų, jokios telemetrijos, ir niekas skaitomo niekada nepalieka tavo paties sienų. Kalta vakarais ir savaitgaliais iš širdies, nes laukti nebuvo išeitis.",
+  "about.coffee": "BombVault yra nemokamas ir toks liks. Auka palaiko projektą gyvą ir padengia jo išlaidas: domeną, serverį ir vakarus, kurie į jį sudedami.",
+  "about.coffeeButton": "Pavaišinti kava",
+  "about.version": "Versija",
   "about.report": "Problemos, pageidavimai ar tobulinimo pasiūlymai? Sukurkite issue GitHub'e.",
   "about.repo": "GitHub",
 

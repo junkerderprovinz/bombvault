@@ -18,6 +18,10 @@ const gl: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Sobre BombVault",
+  "about.body": "Un só cabaleiro, unha cruzada: ferramentas libres e de código aberto que non existían así. Sen contas, sen telemetría, e nada lexible sae nunca dos teus propios muros. Forxado polas noites e as fins de semana con moito corazón, porque agardar non era unha opción.",
+  "about.coffee": "BombVault é gratuíto e seguirao sendo. Unha doazón mantén vivo o proxecto e cobre o que custa: o dominio, o servidor e as noites que van nel.",
+  "about.coffeeButton": "Convídame a un café",
+  "about.version": "Versión",
   "about.report": "Problemas, desexos ou suxestións de mellora? Abre unha incidencia en GitHub.",
   "about.repo": "GitHub",
 

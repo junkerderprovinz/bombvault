@@ -18,6 +18,10 @@ const is: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Um BombVault",
+  "about.body": "Einn riddari, ein krossferð: frjáls verkfæri með opnum kóða sem voru ekki til svona. Engir reikningar, engin fjarmæling og ekkert læsilegt fer nokkurn tíma út fyrir þína eigin múra. Smíðað á kvöldin og um helgar af heilum hug, því að bíða var ekki valkostur.",
+  "about.coffee": "BombVault er ókeypis og verður það áfram. Framlag heldur verkefninu á lífi og stendur undir því sem það kostar: léninu, þjóninum og kvöldunum sem fara í það.",
+  "about.coffeeButton": "Bjóddu mér kaffi",
+  "about.version": "Útgáfa",
   "about.report": "Vandamál, óskir eða tillögur að úrbótum? Opnaðu issue á GitHub.",
   "about.repo": "GitHub",
 

@@ -18,6 +18,10 @@ const hr: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "O aplikaciji BombVault",
+  "about.body": "Jedan vitez, jedan pohod: slobodni alati otvorenog koda kakvih nije bilo. Nikakvih računa, nikakve telemetrije i ništa čitljivo nikada ne napušta tvoje zidine. Kovano večerima i vikendima sa srcem, jer čekanje nije bilo opcija.",
+  "about.coffee": "BombVault je besplatan i takav ostaje. Donacija drži projekt na životu i pokriva ono što košta: domenu, poslužitelj i večeri koje u njega odlaze.",
+  "about.coffeeButton": "Počasti me kavom",
+  "about.version": "Verzija",
   "about.report": "Problemi, želje ili prijedlozi za poboljšanje? Otvori issue na GitHubu.",
   "about.repo": "GitHub",
 

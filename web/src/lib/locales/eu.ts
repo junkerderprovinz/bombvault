@@ -18,6 +18,10 @@ const eu: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "BombVault-i buruz",
+  "about.body": "Zaldun bakar bat, kanpaina bat: horrela existitzen ez ziren tresna libre eta kode irekikoak. Konturik ez, telemetriarik ez, eta irakur daitekeen ezerk ez ditu inoiz zure harresiak uzten. Arratsaldeetan eta asteburuetan bihotzez forjatua, itxarotea aukera ez zelako.",
+  "about.coffee": "BombVault doakoa da eta hala jarraituko du. Dohaintza batek proiektua bizirik mantentzen du eta kostuak estaltzen ditu: domeinua, zerbitzaria eta bertan sartzen diren arratsaldeak.",
+  "about.coffeeButton": "Erosi kafe bat",
+  "about.version": "Bertsioa",
   "about.report": "Arazoak, nahiak edo hobekuntza-proposamenak? Ireki issue bat GitHuben.",
   "about.repo": "GitHub",
 

@@ -18,6 +18,10 @@ const ca: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Quant a BombVault",
+  "about.body": "Un sol cavaller, una croada: eines lliures i de codi obert que no existien així. Sense comptes, sense telemetria, i res llegible no surt mai de les teves pròpies muralles. Forjat als vespres i els caps de setmana amb molt de cor, perquè esperar no era una opció.",
+  "about.coffee": "BombVault és gratuït i ho seguirà sent. Un donatiu manté viu el projecte i cobreix el que costa: el domini, el servidor i els vespres que hi van.",
+  "about.coffeeButton": "Convida’m a un cafè",
+  "about.version": "Versió",
   "about.report": "Problemes, desitjos o suggeriments de millora? Obre una incidència a GitHub.",
   "about.repo": "GitHub",
 

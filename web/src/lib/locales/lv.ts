@@ -18,6 +18,10 @@ const lv: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Par BombVault",
+  "about.body": "Viens bruņinieks, viens karagājiens: brīvi, atvērtā pirmkoda rīki, kādu tādā veidā nebija. Nekādu kontu, nekādas telemetrijas, un nekas lasāms nekad nepamet tavus paša mūrus. Kalts vakaros un nedēļas nogalēs ar sirdi, jo gaidīt nebija variants.",
+  "about.coffee": "BombVault ir bez maksas un tāds paliks. Ziedojums uztur projektu dzīvu un sedz tā izmaksas: domēnu, serveri un vakarus, kas tajā ieguldīti.",
+  "about.coffeeButton": "Uzsauc kafiju",
+  "about.version": "Versija",
   "about.report": "Problēmas, vēlmes vai uzlabojumu ieteikumi? Izveido issue GitHub.",
   "about.repo": "GitHub",
 

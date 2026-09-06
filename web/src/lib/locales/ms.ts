@@ -18,6 +18,10 @@ const ms: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Perihal BombVault",
+  "about.body": "Seorang kesateria, satu kempen: alat bebas sumber terbuka yang tidak pernah wujud begini. Tiada akaun, tiada telemetri, dan tiada apa pun yang boleh dibaca meninggalkan tembokmu sendiri. Ditempa pada waktu malam dan hujung minggu dengan sepenuh hati, kerana menunggu bukan pilihan.",
+  "about.coffee": "BombVault percuma dan akan kekal begitu. Derma memastikan projek ini terus hidup dan menampung kosnya: domain, pelayan dan malam-malam yang dicurahkan padanya.",
+  "about.coffeeButton": "Belanja saya kopi",
+  "about.version": "Versi",
   "about.report": "Masalah, permintaan atau cadangan penambahbaikan? Buka issue di GitHub.",
   "about.repo": "GitHub",
 

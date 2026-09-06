@@ -18,6 +18,10 @@ const sk: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "O aplikácii BombVault",
+  "about.body": "Jeden rytier, jedno ťaženie: slobodné nástroje s otvoreným kódom, ktoré takto neexistovali. Žiadne účty, žiadna telemetria a nič čitateľné nikdy neopustí tvoje vlastné hradby. Kované po večeroch a cez víkendy so srdcom, pretože čakať sa nedalo.",
+  "about.coffee": "BombVault je zadarmo a zostane. Dar drží projekt nažive a pokryje, čo stojí: doménu, server a večery, ktoré doň idú.",
+  "about.coffeeButton": "Kúp mi kávu",
+  "about.version": "Verzia",
   "about.report": "Problémy, želania alebo návrhy na zlepšenie? Založ issue na GitHube.",
   "about.repo": "GitHub",
 

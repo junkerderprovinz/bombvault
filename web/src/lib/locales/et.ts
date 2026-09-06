@@ -18,6 +18,10 @@ const et: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Teave BombVaulti kohta",
+  "about.body": "Üks rüütel, üks sõjaretk: vabad, avatud lähtekoodiga tööriistad, mida sellisel kujul polnud. Ei ühtki kontot, ei mingit telemeetriat ja miski loetav ei lahku kunagi sinu enda müüride vahelt. Sepistatud õhtuti ja nädalavahetustel südamega, sest ootamine polnud valik.",
+  "about.coffee": "BombVault on tasuta ja jääb selleks. Annetus hoiab projekti elus ja katab selle kulud: domeeni, serveri ja õhtud, mis sellesse lähevad.",
+  "about.coffeeButton": "Osta mulle kohv",
+  "about.version": "Versioon",
   "about.report": "Probleemid, soovid või parendusettepanekud? Ava GitHubis issue.",
   "about.repo": "GitHub",
 

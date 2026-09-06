@@ -68,8 +68,14 @@ export const en = {
   "nav.fleet": "Fleet",
   "nav.settings": "Settings",
   "about.title": "About BombVault",
+  "about.body":
+    "A one-knight crusade: free, open-source tools that did not exist in this shape. No accounts, no telemetry, and nothing readable ever leaves your own walls. Forged on evenings and weekends with a lot of heart, because waiting was not an option.",
+  "about.coffee":
+    "BombVault is free and stays free. A donation keeps the project alive and covers what it costs: the domain, the server, and the evenings that go into it.",
+  "about.coffeeButton": "Buy me a coffee",
   "about.report": "Problems, wishes or ideas for improvement? Open an issue on GitHub.",
   "about.repo": "GitHub",
+  "about.version": "Version",
 
   // Mode toggle
   "mode.simpleView": "Simple view",
@@ -1805,8 +1811,14 @@ export const de: Translations = {
   "nav.fleet": "Flotte",
   "nav.settings": "Einstellungen",
   "about.title": "Über BombVault",
+  "about.body":
+    "Ein einzelner Ritter, ein Feldzug: freie, quelloffene Werkzeuge, die es so nicht gab. Keine Konten, keine Telemetrie, und nichts Lesbares verlässt deine eigenen Mauern. An Abenden und Wochenenden mit viel Herzblut geschmiedet, weil Warten keine Option war.",
+  "about.coffee":
+    "BombVault ist kostenlos und bleibt es. Eine Spende hält das Projekt am Leben und deckt, was es kostet: Domain, Server und die Abende, an denen weitergebaut wird.",
+  "about.coffeeButton": "Kaffee spendieren",
   "about.report": "Probleme, Wünsche oder Verbesserungsvorschläge? Schreib es auf GitHub als Issue.",
   "about.repo": "GitHub",
+  "about.version": "Version",
 
   "mode.simpleView": "Einfache Ansicht",
   "mode.advancedView": "Erweiterte Ansicht",

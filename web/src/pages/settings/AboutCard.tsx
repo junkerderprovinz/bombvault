@@ -61,6 +61,8 @@ import { Card } from "./shared";
 export const GLIMSTONE_VERSION = "1.6.0";
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
+/** The handle from .github/FUNDING.yml, so one place in the product knows it. */
+const COFFEE = "https://buymeacoffee.com/junkerderprovinz";
 
 /**
  * The tag behind a running version string.
@@ -76,14 +78,21 @@ export function releaseTag(version: string): string {
   return bare.startsWith("v") ? bare : `v${bare}`;
 }
 
+/**
+ * One `Label 1.2.3` pair, where only the NUMBER is the link.
+ *
+ * The label is plain text on purpose, the same way KnightLoader writes it: the
+ * word is not the thing anybody wants to open, and underlining it as part of
+ * the link makes the eye read "Version" as a destination.
+ */
 function VersionLink({ label, version, repo }: { label: string; version: string; repo: string }) {
   const tag = releaseTag(version);
   // No tag means a dev build ("dev", ""), and a link to a release page that
   // does not exist is worse than plain text.
   if (!tag) {
     return (
-      <span className="font-mono tabular-nums text-carbon-textMuted">
-        {label} {version}
+      <span className="text-carbon-textMuted">
+        {label} <span className="font-mono tabular-nums">{version}</span>
       </span>
     );
   }
@@ -95,14 +104,17 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
     // ink lifting on hover, which is enough for a number nobody is hunting for:
     // a dotted rule under a version string reads as an annotation, and there is
     // nothing here to annotate.
-    <a
-      href={`${repo}/releases/tag/${encodeURIComponent(tag)}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="font-mono tabular-nums text-carbon-textMuted no-underline hover:text-carbon-text"
-    >
-      {label} {version}
-    </a>
+    <span className="text-carbon-textMuted">
+      {label}{" "}
+      <a
+        href={`${repo}/releases/tag/${encodeURIComponent(tag)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-mono tabular-nums text-carbon-textMuted no-underline hover:text-carbon-text"
+      >
+        {version}
+      </a>
+    </span>
   );
 }
 
@@ -127,37 +139,44 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
 
   return (
     <Card title={t("about.title")} hueIndex={hueIndex}>
-      {/* Sentence FIRST, then the versions on ONE line — the same card as
-          KnightLoader's extension, which jdp asked this to match exactly
-          ([466]). The order is not arbitrary: the sentence says what the card
-          is for, and the numbers are a detail it hands you on the way to the
-          two buttons. Leading with two stacked version strings makes a reader
-          work out what they are looking at before being told.
+      {/* The house About card, as jdp asked for it (2026-09-06: "kannst du in
+          BV die Übercard so machen wie in KL? Die soll standard werden für alle
+          meine Apps"). KnightLoader is the reference and GlimStone now carries
+          the rule, so the ORDER below is the standard rather than this card's
+          own arrangement: what this is, then the coffee with its button, then
+          the way to report something with its buttons, then the versions as a
+          footer.
 
-          One line with a middle dot, not two rows. Two rows read as two facts
-          of equal weight that happen to sit together; "BombVault X · GlimStone
-          Y" reads as one fact about one build, which is what it is. */}
-      <p className="max-w-2xl text-sm text-carbon-textSub">{t("about.report")}</p>
+          Each sentence sits directly above the thing it asks for. Three
+          sentences stacked over one row of buttons reads as a form; a sentence
+          with its own button under it reads as one offer. */}
+      <p className="max-w-2xl text-sm text-carbon-textSub">{t("about.body")}</p>
 
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        {version && <VersionLink label="BombVault" version={version} repo={REPO} />}
-        {version && <span aria-hidden="true" className="text-carbon-textMuted">·</span>}
-        <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
-      </p>
+      <p className="max-w-2xl text-sm text-carbon-textSub">{t("about.coffee")}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          label={t("about.coffeeButton")}
+          labelKey="about.coffeeButton"
+          tone="neutral"
+          onClick={() => window.open(COFFEE, "_blank", "noopener,noreferrer")}
+        />
+      </div>
+
+      {/* One extra step of space above this line, and only above this one
+          (jdp, 2026-09-06). The card holds two offers, and without the break
+          the coffee button sits as close to the next sentence as to the one it
+          belongs to, so the eye pairs it with the wrong text. */}
+      <p className="mt-2 max-w-2xl text-sm text-carbon-textSub">{t("about.report")}</p>
 
       {/* ONE button, because there is one route ([501]). The mail button is
           gone: jdp, "Die email option bitte raus in BV weil wir dafür keine
           Email haben". It pointed at KnightLoader's address, which is a
           different product's inbox — a contact route that reaches the wrong
           place is worse than no contact route, because somebody writes and
-          then waits.
-
-          The sentence lost its mail clause in the same change. Offering a
-          channel in prose that no control on the card can reach is the same
-          broken promise one line up.
-
-          Putting it back is two lines here plus one key, if an address is ever
-          set up for this product. */}
+          then waits. Asked again on 2026-09-06 while adopting KnightLoader's
+          card, and the answer was to set up an address of BombVault's own
+          first, so the sentence still names GitHub alone until there is one.
+          Putting it back is one button here plus two keys. */}
       <div className="flex flex-wrap items-center gap-2">
         <Button
           label={t("about.repo")}
@@ -166,6 +185,18 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           onClick={() => window.open(REPO, "_blank", "noopener,noreferrer")}
         />
       </div>
+
+      {/* Last line in the card, under the buttons. It reads as a footer, which
+          is what it is: the sentences above are what the card wants to say and
+          each has its own button, while a build number is what somebody looks
+          up afterwards. One line with a middle dot, not two rows: two rows read
+          as two facts of equal weight that happen to sit together, and this is
+          one fact about one build. */}
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+        {version && <VersionLink label={t("about.version")} version={version} repo={REPO} />}
+        {version && <span aria-hidden="true" className="text-carbon-textMuted">·</span>}
+        <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
+      </p>
     </Card>
   );
 }
