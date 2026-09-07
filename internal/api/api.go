@@ -122,6 +122,12 @@ func (h *Handler) Router() http.Handler {
 	// session may revoke every other session (epoch rotation).
 	mux.HandleFunc("POST /api/logout-all", h.handleLogoutAll)
 	mux.HandleFunc("POST /api/auth/password", h.handleSetPassword)
+	// The second factor. All three sit behind authGate like any other setting:
+	// arming, proving and removing a factor are things only a signed-in
+	// operator does, and the disable route additionally demands a live code.
+	mux.HandleFunc("POST /api/auth/totp/setup", h.handleTOTPSetup)
+	mux.HandleFunc("POST /api/auth/totp/confirm", h.handleTOTPConfirm)
+	mux.HandleFunc("POST /api/auth/totp/disable", h.handleTOTPDisable)
 
 	// Opt-in Prometheus scrape endpoint. NOT under /api so it never collides with
 	// the JSON routes; it bypasses the session authGate (allow-listed there) and

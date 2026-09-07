@@ -3,6 +3,8 @@ package config
 
 import (
 	"fmt"
+	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -53,6 +55,18 @@ type Config struct {
 	FlashTemplatesDir string
 	FlashDir          string
 	DBPath            string
+	// TrustedProxies lists the hops whose X-Forwarded-For header may be believed
+	// when working out which client a request came from (env TRUSTED_PROXY, comma
+	// separated, plain addresses or CIDR ranges). Empty (the default) means trust
+	// nobody, which is the only safe default: without it any caller could pick
+	// their own login-throttle bucket by inventing a header.
+	//
+	// It exists because the login throttle counts failures per client address,
+	// and behind a reverse proxy every request carries the PROXY's address. All
+	// clients then share one bucket, so an attacker's five failures a minute lock
+	// the operator out of their own instance. Naming the proxy here restores
+	// per-client counting for exactly the deployment the docs recommend.
+	TrustedProxies []net.IPNet
 }
 
 // Load reads configuration from the provided env map and applies defaults.
@@ -84,7 +98,8 @@ func Load(env map[string]string) (Config, error) {
 		FlashTemplatesDir: stringOr(env["FLASH_TEMPLATES_DIR"], "/host/boot/config/plugins/dockerMan/templates-user"),
 		// Container-visible path of the Unraid USB flash (the whole /boot mounted
 		// read at /host/boot) for flash backup.
-		FlashDir: stringOr(env["FLASH_DIR"], "/host/boot"),
+		FlashDir:       stringOr(env["FLASH_DIR"], "/host/boot"),
+		TrustedProxies: trustedProxies(env["TRUSTED_PROXY"]),
 	}
 	c.DBPath = filepath.Join(c.DataDir, "bombvault.sqlite")
 	return c, nil
@@ -123,6 +138,39 @@ func intOr(v string, def int) int {
 // filter recognized. It MUST stay the sole default so an unset
 // DATA_ROOT_SEGMENTS reproduces today's Unraid-only behavior byte-for-byte.
 var defaultDataRootSegments = []string{"appdata"}
+
+// trustedProxies parses TRUSTED_PROXY into networks. Each entry is either a
+// CIDR ("10.0.0.0/8") or a single address, which becomes a /32 or /128.
+//
+// An unparseable entry is DROPPED rather than failing the boot. Getting this
+// wrong must not take a backup tool offline, and dropping is the safe direction:
+// the effect of an ignored entry is that the proxy stays untrusted, which is the
+// behaviour BombVault had before this setting existed. The boot log names what
+// it dropped so the mistake is findable.
+func trustedProxies(raw string) []net.IPNet {
+	var out []net.IPNet
+	for _, part := range strings.Split(raw, ",") {
+		entry := strings.TrimSpace(part)
+		if entry == "" {
+			continue
+		}
+		if _, netw, err := net.ParseCIDR(entry); err == nil {
+			out = append(out, *netw)
+			continue
+		}
+		ip := net.ParseIP(entry)
+		if ip == nil {
+			log.Printf("config: TRUSTED_PROXY: ignoring unparseable entry %q", entry)
+			continue
+		}
+		bits := 32
+		if ip.To4() == nil {
+			bits = 128
+		}
+		out = append(out, net.IPNet{IP: ip, Mask: net.CIDRMask(bits, bits)})
+	}
+	return out
+}
 
 // dataRootSegments parses DATA_ROOT_SEGMENTS as a comma-separated list of
 // path-segment names (each trimmed, lower-cased, empty entries dropped).

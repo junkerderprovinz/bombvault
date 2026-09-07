@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
@@ -3009,8 +3010,14 @@ func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
 }
 
 // handleAuthStatus handles GET /api/auth.
-// Returns {ok, enabled, authed} so the SPA can decide whether to show the
-// login screen.
+// Returns {ok, enabled, authed, totp, ...} so the SPA can decide whether to show
+// the login screen, and what the settings page should say about the account.
+//
+// This endpoint is PUBLIC (allow-listed in authGate), so it says only what an
+// unauthenticated caller may know: whether a password is set, and whether this
+// cookie is currently good for one. The second-factor detail is added only for a
+// caller that is already signed in — how many recovery codes are left is the
+// settings page's business, not a stranger's.
 func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	hash, epoch, on := h.authEnabled()
 	authed := false
@@ -3019,11 +3026,28 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
 		}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
+	out := map[string]any{
 		"ok":      true,
 		"enabled": on,
 		"authed":  authed,
-	})
+		// Told to everyone, because the login screen has to know whether to ask
+		// for a code, and it asks before anybody is signed in. It reveals only
+		// that this instance is harder to get into.
+		"totp": false,
+		// The rule the password field enforces, so the frontend can say the
+		// number rather than hard-code a second copy of it.
+		"minPasswordLen": secret.MinPasswordLen,
+	}
+	if on {
+		if s, err := h.store.GetSettings(); err == nil {
+			out["totp"] = s.TOTPEnabled
+			if authed || !on {
+				out["recoveryCodesLeft"] = len(decodeRecoveryCodes(s.TOTPRecovery))
+				out["passwordNeedsUpgrade"] = secret.NeedsRehash(hash)
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 // handleLogin handles POST /api/login.
@@ -3049,6 +3073,29 @@ const (
 	loginWindow   = time.Minute
 )
 
+// passwordHashSlots bounds how many Argon2id verifications run at the same time.
+//
+// This is the bill for making the password hash expensive. Until v8.6.0 an
+// unauthenticated login attempt cost one SHA-256 block; now it costs 19 MiB and
+// a few milliseconds, and the throttle above only bounds attempts PER CLIENT.
+// An attacker rotating source addresses is not throttled at all, and without a
+// cap here their request rate multiplies straight into resident memory — on an
+// Unraid container someone capped at --memory 256m, that is the OOM killer
+// stopping a backup tool, which is a worse outcome than the weak hash was.
+//
+// Two slots, so the worst case is around 38 MiB of hashing no matter how hard
+// the door is hammered. Excess logins queue instead of allocating; a login that
+// waits a moment under attack is the correct failure mode, and nothing else in
+// BombVault is behind this queue.
+var passwordHashSlots = make(chan struct{}, 2)
+
+// verifyPassword is secret.VerifyPassword behind that cap.
+func verifyPassword(appKey, password, storedHash string) bool {
+	passwordHashSlots <- struct{}{}
+	defer func() { <-passwordHashSlots }()
+	return secret.VerifyPassword(appKey, password, storedHash)
+}
+
 // loginClientKey returns the throttle key for r: the connecting peer's IP,
 // with any port stripped.
 //
@@ -3065,6 +3112,13 @@ const (
 // is a coarser bucket than per-real-client, but it is still strictly better
 // than the single global bucket this replaces, and it can't be spoofed by an
 // unauthenticated caller.
+//
+// SINCE v8.6.0 that last paragraph has an opt-out: set TRUSTED_PROXY to the
+// address or range your reverse proxy connects from, and the right-most
+// X-Forwarded-For entry contributed by that hop is used instead. See
+// (*Handler).loginClientKey and clientIP below. It stays OFF by default, because
+// a forwarded-for header believed unconditionally is worse than no throttle at
+// all: it lets the attacker choose a fresh bucket per request.
 func loginClientKey(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -3074,6 +3128,72 @@ func loginClientKey(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// loginClientKey is loginClientKey plus the TRUSTED_PROXY step: when the peer is
+// a configured trusted proxy, the throttle keys on the client that proxy names
+// rather than on the proxy itself.
+func (h *Handler) loginClientKey(r *http.Request) string {
+	peer := loginClientKey(r)
+	if len(h.cfg.TrustedProxies) == 0 {
+		return peer
+	}
+	ip := net.ParseIP(peer)
+	if ip == nil || !trusted(h.cfg.TrustedProxies, ip) {
+		// Somebody other than the proxy is talking to us directly. Their own
+		// address is the key, and their header is ignored — otherwise naming a
+		// trusted proxy would hand the spoofing hole to everyone else.
+		return peer
+	}
+	if fwd := forwardedClient(r.Header.Get("X-Forwarded-For"), h.cfg.TrustedProxies); fwd != "" {
+		return fwd
+	}
+	return peer
+}
+
+// forwardedClient returns the client address from an X-Forwarded-For chain,
+// reading RIGHT TO LEFT and stopping at the first entry that is not itself a
+// trusted proxy.
+//
+// Right to left is the only defensible direction. The header is a list each hop
+// appends to, so the LEFT-most entry is whatever the original caller sent, which
+// an attacker writes themselves; the right-hand end is what our own trusted hops
+// added. Walking in from the right and stopping at the first address we did not
+// vouch for lands exactly on the last hop we trust talking about a client we do
+// not.
+func forwardedClient(header string, proxies []net.IPNet) string {
+	parts := strings.Split(header, ",")
+	for i := len(parts) - 1; i >= 0; i-- {
+		entry := strings.TrimSpace(parts[i])
+		if entry == "" {
+			continue
+		}
+		// A chain entry may carry a port (rare, but legal for IPv6 forms).
+		if host, _, err := net.SplitHostPort(entry); err == nil {
+			entry = host
+		}
+		ip := net.ParseIP(strings.Trim(entry, "[]"))
+		if ip == nil {
+			// Garbage in the chain. Refuse the whole header rather than
+			// skipping past it: an attacker who can insert an unparseable
+			// entry must not be able to steer which entry we land on.
+			return ""
+		}
+		if trusted(proxies, ip) {
+			continue
+		}
+		return ip.String()
+	}
+	return ""
+}
+
+func trusted(proxies []net.IPNet, ip net.IP) bool {
+	for _, n := range proxies {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 // loginSweepEvery bounds how often loginThrottled performs a full-map sweep
@@ -3230,7 +3350,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
 		return
 	}
-	key := loginClientKey(r)
+	key := h.loginClientKey(r)
 	if h.loginThrottled(key) {
 		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts — wait a minute and try again"})
 		return
@@ -3238,21 +3358,158 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	var body struct {
 		Password string `json:"password"`
+		// Code is the authenticator app's six digits, or a recovery code, and
+		// is only read when the second factor is switched on.
+		Code string `json:"code"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
 
-	if !secret.VerifyPassword(h.cfg.AppKey, body.Password, hash) {
+	if !verifyPassword(h.cfg.AppKey, body.Password, hash) {
 		h.recordLoginFail(key)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid password"})
 		return
 	}
+
+	// The password is right. If a second factor is armed, nothing is granted
+	// until it is satisfied too — including the throttle reset, so an attacker
+	// who has the password still gets five tries a minute at the code.
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if s.TOTPEnabled {
+		if strings.TrimSpace(body.Code) == "" {
+			// Not a failure: the client asked with what it had and now knows to
+			// show the code field. Counting this would lock people out for
+			// doing exactly the right thing.
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ok":       false,
+				"needCode": true,
+				"error":    "enter the code from your authenticator app",
+			})
+			return
+		}
+		if !h.secondFactorOK(&s, body.Code) {
+			h.recordLoginFail(key)
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ok":       false,
+				"needCode": true,
+				"error":    "that code is not valid",
+			})
+			return
+		}
+	}
 	h.recordLoginSuccess(key)
+
+	// Upgrade a legacy password hash now, while the plaintext is in hand and
+	// verified. This is the ONLY moment it can happen.
+	//
+	// It must come BEFORE the token is minted: the session HMAC signs the stored
+	// hash, so a token issued against the old value would be invalidated by the
+	// rehash a line later and the operator would be bounced straight back to the
+	// login screen.
+	if secret.NeedsRehash(hash) {
+		if fresh, hErr := secret.HashPassword(h.cfg.AppKey, body.Password); hErr != nil {
+			log.Printf("api: login: rehash: %v", hErr)
+		} else if _, mErr := h.store.MutateSettings(func(st *store.Settings) error {
+			// Re-check inside the mutation: a parallel password change between
+			// the verify and here must not be overwritten with the old one.
+			if st.AuthPasswordHash == hash {
+				st.AuthPasswordHash = fresh
+			}
+			return nil
+		}); mErr != nil {
+			// Not fatal. The login succeeded; the storage format simply stays
+			// old for another round.
+			log.Printf("api: login: storing upgraded password hash: %v", mErr)
+		} else {
+			hash = fresh
+		}
+	}
 
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
 	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// secondFactorOK checks code against the time-based secret and, failing that,
+// against the single-use recovery codes. A recovery code that matches is SPENT
+// here (removed from the stored list) before this returns true.
+func (h *Handler) secondFactorOK(s *store.Settings, code string) bool {
+	if sec, err := h.decryptTOTPSecret(s.TOTPSecret); err == nil && sec != "" {
+		if secret.ValidTOTP(sec, code, time.Now()) {
+			return true
+		}
+	}
+	stored := decodeRecoveryCodes(s.TOTPRecovery)
+	idx := secret.MatchRecoveryCode(h.cfg.AppKey, code, stored)
+	if idx < 0 {
+		return false
+	}
+	remaining := append(append([]string{}, stored[:idx]...), stored[idx+1:]...)
+	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		st.TOTPRecovery = encodeRecoveryCodes(remaining)
+		return nil
+	}); err != nil {
+		// The code was correct, but it could not be burned. Refuse the login:
+		// a recovery code that survives its own use is a permanent password.
+		log.Printf("api: login: spending recovery code: %v", err)
+		return false
+	}
+	log.Printf("api: login: a recovery code was used, %d left", len(remaining))
+	return true
+}
+
+func decodeRecoveryCodes(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	var out []string
+	if err := json.Unmarshal([]byte(raw), &out); err != nil {
+		log.Printf("api: recovery codes: unreadable, treating as none: %v", err)
+		return nil
+	}
+	return out
+}
+
+func encodeRecoveryCodes(codes []string) string {
+	if len(codes) == 0 {
+		// Empty string, not "[]": the column's zero value and "none left" are
+		// the same state, and only one of them should exist in the database.
+		return ""
+	}
+	b, err := json.Marshal(codes)
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
+// decryptTOTPSecret opens the stored (hex-encoded, APP_KEY-encrypted) secret.
+func (h *Handler) decryptTOTPSecret(stored string) (string, error) {
+	if stored == "" {
+		return "", nil
+	}
+	raw, err := hex.DecodeString(stored)
+	if err != nil {
+		return "", fmt.Errorf("totp secret: %w", err)
+	}
+	plain, err := secret.Decrypt(h.cfg.AppKey, raw)
+	if err != nil {
+		return "", fmt.Errorf("totp secret: %w", err)
+	}
+	return string(plain), nil
+}
+
+func (h *Handler) encryptTOTPSecret(plain string) (string, error) {
+	sealed, err := secret.Encrypt(h.cfg.AppKey, []byte(plain))
+	if err != nil {
+		return "", fmt.Errorf("totp secret: %w", err)
+	}
+	return hex.EncodeToString(sealed), nil
 }
 
 // handleLogout handles POST /api/logout.
@@ -3310,10 +3567,38 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 
 	hash := ""
 	if body.Password != "" {
-		hash = secret.HashPassword(h.cfg.AppKey, body.Password)
+		// The minimum is checked HERE and nowhere else. Verification stays
+		// unconditional, so an instance whose password predates this rule keeps
+		// working and its owner is asked to change it rather than shut out by an
+		// upgrade. See secret.MinPasswordLen for why twelve.
+		//
+		// Counted in runes, not bytes: a passphrase in a language that spends
+		// three bytes a character is not longer for it.
+		if utf8.RuneCountInString(body.Password) < secret.MinPasswordLen {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ok":     false,
+				"error":  fmt.Sprintf("the password must be at least %d characters", secret.MinPasswordLen),
+				"minLen": secret.MinPasswordLen,
+			})
+			return
+		}
+		var err error
+		if hash, err = secret.HashPassword(h.cfg.AppKey, body.Password); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
 		s.AuthPasswordHash = hash
+		if hash == "" {
+			// Switching the login off takes the second factor with it. Leaving
+			// an armed TOTP secret behind a disabled password would mean a
+			// re-enabled login silently demanding a code from an app the
+			// operator may have deleted months ago.
+			s.TOTPEnabled = false
+			s.TOTPSecret = ""
+			s.TOTPRecovery = ""
+		}
 		return nil
 	}); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -3323,6 +3608,167 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"enabled": hash != "",
 	}))
+}
+
+// ---------------------------------------------------------------------------
+// Second factor (TOTP)
+// ---------------------------------------------------------------------------
+
+// handleTOTPSetup handles POST /api/auth/totp/setup: mint a fresh secret, store
+// it encrypted but NOT yet armed, and return the otpauth URI for the QR code.
+//
+// The secret is stored before it is proved so that the confirm step has
+// something server-side to check against, which keeps the plaintext secret out
+// of the client's hands between the two steps. TOTPEnabled stays false until
+// handleTOTPConfirm sees a working code, so an enrolment abandoned halfway
+// leaves the login exactly as it was.
+func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, "setting up two-factor authentication") {
+		return
+	}
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if s.AuthPasswordHash == "" {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "set a login password first — a second factor with no first one protects nothing",
+		})
+		return
+	}
+	if s.TOTPEnabled {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "two-factor authentication is already on — turn it off before setting it up again",
+		})
+		return
+	}
+
+	plain, err := secret.NewTOTPSecret()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	sealed, err := h.encryptTOTPSecret(plain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		st.TOTPSecret = sealed
+		st.TOTPEnabled = false
+		return nil
+	}); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+
+	name := s.InstanceName
+	if name == "" {
+		name = "BombVault"
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"secret": plain,
+		"uri":    secret.TOTPURI("BombVault", name, plain),
+	}))
+}
+
+// handleTOTPConfirm handles POST /api/auth/totp/confirm: arm the second factor
+// once the operator has typed a code the stored secret actually produces, and
+// hand back the recovery codes.
+//
+// The recovery codes are shown exactly once, here. They are stored hashed, so
+// this response is the only chance to write them down, and the frontend says so.
+func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, "setting up two-factor authentication") {
+		return
+	}
+	var body struct {
+		Code string `json:"code"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	plain, err := h.decryptTOTPSecret(s.TOTPSecret)
+	if err != nil || plain == "" {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "no pending setup — start again",
+		})
+		return
+	}
+	if !secret.ValidTOTP(plain, body.Code, time.Now()) {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "that code is not valid — check the clock on your phone and try the next one",
+		})
+		return
+	}
+
+	codes, hashed, err := secret.NewRecoveryCodes(h.cfg.AppKey)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		st.TOTPEnabled = true
+		st.TOTPRecovery = encodeRecoveryCodes(hashed)
+		return nil
+	}); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"recoveryCodes": codes,
+	}))
+}
+
+// handleTOTPDisable handles POST /api/auth/totp/disable: turn the second factor
+// off. It requires a current code or a recovery code, so that a session someone
+// walked away from cannot be used to quietly remove the factor.
+func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, "changing two-factor authentication") {
+		return
+	}
+	var body struct {
+		Code string `json:"code"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !s.TOTPEnabled {
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"enabled": false}))
+		return
+	}
+	if !h.secondFactorOK(&s, body.Code) {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "that code is not valid",
+		})
+		return
+	}
+	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
+		st.TOTPEnabled = false
+		st.TOTPSecret = ""
+		st.TOTPRecovery = ""
+		return nil
+	}); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"enabled": false}))
 }
 
 // authGate is a middleware that enforces authentication when auth is enabled.

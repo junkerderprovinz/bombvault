@@ -52,9 +52,25 @@ type Settings struct {
 	FlashZipExportPath    string
 	FlashZipExportKeep    int
 	DefaultLanguage       string
-	// AuthPasswordHash is the HMAC-SHA256 password hash set by the admin.
+	// AuthPasswordHash is the stored login password: an Argon2id value carrying
+	// its own salt and parameters (see secret.HashPassword). Databases written
+	// before v8.6.0 hold the old bare HMAC hex string instead; secret.Verify-
+	// Password accepts both and the login handler upgrades the value in place on
+	// the next successful sign-in.
 	// An empty string means authentication is disabled (the default).
 	AuthPasswordHash string
+	// TOTPSecret is the authenticator-app secret, ENCRYPTED with the APP_KEY and
+	// hex-encoded. Unlike the password it must be recoverable (the server has to
+	// derive the expected code), so it is encrypted rather than hashed: a copied
+	// database without the APP_KEY yields nothing.
+	TOTPSecret string
+	// TOTPEnabled is true only after the operator has proved the app works by
+	// entering one correct code. A stored secret with this still false is an
+	// abandoned enrolment and is ignored by the login.
+	TOTPEnabled bool
+	// TOTPRecovery is a JSON array of hashed single-use recovery codes. A spent
+	// code is removed from the array, so its length is how many remain.
+	TOTPRecovery string
 	// SessionEpoch is mixed into every session token's HMAC. Rotating it to a
 	// fresh random value (POST /api/logout-all) invalidates ALL outstanding
 	// session cookies at once — the only revocation path for the otherwise
@@ -322,7 +338,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       cloud_cred_sets,
 		       fleet_enabled, instance_name, fleet_token,
 		       everything_schedule, everything_pre_hook, everything_post_hook,
-		       backup_cores, display_prefs
+		       backup_cores, display_prefs,
+		       totp_secret, totp_enabled, totp_recovery
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -331,7 +348,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
-	var fleetEnabled int
+	var fleetEnabled, totpEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -361,6 +378,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&fleetEnabled, &s.InstanceName, &s.FleetToken,
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
 		&s.BackupCores, &s.DisplayPrefs,
+		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -378,6 +396,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.DrillsEnabled = drillsEnabled != 0
 	s.OffsiteDrillsEnabled = offsiteDrillsEnabled != 0
 	s.RecoveryKitAck = recoveryKitAck != 0
+	s.TOTPEnabled = totpEnabled != 0
 	s.ContainersOffsiteImmutable = contImmutable != 0
 	s.VMsOffsiteImmutable = vmsImmutable != 0
 	s.FlashOffsiteImmutable = flashImmutable != 0
@@ -554,7 +573,10 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  everything_pre_hook          = ?,
 		  everything_post_hook         = ?,
 		  backup_cores                 = ?,
-		  display_prefs                = ?
+		  display_prefs                = ?,
+		  totp_secret                  = ?,
+		  totp_enabled                 = ?,
+		  totp_recovery                = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -594,6 +616,9 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.EverythingPostHook,
 		s.BackupCores,
 		s.DisplayPrefs,
+		s.TOTPSecret,
+		boolInt(s.TOTPEnabled),
+		s.TOTPRecovery,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

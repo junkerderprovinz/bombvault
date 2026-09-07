@@ -192,7 +192,13 @@ func TestLoginThrottleSweepsStaleOneOffKeys(t *testing.T) {
 // eviction. The attacker must still be throttled afterward.
 func TestLoginThrottleEvictionNeverUnthrottlesAnActiveAttacker(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
-	enableAuth(t, h, repo) // password is "hunter2"
+	// The PRE-v8.6.0 hash format on purpose, and the password is still
+	// "hunter2". This test's subject is the throttle map, not the hash: it
+	// makes ten thousand login attempts and they all have to land inside
+	// loginWindow, which they cannot when each one runs Argon2id at 19 MiB.
+	// With the fast legacy hash the flood takes seconds again, and the
+	// invariant being asserted is untouched by which format is stored.
+	enableAuthLegacyHash(t, h, repo)
 
 	attacker := "203.0.113.9:51000"
 

@@ -1266,6 +1266,28 @@ UPDATE runs SET completed = 0
 		alreadySatisfied: columnPresent("settings", "display_prefs"),
 		sql:              "ALTER TABLE settings ADD COLUMN display_prefs TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// The second login factor: a time code from an authenticator app.
+		//
+		// totp_secret holds the shared secret ENCRYPTED with the APP_KEY (see
+		// secret.Encrypt), hex-encoded, because unlike a password hash it has to
+		// be recoverable to compute the expected code. A stolen database alone
+		// therefore cannot generate codes.
+		//
+		// totp_enabled is separate from "a secret exists" on purpose: enrolment
+		// writes the secret first and only flips this after the operator has
+		// proved the app works by typing one correct code. A half-finished
+		// enrolment must never be able to lock somebody out of their own backups.
+		//
+		// totp_recovery is a JSON array of HASHED single-use codes. Entries are
+		// removed as they are spent, so its length is also "how many are left".
+		version: 98, name: "settings_totp",
+		alreadySatisfied: columnPresent("settings", "totp_secret"),
+		sql: `
+ALTER TABLE settings ADD COLUMN totp_secret   TEXT    NOT NULL DEFAULT '';
+ALTER TABLE settings ADD COLUMN totp_enabled  INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE settings ADD COLUMN totp_recovery TEXT    NOT NULL DEFAULT '';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

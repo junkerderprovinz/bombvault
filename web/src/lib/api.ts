@@ -490,6 +490,38 @@ export interface AuthStatusResponse {
   enabled: boolean;
   /** Whether the current request carries a valid session cookie. */
   authed: boolean;
+  /** Whether a second factor is armed. Told to everyone, because the login
+   *  screen has to know whether to ask for a code before anybody is signed in. */
+  totp?: boolean;
+  /** How many single-use recovery codes remain. Only present for a signed-in
+   *  caller: a stranger has no business counting them. */
+  recoveryCodesLeft?: number;
+  /** True while the stored password is still in the pre-v8.6.0 format. It is
+   *  upgraded on the next sign-in, so this is informational, not a warning. */
+  passwordNeedsUpgrade?: boolean;
+  /** The minimum length the server enforces, so the field says the server's
+   *  number rather than keeping a second copy of it. */
+  minPasswordLen?: number;
+}
+
+/** Response from POST /api/login. */
+export interface LoginResponse extends OkEnvelope {
+  /** The password was right and a second factor is armed: ask for the code. */
+  needCode?: boolean;
+}
+
+/** Response from POST /api/auth/totp/setup. Flat, like every okEnvelope here. */
+export interface TOTPSetupResponse extends OkEnvelope {
+  /** The base32 secret, for typing in by hand when a QR code cannot be scanned. */
+  secret?: string;
+  /** The otpauth:// URI the QR code encodes. */
+  uri?: string;
+}
+
+/** Response from POST /api/auth/totp/confirm. */
+export interface TOTPConfirmResponse extends OkEnvelope {
+  /** Shown exactly once. They are stored hashed, so there is no second chance. */
+  recoveryCodes?: string[];
 }
 
 /** Response from POST /api/auth/password */
@@ -2890,11 +2922,13 @@ export function getAuth(): Promise<AuthStatusResponse> {
   return fetchJSON("/api/auth");
 }
 
-/** POST /api/login — attempt password login; sets bv_session cookie on success. */
-export function login(password: string): Promise<OkEnvelope> {
+/** POST /api/login — attempt password login; sets bv_session cookie on success.
+ *  When a second factor is armed the first call comes back with needCode and no
+ *  cookie, and the caller asks again with the code. */
+export function login(password: string, code?: string): Promise<LoginResponse> {
   return fetchJSON("/api/login", {
     method: "POST",
-    body: JSON.stringify({ password }),
+    body: JSON.stringify(code ? { password, code } : { password }),
   });
 }
 
@@ -2918,5 +2952,28 @@ export function setAuthPassword(password: string): Promise<SetPasswordResponse> 
   return fetchJSON("/api/auth/password", {
     method: "POST",
     body: JSON.stringify({ password }),
+  });
+}
+
+/** POST /api/auth/totp/setup — mint a secret and return the QR payload. The
+ *  factor is NOT armed until confirmTOTP accepts a code from the app. */
+export function setupTOTP(): Promise<TOTPSetupResponse> {
+  return fetchJSON("/api/auth/totp/setup", { method: "POST", body: "{}" });
+}
+
+/** POST /api/auth/totp/confirm — arm the factor and receive the recovery codes. */
+export function confirmTOTP(code: string): Promise<TOTPConfirmResponse> {
+  return fetchJSON("/api/auth/totp/confirm", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+}
+
+/** POST /api/auth/totp/disable — turn the factor off. Needs a live code or a
+ *  recovery code, so an unattended session cannot quietly remove it. */
+export function disableTOTP(code: string): Promise<OkEnvelope> {
+  return fetchJSON("/api/auth/totp/disable", {
+    method: "POST",
+    body: JSON.stringify({ code }),
   });
 }

@@ -3,6 +3,7 @@ import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSetting
 import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { AccentCard, IconResetArrow } from "./settings/AccentCard";
+import { TwoFactorCard } from "./settings/TwoFactorCard";
 import { LanguageCard } from "./settings/LanguageCard";
 import { ThemeCard } from "./settings/ThemeCard";
 import { RestoreChecksSection } from "./settings/RestoreChecksSection";
@@ -1195,6 +1196,12 @@ export function SettingsPage() {
   // Auth state for the Security card.
   const [authEnabled, setAuthEnabled] = useState(false);
   const [authAuthed, setAuthAuthed] = useState(false);
+  // The second factor's state, and the minimum the SERVER enforces. The
+  // minimum is read rather than hard-coded so the field and the server can
+  // never disagree about the number they both quote to the user.
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [recoveryLeft, setRecoveryLeft] = useState<number | undefined>(undefined);
+  const [minPasswordLen, setMinPasswordLen] = useState(12);
   const [pwNew, setPwNew] = useState("");
   const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
@@ -1500,6 +1507,9 @@ export function SettingsPage() {
       .then((res) => {
         setAuthEnabled(res.enabled);
         setAuthAuthed(res.authed);
+        setTotpEnabled(res.totp ?? false);
+        setRecoveryLeft(res.recoveryCodesLeft);
+        if (res.minPasswordLen) setMinPasswordLen(res.minPasswordLen);
       })
       .catch(() => {
         // Non-fatal: Security card shows auth as off.
@@ -2219,6 +2229,16 @@ export function SettingsPage() {
     if (pwNew !== pwConfirm) {
       setPwSaveMsg(t("auth.passwordMismatch"));
       setPwSaveState("error");
+      return;
+    }
+    // The server refuses a short password too, and its answer is what the
+    // user would eventually see. Checking here as well saves a round trip and
+    // puts the message next to the field instead of in a toast. An EMPTY
+    // password is not "too short": it means "switch authentication off".
+    if (pwNew !== "" && [...pwNew].length < minPasswordLen) {
+      setPwSaveMsg(t("auth.passwordMinHint").replace("{n}", String(minPasswordLen)));
+      setPwSaveState("error");
+      setPwSaveShake((n) => n + 1);
       return;
     }
     setPwSaveState("saving");
@@ -4428,6 +4448,11 @@ export function SettingsPage() {
               wrapperClassName="w-full"
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
+            {/* The rule, stated before it is broken rather than after. There
+                was no minimum at all before v8.6.0, and "1234" was accepted. */}
+            <span className="text-xs text-carbon-textSub">
+              {t("auth.passwordMinHint").replace("{n}", String(minPasswordLen))}
+            </span>
           </div>
 
           {/* Save / status row */}
@@ -4477,6 +4502,30 @@ export function SettingsPage() {
       </Card>
         );
       })()}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* SYSTEM — the second login factor (v8.6.0). Its own Card rather than */}
+      {/* another section inside Security: enrolment is a three-step sequence */}
+      {/* with a QR code and a one-time list of recovery codes, which is more  */}
+      {/* than the password form's register, and it reads as a separate        */}
+      {/* decision from "is there a password at all".                          */}
+      {/* ------------------------------------------------------------------ */}
+      {tab === "system" && (
+        <TwoFactorCard
+          passwordSet={authEnabled}
+          enabled={totpEnabled}
+          recoveryLeft={recoveryLeft}
+          onChanged={() => {
+            void getAuth()
+              .then((res) => {
+                setTotpEnabled(res.totp ?? false);
+                setRecoveryLeft(res.recoveryCodesLeft);
+              })
+              .catch(() => undefined);
+          }}
+          hueIndex={nextHue()}
+        />
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* GENERAL — Language (GlimStone follow-up pass, live-review point 9). */}

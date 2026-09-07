@@ -50,7 +50,28 @@ func enableAuth(t *testing.T, h *Handler, repo *store.Repo) string {
 	if err != nil {
 		t.Fatalf("get settings: %v", err)
 	}
-	s.AuthPasswordHash = secret.HashPassword(h.cfg.AppKey, "hunter2")
+	pwHash, pwErr := secret.HashPassword(h.cfg.AppKey, "hunter2")
+	if pwErr != nil {
+		t.Fatalf("HashPassword: %v", pwErr)
+	}
+	s.AuthPasswordHash = pwHash
+	if err := repo.UpdateSettings(s); err != nil {
+		t.Fatalf("update settings: %v", err)
+	}
+	return s.AuthPasswordHash
+}
+
+// enableAuthLegacyHash stores the PRE-v8.6.0 password format (a bare HMAC) and
+// returns it. Two tests need it: the one that proves a legacy hash is upgraded
+// on sign-in, and the throttle-flood test, whose ten thousand attempts have to
+// fit inside loginWindow and cannot when every one of them runs Argon2id.
+func enableAuthLegacyHash(t *testing.T, h *Handler, repo *store.Repo) string {
+	t.Helper()
+	s, err := repo.GetSettings()
+	if err != nil {
+		t.Fatalf("get settings: %v", err)
+	}
+	s.AuthPasswordHash = legacyHashForTest(h.cfg.AppKey, "hunter2")
 	if err := repo.UpdateSettings(s); err != nil {
 		t.Fatalf("update settings: %v", err)
 	}

@@ -65,22 +65,33 @@ func TestEncryptInvalidAppKeyFails(t *testing.T) {
 
 const otherKey = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 
+// mustHash wraps HashPassword, which now returns an error because Argon2id needs
+// a random salt. Every caller below only wants "a valid stored hash".
+func mustHash(t *testing.T, key, password string) string {
+	t.Helper()
+	h, err := HashPassword(key, password)
+	if err != nil {
+		t.Fatalf("HashPassword: %v", err)
+	}
+	return h
+}
+
 func TestHashPasswordVerify(t *testing.T) {
-	hash := HashPassword(appKey, "hunter2")
+	hash := mustHash(t, appKey, "hunter2")
 	if !VerifyPassword(appKey, "hunter2", hash) {
 		t.Fatal("VerifyPassword: correct password must return true")
 	}
 }
 
 func TestVerifyPasswordWrongPassword(t *testing.T) {
-	hash := HashPassword(appKey, "hunter2")
+	hash := mustHash(t, appKey, "hunter2")
 	if VerifyPassword(appKey, "wrong", hash) {
 		t.Fatal("VerifyPassword: wrong password must return false")
 	}
 }
 
 func TestVerifyPasswordWrongAppKey(t *testing.T) {
-	hash := HashPassword(appKey, "hunter2")
+	hash := mustHash(t, appKey, "hunter2")
 	// Same password, different APP_KEY — must not verify.
 	if VerifyPassword(otherKey, "hunter2", hash) {
 		t.Fatal("VerifyPassword: wrong APP_KEY must return false")
@@ -88,7 +99,7 @@ func TestVerifyPasswordWrongAppKey(t *testing.T) {
 }
 
 func TestSessionTokenRoundtrip(t *testing.T) {
-	hash := HashPassword(appKey, "s3cret")
+	hash := mustHash(t, appKey, "s3cret")
 	tok := NewSessionToken(appKey, hash, "", time.Hour)
 	if !ValidSessionToken(appKey, hash, "", tok) {
 		t.Fatal("ValidSessionToken: fresh token must be valid")
@@ -96,7 +107,7 @@ func TestSessionTokenRoundtrip(t *testing.T) {
 }
 
 func TestSessionTokenRoundtripWithEpoch(t *testing.T) {
-	hash := HashPassword(appKey, "s3cret")
+	hash := mustHash(t, appKey, "s3cret")
 	const epoch = "0011223344556677"
 	tok := NewSessionToken(appKey, hash, epoch, time.Hour)
 	if !ValidSessionToken(appKey, hash, epoch, tok) {
@@ -105,7 +116,7 @@ func TestSessionTokenRoundtripWithEpoch(t *testing.T) {
 }
 
 func TestSessionTokenExpired(t *testing.T) {
-	hash := HashPassword(appKey, "s3cret")
+	hash := mustHash(t, appKey, "s3cret")
 	// TTL of -1s gives an already-expired token.
 	tok := NewSessionToken(appKey, hash, "", -time.Second)
 	if ValidSessionToken(appKey, hash, "", tok) {
@@ -114,7 +125,7 @@ func TestSessionTokenExpired(t *testing.T) {
 }
 
 func TestSessionTokenTampered(t *testing.T) {
-	hash := HashPassword(appKey, "s3cret")
+	hash := mustHash(t, appKey, "s3cret")
 	tok := NewSessionToken(appKey, hash, "", time.Hour)
 	// Flip the last character of the signature.
 	b := []byte(tok)
@@ -125,10 +136,10 @@ func TestSessionTokenTampered(t *testing.T) {
 }
 
 func TestSessionTokenPasswordHashChanged(t *testing.T) {
-	hash := HashPassword(appKey, "s3cret")
+	hash := mustHash(t, appKey, "s3cret")
 	tok := NewSessionToken(appKey, hash, "", time.Hour)
 
-	newHash := HashPassword(appKey, "newpassword")
+	newHash := mustHash(t, appKey, "newpassword")
 	// Token was issued against old hash — must be invalid under new hash.
 	if ValidSessionToken(appKey, newHash, "", tok) {
 		t.Fatal("ValidSessionToken: token must be invalid after password change")
@@ -136,7 +147,7 @@ func TestSessionTokenPasswordHashChanged(t *testing.T) {
 }
 
 func TestSessionTokenEpochChanged(t *testing.T) {
-	hash := HashPassword(appKey, "s3cret")
+	hash := mustHash(t, appKey, "s3cret")
 	// Token minted under epoch A must fail validation under epoch B — this is
 	// the "log out everywhere" revocation mechanism.
 	tok := NewSessionToken(appKey, hash, "epochA", time.Hour)
@@ -152,7 +163,7 @@ func TestSessionTokenEpochChanged(t *testing.T) {
 }
 
 func TestSessionTokenLegacyFormatValidUnderEmptyEpoch(t *testing.T) {
-	hash := HashPassword(appKey, "s3cret")
+	hash := mustHash(t, appKey, "s3cret")
 	// A token in the PRE-EPOCH wire format (message without an epoch segment)
 	// must keep validating under the empty epoch, so sessions minted before the
 	// epoch existed survive the upgrade until the first rotation.
@@ -164,7 +175,7 @@ func TestSessionTokenLegacyFormatValidUnderEmptyEpoch(t *testing.T) {
 }
 
 func TestSessionTokenBadFormat(t *testing.T) {
-	hash := HashPassword(appKey, "x")
+	hash := mustHash(t, appKey, "x")
 	if ValidSessionToken(appKey, hash, "", "nodot") {
 		t.Fatal("ValidSessionToken: token without dot must be invalid")
 	}

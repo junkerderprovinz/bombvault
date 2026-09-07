@@ -84,25 +84,8 @@ func hmacHex(appKey, message string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-// HashPassword derives a stored password hash from appKey and password using
-// HMAC-SHA256.  The result is deterministic and domain-separated so that an
-// offline brute-force also requires knowledge of APP_KEY.
-//
-// It panics on an invalid (non-hex) appKey.
-func HashPassword(appKey, password string) string {
-	return hmacHex(appKey, "bombvault:auth:"+password)
-}
-
-// VerifyPassword returns true when password hashes to storedHash under appKey.
-// The comparison is constant-time to resist timing attacks.
-//
-// It panics on an invalid (non-hex) appKey.
-func VerifyPassword(appKey, password, storedHash string) bool {
-	got := HashPassword(appKey, password)
-	a, _ := hex.DecodeString(got)
-	b, _ := hex.DecodeString(storedHash)
-	return hmac.Equal(a, b)
-}
+// HashPassword and VerifyPassword now live in password.go: the login password is
+// stored with Argon2id over an APP_KEY-keyed pepper, not with a bare HMAC.
 
 // sessionMessage builds the HMAC message a session token signs. The epoch is a
 // server-side revocation value: rotating it (POST /api/logout-all) changes the
