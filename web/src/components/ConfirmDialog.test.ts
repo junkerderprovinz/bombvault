@@ -197,3 +197,86 @@ describe("ConfirmDialog", () => {
     expect(visibleText(described[0])).toBe(baseProps.message);
   });
 });
+
+// ---------------------------------------------------------------------------
+// GlimStone 1.7.3, folded in here. Three of these four are about what the
+// dialog does NOT draw, which is the kind of change that passes every existing
+// test by definition: nothing looks for a border that was never asserted.
+// ---------------------------------------------------------------------------
+describe("ConfirmDialog, GlimStone 1.7.3", () => {
+  function classNames(node: unknown, out: string[] = []): string[] {
+    if (!isElementNode(node)) return out;
+    if (Array.isArray(node)) {
+      for (const c of node) classNames(c, out);
+      return out;
+    }
+    const cn = node.props?.className;
+    if (typeof cn === "string") out.push(cn);
+    if (node.props?.children !== undefined) classNames(node.props.children, out);
+    return out;
+  }
+
+  it("draws no divider under the title and none above the buttons", () => {
+    // Hierarchy drawn with borders is the thing the design language exists to
+    // avoid, and it had survived in the language's own window ("die linien weg").
+    const all = classNames(ConfirmDialog(baseProps)).join(" ");
+    expect(all).not.toContain("border-b");
+    expect(all).not.toContain("border-t");
+  });
+
+  it("omits the corner X entirely when no closeLabel is given", () => {
+    // Counted, not read as text. The first version of this check looked for
+    // the word "Close" and passed while the button was still being rendered
+    // with an undefined label, which is the failure mode it exists to catch:
+    // the control is still there, it just has no name any more.
+    const buttonsIn = (props: Parameters<typeof ConfirmDialog>[0]) =>
+      findAll(
+        ConfirmDialog(props),
+        (n) => typeof n.type === "function" && (n.type as { name?: string }).name === "Button",
+      );
+    const withX = buttonsIn(baseProps);
+    expect(withX).toHaveLength(3);
+    expect(withX.some((b) => b.props?.labelKey === "common.close")).toBe(true);
+
+    const { closeLabel: _drop, ...withoutClose } = baseProps;
+    const withoutX = buttonsIn(withoutClose);
+    expect(withoutX).toHaveLength(2);
+    expect(withoutX.some((b) => b.props?.labelKey === "common.close")).toBe(false);
+    // and the rest of the window is untouched
+    const text = visibleText(ConfirmDialog(withoutClose));
+    expect(text).toContain("Cancel");
+    expect(text).toContain("Delete this backup? This cannot be undone.");
+  });
+
+  it("puts an `extra` control under the message, not inside it", () => {
+    const tree = ConfirmDialog({ ...baseProps, extra: "ALSO REMOVE THE FOLDER" });
+    expect(visibleText(tree)).toContain("ALSO REMOVE THE FOLDER");
+    // The described paragraph stays the message alone: a switch announced as
+    // part of the description is read as prose rather than reached as a control.
+    const described = findAll(
+      tree,
+      (n) => n.props?.id === "confirmdialog-message",
+    );
+    expect(described).toHaveLength(1);
+    expect(visibleText(described[0].props?.children)).not.toContain("ALSO REMOVE THE FOLDER");
+  });
+
+  it("hands the confirm button an explicit glyph when one is given", () => {
+    const glyph = "GLYPH";
+    const buttons = findAll(
+      ConfirmDialog({ ...baseProps, confirmGlyph: glyph }),
+      (n) => typeof n.type === "function" && (n.type as { name?: string }).name === "Button",
+    );
+    const confirm = buttons.find((b) => b.props?.label === "Confirm");
+    expect(confirm?.props?.glyph).toBe(glyph);
+  });
+
+  it("leaves the glyph undefined when the caller gives none, so the key still decides", () => {
+    const buttons = findAll(
+      ConfirmDialog(baseProps),
+      (n) => typeof n.type === "function" && (n.type as { name?: string }).name === "Button",
+    );
+    const confirm = buttons.find((b) => b.props?.label === "Confirm");
+    expect(confirm?.props?.glyph).toBeUndefined();
+  });
+});

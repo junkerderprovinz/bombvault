@@ -147,6 +147,26 @@
    a cage that clips a label a translation made longer than expected. */
 :root {
   --btn-h: 2rem;
+  /* The SECOND height, and the only one. GlimStone 1.7.5: there was one height
+     until now, and it was right for every button standing in a row of fields,
+     which is almost all of them. What it could not answer is the button a page
+     is ABOUT. The wrong way to supply that is to raise --btn-h, which puts
+     every control in the house out of line with every field beside it to solve
+     a problem two controls have.
+
+     Two heights, because two reads as a deliberate difference and three reads
+     as a ladder somebody has to pick a rung from. The step is half a rem for a
+     measured reason: four pixels of difference between neighbours gets reported
+     as a bug and eight does not, and this house has the four-pixel report on
+     file.
+
+     What earns it: the one control that creates the thing the page lists, or a
+     control whose press is hard to undo. What does not: anything standing in a
+     row with a form field, unless the whole row is centred on it deliberately.
+     A key control in a field row has to be CENTRED against its neighbours, not
+     top-aligned with them, or it reads as the misalignment the single height
+     existed to prevent. */
+  --btn-h-key: 2.5rem;
 
   /* The nav rail's own row box, and the size a page-level tab strip matches
      (jdp: "Die Tabs in den Settings sind immer noch zu klein. die sollen gleich
@@ -318,6 +338,21 @@
   width: 1.25rem;
   height: 1.25rem;
   flex: none;
+}
+
+/* The key control's box, GlimStone 1.7.5. Height only: everything else about a
+   button is unchanged, so a key control is the same button standing taller. */
+.bv-btn-key {
+  height: var(--btn-h-key);
+}
+
+/* The mark grows with the box. A 20px glyph in a 40px frame reads as a small
+   symbol in a large button rather than as a bigger control, and on a glyph-only
+   key control the drawing is the entire label, so it is the thing that has to
+   be legible. The step matches the height's: 1.25rem -> 1.375rem. */
+.bv-btn-key .bv-btn-glyph > svg {
+  width: 1.375rem;
+  height: 1.375rem;
 }
 
 /* Reactive controls carry no gap at rest, and this is the reason the glyph
@@ -2273,6 +2308,29 @@ body {
   --motion-tab-dist: 0px;
   --motion-tab-dur: 0ms;
 }
+
+/* The motion setting has to reach ordinary transitions too, not only the named
+   animations above. GlimStone 1.7.3: one setting should reach every transition
+   rather than a list each app keeps in step by hand. Without this the three-way
+   switch changed the entrances and left every hover, colour fade and open/close
+   running at whatever Tailwind's default is, which is the same complaint the
+   duration tokens above were introduced for, one layer down.
+
+   `off` uses !important on purpose and only there: it has to beat a utility
+   class that wrote its own duration, and "off" is the one state where there is
+   nothing to preserve. `subtle` does not, so a component that deliberately
+   times something itself keeps its number. */
+:root { --motion-control-dur: 150ms; }
+:root[data-motion="subtle"] { --motion-control-dur: 80ms; }
+:root[data-motion="off"] { --motion-control-dur: 0s; }
+:root[data-motion="off"] * { transition-duration: 0s !important; }
+:root[data-motion="subtle"] .transition,
+:root[data-motion="subtle"] .transition-colors,
+:root[data-motion="subtle"] .transition-opacity,
+:root[data-motion="subtle"] .transition-transform {
+  transition-duration: var(--motion-control-dur);
+}
+
 
 /* Logo idle hover sway (Item 7b) */
 @keyframes bv-logo-sway {

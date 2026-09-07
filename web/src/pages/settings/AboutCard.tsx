@@ -57,8 +57,19 @@ import { Card } from "./shared";
  * was accurate about a CHANGELOG heading and wrong about the world, and a
  * version number is only as good as the page it opens. Read the RELEASE list
  * when moving this, not the changelog - `gh release list` is the check.
+ *
+ * 1.7.5 now, and the check above was run before writing it: all six tags from
+ * v1.7.0 to v1.7.5 answer 200 on their own release page, so what was a
+ * changelog heading in [552] is a published release today. The engines moved
+ * with the number rather than after it, which is the whole point of this
+ * string: the second button height, the transition duration the motion switch
+ * reaches, the wheel on the number field, the stepper wrapper that stopped
+ * stretching, and the confirmation dialog's four changes are all in this
+ * build. What did NOT move is the class prefix: GlimStone renamed its own
+ * rules to `glim-` in 1.7.1 and this app still writes `bv-`, which is a sweep
+ * of its own and not a thing this number is claiming.
  */
-export const GLIMSTONE_VERSION = "1.6.0";
+export const GLIMSTONE_VERSION = "1.7.5";
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 /** The handle from .github/FUNDING.yml, so one place in the product knows it. */

@@ -111,6 +111,45 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
   };
 
   /**
+   * The wheel steps the value, but ONLY while the field has focus (GlimStone
+   * 1.7.4).
+   *
+   * That condition is the whole design, not a caution bolted on afterwards. A
+   * number input that answers the wheel whenever a pointer happens to pass over
+   * it changes values somebody was only scrolling past, and browsers removed
+   * exactly that behaviour from the native widget. Requiring focus means the
+   * field was deliberately entered first, which is the same gesture that
+   * already enables the arrow keys, so the wheel becomes a fourth way to do
+   * what typing, the arrow keys and the two steppers already do rather than a
+   * new hazard.
+   *
+   * Attached with `passive: false` and calling preventDefault, or the page
+   * scrolls at the same time and the field slides out from under the pointer
+   * mid-adjustment. React's own onWheel is passive by default and cannot do
+   * this, which is why it hangs off the element by hand.
+   *
+   * Up is more, matching the upper arrow and the up key. A trackpad reports
+   * fractional deltas, so only the sign is read.
+   */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (el.disabled || el.readOnly) return;
+      if (el.ownerDocument.activeElement !== el) return;
+      if (e.deltaY === 0) return;
+      e.preventDefault();
+      step(e.deltaY < 0 ? 1 : -1);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+    // `step` is redefined every render and closes over nothing that changes
+    // between them beyond `sync`, which is stable. Re-attaching a non-passive
+    // listener on every render would be the more expensive mistake.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sync]);
+
+  /**
    * A solid triangle with ROUNDED corners ([457]).
    *
    * This took three goes, and the last correction is the one worth writing
@@ -146,7 +185,19 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
   );
 
   return (
-    <span className={`relative block ${wrapperClassName}`}>
+    // Sized by its content, not by its parent (GlimStone 1.7.5). `block` alone
+    // is correct in a block parent and wrong in the place this helper is used
+    // most: a labelled field is a COLUMN flex container, this wrapper is a flex
+    // item in it, and the default stretch spreads an item across the cross axis
+    // — which in a column is its width. So a 6rem number box in a full-width
+    // column produced a full-width wrapper, and the two arrows sat at the far
+    // right of the row with the field alone on the left. The rule beside the
+    // steppers has said "a stepper is part of the field, not a control next to
+    // it" all along; the stylesheet agreed and the screen did not.
+    //
+    // One consequence, stated rather than buried: the width lives on the input,
+    // and it has to be a definite one.
+    <span className={`relative block w-fit max-w-full self-start justify-self-start ${wrapperClassName}`}>
       <input
         {...rest}
         ref={ref}

@@ -34,7 +34,7 @@
 // `ref` specially on a JSX-created host element, not on the props object a
 // hand-written test builds, and no test here exercises it.
 // ---------------------------------------------------------------------------
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconClose } from "./Sidebar";
@@ -60,7 +60,26 @@ export interface ConfirmDialogProps {
    *  sharing one label gave them the same accessible name (a screen-reader
    *  user would hear two identically-named controls; it also broke
    *  Playwright's own strict-mode selector matching in review). */
-  closeLabel: string;
+  /** Optional since GlimStone 1.7.3. Leave it out and the corner X is not
+   *  drawn at all: two controls that do the same thing, one of them where a
+   *  window's close button lives, read as a choice between two answers rather
+   *  than as one answer offered twice. Nothing changes for a call site that
+   *  keeps passing it. */
+  closeLabel?: string;
+  /** The confirm button's glyph, for a caller whose label is composed or
+   *  data-driven and therefore has no translation key to pick one from
+   *  (GlimStone 1.7.3, reported there as "loeschen hat kein Glyph"). An
+   *  explicit glyph wins over whatever `confirmLabelKey` would have resolved
+   *  to. */
+  confirmGlyph?: ReactNode;
+  /** A slot under the message, for a control the confirming action needs an
+   *  answer to (GlimStone 1.7.3). It exists because the alternatives are
+   *  worse: an app that has to ask "and shall I also remove X?" either builds
+   *  a second confirmation window of its own, which is how a house ends up
+   *  with two that look almost alike, or asks afterwards, which is a second
+   *  question about an action already taken. Keep it to a switch or two; a
+   *  dialog with a form in it is a page. */
+  extra?: ReactNode;
   /** Fault-red for a genuinely irreversible action (the default — every
    *  migrated call site but one is exactly this), warn-amber for
    *  RestoreCancelButton's "light" (non-destructive, restore-to-folder)
@@ -79,6 +98,8 @@ export function ConfirmDialog({
   confirmLabelKey,
   cancelLabel,
   closeLabel,
+  confirmGlyph,
+  extra,
   tone = "fail",
   onConfirm,
   onCancel,
@@ -100,7 +121,7 @@ export function ConfirmDialog({
         className="bv-modal-card relative flex max-h-[85vh] w-full max-w-md flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
+        <div className="flex items-start justify-between gap-4 px-5 py-4">
           {/* Task 5 follow-up (rule 15 — "a window is a window... title as a
               badge"): a dialog's <h2> names the WINDOW CHROME itself, so it
               gets the same tone="heading" Badge treatment as a page's section
@@ -122,14 +143,16 @@ export function ConfirmDialog({
           {/* #178, [201]: the dialog's close control is a Button like every
               other clickable thing, so it follows the label mode instead of
               being a permanently glyph-only square of its own. */}
-          <Button
-            label={closeLabel}
-            labelKey="common.close"
-            glyph={<IconClose />}
-            tone="neutral"
-            onClick={onCancel}
-            className="shrink-0"
-          />
+          {closeLabel !== undefined && (
+            <Button
+              label={closeLabel}
+              labelKey="common.close"
+              glyph={<IconClose />}
+              tone="neutral"
+              onClick={onCancel}
+              className="shrink-0"
+            />
+          )}
         </div>
 
         {/* Body (scrolls) — the real per-call-site question/explanation. Also
@@ -139,10 +162,15 @@ export function ConfirmDialog({
           <p id="confirmdialog-message" className="text-sm leading-relaxed text-carbon-textSub wrap-break-word">
             {message}
           </p>
+          {/* Deliberately OUTSIDE the described paragraph: aria-describedby
+              points at the message alone, and a switch announced as part of the
+              description would be read as prose rather than reached as a
+              control. */}
+          {extra !== undefined && <div className="mt-4">{extra}</div>}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-carbon-border px-5 py-4">
+        <div className="flex items-center justify-end gap-3 px-5 py-4">
           <Button
             label={cancelLabel}
             labelKey="common.cancel"
@@ -170,6 +198,7 @@ export function ConfirmDialog({
             // key the way close and cancel above do. `null` where the caller
             // gave none is the deliberate 'no key' answer, not an oversight.
             labelKey={confirmLabelKey ?? null}
+            glyph={confirmGlyph}
             tone={tone === "fail" ? "danger" : "warn"}
             onClick={onConfirm}
           />
