@@ -107,7 +107,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <div
-      className="bv-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
@@ -118,7 +118,7 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirmdialog-title"
         aria-describedby="confirmdialog-message"
-        className="bv-modal-card relative flex max-h-[85vh] w-full max-w-md flex-col rounded-card bg-carbon-surface shadow-2xl"
+        className="glim-modal-card relative flex max-h-[85vh] w-full max-w-md flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 px-5 py-4">

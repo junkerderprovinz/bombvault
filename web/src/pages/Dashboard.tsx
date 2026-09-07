@@ -708,7 +708,7 @@ export function ProtectionCard({
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && domains.length > 0 && (
-        <div className="@container divide-y divide-carbon-border bv-content-fade">
+        <div className="@container divide-y divide-carbon-border glim-content-fade">
           {domains.map((d) => {
             const off = d.status === "off";
             // Only containers, flash + files ever run an off-site DR drill
@@ -1080,7 +1080,7 @@ export function RansomwareCard({
     <Card title={t("ransomware.title")} hueIndex={hueIndex}>
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {!loading && (
-      <div className="bv-content-fade">
+      <div className="glim-content-fade">
       {shown.map((d) => {
           // Each row: label, state, and an optional age stamp. A "bad" row is a red
           // gap the user should fix — it deep-links into Settings. Every state comes
@@ -1226,14 +1226,14 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noRuns")}</p>
       )}
       {runs.length > 0 && (
-        <div className="bv-content-fade">
+        <div className="glim-content-fade">
           {/* Day filter */}
           <div className="flex items-center gap-2 mb-2">
             <label className="text-xs text-carbon-textMuted">{t("run.filterDay")}</label>
             <select
               value={day}
               onChange={(e) => setDay(e.target.value)}
-              className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
+              className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
             >
               <option value="all">{t("run.allDays")}</option>
               {days.map((d) => (
@@ -1338,7 +1338,7 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
       )}
 
       {withBackups.length > 0 && (
-        <div className="divide-y divide-carbon-border bv-content-fade">
+        <div className="divide-y divide-carbon-border glim-content-fade">
           {withBackups.map((c) => {
             // Older data (or a run before the start time was recorded) has no
             // lastBackupStarted — fall back to just the finish time, never a
@@ -1555,7 +1555,7 @@ function HealthHeatmapCard({
         <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
       )}
       {!loading && days.length > 0 && (
-        <div className="flex flex-col gap-2 bv-content-fade">
+        <div className="flex flex-col gap-2 glim-content-fade">
           <div className="flex gap-1 overflow-x-auto">
             {weeks.map((week, wi) => (
               <div key={wi} className="flex flex-col gap-1">
@@ -1752,7 +1752,7 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
         <p className="text-sm text-carbon-textMuted">{t("dashboard.noStats")}</p>
       )}
       {!loading && anyData && data && (
-        <div className="divide-y divide-carbon-border bv-content-fade">
+        <div className="divide-y divide-carbon-border glim-content-fade">
           {data.map((d) => {
             const has = d.latest != null;
             const dedup =

@@ -11,7 +11,7 @@
 //   1. The words are REALLY THERE at rest, in a collapsed box. Not `sr-only`,
 //      which cannot be revealed, and not absent, which cannot be revealed
 //      either. A reveal animation needs something to reveal.
-//   2. The control is marked for the CSS to key off. Without `bv-reactive` on
+//   2. The control is marked for the CSS to key off. Without `glim-reactive` on
 //      the button, the hover rule has nothing to match and the label stays
 //      collapsed forever — a mode that silently does nothing.
 //   3. The width does not move. This is the reason the mode can exist at all:
@@ -40,16 +40,16 @@ it("keeps the words in the DOM, collapsed rather than hidden or dropped", () => 
   setLabelMode("buttons", "reactive");
   renderButton();
   const label = screen.getByText("Off-site-DR-Prüfung starten");
-  expect(label.className).toBe("bv-label-reactive");
+  expect(label.className).toBe("glim-label-reactive");
   // Neither of the two treatments that cannot animate.
   expect(label.className).not.toContain("sr-only");
-  expect(label.className).not.toContain("bv-btn-label");
+  expect(label.className).not.toContain("glim-btn-label");
 });
 
 it("marks the control so the reveal has something to key off", () => {
   setLabelMode("buttons", "reactive");
   renderButton();
-  expect(screen.getByRole("button").className).toContain("bv-reactive");
+  expect(screen.getByRole("button").className).toContain("glim-reactive");
 });
 
 it("marks nothing in the other three modes", () => {
@@ -57,8 +57,8 @@ it("marks nothing in the other three modes", () => {
     cleanup();
     setLabelMode("buttons", mode);
     renderButton();
-    expect(screen.getByRole("button").className).not.toContain("bv-reactive");
-    expect(document.querySelector(".bv-label-reactive")).toBeNull();
+    expect(screen.getByRole("button").className).not.toContain("glim-reactive");
+    expect(document.querySelector(".glim-label-reactive")).toBeNull();
   }
 });
 
@@ -77,7 +77,7 @@ it("takes no width stage, so the button itself can grow as the words arrive", ()
   setLabelMode("buttons", "reactive");
   renderButton();
   const el = screen.getByRole("button");
-  expect([...el.classList].find((c) => /^bv-btn-(xs|sm|md|lg)$/.test(c))).toBeUndefined();
+  expect([...el.classList].find((c) => /^glim-btn-(xs|sm|md|lg)$/.test(c))).toBeUndefined();
 });
 
 it("carries its label's length so the reveal is neither clipped nor sluggish", () => {
@@ -94,8 +94,8 @@ it("shows its text outright when it has no glyph to fall back on", () => {
   render(<Button label="Clear" onClick={() => {}} />);
   // Same rule as glyph mode: an empty box is unusable, and a reactive empty box
   // is an empty box you have to find with the pointer first.
-  expect(screen.getByText("Clear").className).toContain("bv-btn-label");
-  expect(screen.getByRole("button").className).not.toContain("bv-reactive");
+  expect(screen.getByText("Clear").className).toContain("glim-btn-label");
+  expect(screen.getByRole("button").className).not.toContain("glim-reactive");
 });
 
 it("does not also put the label in a bubble — hovering already reveals it", () => {
@@ -108,5 +108,5 @@ it("does not also put the label in a bubble — hovering already reveals it", ()
   render(
     <Button label="Clear" glyph={<svg />} title="Another backup is running" onClick={() => {}} />
   );
-  expect(screen.getByRole("button").className).toContain("bv-reactive");
+  expect(screen.getByRole("button").className).toContain("glim-reactive");
 });

@@ -65,9 +65,13 @@ import { Card } from "./shared";
  * string: the second button height, the transition duration the motion switch
  * reaches, the wheel on the number field, the stepper wrapper that stopped
  * stretching, and the confirmation dialog's four changes are all in this
- * build. What did NOT move is the class prefix: GlimStone renamed its own
- * rules to `glim-` in 1.7.1 and this app still writes `bv-`, which is a sweep
- * of its own and not a thing this number is claiming.
+ * build. The class prefix moved too, in a sweep of its own right after: the
+ * forty classes and fourteen keyframes this app had under `bv-` are `glim-`
+ * now, the same names the language uses. What deliberately did NOT move are the
+ * browser storage keys, which also begin with `bv-` and are not classes at all
+ * (`bv-theme`, `bv-lang`, `bv-accent`, the filters); renaming those would have
+ * silently reset every user's language, colour and filters, and broken the
+ * display-prefs round trip with the server, which names the same keys in Go.
  */
 export const GLIMSTONE_VERSION = "1.7.5";
 const REPO = "https://github.com/junkerderprovinz/bombvault";

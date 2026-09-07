@@ -103,7 +103,7 @@ export function RestoreChecksSection({
             const clamped = isNaN(n) ? 1 : Math.min(100, Math.max(1, n));
             update({ drillsSubsetPct: clamped });
           }}
-          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
         />
       </label>
     </Card>

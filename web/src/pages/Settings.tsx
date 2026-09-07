@@ -726,7 +726,7 @@ export function EverythingSection({
               onChange={(e) => update({ everythingPreHook: e.target.value })}
               spellCheck={false}
               placeholder={settings.everythingPreHookSet ? t("cloud.secretSet") : "echo starting"}
-              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
+              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
             />
             {settings.everythingPreHookSet && (
               <Badge
@@ -750,7 +750,7 @@ export function EverythingSection({
               placeholder={
                 settings.everythingPostHookSet ? t("cloud.secretSet") : "curl -fsS https://hc-ping.com/your-uuid"
               }
-              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus"
+              className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus"
             />
             {settings.everythingPostHookSet && (
               <Badge
@@ -889,7 +889,7 @@ const TAB_ORDER: TabKey[] = [
 // redrawing also means the paths stay exactly the shapes that survived the
 // earlier legibility rounds.
 //
-// The explicit width/height="15" is gone with it: `.bv-seg > svg` has set the
+// The explicit width/height="15" is gone with it: `.glim-seg > svg` has set the
 // real size since [241], so those attributes only documented a size that had
 // not been true for a while.
 function IconTabGeneral() {
@@ -2315,7 +2315,7 @@ export function SettingsPage() {
     //
     // `flex-1` (sticky-footer round): makes this whole page root grow to
     // fill the scrollable viewport's available height (app/Layout.tsx's
-    // `main` → its `bv-page-enter` child, both given a matching `flex-1 flex
+    // `main` → its `glim-page-enter` child, both given a matching `flex-1 flex
     // flex-col` for exactly this — see that file's own comments) instead of
     // shrink-wrapping to its own content height. On its own this would just
     // make the ROOT taller with blank space at the bottom (flex columns
@@ -2579,10 +2579,10 @@ export function SettingsPage() {
           those conditionals alone, key or no key; keying the WRAPPER too
           changes nothing about which children exist, it only makes the
           wrapper itself a fresh DOM node each click, which is what lets
-          `.bv-tab-slide`'s own entrance animation (index.css) replay every
+          `.glim-tab-slide`'s own entrance animation (index.css) replay every
           time instead of only once at Settings' own first mount (a
           persistent class on a node that never gets recreated never
-          replays its animation, the same reasoning bv-stagger-row's own
+          replays its animation, the same reasoning glim-stagger-row's own
           comment gives for why a list re-render does NOT replay). --tab-dir
           is set from `tabDir` state, computed by whichever caller last
           changed `tab` (the Selector's onChange below, or the hashchange
@@ -2606,7 +2606,7 @@ export function SettingsPage() {
           rather than sitting fixed over top of it. */}
       <div
         key={tab}
-        className="flex flex-col gap-10 bv-tab-slide flex-1"
+        className="flex flex-col gap-10 glim-tab-slide flex-1"
         style={{ maxWidth: tabStripWidth ?? undefined, "--tab-dir": tabDir } as CSSProperties}
       >
 
@@ -2750,7 +2750,7 @@ export function SettingsPage() {
                   onChange={(e) => scheduleField(key, e.target.value)}
                   placeholder={t("offsite.schedulePlaceholder")}
                   dir="ltr"
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
                 />
               </div>
             ))}
@@ -2887,7 +2887,7 @@ export function SettingsPage() {
                     const n = Math.max(5, parseInt(raw, 10) || 0);
                     scheduleField("restartHealthTimeoutSec", n);
                   }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
                 />
               </label>
             )}
@@ -3168,7 +3168,7 @@ export function SettingsPage() {
                   // in one cell never resets another cell's pending timer.
                   debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setRetSaveState, setRetSaveError));
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
             </label>
           ))}
@@ -3267,7 +3267,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
                     debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
                   }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
                 />
               </label>
               <label className="flex flex-col gap-1">
@@ -3286,7 +3286,7 @@ export function SettingsPage() {
                     setSettings((prev) => (prev ? { ...prev, registryAuths: nextAuths } : prev));
                     debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
                   }}
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
                 />
               </label>
               <label className="flex flex-col gap-1">
@@ -3316,7 +3316,7 @@ export function SettingsPage() {
                     debouncedSave("registryAuths", () => saveRegistries(nextAuths, registryRowIds));
                   }}
                   wrapperClassName="w-full"
-                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
                 />
               </label>
               {/* Square icon-only remove button with a trash-can glyph (jdp,
@@ -3479,7 +3479,7 @@ export function SettingsPage() {
                 void save({ resticCacheMaxMB: n }, setCacheSaveState, setCacheSaveError)
               );
             }}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
           />
         </label>
       </Card>
@@ -3513,7 +3513,7 @@ export function SettingsPage() {
                 void save({ backupCores: n }, setCoresSaveState, setCoresSaveError)
               );
             }}
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
           />
         </label>
       </Card>
@@ -3614,7 +3614,7 @@ export function SettingsPage() {
                 }}
                 placeholder={t("export.encrypt.recipientsPlaceholder")}
                 dir="ltr"
-                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
+                className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
               />
               <span className="text-xs text-carbon-textMuted">{t("export.encrypt.recipientsHint")}</span>
               {!settings.exportAgeRecipients.trim() && (
@@ -3919,7 +3919,7 @@ export function SettingsPage() {
                   }}
                   placeholder="rest:http://host:8000/repo"
                   dir="ltr"
-                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus text-start"
+                  className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
                 />
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
@@ -3974,7 +3974,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                   debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError));
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
             </label>
           ))}
@@ -4006,7 +4006,7 @@ export function SettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
                   debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setLimSaveState, setLimSaveError));
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
             </label>
           ))}
@@ -4075,7 +4075,7 @@ export function SettingsPage() {
             }}
             placeholder={settings.metricsTokenSet && settings.metricsToken === "" ? t("cloud.secretSet") : ""}
             wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
           />
         </label>
       </Card>
@@ -4412,7 +4412,7 @@ export function SettingsPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               wrapperClassName="w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -4426,7 +4426,7 @@ export function SettingsPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               wrapperClassName="w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
           </div>
 

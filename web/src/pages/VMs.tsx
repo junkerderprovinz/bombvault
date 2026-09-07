@@ -911,9 +911,9 @@ export function VMRow({
       // almost no colour at rest); glim-active while THIS row's own
       // backup/restore is actively running, so reactive mode shows the hue
       // without needing hover — mirrors ContainerRow's identical treatment.
-      // bv-stagger-row (GlimStone motion-engine animation 3) — see
+      // glim-stagger-row (GlimStone motion-engine animation 3) — see
       // ContainerRow's identical comment.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row ${
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -1830,7 +1830,7 @@ export function VMs() {
               placeholder={t("vms.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
+              className="w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
             <ChipFilter<ScheduleFilterKey>
               label={t("filter.schedule")}
@@ -1917,7 +1917,7 @@ export function VMs() {
 
       {/* Live VMs */}
       {!loading && live.length > 0 && (
-        <div className="flex flex-col gap-3 bv-content-fade">
+        <div className="flex flex-col gap-3 glim-content-fade">
           {live.map((v, i) => (
             <VMRow
               key={v.libvirtName}
@@ -1934,7 +1934,7 @@ export function VMs() {
 
       {/* Orphan VMs — no longer defined on the host but still have backups */}
       {!loading && orphans.length > 0 && (
-        <div className="flex flex-col gap-3 bv-content-fade">
+        <div className="flex flex-col gap-3 glim-content-fade">
           <div>
             {/* GlimStone follow-up pass ("half-overlap card notch"):
                 `relative` directly on this <h2> — no padding wraps it, so

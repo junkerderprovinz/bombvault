@@ -399,7 +399,7 @@ export function DashboardWidgetCard({
             value={token ?? ""}
             placeholder={token ? "" : t("cloud.secretSet")}
             wrapperClassName="w-full"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
           />
           <div className="flex items-center gap-2">
             <Button

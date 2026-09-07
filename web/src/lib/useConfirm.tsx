@@ -149,7 +149,7 @@ export function useConfirm() {
   }, [pending, settle]);
 
   // Portal-rendered to <body> (InfoBubble.tsx's fix for the same problem):
-  // any ancestor of the call site with a CSS transform (e.g. .bv-page-enter)
+  // any ancestor of the call site with a CSS transform (e.g. .glim-page-enter)
   // creates a new containing block, so a `position: fixed` backdrop nested
   // under it only covers that ancestor's box, not the real viewport.
   const confirmDialog = pending

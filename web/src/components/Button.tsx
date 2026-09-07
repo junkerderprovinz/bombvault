@@ -49,10 +49,10 @@ import { IconClose } from "./navGlyphs";
 // ---------------------------------------------------------------------------
 
 const STAGE_CLASS: Record<WidthStage, string> = {
-  xs: "bv-btn-xs",
-  sm: "bv-btn-sm",
-  md: "bv-btn-md",
-  lg: "bv-btn-lg",
+  xs: "glim-btn-xs",
+  sm: "glim-btn-sm",
+  md: "glim-btn-md",
+  lg: "glim-btn-lg",
 };
 
 /**
@@ -285,7 +285,7 @@ export function Button({
   // and the sidebar rail and Settings tab strip keep their own fixed widths
   // because neither is a Button.
   const stage = chip
-    ? "bv-btn-chip"
+    ? "glim-btn-chip"
     : effective === "glyph" || reactive
       ? ""
       : STAGE_CLASS[stageOverride ?? widthStage(label)];
@@ -311,7 +311,7 @@ export function Button({
 
   const hueOn = hueIndex !== undefined;
   // The reveal's own ceiling, in the label's visual units — see
-  // `.bv-label-reactive` in index.css for why a fixed one both clipped long
+  // `.glim-label-reactive` in index.css for why a fixed one both clipped long
   // labels and made short ones snap.
   const hueStyle = {
     ...(hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : {}),
@@ -344,10 +344,10 @@ export function Button({
           aria-describedby={tooltip.describedBy}
           {...tooltip.handlers}
           style={Object.keys(hueStyle).length ? hueStyle : undefined}
-          className={`bv-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""}${reactive ? " bv-reactive" : ""} ${className}`.trim()}
+          className={`glim-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""}${reactive ? " glim-reactive" : ""} ${className}`.trim()}
         >
           {showGlyph && (
-            <span className="bv-btn-glyph">
+            <span className="glim-btn-glyph">
               {busy ? (
                 <span
                   className="h-3.5 w-3.5 rounded-full border-2 border-t-transparent animate-spin inline-block"
@@ -363,9 +363,9 @@ export function Button({
               this engine could otherwise introduce 197 times over.
               Reactive gets a THIRD treatment: visible to everyone, but with a
               collapsed box that opens on hover — so unlike `sr-only` it is
-              really there, and unlike `bv-btn-label` it takes no room until
+              really there, and unlike `glim-btn-label` it takes no room until
               asked. */}
-          <span className={showText ? "bv-btn-label" : reactive ? "bv-label-reactive" : "sr-only"}>
+          <span className={showText ? "glim-btn-label" : reactive ? "glim-label-reactive" : "sr-only"}>
             {label}
           </span>
         </button>,

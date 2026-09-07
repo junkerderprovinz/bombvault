@@ -292,7 +292,7 @@ export function CadenceBuilder({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well disabled:opacity-50";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well disabled:opacity-50";
 
   return (
     // A <fieldset> — not opacity — carries the disabled state: it natively
@@ -374,7 +374,7 @@ export function CadenceBuilder({
           directly on a Card like NotifyCard's "on" row. The wrapper stays:
           it is what anchors the time picker, weekday row, interval field,
           cron editor and preview text as one group, and `inputCls`'s own
-          `bv-field-focus-well` focus treatment is specified against a
+          `glim-field-focus-well` focus treatment is specified against a
           surface2 well — the variant, not the caller, is what moved.
             Round 8 (jdp: "Die kleinen Selektoren sollen so aussehen wie die
           grossen! Die nicht ausgewaehlten Optionen sollen kein Badge sein")

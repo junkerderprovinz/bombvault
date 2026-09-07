@@ -83,7 +83,7 @@ export function RcloneCard({
         rows={6}
         placeholder={"[b2]\ntype = b2\naccount = ...\nkey = ..."}
         dir="ltr"
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 bv-field-focus text-start"
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-3 py-2 glim-field-focus text-start"
       />
       {/* GlimStone follow-up pass (Phase 2 Task 4's remainder): stays permanent
           text, NOT bubbled — it names the exact "rclone:<remote>:<bucket>/path"

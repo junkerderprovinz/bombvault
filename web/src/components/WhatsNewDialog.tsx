@@ -240,7 +240,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
 
   return (
     <div
-      className="bv-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -249,7 +249,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
         role="dialog"
         aria-modal="true"
         aria-labelledby="whatsnew-title"
-        className="bv-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
+        className="glim-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">

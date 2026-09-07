@@ -250,7 +250,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 one. It is still ONE value per viewport, so nothing about the
                 no-jumping property changes. */}
             {/* min-h-8 on every row, and it has to be stated rather than
-                inherited ([469]). `.bv-btn-xs` sets a min-WIDTH and no height, so
+                inherited ([469]). `.glim-btn-xs` sets a min-WIDTH and no height, so
                 a row is as tall as whatever it happens to contain: measured after
                 the glyph fix, a folder row came out at 20px (exactly its glyph)
                 while the ".." row above it was 32px, with identical classes and
@@ -259,7 +259,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                 button internals is worse value than saying the height out loud
                 where the list is defined. 32px is this app's control height. */}
             {/* `!justify-start` with the important modifier, and it is not a
-                shortcut ([496]). `.bv-btn` sets `justify-content: center` and
+                shortcut ([496]). `.glim-btn` sets `justify-content: center` and
                 wins on specificity, so the plain utility these rows already
                 carried was being dropped: measured in the live dialog, the
                 computed value was `center` and each folder name sat 191px into a
@@ -339,7 +339,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
                   // niedriger als der button daneben". Every field in every other
                   // dialog already uses these three, and they come to exactly the
                   // 32px this app gives a control.
-                  className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
+                  className="flex-1 min-w-0 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
                 />
                 <Button
                   label={t("folder.newFolder")}
@@ -419,7 +419,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
           dir="ltr"
-          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
+          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
         />
         {/* Icon-only (GlimStone follow-up round, point 1 — "Durchsuchen"
             becomes a glyph, no text label).

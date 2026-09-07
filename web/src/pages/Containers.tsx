@@ -575,7 +575,7 @@ function HooksEditor({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus";
 
   if (!open) return null;
 
@@ -1372,7 +1372,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
   const openSuggestions = (suggestions ?? []).filter((sg) => !currentLines.includes(sg.line));
 
   const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 bv-field-focus";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-xs font-mono px-2 py-1 glim-field-focus";
 
   if (!open) return null;
 
@@ -1754,10 +1754,10 @@ function ContainerRow({
       // button. glim-active while a backup/restore is actively running on
       // THIS row: reactive mode then shows the hue without needing hover,
       // same as knightloader's TaskRow keying off task.status === 'running'.
-      // bv-stagger-row (GlimStone motion-engine animation 3) reuses this
+      // glim-stagger-row (GlimStone motion-engine animation 3) reuses this
       // SAME `index` (via --row-i) the colour engine already threads through
       // every call site — see that class's own keyframe comment in index.css.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row ${
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -2078,7 +2078,7 @@ function StackCard({
    *  HEADING but left every card underneath it flat): StackCard is the exact
    *  same "row card in a list" shape as ContainerRow right above it in this
    *  file (and Files.tsx/Fleet.tsx/Receiver.tsx/VMs.tsx's own list-row
-   *  cards) — glim-hue/glim-tint/bv-stagger-row + `hueVars(rainbowAt(index))`
+   *  cards) — glim-hue/glim-tint/glim-stagger-row + `hueVars(rainbowAt(index))`
    *  — yet was the one card shape in this file with NO colour-engine wiring
    *  at all. By LIST INDEX among the stacks rendered together (StacksPanel's
    *  own `stacks.map`), a separate local 0-based sequence from
@@ -2170,10 +2170,10 @@ function StackCard({
     <div
       style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the whole card with it,
-      // bv-stagger-row reuses the same `index` for the entrance stagger — the
+      // glim-stagger-row reuses the same `index` for the entrance stagger — the
       // identical trio ContainerRow's own outer <div> carries above (see this
       // function's own `index` doc comment).
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-2 glim-hue glim-tint bv-stagger-row"
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-2 glim-hue glim-tint glim-stagger-row"
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
@@ -3107,7 +3107,7 @@ export function Containers() {
               placeholder={t("containers.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
+              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
             <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
             <ChipFilter<ScheduleFilterKey>
@@ -3209,7 +3209,7 @@ export function Containers() {
       )}
 
       {!loading && filterKey !== "notInstalled" && live.length > 0 && (
-        <div className="flex flex-col gap-3 bv-content-fade">
+        <div className="flex flex-col gap-3 glim-content-fade">
           {live.map((c, i) => (
             <ContainerRow
               key={c.name}
@@ -3227,7 +3227,7 @@ export function Containers() {
 
       {/* Not-installed containers that still have backups. */}
       {!loading && filterKey !== "installed" && orphans.length > 0 && (
-        <div className="flex flex-col gap-3 bv-content-fade">
+        <div className="flex flex-col gap-3 glim-content-fade">
           <div>
             {/* GlimStone follow-up pass ("half-overlap card notch"):
                 `relative` directly on this <h2> — same bare-heading case as

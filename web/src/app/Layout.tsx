@@ -179,7 +179,7 @@ export function Layout() {
           underneath it when content is tall, needs `main`'s direct child to
           become a flex item it can measure/fill against. Harmless for every
           OTHER route: a page that doesn't opt into filling that height (see
-          `bv-page-enter` below) just renders at its own natural height with
+          `glim-page-enter` below) just renders at its own natural height with
           invisible blank flex space below it — no visible change. */}
       <main className="flex-1 flex flex-col overflow-y-auto p-6 min-w-0">
         {/* `flex-1 flex flex-col` added (same fix as above): makes this
@@ -191,7 +191,7 @@ export function Layout() {
             fixed to the viewport (see AboutFooter's own header comment for
             the full before/after). Every other page ignores the extra
             height exactly as described above. */}
-        <div key={location.pathname} className="bv-page-enter flex-1 flex flex-col">
+        <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col">
           <Outlet />
         </div>
       </main>

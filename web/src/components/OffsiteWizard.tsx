@@ -630,7 +630,7 @@ export function OffsiteWizard({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
   const stepTitle = "text-xs font-semibold text-carbon-textSub uppercase tracking-widest";
 
   // Backend caveats key off the ACTUAL repo URL (live), not the Step-1 radio — so
@@ -1029,7 +1029,7 @@ export function OffsiteWizard({
                   setPLimitUpload(n);
                   debounced("pLimitUpload", () => void persistPrimarySafety({ limitUpload: n }));
                 }}
-                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -1042,7 +1042,7 @@ export function OffsiteWizard({
                   setPLimitDownload(n);
                   debounced("pLimitDownload", () => void persistPrimarySafety({ limitDownload: n }));
                 }}
-                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+                className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
               />
             </label>
           </div>
@@ -1056,7 +1056,7 @@ export function OffsiteWizard({
                 setPBudget(n);
                 debounced("pBudget", () => void persistPrimarySafety({ growthBudgetGb: n }));
               }}
-              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
             />
           </label>
           <p className="text-xs text-carbon-textMuted leading-relaxed">{t("settings.primaryRemote.budgetHint")}</p>
@@ -1115,7 +1115,7 @@ export function OffsiteWizard({
                   void save({ offsiteGrowthBudgetGB: n }, setBudgetState, () => undefined)
                 );
               }}
-              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus-well"
+              className="rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well"
             />
           </label>
         </div>

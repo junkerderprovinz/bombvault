@@ -924,7 +924,7 @@ function FileSetDialog({
   }
 
   // Portal to <body> so the fixed overlay can never be trapped by an ancestor's
-  // CSS transform (belt-and-braces with the bv-page-in keyframe fix, #62).
+  // CSS transform (belt-and-braces with the glim-page-in keyframe fix, #62).
   //
   // GlimStone follow-up pass (jdp live review: "wird das Fenster zu weit oben
   // eingeblendet, dort sitzt der Cardtitelbadge nicht richtig"): was
@@ -976,7 +976,7 @@ function FileSetDialog({
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
           />
         </div>
 
@@ -1002,7 +1002,7 @@ function FileSetDialog({
             rows={4}
             placeholder={"*.tmp\ncache/"}
             dir="ltr"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
           />
           <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
@@ -1105,9 +1105,9 @@ function FileSetRow({
       // glim-tint washes the card (trap #2 — without it this card shows
       // almost no colour at rest); glim-active while THIS set's own
       // backup/restore is actively running — mirrors ContainerRow/VMRow.
-      // bv-stagger-row (GlimStone motion-engine animation 3) — see
+      // glim-stagger-row (GlimStone motion-engine animation 3) — see
       // ContainerRow's identical comment.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row ${
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -1581,7 +1581,7 @@ export function Files() {
 
       {/* File-set cards */}
       {!loading && sets.length > 0 && (
-        <div className="flex flex-col gap-3 bv-content-fade">
+        <div className="flex flex-col gap-3 glim-content-fade">
           {sets.map((s, i) => (
             <FileSetRow
               key={s.id}

@@ -26,7 +26,7 @@ function renderButton(label = "Clear", withGlyph = true) {
 
 function stageClass(): string {
   const el = screen.getByRole("button");
-  return [...el.classList].find((c) => /^bv-btn-(xs|sm|md|lg)$/.test(c)) ?? "";
+  return [...el.classList].find((c) => /^glim-btn-(xs|sm|md|lg)$/.test(c)) ?? "";
 }
 
 beforeEach(() => {
@@ -60,7 +60,7 @@ it("keeps the same width stage in the two modes that show text", () => {
   // One distinct stage across both: adding the glyph changed what is SHOWN,
   // never how wide the control is, so nothing reflows between them.
   expect(new Set(stages).size).toBe(1);
-  expect(stages[0]).toBe("bv-btn-lg");
+  expect(stages[0]).toBe("glim-btn-lg");
 });
 
 it("takes no stage at all in the two modes that hide text", () => {
@@ -176,13 +176,13 @@ it("shows a button's text in glyph mode when it has no glyph yet", () => {
   renderButton("Clear", false);
   // 146 of the app's buttons have no glyph yet. Until they do, a blank square
   // is the worse failure, so those fall back to their text.
-  expect(screen.getByText("Clear").className).toContain("bv-btn-label");
+  expect(screen.getByText("Clear").className).toContain("glim-btn-label");
 });
 
 it("gives a longer label a wider stage", () => {
   setLabelMode("buttons", "text");
   renderButton("Kijelölés törlése");
-  expect(stageClass()).toBe("bv-btn-md");
+  expect(stageClass()).toBe("glim-btn-md");
 });
 
 // Tone -> classes. ConfirmDialog used to own this table and asserted the class
@@ -231,8 +231,8 @@ it("a chip takes no width stage and never shows its text", () => {
     setLabelMode("buttons", mode);
     render(<Button label="Remove plex" variant="chip" onClick={() => {}} />);
     const el = screen.getByRole("button");
-    expect(el.className).toContain("bv-btn-chip");
-    for (const stage of ["bv-btn-xs", "bv-btn-sm", "bv-btn-md", "bv-btn-lg"]) {
+    expect(el.className).toContain("glim-btn-chip");
+    for (const stage of ["glim-btn-xs", "glim-btn-sm", "glim-btn-md", "glim-btn-lg"]) {
       expect(el.className).not.toContain(stage);
     }
     // Announced and on hover, never painted next to the thing it removes.

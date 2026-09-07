@@ -186,7 +186,7 @@ export function PathModeSwitch({
             onChange={(e) => onChange(e.target.value)}
             placeholder="s3:bucket/path or rest:http://host:8000/repo"
             dir="ltr"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus text-start"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
           />
           {/* Was a plain flat `bg-carbon-surface2` <button> — the un-hued
               chrome this component's own `hueIndex` doc comment names.

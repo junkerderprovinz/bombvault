@@ -92,7 +92,7 @@ export function offsiteStatusText(
  * source tree, or no candidate-count estimate to divide by), and further to
  * the plain label when even startedAt isn't known yet.
  *
- * The segment reuses ProgressBar's own `bv-indeterminate` keyframe/accent color
+ * The segment reuses ProgressBar's own `glim-indeterminate` keyframe/accent color
  * so it reads as the same "progress bar" motif as the determinate bars
  * elsewhere in the app (Containers/VMs/Files/Flash cards, the restore panel) -
  * a small inline shape rather than the full ProgressBar component, since
@@ -146,7 +146,7 @@ export function OffsiteIndicator({ domain, withLabel }: { domain: Domain; withLa
       >
         <span
           className="absolute inset-y-0 w-1/3 rounded-pill"
-          style={{ background: "var(--accent)", animation: "bv-indeterminate 1.2s ease-in-out infinite" }}
+          style={{ background: "var(--accent)", animation: "glim-indeterminate 1.2s ease-in-out infinite" }}
         />
       </span>
       ↗ {label}{statusText}

@@ -56,7 +56,7 @@ import { useT } from "../lib/i18n";
 // Colour engine: the trigger keeps its EXACT visual identity as the native
 // `<input type="time">` it replaces (same `inputCls`-equivalent classes as
 // CadenceBuilder's sibling cron/everyN fields, including
-// `bv-field-focus-well`'s inset focus ring), so it fits into the existing
+// `glim-field-focus-well`'s inset focus ring), so it fits into the existing
 // well without a visual seam. The popover's selected-hour/selected-minute
 // highlight reads `var(--accent)`/`var(--accent-contrast)` directly (see
 // index.css's `.glim-time-option[aria-selected="true"]`), redefined per-item
@@ -429,7 +429,7 @@ export function TimePicker({
 
   const triggerCls =
     className ??
-    "inline-flex items-center gap-1.5 rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center gap-1.5 rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well disabled:opacity-50 disabled:cursor-not-allowed";
 
   const display = formatTime(hour, minute);
 

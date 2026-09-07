@@ -20,7 +20,7 @@ const STORAGE_KEY = "bv-shape";
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.removeAttribute("data-shape");
-  document.documentElement.classList.remove("bv-shape-transitions");
+  document.documentElement.classList.remove("glim-shape-transitions");
 });
 
 describe("SHAPES", () => {
@@ -97,26 +97,26 @@ describe("setShape", () => {
 // live `transition: border-radius`. This suite covers only the JS-side
 // contract: absent until armed, present (and idempotent) once armed.
 describe("armShapeTransitions", () => {
-  it("does not add .bv-shape-transitions until called", () => {
-    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(false);
+  it("does not add .glim-shape-transitions until called", () => {
+    expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(false);
   });
 
-  it("adds .bv-shape-transitions when called", () => {
+  it("adds .glim-shape-transitions when called", () => {
     armShapeTransitions();
-    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(true);
+    expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(true);
   });
 
   it("is idempotent — calling it again never removes or duplicates the class", () => {
     armShapeTransitions();
     armShapeTransitions();
-    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(true);
-    expect(document.documentElement.className.split(/\s+/).filter((c) => c === "bv-shape-transitions").length).toBe(1);
+    expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(true);
+    expect(document.documentElement.className.split(/\s+/).filter((c) => c === "glim-shape-transitions").length).toBe(1);
   });
 
   it("a subsequent setShape() call after arming leaves the class in place", () => {
     armShapeTransitions();
     setShape("soft");
-    expect(document.documentElement.classList.contains("bv-shape-transitions")).toBe(true);
+    expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(true);
     expect(document.documentElement.getAttribute("data-shape")).toBe("soft");
   });
 });

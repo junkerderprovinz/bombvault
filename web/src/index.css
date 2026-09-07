@@ -192,7 +192,7 @@
      32px is not a taste pick: it is what the app's own text fields already
      measure (`px-3 py-1.5 text-sm` — 20px of line box plus 12px of padding).
      A button beside a field now matches it instead of standing 4px proud.
-     Selector segments follow automatically, since `.bv-seg` reads this token
+     Selector segments follow automatically, since `.glim-seg` reads this token
      rather than carrying its own number. */
   --btn-pad-x: 0.875rem;
   --btn-gap: 0.5rem;
@@ -203,7 +203,22 @@
   --btn-w-lg: 15rem;
 }
 
-.bv-btn {
+/* The one raised surface, from GlimStone. It was already being used on the
+   glyph gallery and defined nowhere, so that element rendered with no ground,
+   no radius and no elevation at all. Nothing failed and no test went red: a
+   class with no rule is invisible to TypeScript and to every assertion that
+   only checks the class is present. Found by the same check GlimStone runs on
+   its own components, applied here after the prefix sweep: which classes does
+   the code name that the stylesheet never defines?
+
+   Never nested (rule 1: one elevation). */
+.glim-card {
+  background-color: var(--carbon-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--elevation), var(--hairline);
+}
+
+.glim-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -218,22 +233,22 @@
   transition: opacity 120ms, background-color 120ms;
 }
 
-.bv-btn:disabled {
+.glim-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.bv-btn-xs { min-width: var(--btn-w-xs); }
-.bv-btn-sm { min-width: var(--btn-w-sm); }
-.bv-btn-md { min-width: var(--btn-w-md); }
-.bv-btn-lg { min-width: var(--btn-w-lg); }
+.glim-btn-xs { min-width: var(--btn-w-xs); }
+.glim-btn-sm { min-width: var(--btn-w-sm); }
+.glim-btn-md { min-width: var(--btn-w-md); }
+.glim-btn-lg { min-width: var(--btn-w-lg); }
 
 /* The remove control inside a pill (Button variant="chip"). It takes no width
    stage and none of the button height: it has to fit INSIDE its chip, which is
    a 0.75rem-text pill. It inherits the pill's ink rather than painting its own
    surface, so it reads as part of the chip and stays correct on an accent
    background as well as a neutral one. */
-.bv-btn-chip {
+.glim-btn-chip {
   height: 1.125rem;
   width: 1.125rem;
   min-width: 0;
@@ -243,12 +258,12 @@
   transition: opacity 120ms, background-color 120ms;
 }
 
-.bv-btn-chip:hover:not(:disabled) {
+.glim-btn-chip:hover:not(:disabled) {
   opacity: 1;
   background-color: color-mix(in srgb, currentColor 18%, transparent);
 }
 
-.bv-btn-chip svg {
+.glim-btn-chip svg {
   width: 0.625rem;
   height: 0.625rem;
 }
@@ -259,11 +274,11 @@
    on the CONTENT: with the label hidden in glyph mode a segment collapsed to
    its 16px glyph and the whole strip visibly shrank on switching. Height is
    also what makes a tab strip line up with a button sitting next to it. */
-.bv-seg {
+.glim-seg {
   /* Page-level strips (Settings tabs, the Theme/Shape/Motion/Labels pickers)
      take the RAIL's row height, not the button height — they are tabs, and
      tabs match the tabs opposite them. The compact glyph segments that sit in
-     form rows use `.bv-seg-btn` below instead, because those stand beside
+     form rows use `.glim-seg-btn` below instead, because those stand beside
      inputs and have to match THOSE. */
   height: var(--nav-row-h);
   padding-block: 0;
@@ -284,18 +299,18 @@
    off the shared centre line. */
 /* The rail row's own box, stated rather than derived from padding, so a tab
    strip can be given the identical one via the same token. */
-.bv-nav-row {
+.glim-nav-row {
   height: var(--nav-row-h);
   box-sizing: border-box;
 }
 
-/* Same reason as `.bv-btn.bv-reactive` above: a closed reactive row must not
+/* Same reason as `.glim-btn.glim-reactive` above: a closed reactive row must not
    reserve a gap beside a zero-width label. */
-.bv-nav-row.bv-reactive {
+.glim-nav-row.glim-reactive {
   gap: 0;
 }
 
-.bv-nav-row > svg {
+.glim-nav-row > svg {
   width: 1.25rem;
   height: 1.25rem;
   flex: none;
@@ -307,12 +322,12 @@
    only the rail scaled them up, so a Settings tab and a nav row showed the same
    symbol at two sizes on one screen.
 
-   Scoped to `.bv-seg`, which is the `lg` page-level strip (Selector.tsx's SIZE
+   Scoped to `.glim-seg`, which is the `lg` page-level strip (Selector.tsx's SIZE
    table) — the small `sm`/`md` segments (heatmap toggle, weekday pills,
    PathModeSwitch) sit in shorter boxes than `--btn-h` and a 20px glyph would
    burst them. Height is fixed there anyway, so nothing reflows. */
-.bv-seg > svg,
-.bv-seg-btn > svg {
+.glim-seg > svg,
+.glim-seg-btn > svg {
   width: 1.25rem;
   height: 1.25rem;
   flex: none;
@@ -321,7 +336,7 @@
 /* A glyph-carrying segment that lives in a FORM ROW rather than a tab strip
    (the Local/Off-site switches). Same box as a button, because that is what it
    stands next to — an input and a browse button, both `--btn-h`. */
-.bv-seg-btn {
+.glim-seg-btn {
   height: var(--btn-h);
   padding-block: 0;
   display: inline-flex;
@@ -334,7 +349,7 @@
    ist auf den lokal und ordner durchsuchen buttons nicht gleich groß" — the
    segment scaled its glyph up and the button did not, so the same symbol came
    in two sizes on one row). */
-.bv-btn-glyph > svg {
+.glim-btn-glyph > svg {
   width: 1.25rem;
   height: 1.25rem;
   flex: none;
@@ -342,7 +357,7 @@
 
 /* The key control's box, GlimStone 1.7.5. Height only: everything else about a
    button is unchanged, so a key control is the same button standing taller. */
-.bv-btn-key {
+.glim-btn-key {
   height: var(--btn-h-key);
 }
 
@@ -350,7 +365,7 @@
    symbol in a large button rather than as a bigger control, and on a glyph-only
    key control the drawing is the entire label, so it is the thing that has to
    be legible. The step matches the height's: 1.25rem -> 1.375rem. */
-.bv-btn-key .bv-btn-glyph > svg {
+.glim-btn-key .glim-btn-glyph > svg {
   width: 1.375rem;
   height: 1.375rem;
 }
@@ -362,11 +377,11 @@
    same button in glyph mode. The gap comes back as the LABEL's own
    `margin-inline-start` when it opens, so the spacing is unchanged once the
    words are out. */
-.bv-btn.bv-reactive {
+.glim-btn.glim-reactive {
   gap: 0;
 }
 
-.bv-btn-glyph {
+.glim-btn-glyph {
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -374,7 +389,7 @@
 
 /* The label may be narrower than its stage; it must not stretch the button
    past it either, so long text ellipsises rather than breaking a row. */
-.bv-btn-label {
+.glim-btn-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -392,7 +407,7 @@
 
    `max-width` is what animates, not `width`: the label's natural width is
    unknown to CSS, and `width: auto` does not transition. 14rem is a ceiling
-   nothing here reaches — `.bv-btn-label`'s own ellipsis handles anything that
+   nothing here reaches — `.glim-btn-label`'s own ellipsis handles anything that
    would.
 
    `padding: 0` is load-bearing, not tidiness. `max-width: 0` clips CONTENT,
@@ -405,7 +420,7 @@
    accessible name: that is the label text itself, which stays in the DOM in
    every mode.
    --------------------------------------------------------------------------- */
-.bv-label-reactive {
+.glim-label-reactive {
   display: inline-block;
   max-width: 0;
   opacity: 0;
@@ -436,10 +451,10 @@
    margin, that one hands back the resting `translateX`/`scaleX`. Adding a
    state to one list and not the other leaves the label revealed but still
    displaced, which is what [527] had to repair. */
-.bv-reactive.glim-active .bv-label-reactive,
-.bv-reactive:hover .bv-label-reactive,
-.bv-reactive:focus-visible .bv-label-reactive,
-.bv-reactive:focus-within .bv-label-reactive {
+.glim-reactive.glim-active .glim-label-reactive,
+.glim-reactive:hover .glim-label-reactive,
+.glim-reactive:focus-visible .glim-label-reactive,
+.glim-reactive:focus-within .glim-label-reactive {
   /* The ceiling comes from the label's own length, not a fixed number.
      A fixed 14rem did two bad things at once: it CLIPPED anything longer (jdp:
      "der überspringenbutton zeigt nicht den ganzen text bei mousover" — that
@@ -471,7 +486,7 @@
   /* Subtle: the words widen and fade in, and that is all. One easing, one
      duration, no overshoot — this is the setting for people who want the
      feature without the theatre. */
-  :root[data-motion="subtle"] .bv-label-reactive {
+  :root[data-motion="subtle"] .glim-label-reactive {
     transition:
       max-width 160ms cubic-bezier(0.22, 0.61, 0.36, 1),
       opacity 120ms ease-out,
@@ -483,7 +498,7 @@
      width does the bouncing and nothing else has to move), while the text
      itself slides in from the left and unsquashes — it starts slightly
      compressed and scales back to 1 as it lands. */
-  :root[data-motion="full"] .bv-label-reactive {
+  :root[data-motion="full"] .glim-label-reactive {
     transition:
       max-width 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
       opacity 180ms ease-out,
@@ -509,10 +524,10 @@
      the file made them move together. They are adjacent and cross-referenced
      now, which is the cheapest guard available short of merging them — and they
      cannot merge, because one is inside the reduced-motion gate and one is not. */
-  :root[data-motion="full"] .bv-reactive.glim-active .bv-label-reactive,
-  :root[data-motion="full"] .bv-reactive:hover .bv-label-reactive,
-  :root[data-motion="full"] .bv-reactive:focus-visible .bv-label-reactive,
-  :root[data-motion="full"] .bv-reactive:focus-within .bv-label-reactive {
+  :root[data-motion="full"] .glim-reactive.glim-active .glim-label-reactive,
+  :root[data-motion="full"] .glim-reactive:hover .glim-label-reactive,
+  :root[data-motion="full"] .glim-reactive:focus-visible .glim-label-reactive,
+  :root[data-motion="full"] .glim-reactive:focus-within .glim-label-reactive {
     transform: translateX(0) scaleX(1);
   }
 }
@@ -684,7 +699,7 @@
   --focus-ring-flat: rgba(252, 196, 25, .55);
 
   /* Field-focus outline (GlimStone form-engine #8, spec-compliance fix) —
-     see the .bv-field-focus/.bv-field-focus-well comment further down for
+     see the .glim-field-focus/.glim-field-focus-well comment further down for
      what this is. A spec-compliance review found the brightness-step-only
      treatment below (--field-focus-well) could not be both visible enough
      for SC 1.4.11 AND keep the field's own text readable, so a hairline
@@ -694,7 +709,7 @@
      verbatim: --focus-ring's rgba(252,196,25,.55) was verified against
      --carbon-surface/--carbon-bg (#262626/#161616), much darker than what
      this outline actually renders against — a field's OWN background at
-     focus (--carbon-surface3 #525252 for .bv-field-focus, or
+     focus (--carbon-surface3 #525252 for .glim-field-focus, or
      --field-focus-well below for the well variant) — where it only manages
      2.58:1 / 2.37:1, under the 3:1 minimum. The higher .8 opacity here (same
      accent hue, same amber family, nothing new) composites to ~3.71:1 on
@@ -706,7 +721,7 @@
   --field-focus-ring: rgba(252, 196, 25, .8);
 
   /* Field focus, the "well" variant only (GlimStone form-engine #8) — see the
-     .bv-field-focus-well comment further down in this file for what this is
+     .glim-field-focus-well comment further down in this file for what this is
      and why it exists. The ORIGINAL value here was #8e8e8e, verified only
      against --carbon-surface2 (#393939, the WELL's own OUTER background) at
      3.53:1 — never checked against what the fill actually sits under
@@ -717,7 +732,7 @@
      actually render (they set no placeholder colour, so Chromium's UA
      default applies), or 1.01:1 for the two fields that DO pin it to
      --carbon-textMuted #8d8d8d (ActivityLog/ErrorDetailPanel — both the
-     .bv-field-focus variant, so that worst case is hypothetical here).
+     .glim-field-focus variant, so that worst case is hypothetical here).
      Now that --field-focus-ring above is doing the real SC 1.4.11 work,
      this only needs to be a modest, genuine brightness step off
      --carbon-surface3 (#525252) that does NOT break text contrast: #5a5a5a
@@ -843,10 +858,10 @@
      card + heatmap cell, Containers.tsx's 4 exclusion-assistant controls —
      none of them form fields, so Phase 1 Task 8's brightness-step migration
      never touched them) now point at --focus-ring directly instead — see
-     the .bv-field-focus comment below for the full "where does --focus-ring
+     the .glim-field-focus comment below for the full "where does --focus-ring
      reach today" note, updated to match. Task 8 (focus system completion)
      did not need to touch those 7 call sites again; it added the universal
-     `:focus-visible` base rule (below, right after .bv-field-focus-well) and
+     `:focus-visible` base rule (below, right after .glim-field-focus-well) and
      verified it composes correctly with the [data-rainbow] .glim-hue
      --focus-ring override further down this file.
 
@@ -1036,7 +1051,7 @@
   --field-focus-ring: rgba(142, 106, 0, 1);
 
   /* Field focus, "well" variant (GlimStone form-engine #8) — see the
-     .bv-field-focus-well comment further down for what this is. The
+     .glim-field-focus-well comment further down for what this is. The
      ORIGINAL value here was #787878, verified only against --carbon-surface2
      (#e8e8e8, the WELL's own OUTER background) at 3.60:1 — never checked
      against the field's OWN content sitting on that fill. On #787878,
@@ -1479,7 +1494,7 @@ body {
    TASK 8 (complete the focus system) closed that gap: see the base
    `:focus-visible { outline: 2px solid var(--focus-ring); outline-offset:
    2px }` rule, adopted verbatim from the reference (glimstone/reference/
-   tokens.css) further down this file, right after .bv-field-focus-well
+   tokens.css) further down this file, right after .glim-field-focus-well
    below — that rule's own comment covers what it reaches, how it composes
    with `[data-rainbow] .glim-hue` (below) and with the two field-focus rules
    immediately below it, and why none of the hand-opted-in controls above
@@ -1492,11 +1507,11 @@ body {
    list and reasoning).
 
    Two variants, chosen by what the field already rests on:
-   - .bv-field-focus — the common case (most fields in the app): resting
+   - .glim-field-focus — the common case (most fields in the app): resting
      directly on a card/page surface (bg-carbon-surface2), steps to
      bg-carbon-surface3 on focus — literally the token pair the design
      language names for this.
-   - .bv-field-focus-well — a field nested inside an already-surface2 "well"
+   - .glim-field-focus-well — a field nested inside an already-surface2 "well"
      (CloudCard, CadenceBuilder, the off-site wizard/targets forms, the
      notify/integrity selects, Fleet's mesh "apply to" domain picker) rests
      on bg-carbon-surface3 instead, so stepping to that SAME surface3 on
@@ -1533,12 +1548,12 @@ body {
    default focus outline (Chromium resolves `outline-style: auto` to a real,
    visible ring; verified live) fills the gap. Declaring our own 1px outline
    here overrides that native default the same way `outline: none` used to. */
-.bv-field-focus:focus {
+.glim-field-focus:focus {
   background-color: var(--carbon-surface3);
   outline: 1px solid var(--field-focus-ring);
   outline-offset: -1px;
 }
-.bv-field-focus-well:focus {
+.glim-field-focus-well:focus {
   background-color: var(--field-focus-well);
   outline: 1px solid var(--field-focus-ring);
   outline-offset: -1px;
@@ -1549,13 +1564,13 @@ body {
    (glimstone/reference/tokens.css), adopted verbatim. Before this rule
    existed, --focus-ring reached only the handful of shared controls that
    opted in by hand plus the 7 sites Task 7 moved off the old blue outline
-   (see the .bv-field-focus comment above for that full history); ~215
+   (see the .glim-field-focus comment above for that full history); ~215
    ordinary buttons and links across the app fell through to the browser's
    own native default focus outline instead of this app's token. This one
    rule closes that gap for all of them at once — no per-component change
    needed, and safe to add with nothing to remove first: nothing in the app
    sets `outline: none`, so there was no earlier suppression to undo (see
-   the .bv-field-focus comment above for why that distinction matters — the
+   the .glim-field-focus comment above for why that distinction matters — the
    field rules DO have to fight a native default this way).
 
    Composition with rainbow (`[data-rainbow] .glim-hue` further down this
@@ -1573,7 +1588,7 @@ body {
    on/off/reactive: a plain button/link gets the flat ring, a hue-enabled
    Selector segment gets its own position's ring instead.
 
-   Composition with form fields (.bv-field-focus/-well immediately above,
+   Composition with form fields (.glim-field-focus/-well immediately above,
    Phase 1 Task 8): NOT a double ring. Both field rules key off `:focus`
    (not `:focus-visible`) and declare their own explicit
    `outline`/`outline-offset` at (0,2,0) specificity — one class plus one
@@ -1710,7 +1725,7 @@ body {
      brings the hue back for reactive mode regardless. This token was written
      during Task 2/3, ahead of anything reading it, specifically for the base
      `:focus-visible { outline: 2px solid var(--focus-ring) }` rule (Task 8,
-     see the .bv-field-focus-well comment above) to reach through once it
+     see the .glim-field-focus-well comment above) to reach through once it
      existed — it now does; verified live.
 
      FALLBACK GUARD (code-quality follow-up, not part of Task 8's own
@@ -1739,7 +1754,7 @@ body {
   /* Follow-up to the above (Phase 2 whole-branch review item 1): a FIELD
      inside a hued row (e.g. VMs.tsx's Method <select>, also Containers.tsx/
      Files.tsx) still focused with the flat amber --field-focus-ring
-     (.bv-field-focus/.bv-field-focus-well further up this file both read
+     (.glim-field-focus/.glim-field-focus-well further up this file both read
      that token, not --focus-ring) while sibling buttons in the same row
      correctly picked up --item-hue-ring via the redefinition above — two
      different ring colours in one visually-hued row. Same var chain as
@@ -1930,14 +1945,14 @@ body {
    the five switches on the Paths tab painted its idle glyph rgb(255,131,43)
    while every other icon in the same card was rgb(244,244,244).
 
-   Scoped to `.bv-seg-btn`, which is exactly the compact form-row variant and
-   never the `.bv-seg` tab strip, so the rainbow keeps the surface it was
+   Scoped to `.glim-seg-btn`, which is exactly the compact form-row variant and
+   never the `.glim-seg` tab strip, so the rainbow keeps the surface it was
    designed for. The idle glyph then inherits `text-carbon-textSub` from its own
    segment, the way the label beside it already did. */
-.bv-seg-btn.glim-hue-icon:not(.glim-active) svg,
-[data-rainbow="reactive"] .bv-seg-btn.glim-hue-icon:not(.glim-active) svg,
-[data-rainbow="reactive"] .bv-seg-btn.glim-hue-icon:not(.glim-active):hover svg,
-[data-rainbow="reactive"] .bv-seg-btn.glim-hue-icon:not(.glim-active):focus-within svg {
+.glim-seg-btn.glim-hue-icon:not(.glim-active) svg,
+[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active) svg,
+[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active):hover svg,
+[data-rainbow="reactive"] .glim-seg-btn.glim-hue-icon:not(.glim-active):focus-within svg {
   color: inherit;
 }
 
@@ -1953,13 +1968,13 @@ body {
    Sidebar.tsx's main nav rail (Dashboard/Recovery/Containers/.../Settings) —
    see Sidebar.tsx's own header comment for the full history of that
    decision and why jdp has now reversed it. NavItem no longer carries the
-   `.bv-nav-idle` marker at all; it carries `.glim-hue`/`.glim-hue-icon`
+   `.glim-nav-idle` marker at all; it carries `.glim-hue`/`.glim-hue-icon`
    instead (via hueVars(rainbowAt(index)), the SAME mechanism any other
    hue-enabled Selector segment uses), which the GENERIC `.glim-hue-icon`
    rule above already implements correctly with NO changes needed here —
    Sidebar.tsx's own nav items simply became one more consumer of that
    existing rule, the same way the Settings tab strip's own Selector
-   segments always were. `.bv-nav-idle` survives, scoped down to its one
+   segments always were. `.glim-nav-idle` survives, scoped down to its one
    remaining real consumer: SidebarControls' Simple/Advanced button, a
    genuine set-of-ONE with no sibling of the same type to hold a stable
    rainbow POSITION against (the colour engine's own "anything that is the
@@ -1973,15 +1988,15 @@ body {
    mode that needs its own explicit rest/hover pair restated here (mirroring
    [data-rainbow="reactive"] .glim-hue below), since this element carries no
    .glim-hue of its own for that block to redefine --accent on. */
-.bv-nav-idle svg {
+.glim-nav-idle svg {
   transition: color 150ms ease;
   color: var(--accent);
 }
-[data-rainbow="reactive"] .bv-nav-idle svg {
+[data-rainbow="reactive"] .glim-nav-idle svg {
   color: var(--carbon-text-muted);
 }
-[data-rainbow="reactive"] .bv-nav-idle:hover svg,
-[data-rainbow="reactive"] .bv-nav-idle:focus-within svg {
+[data-rainbow="reactive"] .glim-nav-idle:hover svg,
+[data-rainbow="reactive"] .glim-nav-idle:focus-within svg {
   color: var(--accent);
 }
 
@@ -2082,11 +2097,11 @@ body {
    always physically left→right regardless of reading direction. The track's
    own bounds (ProgressBar.tsx's `start-0 end-0`) already follow direction
    correctly — only this animation's two endpoints needed the override. */
-:root { --bv-indet-from: -35%; --bv-indet-to: 100%; }
-[dir="rtl"] { --bv-indet-from: 100%; --bv-indet-to: -35%; }
-@keyframes bv-indeterminate {
-  0%   { left: var(--bv-indet-from); }
-  100% { left: var(--bv-indet-to); }
+:root { --glim-indet-from: -35%; --glim-indet-to: 100%; }
+[dir="rtl"] { --glim-indet-from: 100%; --glim-indet-to: -35%; }
+@keyframes glim-indeterminate {
+  0%   { left: var(--glim-indet-from); }
+  100% { left: var(--glim-indet-to); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -2122,7 +2137,7 @@ body {
    Tokens, not per-state duplicated rules: "subtle" and "off" reuse the
    IDENTICAL keyframes as "full", just parameterized to smaller numbers —
    the same technique this file already uses for --glim-toast-slide (per
-   [dir]) and --bv-indet-from/--bv-indet-to (per [dir]) rather than forking
+   [dir]) and --glim-indet-from/--glim-indet-to (per [dir]) rather than forking
    the keyframe itself. Declared on a bare :root FIRST as the full-intensity
    values (byte-identical to what this app already shipped before this axis
    existed), so anything that runs before main.tsx's
@@ -2130,14 +2145,14 @@ body {
    still renders the pre-existing look rather than an undefined fourth state.
 
    Retrofit, not new-code-only: these tokens drive the 5 keyframes that
-   already existed before this axis (bv-page-in/glim-toast-in/glim-fade-in/
+   already existed before this axis (glim-page-in/glim-toast-in/glim-fade-in/
    the shake pulse fallback/glim-shake) — the exact "new pattern only wired
    into freshly-written code, old code silently exempt" trap this codebase's
    own colour-engine standing rule already diagnoses once for the rainbow
    axis. A future pass adding new keyframes should read these vars too,
    not reinvent a second scheme. */
 :root {
-  --motion-page-dist: 8px;               /* .bv-page-enter's translateY distance */
+  --motion-page-dist: 8px;               /* .glim-page-enter's translateY distance */
   --motion-page-dur: 320ms;
   --motion-page-ease: cubic-bezier(.2, .6, .2, 1);
 
@@ -2163,7 +2178,7 @@ body {
 
      1) Shape-morph (--motion-shape-*): border-radius transition duration
         when data-shape changes live (armed post-mount by lib/shape.ts's
-        armShapeTransitions() — see .bv-shape-transitions further down).
+        armShapeTransitions() — see .glim-shape-transitions further down).
      2) Confirmation-pulse (--motion-pulse-*): glim-pulse's glow+scale
         amplitude/duration on an auto-saved field's SUCCESS, the gentler
         sibling of glim-shake's failure feedback above.
@@ -2172,7 +2187,7 @@ body {
         fade/slide-in duration.
      4) Colour-wipe (--motion-wipe-*): how long a coordinated colour
         transition runs across the whole page when [data-rainbow] itself
-        changes (lib/appearance.ts's applyRainbow() toggles .bv-colour-wipe
+        changes (lib/appearance.ts's applyRainbow() toggles .glim-colour-wipe
         for exactly this long — see that function's own comment).
      5) Drawn-checkmark (--motion-check-*): the SVG stroke-dashoffset draw
         duration for a check that just went busy -> fresh success.
@@ -2244,10 +2259,10 @@ body {
      section, for the same element — see this token block's own file-header
      paragraph above for why "off" borrows those numbers rather than
      inventing its own.
-       --motion-page-dist: 0 makes bv-page-in a PURE opacity fade —
+       --motion-page-dist: 0 makes glim-page-in a PURE opacity fade —
      translateY(0) is a no-op transform, so this is numerically identical to
-     bv-fade-in already, with no keyframe swap needed to match that block's
-     own `bv-fade-in 200ms ease`.
+     glim-fade-in already, with no keyframe swap needed to match that block's
+     own `glim-fade-in 200ms ease`.
        --motion-toast-slide-scale: 0 does the identical trick for
      glim-toast-in, matching that block's own swap to `glim-fade-in 160ms
      ease` (a pure fade, translateX(0) the whole time).
@@ -2263,7 +2278,7 @@ body {
      is INVISIBLE, not a signal, and this control exists specifically to
      tell a user "you clicked it, the backend said no" — so `.glim-shake`
      itself (see its own rule below) swaps animation-name entirely to
-     bv-egg-fade-pulse for data-motion="off", the exact keyframe the
+     glim-egg-fade-pulse for data-motion="off", the exact keyframe the
      (reduce) block already uses for the same reason. */
   --motion-page-dist: 0px;
   --motion-page-dur: 200ms;
@@ -2333,7 +2348,7 @@ body {
 
 
 /* Logo idle hover sway (Item 7b) */
-@keyframes bv-logo-sway {
+@keyframes glim-logo-sway {
   0%, 100% { transform: rotate(-2.5deg); }
   50%      { transform: rotate(2.5deg); }
 }
@@ -2341,7 +2356,7 @@ body {
 /* Easter-egg: wobble → shatter + explosion cloud (Item 6). The logo breaks into an
    N×N grid of fragments that fly outward under a little gravity, while a flash,
    shockwave, billowing fire→smoke cloud and sparks fire behind them. */
-@keyframes bv-egg-shake {
+@keyframes glim-egg-shake {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   15%      { transform: translate(-2px, 1px) rotate(-8deg); }
   30%      { transform: translate(2px, -1px) rotate(7deg); }
@@ -2352,26 +2367,26 @@ body {
 
 /* Each fragment flies from rest to its per-tile (--dx,--dy) with spin, a downward
    gravity nudge, shrink and fade. Custom props are set inline per tile in the TSX. */
-@keyframes bv-frag-fly {
+@keyframes glim-frag-fly {
   0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
   12%  { opacity: 1; }
   100% { transform: translate(var(--dx, 0), calc(var(--dy, 0) + 24px)) rotate(var(--rot, 0deg)) scale(.22); opacity: 0; }
 }
 
 /* Bright central flash — pops white/yellow and is gone fast. */
-@keyframes bv-egg-flash {
+@keyframes glim-egg-flash {
   0%   { transform: translate(-50%, -50%) scale(.25); opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
 }
 
 /* Shockwave ring expanding outward. */
-@keyframes bv-egg-shock {
+@keyframes glim-egg-shock {
   0%   { transform: translate(-50%, -50%) scale(.2); opacity: .85; }
   100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
 }
 
 /* Billowing explosion cloud — each puff scales up, drifts to (--cx,--cy) and fades. */
-@keyframes bv-cloud-billow {
+@keyframes glim-cloud-billow {
   0%   { transform: translate(-50%, -50%) translate(0, 0) scale(.2); opacity: 0; }
   18%  { opacity: .95; }
   55%  { opacity: .7; }
@@ -2379,12 +2394,12 @@ body {
 }
 
 /* Flying sparks — outward to (--tx,--ty) with a little gravity, shrink and fade. */
-@keyframes bv-spark-fly {
+@keyframes glim-spark-fly {
   0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
   100% { transform: translate(-50%, -50%) translate(var(--tx, 0), calc(var(--ty, 0) + 18px)) scale(.2); opacity: 0; }
 }
 
-@keyframes bv-egg-fade-pulse {
+@keyframes glim-egg-fade-pulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: .55; }
 }
@@ -2393,16 +2408,16 @@ body {
    hard-coded 8px — the motion-engine token above (GlimStone motion-engine
    section, further up this file) parameterizes the distance per
    off/subtle/full without needing a second keyframe. */
-@keyframes bv-page-in {
+@keyframes glim-page-in {
   from { opacity: 0; transform: translateY(var(--motion-page-dist, 8px)); }
   /* End at `none`, not translateY(0): animation-fill-mode:both keeps the final
-     keyframe, and any transform other than none makes .bv-page-enter a
+     keyframe, and any transform other than none makes .glim-page-enter a
      containing block for position:fixed descendants — which anchored in-page
      dialogs (the Files add/edit dialog, #62) to the page box instead of the
      viewport and cut them off at the top. `none` interpolates identically. */
   to   { opacity: 1; transform: none; }
 }
-@keyframes bv-fade-in {
+@keyframes glim-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
@@ -2447,7 +2462,7 @@ body {
 }
 
 /* What's-new modal (#48) — gentle enter; reduced-motion users get just a fade. */
-@keyframes bv-modal-in {
+@keyframes glim-modal-in {
   from { opacity: 0; transform: translateY(10px) scale(.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
@@ -2472,7 +2487,7 @@ body {
    the motion-engine token (further up this file) scales the whole
    oscillation per off/subtle/full (0 / .5 / 1) without a second keyframe.
    The scale-0 case is never actually reached in practice: data-motion="off"
-   swaps `.glim-shake`'s animation-name entirely to bv-egg-fade-pulse below
+   swaps `.glim-shake`'s animation-name entirely to glim-egg-fade-pulse below
    (a 0-amplitude shake is invisible, not a "rejected" signal) — the token
    is still defined for that state for documentation symmetry with the
    other three motion tokens. */
@@ -2492,7 +2507,7 @@ body {
    hard-codes a literal the engine can't reach).
    --------------------------------------------------------------------------- */
 
-/* 1) Shape-morph. .bv-shape-transitions is added to <html> by lib/shape.ts's
+/* 1) Shape-morph. .glim-shape-transitions is added to <html> by lib/shape.ts's
    armShapeTransitions() two animation frames after first paint (see that
    function's own comment for why two, not zero or one) — NEVER present
    during the very first render, so the very first (correct, already-
@@ -2524,23 +2539,23 @@ body {
 /* 3) Staggered list fade-in. --row-i is set inline per row (ContainerRow/
    VMRow/FileSetRow/FleetPeerCard/ReceivedRepoCard, each already threading a
    0-based `index` prop for the colour engine — this reuses that SAME index,
-   not a second one) via the `bv-stagger-row` class. `min()` is what enforces
+   not a second one) via the `glim-stagger-row` class. `min()` is what enforces
    the "a 50-row list still finishes within ~480ms" cap from a single
    declaration — no JS clamping needed. A row's animation only ever plays
    once: it fires when React actually CREATES that row's DOM node (a fresh
    mount — a new container appearing, or the whole list's first render), and
    a list re-rendering with the SAME rows (a polling refresh) never replays
    it, because those nodes never unmount in the first place. */
-@keyframes bv-row-in {
+@keyframes glim-row-in {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
 
-/* 4) Colour-wipe. lib/appearance.ts's applyRainbow() adds `.bv-colour-wipe`
+/* 4) Colour-wipe. lib/appearance.ts's applyRainbow() adds `.glim-colour-wipe`
    to <html> for exactly --motion-wipe-dur (plus a small margin) whenever
    [data-rainbow]'s resolved value actually changes AFTER mount (never on
    the boot-time applyStoredRainbow() call) — see that function's own
-   comment for the exact guard. The actual `.bv-colour-wipe *` rule (further
+   comment for the exact guard. The actual `.glim-colour-wipe *` rule (further
    down, inside the no-preference block) is scoped to that TEMPORARY class,
    not a permanent app-wide rule, specifically because it must not run
    during ordinary hover/press colour changes elsewhere in the app — it only
@@ -2551,25 +2566,25 @@ body {
    makes the path exactly 1 unit long regardless of its real geometry, so a
    plain 1 -> 0 dashoffset keyframe always draws the whole glyph without any
    getTotalLength() math. The SAFE DEFAULT lives OUTSIDE this media query
-   (further down, an unconditional `.bv-check-draw` rule sets dashoffset to
+   (further down, an unconditional `.glim-check-draw` rule sets dashoffset to
    0 — fully drawn, no animation declared at all): a reduced-motion viewer
    must see a complete checkmark immediately, never one stuck permanently
    invisible at dashoffset 1 because the only rule that ever set it to 0
    lived inside a media query that never matched for them. */
-@keyframes bv-check-draw {
+@keyframes glim-check-draw {
   to { stroke-dashoffset: 0; }
 }
 
 /* 6) Skeleton-to-content crossfade. Dashboard.tsx's (and other pages')
    loading placeholder is today a plain "Checking…" text line, not a
-   shimmering skeleton — .bv-content-fade fades the REPLACEMENT content in
+   shimmering skeleton — .glim-content-fade fades the REPLACEMENT content in
    once `loading` flips false, the exact node React creates fresh at that
    moment (the placeholder and the real content are two different
    conditionally-rendered elements, never the same DOM node with its text
    swapped), so — like every other entrance keyframe on this file — this
    needs no extra "did it just load" tracking of its own: a persistent class
    on a freshly-mounted node already plays exactly once. */
-@keyframes bv-content-fade-in {
+@keyframes glim-content-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
@@ -2589,23 +2604,23 @@ body {
    each time. */
 :root { --tab-dir-sign: 1; }
 [dir="rtl"] { --tab-dir-sign: -1; }
-@keyframes bv-tab-slide {
+@keyframes glim-tab-slide {
   from { opacity: 0; transform: translateX(calc(var(--tab-dir, 1) * var(--tab-dir-sign, 1) * var(--motion-tab-dist, 18px))); }
   to   { opacity: 1; transform: none; }
 }
 
 /* The logo mark hosts the normal <img> plus (at boom) the fragment grid. The FX
-   overlay (.bv-boom-fx) is a sibling so the flash / shockwave / cloud / sparks are
+   overlay (.glim-boom-fx) is a sibling so the flash / shockwave / cloud / sparks are
    never clipped or transformed by the mark. Both overflow the 64px box freely and
    are absolutely positioned, so the boom never shifts the sidebar layout. */
-.bv-logo-mark { transform-origin: center; will-change: transform; overflow: visible; }
+.glim-logo-mark { transform-origin: center; will-change: transform; overflow: visible; }
 
 /* Fragment shatter grid — a 6×6 set of slices of the current logo, overlaid on the
    64px box. Each tile paints its own slice via --egg-logo + a per-tile
    background-position, so at rest they reassemble the whole mark; at boom they fly
    apart. Tile left/top/size/background-position + --dx/--dy/--rot/--delay are inline. */
-.bv-frag-grid { position: absolute; inset: 0; pointer-events: none; }
-.bv-frag {
+.glim-frag-grid { position: absolute; inset: 0; pointer-events: none; }
+.glim-frag {
   position: absolute;
   background-image: var(--egg-logo);
   /* Each tile is a sixth of the mark and paints its own slice, so the
@@ -2620,23 +2635,23 @@ body {
   opacity: 0;
 }
 
-.bv-boom-fx { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
-.bv-boom-fx::before,
-.bv-boom-fx::after {
+.glim-boom-fx { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.glim-boom-fx::before,
+.glim-boom-fx::after {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
   border-radius: 9999px;
 }
-.bv-boom-fx::before { /* flash core — white/yellow, gone fast */
+.glim-boom-fx::before { /* flash core — white/yellow, gone fast */
   width: 48px;
   height: 48px;
   background: radial-gradient(circle, #ffffff 0%, #fff57c 40%, rgba(246, 142, 50, .5) 65%, transparent 78%);
   transform: translate(-50%, -50%) scale(.25);
   opacity: 0;
 }
-.bv-boom-fx::after { /* shockwave ring */
+.glim-boom-fx::after { /* shockwave ring */
   width: 40px;
   height: 40px;
   border: 2px solid var(--accent);
@@ -2646,7 +2661,7 @@ body {
 
 /* Soft overlapping radial puffs that build the billowing fire→smoke cloud. Hot puffs
    keep a yellow/orange core; smoke puffs fade to the logo's cool greys. */
-.bv-cloud {
+.glim-cloud {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -2657,14 +2672,14 @@ body {
   opacity: 0;
   filter: blur(2px);
 }
-.bv-cloud--hot {
+.glim-cloud--hot {
   background: radial-gradient(circle, rgba(255, 245, 124, .95) 0%, rgba(246, 142, 50, .82) 38%, rgba(125, 116, 110, .5) 66%, transparent 80%);
 }
-.bv-cloud--smoke {
+.glim-cloud--smoke {
   background: radial-gradient(circle, rgba(246, 142, 50, .55) 0%, rgba(138, 130, 124, .55) 45%, rgba(92, 88, 84, .42) 70%, transparent 82%);
 }
 
-.bv-particle {
+.glim-particle {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -2685,30 +2700,30 @@ body {
    start at dashoffset 1 (fully undrawn) and animates back to 0 — this
    bare rule is what every OTHER case (reduced motion, or a browser that
    somehow never runs that block) falls back to. */
-.bv-check-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.glim-check-draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Gentle sway on hover, only while the logo is idle (not mid-egg). */
-  .bv-logo-btn:hover .bv-logo-idle { animation: bv-logo-sway 2.4s ease-in-out infinite; }
+  .glim-logo-btn:hover .glim-logo-idle { animation: glim-logo-sway 2.4s ease-in-out infinite; }
 
-  .bv-egg-wobble { animation: bv-egg-shake 240ms ease-in-out infinite; }
+  .glim-egg-wobble { animation: glim-egg-shake 240ms ease-in-out infinite; }
 
   /* At boom the static logo vanishes (opacity, not display — so it doesn't fight the
      Tailwind block/dark:block swap) and the mark shatters into flying tiles. */
-  .bv-egg-boom .bv-logo-img { opacity: 0; }
-  .bv-egg-boom .bv-frag {
-    animation: bv-frag-fly 950ms cubic-bezier(.22, .61, .3, 1) forwards;
+  .glim-egg-boom .glim-logo-img { opacity: 0; }
+  .glim-egg-boom .glim-frag {
+    animation: glim-frag-fly 950ms cubic-bezier(.22, .61, .3, 1) forwards;
     animation-delay: var(--delay, 0ms);
   }
 
-  .bv-boom-fx::before { animation: bv-egg-flash 160ms ease-out forwards; }
-  .bv-boom-fx::after  { animation: bv-egg-shock 620ms ease-out forwards; }
-  .bv-cloud {
-    animation: bv-cloud-billow 840ms cubic-bezier(.2, .6, .3, 1) forwards;
+  .glim-boom-fx::before { animation: glim-egg-flash 160ms ease-out forwards; }
+  .glim-boom-fx::after  { animation: glim-egg-shock 620ms ease-out forwards; }
+  .glim-cloud {
+    animation: glim-cloud-billow 840ms cubic-bezier(.2, .6, .3, 1) forwards;
     animation-delay: var(--delay, 0ms);
   }
-  .bv-particle {
-    animation: bv-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
+  .glim-particle {
+    animation: glim-spark-fly 820ms cubic-bezier(.2, .6, .3, 1) forwards;
     animation-delay: var(--delay, 0ms);
   }
 
@@ -2718,7 +2733,7 @@ body {
      different intensity depending on that attribute, WITHOUT this rule
      itself needing to fork into three copies — see the token block's own
      comment for exactly what "off"/"subtle" resolve to. */
-  .bv-page-enter { animation: bv-page-in var(--motion-page-dur, 320ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both; }
+  .glim-page-enter { animation: glim-page-in var(--motion-page-dur, 320ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both; }
 
   /* Info bubble entrance (GlimStone form-engine #3). Motion-engine retrofit:
      duration reads --motion-fade-dur (110/70/0ms for full/subtle/off) — at
@@ -2741,8 +2756,8 @@ body {
      deliberately rather than silently: a future pass giving this axis
      broader coverage should read this comment before assuming it was
      missed by accident. */
-  .bv-modal-backdrop { animation: bv-fade-in 200ms ease both; }
-  .bv-modal-card { animation: bv-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
+  .glim-modal-backdrop { animation: glim-fade-in 200ms ease both; }
+  .glim-modal-card { animation: glim-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
 
   /* Generic error-feedback shake (#142) — see glim-shake's own keyframe
      comment above for the reusability contract. Motion-engine retrofit:
@@ -2750,17 +2765,17 @@ body {
      keyframe's own amplitude scales by --motion-shake-scale — but "off"
      needs more than a smaller number: a 0-amplitude shake is invisible, not
      a "rejected" signal, so data-motion="off" swaps the animation-name
-     entirely to bv-egg-fade-pulse below, the exact keyframe the (reduce)
+     entirely to glim-egg-fade-pulse below, the exact keyframe the (reduce)
      block already uses for the same control for the same reason. */
   .glim-shake { animation: glim-shake var(--motion-shake-dur, 360ms) ease-in-out; }
-  :root[data-motion="off"] .glim-shake { animation: bv-egg-fade-pulse 300ms ease-in-out; }
+  :root[data-motion="off"] .glim-shake { animation: glim-egg-fade-pulse 300ms ease-in-out; }
 
-  /* Round 2, item 1 — shape-morph. See .bv-shape-transitions's own comment
+  /* Round 2, item 1 — shape-morph. See .glim-shape-transitions's own comment
      (further up this file, alongside the other six keyframes) for why this
      lives here rather than as a permanent, unconditional rule. */
-  .bv-shape-transitions .rounded-card,
-  .bv-shape-transitions .rounded-control,
-  .bv-shape-transitions .rounded-pill {
+  .glim-shape-transitions .rounded-card,
+  .glim-shape-transitions .rounded-control,
+  .glim-shape-transitions .rounded-pill {
     transition: border-radius var(--motion-shape-dur, 260ms) var(--motion-shape-ease, cubic-bezier(.2, .6, .2, 1));
   }
 
@@ -2772,8 +2787,8 @@ body {
   /* Round 2, item 3 — staggered list fade-in. `min()` caps the total spread
      regardless of list length; see this keyframe's own comment further up
      for why a re-render of already-mounted rows never replays this. */
-  .bv-stagger-row {
-    animation: bv-row-in var(--motion-stagger-dur, 240ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both;
+  .glim-stagger-row {
+    animation: glim-row-in var(--motion-stagger-dur, 240ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both;
     animation-delay: min(calc(var(--row-i, 0) * var(--motion-stagger-step, 30ms)), var(--motion-stagger-cap, 480ms));
   }
 
@@ -2785,12 +2800,12 @@ body {
      gets the same duration so nothing visibly lags behind the rest of the
      wipe.
 
-     `.bv-colour-wipe.bv-colour-wipe *` — the doubled class is a deliberate
+     `.glim-colour-wipe.glim-colour-wipe *` — the doubled class is a deliberate
      specificity bump (two class selectors, (0,2,0), not the plain one
      class's (0,1,0)), NOT a typo. Caught LIVE, not by a code read: almost
      every real element this rule needs to reach (buttons, badges, Selector
      segments) is ALSO `.rounded-control`/`.rounded-pill` — item 1's own
-     `.bv-shape-transitions .rounded-control` rule is a two-class selector
+     `.glim-shape-transitions .rounded-control` rule is a two-class selector
      at (0,2,0), and `transition` is a SHORTHAND: the cascade doesn't merge
      two rules' property lists for the same longhands, the higher-specificity
      rule wins the entire shorthand outright. At equal (0,1,0) this rule was
@@ -2806,8 +2821,8 @@ body {
      have its OWN border-radius transition pre-empted on a doubly-matched
      element — two independent user actions inside one half-second of each
      other, judged not worth the added complexity a real merge would need. */
-  .bv-colour-wipe,
-  .bv-colour-wipe.bv-colour-wipe * {
+  .glim-colour-wipe,
+  .glim-colour-wipe.glim-colour-wipe * {
     transition:
       background-color var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
       color var(--motion-wipe-dur, 320ms) var(--motion-wipe-ease, ease),
@@ -2822,34 +2837,34 @@ body {
      draw — see components/CheckDraw.tsx and that default rule's own
      comment for the reduced-motion fallback this intentionally does NOT
      touch. */
-  .bv-check-draw {
+  .glim-check-draw {
     stroke-dashoffset: 1;
-    animation: bv-check-draw var(--motion-check-dur, 360ms) ease forwards;
+    animation: glim-check-draw var(--motion-check-dur, 360ms) ease forwards;
   }
 
   /* Round 2, item 6 — skeleton-to-content crossfade. Plays once per mount of
      the freshly-loaded content block, the same "persistent class on a
      freshly-created node" mechanism every other entrance keyframe here
      already relies on. */
-  .bv-content-fade { animation: bv-content-fade-in var(--motion-content-dur, 220ms) ease both; }
+  .glim-content-fade { animation: glim-content-fade-in var(--motion-content-dur, 220ms) ease both; }
 
   /* Round 2, item 7 — Settings tab slide. See --tab-dir/--tab-dir-sign's own
      comment further up for the direction contract. */
-  .bv-tab-slide { animation: bv-tab-slide var(--motion-tab-dur, 220ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both; }
+  .glim-tab-slide { animation: glim-tab-slide var(--motion-tab-dur, 220ms) var(--motion-page-ease, cubic-bezier(.2, .6, .2, 1)) both; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   /* No violent shatter or explosion — just a quiet fade-pulse of the logo; the
      cloud, fragments and sparks stay hidden so reduced-motion users get something
      gentle instead of a shattering blast. */
-  .bv-egg-wobble { animation: bv-egg-fade-pulse 900ms ease-in-out; }
-  .bv-egg-boom .bv-logo-img { animation: bv-egg-fade-pulse 600ms ease-in-out; }
-  .bv-frag-grid, .bv-boom-fx { display: none; }
-  .bv-page-enter { animation: bv-fade-in 200ms ease both; }
+  .glim-egg-wobble { animation: glim-egg-fade-pulse 900ms ease-in-out; }
+  .glim-egg-boom .glim-logo-img { animation: glim-egg-fade-pulse 600ms ease-in-out; }
+  .glim-frag-grid, .glim-boom-fx { display: none; }
+  .glim-page-enter { animation: glim-fade-in 200ms ease both; }
 
   /* Reduced motion: the modal only fades — no slide or scale. */
-  .bv-modal-backdrop { animation: bv-fade-in 150ms ease both; }
-  .bv-modal-card { animation: bv-fade-in 150ms ease both; }
+  .glim-modal-backdrop { animation: glim-fade-in 150ms ease both; }
+  .glim-modal-card { animation: glim-fade-in 150ms ease both; }
 
   /* Reduced motion: the toast drops its translateX slide and just fades in
      (reusing glim-fade-in, per reference/tokens.css's own reduced-motion
@@ -2858,10 +2873,10 @@ body {
   .glim-toast { animation: glim-fade-in 160ms ease both; }
 
   /* Reduced motion: no lateral shake — reuses the egg wobble's own quiet
-     fade-pulse (bv-egg-fade-pulse is already a generic opacity pulse despite
+     fade-pulse (glim-egg-fade-pulse is already a generic opacity pulse despite
      its name; the failure still needs to register, just without the
      side-to-side motion component). */
-  .glim-shake { animation: bv-egg-fade-pulse 300ms ease-in-out; }
+  .glim-shake { animation: glim-egg-fade-pulse 300ms ease-in-out; }
 }
 
 /* The native number spinner is gone ([411]).
@@ -2880,12 +2895,12 @@ body {
    The replacement lives in components/NumberField.tsx, and it owes the arrows
    back in the same breath: removing a native widget without replacing it is
    what produced "jetzt sind keine pfeiltasten mehr da" in another app. */
-.bv-num {
+.glim-num {
   appearance: textfield;
   -moz-appearance: textfield;
 }
-.bv-num::-webkit-outer-spin-button,
-.bv-num::-webkit-inner-spin-button {
+.glim-num::-webkit-outer-spin-button,
+.glim-num::-webkit-inner-spin-button {
   appearance: none;
   -webkit-appearance: none;
   margin: 0;

@@ -35,7 +35,7 @@ import { useT } from "./i18n";
 //     why the pause/resume precision itself is tested there, not here.
 //   - createPortal(..., document.body) — same fix as useConfirm.tsx/
 //     InfoBubble.tsx: a `position: fixed` viewport nested under any
-//     .bv-page-enter/.bv-modal-card ancestor (both use `transform`, which
+//     .glim-page-enter/.glim-modal-card ancestor (both use `transform`, which
 //     creates a new containing block) would be clipped to that ancestor's
 //     box instead of covering the real viewport.
 //   - quiet-mode persistence (localStorage), read once at mount exactly

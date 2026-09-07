@@ -77,7 +77,7 @@ function isKeyMismatch(err: string | undefined): boolean {
 
 // Shared mono text-input styling (off-site URLs, foreign location/key fields).
 const offsiteInput =
-  "rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono bv-field-focus";
+  "rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus";
 
 // RestoreRow — a single discovered target (container or VM) with its latest
 // snapshot and a per-item Restore button. The restore mechanics are the shared
@@ -542,7 +542,7 @@ function ForeignItemRow({
           value={snapshot}
           onChange={(e) => setSnapshot(e.target.value)}
           disabled={busy}
-          className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text bv-field-focus"
+          className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text glim-field-focus"
         >
           <option value="latest">{t("recovery.foreignLatest")}</option>
           {snaps.map((s) => (
@@ -2556,7 +2556,7 @@ export default function Recovery() {
             });
           }}
           // Only the layout stays here ([326]). Surface, hover, radius,
-          // padding, text size and colour all come from `tone` and `.bv-btn`
+          // padding, text size and colour all come from `tone` and `.glim-btn`
           // already, and restating them was not merely redundant: Tailwind
           // resolves two competing background utilities by their order in the
           // compiled stylesheet, not by the order they appear in the

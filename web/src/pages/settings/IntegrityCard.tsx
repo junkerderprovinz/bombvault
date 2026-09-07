@@ -338,7 +338,7 @@ export function IntegrityCard({
   };
 
   const selectCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well";
 
   return (
     <Card title={t("integrity.title")} hint={t("integrity.hint")} hueIndex={hueIndex}>

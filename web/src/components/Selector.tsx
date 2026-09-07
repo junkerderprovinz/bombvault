@@ -449,16 +449,16 @@ const SIZE: Record<
   SelectorSize,
   { gap: string; padding: string; glyphPadding: string; text: string }
 > = {
-  sm: { gap: "gap-1", padding: "px-2 py-0.5", glyphPadding: "px-2 bv-seg-btn", text: "text-xs" },
-  md: { gap: "gap-1.5", padding: "px-3 py-1", glyphPadding: "px-3 bv-seg-btn", text: "text-xs" },
+  sm: { gap: "gap-1", padding: "px-2 py-0.5", glyphPadding: "px-2 glim-seg-btn", text: "text-xs" },
+  md: { gap: "gap-1.5", padding: "px-3 py-1", glyphPadding: "px-3 glim-seg-btn", text: "text-xs" },
   // "lg" is the page-level scale (Settings tabs, Shape/Motion/Labels pickers).
-  // `bv-seg` gives it the button height instead of letting padding decide, so
+  // `glim-seg` gives it the button height instead of letting padding decide, so
   // the strip neither shrinks in glyph mode nor sits lower than a button.
-  lg: { gap: "gap-2", padding: "px-3 bv-seg", glyphPadding: "px-3 bv-seg", text: "text-sm" },
+  lg: { gap: "gap-2", padding: "px-3 glim-seg", glyphPadding: "px-3 glim-seg", text: "text-sm" },
 };
 
 /**
- * The padding a segment actually gets: `bv-seg`'s button height as soon as the
+ * The padding a segment actually gets: `glim-seg`'s button height as soon as the
  * segment CARRIES A GLYPH, the compact per-stage padding otherwise.
  *
  * Why the glyph is what decides, rather than the size (jdp, live: "die button
@@ -673,7 +673,7 @@ function SelectorTab({
               ? ({ ...style, "--reactive-chars": labelWidth(item.label) } as CSSProperties)
               : style
           }
-          className={`${className}${reactive ? " bv-reactive" : ""}`}
+          className={`${className}${reactive ? " glim-reactive" : ""}`}
           onClick={onSelect}
           {...tooltip.handlers}
         >
@@ -687,7 +687,7 @@ function SelectorTab({
             /* Reactive: really in the strip, just collapsed until hovered.
                `truncate` is dropped here because the reveal animates
                `max-width` and the two would fight over the same property. */
-            <span className="bv-label-reactive">{item.label}</span>
+            <span className="glim-label-reactive">{item.label}</span>
           ) : (
             (labelMode === "text" || !item.iconOnly) &&
             (!hidesLabel(labelMode) || !item.icon) && (

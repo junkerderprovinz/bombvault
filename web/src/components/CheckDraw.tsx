@@ -18,7 +18,7 @@
 // state-colour indicator in this app (design-language.md's own rule 4: the
 // four state hues are never rainbowed).
 //
-// The actual animation lives in index.css (`.bv-check-draw`, "Round 2, item
+// The actual animation lives in index.css (`.glim-check-draw`, "Round 2, item
 // 5" — see that rule's own comment, and the SAFE-DEFAULT rule right above
 // the (prefers-reduced-motion: no-preference) block it lives inside, for
 // why a reduced-motion viewer sees a fully-drawn checkmark on the very
@@ -48,7 +48,7 @@ export function CheckDraw() {
       className="inline-block shrink-0 align-[-1px]"
       aria-hidden="true"
     >
-      <path pathLength="1" className="bv-check-draw" d="M3 8.5L6.5 12L13 4" />
+      <path pathLength="1" className="glim-check-draw" d="M3 8.5L6.5 12L13 4" />
     </svg>
   );
 }

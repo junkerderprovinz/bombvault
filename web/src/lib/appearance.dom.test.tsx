@@ -51,7 +51,7 @@ beforeEach(() => {
   // instance — without fake timers each of those would leave a genuine
   // pending 500ms browser timer running past the end of its test.
   vi.useFakeTimers();
-  document.documentElement.classList.remove("bv-colour-wipe");
+  document.documentElement.classList.remove("glim-colour-wipe");
   // Drive the module back to a known, fully-off baseline. appearance.ts
   // holds `state` at module scope deliberately (see its own "Live state"
   // comment) — applyRainbow() resets both that singleton and the DOM
@@ -65,7 +65,7 @@ beforeEach(() => {
   // wipe of its own; clear it here so every test starts from a clean,
   // wipe-free baseline regardless of what the previous test left mid-flight.
   vi.runOnlyPendingTimers();
-  document.documentElement.classList.remove("bv-colour-wipe");
+  document.documentElement.classList.remove("glim-colour-wipe");
 });
 
 afterEach(() => {
@@ -210,40 +210,40 @@ describe("setRainbow", () => {
 
 // ---------------------------------------------------------------------------
 // GlimStone motion-engine, animation 4 — colour-wipe. index.css's own
-// ".bv-colour-wipe" rule (inside @media (prefers-reduced-motion:
+// ".glim-colour-wipe" rule (inside @media (prefers-reduced-motion:
 // no-preference)) is what actually turns this class into a transition; this
 // suite only covers the JS half's WIRING — that the class lands on a real
 // flip, never on a no-op re-apply, and comes back off on its own.
 // ---------------------------------------------------------------------------
 describe("applyRainbow — colour-wipe class", () => {
-  it("adds .bv-colour-wipe on a real off→on flip", () => {
+  it("adds .glim-colour-wipe on a real off→on flip", () => {
     applyRainbow({ on: true, reactive: false });
-    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+    expect(document.documentElement.classList.contains("glim-colour-wipe")).toBe(true);
   });
 
-  it("adds .bv-colour-wipe on an on→reactive flip (still a resolved-attribute change)", () => {
+  it("adds .glim-colour-wipe on an on→reactive flip (still a resolved-attribute change)", () => {
     applyRainbow({ on: true, reactive: false });
     vi.runOnlyPendingTimers();
-    document.documentElement.classList.remove("bv-colour-wipe");
+    document.documentElement.classList.remove("glim-colour-wipe");
     applyRainbow({ on: true, reactive: true });
-    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+    expect(document.documentElement.classList.contains("glim-colour-wipe")).toBe(true);
   });
 
-  it("does NOT add .bv-colour-wipe on a no-op re-apply of the identical resolved state", () => {
+  it("does NOT add .glim-colour-wipe on a no-op re-apply of the identical resolved state", () => {
     applyRainbow({ on: true, reactive: false });
     vi.runOnlyPendingTimers();
-    document.documentElement.classList.remove("bv-colour-wipe");
+    document.documentElement.classList.remove("glim-colour-wipe");
     // Same on/reactive as above — a different call (e.g. re-applying a
     // stored palette edit) but the resolved data-rainbow value is unchanged.
     applyRainbow({ on: true, reactive: false, seed: 3 });
-    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(false);
+    expect(document.documentElement.classList.contains("glim-colour-wipe")).toBe(false);
   });
 
-  it("removes .bv-colour-wipe again after its own timer fires", () => {
+  it("removes .glim-colour-wipe again after its own timer fires", () => {
     applyRainbow({ on: true, reactive: false });
-    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+    expect(document.documentElement.classList.contains("glim-colour-wipe")).toBe(true);
     vi.runOnlyPendingTimers();
-    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(false);
+    expect(document.documentElement.classList.contains("glim-colour-wipe")).toBe(false);
   });
 
   it("restarts its own timer on a second rapid flip instead of removing the class early", () => {
@@ -251,8 +251,8 @@ describe("applyRainbow — colour-wipe class", () => {
     vi.advanceTimersByTime(200); // t=200
     applyRainbow({ on: true, reactive: true }); // second flip: clears A, arms timer B due at t=700
     vi.advanceTimersByTime(400); // t=600 — B (t=700) not due yet; had A survived it WOULD have fired at 500
-    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(true);
+    expect(document.documentElement.classList.contains("glim-colour-wipe")).toBe(true);
     vi.advanceTimersByTime(150); // t=750 — past B's own t=700
-    expect(document.documentElement.classList.contains("bv-colour-wipe")).toBe(false);
+    expect(document.documentElement.classList.contains("glim-colour-wipe")).toBe(false);
   });
 });

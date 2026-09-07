@@ -316,9 +316,9 @@ export function NotifyCard({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 bv-field-focus-well";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
   const selectCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 bv-field-focus-well";
+    "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well";
   // selectCardCls (the Card-level sibling of selectCls above, for a select
   // sitting directly on the Card rather than a surface2 panel) was REMOVED
   // here — its one call site, the "on" select, became a Selector (task 1 of

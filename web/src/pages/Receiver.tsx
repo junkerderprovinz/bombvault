@@ -251,9 +251,9 @@ function ReceivedRepoCard({
       // a received-repo card has no progressMap-tracked backup/restore job of
       // its own to key it off — Check is a quick request/response action,
       // not a tracked job.
-      // bv-stagger-row (GlimStone motion-engine animation 3) — see
+      // glim-stagger-row (GlimStone motion-engine animation 3) — see
       // ContainerRow's identical comment.
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint bv-stagger-row"
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row"
     >
       {/* Header: name + badges */}
       <div className="flex items-start gap-3 flex-wrap">
@@ -472,7 +472,7 @@ function ReceiverDialog({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 bv-field-focus";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
   // `items-center` — the third and last of the three sites Files.tsx's own
   // FileSetDialog comment recorded as "same fix still owed" when that round
@@ -765,7 +765,7 @@ export function Receiver() {
 
       {/* Repo cards */}
       {!loading && repos.length > 0 && (
-        <div className="flex flex-col gap-3 bv-content-fade">
+        <div className="flex flex-col gap-3 glim-content-fade">
           {repos.map((r, i) => (
             <ReceivedRepoCard
               key={r.id}

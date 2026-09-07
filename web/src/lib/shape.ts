@@ -70,7 +70,7 @@ export function applyStoredShape(): void {
 
 /**
  * armShapeTransitions — GlimStone motion-engine, animation 1 (shape-morph).
- * Adds `.bv-shape-transitions` to <html>, the class index.css's own
+ * Adds `.glim-shape-transitions` to <html>, the class index.css's own
  * "Round 2, item 1" rule scopes its `transition: border-radius` onto — see
  * that rule's own comment for the full contract. Never removed once added:
  * every render after main.tsx calls this is by definition a LIVE change, the
@@ -95,5 +95,5 @@ export function applyStoredShape(): void {
  * kind of claim a live browser is free to disagree with.
  */
 export function armShapeTransitions(): void {
-  document.documentElement.classList.add("bv-shape-transitions");
+  document.documentElement.classList.add("glim-shape-transitions");
 }

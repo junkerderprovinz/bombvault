@@ -56,7 +56,7 @@ export function FilterPopover({
         onClick={() => setOpen((p) => !p)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        /* `bv-btn` rather than its own padding ([327], jdp: "Der Filter button
+        /* `glim-btn` rather than its own padding ([327], jdp: "Der Filter button
            größer machen und ins größensystem einbinden"). It was `py-1.5
            text-xs`: smaller than every real button, and sized by two literals
            no token could ever reach — so when `--btn-h` moved from 2.25rem to
@@ -65,7 +65,7 @@ export function FilterPopover({
            padding, gap, radius and font size from the tokens; only the surface
            colour and its hover stay local, because this trigger opens a
            popover and should not read as one of the page's actions. */
-        className="bv-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
+        className="glim-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-carbon-hover transition-colors"
       >
         {/* FILLED funnel (design-language.md "Icon glyphs", rule 218 — this
             silhouette was already closed under its old stroke, so it flips

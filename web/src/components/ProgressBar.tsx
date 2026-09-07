@@ -10,7 +10,7 @@
 // Determinate: the fill width tracks `percent` with a smooth transition.
 // Indeterminate (active but no number yet): a small accent segment loops
 // start→end, RTL-aware via a `[dir="rtl"]`-scoped custom property (keyframes
-// `bv-indeterminate` live in index.css).
+// `glim-indeterminate` live in index.css).
 // When inactive, it renders nothing.
 //
 // `label` adds a small caption naming the phase/percentage (e.g. "Restoring… 42%")
@@ -55,7 +55,7 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
           className="absolute inset-y-0 w-1/3 rounded-pill"
           style={{
             background: "var(--accent)",
-            animation: "bv-indeterminate 1.2s ease-in-out infinite",
+            animation: "glim-indeterminate 1.2s ease-in-out infinite",
           }}
         />
       ) : (

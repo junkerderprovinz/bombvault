@@ -323,12 +323,12 @@ export function ActivityLog({
           onChange={(e) => setFilterText(e.target.value)}
           placeholder={t("activityLog.filterPlaceholder")}
           aria-label={t("activityLog.filterPlaceholder")}
-          className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted bv-field-focus"
+          className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted glim-field-focus"
         />
         <select
           value={filterDomain}
           onChange={(e) => setFilterDomain(e.target.value as LogFilterDomain)}
-          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
+          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
         >
           <option value="all">{t("activityLog.filterAllDomains")}</option>
           <option value="containers">{t("activityLog.domainContainers")}</option>
@@ -341,7 +341,7 @@ export function ActivityLog({
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value as LogFilterKind)}
-          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
+          className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
         >
           <option value="all">{t("activityLog.filterAllTypes")}</option>
           <option value="backup">{t("activityLog.typeBackup")}</option>

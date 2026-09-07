@@ -140,7 +140,7 @@ let wipeLastAttr: string | null = null;
 let wipeTimer: ReturnType<typeof setTimeout> | undefined;
 
 /**
- * beginColourWipe adds `.bv-colour-wipe` to <html> — the class index.css's
+ * beginColourWipe adds `.glim-colour-wipe` to <html> — the class index.css's
  * own "Round 2, item 4" rule scopes its coordinated colour transition onto —
  * and clears it again after a fixed delay. A flat constant (not read back
  * out of --motion-wipe-dur) on purpose: that token can be as low as 0ms
@@ -157,9 +157,9 @@ let wipeTimer: ReturnType<typeof setTimeout> | undefined;
 function beginColourWipe(): void {
   if (wipeTimer !== undefined) clearTimeout(wipeTimer);
   const root = document.documentElement;
-  root.classList.add("bv-colour-wipe");
+  root.classList.add("glim-colour-wipe");
   wipeTimer = setTimeout(() => {
-    root.classList.remove("bv-colour-wipe");
+    root.classList.remove("glim-colour-wipe");
     wipeTimer = undefined;
   }, 500);
 }

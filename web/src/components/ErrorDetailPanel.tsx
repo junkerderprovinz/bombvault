@@ -160,19 +160,19 @@ export function ErrorDetailPanel({
   };
 
   // Portalled to <body> — this panel is rendered from inside Dashboard, which
-  // Layout wraps in .bv-page-enter, and that wrapper's animation leaves a
+  // Layout wraps in .glim-page-enter, and that wrapper's animation leaves a
   // computed `transform: matrix(1, 0, 0, 1, 0, 0)` behind. An identity matrix is
   // still a transform, so it makes the wrapper a containing block for
   // `position: fixed` descendants: measured inline, this backdrop covered
   // 248,24 1113x1594 instead of the real 0,0 1400x1000 viewport — the sidebar
   // stayed uncovered and clickable behind an "aria-modal" dialog, and the
   // bottom 594px hung below the fold. Same fix, same reason, as InfoBubble.tsx
-  // and lib/useConfirm.tsx (the @keyframes bv-page-in comment in index.css tries
+  // and lib/useConfirm.tsx (the @keyframes glim-page-in comment in index.css tries
   // to avoid this by ending at `transform: none`, but the computed value is the
   // identity matrix regardless, so the portal is what actually cures it).
   return createPortal(
     <div
-      className="bv-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -181,7 +181,7 @@ export function ErrorDetailPanel({
         role="dialog"
         aria-modal="true"
         aria-labelledby="errorpanel-title"
-        className="bv-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
+        className="glim-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
@@ -225,12 +225,12 @@ export function ErrorDetailPanel({
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={t("errorPanel.filterPlaceholder")}
             aria-label={t("errorPanel.filterPlaceholder")}
-            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted bv-field-focus"
+            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted glim-field-focus"
           />
           <select
             value={filterDomain}
             onChange={(e) => setFilterDomain(e.target.value)}
-            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
           >
             <option value="all">{t("activityLog.filterAllDomains")}</option>
             <option value="containers">{t("activityLog.domainContainers")}</option>
@@ -243,7 +243,7 @@ export function ErrorDetailPanel({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text bv-field-focus"
+            className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
           >
             <option value="all">{t("activityLog.filterAllTypes")}</option>
             <option value="backup">{t("activityLog.typeBackup")}</option>

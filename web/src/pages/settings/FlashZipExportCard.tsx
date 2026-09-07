@@ -226,7 +226,7 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
                   setKeep(n);
                   debounced("flashZipExportKeep", () => void persist({ flashZipExportKeep: n }));
                 }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full bv-field-focus"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
             </label>
           ) : (

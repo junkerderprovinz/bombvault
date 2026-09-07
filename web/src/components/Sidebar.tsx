@@ -215,7 +215,7 @@ const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
 // micro-interactions below animate too; all transforms are motion-safe-gated so
 // reduced-motion users get colour-only feedback (Item 7a/7d).
 const navBase =
-  "bv-nav-row flex items-center gap-3 px-3.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
+  "glim-nav-row flex items-center gap-3 px-3.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
 const navActive =
   "bg-accent text-accentContrast";
 // `rtl:-translate-x-0.5!` — physical `translate-x`, same trap as the Toggle
@@ -226,16 +226,16 @@ const navActive =
 // sidebar sits on the right. `!` beats the base rule regardless of Tailwind's
 // generated declaration order, same reasoning as the Toggle thumb fix.
 //
-// `bv-nav-idle` DROPPED from this shared string (GlimStone follow-up round,
+// `glim-nav-idle` DROPPED from this shared string (GlimStone follow-up round,
 // rainbow reversal — see this file's own header comment): NavItem below no
-// longer reads the bespoke flat-accent `.bv-nav-idle svg` CSS rule at all —
+// longer reads the bespoke flat-accent `.glim-nav-idle svg` CSS rule at all —
 // it now carries `.glim-hue`/`.glim-hue-icon` instead, the exact classes any
 // other hue-enabled Selector segment carries (Selector.tsx), so it picks up
 // index.css's EXISTING generic `.glim-hue-icon` rule (no new CSS needed for
 // NavItem itself) — the identical idle/hover/selected 3-state machine this
 // rail always had, just reading this item's own `--item-hue` instead of the
 // single flat `--accent`.
-//   `bv-nav-idle` itself is NOT deleted from index.css — SidebarControls'
+//   `glim-nav-idle` itself is NOT deleted from index.css — SidebarControls'
 // own Simple/Advanced view toggle below is a genuine set-of-ONE, not a list
 // of same-type destinations competing for a stable rainbow position (the
 // colour engine's own "anything that is the only one of its kind on the
@@ -297,7 +297,7 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
         // both. Without it the glyphs sat hard left with 178px of empty rail
         // beside each one.
         className={({ isActive }) =>
-          `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " bv-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
+          `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
         }
         style={
           {
@@ -312,7 +312,7 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
             `sr-only` is `position: absolute`, so the hidden span is not a flex
             item and `gap-3` does not leave a phantom gap beside the centred
             glyph. */}
-        <span className={showLabel ? undefined : reactive ? "bv-label-reactive" : "sr-only"}>{label}</span>
+        <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{label}</span>
       </NavLink>
       {tooltip.bubble}
     </>
@@ -379,7 +379,7 @@ function SidebarControls() {
         aria-pressed={advanced}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
-        // `bv-nav-idle` stated explicitly here, not inherited from
+        // `glim-nav-idle` stated explicitly here, not inherited from
         // `navInactive` any more (GlimStone follow-up round, rainbow
         // reversal — see `navInactive`'s own comment above): this toggle is
         // a genuine set-of-one, not a member of the now-hued nav-destination
@@ -388,7 +388,7 @@ function SidebarControls() {
         //
         // `justify-center` in glyph mode for the same reason as NavItem's —
         // this row sits in the same column and has to centre with it.
-        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " bv-reactive" : ""} bv-nav-idle ${navInactive} w-full`}
+        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-nav-idle ${navInactive} w-full`}
         style={reactive ? ({ "--reactive-chars": labelWidth(view) } as CSSProperties) : undefined}
       >
         {/* One glyph per state, not one for both (jdp): the row shows the view
@@ -397,7 +397,7 @@ function SidebarControls() {
             row unreadable. Sparse layout for simple, dense one for advanced. */}
         {advanced ? <IconViewAdvanced /> : <IconViewSimple />}
         {/* Hidden, never removed: the toggle keeps its accessible name. */}
-        <span className={showLabel ? undefined : reactive ? "bv-label-reactive" : "sr-only"}>{view}</span>
+        <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{view}</span>
       </button>
       {tooltip.bubble}
     </div>
@@ -497,7 +497,7 @@ export function Sidebar({ settings }: SidebarProps) {
   }, []);
 
   const eggClass =
-    eggState === "wobble" ? "bv-egg-wobble" : eggState === "boom" ? "bv-egg-boom" : "bv-logo-idle";
+    eggState === "wobble" ? "glim-egg-wobble" : eggState === "boom" ? "glim-egg-boom" : "glim-logo-idle";
 
   return (
     // Glyph mode is the one mode that narrows the rail (#178, manilx: "When
@@ -506,7 +506,7 @@ export function Sidebar({ settings }: SidebarProps) {
     //   - text and text+glyph obviously need the words' width;
     //   - REACTIVE cannot narrow, because its words slide back INSIDE the row
     //     (`--reactive-chars` on a `max-width` transition) and because the
-    //     ACTIVE row keeps its words permanently (`.bv-reactive.glim-active`).
+    //     ACTIVE row keeps its words permanently (`.glim-reactive.glim-active`).
     //     A 96px rail would clip the one row that must always stay readable,
     //     and the alternative, expanding the whole rail on hover, either shoves
     //     the page sideways or turns into the tooltip reactive mode exists to
@@ -528,7 +528,7 @@ export function Sidebar({ settings }: SidebarProps) {
         onPointerLeave={cancelHold}
         onPointerCancel={cancelHold}
         onContextMenu={(e) => e.preventDefault()}
-        className={`bv-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"}${railReactive ? " bv-reactive" : ""} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
+        className={`glim-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"}${railReactive ? " glim-reactive" : ""} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
         {/* The narrow rail gets the smaller mark, which is the second logo the
             rail-width question always needed: 64px in a 96px column leaves 16px
@@ -541,27 +541,27 @@ export function Sidebar({ settings }: SidebarProps) {
           className={`relative inline-flex ${markBox} shrink-0 items-center justify-center`}
           style={{ "--egg-mark": railNarrow ? "48px" : "64px" } as CSSProperties}
         >
-          <span className={`bv-logo-mark flex ${markBox} items-center justify-center ${eggClass}`}>
+          <span className={`glim-logo-mark flex ${markBox} items-center justify-center ${eggClass}`}>
             <img
               src="/logo.svg"
               alt="BombVault"
               draggable={false}
-              className={`bv-logo-img ${markBox} object-contain shrink-0 block dark:hidden`}
+              className={`glim-logo-img ${markBox} object-contain shrink-0 block dark:hidden`}
             />
             <img
               src="/logo-light.svg"
               alt="BombVault"
               draggable={false}
-              className={`bv-logo-img ${markBox} object-contain shrink-0 hidden dark:block`}
+              className={`glim-logo-img ${markBox} object-contain shrink-0 hidden dark:block`}
             />
             {/* At boom the <img> is hidden (CSS) and the mark shatters into flying
                 tiles, each showing its own slice of the current logo. */}
             {eggState === "boom" && (
-              <span className="bv-frag-grid" aria-hidden="true">
+              <span className="glim-frag-grid" aria-hidden="true">
                 {FRAG_TILES.map((f, i) => (
                   <span
                     key={i}
-                    className="bv-frag"
+                    className="glim-frag"
                     style={
                       {
                         left: f.left,
@@ -581,12 +581,12 @@ export function Sidebar({ settings }: SidebarProps) {
             )}
           </span>
           {eggState === "boom" && (
-            <span className="bv-boom-fx" aria-hidden="true">
+            <span className="glim-boom-fx" aria-hidden="true">
               {/* Billowing fire→smoke cloud behind the flying fragments. */}
               {BOOM_CLOUD.map((c, i) => (
                 <span
                   key={`c${i}`}
-                  className={`bv-cloud ${c.hot ? "bv-cloud--hot" : "bv-cloud--smoke"}`}
+                  className={`glim-cloud ${c.hot ? "glim-cloud--hot" : "glim-cloud--smoke"}`}
                   style={{ "--cx": c.cx, "--cy": c.cy, "--delay": c.delay } as React.CSSProperties}
                 />
               ))}
@@ -594,7 +594,7 @@ export function Sidebar({ settings }: SidebarProps) {
               {BOOM_PARTICLES.map((p, i) => (
                 <span
                   key={`p${i}`}
-                  className="bv-particle"
+                  className="glim-particle"
                   style={
                     {
                       "--tx": p.tx,
@@ -620,7 +620,7 @@ export function Sidebar({ settings }: SidebarProps) {
           <span
             aria-hidden={railReactive || undefined}
             className={`text-carbon-text font-bold text-xl tracking-tight leading-none whitespace-nowrap${
-              railReactive ? " bv-label-reactive" : ""
+              railReactive ? " glim-label-reactive" : ""
             }`}
           >
             BombVault

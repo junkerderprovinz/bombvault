@@ -46,7 +46,7 @@ function renderSidebar() {
  *  forgotten (it was the single row not following this axis at all). */
 function railRows(): HTMLElement[] {
   return [
-    ...document.querySelectorAll<HTMLElement>("aside .bv-nav-row"),
+    ...document.querySelectorAll<HTMLElement>("aside .glim-nav-row"),
   ];
 }
 
@@ -96,7 +96,7 @@ describe("glyph mode is the only mode that narrows the rail", () => {
     // The mark's own box, and the size the shatter tiles read for their
     // background: both have to move, or the tiles slice an image scaled to a
     // box they are no longer in.
-    const mark = document.querySelector<HTMLElement>(".bv-logo-mark");
+    const mark = document.querySelector<HTMLElement>(".glim-logo-mark");
     expect(mark?.className).toContain("h-12 w-12");
     expect(mark?.parentElement?.style.getPropertyValue("--egg-mark")).toBe("48px");
   });
@@ -108,7 +108,7 @@ describe("glyph mode is the only mode that narrows the rail", () => {
       renderSidebar();
       expect(rail().className, mode).toContain("w-56");
       expect(rail().className, mode).not.toContain("w-24");
-      const mark = document.querySelector<HTMLElement>(".bv-logo-mark");
+      const mark = document.querySelector<HTMLElement>(".glim-logo-mark");
       expect(mark?.className, mode).toContain("h-16 w-16");
       expect(mark?.parentElement?.style.getPropertyValue("--egg-mark"), mode).toBe("64px");
     }

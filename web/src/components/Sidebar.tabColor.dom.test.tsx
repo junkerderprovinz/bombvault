@@ -9,12 +9,12 @@
 //
 // REWRITTEN (GlimStone follow-up round, rainbow REVERSAL — jdp: "Die ganzen
 // Tabs in der Sidebar sind wieder nicht im Regenbogenmodus bzw in der
-// Farbengine."): this file used to guard the `bv-nav-idle` marker on EVERY
+// Farbengine."): this file used to guard the `glim-nav-idle` marker on EVERY
 // NavItem (the flat-accent-only mechanism the nav rail used before this
 // round). NavItem no longer carries that marker at all — it now carries
 // `.glim-hue`/`.glim-hue-icon` (plus `.glim-active` once selected), the
 // EXACT classes any other hue-enabled Selector segment carries — so this
-// file's class-contract assertions are updated to match. `bv-nav-idle`
+// file's class-contract assertions are updated to match. `glim-nav-idle`
 // itself is NOT gone from the app: SidebarControls' own Simple/Advanced
 // toggle (a genuine set-of-one, never hued) still carries it, and this
 // file's own last `describe` block still guards that.
@@ -72,7 +72,7 @@ describe("Sidebar — NavItem carries a rainbow hue position (glim-hue/glim-hue-
       expect(link.className).toContain("glim-hue");
       expect(link.className).toContain("glim-hue-icon");
       // Idle items must NOT carry the old flat-accent marker any more.
-      expect(link.className).not.toContain("bv-nav-idle");
+      expect(link.className).not.toContain("glim-nav-idle");
     }
   });
 
@@ -139,11 +139,11 @@ describe("Sidebar — NavItem carries a rainbow hue position (glim-hue/glim-hue-
   });
 });
 
-describe("Sidebar — bv-nav-idle marker (SidebarControls' own flat-accent set-of-one)", () => {
-  it("the Simple/Advanced view toggle (never has an active state, never hued) carries bv-nav-idle, not glim-hue", () => {
+describe("Sidebar — glim-nav-idle marker (SidebarControls' own flat-accent set-of-one)", () => {
+  it("the Simple/Advanced view toggle (never has an active state, never hued) carries glim-nav-idle, not glim-hue", () => {
     renderSidebar(["/"]);
     const toggle = screen.getByRole("button", { name: "Simple view" });
-    expect(toggle.className).toContain("bv-nav-idle");
+    expect(toggle.className).toContain("glim-nav-idle");
     expect(toggle.className).not.toContain("glim-hue");
   });
 });

@@ -202,9 +202,9 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
         {...rest}
         ref={ref}
         type="number"
-        // bv-num strips the native spinner; pe-8 is the rule's second half —
+        // glim-num strips the native spinner; pe-8 is the rule's second half —
         // room for the arrows so the digits never run underneath them.
-        className={`bv-num pe-8 ${className}`}
+        className={`glim-num pe-8 ${className}`}
       />
       {/* aria-hidden and not focusable: the input already carries the value,
           the range and the arrow keys. A screen reader meeting these would
