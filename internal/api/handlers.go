@@ -224,8 +224,51 @@ func scrubError(err error) string {
 	if strings.Contains(msg, "wrong password or no key found") {
 		return "backup repository can't be opened: the APP_KEY differs from when this repo was first created (or encryption was toggled). Use the original APP_KEY, or point Settings at a fresh, empty backup path."
 	}
+	if hint := restAuthHint(msg); hint != "" {
+		return hint
+	}
 	msg = scrubSecrets(msg)
 	return strings.TrimSpace(msg)
+}
+
+// restAuthHint turns a bare "401 Unauthorized" into the two things that
+// actually cause it, or returns "" when the message is not an auth refusal.
+//
+// The knowledge was already in this codebase, in a comment above
+// isRepoUninitialized: a rest-server 401 is almost always the first path
+// segment not matching the htpasswd user (which `--private-repos` requires), or
+// a repository reaching for credentials it was never pointed at. Being written
+// down where only a maintainer reads it is not the same as being said. Issue
+// #194: a user spent hours on "I continue to get a 401 error", gave up, and
+// wrote "until someone creates a step by step walk through ... I can't invest
+// more time in this". The walkthrough exists (docs/offsite-recovery.md has a
+// two-box worked example); what was missing is that the error itself never
+// pointed anywhere.
+//
+// Scoped deliberately. Only 401 and only when the repository is a rest one, so
+// an S3 403 (a different problem with different causes) keeps its own wording,
+// and a message that merely contains the digits 401 somewhere else cannot
+// trigger this.
+// restStatus401 matches 401 as a status code rather than as three digits inside
+// a longer number. Without the boundaries, `rest:http://box:8401/repo:
+// connection refused` claims to be an auth failure, because the port contains
+// it. Caught by the test, not by reading the line back.
+var restStatus401 = regexp.MustCompile(`(^|[^0-9])401([^0-9]|$)`)
+
+func restAuthHint(msg string) string {
+	low := strings.ToLower(msg)
+	if !restStatus401.MatchString(low) && !strings.Contains(low, "unauthorized") {
+		return ""
+	}
+	if !strings.Contains(low, "rest:") {
+		return ""
+	}
+	return "the rest-server rejected these credentials (401). Two things cause almost every one of these. " +
+		"First, the repository URL's first path segment has to be the htpasswd user itself when the server runs " +
+		"with --private-repos: with user \"tower\", the URL is rest:http://host:8000/tower/<repo>, not " +
+		"rest:http://host:8000/<repo>. Second, this repository may be using the shared REST credentials rather " +
+		"than the credential set you filled in, which happens when its own row does not name that set. " +
+		"Check both and run the connection test again. The two-box walkthrough is in docs/offsite-recovery.md."
 }
 
 // sameSiteOnly refuses a request a browser fired from another website, judged by
