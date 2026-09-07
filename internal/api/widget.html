@@ -286,7 +286,16 @@
   setInterval(tickFooter, 1000);
 
   function poll() {
-    fetch("/api/widget/data?token=" + encodeURIComponent(token), { cache: "no-store" })
+    // The token travels in a HEADER, never in the URL. This page is polled on a
+    // timer, so the query form wrote the credential into the reverse proxy's
+    // access log once per refresh, for as long as the dashboard stayed open.
+    // The one place it still has to appear in a URL is this page's own src,
+    // because an embedding iframe cannot set a header on the document request.
+    // Everything after that is a fetch this page makes itself, and a fetch can.
+    fetch("/api/widget/data", {
+      cache: "no-store",
+      headers: { "X-Widget-Token": token },
+    })
       .then(function (res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();

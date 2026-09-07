@@ -86,6 +86,7 @@ const eu: Partial<Translations> = {
   "containers.discovering": "Bilatzen…",
   "containers.discoverHint": "/config galdu duzu? Berreraiki babeskopien zerrenda biltegitik.",
   "containers.backupNow": "Egin babeskopia orain",
+  "containers.stopWarning": "Babeskopiak edukiontzia gelditzen du bitartean, eta gero berriro abiarazten du. Horrek mantentzen ditu datuak koherente. Lehen kopia da luzeena; hurrengoek aldaketak baino ez dituzte kopiatzen.",
   "containers.lastBackup": "Azken babeskopia",
   "containers.never": "Inoiz ez",
   "containers.colName": "Izena",
@@ -1155,6 +1156,7 @@ const eu: Partial<Translations> = {
   "recovery.appKeyExplain": "Dauden babeskopiak irakurtzeko, edukiontzi honek lehen erabili zuen APP_KEY BERA behar du. Zure berreskuratze-kitan dago. Ezarri Unraid edukiontziaren txantiloian jada ez badago, eta egiaztatu berriz.",
   "recovery.appKeyRemedy": "Zifratze-gakoa ez dator bat babeskopia hauekin. Ezarri jatorrizko APP_KEY-a (zure berreskuratze-kitatik) edukiontziaren txantiloian, eta egiaztatu berriz.",
   "recovery.readable": "Zure babeskopiak irakurgarriak dira.",
+  "recovery.readFrom": "Hemendik irakurria:",
   "recovery.notReachable": "Zure babeskopiak oraindik ez zeuden eskuragarri. Erantsi beheko kokapena, eta egiaztatu berriz.",
   "recovery.recheck": "Egiaztatu",
   // Step 2

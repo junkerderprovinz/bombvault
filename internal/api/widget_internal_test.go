@@ -45,8 +45,24 @@ func TestWidgetTokenOK(t *testing.T) {
 	if widgetTokenOK(req("?token=wrong", ""), tok) {
 		t.Fatal("wrong query token must fail")
 	}
-	if !widgetTokenOK(req("?token="+tok, ""), tok) {
-		t.Fatal("right query token must pass")
+	// The FEED refuses the query form even when the token is right. That split
+	// is the security value: the feed is polled on a timer, so a query token was
+	// written into the proxy's access log once per refresh. The page keeps the
+	// query form because an iframe cannot set a header on the document request.
+	if widgetTokenOK(req("?token="+tok, ""), tok) {
+		t.Fatal("the feed must refuse a right token in the query")
+	}
+	if !widgetPageTokenOK(req("?token="+tok, ""), tok) {
+		t.Fatal("the page must still accept a right token in the query")
+	}
+	if widgetPageTokenOK(req("?token=wrong", ""), tok) {
+		t.Fatal("the page must refuse a wrong query token")
+	}
+	if !widgetPageTokenOK(req("", tok), tok) {
+		t.Fatal("the page must accept the header too")
+	}
+	if widgetPageTokenOK(req("?token="+tok, ""), "") {
+		t.Fatal("an empty stored token must fail on the page as well")
 	}
 	if !widgetTokenOK(req("", tok), tok) {
 		t.Fatal("right header token must pass")
@@ -55,8 +71,9 @@ func TestWidgetTokenOK(t *testing.T) {
 	if widgetTokenOK(req("?token="+tok, "wrong"), tok) {
 		t.Fatal("a wrong header must not be rescued by a right query token")
 	}
-	// A truncated/extended token must fail (no prefix matching).
-	if widgetTokenOK(req("?token="+tok[:16], ""), tok) || widgetTokenOK(req("?token="+tok+"ff", ""), tok) {
+	// A truncated/extended token must fail (no prefix matching). Checked on the
+	// page gate, since that is the one that still reads the query at all.
+	if widgetPageTokenOK(req("?token="+tok[:16], ""), tok) || widgetPageTokenOK(req("?token="+tok+"ff", ""), tok) {
 		t.Fatal("prefix/extended tokens must fail")
 	}
 }

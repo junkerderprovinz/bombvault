@@ -1104,12 +1104,12 @@ export function suggestContainerExcludes(
  * targets — used by the Recovery readiness check so merely testing readability
  * never resurrects orphan entries (#44). The default rebuilds the targets.
  */
-export function discover(probe = false): Promise<OkEnvelope & { discovered?: number }> {
+export function discover(probe = false): Promise<OkEnvelope & { discovered?: number; repo?: string }> {
   return fetchJSON(`/api/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 
 /** Rebuild the VM target list from backup storage. `probe` = read-only readiness check (see discover, #44). */
-export function discoverVMs(probe = false): Promise<OkEnvelope & { discovered?: number }> {
+export function discoverVMs(probe = false): Promise<OkEnvelope & { discovered?: number; repo?: string }> {
   return fetchJSON(`/api/vms/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 
@@ -2356,7 +2356,7 @@ export function restoreFileSetFiles(
 /** Rebuild the file-set list from the fileset: tags in backup storage. `probe` =
  *  read-only readiness check (see discover, #44). Discovered sets arrive DISABLED
  *  with an empty path (tags alone don't carry it) — set a folder before backing up. */
-export function discoverFiles(probe = false): Promise<OkEnvelope & { discovered?: number }> {
+export function discoverFiles(probe = false): Promise<OkEnvelope & { discovered?: number; repo?: string }> {
   return fetchJSON(`/api/files/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 

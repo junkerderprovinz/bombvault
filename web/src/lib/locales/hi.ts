@@ -86,6 +86,7 @@ const hi: Partial<Translations> = {
   "containers.discovering": "खोजा जा रहा है…",
   "containers.discoverHint": "/config खो गया? स्टोरेज से बैकअप सूची फिर से बनाएँ।",
   "containers.backupNow": "अभी बैकअप लें",
+  "containers.stopWarning": "बैकअप के दौरान कंटेनर रोका जाता है और बाद में फिर चालू कर दिया जाता है। इसी से उसका डेटा सुसंगत रहता है। पहला बैकअप सबसे लंबा होता है; बाद वाले केवल बदलाव कॉपी करते हैं।",
   "containers.lastBackup": "आख़िरी बैकअप",
   "containers.never": "कभी नहीं",
   "containers.colName": "नाम",
@@ -1155,6 +1156,7 @@ const hi: Partial<Translations> = {
   "recovery.appKeyExplain": "मौजूदा बैकअप पढ़ने के लिए, इस कंटेनर को पहले जैसा वही APP_KEY चाहिए। यह आपकी रिकवरी किट में है। अगर पहले से नहीं है तो इसे Unraid कंटेनर टेम्पलेट में सेट करें, फिर फिर से जाँचें।",
   "recovery.appKeyRemedy": "एन्क्रिप्शन कुंजी इन बैकअप से मेल नहीं खाती। कंटेनर टेम्पलेट में मूल APP_KEY (आपकी रिकवरी किट से) सेट करें, फिर फिर से जाँचें।",
   "recovery.readable": "आपके बैकअप पढ़े जा सकते हैं।",
+  "recovery.readFrom": "यहाँ से पढ़ा गया:",
   "recovery.notReachable": "आपके बैकअप अभी तक पहुँच योग्य नहीं थे। नीचे स्थान जोड़ें, फिर फिर से जाँचें।",
   "recovery.recheck": "जाँचें",
   // Step 2

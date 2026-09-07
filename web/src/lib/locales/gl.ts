@@ -86,6 +86,7 @@ const gl: Partial<Translations> = {
   "containers.discovering": "Buscando…",
   "containers.discoverHint": "Perdiches /config? Reconstrúe a lista de copias desde o almacenamento.",
   "containers.backupNow": "Copiar agora",
+  "containers.stopWarning": "A copia detén o contedor mentres se executa e vólveo iniciar despois. Iso é o que mantén os datos coherentes. A primeira copia é a longa; as seguintes só copian os cambios.",
   "containers.lastBackup": "Última copia",
   "containers.never": "Nunca",
   "containers.colName": "Nome",
@@ -1155,6 +1156,7 @@ const gl: Partial<Translations> = {
   "recovery.appKeyExplain": "Para ler copias existentes, este contedor precisa o MESMO APP_KEY que usaba antes: está no teu kit de recuperación. Configúrao no modelo de contedor de Unraid se aínda non o está, e volve comprobar.",
   "recovery.appKeyRemedy": "A clave de cifrado non coincide con estas copias. Configura o APP_KEY orixinal (do teu kit de recuperación) no modelo do contedor, e volve comprobar.",
   "recovery.readable": "As túas copias son lexibles.",
+  "recovery.readFrom": "Lido de:",
   "recovery.notReachable": "As túas copias aínda non eran accesibles. Engade a localización de abaixo, e volve comprobar.",
   "recovery.recheck": "Comprobar",
   // Step 2

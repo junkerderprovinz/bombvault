@@ -946,6 +946,38 @@ func (s *Service) resolveRepo(loc string) (string, error) {
 }
 
 // containersRepoPath resolves the restic repo for the containers domain.
+// DiscoverSource reports which repository the discovery pass for a domain will
+// actually read, so the Recovery wizard can say so instead of leaving the user
+// to guess (#196).
+//
+// It exists because the wizard asks for an off-site repository in one step and
+// then reads the domain's PRIMARY path in the next, and those are usually not
+// the same place. In the situation the wizard is for — a fresh install with
+// nothing local left — the answer it gives ("cannot read", or an empty result)
+// is about a folder that was never going to hold anything, and nothing on
+// screen said which folder it was. Naming it does not make the wizard read the
+// off-site copy; it makes the answer interpretable, which is the difference
+// between "my backups are gone" and "it looked in the wrong place".
+func (s *Service) DiscoverSource(domain string) string {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return ""
+	}
+	var repo string
+	switch domain {
+	case "vms":
+		repo, err = s.vmsRepoPath(settings)
+	case "files":
+		repo, err = s.filesRepoPath(settings)
+	default:
+		repo, err = s.containersRepoPath(settings)
+	}
+	if err != nil {
+		return ""
+	}
+	return repo
+}
+
 func (s *Service) containersRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.ContainersPath)
 }

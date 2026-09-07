@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { backupNow } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
+import { useConfirm } from "../lib/useConfirm";
 import { busyPhraseKey } from "../lib/progress";
 import type { useT } from "../lib/i18n";
 import { Button } from "./Button";
@@ -43,6 +44,12 @@ interface BackupButtonProps {
 // delete the per-role sizes entirely. Do not re-measure this button against
 // its neighbours and "improve" the number — see Badge.tsx's own "ONE SIZE
 // FOR SQUARE ICON BADGES" block for why that reasoning is the defect.
+// Per-browser acknowledgement of the stop warning (#197). A storage key, not a
+// class name, so it keeps the app's own bv- prefix: those keys were left alone
+// when the CSS classes moved to glim-, precisely because renaming one resets
+// every user's stored state.
+const STOP_ACK_KEY = "bv-container-stop-ack";
+
 export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps) {
   // Fire-and-watch: the server runs the backup detached and answers immediately,
   // so we watch the "container:<name>" progress + recorded run for the outcome
@@ -56,6 +63,7 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
   });
   const blockedByOther = !!running?.active && !isPending;
   const { push } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
   // failed action toasts AND shakes its button.
   const [shake, setShake] = useState(0);
@@ -87,6 +95,42 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
     }
   }, [state, push, t]);
 
+  // #197: a container backup STOPS the container for the duration of the run
+  // and starts it again afterwards. That is the right default — it is what
+  // makes the appdata consistent — and it was stated nowhere at all. Somebody
+  // pressing this on Plex or a database in the afternoon takes it offline for
+  // as long as the first full backup takes, which is minutes rather than
+  // seconds, and reads the result as the tool misbehaving.
+  //
+  // So it is said ONCE, before the first backup this browser has ever started,
+  // and then never again: a warning that returns on every press is a warning
+  // people click away without reading, which would put us back where we
+  // started. The acknowledgement is per browser rather than per container,
+  // because the fact being taught is about how backups work here, not about
+  // one container.
+  const confirmStopThenFire = useCallback(async () => {
+    let acked = false;
+    try {
+      acked = localStorage.getItem(STOP_ACK_KEY) === "1";
+    } catch {
+      // A browser that refuses storage (private window, blocked site data) asks
+      // every time rather than never. Annoying beats silent downtime.
+    }
+    if (!acked) {
+      const ok = await confirm(t("containers.stopWarning"), {
+        confirmLabel: t("containers.backupNow"),
+        tone: "warn",
+      });
+      if (!ok) return;
+      try {
+        localStorage.setItem(STOP_ACK_KEY, "1");
+      } catch {
+        /* see above */
+      }
+    }
+    await fire();
+  }, [confirm, fire, t]);
+
   // #178: the button's NAME is stable; only the exceptional states get a
   // tooltip. A label that changed to "Backing up…" would resize the control
   // mid-action, which the width stages exist to prevent.
@@ -97,6 +141,8 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
       : undefined;
 
   return (
+    <>
+      {confirmDialog}
     <Button
       key={shake}
       label={t("containers.backupNow")}
@@ -109,11 +155,12 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
       // handing a number to the other, so they agree in all 42 languages and
       // keep agreeing when either word is retranslated.
       stage={groupStage([t("containers.backupNow"), t("export.button")])}
-      onClick={() => void fire()}
+      onClick={() => void confirmStopThenFire()}
       disabled={isPending || blockedByOther}
       busy={isPending}
       title={stateTip}
       className={shake ? "glim-shake" : ""}
     />
+    </>
   );
 }

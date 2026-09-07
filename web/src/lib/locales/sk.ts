@@ -86,6 +86,7 @@ const sk: Partial<Translations> = {
   "containers.discovering": "Hľadá sa…",
   "containers.discoverHint": "Prišli ste o /config? Obnovte zoznam záloh z úložiska.",
   "containers.backupNow": "Zálohovať teraz",
+  "containers.stopWarning": "Zálohovanie kontajner na čas behu zastaví a potom ho znova spustí. Práve to udrží jeho dáta konzistentné. Prvá záloha je tá dlhá; ďalšie kopírujú len zmeny.",
   "containers.lastBackup": "Posledná záloha",
   "containers.never": "Nikdy",
   "containers.colName": "Názov",
@@ -1155,6 +1156,7 @@ const sk: Partial<Translations> = {
   "recovery.appKeyExplain": "Na čítanie existujúcich záloh tento kontajner potrebuje ROVNAKÝ APP_KEY, aký sa používal predtým. Je vo vašej súprave na obnovenie. Nastavte ho v šablóne kontajnera Unraid, ak ešte nie je nastavený, potom znova skontrolujte.",
   "recovery.appKeyRemedy": "Šifrovací kľúč sa nezhoduje s týmito zálohami. Nastavte pôvodný APP_KEY (zo súpravy na obnovenie) v šablóne kontajnera, potom znova skontrolujte.",
   "recovery.readable": "Vaše zálohy sú čitateľné.",
+  "recovery.readFrom": "Načítané z:",
   "recovery.notReachable": "Vaše zálohy zatiaľ neboli dostupné. Pripojte umiestnenie nižšie, potom znova skontrolujte.",
   "recovery.recheck": "Skontrolovať",
   // Step 2

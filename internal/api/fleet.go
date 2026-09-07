@@ -78,18 +78,34 @@ type fleetStatusResponse struct {
 	// "Backup Everything" pass is what covers it, via CoveredBy.
 }
 
-// fleetTokenOK reports whether the request carries the stored fleet token, via
-// the X-Fleet-Token header or the ?token= query parameter (the header wins
-// when both are present). Constant-time compare; an EMPTY stored token always
-// fails (feature off = fail closed), mirroring widgetTokenOK exactly.
+// fleetTokenOK reports whether the request carries the stored fleet token, in
+// the X-Fleet-Token header. Constant-time compare; an EMPTY stored token always
+// fails (feature off = fail closed).
+//
+// THE ?token= QUERY FORM IS GONE, deliberately. It used to be accepted as a
+// fallback, and nothing ever used it: this instance's own peer poll
+// (peerStatus) and its mesh-offer sender both set the header, and they are the
+// only callers there are. What it did do is offer the one way this secret could
+// end up somewhere nobody controls. A URL is a poor container for a credential
+// even over TLS, because the transport is not where it leaks: it leaks into
+// browser history, into bookmarks, and above all into the access log of
+// whatever reverse proxy stands in front, which records the full request line
+// including the query. That was measured rather than assumed on 2026-09-07, in
+// this deployment's own proxy log.
+//
+// Encrypting the token would not have helped and is worth writing down so
+// nobody proposes it again: the connection is already encrypted, and a
+// ciphertext handed to a client IS the credential, replayable by anyone who
+// copies it. The fix for a secret in a URL is to take it out of the URL.
+//
+// The widget keeps a query form on its PAGE, and only there, because an
+// embedding iframe cannot set a header on the document request. Its data feed
+// does not: see widgetTokenOK.
 func fleetTokenOK(r *http.Request, stored string) bool {
 	if stored == "" {
 		return false
 	}
 	got := r.Header.Get("X-Fleet-Token")
-	if got == "" {
-		got = r.URL.Query().Get("token")
-	}
 	return subtle.ConstantTimeCompare([]byte(got), []byte(stored)) == 1
 }
 
@@ -111,7 +127,7 @@ func (h *Handler) fleetGate(w http.ResponseWriter, r *http.Request) (store.Setti
 	return s, true
 }
 
-// handleFleetStatus serves GET /api/fleet/status?token=… — the read-only
+// handleFleetStatus serves GET /api/fleet/status (X-Fleet-Token) — the read-only
 // protection-scorecard summary a peer's Fleet view polls. Same payload shape
 // as GET /api/status (DomainStatusEntry[]) plus this instance's name/version,
 // so a Fleet page can reuse the same rendering as the local dashboard.

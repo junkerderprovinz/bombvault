@@ -86,6 +86,7 @@ const hr: Partial<Translations> = {
   "containers.discovering": "Pretraživanje…",
   "containers.discoverHint": "Izgubili ste /config? Ponovno izgradite popis sigurnosnih kopija iz pohrane.",
   "containers.backupNow": "Napravi sigurnosnu kopiju sada",
+  "containers.stopWarning": "Sigurnosna kopija zaustavlja kontejner dok traje i zatim ga ponovno pokreće. Upravo to čuva dosljednost podataka. Prva kopija je duga; kasnije kopiraju samo promjene.",
   "containers.lastBackup": "Posljednja sigurnosna kopija",
   "containers.never": "Nikad",
   "containers.colName": "Naziv",
@@ -1155,6 +1156,7 @@ const hr: Partial<Translations> = {
   "recovery.appKeyExplain": "Za čitanje postojećih sigurnosnih kopija ovom kontejneru treba ISTI APP_KEY koji je koristio prije. Nalazi se u vašem kompletu za oporavak. Postavite ga u Unraid predlošku kontejnera ako još nije postavljen, zatim ponovno provjerite.",
   "recovery.appKeyRemedy": "Ključ za enkripciju ne odgovara ovim sigurnosnim kopijama. Postavite izvorni APP_KEY (iz vašeg kompleta za oporavak) u predlošku kontejnera, zatim ponovno provjerite.",
   "recovery.readable": "Vaše sigurnosne kopije su čitljive.",
+  "recovery.readFrom": "Pročitano iz:",
   "recovery.notReachable": "Vaše sigurnosne kopije još nisu bile dostupne. Dodajte lokaciju ispod, zatim ponovno provjerite.",
   "recovery.recheck": "Provjeri",
   // Step 2

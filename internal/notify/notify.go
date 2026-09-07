@@ -243,13 +243,53 @@ type Event struct {
 	OK      bool
 }
 
+// shouldSend decides whether an outcome is worth a message.
+//
+// UNSET IS NOT "never", and that distinction is the fix for #195. The stored
+// config is a JSON blob defaulting to the empty string, so a fresh install
+// parsed to On == "" and fell into the silent branch. The effect was the worst
+// shape a default can have: somebody fills in a channel, presses Test, sees it
+// arrive, and is then never told that backups stopped — because Test sends
+// unconditionally while every real event was dropped here. Nothing on screen
+// separated "configured and live" from "configured and muted".
+//
+// So an empty value now means "failure": if a channel has been set up at all,
+// the thing people mean by turning notifications on is being told when
+// something breaks. An EXPLICIT "never" is still honoured exactly as before,
+// because silencing on purpose is a real choice and this must not override it.
+// The two are distinguishable precisely because the blob starts empty.
+// active reports whether notifications are switched on at all.
+//
+// ONE place decides this. It used to be decided in five: shouldSend plus four
+// hand-written allowlists spelled `c.On != "always" && c.On != "failure"`. That
+// spelling is why fixing the unset default in shouldSend alone changed nothing
+// — the four copies still dropped the message before it ever got there, and the
+// tests that caught it are the ones written the same hour. A policy repeated in
+// five places is four places to forget.
+//
+// It stays a POSITIVE allowlist, which is a deliberate older decision this
+// change does not get to overturn: an unrecognised value is treated like
+// "never", so a corrupted or hand-edited config cannot start contacting
+// endpoints on its own. Only ONE member is added to the list, the empty string,
+// because that is the actual defect: the stored blob starts empty, so "" means
+// nobody has chosen yet, and somebody who fills in a channel means to hear when
+// something breaks. An explicit "never" is still off.
+func (c Config) active() bool {
+	switch c.On {
+	case "", "always", "failure":
+		return true
+	default: // "never", and anything unrecognised
+		return false
+	}
+}
+
 func (c Config) shouldSend(ok bool) bool {
 	switch c.On {
 	case "always":
 		return true
-	case "failure":
+	case "failure", "": // unset = failure; see the doc comment above
 		return !ok
-	default: // "never" or unset
+	default: // "never", and anything unrecognised — see active()
 		return false
 	}
 }
@@ -338,7 +378,7 @@ func (c Config) appriseReady() bool {
 // policy governs only the message channels (webhook/matrix/smtp/apprise). Each
 // channel's error is logged, never returned (best-effort).
 func Send(ctx context.Context, c Config, domain string, ev Event) {
-	if c.On != "always" && c.On != "failure" {
+	if !c.active() {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -402,7 +442,7 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 // summary, so its starts must not leak either). The Healthchecks-suppress flag
 // keeps affecting only the Healthchecks ping. Best-effort.
 func SendStart(ctx context.Context, c Config, domain string) {
-	if c.On != "always" && c.On != "failure" {
+	if !c.active() {
 		return
 	}
 	hcURL := c.healthchecksURLFor(domain)
@@ -441,7 +481,7 @@ func SendStart(ctx context.Context, c Config, domain string) {
 // healthchecksURLFor normalises it to the per-domain check key.
 func PingDomainStart(ctx context.Context, c Config, domain string) {
 	hcURL := c.healthchecksURLFor(domain)
-	if (c.On != "always" && c.On != "failure") || hcURL == "" {
+	if !c.active() || hcURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -460,7 +500,7 @@ func PingDomainStart(ctx context.Context, c Config, domain string) {
 // no check configured or notifications are off; best-effort.
 func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, summary string) {
 	hcURL := c.healthchecksURLFor(domain)
-	if (c.On != "always" && c.On != "failure") || hcURL == "" {
+	if !c.active() || hcURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)

@@ -86,6 +86,7 @@ const ca: Partial<Translations> = {
   "containers.discovering": "Cercant…",
   "containers.discoverHint": "Has perdut /config? Reconstrueix la llista de còpies des de l'emmagatzematge.",
   "containers.backupNow": "Fes còpia ara",
+  "containers.stopWarning": "Fer una còpia atura el contenidor mentre s'executa i el torna a engegar després. Això és el que manté les dades coherents. La primera còpia és la llarga; les següents només copien els canvis.",
   "containers.lastBackup": "Última còpia",
   "containers.never": "Mai",
   "containers.colName": "Nom",
@@ -1155,6 +1156,7 @@ const ca: Partial<Translations> = {
   "recovery.appKeyExplain": "Per llegir còpies existents, aquest contenidor necessita la MATEIXA APP_KEY que feia servir abans. És al teu kit de recuperació. Configura-la a la plantilla del contenidor Unraid si encara no ho està, i torna a comprovar.",
   "recovery.appKeyRemedy": "La clau de xifratge no coincideix amb aquestes còpies. Configura la APP_KEY original (del teu kit de recuperació) a la plantilla del contenidor, i torna a comprovar.",
   "recovery.readable": "Les teves còpies són llegibles.",
+  "recovery.readFrom": "Llegit de:",
   "recovery.notReachable": "Les teves còpies encara no eren accessibles. Adjunta la ubicació de sota, i torna a comprovar.",
   "recovery.recheck": "Comprova",
   // Step 2

@@ -86,6 +86,7 @@ const is: Partial<Translations> = {
   "containers.discovering": "Leita…",
   "containers.discoverHint": "Týndir /config? Endurbyggðu afritalistann úr geymslunni.",
   "containers.backupNow": "Afrita núna",
+  "containers.stopWarning": "Afritun stöðvar gáminn á meðan hún keyrir og ræsir hann aftur á eftir. Það er það sem heldur gögnunum samkvæmum. Fyrsta afritið er það langa; síðari afrita aðeins breytingar.",
   "containers.lastBackup": "Síðasta afrit",
   "containers.never": "Aldrei",
   "containers.colName": "Nafn",
@@ -1155,6 +1156,7 @@ const is: Partial<Translations> = {
   "recovery.appKeyExplain": "Til að lesa fyrirliggjandi afrit þarf þessi gámur SAMA APP_KEY og var notaður áður. Það er í endurheimtarpakkanum þínum. Stilltu það í Unraid-gámasniðmátinu ef það er ekki þegar gert, athugaðu svo aftur.",
   "recovery.appKeyRemedy": "Dulkóðunarlykillinn passar ekki við þessi afrit. Stilltu upprunalega APP_KEY (úr endurheimtarpakkanum þínum) í gámasniðmátinu, athugaðu svo aftur.",
   "recovery.readable": "Afritin þín eru læsileg.",
+  "recovery.readFrom": "Lesið úr:",
   "recovery.notReachable": "Afritin þín voru ekki aðgengileg ennþá. Bættu staðsetningunni hér að neðan við, athugaðu svo aftur.",
   "recovery.recheck": "Athuga",
   // Step 2

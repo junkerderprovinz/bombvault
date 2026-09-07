@@ -86,6 +86,7 @@ const ms: Partial<Translations> = {
   "containers.discovering": "Mencari…",
   "containers.discoverHint": "Kehilangan /config? Bina semula senarai sandaran daripada storan.",
   "containers.backupNow": "Sandarkan sekarang",
+  "containers.stopWarning": "Sandaran menghentikan bekas semasa ia berjalan, kemudian memulakannya semula. Itulah yang mengekalkan data kekal konsisten. Sandaran pertama paling lama; yang seterusnya hanya menyalin perubahan.",
   "containers.lastBackup": "Sandaran terakhir",
   "containers.never": "Tidak pernah",
   "containers.colName": "Nama",
@@ -1155,6 +1156,7 @@ const ms: Partial<Translations> = {
   "recovery.appKeyExplain": "Untuk membaca sandaran sedia ada, bekas ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelum ini. Ia ada dalam kit pemulihan anda. Tetapkannya dalam templat bekas Unraid jika belum lagi, kemudian semak semula.",
   "recovery.appKeyRemedy": "Kunci penyulitan tidak sepadan dengan sandaran ini. Tetapkan APP_KEY asal (daripada kit pemulihan anda) dalam templat bekas, kemudian semak semula.",
   "recovery.readable": "Sandaran anda boleh dibaca.",
+  "recovery.readFrom": "Dibaca dari:",
   "recovery.notReachable": "Sandaran anda belum boleh dicapai. Lampirkan lokasi di bawah, kemudian semak semula.",
   "recovery.recheck": "Semak",
   // Step 2

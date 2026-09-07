@@ -86,6 +86,7 @@ const lt: Partial<Translations> = {
   "containers.discovering": "Ieškoma…",
   "containers.discoverHint": "Praradote /config? Atkurkite kopijų sąrašą iš saugyklos.",
   "containers.backupNow": "Kurti kopiją dabar",
+  "containers.stopWarning": "Atsarginė kopija sustabdo konteinerį, kol vykdoma, ir po to jį paleidžia iš naujo. Būtent tai išlaiko duomenis darnius. Pirmoji kopija ilgiausia; vėlesnės kopijuoja tik pakeitimus.",
   "containers.lastBackup": "Paskutinė kopija",
   "containers.never": "Niekada",
   "containers.colName": "Pavadinimas",
@@ -1155,6 +1156,7 @@ const lt: Partial<Translations> = {
   "recovery.appKeyExplain": "Norint perskaityti esamas atsargines kopijas, šiam konteineriui reikia TO PATIES APP_KEY, kurį jis naudojo anksčiau. Jis yra jūsų atkūrimo rinkinyje. Nustatykite jį Unraid konteinerio šablone, jei dar nenustatytas, tada patikrinkite dar kartą.",
   "recovery.appKeyRemedy": "Šifravimo raktas neatitinka šių atsarginių kopijų. Nustatykite originalų APP_KEY (iš jūsų atkūrimo rinkinio) konteinerio šablone, tada patikrinkite dar kartą.",
   "recovery.readable": "Jūsų atsarginės kopijos yra skaitomos.",
+  "recovery.readFrom": "Nuskaityta iš:",
   "recovery.notReachable": "Jūsų atsarginės kopijos dar nebuvo pasiekiamos. Pridėkite vietą žemiau, tada patikrinkite dar kartą.",
   "recovery.recheck": "Patikrinti",
   // Step 2

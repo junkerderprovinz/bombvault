@@ -138,6 +138,7 @@ export const en = {
   "containers.discovering": "Discovering…",
   "containers.discoverHint": "Lost /config? Rebuild the backup list from storage.",
   "containers.backupNow": "Back up now",
+  "containers.stopWarning": "Backing up a container stops it while the backup runs, then starts it again. That is what keeps its data consistent. The first backup is the long one; later ones only copy what changed.",
   "containers.lastBackup": "Last backup",
   "containers.never": "Never",
   "containers.colName": "Name",
@@ -1423,6 +1424,7 @@ export const en = {
   "recovery.appKeyExplain": "To read existing backups this container needs the SAME APP_KEY it used before. It's in your recovery kit. Set it in the Unraid container template if it isn't already, then re-check.",
   "recovery.appKeyRemedy": "The encryption key doesn't match these backups. Set the original APP_KEY (from your recovery kit) in the container template, then re-check.",
   "recovery.readable": "Your backups are readable.",
+  "recovery.readFrom": "Read from:",
   "recovery.notReachable": "Couldn't reach your backups yet. Attach the location below, then re-check.",
   "recovery.recheck": "Check",
   // Step 2 — restore BombVault's own settings first (optional, before attach)
@@ -1878,6 +1880,7 @@ export const de: Translations = {
   "containers.discovering": "Suche…",
   "containers.discoverHint": "/config verloren? Backup-Liste aus dem Speicher wiederherstellen.",
   "containers.backupNow": "Jetzt sichern",
+  "containers.stopWarning": "Beim Sichern wird der Container angehalten und danach wieder gestartet. Nur so bleiben seine Daten in sich stimmig. Die erste Sicherung dauert am längsten, spätere kopieren nur noch Änderungen.",
   "containers.lastBackup": "Letztes Backup",
   "containers.never": "Nie",
   "containers.colName": "Name",
@@ -2954,6 +2957,7 @@ export const de: Translations = {
   "recovery.appKeyExplain": "Um vorhandene Backups zu lesen, braucht dieser Container denselben APP_KEY wie zuvor. Er steht in deinem Recovery-Kit. Setze ihn im Unraid-Container-Template, falls noch nicht geschehen, und prüfe erneut.",
   "recovery.appKeyRemedy": "Der Verschlüsselungsschlüssel passt nicht zu diesen Backups. Trage den ursprünglichen APP_KEY (aus deinem Recovery-Kit) im Container-Template ein und prüfe erneut.",
   "recovery.readable": "Deine Backups sind lesbar.",
+  "recovery.readFrom": "Gelesen aus:",
   "recovery.notReachable": "Deine Backups waren noch nicht erreichbar. Hänge den Speicherort unten an und prüfe erneut.",
   "recovery.recheck": "Prüfen",
   // Schritt 2 — zuerst BombVaults eigene Einstellungen wiederherstellen (optional)

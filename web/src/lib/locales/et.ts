@@ -86,6 +86,7 @@ const et: Partial<Translations> = {
   "containers.discovering": "Otsimine…",
   "containers.discoverHint": "Kaotasid /config? Ehita varunduste loend salvestusruumist uuesti üles.",
   "containers.backupNow": "Varunda kohe",
+  "containers.stopWarning": "Varundamine peatab konteineri selle ajaks ja käivitab pärast uuesti. Just see hoiab andmed terviklikuna. Esimene varundus on pikk; hilisemad kopeerivad ainult muudatused.",
   "containers.lastBackup": "Viimane varundus",
   "containers.never": "Mitte kunagi",
   "containers.colName": "Nimi",
@@ -1155,6 +1156,7 @@ const et: Partial<Translations> = {
   "recovery.appKeyExplain": "Olemasolevate varunduste lugemiseks vajab see konteiner SAMA APP_KEY-d, mida varem kasutati. See on sinu taastekomplektis. Määra see Unraidi konteineri mallis, kui see pole veel tehtud, ja kontrolli uuesti.",
   "recovery.appKeyRemedy": "Krüpteeringu võti ei sobi nende varundustega. Määra algne APP_KEY (sinu taastekomplektist) konteineri mallis ja kontrolli uuesti.",
   "recovery.readable": "Sinu varundused on loetavad.",
+  "recovery.readFrom": "Loetud asukohast:",
   "recovery.notReachable": "Sinu varundused polnud veel kättesaadavad. Lisa allpool asukoht ja kontrolli uuesti.",
   "recovery.recheck": "Kontrolli",
   // Step 2

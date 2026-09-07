@@ -40,19 +40,40 @@ const widgetRunLimit = 40
 // show the head of an error anyway, and the full text stays in the app.
 const widgetErrorMax = 200
 
-// widgetTokenOK reports whether the request carries the stored widget token,
-// via the X-Widget-Token header or the ?token= query parameter (the header
-// wins when both are present). Constant-time compare; an EMPTY stored token
+// widgetTokenOK reports whether the request carries the stored widget token in
+// the X-Widget-Token header. Constant-time compare; an EMPTY stored token
 // always fails (feature off = fail closed), even for an empty presented one.
+//
+// The query form lives in widgetPageTokenOK below and nowhere else. Splitting
+// the two is the whole point: an iframe cannot set a header on the document
+// request, so the PAGE has to take the token from its src, and that one
+// appearance is unavoidable. Everything after it is a fetch the page makes
+// itself, which can set a header — so it does, and the secret stops appearing
+// in request lines.
+//
+// What that was costing: widget.html put the token into every feed URL and the
+// feed is polled on a timer, so the credential was written into the reverse
+// proxy's access log once per refresh, for as long as the dashboard was open.
+// Measured in this deployment's own proxy log on 2026-09-07, which records the
+// full request line including the query.
 func widgetTokenOK(r *http.Request, stored string) bool {
 	if stored == "" {
 		return false
 	}
 	got := r.Header.Get("X-Widget-Token")
-	if got == "" {
-		got = r.URL.Query().Get("token")
-	}
 	return subtle.ConstantTimeCompare([]byte(got), []byte(stored)) == 1
+}
+
+// widgetPageTokenOK is widgetTokenOK plus the ?token= query form, and it is
+// used by the PAGE alone. See widgetTokenOK for why the two are separate.
+func widgetPageTokenOK(r *http.Request, stored string) bool {
+	if widgetTokenOK(r, stored) {
+		return true
+	}
+	if stored == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(r.URL.Query().Get("token")), []byte(stored)) == 1
 }
 
 // widgetGate loads settings and enforces the widget token, mirroring how
@@ -60,13 +81,24 @@ func widgetTokenOK(r *http.Request, stored string) bool {
 // refusal: 503 on a store error (fail closed, like authGate), 403 on a
 // missing/mismatched token or when no token is stored (feature off).
 func (h *Handler) widgetGate(w http.ResponseWriter, r *http.Request) bool {
+	return h.widgetGateWith(w, r, widgetTokenOK)
+}
+
+// widgetPageGate is widgetGate for the page, which additionally accepts the
+// query form. Separate function rather than a boolean argument, so a future
+// caller cannot pass the wrong one by accident at a call site that reads fine.
+func (h *Handler) widgetPageGate(w http.ResponseWriter, r *http.Request) bool {
+	return h.widgetGateWith(w, r, widgetPageTokenOK)
+}
+
+func (h *Handler) widgetGateWith(w http.ResponseWriter, r *http.Request, ok func(*http.Request, string) bool) bool {
 	s, err := h.store.GetSettings()
 	if err != nil {
 		log.Printf("api: widget: settings read failed: %v", err)
 		http.Error(w, "widget unavailable", http.StatusServiceUnavailable)
 		return false
 	}
-	if !widgetTokenOK(r, s.WidgetToken) {
+	if !ok(r, s.WidgetToken) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return false
 	}
@@ -78,7 +110,7 @@ func (h *Handler) widgetGate(w http.ResponseWriter, r *http.Request) bool {
 // exactly this path); everything dynamic comes from /api/widget/data, so the
 // page bytes themselves are static.
 func (h *Handler) handleWidgetPage(w http.ResponseWriter, r *http.Request) {
-	if !h.widgetGate(w, r) {
+	if !h.widgetPageGate(w, r) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -126,7 +158,7 @@ func truncateWidgetError(msg string) string {
 	return msg[:widgetErrorMax] + "…"
 }
 
-// handleWidgetData serves the widget feed (GET /api/widget/data?token=…): the
+// handleWidgetData serves the widget feed (GET /api/widget/data, X-Widget-Token): the
 // last widgetRunLimit runs (reusing ListRuns + the runView target resolution),
 // the schedule-next preview and the app version — everything the page needs
 // for one refresh in one round trip.

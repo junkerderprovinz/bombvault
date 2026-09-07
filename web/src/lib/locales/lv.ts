@@ -86,6 +86,7 @@ const lv: Partial<Translations> = {
   "containers.discovering": "Meklē…",
   "containers.discoverHint": "Pazaudējāt /config? Atjaunojiet rezerves kopiju sarakstu no krātuves.",
   "containers.backupNow": "Izveidot rezerves kopiju tagad",
+  "containers.stopWarning": "Dublēšana aptur konteineru uz izpildes laiku un pēc tam palaiž no jauna. Tieši tas saglabā datu saskaņotību. Pirmā kopija ir garā; nākamās kopē tikai izmaiņas.",
   "containers.lastBackup": "Pēdējā rezerves kopija",
   "containers.never": "Nekad",
   "containers.colName": "Nosaukums",
@@ -1155,6 +1156,7 @@ const lv: Partial<Translations> = {
   "recovery.appKeyExplain": "Lai nolasītu esošās rezerves kopijas, šim konteinerim nepieciešams TĀDS PATS APP_KEY, kāds izmantots iepriekš. Tas atrodas jūsu atkopšanas komplektā. Iestatiet to Unraid konteinera veidnē, ja tas vēl nav iestatīts, un pēc tam pārbaudiet vēlreiz.",
   "recovery.appKeyRemedy": "Šifrēšanas atslēga neatbilst šīm rezerves kopijām. Iestatiet oriģinālo APP_KEY (no jūsu atkopšanas komplekta) konteinera veidnē un pēc tam pārbaudiet vēlreiz.",
   "recovery.readable": "Jūsu rezerves kopijas ir nolasāmas.",
+  "recovery.readFrom": "Nolasīts no:",
   "recovery.notReachable": "Jūsu rezerves kopijas vēl nebija sasniedzamas. Pievienojiet atrašanās vietu zemāk un pēc tam pārbaudiet vēlreiz.",
   "recovery.recheck": "Pārbaudīt",
   // Step 2

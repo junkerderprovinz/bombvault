@@ -1501,6 +1501,9 @@ export default function Recovery() {
 
   // Step 1 — repo-readable / APP_KEY state, shared with later steps.
   const [readableState, setReadableState] = useState<StepState>("idle");
+  // The repository folders the readability check actually read, shown under the
+  // step so an empty answer is interpretable rather than frightening (#196).
+  const [readSources, setReadSources] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
@@ -1623,6 +1626,14 @@ export default function Recovery() {
         return "warn";
       }
       const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0);
+      // Name the folders this actually read (#196). The wizard asks for an
+      // off-site repository one step earlier and then reads each domain's
+      // PRIMARY path, which is usually somewhere else entirely — and in the
+      // disaster case this wizard exists for, that primary is a local folder
+      // with nothing in it. An empty answer about an unnamed folder reads as
+      // "my backups are gone"; the same answer with the path in it reads as
+      // "it looked in the wrong place", which is the truth and is actionable.
+      setReadSources([c.repo, v.repo, f.repo].filter((r): r is string => !!r));
       // >0 = repo readable with content; 0 = reachable but empty / not attached yet.
       const next: StepState = total > 0 ? "ok" : "warn";
       setReadableState(next);
@@ -2040,6 +2051,18 @@ export default function Recovery() {
             <span className="text-sm text-statusWarn">{t("recovery.notReachable")}</span>
           )}
         </div>
+
+        {/* Which folders were read (#196). Shown whenever the check has run, not
+            only on failure: on a green result it confirms the right place, and
+            on an empty one it turns "my backups are gone" into "it looked
+            somewhere else". Deliberately the raw paths, because the next thing
+            a stuck user does is compare them with what they typed. */}
+        {readSources.length > 0 && readableState !== "idle" && (
+          <p className="text-xs text-carbon-textMuted leading-relaxed wrap-break-word">
+            {t("recovery.readFrom")}{" "}
+            <span className="font-mono">{readSources.join(", ")}</span>
+          </p>
+        )}
 
         {/* Exact remedy when the key doesn't match the repo. */}
         {readableState === "bad" && (

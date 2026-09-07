@@ -37,6 +37,37 @@ func widgetGet(t *testing.T, h http.Handler, path, headerToken string) *httptest
 	return w
 }
 
+// TestWidgetQueryTokenOnlyOnThePage pins the split introduced for #198: the
+// PAGE still takes ?token=, because an embedding iframe cannot set a header on
+// the document request, and the FEED does not, because the page fetches it
+// itself and a fetch can set one.
+//
+// The distinction is the whole security value. The feed is polled on a timer,
+// so the query form wrote the credential into the reverse proxy's access log
+// once per refresh for as long as a dashboard stayed open; the page's src is
+// requested once. A test that only checked "the right token works" would pass
+// on the old behaviour too, so the refusal is what is asserted here.
+func TestWidgetQueryTokenOnlyOnThePage(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	tok := "0123456789abcdef0123456789abcdef"
+	setWidgetToken(t, st, tok)
+
+	if w := widgetGet(t, h, "/widget?token="+tok, ""); w.Code != http.StatusOK {
+		t.Fatalf("the page must still accept ?token=, got %d", w.Code)
+	}
+	if w := widgetGet(t, h, "/api/widget/data?token="+tok, ""); w.Code != http.StatusForbidden {
+		t.Fatalf("the feed must REFUSE ?token=, got %d", w.Code)
+	}
+	if w := widgetGet(t, h, "/api/widget/data", tok); w.Code != http.StatusOK {
+		t.Fatalf("the feed must accept the header, got %d", w.Code)
+	}
+	// The header keeps working on the page too, so a caller that can set one is
+	// never forced into the URL.
+	if w := widgetGet(t, h, "/widget", tok); w.Code != http.StatusOK {
+		t.Fatalf("the page must accept the header, got %d", w.Code)
+	}
+}
+
 // TestWidgetTokenGate pins the fail-closed token gate on BOTH widget endpoints:
 // no stored token (feature off) → 403 even with an empty presented token; a
 // missing or wrong token → 403; the right token (query param or header) → 200.
@@ -85,7 +116,7 @@ func TestWidgetTokenGate(t *testing.T) {
 // widgetDataBody fetches /api/widget/data with the token and decodes the body.
 func widgetDataBody(t *testing.T, h http.Handler, tok string) map[string]any {
 	t.Helper()
-	w := widgetGet(t, h, "/api/widget/data?token="+tok, "")
+	w := widgetGet(t, h, "/api/widget/data", tok)
 	if w.Code != http.StatusOK {
 		t.Fatalf("GET /api/widget/data = %d, want 200 (body %q)", w.Code, w.Body.String())
 	}
@@ -231,7 +262,7 @@ func TestWidgetTokenGenerateAndDisable(t *testing.T) {
 	if s.WidgetToken != tok {
 		t.Fatalf("generated token not stored: settings=%q returned=%q", s.WidgetToken, tok)
 	}
-	if w := widgetGet(t, h, "/api/widget/data?token="+tok, ""); w.Code != http.StatusOK {
+	if w := widgetGet(t, h, "/api/widget/data", tok); w.Code != http.StatusOK {
 		t.Fatalf("fresh token must authorize the feed, got %d", w.Code)
 	}
 
@@ -241,10 +272,10 @@ func TestWidgetTokenGenerateAndDisable(t *testing.T) {
 	if !hex32Re.MatchString(tok2) || tok2 == tok {
 		t.Fatalf("regenerate must return a fresh 32-hex token, got %q (old %q)", tok2, tok)
 	}
-	if w := widgetGet(t, h, "/api/widget/data?token="+tok, ""); w.Code != http.StatusForbidden {
+	if w := widgetGet(t, h, "/api/widget/data", tok); w.Code != http.StatusForbidden {
 		t.Fatalf("old token must be revoked after regenerate, got %d", w.Code)
 	}
-	if w := widgetGet(t, h, "/api/widget/data?token="+tok2, ""); w.Code != http.StatusOK {
+	if w := widgetGet(t, h, "/api/widget/data", tok2); w.Code != http.StatusOK {
 		t.Fatalf("new token must authorize the feed, got %d", w.Code)
 	}
 
@@ -253,7 +284,7 @@ func TestWidgetTokenGenerateAndDisable(t *testing.T) {
 	if w3.Code != http.StatusOK || m3["ok"] != true {
 		t.Fatalf("disable: code=%d body=%v", w3.Code, m3)
 	}
-	if w := widgetGet(t, h, "/api/widget/data?token="+tok2, ""); w.Code != http.StatusForbidden {
+	if w := widgetGet(t, h, "/api/widget/data", tok2); w.Code != http.StatusForbidden {
 		t.Fatalf("disabled widget must 403 even with the last token, got %d", w.Code)
 	}
 }
@@ -291,7 +322,7 @@ func TestWidgetTokenSettingsRoundTrip(t *testing.T) {
 	if wPut.Code != http.StatusOK || mPut["ok"] != true {
 		t.Fatalf("put settings: code=%d body=%v", wPut.Code, mPut)
 	}
-	if w := widgetGet(t, h, "/api/widget/data?token="+tok, ""); w.Code != http.StatusOK {
+	if w := widgetGet(t, h, "/api/widget/data", tok); w.Code != http.StatusOK {
 		t.Fatalf("settings round-trip must keep the widget token, got %d", w.Code)
 	}
 }

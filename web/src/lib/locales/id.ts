@@ -86,6 +86,7 @@ const id: Partial<Translations> = {
   "containers.discovering": "Mencari…",
   "containers.discoverHint": "Kehilangan /config? Bangun kembali daftar cadangan dari penyimpanan.",
   "containers.backupNow": "Cadangkan sekarang",
+  "containers.stopWarning": "Pencadangan menghentikan kontainer selama berjalan, lalu menjalankannya kembali. Itulah yang menjaga datanya tetap konsisten. Pencadangan pertama paling lama; berikutnya hanya menyalin perubahan.",
   "containers.lastBackup": "Cadangan terakhir",
   "containers.never": "Tidak pernah",
   "containers.colName": "Nama",
@@ -1155,6 +1156,7 @@ const id: Partial<Translations> = {
   "recovery.appKeyExplain": "Untuk membaca cadangan yang ada, container ini memerlukan APP_KEY YANG SAMA seperti yang digunakan sebelumnya. Ada di kit pemulihan Anda. Atur di template container Unraid jika belum, lalu periksa ulang.",
   "recovery.appKeyRemedy": "Kunci enkripsi tidak cocok dengan cadangan ini. Atur APP_KEY asli (dari kit pemulihan Anda) di template container, lalu periksa ulang.",
   "recovery.readable": "Cadangan Anda dapat dibaca.",
+  "recovery.readFrom": "Dibaca dari:",
   "recovery.notReachable": "Cadangan Anda belum dapat dijangkau. Lampirkan lokasi di bawah, lalu periksa ulang.",
   "recovery.recheck": "Periksa",
   // Step 2

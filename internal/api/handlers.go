@@ -698,7 +698,13 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
+	// `repo` names the folder this pass actually read (#196): the wizard asks
+	// for an off-site repository a step earlier and then reads the PRIMARY
+	// path, and an empty answer about an unnamed folder is unreadable.
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"discovered": n,
+		"repo":       h.svc.DiscoverSource("containers"),
+	}))
 }
 
 // handleDiscoverVMs rebuilds the VM target list from backup storage, so a VM
@@ -710,7 +716,13 @@ func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
+	// `repo` names the folder this pass actually read (#196): the wizard asks
+	// for an off-site repository a step earlier and then reads the PRIMARY
+	// path, and an empty answer about an unnamed folder is unreadable.
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"discovered": n,
+		"repo":       h.svc.DiscoverSource("vms"),
+	}))
 }
 
 // handleBackup starts a single container backup ON THE SERVER and returns
@@ -4145,7 +4157,13 @@ func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"discovered": n}))
+	// `repo` names the folder this pass actually read (#196): the wizard asks
+	// for an off-site repository a step earlier and then reads the PRIMARY
+	// path, and an empty answer about an unnamed folder is unreadable.
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"discovered": n,
+		"repo":       h.svc.DiscoverSource("files"),
+	}))
 }
 
 // handleForeignOpen opens ANOTHER BombVault instance's repository READ-ONLY

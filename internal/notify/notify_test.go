@@ -659,3 +659,48 @@ func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
 		t.Fatalf("with summary off a marked message must send, hits=%d", hits)
 	}
 }
+
+// TestSendOnUnsetNotifiesFailures pins the fix for #195, and it exists because
+// its absence is the reason the defect shipped: every existing test in this
+// file passes an explicit On value, so the case a fresh install actually has —
+// the stored blob empty, On == "" — was never exercised at all.
+//
+// The rule: unset means "failure" and an explicit "never" still means never.
+// An unrecognised value stays silent, because that positive allowlist is an
+// older deliberate decision and this fix does not get to overturn it; only the
+// empty string joins the list, since that is the case a fresh install has.
+func TestSendOnUnsetNotifiesFailures(t *testing.T) {
+	cases := []struct {
+		name     string
+		on       string
+		ok       bool
+		wantSent bool
+	}{
+		{"unset sends a failure", "", false, true},
+		{"unset stays quiet on success", "", true, false},
+		{"explicit never stays silent on failure", "never", false, false},
+		{"explicit never stays silent on success", "never", true, false},
+		{"failure behaves as before", "failure", false, true},
+		{"always sends a success too", "always", true, true},
+		// An unrecognised value stays silent, which is the older deliberate
+		// decision (see TestSendUnknownPolicySuppressed): a corrupted config
+		// must not start contacting endpoints. Only "" joins the allowlist.
+		{"an unknown value stays silent", "wat", false, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var hits int
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				hits++
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer srv.Close()
+			notify.Send(context.Background(),
+				notify.Config{On: c.on, WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"},
+				"", notify.Event{Title: "t", Message: "m", OK: c.ok})
+			if got := hits > 0; got != c.wantSent {
+				t.Fatalf("On=%q ok=%v: sent=%v, want %v", c.on, c.ok, got, c.wantSent)
+			}
+		})
+	}
+}
