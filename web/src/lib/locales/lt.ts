@@ -875,7 +875,7 @@ const lt: Partial<Translations> = {
   "auth.loginError": "Prisijungti nepavyko",
 
   // Settings — Security card
-  "auth.security": "Sauga",
+  "auth.security": "Slaptažodis",
   "auth.authOff": "Autentifikavimas išjungtas. Visi vietinio tinklo naudotojai turi visą prieigą.",
   "auth.authOn": "Autentifikavimas įjungtas.",
   "auth.setPassword": "Nustatyti slaptažodį",
@@ -1329,7 +1329,7 @@ const lt: Partial<Translations> = {
   "settings.filesEnabledHint": "Kurkite savavališkų aplankų po jūsų prijungimais atsargines kopijas kaip failų rinkinius, nepriklausomai nuo kitų sričių.",
   "settings.filesPath": "Aplankų kelias",
   "jobs.filesSection": "Aplankai",
-  "jobs.filesIncludeHint": "Kopijuoja kiekvieną aplankų rinkinį, kuriam įjungta „įtraukti į tvarkaraštį“. Perjunkite kiekvieną rinkinį žemiau arba Aplankų skirtuke.",
+  "jobs.filesIncludeHint": "Kopijuoja kiekvieną aplankų rinkinį, kuriam įjungta „įtraukti į tvarkaraštį“. Perjunkite kiekvieną rinkinį žemiau arba Aplankų skirtuke. Su tvarkaraščiais kiekvienam elementui rinkinys gali turėti savo ritmą, o tai jį taip pat pašalina iš Kurti visko atsarginę kopiją.",
   "jobs.noFileSetsIncluded": "Aplankų rinkinių dar nėra. Pridėkite juos Aplankų skirtuke.",
   "dashboard.domainFiles": "Aplankai",
   "recovery.filesFound": "Rasta {f} aplankų rinkiniai.",

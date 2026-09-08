@@ -332,7 +332,7 @@ const pl: Partial<Translations> = {
   "auth.loginError": "Logowanie nieudane",
 
   // Settings — Security card
-  "auth.security": "Bezpieczeństwo",
+  "auth.security": "Hasło",
   "auth.authOff": "Uwierzytelnianie jest wyłączone. Wszyscy użytkownicy sieci LAN mają pełny dostęp.",
   "auth.authOn": "Uwierzytelnianie jest włączone.",
   "auth.setPassword": "Ustaw hasło",
@@ -1153,7 +1153,7 @@ const pl: Partial<Translations> = {
   "settings.filesEnabledHint": "Kopia zapasowa dowolnych folderów w twoich punktach montowania, niezależnie od pozostałych domen.",
   "settings.filesPath": "Ścieżka folderów",
   "jobs.filesSection": "Foldery",
-  "jobs.filesIncludeHint": "Tworzy kopię każdego zestawu folderów z włączoną opcją „uwzględnij w harmonogramie”. Przełączaj zestawy poniżej lub w zakładce Foldery.",
+  "jobs.filesIncludeHint": "Tworzy kopię każdego zestawu folderów z włączoną opcją „uwzględnij w harmonogramie”. Przełączaj zestawy poniżej lub w zakładce Foldery. Przy harmonogramach na element zestaw może mieć własny rytm, co wyłącza go także z Kopii wszystkiego.",
   "jobs.noFileSetsIncluded": "Nie ma jeszcze zestawów folderów. Dodaj je w zakładce Foldery.",
   "dashboard.domainFiles": "Foldery",
   "recovery.filesFound": "Znaleziono {f} zestawów folderów.",

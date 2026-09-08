@@ -337,7 +337,7 @@ const zh: Partial<Translations> = {
   "auth.loginError": "登录失败",
 
   // Settings — Security card
-  "auth.security": "安全",
+  "auth.security": "密码",
   "auth.authOff": "身份验证已关闭，所有 LAN 用户均有完全访问权限。",
   "auth.authOn": "身份验证已启用。",
   "auth.setPassword": "设置密码",
@@ -1150,7 +1150,7 @@ const zh: Partial<Translations> = {
   "settings.filesEnabledHint": "备份挂载点下的任意文件夹，独立于其他域。",
   "settings.filesPath": "文件夹路径",
   "jobs.filesSection": "文件夹",
-  "jobs.filesIncludeHint": "备份每个启用了“加入计划任务”的文件夹集（在下方或“文件夹”标签页中逐个切换）。",
+  "jobs.filesIncludeHint": "备份每个启用了“加入计划任务”的文件夹集（在下方或“文件夹”标签页中逐个切换）。 开启按项计划后，某个集合可以拥有自己的节奏，同时也会退出“备份全部”。",
   "jobs.noFileSetsIncluded": "还没有文件夹集。请在“文件夹”标签页中添加。",
   "dashboard.domainFiles": "文件夹",
   "recovery.filesFound": "找到 {f} 个文件夹集。",

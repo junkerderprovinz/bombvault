@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect, type CSSProperties } from "react";
-import { type Settings } from "../lib/api";
+import { logout, type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
 import { hueVars, rainbowAt } from "../lib/appearance";
@@ -19,6 +19,7 @@ import {
   IconViewSimple,
   IconViewAdvanced,
   IconGear,
+  IconPower,
 } from "./navGlyphs";
 import { useLabelMode } from "../lib/useLabelMode";
 import { hidesLabel, labelWidth } from "../lib/controls";
@@ -63,6 +64,9 @@ export {
 
 interface SidebarProps {
   settings: Settings | null;
+  /** Whether a login password is set. The sign-out row exists only then, since
+   *  on an instance without one there is nothing to sign out of. */
+  authEnabled: boolean;
 }
 
 interface NavItem {
@@ -320,6 +324,50 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
 }
 
 // ---------------------------------------------------------------------------
+// SidebarSignOut — the footer's sign-out row, above the view toggle (jdp).
+//
+// Its own small component rather than a branch inside SidebarControls, because
+// it is the only row in this rail whose EXISTENCE depends on server state; the
+// toggle beside it is always there. Same markup as that toggle so the two read
+// as one column: the shared nav-row base, the label hidden but never removed in
+// glyph mode, and a tooltip only where the words are gone.
+//
+// Signing out clears this browser's cookie and reloads, which is what puts the
+// login screen back up. Settings keeps its own sign-out (and the "everywhere"
+// variant that rotates the session epoch); this one is the reach-for-it copy,
+// so it does the plain thing only.
+function SidebarSignOut() {
+  const { t } = useT();
+  const labelMode = useLabelMode("sidebar");
+  const showLabel = !hidesLabel(labelMode);
+  const reactive = labelMode === "reactive";
+  const label = t("auth.logout");
+  const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
+
+  async function signOut() {
+    await logout().catch(() => undefined);
+    const g = globalThis as unknown as { location: { reload(): void } };
+    g.location.reload();
+  }
+
+  return (
+    <>
+      <button
+        ref={tooltip.ref}
+        onClick={() => void signOut()}
+        aria-describedby={tooltip.describedBy}
+        {...tooltip.handlers}
+        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-nav-idle ${navInactive} w-full`}
+        style={reactive ? ({ "--reactive-chars": labelWidth(label) } as CSSProperties) : undefined}
+      >
+        <IconPower />
+        <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{label}</span>
+      </button>
+      {tooltip.bubble}
+    </>
+  );
+}
+
 // SidebarControls — Simple/Advanced view toggle in the sidebar footer. Both
 // the language switcher (flag + name, dropdown opening upward — GlimStone
 // follow-up pass, live-review point 9) and the dark/light theme toggle
@@ -404,7 +452,7 @@ function SidebarControls() {
   );
 }
 
-export function Sidebar({ settings }: SidebarProps) {
+export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const { t } = useT();
   const navigate = useNavigate();
   const vmsEnabled = settings?.vmsEnabled ?? false;
@@ -705,6 +753,7 @@ export function Sidebar({ settings }: SidebarProps) {
                 THIS SAME nextHue() sequence rather than starting its own —
                 see this block's own opening comment. */}
             <div className="flex flex-col gap-1 p-3">
+              {authEnabled && <SidebarSignOut />}
               <SidebarControls />
               <NavItem
                 to="/settings"

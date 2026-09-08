@@ -875,7 +875,7 @@ const gl: Partial<Translations> = {
   "auth.loginError": "O inicio de sesión fallou",
 
   // Settings — Security card
-  "auth.security": "Seguridade",
+  "auth.security": "Contrasinal",
   "auth.authOff": "A autenticación está desactivada: todos os usuarios da LAN teñen acceso completo.",
   "auth.authOn": "A autenticación está activada.",
   "auth.setPassword": "Configurar contrasinal",
@@ -1329,7 +1329,7 @@ const gl: Partial<Translations> = {
   "settings.filesEnabledHint": "Fai copia de cartafoles arbitrarios baixo as túas montaxes como conxuntos de ficheiros, independentemente doutros dominios.",
   "settings.filesPath": "Camiño de cartafoles",
   "jobs.filesSection": "Cartafoles",
-  "jobs.filesIncludeHint": "Fai copia de cada conxunto de cartafoles con «incluír na planificación» activado. Cambia cada conxunto abaixo ou na lapela Cartafoles.",
+  "jobs.filesIncludeHint": "Fai copia de cada conxunto de cartafoles con «incluír na planificación» activado. Cambia cada conxunto abaixo ou na lapela Cartafoles. Cos horarios por elemento, un conxunto pode ter a súa propia cadencia, o que tamén o quita de Copiar todo.",
   "jobs.noFileSetsIncluded": "Aínda non hai conxuntos de cartafoles. Engádeos na lapela Cartafoles.",
   "dashboard.domainFiles": "Cartafoles",
   "recovery.filesFound": "Atopáronse {f} conxuntos de cartafoles.",

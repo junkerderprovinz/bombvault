@@ -337,7 +337,7 @@ const ar: Partial<Translations> = {
   "auth.loginError": "فشل تسجيل الدخول",
 
   // Settings — Security card
-  "auth.security": "الأمان",
+  "auth.security": "كلمة المرور",
   "auth.authOff": "المصادقة معطّلة. جميع مستخدمي LAN لديهم وصول كامل.",
   "auth.authOn": "المصادقة مفعّلة.",
   "auth.setPassword": "تعيين كلمة مرور",
@@ -1161,7 +1161,7 @@ const ar: Partial<Translations> = {
   "settings.filesEnabledHint": "نسخ مجلدات عشوائية تحت نقاط التحميل احتياطيًا، بشكل مستقل عن المجالات الأخرى.",
   "settings.filesPath": "مسار المجلدات",
   "jobs.filesSection": "المجلدات",
-  "jobs.filesIncludeHint": "ينسخ احتياطياً كل مجموعة مجلدات مفعَّل فيها «التضمين في الجدول الزمني». بدِّل كل مجموعة أدناه أو في تبويب المجلدات.",
+  "jobs.filesIncludeHint": "ينسخ احتياطياً كل مجموعة مجلدات مفعَّل فيها «التضمين في الجدول الزمني». بدِّل كل مجموعة أدناه أو في تبويب المجلدات. مع الجداول لكل عنصر، يمكن لمجموعة أن تحمل إيقاعها الخاص، وهو ما يُخرجها أيضًا من نسخ كل شيء.",
   "jobs.noFileSetsIncluded": "لا توجد مجموعات مجلدات بعد. أضِفها في تبويب المجلدات.",
   "dashboard.domainFiles": "المجلدات",
   "recovery.filesFound": "تم العثور على {f} مجموعات مجلدات.",

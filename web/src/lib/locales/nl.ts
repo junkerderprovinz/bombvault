@@ -332,7 +332,7 @@ const nl: Partial<Translations> = {
   "auth.loginError": "Aanmelden mislukt",
 
   // Settings — Security card
-  "auth.security": "Beveiliging",
+  "auth.security": "Wachtwoord",
   "auth.authOff": "Verificatie is uitgeschakeld. Alle LAN-gebruikers hebben volledige toegang.",
   "auth.authOn": "Verificatie is ingeschakeld.",
   "auth.setPassword": "Wachtwoord instellen",
@@ -1155,7 +1155,7 @@ const nl: Partial<Translations> = {
   "settings.filesEnabledHint": "Willekeurige mappen onder je mounts back-uppen, los van de andere domeinen.",
   "settings.filesPath": "Mappen-pad",
   "jobs.filesSection": "Mappen",
-  "jobs.filesIncludeHint": "Maakt een back-up van elke mappenset waarbij „opnemen in planning” is ingeschakeld. Schakel per set hieronder of op het tabblad Mappen.",
+  "jobs.filesIncludeHint": "Maakt een back-up van elke mappenset waarbij „opnemen in planning” is ingeschakeld. Schakel per set hieronder of op het tabblad Mappen. Met schema's per item kan een set in plaats daarvan een eigen ritme dragen, wat hem ook uit Alles back-uppen haalt.",
   "jobs.noFileSetsIncluded": "Nog geen mappensets. Voeg ze toe op het tabblad Mappen.",
   "dashboard.domainFiles": "Mappen",
   "recovery.filesFound": "{f} mappensets gevonden.",

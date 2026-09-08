@@ -337,7 +337,7 @@ const vi: Partial<Translations> = {
   "auth.loginError": "Đăng nhập thất bại",
 
   // Settings — Security card
-  "auth.security": "Bảo mật",
+  "auth.security": "Mật khẩu",
   "auth.authOff": "Xác thực đang tắt. Tất cả người dùng LAN có toàn quyền truy cập.",
   "auth.authOn": "Xác thực đã bật.",
   "auth.setPassword": "Đặt mật khẩu",
@@ -1150,7 +1150,7 @@ const vi: Partial<Translations> = {
   "settings.filesEnabledHint": "Sao lưu các thư mục tùy ý dưới các điểm gắn kết của bạn, độc lập với các miền khác.",
   "settings.filesPath": "Đường dẫn thư mục",
   "jobs.filesSection": "Thư mục",
-  "jobs.filesIncludeHint": "Sao lưu mọi bộ thư mục có bật \"đưa vào lịch trình\". Bật/tắt từng bộ bên dưới hoặc trong tab Thư mục.",
+  "jobs.filesIncludeHint": "Sao lưu mọi bộ thư mục có bật \"đưa vào lịch trình\". Bật/tắt từng bộ bên dưới hoặc trong tab Thư mục. Khi bật lịch theo từng mục, một bộ có thể mang nhịp riêng của nó, và điều đó cũng đưa nó ra khỏi Sao lưu tất cả.",
   "jobs.noFileSetsIncluded": "Chưa có bộ thư mục nào. Thêm trong tab Thư mục.",
   "dashboard.domainFiles": "Thư mục",
   "recovery.filesFound": "Tìm thấy {f} bộ thư mục.",

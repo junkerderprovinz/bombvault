@@ -875,7 +875,7 @@ const hi: Partial<Translations> = {
   "auth.loginError": "लॉगिन विफल हुआ",
 
   // Settings — Security card
-  "auth.security": "सुरक्षा",
+  "auth.security": "पासवर्ड",
   "auth.authOff": "ऑथेंटिकेशन बंद है। सभी LAN उपयोगकर्ताओं को पूरी पहुँच है।",
   "auth.authOn": "ऑथेंटिकेशन सक्षम है।",
   "auth.setPassword": "पासवर्ड सेट करें",
@@ -1329,7 +1329,7 @@ const hi: Partial<Translations> = {
   "settings.filesEnabledHint": "अन्य डोमेन से स्वतंत्र रूप से, अपने माउंट के अंतर्गत मनमाने फ़ोल्डरों का बैकअप फ़ाइल सेट के रूप में लें।",
   "settings.filesPath": "फ़ोल्डर पथ",
   "jobs.filesSection": "फ़ोल्डर",
-  "jobs.filesIncludeHint": "\"शेड्यूल में शामिल करें\" चालू वाले हर फ़ोल्डर सेट का बैकअप लेता है। हर सेट को नीचे या Folders टैब में बदलें।",
+  "jobs.filesIncludeHint": "\"शेड्यूल में शामिल करें\" चालू वाले हर फ़ोल्डर सेट का बैकअप लेता है। हर सेट को नीचे या Folders टैब में बदलें। प्रति-आइटम शेड्यूल चालू होने पर कोई सेट अपनी अलग लय रख सकता है, जिससे वह सब कुछ बैकअप करें से भी बाहर हो जाता है।",
   "jobs.noFileSetsIncluded": "अभी तक कोई फ़ोल्डर सेट नहीं है। इन्हें Folders टैब में जोड़ें।",
   "dashboard.domainFiles": "फ़ोल्डर",
   "recovery.filesFound": "{f} फ़ोल्डर सेट मिले।",

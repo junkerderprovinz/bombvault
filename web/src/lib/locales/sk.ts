@@ -875,7 +875,7 @@ const sk: Partial<Translations> = {
   "auth.loginError": "Prihlásenie zlyhalo",
 
   // Settings — Security card
-  "auth.security": "Zabezpečenie",
+  "auth.security": "Heslo",
   "auth.authOff": "Overovanie je vypnuté. Všetci používatelia LAN majú plný prístup.",
   "auth.authOn": "Overovanie je zapnuté.",
   "auth.setPassword": "Nastaviť heslo",
@@ -1329,7 +1329,7 @@ const sk: Partial<Translations> = {
   "settings.filesEnabledHint": "Zálohujte ľubovoľné priečinky pod vašimi pripojeniami ako sady súborov, nezávisle od ostatných domén.",
   "settings.filesPath": "Cesta priečinkov",
   "jobs.filesSection": "Priečinky",
-  "jobs.filesIncludeHint": "Zálohuje každú sadu priečinkov so zapnutým „zahrnúť do plánu“. Prepnite jednotlivé sady nižšie alebo na karte Priečinky.",
+  "jobs.filesIncludeHint": "Zálohuje každú sadu priečinkov so zapnutým „zahrnúť do plánu“. Prepnite jednotlivé sady nižšie alebo na karte Priečinky. S plánmi na položku môže sada mať vlastnú kadenciu, čo ju zároveň vyjme zo Zálohovať všetko.",
   "jobs.noFileSetsIncluded": "Zatiaľ žiadne sady priečinkov. Pridajte ich na karte Priečinky.",
   "dashboard.domainFiles": "Priečinky",
   "recovery.filesFound": "Nájdených {f} sád priečinkov.",

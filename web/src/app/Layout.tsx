@@ -29,6 +29,11 @@ type AuthGateState = "loading" | "pass" | "blocked";
 export function Layout() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [authGate, setAuthGate] = useState<AuthGateState>("loading");
+  // Whether a login password is set at all. Separate from authGate, which only
+  // answers "may this browser in": the sidebar needs a sign-out row exactly when
+  // there is something to sign out OF, and on an instance with no password
+  // there is not.
+  const [authEnabled, setAuthEnabled] = useState(false);
   // The version to show the "What's new" dialog for (null = don't show).
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
@@ -37,6 +42,7 @@ export function Layout() {
   const checkAuth = useCallback(() => {
     getAuth()
       .then((res) => {
+        setAuthEnabled(res.enabled);
         if (res.enabled && !res.authed) {
           setAuthGate("blocked");
         } else {
@@ -168,7 +174,7 @@ export function Layout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-carbon-background">
-      <Sidebar settings={settings} />
+      <Sidebar settings={settings} authEnabled={authEnabled} />
       {/* `flex flex-col` added here (sticky-footer page-shell fix, jdp live
           review — "die Versionsnummer soll unterhalb der untersten Card
           stehen, nicht die Cards durchfahren lassen"): `main` is the actual

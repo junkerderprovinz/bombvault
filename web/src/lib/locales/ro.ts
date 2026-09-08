@@ -334,7 +334,7 @@ const ro: Partial<Translations> = {
   "auth.loginError": "Conectare eșuată",
 
   // Settings — Security card
-  "auth.security": "Securitate",
+  "auth.security": "Parolă",
   "auth.authOff": "Autentificarea este dezactivată. Toți utilizatorii LAN au acces complet.",
   "auth.authOn": "Autentificarea este activată.",
   "auth.setPassword": "Setare parolă",
@@ -1161,7 +1161,7 @@ const ro: Partial<Translations> = {
   "settings.filesEnabledHint": "Copiere de rezervă a unor foldere oarecare de sub punctele tale de montare, independent de celelalte domenii.",
   "settings.filesPath": "Cale foldere",
   "jobs.filesSection": "Foldere",
-  "jobs.filesIncludeHint": "Face backup fiecărui set de foldere cu „Includeți în programare” activat. Comutați per set mai jos sau în fila Foldere.",
+  "jobs.filesIncludeHint": "Face backup fiecărui set de foldere cu „Includeți în programare” activat. Comutați per set mai jos sau în fila Foldere. Cu programările per element, un set poate avea propria cadență, ceea ce îl scoate și din Copiază tot.",
   "jobs.noFileSetsIncluded": "Încă nu există seturi de foldere. Adăugați-le în fila Foldere.",
   "dashboard.domainFiles": "Foldere",
   "recovery.filesFound": "Găsite {f} seturi de foldere.",

@@ -875,7 +875,7 @@ const et: Partial<Translations> = {
   "auth.loginError": "Sisselogimine ebaõnnestus",
 
   // Settings — Security card
-  "auth.security": "Turvalisus",
+  "auth.security": "Parool",
   "auth.authOff": "Autentimine on väljas: kõigil kohaliku võrgu kasutajatel on täielik ligipääs.",
   "auth.authOn": "Autentimine on sees.",
   "auth.setPassword": "Määra parool",
@@ -1329,7 +1329,7 @@ const et: Partial<Translations> = {
   "settings.filesEnabledHint": "Varunda suvalisi kaustu oma haakepunktide all failikomplektidena, sõltumata teistest valdkondadest.",
   "settings.filesPath": "Kaustade rada",
   "jobs.filesSection": "Kaustad",
-  "jobs.filesIncludeHint": "Varundab iga kaustakomplekti, millel on „lisa ajakavasse” sees. Lülita iga komplekt allpool või Kaustade vahekaardil.",
+  "jobs.filesIncludeHint": "Varundab iga kaustakomplekti, millel on „lisa ajakavasse” sees. Lülita iga komplekt allpool või Kaustade vahekaardil. Elemendipõhiste ajakavadega võib komplektil olla oma rütm, mis võtab selle välja ka Varunda kõik alt.",
   "jobs.noFileSetsIncluded": "Kaustakomplekte pole veel. Lisa need Kaustade vahekaardil.",
   "dashboard.domainFiles": "Kaustad",
   "recovery.filesFound": "Leiti {f} kaustakomplekti.",

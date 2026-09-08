@@ -337,7 +337,7 @@ const es: Partial<Translations> = {
   "auth.loginError": "Error al iniciar sesión",
 
   // Settings — Security card
-  "auth.security": "Seguridad",
+  "auth.security": "Contraseña",
   "auth.authOff": "La autenticación está desactivada: todos los usuarios de la LAN tienen acceso completo.",
   "auth.authOn": "La autenticación está habilitada.",
   "auth.setPassword": "Establecer contraseña",
@@ -1156,7 +1156,7 @@ const es: Partial<Translations> = {
   "settings.filesEnabledHint": "Copia de seguridad de carpetas arbitrarias bajo tus puntos de montaje, independiente de los demás dominios.",
   "settings.filesPath": "Ruta de carpetas",
   "jobs.filesSection": "Carpetas",
-  "jobs.filesIncludeHint": "Hace copia de cada conjunto de carpetas con «incluir en el calendario» activado. Actívalo por conjunto abajo o en la pestaña Carpetas.",
+  "jobs.filesIncludeHint": "Hace copia de cada conjunto de carpetas con «incluir en el calendario» activado. Actívalo por conjunto abajo o en la pestaña Carpetas. Con los horarios por elemento, un conjunto puede llevar su propia cadencia, lo que también lo saca de Copiar todo.",
   "jobs.noFileSetsIncluded": "Aún no hay conjuntos de carpetas. Añádelos en la pestaña Carpetas.",
   "dashboard.domainFiles": "Carpetas",
   "recovery.filesFound": "Se encontraron {f} conjuntos de carpetas.",

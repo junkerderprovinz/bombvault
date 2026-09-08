@@ -337,7 +337,7 @@ const hu: Partial<Translations> = {
   "auth.loginError": "Bejelentkezés sikertelen",
 
   // Settings — Security card
-  "auth.security": "Biztonság",
+  "auth.security": "Jelszó",
   "auth.authOff": "A hitelesítés ki van kapcsolva. Minden LAN-felhasználónak teljes hozzáférése van.",
   "auth.authOn": "A hitelesítés engedélyezett.",
   "auth.setPassword": "Jelszó beállítása",
@@ -1161,7 +1161,7 @@ const hu: Partial<Translations> = {
   "settings.filesEnabledHint": "Tetszőleges mappák mentése a csatolási pontjaid alatt, a többi területtől függetlenül.",
   "settings.filesPath": "Mappák útvonala",
   "jobs.filesSection": "Mappák",
-  "jobs.filesIncludeHint": "Minden mappakészletet ment, amelynél az „Ütemezésbe foglalás“ engedélyezve van. Készletenként alább vagy a Mappák lapon kapcsolható.",
+  "jobs.filesIncludeHint": "Minden mappakészletet ment, amelynél az „Ütemezésbe foglalás“ engedélyezve van. Készletenként alább vagy a Mappák lapon kapcsolható. Elemenkénti ütemezéssel egy készlet saját ritmust kaphat, ami ki is veszi a Mindent menteni futásból.",
   "jobs.noFileSetsIncluded": "Még nincsenek mappakészletek. Adja hozzá őket a Mappák lapon.",
   "dashboard.domainFiles": "Mappák",
   "recovery.filesFound": "{f} mappakészlet található.",

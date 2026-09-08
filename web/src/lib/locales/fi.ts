@@ -337,7 +337,7 @@ const fi: Partial<Translations> = {
   "auth.loginError": "Kirjautuminen epäonnistui",
 
   // Settings — Security card
-  "auth.security": "Turvallisuus",
+  "auth.security": "Salasana",
   "auth.authOff": "Todennus on pois: kaikilla LAN-käyttäjillä on täysi pääsy.",
   "auth.authOn": "Todennus on käytössä.",
   "auth.setPassword": "Aseta salasana",
@@ -1158,7 +1158,7 @@ const fi: Partial<Translations> = {
   "settings.filesEnabledHint": "Mielivaltaisten kansioiden varmuuskopiointi liitospisteidesi alta, muista alueista riippumatta.",
   "settings.filesPath": "Kansioiden polku",
   "jobs.filesSection": "Kansiot",
-  "jobs.filesIncludeHint": "Varmuuskopioi jokaisen kansiojoukon, jolla „sisällytä aikatauluun” on käytössä. Kytke joukot alla tai Kansiot-välilehdellä.",
+  "jobs.filesIncludeHint": "Varmuuskopioi jokaisen kansiojoukon, jolla „sisällytä aikatauluun” on käytössä. Kytke joukot alla tai Kansiot-välilehdellä. Kohdekohtaisilla aikatauluilla joukolla voi olla oma tahtinsa, mikä poistaa sen myös Varmuuskopioi kaikki -ajosta.",
   "jobs.noFileSetsIncluded": "Ei vielä kansiojoukkoja. Lisää ne Kansiot-välilehdellä.",
   "dashboard.domainFiles": "Kansiot",
   "recovery.filesFound": "Löytyi {f} kansiojoukkoa.",

@@ -875,7 +875,7 @@ const ms: Partial<Translations> = {
   "auth.loginError": "Log masuk gagal",
 
   // Settings — Security card
-  "auth.security": "Keselamatan",
+  "auth.security": "Kata laluan",
   "auth.authOff": "Pengesahan dimatikan. Semua pengguna LAN mempunyai akses penuh.",
   "auth.authOn": "Pengesahan diaktifkan.",
   "auth.setPassword": "Tetapkan kata laluan",
@@ -1329,7 +1329,7 @@ const ms: Partial<Translations> = {
   "settings.filesEnabledHint": "Sandarkan folder sewenang-wenangnya di bawah mount anda sebagai set fail, tanpa mengira domain lain.",
   "settings.filesPath": "Laluan folder",
   "jobs.filesSection": "Folder",
-  "jobs.filesIncludeHint": "Menyandarkan setiap set folder dengan \"sertakan dalam jadual\" dihidupkan. Tukar setiap set di bawah atau dalam tab Folder.",
+  "jobs.filesIncludeHint": "Menyandarkan setiap set folder dengan \"sertakan dalam jadual\" dihidupkan. Tukar setiap set di bawah atau dalam tab Folder. Dengan jadual setiap item, satu set boleh mempunyai iramanya sendiri, yang juga mengeluarkannya daripada Sandarkan Semua.",
   "jobs.noFileSetsIncluded": "Belum ada set folder. Tambahkannya dalam tab Folder.",
   "dashboard.domainFiles": "Folder",
   "recovery.filesFound": "{f} set folder dijumpai.",

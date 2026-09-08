@@ -334,7 +334,7 @@ const no: Partial<Translations> = {
   "auth.loginError": "Innlogging mislyktes",
 
   // Settings — Security card
-  "auth.security": "Sikkerhet",
+  "auth.security": "Passord",
   "auth.authOff": "Autentisering er av. Alle LAN-brukere har full tilgang.",
   "auth.authOn": "Autentisering er aktivert.",
   "auth.setPassword": "Angi passord",
@@ -1158,7 +1158,7 @@ const no: Partial<Translations> = {
   "settings.filesEnabledHint": "Sikkerhetskopiér vilkårlige mapper under monteringspunktene dine, uavhengig av de andre domenene.",
   "settings.filesPath": "Mapper-sti",
   "jobs.filesSection": "Mapper",
-  "jobs.filesIncludeHint": "Sikkerhetskopierer hvert mappesett med «Inkluder i tidsplan» aktivert. Slå av/på per sett nedenfor eller i Mapper-fanen.",
+  "jobs.filesIncludeHint": "Sikkerhetskopierer hvert mappesett med «Inkluder i tidsplan» aktivert. Slå av/på per sett nedenfor eller i Mapper-fanen. Med planer per element kan et sett i stedet ha sin egen kadens, som også tar det ut av Sikkerhetskopier alt.",
   "jobs.noFileSetsIncluded": "Ingen mappesett ennå. Legg dem til i Mapper-fanen.",
   "dashboard.domainFiles": "Mapper",
   "recovery.filesFound": "Fant {f} mappesett.",

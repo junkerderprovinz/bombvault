@@ -870,7 +870,7 @@ const sl: Partial<Translations> = {
   "auth.loginError": "Prijava ni uspela",
 
   // Settings — Security card
-  "auth.security": "Varnost",
+  "auth.security": "Geslo",
   "auth.authOff": "Preverjanje pristnosti je izklopljeno. Vsi uporabniki v LAN-u imajo poln dostop.",
   "auth.authOn": "Preverjanje pristnosti je omogočeno.",
   "auth.setPassword": "Nastavi geslo",
@@ -1313,7 +1313,7 @@ const sl: Partial<Translations> = {
   "settings.filesEnabledHint": "Varnostno kopiraj poljubne mape pod svojimi priklopnimi točkami kot nabore datotek, neodvisno od drugih domen.",
   "settings.filesPath": "Pot za mape",
   "jobs.filesSection": "Mape",
-  "jobs.filesIncludeHint": "Varnostno kopira vsak nabor map z omogočenim \"vključi v urnik\". Preklopi vsak nabor spodaj ali v zavihku Mape.",
+  "jobs.filesIncludeHint": "Varnostno kopira vsak nabor map z omogočenim \"vključi v urnik\". Preklopi vsak nabor spodaj ali v zavihku Mape. Z urniki na element ima lahko nabor svoj ritem, kar ga tudi izvzame iz Varnostno kopiraj vse.",
   "jobs.noFileSetsIncluded": "Še ni naborov map. Dodaj jih v zavihku Mape.",
   "dashboard.domainFiles": "Mape",
   "recovery.filesFound": "Najdenih {f} naborov map.",

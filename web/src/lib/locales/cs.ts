@@ -337,7 +337,7 @@ const cs: Partial<Translations> = {
   "auth.loginError": "Přihlášení selhalo",
 
   // Settings — Security card
-  "auth.security": "Zabezpečení",
+  "auth.security": "Heslo",
   "auth.authOff": "Ověřování je vypnuto. Všichni uživatelé v LAN mají plný přístup.",
   "auth.authOn": "Ověřování je povoleno.",
   "auth.setPassword": "Nastavit heslo",
@@ -1156,7 +1156,7 @@ const cs: Partial<Translations> = {
   "settings.filesEnabledHint": "Zálohování libovolných složek pod tvými přípojnými body, nezávisle na ostatních doménách.",
   "settings.filesPath": "Cesta ke složkám",
   "jobs.filesSection": "Složky",
-  "jobs.filesIncludeHint": "Zálohuje každou sadu složek se zapnutým „Zahrnout do plánu“. Přepněte u jednotlivých sad níže nebo na kartě Složky.",
+  "jobs.filesIncludeHint": "Zálohuje každou sadu složek se zapnutým „Zahrnout do plánu“. Přepněte u jednotlivých sad níže nebo na kartě Složky. S plány na položku může sada mít vlastní kadenci, což ji zároveň vyjme ze Zálohovat vše.",
   "jobs.noFileSetsIncluded": "Zatím žádné sady složek. Přidejte je na kartě Složky.",
   "dashboard.domainFiles": "Složky",
   "recovery.filesFound": "Nalezeno {f} sad složek.",

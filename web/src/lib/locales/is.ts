@@ -875,7 +875,7 @@ const is: Partial<Translations> = {
   "auth.loginError": "Innskráning mistókst",
 
   // Settings — Security card
-  "auth.security": "Öryggi",
+  "auth.security": "Lykilorð",
   "auth.authOff": "Auðkenning er slökkt. Allir notendur á staðarnetinu hafa fullan aðgang.",
   "auth.authOn": "Auðkenning er virk.",
   "auth.setPassword": "Setja lykilorð",
@@ -1329,7 +1329,7 @@ const is: Partial<Translations> = {
   "settings.filesEnabledHint": "Afritaðu handahófskenndar möppur undir tengipunktum þínum sem skráasett, óháð öðrum svæðum.",
   "settings.filesPath": "Slóð möppu",
   "jobs.filesSection": "Möppur",
-  "jobs.filesIncludeHint": "Afritar hvert möppusett með virkjuðu „setja í tímaáætlun“. Skiptu hverju setti hér að neðan eða í Möppur-flipanum.",
+  "jobs.filesIncludeHint": "Afritar hvert möppusett með virkjuðu „setja í tímaáætlun“. Skiptu hverju setti hér að neðan eða í Möppur-flipanum. Með áætlunum á hvert atriði getur safn þess í stað borið sinn eigin takt, sem tekur það einnig út úr Afrita allt.",
   "jobs.noFileSetsIncluded": "Engin möppusett ennþá. Bættu þeim við í Möppur-flipanum.",
   "dashboard.domainFiles": "Möppur",
   "recovery.filesFound": "{f} möppusett fundust.",

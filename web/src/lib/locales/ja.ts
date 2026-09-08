@@ -337,7 +337,7 @@ const ja: Partial<Translations> = {
   "auth.loginError": "ログインに失敗しました",
 
   // Settings — Security card
-  "auth.security": "セキュリティ",
+  "auth.security": "パスワード",
   "auth.authOff": "認証が無効です。LAN ユーザー全員がフルアクセスを持っています。",
   "auth.authOn": "認証が有効です。",
   "auth.setPassword": "パスワードを設定",
@@ -1150,7 +1150,7 @@ const ja: Partial<Translations> = {
   "settings.filesEnabledHint": "他の領域とは独立して、マウント配下の任意のフォルダーをバックアップします。",
   "settings.filesPath": "フォルダーパス",
   "jobs.filesSection": "フォルダー",
-  "jobs.filesIncludeHint": "「スケジュールに含める」が有効なすべてのフォルダーセットをバックアップします（下の一覧またはフォルダータブでセットごとに切り替え）。",
+  "jobs.filesIncludeHint": "「スケジュールに含める」が有効なすべてのフォルダーセットをバックアップします（下の一覧またはフォルダータブでセットごとに切り替え）。 項目ごとのスケジュールを有効にすると、セットは自分のペースを持てるようになり、すべてをバックアップの対象からも外れます。",
   "jobs.noFileSetsIncluded": "フォルダーセットはまだありません。フォルダータブで追加してください。",
   "dashboard.domainFiles": "フォルダー",
   "recovery.filesFound": "フォルダーセット {f} 個が見つかりました。",

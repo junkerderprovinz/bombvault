@@ -875,7 +875,7 @@ const eu: Partial<Translations> = {
   "auth.loginError": "Saioa hastean huts egin du",
 
   // Settings — Security card
-  "auth.security": "Segurtasuna",
+  "auth.security": "Pasahitza",
   "auth.authOff": "Autentifikazioa itzalita dago: LAN erabiltzaile guztiek sarbide osoa dute.",
   "auth.authOn": "Autentifikazioa gaituta dago.",
   "auth.setPassword": "Ezarri pasahitza",
@@ -1329,7 +1329,7 @@ const eu: Partial<Translations> = {
   "settings.filesEnabledHint": "Babestu zure muntaketen azpiko edozein karpeta fitxategi-multzo gisa, beste domeinuetatik independenteki.",
   "settings.filesPath": "Karpeten bidea",
   "jobs.filesSection": "Karpetak",
-  "jobs.filesIncludeHint": "«egutegian sartu» piztuta duen karpeta-multzo bakoitza babesten du. Aldatu multzo bakoitza behean edo Karpetak fitxan.",
+  "jobs.filesIncludeHint": "«egutegian sartu» piztuta duen karpeta-multzo bakoitza babesten du. Aldatu multzo bakoitza behean edo Karpetak fitxan. Elementuko ordutegiekin, multzo batek bere erritmoa izan dezake, eta horrek Dena babeskopiatu-tik ere kanpo uzten du.",
   "jobs.noFileSetsIncluded": "Oraindik ez dago karpeta-multzorik. Gehitu Karpetak fitxan.",
   "dashboard.domainFiles": "Karpetak",
   "recovery.filesFound": "{f} karpeta-multzo aurkitu dira.",

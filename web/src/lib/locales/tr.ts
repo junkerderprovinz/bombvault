@@ -337,7 +337,7 @@ const tr: Partial<Translations> = {
   "auth.loginError": "Oturum açılamadı",
 
   // Settings — Security card
-  "auth.security": "Güvenlik",
+  "auth.security": "Parola",
   "auth.authOff": "Kimlik doğrulama kapalı. Tüm LAN kullanıcıları tam erişime sahip.",
   "auth.authOn": "Kimlik doğrulama etkin.",
   "auth.setPassword": "Parola belirle",
@@ -1158,7 +1158,7 @@ const tr: Partial<Translations> = {
   "settings.filesEnabledHint": "Bağlama noktalarındaki rastgele klasörleri, diğer alanlardan bağımsız olarak yedekle.",
   "settings.filesPath": "Klasörler yolu",
   "jobs.filesSection": "Klasörler",
-  "jobs.filesIncludeHint": "“Zamanlamaya ekle” etkin olan her klasör setini yedekler. Her seti aşağıdan veya Klasörler sekmesinden değiştirin.",
+  "jobs.filesIncludeHint": "“Zamanlamaya ekle” etkin olan her klasör setini yedekler. Her seti aşağıdan veya Klasörler sekmesinden değiştirin. Öğe başına zamanlamalar açıkken bir küme kendi ritmini taşıyabilir, bu da onu Her Şeyi Yedekle çalışmasından çıkarır.",
   "jobs.noFileSetsIncluded": "Henüz klasör seti yok. Klasörler sekmesinden ekleyin.",
   "dashboard.domainFiles": "Klasörler",
   "recovery.filesFound": "{f} klasör seti bulundu.",

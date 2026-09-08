@@ -875,7 +875,7 @@ const id: Partial<Translations> = {
   "auth.loginError": "Login gagal",
 
   // Settings — Security card
-  "auth.security": "Keamanan",
+  "auth.security": "Kata sandi",
   "auth.authOff": "Autentikasi mati. Semua pengguna LAN memiliki akses penuh.",
   "auth.authOn": "Autentikasi diaktifkan.",
   "auth.setPassword": "Atur kata sandi",
@@ -1329,7 +1329,7 @@ const id: Partial<Translations> = {
   "settings.filesEnabledHint": "Cadangkan folder sembarang di bawah mount Anda sebagai set file, terlepas dari domain lain.",
   "settings.filesPath": "Jalur folder",
   "jobs.filesSection": "Folder",
-  "jobs.filesIncludeHint": "Mencadangkan setiap set folder dengan \"sertakan dalam jadwal\" aktif. Alihkan setiap set di bawah atau di tab Folder.",
+  "jobs.filesIncludeHint": "Mencadangkan setiap set folder dengan \"sertakan dalam jadwal\" aktif. Alihkan setiap set di bawah atau di tab Folder. Dengan jadwal per item, sebuah set dapat memiliki iramanya sendiri, yang juga mengeluarkannya dari Cadangkan Semua.",
   "jobs.noFileSetsIncluded": "Belum ada set folder. Tambahkan di tab Folder.",
   "dashboard.domainFiles": "Folder",
   "recovery.filesFound": "Ditemukan {f} set folder.",

@@ -337,7 +337,7 @@ const it: Partial<Translations> = {
   "auth.loginError": "Accesso fallito",
 
   // Settings — Security card
-  "auth.security": "Sicurezza",
+  "auth.security": "Password",
   "auth.authOff": "L'autenticazione è disattivata. Tutti gli utenti della LAN hanno accesso completo.",
   "auth.authOn": "L'autenticazione è abilitata.",
   "auth.setPassword": "Imposta password",
@@ -1158,7 +1158,7 @@ const it: Partial<Translations> = {
   "settings.filesEnabledHint": "Backup di cartelle arbitrarie sotto i tuoi mount, indipendente dagli altri domini.",
   "settings.filesPath": "Percorso delle cartelle",
   "jobs.filesSection": "Cartelle",
-  "jobs.filesIncludeHint": "Esegue il backup di ogni set di cartelle con «includi nel calendario» attivo, attivabile per set qui sotto o nella scheda Cartelle.",
+  "jobs.filesIncludeHint": "Esegue il backup di ogni set di cartelle con «includi nel calendario» attivo, attivabile per set qui sotto o nella scheda Cartelle. Con le pianificazioni per elemento, un set può avere una propria cadenza, che lo esclude anche da Esegui backup di tutto.",
   "jobs.noFileSetsIncluded": "Ancora nessun set di cartelle. Aggiungili nella scheda Cartelle.",
   "dashboard.domainFiles": "Cartelle",
   "recovery.filesFound": "Trovati {f} set di cartelle.",

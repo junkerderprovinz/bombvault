@@ -337,7 +337,7 @@ const ko: Partial<Translations> = {
   "auth.loginError": "로그인 실패",
 
   // Settings — Security card
-  "auth.security": "보안",
+  "auth.security": "비밀번호",
   "auth.authOff": "인증이 꺼져 있습니다. 모든 LAN 사용자가 전체 액세스 권한을 가집니다.",
   "auth.authOn": "인증이 활성화되어 있습니다.",
   "auth.setPassword": "비밀번호 설정",
@@ -1150,7 +1150,7 @@ const ko: Partial<Translations> = {
   "settings.filesEnabledHint": "다른 영역과 무관하게 마운트 아래의 임의 폴더를 백업합니다.",
   "settings.filesPath": "폴더 경로",
   "jobs.filesSection": "폴더",
-  "jobs.filesIncludeHint": "「일정에 포함」이 활성화된 모든 폴더 세트를 백업합니다(아래 목록이나 폴더 탭에서 세트별로 전환).",
+  "jobs.filesIncludeHint": "「일정에 포함」이 활성화된 모든 폴더 세트를 백업합니다(아래 목록이나 폴더 탭에서 세트별로 전환). 항목별 일정을 켜면 세트가 자체 주기를 가질 수 있고, 그러면 모두 백업에서도 빠집니다.",
   "jobs.noFileSetsIncluded": "아직 폴더 세트가 없습니다. 폴더 탭에서 추가하세요.",
   "dashboard.domainFiles": "폴더",
   "recovery.filesFound": "폴더 세트 {f}개를 찾았습니다.",

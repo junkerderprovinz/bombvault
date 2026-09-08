@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
-import { IconClose } from "./Sidebar";
 
 // ---------------------------------------------------------------------------
 // WhatsNewDialog (#48) — a "What's new" modal shown once when a NEW BombVault
@@ -251,8 +250,11 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
         aria-labelledby="whatsnew-title"
         className="glim-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
+        {/* Header. No rule under it and none above the footer: a divider is
+            hierarchy drawn with a border, which this app's design language
+            avoids, and the padding already separates the three regions. The
+            same removal ConfirmDialog had in v8.5.4. */}
+        <div className="flex items-start justify-between gap-4 px-5 py-4">
           {/* Task 5 follow-up (rule 15, "title as a badge" for window
               chrome) — see ConfirmDialog.tsx for the aria-labelledby-safety
               reasoning; identical here.
@@ -262,18 +264,10 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
           <h2 id="whatsnew-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("whatsnew.title").replace("{version}", version)}</Badge>
           </h2>
-          {/* #178, [201]: the dialog's close control is a Button like every
-              other clickable thing, so it follows the label mode instead of
-              being a permanently glyph-only square of its own. */}
-          <Button
-            ref={closeRef}
-            label={t("whatsnew.close")}
-            labelKey="whatsnew.close"
-            glyph={<IconClose />}
-            tone="neutral"
-            onClick={onClose}
-            className="shrink-0"
-          />
+          {/* The header's own close button is gone: the footer already carries
+              one, and two controls that do the same thing read as a choice
+              between two answers rather than one answer offered twice. The
+              open-focus moved with it, onto the footer button. */}
         </div>
 
         {/* Body (scrolls) */}
@@ -313,7 +307,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             "plain blue text link between badges is a foreign object" example
             rule 13 names. size="large" matches Close's own visual weight
             (px-4 py-2 text-sm) so the two don't read as mismatched siblings. */}
-        <div className="flex items-center justify-between gap-3 border-t border-carbon-border px-5 py-4">
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
           <Badge
             as="a"
             href={fullUrl}
@@ -325,8 +319,9 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             {t("whatsnew.viewOnGitHub")}
           </Badge>
           <Button
+            ref={closeRef}
             label={t("whatsnew.close")}
-          labelKey="whatsnew.close"
+            labelKey="whatsnew.close"
             tone="neutral"
             onClick={onClose}
           />

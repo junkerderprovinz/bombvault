@@ -337,7 +337,7 @@ const sv: Partial<Translations> = {
   "auth.loginError": "Inloggning misslyckades",
 
   // Settings — Security card
-  "auth.security": "Säkerhet",
+  "auth.security": "Lösenord",
   "auth.authOff": "Autentisering är av. Alla LAN-användare har full åtkomst.",
   "auth.authOn": "Autentisering är aktiverad.",
   "auth.setPassword": "Ange lösenord",
@@ -1158,7 +1158,7 @@ const sv: Partial<Translations> = {
   "settings.filesEnabledHint": "Säkerhetskopiera valfria mappar under dina monteringspunkter, oberoende av de andra domänerna.",
   "settings.filesPath": "Mappar-sökväg",
   "jobs.filesSection": "Mappar",
-  "jobs.filesIncludeHint": "Säkerhetskopierar varje mappuppsättning med ”inkludera i schema” aktiverat. Växla per uppsättning nedan eller på Mappar-fliken.",
+  "jobs.filesIncludeHint": "Säkerhetskopierar varje mappuppsättning med ”inkludera i schema” aktiverat. Växla per uppsättning nedan eller på Mappar-fliken. Med scheman per objekt kan en uppsättning i stället ha sin egen kadens, vilket också tar bort den från Säkerhetskopiera allt.",
   "jobs.noFileSetsIncluded": "Inga mappuppsättningar ännu. Lägg till dem på Mappar-fliken.",
   "dashboard.domainFiles": "Mappar",
   "recovery.filesFound": "Hittade {f} mappuppsättningar.",

@@ -1089,7 +1089,7 @@ export const en = {
   "auth.loginError": "Login failed",
 
   // Settings — Security card
-  "auth.security": "Security",
+  "auth.security": "Password",
   "auth.authOff": "Authentication is off. All LAN users have full access.",
   "auth.authOn": "Authentication is enabled.",
   "auth.setPassword": "Set password",
@@ -1612,7 +1612,7 @@ export const en = {
   "settings.filesEnabledHint": "Back up arbitrary folders under your mounts as file sets, independent of the other domains.",
   "settings.filesPath": "Folders path",
   "jobs.filesSection": "Folders",
-  "jobs.filesIncludeHint": "Backs up every folder set with “include in schedule” enabled. Toggle each set below or on the Folders tab.",
+  "jobs.filesIncludeHint": "Backs up every folder set with “include in schedule” enabled. Toggle each set below or on the Folders tab. With per-item schedules on, a set can carry its own cadence instead, which also takes it out of Backup Everything.",
   "jobs.noFileSetsIncluded": "No folder sets yet. Add them on the Folders tab.",
   "dashboard.domainFiles": "Folders",
   "recovery.filesFound": "Found {f} folder sets.",
@@ -2699,7 +2699,7 @@ export const de: Translations = {
   "auth.loginError": "Anmeldung fehlgeschlagen",
 
   // Settings — Security card
-  "auth.security": "Sicherheit",
+  "auth.security": "Passwort",
   "auth.authOff": "Authentifizierung ist deaktiviert. Alle LAN-Nutzer haben vollen Zugriff.",
   "auth.authOn": "Authentifizierung ist aktiviert.",
   "auth.setPassword": "Passwort setzen",
@@ -2718,7 +2718,7 @@ export const de: Translations = {
   "auth.codeLabel": "Anmeldecode",
   "auth.codeHint": "Sechs Ziffern aus deiner Authenticator-App oder einer deiner Notfallcodes.",
   "auth.codeInvalid": "Dieser Code ist ungültig",
-  "auth.twoFactor": "Zwei-Faktor-Anmeldung",
+  "auth.twoFactor": "Zwei-Faktor-Authentifizierung",
   "auth.twoFactorHint": "Ein Code vom Handy zusätzlich zum Passwort. Lohnt sich, wenn diese Instanz von außerhalb deines Netzes erreichbar ist.",
   "auth.twoFactorOn": "An. Neben dem Passwort wird ein Code verlangt.",
   "auth.twoFactorOff": "Aus. Das Passwort allein genügt zum Anmelden.",
@@ -3163,7 +3163,7 @@ export const de: Translations = {
   "settings.filesEnabledHint": "Beliebige Ordner unter deinen Mounts als Datei-Sets sichern, unabhängig von den anderen Domänen.",
   "settings.filesPath": "Ordner-Pfad",
   "jobs.filesSection": "Ordner",
-  "jobs.filesIncludeHint": "Sichert jedes Ordner-Set mit aktiviertem „Im Zeitplan einschließen“, pro Set unten oder im Ordner-Tab umschaltbar.",
+  "jobs.filesIncludeHint": "Sichert jedes Ordner-Set mit aktiviertem „Im Zeitplan einschließen“, pro Set unten oder im Ordner-Tab umschaltbar. Mit Zeitplänen pro Element kann ein Set stattdessen einen eigenen Rhythmus tragen, der es auch aus „Alles sichern“ herausnimmt.",
   "jobs.noFileSetsIncluded": "Noch keine Ordner-Sets. Füge sie im Ordner-Tab hinzu.",
   "dashboard.domainFiles": "Ordner",
   "recovery.filesFound": "{f} Ordner-Sets gefunden.",

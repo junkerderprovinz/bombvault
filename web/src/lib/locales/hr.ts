@@ -875,7 +875,7 @@ const hr: Partial<Translations> = {
   "auth.loginError": "Prijava nije uspjela",
 
   // Settings — Security card
-  "auth.security": "Sigurnost",
+  "auth.security": "Lozinka",
   "auth.authOff": "Autentifikacija je isključena. Svi LAN korisnici imaju puni pristup.",
   "auth.authOn": "Autentifikacija je omogućena.",
   "auth.setPassword": "Postavi lozinku",
@@ -1329,7 +1329,7 @@ const hr: Partial<Translations> = {
   "settings.filesEnabledHint": "Sigurnosno kopirajte proizvoljne mape ispod svojih montiranja kao skupove datoteka, neovisno o ostalim domenama.",
   "settings.filesPath": "Putanja mapa",
   "jobs.filesSection": "Mape",
-  "jobs.filesIncludeHint": "Sigurnosno kopira svaki skup mapa s uključenim „uključi u raspored”. Promijenite svaki skup ispod ili na kartici Mape.",
+  "jobs.filesIncludeHint": "Sigurnosno kopira svaki skup mapa s uključenim „uključi u raspored”. Promijenite svaki skup ispod ili na kartici Mape. S rasporedima po stavci skup može imati vlastiti ritam, što ga također isključuje iz Sigurnosno kopiraj sve.",
   "jobs.noFileSetsIncluded": "Još nema skupova mapa. Dodajte ih na kartici Mape.",
   "dashboard.domainFiles": "Mape",
   "recovery.filesFound": "Pronađeno je {f} skupova mapa.",

@@ -176,3 +176,69 @@ func TestFilesDueGateIgnoresSetsOnTheirOwnCadence(t *testing.T) {
 		t.Fatalf("feature off: want both enabled sets, got %v", st2.askedFor)
 	}
 }
+
+// manilx's actual setup, from the screenshots on #199, because the first reply
+// on that issue was written from reading rather than from running it.
+//
+// The Folders domain schedule is OFF: nothing is scheduled there at all. What
+// backs his folders up is Backup Everything at 05:00, and every set has "include
+// in schedule" on. He wants one set, My_Backups, out of that nightly run and on
+// its own weekly cadence.
+//
+// So the per-item entry has to register even though the domain it belongs to has
+// no schedule of its own, which is the part that could plausibly not work.
+func TestPerItemFileSetEntryRegistersWithTheDomainScheduleOff(t *testing.T) {
+	sets := []store.FileSet{
+		{ID: "iso", Name: "ISO", Enabled: true},
+		{ID: "mine", Name: "My_Backups", Enabled: true, ScheduleCadence: "weekly sun 04:00"},
+		{ID: "data", Name: "data", Enabled: true},
+		{ID: "dock", Name: "dockhand", Enabled: true},
+	}
+	backup, _ := recordingBackup()
+	sc := New(backup, func() ([]store.Target, error) { return nil, nil })
+	filesBackup, rec := recordingBackup()
+	sc.SetFilesJob(filesBackup, func() ([]store.FileSet, error) { return sets, nil })
+
+	// Exactly his card: Folders schedule "off", per-item schedules on.
+	on := store.Settings{FilesEnabled: true, FilesSchedule: "off", PerItemSchedules: true}
+	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if got := len(sc.entries); got != 1 {
+		t.Fatalf("want exactly 1 entry (My_Backups, no domain entry), got %d", got)
+	}
+
+	// Firing it backs up his set and nothing else.
+	for _, e := range sc.c.Entries() {
+		e.Job.Run()
+	}
+	if len(*rec) != 1 || (*rec)[0] != "mine" {
+		t.Fatalf("the weekly entry must back up My_Backups alone, got %v", *rec)
+	}
+}
+
+// And the other half of his setup: Backup Everything must skip that set while
+// still covering the three that carry no cadence. This is the filter the API's
+// everythingRunFiles applies, tested at the seam it shares with the scheduler.
+func TestBackupEverythingSkipsAFolderSetOnItsOwnCadence(t *testing.T) {
+	sets := []store.FileSet{
+		{ID: "iso", Name: "ISO", Enabled: true},
+		{ID: "mine", Name: "My_Backups", Enabled: true, ScheduleCadence: "weekly sun 04:00"},
+		{ID: "data", Name: "data", Enabled: true},
+		{ID: "dock", Name: "dockhand", Enabled: true},
+	}
+	got := DomainRunFileSets(sets, true)
+	var names []string
+	for _, fs := range got {
+		names = append(names, fs.Name)
+	}
+	want := []string{"ISO", "data", "dockhand"}
+	if len(names) != len(want) {
+		t.Fatalf("got %v, want %v", names, want)
+	}
+	for i := range want {
+		if names[i] != want[i] {
+			t.Fatalf("got %v, want %v", names, want)
+		}
+	}
+}

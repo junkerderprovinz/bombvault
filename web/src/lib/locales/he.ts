@@ -337,7 +337,7 @@ const he: Partial<Translations> = {
   "auth.loginError": "הכניסה נכשלה",
 
   // Settings — Security card
-  "auth.security": "אבטחה",
+  "auth.security": "סיסמה",
   "auth.authOff": "האימות מושבת: לכל משתמשי ה-LAN גישה מלאה.",
   "auth.authOn": "האימות מופעל.",
   "auth.setPassword": "הגדר סיסמה",
@@ -1158,7 +1158,7 @@ const he: Partial<Translations> = {
   "settings.filesEnabledHint": "גיבוי תיקיות שרירותיות מתחת לנקודות העגינה שלך, בנפרד מהתחומים האחרים.",
   "settings.filesPath": "נתיב תיקיות",
   "jobs.filesSection": "תיקיות",
-  "jobs.filesIncludeHint": "מגבה כל ערכת תיקיות שבה מופעל „כלול בלוח הזמנים‟. החליפו כל ערכה למטה או בלשונית תיקיות.",
+  "jobs.filesIncludeHint": "מגבה כל ערכת תיקיות שבה מופעל „כלול בלוח הזמנים‟. החליפו כל ערכה למטה או בלשונית תיקיות. עם לוחות זמנים לכל פריט, ערכה יכולה לשאת קצב משלה, מה שגם מוציא אותה מגיבוי הכול.",
   "jobs.noFileSetsIncluded": "אין עדיין ערכות תיקיות. הוסיפו אותן בלשונית תיקיות.",
   "dashboard.domainFiles": "תיקיות",
   "recovery.filesFound": "נמצאו {f} ערכות תיקיות.",

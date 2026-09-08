@@ -337,7 +337,7 @@ const th: Partial<Translations> = {
   "auth.loginError": "เข้าสู่ระบบไม่สำเร็จ",
 
   // Settings — Security card
-  "auth.security": "ความปลอดภัย",
+  "auth.security": "รหัสผ่าน",
   "auth.authOff": "การยืนยันตัวตนปิดอยู่ ผู้ใช้ LAN ทุกคนมีสิทธิ์เข้าถึงเต็มที่",
   "auth.authOn": "การยืนยันตัวตนเปิดใช้งานแล้ว",
   "auth.setPassword": "ตั้งรหัสผ่าน",
@@ -1161,7 +1161,7 @@ const th: Partial<Translations> = {
   "settings.filesEnabledHint": "สำรองข้อมูลโฟลเดอร์ใดก็ได้ภายใต้จุดเมานต์ของคุณ แยกจากโดเมนอื่น",
   "settings.filesPath": "พาธโฟลเดอร์",
   "jobs.filesSection": "โฟลเดอร์",
-  "jobs.filesIncludeHint": "สำรองข้อมูลทุกชุดโฟลเดอร์ที่เปิด «รวมในตารางเวลา» ไว้ สลับแต่ละชุดด้านล่างหรือในแท็บโฟลเดอร์",
+  "jobs.filesIncludeHint": "สำรองข้อมูลทุกชุดโฟลเดอร์ที่เปิด «รวมในตารางเวลา» ไว้ สลับแต่ละชุดด้านล่างหรือในแท็บโฟลเดอร์ เมื่อเปิดตารางเวลาแยกรายการ ชุดหนึ่งสามารถมีจังหวะของตัวเองได้ ซึ่งจะทำให้ออกจากการสำรองข้อมูลทั้งหมดด้วย",
   "jobs.noFileSetsIncluded": "ยังไม่มีชุดโฟลเดอร์ เพิ่มได้ในแท็บโฟลเดอร์",
   "dashboard.domainFiles": "โฟลเดอร์",
   "recovery.filesFound": "พบ {f} ชุดโฟลเดอร์",

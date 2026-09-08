@@ -125,6 +125,10 @@ export function TwoFactorCard({
 
       {/* OFF: one button starts the enrolment. */}
       {passwordSet && !enabled && step.kind === "idle" && (
+        // self-start, or the Card's flex column stretches it across the full
+        // width: a lone button in a column has nothing beside it to size
+        // against. Every other button in this card sits in a flex row and was
+        // therefore already the width of its own words.
         <Button
           label={t("auth.twoFactorEnable")}
           labelKey="auth.twoFactorEnable"
@@ -133,6 +137,7 @@ export function TwoFactorCard({
           disabled={busy}
           busy={busy}
           hueIndex={hueIndex}
+          className="self-start"
         />
       )}
 

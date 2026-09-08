@@ -337,7 +337,7 @@ const da: Partial<Translations> = {
   "auth.loginError": "Login mislykkedes",
 
   // Settings — Security card
-  "auth.security": "Sikkerhed",
+  "auth.security": "Adgangskode",
   "auth.authOff": "Godkendelse er slået fra. Alle LAN-brugere har fuld adgang.",
   "auth.authOn": "Godkendelse er aktiveret.",
   "auth.setPassword": "Angiv adgangskode",
@@ -1158,7 +1158,7 @@ const da: Partial<Translations> = {
   "settings.filesEnabledHint": "Sikkerhedskopiér vilkårlige mapper under dine mountpunkter, uafhængigt af de andre domæner.",
   "settings.filesPath": "Mapper-sti",
   "jobs.filesSection": "Mapper",
-  "jobs.filesIncludeHint": "Sikkerhedskopierer hvert mappesæt med »inkluder i tidsplan« slået til. Slå hvert sæt til/fra nedenfor eller på Mapper-fanen.",
+  "jobs.filesIncludeHint": "Sikkerhedskopierer hvert mappesæt med »inkluder i tidsplan« slået til. Slå hvert sæt til/fra nedenfor eller på Mapper-fanen. Med planer pr. element kan et sæt i stedet have sin egen kadence, hvilket også tager det ud af Sikkerhedskopiér alt.",
   "jobs.noFileSetsIncluded": "Ingen mappesæt endnu. Tilføj dem på Mapper-fanen.",
   "dashboard.domainFiles": "Mapper",
   "recovery.filesFound": "Fandt {f} mappesæt.",

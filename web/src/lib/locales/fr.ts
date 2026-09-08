@@ -337,7 +337,7 @@ const fr: Partial<Translations> = {
   "auth.loginError": "Échec de la connexion",
 
   // Settings — Security card
-  "auth.security": "Sécurité",
+  "auth.security": "Mot de passe",
   "auth.authOff": "L'authentification est désactivée : tous les utilisateurs LAN ont un accès complet.",
   "auth.authOn": "L'authentification est activée.",
   "auth.setPassword": "Définir un mot de passe",
@@ -1158,7 +1158,7 @@ const fr: Partial<Translations> = {
   "settings.filesEnabledHint": "Sauvegarder des dossiers arbitraires sous vos points de montage, indépendamment des autres domaines.",
   "settings.filesPath": "Chemin des dossiers",
   "jobs.filesSection": "Dossiers",
-  "jobs.filesIncludeHint": "Sauvegarde chaque jeu de dossiers dont l'option « inclure dans le planning » est activée, à basculer par jeu ci-dessous ou dans l'onglet Dossiers.",
+  "jobs.filesIncludeHint": "Sauvegarde chaque jeu de dossiers dont l'option « inclure dans le planning » est activée, à basculer par jeu ci-dessous ou dans l'onglet Dossiers. Avec les plannings par élément, un ensemble peut porter sa propre cadence, ce qui le retire aussi de Tout sauvegarder.",
   "jobs.noFileSetsIncluded": "Aucun jeu de dossiers pour l'instant, ajoutez-les dans l'onglet Dossiers.",
   "dashboard.domainFiles": "Dossiers",
   "recovery.filesFound": "{f} jeux de dossiers trouvés.",

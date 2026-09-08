@@ -875,7 +875,7 @@ const ca: Partial<Translations> = {
   "auth.loginError": "Ha fallat l'inici de sessió",
 
   // Settings — Security card
-  "auth.security": "Seguretat",
+  "auth.security": "Contrasenya",
   "auth.authOff": "L'autenticació està desactivada. Tots els usuaris de la LAN tenen accés complet.",
   "auth.authOn": "L'autenticació està activada.",
   "auth.setPassword": "Configura contrasenya",
@@ -1329,7 +1329,7 @@ const ca: Partial<Translations> = {
   "settings.filesEnabledHint": "Fes còpia de carpetes arbitràries sota els teus muntatges com a conjunts de fitxers, independentment dels altres dominis.",
   "settings.filesPath": "Camí de carpetes",
   "jobs.filesSection": "Carpetes",
-  "jobs.filesIncludeHint": "Fa còpia de cada conjunt de carpetes amb «inclou en la planificació» activat. Commuta cada conjunt a sota o a la pestanya Carpetes.",
+  "jobs.filesIncludeHint": "Fa còpia de cada conjunt de carpetes amb «inclou en la planificació» activat. Commuta cada conjunt a sota o a la pestanya Carpetes. Amb els horaris per element, un conjunt pot tenir la seva pròpia cadència, cosa que també el treu de Fer còpia de tot.",
   "jobs.noFileSetsIncluded": "Encara no hi ha conjunts de carpetes. Afegeix-los a la pestanya Carpetes.",
   "dashboard.domainFiles": "Carpetes",
   "recovery.filesFound": "S'ha trobat {f} conjunts de carpetes.",

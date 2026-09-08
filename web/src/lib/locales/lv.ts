@@ -875,7 +875,7 @@ const lv: Partial<Translations> = {
   "auth.loginError": "Pieteikšanās neizdevās",
 
   // Settings — Security card
-  "auth.security": "Drošība",
+  "auth.security": "Parole",
   "auth.authOff": "Autentifikācija ir izslēgta. Visiem LAN lietotājiem ir pilna piekļuve.",
   "auth.authOn": "Autentifikācija ir iespējota.",
   "auth.setPassword": "Iestatīt paroli",
@@ -1329,7 +1329,7 @@ const lv: Partial<Translations> = {
   "settings.filesEnabledHint": "Dublējiet patvaļīgas mapes zem savām piesaistēm kā failu kopas, neatkarīgi no citiem domēniem.",
   "settings.filesPath": "Mapju ceļš",
   "jobs.filesSection": "Mapes",
-  "jobs.filesIncludeHint": "Dublē katru mapju kopu ar iespējotu „iekļaut grafikā”. Pārslēdziet katru kopu zemāk vai Mapju cilnē.",
+  "jobs.filesIncludeHint": "Dublē katru mapju kopu ar iespējotu „iekļaut grafikā”. Pārslēdziet katru kopu zemāk vai Mapju cilnē. Ar grafikiem katram elementam kopa var nest savu ritmu, kas to izņem arī no Dublēt visu.",
   "jobs.noFileSetsIncluded": "Vēl nav mapju kopu. Pievienojiet tās Mapju cilnē.",
   "dashboard.domainFiles": "Mapes",
   "recovery.filesFound": "Atrastas {f} mapju kopas.",

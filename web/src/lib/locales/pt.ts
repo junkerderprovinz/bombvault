@@ -334,7 +334,7 @@ const pt: Partial<Translations> = {
   "auth.loginError": "Falha ao iniciar sessão",
 
   // Settings — Security card
-  "auth.security": "Segurança",
+  "auth.security": "Palavra-passe",
   "auth.authOff": "A autenticação está desativada. Todos os utilizadores da LAN têm acesso total.",
   "auth.authOn": "A autenticação está ativada.",
   "auth.setPassword": "Definir palavra-passe",
@@ -1158,7 +1158,7 @@ const pt: Partial<Translations> = {
   "settings.filesEnabledHint": "Backup de pastas arbitrárias sob seus pontos de montagem, independente dos outros domínios.",
   "settings.filesPath": "Caminho das pastas",
   "jobs.filesSection": "Pastas",
-  "jobs.filesIncludeHint": "Faz backup de cada conjunto de pastas com «incluir no agendamento» ativado. Alterne por conjunto abaixo ou no separador Pastas.",
+  "jobs.filesIncludeHint": "Faz backup de cada conjunto de pastas com «incluir no agendamento» ativado. Alterne por conjunto abaixo ou no separador Pastas. Com os horários por item, um conjunto pode ter a sua própria cadência, o que também o retira de Copiar tudo.",
   "jobs.noFileSetsIncluded": "Ainda não há conjuntos de pastas. Adicione-os no separador Pastas.",
   "dashboard.domainFiles": "Pastas",
   "recovery.filesFound": "Encontrados {f} conjuntos de pastas.",
