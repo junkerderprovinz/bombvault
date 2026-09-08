@@ -255,7 +255,7 @@ Unraid's usual backup answer is [**Appdata.Backup**](https://github.com/Commifre
 - HTTPS out of the box (self-signed, or BYO cert behind a reverse proxy).
 - **Docker healthcheck** — the container reports healthy/unhealthy from its own `/api/health`, so an auto-heal tool (Autoheal and the like) can restart it automatically if the engine ever wedges.
 - Dark/light UI in **42 languages** with a flag picker.
-- **Make it look how you want it.** Three switches on Settings → General, applied across the whole app and remembered per browser: **Colors** (one accent, or *Rainbow Mode*, where each row in a list takes its own colour from an editable palette of eight, with optional *Reactive Mode* and *Colour Rotation*), **Corners** (round, soft or square, for cards, buttons, tabs, inputs and badges at once) and **Animations** (off, subtle or full). Animations is a manual dial that sits alongside your system's reduced-motion setting and never overrides it: if your OS asks for less motion, that still wins.
+- **Make it look how you want it.** Three switches on Settings → General, applied across the whole app and remembered per browser: **Colors** (one accent, or *Rainbow Mode*, where every card, list row and toolbar takes its own colour from an editable palette of eight and paints the controls inside it, with optional *Reactive Mode* and *Colour Rotation*), **Corners** (round, soft or square, for cards, buttons, tabs, inputs and badges at once) and **Animations** (off, subtle or full). Animations is a manual dial that sits alongside your system's reduced-motion setting and never overrides it: if your OS asks for less motion, that still wins.
 
 </details>
 
