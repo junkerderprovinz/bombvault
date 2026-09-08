@@ -218,6 +218,7 @@ const ko: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "색상",
   "settings.accentColor": "강조 색상",
+  "settings.accentRainbowHint": "무지개 모드가 켜져 있습니다. 강조 색상을 다시 선택하려면 끄세요.",
   "settings.accentPreset": "프리셋",
   "settings.accentReset": "강조 색상 및 프리셋 재설정",
   "settings.shape": "모서리",

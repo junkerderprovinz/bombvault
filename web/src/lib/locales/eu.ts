@@ -658,6 +658,7 @@ const eu: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Koloreak",
   "settings.accentColor": "Azentu-kolorea",
+  "settings.accentRainbowHint": "Ostadar modua piztuta dago. Itzali ezazu berriro azentu-kolore bat hautatzeko.",
   "settings.accentPreset": "Aurrezarpena",
   "settings.accentReset": "Berrezarri azentu-kolorea eta aurrezarpenak",
   "settings.shape": "Ertzak",

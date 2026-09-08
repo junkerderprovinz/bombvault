@@ -658,6 +658,7 @@ const fa: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "رنگ‌ها",
   "settings.accentColor": "رنگ تأکیدی",
+  "settings.accentRainbowHint": "حالت رنگین‌کمان روشن است. برای انتخاب دوباره‌ی رنگ تأکید، آن را خاموش کنید.",
   "settings.accentPreset": "پیش‌تنظیم",
   "settings.accentReset": "بازنشانی رنگ تأکیدی و پیش‌تنظیم‌ها",
   "settings.shape": "گوشه‌ها",

@@ -213,6 +213,7 @@ const pl: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Kolory",
   "settings.accentColor": "Kolor akcentu",
+  "settings.accentRainbowHint": "Tryb tęczy jest włączony. Wyłącz go, aby ponownie wybrać kolor akcentu.",
   "settings.accentPreset": "Ustawienie wstępne",
   "settings.accentReset": "Resetuj kolor akcentu i ustawienia wstępne",
   "settings.shape": "Narożniki",

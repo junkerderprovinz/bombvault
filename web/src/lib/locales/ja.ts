@@ -218,6 +218,7 @@ const ja: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "カラー",
   "settings.accentColor": "アクセントカラー",
+  "settings.accentRainbowHint": "レインボーモードが有効です。アクセントカラーを選ぶには、これをオフにしてください。",
   "settings.accentPreset": "プリセット",
   "settings.accentReset": "アクセントカラーとプリセットをリセット",
   "settings.shape": "角の形状",

@@ -218,6 +218,7 @@ const he: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "צבעים",
   "settings.accentColor": "צבע הדגשה",
+  "settings.accentRainbowHint": "מצב הקשת פעיל. כבה אותו כדי לבחור שוב צבע הדגשה.",
   "settings.accentPreset": "ערכה מוגדרת מראש",
   "settings.accentReset": "איפוס צבע ההדגשה והערכות המוגדרות מראש",
   "settings.shape": "פינות",

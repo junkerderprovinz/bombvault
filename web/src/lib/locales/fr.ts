@@ -218,6 +218,7 @@ const fr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Couleurs",
   "settings.accentColor": "Couleur d'accentuation",
+  "settings.accentRainbowHint": "Le mode arc-en-ciel est activé. Désactivez-le pour choisir de nouveau une couleur d'accent.",
   "settings.accentPreset": "Préréglage",
   "settings.accentReset": "Réinitialiser la couleur d'accentuation et les préréglages",
   "settings.shape": "Angles",

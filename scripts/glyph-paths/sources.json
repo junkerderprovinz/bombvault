@@ -28,5 +28,10 @@
     "viewBox": "0 0 512 512",
     "paths": 1,
     "from": "lokal.svg"
+  },
+  "github": {
+    "viewBox": "0 0 24 24",
+    "paths": 1,
+    "from": "simple-icons/icons/github.svg (CC0)"
   }
 }

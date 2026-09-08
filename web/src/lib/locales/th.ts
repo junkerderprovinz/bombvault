@@ -218,6 +218,7 @@ const th: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "สี",
   "settings.accentColor": "สีเน้น",
+  "settings.accentRainbowHint": "โหมดสายรุ้งเปิดอยู่ ปิดโหมดนี้เพื่อเลือกสีเน้นอีกครั้ง",
   "settings.accentPreset": "ค่าที่ตั้งไว้ล่วงหน้า",
   "settings.accentReset": "รีเซ็ตสีเน้นและค่าที่ตั้งไว้ล่วงหน้า",
   "settings.shape": "มุม",

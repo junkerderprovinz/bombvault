@@ -658,6 +658,7 @@ const lt: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Spalvos",
   "settings.accentColor": "Akcentinė spalva",
+  "settings.accentRainbowHint": "Vaivorykštės režimas įjungtas. Išjunkite jį, kad vėl galėtumėte pasirinkti akcento spalvą.",
   "settings.accentPreset": "Išankstinis nustatymas",
   "settings.accentReset": "Atkurti akcentinę spalvą ir išankstinius nustatymus",
   "settings.shape": "Kampai",

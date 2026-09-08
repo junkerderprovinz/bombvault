@@ -218,6 +218,7 @@ const el: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Χρώματα",
   "settings.accentColor": "Χρώμα επισήμανσης",
+  "settings.accentRainbowHint": "Η λειτουργία ουράνιου τόξου είναι ενεργή. Απενεργοποιήστε την για να επιλέξετε ξανά χρώμα τονισμού.",
   "settings.accentPreset": "Προεπιλογή",
   "settings.accentReset": "Επαναφορά χρώματος επισήμανσης και προεπιλογών",
   "settings.shape": "Γωνίες",

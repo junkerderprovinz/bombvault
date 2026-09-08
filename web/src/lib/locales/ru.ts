@@ -213,6 +213,7 @@ const ru: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Цвета",
   "settings.accentColor": "Акцентный цвет",
+  "settings.accentRainbowHint": "Радужный режим включён. Выключите его, чтобы снова выбрать акцентный цвет.",
   "settings.accentPreset": "Предустановка",
   "settings.accentReset": "Сбросить акцентный цвет и предустановки",
   "settings.shape": "Углы",

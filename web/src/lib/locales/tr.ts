@@ -218,6 +218,7 @@ const tr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Renkler",
   "settings.accentColor": "Vurgu rengi",
+  "settings.accentRainbowHint": "Gökkuşağı modu açık. Yeniden vurgu rengi seçmek için kapatın.",
   "settings.accentPreset": "Ön ayar",
   "settings.accentReset": "Vurgu rengini ve ön ayarları sıfırla",
   "settings.shape": "Köşeler",

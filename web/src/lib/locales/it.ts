@@ -218,6 +218,7 @@ const it: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Colori",
   "settings.accentColor": "Colore di accento",
+  "settings.accentRainbowHint": "La modalità arcobaleno è attiva. Disattivala per scegliere di nuovo un colore d'accento.",
   "settings.accentPreset": "Predefinito",
   "settings.accentReset": "Reimposta il colore di accento e i predefiniti",
   "settings.shape": "Angoli",

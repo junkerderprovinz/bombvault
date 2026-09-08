@@ -42,6 +42,12 @@ ACTION = [
     ("IconLink", "interface-essential/link-chain.svg", "Connect or link"),
     ("IconEye", "interface-essential/glasses.svg", "Show, reveal or preview"),
     ("IconInfo", "interface-essential/information-circle.svg", "Information or details"),
+    # The About card's own two non-brand buttons (jdp, 2026-09-08: "in der
+    # übercard fehlen die glyphen auf den buttons"). They had none because
+    # glyphFor matched nothing for `about.coffeeButton` and `about.mail`, and
+    # an unmatched key deliberately returns undefined rather than a stand-in.
+    ("IconCoffee", "food-drink/coffee-takeaway-cup.svg", "Buy the author a coffee"),
+    ("IconMail", "mail/mail-send-email-message.svg", "Write to us"),
 ]
 
 # The navigation and domain set Sidebar.tsx used to draw by hand. Same source
@@ -304,6 +310,41 @@ CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 PLUS_BOX = "0 0 14 14"
 CROSS_BOX = "2 2 10 10"
 
+# The reasoning behind CROSS_BOX, carried in the generator rather than written
+# into the generated file. It lived in navGlyphs.tsx and glyphs.tsx until
+# 2026-09-08, when a regeneration deleted both copies without a word — the
+# header does say "do not hand-edit", so the loss was earned, but there was
+# nowhere else to put it until `doc()` learned to emit a multi-line note.
+CLOSE_NOTE = """Close
+
+The viewBox is CROPPED to the ink, and that is the whole fix ([426]).
+
+This is IconAdd's plus turned 45 degrees, and turning it cost size nobody
+chose to give up: a plus whose arms span 10 of 14 units reads at 72% of its
+box, and the same drawing rotated reads at 58%, because the axis-aligned
+extent of a diagonal cross is smaller than the arms that make it. Rasterised
+and measured across all 48 glyphs, 45 fill their box; IconAdd sits at 72% and
+these two crosses at 58%, the smallest marks in the set by some way.
+
+jdp saw it as soon as one sat beside a full-size glyph ("die beiden glyphen
+von erneuern und deaktivieren sind unterschiedlich groß"), and he was right
+twice over, because my first three measurements said the two were identical.
+They used getBBox/getBoundingClientRect, and BOTH report a rotated group's
+PRE-rotation extent, so a rotated glyph measures as though it were never
+turned. The contact sheet at /glyphs had the same blind spot and rated this
+one 101% filled; it now rasterises instead ([427]).
+
+8.12 = 14 x 0.58, centred on the same (7,7) the rotation uses, so the ink is
+untouched and only the frame around it moves. No path data changes, which is
+the point of making the viewBox the one sizing mechanism."""
+
+CANCEL_NOTE = """Cancel or dismiss
+
+Same drawing and the same cropped viewBox as navGlyphs' IconClose, for the
+same reason ([426]): rotating the plus 45 degrees dropped it from 72% of its
+box to 58%, the two smallest marks among 48. See IconClose for the full note,
+including why three separate measurements failed to notice."""
+
 EXTRA_NAV = [
     (
         "IconContainers",
@@ -320,7 +361,7 @@ EXTRA_NAV = [
     ("IconTabOffsite", "Off-site tab", CLOUD_BOX, CLOUD),
     ("IconCloud", "Off-site or cloud", CLOUD_BOX, CLOUD),
     ("IconAdd", "Add", PLUS_BOX, PLUS),
-    ("IconClose", "Close", CROSS_BOX, CROSS),
+    ("IconClose", CLOSE_NOTE, CROSS_BOX, CROSS),
     # ---------------------------------------------------------------------
     # jdp's own files ([316]-[321]), each cropped to its measured ink.
     #
@@ -360,10 +401,37 @@ EXTRA_NAV = [
 # import while its twin moved would have put two different crosses on one
 # screen.
 EXTRA_ACTION = [
-    ("IconCancel", "Cancel or dismiss", CROSS_BOX, CROSS),
+    ("IconCancel", CANCEL_NOTE, CROSS_BOX, CROSS),
     # jdp's save glyph ([316]), replacing Streamline's floppy-disk everywhere a
     # button means "save".
     imported("IconSave", "Save", "0 0 448 512", (0.0, 32.0, 448.0, 448.0), "save"),
+    # A BRAND MARK, and the second one in the app (jdp, 2026-09-08: "der
+    # github button soll das github logo als glyph haben. bitte so vermerken").
+    # EXTRA_NAV's Docker whale set the precedent and carries the trademark
+    # reasoning; the same reasoning applies here word for word. Source is the
+    # same too: Simple Icons, CC0, already named in the attribution block
+    # above, so there is no further obligation to discharge. Streamline has no
+    # GitHub mark and would not be the right place for one.
+    #
+    # THE RULE THIS ESTABLISHES, since there are now two of them.
+    #
+    # Every other glyph here is a drawn VERB — a symbol for what a button does,
+    # chosen so the same verb wears the same shape everywhere. A logo is the
+    # opposite: it names one company and means nothing anywhere else. It earns
+    # a place only where the control leads to that company's own thing and the
+    # reader recognises the mark faster than any word. That is the repository
+    # button on the About card, and the Docker row in the rail, and nothing
+    # else.
+    #
+    # A brand mark is therefore NEVER wired into glyphFor: a rule keyed on
+    # "repo" would put GitHub's logo on repository settings that have nothing
+    # to do with GitHub. It is passed as an explicit `glyph` at the one call
+    # site that means it. And if the repository ever moves off GitHub, the
+    # mark moves with it or goes.
+    #
+    # The ink box is MEASURED (getBBox in Chromium on the real path), like
+    # every other imported glyph here.
+    imported("IconGithub", "The project's GitHub repository", "0 0 24 24", (0.0, 0.297, 24.0, 23.406), "github"),
 ]
 
 ATTRIBUTION = """// ---------------------------------------------------------------------------
@@ -446,19 +514,46 @@ def body(path):
     return "\n".join("      " + line.strip() for line in inner.split("\n"))
 
 
+def doc(note):
+    """The doc comment above one glyph.
+
+    A one-line note keeps the short form `/** Refresh or reload. */`, which is
+    what almost every glyph needs and what this file emitted for its whole life.
+
+    A note carrying newlines is emitted as a real block comment instead, and
+    that arm exists because of a loss rather than a wish: two glyphs (IconClose
+    and IconCancel) had long explanations of WHY their viewBox is cropped
+    written straight into the generated files, and running this script wiped
+    both. The header says "do not hand-edit", so the files were right and the
+    edit was wrong — but a generator that can only carry one line leaves no
+    correct place to put the reasoning, which is how it ended up there.
+
+    The first line is still the summary and still gets its trailing period, so
+    a long note reads the same as a short one at a glance.
+    """
+    lines = note.split("\n")
+    if len(lines) == 1:
+        return "/** %s. */" % note
+    out = ["/**", " * %s." % lines[0]]
+    for line in lines[1:]:
+        out.append(" *" if not line else " * %s" % line)
+    out.append(" */")
+    return "\n".join(out)
+
+
 def write(path, headline, items, extra=()):
     out = [ATTRIBUTION % headline]
     for name, src, note in items:
         out.append(
-            "\n/** %s. */\nexport function %s() {\n  return (\n    <G>\n%s\n    </G>\n  );\n}\n"
-            % (note, name, body(src))
+            "\n%s\nexport function %s() {\n  return (\n    <G>\n%s\n    </G>\n  );\n}\n"
+            % (doc(note), name, body(src))
         )
     for name, note, viewbox, markup in extra:
         out.append(
-            "\n/** %s. */\nexport function %s() {\n  return (\n"
+            "\n%s\nexport function %s() {\n  return (\n"
             '    <svg\n      width="16"\n      height="16"\n      viewBox="%s"\n'
             '      fill="currentColor"\n      className="shrink-0"\n      aria-hidden="true"\n    >\n'
-            "      %s\n    </svg>\n  );\n}\n" % (note, name, viewbox, markup)
+            "      %s\n    </svg>\n  );\n}\n" % (doc(note), name, viewbox, markup)
         )
     io.open(path, "w", encoding="utf-8", newline="").write("".join(out))
     print("wrote %d glyphs to %s (%d hand-authored)" % (len(items) + len(extra), path, len(extra)))

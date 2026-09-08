@@ -656,6 +656,7 @@ const sl: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Barve",
   "settings.accentColor": "Poudarjena barva",
+  "settings.accentRainbowHint": "Mavrični način je vklopljen. Izklopite ga, če želite znova izbrati poudarno barvo.",
   "settings.accentPreset": "Prednastavitev",
   "settings.accentReset": "Ponastavi poudarjeno barvo in prednastavitve",
   "settings.shape": "Oglišča",

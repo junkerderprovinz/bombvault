@@ -218,6 +218,7 @@ const da: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Farver",
   "settings.accentColor": "Accentfarve",
+  "settings.accentRainbowHint": "Regnbuetilstand er slået til. Slå den fra for at vælge en accentfarve igen.",
   "settings.accentPreset": "Forudindstilling",
   "settings.accentReset": "Nulstil accentfarve og forudindstillinger",
   "settings.shape": "Hjørner",

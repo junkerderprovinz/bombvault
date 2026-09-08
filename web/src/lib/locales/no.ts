@@ -215,6 +215,7 @@ const no: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Farger",
   "settings.accentColor": "Aksentfarge",
+  "settings.accentRainbowHint": "Regnbuemodus er på. Slå den av for å velge en aksentfarge igjen.",
   "settings.accentPreset": "Forhåndsinnstilling",
   "settings.accentReset": "Tilbakestill aksentfarge og forhåndsinnstillinger",
   "settings.shape": "Hjørner",

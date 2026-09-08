@@ -216,6 +216,7 @@ const uk: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Кольори",
   "settings.accentColor": "Акцентний колір",
+  "settings.accentRainbowHint": "Веселковий режим увімкнено. Вимкніть його, щоб знову вибрати акцентний колір.",
   "settings.accentPreset": "Передустановка",
   "settings.accentReset": "Скинути акцентний колір і передустановки",
   "settings.shape": "Кути",

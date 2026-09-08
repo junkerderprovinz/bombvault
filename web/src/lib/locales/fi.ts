@@ -218,6 +218,7 @@ const fi: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Värit",
   "settings.accentColor": "Korostusväri",
+  "settings.accentRainbowHint": "Sateenkaaritila on päällä. Ota se pois käytöstä valitaksesi taas korostusvärin.",
   "settings.accentPreset": "Esiasetus",
   "settings.accentReset": "Palauta korostusväri ja esiasetukset",
   "settings.shape": "Kulmat",

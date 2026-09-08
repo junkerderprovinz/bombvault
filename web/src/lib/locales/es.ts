@@ -218,6 +218,7 @@ const es: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Colores",
   "settings.accentColor": "Color de acento",
+  "settings.accentRainbowHint": "El modo arcoíris está activado. Desactívalo para volver a elegir un color de acento.",
   "settings.accentPreset": "Predeterminado",
   "settings.accentReset": "Restablecer el color de acento y los predeterminados",
   "settings.shape": "Esquinas",

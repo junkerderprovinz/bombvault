@@ -255,6 +255,7 @@ export function AccentPresetSwatch({
   active,
   onSelect,
   onChangePreset,
+  disabled = false,
   t,
 }: {
   hex: string;
@@ -269,6 +270,11 @@ export function AccentPresetSwatch({
   /** Fires on every live edit inside the popover — persists the edited
    *  value back into THIS preset's own slot in the stored array. */
   onChangePreset: (hex: string) => void;
+  /** Inert while another setting owns the colours — today that is rainbow
+   *  mode (jdp, 2026-09-08). Still RENDERED, never unmounted: a row of
+   *  swatches that vanishes leaves no trace of what it was, and the point is
+   *  to show that the choice exists and is currently not the one in charge. */
+  disabled?: boolean;
   t: ReturnType<typeof useT>["t"];
 }) {
   const label = `${t("settings.accentPreset")} ${index + 1}`;
@@ -280,8 +286,15 @@ export function AccentPresetSwatch({
   // reset badge was 28px.
   return (
     <span
-      onClick={() => onSelect(hex)}
-      className="inline-flex rounded-pill border-2 transition-transform hover:scale-110"
+      onClick={disabled ? undefined : () => onSelect(hex)}
+      aria-disabled={disabled || undefined}
+      // pointer-events-none reaches the ColorPickerSwatch inside too, which is
+      // the whole point: the picker is opened by clicking the disc itself, so
+      // suppressing only this wrapper's onClick would still let the popover
+      // open and write a preset nobody can see the effect of.
+      className={`inline-flex rounded-pill border-2 transition-transform ${
+        disabled ? "pointer-events-none" : "hover:scale-110"
+      }`}
       style={{ borderColor: active ? "var(--carbon-text)" : "var(--carbon-border)" }}
     >
       <ColorPickerSwatch

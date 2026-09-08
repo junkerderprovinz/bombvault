@@ -213,6 +213,7 @@ const nl: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Kleuren",
   "settings.accentColor": "Accentkleur",
+  "settings.accentRainbowHint": "De regenboogmodus staat aan. Zet hem uit om weer een accentkleur te kiezen.",
   "settings.accentPreset": "Voorinstelling",
   "settings.accentReset": "Accentkleur en voorinstellingen herstellen",
   "settings.shape": "Hoeken",

@@ -658,6 +658,7 @@ const hr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Boje",
   "settings.accentColor": "Naglasna boja",
+  "settings.accentRainbowHint": "Dugin način rada je uključen. Isključite ga da biste ponovno odabrali boju naglaska.",
   "settings.accentPreset": "Predložak",
   "settings.accentReset": "Vrati naglasnu boju i predloške na zadano",
   "settings.shape": "Kutovi",

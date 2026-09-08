@@ -658,6 +658,7 @@ const bg: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Цветове",
   "settings.accentColor": "Акцентен цвят",
+  "settings.accentRainbowHint": "Дъговият режим е включен. Изключете го, за да изберете отново акцентен цвят.",
   "settings.accentPreset": "Готова настройка",
   "settings.accentReset": "Възстанови акцентния цвят и готовите настройки",
   "settings.shape": "Ъгли",

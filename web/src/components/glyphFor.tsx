@@ -19,11 +19,13 @@ import {
   IconBack,
   IconCancel,
   IconClearSelection,
+  IconCoffee,
   IconEye,
   IconForward,
   IconInfo,
   IconKey,
   IconLink,
+  IconMail,
   IconPlay,
   IconPrune,
   IconRefresh,
@@ -122,6 +124,20 @@ const RULES: Rule[] = [
   // it takes `source.local` and `settings.pathMode.local` — the actual
   // switches — without swallowing every key that merely mentions locality.
   [/\.local$|Local$/i, () => <IconLocal />],
+
+  // The About card's two non-brand offers. Both are nouns rather than verbs,
+  // which is why nothing above them matched: this table is built around what a
+  // button DOES, and "coffee" and "mail" are what it is ABOUT. They earn their
+  // own rules rather than an explicit glyph at the call site because the
+  // meanings are general — any future "write to us" wears the same envelope.
+  //
+  // The third button on that card, the repository one, is deliberately NOT
+  // here: it wears GitHub's own mark, and a brand mark must never be reachable
+  // by pattern (a rule keyed on "repo" would put GitHub's logo on repository
+  // settings that have nothing to do with GitHub). It is passed explicitly at
+  // its one call site. See gen_glyphs.py's IconGithub entry for the full rule.
+  [/coffee|donate|sponsor/i, () => <IconCoffee />],
+  [/\.mail|contact|writeToUs/i, () => <IconMail />],
 
   // Places and configuration, last because they are the vaguest.
   [/folder|path|directory/i, () => <IconFolder />],

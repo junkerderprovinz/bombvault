@@ -218,6 +218,7 @@ const hu: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Színek",
   "settings.accentColor": "Kiemelőszín",
+  "settings.accentRainbowHint": "A szivárványmód be van kapcsolva. Kapcsold ki, hogy újra kiemelőszínt válassz.",
   "settings.accentPreset": "Előbeállítás",
   "settings.accentReset": "Kiemelőszín és előbeállítások visszaállítása",
   "settings.shape": "Sarkok",

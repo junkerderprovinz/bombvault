@@ -30,6 +30,7 @@
 // control, and this card has no control to explain.
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
+import { IconGithub } from "../../components/glyphs";
 import { getHealth } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { Card } from "./shared";
@@ -196,9 +197,16 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           along still stands unchanged: never name a route no control here can
           reach. */}
       <div className="flex flex-wrap items-center gap-2">
+        {/* The one place in this app that names GitHub, so the one place that
+            wears its mark (jdp, 2026-09-08: "der github button soll das github
+            logo als glyph haben"). Passed explicitly rather than through
+            glyphFor on purpose: a pattern on "repo" would put this logo on
+            repository settings that have nothing to do with GitHub. The rule
+            is written out at gen_glyphs.py's IconGithub entry. */}
         <Button
           label={t("about.repo")}
           labelKey="about.repo"
+          glyph={<IconGithub />}
           tone="neutral"
           onClick={() => window.open(REPO, "_blank", "noopener,noreferrer")}
         />

@@ -215,6 +215,7 @@ const pt: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Cores",
   "settings.accentColor": "Cor de destaque",
+  "settings.accentRainbowHint": "O modo arco-íris está ativado. Desative-o para escolher novamente uma cor de destaque.",
   "settings.accentPreset": "Predefinição",
   "settings.accentReset": "Redefinir a cor de destaque e as predefinições",
   "settings.shape": "Cantos",

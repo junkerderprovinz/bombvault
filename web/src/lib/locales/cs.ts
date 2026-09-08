@@ -218,6 +218,7 @@ const cs: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Barvy",
   "settings.accentColor": "Barva zvýraznění",
+  "settings.accentRainbowHint": "Duhový režim je zapnutý. Vypněte jej, chcete-li znovu zvolit barvu zvýraznění.",
   "settings.accentPreset": "Předvolba",
   "settings.accentReset": "Obnovit barvu zvýraznění a předvolby",
   "settings.shape": "Rohy",

@@ -658,6 +658,7 @@ const gl: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Cores",
   "settings.accentColor": "Cor de acento",
+  "settings.accentRainbowHint": "O modo arco da vella está activado. Desactívao para volver escoller unha cor de acento.",
   "settings.accentPreset": "Predefinición",
   "settings.accentReset": "Restaurar a cor de acento e as predefinicións",
   "settings.shape": "Esquinas",

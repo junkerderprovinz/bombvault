@@ -218,6 +218,7 @@ const sv: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Färger",
   "settings.accentColor": "Accentfärg",
+  "settings.accentRainbowHint": "Regnbågsläget är på. Stäng av det för att välja en accentfärg igen.",
   "settings.accentPreset": "Förinställning",
   "settings.accentReset": "Återställ accentfärg och förinställningar",
   "settings.shape": "Hörn",

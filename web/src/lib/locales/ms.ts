@@ -658,6 +658,7 @@ const ms: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Warna",
   "settings.accentColor": "Warna aksen",
+  "settings.accentRainbowHint": "Mod pelangi dihidupkan. Matikannya untuk memilih warna aksen semula.",
   "settings.accentPreset": "Praset",
   "settings.accentReset": "Set semula warna aksen dan praset",
   "settings.shape": "Sudut",

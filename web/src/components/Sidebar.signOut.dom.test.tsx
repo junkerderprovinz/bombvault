@@ -87,3 +87,34 @@ describe("Sidebar sign-out", () => {
     expect(label.className).toContain("sr-only");
   });
 });
+
+// The labelling engine, the half jdp reported on 2026-09-08 ("... und auch
+// nicht in der beschriftungengine"). Hiding the words already worked; what did
+// not was the rail's OTHER rule — text mode drops the glyph — so this row sat
+// under a column of text-only nav rows wearing a symbol none of them wore.
+describe("Sidebar sign-out and the labelling engine", () => {
+  it("drops its glyph in text mode, like every nav row above it", () => {
+    // The storage key is `bv-labels-sidebar`, NOT `glim-`: the prefix sweep
+    // renamed the CSS classes and deliberately left the storage keys alone.
+    localStorage.setItem("bv-labels-sidebar", "text");
+    draw(true);
+    const out = screen.getByRole("button", { name: /sign out/i });
+    expect(out.querySelector("svg")).toBeNull();
+    // The words are the whole row in this mode, so they must be plain text.
+    expect(within(out).getByText(/sign out/i).className).not.toContain("sr-only");
+  });
+
+  it("keeps its glyph in glyph mode", () => {
+    localStorage.setItem("bv-labels-sidebar", "glyph");
+    draw(true);
+    const out = screen.getByRole("button", { name: /sign out/i });
+    expect(out.querySelector("svg")).not.toBeNull();
+  });
+
+  it("is in the colour engine: glim-hue plus a real --item-hue", () => {
+    draw(true);
+    const out = screen.getByRole("button", { name: /sign out/i });
+    expect(out.className).toContain("glim-hue");
+    expect(out.style.getPropertyValue("--item-hue")).toMatch(/^#/);
+  });
+});

@@ -218,6 +218,7 @@ const vi: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Màu sắc",
   "settings.accentColor": "Màu nhấn",
+  "settings.accentRainbowHint": "Chế độ cầu vồng đang bật. Tắt nó để chọn lại màu nhấn.",
   "settings.accentPreset": "Cài đặt sẵn",
   "settings.accentReset": "Đặt lại màu nhấn và cài đặt sẵn",
   "settings.shape": "Góc",

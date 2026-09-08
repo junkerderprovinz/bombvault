@@ -4853,7 +4853,7 @@ export function SettingsPage() {
         rainbow.palette.every((hex, i) => hex.toLowerCase() === RAINBOW[i]?.toLowerCase());
       return (
       <Card title={t("settings.colors")} hueIndex={hueIdx}>
-        <AccentCard t={t} />
+        <AccentCard t={t} rainbowOn={rainbow.on} />
         <div className="flex flex-col gap-3">
           {/* hueIndex 0/1/2 (jdp, live-review, extremely emphatic — "auch
               nicht die Toggles der Regenbogen-Card! ... Es soll immer alles

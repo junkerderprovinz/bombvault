@@ -658,6 +658,7 @@ const ca: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Colors",
   "settings.accentColor": "Color d'accent",
+  "settings.accentRainbowHint": "El mode arc de Sant Martí està activat. Desactiva'l per tornar a triar un color d'accent.",
   "settings.accentPreset": "Predefinit",
   "settings.accentReset": "Restableix el color d'accent i els predefinits",
   "settings.shape": "Cantonades",

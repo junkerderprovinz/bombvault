@@ -218,6 +218,7 @@ const zh: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "颜色",
   "settings.accentColor": "强调色",
+  "settings.accentRainbowHint": "彩虹模式已开启。关闭它即可重新选择强调色。",
   "settings.accentPreset": "预设",
   "settings.accentReset": "重置强调色和预设",
   "settings.shape": "圆角",

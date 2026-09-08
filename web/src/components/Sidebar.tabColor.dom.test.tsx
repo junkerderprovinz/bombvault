@@ -139,11 +139,37 @@ describe("Sidebar — NavItem carries a rainbow hue position (glim-hue/glim-hue-
   });
 });
 
-describe("Sidebar — glim-nav-idle marker (SidebarControls' own flat-accent set-of-one)", () => {
-  it("the Simple/Advanced view toggle (never has an active state, never hued) carries glim-nav-idle, not glim-hue", () => {
+// REVERSED on 2026-09-08. This block used to assert the opposite — that the
+// view toggle carries glim-nav-idle and NOT glim-hue — because an earlier round
+// argued it was "a genuine set-of-one, not a member of the now-hued
+// nav-destination list". That was my reasoning, not jdp's, and he overruled it:
+// "erweiterte ansicht und ausloggbutton sind nicht in der farbengine und auch
+// nicht in der beschriftungengine". The rail is one column and every row in it
+// takes a palette position.
+//
+// The two markers were never alternatives, which is what made the old assertion
+// look sound: glim-nav-idle decides WHEN the colour appears (hover-reveal),
+// glim-hue decides WHICH colour the row owns. A row wants both.
+describe("Sidebar — the footer rows are in the colour engine too", () => {
+  it("the view toggle carries glim-hue as well as glim-nav-idle, and a real hue", () => {
     renderSidebar(["/"]);
     const toggle = screen.getByRole("button", { name: "Simple view" });
     expect(toggle.className).toContain("glim-nav-idle");
-    expect(toggle.className).not.toContain("glim-hue");
+    expect(toggle.className).toContain("glim-hue");
+    // The class alone is not the integration: without --item-hue under it the
+    // rule resolves the accent to nothing (see hueVars' own comment).
+    expect(toggle.style.getPropertyValue("--item-hue")).toMatch(/^#/);
+  });
+
+  it("its hue continues the rail's own sequence rather than restarting", () => {
+    renderSidebar(["/"]);
+    const settings = screen.getByRole("link", { name: "Settings" });
+    const toggle = screen.getByRole("button", { name: "Simple view" });
+    // Settings is rendered directly after the toggle and takes the next
+    // position, so the two must differ. Equal values would mean one of them
+    // started a counter of its own.
+    expect(toggle.style.getPropertyValue("--item-hue")).not.toBe(
+      settings.style.getPropertyValue("--item-hue")
+    );
   });
 });

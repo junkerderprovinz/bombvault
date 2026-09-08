@@ -215,6 +215,7 @@ const ro: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Culori",
   "settings.accentColor": "Culoare de accent",
+  "settings.accentRainbowHint": "Modul curcubeu este pornit. Oprește-l pentru a alege din nou o culoare de accent.",
   "settings.accentPreset": "Presetare",
   "settings.accentReset": "Resetează culoarea de accent și presetările",
   "settings.shape": "Colțuri",

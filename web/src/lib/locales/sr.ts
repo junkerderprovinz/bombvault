@@ -656,6 +656,7 @@ const sr: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Боје",
   "settings.accentColor": "Истакнута боја",
+  "settings.accentRainbowHint": "Дугин режим је укључен. Искључите га да бисте поново изабрали боју истицања.",
   "settings.accentPreset": "Претподешавање",
   "settings.accentReset": "Ресетуј истакнуту боју и претподешавања",
   "settings.shape": "Углови",

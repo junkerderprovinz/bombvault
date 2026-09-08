@@ -658,6 +658,7 @@ const is: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Litir",
   "settings.accentColor": "Áherslulitur",
+  "settings.accentRainbowHint": "Regnbogastilling er kveikt. Slökktu á henni til að velja áherslulit aftur.",
   "settings.accentPreset": "Forstilling",
   "settings.accentReset": "Endurstilla áherslulit og forstillingar",
   "settings.shape": "Horn",

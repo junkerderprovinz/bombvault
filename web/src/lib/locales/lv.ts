@@ -658,6 +658,7 @@ const lv: Partial<Translations> = {
   // Appearance / Accent
   "settings.colors": "Krāsas",
   "settings.accentColor": "Akcenta krāsa",
+  "settings.accentRainbowHint": "Varavīksnes režīms ir ieslēgts. Izslēdziet to, lai atkal izvēlētos akcenta krāsu.",
   "settings.accentPreset": "Sākotnējais iestatījums",
   "settings.accentReset": "Atiestatīt akcenta krāsu un sākotnējos iestatījumus",
   "settings.shape": "Stūri",

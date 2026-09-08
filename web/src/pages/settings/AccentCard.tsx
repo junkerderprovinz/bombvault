@@ -12,8 +12,26 @@ import { useT } from "../../lib/i18n";
 
 export function AccentCard({
   t,
+  rainbowOn = false,
 }: {
   t: ReturnType<typeof useT>["t"];
+  /** Whether rainbow mode currently owns the colours (jdp, 2026-09-08: "wenn
+   *  man den regenbogen modus aktiviert, sollen die akzentfarben abgedunkelt
+   *  und deaktiviert werden").
+   *
+   *  Dimmed AND inert, not hidden: the row still says "there is an accent
+   *  colour here", which is what makes the rainbow switch above it legible as
+   *  the thing that took it over.
+   *
+   *  Honest scope, because it is worth not overstating: today the rainbow
+   *  overrides --accent only on elements carrying `.glim-hue`
+   *  (`[data-rainbow] .glim-hue` in index.css), so a handful of controls that
+   *  were never given a palette position still paint the flat accent. Those
+   *  are being brought into the engine in a pass of their own; until then the
+   *  hint below deliberately says "turn rainbow off to choose one again"
+   *  rather than "the accent does nothing", which would be a promise the CSS
+   *  does not yet keep. */
+  rainbowOn?: boolean;
 }) {
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
   const [presets, setPresets] = useState<string[]>(() => getAccentPresets());
@@ -42,7 +60,10 @@ export function AccentCard({
   const nothingToReset = accentIsDefault && presetsAreDefault;
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex flex-col gap-2">
+    <div
+      className={`flex items-center gap-3 flex-wrap ${rainbowOn ? "opacity-45" : ""}`}
+    >
       {/* Row label — bare now, no trailing colon (jdp, live-review: "Der
           Doppelpunkt nach Akzentfarbe und Farbpalette weg"). The colon was
           only ever appended here in JSX, never baked into the
@@ -87,6 +108,7 @@ export function AccentCard({
             active={accentHex.toLowerCase() === hex.toLowerCase()}
             onSelect={selectAccent}
             onChangePreset={(v) => changePreset(i, v)}
+            disabled={rainbowOn}
             t={t}
           />
         ))}
@@ -200,12 +222,20 @@ export function AccentCard({
             selectAccent(DEFAULT_ACCENT);
             setPresets(setAccentPresets(DEFAULT_ACCENT_PRESETS));
           }}
-          disabled={nothingToReset}
+          disabled={nothingToReset || rainbowOn}
           className="border-2 border-carbon-border"
         >
           <IconResetArrow />
         </Badge>
       </div>
+    </div>
+    {/* The one line that says WHY the row above went quiet. Without it a dimmed
+        row is just a broken row: the reader sees eight colours they cannot
+        click and no reason anywhere on screen, and the switch that caused it
+        sits below rather than above. Rendered only while it is true. */}
+    {rainbowOn && (
+      <p className="text-xs text-carbon-textMuted">{t("settings.accentRainbowHint")}</p>
+    )}
     </div>
   );
 }

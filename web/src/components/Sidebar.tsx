@@ -336,10 +336,16 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
 // login screen back up. Settings keeps its own sign-out (and the "everywhere"
 // variant that rotates the session epoch); this one is the reach-for-it copy,
 // so it does the plain thing only.
-function SidebarSignOut() {
+function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
   const { t } = useT();
   const labelMode = useLabelMode("sidebar");
   const showLabel = !hidesLabel(labelMode);
+  // jdp, 2026-09-08: "erweiterte ansicht und ausloggbutton sind nicht in der
+  // farbengine und auch nicht in der beschriftungengine". Both true, and the
+  // labelling half was the more visible one: this row painted its glyph in
+  // EVERY mode, so in text mode it sat under a column of text-only nav rows
+  // wearing a symbol none of them wore. NavItem's rule, restated here.
+  const showIcon = labelMode !== "text";
   const reactive = labelMode === "reactive";
   const label = t("auth.logout");
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
@@ -357,10 +363,20 @@ function SidebarSignOut() {
         onClick={() => void signOut()}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
-        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-nav-idle ${navInactive} w-full`}
-        style={reactive ? ({ "--reactive-chars": labelWidth(label) } as CSSProperties) : undefined}
+        // `glim-hue glim-hue-icon` + hueVars, exactly as NavItem carries them:
+        // this row sits in the same column as the nav destinations and is read
+        // as one of them, so it takes a palette position like the rest.
+        // `glim-nav-idle` stays: it is the hover-reveal marker, orthogonal to
+        // which colour the row owns.
+        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
+        style={
+          {
+            ...(hueVars(rainbowAt(hueIndex)) as CSSProperties),
+            ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
+          } as CSSProperties
+        }
       >
-        <IconPower />
+        {showIcon && <IconPower />}
         <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{label}</span>
       </button>
       {tooltip.bubble}
@@ -396,7 +412,7 @@ export function Flag({ code }: { code: string }) {
   );
 }
 
-function SidebarControls() {
+function SidebarControls({ hueIndex }: { hueIndex: number }) {
   const { t } = useT();
   const { advanced, setAdvanced } = useAdvanced();
   // #178: this row lives IN the rail, so it follows the rail's own axis. It
@@ -404,6 +420,9 @@ function SidebarControls() {
   // five icons and one full-width label, and the rail could not narrow.
   const labelMode = useLabelMode("sidebar");
   const showLabel = !hidesLabel(labelMode);
+  // See SidebarSignOut's own comment: the rail's text mode drops the glyph,
+  // and this row was not obeying that.
+  const showIcon = labelMode !== "text";
   const reactive = labelMode === "reactive";
   const view = advanced ? t("mode.advancedView") : t("mode.simpleView");
   // Same rule as NavItem's: the row explains itself in the real bubble, and
@@ -427,23 +446,28 @@ function SidebarControls() {
         aria-pressed={advanced}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
-        // `glim-nav-idle` stated explicitly here, not inherited from
-        // `navInactive` any more (GlimStone follow-up round, rainbow
-        // reversal — see `navInactive`'s own comment above): this toggle is
-        // a genuine set-of-one, not a member of the now-hued nav-destination
-        // list, so it keeps the old flat-accent hover-reveal marker on its
-        // own call site.
+        // This row used to argue it was "a genuine set-of-one, not a member of
+        // the now-hued nav-destination list" and keep the flat accent. That
+        // was my call, not jdp's, and he reversed it on 2026-09-08: the rail
+        // is one column and every row in it takes a palette position. The
+        // hover-reveal marker `glim-nav-idle` is unaffected — it decides WHEN
+        // the colour shows, not WHICH colour the row owns.
         //
         // `justify-center` in glyph mode for the same reason as NavItem's —
         // this row sits in the same column and has to centre with it.
-        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-nav-idle ${navInactive} w-full`}
-        style={reactive ? ({ "--reactive-chars": labelWidth(view) } as CSSProperties) : undefined}
+        className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
+        style={
+          {
+            ...(hueVars(rainbowAt(hueIndex)) as CSSProperties),
+            ...(reactive ? { "--reactive-chars": labelWidth(view) } : {}),
+          } as CSSProperties
+        }
       >
         {/* One glyph per state, not one for both (jdp): the row shows the view
             it is CURRENTLY in, so a single symbol left the two states looking
             identical — in glyph mode, where the words are gone, that made the
             row unreadable. Sparse layout for simple, dense one for advanced. */}
-        {advanced ? <IconViewAdvanced /> : <IconViewSimple />}
+        {showIcon && (advanced ? <IconViewAdvanced /> : <IconViewSimple />)}
         {/* Hidden, never removed: the toggle keeps its accessible name. */}
         <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{view}</span>
       </button>
@@ -746,15 +770,19 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               )}
             </nav>
 
-            {/* Bottom group: the Simple/Advanced view toggle (SidebarControls,
-                its own set-of-one, never hued — see its own call site's
-                comment), then Settings. Language and theme both moved out —
-                see SidebarControls' own header comment. Settings continues
-                THIS SAME nextHue() sequence rather than starting its own —
-                see this block's own opening comment. */}
+            {/* Bottom group: sign-out (only with a password set), the
+                Simple/Advanced view toggle, then Settings. All three continue
+                THIS SAME nextHue() sequence rather than starting their own —
+                see this block's own opening comment. The first two joined it
+                on 2026-09-08 (jdp: both were outside the colour engine); the
+                `authEnabled &&` gate short-circuits before nextHue() runs, so
+                an instance without a password burns no palette position and
+                the toggle below keeps the colour it would have had anyway.
+                Language and theme both moved out — see SidebarControls' own
+                header comment. */}
             <div className="flex flex-col gap-1 p-3">
-              {authEnabled && <SidebarSignOut />}
-              <SidebarControls />
+              {authEnabled && <SidebarSignOut hueIndex={nextHue()} />}
+              <SidebarControls hueIndex={nextHue()} />
               <NavItem
                 to="/settings"
                 label={t("nav.settings")}
