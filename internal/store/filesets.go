@@ -19,8 +19,18 @@ type FileSet struct {
 	// Excludes are restic --exclude patterns applied to this set's backup.
 	Excludes []string
 	// Enabled gates the set's participation in scheduled and whole-domain runs.
-	Enabled   bool
-	CreatedAt int64
+	Enabled bool
+	// ScheduleCadence is this set's OPTIONAL per-item schedule override (#199,
+	// the same mechanism containers and VMs got in #121). Empty means "follow the
+	// Folders domain schedule", which is what every set did before this existed.
+	// A concrete cadence takes the set OUT of the domain run and out of Backup
+	// Everything and gives it its own entry; the literal "off" excludes it from
+	// scheduling altogether. Only honoured while the per-item-schedules feature
+	// toggle is on, so an install that never turns it on behaves exactly as it
+	// did. Owned by SetFileSetScheduleCadence, never by UpdateFileSet, so an
+	// ordinary edit of the name or path cannot silently drop a cadence.
+	ScheduleCadence string
+	CreatedAt       int64
 }
 
 // CreateFileSet inserts a new file set. An empty ID is assigned via newID();
@@ -77,7 +87,7 @@ func (r *Repo) UpdateFileSet(fs FileSet) error {
 // ListFileSets returns all file sets ordered by name.
 func (r *Repo) ListFileSets() ([]FileSet, error) {
 	rows, err := r.db.Query(`
-		SELECT id, name, path, excludes, enabled, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, created_at
 		FROM file_sets ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListFileSets: %w", err)
@@ -98,7 +108,7 @@ func (r *Repo) ListFileSets() ([]FileSet, error) {
 // GetFileSet returns the file set with the given id.
 func (r *Repo) GetFileSet(id string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, created_at
 		FROM file_sets WHERE id = ?`, id)
 	return scanFileSet(row)
 }
@@ -106,7 +116,7 @@ func (r *Repo) GetFileSet(id string) (FileSet, error) {
 // GetFileSetByName returns the file set with the given (unique) name.
 func (r *Repo) GetFileSetByName(name string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, created_at
 		FROM file_sets WHERE name = ?`, name)
 	return scanFileSet(row)
 }
@@ -126,6 +136,26 @@ func (r *Repo) SetFileSetEnabled(id string, enabled bool) error {
 
 // DeleteFileSet removes a file set and ALL its run history by id, in a single
 // transaction. It is a no-op (no error) if the set does not exist.
+// SetFileSetScheduleCadence writes a file set's per-item schedule override (#199).
+// An empty string clears it, putting the set back on the Folders domain schedule.
+//
+// Deliberately its own statement rather than a field on UpdateFileSet: the cadence
+// is owned by the schedule editor, and folding it into the general update would
+// mean every rename or path edit carries a cadence with it, so a form that did not
+// know about the field would silently clear one. The same split targets.go makes
+// for SetScheduleCadence, and for the same reason.
+func (r *Repo) SetFileSetScheduleCadence(id, cadence string) error {
+	res, err := r.db.Exec(
+		`UPDATE file_sets SET schedule_cadence = ? WHERE id = ?`, cadence, id)
+	if err != nil {
+		return fmt.Errorf("SetFileSetScheduleCadence: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("SetFileSetScheduleCadence: no file set %q", id)
+	}
+	return nil
+}
+
 func (r *Repo) DeleteFileSet(id string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -146,7 +176,7 @@ func scanFileSet(s scanner) (FileSet, error) {
 	var fs FileSet
 	var exJSON string
 	var enabled int
-	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.CreatedAt)
+	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &fs.CreatedAt)
 	if err != nil {
 		return FileSet{}, fmt.Errorf("scanFileSet: %w", err)
 	}

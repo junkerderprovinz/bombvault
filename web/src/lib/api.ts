@@ -2230,6 +2230,9 @@ export interface FileSetView {
   enabled: boolean;
   /** Unix seconds of the last successful backup; 0 = never. */
   lastBackup: number;
+  /** This set's per-item schedule override (#199); "" follows the Folders
+   *  domain schedule. Only acted on while perItemSchedules is on. */
+  scheduleCadence?: string;
   /** Whether the resolved source path currently exists on disk. */
   pathExists: boolean;
 }
@@ -2284,7 +2287,15 @@ export function createFileSet(set: {
 /** PATCH /api/files/sets/{id} — partial update; omitted fields keep their value. */
 export function patchFileSet(
   id: string,
-  patch: { name?: string; path?: string; excludes?: string[]; enabled?: boolean }
+  patch: {
+    name?: string;
+    path?: string;
+    excludes?: string[];
+    enabled?: boolean;
+    /** #199. Sent alone by the cadence editor, so an edit there cannot disturb
+     *  the rest of the set. An empty string clears the override. */
+    scheduleCadence?: string;
+  }
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}`, {
     method: "PATCH",

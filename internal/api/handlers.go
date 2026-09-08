@@ -4349,6 +4349,10 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		Path     *string   `json:"path"`
 		Excludes *[]string `json:"excludes"`
 		Enabled  *bool     `json:"enabled"`
+		// #199. Its own field rather than part of the set, because the store
+		// setter is separate for the same reason: a form that does not know
+		// about the cadence must not be able to clear one by omitting it.
+		ScheduleCadence *string `json:"scheduleCadence"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -4397,6 +4401,19 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if body.ScheduleCadence != nil {
+		if err := h.svc.SetFileSetScheduleCadence(r.Context(), id, *body.ScheduleCadence); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		// Structural, exactly like the VM case above: reload so the set's own
+		// cron entry is registered or dropped. A file-set PATCH does not
+		// otherwise reload the scheduler.
+		if err := h.reloadScheduler(); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }

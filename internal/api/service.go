@@ -8617,6 +8617,11 @@ type FileSetView struct {
 	Enabled    bool     `json:"enabled"`
 	LastBackup int64    `json:"lastBackup"`
 	PathExists bool     `json:"pathExists"`
+	// ScheduleCadence is the set's per-item schedule override (#199); empty means
+	// it follows the Folders domain schedule. Always sent, so the interface can
+	// show the cadence without a second request, and only acted on while the
+	// per-item-schedules toggle is on.
+	ScheduleCadence string `json:"scheduleCadence"`
 }
 
 // ListFileSetViews returns all configured file sets with their last-backup
@@ -8628,7 +8633,14 @@ func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
 	}
 	views := make([]FileSetView, 0, len(sets))
 	for _, set := range sets {
-		v := FileSetView{ID: set.ID, Name: set.Name, Path: set.Path, Excludes: set.Excludes, Enabled: set.Enabled}
+		v := FileSetView{
+			ID:              set.ID,
+			Name:            set.Name,
+			Path:            set.Path,
+			Excludes:        set.Excludes,
+			Enabled:         set.Enabled,
+			ScheduleCadence: set.ScheduleCadence,
+		}
 		if v.Excludes == nil {
 			v.Excludes = []string{}
 		}
@@ -9746,6 +9758,28 @@ func (s *Service) SetVMInclude(_ context.Context, name string, include bool) err
 // target if absent. The cadence is validated with the domain-schedule grammar; an
 // empty string clears the override. everyN is rejected (no per-item last-run gate),
 // exactly like SetScheduleCadence.
+// SetFileSetScheduleCadence writes a folder set's per-item schedule override
+// (#199), validating it the same way the container and VM setters do.
+//
+// "everyN" is refused for the same reason it is refused there: classifyItemOverride
+// maps an interval cadence back to the domain default rather than giving the item
+// its own entry, so accepting one here would store a value that silently does
+// nothing. Better to say so at the point of entry than to have somebody discover
+// it from a backup that never ran.
+func (s *Service) SetFileSetScheduleCadence(_ context.Context, id, cadence string) error {
+	cadence = strings.TrimSpace(cadence)
+	if cadence != "" {
+		cad, err := schedule.ParseCadence(cadence)
+		if err != nil {
+			return fmt.Errorf("invalid schedule: %w", err)
+		}
+		if cad.IntervalDays > 0 {
+			return fmt.Errorf("per-item schedules do not support 'everyN': use 'off', 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression")
+		}
+	}
+	return s.store.SetFileSetScheduleCadence(id, cadence)
+}
+
 func (s *Service) SetVMScheduleCadence(_ context.Context, name, cadence string) error {
 	cadence = strings.TrimSpace(cadence)
 	if cadence != "" {

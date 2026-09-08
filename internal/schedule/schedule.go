@@ -219,6 +219,22 @@ func DomainRunTargets(targets []store.Target, perItem bool) []store.Target {
 	return out
 }
 
+// DomainRunFileSets is the file-set counterpart of DomainRunTargets (#199).
+// Enabled is still checked by RunFilesJob, so this only removes sets that carry
+// their own cadence or are explicitly "off".
+func DomainRunFileSets(sets []store.FileSet, perItem bool) []store.FileSet {
+	if !perItem {
+		return sets
+	}
+	out := make([]store.FileSet, 0, len(sets))
+	for _, fs := range sets {
+		if classifyItemOverride(fs.ScheduleCadence).inDomainRun {
+			out = append(out, fs)
+		}
+	}
+	return out
+}
+
 // DomainRunVMTargets is the VM counterpart of DomainRunTargets.
 func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 	if !perItem {
@@ -371,18 +387,24 @@ func VMsDueGate(st DomainGateStore) LastRunFunc {
 	}
 }
 
-// FilesDueGate is the file-set counterpart. File sets carry no per-item cadence
-// override, so the participating set is simply the ENABLED sets — still
-// narrower than "every file set ever backed up": a set the user switched off
-// must not hold the gate closed for the sets that are still on.
+// FilesDueGate is the file-set counterpart. The participating set is the ENABLED
+// sets that still follow the domain cadence — narrower than "every file set ever
+// backed up" in two ways: a set the user switched off must not hold the gate
+// closed for the sets that are still on, and since #199 a set on its own cadence
+// must not either, because the domain job will not back it up and its own entry
+// answers for it instead.
 func FilesDueGate(st DomainGateStore) LastRunFunc {
 	return func() (time.Time, error) {
+		settings, err := st.GetSettings()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("files due-gate: read settings: %w", err)
+		}
 		sets, err := st.ListFileSets()
 		if err != nil {
 			return time.Time{}, fmt.Errorf("files due-gate: list file sets: %w", err)
 		}
 		ids := make([]string, 0, len(sets))
-		for _, fs := range sets {
+		for _, fs := range DomainRunFileSets(sets, settings.PerItemSchedules) {
 			if fs.Enabled {
 				ids = append(ids, fs.ID)
 			}
@@ -1505,6 +1527,11 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: files job: list file sets: %v", err)
 					return
 				}
+				// #199: a set on its own cadence has its own entry and must not
+				// also ride the domain run, or it is backed up twice a night.
+				// The containers and VMs jobs have applied their filter here
+				// since #121; this one was the gap manilx ran into.
+				sets = DomainRunFileSets(sets, settings.PerItemSchedules)
 				if !DomainRunHasFileWork(sets) {
 					return // no enabled set — skip the loop and the batched tail (DomainRunHasWork)
 				}
@@ -1920,6 +1947,28 @@ func (s *Scheduler) registerPerItemEntries() error {
 			}
 		}
 	}
+	if s.backupFiles != nil && s.listFileSetsFn != nil {
+		sets, err := s.listFileSetsFn()
+		if err != nil {
+			log.Printf("schedule: per-item files: list file sets: %v", err)
+		} else {
+			for _, fs := range sets {
+				if !fs.Enabled {
+					continue
+				}
+				sched := classifyItemOverride(fs.ScheduleCadence)
+				if !sched.ownEntry {
+					continue
+				}
+				id := fs.ID
+				if err := s.addPerItemEntry(sched.Spec, "files", func() {
+					s.runFileSetItem(id)
+				}); err != nil {
+					return fmt.Errorf("schedule: per-item file set %q: %w", fs.Name, err)
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -1997,6 +2046,42 @@ func (s *Scheduler) runVMItem(name string) {
 	}
 	if s.replicateAfterBulkFn != nil {
 		s.replicateAfterBulkFn("vms")
+	}
+}
+
+// runFileSetItem is the file-set counterpart of runContainerItem (#199): one
+// set's own scheduled fire.
+//
+// It keys on the stable ID rather than the name, which is the one place this
+// differs from its two siblings. A file set can be renamed without losing its
+// run history (runs.target_id references file_sets.id), so a name captured at
+// registration time can go stale between scheduler reloads while the ID cannot.
+// The list is re-read at fire time and the set re-checked, so a set deleted or
+// switched off since the last reload is skipped rather than backed up.
+func (s *Scheduler) runFileSetItem(id string) {
+	sets, err := s.listFileSetsFn()
+	if err != nil {
+		log.Printf("schedule: per-item files job: list file sets: %v", err)
+		return
+	}
+	var one *store.FileSet
+	for i := range sets {
+		if sets[i].ID == id {
+			one = &sets[i]
+			break
+		}
+	}
+	if one == nil || !one.Enabled {
+		return // removed or switched off since the last reload
+	}
+	s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
+		return RunFilesJob([]store.FileSet{*one}, s.backupFiles)
+	})
+	if s.pruneAfterBulkFn != nil {
+		s.pruneAfterBulkFn("files")
+	}
+	if s.replicateAfterBulkFn != nil {
+		s.replicateAfterBulkFn("files")
 	}
 }
 

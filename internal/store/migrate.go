@@ -1288,6 +1288,21 @@ ALTER TABLE settings ADD COLUMN totp_secret   TEXT    NOT NULL DEFAULT '';
 ALTER TABLE settings ADD COLUMN totp_enabled  INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE settings ADD COLUMN totp_recovery TEXT    NOT NULL DEFAULT '';`,
 	},
+	{
+		// A per-item schedule for a folder set (#199), the same column containers
+		// and VMs have carried since #121. Empty, the default, means the set
+		// follows the Folders domain schedule, so every existing set keeps
+		// behaving exactly as it did and the column changes nothing until
+		// somebody sets a cadence AND turns the per-item-schedules toggle on.
+		//
+		// Requested by manilx, who backs everything up nightly through Backup
+		// Everything and has one large folder set that only needs a weekly run:
+		// without a cadence of its own the set was all in or all out, so the
+		// only way to spare it was to exclude it and then back it up by hand.
+		version: 99, name: "file_sets_schedule_cadence",
+		alreadySatisfied: columnPresent("file_sets", "schedule_cadence"),
+		sql:              "ALTER TABLE file_sets ADD COLUMN schedule_cadence TEXT NOT NULL DEFAULT '';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

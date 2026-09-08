@@ -169,7 +169,7 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 		{"containers", settings.ContainersEnabled, func() EverythingDomainResult { return s.everythingRunContainers(ctx, runID, settings) }},
 		{"vms", settings.VMsEnabled, func() EverythingDomainResult { return s.everythingRunVMs(ctx, runID, settings) }},
 		{"flash", settings.FlashEnabled, func() EverythingDomainResult { return s.everythingRunFlash(ctx, runID) }},
-		{"files", settings.FilesEnabled, func() EverythingDomainResult { return s.everythingRunFiles(ctx, runID) }},
+		{"files", settings.FilesEnabled, func() EverythingDomainResult { return s.everythingRunFiles(ctx, runID, settings) }},
 		{"config", settings.ConfigEnabled, func() EverythingDomainResult { return s.everythingRunConfig(ctx, runID) }},
 	}
 	results := make([]EverythingDomainResult, 0, len(steps))
@@ -400,16 +400,18 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 // reproducing schedule.RunFilesJob's exact semantics inline (Enabled sets
 // only; any other per-item error is logged and the loop continues — files has
 // no "not installed" sentinel, matching main.go's own scheduled files
-// closure). Unlike containers/vms, the real scheduled files job applies no
-// per-item-schedule filtering (schedule.go has no DomainRun-style filter for
-// file sets), so neither does this step.
-func (s *Service) everythingRunFiles(ctx context.Context, runID string) EverythingDomainResult {
+// closure). Since #199 it also drops sets on their own per-item cadence, the
+// way the containers and VMs steps already did: a folder set given a weekly
+// schedule of its own must not be dragged along by the nightly Everything run,
+// which was the whole point of asking for one.
+func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
 	const domain = "files"
 	sets, err := s.store.ListFileSets()
 	if err != nil {
 		log.Printf("api: backup everything: files: list file sets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
+	sets = schedule.DomainRunFileSets(sets, settings.PerItemSchedules) // #199
 	if !schedule.DomainRunHasFileWork(sets) {
 		return everythingDomainIdle(domain)
 	}

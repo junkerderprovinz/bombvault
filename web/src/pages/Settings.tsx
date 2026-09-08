@@ -526,6 +526,7 @@ function FilesSection({
   settings,
   syncSchedules,
   fileSets,
+  perItem,
   onChange,
   onSetsChanged,
   t,
@@ -540,6 +541,10 @@ function FilesSection({
    *  all and always used its own independent settings.filesSchedule. */
   syncSchedules: boolean;
   fileSets: FileSetView[];
+  /** Whether per-item schedules are switched on (#199): the row's cadence
+   *  editor is hidden entirely while off, exactly as the container rows do it,
+   *  so nobody can set a cadence that the scheduler would then ignore. */
+  perItem: boolean;
   onChange: (schedule: string) => void;
   /** A toggle PATCHed a set — reload the list so the rows reflect the server. */
   onSetsChanged: () => void;
@@ -554,6 +559,15 @@ function FilesSection({
   // GlimStone follow-up pass (v8.0.0): the persistent (never auto-cleared)
   // error paragraph below is now a toast — a toggle failure is a one-shot
   // completion notice like every other migrated site here.
+  // Mirrors ContainersSection's setScheduleCadence: the PATCH carries only the
+  // cadence, so an edit here cannot disturb the set's name, path or excludes,
+  // and the list is reloaded because the server may have reloaded the scheduler.
+  async function setFileSetCadence(id: string, cadence: string) {
+    const res = await patchFileSet(id, { scheduleCadence: cadence });
+    if (res.ok) onSetsChanged();
+    return res;
+  }
+
   async function toggle(set: FileSetView) {
     setBusy((b) => ({ ...b, [set.id]: true }));
     try {
@@ -588,7 +602,13 @@ function FilesSection({
       ) : (
         <div className="flex flex-col gap-1 divide-y divide-carbon-border">
           {fileSets.map((s) => (
-            <div key={s.id} className="flex items-center gap-3 py-2 text-sm">
+            // #199 gave a folder set its own cadence, so the row grew a second
+            // line the way the container rows already had one. The layout
+            // follows ContainersSection exactly: the identifying row stays a
+            // single flex line, the override sits under it, and it appears only
+            // while the per-item-schedules toggle is on.
+            <div key={s.id} className="flex flex-col gap-2 py-2 text-sm">
+            <div className="flex items-center gap-3">
               <div
                 className={`w-2 h-2 rounded-full shrink-0 ${
                   s.enabled ? "bg-statusOkSolid" : "bg-carbon-surface3"
@@ -621,6 +641,14 @@ function FilesSection({
                   disabled={!!busy[s.id]}
                 />
               </label>
+            </div>
+            {perItem && (
+              <ItemScheduleOverride
+                name={s.name}
+                initial={s.scheduleCadence ?? ""}
+                onSave={(cadence) => setFileSetCadence(s.id, cadence)}
+              />
+            )}
             </div>
           ))}
         </div>
@@ -2745,6 +2773,7 @@ export function SettingsPage() {
             settings={settings}
             syncSchedules={syncSchedules}
             fileSets={fileSets}
+            perItem={settings.perItemSchedules}
             onChange={(v) => scheduleField("filesSchedule", v)}
             onSetsChanged={loadFileSets}
             t={t}
