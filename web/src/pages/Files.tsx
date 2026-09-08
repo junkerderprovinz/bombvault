@@ -40,6 +40,7 @@ import { RecentRunsList } from "../components/RecentRunsList";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconBackupNow, IconFiles, IconPencil, IconTrash } from "../components/Sidebar";
+import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
@@ -1108,7 +1109,7 @@ function FileSetRow({
       // backup/restore is actively running — mirrors ContainerRow/VMRow.
       // glim-stagger-row (GlimStone motion-engine animation 3) — see
       // ContainerRow's identical comment.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row ${
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -1574,6 +1575,7 @@ export function Files() {
             key={shakeBackupAll}
             label={t("files.backupAll")}
             labelKey="files.backupAll"
+            hueIndex={BULK_HUE.backup}
             tone="accent"
             onClick={() => void handleBackupAll()}
             disabled={backupAllBusy || running.active || backupableIds.length === 0}

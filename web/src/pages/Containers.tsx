@@ -7,6 +7,7 @@ import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { DropdownListbox } from "../components/DropdownListbox";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
+import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel, type TranslationKey } from "../lib/i18n";
 import { InfoBubble } from "../components/InfoBubble";
 import { PAGE_SHELL } from "../lib/pageShell";
@@ -1757,7 +1758,7 @@ function ContainerRow({
       // glim-stagger-row (GlimStone motion-engine animation 3) reuses this
       // SAME `index` (via --row-i) the colour engine already threads through
       // every call site — see that class's own keyframe comment in index.css.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row ${
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -1992,6 +1993,7 @@ function ScheduleIncludeAllControl({
         key={shakeInclude}
         label={t("schedule.includeAll")}
         labelKey="schedule.includeAll"
+        hueIndex={BULK_HUE.include}
         tone="accent"
         onClick={() => void run(true)}
         disabled={busy}
@@ -2173,7 +2175,7 @@ function StackCard({
       // glim-stagger-row reuses the same `index` for the entrance stagger — the
       // identical trio ContainerRow's own outer <div> carries above (see this
       // function's own `index` doc comment).
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-2 glim-hue glim-tint glim-stagger-row"
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-2 glim-hue glim-stagger-row"
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
@@ -3000,6 +3002,7 @@ export function Containers() {
             key={shakeDiscover}
             label={t("containers.discover")}
             labelKey="containers.discover"
+            hueIndex={BULK_HUE.discover}
             tone="accent"
             onClick={() => void handleDiscover()}
             disabled={discovering}
@@ -3168,6 +3171,7 @@ export function Containers() {
             key={shakeBackupSelected}
         label={t("containers.backupSelected")}
             labelKey="containers.backupSelected"
+            hueIndex={BULK_HUE.backup}
             tone="accent"
             onClick={() => void backupSelected()}
             disabled={bulkBusy || batchActive || running.active}
@@ -3180,6 +3184,7 @@ export function Containers() {
             <Button
               label={t("containers.restoreSelected")}
               labelKey="containers.restoreSelected"
+              hueIndex={BULK_HUE.restore}
               tone="accent"
               onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}

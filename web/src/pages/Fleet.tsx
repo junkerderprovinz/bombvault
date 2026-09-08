@@ -590,7 +590,7 @@ function FleetPeerCard({
       // Poll/Propose are quick request/response actions, not a tracked job.
       // glim-stagger-row (GlimStone motion-engine animation 3) — see
       // ContainerRow's identical comment.
-      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row"
+      className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
     >
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">

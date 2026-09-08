@@ -5,6 +5,7 @@ import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import type { VM, Snapshot, VmOrder } from "../lib/api";
+import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useDragReorder } from "../lib/useDragReorder";
@@ -913,7 +914,7 @@ export function VMRow({
       // without needing hover — mirrors ContainerRow's identical treatment.
       // glim-stagger-row (GlimStone motion-engine animation 3) — see
       // ContainerRow's identical comment.
-      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-tint glim-stagger-row ${
+      className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
@@ -1157,6 +1158,7 @@ function ScheduleIncludeAllControl({
         key={shakeInclude}
         label={t("schedule.includeAll")}
         labelKey="schedule.includeAll"
+        hueIndex={BULK_HUE.include}
         tone="accent"
         onClick={() => void run(true)}
         disabled={busy}
@@ -1772,6 +1774,7 @@ export function VMs() {
             key={shakeDiscover}
             label={t("containers.discover")}
             labelKey="containers.discover"
+            hueIndex={BULK_HUE.discover}
             tone="accent"
             onClick={() => void handleDiscover()}
             disabled={discovering}
@@ -1883,6 +1886,7 @@ export function VMs() {
           <Button
             label={t("vms.backupSelected")}
           labelKey="vms.backupSelected"
+          hueIndex={BULK_HUE.backup}
             tone="accent"
             onClick={backupSelected}
             disabled={bulkBusy || running.active}
@@ -1892,6 +1896,7 @@ export function VMs() {
             <Button
               label={t("vms.restoreSelected")}
               labelKey="vms.restoreSelected"
+              hueIndex={BULK_HUE.restore}
               tone="accent"
               onClick={() => void restoreSelected()}
               disabled={bulkBusy || running.active}
