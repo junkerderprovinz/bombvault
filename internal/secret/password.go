@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 
@@ -113,7 +114,15 @@ func verifyArgon(appKey, password, storedHash string) bool {
 	if !ok {
 		return false
 	}
-	got := argon2.IDKey(pepper(appKey, password), salt, t, m, p, uint32(len(want)))
+	// argon2 wants the key length as a uint32 and len() is an int. parseArgon
+	// already refuses an empty key, and a stored hash is one base64 field in a
+	// settings row, so this can never be near 4 GiB - but a bound costs nothing
+	// and makes the conversion provably safe instead of safe by argument.
+	n := len(want)
+	if n <= 0 || n > math.MaxUint32 {
+		return false
+	}
+	got := argon2.IDKey(pepper(appKey, password), salt, t, m, p, uint32(n))
 	return hmac.Equal(got, want)
 }
 

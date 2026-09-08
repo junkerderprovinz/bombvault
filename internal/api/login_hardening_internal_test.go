@@ -350,7 +350,7 @@ func TestTheCookieFromAnUpgradingLoginIsStillValidAfterwards(t *testing.T) {
 // The second factor
 // ---------------------------------------------------------------------------
 
-const testTOTPSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+const testTOTPSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" //nolint:gosec // G101: the RFC 6238 test vector, not a credential
 
 func currentCode(t *testing.T) string {
 	t.Helper()

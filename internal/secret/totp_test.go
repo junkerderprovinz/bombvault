@@ -10,7 +10,7 @@ import (
 // implementation is the same algorithm every authenticator app runs. The secret
 // in the RFC is the ASCII string "12345678901234567890"; here it is base32 as an
 // app would receive it.
-const rfcSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+const rfcSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" //nolint:gosec // G101: RFC 6238's own published test vector, not a credential
 
 func TestTOTPMatchesRFC6238Vectors(t *testing.T) {
 	// The RFC's SHA-1 vectors are eight digits; BombVault uses six, so the
@@ -185,5 +185,28 @@ func TestRecoveryCodesNeedTheAppKey(t *testing.T) {
 	}
 	if MatchRecoveryCode(otherKey, plain[0], hashed) >= 0 {
 		t.Fatal("a stolen database without the APP_KEY must not yield a usable code")
+	}
+}
+
+// A clock that has not been set yet must not push the counter into a window no
+// verifier can reach. Before the clamp, a pre-epoch time wrapped the int64 into
+// an enormous uint64 step and TOTPCode happily returned six digits for it.
+func TestTOTPClampsAPreEpochClockToStepZero(t *testing.T) {
+	before := time.Unix(-86400, 0) // a day before 1970
+	got, err := TOTPCode(rfcSecret, before)
+	if err != nil {
+		t.Fatalf("TOTPCode: %v", err)
+	}
+	atZero, err := TOTPCode(rfcSecret, time.Unix(0, 0))
+	if err != nil {
+		t.Fatalf("TOTPCode at epoch: %v", err)
+	}
+	if got != atZero {
+		t.Fatalf("a pre-epoch clock must fall back to the first step: got %s, step 0 is %s", got, atZero)
+	}
+	// And the code for that step must still verify, so the fallback is a real
+	// window rather than a value nothing accepts.
+	if !ValidTOTP(rfcSecret, got, before) {
+		t.Fatal("the clamped code must verify at the same clamped time")
 	}
 }

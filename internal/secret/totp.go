@@ -57,7 +57,22 @@ func TOTPCode(secret string, t time.Time) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("secret: totp: invalid base32 secret: %w", err)
 	}
-	return totpAt(key, uint64(t.Unix())/uint64(totpPeriod.Seconds())), nil
+	return totpAt(key, totpStep(t)), nil
+}
+
+// totpStep converts a wall-clock time into an RFC 6238 counter.
+//
+// The clamp is the point: Unix() is an int64 and the counter is a uint64, so a
+// time before the epoch would wrap to an enormous step and hand out codes from
+// a window no verifier will ever reach, silently. A box whose clock has not
+// been set yet is the realistic way to get there, and it is exactly the moment
+// a second factor must not start producing nonsense.
+func totpStep(t time.Time) uint64 {
+	sec := t.Unix()
+	if sec < 0 {
+		return 0
+	}
+	return uint64(sec) / uint64(totpPeriod.Seconds())
 }
 
 func totpAt(key []byte, counter uint64) string {
@@ -99,7 +114,7 @@ func ValidTOTP(secret, code string, t time.Time) bool {
 	if err != nil || len(key) == 0 {
 		return false
 	}
-	step := uint64(t.Unix()) / uint64(totpPeriod.Seconds())
+	step := totpStep(t)
 	ok := false
 	for d := -totpSkew; d <= totpSkew; d++ {
 		c := step
