@@ -928,6 +928,8 @@ const vi: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Mật khẩu này chỉ hiển thị MỘT LẦN và không bao giờ được BombVault lưu trữ. Hãy lưu lại ngay. Bạn cần nó cho thông tin đăng nhập bên dưới và không thể khôi phục.",
   "offsite.wizard.tlsNote": "Cách này dùng HTTP thuần, không sao trên LAN tin cậy hoặc VPN. Nếu storage box có thể truy cập qua internet, hãy đặt rest-server sau HTTPS (một reverse proxy TLS) để thông tin đăng nhập của kho không bị gửi dưới dạng văn bản thuần.",
   "offsite.wizard.password": "Mật khẩu được tạo (hãy lưu lại)",
+  "offsite.wizard.passwordInfo": "Một bí mật ở hai dạng. Văn bản rõ ở trên đi vào mật khẩu REST của đích này, ngay trên máy này. Các công thức bên dưới mang chính mật khẩu đó đã được băm, ở dòng thêm vào .htpasswd, và dòng đó đi lên máy lưu trữ. Bạn không phải tự băm gì cả.",
+  "offsite.wizard.repoUrlInfo": "Phần đầu của đường dẫn là người dùng, không phải thư mục: rest:http://may:8000/nguoidung/kho. Máy chủ được tạo chỉ phục vụ mỗi người dùng đường dẫn của chính họ, nên thiếu người dùng sẽ trả về 401 dù mật khẩu đúng.",
   "offsite.wizard.step3": "3 · URL kho + thông tin đăng nhập",
   "offsite.wizard.repoUrl": "URL kho off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

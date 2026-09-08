@@ -88,7 +88,7 @@ Yllä kuvataan osat. Tässä on yksi kokonainen kokoonpano oikeilla arvoilla, si
 
 Kaksi konetta: **TOWER** ajaa kontit ja lähettää varmuuskopiot, **VAULT** ottaa ne vastaan ja pakottaa muuttumattomuuden. Korvaa omilla nimillä, osoitteilla ja jakopoluilla.
 
-**1. Pystytä append-only-palvelin VAULTiin.** Mene TOWERin BombVaultissa kohtaan *Asetukset → Etäkohde → ohjattu asennus*, valitse **rest-server** ja luo resepti. Kopioi välilehti **Unraid-malli (XML)**, tallenna se VAULTiin nimellä `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, valitse sitten *Docker → Add Container* ja mallilistasta **rest-server**. Kirjoita näytetty `htpasswd`-rivi VAULTissa tiedostoon `/mnt/user/appdata/rest-server/.htpasswd` ennen käynnistystä. Kertakäyttösalasana näytetään kerran eikä sitä tallenneta, joten kopioi se nyt.
+**1. Pystytä append-only-palvelin VAULTiin.** Mene TOWERin BombVaultissa kohtaan *Asetukset → Etäkohde → ohjattu asennus*, valitse **rest-server** ja luo resepti. Kopioi välilehti **Unraid-malli (XML)**, tallenna se VAULTiin nimellä `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, valitse sitten *Docker → Add Container* ja mallilistasta **rest-server**. Kirjoita näytetty `htpasswd`-rivi VAULTissa tiedostoon `/mnt/user/appdata/rest-server/.htpasswd` ennen käynnistystä. Kertakäyttösalasana näytetään kerran eikä sitä tallenneta, joten kopioi se nyt. Se rivi sisältää saman salasanan, jo bcrypt-tiivistettynä: selkoteksti menee TOWERin REST-tunnuksiin, tiivistetty rivi VAULTin `.htpasswd`-tiedostoon. Sinun ei tarvitse tiivistää mitään itse.
 
     Jätä `--append-only` OPTIONS-kenttään. Se on koko juju: ilman sitä VAULT on taas tavallinen jako.
 

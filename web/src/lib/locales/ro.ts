@@ -915,6 +915,8 @@ const ro: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Această parolă este afișată O SINGURĂ DATĂ și nu este niciodată stocată de BombVault. Salveaz-o acum. Ai nevoie de ea pentru credențialele de mai jos și nu poate fi recuperată.",
   "offsite.wizard.tlsNote": "Această rețetă folosește HTTP simplu, în regulă într-un LAN de încredere sau VPN. Dacă storage box-ul este accesibil prin internet, pune rest-server în spatele HTTPS (un proxy invers TLS) ca să nu se trimită credențialele depozitului în clar.",
   "offsite.wizard.password": "Parolă generată (salveaz-o)",
+  "offsite.wizard.passwordInfo": "Un singur secret în două forme. Textul simplu de mai sus merge în parola REST a acestei destinații, aici pe această mașină. Rețetele de mai jos poartă aceeași parolă deja criptată, în linia care adaugă la .htpasswd, iar acea linie merge pe mașina de stocare. Nu trebuie să criptezi nimic tu.",
+  "offsite.wizard.repoUrlInfo": "Prima parte a căii este utilizatorul, nu un dosar: rest:http://masina:8000/utilizator/depozit. Serverul generat oferă fiecărui utilizator doar propria cale, deci omiterea utilizatorului răspunde 401 chiar și cu parola corectă.",
   "offsite.wizard.step3": "3 · URL depozit + credențiale",
   "offsite.wizard.repoUrl": "URL depozit off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

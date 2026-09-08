@@ -309,6 +309,8 @@ const lv: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Šī parole tiek parādīta TIKAI VIENREIZ, un BombVault to nekad nesaglabā. Saglabājiet to tagad. Tā ir nepieciešama zemāk norādītajiem akreditācijas datiem, un to nevar atgūt.",
   "offsite.wizard.tlsNote": "Šī recepte izmanto vienkāršu HTTP. Tas ir kārtībā uzticamā LAN vai VPN. Ja krātuves ierīce ir sasniedzama internetā, novietojiet rest-server aiz HTTPS (TLS apgrieztais starpniekserveris), lai repozitorija akreditācijas dati netiktu sūtīti nešifrēti.",
   "offsite.wizard.password": "Ģenerētā parole (saglabājiet to)",
+  "offsite.wizard.passwordInfo": "Viens noslēpums divos veidos. Atklātais teksts augšā iet uz šī mērķa REST paroli, šeit uz šīs mašīnas. Receptes zemāk nes to pašu paroli jau jauktu, rindā, kas pievieno .htpasswd, un šī rinda iet uz krātuves mašīnu. Pašam nekas nav jājauc.",
+  "offsite.wizard.repoUrlInfo": "Ceļa pirmā daļa ir lietotājs, nevis mape: rest:http://masina:8000/lietotajs/kratuve. Ģenerētais serveris katram lietotājam dod tikai viņa ceļu, tāpēc izlaists lietotājs atbild 401 pat ar pareizu paroli.",
   "offsite.wizard.step3": "3 · Repozitorija URL + akreditācijas dati",
   "offsite.wizard.repoUrl": "Attālinātā repozitorija URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

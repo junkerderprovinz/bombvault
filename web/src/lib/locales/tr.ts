@@ -936,6 +936,8 @@ const tr: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Bu parola YALNIZCA BİR KEZ gösterilir ve BombVault tarafından asla saklanmaz. Şimdi kaydedin. Aşağıdaki kimlik bilgileri için gereklidir ve kurtarılamaz.",
   "offsite.wizard.tlsNote": "Bu tarif düz HTTP kullanır. Güvenilir bir LAN veya VPN'de sorun değil. Depolama sunucusu internet üzerinden erişilebiliyorsa, rest-server'ı HTTPS (bir TLS ters proxy) arkasına alın ki depo kimlik bilgileri açık metin olarak gönderilmesin.",
   "offsite.wizard.password": "Oluşturulan parola (bunu kaydedin)",
+  "offsite.wizard.passwordInfo": "Tek bir sır, iki biçimde. Yukarıdaki düz metin bu hedefin REST parolasına girer, bu makinede. Aşağıdaki tarifler aynı parolayı zaten özetlenmiş olarak taşır, .htpasswd dosyasına ekleyen satırda, ve o satır depolama makinesine gider. Kendin bir şey özetlemek zorunda değilsin.",
+  "offsite.wizard.repoUrlInfo": "Yolun ilk parçası kullanıcıdır, klasör değil: rest:http://makine:8000/kullanici/depo. Üretilen sunucu her kullanıcıya yalnızca kendi yolunu verir, bu yüzden atlanan kullanıcı doğru parolayla bile 401 yanıtı verir.",
   "offsite.wizard.step3": "3 · Depo URL'si + kimlik bilgileri",
   "offsite.wizard.repoUrl": "Site dışı depo URL'si",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

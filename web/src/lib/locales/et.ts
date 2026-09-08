@@ -309,6 +309,8 @@ const et: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "See parool kuvatakse AINULT ÜKS KORD ja BombVault ei salvesta seda kunagi. Salvesta see kohe. Vajad seda allolevate mandaatide jaoks ja seda ei saa taastada.",
   "offsite.wizard.tlsNote": "See retsept kasutab tavalist HTTP-d. Usaldusväärses kohalikus võrgus või VPN-is on see sobiv. Kui salvestuskast on internetist ligipääsetav, pane rest-server HTTPS-i taha (TLS-pöördproksi), et hoidla mandaati ei saadetaks avatekstina.",
   "offsite.wizard.password": "Loodud parool (salvesta see)",
+  "offsite.wizard.passwordInfo": "Üks saladus kahel kujul. Ülal olev avatekst läheb selle sihtkoha REST-paroolile, siin sellel masinal. Allolevad retseptid kannavad sama parooli juba räsituna, real, mis lisab .htpasswd faili, ja see rida läheb salvestusmasinale. Ise sa midagi räsima ei pea.",
+  "offsite.wizard.repoUrlInfo": "Tee esimene osa on kasutaja, mitte kaust: rest:http://masin:8000/kasutaja/hoidla. Loodud server annab igale kasutajale ainult tema enda tee, seega puuduv kasutaja vastab 401 ka õige parooliga.",
   "offsite.wizard.step3": "3 · Hoidla URL + mandaadid",
   "offsite.wizard.repoUrl": "Välise hoidla URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

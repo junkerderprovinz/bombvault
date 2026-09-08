@@ -741,8 +741,19 @@ export function OffsiteWizard({
               <div className="rounded-card bg-statusWarnBg px-3 py-2 text-xs text-statusWarn leading-relaxed">
                 {t("offsite.wizard.passwordWarning")}
               </div>
+              {/* The bubble exists because two people arrived at the same
+                  question from the same screen (#192, #194): the recipes below
+                  contain an `echo '<user>:<hash>' >> .htpasswd` line, and
+                  nothing here said that the hash is THIS password. Both are
+                  printed, neither is labelled as the other's form, so it reads
+                  as two secrets and the reader starts looking for the second
+                  one. It is one secret in two forms, and which half goes on
+                  which box is the whole of the setup. */}
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-carbon-textMuted">{t("offsite.wizard.password")}</span>
+                <span className="flex items-center gap-1.5 text-xs text-carbon-textMuted">
+                  {t("offsite.wizard.password")}
+                  <InfoBubble tip={t("offsite.wizard.passwordInfo")} />
+                </span>
                 <CopyBlock text={snippet.password} t={t} />
               </div>
               <div className="flex flex-col gap-1">
@@ -820,8 +831,18 @@ export function OffsiteWizard({
           </div>
         ) : (
           <>
+            {/* The other half of the same recurring 401 (#192, #194): with
+                --private-repos, which every recipe this wizard prints turns on,
+                the FIRST path segment has to be the htpasswd user. The URL is
+                otherwise well-formed and the password is right, so the failure
+                arrives as a bare 401 with nothing pointing at the path. The
+                placeholder has always shown the correct shape; nobody reads a
+                placeholder as a rule, so the rule is stated here. */}
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">{t("offsite.wizard.repoUrl")}</span>
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("offsite.wizard.repoUrl")}
+                <InfoBubble tip={t("offsite.wizard.repoUrlInfo")} />
+              </span>
               <input
                 value={repoURL}
                 spellCheck={false}

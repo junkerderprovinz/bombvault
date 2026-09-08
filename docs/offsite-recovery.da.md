@@ -88,7 +88,7 @@ Ovenfor beskrives delene. Her er én komplet opsætning med rigtige værdier, fo
 
 To maskiner: **TOWER** kører containerne og sender sikkerhedskopierne, **VAULT** modtager dem og håndhæver uforanderligheden. Udskift med dine egne navne, adresser og delingsstier.
 
-**1. Rejs append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Indstillinger → Eksternt → guidet opsætning*, vælg **rest-server** og generér opskriften. Kopiér fanen **Unraid-skabelon (XML)**, gem den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og vælg derefter *Docker → Add Container* og **rest-server** fra skabelonlisten. Skriv den viste `htpasswd`-linje ind i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT, før du starter den. Engangsadgangskoden vises én gang og gemmes aldrig, så kopiér den nu.
+**1. Rejs append-only-serveren på VAULT.** I BombVault på TOWER: gå til *Indstillinger → Eksternt → guidet opsætning*, vælg **rest-server** og generér opskriften. Kopiér fanen **Unraid-skabelon (XML)**, gem den på VAULT som `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, og vælg derefter *Docker → Add Container* og **rest-server** fra skabelonlisten. Skriv den viste `htpasswd`-linje ind i `/mnt/user/appdata/rest-server/.htpasswd` på VAULT, før du starter den. Engangsadgangskoden vises én gang og gemmes aldrig, så kopiér den nu. Den linje bærer den samme adgangskode, allerede bcrypt-hashet for dig: klarteksten hører til i REST-legitimationsoplysningerne på TOWER, den hashede linje i `.htpasswd` på VAULT. Du skal ikke hashe noget selv.
 
     Lad `--append-only` blive stående i OPTIONS-feltet. Det er hele pointen: uden det er VAULT en almindelig deling igen.
 

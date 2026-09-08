@@ -916,6 +916,8 @@ const fr: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Ce mot de passe est affiché UNE SEULE FOIS et n'est jamais conservé par BombVault. Enregistrez-le maintenant : il est requis pour les identifiants ci-dessous et ne peut pas être récupéré.",
   "offsite.wizard.tlsNote": "Cette recette utilise du HTTP simple, sans souci sur un LAN de confiance ou un VPN. Si le serveur de stockage est accessible depuis internet, placez rest-server derrière HTTPS (un reverse proxy TLS) pour que les identifiants du dépôt ne soient pas envoyés en clair.",
   "offsite.wizard.password": "Mot de passe généré (à conserver)",
+  "offsite.wizard.passwordInfo": "Un seul secret sous deux formes. Le texte en clair ci-dessus va dans le mot de passe REST de cette destination, ici sur cette machine. Les recettes ci-dessous portent le même mot de passe déjà haché, dans la ligne qui ajoute à .htpasswd, et cette ligne va sur la machine de stockage. Vous n'avez rien à hacher vous-même.",
+  "offsite.wizard.repoUrlInfo": "La première partie du chemin est l'utilisateur, pas un dossier : rest:http://machine:8000/utilisateur/depot. Le serveur généré ne sert à chaque utilisateur que son propre chemin, donc un utilisateur omis répond 401 même avec le bon mot de passe.",
   "offsite.wizard.step3": "3 · URL du dépôt + identifiants",
   "offsite.wizard.repoUrl": "URL du dépôt hors site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

@@ -908,6 +908,8 @@ const ja: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "このパスワードは一度だけ表示され、BombVault には保存されません。今すぐ保存してください。下の認証情報で必要になり、後から復元することはできません。",
   "offsite.wizard.tlsNote": "このレシピは平文の HTTP を使います。信頼できる LAN や VPN では問題ありません。ストレージボックスがインターネット経由で到達可能な場合は、rest-server を HTTPS（TLS リバースプロキシ）の背後に置き、リポジトリの認証情報が平文で送信されないようにしてください。",
   "offsite.wizard.password": "生成されたパスワード（保存してください）",
+  "offsite.wizard.passwordInfo": "秘密はひとつ、形がふたつです。上の平文はこの宛先の REST パスワードに入れます。下のレシピには同じパスワードがすでにハッシュ化された形で入っていて、それが .htpasswd に追記する行です。その行はストレージ側の機械に置きます。自分でハッシュ化する必要はありません。",
+  "offsite.wizard.repoUrlInfo": "パスの最初の部分はフォルダーではなくユーザーです: rest:http://box:8000/ユーザー/リポジトリ。生成されたサーバーは各ユーザーに自分のパスだけを渡すので、ユーザーを省くとパスワードが正しくても 401 が返ります。",
   "offsite.wizard.step3": "3 · リポジトリ URL + 認証情報",
   "offsite.wizard.repoUrl": "オフサイトリポジトリ URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

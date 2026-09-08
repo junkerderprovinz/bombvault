@@ -916,6 +916,8 @@ const he: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "סיסמה זו מוצגת פעם אחת בלבד ו-BombVault לעולם אינו שומר אותה. שמור אותה כעת: היא נחוצה עבור פרטי ההתחברות שלמטה ולא ניתן לשחזר אותה.",
   "offsite.wizard.tlsNote": "מתכון זה משתמש ב-HTTP רגיל, בסדר גמור ב-LAN מהימן או VPN. אם מכונת האחסון נגישה דרך האינטרנט, מקם את rest-server מאחורי HTTPS (reverse proxy עם TLS) כדי שפרטי ההתחברות של המאגר לא יישלחו בטקסט גלוי.",
   "offsite.wizard.password": "סיסמה שנוצרה (שמור אותה)",
+  "offsite.wizard.passwordInfo": "סוד אחד בשתי צורות. הטקסט הגלוי למעלה נכנס לסיסמת ה-REST של היעד הזה, כאן במכונה הזו. המתכונים למטה נושאים את אותה סיסמה כבר מגובבת, בשורה שמוסיפה ל-.htpasswd, והשורה הזו נכנסת במכונת האחסון. אינך צריך לגבב דבר בעצמך.",
+  "offsite.wizard.repoUrlInfo": "החלק הראשון של הנתיב הוא המשתמש, לא תיקייה: rest:http://box:8000/משתמש/מאגר. השרת שנוצר נותן לכל משתמש רק את הנתיב שלו, ולכן השמטת המשתמש מחזירה 401 גם עם הסיסמה הנכונה.",
   "offsite.wizard.step3": "3 · כתובת URL של המאגר + פרטי התחברות",
   "offsite.wizard.repoUrl": "כתובת URL של מאגר מחוץ לאתר",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

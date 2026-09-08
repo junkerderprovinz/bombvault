@@ -88,7 +88,7 @@
 
 جهازان: **TOWER** يشغّل الحاويات ويرسل النسخ الاحتياطية، و**VAULT** يستقبلها ويفرض عدم القابلية للتغيير. استبدل الأسماء والعناوين ومسارات المشاركة بما يخصك.
 
-**1. على VAULT، جهّز خادم الإضافة-فقط.** في BombVault على TOWER انتقل إلى *الإعدادات ← خارج الموقع ← الإعداد الموجَّه*، اختر **rest-server** وولّد الوصفة. انسخ تبويب **قالب Unraid (XML)**، واحفظه على VAULT باسم `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`، ثم *Docker ← Add Container* واختر **rest-server** من قائمة القوالب. قبل تشغيله، اكتب سطر `htpasswd` المعروض في `/mnt/user/appdata/rest-server/.htpasswd` على VAULT. كلمة المرور لمرة واحدة تُعرض مرة واحدة ولا تُحفظ أبدًا، فانسخها الآن.
+**1. على VAULT، جهّز خادم الإضافة-فقط.** في BombVault على TOWER انتقل إلى *الإعدادات ← خارج الموقع ← الإعداد الموجَّه*، اختر **rest-server** وولّد الوصفة. انسخ تبويب **قالب Unraid (XML)**، واحفظه على VAULT باسم `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`، ثم *Docker ← Add Container* واختر **rest-server** من قائمة القوالب. قبل تشغيله، اكتب سطر `htpasswd` المعروض في `/mnt/user/appdata/rest-server/.htpasswd` على VAULT. كلمة المرور لمرة واحدة تُعرض مرة واحدة ولا تُحفظ أبدًا، فانسخها الآن. يحمل ذلك السطر كلمة المرور نفسها، مُجزّأة بـ bcrypt نيابةً عنك: النص الظاهر يوضع في بيانات اعتماد REST على TOWER، والسطر المُجزّأ في `.htpasswd` على VAULT. لا حاجة لأن تُجزّئ شيئًا بنفسك.
 
     اترك `--append-only` في حقل OPTIONS. هذا هو جوهر الأمر كله: بدونه يعود VAULT مجرد مشاركة عادية.
 

@@ -309,6 +309,8 @@ const is: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Þetta lykilorð birtist AÐEINS EINU SINNI og BombVault vistar það aldrei. Vistaðu það núna. Þú þarft það fyrir aðgangsgögnin hér fyrir neðan og það verður ekki endurheimt.",
   "offsite.wizard.tlsNote": "Þessi uppskrift notar venjulegt HTTP, í lagi á traustu staðarneti eða VPN. Ef geymslutækið er aðgengilegt í gegnum internetið skaltu setja rest-server á bak við HTTPS (öfugan TLS-milliþjón) svo aðgangsgögn geymslusafnsins séu ekki send ódulkóðuð.",
   "offsite.wizard.password": "Lykilorð sem var búið til (vistaðu þetta)",
+  "offsite.wizard.passwordInfo": "Eitt leyndarmál í tveimur myndum. Textinn að ofan á heima í REST-lykilorði þessa áfangastaðar, hér á þessari vél. Uppskriftirnar að neðan bera sama lykilorð þegar hakkað, í línunni sem bætir við .htpasswd, og sú lína á heima á geymsluvélinni. Þú þarft ekki að hakka neitt sjálfur.",
+  "offsite.wizard.repoUrlInfo": "Fyrsti hluti slóðarinnar er notandinn, ekki mappa: rest:http://vel:8000/notandi/repository. Netþjónninn afhendir hverjum notanda aðeins hans eigin slóð, svo notandi sem vantar svarar 401 jafnvel með réttu lykilorði.",
   "offsite.wizard.step3": "3 · Slóð geymslusafns + aðgangsgögn",
   "offsite.wizard.repoUrl": "Slóð fjarlægs geymslusafns",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

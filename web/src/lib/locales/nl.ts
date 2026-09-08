@@ -909,6 +909,8 @@ const nl: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Dit wachtwoord wordt slechts ÉÉN KEER getoond en wordt nooit door BombVault opgeslagen. Sla het nu op. Je hebt het nodig voor de inloggegevens hieronder en het kan niet worden hersteld.",
   "offsite.wizard.tlsNote": "Dit recept gebruikt gewoon HTTP, prima op een vertrouwd LAN of VPN. Is de storage box via internet bereikbaar, zet rest-server dan achter HTTPS (een TLS reverse proxy) zodat de repository-inloggegevens niet in leesbare tekst worden verstuurd.",
   "offsite.wizard.password": "Gegenereerd wachtwoord (bewaar dit)",
+  "offsite.wizard.passwordInfo": "Eén geheim in twee vormen. De platte tekst hierboven hoort in het REST-wachtwoord van deze bestemming, hier op deze machine. De recepten hieronder bevatten hetzelfde wachtwoord al gehasht, in de regel die aan .htpasswd toevoegt, en die regel hoort op de opslagmachine. Je hoeft zelf niets te hashen.",
+  "offsite.wizard.repoUrlInfo": "Het eerste deel van het pad is de gebruiker, geen map: rest:http://machine:8000/gebruiker/repository. De gegenereerde server geeft elke gebruiker alleen zijn eigen pad, dus zonder gebruiker volgt een 401, ook met het juiste wachtwoord.",
   "offsite.wizard.step3": "3 · Repository-URL + inloggegevens",
   "offsite.wizard.repoUrl": "Off-site repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

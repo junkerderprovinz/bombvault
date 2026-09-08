@@ -88,7 +88,7 @@ Acima estão as peças. Isto é uma instalação completa com valores reais, por
 
 Duas máquinas: **TOWER** executa os contentores e envia as cópias, **VAULT** recebe-as e impõe a imutabilidade. Substitua pelos seus próprios nomes, endereços e caminhos de partilha.
 
-**1. No VAULT, monte o servidor append-only.** No BombVault em TOWER vá a *Definições → Externo → configuração guiada*, escolha **rest-server** e gere a receita. Copie o separador **Modelo Unraid (XML)**, guarde-o no VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, depois *Docker → Add Container* e escolha **rest-server** na lista de modelos. Antes de o iniciar, escreva a linha `htpasswd` mostrada em `/mnt/user/appdata/rest-server/.htpasswd` no VAULT. A palavra-passe de uso único é mostrada uma vez e nunca guardada: copie-a agora.
+**1. No VAULT, monte o servidor append-only.** No BombVault em TOWER vá a *Definições → Externo → configuração guiada*, escolha **rest-server** e gere a receita. Copie o separador **Modelo Unraid (XML)**, guarde-o no VAULT como `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, depois *Docker → Add Container* e escolha **rest-server** na lista de modelos. Antes de o iniciar, escreva a linha `htpasswd` mostrada em `/mnt/user/appdata/rest-server/.htpasswd` no VAULT. A palavra-passe de uso único é mostrada uma vez e nunca guardada: copie-a agora. Essa linha leva a mesma palavra-passe, já cifrada com bcrypt para ti: o texto em claro vai nas credenciais REST em TOWER, a linha cifrada no `.htpasswd` em VAULT. Não tens de cifrar nada.
 
     Deixe `--append-only` no campo OPTIONS. É esse o objetivo: sem ele, o VAULT volta a ser uma partilha comum.
 

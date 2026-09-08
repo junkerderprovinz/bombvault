@@ -88,7 +88,7 @@ BombVault는 백업이 단지 존재하는 것이 아니라 실제로 복원 가
 
 두 대: **TOWER** 는 컨테이너를 돌리며 백업을 보내고, **VAULT** 는 이를 받아 불변성을 강제합니다. 이름과 주소, 공유 경로는 각자의 것으로 바꾸세요.
 
-**1. VAULT 에 추가 전용 서버를 세웁니다.** TOWER 의 BombVault 에서 *설정 → 오프사이트 → 가이드 설정* 으로 가서 **rest-server** 를 고르고 레시피를 생성합니다. **Unraid 템플릿 (XML)** 탭을 복사해 VAULT 에 `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` 로 저장한 뒤, *Docker → Add Container* 에서 템플릿 목록의 **rest-server** 를 고릅니다. 시작하기 전에 표시된 `htpasswd` 줄을 VAULT 의 `/mnt/user/appdata/rest-server/.htpasswd` 에 적어 넣으세요. 일회용 비밀번호는 한 번만 표시되고 저장되지 않으니 지금 복사하세요.
+**1. VAULT 에 추가 전용 서버를 세웁니다.** TOWER 의 BombVault 에서 *설정 → 오프사이트 → 가이드 설정* 으로 가서 **rest-server** 를 고르고 레시피를 생성합니다. **Unraid 템플릿 (XML)** 탭을 복사해 VAULT 에 `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` 로 저장한 뒤, *Docker → Add Container* 에서 템플릿 목록의 **rest-server** 를 고릅니다. 시작하기 전에 표시된 `htpasswd` 줄을 VAULT 의 `/mnt/user/appdata/rest-server/.htpasswd` 에 적어 넣으세요. 일회용 비밀번호는 한 번만 표시되고 저장되지 않으니 지금 복사하세요. 그 줄에는 같은 비밀번호가 bcrypt로 해시되어 들어 있습니다. 평문은 TOWER의 REST 자격 증명에, 해시된 줄은 VAULT의 `.htpasswd`에 넣습니다. 직접 해시할 것은 없습니다.
 
     OPTIONS 항목의 `--append-only` 는 그대로 두세요. 이것이 핵심이며, 빼면 VAULT 는 다시 평범한 공유가 됩니다.
 

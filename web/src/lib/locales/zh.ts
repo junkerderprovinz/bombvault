@@ -928,6 +928,8 @@ const zh: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "此密码仅显示一次，BombVault 绝不会存储它。请立即保存，下方的凭据需要用到它，且无法恢复。",
   "offsite.wizard.tlsNote": "此方案使用纯 HTTP，在受信任的 LAN 或 VPN 上没有问题。如果存储主机可通过互联网访问，请将 rest-server 置于 HTTPS（一个 TLS 反向代理）之后，以免仓库凭据以明文传输。",
   "offsite.wizard.password": "生成的密码（请保存）",
+  "offsite.wizard.passwordInfo": "同一个密码，两种形式。上面的明文填进这个目标的 REST 密码，就在这台机器上。下面的配方里带着同一个密码的哈希形式，就是那行追加到 .htpasswd 的命令，那一行放到存储机器上。你不需要自己做哈希。",
+  "offsite.wizard.repoUrlInfo": "路径的第一段是用户名，不是文件夹：rest:http://box:8000/用户/仓库。生成的服务器只把各自的路径给对应用户，所以漏掉用户名时，即使密码正确也会返回 401。",
   "offsite.wizard.step3": "3 · 仓库 URL + 凭据",
   "offsite.wizard.repoUrl": "异地仓库 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

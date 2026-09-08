@@ -936,6 +936,8 @@ const fi: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Tämä salasana näytetään vain KERRAN, eikä BombVault tallenna sitä. Tallenna se nyt: tarvitset sitä alla oleviin tunnuksiin, eikä sitä voi palauttaa.",
   "offsite.wizard.tlsNote": "Tämä resepti käyttää tavallista HTTP:tä. Luotetussa LAN- tai VPN-verkossa se on ongelmatonta. Jos tallennuspalvelin on tavoitettavissa internetistä, sijoita rest-server HTTPS:n taakse (TLS-käänteisproxy), jottei repon tunnuksia lähetetä selväkielisenä.",
   "offsite.wizard.password": "Luotu salasana (tallenna tämä)",
+  "offsite.wizard.passwordInfo": "Yksi salaisuus kahdessa muodossa. Yllä oleva selkoteksti menee tämän kohteen REST-salasanaan, tässä koneessa. Alla olevat reseptit sisältävät saman salasanan jo tiivisteenä, rivillä joka lisää .htpasswd-tiedostoon, ja se rivi menee tallennuskoneelle. Sinun ei tarvitse tiivistää mitään itse.",
+  "offsite.wizard.repoUrlInfo": "Polun ensimmäinen osa on käyttäjä, ei kansio: rest:http://kone:8000/kayttaja/repositorio. Luotu palvelin antaa kullekin käyttäjälle vain oman polkunsa, joten puuttuva käyttäjä vastaa 401 oikeallakin salasanalla.",
   "offsite.wizard.step3": "3 · Repon URL + tunnukset",
   "offsite.wizard.repoUrl": "Etärepon URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

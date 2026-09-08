@@ -88,7 +88,7 @@ BombVault 提供两个层级的证明，证明您的备份确实可还原，而�
 
 两台机器：**TOWER** 运行容器并推送备份，**VAULT** 接收备份并强制不可变。请把名称、地址和共享路径换成你自己的。
 
-**1. 在 VAULT 上架设仅追加服务器。** 在 TOWER 的 BombVault 中进入 *设置 → 异地 → 引导式设置*，选择 **rest-server** 并生成配方。复制 **Unraid 模板 (XML)** 标签页，在 VAULT 上保存为 `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`，然后 *Docker → Add Container*，从模板下拉列表中选择 **rest-server**。启动之前，把显示的 `htpasswd` 行写入 VAULT 的 `/mnt/user/appdata/rest-server/.htpasswd`。一次性密码只显示一次且从不保存，请现在复制。
+**1. 在 VAULT 上架设仅追加服务器。** 在 TOWER 的 BombVault 中进入 *设置 → 异地 → 引导式设置*，选择 **rest-server** 并生成配方。复制 **Unraid 模板 (XML)** 标签页，在 VAULT 上保存为 `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`，然后 *Docker → Add Container*，从模板下拉列表中选择 **rest-server**。启动之前，把显示的 `htpasswd` 行写入 VAULT 的 `/mnt/user/appdata/rest-server/.htpasswd`。一次性密码只显示一次且从不保存，请现在复制。 那一行带着同一个密码，已经用 bcrypt 哈希过：明文填进 TOWER 的 REST 凭据，哈希过的那行放进 VAULT 的 `.htpasswd`。你不需要自己做哈希。
 
     请保留 OPTIONS 字段中的 `--append-only`。这正是关键所在：去掉它，VAULT 就又变回普通共享了。
 

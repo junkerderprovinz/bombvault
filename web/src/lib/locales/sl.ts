@@ -309,6 +309,8 @@ const sl: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "To geslo je prikazano SAMO ENKRAT in ga BombVault nikoli ne shrani. Shrani ga zdaj. Potrebuješ ga za spodnje poverilnice in ga ni mogoče obnoviti.",
   "offsite.wizard.tlsNote": "Ta recept uporablja navaden HTTP. V redu na zaupanja vrednem LAN-u ali VPN-ju. Če je shramba dosegljiva prek interneta, postavi rest-server za HTTPS (TLS obratni posrednik), da se poverilnica repozitorija ne pošilja nešifrirano.",
   "offsite.wizard.password": "Ustvarjeno geslo (shrani ga)",
+  "offsite.wizard.passwordInfo": "Ena skrivnost v dveh oblikah. Golo besedilo zgoraj sodi v geslo REST tega cilja, tukaj na tem stroju. Recepti spodaj nosijo isto geslo že razpršeno, v vrstici, ki dodaja v .htpasswd, in ta vrstica sodi na shranjevalni stroj. Sam ti ni treba ničesar razpršiti.",
+  "offsite.wizard.repoUrlInfo": "Prvi del poti je uporabnik, ne mapa: rest:http://stroj:8000/uporabnik/repozitorij. Ustvarjeni strežnik vsakemu uporabniku postreže samo njegovo pot, zato izpuščen uporabnik odgovori 401 tudi s pravilnim geslom.",
   "offsite.wizard.step3": "3 · URL repozitorija + poverilnice",
   "offsite.wizard.repoUrl": "URL zunanjega repozitorija",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

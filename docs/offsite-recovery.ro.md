@@ -88,7 +88,7 @@ Mai sus sunt descrise piesele. Aici este o configurație completă cu valori rea
 
 Două mașini: **TOWER** rulează containerele și trimite copiile, **VAULT** le primește și impune imutabilitatea. Înlocuiește cu propriile nume, adrese și căi de partajare.
 
-**1. Pe VAULT, ridică serverul append-only.** În BombVault pe TOWER mergi la *Setări → În afara sediului → configurare ghidată*, alege **rest-server** și generează rețeta. Copiază fila **Șablon Unraid (XML)**, salveaz-o pe VAULT ca `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, apoi *Docker → Add Container* și alege **rest-server** din lista de șabloane. Înainte de pornire, scrie linia `htpasswd` afișată în `/mnt/user/appdata/rest-server/.htpasswd` pe VAULT. Parola de unică folosință este afișată o singură dată și nu este niciodată păstrată: copiaz-o acum.
+**1. Pe VAULT, ridică serverul append-only.** În BombVault pe TOWER mergi la *Setări → În afara sediului → configurare ghidată*, alege **rest-server** și generează rețeta. Copiază fila **Șablon Unraid (XML)**, salveaz-o pe VAULT ca `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, apoi *Docker → Add Container* și alege **rest-server** din lista de șabloane. Înainte de pornire, scrie linia `htpasswd` afișată în `/mnt/user/appdata/rest-server/.htpasswd` pe VAULT. Parola de unică folosință este afișată o singură dată și nu este niciodată păstrată: copiaz-o acum. Acea linie poartă aceeași parolă, deja criptată cu bcrypt pentru tine: textul simplu merge în datele de acces REST pe TOWER, linia criptată în `.htpasswd` pe VAULT. Nu trebuie să criptezi nimic tu.
 
     Lasă `--append-only` în câmpul OPTIONS. Acesta este tot rostul: fără el, VAULT redevine o partajare obișnuită.
 

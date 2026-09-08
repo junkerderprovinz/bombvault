@@ -309,6 +309,8 @@ const hr: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Ova lozinka prikazuje se SAMO JEDNOM i BombVault je nikada ne sprema. Spremite je sada. Potrebna je za vjerodajnice u nastavku i ne može se oporaviti.",
   "offsite.wizard.tlsNote": "Ovaj recept koristi obični HTTP. U redu je unutar pouzdane LAN mreže ili VPN-a. Ako je pohranski uređaj dostupan preko interneta, postavite rest-server iza HTTPS-a (TLS obrnuti proxy) kako se vjerodajnica repozitorija ne bi slala nešifrirana.",
   "offsite.wizard.password": "Generirana lozinka (spremite je)",
+  "offsite.wizard.passwordInfo": "Jedna tajna u dva oblika. Otvoreni tekst iznad ide u REST lozinku ovog odredišta, ovdje na ovom stroju. Recepti ispod nose istu lozinku već raspršenu, u retku koji dodaje u .htpasswd, a taj redak ide na stroj za pohranu. Sam ne moraš ništa raspršivati.",
+  "offsite.wizard.repoUrlInfo": "Prvi dio putanje je korisnik, a ne mapa: rest:http://stroj:8000/korisnik/repozitorij. Generirani poslužitelj svakom korisniku daje samo njegovu putanju, pa izostavljeni korisnik odgovara 401 i s ispravnom lozinkom.",
   "offsite.wizard.step3": "3 · URL repozitorija + vjerodajnice",
   "offsite.wizard.repoUrl": "URL izvanmrežnog repozitorija",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

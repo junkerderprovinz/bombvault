@@ -309,6 +309,8 @@ const lt: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Šis slaptažodis rodomas TIK VIENĄ KARTĄ ir BombVault jo niekada neišsaugo. Išsaugokite jį dabar. Jo prireiks toliau pateiktiems prisijungimo duomenims ir jo negalima atkurti.",
   "offsite.wizard.tlsNote": "Šis receptas naudoja paprastą HTTP. Tinka patikimame vietiniame tinkle arba VPN. Jei saugyklos dėžė pasiekiama internetu, patalpinkite rest-server už HTTPS (atvirkštinis TLS tarpinis serveris), kad saugyklos prisijungimo duomenys nebūtų siunčiami atviru tekstu.",
   "offsite.wizard.password": "Sugeneruotas slaptažodis (išsaugokite jį)",
+  "offsite.wizard.passwordInfo": "Viena paslaptis dviem pavidalais. Atviras tekstas viršuje eina į šio tikslo REST slaptažodį, čia šioje mašinoje. Receptai žemiau neša tą patį slaptažodį jau maišytą, eilutėje, kuri prideda prie .htpasswd, ir ta eilutė eina į saugyklos mašiną. Pats nieko maišyti neturi.",
+  "offsite.wizard.repoUrlInfo": "Pirmoji kelio dalis yra naudotojas, o ne aplankas: rest:http://masina:8000/naudotojas/saugykla. Sugeneruotas serveris kiekvienam naudotojui duoda tik jo kelią, tad praleistas naudotojas atsako 401 net su teisingu slaptažodžiu.",
   "offsite.wizard.step3": "3 · Saugyklos URL + prisijungimo duomenys",
   "offsite.wizard.repoUrl": "Nuotolinės saugyklos URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

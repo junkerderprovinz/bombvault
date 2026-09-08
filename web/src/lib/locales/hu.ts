@@ -919,6 +919,8 @@ const hu: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Ez a jelszó csak EGYSZER jelenik meg, és a BombVault soha nem tárolja. Mentsd el most. Szükséged lesz rá az alábbi hitelesítő adatokhoz, és nem állítható helyre.",
   "offsite.wizard.tlsNote": "Ez a recept egyszerű HTTP-t használ. Megbízható LAN-on vagy VPN-en ez rendben van. Ha a tárolószerver elérhető az internetről, tedd a rest-servert HTTPS mögé (egy TLS fordított proxy), hogy a repository hitelesítő adatai ne titkosítatlanul menjenek át.",
   "offsite.wizard.password": "Generált jelszó (mentsd el)",
+  "offsite.wizard.passwordInfo": "Egy titok két alakban. A fenti nyílt szöveg ennek a célnak a REST-jelszavába kerül, itt ezen a gépen. Az alábbi receptek ugyanazt a jelszót már kivonatolva hordozzák, abban a sorban, amely a .htpasswd fájlhoz fűz, és az a sor a tárológépre kerül. Neked semmit sem kell kivonatolnod.",
+  "offsite.wizard.repoUrlInfo": "Az útvonal első része a felhasználó, nem mappa: rest:http://gep:8000/felhasznalo/tarolo. A létrehozott kiszolgáló minden felhasználónak csak a saját útvonalát adja, így a kihagyott felhasználó 401-et válaszol a helyes jelszóval is.",
   "offsite.wizard.step3": "3 · Repository URL + hitelesítő adatok",
   "offsite.wizard.repoUrl": "Telephelyen kívüli repository URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

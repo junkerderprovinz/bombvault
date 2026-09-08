@@ -907,6 +907,8 @@ const pl: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "To hasło jest pokazywane TYLKO RAZ i nigdy nie jest przechowywane przez BombVault. Zapisz je teraz. Jest potrzebne do poświadczeń poniżej i nie można go odzyskać.",
   "offsite.wizard.tlsNote": "Ten przepis używa zwykłego HTTP, w zaufanej sieci LAN lub VPN nie ma problemu. Jeśli serwer magazynu jest osiągalny przez internet, umieść rest-server za HTTPS (odwrotne proxy TLS), aby poświadczenia repozytorium nie były przesyłane otwartym tekstem.",
   "offsite.wizard.password": "Wygenerowane hasło (zapisz je)",
+  "offsite.wizard.passwordInfo": "Jeden sekret w dwóch postaciach. Jawny tekst powyżej trafia do hasła REST tego celu, tutaj na tej maszynie. Przepisy poniżej zawierają to samo hasło już zahaszowane, w linii dopisującej do .htpasswd, a ta linia trafia na maszynę magazynową. Sam nie musisz niczego haszować.",
+  "offsite.wizard.repoUrlInfo": "Pierwsza część ścieżki to użytkownik, nie katalog: rest:http://maszyna:8000/uzytkownik/repozytorium. Wygenerowany serwer udostępnia każdemu użytkownikowi tylko jego własną ścieżkę, więc pominięcie użytkownika odpowiada 401 nawet przy poprawnym haśle.",
   "offsite.wizard.step3": "3 · Adres URL repozytorium + poświadczenia",
   "offsite.wizard.repoUrl": "Adres URL repozytorium poza siedzibą",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

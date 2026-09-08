@@ -908,6 +908,8 @@ const ko: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "이 비밀번호는 단 한 번만 표시되며 BombVault에 저장되지 않습니다. 지금 저장하세요. 아래 자격 증명에 필요하며 복구할 수 없습니다.",
   "offsite.wizard.tlsNote": "이 방식은 일반 HTTP를 사용합니다. 신뢰할 수 있는 LAN이나 VPN에서는 문제없습니다. 스토리지 박스가 인터넷을 통해 접근 가능하다면, rest-server를 HTTPS(TLS 리버스 프록시) 뒤에 두어 리포지토리 자격 증명이 평문으로 전송되지 않도록 하세요.",
   "offsite.wizard.password": "생성된 비밀번호 (저장하세요)",
+  "offsite.wizard.passwordInfo": "비밀은 하나, 형태는 둘입니다. 위의 평문은 이 대상의 REST 비밀번호에 넣습니다. 아래 레시피에는 같은 비밀번호가 이미 해시된 형태로 들어 있으며, 그것이 .htpasswd에 덧붙이는 줄입니다. 그 줄은 저장소 쪽 기기에 넣습니다. 직접 해시할 것은 없습니다.",
+  "offsite.wizard.repoUrlInfo": "경로의 첫 부분은 폴더가 아니라 사용자입니다: rest:http://box:8000/사용자/저장소. 생성된 서버는 각 사용자에게 자기 경로만 제공하므로, 사용자를 빼면 비밀번호가 맞아도 401이 돌아옵니다.",
   "offsite.wizard.step3": "3 · 리포지토리 URL + 자격 증명",
   "offsite.wizard.repoUrl": "오프사이트 리포지토리 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

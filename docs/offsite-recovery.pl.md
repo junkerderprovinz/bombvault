@@ -88,7 +88,7 @@ Powyżej opisano części. To jest jedna kompletna konfiguracja z prawdziwymi wa
 
 Dwie maszyny: **TOWER** uruchamia kontenery i wysyła kopie, **VAULT** je przyjmuje i wymusza niezmienność. Podstaw własne nazwy, adresy i ścieżki udziałów.
 
-**1. Na VAULT postaw serwer append-only.** W BombVault na TOWER przejdź do *Ustawienia → Poza siedzibą → kreator*, wybierz **rest-server** i wygeneruj przepis. Skopiuj zakładkę **Szablon Unraid (XML)**, zapisz ją na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, następnie *Docker → Add Container* i wybierz **rest-server** z listy szablonów. Przed uruchomieniem wpisz pokazaną linię `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorazowe hasło pokazywane jest raz i nigdy nie jest zapisywane: skopiuj je teraz.
+**1. Na VAULT postaw serwer append-only.** W BombVault na TOWER przejdź do *Ustawienia → Poza siedzibą → kreator*, wybierz **rest-server** i wygeneruj przepis. Skopiuj zakładkę **Szablon Unraid (XML)**, zapisz ją na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, następnie *Docker → Add Container* i wybierz **rest-server** z listy szablonów. Przed uruchomieniem wpisz pokazaną linię `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorazowe hasło pokazywane jest raz i nigdy nie jest zapisywane: skopiuj je teraz. Ta linia niesie to samo hasło, już zahaszowane bcryptem: jawny tekst trafia do danych REST na TOWER, zahaszowana linia do `.htpasswd` na VAULT. Sam nie musisz niczego haszować.
 
     Zostaw `--append-only` w polu OPTIONS. O to właśnie chodzi: bez tego VAULT znów jest zwykłym udziałem.
 

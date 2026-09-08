@@ -88,7 +88,7 @@ BombVault מציעה שתי רמות הוכחה שהגיבויים שלך באמ
 
 שני מחשבים: **TOWER** מריץ את המכולות ושולח את הגיבויים, ו-**VAULT** מקבל אותם ואוכף את אי-השינוי. החלף בשמות, בכתובות ובנתיבי השיתוף שלך.
 
-**1. ב-VAULT הקם את שרת ההוספה-בלבד.** ב-BombVault על TOWER עבור אל *הגדרות ← מחוץ לאתר ← התקנה מודרכת*, בחר **rest-server** וצור את המתכון. העתק את הלשונית **תבנית Unraid (XML)**, שמור אותה ב-VAULT בשם `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, ואז *Docker ← Add Container* ובחר **rest-server** מרשימת התבניות. לפני ההפעלה כתוב את שורת ה-`htpasswd` המוצגת אל `/mnt/user/appdata/rest-server/.htpasswd` ב-VAULT. הסיסמה החד-פעמית מוצגת פעם אחת ואינה נשמרת לעולם, אז העתק אותה עכשיו.
+**1. ב-VAULT הקם את שרת ההוספה-בלבד.** ב-BombVault על TOWER עבור אל *הגדרות ← מחוץ לאתר ← התקנה מודרכת*, בחר **rest-server** וצור את המתכון. העתק את הלשונית **תבנית Unraid (XML)**, שמור אותה ב-VAULT בשם `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, ואז *Docker ← Add Container* ובחר **rest-server** מרשימת התבניות. לפני ההפעלה כתוב את שורת ה-`htpasswd` המוצגת אל `/mnt/user/appdata/rest-server/.htpasswd` ב-VAULT. הסיסמה החד-פעמית מוצגת פעם אחת ואינה נשמרת לעולם, אז העתק אותה עכשיו. השורה הזו נושאת את אותה סיסמה, כבר מגובבת ב-bcrypt עבורך: הטקסט הגלוי נכנס לפרטי ההזדהות של REST ב-TOWER, והשורה המגובבת נכנסת ל-`.htpasswd` ב-VAULT. אינך צריך לגבב דבר בעצמך.
 
     השאר את `--append-only` בשדה OPTIONS. זה כל העניין: בלעדיו VAULT חוזר להיות שיתוף רגיל.
 

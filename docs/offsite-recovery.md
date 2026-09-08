@@ -88,7 +88,7 @@ Everything above describes the parts. This is one complete setup with real value
 
 Two boxes: **TOWER** runs the containers and pushes backups; **VAULT** receives them and enforces immutability. Substitute your own names, addresses and share paths.
 
-**1. On VAULT, stand up the append-only server.** In BombVault on TOWER, go to *Settings → Off-site → guided setup*, pick **rest-server**, and generate the deploy recipe. Copy the **Unraid template (XML)** tab, save it on VAULT as `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, then *Docker → Add Container* and pick **rest-server** from the template dropdown. Before starting it, write the shown `htpasswd` line into `/mnt/user/appdata/rest-server/.htpasswd` on VAULT. The one-time password is displayed once and never stored, so copy it now.
+**1. On VAULT, stand up the append-only server.** In BombVault on TOWER, go to *Settings → Off-site → guided setup*, pick **rest-server**, and generate the deploy recipe. Copy the **Unraid template (XML)** tab, save it on VAULT as `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, then *Docker → Add Container* and pick **rest-server** from the template dropdown. Before starting it, write the shown `htpasswd` line into `/mnt/user/appdata/rest-server/.htpasswd` on VAULT. The one-time password is displayed once and never stored, so copy it now. That line carries the same password, bcrypt-hashed for you: the plaintext goes into TOWER's REST credentials, the hashed line goes into VAULT's `.htpasswd`. There is nothing for you to hash yourself.
 
     Leave `--append-only` in the OPTIONS field. It is the whole point: without it VAULT is an ordinary share again.
 

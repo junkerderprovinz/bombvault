@@ -309,6 +309,8 @@ const ca: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Aquesta contrasenya es mostra NOMÉS UN COP i BombVault mai la desa. Guarda-la ara. La necessitaràs per a les credencials de sota i no es pot recuperar.",
   "offsite.wizard.tlsNote": "Aquesta recepta fa servir HTTP simple, bé en una LAN o VPN de confiança. Si la caixa d'emmagatzematge és accessible per internet, posa el rest-server darrere de HTTPS (un proxy invers TLS) perquè la credencial del repositori no es transmeti en clar.",
   "offsite.wizard.password": "Contrasenya generada (guarda-la)",
+  "offsite.wizard.passwordInfo": "Un sol secret en dues formes. El text en clar de dalt va a la contrasenya REST d'aquesta destinació, aquí en aquesta màquina. Les receptes de sota porten la mateixa contrasenya ja xifrada, a la línia que afegeix a .htpasswd, i aquesta línia va a la màquina d'emmagatzematge. No has de xifrar res tu.",
+  "offsite.wizard.repoUrlInfo": "La primera part del camí és l'usuari, no una carpeta: rest:http://maquina:8000/usuari/repositori. El servidor generat serveix a cada usuari només el seu propi camí, així que ometre l'usuari respon 401 encara que la contrasenya sigui correcta.",
   "offsite.wizard.step3": "3 · URL del repositori + credencials",
   "offsite.wizard.repoUrl": "URL del repositori extern",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

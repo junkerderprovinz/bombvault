@@ -934,6 +934,8 @@ const cs: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Toto heslo se zobrazí POUZE JEDNOU a BombVault jej nikde neukládá. Uložte si jej teď. Budete jej potřebovat pro přihlašovací údaje níže a nelze jej obnovit.",
   "offsite.wizard.tlsNote": "Tento recept používá prosté HTTP. V důvěryhodné síti LAN nebo VPN bez problémů. Pokud je úložný server dostupný přes internet, umísti rest-server za HTTPS (reverzní proxy s TLS), aby se přihlašovací údaje repozitáře nepřenášely v otevřené podobě.",
   "offsite.wizard.password": "Vygenerované heslo (uložte si je)",
+  "offsite.wizard.passwordInfo": "Jedno tajemství ve dvou podobách. Otevřený text nahoře patří do REST hesla tohoto cíle, zde na tomto stroji. Recepty níže nesou stejné heslo už zahašované, v řádku, který přidává do .htpasswd, a ten řádek patří na úložný stroj. Sám nic hašovat nemusíš.",
+  "offsite.wizard.repoUrlInfo": "První část cesty je uživatel, ne složka: rest:http://stroj:8000/uzivatel/repozitar. Vygenerovaný server dává každému uživateli jen jeho vlastní cestu, takže vynechaný uživatel odpoví 401 i se správným heslem.",
   "offsite.wizard.step3": "3 · URL repozitáře + přihlašovací údaje",
   "offsite.wizard.repoUrl": "URL repozitáře mimo lokalitu",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

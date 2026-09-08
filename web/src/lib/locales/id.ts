@@ -309,6 +309,8 @@ const id: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Kata sandi ini hanya ditampilkan SEKALI dan tidak pernah disimpan oleh BombVault. Simpan sekarang. Anda membutuhkannya untuk kredensial di bawah dan tidak dapat dipulihkan.",
   "offsite.wizard.tlsNote": "Resep ini menggunakan HTTP biasa. Baik-baik saja di LAN atau VPN tepercaya. Jika storage box dapat dijangkau melalui internet, letakkan rest-server di belakang HTTPS (reverse proxy TLS) agar kredensial repositori tidak dikirim dalam bentuk teks biasa.",
   "offsite.wizard.password": "Kata sandi yang dihasilkan (simpan ini)",
+  "offsite.wizard.passwordInfo": "Satu rahasia dalam dua bentuk. Teks polos di atas masuk ke kata sandi REST tujuan ini, di mesin ini. Resep di bawah membawa kata sandi yang sama yang sudah di-hash, pada baris yang menambahkan ke .htpasswd, dan baris itu masuk ke mesin penyimpanan. Kamu tidak perlu meng-hash apa pun sendiri.",
+  "offsite.wizard.repoUrlInfo": "Bagian pertama jalur adalah pengguna, bukan folder: rest:http://mesin:8000/pengguna/repositori. Server yang dihasilkan hanya melayani jalur milik masing-masing pengguna, jadi pengguna yang dihilangkan menjawab 401 bahkan dengan kata sandi yang benar.",
   "offsite.wizard.step3": "3 · URL repositori + kredensial",
   "offsite.wizard.repoUrl": "URL repositori off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

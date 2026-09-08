@@ -912,6 +912,8 @@ const pt: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Esta palavra-passe é mostrada UMA VEZ e nunca é guardada pelo BombVault. Guarde-a agora. Precisa dela para as credenciais abaixo e não pode ser recuperada.",
   "offsite.wizard.tlsNote": "Esta receita usa HTTP simples, sem problema numa LAN de confiança ou VPN. Se a storage box estiver acessível pela internet, coloque o rest-server atrás de HTTPS (um proxy reverso TLS) para que as credenciais do repositório não sejam enviadas em texto simples.",
   "offsite.wizard.password": "Palavra-passe gerada (guarde-a)",
+  "offsite.wizard.passwordInfo": "Um segredo em duas formas. O texto em claro acima vai na palavra-passe REST deste destino, aqui nesta máquina. As receitas abaixo levam a mesma palavra-passe já cifrada, na linha que acrescenta ao .htpasswd, e essa linha vai na máquina de armazenamento. Não tens de cifrar nada.",
+  "offsite.wizard.repoUrlInfo": "A primeira parte do caminho é o utilizador, não uma pasta: rest:http://maquina:8000/utilizador/repositorio. O servidor gerado serve a cada utilizador apenas o seu próprio caminho, por isso omitir o utilizador responde 401 mesmo com a palavra-passe certa.",
   "offsite.wizard.step3": "3 · URL do repositório + credenciais",
   "offsite.wizard.repoUrl": "URL do repositório externo",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

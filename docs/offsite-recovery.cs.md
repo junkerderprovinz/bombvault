@@ -88,7 +88,7 @@ Výše jsou popsány jednotlivé díly. Tohle je jedno úplné nastavení se sku
 
 Dva stroje: **TOWER** provozuje kontejnery a posílá zálohy, **VAULT** je přijímá a vynucuje neměnnost. Dosaďte vlastní názvy, adresy a cesty ke sdílení.
 
-**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo pracoviště → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď.
+**1. Na VAULT postavte server v režimu append-only.** V BombVaultu na TOWER jděte do *Nastavení → Mimo pracoviště → průvodce*, zvolte **rest-server** a vygenerujte recept. Zkopírujte kartu **Šablona Unraid (XML)**, uložte ji na VAULT jako `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml`, pak *Docker → Add Container* a vyberte **rest-server** ze seznamu šablon. Před spuštěním zapište zobrazený řádek `htpasswd` na VAULT do `/mnt/user/appdata/rest-server/.htpasswd`. Jednorázové heslo se zobrazí jen jednou a nikdy se neukládá: zkopírujte si ho teď. Ten řádek nese stejné heslo, už zahašované bcryptem: otevřený text patří do REST přihlašovacích údajů na TOWER, zahašovaný řádek do `.htpasswd` na VAULT. Sám nic hašovat nemusíš.
 
     Nechte `--append-only` v poli OPTIONS. O to tu celou dobu jde: bez toho je VAULT zase obyčejné sdílení.
 

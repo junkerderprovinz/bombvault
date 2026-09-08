@@ -309,6 +309,8 @@ const eu: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Pasahitz hau BEHIN BAKARRIK erakusten da eta BombVaultek ez du inoiz gordetzen. Gorde orain. Beheko kredentzialetarako beharko duzu eta ezin da berreskuratu.",
   "offsite.wizard.tlsNote": "Errezeta honek HTTP soila erabiltzen du. Ondo dago fidagarria den LAN edo VPN batean. Biltegiratze-kutxa internetetik eskuragarri badago, jarri rest-server HTTPS baten atzean (TLS alderantzizko proxy bat) biltegiaren kredentziala testu argian ez bidaltzeko.",
   "offsite.wizard.password": "Sortutako pasahitza (gorde ezazu)",
+  "offsite.wizard.passwordInfo": "Sekretu bakarra bi formatan. Goiko testu argia helmuga honen REST pasahitzean doa, makina honetan bertan. Beheko errezetek pasahitz bera daramate jada hasita, .htpasswd fitxategiari eransten dion lerroan, eta lerro hori biltegiratze-makinan doa. Ez duzu ezer hashatu behar.",
+  "offsite.wizard.repoUrlInfo": "Bidearen lehen zatia erabiltzailea da, ez karpeta bat: rest:http://makina:8000/erabiltzailea/biltegia. Sortutako zerbitzariak erabiltzaile bakoitzari bere bidea baino ez dio ematen, beraz erabiltzailea falta bada 401 erantzuten du pasahitz zuzenarekin ere.",
   "offsite.wizard.step3": "3 · Biltegiaren URLa + kredentzialak",
   "offsite.wizard.repoUrl": "Kanpoko biltegiaren URLa",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

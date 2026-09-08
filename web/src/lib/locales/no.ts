@@ -912,6 +912,8 @@ const no: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Dette passordet vises bare ÉN gang og lagres aldri av BombVault. Lagre det nå. Du trenger det for legitimasjonen nedenfor, og det kan ikke gjenopprettes.",
   "offsite.wizard.tlsNote": "Denne oppskriften bruker vanlig HTTP, helt greit på et betrodd LAN eller VPN. Hvis lagringsboksen er tilgjengelig over internett, plasser rest-server bak HTTPS (en TLS-reverse-proxy), slik at repository-legitimasjonen ikke sendes i klartekst.",
   "offsite.wizard.password": "Generert passord (lagre dette)",
+  "offsite.wizard.passwordInfo": "Én hemmelighet i to former. Klarteksten over hører hjemme i REST-passordet til dette målet, her på denne maskinen. Oppskriftene under bærer det samme passordet allerede hashet, i linjen som legger til i .htpasswd, og den linjen hører hjemme på lagringsmaskinen. Du skal ikke hashe noe selv.",
+  "offsite.wizard.repoUrlInfo": "Den første delen av stien er brukeren, ikke en mappe: rest:http://maskin:8000/bruker/repository. Den genererte serveren gir hver bruker bare sin egen sti, så en manglende bruker svarer 401 selv med riktig passord.",
   "offsite.wizard.step3": "3 · Repository-URL + legitimasjon",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

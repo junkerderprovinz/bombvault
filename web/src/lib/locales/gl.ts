@@ -309,6 +309,8 @@ const gl: Partial<Translations> = {
   "offsite.wizard.passwordWarning": "Este contrasinal móstrase SÓ UNHA VEZ e BombVault nunca o garda. Gárdao agora: necesítalo para as credenciais de abaixo e non se pode recuperar.",
   "offsite.wizard.tlsNote": "Esta receita usa HTTP simple, ben nunha LAN ou VPN de confianza. Se a caixa de almacenamento é accesible por internet, pon o rest-server detrás de HTTPS (un proxy inverso TLS) para que a credencial do repositorio non se envíe en claro.",
   "offsite.wizard.password": "Contrasinal xerado (gárdao)",
+  "offsite.wizard.passwordInfo": "Un só segredo en dúas formas. O texto en claro de arriba vai no contrasinal REST deste destino, aquí nesta máquina. As receitas de abaixo levan o mesmo contrasinal xa cifrado, na liña que engade a .htpasswd, e esa liña vai na máquina de almacenamento. Non tes que cifrar nada ti.",
+  "offsite.wizard.repoUrlInfo": "A primeira parte do camiño é o usuario, non un cartafol: rest:http://maquina:8000/usuario/repositorio. O servidor xerado serve a cada usuario só o seu propio camiño, así que omitir o usuario responde 401 aínda co contrasinal correcto.",
   "offsite.wizard.step3": "3 · URL do repositorio + credenciais",
   "offsite.wizard.repoUrl": "URL do repositorio externo",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",

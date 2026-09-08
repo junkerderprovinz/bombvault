@@ -88,7 +88,7 @@ Receiver は厳密に読み取り専用です。受信したリポジトリに�
 
 2 台のマシン: **TOWER** がコンテナを動かしてバックアップを送り、**VAULT** がそれを受け取って不変性を強制します。名前・アドレス・共有パスはご自分のものに置き換えてください。
 
-**1. VAULT に追記専用サーバーを立てる。** TOWER の BombVault で *設定 → オフサイト → ガイド付きセットアップ* を開き、**rest-server** を選んでレシピを生成します。**Unraid テンプレート (XML)** タブをコピーし、VAULT に `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` として保存してから、*Docker → Add Container* でテンプレート一覧から **rest-server** を選びます。起動する前に、表示された `htpasswd` の行を VAULT の `/mnt/user/appdata/rest-server/.htpasswd` に書き込んでください。ワンタイムパスワードは一度しか表示されず保存もされないので、今のうちにコピーしてください。
+**1. VAULT に追記専用サーバーを立てる。** TOWER の BombVault で *設定 → オフサイト → ガイド付きセットアップ* を開き、**rest-server** を選んでレシピを生成します。**Unraid テンプレート (XML)** タブをコピーし、VAULT に `/boot/config/plugins/dockerMan/templates-user/my-rest-server.xml` として保存してから、*Docker → Add Container* でテンプレート一覧から **rest-server** を選びます。起動する前に、表示された `htpasswd` の行を VAULT の `/mnt/user/appdata/rest-server/.htpasswd` に書き込んでください。ワンタイムパスワードは一度しか表示されず保存もされないので、今のうちにコピーしてください。 その行には同じパスワードが bcrypt でハッシュ化された形で入っています。平文は TOWER の REST 認証情報へ、ハッシュ化された行は VAULT の `.htpasswd` へ。自分でハッシュ化する必要はありません。
 
     OPTIONS 欄の `--append-only` はそのままにしてください。これこそが要点で、外すと VAULT はただの共有に戻ります。
 
