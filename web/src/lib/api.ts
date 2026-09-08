@@ -2233,8 +2233,25 @@ export interface FileSetView {
   /** This set's per-item schedule override (#199); "" follows the Folders
    *  domain schedule. Only acted on while perItemSchedules is on. */
   scheduleCadence?: string;
+  /** What actually happens to this set, resolved on the server from the same
+   *  four settings the scheduler reads (#199). The interface only formats it,
+   *  so the sentence it shows cannot disagree with the job that runs. */
+  effectiveSchedule?: EffectiveSchedule;
   /** Whether the resolved source path currently exists on disk. */
   pathExists: boolean;
+}
+
+/** The resolved outcome for one folder set (schedule.EffectiveFileSetSchedule).
+ *  - "none":       nothing backs it up automatically
+ *  - "own":        its own per-item entry, on `spec`
+ *  - "domain":     the Folders schedule, on `spec`
+ *  - "everything": only the Backup Everything pass, on `spec`
+ *  - "both":       the Folders schedule AND Backup Everything, so twice a cycle
+ *                  (`spec` and `alsoSpec`) */
+export interface EffectiveSchedule {
+  kind: "none" | "own" | "domain" | "everything" | "both";
+  spec: string;
+  alsoSpec: string;
 }
 
 export interface ListFileSetsResponse {

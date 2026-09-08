@@ -31,6 +31,7 @@ import type { FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "..
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
+import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { DEFAULT_RESTORE_FOLDER } from "../components/RestorePanel";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
@@ -1161,6 +1162,13 @@ function FileSetRow({
           </p>
         </div>
       </div>
+
+      {/* #199: the consequence of the toggle right below, in words. This tab is
+          where a set is created and where the include switch is flipped, so it
+          is the second place a reader can walk away with the wrong belief about
+          whether the folder is protected. Same component, same server-computed
+          sentence as the Schedules card. */}
+      <EffectiveScheduleLine effective={set.effectiveSchedule} />
 
       {/* Actions row */}
       <div className="flex items-start justify-between gap-4 flex-wrap">

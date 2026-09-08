@@ -32,6 +32,7 @@ import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 // remaining consumer of the constant is ItemScheduleOverride.tsx.
 import { CadenceBuilder } from "../components/CadenceBuilder";
 import { PAGE_SHELL_TABBED } from "../lib/pageShell";
+import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
 import { ItemScheduleOverride } from "../components/ItemScheduleOverride";
 import { Toggle } from "../components/Toggle";
 import { Badge } from "../components/Badge";
@@ -642,6 +643,14 @@ function FilesSection({
                 />
               </label>
             </div>
+            {/* #199: the one line that says what actually happens to this set.
+                Rendered ALWAYS, not only under `perItem`, because the worst
+                outcome ("not backed up automatically") is reachable with the
+                per-item toggle off — that is what "Include in schedule" does
+                on its own, and it is exactly the state manilx put three of his
+                four folders into while believing Backup Everything still
+                covered them. */}
+            <EffectiveScheduleLine effective={s.effectiveSchedule} />
             {perItem && (
               <ItemScheduleOverride
                 name={s.name}

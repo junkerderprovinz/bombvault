@@ -8622,6 +8622,13 @@ type FileSetView struct {
 	// show the cadence without a second request, and only acted on while the
 	// per-item-schedules toggle is on.
 	ScheduleCadence string `json:"scheduleCadence"`
+	// EffectiveSchedule is what actually happens to this set: which schedule
+	// backs it up, whether two of them do, or whether none does. Computed here
+	// rather than in the interface so the sentence on the Folders card comes from
+	// the same rules the scheduler runs, not from a second copy that can drift
+	// (#199: three controls that all read like scheduling, and the combination
+	// that looks most sensible silently protects nothing).
+	EffectiveSchedule schedule.EffectiveSchedule `json:"effectiveSchedule"`
 }
 
 // ListFileSetViews returns all configured file sets with their last-backup
@@ -8631,15 +8638,22 @@ func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list file sets: %w", err)
 	}
+	// Read once for the whole list: the effective schedule depends on four
+	// settings fields, and asking per set would issue N identical reads.
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
 	views := make([]FileSetView, 0, len(sets))
 	for _, set := range sets {
 		v := FileSetView{
-			ID:              set.ID,
-			Name:            set.Name,
-			Path:            set.Path,
-			Excludes:        set.Excludes,
-			Enabled:         set.Enabled,
-			ScheduleCadence: set.ScheduleCadence,
+			ID:                set.ID,
+			Name:              set.Name,
+			Path:              set.Path,
+			Excludes:          set.Excludes,
+			Enabled:           set.Enabled,
+			ScheduleCadence:   set.ScheduleCadence,
+			EffectiveSchedule: schedule.EffectiveFileSetSchedule(set, settings),
 		}
 		if v.Excludes == nil {
 			v.Excludes = []string{}
