@@ -377,6 +377,21 @@ func TestBackupStdinArgsLimits(t *testing.T) {
 	}
 }
 
+// TestBackupArgsSameBasenamePositionals pins the multi-source case where two
+// positional sources share their basename leaf (/a/end and /b/end): both are
+// passed through after -- verbatim and in order — no dedupe, no rewrite —
+// because restic records snapshot Paths from the positionals as given
+// (absolute-path preservation is contract-proven against the real binary in
+// restic_positionals_contract_test.go). RESTORE-01's longest-prefix mapping
+// against snapshot Paths relies on those two sources staying distinct.
+func TestBackupArgsSameBasenamePositionals(t *testing.T) {
+	got := BackupArgs("/repo", []string{"/a/end", "/b/end"}, []string{"container:plex"}, Mode{Encrypted: true})
+	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "container:plex", "--", "/a/end", "/b/end"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
 func TestDumpZipArgsEncrypted(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}
