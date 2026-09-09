@@ -1,0 +1,91 @@
+# Requirements: BombVault — Tree-Based Sub-Folder Backup Selection
+
+**Defined:** 2026-09-09
+**Core Value:** Every container, VM, and config on the host can be backed up consistently and restored completely — a dead server is rebuilt from the restic repo alone.
+
+## v1 Requirements
+
+Requirements for initial release. Each maps to roadmap phases.
+
+### Tree Component & Selection Semantics
+
+- [ ] **TREE-01**: Collapsible lazy-loading tree per mount/root — children load on expand; no eager full-tree loads (appdata trees can hold thousands of entries)
+- [ ] **TREE-02**: Checkbox at every level; checking a folder includes everything below it; unchecking a child carves it out as an exclusion (Veeam/Duplicati cascade model)
+- [ ] **TREE-03**: Partially-selected parents display a mixed/indeterminate state (`aria-checked="mixed"`, derived from children); re-activating a remembered-partial checkbox restores its prior partial state
+- [ ] **TREE-04**: On reopen, selection state is reconstructed from the saved `backupPaths` set — fully-included, partially-included, and excluded sub-branches are all distinguishable
+- [ ] **TREE-05**: Full keyboard navigation + ARIA tree/checkbox roles (APG patterns: arrow expand/collapse/move, Space toggle, `aria-expanded` on parents, `aria-level`/`setsize`/`posinset` for lazy nodes)
+- [ ] **TREE-06**: Unreadable vs empty directories are distinguished per node — muted "no access" row vs plain empty; no infinite spinners, no silent collapses
+
+### Browse Backend
+
+- [ ] **BROWSE-01**: Listing children of a tree node is cheap and per-node (child list + `hasChildren` hint via emptiness probe), suitable for lazy expansion of huge appdata trees
+- [ ] **BROWSE-02**: Listing responses distinguish "empty directory" from "error reading directory", with scrubbed messages (paths → `[path]` first)
+- [ ] **BROWSE-03**: Listing is containment-safe — lexical/symlink-safe (`os.Root`) and never lists outside the discovered/custom root boundary; the tree must not become an arbitrary filesystem probe
+- [ ] **BROWSE-04**: Hidden-entry visibility is consistent between the tree and the existing folder browser, so both views agree on what they list
+
+### Selection ↔ Persistence
+
+- [ ] **SELECT-01**: Tree state normalizes to/from the existing flat `backupPaths` set — store maximal included paths (highest ticked node) + exclusion sub-paths below included roots; drop redundant descendants
+- [ ] **SELECT-02**: Persistence format unchanged — zero migration; existing deployments keep their saved `backupPaths` selections working without action
+- [ ] **SELECT-03**: Effective-selection preview — the panel shows what will actually be backed up per mount ("N paths"), matching exactly the positional paths handed to restic (explicit sources bypass excludes, so the effective set must equal the ticked paths)
+- [ ] **SELECT-04**: Whitelist start-state — starting from nothing checked and ticking keep-lists works through the same normalization (no special-casing)
+
+### Domain Integration
+
+- [ ] **INTEG-01**: Container panel — unfold any discovered mount or custom path and select subfolders (Plex `transcoding`, caches, logs) without dropping the rest of the mount
+- [ ] **INTEG-02**: File Sets page — the same tree component is used when choosing what a file set covers
+- [ ] **INTEG-03**: Exclusions are reviewable after the fact — deselected sub-branches render as a visible list near the mount, consistent with existing preview styling
+- [ ] **INTEG-04**: Fully deselecting a mount's tree has defined, UI-documented semantics that never silently re-trigger the empty-list auto-detection fallback (`configuredBackupPaths` treats an empty list as "no explicit selection")
+
+### Restic Engine
+
+- [ ] **RESTIC-01**: Per-mount/root `CACHEDIR.TAG` toggle maps to restic `--exclude-caches` in `BackupArgs` (argv change covered by `restic_args_test.go`)
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Tree Enhancements
+
+- **TREE-07**: Search/filter within large trees (trigger: users report navigation pain on big mounts)
+- **TREE-08**: Restore-side tree reusing the component over snapshot listings (different data source: snapshot `ls` vs live FS; keep component state model portable)
+
+### Selection Enhancements
+
+- **SELECT-05**: Per-folder size hints — on-demand "measure this folder" with cached results (background job + SQLite cache); never eager on expand
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Sub-folder selection for VMs | A zvol is block storage; folder granularity has no meaning there (PROJECT.md) |
+| Replacing the restic ExcludesEditor | Patterns answer "which files/globs"; the tree answers "which folders" — complementary, not redundant (PROJECT.md) |
+| Changing the `backupPaths` persistence format | Existing deployments must keep working without migration (PROJECT.md) |
+| Auto-detection of junk folders / silent auto-exclusion | Silent non-backup is the cardinal sin of backup tools — users discover missing restores at disaster time; confirm-first suggestions may be a later effort (PROJECT.md) |
+| Junk suggestion chips | Candidate for a later effort once v1 selection UX proves the pattern (PROJECT.md) |
+| File-type/extension masks inside the tree | Different question (which files vs which folders); mixing them creates precedence confusion — masks stay in ExcludesEditor |
+| Eager size computation on tree expand | Stalls the panel and hammers the disk on multi-GB appdata; only on-demand measurement survives (SELECT-05) |
+| Nested-tree JSON persistence in SQLite | Mirrors the UI but violates the locked flat-set decision; two persistence models drift |
+| Per-subfolder retention or schedules | Fragments restic snapshot identity; retention is per-item tag and must never regroup (#91, live `tag` discipline) |
+| Arbitrary-path browsing from the tree | Defeats boundary validation and error-scrubbing discipline; expands `/api/browse` attack surface — custom paths remain an explicit add |
+| Per-subfolder "last backed up" indicators | Snapshots aren't cheaply path-indexed; a folder "backed up" at snapshot time may have been excluded — misleading |
+| Compose project dir sub-folder selection beyond per-stack backup | Covered by issue #189's per-stack design (PROJECT.md) |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| (populated during roadmap creation) | — | — |
+
+**Coverage:**
+- v1 requirements: 19 total
+- Mapped to phases: 0
+- Unmapped: 19 ⚠️ *(expected pre-roadmap)*
+
+---
+*Requirements defined: 2026-09-09*
+*Last updated: 2026-09-09 after initial definition*
