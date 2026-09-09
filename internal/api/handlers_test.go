@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -2396,4 +2397,157 @@ func TestMountsExcluded(t *testing.T) {
 	if cps := customPaths(m); len(cps) != 0 {
 		t.Fatalf("include-only save must fabricate no custom paths, got %v", cps)
 	}
+}
+
+// TestEmptySelectionGuard pins the PATCH boundary's empty-selection guard
+// (the write side of INTEG-04): a tree-sourced save that normalizes to NOTHING
+// is refused with a machine-routable code when a non-empty selection is stored
+// to protect — a bare [] silently re-enables automatic appdata detection, the
+// exact surprise deselect-all must never produce (threat T-01-13). Strictly
+// source-gated per RESEARCH Open Question 2: legacy clients (no
+// selectionSource) and unknown source values keep today's clears-to-auto
+// behavior byte-for-byte, an exclusions-only save IS the explicitly-deselected
+// state and passes (D-03), and a fresh container has nothing to protect.
+func TestEmptySelectionGuard(t *testing.T) {
+	// harness builds a router whose HostSourceRoot=/mnt sits on a temp
+	// HostMountRoot (split-root translation), mirroring
+	// TestServiceContainerMountsAndSelection.
+	harness := func(t *testing.T) (http.Handler, *store.Repo, string) {
+		t.Helper()
+		dir := t.TempDir()
+		root := filepath.ToSlash(dir)
+		cfg := config.Config{
+			AppKey: strings.Repeat("a", 64), DataDir: dir,
+			HostMountRoot: root, HostSourceRoot: "/mnt",
+		}
+		st := newMemStore(t)
+		mustSettings(t, st)
+		d := &fakeServiceDocker{}
+		svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+		sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+		h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+		return h, st, root
+	}
+	patch := func(t *testing.T, h http.Handler, name string, body map[string]any) map[string]any {
+		t.Helper()
+		b, err := json.Marshal(body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/"+name, string(b))
+		return m
+	}
+	// preSave stores a non-empty explicit selection and asserts it landed.
+	preSave := func(t *testing.T, h http.Handler, st *store.Repo, root string) {
+		t.Helper()
+		if m := patch(t, h, "plex", map[string]any{"backupPaths": []string{"/mnt/user/appdata/plex"}}); m["ok"] != true {
+			t.Fatalf("prior save must succeed: %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := []string{root + "/user/appdata/plex"}; !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("prior selection = %v, want %v", tg.SelectedPaths, want)
+		}
+	}
+
+	t.Run("tree-source empty list over a non-empty selection is refused", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		m := patch(t, h, "plex", map[string]any{"backupPaths": []string{}, "selectionSource": "tree"})
+		if m["ok"] != false {
+			t.Fatalf("tree-source deselect-everything must be refused, got %v", m)
+		}
+		if m["code"] != "empty-selection" {
+			t.Fatalf("code = %v, want empty-selection (machine-routable)", m["code"])
+		}
+		if errMsg, _ := m["error"].(string); errMsg == "" {
+			t.Fatalf("refusal must carry a scrubbed error message, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := []string{root + "/user/appdata/plex"}; !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("stored selection must be untouched after a refusal, got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("legacy empty list still clears to auto-detection", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// No selectionSource field at all — the legacy client shape.
+		m := patch(t, h, "plex", map[string]any{"backupPaths": []string{}})
+		if m["ok"] != true {
+			t.Fatalf("legacy empty list must clear byte-for-byte as today, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("legacy empty list must persist [] (auto-detect), got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("exclusions-only tree save is accepted", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// An exclusions-only result is non-empty: it IS the explicitly
+		// deselected state (D-03), never refused — even from the tree source.
+		m := patch(t, h, "plex", map[string]any{
+			"backupPaths":     []string{"!/mnt/user/appdata/plex/transcoding"},
+			"selectionSource": "tree",
+		})
+		if m["ok"] != true {
+			t.Fatalf("exclusions-only save must succeed, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"!" + root + "/user/appdata/plex/transcoding"}
+		if !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("stored selection = %v, want %v", tg.SelectedPaths, want)
+		}
+	})
+
+	t.Run("unknown selectionSource is ignored", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// Only the literal "tree" carries meaning; any other value is treated
+		// as absent, so no source value can fail a save (T-01-14).
+		m := patch(t, h, "plex", map[string]any{
+			"backupPaths":     []string{},
+			"selectionSource": "future-client-value",
+		})
+		if m["ok"] != true {
+			t.Fatalf("unknown source must behave exactly as absent, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("unknown-source empty list must clear to auto-detect, got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("fresh container has nothing to protect", func(t *testing.T) {
+		h, st, _ := harness(t)
+		// No prior selection exists: a tree-source empty list is a no-op save,
+		// not a destructive deselect, so it must succeed.
+		m := patch(t, h, "fresh", map[string]any{"backupPaths": []string{}, "selectionSource": "tree"})
+		if m["ok"] != true {
+			t.Fatalf("fresh container tree-source empty list must succeed, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("fresh")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("stored selection = %v, want empty", tg.SelectedPaths)
+		}
+	})
 }
