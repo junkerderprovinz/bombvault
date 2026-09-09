@@ -37,6 +37,12 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **INTEG-03**: Exclusions are reviewable after the fact — deselected sub-branches render as a visible list near the mount, consistent with existing preview styling
 - [ ] **INTEG-04**: Fully deselecting a mount's tree has defined, UI-documented semantics that never silently re-trigger the empty-list auto-detection fallback (`configuredBackupPaths` treats an empty list as "no explicit selection")
 
+### Restore Robustness
+
+<!-- Added during roadmap creation (2026-09-09) from research/PITFALLS: the tree makes selection churn first-class, and today a changed path list aborts a restore mid-flight after destructive teardown. Restore hardening must precede tree-wide availability. -->
+
+- [ ] **RESTORE-01**: Restore survives selection changes — restoring a chosen snapshot intersects the stored path list with that snapshot's recorded `Paths` (longest-prefix mapping, never first-path-component), so narrowing or reshaping a selection never aborts a restore mid-flight after destructive teardown
+
 ### Restic Engine
 
 - [ ] **RESTIC-01**: Per-mount/root `CACHEDIR.TAG` toggle maps to restic `--exclude-caches` in `BackupArgs` (argv change covered by `restic_args_test.go`)
@@ -79,13 +85,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated during roadmap creation) | — | — |
+| BROWSE-01 | Phase 1 | Pending |
+| BROWSE-02 | Phase 1 | Pending |
+| BROWSE-03 | Phase 1 | Pending |
+| BROWSE-04 | Phase 1 | Pending |
+| SELECT-01 | Phase 1 | Pending |
+| SELECT-02 | Phase 1 | Pending |
+| SELECT-04 | Phase 1 | Pending |
+| RESTORE-01 | Phase 1 | Pending |
+| TREE-01 | Phase 2 | Pending |
+| TREE-02 | Phase 2 | Pending |
+| TREE-03 | Phase 2 | Pending |
+| TREE-04 | Phase 2 | Pending |
+| TREE-05 | Phase 2 | Pending |
+| TREE-06 | Phase 2 | Pending |
+| INTEG-01 | Phase 2 | Pending |
+| SELECT-03 | Phase 3 | Pending |
+| INTEG-03 | Phase 3 | Pending |
+| INTEG-04 | Phase 3 | Pending |
+| RESTIC-01 | Phase 3 | Pending |
+| INTEG-02 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19 ⚠️ *(expected pre-roadmap)*
+- v1 requirements: 20 total (19 original + RESTORE-01 added during roadmap creation)
+- Mapped to phases: 20
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-09*
-*Last updated: 2026-09-09 after initial definition*
+*Last updated: 2026-09-09 — roadmap created; RESTORE-01 added from research; traceability populated*
