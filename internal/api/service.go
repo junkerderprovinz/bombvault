@@ -3766,8 +3766,11 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 // SetBackupPaths stores the user's explicit backup-folder selection for a
 // container. The input paths are HOST paths (what the UI shows); each is
 // translated to its container path and must be reachable under the host mount,
-// otherwise the whole update is rejected. An empty list clears the selection so
-// backups fall back to automatic appdata detection.
+// otherwise the whole update is rejected. An entry prefixed with "!" (the tree
+// selector's excluded branch — semantics owned by internal/api/selection.go)
+// is translated and contained on its BARE path, then stored prefixed. An empty
+// list clears the selection so backups fall back to automatic appdata
+// detection.
 func (s *Service) SetBackupPaths(_ context.Context, name string, hostPaths []string) error {
 	var cps []string
 	seen := map[string]bool{}
@@ -3776,19 +3779,39 @@ func (s *Service) SetBackupPaths(_ context.Context, name string, hostPaths []str
 		if hp == "" {
 			continue
 		}
+		// The exclusion prefix is parsed BEFORE translation: toContainerPath
+		// does a strict TrimPrefix against the host source root, so a raw
+		// "!/mnt/..." fails it and the WHOLE save would be rejected. Split,
+		// translate the bare path, re-attach (01-RESEARCH.md Pitfall 1;
+		// 01-CONTEXT.md encoding Q1).
+		bare, excluded := SplitExclusion(hp)
+		if bare == "" && excluded {
+			return fmt.Errorf("empty excluded path %q", hp)
+		}
 		// toContainerPath path.Cleans the input first (resolving any ".."), then
 		// requires the host-source-root prefix, so its result is guaranteed to sit
-		// under the mount root — no separate containment check needed.
-		cp, ok := s.toContainerPath(hp)
+		// under the mount root — no separate containment check needed. Both
+		// classes get the identical check on their bare path, so no unvalidated
+		// string ever reaches the store (threat T-01-01).
+		cp, ok := s.toContainerPath(bare)
 		if !ok {
 			return fmt.Errorf("path %q is not under the host mount and can't be backed up", hp)
+		}
+		if excluded {
+			cp = ExclusionPrefix + cp
 		}
 		if !seen[cp] {
 			cps = append(cps, cp)
 			seen[cp] = true
 		}
 	}
-	return s.store.SetBackupPaths(name, cps)
+	// Normalize before persisting: per-class maximal-root pruning + canonical
+	// order, so equal selections store byte-identical sets regardless of the
+	// order the client sent (01-CONTEXT.md encoding Q3/Q4). This is NOT stale-path
+	// repair — dropping entries whose folder vanished stays the engine's job at
+	// run time (onlyExistingPaths); normalization only removes REDUNDANT entries
+	// and canonically orders what the user actually chose.
+	return s.store.SetBackupPaths(name, NormalizeSelection(cps))
 }
 
 // sliceSet builds a set from a string slice.
