@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Selection Engine & Restore Safety
 status: verifying
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-09-09T18:28:54.390Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-09-09T18:52:29.172Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 01 execution started
-state_head: 0cf3dfcf5e9c30bcda3588aa5f5ce7012f3ae9ba
+state_head: 5e6b833a7a3434c913cb575b4c066922c5c7e2d0
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01-01 | 37min | 2 tasks | 6 files |
 | Phase 01 P01-02 | 19 min | 2 tasks | 3 files |
 | Phase 01 P01-03 | 61min | 3 tasks | 12 files |
+| Phase 01 P01-04 | 17min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,7 @@ Recent decisions affecting current work:
 - [Phase 01]: Restore selectors map onto the chosen snapshot's Paths (two-pass longest-prefix); empty intersection aborts in prepare before teardown; per-path skips become scrubbed success-run notes via RestoreDeps.SkippedPaths (nil/empty byte-identical, pinned)
 - [Phase 01]: Fixtures predating RESTORE-01 now seed snapshot Paths — fake-engine container snapshots must model the positional truth the mapping reads
 - [Phase 01]: restic 0.17 positional behaviors (excludes keep positionals; absolute Paths preserved) pinned as contract tests that skip locally and prove on CI
+- [Phase 01]: Empty-selection guard is strictly source-gated on the literal selectionSource:"tree" - refusal (errEmptySelection -> code:"empty-selection" envelope) fires before any store write; legacy and unknown sources keep byte-compat clears — RESEARCH Open Question 2 resolved: no payload sniffing (CONTEXT INTEG-04 Q1); a refused deselect leaves prior state structurally untouched, not best-effort
 
 ### Pending Todos
 
@@ -105,6 +107,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T18:28:54.355Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-09-09T18:52:15.816Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
