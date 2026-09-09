@@ -18,10 +18,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Browse Backend
 
-- [ ] **BROWSE-01**: Listing children of a tree node is cheap and per-node (child list + `hasChildren` hint via emptiness probe), suitable for lazy expansion of huge appdata trees
-- [ ] **BROWSE-02**: Listing responses distinguish "empty directory" from "error reading directory", with scrubbed messages (paths → `[path]` first)
-- [ ] **BROWSE-03**: Listing is containment-safe — lexical/symlink-safe (`os.Root`) and never lists outside the discovered/custom root boundary; the tree must not become an arbitrary filesystem probe
-- [ ] **BROWSE-04**: Hidden-entry visibility is consistent between the tree and the existing folder browser, so both views agree on what they list
+- [x] **BROWSE-01**: Listing children of a tree node is cheap and per-node (child list + `hasChildren` hint via emptiness probe), suitable for lazy expansion of huge appdata trees
+- [x] **BROWSE-02**: Listing responses distinguish "empty directory" from "error reading directory", with scrubbed messages (paths → `[path]` first)
+- [x] **BROWSE-03**: Listing is containment-safe — lexical/symlink-safe (`os.Root`) and never lists outside the discovered/custom root boundary; the tree must not become an arbitrary filesystem probe
+- [x] **BROWSE-04**: Hidden-entry visibility is consistent between the tree and the existing folder browser, so both views agree on what they list
 
 ### Selection ↔ Persistence
 
@@ -86,10 +86,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BROWSE-01 | Phase 1 | Pending |
-| BROWSE-02 | Phase 1 | Pending |
-| BROWSE-03 | Phase 1 | Pending |
-| BROWSE-04 | Phase 1 | Pending |
+| BROWSE-01 | Phase 1 | Complete |
+| BROWSE-02 | Phase 1 | Complete |
+| BROWSE-03 | Phase 1 | Complete |
+| BROWSE-04 | Phase 1 | Complete |
 | SELECT-01 | Phase 1 | Complete |
 | SELECT-02 | Phase 1 | Complete |
 | SELECT-04 | Phase 1 | Complete |

@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Selection Engine & Restore Safety
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-09-09T16:29:13.885Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-09-09T16:57:05.667Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 01 execution started
-state_head: 4bea7f3c06431cc591c2f7e0bf3b1b36241843ae
+state_head: bf28fe57a92c198700ccba40740d97b615f7e924
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 01 (Selection Engine & Restore Safety) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-09-09 — Phase 01 execution started
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01-01 | 37min | 2 tasks | 6 files |
+| Phase 01 P01-02 | 19 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,10 @@ Recent decisions affecting current work:
 - [Phase 01]: Exclusions never become restic positionals and never derive --exclude flags (locked L1/L14): NormalizeSelection preserves them as a distinct class and readers split via SplitExclusion
 - [Phase 01]: configuredBackupPaths tests explicit-vs-auto on the RAW stored list but returns includes-only, so an exclusions-only selection stays an explicit choice while downstream consumers get a clean positional list
 - [Phase 01]: storedDataIsGone classifies explicit-none (non-empty raw, zero includes) as NOT gone, checked before any stat - a deliberate deselect is never refused as "not reachable" (threat T-01-03)
+- [Phase 01]: Phase 01 plan 02: handleBrowse containment is two-layered - byte-identical paths.Resolve first reject (no status field on that branch) + os.Root kernel-enforced containment behind it; every other read outcome lands in the HTTP 200 envelope carrying a status kind — Phase 01 plan 02: handleBrowse containment is two-layered - byte-identical paths.Resolve first reject (no status field on that branch) + os.Root kernel-enforced containment behind it; every other read outcome lands in the HTTP 200 envelope carrying a status kind
+- [Phase 01]: Phase 01 plan 02: browse status carries the error KIND only (restricted/missing/error via errors.Is on *fs.PathError); an os.Root escape rejection deliberately lands in the opaque error bucket so an escape attempt never announces itself on the wire — Phase 01 plan 02: browse status carries the error KIND only (restricted/missing/error via errors.Is on *fs.PathError); an os.Root escape rejection deliberately lands in the opaque error bucket so an escape attempt never announces itself on the wire
+- [Phase 01]: Phase 01 plan 02: listing contract = cap 500 + truncated flag with sort-then-truncate on the filtered slice (deterministic lexically-first page); hidden visibility is a literal hidden=1 opt-in with byte-identical default (flag filters, never reorders or fabricates) — Phase 01 plan 02: listing contract = cap 500 + truncated flag with sort-then-truncate on the filtered slice (deterministic lexically-first page); hidden visibility is a literal hidden=1 opt-in with byte-identical default (flag filters, never reorders or fabricates)
+- [Phase 01]: Phase 01 plan 02: white-box tables for unexported helpers live in *_internal_test.go (package api) beside the router-harness contract tests in package api_test - Go cannot mix packages per file (browse_contract_internal_test.go precedent) — Phase 01 plan 02: white-box tables for unexported helpers live in *_internal_test.go (package api) beside the router-harness contract tests in package api_test - Go cannot mix packages per file (browse_contract_internal_test.go precedent)
 
 ### Pending Todos
 
@@ -96,6 +101,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T16:28:44.491Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-09-09T16:57:05.652Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
