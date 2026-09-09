@@ -469,16 +469,18 @@ if len(tg.AppdataPaths) > 0 && len(mapped) == 0 {
 | A4 | `snapshot.Paths` entries are verbatim positionals for both same-shape and legacy snapshots (restic doc-verified; 0.17-specific confirmation delegated to the L12 contract tests on CI) | R5, R7 | If 0.17 deviated, mapping tests on CI catch it before any release; mapping itself is data-driven so no code change |
 | A5 | `Run` record can carry a bounded skip note via the existing `Runs.Finish` error-text parameter (truncateErr-bounded) without schema change | R5 | If the planner prefers log-only skip reporting (CONTEXT Q2's minimum), the deps field shrinks to logging — behavior-safe either way |
 
-## Open Questions
+## Open Questions (RESOLVED — both adopted verbatim by the phase plans)
 
 1. **Where exactly should `SkippedPaths` surface in the run record?**
    - What we know: CONTEXT Q2 requires "skips signalés dans le résultat du restore"; the run row is written by the orchestrator (`Runs.Start/Finish`), the skips are known in the service.
    - What's unclear: run-error-field note (A5) vs a dedicated display channel later.
    - Recommendation: pass `SkippedPaths` through `RestoreDeps` and append a bounded scrubbed summary to the success run's note text; refine display in Phase 3.
+   - **RESOLVED:** adopted as recommended — plan 01-03 Task 2 ("Skip reporting through the orchestrator"): additive `RestoreDeps.SkippedPaths` field + bounded scrubbed skip note on the success run record (byte-identity pin when the field is empty); display refinement stays Phase 3.
 
 2. **Should the empty-selection guard also fire when `selectionSource` is absent but the save comes from a tree-shaped payload?**
    - What we know: CONTEXT Q1 locks the guard to tree-source saves only; legacy clients must keep today's `[]`-clears behavior byte-for-byte.
    - Recommendation: strictly source-gated, as locked. No heuristic sniffing.
+   - **RESOLVED:** adopted as recommended — plan 01-04 Task 2 ("PATCH empty-selection guard"): the guard fires only when `selectionSource == "tree"`; legacy and unknown sources keep today's clears-to-auto-detect behavior byte-for-byte, asserted in `TestEmptySelectionGuard`.
 
 ## Environment Availability
 
