@@ -2267,3 +2267,133 @@ func TestReleaseNotesHandler(t *testing.T) {
 		t.Fatalf("default-to-running-version result = %v", m)
 	}
 }
+
+// TestMountsExcluded pins the mounts endpoint's exclusions contract (the read
+// side of INTEG-04): stored "!-prefixed entries render in a top-level excluded
+// array in HOST form and never leak into custom as stale Exists:false phantom
+// paths (01-RESEARCH.md Pitfall 3 — the interim window recorded by plan 01-01),
+// MountInfo.Selected keeps its include-only semantics, and an include-only
+// save's response is unchanged apart from the additive empty (never null)
+// excluded field.
+func TestMountsExcluded(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	hostPlex := "/mnt/user/appdata/plex"
+	patch := func(paths []string) map[string]any {
+		t.Helper()
+		b, err := json.Marshal(map[string]any{"backupPaths": paths})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", string(b))
+		return m
+	}
+	getMounts := func() map[string]any {
+		t.Helper()
+		_, m := doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+		if m["ok"] != true {
+			t.Fatalf("mounts list must succeed, got %v", m)
+		}
+		return m
+	}
+	mountByDest := func(m map[string]any, dest string) map[string]any {
+		t.Helper()
+		ms, _ := m["mounts"].([]any)
+		for _, e := range ms {
+			if mm, ok := e.(map[string]any); ok && mm["dest"] == dest {
+				return mm
+			}
+		}
+		t.Fatalf("no mount with dest %q in %+v", dest, m)
+		return nil
+	}
+	customPaths := func(m map[string]any) []string {
+		t.Helper()
+		cs, _ := m["custom"].([]any)
+		out := make([]string, 0, len(cs))
+		for _, e := range cs {
+			if cm, ok := e.(map[string]any); ok {
+				out = append(out, fmt.Sprint(cm["path"]))
+			}
+		}
+		return out
+	}
+
+	// Mixed save: the root is a selected mount, the branch is a first-class
+	// excluded entry (host form), and neither shows up as a custom path.
+	if m := patch([]string{hostPlex, "!" + hostPlex + "/transcoding"}); m["ok"] != true {
+		t.Fatalf("mixed save must succeed: %v", m)
+	}
+	m := getMounts()
+	if got := mountByDest(m, "/config")["selected"]; got != true {
+		t.Fatalf("included root must select its mount, got %v", got)
+	}
+	excluded, ok := m["excluded"].([]any)
+	if !ok {
+		t.Fatalf("excluded must be a JSON array, got %T (%v)", m["excluded"], m)
+	}
+	if len(excluded) != 1 || excluded[0] != hostPlex+"/transcoding" {
+		t.Fatalf("excluded = %v, want [%s] in HOST form", excluded, hostPlex+"/transcoding")
+	}
+	for _, cp := range customPaths(m) {
+		if strings.Contains(cp, "transcoding") {
+			t.Fatalf("an exclusion must never render as a custom path, got %q", cp)
+		}
+	}
+
+	// Exclusions-only save (the deselected branch is the mount root itself, the
+	// strongest discriminator: a raw-list selSet would wrongly match the
+	// mount): the entry shows up in excluded, the mount is NOT selected
+	// (Selected is computed from includes only), and no Exists:false phantom
+	// custom path is fabricated.
+	if m := patch([]string{"!" + hostPlex}); m["ok"] != true {
+		t.Fatalf("exclusions-only save must succeed: %v", m)
+	}
+	m = getMounts()
+	excluded, ok = m["excluded"].([]any)
+	if !ok || len(excluded) != 1 || excluded[0] != hostPlex {
+		t.Fatalf("excluded = %v (%T), want [%s]", m["excluded"], m["excluded"], hostPlex)
+	}
+	if got := mountByDest(m, "/config")["selected"]; got == true {
+		t.Fatal("an exclusion must never mark a mount selected")
+	}
+	if cps := customPaths(m); len(cps) != 0 {
+		t.Fatalf("exclusions-only save must fabricate no custom paths, got %v", cps)
+	}
+
+	// Include-only save: today's behavior byte-for-byte apart from the additive
+	// excluded field, which is an empty ARRAY, never null.
+	if m := patch([]string{hostPlex}); m["ok"] != true {
+		t.Fatalf("include-only save must succeed: %v", m)
+	}
+	m = getMounts()
+	excluded, ok = m["excluded"].([]any)
+	if !ok {
+		t.Fatalf("excluded must be an empty array, not null: %T (%v)", m["excluded"], m)
+	}
+	if len(excluded) != 0 {
+		t.Fatalf("excluded = %v, want empty", excluded)
+	}
+	if got := mountByDest(m, "/config")["selected"]; got != true {
+		t.Fatalf("include-only behavior must be unchanged, selected = %v", got)
+	}
+	if cps := customPaths(m); len(cps) != 0 {
+		t.Fatalf("include-only save must fabricate no custom paths, got %v", cps)
+	}
+}
