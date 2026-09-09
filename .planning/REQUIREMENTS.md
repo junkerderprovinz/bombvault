@@ -59,6 +59,7 @@ Deferred to future release. Tracked but not in current roadmap.
 ### Selection Enhancements
 
 - **SELECT-05**: Per-folder size hints — on-demand "measure this folder" with cached results (background job + SQLite cache); never eager on expand
+- **SELECT-06**: Backup-time coverage diff — warn when a sibling of a stored path is neither selected nor excluded (research recommendation; deferred 2026-09-09 by user decision — the Phase 3 narrowing note under SELECT-03 remains the sole future-children mitigation for v1)
 
 ## Out of Scope
 

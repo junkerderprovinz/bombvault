@@ -63,7 +63,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- Research-recommended but unmapped: backup-time coverage diff (warn when a sibling of a stored path is neither selected nor excluded) has no v1 requirement — surfaced for user decision (promote, or defer to v2 with the narrowing note as the sole future-children mitigation)
+None.
+
+*(Resolved 2026-09-09: backup-time coverage diff deferred to v2 as SELECT-06 by user decision — the Phase 3 narrowing note under SELECT-03 remains the sole future-children mitigation for v1.)*
 
 ## Deferred Items
 
@@ -71,6 +73,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 | Category | Item | Status | Deferred At | Milestone |
 |----------|------|--------|-------------|-----------|
+| v2 (REQUIREMENTS.md) | SELECT-06 backup-time coverage diff | Tracked in REQUIREMENTS.md v2 | 2026-09-09 | — |
 | v2 (REQUIREMENTS.md) | TREE-07 search/filter, TREE-08 restore-side tree, SELECT-05 size hints | Tracked in REQUIREMENTS.md v2 | 2026-09-09 | — |
 
 ## Session Continuity
