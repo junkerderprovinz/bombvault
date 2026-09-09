@@ -2938,6 +2938,15 @@ type browseDirEntry struct {
 	Path string `json:"path"` // relative to HostMountRoot (e.g. "appdata/plex")
 }
 
+// maxBrowseEntries caps one browse listing (D-08 / phase research R1): appdata
+// trees can hold tens of thousands of entries and a single unbounded ReadDir
+// response would balloon into a multi-megabyte JSON body the SPA has to parse
+// just to render one tree level (threat T-01-07). The cap is deterministic —
+// the lexically-FIRST maxBrowseEntries after the sort — and the response's
+// "truncated" flag tells the tree a deeper listing exists beyond this page.
+// 500 entries is tens of KB of JSON, fine on the LAN this is served on.
+const maxBrowseEntries = 500
+
 // ---------------------------------------------------------------------------
 // Authentication
 // ---------------------------------------------------------------------------
@@ -4154,9 +4163,11 @@ func classifyReadDirError(err error) string {
 	}
 }
 
-// handleBrowse serves GET /api/browse?path=<subpath>.
+// handleBrowse serves GET /api/browse?path=<subpath>[&hidden=1].
 // It lists the immediate subdirectories of <HostMountRoot>/<subpath>,
-// excluding hidden entries (dot-prefixed names), sorted alphabetically.
+// excluding hidden entries (dot-prefixed names) unless hidden=1 opts in,
+// sorted alphabetically and capped at maxBrowseEntries with a "truncated"
+// flag on overflow.
 //
 // Containment is two-layered (BROWSE-03): paths.Resolve is the cheap lexical
 // first reject (its rejection response is byte-identical to the pre-Root
@@ -4167,11 +4178,19 @@ func classifyReadDirError(err error) string {
 // restricted, failed — lands in the HTTP 200 envelope carrying a "status"
 // kind; empty + status:"ok" is the real-empty signal.
 //
+// The hidden flag is a pinned additive opt-in (BROWSE-04): absent or anything
+// but "1" keeps the default byte-identical behavior, so the existing
+// FolderBrowser and every destination picker keep agreeing with the tree.
+//
 // The response is always HTTP 200; errors use {ok:false,error,status} so the
 // UI can display a graceful message. A missing or empty `path` query parameter
 // lists the mount root itself.
 func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	subpath := r.URL.Query().Get("path")
+	// Opt-in hidden visibility (D-05): only the literal "1" opts in, so a
+	// client cannot turn hidden entries on by accident with an empty or
+	// mistyped value.
+	includeHidden := r.URL.Query().Get("hidden") == "1"
 
 	// Lexical containment check. An empty subpath lists the mount root itself —
 	// paths.Resolve requires a non-empty child (strict containment). Only the
@@ -4245,8 +4264,8 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		name := e.Name()
-		if strings.HasPrefix(name, ".") {
-			continue // skip hidden entries
+		if !includeHidden && strings.HasPrefix(name, ".") {
+			continue // skip hidden entries unless hidden=1 opted in
 		}
 		// Build the relative path from HostMountRoot to this entry.
 		var entryPath string
@@ -4259,15 +4278,24 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ReadDir(-1) returns entries in directory order (usually alphabetical on
-	// most filesystems), but sort explicitly to guarantee it.
+	// most filesystems), but sort explicitly to guarantee it. The sort runs on
+	// the FILTERED slice, then truncation takes the lexically-first page — so
+	// a capped listing is a deterministic prefix of the full sorted one.
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name < dirs[j].Name })
 
+	truncated := false
+	if len(dirs) > maxBrowseEntries {
+		dirs = dirs[:maxBrowseEntries]
+		truncated = true
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":     true,
-		"root":   h.cfg.HostMountRoot,
-		"path":   subpath,
-		"dirs":   dirs,
-		"status": "ok",
+		"ok":        true,
+		"root":      h.cfg.HostMountRoot,
+		"path":      subpath,
+		"dirs":      dirs,
+		"status":    "ok",
+		"truncated": truncated,
 	})
 }
 
