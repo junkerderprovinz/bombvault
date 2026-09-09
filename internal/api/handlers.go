@@ -4273,7 +4273,7 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	}
 	f, err := root.Open(rel)
 	if err != nil {
-		log.Printf("api: browse: open %q: %v", rel, err) //nolint:gosec // G706: rel is always "." or a paths.Resolve-validated subpath; no raw user bytes reach the log formatter
+		log.Printf("api: browse: open %q: %v", rel, err) //nolint:gosec // G706: rel is client-influenced (the request's path query) but paths.Resolve-validated upstream, and %q escapes quotes/backslashes/newlines/control chars — no log-injection or format-string surface
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":     false,
 			"error":  "could not read directory",
@@ -4285,7 +4285,7 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := f.ReadDir(-1)
 	if err != nil {
-		log.Printf("api: browse: ReadDir %q: %v", rel, err) //nolint:gosec // G706: rel is always "." or a paths.Resolve-validated subpath; no raw user bytes reach the log formatter
+		log.Printf("api: browse: ReadDir %q: %v", rel, err) //nolint:gosec // G706: rel is client-influenced (the request's path query) but paths.Resolve-validated upstream, and %q escapes quotes/backslashes/newlines/control chars — no log-injection or format-string surface
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":     false,
 			"error":  "could not read directory",
