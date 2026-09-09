@@ -1088,7 +1088,7 @@ function StopContainersEditor({
           aria-haspopup="listbox"
           aria-expanded={pickerOpen}
           onClick={() => setPickerOpen((v) => !v)}
-          className="flex items-center gap-2 w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-hover transition-colors text-start"
+          className="flex items-center gap-2 w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-surface3 transition-colors text-start"
         >
           <span className="min-w-0 flex-1 truncate">{t("stophook.title")}</span>
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`shrink-0 transition-transform ${pickerOpen ? "rotate-90" : "rtl:rotate-180"}`}>

@@ -1037,7 +1037,7 @@ export function Selector(props: SelectorProps) {
                 ? "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
                 : raised
                   ? "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-                  : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text",
+                  : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text",
           // No gap while a reactive segment is closed: the collapsed label is
           // still a flex item, so the gap would sit beside a zero-width box and
           // push the glyph off centre. The label brings its own margin when it

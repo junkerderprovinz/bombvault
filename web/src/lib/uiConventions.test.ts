@@ -306,7 +306,7 @@ ruleTester.run("no-status-color-on-control", rules["no-status-color-on-control"]
     `<span className="mt-1 h-2 w-2 rounded-full bg-statusFailSolid" />`,
     // The destructive control, after the fix: same chip as its siblings.
     `<Badge as="button" tone="neutral" onClick={remove}>{t("offsite.targets.remove")}</Badge>`,
-    `<button onClick={del} className="rounded-control bg-carbon-surface2 text-carbon-text hover:bg-carbon-hover">{t("x")}</button>`,
+    `<button onClick={del} className="rounded-control bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3">{t("x")}</button>`,
     // tone="active" is the accent, not a status colour.
     `<Badge as="button" shape="square" size="icon" tone="active" tip={t("snapshots.delete")}><IconTrash /></Badge>`,
     // The escape hatch: ConfirmDialog's own severity-bearing variant.

@@ -2596,7 +2596,7 @@ export function Dashboard() {
           className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
           }`}
         >
           {/* FILLED pencil (design-language.md "Icon glyphs", rule 218 —

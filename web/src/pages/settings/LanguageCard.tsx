@@ -79,7 +79,7 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-hover transition-colors"
+          className="flex items-center gap-2.5 w-48 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text hover:bg-carbon-surface3 transition-colors"
         >
           <Flag code={current.flag} />
           <span className="min-w-0 truncate text-start">{current.label}</span>

@@ -126,7 +126,7 @@ export type ButtonVariant = "default" | "chip" | "icon";
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:opacity-90",
   neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hover",
-  subtle: "bg-carbon-surface2 text-carbon-text hover:bg-carbon-hover",
+  subtle: "bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3",
   danger: "bg-statusFailSolid text-carbon-background hover:opacity-90",
   warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
 };
