@@ -2126,7 +2126,7 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}
 
 	// Storing an explicit selection (host paths) flips media to selected.
-	if err := svc.SetBackupPaths(ctx, "plex", []string{appdataHost, mediaHost}); err != nil {
+	if err := svc.SetBackupPaths(ctx, "plex", []string{appdataHost, mediaHost}, ""); err != nil {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
 	mounts, _, _, _ = svc.ContainerMounts(ctx, "plex")
@@ -2137,7 +2137,7 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}
 
 	// An unreachable path is rejected.
-	if err := svc.SetBackupPaths(ctx, "plex", []string{"/etc/localtime"}); err == nil {
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"/etc/localtime"}, ""); err == nil {
 		t.Fatal("SetBackupPaths must reject a path outside the host mount")
 	}
 
@@ -2241,6 +2241,60 @@ func TestSetBackupPathsMixedSelectionRoundTrip(t *testing.T) {
 	}
 }
 
+// TestSetBackupPathsLegacySourceKeepsPlan01Behavior pins that the widened
+// SetBackupPaths signature is behavior-identical to plan 01's when
+// selectionSource is empty (the legacy/absent encoding): normalization to the
+// canonical maximal-root form, the exclusions-only explicit-none carrier, and
+// [] clearing to auto-detection all unchanged. The empty-selection guard is
+// strictly source-gated, so an empty source must never trip it.
+func TestSetBackupPathsLegacySourceKeepsPlan01Behavior(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	ctx := context.Background()
+	hostPlex := "/mnt/user/appdata/plex"
+	stored := func() []string {
+		t.Helper()
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tg.SelectedPaths
+	}
+
+	// Mixed selection stores the normalized maximal-root form (plan 01).
+	if err := svc.SetBackupPaths(ctx, "plex", []string{
+		hostPlex, hostPlex + "/config", "!" + hostPlex + "/transcoding", "!" + hostPlex + "/transcoding/cache",
+	}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	want := []string{root + "/user/appdata/plex", "!" + root + "/user/appdata/plex/transcoding"}
+	if got := stored(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("stored selection = %v, want %v", got, want)
+	}
+
+	// Exclusions-only stays the explicit-none carrier (never auto-detect).
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"!" + hostPlex}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if want := []string{"!" + root + "/user/appdata/plex"}; !reflect.DeepEqual(stored(), want) {
+		t.Fatalf("exclusions-only stored = %v, want %v", stored(), want)
+	}
+
+	// [] clears to auto-detection byte-for-byte.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if got := stored(); len(got) != 0 {
+		t.Fatalf("empty list must persist [] (auto-detect), got %v", got)
+	}
+}
+
 // TestBackupNarrowedSelectionUsesMaximalIncludes pins success criterion 2:
 // after a narrowed tree selection (whole mount kept, one branch deselected), a
 // backup hands restic EXACTLY the maximal-root container-form includes as
@@ -2283,7 +2337,7 @@ func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
 	// Narrow: the whole appdata mount kept, the transcoding branch deselected.
 	if err := svc.SetBackupPaths(ctx, "plex", []string{
 		"/mnt/user/appdata/plex", "!/mnt/user/appdata/plex/transcoding",
-	}); err != nil {
+	}, ""); err != nil {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
 	if _, err := svc.Backup(ctx, "plex"); err != nil {
@@ -2331,7 +2385,7 @@ func TestBackupPathsExclusionsOnlyIsNotRefused(t *testing.T) {
 
 	// Everything deselected: the stored list is non-empty (explicit) but holds
 	// zero includes.
-	if err := svc.SetBackupPaths(ctx, "plex", []string{"!/mnt/user/appdata/plex"}); err != nil {
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"!/mnt/user/appdata/plex"}, ""); err != nil {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
 	sum, err := svc.Backup(ctx, "plex")
@@ -2368,7 +2422,7 @@ func TestContainerMountsFlagsMissingCustomPath(t *testing.T) {
 
 	// Store both as explicit custom selections (host paths, both reachable; only
 	// one exists on disk). SetBackupPaths does not require existence.
-	if err := svc.SetBackupPaths(ctx, "app", []string{"/mnt/user/present", "/mnt/user/gone"}); err != nil {
+	if err := svc.SetBackupPaths(ctx, "app", []string{"/mnt/user/present", "/mnt/user/gone"}, ""); err != nil {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
 

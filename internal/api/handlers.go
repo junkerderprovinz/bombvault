@@ -61,6 +61,16 @@ func failEnvelope(err error) map[string]any {
 	return map[string]any{"ok": false, "error": scrubError(err)}
 }
 
+// codedFailEnvelope is failEnvelope plus a machine-routable code. The code lets
+// a client branch on the failure KIND without parsing error text — used for the
+// empty-selection refusal ("empty-selection"), which the Phase 3 tree UI turns
+// into guidance instead of a bare failure (CONTEXT INTEG-04 Q2). Error text is
+// scrubbed exactly like failEnvelope, and the response stays in the house HTTP
+// 200 envelope.
+func codedFailEnvelope(err error, code string) map[string]any {
+	return map[string]any{"ok": false, "error": scrubError(err), "code": code}
+}
+
 // absPathRe matches absolute unix paths so they can be stripped from any error
 // message that slips through to the API surface.
 var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
@@ -1100,6 +1110,17 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		PreHook           *string   `json:"preHook"`
 		PostHook          *string   `json:"postHook"`
 		BackupPaths       *[]string `json:"backupPaths"`
+		// SelectionSource is the optional intent carrier for a backupPaths save.
+		// Only the literal "tree" carries meaning (it enables the empty-selection
+		// guard — a deselect-everything from the tree over a prior non-empty
+		// selection is refused); any other value is ignored and treated exactly
+		// as absent, so no source value can ever fail a save (CONTEXT INTEG-04
+		// Q1 / RESEARCH Pitfall 7). The field MUST be declared even though it is
+		// optional: decodeBody runs DisallowUnknownFields, so an undeclared
+		// selectionSource would reject every tree save at the boundary. Omitting
+		// it stays legal (pointer field), and SPA + server ship in one binary
+		// (embedded web/dist), so version skew is a non-issue.
+		SelectionSource   *string   `json:"selectionSource"`
 		StopContainers    *[]string `json:"stopContainers"`
 		Excludes          *[]string `json:"excludes"`
 		UpdateAfterBackup *bool     `json:"updateAfterBackup"`
@@ -1122,7 +1143,16 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if body.BackupPaths != nil {
-		if err := h.svc.SetBackupPaths(r.Context(), name, *body.BackupPaths); err != nil {
+		if err := h.svc.SetBackupPaths(r.Context(), name, *body.BackupPaths, strOr(body.SelectionSource)); err != nil {
+			// The empty-selection refusal gets a machine-routable code so the
+			// Phase 3 UI can offer guidance ("nothing would be backed up")
+			// instead of a bare failure; every other error keeps the plain
+			// envelope (CONTEXT INTEG-04 Q2). Both stay in the HTTP 200
+			// envelope.
+			if errors.Is(err, errEmptySelection) {
+				writeJSON(w, http.StatusOK, codedFailEnvelope(err, "empty-selection"))
+				return
+			}
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}

@@ -3791,6 +3791,14 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 	return mounts, custom, excluded, nil
 }
 
+// errEmptySelection refuses a tree-sourced save that would deselect everything:
+// an explicit empty selection silently re-enables automatic appdata detection,
+// which is exactly the surprise the tree's deselect-all must never produce over
+// a previously non-empty selection (threat T-01-13). Message-carrying and
+// errors.Is-able so the PATCH boundary routes it to the coded
+// {code:"empty-selection"} envelope instead of the plain failure one.
+var errEmptySelection = errors.New("an explicit empty selection would re-enable automatic appdata detection")
+
 // SetBackupPaths stores the user's explicit backup-folder selection for a
 // container. The input paths are HOST paths (what the UI shows); each is
 // translated to its container path and must be reachable under the host mount,
@@ -3798,8 +3806,15 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 // selector's excluded branch — semantics owned by internal/api/selection.go)
 // is translated and contained on its BARE path, then stored prefixed. An empty
 // list clears the selection so backups fall back to automatic appdata
-// detection.
-func (s *Service) SetBackupPaths(_ context.Context, name string, hostPaths []string) error {
+// detection — except when selectionSource is the literal "tree" and a
+// non-empty selection is stored to protect: that is a deselect-everything, and
+// it is refused with errEmptySelection (the coded envelope is the handler's
+// job). selectionSource is a transient intent signal, never persisted; any
+// value other than "tree" — including "" from legacy clients — is treated
+// exactly as absent, so old clients keep today's clears-to-auto behavior
+// byte-for-byte (CONTEXT INTEG-04 Q1; RESEARCH Open Question 2 — strictly
+// source-gated, no payload sniffing).
+func (s *Service) SetBackupPaths(_ context.Context, name string, hostPaths []string, selectionSource string) error {
 	var cps []string
 	seen := map[string]bool{}
 	for _, hp := range hostPaths {
@@ -3839,7 +3854,23 @@ func (s *Service) SetBackupPaths(_ context.Context, name string, hostPaths []str
 	// repair — dropping entries whose folder vanished stays the engine's job at
 	// run time (onlyExistingPaths); normalization only removes REDUNDANT entries
 	// and canonically orders what the user actually chose.
-	return s.store.SetBackupPaths(name, NormalizeSelection(cps))
+	normalized := NormalizeSelection(cps)
+	// Empty-selection guard (D-09/D-10), strictly source-gated — no heuristic
+	// sniffing of tree-shaped payloads. All three conditions must hold:
+	//   - the save came from the tree source (only the literal "tree"; legacy
+	//     and unknown sources keep today's clears byte-for-byte),
+	//   - the normalized result is EMPTY (an exclusions-only result is
+	//     non-empty and IS the explicitly-deselected state, D-03 — it passes),
+	//   - a non-empty selection is stored to protect (a fresh container has
+	//     nothing to lose, so the save is a no-op, not a destructive deselect).
+	// The refusal returns BEFORE any store write, so the prior selection is
+	// preserved untouched.
+	if selectionSource == "tree" && len(normalized) == 0 {
+		if prior, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(prior.SelectedPaths) > 0 {
+			return errEmptySelection
+		}
+	}
+	return s.store.SetBackupPaths(name, normalized)
 }
 
 // sliceSet builds a set from a string slice.

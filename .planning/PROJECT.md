@@ -68,9 +68,11 @@ Every container, VM, and config on the host can be backed up consistently and re
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Tree selection = new view over the existing flat `backupPaths` set | Zero-migration compatibility with deployed instances; one persistence model, two presentations | — Pending |
+| Tree selection = new view over the existing flat `backupPaths` set | Zero-migration compatibility with deployed instances; one persistence model, two presentations | Decided (Phase 1) |
 | Keep ExcludesEditor (restic patterns) alongside folder tree selection | Selection answers "which folders"; exclude patterns answer "which files/globs" — different questions | — Pending |
-| Lazy-load tree children from a server directory listing (extend `/api/browse`) | Appdata trees can be huge; eager full-tree loads would stall the panel and the backend | — Pending |
+| Lazy-load tree children from a server directory listing (extend `/api/browse`) | Appdata trees can be huge; eager full-tree loads would stall the panel and the backend | Backend landed (Phase 1) |
+| Selections compile to maximal-root restic positional targets; exclusions encode as `!`-prefixed entries in the same flat list | restic excludes do not apply to positional sources — exclude-based encoding disqualified | Decided (Phase 1) |
+| Future children of an included root are included (allowlist semantic) | narrowing selections communicate the future-children allowlist semantic; UI communication lands with Phase 3 SELECT-03 | Accepted (Phase 1) |
 
 ## Evolution
 
