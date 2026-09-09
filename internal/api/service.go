@@ -3975,18 +3975,21 @@ func (s *Service) storedDataIsGone(name string) bool {
 		return false // no prior target — a first backup of a new/stateless container
 	}
 	// Explicit-none: a non-empty stored list with zero includes is a deselect,
-	// not a disappearance. Checked before any stat — the excluded branches never
-	// exist as literals ("!"+path), so onlyExistingPaths alone would "pass" this
-	// measurement while proving nothing about the disk.
+	// not a disappearance. Checked before any stat, so the classification comes
+	// from the selection's SHAPE (the user said no) rather than from the disk.
 	if len(existing.SelectedPaths) > 0 && len(includesOnly(existing.SelectedPaths)) == 0 {
 		return false
 	}
 	// SelectedPaths first: while a selection stands it is what a backup uses, so
-	// it is the list whose disappearance means the share went away. Once the user
-	// clears it, what the last run captured (AppdataPaths) is the only record of
-	// where the data was, and it still tells us whether that data is still there.
-	stored := existing.SelectedPaths
-	if len(stored) == 0 {
+	// it is the list whose disappearance means the share went away — stat the
+	// INCLUDES half only, like every other reader of the stored list. The
+	// "!"-prefixed entries are classes, not paths; statting them as literals
+	// would measure nothing (they resolve against cwd and virtually never exist,
+	// so they could only ever vote "gone"). Once the user clears it, what the
+	// last run captured (AppdataPaths) is the only record of where the data was,
+	// and it still tells us whether that data is still there.
+	stored := includesOnly(existing.SelectedPaths)
+	if len(existing.SelectedPaths) == 0 {
 		stored = existing.AppdataPaths
 	}
 	return len(stored) > 0 && len(onlyExistingPaths(stored)) == 0

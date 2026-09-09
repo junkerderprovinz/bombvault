@@ -100,9 +100,42 @@ func TestStoredDataIsGoneClassifiesExplicitNone(t *testing.T) {
 		t.Fatal("a mixed selection with existing includes is not data-gone")
 	}
 
+	// The explicit-none classification is checked BEFORE any stat and is a
+	// decision about the selection's shape, not an accident of measuring
+	// nothing: even when the captured fallback data (AppdataPaths) has also
+	// vanished, an exclusions-only selection stays "not gone" — the user said
+	// no, and the disk has nothing to prove about a deliberate deselect.
+	captured := existingDir(t, "captured")
+	seedCaptured(t, st, "myapp", captured)
+	if err := os.RemoveAll(captured); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetBackupPaths("myapp", []string{"!/host/user/appdata/gone-branch"}); err != nil {
+		t.Fatal(err)
+	}
+	if s.storedDataIsGone("myapp") {
+		t.Fatal("an exclusions-only selection stays explicit-none even when the captured data also vanished")
+	}
+
+	// The converse classification, now on the includes-only view: a mixed
+	// selection whose include vanished IS gone. The stat loop measures
+	// includesOnly(...) — "!"-entries are classes, not paths, and as literals
+	// they only ever voted "gone" — so dropping them from the measurement must
+	// not mask a genuinely vanished include.
+	vanished := existingDir(t, "share")
+	if err := st.SetBackupPaths("myapp", []string{vanished, "!" + vanished + "/deselected"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(vanished); err != nil {
+		t.Fatal(err)
+	}
+	if !s.storedDataIsGone("myapp") {
+		t.Fatal("a mixed selection whose include vanished must still be reported gone")
+	}
+
 	// Legacy prefix-free behavior unchanged: a prefix-free selection whose
 	// folder vanished IS gone (what an unmounted share looks like).
-	gone := existingDir(t, "share")
+	gone := existingDir(t, "share2")
 	if err := st.SetBackupPaths("myapp", []string{gone}); err != nil {
 		t.Fatal(err)
 	}
