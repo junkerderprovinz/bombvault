@@ -3846,10 +3846,18 @@ func onlyExistingPaths(paths []string) []string {
 // as "this container has no folders" turns a temporarily unreachable share into
 // a confident empty answer (#175 at root granularity). An empty list here means
 // genuinely nothing is configured, which is the only case that IS "nothing".
+//
+// The explicit-vs-auto test stays on the RAW stored list, but the RETURN is the
+// includes half only (SplitExclusion, internal/api/selection.go): keeping the
+// test raw is what makes an exclusions-only selection count as explicit rather
+// than auto-detect, while the includes-only return keeps deselected branches
+// out of everything downstream (effectiveBackupPaths' positionals,
+// SuggestExcludes' roots). Exclusions never become positionals and never
+// derive --exclude flags — locked positions L1/L14.
 func (s *Service) configuredBackupPaths(name string, in model.Inspect) []string {
 	chosen := s.resolveAppdataPaths(name, in)
 	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
-		chosen = existing.SelectedPaths
+		chosen = includesOnly(existing.SelectedPaths)
 	}
 	return chosen
 }
@@ -3883,7 +3891,11 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 // never made (both are an empty SelectedPaths, meaning "use automatic
 // detection"), and the configured list cannot either, because the appdata
 // fallback in resolveAppdataPaths is itself stat-gated and so disappears along
-// with the folder.
+// with the folder. Since the "!"-prefixed flat encoding (internal/api/
+// selection.go) there is a fourth shape with the same empty effective list: a
+// selection whose every entry is an exclusion — explicit-none, deliberate,
+// never a fault, even though the deselected folder is still on disk (threat
+// T-01-03).
 func (s *Service) emptyBackupIsUnreachable(name string, effective []string) bool {
 	return len(effective) == 0 && s.storedDataIsGone(name)
 }
@@ -3893,11 +3905,22 @@ func (s *Service) emptyBackupIsUnreachable(name string, effective []string) bool
 // claims ("not reachable"), so it is what the guard measures.
 //
 // A container with no stored target, or one whose last run captured nothing, is
-// a first or a genuinely stateless backup and is never refused.
+// a first or a genuinely stateless backup and is never refused. Neither is an
+// exclusions-only selection: its raw list is non-empty but holds no includes,
+// so measuring it would stat nothing and report the deliberate deselect as a
+// vanished share — "gone" must mean the DATA is gone, not that the user said
+// no (T-01-03).
 func (s *Service) storedDataIsGone(name string) bool {
 	existing, err := s.store.GetTargetByContainer(name)
 	if err != nil {
 		return false // no prior target — a first backup of a new/stateless container
+	}
+	// Explicit-none: a non-empty stored list with zero includes is a deselect,
+	// not a disappearance. Checked before any stat — the excluded branches never
+	// exist as literals ("!"+path), so onlyExistingPaths alone would "pass" this
+	// measurement while proving nothing about the disk.
+	if len(existing.SelectedPaths) > 0 && len(includesOnly(existing.SelectedPaths)) == 0 {
+		return false
 	}
 	// SelectedPaths first: while a selection stands it is what a backup uses, so
 	// it is the list whose disappearance means the share went away. Once the user
