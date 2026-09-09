@@ -153,14 +153,19 @@ func restoreRunRow(t *testing.T, st *store.Repo) store.Run {
 }
 
 // TestRestoreSelectionChangePerPathSkip is RESTORE-01 case (a), D-14: one
-// stored path has no mapping in the chosen snapshot — the restore must still
-// COMPLETE (a per-path skip never aborts the run), the mapped paths restore
-// normally, and the run record carries the skip as a bounded note with the
-// path scrubbed to [path] (T-01-11: nothing raw crosses into the persisted
-// run row the SPA renders).
+// stored path has no mapping in the chosen snapshot — here a second bind the
+// user added AFTER the snapshot was taken, so the snapshot holds no data for
+// it at all (no ancestor, no descendant). The restore must still COMPLETE (a
+// per-path skip never aborts the run), the mapped paths restore normally, and
+// the run record carries the skip as a bounded note with the path scrubbed to
+// [path] (T-01-11: nothing raw crosses into the persisted run row the SPA
+// renders).
 func TestRestoreSelectionChangePerPathSkip(t *testing.T) {
 	st, d, eng, svc := restoreScaffold(t,
-		[]string{"/host/user/user/appdata/plex/config", "/host/user/user/appdata/plex/volatile"},
+		[]string{
+			"/host/user/user/appdata/plex/config",
+			"/host/user/mnt/disk2/appdata/jellyfin/config", // added after the snapshot: no data for it
+		},
 		[]restic.Snapshot{{
 			ID:    "aaaa1111",
 			Tags:  []string{"container:plex", "p1"},
@@ -171,7 +176,7 @@ func TestRestoreSelectionChangePerPathSkip(t *testing.T) {
 		t.Fatalf("restore with one unmapped stored path must complete (per-path skip, never a global abort): %v", err)
 	}
 
-	// Both stored paths fall back to the same snapshot ancestor — restored once.
+	// The plex subtree restores from its snapshot path; the orphan is skipped.
 	want := "aaaa1111:/host/user/user/appdata/plex"
 	if len(eng.restored) != 1 || !strings.HasSuffix(eng.restored[0], want) {
 		t.Fatalf("restored = %v, want exactly one call ending in %q", eng.restored, want)
@@ -185,26 +190,31 @@ func TestRestoreSelectionChangePerPathSkip(t *testing.T) {
 	if row.Status != "success" {
 		t.Fatalf("run status = %q, want success", row.Status)
 	}
-	if !strings.Contains(row.Error, "2 stored path") {
+	if !strings.Contains(row.Error, "1 stored path") {
 		t.Fatalf("run error note = %q, want it to report the skipped-path count", row.Error)
 	}
-	if n := strings.Count(row.Error, "[path]"); n != 2 {
-		t.Fatalf("run error note = %q, want exactly 2 scrubbed [path] tokens, got %d", row.Error, n)
+	if n := strings.Count(row.Error, "[path]"); n != 1 {
+		t.Fatalf("run error note = %q, want exactly 1 scrubbed [path] token, got %d", row.Error, n)
 	}
-	if strings.Contains(row.Error, "/host/") || strings.Contains(row.Error, "volatile") {
+	if strings.Contains(row.Error, "/host/") || strings.Contains(row.Error, "jellyfin") {
 		t.Fatalf("run error note = %q leaks a raw path — must be scrubbed to [path] first", row.Error)
 	}
 }
 
 // TestRestoreSelectionChangeSkipOrder is RESTORE-01 case (b): multiple orphan
-// stored paths are all recorded and none aborts the run. The stored-list ORDER
-// of the skips is pinned pre-scrub in TestMapRestorePaths; here the scrubbed
-// run-row note is order-insensitive BY DESIGN (every absolute path scrubs to
-// the same [path] token — T-01-11), so what this integration case pins is
-// multi-skip non-abort plus the exact bounded note shape.
+// stored paths (two more binds added on other pools since the snapshot) are
+// all recorded and none aborts the run. The stored-list ORDER of the skips is
+// pinned pre-scrub in TestMapRestorePaths; here the scrubbed run-row note is
+// order-insensitive BY DESIGN (every absolute path scrubs to the same [path]
+// token — T-01-11), so what this integration case pins is multi-skip
+// non-abort plus the exact bounded note shape.
 func TestRestoreSelectionChangeSkipOrder(t *testing.T) {
 	st, d, eng, svc := restoreScaffold(t,
-		[]string{"/host/user/user/appdata/plex/zzz", "/host/user/user/appdata/plex/aaa", "/host/user/user/appdata/plex/config"},
+		[]string{
+			"/host/user/user/appdata/plex/config",
+			"/host/user/mnt/disk2/appdata/extra",
+			"/host/user/mnt/disk3/appdata/more",
+		},
 		[]restic.Snapshot{{
 			ID:    "aaaa1111",
 			Tags:  []string{"container:plex", "p1"},
@@ -215,7 +225,7 @@ func TestRestoreSelectionChangeSkipOrder(t *testing.T) {
 		t.Fatalf("restore with multiple unmapped stored paths must complete: %v", err)
 	}
 
-	// One subtree restore covers all three stored paths.
+	// One subtree restore covers the mapped path; both orphans are skipped.
 	want := "aaaa1111:/host/user/user/appdata/plex"
 	if len(eng.restored) != 1 || !strings.HasSuffix(eng.restored[0], want) {
 		t.Fatalf("restored = %v, want exactly one call ending in %q", eng.restored, want)
@@ -228,11 +238,11 @@ func TestRestoreSelectionChangeSkipOrder(t *testing.T) {
 	if row.Status != "success" {
 		t.Fatalf("run status = %q, want success", row.Status)
 	}
-	if !strings.Contains(row.Error, "3 stored path") {
-		t.Fatalf("run error note = %q, want it to report all 3 skips", row.Error)
+	if !strings.Contains(row.Error, "2 stored path") {
+		t.Fatalf("run error note = %q, want it to report both skips", row.Error)
 	}
-	if n := strings.Count(row.Error, "[path]"); n != 3 {
-		t.Fatalf("run error note = %q, want exactly 3 scrubbed [path] tokens, got %d", row.Error, n)
+	if n := strings.Count(row.Error, "[path]"); n != 2 {
+		t.Fatalf("run error note = %q, want exactly 2 scrubbed [path] tokens, got %d", row.Error, n)
 	}
 }
 

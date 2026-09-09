@@ -677,7 +677,10 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	if d.RecreateOnly {
 		recordedSnap = ""
 	}
-	if err := d.Runs.Finish(runID, statusSuccess, recordedSnap, 0, ""); err != nil {
+	// A partial-mapping restore (RESTORE-01) still records success — the run
+	// itself completed — but the note channel says what was left out, so a DR
+	// audit never mistakes "success" for "everything came back".
+	if err := d.Runs.Finish(runID, statusSuccess, recordedSnap, 0, skippedPathsNote(d.SkippedPaths)); err != nil {
 		return fmt.Errorf("restore: record run finish: %w", err)
 	}
 	return nil
@@ -950,4 +953,31 @@ func truncateErr(err error) string {
 		return msg[:max]
 	}
 	return msg
+}
+
+// skippedPathsNote renders the success-run note for a restore whose stored
+// selection only partially mapped onto the chosen snapshot (RESTORE-01): the
+// restore still completes — a per-path skip never aborts — but a bare
+// "success" would read as "everything came back" to someone auditing a DR
+// drill, so the Runs.Finish note (RESEARCH A5) records what was left out.
+// Each path is scrubbed to [path] FIRST, using this package's deliberately
+// duplicated scrub regexes (T-01-11: nothing raw reaches the run row the SPA
+// renders), and the whole note is then length-capped through truncateErr to
+// the runs.error column's bound — scrubbing twice is deliberate: per-path
+// keeps the count exact, the final pass is the same belt-and-suspenders rule
+// truncateErr applies to every other writer of that column. Empty input
+// returns "", which keeps Finish's errMsg — and therefore every
+// cleanly-mapping run row — byte-identical to the pre-feature shape
+// (pinned by TestRestoreDepsSkippedPathsEmptyIsByteIdentical).
+func skippedPathsNote(skipped []string) string {
+	if len(skipped) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(skipped))
+	for _, p := range skipped {
+		parts = append(parts, scrubRunErr(p))
+	}
+	return truncateErr(fmt.Errorf(
+		"completed; %d stored path(s) absent from the chosen snapshot were not restored: %s",
+		len(skipped), strings.Join(parts, ", ")))
 }
