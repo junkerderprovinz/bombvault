@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Selection Engine & Restore Safety
-status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-09-09T16:57:05.667Z"
+status: verifying
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-09-09T18:28:54.390Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 01 execution started
-state_head: bf28fe57a92c198700ccba40740d97b615f7e924
+state_head: 0cf3dfcf5e9c30bcda3588aa5f5ce7012f3ae9ba
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 ## Current Position
 
 Phase: 01 (Selection Engine & Restore Safety) — EXECUTING
-Plan: 3 of 4
-Status: Ready to execute
+Plan: 4 of 4
+Status: Phase complete — ready for verification
 Last activity: 2026-09-09 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01-01 | 37min | 2 tasks | 6 files |
 | Phase 01 P01-02 | 19 min | 2 tasks | 3 files |
+| Phase 01 P01-03 | 61min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Phase 01 plan 02: browse status carries the error KIND only (restricted/missing/error via errors.Is on *fs.PathError); an os.Root escape rejection deliberately lands in the opaque error bucket so an escape attempt never announces itself on the wire — Phase 01 plan 02: browse status carries the error KIND only (restricted/missing/error via errors.Is on *fs.PathError); an os.Root escape rejection deliberately lands in the opaque error bucket so an escape attempt never announces itself on the wire
 - [Phase 01]: Phase 01 plan 02: listing contract = cap 500 + truncated flag with sort-then-truncate on the filtered slice (deterministic lexically-first page); hidden visibility is a literal hidden=1 opt-in with byte-identical default (flag filters, never reorders or fabricates) — Phase 01 plan 02: listing contract = cap 500 + truncated flag with sort-then-truncate on the filtered slice (deterministic lexically-first page); hidden visibility is a literal hidden=1 opt-in with byte-identical default (flag filters, never reorders or fabricates)
 - [Phase 01]: Phase 01 plan 02: white-box tables for unexported helpers live in *_internal_test.go (package api) beside the router-harness contract tests in package api_test - Go cannot mix packages per file (browse_contract_internal_test.go precedent) — Phase 01 plan 02: white-box tables for unexported helpers live in *_internal_test.go (package api) beside the router-harness contract tests in package api_test - Go cannot mix packages per file (browse_contract_internal_test.go precedent)
+- [Phase 01]: Restore selectors map onto the chosen snapshot's Paths (two-pass longest-prefix); empty intersection aborts in prepare before teardown; per-path skips become scrubbed success-run notes via RestoreDeps.SkippedPaths (nil/empty byte-identical, pinned)
+- [Phase 01]: Fixtures predating RESTORE-01 now seed snapshot Paths — fake-engine container snapshots must model the positional truth the mapping reads
+- [Phase 01]: restic 0.17 positional behaviors (excludes keep positionals; absolute Paths preserved) pinned as contract tests that skip locally and prove on CI
 
 ### Pending Todos
 
@@ -101,6 +105,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T16:57:05.652Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-09-09T18:28:54.355Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

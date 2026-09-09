@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Listing a tree node's children is a cheap per-node call that distinguishes "empty directory" from "unreadable directory" (scrubbed messages), never escapes its root boundary even through symlinks, and agrees with the existing folder browser on hidden entries
   5. Restoring an older snapshot after the user reshaped their selection completes instead of aborting mid-restore after destructive teardown; restore maps by the chosen snapshot's recorded `Paths` (longest-prefix), not by the current selection
 
-**Plans**: 2/4 plans executed
+**Plans**: 3/4 plans executed
 
 Plans:
 **Wave 1**
@@ -44,7 +44,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-03-PLAN.md — Restore hardening: longest-prefix mapping against the chosen snapshot's Paths, pre-teardown abort, restic 0.17 spot-checks (RESTORE-01)
+- [x] 01-03-PLAN.md — Restore hardening: longest-prefix mapping against the chosen snapshot's Paths, pre-teardown abort, restic 0.17 spot-checks (RESTORE-01)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -112,7 +112,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Selection Engine & Restore Safety | 2/4 | In Progress|  |
+| 1. Selection Engine & Restore Safety | 3/4 | In Progress|  |
 | 2. Container Panel Tree Selection | 0/TBD | Not started | - |
 | 3. Selection Trust & Controls | 0/TBD | Not started | - |
 | 4. File Sets Parity | 0/TBD | Not started | - |

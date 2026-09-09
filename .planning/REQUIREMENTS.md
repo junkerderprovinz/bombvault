@@ -41,7 +41,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 <!-- Added during roadmap creation (2026-09-09) from research/PITFALLS: the tree makes selection churn first-class, and today a changed path list aborts a restore mid-flight after destructive teardown. Restore hardening must precede tree-wide availability. -->
 
-- [ ] **RESTORE-01**: Restore survives selection changes — restoring a chosen snapshot intersects the stored path list with that snapshot's recorded `Paths` (longest-prefix mapping, never first-path-component), so narrowing or reshaping a selection never aborts a restore mid-flight after destructive teardown
+- [x] **RESTORE-01**: Restore survives selection changes — restoring a chosen snapshot intersects the stored path list with that snapshot's recorded `Paths` (longest-prefix mapping, never first-path-component), so narrowing or reshaping a selection never aborts a restore mid-flight after destructive teardown
 
 ### Restic Engine
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SELECT-01 | Phase 1 | Complete |
 | SELECT-02 | Phase 1 | Complete |
 | SELECT-04 | Phase 1 | Complete |
-| RESTORE-01 | Phase 1 | Pending |
+| RESTORE-01 | Phase 1 | Complete |
 | TREE-01 | Phase 2 | Pending |
 | TREE-02 | Phase 2 | Pending |
 | TREE-03 | Phase 2 | Pending |
