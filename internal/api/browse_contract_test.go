@@ -19,6 +19,7 @@ package api_test
 // absolute-path rejection responses gain no new fields.
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -163,5 +164,155 @@ func TestBrowseSymlinkEscapeRejected(t *testing.T) {
 	}
 	if m["status"] != "error" {
 		t.Fatalf("expected opaque status:\"error\" for the escape rejection, got %v", m)
+	}
+}
+
+// TestBrowseHidden pins the BROWSE-04 hidden-entry contract as a pinned
+// additive opt-in (D-05): the default call keeps today's byte-identical
+// behavior (dot-prefixed entries excluded), ?hidden=1 includes them at the
+// root and at every depth, and the two responses are otherwise identical and
+// identically sorted — the flag filters, it never reorders or fabricates.
+// A name that merely CONTAINS a dot mid-name must never be hidden: the rule
+// is the dot PREFIX, nothing else.
+func TestBrowseHidden(t *testing.T) {
+	root := t.TempDir()
+	for _, d := range []string{".hidden", ".cache", "my.dir", "appdata", "media"} {
+		if err := os.MkdirAll(filepath.Join(root, d), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// A dot-FILE and a normal file: files are never listed, flag or no flag.
+	if err := os.WriteFile(filepath.Join(root, ".dotfile"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// A dot-prefixed child one level down: hidden=1 must include it at every
+	// depth, not just the root listing.
+	if err := os.MkdirAll(filepath.Join(root, "appdata", ".staging"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	// An empty directory: [] with and without the flag.
+	if err := os.Mkdir(filepath.Join(root, "emptydir"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	h := newBrowseRouter(t, root)
+
+	// Default (no flag): dot-prefixed entries excluded — today's behavior.
+	_, def := doJSON(t, h, http.MethodGet, "/api/browse", "")
+	if def["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", def)
+	}
+	wantDefault := []string{"appdata", "emptydir", "media", "my.dir"}
+	if got := browseNames(def); !equalStrings(got, wantDefault) {
+		t.Fatalf("default listing = %v, want %v", got, wantDefault)
+	}
+
+	// hidden=1 at the root: dot-dirs included, everything else identical and
+	// identically sorted (lexical order includes the dot-dirs first).
+	_, hid := doJSON(t, h, http.MethodGet, "/api/browse?hidden=1", "")
+	if hid["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", hid)
+	}
+	wantHidden := []string{".cache", ".hidden", "appdata", "emptydir", "media", "my.dir"}
+	if got := browseNames(hid); !equalStrings(got, wantHidden) {
+		t.Fatalf("hidden=1 listing = %v, want %v", got, wantHidden)
+	}
+
+	// hidden=0 is NOT the opt-in: only the literal "1" turns it on.
+	_, zero := doJSON(t, h, http.MethodGet, "/api/browse?hidden=0", "")
+	if got := browseNames(zero); !equalStrings(got, wantDefault) {
+		t.Fatalf("hidden=0 must behave as the default, got %v", got)
+	}
+
+	// hidden=1 at a subpath: dot-children included at every depth.
+	_, sub := doJSON(t, h, http.MethodGet, "/api/browse?path=appdata&hidden=1", "")
+	if sub["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", sub)
+	}
+	wantSub := []string{".staging"}
+	if got := browseNames(sub); !equalStrings(got, wantSub) {
+		t.Fatalf("hidden=1 subpath listing = %v, want %v", got, wantSub)
+	}
+	// ...and the same subpath without the flag stays empty (dot-child hidden).
+	_, subDef := doJSON(t, h, http.MethodGet, "/api/browse?path=appdata", "")
+	if got := browseNames(subDef); len(got) != 0 {
+		t.Fatalf("default subpath listing must hide the dot-child, got %v", got)
+	}
+
+	// An empty directory returns [] with and without the flag — the flag never
+	// fabricates entries.
+	_, e1 := doJSON(t, h, http.MethodGet, "/api/browse?path=emptydir", "")
+	if e1["ok"] != true || e1["status"] != "ok" || len(browseNames(e1)) != 0 {
+		t.Fatalf("empty dir default = %v", e1)
+	}
+	_, e2 := doJSON(t, h, http.MethodGet, "/api/browse?path=emptydir&hidden=1", "")
+	if e2["ok"] != true || e2["status"] != "ok" || len(browseNames(e2)) != 0 {
+		t.Fatalf("empty dir with hidden=1 = %v (the flag must not fabricate entries)", e2)
+	}
+}
+
+// equalStrings reports whether two string slices are element-wise equal.
+func equalStrings(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// TestBrowseCap pins the DoS cap (threat T-01-07, D-08 / RESEARCH R1): a
+// directory with more than maxBrowseEntries entries returns exactly the
+// lexically-FIRST maxBrowseEntries with truncated:true; exactly-capacity
+// directories are NOT truncated. Fixtures use deterministic zero-padded names
+// so "lexically first" is assertable.
+func TestBrowseCap(t *testing.T) {
+	root := t.TempDir()
+	for i := 0; i < 501; i++ {
+		if err := os.MkdirAll(filepath.Join(root, fmt.Sprintf("dir%04d", i)), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	h := newBrowseRouter(t, root)
+	w, m := doJSON(t, h, http.MethodGet, "/api/browse", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", w.Code, w.Body.String())
+	}
+	if m["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", m)
+	}
+	got := browseNames(m)
+	if len(got) != 500 {
+		t.Fatalf("expected exactly 500 entries, got %d", len(got))
+	}
+	if m["truncated"] != true {
+		t.Fatalf("expected truncated:true for 501 entries, got %v", m)
+	}
+	// The lexically-first 500: dir0000 .. dir0499 (dir0500 is dropped).
+	if got[0] != "dir0000" || got[499] != "dir0499" {
+		t.Fatalf("expected the lexically-first 500 (dir0000..dir0499), got first=%q last=%q", got[0], got[499])
+	}
+
+	// Exactly 500 entries: NOT truncated (the flag fires only on overflow).
+	full := t.TempDir()
+	for i := 0; i < 500; i++ {
+		if err := os.MkdirAll(filepath.Join(full, fmt.Sprintf("dir%04d", i)), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	h2 := newBrowseRouter(t, full)
+	_, m2 := doJSON(t, h2, http.MethodGet, "/api/browse", "")
+	if m2["ok"] != true {
+		t.Fatalf("expected ok:true, got %v", m2)
+	}
+	if got2 := browseNames(m2); len(got2) != 500 {
+		t.Fatalf("expected 500 entries, got %d", len(got2))
+	}
+	if m2["truncated"] != false {
+		t.Fatalf("expected truncated:false for exactly 500 entries, got %v", m2)
 	}
 }
