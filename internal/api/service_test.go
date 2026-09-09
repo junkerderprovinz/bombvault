@@ -2299,9 +2299,11 @@ func TestSetBackupPathsLegacySourceKeepsPlan01Behavior(t *testing.T) {
 // after a narrowed tree selection (whole mount kept, one branch deselected), a
 // backup hands restic EXACTLY the maximal-root container-form includes as
 // positionals and derives ZERO exclude flags from the selection. The selection
-// compiles to positionals only (locked L1/L14: restic excludes do not apply to
-// positional sources, so exclude-encoding the deselection would silently
-// back the branch up anyway).
+// compiles to positionals only (locked L1/L14) — a product choice, not a
+// restic limitation: restic excludes DO filter content within positional
+// sources (restic_positionals_contract_test.go proves it), but selection-derived
+// --exclude patterns would write into the snapshot's user-owned Excludes
+// metadata (the exclusions editor's surface), so the engine derives none.
 func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)

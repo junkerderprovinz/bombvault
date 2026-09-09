@@ -118,9 +118,17 @@ func NormalizeSelection(entries []string) []string {
 // includesOnly returns the bare (included) half of a stored flat selection —
 // the list a backup is actually built from. Exclusion entries are dropped, not
 // transformed: exclusions never become restic positionals and never derive
-// --exclude flags (locked positions L1/L14 — restic excludes do not apply to
-// positional sources, so exclude-encoding a deselection would silently no-op).
-// Readers that need the whole picture call SplitExclusion themselves.
+// --exclude flags (locked positions L1/L14). That lock is a PRODUCT choice,
+// not a restic limitation — restic excludes DO filter content within positional
+// sources (TestPositionalExcludesKeepSourceDir proves it against real restic:
+// the positional source survives in Paths while the excluded file is filtered
+// from the snapshot), so encoding "!" entries as --exclude patterns would
+// enforce a deselection content-wise. It stays locked anyway because
+// engine-derived patterns would land in the snapshot's restic Excludes
+// metadata, which is user-owned surface (the exclusions editor previews
+// exactly the patterns the user wrote — STACK.md "What NOT to Use"), and
+// machine-generated entries would pollute that round-trip. Readers that need
+// the whole picture call SplitExclusion themselves.
 func includesOnly(entries []string) []string {
 	out := make([]string, 0, len(entries))
 	for _, e := range entries {
