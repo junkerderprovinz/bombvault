@@ -34,12 +34,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Listing a tree node's children is a cheap per-node call that distinguishes "empty directory" from "unreadable directory" (scrubbed messages), never escapes its root boundary even through symlinks, and agrees with the existing folder browser on hidden entries
   5. Restoring an older snapshot after the user reshaped their selection completes instead of aborting mid-restore after destructive teardown; restore maps by the chosen snapshot's recorded `Paths` (longest-prefix), not by the current selection
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Selection encoding keystone: `selection.go` pure helpers + normalized `SetBackupPaths` + reader classification + maximal-include restic positionals (SELECT-01, SELECT-02, SELECT-04)
+- [x] 01-01-PLAN.md — Selection encoding keystone: `selection.go` pure helpers + normalized `SetBackupPaths` + reader classification + maximal-include restic positionals (SELECT-01, SELECT-02, SELECT-04)
 - [ ] 01-02-PLAN.md — Browse node-listing contract: os.Root containment, status trio, cap+truncated, hidden opt-in (BROWSE-01..04)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -112,7 +112,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Selection Engine & Restore Safety | 0/4 | Not started | - |
+| 1. Selection Engine & Restore Safety | 1/4 | In Progress|  |
 | 2. Container Panel Tree Selection | 0/TBD | Not started | - |
 | 3. Selection Trust & Controls | 0/TBD | Not started | - |
 | 4. File Sets Parity | 0/TBD | Not started | - |

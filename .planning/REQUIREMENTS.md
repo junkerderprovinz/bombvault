@@ -25,10 +25,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Selection ↔ Persistence
 
-- [ ] **SELECT-01**: Tree state normalizes to/from the existing flat `backupPaths` set — store maximal included paths (highest ticked node) + exclusion sub-paths below included roots; drop redundant descendants
-- [ ] **SELECT-02**: Persistence format unchanged — zero migration; existing deployments keep their saved `backupPaths` selections working without action
+- [x] **SELECT-01**: Tree state normalizes to/from the existing flat `backupPaths` set — store maximal included paths (highest ticked node) + exclusion sub-paths below included roots; drop redundant descendants
+- [x] **SELECT-02**: Persistence format unchanged — zero migration; existing deployments keep their saved `backupPaths` selections working without action
 - [ ] **SELECT-03**: Effective-selection preview — the panel shows what will actually be backed up per mount ("N paths"), matching exactly the positional paths handed to restic (explicit sources bypass excludes, so the effective set must equal the ticked paths)
-- [ ] **SELECT-04**: Whitelist start-state — starting from nothing checked and ticking keep-lists works through the same normalization (no special-casing)
+- [x] **SELECT-04**: Whitelist start-state — starting from nothing checked and ticking keep-lists works through the same normalization (no special-casing)
 
 ### Domain Integration
 
@@ -90,9 +90,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BROWSE-02 | Phase 1 | Pending |
 | BROWSE-03 | Phase 1 | Pending |
 | BROWSE-04 | Phase 1 | Pending |
-| SELECT-01 | Phase 1 | Pending |
-| SELECT-02 | Phase 1 | Pending |
-| SELECT-04 | Phase 1 | Pending |
+| SELECT-01 | Phase 1 | Complete |
+| SELECT-02 | Phase 1 | Complete |
+| SELECT-04 | Phase 1 | Complete |
 | RESTORE-01 | Phase 1 | Pending |
 | TREE-01 | Phase 2 | Pending |
 | TREE-02 | Phase 2 | Pending |
@@ -108,6 +108,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTEG-02 | Phase 4 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 20 total (19 original + RESTORE-01 added during roadmap creation)
 - Mapped to phases: 20
 - Unmapped: 0 ✓
