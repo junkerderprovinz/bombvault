@@ -3716,13 +3716,13 @@ type CustomPath struct {
 
 // ContainerMounts returns the container's bind mounts annotated for the folder
 // selector, plus any selected custom paths (in host form) that do not match a
-// current mount, each flagged with whether it still exists. The selection is the
-// stored explicit choice, or the automatic appdata default when none is
-// configured.
-func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []CustomPath, error) {
+// current mount, each flagged with whether it still exists, plus the stored
+// exclusions in host form. The selection is the stored explicit choice, or the
+// automatic appdata default when none is configured.
+func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []CustomPath, []string, error) {
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
-		return nil, nil, fmt.Errorf("inspect container: %w", err)
+		return nil, nil, nil, fmt.Errorf("inspect container: %w", err)
 	}
 
 	auto := s.resolveAppdataPaths(name, in)
@@ -3731,7 +3731,25 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 	if len(effective) == 0 {
 		effective = auto
 	}
-	selSet := sliceSet(effective)
+	// Split the entry classes BEFORE anything consumes the list (01-RESEARCH.md
+	// R4, Pitfall 3): includes drive Selected, the auto fallback above and the
+	// custom loop below; a raw "!-prefixed entry fed to any of them would
+	// render as a phantom custom path with Exists:false — toHostPath passes the
+	// prefixed container path through unchanged, so the UI would show a stale
+	// /host/... entry that backs up nothing. The split decodes via
+	// SplitExclusion so the prefix semantics stay owned by selection.go (D-02).
+	// The auto-detection fallback above deliberately stays keyed on the RAW
+	// list: an exclusions-only selection is the explicit-none state (L4), not
+	// a missing selection, so it must never fall back to auto.
+	var includes, exclCPs []string
+	for _, e := range effective {
+		if bare, excluded := SplitExclusion(e); excluded {
+			exclCPs = append(exclCPs, bare)
+		} else {
+			includes = append(includes, bare)
+		}
+	}
+	selSet := sliceSet(includes)
 	autoSet := sliceSet(auto)
 
 	matched := map[string]bool{}
@@ -3753,14 +3771,24 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 	// Custom = selected paths with no matching current mount, shown in host form.
 	// Flag each with whether it still exists under the host mount so the UI can
 	// distinguish a real selected folder from a stale/phantom one (issue #115).
+	// Includes only — exclusions are deliberate state, not stale entries, and
+	// belong in the excluded return below.
 	var custom []CustomPath
-	for _, cp := range effective {
+	for _, cp := range includes {
 		if !matched[cp] {
 			_, statErr := os.Stat(cp) //nolint:gosec // G703: cp is a stored container path already validated under the mount root on save, not raw user input
 			custom = append(custom, CustomPath{Path: s.toHostPath(cp), Exists: statErr == nil})
 		}
 	}
-	return mounts, custom, nil
+
+	// Exclusions are first-class reviewable state (the read side of INTEG-04):
+	// surface them separately, in host form — the form the caller submitted —
+	// so the UI can show what was deliberately deselected after the fact.
+	excluded := make([]string, 0, len(exclCPs))
+	for _, cp := range exclCPs {
+		excluded = append(excluded, s.toHostPath(cp))
+	}
+	return mounts, custom, excluded, nil
 }
 
 // SetBackupPaths stores the user's explicit backup-folder selection for a

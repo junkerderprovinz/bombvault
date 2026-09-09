@@ -1279,14 +1279,16 @@ func (h *Handler) handleSetVmBackupOrder(w http.ResponseWriter, r *http.Request)
 }
 
 // handleContainerMounts lists a container's bind mounts (annotated with the
-// current selection) for the backup-folder selector.
+// current selection) for the backup-folder selector. Stored exclusions come
+// back additively in a top-level excluded array (host form) — never mixed into
+// custom as stale paths (INTEG-04 read side).
 // GET /api/containers/{name}/mounts
 func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
 		return
 	}
-	mounts, custom, err := h.svc.ContainerMounts(r.Context(), name)
+	mounts, custom, excluded, err := h.svc.ContainerMounts(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1297,11 +1299,15 @@ func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) 
 	if custom == nil {
 		custom = []CustomPath{}
 	}
+	if excluded == nil {
+		excluded = []string{}
+	}
 	// hostMountRoot/hostSourceRoot let the folder picker translate a browsed path
 	// (relative to the host mount) back to the host path SetBackupPaths expects.
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"mounts":         mounts,
 		"custom":         custom,
+		"excluded":       excluded,
 		"hostMountRoot":  h.cfg.HostMountRoot,
 		"hostSourceRoot": h.cfg.HostSourceRoot,
 	}))

@@ -542,7 +542,7 @@ func TestContainerMountsNoPhantomAppdata(t *testing.T) {
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/stateless", Image: "x:latest"}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 
-	mounts, custom, err := svc.ContainerMounts(context.Background(), "stateless")
+	mounts, custom, _, err := svc.ContainerMounts(context.Background(), "stateless")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2104,7 +2104,7 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	ctx := context.Background()
 
 	// Default selection: appdata selected, media not, localtime unreachable.
-	mounts, custom, err := svc.ContainerMounts(ctx, "plex")
+	mounts, custom, _, err := svc.ContainerMounts(ctx, "plex")
 	if err != nil {
 		t.Fatalf("ContainerMounts: %v", err)
 	}
@@ -2129,7 +2129,7 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	if err := svc.SetBackupPaths(ctx, "plex", []string{appdataHost, mediaHost}); err != nil {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
-	mounts, _, _ = svc.ContainerMounts(ctx, "plex")
+	mounts, _, _, _ = svc.ContainerMounts(ctx, "plex")
 	for _, m := range mounts {
 		if m.Dest == "/media" && !m.Selected {
 			t.Fatal("media should be selected after SetBackupPaths")
@@ -2372,7 +2372,7 @@ func TestContainerMountsFlagsMissingCustomPath(t *testing.T) {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
 
-	_, custom, err := svc.ContainerMounts(ctx, "app")
+	_, custom, _, err := svc.ContainerMounts(ctx, "app")
 	if err != nil {
 		t.Fatalf("ContainerMounts: %v", err)
 	}
