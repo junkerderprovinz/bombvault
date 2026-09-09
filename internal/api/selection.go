@@ -131,6 +131,80 @@ func includesOnly(entries []string) []string {
 	return out
 }
 
+// mapRestorePaths intersects the stored selection (the positional truth
+// recorded at backup time, tg.AppdataPaths) with the CHOSEN snapshot's
+// recorded Paths, producing the restore selector list plus the stored paths
+// that could not be mapped. RESTORE-01: the stored list must never be replayed
+// verbatim as restore selectors — restic's `restore <id>:<path>` selector must
+// come from the snapshot's Paths (restic.go RestoreSubtreeToArgs doc), so a
+// selection reshaped since the snapshot was taken would miss and fail the
+// restore mid-loop AFTER the container has been stopped and removed. Mapping
+// resolves that here, synchronously, before anything destructive.
+//
+// The returned mapped list is in SNAPSHOT-path form. Deterministic two-pass
+// semantics (01-RESEARCH R5):
+//
+//	pass 1 — every snapshot path q (in the snapshot's own Paths order) that
+//	         equals or lies strictly below some stored path p is restored
+//	         as-is: a snapshot path inside a stored root is exactly what the
+//	         user backed up, and is a valid selector;
+//	pass 2 — every stored path p not already covered by pass 1 falls back to
+//	         the LONGEST snapshot path q that is a strict ancestor of p
+//	         (restoring q's subtree covers p) — longest, never
+//	         first-component (RESTORE-01), appended only if not already
+//	         present; a stored path matching neither clause lands in skipped.
+//
+// skipped is reported to the caller (scrubbed log + run-record note); a skip
+// never aborts the restore — only an empty intersection does, and that check
+// is the caller's (it needs the explicit nothing-to-restore error shape).
+//
+// Pure: no receiver, no store access, no cfg. Containers call it today;
+// File Sets reuse it in Phase 4 (01-CONTEXT.md restore Q1/D-13). The
+// strict-prefix primitive is isStrictDescendant — the same segment-aligned
+// shape as internal/paths.Resolve (paths.go:44-48), so /a never matches /ab.
+func mapRestorePaths(stored, snapshotPaths []string) (mapped, skipped []string) {
+	mapped = make([]string, 0, len(snapshotPaths))
+	skipped = make([]string, 0, len(stored))
+	covered := make(map[string]bool, len(stored)) // stored paths pass 1 already satisfied
+	for _, q := range snapshotPaths {
+		for _, p := range stored {
+			if q == p || isStrictDescendant(q, p) {
+				mapped = append(mapped, q)
+				covered[p] = true
+				break
+			}
+		}
+	}
+	for _, p := range stored {
+		if covered[p] {
+			continue
+		}
+		best := ""
+		for _, q := range snapshotPaths {
+			// Strict ancestors of p form a prefix chain, so "longest" is also a
+			// tiebreak-free total order — first-strictly-longer always wins.
+			if isStrictDescendant(p, q) && len(q) > len(best) {
+				best = q
+			}
+		}
+		if best == "" {
+			skipped = append(skipped, p)
+			continue
+		}
+		seen := false
+		for _, m := range mapped {
+			if m == best {
+				seen = true
+				break
+			}
+		}
+		if !seen {
+			mapped = append(mapped, best)
+		}
+	}
+	return mapped, skipped
+}
+
 // dedupe removes exact duplicates, preserving first-occurrence order.
 func dedupe(xs []string) []string {
 	seen := make(map[string]bool, len(xs))

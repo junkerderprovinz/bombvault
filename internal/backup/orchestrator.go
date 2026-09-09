@@ -261,6 +261,13 @@ type RestoreDeps struct {
 	// destination dir on THIS host, instead of restoring AppdataPaths in place.
 	// Empty = the historical in-place restore via AppdataPaths.
 	RestoreDirs []RestoreDir
+	// SkippedPaths carries the stored paths that had NO mapping in the chosen
+	// snapshot (RESTORE-01): they are not restored, and when non-empty the
+	// success run record gains a bounded, scrubbed note about them instead of a
+	// mid-restore abort (mapping and failure resolution happen in the service's
+	// synchronous prepare phase, before the destructive Stop/Remove). The zero
+	// value changes nothing.
+	SkippedPaths []string
 	// TemplateXML is the captured template flashed back on restore.
 	TemplateXML string
 	// FlashTemplatesDir is where the live Unraid templates live.

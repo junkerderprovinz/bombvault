@@ -5274,8 +5274,12 @@ type containerRestorePlan struct {
 	targetID     string
 	snapshotID   string
 	recreateOnly bool
-	appdataPaths []string            // restored per-path back to origin (nil = recreate-only)
+	appdataPaths []string            // restored per-path back to origin, in SNAPSHOT-path form (nil = recreate-only)
 	restoreDirs  []backup.RestoreDir // cross-pool remap: Subtree->Target; empty = in-place via appdataPaths
+	// skippedPaths carries stored paths that had no mapping in the chosen
+	// snapshot (RESTORE-01): they are skipped individually — scrubbed log +
+	// orchestrator run-record note — never a global abort.
+	skippedPaths []string
 	inspect      model.Inspect
 	templateXML  string
 }
@@ -5412,6 +5416,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	appdataForRestore := tg.AppdataPaths
 	var restoreDirs []backup.RestoreDir
 	var bindRemap map[string]string
+	var planSkipped []string
 	if recreateOnly {
 		appdataForRestore = nil
 	} else {
@@ -5424,6 +5429,27 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 				return containerRestorePlan{}, errors.New("a stored backup path is outside the host mount, so refusing to restore")
 			}
 		}
+		// RESTORE-01: map the stored selection onto THIS snapshot's recorded Paths
+		// (longest-prefix) BEFORE anything destructive. The stored list is the
+		// selection as of the LATEST backup; the chosen snapshot may be an older
+		// one whose Paths hold a different shape. Replaying the stored list
+		// verbatim used to fail the restore mid-loop at the adapter — AFTER this
+		// function's caller had already stopped and removed the container. All
+		// failure resolution happens here, in the synchronous prepare phase: the
+		// orchestrator only ever receives a mapped, snapshot-path-form list.
+		chosen := chosenSnapshot(snaps, snapshotID)
+		mapped, skipped := mapRestorePaths(tg.AppdataPaths, chosen.Paths)
+		if len(tg.AppdataPaths) > 0 && len(mapped) == 0 {
+			return containerRestorePlan{}, errors.New("nothing to restore for this item from this snapshot")
+		}
+		if len(skipped) > 0 {
+			// Per-path skip (D-14): an orphan stored path is never fatal. The
+			// reason is scrubbed (paths → [path] FIRST, house order) and the
+			// skips flow to the run record via RestoreDeps.SkippedPaths below.
+			log.Printf("api: restore: %d stored path(s) absent from snapshot %s, skipping: %s", len(skipped), snapshotID, scrubSecrets(strings.Join(skipped, ", "))) //nolint:gosec // G706: paths scrubbed to [path] before the formatter sees them
+		}
+		appdataForRestore = mapped
+		planSkipped = skipped
 		// Cross-instance / cross-pool remap (destBase set: foreign restore, #123/#125).
 		// A foreign recipe carries the SOURCE host's absolute appdata paths; if this
 		// host lacks that pool the in-place write would land in an unmounted dir under
@@ -5503,6 +5529,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		recreateOnly: recreateOnly,
 		appdataPaths: appdataForRestore,
 		restoreDirs:  restoreDirs,
+		skippedPaths: planSkipped,
 		inspect:      in,
 		templateXML:  xml,
 	}, nil
@@ -5546,8 +5573,9 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		ContainerName:     name,
 		RepoPath:          plan.repo,
 		SnapshotID:        plan.snapshotID,
-		AppdataPaths:      plan.appdataPaths, // restored per-path back to origin (nil = recreate-only)
+		AppdataPaths:      plan.appdataPaths, // restored per-path back to origin, snapshot-path form (nil = recreate-only)
 		RestoreDirs:       plan.restoreDirs,  // cross-pool remap (foreign restore); empty = in-place
+		SkippedPaths:      plan.skippedPaths, // RESTORE-01: unmapped stored paths → run-record note, never an abort
 		TemplateXML:       plan.templateXML,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           plan.inspect,
@@ -6428,6 +6456,21 @@ func snapshotBelongs(snaps []restic.Snapshot, id string) bool {
 		}
 	}
 	return false
+}
+
+// chosenSnapshot returns the snapshot in snaps matching id (exact or
+// unambiguous prefix, like snapshotBelongs/snapshotSubtree), or nil when there
+// is no match. It is how the RESTORE-01 mapping gets at the chosen snapshot's
+// full recorded Paths — the mapping source of truth for which selectors are
+// valid in THIS snapshot (a recompute from the stored list would miss after the
+// selection changed).
+func chosenSnapshot(snaps []restic.Snapshot, id string) *restic.Snapshot {
+	for i := range snaps {
+		if snaps[i].ID == id || strings.HasPrefix(snaps[i].ID, id) {
+			return &snaps[i]
+		}
+	}
+	return nil
 }
 
 // snapshotSubtree returns the first backed-up path (Paths[0]) of the snapshot in
