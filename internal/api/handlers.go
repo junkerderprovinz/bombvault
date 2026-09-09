@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"mime"
 	"net"
@@ -2937,13 +2938,6 @@ type browseDirEntry struct {
 	Path string `json:"path"` // relative to HostMountRoot (e.g. "appdata/plex")
 }
 
-// handleBrowse serves GET /api/browse?path=<subpath>.
-// It lists the immediate subdirectories of <HostMountRoot>/<subpath>,
-// excluding hidden entries (dot-prefixed names), sorted alphabetically.
-//
-// The response is always HTTP 200; errors use {ok:false,error} so the UI can
-// display a graceful message. A missing or empty `path` query parameter lists
-// the mount root itself.
 // ---------------------------------------------------------------------------
 // Authentication
 // ---------------------------------------------------------------------------
@@ -4140,21 +4134,56 @@ func (h *Handler) handleVMSSHTest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// classifyReadDirError maps a browse read failure to the additive per-listing
+// `status` KIND (BROWSE-02, threat T-01-08): the status carries the error
+// CLASS and never the path, so the wire keeps the generic scrubbed "could not
+// read directory" message while the tree can still tell a vanished node
+// ("missing") from an unreadable one ("restricted"). errors.Is on the
+// *fs.PathError, not text matching — error text breaks across platforms and
+// locales. Anything else, including an os.Root escape rejection, lands in the
+// opaque "error" bucket on purpose: an attempted escape must be
+// indistinguishable from any other failure on the wire.
+func classifyReadDirError(err error) string {
+	switch {
+	case errors.Is(err, fs.ErrPermission):
+		return "restricted"
+	case errors.Is(err, fs.ErrNotExist):
+		return "missing"
+	default:
+		return "error"
+	}
+}
+
+// handleBrowse serves GET /api/browse?path=<subpath>.
+// It lists the immediate subdirectories of <HostMountRoot>/<subpath>,
+// excluding hidden entries (dot-prefixed names), sorted alphabetically.
+//
+// Containment is two-layered (BROWSE-03): paths.Resolve is the cheap lexical
+// first reject (its rejection response is byte-identical to the pre-Root
+// handler and carries NO status field — the FolderBrowser contract), then
+// os.OpenRoot/Root.Open (Go 1.24+ stdlib) enforces the same boundary in the
+// kernel, so a symlink planted inside the mount root cannot be listed through
+// to a location outside it. Every read outcome — success, empty, missing,
+// restricted, failed — lands in the HTTP 200 envelope carrying a "status"
+// kind; empty + status:"ok" is the real-empty signal.
+//
+// The response is always HTTP 200; errors use {ok:false,error,status} so the
+// UI can display a graceful message. A missing or empty `path` query parameter
+// lists the mount root itself.
 func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	subpath := r.URL.Query().Get("path")
 
-	// Resolve the absolute path to read.
-	// An empty subpath lists the mount root itself — paths.Resolve requires a
-	// non-empty child (strict containment), so we use the root directly.
-	var abs string
-	if subpath == "" {
-		abs = h.cfg.HostMountRoot
-	} else {
-		var err error
-		abs, err = paths.Resolve(h.cfg.HostMountRoot, subpath)
-		if err != nil {
+	// Lexical containment check. An empty subpath lists the mount root itself —
+	// paths.Resolve requires a non-empty child (strict containment). Only the
+	// verdict is used here; Root.Open below does the actual resolution, so the
+	// resolved absolute is no longer needed.
+	if subpath != "" {
+		if _, err := paths.Resolve(h.cfg.HostMountRoot, subpath); err != nil {
 			// paths.Resolve returns ErrTraversal or ErrAbsoluteSub — neither
 			// leaks host paths; report a generic message for defense-in-depth.
+			// Deliberately no "status" field: this rejection response stays
+			// byte-identical to the pre-Root handler (contract drift on an
+			// untouched branch would break the existing FolderBrowser tests).
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":    false,
 				"error": "invalid path: must be a relative subpath under the mount root",
@@ -4163,12 +4192,49 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	entries, err := os.ReadDir(abs)
+	// os.Root containment (BROWSE-03, threat T-01-05): paths.Resolve above is
+	// purely lexical and cannot see a symlink created INSIDE the mount root
+	// that points outside it, but os.Root re-checks every component against
+	// the root at open time — "symbolic links may not reference a location
+	// outside the root" (stdlib contract). One fd per request, closed on
+	// return; goroutine-safe per the stdlib docs.
+	root, err := os.OpenRoot(h.cfg.HostMountRoot)
 	if err != nil {
-		log.Printf("api: browse: ReadDir %q: %v", abs, err) //nolint:gosec // G706: abs is always either cfg.HostMountRoot or a Resolve-validated child path; no raw user bytes reach the log formatter
+		log.Printf("api: browse: OpenRoot: %v", err)
 		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":    false,
-			"error": "could not read directory",
+			"ok":     false,
+			"error":  "could not read directory",
+			"status": classifyReadDirError(err),
+		})
+		return
+	}
+	defer root.Close()
+
+	// An empty subpath opens the root itself — "." is the root directory's own
+	// name under the Root naming contract.
+	rel := subpath
+	if rel == "" {
+		rel = "."
+	}
+	f, err := root.Open(rel)
+	if err != nil {
+		log.Printf("api: browse: open %q: %v", rel, err) //nolint:gosec // G706: rel is always "." or a paths.Resolve-validated subpath; no raw user bytes reach the log formatter
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":     false,
+			"error":  "could not read directory",
+			"status": classifyReadDirError(err),
+		})
+		return
+	}
+	defer f.Close()
+
+	entries, err := f.ReadDir(-1)
+	if err != nil {
+		log.Printf("api: browse: ReadDir %q: %v", rel, err) //nolint:gosec // G706: rel is always "." or a paths.Resolve-validated subpath; no raw user bytes reach the log formatter
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":     false,
+			"error":  "could not read directory",
+			"status": classifyReadDirError(err),
 		})
 		return
 	}
@@ -4183,24 +4249,25 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 			continue // skip hidden entries
 		}
 		// Build the relative path from HostMountRoot to this entry.
-		var rel string
+		var entryPath string
 		if subpath == "" {
-			rel = name
+			entryPath = name
 		} else {
-			rel = subpath + "/" + name
+			entryPath = subpath + "/" + name
 		}
-		dirs = append(dirs, browseDirEntry{Name: name, Path: rel})
+		dirs = append(dirs, browseDirEntry{Name: name, Path: entryPath})
 	}
 
-	// os.ReadDir returns entries in directory order (usually alphabetical on
+	// ReadDir(-1) returns entries in directory order (usually alphabetical on
 	// most filesystems), but sort explicitly to guarantee it.
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name < dirs[j].Name })
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":   true,
-		"root": h.cfg.HostMountRoot,
-		"path": subpath,
-		"dirs": dirs,
+		"ok":     true,
+		"root":   h.cfg.HostMountRoot,
+		"path":   subpath,
+		"dirs":   dirs,
+		"status": "ok",
 	})
 }
 
