@@ -30,7 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Existing deployments' saved `backupPaths` keep working with zero migration, and an empty list still means exactly "auto-detection" at the persistence boundary — no silent semantic drift
   4. Listing a tree node's children is a cheap per-node call that distinguishes "empty directory" from "unreadable directory" (scrubbed messages), never escapes its root boundary even through symlinks, and agrees with the existing folder browser on hidden entries
   5. Restoring an older snapshot after the user reshaped their selection completes instead of aborting mid-restore after destructive teardown; restore maps by the chosen snapshot's recorded `Paths` (longest-prefix), not by the current selection
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Selection encoding keystone: `selection.go` pure helpers + normalized `SetBackupPaths` + reader classification + maximal-include restic positionals (SELECT-01, SELECT-02, SELECT-04)
+- [ ] 01-02-PLAN.md — Browse node-listing contract: os.Root containment, status trio, cap+truncated, hidden opt-in (BROWSE-01..04)
+- [ ] 01-03-PLAN.md — Restore hardening: longest-prefix mapping against the chosen snapshot's Paths, pre-teardown abort, restic 0.17 spot-checks (RESTORE-01)
+- [ ] 01-04-PLAN.md — Exclusion visibility + empty-selection guard (INTEG-04 backend) + PROJECT.md Key Decisions
 
 **Notes**: Research flag: none — fully specified by `.planning/research/SUMMARY.md` (its Phase 1–3 merged here). During this phase, log the positional-targets Key Decision and the future-children allowlist semantic in PROJECT.md. The empty-selection PATCH-boundary guard (backend half of INTEG-04) lands here; INTEG-04 completes with documented UI semantics in Phase 3.
 
@@ -85,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Selection Engine & Restore Safety | 0/TBD | Not started | - |
+| 1. Selection Engine & Restore Safety | 0/4 | Not started | - |
 | 2. Container Panel Tree Selection | 0/TBD | Not started | - |
 | 3. Selection Trust & Controls | 0/TBD | Not started | - |
 | 4. File Sets Parity | 0/TBD | Not started | - |
