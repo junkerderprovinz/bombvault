@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -23,8 +25,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
+	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
@@ -2143,6 +2147,97 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}
 	if !contains(eng.lastPaths, mediaCP) {
 		t.Fatalf("selected media not backed up: %v", eng.lastPaths)
+	}
+}
+
+// TestSetBackupPathsMixedSelectionRoundTrip drives the REAL router end to end:
+// PATCH a mixed host-path selection (includes + "!"-exclusions) and require the
+// stored target to carry the normalized container-form list — maximal roots,
+// bare includes, prefixed exclusions, canonical order (SELECT-01). The two
+// legacy shapes are pinned in the same test: a prefix-free list round-trips as
+// all-includes (no "!" invented, still normalized for maximality), and []
+// persists as [] (the auto-detect boundary untouched — SELECT-02, zero
+// migration). Run for both root configs, mirroring paths.go's
+// split-root/identity-root framing.
+func TestSetBackupPathsMixedSelectionRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	for _, tc := range []struct {
+		name       string
+		sourceRoot string
+	}{
+		{"split-root", "/mnt"},
+		{"identity-root", root},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.Config{
+				AppKey: strings.Repeat("a", 64), DataDir: dir,
+				HostMountRoot: root, HostSourceRoot: tc.sourceRoot,
+			}
+			st := newMemStore(t)
+			d := &fakeServiceDocker{}
+			svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+			sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+			h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+			// Host paths: the plex appdata root, a config subfolder (redundant
+			// once the root is included), and the transcoding branch the user
+			// deselected (its cache subfolder redundant once the branch is).
+			hostPlex := tc.sourceRoot + "/user/appdata/plex"
+			body := func(paths []string) string {
+				b, err := json.Marshal(map[string][]string{"backupPaths": paths})
+				if err != nil {
+					t.Fatal(err)
+				}
+				return string(b)
+			}
+
+			// Mixed selection → normalized maximal-root form, exclusions prefixed.
+			_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", body([]string{
+				hostPlex,
+				hostPlex + "/config",
+				"!" + hostPlex + "/transcoding",
+				"!" + hostPlex + "/transcoding/cache",
+			}))
+			if m["ok"] != true {
+				t.Fatalf("mixed PATCH must save, got %v", m)
+			}
+			tg, err := st.GetTargetByContainer("plex")
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []string{root + "/user/appdata/plex", "!" + root + "/user/appdata/plex/transcoding"}
+			if !reflect.DeepEqual(tg.SelectedPaths, want) {
+				t.Fatalf("stored selection = %v, want %v (container-form maximal roots + prefixed exclusions)", tg.SelectedPaths, want)
+			}
+
+			// Legacy prefix-free list: stored as all-includes, still normalized.
+			_, m = doJSON(t, h, http.MethodPatch, "/api/containers/plex", body([]string{hostPlex, hostPlex + "/config"}))
+			if m["ok"] != true {
+				t.Fatalf("legacy PATCH must save, got %v", m)
+			}
+			tg, err = st.GetTargetByContainer("plex")
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantLegacy := []string{root + "/user/appdata/plex"}
+			if !reflect.DeepEqual(tg.SelectedPaths, wantLegacy) {
+				t.Fatalf("legacy stored selection = %v, want %v (all-includes, no prefix invented)", tg.SelectedPaths, wantLegacy)
+			}
+
+			// [] persists as [] — the auto-detection boundary, byte-identical.
+			_, m = doJSON(t, h, http.MethodPatch, "/api/containers/plex", body([]string{}))
+			if m["ok"] != true {
+				t.Fatalf("empty PATCH must save, got %v", m)
+			}
+			tg, err = st.GetTargetByContainer("plex")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(tg.SelectedPaths) != 0 {
+				t.Fatalf("empty PATCH must persist [] (auto-detect), got %v", tg.SelectedPaths)
+			}
+		})
 	}
 }
 
