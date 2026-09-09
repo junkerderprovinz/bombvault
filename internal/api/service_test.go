@@ -3862,7 +3862,13 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	// The snapshot must exist for the restore preflight (VerifySnapshot) to pass,
 	// and carry the ownership tag every backup writes, since Restore now verifies
 	// an explicit snapshot id belongs to the container BEFORE anything runs.
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "deadbeef", Tags: []string{"container:Pingvin-Share-X"}}}}
+	// Paths mirrors a real backup's recorded positional (RESTORE-01 maps the
+	// stored selection against the chosen snapshot's Paths).
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{
+		ID:    "deadbeef",
+		Tags:  []string{"container:Pingvin-Share-X"},
+		Paths: []string{"/host/user/user/appdata/pingvin_share_x"},
+	}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
