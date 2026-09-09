@@ -2241,6 +2241,108 @@ func TestSetBackupPathsMixedSelectionRoundTrip(t *testing.T) {
 	}
 }
 
+// TestBackupNarrowedSelectionUsesMaximalIncludes pins success criterion 2:
+// after a narrowed tree selection (whole mount kept, one branch deselected), a
+// backup hands restic EXACTLY the maximal-root container-form includes as
+// positionals and derives ZERO exclude flags from the selection. The selection
+// compiles to positionals only (locked L1/L14: restic excludes do not apply to
+// positional sources, so exclude-encoding the deselection would silently
+// back the branch up anyway).
+func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// The excluded branch EXISTS on disk — the maximal-root include must still
+	// be the only positional (narrowing is the selection's job, not the
+	// existence filter's).
+	for _, p := range []string{root + "/user/appdata/plex/config", root + "/user/appdata/plex/transcoding"} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Narrow: the whole appdata mount kept, the transcoding branch deselected.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{
+		"/mnt/user/appdata/plex", "!/mnt/user/appdata/plex/transcoding",
+	}); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if _, err := svc.Backup(ctx, "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	wantPaths := []string{root + "/user/appdata/plex"}
+	if !reflect.DeepEqual(eng.lastPaths, wantPaths) {
+		t.Fatalf("restic positionals = %v, want %v (maximal-root includes only)", eng.lastPaths, wantPaths)
+	}
+	if len(eng.lastExcludes) != 0 {
+		t.Fatalf("the selection must never derive restic --exclude flags, got %v", eng.lastExcludes)
+	}
+}
+
+// TestBackupPathsExclusionsOnlyIsNotRefused pins the explicit-none semantics
+// (01-CONTEXT.md encoding Q3): an exclusions-only stored selection is the user
+// saying "back up nothing of this container on purpose" — NOT a vanished share
+// — so the #181 guard must let it through and the run proceeds definition-only
+// via the existing empty-AppdataPaths orchestrator path. Before the
+// classification this container was refused as "not reachable" forever
+// (01-RESEARCH.md Pitfall 2).
+func TestBackupPathsExclusionsOnlyIsNotRefused(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Everything deselected: the stored list is non-empty (explicit) but holds
+	// zero includes.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"!/mnt/user/appdata/plex"}); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	sum, err := svc.Backup(ctx, "plex")
+	if err != nil {
+		t.Fatalf("an explicitly deselected container must not be refused as not reachable: %v", err)
+	}
+	if sum.SnapshotID != "" || len(eng.backedUp) != 0 {
+		t.Fatalf("expected a definition-only backup (no restic), got sum=%+v calls=%d", sum, len(eng.backedUp))
+	}
+}
+
 // TestContainerMountsFlagsMissingCustomPath verifies the #115 flag: a stored
 // custom selection whose folder no longer exists under the host mount is returned
 // with Exists=false (so the UI can say "no data folder detected"), while an
