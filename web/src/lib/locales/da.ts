@@ -586,7 +586,7 @@ const da: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Sikkerhedskopierede mapper",
-  "folders.hint": "Vælg hvilke af denne containers tilknyttede mapper der skal sikkerhedskopieres. appdata-mappen er valgt som standard. Sæt flueben ved andre for at inkludere dem, eller tilføj en brugerdefineret sti under host-monteringen. Fjernes alle flueben, vendes der tilbage til den automatiske appdata-standard.",
+  "folders.hint": "Vælg hvilke af denne containers tilknyttede mapper der skal sikkerhedskopieres. appdata-mappen er valgt som standard. Sæt flueben ved andre for at inkludere dem, eller tilføj en brugerdefineret sti under host-monteringen. At fjerne alle flueben er blokeret; brug Nulstil valg for at vende tilbage til den automatiske appdata-standard.",
   "folders.appdataDefault": "appdata (standard)",
   "folders.stackNote":
     "Denne container hører til Compose-stakken {stack}. Projektmappen sikkerhedskopieres én gang for hele stakken, ikke én gang pr. tjeneste, og står derfor ikke her.",
@@ -601,10 +601,12 @@ const da: Partial<Translations> = {
   "folders.treeLabel": "Valg af sikkerhedskopimapper",
   "folders.truncatedList": "Første 500 poster vist",
   "folders.retry": "Prøv igen",
-  "folders.emptySelectionBlocked": "Der skal være valgt mindst én mappe. For slet ikke at sikkerhedskopiere denne container skal du slå Inkluder i tidsplan fra.",
+  "folders.emptySelectionBlocked": "Der skal være valgt mindst én mappe. For slet ikke at sikkerhedskopiere denne container skal du slå Inkluder i tidsplan fra. For at vende tilbage til automatisk registrering skal du bruge Nulstil valg.",
   "folders.previewPaths": "{n} stier",
   "folders.exclusions": "{n} udeladelser",
-
+  "folders.resetSelection": "Nulstil valg",
+  "folders.resetConfirm": "Nulstil mappevalget? Containeren vender tilbage til automatisk registrering (appdata-standard), og alle huskede udeladelser fjernes.",
+  "folders.narrowedNote": "Valget dækker nu færre mapper end før. Fra den næste sikkerhedskopi og fremefter indeholder snapshots kun de valgte mapper. Eksisterende snapshots er uændrede.",
   // Notifications
   "notify.title": "Notifikationer",
   "notify.hint": "Bliv underrettet, når en sikkerhedskopi er færdig, og vælg nedenfor hvilke hændelser der udløser det. Unraid-notifikationer virker allerede i Enkel tilstand; flere leveringskanaler (webhook, Matrix, Healthchecks, e-mail) findes under Avanceret.",

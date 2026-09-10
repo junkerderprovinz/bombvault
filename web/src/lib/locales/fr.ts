@@ -586,7 +586,7 @@ const fr: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Dossiers à sauvegarder",
-  "folders.hint": "Choisissez quels dossiers mappés de ce conteneur sauvegarder. Le dossier appdata est sélectionné par défaut. Cochez-en d'autres pour les inclure, ou ajoutez un chemin personnalisé sous le montage de l'hôte. Tout décocher revient au comportement automatique du dossier appdata.",
+  "folders.hint": "Choisissez quels dossiers mappés de ce conteneur sauvegarder. Le dossier appdata est sélectionné par défaut. Cochez-en d'autres pour les inclure, ou ajoutez un chemin personnalisé sous le montage de l'hôte. Tout décocher est bloqué ; utilise Réinitialiser la sélection pour revenir au comportement automatique du dossier appdata.",
   "folders.appdataDefault": "appdata (par défaut)",
   "folders.stackNote":
     "Ce conteneur appartient à la pile Compose {stack}. Son dossier de projet est sauvegardé une fois pour toute la pile, et non une fois par service, il n'apparaît donc pas ici.",
@@ -601,10 +601,12 @@ const fr: Partial<Translations> = {
   "folders.treeLabel": "Sélection des dossiers de sauvegarde",
   "folders.truncatedList": "Les 500 premières entrées sont affichées",
   "folders.retry": "Réessayer",
-  "folders.emptySelectionBlocked": "Au moins un dossier doit rester sélectionné. Pour ne sauvegarder aucun élément de ce conteneur, désactive son inclusion dans le planning.",
+  "folders.emptySelectionBlocked": "Au moins un dossier doit rester sélectionné. Pour ne sauvegarder aucun élément de ce conteneur, désactive son inclusion dans le planning. Pour revenir à la détection automatique, utilise Réinitialiser la sélection.",
   "folders.previewPaths": "{n} chemins",
   "folders.exclusions": "{n} exclusions",
-
+  "folders.resetSelection": "Réinitialiser la sélection",
+  "folders.resetConfirm": "Réinitialiser la sélection des dossiers ? Le conteneur revient à la détection automatique (appdata par défaut) et toutes les exclusions mémorisées sont supprimées.",
+  "folders.narrowedNote": "La sélection couvre désormais moins de dossiers qu'avant. À partir de la prochaine sauvegarde, les instantanés ne contiendront que les dossiers sélectionnés. Les instantanés existants restent inchangés.",
   // Notifications
   "notify.title": "Notifications",
   "notify.hint": "Soyez averti à la fin d'une sauvegarde, et choisissez ci-dessous les événements qui le déclenchent. Les notifications Unraid fonctionnent déjà en mode Simple ; d'autres canaux de diffusion (webhook, Matrix, Healthchecks, e-mail) se trouvent dans Avancé.",

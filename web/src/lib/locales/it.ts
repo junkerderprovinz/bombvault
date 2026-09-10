@@ -586,7 +586,7 @@ const it: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Cartelle da salvare",
-  "folders.hint": "Scegli quali cartelle mappate di questo contenitore salvare. La cartella appdata è selezionata per impostazione predefinita. Spunta le altre per includerle, oppure aggiungi un percorso personalizzato sotto il mount dell'host. Deselezionando tutto si torna al valore automatico di appdata.",
+  "folders.hint": "Scegli quali cartelle mappate di questo contenitore salvare. La cartella appdata è selezionata per impostazione predefinita. Spunta le altre per includerle, oppure aggiungi un percorso personalizzato sotto il mount dell'host. Deselezionare tutto è bloccato; usa Azzera selezione per tornare al valore automatico di appdata.",
   "folders.appdataDefault": "appdata (predefinita)",
   "folders.stackNote":
     "Questo contenitore appartiene allo stack Compose {stack}. La cartella del progetto viene salvata una volta per l'intero stack, non una per servizio, quindi non compare qui.",
@@ -601,10 +601,12 @@ const it: Partial<Translations> = {
   "folders.treeLabel": "Selezione delle cartelle di backup",
   "folders.truncatedList": "Mostrate le prime 500 voci",
   "folders.retry": "Riprova",
-  "folders.emptySelectionBlocked": "Almeno una cartella deve rimanere selezionata. Per non eseguire il backup di nulla di questo contenitore, disattiva l'inclusione nel calendario.",
+  "folders.emptySelectionBlocked": "Almeno una cartella deve rimanere selezionata. Per non eseguire il backup di nulla di questo contenitore, disattiva l'inclusione nel calendario. Per tornare al rilevamento automatico, usa Azzera selezione.",
   "folders.previewPaths": "{n} percorsi",
   "folders.exclusions": "{n} esclusioni",
-
+  "folders.resetSelection": "Azzera selezione",
+  "folders.resetConfirm": "Azzerare la selezione delle cartelle? Il contenitore torna al rilevamento automatico (appdata predefinita) e tutte le esclusioni memorizzate vengono rimosse.",
+  "folders.narrowedNote": "La selezione ora comprende meno cartelle di prima. Dal prossimo backup in poi, le istantanee conterranno solo le cartelle selezionate. Le istantanee esistenti restano invariate.",
   // Notifications
   "notify.title": "Notifiche",
   "notify.hint": "Ricevi una notifica al termine di un backup e scegli qui sotto quali eventi la attivano. Le notifiche Unraid funzionano già in modalità Semplice; altri canali di consegna (webhook, Matrix, Healthchecks, email) si trovano in Avanzate.",

@@ -586,7 +586,7 @@ const hu: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Mentett mappák",
-  "folders.hint": "Válaszd ki, hogy a konténer leképezett mappái közül melyeket szeretnéd menteni. Az appdata mappa alapértelmezetten ki van jelölve. Pipáld ki a többit a felvételhez, vagy adj hozzá egyéni elérési utat a gazdagép csatolásán belül. Ha mindent kiveszel, visszaáll az automatikus appdata alapértelmezés.",
+  "folders.hint": "Válaszd ki, hogy a konténer leképezett mappái közül melyeket szeretnéd menteni. Az appdata mappa alapértelmezetten ki van jelölve. Pipáld ki a többit a felvételhez, vagy adj hozzá egyéni elérési utat a gazdagép csatolásán belül. Minden kijelölés megszüntetése tiltott; az automatikus appdata alapértelmezéshez a Kijelölés visszaállítása gombbal térhetsz vissza.",
   "folders.appdataDefault": "appdata (alapértelmezett)",
   "folders.stackNote":
     "Ez a konténer a(z) {stack} Compose veremhez tartozik. A projektmappa az egész veremhez egyszer kerül mentésre, nem szolgáltatásonként, ezért nem szerepel itt.",
@@ -601,10 +601,12 @@ const hu: Partial<Translations> = {
   "folders.treeLabel": "Biztonsági mentési mappák kiválasztása",
   "folders.truncatedList": "Az első 500 bejegyzés látható",
   "folders.retry": "Újrapróbálás",
-  "folders.emptySelectionBlocked": "Legalább egy mappának kiválasztva kell maradnia. Ha nem szeretnél ebből a konténerből semmit menteni, kapcsold ki az ütemezésbe foglalást.",
+  "folders.emptySelectionBlocked": "Legalább egy mappának kiválasztva kell maradnia. Ha nem szeretnél ebből a konténerből semmit menteni, kapcsold ki az ütemezésbe foglalást. Az automatikus felismeréshez használd a Kijelölés visszaállítása gombot.",
   "folders.previewPaths": "{n} elérési út",
   "folders.exclusions": "{n} kizárás",
-
+  "folders.resetSelection": "Kijelölés visszaállítása",
+  "folders.resetConfirm": "Visszaállítod a mappakijelölést? A konténer visszatér az automatikus felismeréshez (appdata alapértelmezés), és minden megjegyzett kizárás törlődik.",
+  "folders.narrowedNote": "A kijelölés most kevesebb mappát foglal magában, mint korábban. A következő mentéstől kezdve a pillanatképek csak a kijelölt mappákat tartalmazzák. A meglévő pillanatképek változatlanok maradnak.",
   // Notifications
   "notify.title": "Értesítések",
   "notify.hint": "Kapj értesítést, amikor egy mentés befejeződik, és válaszd ki alább, mely események váltják ki. Az Unraid-értesítések már Egyszerű módban is működnek; további kézbesítési csatornák (webhook, Matrix, Healthchecks, e-mail) a Speciálisban találhatók.",

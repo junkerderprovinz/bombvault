@@ -583,7 +583,7 @@ const ro: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Foldere de salvat",
-  "folders.hint": "Alege care dintre folderele mapate ale acestui container să fie salvate. Folderul appdata este selectat implicit. Bifează altele pentru a le include sau adaugă o cale personalizată sub montarea gazdei. Debifarea tuturor revine la valoarea implicită automată appdata.",
+  "folders.hint": "Alege care dintre folderele mapate ale acestui container să fie salvate. Folderul appdata este selectat implicit. Bifează altele pentru a le include sau adaugă o cale personalizată sub montarea gazdei. Debifarea tuturor este blocată; folosește Resetează selecția pentru a reveni la valoarea implicită automată appdata.",
   "folders.appdataDefault": "appdata (implicit)",
   "folders.stackNote":
     "Acest container aparține stivei Compose {stack}. Dosarul proiectului este copiat o dată pentru toată stiva, nu o dată per serviciu, de aceea nu apare aici.",
@@ -598,10 +598,12 @@ const ro: Partial<Translations> = {
   "folders.treeLabel": "Selectarea folderelor pentru copie de rezervă",
   "folders.truncatedList": "Sunt afișate primele 500 de intrări",
   "folders.retry": "Încearcă din nou",
-  "folders.emptySelectionBlocked": "Cel puțin un folder trebuie să rămână selectat. Pentru a nu face copie de rezervă la nimic din acest container, dezactivează includerea în programare.",
+  "folders.emptySelectionBlocked": "Cel puțin un folder trebuie să rămână selectat. Pentru a nu face copie de rezervă la nimic din acest container, dezactivează includerea în programare. Pentru a reveni la detectarea automată, folosește Resetează selecția.",
   "folders.previewPaths": "{n} căi",
   "folders.exclusions": "{n} excluderi",
-
+  "folders.resetSelection": "Resetează selecția",
+  "folders.resetConfirm": "Resetezi selecția dosarelor? Containerul revine la detectarea automată (implicită appdata), iar toate excluderile ținute minte sunt eliminate.",
+  "folders.narrowedNote": "Selecția acoperă acum mai puține foldere decât înainte. Începând cu următoarea copie de rezervă, snapshot-urile vor conține doar folderele selectate. Snapshot-urile existente rămân neschimbate.",
   // Notifications
   "notify.title": "Notificări",
   "notify.hint": "Primește o notificare la finalizarea unei copii de rezervă și alege mai jos ce evenimente o declanșează. Notificările Unraid funcționează deja în modul Simplu; mai multe canale de livrare (webhook, Matrix, Healthchecks, e-mail) se găsesc la Avansat.",

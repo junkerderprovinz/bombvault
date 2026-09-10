@@ -578,7 +578,7 @@ const ja: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "バックアップ対象フォルダ",
-  "folders.hint": "このコンテナのマッピング済みフォルダのうち、どれをバックアップするか選択します。appdata フォルダはデフォルトで選択されています。他のフォルダを含めるにはチェックを入れるか、ホストマウント配下のカスタムパスを追加してください。すべてのチェックを外すと、自動の appdata デフォルトに戻ります。",
+  "folders.hint": "このコンテナのマッピング済みフォルダのうち、どれをバックアップするか選択します。appdata フォルダはデフォルトで選択されています。他のフォルダを含めるにはチェックを入れるか、ホストマウント配下のカスタムパスを追加してください。すべてのチェックを外すことはできません。自動の appdata デフォルトに戻るには「選択をリセット」を使用してください。",
   "folders.appdataDefault": "appdata（デフォルト）",
   "folders.stackNote":
     "このコンテナは Compose スタック {stack} に属します。プロジェクトフォルダーはサービスごとではなくスタック全体で一度だけバックアップされるため、ここには表示されません。",
@@ -593,10 +593,12 @@ const ja: Partial<Translations> = {
   "folders.treeLabel": "バックアップフォルダーの選択",
   "folders.truncatedList": "最初の500件を表示しています",
   "folders.retry": "再試行",
-  "folders.emptySelectionBlocked": "少なくとも1つのフォルダーを選択したままにしてください。このコンテナーのバックアップを一切行わない場合は、「スケジュールに含める」をオフにしてください。",
+  "folders.emptySelectionBlocked": "少なくとも1つのフォルダーを選択したままにしてください。このコンテナーのバックアップを一切行わない場合は、「スケジュールに含める」をオフにしてください。自動検出に戻るには「選択をリセット」を使用してください。",
   "folders.previewPaths": "{n} 個のパス",
   "folders.exclusions": "{n} 件の除外",
-
+  "folders.resetSelection": "選択をリセット",
+  "folders.resetConfirm": "フォルダの選択をリセットしますか？コンテナは自動検出（appdata デフォルト）に戻り、記憶されているすべての除外が削除されます。",
+  "folders.narrowedNote": "選択範囲は以前より少ないフォルダをカバーしています。次回のバックアップから、スナップショットには選択されたフォルダのみが含まれます。既存のスナップショットは変更されません。",
   // Notifications
   "notify.title": "通知",
   "notify.hint": "バックアップ完了時に通知を受け取り、どのイベントで発火するかを下で選びます。Unraid通知はシンプルモードでも動作します。ほかの配信チャネル（Webhook、Matrix、Healthchecks、メール）は詳細設定にあります。",

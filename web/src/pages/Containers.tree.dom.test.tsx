@@ -615,8 +615,11 @@ describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, S
     });
     expect(screen.getByText("scrubbed failure")).toBeTruthy();
     expect(patches).toHaveLength(1);
-    // Non-optimistic failure: nothing was ever mutated locally.
-    expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked")).toBe("true");
+    // Non-optimistic failure: nothing was ever mutated locally. The selected
+    // mount classifies MIXED (not "true") — the fixture carries a remembered
+    // exclusion strictly below it, which is exactly the D-01 remembered-partial
+    // classification — and "untouched" means it still does after the failure.
+    expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked")).toBe("mixed");
     expect(screen.getByRole("button", { name: /1 exclusions/ })).toBeTruthy();
     expect(mountsCalls).toBe(1); // no refetch on failure
     expect(screen.getByRole("button", { name: "Reset selection" }).className).toContain("glim-shake");

@@ -586,7 +586,7 @@ const es: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Carpetas a copiar",
-  "folders.hint": "Elige qué carpetas mapeadas de este contenedor copiar. La carpeta appdata está seleccionada por defecto. Marca otras para incluirlas, o añade una ruta personalizada dentro del montaje del host. Si lo desmarcas todo, vuelve al valor automático de appdata.",
+  "folders.hint": "Elige qué carpetas mapeadas de este contenedor copiar. La carpeta appdata está seleccionada por defecto. Marca otras para incluirlas, o añade una ruta personalizada dentro del montaje del host. Desmarcarlo todo está bloqueado; usa Restablecer selección para volver al valor automático de appdata.",
   "folders.appdataDefault": "appdata (por defecto)",
   "folders.stackNote":
     "Este contenedor pertenece a la pila Compose {stack}. Su carpeta de proyecto se copia una vez para toda la pila, no una vez por servicio, por eso no aparece aquí.",
@@ -601,10 +601,12 @@ const es: Partial<Translations> = {
   "folders.treeLabel": "Selección de carpetas de copia de seguridad",
   "folders.truncatedList": "Se muestran las primeras 500 entradas",
   "folders.retry": "Reintentar",
-  "folders.emptySelectionBlocked": "Debe quedar seleccionada al menos una carpeta. Para no respaldar nada de este contenedor, desactiva la inclusión en el calendario.",
+  "folders.emptySelectionBlocked": "Debe quedar seleccionada al menos una carpeta. Para no respaldar nada de este contenedor, desactiva la inclusión en el calendario. Para volver a la detección automática, usa Restablecer selección.",
   "folders.previewPaths": "{n} rutas",
   "folders.exclusions": "{n} exclusiones",
-
+  "folders.resetSelection": "Restablecer selección",
+  "folders.resetConfirm": "¿Restablecer la selección de carpetas? El contenedor vuelve a la detección automática (appdata por defecto) y se eliminan todas las exclusiones recordadas.",
+  "folders.narrowedNote": "La selección ahora abarca menos carpetas que antes. A partir de la próxima copia, las instantáneas contendrán solo las carpetas seleccionadas. Las instantáneas existentes no cambian.",
   // Notifications
   "notify.title": "Notificaciones",
   "notify.hint": "Recibe un aviso cuando termine una copia y elige abajo qué eventos lo activan. Las notificaciones de Unraid ya funcionan en modo Simple; más canales de entrega (webhook, Matrix, Healthchecks, correo) están en Avanzado.",

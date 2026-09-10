@@ -586,7 +586,7 @@ const sv: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Säkerhetskopierade mappar",
-  "folders.hint": "Välj vilka av den här containerns mappade mappar som ska säkerhetskopieras. appdata-mappen är vald som standard. Kryssa i andra för att inkludera dem, eller lägg till en egen sökväg under host-monteringen. Om du avmarkerar allt återgår det till det automatiska appdata-standardvalet.",
+  "folders.hint": "Välj vilka av den här containerns mappade mappar som ska säkerhetskopieras. appdata-mappen är vald som standard. Kryssa i andra för att inkludera dem, eller lägg till en egen sökväg under host-monteringen. Att avmarkera allt är blockerat; använd Återställ urval för att gå tillbaka till det automatiska appdata-standardvalet.",
   "folders.appdataDefault": "appdata (standard)",
   "folders.stackNote":
     "Den här containern hör till Compose-stacken {stack}. Projektmappen säkerhetskopieras en gång för hela stacken, inte en gång per tjänst, och listas därför inte här.",
@@ -601,10 +601,12 @@ const sv: Partial<Translations> = {
   "folders.treeLabel": "Val av säkerhetskopiemappar",
   "folders.truncatedList": "Första 500 posterna visas",
   "folders.retry": "Försök igen",
-  "folders.emptySelectionBlocked": "Minst en mapp måste förbli vald. Stäng av Inkludera i schema om du inte vill säkerhetskopiera något från den här containern.",
+  "folders.emptySelectionBlocked": "Minst en mapp måste förbli vald. Stäng av Inkludera i schema om du inte vill säkerhetskopiera något från den här containern. Använd Återställ urval för att gå tillbaka till automatisk identifiering.",
   "folders.previewPaths": "{n} sökvägar",
   "folders.exclusions": "{n} undantag",
-
+  "folders.resetSelection": "Återställ urval",
+  "folders.resetConfirm": "Återställ mappurvalet? Containern går tillbaka till automatisk identifiering (appdata-standard) och alla sparade undantag tas bort.",
+  "folders.narrowedNote": "Urvalet omfattar nu färre mappar än tidigare. Från och med nästa säkerhetskopiering innehåller snapshots endast de valda mapparna. Befintliga snapshots förblir oförändrade.",
   // Notifications
   "notify.title": "Aviseringar",
   "notify.hint": "Få en avisering när en säkerhetskopiering är klar, och välj nedan vilka händelser som utlöser den. Unraid-aviseringar fungerar redan i enkelt läge; fler leveranskanaler (webhook, Matrix, Healthchecks, e-post) finns under Avancerat.",

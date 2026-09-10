@@ -713,15 +713,52 @@ function UpdateAfterBackupRow({
  *  a snapshot would also undo newer toggles stacked behind the failed one
  *  (Pitfall 5). `structural` marks custom add/remove, which keep their
  *  historical toast-only failure path: the row is already added/gone either
- *  way, so there is no checkbox state to restore. */
+ *  way, so there is no checkbox state to restore.
+ *
+ *  Phase 3 plan 03 (D-05, RESEARCH Pattern 3): the descriptor also carries
+ *  the initiating mutation's SELECTION SOURCE. Every tree toggle, custom
+ *  add/remove and structural save sets the literal "tree" — that is what
+ *  keeps the Phase 1 empty-selection guard live for the editor's normal
+ *  mutations. The reset descriptor (reset: true) carries NO source: its
+ *  drain sends exactly {backupPaths: []}, which the strictly tree-source-
+ *  gated guard passes by design, making the confirmed reset the ONE
+ *  sanctioned exit back to auto-detection. Stacked cases resolve through
+ *  latest-descriptor-wins: a toggle stacked behind a reset drains the live
+ *  non-empty list with "tree" (the guard only bites on empty), a reset
+ *  stacked behind a toggle drains []. */
 interface SaveDesc {
   node: string;
   pre: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
   sent: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
   structural: boolean;
+  source?: "tree";
+  reset?: true;
 }
 
-export function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; open: boolean; t: T }) {
+/** Busy/shake map key for the reset control (D-05). Not a host path, so it
+ *  can never collide with a tree row's key in the same maps. */
+const RESET_ROW_KEY = "__resetSelection__";
+
+export function FoldersEditor({
+  name,
+  stack,
+  open,
+  t,
+  lastBackup = null,
+}: {
+  name: string;
+  stack: string;
+  open: boolean;
+  t: T;
+  /** Unix seconds of the container's last successful backup, null when none
+   *  exists (Container.lastBackup verbatim). The D-02 narrowing gate: a
+   *  narrowing selection only warns when there is at least one prior
+   *  snapshot whose scope the narrowing changes — with no backup ever run,
+   *  nothing has been captured under the wider selection to communicate
+   *  about. Optional only so the dom harnesses can omit it; the production
+   *  caller (ContainerRow) always passes container.lastBackup. */
+  lastBackup?: number | null;
+}) {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounts, setMounts] = useState<MountInfo[]>([]);
@@ -780,6 +817,29 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
   // mirror), so each row's busy flag clears exactly when the attempt that
   // acknowledges its effect settles.
   const pendingRowsRef = useRef<Set<string>>(new Set());
+  // PHASE 3 PLAN 03 (D-02, SELECT-03 second half) — the narrowing-note
+  // baseline: the include count of the last state the SERVER acknowledged
+  // (the served selection at load, then every ok save's attempted count).
+  // Event-driven, not derived: the note fires when an acknowledged attempt
+  // carried FEWER includes than this, and the comparison is against the
+  // last-SAVED count — never a pre-mutation count — so a burst collapsed by
+  // the queue nets correctly (RESEARCH Pitfall 3: stacked toggles must not
+  // each fire their own comparison against the same stale baseline).
+  const lastSavedCountRef = useRef(0);
+  // The note itself. Transient editor-session state, deliberately NOT
+  // persisted: no server-side include-count history exists to restore it
+  // from, and reopening the section re-derives truth from the served state.
+  const [narrowed, setNarrowed] = useState(false);
+  // D-05 reset confirm — fail tone with both consequences named in the
+  // message itself (ConfirmDialog's own precedent: the dialog carries the
+  // destructive weight, the trigger stays neutral).
+  const { confirm, confirmDialog } = useConfirm();
+
+  // Closing the section clears the note: the editor session it belongs to is
+  // over, and a reopened section starts from the served state again.
+  useEffect(() => {
+    if (!open) setNarrowed(false);
+  }, [open]);
 
   // The single mirror-write helper: every mutation (load, toggle, custom
   // add/remove) lands here so the ref the queue reads and the state the tree
@@ -800,13 +860,16 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
           setMounts(ms);
           // The includes derive from mount rows AND custom paths together —
           // one Set, because the wire list carries both classes flat.
-          applyMirror(
-            new Set([
-              ...ms.filter((m) => m.selected && m.reachable).map((m) => m.source),
-              ...(r.custom ?? []).map((c) => c.path),
-            ]),
-            new Set(r.excluded ?? []),
-          );
+          const inc = new Set([
+            ...ms.filter((m) => m.selected && m.reachable).map((m) => m.source),
+            ...(r.custom ?? []).map((c) => c.path),
+          ]);
+          const exc = new Set(r.excluded ?? []);
+          applyMirror(inc, exc);
+          // The served selection IS the last-saved state — the D-02 baseline
+          // starts here, and the post-reset refetch re-runs this whole block
+          // (setLoaded(false) below) so a reset re-baselines too.
+          lastSavedCountRef.current = inc.size;
           setCustom(r.custom ?? []);
           if (r.hostMountRoot) setHostMountRoot(r.hostMountRoot);
           if (r.hostSourceRoot) setHostSourceRoot(r.hostSourceRoot);
@@ -848,20 +911,60 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
     pendingRowsRef.current.clear();
     try {
       const live = mirrorRef.current;
-      const r = await setBackupPaths(name, toFlatList(live.inc, live.exc), { selectionSource: "tree" });
+      // D-05 (INTEG-04): a reset drain sends EXACTLY {backupPaths: []} with
+      // NO selectionSource — the Phase 1 empty-selection guard is strictly
+      // gated on the literal "tree", so this is the one sanctioned shape
+      // that passes it back into auto-detection. Every other drain carries
+      // the live flat list under the "tree" source (a toggle stacked behind
+      // a reset is latest-intent-wins: its drain re-sends the live NON-empty
+      // list, which the guard never bites on).
+      const r = desc.reset
+        ? await setBackupPaths(name, [])
+        : await setBackupPaths(
+            name,
+            toFlatList(live.inc, live.exc),
+            desc.source ? { selectionSource: desc.source } : undefined,
+          );
       if (r.ok) {
         push(t("folders.saved"), "success");
+        if (desc.reset) {
+          // Non-optimistic success: nothing was ever emptied locally, so the
+          // served auto-detected state (mounts re-selected, remembered
+          // exclusions and custom rows gone) must REPLACE everything — the
+          // refetch re-runs the load block above, re-seeding the mirror,
+          // the custom list and the lastSavedCount baseline together.
+          setLoaded(false);
+        } else {
+          // D-02 narrowing gate (SELECT-03 second half): compare THIS
+          // attempt's acknowledged include count against the last-SAVED
+          // count, gated on container.lastBackup — a narrowing selection
+          // only communicates when at least one prior snapshot exists whose
+          // scope the narrowing changes. Attempted-at-drain-start, not the
+          // mirror at settle time: mutations stacked behind this save are
+          // the NEXT attempt's comparison, never this one's.
+          const attempted = live.inc.size;
+          if (attempted < lastSavedCountRef.current && lastBackup !== null) setNarrowed(true);
+          lastSavedCountRef.current = attempted;
+        }
       } else {
         // Server error text VERBATIM, coded envelope or not: the D-04
         // backstop (code "empty-selection") is unreachable while the client
         // block below exists and still lands here as defense-in-depth —
         // toast + revert.
         push(r.error ?? t("settings.error"), "fail");
-        if (!desc.structural) revertFrom(desc);
+        if (desc.reset) {
+          // Failed reset: non-optimistic means nothing was mutated locally,
+          // so there is no mirror to revert — the failure is the toast plus
+          // the reset control's own shake. The selection stays exactly as
+          // it was, remembered exclusions included.
+          setRowShake((s) => ({ ...s, [RESET_ROW_KEY]: (s[RESET_ROW_KEY] ?? 0) + 1 }));
+        } else if (!desc.structural) revertFrom(desc);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      if (!desc.structural) revertFrom(desc);
+      if (desc.reset) {
+        setRowShake((s) => ({ ...s, [RESET_ROW_KEY]: (s[RESET_ROW_KEY] ?? 0) + 1 }));
+      } else if (!desc.structural) revertFrom(desc);
     } finally {
       queueRef.current.inFlight = false;
       setRowBusy((b) => {
@@ -932,6 +1035,7 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
       pre,
       sent: { includes: next.includes, exclusions: next.exclusions },
       structural: false,
+      source: "tree",
     });
   }
 
@@ -980,6 +1084,7 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
       pre,
       sent: { includes: nextIncludes, exclusions: pre.exclusions },
       structural: true,
+      source: "tree",
     });
   }
 
@@ -997,6 +1102,32 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
       pre,
       sent: { includes: nextIncludes, exclusions: pre.exclusions },
       structural: true,
+      source: "tree",
+    });
+  }
+
+  // D-05 (INTEG-04): Reset selection — the ONE sanctioned exit back to
+  // auto-detection. Confirmed first (fail-tone dialog, both consequences in
+  // the message: auto-detection returns AND remembered exclusions are gone),
+  // then serialized through the SAME one-deep queue as every toggle — a
+  // reset can never race an in-flight toggle save, and a toggle stacked
+  // behind a reset simply becomes the next drain with latest-intent-wins.
+  // Non-optimistic in BOTH directions: the mirror is never emptied locally,
+  // so ok refetches (the served state replaces everything) and failure
+  // leaves the editor exactly as it was.
+  async function onResetSelection(): Promise<void> {
+    if (!(await confirm(t("folders.resetConfirm")))) return;
+    setRowBusy((b) => ({ ...b, [RESET_ROW_KEY]: true }));
+    pendingRowsRef.current.add(RESET_ROW_KEY);
+    scheduleSave({
+      node: RESET_ROW_KEY,
+      // pre/sent describe a mirror delta, but a reset never applies one
+      // locally — the fields exist because SaveDesc's toggle path demands
+      // the shape; the reset branch in attemptSave never reads them.
+      pre: { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc },
+      sent: { includes: new Set<string>(), exclusions: new Set<string>() },
+      structural: false,
+      reset: true,
     });
   }
 
@@ -1061,6 +1192,18 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
           blockedPath={blockedPath}
         />
       )}
+      {/* D-02 (SELECT-03 second half): the narrowing note — event-driven,
+          gated on a prior backup, transient for the editor session. Placed
+          directly under the tree so it reads as a consequence of the
+          selection change above it, before the Add row. role="status" makes
+          it a polite live region; text-statusWarn on a non-interactive <p>
+          (the no-status-color-on-controls rule governs interactive
+          elements). */}
+      {narrowed && (
+        <p role="status" className="text-xs text-statusWarn">
+          {t("folders.narrowedNote")}
+        </p>
+      )}
       <div className="flex items-end gap-2 pt-1">
         <div className="flex-1 min-w-0">
           <FolderBrowser
@@ -1101,6 +1244,22 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
           onClick={addCustom}
         />
       </div>
+      {/* D-05 (INTEG-04): Reset selection — the ONE sanctioned exit back to
+          auto-detection. Neutral tone on purpose: the fail-weighted confirm
+          dialog carries the destructive signal (Pitfall 2's companion —
+          dialog carries the weight, not the trigger). The keyed wrapper +
+          glim-shake is the same nonce-remount technique the tree rows use,
+          keyed by the reset control's own shake entry. */}
+      <div className="pt-1" key={rowShake[RESET_ROW_KEY] ?? 0}>
+        <Button
+          label={t("folders.resetSelection")}
+          labelKey="folders.resetSelection"
+          disabled={rowBusy[RESET_ROW_KEY] === true}
+          className={rowShake[RESET_ROW_KEY] ? "glim-shake" : ""}
+          onClick={() => void onResetSelection()}
+        />
+      </div>
+      {confirmDialog}
     </div>
   );
 }
@@ -2091,7 +2250,13 @@ function ContainerRow({
             unmounted (no wasted fetches/effects) whenever their chip
             couldn't have been clicked in the first place. */}
         <Advanced when={installed}>
-          <FoldersEditor name={container.name} stack={container.stack} open={openSections.has("folders")} t={t} />
+          <FoldersEditor
+            name={container.name}
+            stack={container.stack}
+            open={openSections.has("folders")}
+            t={t}
+            lastBackup={container.lastBackup}
+          />
           <StopContainersEditor
             name={container.name}
             initial={container.stopContainers ?? []}

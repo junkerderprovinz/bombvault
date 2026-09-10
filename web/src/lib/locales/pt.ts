@@ -583,7 +583,7 @@ const pt: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Pastas a copiar",
-  "folders.hint": "Escolha quais das pastas mapeadas deste contentor copiar. A pasta appdata está selecionada por predefinição. Marque outras para as incluir, ou adicione um caminho personalizado dentro do mount do host. Desmarcar tudo volta à predefinição automática da appdata.",
+  "folders.hint": "Escolha quais das pastas mapeadas deste contentor copiar. A pasta appdata está selecionada por predefinição. Marque outras para as incluir, ou adicione um caminho personalizado dentro do mount do host. Desmarcar tudo está bloqueado; usa Repor seleção para voltar à predefinição automática da appdata.",
   "folders.appdataDefault": "appdata (predefinição)",
   "folders.stackNote":
     "Este contentor pertence à pilha Compose {stack}. A pasta do projeto é copiada uma vez para toda a pilha, não uma vez por serviço, por isso não aparece aqui.",
@@ -598,10 +598,12 @@ const pt: Partial<Translations> = {
   "folders.treeLabel": "Seleção de pastas de cópia de segurança",
   "folders.truncatedList": "A mostrar as primeiras 500 entradas",
   "folders.retry": "Tentar novamente",
-  "folders.emptySelectionBlocked": "Pelo menos uma pasta tem de permanecer selecionada. Para não fazer cópia de segurança de nada deste contentor, desativa a inclusão no agendamento.",
+  "folders.emptySelectionBlocked": "Pelo menos uma pasta tem de permanecer selecionada. Para não fazer cópia de segurança de nada deste contentor, desativa a inclusão no agendamento. Para voltar à deteção automática, usa Repor seleção.",
   "folders.previewPaths": "{n} caminhos",
   "folders.exclusions": "{n} exclusões",
-
+  "folders.resetSelection": "Repor seleção",
+  "folders.resetConfirm": "Repor a seleção de pastas? O contentor volta à deteção automática (appdata predefinida) e todas as exclusões memorizadas são removidas.",
+  "folders.narrowedNote": "A seleção agora abrange menos pastas do que antes. A partir da próxima cópia, as snapshots conterão apenas as pastas selecionadas. As snapshots existentes ficam inalteradas.",
   // Notifications
   "notify.title": "Notificações",
   "notify.hint": "Seja notificado quando uma cópia terminar e escolha abaixo quais eventos a acionam. As notificações do Unraid já funcionam no modo Simples; mais canais de entrega (webhook, Matrix, Healthchecks, e-mail) estão em Avançado.",

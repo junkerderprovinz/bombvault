@@ -586,7 +586,7 @@ const fi: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Varmuuskopioitavat kansiot",
-  "folders.hint": "Valitse, mitkä tämän kontin liitetyistä kansioista varmuuskopioidaan. appdata-kansio on valittuna oletuksena. Rastita muut sisällyttääksesi ne, tai lisää oma polku host-liitoksen alle. Kaikkien rastien poistaminen palauttaa automaattisen appdata-oletuksen.",
+  "folders.hint": "Valitse, mitkä tämän kontin liitetyistä kansioista varmuuskopioidaan. appdata-kansio on valittuna oletuksena. Rastita muut sisällyttääksesi ne, tai lisää oma polku host-liitoksen alle. Kaikkien rastien poistaminen on estetty; automaattiseen appdata-oletukseen palataan Valinnan nollaus -toiminnolla.",
   "folders.appdataDefault": "appdata (oletus)",
   "folders.stackNote":
     "Tämä kontti kuuluu Compose-pinoon {stack}. Projektikansio varmuuskopioidaan kerran koko pinolle, ei kerran per palvelu, joten sitä ei näy tässä.",
@@ -601,10 +601,12 @@ const fi: Partial<Translations> = {
   "folders.treeLabel": "Varmuuskopioitavien kansioiden valinta",
   "folders.truncatedList": "Näytetään ensimmäiset 500 kohtaa",
   "folders.retry": "Yritä uudelleen",
-  "folders.emptySelectionBlocked": "Vähintään yksi kansio on pysyttävä valittuna. Jos et halua varmuuskopioida mitään tästä kontista, poista sisällytys aikatauluun käytöstä.",
+  "folders.emptySelectionBlocked": "Vähintään yksi kansio on pysyttävä valittuna. Jos et halua varmuuskopioida mitään tästä kontista, poista sisällytys aikatauluun käytöstä. Palataksesi automaattiseen tunnistukseen käytä Valinnan nollaus -toimintoa.",
   "folders.previewPaths": "{n} polkua",
   "folders.exclusions": "{n} poissjoukkoa",
-
+  "folders.resetSelection": "Valinnan nollaus",
+  "folders.resetConfirm": "Nollataanko kansioiden valinta? Kontti palaa automaattiseen tunnistukseen (appdata-oletus), ja kaikki muistissa pidetyt poissulkemiset poistetaan.",
+  "folders.narrowedNote": "Valinta kattaa nyt vähemmän kansioita kuin aiemmin. Seuraavasta varmuuskopiosta alkaen tilannekuvat sisältävät vain valitut kansiot. Olemassa olevat tilannekuvat eivät muutu.",
   // Notifications
   "notify.title": "Ilmoitukset",
   "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu, ja valitse alta mitkä tapahtumat sen laukaisevat. Unraid-ilmoitukset toimivat jo yksinkertaisessa tilassa; lisää toimituskanavia (webhook, Matrix, Healthchecks, sähköposti) löytyy Lisäasetuksista.",
