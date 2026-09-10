@@ -32,7 +32,7 @@ result: [pending]
 expected: Soit accepter la base de vérification actuelle (les 5 critères numérotés du ROADMAP, tous de niveau moteur et testables — 10/10 vérifiés), soit exécuter `/gsd mvp-phase 1` pour poser un but en User Story et re-vérifier sous cette forme.
 result: [pending]
 
-### 4. Push docker-folders + jobs GitHub Actions Test/Lint verts au HEAD final (3fe492c5)
+### 4. Push docker-folders + jobs GitHub Actions Test/Lint verts au HEAD final (c02149eb)
 expected: |
   La SUBSTANCE des deux jobs est déjà prouvée de première main au HEAD final : suite `go test ./...` intégrale
   verte (conteneur golang:1.26-bookworm + restic 0.17.3 SHA256-vérifié — contract tests positionals 3/3 dont
@@ -40,14 +40,23 @@ expected: |
   exécuté en non-root uid 1000) et golangci-lint 0 issue dans l'image CI. Reste l'EXÉCUTION D'ENREGISTREMENT
   GitHub : push de docker-folders (403 pour CatFoxVoyager = accès READ — à pousser avec un compte autorisé ou
   après correction des droits) puis vérification des jobs Lint + Test sur ce HEAD.
-result: [pending]
+result: passed
+evidence: |
+  Push effectué le 2026-09-10 vers le fork CatFoxVoyager/bombvault (créé depuis junkerdeprovinz/bombvault ;
+  l'URL origin locale portait une faute de frappe junkerdeprovinz → junkerderprovinz, corrigée). Branche
+  docker-folders poussée au commit c02149eb, hook pre-push (gofmt/hadolint/gitleaks) passé — aucun secret.
+  AUCUNE PR vers le dépôt original (consigne utilisateur) ; PR interne au fork CatFoxVoyager/bombvault#1
+  (base main ← head docker-folders) ouverte uniquement comme déclencheur CI — les workflows n'acceptent
+  ni push sur docker-folders ni workflow_dispatch. Résultats au HEAD exact : lint.yml = web ✓ / go ✓ /
+  test ✓ (installe restic), build.yml = Boot smoke test (amd64) ✓ / Build (amd64+arm64) ✓ — tout vert.
+  Le workflow « Instant Repo-Watch Ping » échoue sur le fork (bot requérant des secrets absents) — non gateant.
 
 ## Summary
 
 total: 4
-passed: 0
+passed: 1
 issues: 0
-pending: 4
+pending: 3
 skipped: 0
 blocked: 0
 
