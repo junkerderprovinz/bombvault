@@ -599,6 +599,8 @@ const ko: Partial<Translations> = {
   "folders.resetSelection": "선택 초기화",
   "folders.resetConfirm": "폴더 선택을 초기화할까요? 컨테이너가 자동 감지(appdata 기본값)로 돌아가고 기억된 모든 제외가 제거됩니다.",
   "folders.narrowedNote": "선택이 이전보다 적은 폴더를 포함합니다. 다음 백업부터 스냅샷에는 선택한 폴더만 포함됩니다. 기존 스냅샷은 변경되지 않습니다.",
+  "folders.cachedirToggle": "캐시 폴더 건너뛰기 (CACHEDIR.TAG)",
+  "folders.cachedirScope": "이 컨테이너의 전체 백업에 적용되며, 이 폴더에만 적용되는 것이 아닙니다.",
   // Notifications
   "notify.title": "알림",
   "notify.hint": "백업이 완료되면 알림을 받고, 아래에서 어떤 이벤트에 발생시킬지 선택하세요. Unraid 알림은 간단 모드에서도 작동합니다. 웹훅, Matrix, Healthchecks, 이메일 등 더 많은 전달 채널은 고급 설정에 있습니다.",

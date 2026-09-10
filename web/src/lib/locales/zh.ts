@@ -599,6 +599,8 @@ const zh: Partial<Translations> = {
   "folders.resetSelection": "重置选择",
   "folders.resetConfirm": "重置文件夹选择？容器将恢复自动检测（appdata 默认值），并移除所有已记住的排除项。",
   "folders.narrowedNote": "选择现在涵盖的文件夹比之前少。从下次备份开始，快照将只包含选定的文件夹。现有快照保持不变。",
+  "folders.cachedirToggle": "跳过缓存文件夹（CACHEDIR.TAG）",
+  "folders.cachedirScope": "适用于此容器的整个备份，而不仅仅是此文件夹。",
   // Notifications
   "notify.title": "通知",
   "notify.hint": "在备份完成时获得通知，并在下方选择触发通知的事件。Unraid 通知在简单模式下即可使用；更多送达渠道（Webhook、Matrix、Healthchecks、邮件）位于高级设置中。",

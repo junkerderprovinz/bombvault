@@ -599,6 +599,8 @@ const vi: Partial<Translations> = {
   "folders.resetSelection": "Đặt lại lựa chọn",
   "folders.resetConfirm": "Đặt lại lựa chọn thư mục? Container sẽ quay về phát hiện tự động (mặc định appdata) và mọi ngoại lệ đã ghi nhớ sẽ bị xóa.",
   "folders.narrowedNote": "Lựa chọn hiện bao phủ ít thư mục hơn trước. Từ bản sao lưu tiếp theo, các snapshot sẽ chỉ chứa các thư mục đã chọn. Các snapshot hiện có không thay đổi.",
+  "folders.cachedirToggle": "Bỏ qua thư mục bộ nhớ đệm (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Áp dụng cho toàn bộ bản sao lưu của container này, không chỉ thư mục này.",
   // Notifications
   "notify.title": "Thông báo",
   "notify.hint": "Nhận thông báo khi một bản sao lưu hoàn tất, và chọn bên dưới sự kiện nào sẽ kích hoạt nó. Thông báo Unraid đã hoạt động ở chế độ Đơn giản; thêm các kênh gửi (webhook, Matrix, Healthchecks, email) có trong phần Nâng cao.",

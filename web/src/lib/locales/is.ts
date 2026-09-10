@@ -613,6 +613,8 @@ const is: Partial<Translations> = {
   "folders.resetSelection": "Endurstilla val",
   "folders.resetConfirm": "Endurstilla möppuvalið? Gámurinn fer aftur í sjáfvirka greiningu (appdata-sjálfgefið) og öll munduð undantekning eru fjarlægð.",
   "folders.narrowedNote": "Valið nær nú yfir færri möppur en áður. Frá og með næstu öryggisafritun munu skyggnur aðeins innihalda valdar möppur. Fyrirliggjandi skyggnur breytast ekki.",
+  "folders.cachedirToggle": "Sleppa skyndiminnismöppum (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Á við allt öryggisafrit þessa gáms, ekki aðeins þessa möppu.",
   "stophook.title": "Stöðva aðra gáma",
   "stophook.hint": "Stöðvaðu þessa aðra gáma á meðan þessi er afritaður (t.d. gagnagrunn), og ræstu þá svo aftur á eftir.",
   "stophook.noCandidates": "Engir aðrir uppsettir gámar fundust.",

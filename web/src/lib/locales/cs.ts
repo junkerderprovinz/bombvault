@@ -605,6 +605,8 @@ const cs: Partial<Translations> = {
   "folders.resetSelection": "Resetovat výběr",
   "folders.resetConfirm": "Resetovat výběr složek? Kontejner se vrátí k automatické detekci (výchozí appdata) a všechna zapamatovaná vyloučení se odstraní.",
   "folders.narrowedNote": "Výběr nyní zahrnuje méně složek než dříve. Od příštího zálohování budou snímky obsahovat pouze vybrané složky. Stávající snímky zůstávají beze změny.",
+  "folders.cachedirToggle": "Přeskočit složky mezipaměti (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Platí pro celou zálohu tohoto kontejneru, nejen pro tuto složku.",
   // Notifications
   "notify.title": "Oznámení",
   "notify.hint": "Nechte si poslat upozornění po dokončení zálohy a níže vyberte, jaké události ho spustí. Upozornění Unraid fungují už v jednoduchém režimu; další doručovací kanály (webhook, Matrix, Healthchecks, e-mail) najdete v Pokročilém.",

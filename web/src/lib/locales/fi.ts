@@ -607,6 +607,8 @@ const fi: Partial<Translations> = {
   "folders.resetSelection": "Valinnan nollaus",
   "folders.resetConfirm": "Nollataanko kansioiden valinta? Kontti palaa automaattiseen tunnistukseen (appdata-oletus), ja kaikki muistissa pidetyt poissulkemiset poistetaan.",
   "folders.narrowedNote": "Valinta kattaa nyt vähemmän kansioita kuin aiemmin. Seuraavasta varmuuskopiosta alkaen tilannekuvat sisältävät vain valitut kansiot. Olemassa olevat tilannekuvat eivät muutu.",
+  "folders.cachedirToggle": "Ohita välimuistikansiot (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Koskee koko tämän kontin varmuuskopiota, ei vain tätä kansiota.",
   // Notifications
   "notify.title": "Ilmoitukset",
   "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu, ja valitse alta mitkä tapahtumat sen laukaisevat. Unraid-ilmoitukset toimivat jo yksinkertaisessa tilassa; lisää toimituskanavia (webhook, Matrix, Healthchecks, sähköposti) löytyy Lisäasetuksista.",

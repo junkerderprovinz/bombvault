@@ -28,8 +28,8 @@ let mountsReply: ContainerMountsResponse;
 // Replies may be plain values or promises (a pending promise pins the loading
 // row, which an immediately-resolving mock can never show).
 let browseReplies: (BrowseResponse | Promise<BrowseResponse>)[] = [];
-// Same shape for setBackupPaths: a deferred reply holds a save in flight so
-// the queue's serialize/drain behavior is observable step by step.
+// Same shape for setContainerTargets: a deferred reply holds a save in flight
+// so the queue's serialize/drain behavior is observable step by step.
 let patchReplies: (OkEnvelope | Promise<OkEnvelope>)[] = [];
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -42,8 +42,15 @@ vi.mock("../lib/api", async (importOriginal) => {
       const reply = browseReplies.shift() ?? { ok: true, dirs: [], status: "ok", truncated: false };
       return Promise.resolve(reply);
     },
-    setBackupPaths: (name: string, paths: string[], opts?: { selectionSource?: string }) => {
-      patches.push({ name, paths, opts });
+    // The composed PATCH endpoint (plan 03 Task 2) with the flat paths/source
+    // view the Phase 2 assertions pin, projected out of the body — the same
+    // wire contract the retired setBackupPaths mock captured.
+    setContainerTargets: (name: string, body: Record<string, unknown>) => {
+      patches.push({
+        name,
+        paths: (body.backupPaths as string[] | undefined) ?? [],
+        opts: body.selectionSource ? { selectionSource: body.selectionSource as string } : undefined,
+      });
       const reply = patchReplies.shift() ?? { ok: true };
       return Promise.resolve(reply);
     },
@@ -139,6 +146,8 @@ function TreeHarness() {
       browseCache={sharedCache}
       onToggle={() => {}}
       onRemoveCustom={() => {}}
+      excludeCaches={{}}
+      onToggleCaches={() => {}}
     />
   );
 }
@@ -503,7 +512,7 @@ describe("empty-selection guard (D-04, pulled forward from plan 02)", () => {
       screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked"),
     ).toBe("true");
     const warn = screen.getByText(
-      "At least one folder must stay selected. To back up none of this container, turn off Include in schedule.",
+      "At least one folder must stay selected. To back up none of this container, turn off Include in schedule. To return to automatic detection, use Reset selection.",
     );
     expect(warn.className).toContain("text-statusWarn");
   });
@@ -528,7 +537,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     expect(row.getAttribute("aria-checked")).toBe("true"); // mirror never flipped
     expect(row.className).toContain("glim-shake"); // one shake replay via the nonce-in-key technique
     const warn = screen.getByText(
-      "At least one folder must stay selected. To back up none of this container, turn off Include in schedule.",
+      "At least one folder must stay selected. To back up none of this container, turn off Include in schedule. To return to automatic detection, use Reset selection.",
     );
     expect(warn.className).toContain("text-xs");
     expect(warn.className).toContain("text-statusWarn");

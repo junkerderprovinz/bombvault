@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError } from "../lib/api";
+import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody } from "../lib/api";
 import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
 import { applyToggle, browseRelToHost, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
@@ -707,33 +707,49 @@ function UpdateAfterBackupRow({
 // ExcludesEditor below): the tree's integration tests render this editor
 // against the mocked api client instead of a whole ContainerRow.
 
-/** What one queued backupPaths save was initiated for (plan 02). `pre`/`sent`
- *  carry the initiating mutation's effect so a FAILURE can revert by
- *  set-difference inverse (revertFrom below) instead of a captured snapshot —
- *  a snapshot would also undo newer toggles stacked behind the failed one
- *  (Pitfall 5). `structural` marks custom add/remove, which keep their
- *  historical toast-only failure path: the row is already added/gone either
- *  way, so there is no checkbox state to restore.
- *
- *  Phase 3 plan 03 (D-05, RESEARCH Pattern 3): the descriptor also carries
- *  the initiating mutation's SELECTION SOURCE. Every tree toggle, custom
- *  add/remove and structural save sets the literal "tree" — that is what
- *  keeps the Phase 1 empty-selection guard live for the editor's normal
- *  mutations. The reset descriptor (reset: true) carries NO source: its
- *  drain sends exactly {backupPaths: []}, which the strictly tree-source-
- *  gated guard passes by design, making the confirmed reset the ONE
- *  sanctioned exit back to auto-detection. Stacked cases resolve through
- *  latest-descriptor-wins: a toggle stacked behind a reset drains the live
- *  non-empty list with "tree" (the guard only bites on empty), a reset
- *  stacked behind a toggle drains []. */
-interface SaveDesc {
-  node: string;
-  pre: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
-  sent: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
-  structural: boolean;
-  source?: "tree";
-  reset?: true;
+/** The (includes, exclusions) host-path mirror pair, shared by the paths-class
+ *  descriptor below. */
+interface MirrorSets {
+  includes: ReadonlySet<string>;
+  exclusions: ReadonlySet<string>;
 }
+
+/** What one queued container-PATCH save was initiated for (plan 02; generalized
+ *  in plan 03 Task 2). The `cls` discriminates the two mutation classes the
+ *  editor can owe the server:
+ *
+ *  - "paths": a backupPaths save. `pre`/`sent` carry the initiating mutation's
+ *    effect so a FAILURE can revert by set-difference inverse (revertFrom
+ *    below) instead of a captured snapshot — a snapshot would also undo newer
+ *    toggles stacked behind the failed one (Pitfall 5). `structural` marks
+ *    custom add/remove, which keep their historical toast-only failure path.
+ *    `source` carries the SELECTION SOURCE: every tree mutation sets the
+ *    literal "tree", keeping the Phase 1 empty-selection guard live; the
+ *    reset descriptor (reset: true) carries NO source — its drain sends
+ *    exactly {backupPaths: []}, which the strictly tree-source-gated guard
+ *    passes by design, making the confirmed reset the ONE sanctioned exit to
+ *    auto-detection. Stacked cases resolve through latest-descriptor-wins.
+ *
+ *  - "caches": a per-root CACHEDIR.TAG flip (D-06, RESTIC-01). The drain
+ *    always sends the FULL live map (the server replaces it wholesale), so
+ *    the descriptor only needs the flipped key's pre/next for the failure
+ *    revert — restore pre, and only when the live map still equals the
+ *    attempted value (a newer flip on the same key survives). */
+type SaveDesc =
+  | {
+      cls: "paths";
+      node: string;
+      pre: MirrorSets;
+      sent: MirrorSets;
+      structural: boolean;
+      source?: "tree";
+      reset?: true;
+    }
+  | {
+      cls: "caches";
+      node: string;
+      caches: { path: string; pre: boolean; next: boolean };
+    };
 
 /** Busy/shake map key for the reset control (D-05). Not a host path, so it
  *  can never collide with a tree row's key in the same maps. */
@@ -809,14 +825,27 @@ export function FoldersEditor({
   // call's closure.
   const mirrorRef = useRef<{ inc: Set<string>; exc: Set<string> }>({ inc: new Set(), exc: new Set() });
   const queueRef = useRef<{ inFlight: boolean; dirty: boolean }>({ inFlight: false, dirty: false });
-  // Desc of the mutation that most recently marked the queue dirty — the
-  // failure-revert recipe for the drain attempt it causes. Null while idle.
-  const pendingDescRef = useRef<SaveDesc | null>(null);
+  // Descs of the mutations that most recently marked each CLASS dirty — the
+  // failure-revert recipes (and reset flag) for the drain attempt they cause.
+  // Per-class because a drain can owe paths AND caches at once while each
+  // class's latest desc is the only revert recipe it needs. Empty while idle.
+  const pendingDescsRef = useRef<{ paths?: Extract<SaveDesc, { cls: "paths" }>; caches?: Extract<SaveDesc, { cls: "caches" }> }>({});
+  // Classes the next drain owes the server. While an attempt is in flight a
+  // mutation of class X marks X owed; the drain composes ONE body carrying
+  // exactly these classes (T-03-07: never two concurrent PATCHes, never a
+  // class the drain does not owe).
+  const owedRef = useRef<Set<"paths" | "caches">>(new Set());
   // Rows whose toggles are folded into the next attempt's body. An attempt
   // always carries every not-yet-acknowledged toggle (it sends the live
   // mirror), so each row's busy flag clears exactly when the attempt that
   // acknowledges its effect settles.
   const pendingRowsRef = useRef<Set<string>>(new Set());
+  // D-06 (RESTIC-01): the per-root CACHEDIR.TAG map in HOST path form —
+  // server truth at load, optimistically flipped per save, reverted on
+  // failure. Ref-and-state mirror pair for the same reason as mirrorRef: the
+  // queue must read the LIVE map through a ref, the tree renders the state.
+  const [excludeCaches, setExcludeCaches] = useState<Record<string, boolean>>({});
+  const cachesRef = useRef<Record<string, boolean>>({});
   // PHASE 3 PLAN 03 (D-02, SELECT-03 second half) — the narrowing-note
   // baseline: the include count of the last state the SERVER acknowledged
   // (the served selection at load, then every ok save's attempted count).
@@ -850,6 +879,13 @@ export function FoldersEditor({
     setExclusions(exc);
   }
 
+  // Same contract for the CACHEDIR map (D-06): one write helper so the queue's
+  // ref and the tree's state can never drift apart.
+  function applyCaches(next: Record<string, boolean>): void {
+    cachesRef.current = next;
+    setExcludeCaches(next);
+  }
+
   useEffect(() => {
     if (!open || loaded) return;
     setLoading(true);
@@ -870,6 +906,9 @@ export function FoldersEditor({
           // starts here, and the post-reset refetch re-runs this whole block
           // (setLoaded(false) below) so a reset re-baselines too.
           lastSavedCountRef.current = inc.size;
+          // D-06: the served CACHEDIR map is the stored truth (the server
+          // always sends an object; the ?? {} is fixture tolerance only).
+          applyCaches(r.excludeCaches ?? {});
           setCustom(r.custom ?? []);
           if (r.hostMountRoot) setHostMountRoot(r.hostMountRoot);
           if (r.hostSourceRoot) setHostSourceRoot(r.hostSourceRoot);
@@ -888,83 +927,118 @@ export function FoldersEditor({
 
   // Queue entry point — called AFTER the mirror has been updated. If an
   // attempt is in flight, the mutation's effect rides the next drain: mark
-  // dirty and remember its desc (latest desc wins, matching the latest-list
-  // drain). Otherwise the mutation becomes the in-flight attempt itself.
+  // dirty and remember its class's desc (latest desc per class wins, matching
+  // the latest-state drain). Otherwise the mutation becomes the in-flight
+  // attempt itself.
   function scheduleSave(desc: SaveDesc): void {
     if (queueRef.current.inFlight) {
       queueRef.current.dirty = true;
-      pendingDescRef.current = desc;
+      owedRef.current.add(desc.cls);
+      // Discriminant-narrowed writes: a dynamic [desc.cls] index would lose
+      // the cls-to-shape correlation TypeScript needs here.
+      if (desc.cls === "paths") pendingDescsRef.current.paths = desc;
+      else pendingDescsRef.current.caches = desc;
       return;
     }
-    void attemptSave(desc);
+    owedRef.current = new Set([desc.cls]);
+    pendingDescsRef.current = desc.cls === "paths" ? { paths: desc } : { caches: desc };
+    void attemptSave();
   }
 
-  // One save attempt. The body is the LIVE mirror at attempt start — not
-  // desc.sent, which is already stale when later mutations stacked behind it.
-  // desc is only the failure-revert recipe for the mutation that started this
-  // attempt (the latest one, for a drain). Every backupPaths PATCH the editor
-  // sends comes through here, so no two saves are ever concurrent — not even
-  // a custom add riding behind a toggle.
-  async function attemptSave(desc: SaveDesc): Promise<void> {
+  // One save attempt. The body is composed at attempt start from the LIVE
+  // mirrors — never from desc.sent, which is already stale when later
+  // mutations stacked behind it — and carries ONLY the classes this attempt
+  // owes. Every container PATCH the editor sends comes through here as a
+  // single fetchJSON call, so no two saves are ever concurrent — not even a
+  // CACHEDIR flip riding behind a selection save (T-03-07).
+  async function attemptSave(): Promise<void> {
     queueRef.current.inFlight = true;
     const rows = [...pendingRowsRef.current];
     pendingRowsRef.current.clear();
+    const owed = new Set(owedRef.current);
+    owedRef.current.clear();
+    const descs = pendingDescsRef.current;
+    pendingDescsRef.current = {};
+    const pathsDesc = descs.paths;
+    const cachesDesc = descs.caches;
     try {
       const live = mirrorRef.current;
-      // D-05 (INTEG-04): a reset drain sends EXACTLY {backupPaths: []} with
-      // NO selectionSource — the Phase 1 empty-selection guard is strictly
-      // gated on the literal "tree", so this is the one sanctioned shape
-      // that passes it back into auto-detection. Every other drain carries
-      // the live flat list under the "tree" source (a toggle stacked behind
-      // a reset is latest-intent-wins: its drain re-sends the live NON-empty
-      // list, which the guard never bites on).
-      const r = desc.reset
-        ? await setBackupPaths(name, [])
-        : await setBackupPaths(
-            name,
-            toFlatList(live.inc, live.exc),
-            desc.source ? { selectionSource: desc.source } : undefined,
-          );
-      if (r.ok) {
-        push(t("folders.saved"), "success");
-        if (desc.reset) {
-          // Non-optimistic success: nothing was ever emptied locally, so the
-          // served auto-detected state (mounts re-selected, remembered
-          // exclusions and custom rows gone) must REPLACE everything — the
-          // refetch re-runs the load block above, re-seeding the mirror,
-          // the custom list and the lastSavedCount baseline together.
-          setLoaded(false);
+      const body: ContainerTargetsBody = {};
+      if (owed.has("paths")) {
+        // D-05 (INTEG-04): a reset drain sends EXACTLY {backupPaths: []} with
+        // NO selectionSource — the Phase 1 empty-selection guard is strictly
+        // gated on the literal "tree", so this is the one sanctioned shape
+        // that passes it back into auto-detection. Every other drain carries
+        // the live flat list under the "tree" source (a toggle stacked behind
+        // a reset is latest-intent-wins: its drain re-sends the live NON-empty
+        // list, which the guard never bites on).
+        if (pathsDesc?.reset) {
+          body.backupPaths = [];
         } else {
-          // D-02 narrowing gate (SELECT-03 second half): compare THIS
-          // attempt's acknowledged include count against the last-SAVED
-          // count, gated on container.lastBackup — a narrowing selection
-          // only communicates when at least one prior snapshot exists whose
-          // scope the narrowing changes. Attempted-at-drain-start, not the
-          // mirror at settle time: mutations stacked behind this save are
-          // the NEXT attempt's comparison, never this one's.
-          const attempted = live.inc.size;
-          if (attempted < lastSavedCountRef.current && lastBackup !== null) setNarrowed(true);
-          lastSavedCountRef.current = attempted;
+          body.backupPaths = toFlatList(live.inc, live.exc);
+          if (pathsDesc?.source) body.selectionSource = pathsDesc.source;
+        }
+      }
+      if (owed.has("caches")) {
+        // D-06: the whole live map, one class — the server replaces it
+        // wholesale, so a flip and a later drain of the same class can never
+        // lose each other's entries.
+        body.excludeCaches = { ...cachesRef.current };
+      }
+      const r = await setContainerTargets(name, body);
+      if (r.ok) {
+        // Success feedback is per-class: a paths save announces itself with
+        // the Saved toast; a caches-only save is quiet (the switch's own
+        // state change IS the feedback, the live-save house shape).
+        if (owed.has("paths")) {
+          push(t("folders.saved"), "success");
+          if (pathsDesc?.reset) {
+            // Non-optimistic success: nothing was ever emptied locally, so
+            // the served auto-detected state (mounts re-selected, remembered
+            // exclusions and custom rows gone) must REPLACE everything — the
+            // refetch re-runs the load block above, re-seeding the mirror,
+            // the custom list, the caches map and the lastSavedCount baseline
+            // together.
+            setLoaded(false);
+          } else {
+            // D-02 narrowing gate (SELECT-03 second half): compare THIS
+            // attempt's acknowledged include count against the last-SAVED
+            // count, gated on container.lastBackup — a narrowing selection
+            // only communicates when at least one prior snapshot exists whose
+            // scope the narrowing changes. Attempted-at-drain-start, not the
+            // mirror at settle time: mutations stacked behind this save are
+            // the NEXT attempt's comparison, never this one's.
+            const attempted = live.inc.size;
+            if (attempted < lastSavedCountRef.current && lastBackup !== null) setNarrowed(true);
+            lastSavedCountRef.current = attempted;
+          }
         }
       } else {
         // Server error text VERBATIM, coded envelope or not: the D-04
         // backstop (code "empty-selection") is unreachable while the client
         // block below exists and still lands here as defense-in-depth —
-        // toast + revert.
+        // toast + revert. One toast per attempt: a single failed fetch
+        // failed both classes it carried.
         push(r.error ?? t("settings.error"), "fail");
-        if (desc.reset) {
-          // Failed reset: non-optimistic means nothing was mutated locally,
-          // so there is no mirror to revert — the failure is the toast plus
-          // the reset control's own shake. The selection stays exactly as
-          // it was, remembered exclusions included.
-          setRowShake((s) => ({ ...s, [RESET_ROW_KEY]: (s[RESET_ROW_KEY] ?? 0) + 1 }));
-        } else if (!desc.structural) revertFrom(desc);
+        if (owed.has("paths")) {
+          if (pathsDesc?.reset) {
+            // Failed reset: non-optimistic means nothing was mutated
+            // locally, so there is no mirror to revert — the failure is the
+            // toast plus the reset control's own shake. The selection stays
+            // exactly as it was, remembered exclusions included.
+            setRowShake((s) => ({ ...s, [RESET_ROW_KEY]: (s[RESET_ROW_KEY] ?? 0) + 1 }));
+          } else if (pathsDesc && !pathsDesc.structural) revertFrom(pathsDesc);
+        }
+        if (owed.has("caches") && cachesDesc) revertCachesFrom(cachesDesc);
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      if (desc.reset) {
-        setRowShake((s) => ({ ...s, [RESET_ROW_KEY]: (s[RESET_ROW_KEY] ?? 0) + 1 }));
-      } else if (!desc.structural) revertFrom(desc);
+      if (owed.has("paths")) {
+        if (pathsDesc?.reset) {
+          setRowShake((s) => ({ ...s, [RESET_ROW_KEY]: (s[RESET_ROW_KEY] ?? 0) + 1 }));
+        } else if (pathsDesc && !pathsDesc.structural) revertFrom(pathsDesc);
+      }
+      if (owed.has("caches") && cachesDesc) revertCachesFrom(cachesDesc);
     } finally {
       queueRef.current.inFlight = false;
       setRowBusy((b) => {
@@ -974,9 +1048,7 @@ export function FoldersEditor({
       });
       if (queueRef.current.dirty) {
         queueRef.current.dirty = false;
-        const next = pendingDescRef.current;
-        pendingDescRef.current = null;
-        if (next) void attemptSave(next);
+        if (owedRef.current.size > 0) void attemptSave();
       }
     }
   }
@@ -987,7 +1059,7 @@ export function FoldersEditor({
   // happened AFTER the failed one (but before its save resolved) survives
   // untouched; restoring a captured pre-mutation snapshot here is the exact
   // Pitfall 5 bug, because the snapshot also undoes that newer toggle.
-  function revertFrom(desc: SaveDesc): void {
+  function revertFrom(desc: Extract<SaveDesc, { cls: "paths" }>): void {
     const live = mirrorRef.current;
     const inc = new Set(live.inc);
     const exc = new Set(live.exc);
@@ -996,6 +1068,18 @@ export function FoldersEditor({
     for (const p of desc.sent.exclusions) if (!desc.pre.exclusions.has(p)) exc.delete(p);
     for (const p of desc.pre.exclusions) if (!desc.sent.exclusions.has(p)) exc.add(p);
     applyMirror(inc, exc);
+    setRowShake((s) => ({ ...s, [desc.node]: (s[desc.node] ?? 0) + 1 }));
+  }
+
+  // Caches-class failure revert (D-06): restore the flipped key to its stored
+  // value — but ONLY when the live map still carries the attempted value. A
+  // newer flip of the SAME key that stacked behind the failed save survives
+  // untouched, the same newer-intent-survives discipline revertFrom applies to
+  // paths (Pitfall 5, one class over).
+  function revertCachesFrom(desc: Extract<SaveDesc, { cls: "caches" }>): void {
+    if (cachesRef.current[desc.caches.path] !== desc.caches.next) return;
+    const next = { ...cachesRef.current, [desc.caches.path]: desc.caches.pre };
+    applyCaches(next);
     setRowShake((s) => ({ ...s, [desc.node]: (s[desc.node] ?? 0) + 1 }));
   }
 
@@ -1031,6 +1115,7 @@ export function FoldersEditor({
     setRowBusy((b) => ({ ...b, [hostPath]: true }));
     pendingRowsRef.current.add(hostPath);
     scheduleSave({
+      cls: "paths",
       node: hostPath,
       pre,
       sent: { includes: next.includes, exclusions: next.exclusions },
@@ -1080,6 +1165,7 @@ export function FoldersEditor({
     setCustom(nextCustom);
     applyMirror(nextIncludes, pre.exclusions);
     scheduleSave({
+      cls: "paths",
       node: p,
       pre,
       sent: { includes: nextIncludes, exclusions: pre.exclusions },
@@ -1098,6 +1184,7 @@ export function FoldersEditor({
     setCustom(nextCustom);
     applyMirror(nextIncludes, pre.exclusions);
     scheduleSave({
+      cls: "paths",
       node: path,
       pre,
       sent: { includes: nextIncludes, exclusions: pre.exclusions },
@@ -1128,7 +1215,24 @@ export function FoldersEditor({
       sent: { includes: new Set<string>(), exclusions: new Set<string>() },
       structural: false,
       reset: true,
+      cls: "paths",
     });
+  }
+
+  // D-06 (RESTIC-01): flip one root's CACHEDIR.TAG entry. Same live-save
+  // shape as a checkbox toggle — optimistic flip, one queued save, revert +
+  // shake on failure, busy map keyed by the root's HOST path (so the switch
+  // and the row's checkbox disable together while the root has an
+  // unacknowledged mutation of either class). The scope is item-wide (the
+  // flag compiles into the backup argv for the whole container); the
+  // InfoBubble beside the switch says so.
+  function onToggleCaches(hostPath: string, next: boolean): void {
+    const pre = cachesRef.current[hostPath] === true;
+    if (pre === next) return; // defense-in-depth: a no-op flip never saves
+    applyCaches({ ...cachesRef.current, [hostPath]: next });
+    setRowBusy((b) => ({ ...b, [hostPath]: true }));
+    pendingRowsRef.current.add(hostPath);
+    scheduleSave({ cls: "caches", node: hostPath, caches: { path: hostPath, pre, next } });
   }
 
   // Sub-include absorption (INTEG-01, D-02, RESEARCH Q1): the server files
@@ -1187,6 +1291,8 @@ export function FoldersEditor({
           browseCache={browseCache.current}
           onToggle={onToggle}
           onRemoveCustom={removeCustomPath}
+          excludeCaches={excludeCaches}
+          onToggleCaches={onToggleCaches}
           busyPaths={new Set(Object.keys(rowBusy).filter((k) => rowBusy[k]))}
           shakeCounts={rowShake}
           blockedPath={blockedPath}

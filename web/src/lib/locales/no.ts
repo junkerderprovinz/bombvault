@@ -604,6 +604,8 @@ const no: Partial<Translations> = {
   "folders.resetSelection": "Nullstill valg",
   "folders.resetConfirm": "Nullstil mappevalget? Containeren går tilbake til automatisk gjenkjenning (appdata-standard), og alle huskede utelatelser fjernes.",
   "folders.narrowedNote": "Valget dekker nå færre mapper enn før. Fra og med neste sikkerhetskopi inneholder snapshots kun de valgte mappene. Eksisterende snapshots er uendret.",
+  "folders.cachedirToggle": "Hopp over cachemapper (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Gjelder hele sikkerhetskopien av denne containeren, ikke bare denne mappen.",
   // Notifications
   "notify.title": "Varsler",
   "notify.hint": "Få varsel når en sikkerhetskopi er ferdig, og velg nedenfor hvilke hendelser som utløser det. Unraid-varsler fungerer allerede i enkel modus; flere leveringskanaler (webhook, Matrix, Healthchecks, e-post) finner du under Avansert.",

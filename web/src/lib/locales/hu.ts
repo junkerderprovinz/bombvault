@@ -607,6 +607,8 @@ const hu: Partial<Translations> = {
   "folders.resetSelection": "Kijelölés visszaállítása",
   "folders.resetConfirm": "Visszaállítod a mappakijelölést? A konténer visszatér az automatikus felismeréshez (appdata alapértelmezés), és minden megjegyzett kizárás törlődik.",
   "folders.narrowedNote": "A kijelölés most kevesebb mappát foglal magában, mint korábban. A következő mentéstől kezdve a pillanatképek csak a kijelölt mappákat tartalmazzák. A meglévő pillanatképek változatlanok maradnak.",
+  "folders.cachedirToggle": "Gyorsítótár-mappák kihagyása (CACHEDIR.TAG)",
+  "folders.cachedirScope": "A konténer teljes mentésére vonatkozik, nem csak erre a mappára.",
   // Notifications
   "notify.title": "Értesítések",
   "notify.hint": "Kapj értesítést, amikor egy mentés befejeződik, és válaszd ki alább, mely események váltják ki. Az Unraid-értesítések már Egyszerű módban is működnek; további kézbesítési csatornák (webhook, Matrix, Healthchecks, e-mail) a Speciálisban találhatók.",

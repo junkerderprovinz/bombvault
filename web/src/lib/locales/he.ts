@@ -607,6 +607,8 @@ const he: Partial<Translations> = {
   "folders.resetSelection": "איפוס הבחירה",
   "folders.resetConfirm": "לאפס את בחירת התיקיות? המכל חוזר לזיהוי האוטומטי (ברירת המחדל של appdata) וכל ההחרגות הזכורות נמחקות.",
   "folders.narrowedNote": "הבחירה מכסה כעת פחות תיקיות מלפני כן. החל מהגיבוי הבא, תמונות המצב יכילו רק את התיקיות שנבחרו. תמונות מצב קיימות אינן משתנות.",
+  "folders.cachedirToggle": "דלג על תיקיות מטמון (CACHEDIR.TAG)",
+  "folders.cachedirScope": "חל על הגיבוי המלא של המכל הזה, לא רק על תיקייה זו.",
   // Notifications
   "notify.title": "התראות",
   "notify.hint": "קבל התראה כשגיבוי מסתיים, ובחר למטה אילו אירועים מפעילים אותה. התראות Unraid פועלות כאן גם במצב פשוט; ערוצי מסירה נוספים (webhook, Matrix, Healthchecks, דוא\"ל) נמצאים תחת מתקדם.",

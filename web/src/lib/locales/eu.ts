@@ -613,6 +613,8 @@ const eu: Partial<Translations> = {
   "folders.resetSelection": "Hautapena berrezarri",
   "folders.resetConfirm": "Karpeten hautapena berrezarri? Edukiontza detekzio automatikora itzultzen da (appdata lehenespena) ja gogoratutako bazterketa guztiak kentzen dira.",
   "folders.narrowedNote": "Hautapenak orain aurrekoa baino karpeta gutxiago hartzen ditu barne. Hurrengo babeskopiatik aurrera, snapshot-ek hautatutako karpetak bakarrik edukiko dituzte. Existitzen diren snapshot-ek ez dute aldatzen.",
+  "folders.cachedirToggle": "Saltatu cache karpetak (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Edukiontzi honen babeskopia osoari aplikatzen zaio, ez bakarrik karpeta honi.",
   "stophook.title": "Gelditu beste edukiontzi batzuk",
   "stophook.hint": "Gelditu beste edukiontzi hauek hau babesten den bitartean (adibidez datu-base bat), eta abiarazi berriz gero.",
   "stophook.noCandidates": "Ez da beste edukiontzi instalaturik aurkitu.",

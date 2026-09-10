@@ -875,6 +875,11 @@ export interface ContainerMountsResponse extends OkEnvelope {
    *  stripped) in HOST path form — served since Phase 1 so the tree can
    *  reconstruct its (includes, exclusions) mirror without loading children. */
   excluded?: string[];
+  /** Per-root CACHEDIR.TAG toggles (RESTIC-01, plan 03-01) in HOST path form.
+   *  The Go handler ALWAYS serves an object, never null (empty = nothing
+   *  skipped); optional in the type only because the field postdates older
+   *  fixtures, so callers default it to {}. */
+  excludeCaches?: Record<string, boolean>;
   hostMountRoot?: string;
   hostSourceRoot?: string;
 }
@@ -884,21 +889,28 @@ export function getContainerMounts(name: string): Promise<ContainerMountsRespons
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/mounts`);
 }
 
-/** PATCH /api/containers/{name} — set the explicit backup-folder selection (host paths).
- *  `opts.selectionSource` tags the writer ("tree" = the container panel's
- *  selection tree); the server gates its empty-selection refusal on that
- *  literal and keeps legacy sources byte-compatible. */
-export function setBackupPaths(
-  name: string,
-  backupPaths: string[],
-  opts?: { selectionSource?: string },
-): Promise<OkEnvelope> {
+/** The composed PATCH body the FoldersEditor queue serializes (plan 03 Task 2,
+ *  T-03-07): one request carrying ONLY the classes the drain owes.
+ *  `backupPaths` replaces the stored selection wholesale; when present with a
+ *  non-empty list, `selectionSource` tags the writer ("tree" = the selection
+ *  tree) — the server gates its empty-selection refusal on that literal and
+ *  keeps legacy sources byte-compatible, and the reset deliberately sends
+ *  backupPaths WITHOUT a source (the one sanctioned pass to auto-detection).
+ *  `excludeCaches` replaces the whole per-root CACHEDIR.TAG map; the server
+ *  treats a nil map as untouched, so omitting the class leaves it alone. */
+export interface ContainerTargetsBody {
+  backupPaths?: string[];
+  selectionSource?: string;
+  excludeCaches?: Record<string, boolean>;
+}
+
+/** PATCH /api/containers/{name} — the editor's ONE save entry point: paths
+ *  saves, the reset, and CACHEDIR flips all serialize through here so no two
+ *  container PATCHes from the panel are ever concurrent. */
+export function setContainerTargets(name: string, body: ContainerTargetsBody): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
-    body: JSON.stringify({
-      backupPaths,
-      ...(opts?.selectionSource ? { selectionSource: opts.selectionSource } : {}),
-    }),
+    body: JSON.stringify(body),
   });
 }
 

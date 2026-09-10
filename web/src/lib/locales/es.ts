@@ -607,6 +607,8 @@ const es: Partial<Translations> = {
   "folders.resetSelection": "Restablecer selección",
   "folders.resetConfirm": "¿Restablecer la selección de carpetas? El contenedor vuelve a la detección automática (appdata por defecto) y se eliminan todas las exclusiones recordadas.",
   "folders.narrowedNote": "La selección ahora abarca menos carpetas que antes. A partir de la próxima copia, las instantáneas contendrán solo las carpetas seleccionadas. Las instantáneas existentes no cambian.",
+  "folders.cachedirToggle": "Omitir carpetas de caché (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Se aplica a toda la copia de seguridad de este contenedor, no solo a esta carpeta.",
   // Notifications
   "notify.title": "Notificaciones",
   "notify.hint": "Recibe un aviso cuando termine una copia y elige abajo qué eventos lo activan. Las notificaciones de Unraid ya funcionan en modo Simple; más canales de entrega (webhook, Matrix, Healthchecks, correo) están en Avanzado.",

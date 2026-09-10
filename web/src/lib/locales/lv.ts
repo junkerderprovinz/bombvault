@@ -613,6 +613,8 @@ const lv: Partial<Translations> = {
   "folders.resetSelection": "Atiestatīt atlasi",
   "folders.resetConfirm": "Atiestatīt mapju atlasi? Konteiners atgriežas pie automātiskās noteikšanas (appdata noklusējums), un visas atcerētās izslēgšanas tiek noņemtas.",
   "folders.narrowedNote": "Atlase tagad aptver mazāk mapju nekā iepriekš. Sākot ar nākamo rezerves kopiju, momentuzņēmumi saturēs tikai atlasītās mapes. Esošie momentuzņēmumi nemainās.",
+  "folders.cachedirToggle": "Izlaist kešatmiņas mapes (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Attiecas uz visu šī konteinera rezerves kopiju, ne tikai uz šo mapi.",
   "stophook.title": "Apturēt citus konteinerus",
   "stophook.hint": "Apturiet šos citus konteinerus, kamēr tiek dublēts šis (piem., datubāzi), un pēc tam tos atkal palaidiet.",
   "stophook.noCandidates": "Citi instalēti konteineri nav atrasti.",

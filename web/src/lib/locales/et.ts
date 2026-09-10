@@ -613,6 +613,8 @@ const et: Partial<Translations> = {
   "folders.resetSelection": "Lähtesta valik",
   "folders.resetConfirm": "Lähtestada kaustade valik? Konteiner naaseb automaatsele tuvastamisele (appdata vaikeväärtus) ja kõik meeldejäetud välistused eemaldatakse.",
   "folders.narrowedNote": "Valik hõlmab nüüd vähem kaustu kui varem. Alates järgmisest varukoopiast sisaldavad hetktõmmised ainult valitud kaustu. Olemasolevad hetktõmmised jäävad muutmata.",
+  "folders.cachedirToggle": "Jäta vahemälu kaustad vahele (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Kehtib kogu selle konteineri varukoopia kohta, mitte ainult selle kausta kohta.",
   "stophook.title": "Peata teised konteinerid",
   "stophook.hint": "Peata need teised konteinerid selle konteineri varundamise ajaks (näiteks andmebaas) ja käivita need seejärel uuesti.",
   "stophook.noCandidates": "Teisi installitud konteinereid ei leitud.",

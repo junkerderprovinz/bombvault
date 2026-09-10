@@ -599,6 +599,8 @@ const ja: Partial<Translations> = {
   "folders.resetSelection": "選択をリセット",
   "folders.resetConfirm": "フォルダの選択をリセットしますか？コンテナは自動検出（appdata デフォルト）に戻り、記憶されているすべての除外が削除されます。",
   "folders.narrowedNote": "選択範囲は以前より少ないフォルダをカバーしています。次回のバックアップから、スナップショットには選択されたフォルダのみが含まれます。既存のスナップショットは変更されません。",
+  "folders.cachedirToggle": "キャッシュフォルダをスキップ（CACHEDIR.TAG）",
+  "folders.cachedirScope": "このコンテナのバックアップ全体に適用されます。このフォルダだけではありません。",
   // Notifications
   "notify.title": "通知",
   "notify.hint": "バックアップ完了時に通知を受け取り、どのイベントで発火するかを下で選びます。Unraid通知はシンプルモードでも動作します。ほかの配信チャネル（Webhook、Matrix、Healthchecks、メール）は詳細設定にあります。",

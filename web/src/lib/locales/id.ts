@@ -613,6 +613,8 @@ const id: Partial<Translations> = {
   "folders.resetSelection": "Atur ulang pilihan",
   "folders.resetConfirm": "Atur ulang pilihan folder? Kontainer kembali ke deteksi otomatis (default appdata) dan semua pengecualian yang diingat dihapus.",
   "folders.narrowedNote": "Pilihan sekarang mencakup lebih sedikit folder dari sebelumnya. Mulai dari pencadangan berikutnya, snapshot hanya akan berisi folder yang dipilih. Snapshot yang ada tidak berubah.",
+  "folders.cachedirToggle": "Lewati folder cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Berlaku untuk seluruh pencadangan kontainer ini, bukan hanya folder ini.",
   "stophook.title": "Hentikan container lain",
   "stophook.hint": "Hentikan container lain ini selama container ini dicadangkan (misalnya database), lalu jalankan kembali setelahnya.",
   "stophook.noCandidates": "Tidak ditemukan container lain yang terinstal.",

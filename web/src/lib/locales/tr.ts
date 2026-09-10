@@ -607,6 +607,8 @@ const tr: Partial<Translations> = {
   "folders.resetSelection": "Seçimi sıfırla",
   "folders.resetConfirm": "Klasör seçimi sıfırlansın mı? Kapsayıcı otomatik algılamaya (appdata varsayılanı) döner ve hatırlanan tüm hariç tutmalar kaldırılır.",
   "folders.narrowedNote": "Seçim artık öncekinden daha az klasörü kapsıyor. Bir sonraki yedeklemeden itibaren anlık görüntüler yalnızca seçilen klasörleri içerecek. Mevcut anlık görüntüler değişmez.",
+  "folders.cachedirToggle": "Önbellek klasörlerini atla (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Bu kapsayıcının yedeklemesinin tamamına uygulanır, yalnızca bu klasöre değil.",
   // Notifications
   "notify.title": "Bildirimler",
   "notify.hint": "Bir yedekleme tamamlandığında bildirim alın ve aşağıda hangi olayların bunu tetikleyeceğini seçin. Unraid bildirimleri Basit modda zaten çalışır; daha fazla iletim kanalı (webhook, Matrix, Healthchecks, e-posta) Gelişmiş bölümünde bulunur.",

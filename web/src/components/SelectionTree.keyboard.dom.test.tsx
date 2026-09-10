@@ -48,8 +48,15 @@ vi.mock("../lib/api", async (importOriginal) => {
       const reply = browseReplies.shift() ?? { ok: true, dirs: [], status: "ok", truncated: false };
       return Promise.resolve(reply);
     },
-    setBackupPaths: (name: string, paths: string[], opts?: { selectionSource?: string }) => {
-      patches.push({ name, paths, opts });
+    // The composed PATCH endpoint (plan 03 Task 2) with the flat paths/source
+    // view the keyboard Space assertions pin, projected out of the body — the
+    // same wire contract the retired setBackupPaths mock captured.
+    setContainerTargets: (name: string, body: Record<string, unknown>) => {
+      patches.push({
+        name,
+        paths: (body.backupPaths as string[] | undefined) ?? [],
+        opts: body.selectionSource ? { selectionSource: body.selectionSource as string } : undefined,
+      });
       const reply = patchReplies.shift() ?? { ok: true };
       return Promise.resolve(reply);
     },

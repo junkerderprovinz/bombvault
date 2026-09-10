@@ -12,6 +12,8 @@ import {
   saveExpanded,
 } from "../lib/selectionTree";
 import { Button } from "./Button";
+import { InfoBubble } from "./InfoBubble";
+import { Toggle } from "./Toggle";
 
 // ---------------------------------------------------------------------------
 // SelectionTree — the container panel's backup-folder tree (Phase 2, D-02:
@@ -90,6 +92,13 @@ export interface SelectionTreeProps {
   onToggle: (hostPath: string) => void;
   /** Remove-button handler for custom rows; carries the HOST path. */
   onRemoveCustom: (hostPath: string) => void;
+  /** Per-root CACHEDIR.TAG toggles in HOST path form (D-06, RESTIC-01) —
+   *  the stored map the switches render from, exactly as the mounts response
+   *  served it plus the editor's optimistic flips. */
+  excludeCaches: Readonly<Record<string, boolean>>;
+  /** CACHEDIR switch flip; carries the root's HOST path and the new value.
+   *  Rides the SAME serialized save queue as onToggle (T-03-07). */
+  onToggleCaches: (hostPath: string, next: boolean) => void;
   /** Paths with a save in flight; their checkboxes disable. */
   busyPaths?: ReadonlySet<string>;
   /** Shake nonces per path; a bumped key replays .glim-shake on that row. */
@@ -130,6 +139,8 @@ export function SelectionTree({
   browseCache,
   onToggle,
   onRemoveCustom,
+  excludeCaches,
+  onToggleCaches,
   busyPaths,
   shakeCounts,
   blockedPath,
@@ -491,6 +502,37 @@ export function SelectionTree({
             </span>
           )}
         </div>
+        {spec.depth === 0 && (
+          // CACHEDIR.TAG sub-row (D-06, RESTIC-01): one switch per ROOT —
+          // mounts and standalone customs alike, regardless of expand state —
+          // in the same presentation-wrapped shape as the blocked warn line
+          // (the tree root's children stay treeitem/group-shaped). The
+          // switch carries hideLabel because the CALLER draws the visible
+          // label right beside it: Toggle's internal caption span is text-sm
+          // and would break the tree's 12px register (the sanctioned
+          // caller-drawn-label case from Toggle's own contract). The
+          // InfoBubble discloses the item-wide scope — the flag applies to
+          // the whole backup, not only this folder. glim-shake rides the row
+          // wrapper, replayed by the keyed nonce remount above; unreachable
+          // mounts cannot back up, so their switch disables. indent 16 / py-1
+          // match the exclusions disclosure's sub-row rhythm.
+          <div role="presentation">
+            <div
+              className={`flex items-center gap-2 py-1${shakeCounts?.[spec.path] ? " glim-shake" : ""}`}
+              style={{ paddingInlineStart: 16 }}
+            >
+              <Toggle
+                checked={excludeCaches[spec.path] === true}
+                onChange={(next) => onToggleCaches(spec.path, next)}
+                label={t("folders.cachedirToggle")}
+                hideLabel
+                disabled={spec.unreachable || !!busyPaths?.has(spec.path)}
+              />
+              <span className="text-xs text-carbon-textSub">{t("folders.cachedirToggle")}</span>
+              <InfoBubble tip={t("folders.cachedirScope")} />
+            </div>
+          </div>
+        )}
         {blockedPath === spec.path && (
           // Presentation wrapper (see the header note): the tree root's
           // children must stay treeitem/group-shaped while the warn text

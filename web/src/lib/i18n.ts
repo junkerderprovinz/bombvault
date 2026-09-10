@@ -760,6 +760,12 @@ export const en = {
   // snapshots explicitly; existing snapshots are named as unchanged.
   "folders.narrowedNote":
     "The selection now covers fewer folders than before. From the next backup on, snapshots will contain only the selected folders. Existing snapshots are unchanged.",
+  // Phase 3 plan 03 Task 2 (D-06, RESTIC-01): the per-root CACHEDIR.TAG
+  // switch. The scope line is the honest disclosure — the flag compiles into
+  // the backup argv for the WHOLE container, so a per-folder reading would
+  // over-promise what the switch does.
+  "folders.cachedirToggle": "Skip cache folders (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Applies to the entire backup of this container, not only this folder.",
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -2479,6 +2485,8 @@ export const de: Translations = {
     "Ordnerauswahl zurücksetzen? Der Container kehrt zur automatischen Erkennung zurück (appdata-Standard), und alle gemerkten Ausschlüsse werden entfernt.",
   "folders.narrowedNote":
     "Die Auswahl umfasst jetzt weniger Ordner als zuvor. Ab der nächsten Sicherung enthalten Snapshots nur noch die ausgewählten Ordner. Bestehende Snapshots bleiben unverändert.",
+  "folders.cachedirToggle": "Cache-Ordner überspringen (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Gilt für die gesamte Sicherung dieses Containers, nicht nur für diesen Ordner.",
   "stophook.title": "Andere Container stoppen",
   "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",

@@ -613,6 +613,8 @@ const hr: Partial<Translations> = {
   "folders.resetSelection": "Ponastavi odabir",
   "folders.resetConfirm": "Ponovno postaviti odabir mapa? Kontejner se vraća na automatsko otkrivanje (zadano appdata), a sva zapamćena isključenja uklanjaju se.",
   "folders.narrowedNote": "Odabir sada obuhvaća manje mapa nego prije. Od sljedeće sigurnosne kopije snimke će sadržavati samo odabrane mape. Postojeće snimke ostaju nepromijenjene.",
+  "folders.cachedirToggle": "Preskoči mape predmemorije (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Primjenjuje se na cijelu sigurnosnu kopiju ovog kontejnera, ne samo na ovu mapu.",
   "stophook.title": "Zaustavi druge kontejnere",
   "stophook.hint": "Zaustavite ove druge kontejnere dok se ovaj sigurnosno kopira (npr. bazu podataka), zatim ih naknadno ponovno pokrenite.",
   "stophook.noCandidates": "Nisu pronađeni drugi instalirani kontejneri.",

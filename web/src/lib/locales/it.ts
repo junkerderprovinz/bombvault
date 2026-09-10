@@ -607,6 +607,8 @@ const it: Partial<Translations> = {
   "folders.resetSelection": "Azzera selezione",
   "folders.resetConfirm": "Azzerare la selezione delle cartelle? Il contenitore torna al rilevamento automatico (appdata predefinita) e tutte le esclusioni memorizzate vengono rimosse.",
   "folders.narrowedNote": "La selezione ora comprende meno cartelle di prima. Dal prossimo backup in poi, le istantanee conterranno solo le cartelle selezionate. Le istantanee esistenti restano invariate.",
+  "folders.cachedirToggle": "Salta le cartelle di cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Si applica all'intero backup di questo contenitore, non solo a questa cartella.",
   // Notifications
   "notify.title": "Notifiche",
   "notify.hint": "Ricevi una notifica al termine di un backup e scegli qui sotto quali eventi la attivano. Le notifiche Unraid funzionano già in modalità Semplice; altri canali di consegna (webhook, Matrix, Healthchecks, email) si trovano in Avanzate.",

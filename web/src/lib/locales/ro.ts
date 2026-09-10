@@ -604,6 +604,8 @@ const ro: Partial<Translations> = {
   "folders.resetSelection": "Resetează selecția",
   "folders.resetConfirm": "Resetezi selecția dosarelor? Containerul revine la detectarea automată (implicită appdata), iar toate excluderile ținute minte sunt eliminate.",
   "folders.narrowedNote": "Selecția acoperă acum mai puține foldere decât înainte. Începând cu următoarea copie de rezervă, snapshot-urile vor conține doar folderele selectate. Snapshot-urile existente rămân neschimbate.",
+  "folders.cachedirToggle": "Omite folderele de cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Se aplică întregii copii de rezervă a acestui container, nu doar acestui folder.",
   // Notifications
   "notify.title": "Notificări",
   "notify.hint": "Primește o notificare la finalizarea unei copii de rezervă și alege mai jos ce evenimente o declanșează. Notificările Unraid funcționează deja în modul Simplu; mai multe canale de livrare (webhook, Matrix, Healthchecks, e-mail) se găsesc la Avansat.",

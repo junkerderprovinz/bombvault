@@ -57,14 +57,19 @@ vi.mock("../lib/api", async (importOriginal) => {
       activePatches += 1;
       maxConcurrentPatches = Math.max(maxConcurrentPatches, activePatches);
       patchBodies.push({ name, body });
+      // Legacy derived view (Phase 2 assertions): the flat paths/source shape
+      // the retired setBackupPaths mock captured, projected out of the
+      // composed body so the old expectations keep pinning the same wire
+      // contract through the single Task 2 endpoint.
+      patches.push({
+        name,
+        paths: (body.backupPaths as string[] | undefined) ?? [],
+        opts: body.selectionSource ? { selectionSource: body.selectionSource as string } : undefined,
+      });
       const reply = patchReplies.shift() ?? { ok: true };
       return Promise.resolve(reply).finally(() => {
         activePatches -= 1;
       });
-    },
-    setBackupPaths: (name: string, paths: string[], opts?: { selectionSource?: string }) => {
-      patches.push({ name, paths, opts });
-      return Promise.resolve(patchReplies.shift() ?? { ok: true });
     },
   };
 });
@@ -316,6 +321,8 @@ describe("FoldersEditor tree integration (INTEG-01, D-02, D-04, D-05)", () => {
           browseCache={sharedCache}
           onToggle={() => {}}
           onRemoveCustom={() => {}}
+          excludeCaches={{}}
+          onToggleCaches={() => {}}
         />
       </Providers>,
     );
@@ -844,10 +851,11 @@ describe("per-root CACHEDIR.TAG toggle (D-06, RESTIC-01, T-03-07)", () => {
     expect(within(custom).getByRole("switch").getAttribute("aria-checked")).toBe("false");
 
     // Unreachable mounts cannot back up — their switch is disabled; the
-    // reachable mount's and the custom root's are not.
-    expect(within(gone).getByRole("switch")).toBeDisabled();
-    expect(within(plex).getByRole("switch")).toBeEnabled();
-    expect(within(custom).getByRole("switch")).toBeEnabled();
+    // reachable mount's and the custom root's are not. (Plain property
+    // checks: no @testing-library/jest-dom in this repo.)
+    expect((within(gone).getByRole("switch") as HTMLButtonElement).disabled).toBe(true);
+    expect((within(plex).getByRole("switch") as HTMLButtonElement).disabled).toBe(false);
+    expect((within(custom).getByRole("switch") as HTMLButtonElement).disabled).toBe(false);
 
     // The sub-rows never enter the treeitem set (presentation wrappers).
     expect(screen.getAllByRole("treeitem")).toHaveLength(3);
@@ -909,7 +917,10 @@ describe("per-root CACHEDIR.TAG toggle (D-06, RESTIC-01, T-03-07)", () => {
       fireEvent.click(within(plexSub).getByRole("switch"));
     });
     expect(patchBodies).toHaveLength(1);
-    expect(within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch")).toBeDisabled();
+    expect(
+      (within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
 
     // 3. The selection save settles; the queue drains the caches flip as ONE
     //    further fetch carrying the live map — never two PATCHes at once.
@@ -920,7 +931,10 @@ describe("per-root CACHEDIR.TAG toggle (D-06, RESTIC-01, T-03-07)", () => {
     expect(patchBodies[1]).toEqual({ name: "tree", body: { excludeCaches: { [MOUNT]: true } } });
     expect(maxConcurrentPatches).toBe(1);
     // Acknowledged: the busy flag clears and the switch re-enables.
-    expect(within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch")).toBeEnabled();
+    expect(
+      (within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch") as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
   });
 
   it("a failed caches PATCH reverts to the stored value, toasts verbatim, and shakes the switch row", async () => {
@@ -942,8 +956,9 @@ describe("per-root CACHEDIR.TAG toggle (D-06, RESTIC-01, T-03-07)", () => {
     expect(patchBodies).toHaveLength(1); // no retry
     const sub = cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
     expect(within(sub).getByRole("switch").getAttribute("aria-checked")).toBe("false");
-    expect(within(sub).getByRole("switch")).toBeEnabled();
-    // The shake lands on the switch's own sub-row (keyed nonce remount).
-    expect(sub.className).toContain("glim-shake");
+    expect((within(sub).getByRole("switch") as HTMLButtonElement).disabled).toBe(false);
+    // The shake lands on the switch's own row — the inner flex div inside the
+    // classless presentation wrapper (keyed nonce remount replays it).
+    expect((sub.firstElementChild as HTMLElement).className).toContain("glim-shake");
   });
 });

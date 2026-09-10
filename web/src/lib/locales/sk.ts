@@ -613,6 +613,8 @@ const sk: Partial<Translations> = {
   "folders.resetSelection": "Obnoviť výber",
   "folders.resetConfirm": "Obnoviť výber priečinkov? Kontajner sa vráti k automatickej detekcii (predvolené appdata) a všetky zapamätané vylúčenia sa odstránia.",
   "folders.narrowedNote": "Výber teraz zahŕňa menej priečinkov ako predtým. Od ďalšieho zálohovania budú snímky obsahovať iba vybraté priečinky. Existujúce snímky sa nezmenia.",
+  "folders.cachedirToggle": "Preskočiť priečinky vyrovnávacej pamäte (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Vzťahuje sa na celú zálohu tohto kontajnera, nielen na tento priečinok.",
   "stophook.title": "Zastaviť iné kontajnery",
   "stophook.hint": "Zastavte tieto iné kontajnery, kým sa tento zálohuje (napríklad databázu), a potom ich znova spustite.",
   "stophook.noCandidates": "Nenašli sa žiadne iné nainštalované kontajnery.",
