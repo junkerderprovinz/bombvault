@@ -485,25 +485,31 @@ Keyboard tests follow `DropdownListbox.keyboard.dom.test.tsx` (jsdom needs `Elem
 | A5 | Focus stays workable without aria-activedescendant (roving tabindex chosen) | Pattern 4 | Low — APG allows both; jsdom testing favors roving tabindex |
 | A6 | Expansion localStorage key format `bv-*` per container with a hard entry cap satisfies D-05 | Pattern/Structure | Low — exact key name/cap number is planner discretion |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+*All four resolved at plan time (2026-09-10) — dispositions inline below; verified by gsd-plan-checker (Warning 1, dimension 11).*
 
 1. **Where do sub-mount includes render — tree state or the custom list?**
    - What we know: includes that are not exactly a mount root land in `custom[]` today (service.go:3776-3782), including paths UNDER a reachable mount.
    - What's unclear: D-02 forbids double presentation; should the FoldersEditor filter custom entries that lie under a reachable mount and fold them into that mount's tree state (recommended — that IS TREE-04's "partial mount"), and if so does the custom row list change for pre-existing deployments?
    - Recommendation: absorb them into the tree; filter them from the custom row list by prefix test against reachable mount sources.
+   - **Resolution (plans):** adopted — absorbed into the tree, custom rows filtered by prefix test (02-01 tracer + 02-03 Task 2 sub-include absorption; surfaced as a flagged assumption in 02-03).
 
 2. **Does reopen re-fetch from the server?**
    - What we know: D-03 says the server is the source of truth and TREE-4 "découle de la relecture serveur"; but the existing editors keep a component-persistent mirror loaded once (`loaded` guard, Containers.tsx:721-744), and every tree toggle round-trips, so the mirror equals the server within a session.
    - What's unclear: whether the planner should force a mounts re-fetch on editor reopen (stricter reading) or keep component persistence (consistent with all sibling editors).
    - Recommendation: keep component persistence (state survives close because FoldersEditor stays mounted); a page reload refetches anyway. Cross-session drift matches the behavior of every other editor today.
+   - **Resolution (plans):** adopted — component persistence kept, editor-level state (02-03 flagged assumption; mirror at FoldersEditor level per Pitfall 3).
 
 3. **Enter key on leaf nodes — any action?**
    - What we know: APG defines Enter as the node's default action; for a checkbox tree on a leaf, Space already toggles.
    - Recommendation: Enter toggles expansion on parents, does nothing extra on leaves (Space is the only toggler). Planner's discretion per CONTEXT.
+   - **Resolution (plans):** adopted verbatim — Enter expands/collapses parents, no extra leaf action (02-03 Task 1 keyboard map).
 
 4. **How aggressively to serialize PATCHes (Pitfall 5)?**
    - What we know: house live-save awaits per toggle with revert; rapid tree toggles make that insufficient.
    - Recommendation: a one-deep save queue — while a PATCH is in flight, the next toggle updates the mirror and marks dirty; on resolve, send the latest full list once. Keeps ordering, collapses bursts, keeps revert logic simple.
+   - **Resolution (plans):** adopted verbatim — serialized one-deep PATCH queue (02-02 Task 2).
 
 ## Environment Availability
 
