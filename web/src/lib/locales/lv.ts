@@ -22,6 +22,7 @@ const lv: Partial<Translations> = {
   "about.coffee": "BombVault ir bez maksas un tāds paliks. Ziedojums uztur projektu dzīvu un sedz tā izmaksas: domēnu, serveri un vakarus, kas tajā ieguldīti.",
   "about.coffeeButton": "Uzsauc kafiju",
   "about.crypto": "Kripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Ziedot ar kripto",
   "about.cryptoIntro": "Izvēlies monētu un tīklu, tad noskenē kodu vai nokopē adresi.",
   "about.cryptoNetworks": "Tīkli",

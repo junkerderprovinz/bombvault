@@ -17,6 +17,7 @@ const ar: Partial<Translations> = {
   "about.coffee": "BombVault مجاني وسيبقى كذلك. التبرع يبقي المشروع حيًا ويغطي تكاليفه: النطاق والخادم والأمسيات التي تذهب إليه.",
   "about.coffeeButton": "اشترِ لي قهوة",
   "about.crypto": "العملات المشفّرة",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "التبرّع بالعملات المشفّرة",
   "about.cryptoIntro": "اختر العملة والشبكة، ثم امسح الرمز أو انسخ العنوان.",
   "about.cryptoNetworks": "الشبكات",

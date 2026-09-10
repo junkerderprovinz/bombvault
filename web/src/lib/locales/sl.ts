@@ -22,6 +22,7 @@ const sl: Partial<Translations> = {
   "about.coffee": "BombVault je brezplačen in tak ostaja. Donacija ohranja projekt pri življenju in pokrije, kar stane: domeno, strežnik in večere, ki gredo vanj.",
   "about.coffeeButton": "Časti kavo",
   "about.crypto": "Kripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Podpri s kripto",
   "about.cryptoIntro": "Izberi kovanec in omrežje, nato skeniraj kodo ali kopiraj naslov.",
   "about.cryptoNetworks": "Omrežja",

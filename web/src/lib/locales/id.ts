@@ -22,6 +22,7 @@ const id: Partial<Translations> = {
   "about.coffee": "BombVault gratis dan akan tetap begitu. Donasi menjaga proyek ini tetap hidup dan menutup biayanya: domain, server, dan malam-malam yang tercurah ke dalamnya.",
   "about.coffeeButton": "Traktir saya kopi",
   "about.crypto": "Kripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Donasi dengan kripto",
   "about.cryptoIntro": "Pilih koin dan jaringan, lalu pindai kode atau salin alamatnya.",
   "about.cryptoNetworks": "Jaringan",

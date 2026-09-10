@@ -22,6 +22,7 @@ const hi: Partial<Translations> = {
   "about.coffee": "BombVault मुफ़्त है और मुफ़्त ही रहेगा। एक दान परियोजना को जीवित रखता है और उसका खर्च उठाता है: डोमेन, सर्वर और वे शामें जो इसमें लगती हैं।",
   "about.coffeeButton": "मुझे कॉफ़ी पिलाएँ",
   "about.crypto": "क्रिप्टो",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "क्रिप्टो से दान करें",
   "about.cryptoIntro": "एक कॉइन और नेटवर्क चुनें, फिर कोड स्कैन करें या पता कॉपी करें।",
   "about.cryptoNetworks": "नेटवर्क",

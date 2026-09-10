@@ -5131,15 +5131,24 @@ export function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* SYSTEM — About                                                      */}
-      {/* Both versions, each linking to its own release, and the two routes  */}
-      {/* for saying something about them. Replaces the old version footer    */}
-      {/* rather than joining it ([363]) — shipping both is the failure the   */}
-      {/* design language names by name: one number in two type sizes twelve  */}
-      {/* pixels apart. jdp asked for the System tab specifically, which is   */}
-      {/* the right reading of "the end of Settings" on a tabbed page.        */}
+      {/* GENERAL — About                                                     */}
+      {/* Both versions, each linking to its own release, the ways to give,   */}
+      {/* and the two routes for saying something. Replaces the old version   */}
+      {/* footer rather than joining it ([363]) — shipping both is the        */}
+      {/* failure the design language names by name: one number in two type   */}
+      {/* sizes twelve pixels apart.                                          */}
+      {/*                                                                     */}
+      {/* It stood on SYSTEM until [3559], which was a defensible reading of  */}
+      {/* the language's "end of Settings" and the wrong one on a tabbed      */}
+      {/* page. System is where the host integration and the export live —    */}
+      {/* things somebody comes here to operate. General is the first tab in  */}
+      {/* the strip, so this is the last card of the first thing anybody      */}
+      {/* opens, which is where a version number and an invitation to give    */}
+      {/* are actually found. The sibling apps already had it there, so this  */}
+      {/* also ends a three-way disagreement about one standard card.         */}
+      {/* Stays LAST in its tab either way: the card is a footer.             */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (
+      {tab === "general" && (
         <AboutCard hueIndex={nextHue()} />
       )}
       </div>

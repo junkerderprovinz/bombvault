@@ -17,6 +17,7 @@ const zh: Partial<Translations> = {
   "about.coffee": "BombVault 是免费的，而且会一直免费。捐赠让项目活着，并覆盖它的开销：域名、服务器，以及投入其中的夜晚。",
   "about.coffeeButton": "请我喝杯咖啡",
   "about.crypto": "加密货币",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "用加密货币捐赠",
   "about.cryptoIntro": "先选择币种和网络，然后扫码或复制地址。",
   "about.cryptoNetworks": "网络",

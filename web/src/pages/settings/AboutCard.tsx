@@ -6,11 +6,15 @@
 // individually defensible: the result is one number in two type sizes twelve
 // pixels apart. The footer is gone in the same commit that adds this.
 //
-// jdp asked for it in the System tab specifically, which is a departure from
-// the spec's "end of Settings" — and the right one for a tabbed Settings page.
-// "The end of Settings" assumes a single scrolling page; here it would mean
-// either repeating the card on all seven tabs or picking one, and System is
-// where a version number belongs among the host integration and the export.
+// It stands at the END OF THE GENERAL TAB. The language says "the end of
+// Settings", which assumes a single scrolling page; on a tabbed one that means
+// either repeating the card on all seven tabs or picking one. It was System
+// until [3559], on the reading that a version number belongs among the host
+// integration and the export. That was defensible and wrong: System holds
+// things somebody comes here to OPERATE, while General is the first tab in the
+// strip, so this is the last card of the first thing anybody opens. The sibling
+// apps already had it there, so the move also ends a three-way disagreement
+// about one standard card.
 //
 // What the spec asks for, and what each part is doing:
 //
@@ -31,7 +35,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
-import { IconBitcoin, IconBuyMeACoffee } from "../../components/donateMarks";
+import { IconBitcoin, IconBuyMeACoffee, IconPayPal } from "../../components/donateMarks";
 import { IconGithub } from "../../components/glyphs";
 import { getHealth } from "../../lib/api";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
@@ -60,6 +64,19 @@ const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 /** The handle from .github/FUNDING.yml, so one place in the product knows it. */
 const COFFEE = "https://buymeacoffee.com/junkerderprovinz";
+/**
+ * The PayPal.Me page, and it is EMPTY until that page exists.
+ *
+ * The card's own rule, applied to a route rather than to a sentence: never
+ * offer a control that reaches nowhere. A PayPal.Me link is created once and
+ * cannot be renamed afterwards without asking their support, so the name has
+ * to be chosen deliberately rather than guessed at here. Fill this in and the
+ * button appears; leave it empty and the card offers coffee and crypto alone.
+ *
+ * Typed as `string` rather than inferred, so the emptiness is a value this
+ * file expects to change and not a constant the compiler folds away.
+ */
+const PAYPAL: string = "";
 /** The workshop's own mailbox, shared by every tool in it: the subject carries
  *  the product name, so one inbox can tell them apart. */
 const MAIL = "hello@halleluja.design";
@@ -193,6 +210,15 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           tone="neutral"
           onClick={() => setCryptoOpen(true)}
         />
+        {PAYPAL !== "" && (
+          <Button
+            label={t("about.paypal")}
+            labelKey="about.paypal"
+            glyph={<IconPayPal />}
+            tone="neutral"
+            onClick={() => window.open(PAYPAL, "_blank", "noopener,noreferrer")}
+          />
+        )}
       </div>
       {cryptoOpen && <CryptoDonateDialog onClose={() => setCryptoOpen(false)} />}
 

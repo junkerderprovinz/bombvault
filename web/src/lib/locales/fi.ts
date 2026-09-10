@@ -17,6 +17,7 @@ const fi: Partial<Translations> = {
   "about.coffee": "BombVault on ilmainen ja pysyy sellaisena. Lahjoitus pitää projektin hengissä ja kattaa sen kulut: verkkotunnuksen, palvelimen ja illat, jotka siihen kuluvat.",
   "about.coffeeButton": "Tarjoa kahvi",
   "about.crypto": "Krypto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Lahjoita kryptolla",
   "about.cryptoIntro": "Valitse kolikko ja verkko, skannaa sitten koodi tai kopioi osoite.",
   "about.cryptoNetworks": "Verkot",

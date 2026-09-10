@@ -14,9 +14,9 @@
 //
 // Attribution, required by the licences:
 //   Simple Icons (https://simpleicons.org) - CC0 1.0 Universal: Bitcoin,
-//   Ethereum, Tether, Solana, Binance, XRP, Sui, Buy Me a Coffee.
+//   Ethereum, Tether, Solana, Binance, XRP, Sui, Buy Me a Coffee, PayPal.
 //   cryptocurrency-icons (https://github.com/spothq/cryptocurrency-icons) -
-//   MIT: USD Coin. Copyright (c) 2018 Christopher Downer.
+//   MIT: USD Coin and XRP. Copyright (c) 2018 Christopher Downer.
 //
 // Every mark is monochrome and fills with `currentColor`, like every other
 // symbol in this app, so it takes the ink of the tile it sits on and stays
@@ -73,10 +73,29 @@ const PATHS: Record<string, { box: string; d: string }> = {
     d: "M17.636 10.009a7.16 7.16 0 0 1 1.565 4.474 7.2 7.2 0 0 1-1.608 4.53l-.087.106-.023-.135a7 7 0 0 0-.07-.349c-.502-2.21-2.142-4.106-4.84-5.642-1.823-1.034-2.866-2.278-3.14-3.693-.177-.915-.046-1.834.209-2.62.254-.787.631-1.446.953-1.843l1.05-1.284a.46.46 0 0 1 .713 0l5.28 6.456zm1.66-1.283L12.26.123a.336.336 0 0 0-.52 0L4.704 8.726l-.023.029a9.33 9.33 0 0 0-2.07 5.872C2.612 19.803 6.816 24 12 24s9.388-4.197 9.388-9.373a9.32 9.32 0 0 0-2.07-5.871zM6.389 9.981l.63-.77.018.142q.023.17.055.34c.408 2.136 1.862 3.917 4.294 5.297 2.114 1.203 3.345 2.586 3.7 4.103a5.3 5.3 0 0 1 .109 1.801l-.004.034-.03.014A7.2 7.2 0 0 1 12 21.67c-3.976 0-7.2-3.218-7.2-7.188 0-1.705.594-3.27 1.587-4.503z",
   },
   xrp: {
-    box: B24,
-    d: "M5.52 2.955A3.521 3.521 0 001.996 6.48v2.558A2.12 2.12 0 010 11.157l.03.562-.03.561a2.12 2.12 0 011.996 2.121v2.948a3.69 3.69 0 003.68 3.696v-1.123a2.56 2.56 0 01-2.557-2.558v-2.963a3.239 3.239 0 00-1.42-2.682 3.26 3.26 0 001.42-2.682V6.48A2.412 2.412 0 015.52 4.078h.437V2.955zm12.538 0v1.123h.437a2.39 2.39 0 012.386 2.401v2.558a3.26 3.26 0 001.42 2.682 3.239 3.239 0 00-1.42 2.682v2.963a2.56 2.56 0 01-2.557 2.558v1.123a3.69 3.69 0 003.68-3.696V14.4A2.12 2.12 0 0124 12.281l-.03-.562.03-.561a2.12 2.12 0 01-1.996-2.12V6.478a3.518 3.518 0 00-3.509-3.524zM6.253 7.478l3.478 3.259a3.393 3.393 0 004.553 0l3.478-3.26h-1.669l-2.65 2.464a2.133 2.133 0 01-2.886 0L7.922 7.478zm5.606 4.884a3.36 3.36 0 00-2.128.886l-3.493 3.274h1.668l2.667-2.495a2.133 2.133 0 012.885 0l2.65 2.495h1.67l-3.494-3.274a3.36 3.36 0 00-2.425-.886z",
+    // The current XRP mark, not Ripple's old wave lines: those are the
+    // COMPANY's former logo and read as a set of brackets at 22px, which
+    // is exactly how it was reported ("das logo von XRP passt nicht").
+    box: "0 0 32 32",
+    d: "M16 32C7.163 32 0 24.837 0 16S7.163 0 16 0s16 7.163 16 16-7.163 16-16 16zm7.07-24l-4.574 4.523a3.556 3.556 0 01-4.996 0L8.93 8H6.035l6.02 5.957a5.621 5.621 0 007.89 0L25.961 8h-2.89zM8.895 24.563L13.504 20a3.556 3.556 0 014.996 0l4.605 4.563H26l-6.055-5.993a5.621 5.621 0 00-7.89 0L6 24.562h2.895z",
   },
 };
+
+/**
+ * PayPal's own mark, for the button that opens a PayPal.Me page.
+ *
+ * The same rule as every brand here: passed explicitly at the one call site
+ * that means it, never reachable by pattern.
+ */
+export function IconPayPal({ size = 16 }: { size?: number }): ReactNode {
+  return (
+    <Mark
+      box={B24}
+      size={size}
+      d="M15.607 4.653H8.941L6.645 19.251H1.82L4.862 0h7.995c3.754 0 6.375 2.294 6.473 5.513-.648-.478-2.105-.86-3.722-.86m6.57 5.546c0 3.41-3.01 6.853-6.958 6.853h-2.493L11.595 24H6.74l1.845-11.538h3.592c4.208 0 7.346-3.634 7.153-6.949a5.24 5.24 0 0 1 2.848 4.686M9.653 5.546h6.408c.907 0 1.942.222 2.363.541-.195 2.741-2.655 5.483-6.441 5.483H8.714Z"
+    />
+  );
+}
 
 /** Whether a coin id has a mark here. The test beside lib/donate.ts holds
  *  every offered coin to having one, so no tile ships as a bare ticker. */

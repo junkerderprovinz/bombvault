@@ -17,6 +17,7 @@ const vi: Partial<Translations> = {
   "about.coffee": "BombVault miễn phí và sẽ luôn như vậy. Một khoản đóng góp giữ cho dự án sống và trang trải chi phí: tên miền, máy chủ và những buổi tối dành cho nó.",
   "about.coffeeButton": "Mời tôi ly cà phê",
   "about.crypto": "Tiền mã hoá",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Ủng hộ bằng tiền mã hoá",
   "about.cryptoIntro": "Chọn một đồng tiền và một mạng, rồi quét mã hoặc sao chép địa chỉ.",
   "about.cryptoNetworks": "Mạng",

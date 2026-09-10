@@ -17,6 +17,7 @@ const nl: Partial<Translations> = {
   "about.coffee": "BombVault is gratis en blijft gratis. Een donatie houdt het project in leven en dekt wat het kost: het domein, de server en de avonden die erin gaan.",
   "about.coffeeButton": "Trakteer op koffie",
   "about.crypto": "Crypto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Doneren met crypto",
   "about.cryptoIntro": "Kies een munt en een netwerk en scan dan de code of kopieer het adres.",
   "about.cryptoNetworks": "Netwerken",

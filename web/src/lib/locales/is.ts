@@ -22,6 +22,7 @@ const is: Partial<Translations> = {
   "about.coffee": "BombVault er ókeypis og verður það áfram. Framlag heldur verkefninu á lífi og stendur undir því sem það kostar: léninu, þjóninum og kvöldunum sem fara í það.",
   "about.coffeeButton": "Bjóddu mér kaffi",
   "about.crypto": "Rafmynt",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Styrkja með rafmynt",
   "about.cryptoIntro": "Veldu mynt og netkerfi, skannaðu svo kóðann eða afritaðu vistfangið.",
   "about.cryptoNetworks": "Netkerfi",

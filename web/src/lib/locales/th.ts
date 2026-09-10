@@ -17,6 +17,7 @@ const th: Partial<Translations> = {
   "about.coffee": "BombVault ฟรีและจะฟรีต่อไป การบริจาคช่วยให้โครงการอยู่รอดและครอบคลุมค่าใช้จ่าย ทั้งโดเมน เซิร์ฟเวอร์ และค่ำคืนที่ทุ่มลงไป",
   "about.coffeeButton": "เลี้ยงกาแฟ",
   "about.crypto": "คริปโท",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "บริจาคด้วยคริปโท",
   "about.cryptoIntro": "เลือกเหรียญและเครือข่าย แล้วสแกนโค้ดหรือคัดลอกที่อยู่",
   "about.cryptoNetworks": "เครือข่าย",

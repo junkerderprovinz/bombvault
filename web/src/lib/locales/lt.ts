@@ -22,6 +22,7 @@ const lt: Partial<Translations> = {
   "about.coffee": "BombVault yra nemokamas ir toks liks. Auka palaiko projektą gyvą ir padengia jo išlaidas: domeną, serverį ir vakarus, kurie į jį sudedami.",
   "about.coffeeButton": "Pavaišinti kava",
   "about.crypto": "Kripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Paremti kriptovaliuta",
   "about.cryptoIntro": "Pasirink monetą ir tinklą, tada nuskaityk kodą arba nukopijuok adresą.",
   "about.cryptoNetworks": "Tinklai",

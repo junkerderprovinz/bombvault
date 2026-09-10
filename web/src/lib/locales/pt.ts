@@ -17,6 +17,7 @@ const pt: Partial<Translations> = {
   "about.coffee": "O BombVault é grátis e assim fica. Um donativo mantém o projeto vivo e cobre o que ele custa: o domínio, o servidor e as noites que lhe são dadas.",
   "about.coffeeButton": "Paga-me um café",
   "about.crypto": "Cripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Doar com cripto",
   "about.cryptoIntro": "Escolhe uma moeda e uma rede, depois lê o código ou copia o endereço.",
   "about.cryptoNetworks": "Redes",

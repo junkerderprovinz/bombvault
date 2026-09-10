@@ -17,6 +17,7 @@ const hu: Partial<Translations> = {
   "about.coffee": "A BombVault ingyenes, és az is marad. Egy adomány életben tartja a projektet, és fedezi, amibe kerül: a domaint, a szervert és az esti órákat, amik belemennek.",
   "about.coffeeButton": "Hívj meg egy kávéra",
   "about.crypto": "Kripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Támogatás kriptóval",
   "about.cryptoIntro": "Válassz érmét és hálózatot, majd olvasd be a kódot vagy másold ki a címet.",
   "about.cryptoNetworks": "Hálózatok",

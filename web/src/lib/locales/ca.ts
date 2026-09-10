@@ -22,6 +22,7 @@ const ca: Partial<Translations> = {
   "about.coffee": "BombVault és gratuït i ho seguirà sent. Un donatiu manté viu el projecte i cobreix el que costa: el domini, el servidor i els vespres que hi van.",
   "about.coffeeButton": "Convida’m a un cafè",
   "about.crypto": "Cripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Donar amb cripto",
   "about.cryptoIntro": "Tria una moneda i una xarxa, després escaneja el codi o copia l'adreça.",
   "about.cryptoNetworks": "Xarxes",

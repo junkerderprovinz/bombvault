@@ -17,6 +17,7 @@ const ro: Partial<Translations> = {
   "about.coffee": "BombVault este gratuit și rămâne așa. O donație ține proiectul în viață și acoperă ce costă: domeniul, serverul și serile care intră în el.",
   "about.coffeeButton": "Fă-mi cinste cu o cafea",
   "about.crypto": "Cripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Donează în cripto",
   "about.cryptoIntro": "Alege o monedă și o rețea, apoi scanează codul sau copiază adresa.",
   "about.cryptoNetworks": "Rețele",

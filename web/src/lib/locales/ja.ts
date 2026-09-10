@@ -17,6 +17,7 @@ const ja: Partial<Translations> = {
   "about.coffee": "BombVault は無料で、これからも無料です。寄付はプロジェクトを生かし、かかる費用をまかないます。ドメイン、サーバー、そして注ぎ込まれる夜の時間です。",
   "about.coffeeButton": "コーヒーをおごる",
   "about.crypto": "暗号資産",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "暗号資産で寄付",
   "about.cryptoIntro": "通貨とネットワークを選び、コードを読み取るかアドレスをコピーしてください。",
   "about.cryptoNetworks": "ネットワーク",

@@ -17,6 +17,7 @@ const he: Partial<Translations> = {
   "about.coffee": "BombVault חינמי ויישאר כך. תרומה שומרת על הפרויקט בחיים ומכסה את מה שהוא עולה: הדומיין, השרת והערבים שנכנסים אליו.",
   "about.coffeeButton": "קנו לי קפה",
   "about.crypto": "קריפטו",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "תרומה בקריפטו",
   "about.cryptoIntro": "בחר מטבע ורשת, ואז סרוק את הקוד או העתק את הכתובת.",
   "about.cryptoNetworks": "רשתות",

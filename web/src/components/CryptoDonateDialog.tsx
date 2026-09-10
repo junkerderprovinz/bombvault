@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { CoinMark } from "./donateMarks";
 import { QRCode } from "./QRCode";
+import { hueVars, rainbowAt } from "../lib/appearance";
 import { copyText } from "../lib/clipboard";
 import { useT } from "../lib/i18n";
+import { useLabelMode } from "../lib/useLabelMode";
+import { useRainbow } from "../lib/useRainbow";
 import { useToast } from "../lib/toast";
 import { CRYPTO_COINS, type CryptoCoin, type CryptoNetwork } from "../lib/donate";
 
@@ -44,6 +47,23 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
   const [coin, setCoin] = useState<CryptoCoin>(CRYPTO_COINS[0]!);
   const [network, setNetwork] = useState<CryptoNetwork>(CRYPTO_COINS[0]!.networks[0]!);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Both engines, joined the way every other control on the page is.
+  //
+  // The label mode decides what a tile SHOWS. `reactive` deliberately resolves
+  // to the same thing as text-and-glyph HERE and nowhere else: reactive means
+  // the words appear under the pointer, which is right for a strip of verbs
+  // somebody already knows and wrong for a grid of eight coins somebody is
+  // SEARCHING - it would turn "find USDT" into hovering every tile in turn. A
+  // picker is the one surface where hiding the labels until asked defeats the
+  // surface; the sibling app's provider picker made the same call for the same
+  // reason.
+  const mode = useLabelMode("buttons");
+  const showMark = mode !== "text";
+  const showTicker = mode !== "glyph";
+  // Subscribed once for the whole window rather than once per tile: the
+  // palette changes for every tile at once anyway.
+  useRainbow();
 
   // Escape closes, and focus starts inside the window rather than wherever it
   // happened to be — the same contract every other window in this app keeps.
@@ -120,16 +140,21 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
               role="listbox"
               aria-label={t("about.cryptoNetworks")}
             >
-              {coin.networks.map((n) => (
+              {/* A chain name is DATA and has no symbol, so the label engine
+                  has nothing to hide here and these stay words in every mode.
+                  The colour engine still applies: each chain owns a position,
+                  so the chosen one fills in its own hue. */}
+              {coin.networks.map((n, i) => (
                 <button
                   key={n.id}
                   type="button"
                   role="option"
                   aria-selected={n.id === network.id}
                   onClick={() => setNetwork(n)}
-                  className={`rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
+                  style={hueVars(rainbowAt(i)) as CSSProperties}
+                  className={`glim-hue rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
                     n.id === network.id
-                      ? "bg-accent text-accentContrast"
+                      ? "glim-active bg-accent text-accentContrast"
                       : "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hoverRaised hover:text-carbon-text"
                   }`}
                 >
@@ -144,32 +169,49 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
             {network.noteKey && (
               <p className="text-center text-xs text-statusWarn">{t(network.noteKey)}</p>
             )}
+            {/* The one accent surface in this box, so it takes the position of
+                the coin it belongs to: in rainbow mode the copy button is the
+                same colour as the tile the address came from. The close button
+                below has no position, and that is not an omission - it is
+                neutral-toned, and a palette colour on a control that paints no
+                accent resolves to nothing. */}
             <Button
               label={t("common.copy")}
               labelKey="common.copy"
               tone="accent"
+              hueIndex={CRYPTO_COINS.findIndex((c) => c.id === coin.id)}
               onClick={() => void copy()}
             />
           </div>
 
-          {/* The picker, under the answer it changes. */}
+          {/* The picker, under the answer it changes. Each tile owns a palette
+              position, so rainbow mode makes eight coins scannable by colour
+              the way it makes any other list scannable. `.glim-hue-icon` tints
+              the mark itself while the ticker sits beside it, and is dropped in
+              glyph mode: there the mark IS the tile's whole content, and the
+              house rule for an icon-only badge is that only the fill carries
+              colour. */}
           <div className="grid grid-cols-4 gap-2" role="listbox" aria-label={t("about.cryptoTitle")}>
-            {CRYPTO_COINS.map((c) => (
+            {CRYPTO_COINS.map((c, i) => (
               <button
                 key={c.id}
                 type="button"
                 role="option"
                 aria-selected={c.id === coin.id}
                 aria-label={`${c.name} (${c.symbol})`}
+                title={c.name}
                 onClick={() => pickCoin(c)}
+                style={hueVars(rainbowAt(i)) as CSSProperties}
                 className={`flex flex-col items-center gap-1 rounded-control px-2 py-3 transition-colors ${
+                  showTicker ? "glim-hue glim-hue-icon" : "glim-hue"
+                } ${
                   c.id === coin.id
-                    ? "bg-accent text-accentContrast"
+                    ? "glim-active bg-accent text-accentContrast"
                     : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
                 }`}
               >
-                <CoinMark coin={c.id} size={22} />
-                <span className="text-xs font-medium">{c.symbol}</span>
+                {showMark && <CoinMark coin={c.id} size={22} />}
+                {showTicker && <span className="text-xs font-medium">{c.symbol}</span>}
               </button>
             ))}
           </div>

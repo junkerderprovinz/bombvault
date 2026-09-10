@@ -22,6 +22,7 @@ const ms: Partial<Translations> = {
   "about.coffee": "BombVault percuma dan akan kekal begitu. Derma memastikan projek ini terus hidup dan menampung kosnya: domain, pelayan dan malam-malam yang dicurahkan padanya.",
   "about.coffeeButton": "Belanja saya kopi",
   "about.crypto": "Kripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Derma dengan kripto",
   "about.cryptoIntro": "Pilih syiling dan rangkaian, kemudian imbas kod atau salin alamat.",
   "about.cryptoNetworks": "Rangkaian",

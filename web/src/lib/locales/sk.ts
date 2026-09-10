@@ -22,6 +22,7 @@ const sk: Partial<Translations> = {
   "about.coffee": "BombVault je zadarmo a zostane. Dar drží projekt nažive a pokryje, čo stojí: doménu, server a večery, ktoré doň idú.",
   "about.coffeeButton": "Kúp mi kávu",
   "about.crypto": "Krypto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Prispieť kryptom",
   "about.cryptoIntro": "Vyber mincu a sieť, potom naskenuj kód alebo skopíruj adresu.",
   "about.cryptoNetworks": "Siete",

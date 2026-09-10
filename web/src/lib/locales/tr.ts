@@ -17,6 +17,7 @@ const tr: Partial<Translations> = {
   "about.coffee": "BombVault ücretsiz ve öyle kalacak. Bir bağış projeyi ayakta tutar ve masrafını karşılar: alan adını, sunucuyu ve ona giden akşamları.",
   "about.coffeeButton": "Bana bir kahve ısmarla",
   "about.crypto": "Kripto",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "Kripto ile bağış",
   "about.cryptoIntro": "Bir kripto para ve ağ seç, sonra kodu tara veya adresi kopyala.",
   "about.cryptoNetworks": "Ağlar",

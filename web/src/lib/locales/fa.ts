@@ -22,6 +22,7 @@ const fa: Partial<Translations> = {
   "about.coffee": "BombVault رایگان است و رایگان می‌ماند. یک کمک مالی پروژه را زنده نگه می‌دارد و هزینه‌هایش را می‌پوشاند: دامنه، سرور و شب‌هایی که صرفش می‌شود.",
   "about.coffeeButton": "یک قهوه مهمانم کن",
   "about.crypto": "رمزارز",
+  "about.paypal": "PayPal",
   "about.cryptoTitle": "کمک با رمزارز",
   "about.cryptoIntro": "یک ارز و یک شبکه انتخاب کن، سپس کد را اسکن کن یا نشانی را کپی کن.",
   "about.cryptoNetworks": "شبکه‌ها",
