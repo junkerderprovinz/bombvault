@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError } from "../lib/api";
 import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
-import { applyToggle, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
+import { applyToggle, browseRelToHost, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
@@ -945,10 +945,18 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
   function addCustom() {
     const raw = browseValue.trim();
     if (!raw) return;
-    // The folder picker yields a path relative to the host mount; translate it to
-    // the host path SetBackupPaths expects. An already-absolute path (manual
-    // fallback) is used as-is.
-    const p = raw.startsWith("/") ? raw : `${hostSourceRoot}/${raw}`;
+    // The folder picker yields a path relative to the host mount; translate
+    // it to the host path SetBackupPaths expects — through the SAME exported
+    // translator the tree uses for its children, so a manually typed variant
+    // ("appdata/plex/", "appdata//plex", "a/../appdata/plex") is path.Clean-ed
+    // to the canonical form before it enters `custom` and `includes`. Raw
+    // entry made the row fail partitionCustomPaths' cleaned membership test
+    // and vanish from the tree while still counting toward the D-04 floor —
+    // selected, invisible, and unremovable until a reload re-served it
+    // cleaned (review WR-03); the duplicate guard missed spelling variants
+    // too. An already-absolute path still passes through untranslated
+    // (cleaned only), the established manual-fallback precedent.
+    const p = browseRelToHost(raw, hostSourceRoot);
     setBrowseValue("");
     if (custom.some((c) => c.path === p) || includes.has(p)) return;
     const nextCustom = [...custom, { path: p, exists: true }];
