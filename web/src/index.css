@@ -13,6 +13,7 @@
   --color-carbon-textMuted: var(--carbon-text-muted);
   --color-carbon-border: var(--carbon-border);
   --color-carbon-hover: var(--carbon-hover);
+  --color-carbon-hoverRaised: var(--carbon-hover-raised);
 
   /* accent = the raw accent, used as a SOLID fill; accentContrast = the
      computed black/white ink that goes ON that solid fill; accentSoft = a
@@ -370,6 +371,48 @@
   height: 1.375rem;
 }
 
+/* The row action's square (GlimStone 1.8.0, the "icon" variant).
+   ---------------------------------------------------------------------------
+   It takes no width stage, for the same reason a chip does not: it is sized by
+   its glyph rather than by a label it never prints. It DOES take the button
+   height and the tone table, because unlike a chip it stands on the page rather
+   than inside a pill.
+
+   IT IS APPLIED ONLY WHILE THE MODE PAINTS NO WORDS. The class does not ride on
+   every row action in every mode: in text-plus-glyph a row of these printed no
+   word while the buttons beside them did, so the row visibly disagreed with the
+   one setting that governs it. A named exemption is still an exemption once you
+   are looking at the row. See `ButtonVariant` in components/Button.tsx. */
+.glim-btn-icon {
+  width: var(--btn-h);
+  min-width: 0;
+  padding-inline: 0;
+}
+
+/* A row action promoted to a key control stays square, at the other height.
+   Written as its own rule rather than as `width: inherit` guesswork: the two
+   numbers are the two named heights, and a square control has to name both. */
+.glim-btn-icon.glim-btn-key {
+  width: var(--btn-h-key);
+}
+
+/* A glyph ALONE IN A SQUARE is half its box, which is a different question from
+   the 20px above. 20px answers "how big beside 14px text", where a mark and its
+   words have to read as one control. A square glyph-only button has no words to
+   match, so the only proportion available is how much of the frame the ink
+   fills, and 20px in a 32px box is 62% of it, which reads as chunky. Half is
+   the proportion this house already had without writing it down: an icon badge
+   is a 32px tile carrying a 16px drawing. */
+.glim-btn-icon .glim-btn-glyph > svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.glim-btn-icon.glim-btn-key .glim-btn-glyph > svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 /* Reactive controls carry no gap at rest, and this is the reason the glyph
    looked off-centre (jdp's screenshot): the collapsed label is still a flex
    item, so the container's `gap` reserved 8px beside a zero-width box and
@@ -618,6 +661,16 @@
   --carbon-text-muted:#8d8d8d;
   --carbon-border:    #393939;
   --carbon-hover:     #353535;
+
+  /* The third tier of the hover ramp (GlimStone 1.8.0, rule 21). Hover moves UP
+     the surface ramp, and the ramp used to stop at --carbon-surface3: a control
+     FILLED with surface3 (the neutral button, a raised segment) had nowhere to
+     go and reached back down to --carbon-hover, which is 29 units darker here.
+     It dimmed at the one moment somebody was looking straight at it. One step
+     further from the surface, which is lighter on dark and darker on light, so
+     a brightness() filter is not the substitute: one value can only move one
+     way and the two themes need opposite directions. */
+  --carbon-hover-raised: #6f6f6f;
 
   /* Sidebar background — matches --carbon-surface (#262626), one step up from the
      content (--carbon-bg #161616) so the nav rail still reads as a distinct column.
@@ -928,6 +981,8 @@
   --carbon-text-muted:#6f6f6f;
   --carbon-border:    #d1d1d1;
   --carbon-hover:     #e0e0e0;
+  /* Rule 21's third tier, one step DARKER here (see the dark block). */
+  --carbon-hover-raised: #c6c6c6;
 
   /* Sidebar background (light theme) — the raised surface tone, matching
      reference/tokens.css (was incorrectly the page-ground tone). */
@@ -1151,6 +1206,7 @@
     --carbon-surface2:  #e8e8e8;
     --carbon-surface3:  #d1d1d1;
     --carbon-hover:     #e0e0e0;
+    --carbon-hover-raised: #c6c6c6;
     --carbon-border:    #d1d1d1;
     --carbon-text:      #161616;
     --carbon-text-sub:  #525252;
