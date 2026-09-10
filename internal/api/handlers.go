@@ -4281,7 +4281,7 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // read-only browse descriptor: close error is not actionable
 
 	entries, err := f.ReadDir(-1)
 	if err != nil {
