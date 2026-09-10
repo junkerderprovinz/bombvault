@@ -551,7 +551,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         </div>
       ) : createPortal(
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4${
+          className={`glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4${
             hue.className ? ` ${hue.className}` : ""
           }`}
           style={hue.style}

@@ -486,7 +486,7 @@ function ReceiverDialog({
   // `overflow-y-auto` still covers content that grows toward the cap.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onClick={onClose}
     >
       {/* GlimStone follow-up pass ("half-overlap card notch"): the dialog box

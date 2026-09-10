@@ -95,7 +95,7 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div
-      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -186,11 +186,18 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
 
           {/* The picker, under the answer it changes. Each tile owns a palette
               position, so rainbow mode makes eight coins scannable by colour
-              the way it makes any other list scannable. `.glim-hue-icon` tints
-              the mark itself while the ticker sits beside it, and is dropped in
-              glyph mode: there the mark IS the tile's whole content, and the
-              house rule for an icon-only badge is that only the fill carries
-              colour. */}
+              the way it makes any other list scannable.
+
+              `.glim-hue` only, never `.glim-hue-icon`. That class paints a
+              tile's glyph in its own position hue, and this is the one grid in
+              the app whose glyphs may not be painted: they are brand marks
+              carrying brand colours. It sat here while the marks were
+              `currentColor` and did real work; since they took their own
+              colours it has been inert, and an inert class on a control reads
+              as a decision that is still in force. The rule it would have
+              broken is already written out beside .glim-hue-icon in index.css
+              ("die icons sollen nicht eingefärbt werden, nur die badges also
+              der hintergrund"). */}
           <div className="grid grid-cols-4 gap-2" role="listbox" aria-label={t("about.cryptoTitle")}>
             {CRYPTO_COINS.map((c, i) => (
               <button
@@ -202,15 +209,43 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                 title={c.name}
                 onClick={() => pickCoin(c)}
                 style={hueVars(rainbowAt(i)) as CSSProperties}
-                className={`flex flex-col items-center gap-1 rounded-control px-2 py-3 transition-colors ${
-                  showTicker ? "glim-hue glim-hue-icon" : "glim-hue"
-                } ${
+                // Square (jdp, 2026-09-10: "Die kacheln der Kryptowährungen
+                // sollen quadratisch sein"). `aspect-square` rather than a
+                // fixed height, so the tile stays square in all three label
+                // modes: mark alone, ticker alone, or both. Without it the row
+                // changed height whenever the labelling engine changed what is
+                // inside it, and a picker that reflows when you switch label
+                // mode reads as a different grid.
+                //
+                // The hover follows KnightLoader's browser tiles, which
+                // settled this already (BrowserTools.tsx: "The hover goes
+                // light in the dark theme"): a surface one step up is not a
+                // hover anybody notices on a dark ground, so the dark theme
+                // goes to white and flips the ink. The coin marks keep their
+                // own colours straight through it - only the surface and the
+                // ticker change - which is the same rule that file states.
+                // XRP is the one mark with no colour of its own, so index.css
+                // moves --coin-xrp for this hover and for the selected tile.
+                //
+                // The flipped ink is `text-carbon-background`, not the literal
+                // KnightLoader writes: on this theme that token IS #161616, so
+                // the value is the same one and it now comes from the engine
+                // rather than from a hex somebody has to keep in step. The
+                // sibling's own lint rule would have caught the literal here,
+                // and did.
+                className={`glim-coin-tile glim-hue flex aspect-square flex-col items-center justify-center gap-2 rounded-control px-2 transition-colors ${
                   c.id === coin.id
                     ? "glim-active bg-accent text-accentContrast"
-                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
+                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text dark:hover:bg-white dark:hover:text-carbon-background"
                 }`}
               >
-                {showMark && <CoinMark coin={c.id} size={22} />}
+                {/* Half the tile, which is the sibling's proportion rather than
+                    a number chosen here: its browser tiles are 112px with a
+                    56px mark, and these came out 110px wide. The mark was 22px
+                    while the tile sized itself to its contents; once the tile
+                    became a square it was a fifth of it, and a logo floating in
+                    an empty square is not the grid jdp pointed at. */}
+                {showMark && <CoinMark coin={c.id} size={44} />}
                 {showTicker && <span className="text-xs font-medium">{c.symbol}</span>}
               </button>
             ))}

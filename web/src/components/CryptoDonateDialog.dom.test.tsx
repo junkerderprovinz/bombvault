@@ -22,6 +22,9 @@
 // chain points at the wallet it should. This file checks that the right one of
 // them reaches the donor unchanged.
 // ---------------------------------------------------------------------------
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { CryptoDonateDialog } from "./CryptoDonateDialog";
@@ -158,4 +161,65 @@ it("closes on Escape and on the button", () => {
   expect(onClose).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole("button", { name: new RegExp(en["common.close"], "i") }));
   expect(onClose).toHaveBeenCalledTimes(2);
+});
+
+// ---------------------------------------------------------------------------
+// The tiles' colour, which is a second thing that fails silently.
+//
+// The block above guards the address. This block guards the only other way
+// this window can be wrong without anybody reporting it: a mark nobody can
+// see. The same stranger who would not write about a lost transfer will not
+// write about an empty tile either - they will pick the wrong coin, or give
+// up.
+//
+// Two of the three below were real, and neither showed up in a class list.
+// They only appeared once the window was rendered and looked at: Bitcoin's
+// #F7931A sitting on the default accent #FCC419 is 1.45:1, an orange mark on a
+// yellow tile, and the white XRP mark on the dark theme's white hover was
+// white on white. Both are one line of CSS away from coming back.
+// ---------------------------------------------------------------------------
+
+/** index.css, read as text - these are rules no jsdom test can compute. */
+const indexCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../index.css"), "utf8");
+
+it("gives every coin mark its own brand colour", () => {
+  open();
+  // jdp, 2026-09-10: "Die Logos der Kryptowährungen sollen die original-logos
+  // sein mit deren original Farben". Reversing this file's earlier rule, where
+  // every mark took `currentColor` and the grid was eight grey drawings.
+  for (const [i, coin] of CRYPTO_COINS.entries()) {
+    const path = coinTiles().getAllByRole("option")[i]!.querySelector("svg > path");
+    expect(path?.parentElement?.getAttribute("fill"), coin.id).not.toBe("currentColor");
+  }
+});
+
+it("drops the brand colour on the tile that is FILLED with the accent", () => {
+  // The accent is the user's to choose and rainbow mode hands every tile a
+  // different one, so no fixed brand colour can be checked against it. The
+  // selected tile therefore paints its mark in the ink that fill was paired
+  // with - the rule .glim-hue-icon already states for every other glyph in
+  // the app. Measured before it existed: 1.45:1, against the 3:1 a graphic
+  // needs.
+  expect(indexCss).toMatch(/\.glim-coin-tile\.glim-active\s+svg\s*\{[^}]*fill:\s*currentColor/);
+});
+
+it("moves XRP's colour off the dark theme's white hover", () => {
+  // XRP is the one mark with no colour of its own: it is a shape, drawn in
+  // --coin-xrp, which the dark theme sets to white. The hover this grid
+  // borrowed from the sibling turns the tile white underneath it.
+  expect(indexCss).toMatch(
+    /\[data-theme="dark"\]\s+\.glim-coin-tile:not\(\.glim-active\):hover\s*\{[^}]*--coin-xrp/
+  );
+});
+
+it("keeps the tiles square", () => {
+  // jdp, 2026-09-10: "Die kacheln der Kryptowährungen sollen quadratisch
+  // sein". `aspect-square` rather than a height, so the square survives the
+  // labelling engine swapping the tile's contents between mark, ticker and
+  // both - jsdom lays nothing out, so the class is what there is to hold on
+  // to here.
+  open();
+  for (const option of coinTiles().getAllByRole("option")) {
+    expect(option.className).toContain("aspect-square");
+  }
 });

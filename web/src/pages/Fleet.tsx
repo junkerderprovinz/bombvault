@@ -362,7 +362,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   // `overflow-y-auto` on this backdrop still covers content that grows toward
   // the cap.
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4" onClick={onClose}>
+    <div className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4" onClick={onClose}>
       {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
           `relative` shell wraps the scrollable dialog box, same split as
           Receiver.tsx's ReceiverDialog — see that call site's comment. */}
@@ -798,7 +798,7 @@ function FleetDialog({
   // comment for the full writeup.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+      className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onClick={onClose}
     >
       {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling

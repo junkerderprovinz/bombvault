@@ -662,6 +662,12 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
+  /* XRP's mark is the one brand colour that cannot be a literal: it is
+     near-black, and every other coin's colour reads on both grounds. The
+     brand publishes a white variant for exactly this case, so the dark theme
+     takes it. See donateMarks.tsx's PATHS. */
+  --coin-xrp: #ffffff;
+
   --carbon-bg:        #161616;
   --carbon-surface:   #262626;
   --carbon-surface2:  #393939;
@@ -968,6 +974,8 @@
 }
 
 [data-theme="light"] {
+  /* XRP's own near-black, which is right on a light ground. */
+  --coin-xrp: #23292f;
   color-scheme: light;
 
   /* GlimStone form-engine #1 — corrected against reference/tokens.css's
@@ -2022,6 +2030,55 @@ body {
   color: inherit;
 }
 
+/* The crypto window's coin tiles (CryptoDonateDialog).
+   ---------------------------------------------------------------------------
+   Seven of the eight marks are a brand colour that reads on any ground, which
+   is what a brand colour is for, and they are literals in donateMarks.tsx.
+   XRP is the exception: its mark is a shape with no colour of its own, so it
+   is drawn in --coin-xrp, which the theme sets to white on the dark ground and
+   #23292f on the light one.
+
+   A token switched by THEME is right until a tile stops matching its theme,
+   and two states here do exactly that. Both are handled by moving the token,
+   never by giving the mark a second fill: the mark stays one drawing that
+   takes one colour, and the surface that changed is the thing that says which.
+
+   Written as :not(.glim-active):hover and .glim-active so the two never both
+   apply - the selected tile is not re-lit by a hover over itself. */
+
+/* Selected: the tile is FILLED with the accent, so EVERY mark drops its brand
+   colour and takes the ink that fill was paired with.
+
+   This is the same rule .glim-hue-icon states above ("the active item is
+   FILLED with the hue already, so an icon painted the same colour on top of it
+   would vanish into its own background"), and the brand colours do not earn an
+   exception: the accent is the user's to choose and rainbow mode gives every
+   tile a different one, so a fixed brand colour on that fill is a contrast
+   nobody can predict. Measured on the default accent before this rule existed:
+   Bitcoin's #F7931A on #FCC419 is 1.45:1, against the 3:1 a graphic needs. It
+   read as an empty yellow tile.
+
+   Nothing is lost by it. A brand colour earns its place while somebody is
+   SCANNING eight tiles for the coin they hold, and the selected tile is the
+   one they have stopped scanning - it is filled edge to edge with the accent,
+   which is a louder answer than any logo colour.
+
+   `fill` as a CSS property, which beats the `fill` attribute donateMarks.tsx
+   writes, so the marks stay one drawing with one colour and this stays the
+   one place that says what happens on a filled tile. currentColor picks up
+   `text-accentContrast` from the button itself. */
+.glim-coin-tile.glim-active svg {
+  fill: currentColor;
+}
+
+/* Hovered on the dark theme: the tile goes WHITE (KnightLoader's browser-tile
+   hover, adopted here), which is the one dark-theme surface a white mark
+   cannot sit on. It takes the light theme's value, which is XRP's own dark
+   colour rather than a grey picked to fit. */
+[data-theme="dark"] .glim-coin-tile:not(.glim-active):hover {
+  --coin-xrp: #23292f;
+}
+
 /* Sidebar's Simple/Advanced view toggle (SidebarControls, its own
    call-site marker, NOT Sidebar.tsx's main-nav NavItem any more) — the SAME
    3-state tab-strip rule as .glim-hue-icon above (idle colourless only in
@@ -2822,7 +2879,22 @@ body {
      deliberately rather than silently: a future pass giving this axis
      broader coverage should read this comment before assuming it was
      missed by accident. */
-  .glim-modal-backdrop { animation: glim-fade-in 200ms ease both; }
+  /* The darkness itself lives here now, not at the call sites (jdp,
+     2026-09-10: "wenn man es öffnet dunkelt es den Hintergrund zu wenig ab.
+     haben wir das schon standardisiert?").
+     Half-standardised is what it was: this class carried the fade and every
+     one of the nine backdrops in the app then repeated `bg-black/60` as a
+     literal beside it. Standardised by copy-paste, which is the kind that
+     holds right up to the first time somebody wants to change the value and
+     has to find all nine.
+     70% rather than 60 (jdp's own pick from three). Dark enough that the
+     window is plainly in front, light enough that the page behind it is still
+     recognisably there, which is what tells a reader they are on top of
+     something rather than somewhere new. */
+  .glim-modal-backdrop {
+    animation: glim-fade-in 200ms ease both;
+    background-color: rgb(0 0 0 / 0.7);
+  }
   .glim-modal-card { animation: glim-modal-in 260ms cubic-bezier(.2, .6, .2, 1) both; }
 
   /* Generic error-feedback shake (#142) — see glim-shake's own keyframe
