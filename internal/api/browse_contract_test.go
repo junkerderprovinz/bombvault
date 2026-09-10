@@ -111,7 +111,7 @@ func TestBrowseStatusRestricted(t *testing.T) {
 	}
 	// Restore before TempDir cleanup so the removal can succeed (cleanup runs
 	// LIFO: this one first, then the TempDir removal).
-	t.Cleanup(func() { _ = os.Chmod(locked, 0o700) })
+	t.Cleanup(func() { _ = os.Chmod(locked, 0o700) }) //nolint:gosec // G302: 0o700 is the restrictive DIRECTORY mode for this fixture (gosec assumes a file); the cleanup must restore it so TempDir removal succeeds
 
 	h := newBrowseRouter(t, root)
 	w, m := doJSON(t, h, http.MethodGet, "/api/browse?path=locked", "")
