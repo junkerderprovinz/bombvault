@@ -605,7 +605,7 @@ const sv: Partial<Translations> = {
   "folders.previewPaths": "{n} sökvägar",
   "folders.exclusions": "{n} undantag",
   "folders.resetSelection": "Återställ urval",
-  "folders.resetConfirm": "Återställ mappurvalet? Containern går tillbaka till automatisk identifiering (appdata-standard) och alla sparade undantag tas bort.",
+  "folders.resetConfirm": "Återställ mappurvalet? Containern går tillbaka till automatisk identifiering (appdata-standard) och alla sparade undantag och cachemappinställningar tas bort.",
   "folders.narrowedNote": "Urvalet omfattar nu färre mappar än tidigare. Från och med nästa säkerhetskopiering innehåller snapshots endast de valda mapparna. Befintliga snapshots förblir oförändrade.",
   "folders.cachedirToggle": "Hoppa över cachemappar (CACHEDIR.TAG)",
   "folders.cachedirScope": "Gäller hela säkerhetskopieringen av denna container, inte bara denna mapp.",

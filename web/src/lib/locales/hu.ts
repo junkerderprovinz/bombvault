@@ -605,7 +605,7 @@ const hu: Partial<Translations> = {
   "folders.previewPaths": "{n} elérési út",
   "folders.exclusions": "{n} kizárás",
   "folders.resetSelection": "Kijelölés visszaállítása",
-  "folders.resetConfirm": "Visszaállítod a mappakijelölést? A konténer visszatér az automatikus felismeréshez (appdata alapértelmezés), és minden megjegyzett kizárás törlődik.",
+  "folders.resetConfirm": "Visszaállítod a mappakijelölést? A konténer visszatér az automatikus felismeréshez (appdata alapértelmezés), és minden megjegyzett kizárás és gyorsítótár-mappa beállítás törlődik.",
   "folders.narrowedNote": "A kijelölés most kevesebb mappát foglal magában, mint korábban. A következő mentéstől kezdve a pillanatképek csak a kijelölt mappákat tartalmazzák. A meglévő pillanatképek változatlanok maradnak.",
   "folders.cachedirToggle": "Gyorsítótár-mappák kihagyása (CACHEDIR.TAG)",
   "folders.cachedirScope": "A konténer teljes mentésére vonatkozik, nem csak erre a mappára.",

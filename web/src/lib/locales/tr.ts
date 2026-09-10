@@ -605,7 +605,7 @@ const tr: Partial<Translations> = {
   "folders.previewPaths": "{n} yol",
   "folders.exclusions": "{n} hariç tutma",
   "folders.resetSelection": "Seçimi sıfırla",
-  "folders.resetConfirm": "Klasör seçimi sıfırlansın mı? Kapsayıcı otomatik algılamaya (appdata varsayılanı) döner ve hatırlanan tüm hariç tutmalar kaldırılır.",
+  "folders.resetConfirm": "Klasör seçimi sıfırlansın mı? Kapsayıcı otomatik algılamaya (appdata varsayılanı) döner ve hatırlanan tüm hariç tutmalar ile önbellek klasörü ayarları kaldırılır.",
   "folders.narrowedNote": "Seçim artık öncekinden daha az klasörü kapsıyor. Bir sonraki yedeklemeden itibaren anlık görüntüler yalnızca seçilen klasörleri içerecek. Mevcut anlık görüntüler değişmez.",
   "folders.cachedirToggle": "Önbellek klasörlerini atla (CACHEDIR.TAG)",
   "folders.cachedirScope": "Bu kapsayıcının yedeklemesinin tamamına uygulanır, yalnızca bu klasöre değil.",

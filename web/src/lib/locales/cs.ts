@@ -603,7 +603,7 @@ const cs: Partial<Translations> = {
   "folders.previewPaths": "{n} cest",
   "folders.exclusions": "{n} vyloučení",
   "folders.resetSelection": "Resetovat výběr",
-  "folders.resetConfirm": "Resetovat výběr složek? Kontejner se vrátí k automatické detekci (výchozí appdata) a všechna zapamatovaná vyloučení se odstraní.",
+  "folders.resetConfirm": "Resetovat výběr složek? Kontejner se vrátí k automatické detekci (výchozí appdata) a všechna zapamatovaná vyloučení i nastavení složek mezipaměti se odstraní.",
   "folders.narrowedNote": "Výběr nyní zahrnuje méně složek než dříve. Od příštího zálohování budou snímky obsahovat pouze vybrané složky. Stávající snímky zůstávají beze změny.",
   "folders.cachedirToggle": "Přeskočit složky mezipaměti (CACHEDIR.TAG)",
   "folders.cachedirScope": "Platí pro celou zálohu tohoto kontejneru, nejen pro tuto složku.",

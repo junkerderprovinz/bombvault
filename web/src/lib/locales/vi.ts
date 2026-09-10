@@ -597,7 +597,7 @@ const vi: Partial<Translations> = {
   "folders.previewPaths": "{n} đường dẫn",
   "folders.exclusions": "{n} mục loại trừ",
   "folders.resetSelection": "Đặt lại lựa chọn",
-  "folders.resetConfirm": "Đặt lại lựa chọn thư mục? Container sẽ quay về phát hiện tự động (mặc định appdata) và mọi ngoại lệ đã ghi nhớ sẽ bị xóa.",
+  "folders.resetConfirm": "Đặt lại lựa chọn thư mục? Container sẽ quay về phát hiện tự động (mặc định appdata) và mọi ngoại lệ đã ghi nhớ cùng cài đặt thư mục bộ nhớ đệm sẽ bị xóa.",
   "folders.narrowedNote": "Lựa chọn hiện bao phủ ít thư mục hơn trước. Từ bản sao lưu tiếp theo, các snapshot sẽ chỉ chứa các thư mục đã chọn. Các snapshot hiện có không thay đổi.",
   "folders.cachedirToggle": "Bỏ qua thư mục bộ nhớ đệm (CACHEDIR.TAG)",
   "folders.cachedirScope": "Áp dụng cho toàn bộ bản sao lưu của container này, không chỉ thư mục này.",

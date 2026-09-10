@@ -611,7 +611,7 @@ const sk: Partial<Translations> = {
   "folders.previewPaths": "{n} ciest",
   "folders.exclusions": "{n} vylúčení",
   "folders.resetSelection": "Obnoviť výber",
-  "folders.resetConfirm": "Obnoviť výber priečinkov? Kontajner sa vráti k automatickej detekcii (predvolené appdata) a všetky zapamätané vylúčenia sa odstránia.",
+  "folders.resetConfirm": "Obnoviť výber priečinkov? Kontajner sa vráti k automatickej detekcii (predvolené appdata) a všetky zapamätané vylúčenia aj nastavenia priečinkov vyrovnávacej pamäte sa odstránia.",
   "folders.narrowedNote": "Výber teraz zahŕňa menej priečinkov ako predtým. Od ďalšieho zálohovania budú snímky obsahovať iba vybraté priečinky. Existujúce snímky sa nezmenia.",
   "folders.cachedirToggle": "Preskočiť priečinky vyrovnávacej pamäte (CACHEDIR.TAG)",
   "folders.cachedirScope": "Vzťahuje sa na celú zálohu tohto kontajnera, nielen na tento priečinok.",

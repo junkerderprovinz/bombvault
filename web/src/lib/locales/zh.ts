@@ -597,7 +597,7 @@ const zh: Partial<Translations> = {
   "folders.previewPaths": "{n} 个路径",
   "folders.exclusions": "{n} 个排除项",
   "folders.resetSelection": "重置选择",
-  "folders.resetConfirm": "重置文件夹选择？容器将恢复自动检测（appdata 默认值），并移除所有已记住的排除项。",
+  "folders.resetConfirm": "重置文件夹选择？容器将恢复自动检测（appdata 默认值），并移除所有已记住的排除项和缓存文件夹设置。",
   "folders.narrowedNote": "选择现在涵盖的文件夹比之前少。从下次备份开始，快照将只包含选定的文件夹。现有快照保持不变。",
   "folders.cachedirToggle": "跳过缓存文件夹（CACHEDIR.TAG）",
   "folders.cachedirScope": "适用于此容器的整个备份，而不仅仅是此文件夹。",

@@ -611,7 +611,7 @@ const lt: Partial<Translations> = {
   "folders.previewPaths": "{n} keliai",
   "folders.exclusions": "{n} išimčių",
   "folders.resetSelection": "Atstatyti pasirinkimą",
-  "folders.resetConfirm": "Atstatyti aplankų pasirinkimą? Konteineris grįš prie automatinio aptikimo (numatomasis appdata), o visi įsiminti neįtraukimai bus pašalinti.",
+  "folders.resetConfirm": "Atstatyti aplankų pasirinkimą? Konteineris grįš prie automatinio aptikimo (numatomasis appdata), o visi įsiminti neįtraukimai ir podėlio aplankų nustatymai bus pašalinti.",
   "folders.narrowedNote": "Pasirinkimas dabar apima mažiau aplankų nei anksčiau. Nuo kito atsarginio kopijavimo momentinės kopijos talpins tik pasirinktus aplankus. Esamos momentinės kopijos lieka nepakitusios.",
   "folders.cachedirToggle": "Praleisti podėlio aplankus (CACHEDIR.TAG)",
   "folders.cachedirScope": "Taikoma visai šio konteinerio atsarginei kopijai, o ne tik šiam aplankui.",

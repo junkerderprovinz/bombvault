@@ -611,7 +611,7 @@ const sl: Partial<Translations> = {
   "folders.previewPaths": "{n} poti",
   "folders.exclusions": "{n} izključitev",
   "folders.resetSelection": "Ponastavi izbiro",
-  "folders.resetConfirm": "Ponastavi izbiro map? Vsebnik se vrne na samodejno zaznavo (privzeto appdata), vsa zapomnjena izključenja pa se odstranijo.",
+  "folders.resetConfirm": "Ponastavi izbiro map? Vsebnik se vrne na samodejno zaznavo (privzeto appdata), vsa zapomnjena izključenja in nastavitve predpomnilniških map pa se odstranijo.",
   "folders.narrowedNote": "Izbira zdaj zajema manj map kot prej. Od naslednje varnostne kopije naprej bodo posnetki vsebovali samo izbrane mape. Obstoječi posnetki se ne spremenijo.",
   "folders.cachedirToggle": "Preskoči mape predpomnilnika (CACHEDIR.TAG)",
   "folders.cachedirScope": "Velja za celotno varnostno kopijo tega vsebnika, ne samo za to mapo.",

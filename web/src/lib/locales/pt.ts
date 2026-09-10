@@ -602,7 +602,7 @@ const pt: Partial<Translations> = {
   "folders.previewPaths": "{n} caminhos",
   "folders.exclusions": "{n} exclusões",
   "folders.resetSelection": "Repor seleção",
-  "folders.resetConfirm": "Repor a seleção de pastas? O contentor volta à deteção automática (appdata predefinida) e todas as exclusões memorizadas são removidas.",
+  "folders.resetConfirm": "Repor a seleção de pastas? O contentor volta à deteção automática (appdata predefinida) e todas as exclusões memorizadas e as definições de pastas de cache são removidas.",
   "folders.narrowedNote": "A seleção agora abrange menos pastas do que antes. A partir da próxima cópia, as snapshots conterão apenas as pastas selecionadas. As snapshots existentes ficam inalteradas.",
   "folders.cachedirToggle": "Ignorar pastas de cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "Aplica-se a toda a cópia de segurança deste contentor, não apenas a esta pasta.",

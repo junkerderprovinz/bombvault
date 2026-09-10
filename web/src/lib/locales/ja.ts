@@ -597,7 +597,7 @@ const ja: Partial<Translations> = {
   "folders.previewPaths": "{n} 個のパス",
   "folders.exclusions": "{n} 件の除外",
   "folders.resetSelection": "選択をリセット",
-  "folders.resetConfirm": "フォルダの選択をリセットしますか？コンテナは自動検出（appdata デフォルト）に戻り、記憶されているすべての除外が削除されます。",
+  "folders.resetConfirm": "フォルダの選択をリセットしますか？コンテナは自動検出（appdata デフォルト）に戻り、記憶されているすべての除外とキャッシュフォルダの設定が削除されます。",
   "folders.narrowedNote": "選択範囲は以前より少ないフォルダをカバーしています。次回のバックアップから、スナップショットには選択されたフォルダのみが含まれます。既存のスナップショットは変更されません。",
   "folders.cachedirToggle": "キャッシュフォルダをスキップ（CACHEDIR.TAG）",
   "folders.cachedirScope": "このコンテナのバックアップ全体に適用されます。このフォルダだけではありません。",

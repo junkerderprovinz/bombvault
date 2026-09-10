@@ -605,7 +605,7 @@ const da: Partial<Translations> = {
   "folders.previewPaths": "{n} stier",
   "folders.exclusions": "{n} udeladelser",
   "folders.resetSelection": "Nulstil valg",
-  "folders.resetConfirm": "Nulstil mappevalget? Containeren vender tilbage til automatisk registrering (appdata-standard), og alle huskede udeladelser fjernes.",
+  "folders.resetConfirm": "Nulstil mappevalget? Containeren vender tilbage til automatisk registrering (appdata-standard), og alle huskede udeladelser og cachemappeindstillinger fjernes.",
   "folders.narrowedNote": "Valget dækker nu færre mapper end før. Fra den næste sikkerhedskopi og fremefter indeholder snapshots kun de valgte mapper. Eksisterende snapshots er uændrede.",
   "folders.cachedirToggle": "Spring cachemapper over (CACHEDIR.TAG)",
   "folders.cachedirScope": "Gælder for hele sikkerhedskopien af denne container, ikke kun denne mappe.",

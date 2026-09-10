@@ -599,7 +599,7 @@ const nl: Partial<Translations> = {
   "folders.previewPaths": "{n} paden",
   "folders.exclusions": "{n} uitsluitingen",
   "folders.resetSelection": "Selectie herstellen",
-  "folders.resetConfirm": "Mapselectie herstellen? De container keert terug naar automatische detectie (appdata-standaard) en alle bewaarde uitsluitingen worden verwijderd.",
+  "folders.resetConfirm": "Mapselectie herstellen? De container keert terug naar automatische detectie (appdata-standaard) en alle bewaarde uitsluitingen en cachemapinstellingen worden verwijderd.",
   "folders.narrowedNote": "De selectie beslaat nu minder mappen dan voorheen. Vanaf de volgende back-up bevatten snapshots alleen de geselecteerde mappen. Bestaande snapshots blijven ongewijzigd.",
   "folders.cachedirToggle": "Cachemappen overslaan (CACHEDIR.TAG)",
   "folders.cachedirScope": "Geldt voor de volledige back-up van deze container, niet alleen voor deze map.",

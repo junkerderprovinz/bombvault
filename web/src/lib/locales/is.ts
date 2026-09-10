@@ -611,7 +611,7 @@ const is: Partial<Translations> = {
   "folders.previewPaths": "{n} slóðir",
   "folders.exclusions": "{n} undantök",
   "folders.resetSelection": "Endurstilla val",
-  "folders.resetConfirm": "Endurstilla möppuvalið? Gámurinn fer aftur í sjáfvirka greiningu (appdata-sjálfgefið) og öll munduð undantekning eru fjarlægð.",
+  "folders.resetConfirm": "Endurstilla möppuvalið? Gámurinn fer aftur í sjáfvirka greiningu (appdata-sjálfgefið) og öll munduð undantekning og stillingar skyndiminnismappa eru fjarlægð.",
   "folders.narrowedNote": "Valið nær nú yfir færri möppur en áður. Frá og með næstu öryggisafritun munu skyggnur aðeins innihalda valdar möppur. Fyrirliggjandi skyggnur breytast ekki.",
   "folders.cachedirToggle": "Sleppa skyndiminnismöppum (CACHEDIR.TAG)",
   "folders.cachedirScope": "Á við allt öryggisafrit þessa gáms, ekki aðeins þessa möppu.",

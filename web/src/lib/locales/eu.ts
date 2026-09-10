@@ -611,7 +611,7 @@ const eu: Partial<Translations> = {
   "folders.previewPaths": "{n} bide",
   "folders.exclusions": "{n} bazterketa",
   "folders.resetSelection": "Hautapena berrezarri",
-  "folders.resetConfirm": "Karpeten hautapena berrezarri? Edukiontza detekzio automatikora itzultzen da (appdata lehenespena) ja gogoratutako bazterketa guztiak kentzen dira.",
+  "folders.resetConfirm": "Karpeten hautapena berrezarri? Edukiontza detekzio automatikora itzultzen da (appdata lehenespena) eta gogoratutako bazterketa guztiak eta cache karpeten ezarpenak kentzen dira.",
   "folders.narrowedNote": "Hautapenak orain aurrekoa baino karpeta gutxiago hartzen ditu barne. Hurrengo babeskopiatik aurrera, snapshot-ek hautatutako karpetak bakarrik edukiko dituzte. Existitzen diren snapshot-ek ez dute aldatzen.",
   "folders.cachedirToggle": "Saltatu cache karpetak (CACHEDIR.TAG)",
   "folders.cachedirScope": "Edukiontzi honen babeskopia osoari aplikatzen zaio, ez bakarrik karpeta honi.",

@@ -611,7 +611,7 @@ const et: Partial<Translations> = {
   "folders.previewPaths": "{n} teed",
   "folders.exclusions": "{n} välistust",
   "folders.resetSelection": "Lähtesta valik",
-  "folders.resetConfirm": "Lähtestada kaustade valik? Konteiner naaseb automaatsele tuvastamisele (appdata vaikeväärtus) ja kõik meeldejäetud välistused eemaldatakse.",
+  "folders.resetConfirm": "Lähtestada kaustade valik? Konteiner naaseb automaatsele tuvastamisele (appdata vaikeväärtus) ja kõik meeldejäetud välistused ning vahemälu kaustade seaded eemaldatakse.",
   "folders.narrowedNote": "Valik hõlmab nüüd vähem kaustu kui varem. Alates järgmisest varukoopiast sisaldavad hetktõmmised ainult valitud kaustu. Olemasolevad hetktõmmised jäävad muutmata.",
   "folders.cachedirToggle": "Jäta vahemälu kaustad vahele (CACHEDIR.TAG)",
   "folders.cachedirScope": "Kehtib kogu selle konteineri varukoopia kohta, mitte ainult selle kausta kohta.",

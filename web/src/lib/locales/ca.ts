@@ -611,7 +611,7 @@ const ca: Partial<Translations> = {
   "folders.previewPaths": "{n} camins",
   "folders.exclusions": "{n} exclusions",
   "folders.resetSelection": "Restableix la selecció",
-  "folders.resetConfirm": "Restablir la selecció de carpetes? El contenidor torna a la detecció automàtica (per defecte appdata) i s'eliminen totes les exclusions recordades.",
+  "folders.resetConfirm": "Restablir la selecció de carpetes? El contenidor torna a la detecció automàtica (per defecte appdata) i s'eliminen totes les exclusions recordades i la configuració de les carpetes de memòria cau.",
   "folders.narrowedNote": "La selecció ara inclou menys carpetes que abans. A partir de la propera còpia de seguretat, les instantànies contindran només les carpetes seleccionades. Les instantànies existents no canvien.",
   "folders.cachedirToggle": "Omet les carpetes de memòria cau (CACHEDIR.TAG)",
   "folders.cachedirScope": "S'aplica a tota la còpia de seguretat d'aquest contenidor, no només a aquesta carpeta.",

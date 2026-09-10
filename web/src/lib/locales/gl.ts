@@ -611,7 +611,7 @@ const gl: Partial<Translations> = {
   "folders.previewPaths": "{n} rutas",
   "folders.exclusions": "{n} exclusións",
   "folders.resetSelection": "Restablecer selección",
-  "folders.resetConfirm": "Restablecer a selección de cartafoles? O contedor volve á detección automática (appdata por defecto) e elimínanse todas as exclusións lembradas.",
+  "folders.resetConfirm": "Restablecer a selección de cartafoles? O contedor volve á detección automática (appdata por defecto) e elimínanse todas as exclusións lembradas e a configuración dos cartafoles da caché.",
   "folders.narrowedNote": "A selección abarca agora menos cartafoles que antes. A partir da próxima copia, as instantáneas conterán só os cartafoles seleccionados. As instantáneas existentes non cambian.",
   "folders.cachedirToggle": "Omitir cartafoles da caché (CACHEDIR.TAG)",
   "folders.cachedirScope": "Aplícase a toda a copia de seguranza deste contedor, non só a este cartafol.",

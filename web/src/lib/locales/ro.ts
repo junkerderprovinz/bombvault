@@ -602,7 +602,7 @@ const ro: Partial<Translations> = {
   "folders.previewPaths": "{n} căi",
   "folders.exclusions": "{n} excluderi",
   "folders.resetSelection": "Resetează selecția",
-  "folders.resetConfirm": "Resetezi selecția dosarelor? Containerul revine la detectarea automată (implicită appdata), iar toate excluderile ținute minte sunt eliminate.",
+  "folders.resetConfirm": "Resetezi selecția dosarelor? Containerul revine la detectarea automată (implicită appdata), iar toate excluderile ținute minte și setările folderelor de cache sunt eliminate.",
   "folders.narrowedNote": "Selecția acoperă acum mai puține foldere decât înainte. Începând cu următoarea copie de rezervă, snapshot-urile vor conține doar folderele selectate. Snapshot-urile existente rămân neschimbate.",
   "folders.cachedirToggle": "Omite folderele de cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "Se aplică întregii copii de rezervă a acestui container, nu doar acestui folder.",

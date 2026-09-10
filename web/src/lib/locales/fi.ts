@@ -605,7 +605,7 @@ const fi: Partial<Translations> = {
   "folders.previewPaths": "{n} polkua",
   "folders.exclusions": "{n} poissjoukkoa",
   "folders.resetSelection": "Valinnan nollaus",
-  "folders.resetConfirm": "Nollataanko kansioiden valinta? Kontti palaa automaattiseen tunnistukseen (appdata-oletus), ja kaikki muistissa pidetyt poissulkemiset poistetaan.",
+  "folders.resetConfirm": "Nollataanko kansioiden valinta? Kontti palaa automaattiseen tunnistukseen (appdata-oletus), ja kaikki muistissa pidetyt poissulkemiset ja välimuistikansioiden asetukset poistetaan.",
   "folders.narrowedNote": "Valinta kattaa nyt vähemmän kansioita kuin aiemmin. Seuraavasta varmuuskopiosta alkaen tilannekuvat sisältävät vain valitut kansiot. Olemassa olevat tilannekuvat eivät muutu.",
   "folders.cachedirToggle": "Ohita välimuistikansiot (CACHEDIR.TAG)",
   "folders.cachedirScope": "Koskee koko tämän kontin varmuuskopiota, ei vain tätä kansiota.",

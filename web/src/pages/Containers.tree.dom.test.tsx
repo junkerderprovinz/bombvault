@@ -560,28 +560,47 @@ describe("per-root reviewable exclusions (INTEG-03, D-03, D-04)", () => {
 // SELECT-03 D-02).
 //
 // The reset is the ONE sanctioned exit back to auto-detection: confirmed
-// (fail tone, both consequences named), serialized through the same one-deep
-// queue as toggles, body exactly {backupPaths: []} with NO selectionSource
-// (the Phase 1 guard is strictly tree-source-gated, so the reset passes it by
-// design — while tree toggles keep the guard live), and non-optimistic: the
-// editor refetches on ok and the served auto-detected state replaces
-// everything, remembered exclusions gone. The narrowing note is event-driven
-// (D-02): a successful save whose attempted include count is lower than the
-// last-SAVED count, gated on container.lastBackup, announced as a polite
-// role="status" warn line, transient for the editor session only.
+// (fail tone, every consequence named), serialized through the same one-deep
+// queue as toggles, body exactly {backupPaths: [], excludeCaches: {}} with
+// NO selectionSource (the Phase 1 guard is strictly tree-source-gated, so
+// the reset passes it by design — while tree toggles keep the guard live;
+// the cleared caches map is review WR-04: a stored toggle keyed by a root
+// the reset removes must not survive as an orphaned --exclude-caches with
+// no switch left to turn it off), and non-optimistic: the editor refetches
+// on ok and the served auto-detected state replaces everything, remembered
+// exclusions and cache-folder settings gone. The narrowing note is
+// event-driven (D-02): a successful save whose attempted include count is
+// lower than the last-SAVED count, gated on container.lastBackup, announced
+// as a polite role="status" warn line, transient for the editor session
+// only.
 // ---------------------------------------------------------------------------
 
 const NARROWED_NOTE_EN =
   "The selection now covers fewer folders than before. From the next backup on, snapshots will contain only the selected folders. Existing snapshots are unchanged.";
 const RESET_CONFIRM_EN =
-  "Reset the folder selection? The container returns to automatic detection (appdata default) and all remembered exclusions are removed.";
+  "Reset the folder selection? The container returns to automatic detection (appdata default) and all remembered exclusions and cache-folder settings are removed.";
 
 describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, SELECT-03 D-02)", () => {
-  it("Reset selection: fail-tone confirm naming both consequences, one serialized PATCH {backupPaths: []} with no selectionSource, refetch renders the auto-detected selection", async () => {
-    mountsReply = mountsResponse({ excluded: [`${MOUNT}/transcoding`] });
+  it("Reset selection: fail-tone confirm naming every consequence, one serialized PATCH clearing selection AND the caches map, refetch renders the auto-detected selection", async () => {
+    // The orphan scenario WR-04 exists for: the stored caches map carries a
+    // true keyed by a STANDALONE CUSTOM root — exactly the kind of row the
+    // reset removes (the selection becomes auto-detected), so a reset that
+    // cleared only backupPaths would leave the key firing --exclude-caches
+    // for every future backup with no switch left anywhere to turn it off.
+    mountsReply = mountsResponse({
+      excluded: [`${MOUNT}/transcoding`],
+      custom: [{ path: STANDALONE, exists: true }],
+      excludeCaches: { [STANDALONE]: true },
+    });
     await renderEditor(true, 1700000000);
-    // Pre-reset: the remembered exclusion is visible and the mount included.
+    // Pre-reset: the remembered exclusion is visible, the mount included, and
+    // the orphan-to-be's switch is ON.
     expect(screen.getByRole("button", { name: /1 exclusions/ })).toBeTruthy();
+    expect(
+      within(cachedirRow(screen.getByRole("treeitem", { name: /user\/backups/ })))
+        .getByRole("switch")
+        .getAttribute("aria-checked"),
+    ).toBe("true");
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Reset selection" }));
@@ -593,7 +612,10 @@ describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, S
     const confirmBtn = within(dialog).getByRole("button", { name: "Confirm" });
     expect(confirmBtn.className).toContain("bg-statusFailSolid");
 
-    // The server's post-reset state: auto-detected default, exclusions gone.
+    // The server's post-reset state: auto-detected default, exclusions gone,
+    // custom row gone, caches map CLEARED (the reset PATCH below is what
+    // clears it — the fixture models the fixed server; the pre-fix server
+    // kept the stored map, which is the orphan the review flagged).
     mountsReply = mountsResponse();
     await act(async () => {
       fireEvent.click(confirmBtn);
@@ -606,11 +628,22 @@ describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, S
     expect(patches).toHaveLength(1);
     expect(patches[0]).toEqual({ name: "tree", paths: [] });
     expect(patches[0].opts).toBeUndefined();
+    // WR-04: the same body clears the caches map — the composed reset PATCH
+    // carries both cleared classes in one serialized request.
+    expect(patchBodies[0]).toEqual({ name: "tree", body: { backupPaths: [], excludeCaches: {} } });
     // On ok the editor refetches mounts (non-optimistic: state comes from the
     // served response, never a local emptying).
     expect(mountsCalls).toBe(2);
     expect(screen.queryByRole("button", { name: /1 exclusions/ })).toBeNull();
+    // The custom root is gone (auto-detected mounts only) and no switch
+    // renders ON anywhere: the orphaned true did not survive the reset.
+    expect(screen.queryByRole("treeitem", { name: /user\/backups/ })).toBeNull();
     expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked")).toBe("true");
+    expect(
+      within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })))
+        .getByRole("switch")
+        .getAttribute("aria-checked"),
+    ).toBe("false");
   });
 
   it("the reset save does not fire the narrowing note (auto-detection is not a narrowed selection)", async () => {

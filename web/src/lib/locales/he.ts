@@ -605,7 +605,7 @@ const he: Partial<Translations> = {
   "folders.previewPaths": "{n} נתיבים",
   "folders.exclusions": "{n} החרגות",
   "folders.resetSelection": "איפוס הבחירה",
-  "folders.resetConfirm": "לאפס את בחירת התיקיות? המכל חוזר לזיהוי האוטומטי (ברירת המחדל של appdata) וכל ההחרגות הזכורות נמחקות.",
+  "folders.resetConfirm": "לאפס את בחירת התיקיות? המכל חוזר לזיהוי האוטומטי (ברירת המחדל של appdata) וכל ההחרגות הזכורות והגדרות תיקיות המטמון יימחקו.",
   "folders.narrowedNote": "הבחירה מכסה כעת פחות תיקיות מלפני כן. החל מהגיבוי הבא, תמונות המצב יכילו רק את התיקיות שנבחרו. תמונות מצב קיימות אינן משתנות.",
   "folders.cachedirToggle": "דלג על תיקיות מטמון (CACHEDIR.TAG)",
   "folders.cachedirScope": "חל על הגיבוי המלא של המכל הזה, לא רק על תיקייה זו.",

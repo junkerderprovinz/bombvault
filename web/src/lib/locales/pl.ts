@@ -597,7 +597,7 @@ const pl: Partial<Translations> = {
   "folders.previewPaths": "{n} ścieżek",
   "folders.exclusions": "{n} wykluczeń",
   "folders.resetSelection": "Resetuj wybór",
-  "folders.resetConfirm": "Zresetować wybór folderów? Kontener wraca do automatycznego wykrywania (domyślne appdata), a wszystkie zapamiętane wykluczenia zostaną usunięte.",
+  "folders.resetConfirm": "Zresetować wybór folderów? Kontener wraca do automatycznego wykrywania (domyślne appdata), a wszystkie zapamiętane wykluczenia i ustawienia folderów pamięci podręcznej zostaną usunięte.",
   "folders.narrowedNote": "Wybór obejmuje teraz mniej folderów niż wcześniej. Od następnej kopii zapasowej migawki będą zawierać tylko wybrane foldery. Istniejące migawki pozostają bez zmian.",
   "folders.cachedirToggle": "Pomiń foldery pamięci podręcznej (CACHEDIR.TAG)",
   "folders.cachedirScope": "Dotyczy całej kopii zapasowej tego kontenera, a nie tylko tego folderu.",

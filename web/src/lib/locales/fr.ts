@@ -605,7 +605,7 @@ const fr: Partial<Translations> = {
   "folders.previewPaths": "{n} chemins",
   "folders.exclusions": "{n} exclusions",
   "folders.resetSelection": "Réinitialiser la sélection",
-  "folders.resetConfirm": "Réinitialiser la sélection des dossiers ? Le conteneur revient à la détection automatique (appdata par défaut) et toutes les exclusions mémorisées sont supprimées.",
+  "folders.resetConfirm": "Réinitialiser la sélection des dossiers ? Le conteneur revient à la détection automatique (appdata par défaut) et toutes les exclusions mémorisées et les paramètres des dossiers de cache sont supprimés.",
   "folders.narrowedNote": "La sélection couvre désormais moins de dossiers qu'avant. À partir de la prochaine sauvegarde, les instantanés ne contiendront que les dossiers sélectionnés. Les instantanés existants restent inchangés.",
   "folders.cachedirToggle": "Ignorer les dossiers de cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "S'applique à toute la sauvegarde de ce conteneur, pas seulement à ce dossier.",

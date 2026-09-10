@@ -611,7 +611,7 @@ const lv: Partial<Translations> = {
   "folders.previewPaths": "{n} ceļi",
   "folders.exclusions": "{n} izņēmumu",
   "folders.resetSelection": "Atiestatīt atlasi",
-  "folders.resetConfirm": "Atiestatīt mapju atlasi? Konteiners atgriežas pie automātiskās noteikšanas (appdata noklusējums), un visas atcerētās izslēgšanas tiek noņemtas.",
+  "folders.resetConfirm": "Atiestatīt mapju atlasi? Konteiners atgriežas pie automātiskās noteikšanas (appdata noklusējums), un visas atcerētās izslēgšanas un kešatmiņas mapju iestatījumi tiek noņemti.",
   "folders.narrowedNote": "Atlase tagad aptver mazāk mapju nekā iepriekš. Sākot ar nākamo rezerves kopiju, momentuzņēmumi saturēs tikai atlasītās mapes. Esošie momentuzņēmumi nemainās.",
   "folders.cachedirToggle": "Izlaist kešatmiņas mapes (CACHEDIR.TAG)",
   "folders.cachedirScope": "Attiecas uz visu šī konteinera rezerves kopiju, ne tikai uz šo mapi.",

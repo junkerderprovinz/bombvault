@@ -611,7 +611,7 @@ const id: Partial<Translations> = {
   "folders.previewPaths": "{n} jalur",
   "folders.exclusions": "{n} pengecualian",
   "folders.resetSelection": "Atur ulang pilihan",
-  "folders.resetConfirm": "Atur ulang pilihan folder? Kontainer kembali ke deteksi otomatis (default appdata) dan semua pengecualian yang diingat dihapus.",
+  "folders.resetConfirm": "Atur ulang pilihan folder? Kontainer kembali ke deteksi otomatis (default appdata) dan semua pengecualian yang diingat serta pengaturan folder cache dihapus.",
   "folders.narrowedNote": "Pilihan sekarang mencakup lebih sedikit folder dari sebelumnya. Mulai dari pencadangan berikutnya, snapshot hanya akan berisi folder yang dipilih. Snapshot yang ada tidak berubah.",
   "folders.cachedirToggle": "Lewati folder cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "Berlaku untuk seluruh pencadangan kontainer ini, bukan hanya folder ini.",

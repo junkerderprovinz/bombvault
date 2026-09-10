@@ -611,7 +611,7 @@ const ms: Partial<Translations> = {
   "folders.previewPaths": "{n} laluan",
   "folders.exclusions": "{n} pengecualian",
   "folders.resetSelection": "Set semula pilihan",
-  "folders.resetConfirm": "Set semula pilihan folder? Bekas kembali kepada pengesanan automatik (lalai appdata) dan semua pengecualian yang diingati dibuang.",
+  "folders.resetConfirm": "Set semula pilihan folder? Bekas kembali kepada pengesanan automatik (lalai appdata) dan semua pengecualian yang diingati serta tetapan folder cache dibuang.",
   "folders.narrowedNote": "Pilihan kini meliputi lebih kurang folder berbanding sebelumnya. Mulai sandaran seterusnya, snapshot hanya akan mengandungi folder yang dipilih. Snapshot sedia ada tidak berubah.",
   "folders.cachedirToggle": "Langkau folder cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "Terpakai kepada keseluruhan sandaran bekas ini, bukan hanya folder ini.",

@@ -964,6 +964,18 @@ export function FoldersEditor({
     try {
       const live = mirrorRef.current;
       const body: ContainerTargetsBody = {};
+      // A reset drain (WR-04): the confirmed reset clears BOTH remembered
+      // per-root classes — the selection AND the CACHEDIR map. Sending
+      // excludeCaches: {} with the empty backupPaths is what keeps a stored
+      // toggle keyed by a root that disappears in the reset (a standalone
+      // custom row, gone once the selection becomes auto-detected) from
+      // surviving invisibly: anyRootExcludeCaches reads the stored map
+      // regardless of whether the root still renders, so an orphaned true
+      // would keep --exclude-caches firing with no switch left to turn it
+      // off. The empty-selection guard only gates on the literal "tree"
+      // source, which the reset never sends, so the added field keeps the
+      // sanctioned no-source reset shape.
+      const isReset = owed.has("paths") && pathsDesc?.reset === true;
       if (owed.has("paths")) {
         // D-05 (INTEG-04): a reset drain sends EXACTLY {backupPaths: []} with
         // NO selectionSource — the Phase 1 empty-selection guard is strictly
@@ -972,17 +984,24 @@ export function FoldersEditor({
         // the live flat list under the "tree" source (a toggle stacked behind
         // a reset is latest-intent-wins: its drain re-sends the live NON-empty
         // list, which the guard never bites on).
-        if (pathsDesc?.reset) {
+        if (isReset) {
           body.backupPaths = [];
+          body.excludeCaches = {};
         } else {
           body.backupPaths = toFlatList(live.inc, live.exc);
           if (pathsDesc?.source) body.selectionSource = pathsDesc.source;
         }
       }
-      if (owed.has("caches")) {
+      if (owed.has("caches") && !isReset) {
         // D-06: the whole live map, one class — the server replaces it
         // wholesale, so a flip and a later drain of the same class can never
-        // lose each other's entries.
+        // lose each other's entries. Suppressed on a reset drain (see isReset
+        // above): the reset's {} stands and a flip stacked behind it is
+        // superseded — its optimistic state is re-derived by the ok reload,
+        // the same reset-wins supersession a stacked paths toggle gets. On a
+        // FAILED combined drain the flip's revert recipe still runs and lands
+        // on server truth (the server kept the pre-reset map, whose entry for
+        // the flipped key is exactly desc.caches.pre).
         body.excludeCaches = { ...cachesRef.current };
       }
       const r = await setContainerTargets(name, body);
@@ -1195,13 +1214,14 @@ export function FoldersEditor({
 
   // D-05 (INTEG-04): Reset selection — the ONE sanctioned exit back to
   // auto-detection. Confirmed first (fail-tone dialog, both consequences in
-  // the message: auto-detection returns AND remembered exclusions are gone),
-  // then serialized through the SAME one-deep queue as every toggle — a
-  // reset can never race an in-flight toggle save, and a toggle stacked
-  // behind a reset simply becomes the next drain with latest-intent-wins.
-  // Non-optimistic in BOTH directions: the mirror is never emptied locally,
-  // so ok refetches (the served state replaces everything) and failure
-  // leaves the editor exactly as it was.
+  // the message: auto-detection returns AND remembered exclusions are gone,
+  // plus the WR-04 caches clearing the body performs), then serialized
+  // through the SAME one-deep queue as every toggle — a reset can never race
+  // an in-flight toggle save, and a toggle stacked behind a reset simply
+  // becomes the next drain with latest-intent-wins. Non-optimistic in BOTH
+  // directions: the mirror is never emptied locally, so ok refetches (the
+  // served state replaces everything) and failure leaves the editor exactly
+  // as it was.
   async function onResetSelection(): Promise<void> {
     if (!(await confirm(t("folders.resetConfirm")))) return;
     setRowBusy((b) => ({ ...b, [RESET_ROW_KEY]: true }));

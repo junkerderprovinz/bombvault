@@ -748,12 +748,14 @@ export const en = {
   // {n} = stored exclusions strictly under the root (dormant included).
   "folders.exclusions": "{n} exclusions",
   // Phase 3 plan 03 (D-05, INTEG-04): the reset control and its fail-tone
-  // confirm. The confirm message names BOTH consequences (auto-detection
-  // returns AND remembered exclusions are removed) — the dialog carries the
-  // destructive weight, the trigger stays neutral.
+  // confirm. The confirm message names every consequence (auto-detection
+  // returns, remembered exclusions are removed, and the per-root cache-folder
+  // settings go with them — review WR-04 made the reset body clear the
+  // CACHEDIR map, so the copy must promise exactly that) — the dialog carries
+  // the destructive weight, the trigger stays neutral.
   "folders.resetSelection": "Reset selection",
   "folders.resetConfirm":
-    "Reset the folder selection? The container returns to automatic detection (appdata default) and all remembered exclusions are removed.",
+    "Reset the folder selection? The container returns to automatic detection (appdata default) and all remembered exclusions and cache-folder settings are removed.",
   // Phase 3 plan 03 (D-02, SELECT-03): the narrowing note — event-driven
   // (attempted < last-saved includes, gated on a prior backup), transient
   // for the editor session. The message scopes the change to FUTURE
@@ -2482,7 +2484,7 @@ export const de: Translations = {
   "folders.exclusions": "{n} Ausschlüsse",
   "folders.resetSelection": "Auswahl zurücksetzen",
   "folders.resetConfirm":
-    "Ordnerauswahl zurücksetzen? Der Container kehrt zur automatischen Erkennung zurück (appdata-Standard), und alle gemerkten Ausschlüsse werden entfernt.",
+    "Ordnerauswahl zurücksetzen? Der Container kehrt zur automatischen Erkennung zurück (appdata-Standard), und alle gemerkten Ausschlüsse und Cache-Ordner-Einstellungen werden entfernt.",
   "folders.narrowedNote":
     "Die Auswahl umfasst jetzt weniger Ordner als zuvor. Ab der nächsten Sicherung enthalten Snapshots nur noch die ausgewählten Ordner. Bestehende Snapshots bleiben unverändert.",
   "folders.cachedirToggle": "Cache-Ordner überspringen (CACHEDIR.TAG)",

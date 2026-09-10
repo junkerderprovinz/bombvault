@@ -605,7 +605,7 @@ const it: Partial<Translations> = {
   "folders.previewPaths": "{n} percorsi",
   "folders.exclusions": "{n} esclusioni",
   "folders.resetSelection": "Azzera selezione",
-  "folders.resetConfirm": "Azzerare la selezione delle cartelle? Il contenitore torna al rilevamento automatico (appdata predefinita) e tutte le esclusioni memorizzate vengono rimosse.",
+  "folders.resetConfirm": "Azzerare la selezione delle cartelle? Il contenitore torna al rilevamento automatico (appdata predefinita) e tutte le esclusioni memorizzate e le impostazioni delle cartelle di cache vengono rimosse.",
   "folders.narrowedNote": "La selezione ora comprende meno cartelle di prima. Dal prossimo backup in poi, le istantanee conterranno solo le cartelle selezionate. Le istantanee esistenti restano invariate.",
   "folders.cachedirToggle": "Salta le cartelle di cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "Si applica all'intero backup di questo contenitore, non solo a questa cartella.",

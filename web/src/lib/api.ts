@@ -895,9 +895,13 @@ export function getContainerMounts(name: string): Promise<ContainerMountsRespons
  *  non-empty list, `selectionSource` tags the writer ("tree" = the selection
  *  tree) — the server gates its empty-selection refusal on that literal and
  *  keeps legacy sources byte-compatible, and the reset deliberately sends
- *  backupPaths WITHOUT a source (the one sanctioned pass to auto-detection).
- *  `excludeCaches` replaces the whole per-root CACHEDIR.TAG map; the server
- *  treats a nil map as untouched, so omitting the class leaves it alone. */
+ *  backupPaths WITHOUT a source (the one sanctioned pass to auto-detection)
+ *  together with `excludeCaches: {}` (review WR-04: the reset clears the
+ *  per-root CACHEDIR map too, so a toggle keyed by a root the reset removes
+ *  cannot survive as an orphaned --exclude-caches with no switch to turn it
+ *  off). `excludeCaches` replaces the whole per-root CACHEDIR.TAG map; the
+ *  server treats a nil map as untouched, so omitting the class leaves it
+ *  alone. */
 export interface ContainerTargetsBody {
   backupPaths?: string[];
   selectionSource?: string;
