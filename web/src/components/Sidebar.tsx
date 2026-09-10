@@ -579,13 +579,17 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     //   - REACTIVE cannot narrow, because its words slide back INSIDE the row
     //     (`--reactive-chars` on a `max-width` transition) and because the
     //     ACTIVE row keeps its words permanently (`.glim-reactive.glim-active`).
-    //     A 96px rail would clip the one row that must always stay readable,
+    //     A narrow rail would clip the one row that must always stay readable,
     //     and the alternative, expanding the whole rail on hover, either shoves
     //     the page sideways or turns into the tooltip reactive mode exists to
     //     avoid.
-    // 6rem holds the 48px mark plus the row's own `px-3.5`, with the glyph
-    // column still centred in it.
-    <aside className={`flex flex-col ${railNarrow ? "w-24" : "w-56"} shrink-0 h-full overflow-hidden rounded-card bg-carbon-sidebar`}>
+    // The narrow width is `--rail-narrow`, the house's 85px, and no longer this
+    // app's own sum. It used to be 6rem, worked out from the 48px mark plus the
+    // row's `px-3.5`; the sibling worked out 64px the same way from its own
+    // mark, and the two rails then did the same job at different widths. The
+    // mark fits the rail now: 48px still sits centred at 85 with room on both
+    // sides. See GlimStone's own bullet for the reversal.
+    <aside className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-hidden rounded-card bg-carbon-sidebar`}>
       {/* Logo + wordmark → Dashboard. Two theme-specific marks auto-switch via the
           `dark:` variant (dark mark on the light surface, light mark on the dark
           surface). A short click navigates to the Dashboard; press-and-hold fires

@@ -594,6 +594,16 @@
   --radius-control:   0.625rem;
   --radius-pill:      9999px;
 
+  /* The navigation rail's width in glyph mode, where it prints no words
+     (GlimStone's `--rail-narrow`). A NUMBER, not this app's own calculation:
+     it used to be derived from the 48px mark plus the rows' `px-3.5`, which
+     landed on 96px here and 64px in the sibling, and two rails of different
+     widths doing the same job is what a shared language exists to prevent. The
+     mark fits the rail now, not the rail the mark; at 85px the 48px mark still
+     sits centred with room on both sides. The wide rail needs no token, being
+     Tailwind's own `w-56`. */
+  --rail-narrow:      85px;
+
   --text-heading: 1.25rem;  /* 20px */
   --text-body:    0.875rem; /* 14px */
   --text-dense:   0.75rem;  /* 12px */
