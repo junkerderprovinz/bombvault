@@ -28,6 +28,7 @@ import {
   isAtOrUnder,
   isStrictlyUnder,
   loadExpanded,
+  partitionCustomPaths,
   saveExpanded,
   splitFlatSet,
   toFlatList,
@@ -483,5 +484,87 @@ describe("expansion persistence bounds (D-05, plan 02 tables)", () => {
     const reloaded = loadExpanded("plex");
     expect(reloaded[0]).toBe("/mnt/user/appdata/d3");
     expect(reloaded[63]).toBe("/mnt/user/appdata/d2");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// partitionCustomPaths — sub-include absorption (INTEG-01, D-02, RESEARCH Q1)
+//
+// The server puts every include that is not EXACTLY a mount root into custom[]
+// (service.go:3755-3782 — matched[cp] only on exact equality), so a sub-include
+// under a reachable mount arrives as a custom row. The tree absorbs it: the
+// entry joins the (I, E) mirror under its mount (rendering the mount mixed per
+// the whitelist start-state) and is filtered from the custom row list, so every
+// path has exactly ONE presentation on screen.
+// ---------------------------------------------------------------------------
+
+describe("partitionCustomPaths", () => {
+  const cases: {
+    name: string;
+    customPaths: string[];
+    mountSources: string[];
+    underMount: string[];
+    standalone: string[];
+  }[] = [
+    {
+      name: "the plan's example: sub-include absorbed, foreign path standalone",
+      customPaths: ["/mnt/user/appdata/plex/Media", "/mnt/user/other"],
+      mountSources: ["/mnt/user/appdata/plex", "/mnt/user/media"],
+      underMount: ["/mnt/user/appdata/plex/Media"],
+      standalone: ["/mnt/user/other"],
+    },
+    {
+      name: "a sibling sharing the prefix stays standalone (segment alignment)",
+      customPaths: ["/mnt/user/appdata/plex2"],
+      mountSources: ["/mnt/user/appdata/plex"],
+      underMount: [],
+      standalone: ["/mnt/user/appdata/plex2"],
+    },
+    {
+      name: "an exact mount-root match is never a sub-include (it IS the mount row)",
+      customPaths: ["/mnt/user/appdata/plex"],
+      mountSources: ["/mnt/user/appdata/plex"],
+      underMount: [],
+      standalone: ["/mnt/user/appdata/plex"],
+    },
+    {
+      name: "a deeper path still absorbs under its covering mount",
+      customPaths: ["/mnt/user/appdata/plex/Library/Movies"],
+      mountSources: ["/mnt/user/appdata/plex", "/mnt/user/media"],
+      underMount: ["/mnt/user/appdata/plex/Library/Movies"],
+      standalone: [],
+    },
+    {
+      name: "multiple mounts: each sub-include absorbs under its own root only",
+      customPaths: [
+        "/mnt/user/appdata/plex/Media",
+        "/mnt/user/media/Movies",
+        "/mnt/user/backups",
+      ],
+      mountSources: ["/mnt/user/appdata/plex", "/mnt/user/media"],
+      underMount: ["/mnt/user/appdata/plex/Media", "/mnt/user/media/Movies"],
+      standalone: ["/mnt/user/backups"],
+    },
+    {
+      name: "no mounts: everything is standalone",
+      customPaths: ["/mnt/user/other"],
+      mountSources: [],
+      underMount: [],
+      standalone: ["/mnt/user/other"],
+    },
+    {
+      name: "no custom paths: both halves empty",
+      customPaths: [],
+      mountSources: ["/mnt/user/appdata/plex"],
+      underMount: [],
+      standalone: [],
+    },
+  ];
+
+  it.each(cases)("$name", ({ customPaths, mountSources, underMount, standalone }) => {
+    expect(partitionCustomPaths(customPaths, mountSources)).toEqual({
+      underMount,
+      standalone,
+    });
   });
 });
