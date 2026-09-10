@@ -404,3 +404,114 @@ describe("per-root effective-selection preview (SELECT-03 first half, D-01)", ()
     within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByText("2 paths");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Per-root reviewable exclusions (Phase 3, plan 02 — INTEG-03, D-03, D-04).
+//
+// Under every root carrying at least one exclusion STRICTLY below it a
+// collapsible "{n} exclusions" section renders: a plain disclosure button
+// plus, when open, a muted non-interactive list of relative paths. The list
+// is complete by construction — derived from the full stored exclusion set
+// (dormant entries included), never from which tree nodes are loaded — and
+// nothing in it can mutate the selection (one toggle pipeline, T-02-10).
+// ---------------------------------------------------------------------------
+
+describe("per-root reviewable exclusions (INTEG-03, D-03, D-04)", () => {
+  it("renders the disclosure for a root with exclusions, expands to relative mono rows, and renders no section at zero", async () => {
+    mountsReply = mountsResponse({ excluded: [`${MOUNT}/transcoding`, `${MOUNT}/Media`] });
+    await renderEditor();
+
+    // Zero-exclusion roots do not exist in this fixture beyond the mount
+    // itself (it carries both), so the negative case is pinned in the
+    // dedicated zero test below. Here: the button exists, collapsed first.
+    const btn = screen.getByRole("button", { name: /2 exclusions/ });
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+    const listId = btn.getAttribute("aria-controls");
+    expect(listId).toBeTruthy();
+    // Collapsed body is not rendered.
+    expect(document.getElementById(listId ?? "")).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    const list = document.getElementById(listId ?? "");
+    expect(list).not.toBeNull();
+    expect(list?.tagName).toBe("UL");
+    const items = within(list as HTMLElement).getAllByRole("listitem");
+    // Relative, lexically sorted, no root prefix, no leading slash.
+    expect(items.map((li) => li.textContent)).toEqual(["Media", "transcoding"]);
+    for (const li of items) {
+      // title carries the full relative path; the house mono ltr long-path
+      // pattern renders the row.
+      expect(li.getAttribute("title")).toBe(li.textContent);
+      expect(li.getAttribute("dir")).toBe("ltr");
+      expect(li.className).toContain("font-mono");
+      expect(li.className).toContain("break-all");
+    }
+  });
+
+  it("renders no section at all for a root with zero exclusions (no empty-list copy)", async () => {
+    await renderEditor();
+    expect(screen.queryByRole("button", { name: /exclusions/ })).toBeNull();
+    expect(screen.queryByText(/exclusions/i)).toBeNull();
+  });
+
+  it("D-04 dormant case: fully-deselected root renders unchecked box, '0 paths' and '{n} exclusions' together, never hidden", async () => {
+    mountsReply = mountsResponse({
+      mounts: [{ source: MOUNT, dest: "/config", selected: false, isAppdata: false, reachable: true }],
+      excluded: [`${MOUNT}/transcoding`],
+    });
+    await renderEditor();
+
+    const root = screen.getByRole("treeitem", { name: /user\/appdata\/plex/ });
+    expect(root.getAttribute("aria-checked")).toBe("false");
+    within(root).getByText("0 paths");
+    expect(screen.getByRole("button", { name: /1 exclusions/ })).toBeTruthy();
+
+    // Expanding the dormant section lists the remembered exclusion.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /1 exclusions/ }));
+    });
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["transcoding"]);
+  });
+
+  it("the expanded list is non-interactive: no controls inside the body, rows not focusable, treeitem counts unchanged", async () => {
+    mountsReply = mountsResponse({ excluded: [`${MOUNT}/transcoding`, `${MOUNT}/Media`] });
+    await renderEditor();
+
+    // Disclosure rows are excluded from treeitem counts: still exactly one
+    // root treeitem (aria-setsize of the level-1 set unchanged).
+    expect(screen.getAllByRole("treeitem")).toHaveLength(1);
+    expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-setsize")).toBe("1");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /2 exclusions/ }));
+    });
+    expect(screen.getAllByRole("treeitem")).toHaveLength(1);
+
+    // No mutation affordance anywhere in the list body, and rows are not
+    // focusable (no tabindex; li is not focusable by default and must not
+    // become so).
+    for (const li of screen.getAllByRole("listitem")) {
+      expect(li.getAttribute("tabindex")).toBeNull();
+      expect(within(li).queryByRole("checkbox")).toBeNull();
+      expect(within(li).queryByRole("button")).toBeNull();
+      expect(within(li).queryByRole("link")).toBeNull();
+    }
+  });
+
+  it("a never-expanded root still lists its exclusions (derived from the set, not from loaded children)", async () => {
+    mountsReply = mountsResponse({ excluded: [`${MOUNT}/transcoding`, `${MOUNT}/Media`] });
+    await renderEditor();
+
+    // The tree node is NEVER expanded — zero browse calls — yet the
+    // disclosure knows and lists both exclusions.
+    expect(browseCalls).toEqual([]);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /2 exclusions/ }));
+    });
+    expect(browseCalls).toEqual([]);
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Media", "transcoding"]);
+  });
+});

@@ -29,6 +29,7 @@ import {
   isStrictlyUnder,
   loadExpanded,
   partitionCustomPaths,
+  rootExclusions,
   rootIncludeCount,
   saveExpanded,
   splitFlatSet,
@@ -675,5 +676,64 @@ describe("rootIncludeCount (D-01: the preview mirrors the flat-set positional tr
     // folders.notReachable), and quietly dropping them here would make the
     // preview disagree with the argv the next backup actually carries.
     expect(rootIncludeCount("/mnt/user/appdata/plex", new Set(["/mnt/user/appdata/plex/gone-since-yesterday"]))).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rootExclusions — the per-root "{n} exclusions" review list (Phase 3, plan
+// 02, D-03/D-04)
+//
+// The list is the AUDIT VIEW of the remembered exclusions: complete by
+// construction because it derives from the full stored exclusion set
+// (dormant entries included), never from which tree nodes are loaded. Rows
+// are relative, lexically sorted, and purely presentational — nothing in the
+// section can mutate the selection.
+// ---------------------------------------------------------------------------
+
+describe("rootExclusions (D-03/D-04: the reviewable, complete-by-construction list)", () => {
+  const cases: { name: string; root: string; exclusions: string[]; want: string[] }[] = [
+    {
+      name: "returns only exclusions strictly under the root; one equal to the root is excluded",
+      root: "/mnt/user/appdata/plex",
+      exclusions: ["/mnt/user/appdata/plex", "/mnt/user/appdata/plex/cache"],
+      want: ["cache"],
+    },
+    {
+      name: "strips the root prefix to a relative path with no leading slash",
+      root: "/mnt/user/appdata/plex",
+      exclusions: ["/mnt/user/appdata/plex/Media/Movies"],
+      want: ["Media/Movies"],
+    },
+    {
+      name: "sorts lexically",
+      root: "/mnt/user/appdata/plex",
+      exclusions: [
+        "/mnt/user/appdata/plex/transcoding",
+        "/mnt/user/appdata/plex/Media",
+        "/mnt/user/appdata/plex/cache",
+      ],
+      want: ["Media", "cache", "transcoding"],
+    },
+    {
+      name: "returns an empty array when nothing qualifies",
+      root: "/mnt/user/appdata/plex",
+      exclusions: ["/mnt/user/media"],
+      want: [],
+    },
+    {
+      name: "dormant exclusions (root not in includes) still return — the list IS the remembered memory (D-04)",
+      root: "/mnt/user/appdata/plex",
+      exclusions: ["/mnt/user/appdata/plex/transcoding"],
+      want: ["transcoding"],
+    },
+    {
+      name: "a sibling sharing the prefix never lands in the list (segment alignment)",
+      root: "/mnt/user/appdata/plex",
+      exclusions: ["/mnt/user/appdata/plex2/cache"],
+      want: [],
+    },
+  ];
+  it.each(cases)("$name", ({ root, exclusions, want }) => {
+    expect(rootExclusions(root, new Set(exclusions))).toEqual(want);
   });
 });
