@@ -2295,15 +2295,18 @@ func TestSetBackupPathsLegacySourceKeepsPlan01Behavior(t *testing.T) {
 	}
 }
 
-// TestBackupNarrowedSelectionUsesMaximalIncludes pins success criterion 2:
-// after a narrowed tree selection (whole mount kept, one branch deselected), a
-// backup hands restic EXACTLY the maximal-root container-form includes as
-// positionals and derives ZERO exclude flags from the selection. The selection
-// compiles to positionals only (locked L1/L14) — a product choice, not a
-// restic limitation: restic excludes DO filter content within positional
-// sources (restic_positionals_contract_test.go proves it), but selection-derived
-// --exclude patterns would write into the snapshot's user-owned Excludes
-// metadata (the exclusions editor's surface), so the engine derives none.
+// TestBackupNarrowedSelectionUsesMaximalIncludes pins success criterion 2 as
+// amended by the 2026-09-09 gap-closure decision (review finding WR-01, plan
+// 01-05): after a narrowed tree selection (whole mount kept, one branch
+// deselected), a backup hands restic EXACTLY the maximal-root container-form
+// includes as positionals AND enforces the stored exclusion branch strictly
+// below an included root as a restic --exclude pattern appended to the backup
+// argv — the snapshot content finally matches what the stored selection
+// advertises. The accepted cost: the derived pattern lands in the snapshot's
+// restic Excludes metadata (the exclusions editor's user-owned surface), a
+// consequence the user decision explicitly accepts. The positional half is
+// unchanged, and the stored AppdataPaths stays excludes-free — restore mapping
+// (mapRestorePaths) consumes it, so no "!"-prefixed entry may ever reach it.
 func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
@@ -2349,8 +2352,25 @@ func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
 	if !reflect.DeepEqual(eng.lastPaths, wantPaths) {
 		t.Fatalf("restic positionals = %v, want %v (maximal-root includes only)", eng.lastPaths, wantPaths)
 	}
-	if len(eng.lastExcludes) != 0 {
-		t.Fatalf("the selection must never derive restic --exclude flags, got %v", eng.lastExcludes)
+	// The exclusion branch, in the same container-form namespace the positionals
+	// walk (stored entries are already absolute container paths — no translation).
+	wantExcludes := []string{root + "/user/appdata/plex/transcoding"}
+	if !reflect.DeepEqual(eng.lastExcludes, wantExcludes) {
+		t.Fatalf("restic excludes = %v, want %v (the stored exclusion branch enforced on the argv)", eng.lastExcludes, wantExcludes)
+	}
+	// Restore-safety half: AppdataPaths is what mapRestorePaths consumes — it
+	// must stay exactly the positional list with no "!"-prefixed entry.
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(tg.AppdataPaths, wantPaths) {
+		t.Fatalf("stored AppdataPaths = %v, want %v (includes only)", tg.AppdataPaths, wantPaths)
+	}
+	for _, p := range tg.AppdataPaths {
+		if strings.HasPrefix(p, api.ExclusionPrefix) {
+			t.Fatalf("stored AppdataPaths must never carry an exclusion entry, got %q", p)
+		}
 	}
 }
 
