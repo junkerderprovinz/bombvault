@@ -5475,7 +5475,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	// Re-validate the stored appdata paths stay within the host mount root before
 	// restoring (defense-in-depth in case the DB was tampered with). Skipped for a
 	// recreate-only restore, which has no paths.
-	appdataForRestore := tg.AppdataPaths
+	var appdataForRestore []string
 	var restoreDirs []backup.RestoreDir
 	var bindRemap map[string]string
 	var planSkipped []string
