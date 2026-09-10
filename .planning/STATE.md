@@ -1,44 +1,44 @@
 ---
 gsd_state_version: 1.0
-current_phase: 1
-current_phase_name: selection-engine-restore-safety
-status: verifying
-stopped_at: Completed 01-05-PLAN.md
-last_updated: "2026-09-10T09:48:14.076Z"
-last_activity: 2026-09-09
-last_activity_desc: Phase 01 execution started
-state_head: 0735929ac72276b93d0ecc8d82fdf3ed8babbeeb
+current_phase: 2
+current_phase_name: Container Panel Tree Selection
+status: planning
+stopped_at: Phase 01 complete, ready to plan Phase 2
+last_updated: "2026-09-10T11:33:02.001Z"
+last_activity: 2026-09-10
+last_activity_desc: Phase 01 complete, transitioned to Phase 2
+state_head: 86300a9d4e53dea55f47640104d6ddfabbca87a6
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
   completed_plans: 5
-  percent: 0
+  percent: 25
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-09)
+See: .planning/PROJECT.md (updated 2026-09-10)
 
 **Core value:** Every container, VM, and config on the host can be backed up consistently and restored completely — a dead server is rebuilt from the restic repo alone.
-**Current focus:** Phase 01 — Selection Engine & Restore Safety
+**Current focus:** Phase 2 — Container Panel Tree Selection
 
 ## Current Position
 
-Phase: 1 (selection-engine-restore-safety) — READY TO EXECUTE
-Plan: 4 of 4
-Status: Phase complete — ready for verification
-Last activity: 2026-09-09 — Phase 01 execution started
+Phase: 2 — Container Panel Tree Selection
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-10 — Phase 01 complete, transitioned to Phase 2
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████████████████] 5/5 plans (100%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
+- Total plans completed: 5
 - Average duration: —
 - Total execution time: —
 
@@ -46,7 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01 | 5 | - | - |
 
 **Recent Trend:**
 
@@ -96,7 +96,9 @@ None yet.
 
 *(Resolved 2026-09-09: backup-time coverage diff deferred to v2 as SELECT-06 by user decision — the Phase 3 narrowing note under SELECT-03 remains the sole future-children mitigation for v1.)*
 
-- restic contract test TestPositionalExcludeAbsoluteSubdirPattern never executed anywhere yet: skips locally (no restic on PATH) and the docker-folders branch is unpushed - CI green Test job is the closure step
+*(Resolved 2026-09-10: restic contract test TestPositionalExcludeAbsoluteSubdirPattern now proven — full suite green in the golang:1.26-bookworm + restic 0.17.3 container, docker-folders pushed to fork CatFoxVoyager/bombvault, CI lint.yml Test job green at HEAD c02149eb.)*
+
+None open.
 
 ## Deferred Items
 
@@ -109,6 +111,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T09:47:59.756Z
-Stopped at: Completed 01-05-PLAN.md
+Last session: 2026-09-10T11:36:00Z
+Stopped at: Phase 01 complete, ready to plan Phase 2
 Resume file: None

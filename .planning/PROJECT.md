@@ -27,6 +27,8 @@ Every container, VM, and config on the host can be backed up consistently and re
 - ✓ Live progress via SSE, notifications (webhook/Matrix/Healthchecks/Unraid/email) — existing
 - ✓ React SPA: dashboard, per-domain pages, backup order, i18n, dark mode — existing
 - ✓ Multi-arch Docker image (amd64+arm64) for Unraid / TrueNAS Scale / generic hosts, self-signed TLS, optional login — existing
+- ✓ Selection engine & restore safety: lossless flat `backupPaths` encoding (bare + `!`-prefixed entries, zero migration), maximal-root restic positionals with descendant `--exclude` enforcement (WR-01 gap closure 01-05), hardened `/api/browse` listing (os.Root containment, status trio, cap 500 + truncated), restore longest-prefix mapping with pre-teardown abort — Phase 1
+- ✓ Selection persists through the existing flat `backupPaths` set — the tree is a new view over the same data, no new persistence model — Phase 1
 
 ### Active
 
@@ -35,7 +37,6 @@ Every container, VM, and config on the host can be backed up consistently and re
 - [ ] Tree-based per-folder backup selection: collapsible lazy-loading subtree per mount/root, checkboxes at every level, mixed-state parent for partial selections
 - [ ] Container panel: unfold a mount, uncheck volatile subfolders (transcoding, caches, logs) without dropping the rest of the mount
 - [ ] File Sets: same tree selection when choosing what a file set covers
-- [ ] Selection persists through the existing flat `backupPaths` set — the tree is a new view over the same data, no new persistence model
 
 ### Out of Scope
 
@@ -92,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-09 after initialization*
+*Last updated: 2026-09-10 after Phase 1*
