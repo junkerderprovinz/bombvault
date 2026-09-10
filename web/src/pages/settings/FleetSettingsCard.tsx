@@ -128,7 +128,7 @@ export function FleetSettingsCard({
   async function handleCopy() {
     if (!token) return;
     if (await copyText(token)) {
-      push(t("vm.ssh.copied"), "success");
+      push(t("common.copied"), "success");
     } else {
       push(t("vm.ssh.copyFailed"), "fail");
     }
@@ -268,8 +268,8 @@ export function FleetSettingsCard({
               {token}
             </code>
             <Button
-              label={t("vm.ssh.copy")}
-              labelKey="vm.ssh.copy"
+              label={t("common.copy")}
+              labelKey="common.copy"
               tone="accent"
               onClick={() => void handleCopy()}
               className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}

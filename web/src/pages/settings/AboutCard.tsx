@@ -30,6 +30,7 @@
 // control, and this card has no control to explain.
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
+import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
 import { IconGithub } from "../../components/glyphs";
 import { getHealth } from "../../lib/api";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
@@ -119,6 +120,7 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
 export function AboutCard({ hueIndex }: { hueIndex?: number }) {
   const { t } = useT();
   const [version, setVersion] = useState<string | null>(null);
+  const [cryptoOpen, setCryptoOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -163,6 +165,12 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
       <p className="text-sm text-carbon-textSub">{t("about.body")}</p>
 
       <p className="text-sm text-carbon-textSub">{t("about.coffee")}</p>
+      {/* Two ways to give, and they are two because they reach different
+          people. The coffee takes a card, Apple Pay or Google Pay; the crypto
+          window takes what somebody already holds in a wallet and shows no
+          name at either end. Both sit under the one sentence that asks, which
+          is the card's own rule: a sentence directly above the thing it asks
+          for. */}
       <div className="flex flex-wrap items-center gap-2">
         <Button
           label={t("about.coffeeButton")}
@@ -170,7 +178,14 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           tone="neutral"
           onClick={() => window.open(COFFEE, "_blank", "noopener,noreferrer")}
         />
+        <Button
+          label={t("about.crypto")}
+          labelKey="about.crypto"
+          tone="neutral"
+          onClick={() => setCryptoOpen(true)}
+        />
       </div>
+      {cryptoOpen && <CryptoDonateDialog onClose={() => setCryptoOpen(false)} />}
 
       {/* One extra step of space above this line, and only above this one
           (jdp, 2026-09-06). The card holds two offers, and without the break

@@ -141,7 +141,7 @@ export function UnraidTileSection({
 
   async function handleCopyUrl() {
     if (await copyText(DASH_PLUGIN_PLG_URL)) {
-      push(t("vm.ssh.copied"), "success");
+      push(t("common.copied"), "success");
     } else {
       push(t("vm.ssh.copyFailed"), "fail");
     }
@@ -166,8 +166,8 @@ export function UnraidTileSection({
               {DASH_PLUGIN_PLG_URL}
             </code>
             <Button
-              label={t("vm.ssh.copy")}
-              labelKey="vm.ssh.copy"
+              label={t("common.copy")}
+              labelKey="common.copy"
               tone="accent"
               onClick={() => void handleCopyUrl()}
               className={`shrink-0 rounded-control bg-accent px-3 py-2 text-xs font-medium text-accentContrast${hueOn ? " glim-hue" : ""}`}
@@ -360,7 +360,7 @@ export function DashboardWidgetCard({
   async function handleCopy() {
     if (!widgetUrl) return;
     if (await copyText(widgetUrl)) {
-      push(t("vm.ssh.copied"), "success");
+      push(t("common.copied"), "success");
     } else {
       push(t("vm.ssh.copyFailed"), "fail");
     }
@@ -457,7 +457,7 @@ export function DashboardWidgetCard({
                   badges get engine+tooltip automatically): `.glim-hue` +
                   this Card's own hueStyle wires real colour-engine
                   integration, `tip` carries the exact text the button used
-                  to show (`vm.ssh.copy`, unchanged key — the same generic
+                  to show (`common.copy`, the same generic
                   "Kopieren" action every other copy control in this file
                   already uses, not a new one-off string). h-8 w-8 (32px) —
                   the app's ONE square-icon-badge size, identical to Badge's
@@ -476,7 +476,7 @@ export function DashboardWidgetCard({
                   control in this file. */}
               <IconTipButton
                 onClick={() => void handleCopy()}
-                tip={t("vm.ssh.copy")}
+                tip={t("common.copy")}
                 className={`shrink-0 inline-flex items-center justify-center rounded-control bg-accent h-8 w-8 text-accentContrast hover:opacity-90 transition-opacity${hueOn ? " glim-hue" : ""}`}
                 style={hueStyle}
               >

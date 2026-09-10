@@ -112,7 +112,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   async function copy() {
     try {
       await navigator.clipboard.writeText(text);
-      push(t("vm.ssh.copied"), "success");
+      push(t("common.copied"), "success");
     } catch {
       // clipboard unavailable (non-HTTPS) — the text is selectable in the box
       push(t("vm.ssh.copyFailed"), "fail");
@@ -124,8 +124,8 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
         {text}
       </pre>
       <Button
-        label={t("vm.ssh.copy")}
-        labelKey="vm.ssh.copy"
+        label={t("common.copy")}
+        labelKey="common.copy"
         tone="neutral"
         onClick={() => void copy()}
         className="shrink-0"

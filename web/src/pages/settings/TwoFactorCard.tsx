@@ -154,8 +154,8 @@ export function TwoFactorCard({
                 {step.secret}
               </code>
               <Button
-                label={t("vm.ssh.copy")}
-                labelKey="vm.ssh.copy"
+                label={t("common.copy")}
+                labelKey="common.copy"
                 tone="neutral"
                 glyph={<IconCopy />}
                 onClick={() => void copyText(step.secret)}
@@ -213,8 +213,8 @@ export function TwoFactorCard({
           </ul>
           <div className="flex items-center gap-3">
             <Button
-              label={t("vm.ssh.copy")}
-              labelKey="vm.ssh.copy"
+              label={t("common.copy")}
+              labelKey="common.copy"
               tone="neutral"
               glyph={<IconCopy />}
               onClick={() => void copyText(step.codes.join("\n"))}

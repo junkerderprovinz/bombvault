@@ -79,7 +79,7 @@ chmod 600 /root/.ssh/authorized_keys`
   // routine (quiet-mode-suppressible) toast instead — see lib/toast.tsx.
   async function handleCopy() {
     if (await copyText(pub)) {
-      push(t("vm.ssh.copied"), "success");
+      push(t("common.copied"), "success");
     } else {
       // "failures always surface" (design-language.md) — copyText() only
       // returns false when BOTH the Clipboard API and the execCommand
@@ -91,7 +91,7 @@ chmod 600 /root/.ssh/authorized_keys`
 
   async function handleCopyCmd() {
     if (await copyText(authorizeCmd)) {
-      push(t("vm.ssh.copied"), "success");
+      push(t("common.copied"), "success");
     } else {
       push(t("vm.ssh.copyFailed"), "fail");
     }
@@ -159,8 +159,8 @@ chmod 600 /root/.ssh/authorized_keys`
                 icon-badge size and is the same 32px these buttons already
                 measured to, so the footprint is unchanged. */}
             <Button
-              label={t("vm.ssh.copy")}
-              labelKey="vm.ssh.copy"
+              label={t("common.copy")}
+              labelKey="common.copy"
               glyph={<IconCopy />}
               tone="accent"
               onClick={() => void handleCopy()}

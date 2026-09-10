@@ -67,7 +67,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   const [shake, setShake] = useState(0);
   async function copy() {
     if (await copyText(text)) {
-      push(t("vm.ssh.copied"), "success");
+      push(t("common.copied"), "success");
     } else {
       // "failures always surface" (design-language.md) — copyText() only
       // returns false when BOTH the Clipboard API and the execCommand
@@ -84,8 +84,8 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
       </pre>
       <Button
         key={shake}
-        label={t("vm.ssh.copy")}
-        labelKey="vm.ssh.copy"
+        label={t("common.copy")}
+        labelKey="common.copy"
         tone="neutral"
         onClick={() => void copy()}
         className={`shrink-0 rounded-control px-3 py-2 text-xs text-carbon-text${

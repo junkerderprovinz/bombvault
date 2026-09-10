@@ -18,7 +18,7 @@
 //      route, because somebody writes and then waits.
 // ---------------------------------------------------------------------------
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
 import { AboutCard } from "./AboutCard";
 
@@ -87,6 +87,32 @@ it("gives the report sentence the extra line above it, and only that one", () =>
   expect(report.className).toContain("mt-2");
   expect(body.className).not.toContain("mt-2");
   expect(coffee.className).not.toContain("mt-2");
+});
+
+it("puts both ways to give under the sentence that asks, and none of them elsewhere", () => {
+  renderCard();
+  // Two buttons because they reach different people: the coffee takes a card,
+  // the crypto window takes what somebody already holds in a wallet. Both
+  // belong to the SAME sentence, so both have to sit between it and the next
+  // one — a second row further down would read as a second, unrelated offer.
+  const coffee = positionOf(en["about.coffee"]);
+  const report = positionOf(en["about.report"]);
+  for (const key of ["about.coffeeButton", "about.crypto"] as const) {
+    const button = positionOfButton(en[key]);
+    expect(button, key).toBeGreaterThan(coffee);
+    expect(button, key).toBeLessThan(report);
+  }
+});
+
+it("opens the crypto window on the button, closed until then", () => {
+  renderCard();
+  // The window is not merely hidden while it is shut: an address list that is
+  // in the document from the start is one CSS mistake away from being read by
+  // somebody who never asked for it, and one selector away from being copied.
+  expect(screen.queryByRole("dialog")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(en["about.crypto"], "i") }));
+  const dialog = screen.getByRole("dialog");
+  expect(dialog.textContent).toContain(en["about.cryptoTitle"]);
 });
 
 it("names no route without a control, and offers no control the sentence does not name", () => {
