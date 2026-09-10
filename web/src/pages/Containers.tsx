@@ -706,6 +706,21 @@ function UpdateAfterBackupRow({
 // Exported for the SelectionTree dom harness (same precedent as
 // ExcludesEditor below): the tree's integration tests render this editor
 // against the mocked api client instead of a whole ContainerRow.
+
+/** What one queued backupPaths save was initiated for (plan 02). `pre`/`sent`
+ *  carry the initiating mutation's effect so a FAILURE can revert by
+ *  set-difference inverse (revertFrom below) instead of a captured snapshot —
+ *  a snapshot would also undo newer toggles stacked behind the failed one
+ *  (Pitfall 5). `structural` marks custom add/remove, which keep their
+ *  historical toast-only failure path: the row is already added/gone either
+ *  way, so there is no checkbox state to restore. */
+interface SaveDesc {
+  node: string;
+  pre: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
+  sent: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
+  structural: boolean;
+}
+
 export function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; open: boolean; t: T }) {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -743,6 +758,37 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
   // return, dies with the page — exactly the panel-lifetime scope the tree
   // is allowed to remember listings for. Plain Map, no state library.
   const browseCache = useRef(new Map<string, Promise<BrowseResponse>>());
+  // PHASE 2 PLAN 02 — the one-deep serialized PATCH queue (RESEARCH Open
+  // Question 4, Pitfalls 4/5): every backupPaths save funnels through ONE
+  // attempt at a time. While an attempt is in flight a further toggle just
+  // updates the mirror and marks the queue dirty; when the attempt resolves,
+  // a single drain sends the LATEST full flat list. A slow or failing save
+  // can therefore never clobber a newer toggle, and a burst collapses to one
+  // draining request (T-02-08).
+  //
+  // The queue reads the mirror through a REF, not the state closure: two
+  // rapid toggles inside one React batch must each see their predecessor's
+  // effect, and batched setIncludes calls are not visible to the second
+  // call's closure.
+  const mirrorRef = useRef<{ inc: Set<string>; exc: Set<string> }>({ inc: new Set(), exc: new Set() });
+  const queueRef = useRef<{ inFlight: boolean; dirty: boolean }>({ inFlight: false, dirty: false });
+  // Desc of the mutation that most recently marked the queue dirty — the
+  // failure-revert recipe for the drain attempt it causes. Null while idle.
+  const pendingDescRef = useRef<SaveDesc | null>(null);
+  // Rows whose toggles are folded into the next attempt's body. An attempt
+  // always carries every not-yet-acknowledged toggle (it sends the live
+  // mirror), so each row's busy flag clears exactly when the attempt that
+  // acknowledges its effect settles.
+  const pendingRowsRef = useRef<Set<string>>(new Set());
+
+  // The single mirror-write helper: every mutation (load, toggle, custom
+  // add/remove) lands here so the ref the queue reads and the state the tree
+  // renders can never drift apart.
+  function applyMirror(inc: Set<string>, exc: Set<string>): void {
+    mirrorRef.current = { inc, exc };
+    setIncludes(inc);
+    setExclusions(exc);
+  }
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -754,13 +800,13 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
           setMounts(ms);
           // The includes derive from mount rows AND custom paths together —
           // one Set, because the wire list carries both classes flat.
-          setIncludes(
+          applyMirror(
             new Set([
               ...ms.filter((m) => m.selected && m.reachable).map((m) => m.source),
               ...(r.custom ?? []).map((c) => c.path),
             ]),
+            new Set(r.excluded ?? []),
           );
-          setExclusions(new Set(r.excluded ?? []));
           setCustom(r.custom ?? []);
           if (r.hostMountRoot) setHostMountRoot(r.hostMountRoot);
           if (r.hostSourceRoot) setHostSourceRoot(r.hostSourceRoot);
@@ -777,63 +823,114 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
       });
   }, [open, loaded, name, t, push]);
 
-  // persist is the single call every mutation funnels through — every tree
-  // toggle and every custom add/remove resolves to the same flat-list PATCH
-  // with selectionSource "tree" (D-03: the server is the single source of
-  // truth; the mirror equals it because every change round-trips).
-  async function persist(inc: ReadonlySet<string>, exc: ReadonlySet<string>): Promise<boolean> {
+  // Queue entry point — called AFTER the mirror has been updated. If an
+  // attempt is in flight, the mutation's effect rides the next drain: mark
+  // dirty and remember its desc (latest desc wins, matching the latest-list
+  // drain). Otherwise the mutation becomes the in-flight attempt itself.
+  function scheduleSave(desc: SaveDesc): void {
+    if (queueRef.current.inFlight) {
+      queueRef.current.dirty = true;
+      pendingDescRef.current = desc;
+      return;
+    }
+    void attemptSave(desc);
+  }
+
+  // One save attempt. The body is the LIVE mirror at attempt start — not
+  // desc.sent, which is already stale when later mutations stacked behind it.
+  // desc is only the failure-revert recipe for the mutation that started this
+  // attempt (the latest one, for a drain). Every backupPaths PATCH the editor
+  // sends comes through here, so no two saves are ever concurrent — not even
+  // a custom add riding behind a toggle.
+  async function attemptSave(desc: SaveDesc): Promise<void> {
+    queueRef.current.inFlight = true;
+    const rows = [...pendingRowsRef.current];
+    pendingRowsRef.current.clear();
     try {
-      const r = await setBackupPaths(name, toFlatList(inc, exc), { selectionSource: "tree" });
+      const live = mirrorRef.current;
+      const r = await setBackupPaths(name, toFlatList(live.inc, live.exc), { selectionSource: "tree" });
       if (r.ok) {
         push(t("folders.saved"), "success");
-        return true;
+      } else {
+        // Server error text VERBATIM, coded envelope or not: the D-04
+        // backstop (code "empty-selection") is unreachable while the client
+        // block below exists and still lands here as defense-in-depth —
+        // toast + revert.
+        push(r.error ?? t("settings.error"), "fail");
+        if (!desc.structural) revertFrom(desc);
       }
-      push(r.error ?? t("settings.error"), "fail");
-      return false;
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      return false;
+      if (!desc.structural) revertFrom(desc);
+    } finally {
+      queueRef.current.inFlight = false;
+      setRowBusy((b) => {
+        const n = { ...b };
+        for (const p of rows) n[p] = false;
+        return n;
+      });
+      if (queueRef.current.dirty) {
+        queueRef.current.dirty = false;
+        const next = pendingDescRef.current;
+        pendingDescRef.current = null;
+        if (next) void attemptSave(next);
+      }
     }
   }
 
-  // One tree checkbox toggle — optimistic reducer apply, immediate save,
-  // revert + `.glim-shake` on failure (same live-save shape as before Phase
-  // 2, now over the two-class mirror instead of a boolean set).
-  async function onToggle(hostPath: string) {
-    const prevI = includes;
-    const prevE = exclusions;
-    const next = applyToggle(hostPath, prevI, prevE);
-    // D-04 pre-Phase-3 guard (pulled forward from plan 02 with the minimal
-    // warn line; full semantics land in Phase 3): a toggle that would leave
-    // ZERO includes for the whole item never PATCHes — the server's coded
-    // "empty-selection" refusal stays an unreachable backstop. The warn line
-    // routes to Include in schedule, the honest way to back up nothing.
+  // Failure revert: un-apply the failed mutation's DELTA onto the live
+  // mirror — delete what it added, re-add what it removed. That is
+  // applyToggle's inverse computed as set differences, so a toggle that
+  // happened AFTER the failed one (but before its save resolved) survives
+  // untouched; restoring a captured pre-mutation snapshot here is the exact
+  // Pitfall 5 bug, because the snapshot also undoes that newer toggle.
+  function revertFrom(desc: SaveDesc): void {
+    const live = mirrorRef.current;
+    const inc = new Set(live.inc);
+    const exc = new Set(live.exc);
+    for (const p of desc.sent.includes) if (!desc.pre.includes.has(p)) inc.delete(p);
+    for (const p of desc.pre.includes) if (!desc.sent.includes.has(p)) inc.add(p);
+    for (const p of desc.sent.exclusions) if (!desc.pre.exclusions.has(p)) exc.delete(p);
+    for (const p of desc.pre.exclusions) if (!desc.sent.exclusions.has(p)) exc.add(p);
+    applyMirror(inc, exc);
+    setRowShake((s) => ({ ...s, [desc.node]: (s[desc.node] ?? 0) + 1 }));
+  }
+
+  // One tree checkbox toggle — optimistic reducer apply over the LIVE mirror
+  // (the ref, not the state closure; see the queue refs above), then the
+  // queue. The D-04 pre-Phase-3 guard runs BEFORE anything else: a toggle
+  // that would leave ZERO includes for the whole item never PATCHes — the
+  // next includes set IS the whole item, because all mounts plus custom
+  // paths live in this one mirror (D-02 single tree). The warn line routes
+  // to Include in schedule, the honest way to back up nothing; full-deselect
+  // semantics are Phase 3 (INTEG-04).
+  function onToggle(hostPath: string): void {
+    const pre = { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc };
+    const next = applyToggle(hostPath, pre.includes, pre.exclusions);
     if (next.includes.size === 0) {
       setBlockedPath(hostPath);
       setRowShake((s) => ({ ...s, [hostPath]: (s[hostPath] ?? 0) + 1 }));
       return;
     }
     setBlockedPath(null);
-    setIncludes(next.includes);
-    setExclusions(next.exclusions);
+    applyMirror(next.includes, next.exclusions);
     setRowBusy((b) => ({ ...b, [hostPath]: true }));
-    const ok = await persist(next.includes, next.exclusions);
-    setRowBusy((b) => ({ ...b, [hostPath]: false }));
-    if (!ok) {
-      // Revert to the captured pre-toggle mirror. (Rapid-toggle interleaving
-      // is the serialized one-deep queue plan 02 adds; the interim window is
-      // noted in the plan-01 SUMMARY.)
-      setIncludes(prevI);
-      setExclusions(prevE);
-      setRowShake((s) => ({ ...s, [hostPath]: (s[hostPath] ?? 0) + 1 }));
-    }
+    pendingRowsRef.current.add(hostPath);
+    scheduleSave({
+      node: hostPath,
+      pre,
+      sent: { includes: next.includes, exclusions: next.exclusions },
+      structural: false,
+    });
   }
 
-  // Structural list add — immediate save, no revert/shake (same shape as
-  // Settings.tsx's registryAuths row add/remove: the path stays in the list
-  // either way, a failed save just gets picked up by the next edit or a
-  // reload — see debouncedSave's own "no revert" comment for the identical
-  // reasoning applied to a structural edit instead of a text edit).
+  // Structural list add — queued save, no revert/shake on failure (same
+  // shape as Settings.tsx's registryAuths row add/remove: the path stays in
+  // the list either way, a failed save just gets picked up by the next edit
+  // or a reload — see debouncedSave's own "no revert" comment for the
+  // identical reasoning applied to a structural edit instead of a text
+  // edit). It still goes through the queue so it can never run concurrently
+  // with a toggle's save.
   function addCustom() {
     const raw = browseValue.trim();
     if (!raw) return;
@@ -844,22 +941,34 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
     setBrowseValue("");
     if (custom.some((c) => c.path === p) || includes.has(p)) return;
     const nextCustom = [...custom, { path: p, exists: true }];
-    const nextIncludes = new Set(includes);
+    const pre = { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc };
+    const nextIncludes = new Set(pre.includes);
     nextIncludes.add(p);
     setCustom(nextCustom);
-    setIncludes(nextIncludes);
-    void persist(nextIncludes, exclusions);
+    applyMirror(nextIncludes, pre.exclusions);
+    scheduleSave({
+      node: p,
+      pre,
+      sent: { includes: nextIncludes, exclusions: pre.exclusions },
+      structural: true,
+    });
   }
 
-  // Structural list remove — same immediate-save-no-revert shape as addCustom
+  // Structural list remove — same queued-save-no-revert shape as addCustom
   // above.
   function removeCustomPath(path: string) {
     const nextCustom = custom.filter((x) => x.path !== path);
-    const nextIncludes = new Set(includes);
+    const pre = { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc };
+    const nextIncludes = new Set(pre.includes);
     nextIncludes.delete(path);
     setCustom(nextCustom);
-    setIncludes(nextIncludes);
-    void persist(nextIncludes, exclusions);
+    applyMirror(nextIncludes, pre.exclusions);
+    scheduleSave({
+      node: path,
+      pre,
+      sent: { includes: nextIncludes, exclusions: pre.exclusions },
+      structural: true,
+    });
   }
 
   if (!open) return null;
@@ -898,7 +1007,7 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
           hostSourceRoot={hostSourceRoot}
           containerName={name}
           browseCache={browseCache.current}
-          onToggle={(p) => void onToggle(p)}
+          onToggle={onToggle}
           onRemoveCustom={removeCustomPath}
           busyPaths={new Set(Object.keys(rowBusy).filter((k) => rowBusy[k]))}
           shakeCounts={rowShake}
