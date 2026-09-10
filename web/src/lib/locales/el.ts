@@ -598,6 +598,10 @@ const el: Partial<Translations> = {
   "folders.save": "Αποθήκευση φακέλων",
   "folders.saved": "Αποθηκεύτηκε",
   "folders.empty": "Δεν βρέθηκαν αντιστοιχισμένοι φάκελοι για αυτό το container.",
+  "folders.treeLabel": "Επιλογή φακέλων αντιγράφων ασφαλείας",
+  "folders.truncatedList": "Εμφανίζονται οι πρώτες 500 καταχωρήσεις",
+  "folders.retry": "Δοκιμή ξανά",
+  "folders.emptySelectionBlocked": "Πρέπει να παραμείνει επιλεγμένος τουλάχιστον ένας φάκελος. Για να μην γίνει αντίγραφο ασφαλείας τίποτα από αυτό το container, απενεργοποίησε τη συμπερίληψη στο χρονοδιάγραμμα.",
 
   // Notifications
   "notify.title": "Ειδοποιήσεις",

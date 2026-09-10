@@ -592,6 +592,10 @@ const nl: Partial<Translations> = {
   "folders.save": "Mappen opslaan",
   "folders.saved": "Opgeslagen",
   "folders.empty": "Geen gekoppelde mappen gevonden voor deze container.",
+  "folders.treeLabel": "Keuze van back-upmappen",
+  "folders.truncatedList": "Eerste 500 items getoond",
+  "folders.retry": "Opnieuw proberen",
+  "folders.emptySelectionBlocked": "Er moet minstens één map geselecteerd blijven. Zet Opnemen in planning uit als je niets van deze container wilt back-uppen.",
 
   // Notifications
   "notify.title": "Meldingen",

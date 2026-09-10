@@ -6,6 +6,11 @@
 export interface OkEnvelope {
   ok: boolean;
   error?: string;
+  /** Machine-readable refusal kind on coded failures (handlers.go
+   *  codedFailEnvelope), e.g. "empty-selection" when the tree selector's
+   *  PATCH is refused because it would empty the selection. Absent on
+   *  success and on plain uncoded failures. */
+  code?: string;
 }
 
 /** A container row from GET /api/containers */
@@ -481,6 +486,14 @@ export interface BrowseResponse {
   path?: string;
   dirs?: BrowseDirEntry[];
   error?: string;
+  /** Error KIND, not a message (handlers.go classifyReadDirError): "ok" on
+   *  success; "restricted" (fs.ErrPermission), "missing" (ErrNotExist) or
+   *  "error" (opaque bucket — an os.Root escape rejection deliberately lands
+   *  here so an escape attempt never announces itself on the wire). */
+  status?: "ok" | "restricted" | "missing" | "error";
+  /** True when the listing hit the server-side cap (maxBrowseEntries = 500):
+   *  the first lexical page was returned, the rest exist but are not shown. */
+  truncated?: boolean;
 }
 
 /** Response from GET /api/auth */
@@ -858,6 +871,10 @@ export interface CustomPath {
 export interface ContainerMountsResponse extends OkEnvelope {
   mounts?: MountInfo[];
   custom?: CustomPath[];
+  /** Stored exclusion branches ("!" entries of selected_paths, prefix
+   *  stripped) in HOST path form — served since Phase 1 so the tree can
+   *  reconstruct its (includes, exclusions) mirror without loading children. */
+  excluded?: string[];
   hostMountRoot?: string;
   hostSourceRoot?: string;
 }
@@ -867,11 +884,21 @@ export function getContainerMounts(name: string): Promise<ContainerMountsRespons
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/mounts`);
 }
 
-/** PATCH /api/containers/{name} — set the explicit backup-folder selection (host paths). */
-export function setBackupPaths(name: string, backupPaths: string[]): Promise<OkEnvelope> {
+/** PATCH /api/containers/{name} — set the explicit backup-folder selection (host paths).
+ *  `opts.selectionSource` tags the writer ("tree" = the container panel's
+ *  selection tree); the server gates its empty-selection refusal on that
+ *  literal and keeps legacy sources byte-compatible. */
+export function setBackupPaths(
+  name: string,
+  backupPaths: string[],
+  opts?: { selectionSource?: string },
+): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
-    body: JSON.stringify({ backupPaths }),
+    body: JSON.stringify({
+      backupPaths,
+      ...(opts?.selectionSource ? { selectionSource: opts.selectionSource } : {}),
+    }),
   });
 }
 

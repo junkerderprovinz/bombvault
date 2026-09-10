@@ -598,6 +598,10 @@ const es: Partial<Translations> = {
   "folders.save": "Guardar carpetas",
   "folders.saved": "Guardado",
   "folders.empty": "No se encontraron carpetas mapeadas para este contenedor.",
+  "folders.treeLabel": "Selección de carpetas de copia de seguridad",
+  "folders.truncatedList": "Se muestran las primeras 500 entradas",
+  "folders.retry": "Reintentar",
+  "folders.emptySelectionBlocked": "Debe quedar seleccionada al menos una carpeta. Para no respaldar nada de este contenedor, desactiva la inclusión en el calendario.",
 
   // Notifications
   "notify.title": "Notificaciones",

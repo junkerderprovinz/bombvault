@@ -598,6 +598,10 @@ const fr: Partial<Translations> = {
   "folders.save": "Enregistrer les dossiers",
   "folders.saved": "Enregistré",
   "folders.empty": "Aucun dossier mappé trouvé pour ce conteneur.",
+  "folders.treeLabel": "Sélection des dossiers de sauvegarde",
+  "folders.truncatedList": "Les 500 premières entrées sont affichées",
+  "folders.retry": "Réessayer",
+  "folders.emptySelectionBlocked": "Au moins un dossier doit rester sélectionné. Pour ne sauvegarder aucun élément de ce conteneur, désactive son inclusion dans le planning.",
 
   // Notifications
   "notify.title": "Notifications",

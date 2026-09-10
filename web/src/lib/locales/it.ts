@@ -598,6 +598,10 @@ const it: Partial<Translations> = {
   "folders.save": "Salva cartelle",
   "folders.saved": "Salvato",
   "folders.empty": "Nessuna cartella mappata trovata per questo contenitore.",
+  "folders.treeLabel": "Selezione delle cartelle di backup",
+  "folders.truncatedList": "Mostrate le prime 500 voci",
+  "folders.retry": "Riprova",
+  "folders.emptySelectionBlocked": "Almeno una cartella deve rimanere selezionata. Per non eseguire il backup di nulla di questo contenitore, disattiva l'inclusione nel calendario.",
 
   // Notifications
   "notify.title": "Notifiche",

@@ -729,6 +729,14 @@ export const en = {
   "folders.save": "Save folders",
   "folders.saved": "Saved",
   "folders.empty": "No mapped folders found for this container.",
+  // Selection tree (Phase 2) — aria-label on the role="tree" element.
+  "folders.treeLabel": "Backup folder selection",
+  // Truncated listing notice (D-06): the server caps listings at 500 entries.
+  "folders.truncatedList": "First 500 entries shown",
+  // Retry affordance on a node whose listing could not be read (TREE-06).
+  "folders.retry": "Try again",
+  // D-04 empty-selection guard: the inline line under a blocked toggle.
+  "folders.emptySelectionBlocked": "At least one folder must stay selected. To back up none of this container, turn off Include in schedule.",
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -2436,6 +2444,10 @@ export const de: Translations = {
   "folders.save": "Ordner speichern",
   "folders.saved": "Gespeichert",
   "folders.empty": "Keine gemappten Ordner für diesen Container gefunden.",
+  "folders.treeLabel": "Auswahl der Sicherungsordner",
+  "folders.truncatedList": "Erste 500 Einträge angezeigt",
+  "folders.retry": "Erneut versuchen",
+  "folders.emptySelectionBlocked": "Mindestens ein Ordner muss ausgewählt bleiben. Um nichts von diesem Container zu sichern, deaktiviere die Zeitplan-Einbindung.",
   "stophook.title": "Andere Container stoppen",
   "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",

@@ -590,6 +590,10 @@ const ko: Partial<Translations> = {
   "folders.save": "폴더 저장",
   "folders.saved": "저장됨",
   "folders.empty": "이 컨테이너에 매핑된 폴더를 찾을 수 없습니다.",
+  "folders.treeLabel": "백업 폴더 선택",
+  "folders.truncatedList": "처음 500개 항목 표시됨",
+  "folders.retry": "다시 시도",
+  "folders.emptySelectionBlocked": "최소한 하나의 폴더는 선택된 상태로 유지해야 합니다. 이 컨테이너를 백업하지 않으려면 일정 포함을 끄세요.",
 
   // Notifications
   "notify.title": "알림",

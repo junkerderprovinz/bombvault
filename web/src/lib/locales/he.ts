@@ -598,6 +598,10 @@ const he: Partial<Translations> = {
   "folders.save": "שמור תיקיות",
   "folders.saved": "נשמר",
   "folders.empty": "לא נמצאו תיקיות ממופות עבור מכל זה.",
+  "folders.treeLabel": "בחירת תיקיות גיבוי",
+  "folders.truncatedList": "מוצגות 500 הערכים הראשונים",
+  "folders.retry": "נסה שוב",
+  "folders.emptySelectionBlocked": "חייבת להישאר לפחות תיקייה אחת מסומנת. כדי לא לגבות כלום מהמיכל הזה, כבה את ההכללה בלוח הזמנים.",
 
   // Notifications
   "notify.title": "התראות",

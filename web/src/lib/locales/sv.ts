@@ -598,6 +598,10 @@ const sv: Partial<Translations> = {
   "folders.save": "Spara mappar",
   "folders.saved": "Sparat",
   "folders.empty": "Inga mappade mappar hittades för den här containern.",
+  "folders.treeLabel": "Val av säkerhetskopiemappar",
+  "folders.truncatedList": "Första 500 posterna visas",
+  "folders.retry": "Försök igen",
+  "folders.emptySelectionBlocked": "Minst en mapp måste förbli vald. Stäng av Inkludera i schema om du inte vill säkerhetskopiera något från den här containern.",
 
   // Notifications
   "notify.title": "Aviseringar",

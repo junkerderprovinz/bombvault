@@ -590,6 +590,10 @@ const ru: Partial<Translations> = {
   "folders.save": "Сохранить папки",
   "folders.saved": "Сохранено",
   "folders.empty": "Для этого контейнера не найдено подключённых папок.",
+  "folders.treeLabel": "Выбор папок для резервного копирования",
+  "folders.truncatedList": "Показаны первые 500 записей",
+  "folders.retry": "Повторить попытку",
+  "folders.emptySelectionBlocked": "Должна остаться выбранной хотя бы одна папка. Чтобы не создавать резервные копии этого контейнера, отключите включение в расписание.",
 
   // Notifications
   "notify.title": "Уведомления",

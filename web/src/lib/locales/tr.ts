@@ -598,6 +598,10 @@ const tr: Partial<Translations> = {
   "folders.save": "Klasörleri kaydet",
   "folders.saved": "Kaydedildi",
   "folders.empty": "Bu kapsayıcı için eşlenen klasör bulunamadı.",
+  "folders.treeLabel": "Yedekleme klasörleri seçimi",
+  "folders.truncatedList": "İlk 500 kayıt gösteriliyor",
+  "folders.retry": "Yeniden dene",
+  "folders.emptySelectionBlocked": "En az bir klasör seçili kalmalı. Bu kapsayıcının hiçbir şeyini yedeklememek için zamanlamaya eklemeyi kapat.",
 
   // Notifications
   "notify.title": "Bildirimler",

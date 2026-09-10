@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError } from "../lib/api";
-import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder } from "../lib/api";
+import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
+import { applyToggle, toFlatList } from "../lib/selectionTree";
+import { SelectionTree } from "../components/SelectionTree";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
@@ -693,11 +695,27 @@ function UpdateAfterBackupRow({
 // `open` is controlled by the caller (ContainerRow's shared five-chip
 // Selector strip) — see HooksEditor's own comment for the full "why" this and
 // its three siblings dropped their own internal useState.
-function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; open: boolean; t: T }) {
+//
+// PHASE 2 (D-02): the mounts/custom list IS the selection tree now. The
+// editor holds the (includes, exclusions) mirror in HOST path space — the
+// Phase 1 flat encoding's two classes — and every checkbox toggle runs the
+// pure applyToggle reducer over it, then live-saves the whole flat list with
+// selectionSource "tree" (D-03). All per-node display state is derived by
+// SelectionTree from those two sets; this component never tracks checkedness
+// per row.
+// Exported for the SelectionTree dom harness (same precedent as
+// ExcludesEditor below): the tree's integration tests render this editor
+// against the mocked api client instead of a whole ContainerRow.
+export function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; open: boolean; t: T }) {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [mounts, setMounts] = useState<MountInfo[]>([]);
-  const [checked, setChecked] = useState<Set<string>>(new Set());
+  // The selection mirror, host form: bare includes and "!"-class exclusions.
+  // Includes = selected mount sources ∪ custom paths; exclusions = the stored
+  // branches the mounts response has served since Phase 1 (dormant ones
+  // included — they ARE D-01's remembered partial).
+  const [includes, setIncludes] = useState<Set<string>>(new Set());
+  const [exclusions, setExclusions] = useState<Set<string>>(new Set());
   const [custom, setCustom] = useState<CustomPath[]>([]);
   // The folder picker works in paths relative to the host mount (like File Sets);
   // browseValue stages one pick before it is translated to a host path and added.
@@ -706,17 +724,25 @@ function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; 
   const [hostSourceRoot, setHostSourceRoot] = useState("/mnt");
   const { push } = useToast();
   // Live-save conversion (jdp, live review — see HooksEditor's own header
-  // comment for the full "why" across all four editors): a mount checkbox is
-  // a discrete boolean pick, the SAME shape SettingsPage's toggleDomainEnabled
-  // already established for "flip one boolean, persist immediately, revert +
-  // `.glim-shake` on failure" — checkRowBusy/checkRowShake below are that
-  // same per-key busy/shake map, just keyed by mount `source` instead of a
-  // domain name. Adding/removing a CUSTOM path is a structural list edit
-  // instead (closer to Settings.tsx's registryAuths row add/remove), so it
-  // saves immediately too but withOUT revert/shake — see addCustom/
-  // removeCustomPath's own comments below.
-  const [checkRowBusy, setCheckRowBusy] = useState<Record<string, boolean>>({});
-  const [checkRowShake, setCheckRowShake] = useState<Record<string, number>>({});
+  // comment for the full "why" across all four editors): a tree checkbox is
+  // a discrete pick, the SAME shape SettingsPage's toggleDomainEnabled
+  // already established for "flip one thing, persist immediately, revert +
+  // `.glim-shake` on failure" — rowBusy/rowShake below are that same per-key
+  // busy/shake map, now keyed by the toggled node's HOST path. Adding/removing
+  // a CUSTOM path is a structural list edit instead (closer to Settings.tsx's
+  // registryAuths row add/remove), so it saves immediately too but withOUT
+  // revert/shake — see addCustom/removeCustomPath's own comments below.
+  const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
+  const [rowShake, setRowShake] = useState<Record<string, number>>({});
+  // D-04 (pulled forward from plan 02 — see the plan-01 SUMMARY deviations):
+  // the path whose last toggle was refused client-side for emptying the
+  // selection; SelectionTree renders the inline warn line under that row.
+  const [blockedPath, setBlockedPath] = useState<string | null>(null);
+  // Editor-lifetime listings cache (Phase 2 research, Pitfall 3): survives
+  // section close because this component stays mounted above its null
+  // return, dies with the page — exactly the panel-lifetime scope the tree
+  // is allowed to remember listings for. Plain Map, no state library.
+  const browseCache = useRef(new Map<string, Promise<BrowseResponse>>());
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -726,7 +752,15 @@ function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; 
         if (r.ok) {
           const ms = r.mounts ?? [];
           setMounts(ms);
-          setChecked(new Set(ms.filter((m) => m.selected && m.reachable).map((m) => m.source)));
+          // The includes derive from mount rows AND custom paths together —
+          // one Set, because the wire list carries both classes flat.
+          setIncludes(
+            new Set([
+              ...ms.filter((m) => m.selected && m.reachable).map((m) => m.source),
+              ...(r.custom ?? []).map((c) => c.path),
+            ]),
+          );
+          setExclusions(new Set(r.excluded ?? []));
           setCustom(r.custom ?? []);
           if (r.hostMountRoot) setHostMountRoot(r.hostMountRoot);
           if (r.hostSourceRoot) setHostSourceRoot(r.hostSourceRoot);
@@ -743,14 +777,13 @@ function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; 
       });
   }, [open, loaded, name, t, push]);
 
-  // persistPaths is the single call every mutation below funnels through —
-  // toggling a mount checkbox or adding/removing a custom path all resolve to
-  // the same setBackupPaths(name, fullList) PATCH, just with different
-  // revert/shake behaviour on failure (see toggle/addCustom/removeCustomPath's
-  // own comments for which half of the live-save conversion each belongs to).
-  async function persistPaths(paths: string[]): Promise<boolean> {
+  // persist is the single call every mutation funnels through — every tree
+  // toggle and every custom add/remove resolves to the same flat-list PATCH
+  // with selectionSource "tree" (D-03: the server is the single source of
+  // truth; the mirror equals it because every change round-trips).
+  async function persist(inc: ReadonlySet<string>, exc: ReadonlySet<string>): Promise<boolean> {
     try {
-      const r = await setBackupPaths(name, paths);
+      const r = await setBackupPaths(name, toFlatList(inc, exc), { selectionSource: "tree" });
       if (r.ok) {
         push(t("folders.saved"), "success");
         return true;
@@ -763,28 +796,36 @@ function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; 
     }
   }
 
-  // Discrete boolean toggle — optimistic flip, immediate save, revert +
-  // `.glim-shake` (keyed by mount `source`) on failure. Same shape as
-  // SettingsPage's toggleDomainEnabled; see this component's own top-level
-  // comment for the full "why this half of the conversion reverts and the
-  // other half doesn't" reasoning.
-  async function toggle(source: string) {
-    const wasChecked = checked.has(source);
-    const next = new Set(checked);
-    if (wasChecked) next.delete(source);
-    else next.add(source);
-    setChecked(next);
-    setCheckRowBusy((b) => ({ ...b, [source]: true }));
-    const ok = await persistPaths([...next, ...custom.map((c) => c.path)]);
-    setCheckRowBusy((b) => ({ ...b, [source]: false }));
+  // One tree checkbox toggle — optimistic reducer apply, immediate save,
+  // revert + `.glim-shake` on failure (same live-save shape as before Phase
+  // 2, now over the two-class mirror instead of a boolean set).
+  async function onToggle(hostPath: string) {
+    const prevI = includes;
+    const prevE = exclusions;
+    const next = applyToggle(hostPath, prevI, prevE);
+    // D-04 pre-Phase-3 guard (pulled forward from plan 02 with the minimal
+    // warn line; full semantics land in Phase 3): a toggle that would leave
+    // ZERO includes for the whole item never PATCHes — the server's coded
+    // "empty-selection" refusal stays an unreachable backstop. The warn line
+    // routes to Include in schedule, the honest way to back up nothing.
+    if (next.includes.size === 0) {
+      setBlockedPath(hostPath);
+      setRowShake((s) => ({ ...s, [hostPath]: (s[hostPath] ?? 0) + 1 }));
+      return;
+    }
+    setBlockedPath(null);
+    setIncludes(next.includes);
+    setExclusions(next.exclusions);
+    setRowBusy((b) => ({ ...b, [hostPath]: true }));
+    const ok = await persist(next.includes, next.exclusions);
+    setRowBusy((b) => ({ ...b, [hostPath]: false }));
     if (!ok) {
-      setChecked((prev) => {
-        const reverted = new Set(prev);
-        if (wasChecked) reverted.add(source);
-        else reverted.delete(source);
-        return reverted;
-      });
-      setCheckRowShake((s) => ({ ...s, [source]: (s[source] ?? 0) + 1 }));
+      // Revert to the captured pre-toggle mirror. (Rapid-toggle interleaving
+      // is the serialized one-deep queue plan 02 adds; the interim window is
+      // noted in the plan-01 SUMMARY.)
+      setIncludes(prevI);
+      setExclusions(prevE);
+      setRowShake((s) => ({ ...s, [hostPath]: (s[hostPath] ?? 0) + 1 }));
     }
   }
 
@@ -801,18 +842,24 @@ function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; 
     // fallback) is used as-is.
     const p = raw.startsWith("/") ? raw : `${hostSourceRoot}/${raw}`;
     setBrowseValue("");
-    if (custom.some((c) => c.path === p)) return;
+    if (custom.some((c) => c.path === p) || includes.has(p)) return;
     const nextCustom = [...custom, { path: p, exists: true }];
+    const nextIncludes = new Set(includes);
+    nextIncludes.add(p);
     setCustom(nextCustom);
-    void persistPaths([...checked, ...nextCustom.map((c) => c.path)]);
+    setIncludes(nextIncludes);
+    void persist(nextIncludes, exclusions);
   }
 
   // Structural list remove — same immediate-save-no-revert shape as addCustom
   // above.
   function removeCustomPath(path: string) {
     const nextCustom = custom.filter((x) => x.path !== path);
+    const nextIncludes = new Set(includes);
+    nextIncludes.delete(path);
     setCustom(nextCustom);
-    void persistPaths([...checked, ...nextCustom.map((c) => c.path)]);
+    setIncludes(nextIncludes);
+    void persist(nextIncludes, exclusions);
   }
 
   if (!open) return null;
@@ -833,58 +880,31 @@ function FoldersEditor({ name, stack, open, t }: { name: string; stack: string; 
       {!loading && mounts.length === 0 && custom.length === 0 && (
         <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
       )}
-      {mounts.map((m) => (
-        <label
-          // Keyed by source PLUS its own shake nonce (not just source) — a
-          // genuinely new key remounts this one row so `.glim-shake` replays
-          // on a rejected save, the same "key = nonce" technique this app's
-          // shake-capable controls already use (ToggleRow's own
-          // `shakeNonce`-keyed Toggle is the precedent).
-          key={`${m.source}-${checkRowShake[m.source] ?? 0}`}
-          className={`flex items-start gap-2 text-xs ${m.reachable ? "text-carbon-text" : "text-carbon-textMuted"}${checkRowShake[m.source] ? " glim-shake" : ""}`}
-        >
-          <input
-            type="checkbox"
-            disabled={!m.reachable || !!checkRowBusy[m.source]}
-            checked={m.reachable && checked.has(m.source)}
-            onChange={() => void toggle(m.source)}
-            className="mt-0.5 accent-(--accent)"
-          />
-          <span className="flex flex-col">
-            <span dir="ltr" className="font-mono break-all text-start">{m.dest} ← {m.source}</span>
-            {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
-            {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
-          </span>
-        </label>
-      ))}
-      {custom.map((cp) => (
-        <div key={cp.path} className="flex items-start gap-2 text-xs text-carbon-text">
-          <input type="checkbox" checked readOnly className="mt-0.5 accent-(--accent)" />
-          <span className="flex flex-col flex-1 min-w-0">
-            <span dir="ltr" className="font-mono break-all text-start">{cp.path}</span>
-            {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
-          </span>
-          {/* NO bespoke red hover (whole-app sweep): this carried
-              `hover:text-statusFail`, the same "a destructive control paints
-              itself red" treatment removed everywhere else in this pass. It
-              is a bare `×` glyph with no resting fill, so it is NOT a square
-              icon badge and does not take the 32px badge treatment (see
-              Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block, which
-              carves out exactly this shape of affordance alongside the
-              backup-order reorder arrows).
-                `aria-label` was the hard-coded, untranslated English string
-              "remove" — the only one left in web/src, and invisible to the
-              i18n parity test because it never went through t(). Now
-              t("offsite.targets.remove"), an existing key already translated
-              in all 42 locales, so this adds no new key. */}
-          <Button
-            label={t("offsite.targets.remove")}
-            labelKey="offsite.targets.remove"
-            variant="chip"
-            onClick={() => removeCustomPath(cp.path)}
-          />
-        </div>
-      ))}
+      {/* D-02: the mount rows and custom rows ARE the tree's level-1 items —
+          rendered by SelectionTree with lazy children under each, per-node
+          state derived from the (includes, exclusions) mirror. The row's
+          shake nonce stays the "key = nonce" technique this app's
+          shake-capable controls already use (ToggleRow's own
+          `shakeNonce`-keyed Toggle is the precedent); the custom row's
+          remove control keeps t("offsite.targets.remove"), an existing key
+          already translated in all 42 locales. The Add control below stays
+          OUTSIDE the tree: it is an input, not a selection row. */}
+      {!loading && (mounts.length > 0 || custom.length > 0) && (
+        <SelectionTree
+          mounts={mounts}
+          customPaths={custom}
+          includes={includes}
+          exclusions={exclusions}
+          hostSourceRoot={hostSourceRoot}
+          containerName={name}
+          browseCache={browseCache.current}
+          onToggle={(p) => void onToggle(p)}
+          onRemoveCustom={removeCustomPath}
+          busyPaths={new Set(Object.keys(rowBusy).filter((k) => rowBusy[k]))}
+          shakeCounts={rowShake}
+          blockedPath={blockedPath}
+        />
+      )}
       <div className="flex items-end gap-2 pt-1">
         <div className="flex-1 min-w-0">
           <FolderBrowser

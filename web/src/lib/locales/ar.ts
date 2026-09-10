@@ -598,6 +598,10 @@ const ar: Partial<Translations> = {
   "folders.save": "حفظ المجلدات",
   "folders.saved": "تم الحفظ",
   "folders.empty": "لم يتم العثور على مجلدات مربوطة لهذه الحاوية.",
+  "folders.treeLabel": "اختيار مجلدات النسخ الاحتياطي",
+  "folders.truncatedList": "أول 500 عنصر معروض",
+  "folders.retry": "حاول مجددًا",
+  "folders.emptySelectionBlocked": "يجب أن يبقى مجلد واحد محددًا على الأقل. لعدم نسخ هذا الحاوية احتياطيًا، أوقف تضمينها في الجدول الزمني.",
 
   // Notifications
   "notify.title": "الإشعارات",

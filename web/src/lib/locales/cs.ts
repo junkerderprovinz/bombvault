@@ -596,6 +596,10 @@ const cs: Partial<Translations> = {
   "folders.save": "Uložit složky",
   "folders.saved": "Uloženo",
   "folders.empty": "Pro tento kontejner nebyly nalezeny žádné namapované složky.",
+  "folders.treeLabel": "Výběr zálohovaných složek",
+  "folders.truncatedList": "Zobrazeno prvních 500 položek",
+  "folders.retry": "Zkusit znovu",
+  "folders.emptySelectionBlocked": "Vybrána musí zůstat alespoň jedna složka. Chceš-li z tohoto kontejneru nezálohovat nic, vypni zahrnování do plánu.",
 
   // Notifications
   "notify.title": "Oznámení",

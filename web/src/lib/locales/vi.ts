@@ -590,6 +590,10 @@ const vi: Partial<Translations> = {
   "folders.save": "Lưu thư mục",
   "folders.saved": "Đã lưu",
   "folders.empty": "Không tìm thấy thư mục được ánh xạ nào cho container này.",
+  "folders.treeLabel": "Chọn thư mục sao lưu",
+  "folders.truncatedList": "Hiển thị 500 mục đầu tiên",
+  "folders.retry": "Thử lại",
+  "folders.emptySelectionBlocked": "Ít nhất một thư mục phải được chọn. Để không sao lưu gì của container này, hãy tắt đưa vào lịch trình.",
 
   // Notifications
   "notify.title": "Thông báo",

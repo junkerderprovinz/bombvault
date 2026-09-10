@@ -598,6 +598,10 @@ const th: Partial<Translations> = {
   "folders.save": "บันทึกโฟลเดอร์",
   "folders.saved": "บันทึกแล้ว",
   "folders.empty": "ไม่พบโฟลเดอร์ที่แมปไว้สำหรับคอนเทนเนอร์นี้",
+  "folders.treeLabel": "เลือกโฟลเดอร์สำรองข้อมูล",
+  "folders.truncatedList": "แสดง 500 รายการแรก",
+  "folders.retry": "ลองอีกครั้ง",
+  "folders.emptySelectionBlocked": "ต้องมีโฟลเดอร์อย่างน้อยหนึ่งโฟลเดอร์ที่ยังถูกเลือกอยู่ หากไม่ต้องการสำรองข้อมูลใด ๆ จากคอนเทนเนอร์นี้ ให้ปิดการรวมในตารางเวลา",
 
   // Notifications
   "notify.title": "การแจ้งเตือน",

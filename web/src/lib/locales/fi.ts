@@ -598,6 +598,10 @@ const fi: Partial<Translations> = {
   "folders.save": "Tallenna kansiot",
   "folders.saved": "Tallennettu",
   "folders.empty": "Tälle kontille ei löytynyt liitettyjä kansioita.",
+  "folders.treeLabel": "Varmuuskopioitavien kansioiden valinta",
+  "folders.truncatedList": "Näytetään ensimmäiset 500 kohtaa",
+  "folders.retry": "Yritä uudelleen",
+  "folders.emptySelectionBlocked": "Vähintään yksi kansio on pysyttävä valittuna. Jos et halua varmuuskopioida mitään tästä kontista, poista sisällytys aikatauluun käytöstä.",
 
   // Notifications
   "notify.title": "Ilmoitukset",

@@ -595,6 +595,10 @@ const ro: Partial<Translations> = {
   "folders.save": "Salvează folderele",
   "folders.saved": "Salvat",
   "folders.empty": "Nu s-au găsit foldere mapate pentru acest container.",
+  "folders.treeLabel": "Selectarea folderelor pentru copie de rezervă",
+  "folders.truncatedList": "Sunt afișate primele 500 de intrări",
+  "folders.retry": "Încearcă din nou",
+  "folders.emptySelectionBlocked": "Cel puțin un folder trebuie să rămână selectat. Pentru a nu face copie de rezervă la nimic din acest container, dezactivează includerea în programare.",
 
   // Notifications
   "notify.title": "Notificări",

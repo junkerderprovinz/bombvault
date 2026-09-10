@@ -590,6 +590,10 @@ const pl: Partial<Translations> = {
   "folders.save": "Zapisz foldery",
   "folders.saved": "Zapisano",
   "folders.empty": "Nie znaleziono zamapowanych folderów dla tego kontenera.",
+  "folders.treeLabel": "Wybór folderów kopii zapasowej",
+  "folders.truncatedList": "Wyświetlono pierwsze 500 pozycji",
+  "folders.retry": "Spróbuj ponownie",
+  "folders.emptySelectionBlocked": "Co najmniej jeden folder musi pozostać wybrany. Aby nie tworzyć kopii zapasowej niczego z tego kontenera, wyłącz uwzględnianie w harmonogramie.",
 
   // Notifications
   "notify.title": "Powiadomienia",

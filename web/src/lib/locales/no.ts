@@ -595,6 +595,10 @@ const no: Partial<Translations> = {
   "folders.save": "Lagre mapper",
   "folders.saved": "Lagret",
   "folders.empty": "Ingen tilkoblede mapper funnet for denne containeren.",
+  "folders.treeLabel": "Valg av sikkerhetskopimapper",
+  "folders.truncatedList": "Første 500 oppføringer vises",
+  "folders.retry": "Prøv igjen",
+  "folders.emptySelectionBlocked": "Minst én mappe må forbli valgt. Skru av Inkluder i tidsplan hvis du ikke vil sikkerhetskopiere noe fra denne containeren.",
 
   // Notifications
   "notify.title": "Varsler",

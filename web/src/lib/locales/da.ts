@@ -598,6 +598,10 @@ const da: Partial<Translations> = {
   "folders.save": "Gem mapper",
   "folders.saved": "Gemt",
   "folders.empty": "Ingen tilknyttede mapper fundet for denne container.",
+  "folders.treeLabel": "Valg af sikkerhedskopimapper",
+  "folders.truncatedList": "Første 500 poster vist",
+  "folders.retry": "Prøv igen",
+  "folders.emptySelectionBlocked": "Der skal være valgt mindst én mappe. For slet ikke at sikkerhedskopiere denne container skal du slå Inkluder i tidsplan fra.",
 
   // Notifications
   "notify.title": "Notifikationer",

@@ -595,6 +595,10 @@ const pt: Partial<Translations> = {
   "folders.save": "Guardar pastas",
   "folders.saved": "Guardado",
   "folders.empty": "Não foram encontradas pastas mapeadas para este contentor.",
+  "folders.treeLabel": "Seleção de pastas de cópia de segurança",
+  "folders.truncatedList": "A mostrar as primeiras 500 entradas",
+  "folders.retry": "Tentar novamente",
+  "folders.emptySelectionBlocked": "Pelo menos uma pasta tem de permanecer selecionada. Para não fazer cópia de segurança de nada deste contentor, desativa a inclusão no agendamento.",
 
   // Notifications
   "notify.title": "Notificações",

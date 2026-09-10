@@ -590,6 +590,10 @@ const ja: Partial<Translations> = {
   "folders.save": "フォルダを保存",
   "folders.saved": "保存しました",
   "folders.empty": "このコンテナにマッピングされたフォルダが見つかりません。",
+  "folders.treeLabel": "バックアップフォルダーの選択",
+  "folders.truncatedList": "最初の500件を表示しています",
+  "folders.retry": "再試行",
+  "folders.emptySelectionBlocked": "少なくとも1つのフォルダーを選択したままにしてください。このコンテナーのバックアップを一切行わない場合は、「スケジュールに含める」をオフにしてください。",
 
   // Notifications
   "notify.title": "通知",

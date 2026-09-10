@@ -593,6 +593,10 @@ const uk: Partial<Translations> = {
   "folders.save": "Зберегти папки",
   "folders.saved": "Збережено",
   "folders.empty": "Для цього контейнера не знайдено підключених папок.",
+  "folders.treeLabel": "Вибір тек для резервного копіювання",
+  "folders.truncatedList": "Показано перші 500 записів",
+  "folders.retry": "Спробувати ще раз",
+  "folders.emptySelectionBlocked": "Має залишитися вибраною щонайменше одна тека. Щоб не створювати резервних копій нічого з цього контейнера, вимкніть включення до розкладу.",
 
   // Notifications
   "notify.title": "Сповіщення",

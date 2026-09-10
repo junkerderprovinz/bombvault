@@ -598,6 +598,10 @@ const hu: Partial<Translations> = {
   "folders.save": "Mappák mentése",
   "folders.saved": "Mentve",
   "folders.empty": "Nem található leképezett mappa ehhez a konténerhez.",
+  "folders.treeLabel": "Biztonsági mentési mappák kiválasztása",
+  "folders.truncatedList": "Az első 500 bejegyzés látható",
+  "folders.retry": "Újrapróbálás",
+  "folders.emptySelectionBlocked": "Legalább egy mappának kiválasztva kell maradnia. Ha nem szeretnél ebből a konténerből semmit menteni, kapcsold ki az ütemezésbe foglalást.",
 
   // Notifications
   "notify.title": "Értesítések",

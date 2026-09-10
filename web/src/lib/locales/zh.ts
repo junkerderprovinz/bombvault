@@ -590,6 +590,10 @@ const zh: Partial<Translations> = {
   "folders.save": "保存文件夹",
   "folders.saved": "已保存",
   "folders.empty": "未找到此容器的映射文件夹。",
+  "folders.treeLabel": "选择备份文件夹",
+  "folders.truncatedList": "显示前 500 项",
+  "folders.retry": "重试",
+  "folders.emptySelectionBlocked": "必须至少保留一个已选择的文件夹。若不备份此容器的任何内容，请关闭加入计划任务。",
 
   // Notifications
   "notify.title": "通知",
