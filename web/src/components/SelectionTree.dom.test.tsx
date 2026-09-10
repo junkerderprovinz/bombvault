@@ -52,6 +52,8 @@ const { SelectionTree } = await import("./SelectionTree");
 
 const HOST_ROOT = "/mnt";
 const MOUNT = "/mnt/user/appdata/plex";
+const PLEX2 = "/mnt/user/appdata/plex2";
+const OTHER = "/mnt/user/appdata/other";
 
 function mountsResponse(overrides?: Partial<ContainerMountsResponse>): ContainerMountsResponse {
   return {
@@ -291,6 +293,160 @@ describe("SelectionTree per-node listing states (TREE-06, plan-01 scope)", () =>
     });
     expect(browseCalls).toEqual(["user/appdata/plex", "user/appdata/plex"]);
     expect(screen.getByRole("treeitem", { name: /library/ })).toBeTruthy();
+  });
+});
+
+// Plan 02 scope: the five browse outcomes are pinned DISTINCT, the retry
+// affordance re-enters the in-flight state, the truncated notice stays outside
+// the treeitem structure, a rejected promise settles with no spinner left
+// behind, and listing failures never interfere with selection persistence.
+// (The rows themselves landed with plan 01's documented deviations — these
+// tests are the pin the plan asked for: "verify that holds".)
+describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
+  it("renders the couldNotRead fallback when ok:false carries no error text, outside the treeitem structure", async () => {
+    browseReplies = [{ ok: false, status: "error" }];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    });
+
+    // No error string on the wire -> the translated fallback, verbatim key
+    // text, in a plain row (never a treeitem, never an empty-listing stand-in).
+    const row = screen.getByText("Could not read directory");
+    expect(row.closest('[role="treeitem"]')).toBeNull();
+    expect(screen.queryByText("No subdirectories")).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+  });
+
+  it("retry re-enters the in-flight state (spinner row) before the refetched listing lands", async () => {
+    let release!: (v: BrowseResponse) => void;
+    const refetch = new Promise<BrowseResponse>((res) => {
+      release = res;
+    });
+    browseReplies = [
+      { ok: false, status: "restricted", error: "could not read directory" },
+      refetch,
+    ];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    });
+    // The failed cache entry was evicted, so "Try again" is a REAL refetch:
+    // a second browse call, passing through the spinner row again.
+    expect(browseCalls).toEqual(["user/appdata/plex", "user/appdata/plex"]);
+    expect(screen.getByText("Loading…")).toBeTruthy();
+
+    await act(async () => {
+      release(listing());
+    });
+    expect(screen.getByRole("treeitem", { name: /library/ })).toBeTruthy();
+  });
+
+  it("truncated listing renders the served children then one non-interactive notice row (D-06)", async () => {
+    browseReplies = [{ ...listing(), truncated: true }];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    });
+
+    // The served children render as real treeitems...
+    expect(screen.getByRole("treeitem", { name: /transcoding/ })).toBeTruthy();
+    expect(screen.getByRole("treeitem", { name: /library/ })).toBeTruthy();
+    // ...and setsize counts ONLY them: the notice row is outside the arithmetic.
+    expect(screen.getByRole("treeitem", { name: /transcoding/ }).getAttribute("aria-setsize")).toBe("2");
+
+    // Exactly one notice, a plain <p>: no treeitem role, no checkbox, nothing
+    // to click — never counted, never paginated.
+    const notices = screen.getAllByText("First 500 entries shown");
+    expect(notices.length).toBe(1);
+    expect(notices[0].tagName).toBe("P");
+    expect(notices[0].closest('[role="treeitem"]')).toBeNull();
+    expect(notices[0].querySelector("input")).toBeNull();
+  });
+
+  it("renders loading, empty, and no-access outcomes as three distinct rows in one tree", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: PLEX2, dest: "/data", selected: true, isAppdata: false, reachable: true },
+        { source: OTHER, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+    });
+    browseReplies = [
+      { ok: false, status: "restricted", error: "could not read directory" }, // /config
+      { ok: true, status: "ok", truncated: false, dirs: [] }, // /data
+      new Promise<BrowseResponse>(() => {}), // /media, never settles in this test
+    ];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /\/config/ }));
+    });
+    expect(screen.getByText("could not read directory")).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /\/data/ }));
+    });
+    expect(screen.getByText("No subdirectories")).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /\/media/ }));
+    });
+    expect(screen.getByText("Loading…")).toBeTruthy();
+
+    // All three texts coexist and are pairwise distinct; the retry affordance
+    // belongs to the no-access row alone (empty and loading are plain text).
+    expect(screen.getAllByRole("button", { name: "Try again" }).length).toBe(1);
+  });
+
+  it("a rejected browse promise settles to the error row — zero spinner nodes remain", async () => {
+    let reject!: (e: Error) => void;
+    const boom = new Promise<BrowseResponse>((_, rej) => {
+      reject = rej;
+    });
+    browseReplies = [boom];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    });
+    await act(async () => {
+      reject(new Error("network down"));
+    });
+
+    // Both promise outcomes settle the node: the fallback text shows and no
+    // animate-spin element survives anywhere in the document.
+    expect(screen.getByText("Could not read directory")).toBeTruthy();
+    expect(document.querySelectorAll(".animate-spin").length).toBe(0);
+  });
+
+  it("a node whose listing failed still toggles and PATCHes normally (listing errors never block saving)", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: PLEX2, dest: "/data", selected: true, isAppdata: false, reachable: true },
+      ],
+    });
+    browseReplies = [{ ok: false, status: "restricted", error: "could not read directory" }];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /\/config/ }));
+    });
+    expect(screen.getByText("could not read directory")).toBeTruthy();
+
+    // The unreadable folder only failed to LIST: its own include still
+    // toggles, the save still leaves — selection and browse stay independent.
+    const box = within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox");
+    await act(async () => {
+      fireEvent.click(box);
+    });
+    expect(patches).toEqual([{ name: "plex", paths: [PLEX2], opts: { selectionSource: "tree" } }]);
   });
 });
 
