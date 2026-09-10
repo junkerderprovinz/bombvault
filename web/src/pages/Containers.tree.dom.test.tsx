@@ -32,6 +32,13 @@ let browseReplies: (BrowseResponse | Promise<BrowseResponse>)[] = [];
 // the Phase 3 reset/narrowing contracts over it) is observable step by step.
 let patchReplies: ({ ok: boolean; error?: string } | Promise<{ ok: boolean; error?: string }>)[] = [];
 let mountsCalls = 0;
+// Composed-body capture (plan 03 Task 2): one entry per setContainerTargets
+// call, verbatim body included, so tests can pin EXACTLY which classes a
+// drain carried. maxConcurrent is the no-overlap proof (T-03-07): the mock
+// counts calls in flight; two overlapping PATCHes would push it to 2.
+const patchBodies: { name: string; body: Record<string, unknown> }[] = [];
+let activePatches = 0;
+let maxConcurrentPatches = 0;
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -45,6 +52,15 @@ vi.mock("../lib/api", async (importOriginal) => {
       browseCalls.push(path);
       const reply = browseReplies.shift() ?? { ok: true, dirs: [], status: "ok", truncated: false };
       return Promise.resolve(reply);
+    },
+    setContainerTargets: (name: string, body: Record<string, unknown>) => {
+      activePatches += 1;
+      maxConcurrentPatches = Math.max(maxConcurrentPatches, activePatches);
+      patchBodies.push({ name, body });
+      const reply = patchReplies.shift() ?? { ok: true };
+      return Promise.resolve(reply).finally(() => {
+        activePatches -= 1;
+      });
     },
     setBackupPaths: (name: string, paths: string[], opts?: { selectionSource?: string }) => {
       patches.push({ name, paths, opts });
@@ -70,6 +86,9 @@ function mountsResponse(overrides?: Partial<ContainerMountsResponse>): Container
     excluded: [],
     hostMountRoot: "/host/user",
     hostSourceRoot: HOST_ROOT,
+    // The server always serves the CACHEDIR map as an object (RESTIC-01 read
+    // side, plan 03-01); empty = nothing skipped yet.
+    excludeCaches: {},
     ...overrides,
   };
 }
@@ -120,6 +139,9 @@ beforeEach(() => {
   patchReplies = [];
   mountsCalls = 0;
   mountsReply = mountsResponse();
+  patchBodies.length = 0;
+  activePatches = 0;
+  maxConcurrentPatches = 0;
 });
 
 afterEach(cleanup);
@@ -752,5 +774,176 @@ describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, S
     );
     await act(async () => {});
     expect(screen.queryByText(NARROWED_NOTE_EN)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Per-root CACHEDIR.TAG toggle (Phase 3, plan 03 Task 2 — D-06, RESTIC-01,
+// T-03-07).
+//
+// Every root row (mounts AND standalone customs) carries a switch that flips
+// that root's entry in the stored excludeCaches map. The switch renders in a
+// presentation-wrapped sub-row immediately after its treeitem, regardless of
+// expand state, with the caller-drawn label and an InfoBubble disclosing the
+// ITEM-WIDE scope (the flag applies to the whole backup, not the folder).
+// Unreachable mounts render it disabled. Flips ride the SAME one-deep
+// serialized PATCH queue as selection saves: the drain composes one body
+// carrying only the classes it owes, so a caches flip stacked behind an
+// in-flight selection save never overlaps it — the mock's concurrency
+// counter pins that at 1. Failure reverts to the stored value (a newer flip
+// on the same key survives), toasts the verbatim error, shakes the switch;
+// success is quiet.
+// ---------------------------------------------------------------------------
+
+const CACHEDIR_TOGGLE_EN = "Skip cache folders (CACHEDIR.TAG)";
+const CACHEDIR_SCOPE_EN = "Applies to the entire backup of this container, not only this folder.";
+const MEDIA_MOUNT = `${HOST_ROOT}/user/media`;
+
+/** The CACHEDIR sub-row that belongs to a root: the presentation wrapper
+ *  rendered as the treeitem's IMMEDIATE next sibling (the blocked-line /
+ *  exclusions-section placement precedent). */
+function cachedirRow(row: HTMLElement): HTMLElement {
+  const sub = row.nextElementSibling;
+  expect(sub, "the CACHEDIR sub-row renders immediately after its treeitem").toBeTruthy();
+  expect(sub?.getAttribute("role")).toBe("presentation");
+  return sub as HTMLElement;
+}
+
+describe("per-root CACHEDIR.TAG toggle (D-06, RESTIC-01, T-03-07)", () => {
+  it("renders the switch under every root with the caller-drawn label and scope bubble; unreachable mounts disabled", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/srv9/elsewhere`, dest: "/gone", selected: false, isAppdata: false, reachable: false },
+      ],
+      custom: [{ path: STANDALONE, exists: true }],
+      excludeCaches: { [MOUNT]: true },
+    });
+    await renderEditor();
+
+    const plex = cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    const gone = cachedirRow(screen.getByRole("treeitem", { name: /\/mnt\/srv9\/elsewhere/ }));
+    const custom = cachedirRow(screen.getByRole("treeitem", { name: /user\/backups/ }));
+
+    // The switch's accessible name is the label (Toggle sets aria-label);
+    // the caller-drawn visible label sits beside it in the tree's 12px
+    // register (hideLabel is the sanctioned shape for exactly this).
+    for (const sub of [plex, gone, custom]) {
+      const sw = within(sub).getByRole("switch", { name: CACHEDIR_TOGGLE_EN });
+      const label = within(sub).getByText(CACHEDIR_TOGGLE_EN);
+      expect(label.className).toContain("text-carbon-textSub");
+      expect(label.className).toContain("text-xs");
+      // The scope disclosure rides an InfoBubble beside the label.
+      expect(within(sub).getByLabelText(CACHEDIR_SCOPE_EN)).toBeTruthy();
+      expect(sw.tagName).toBe("BUTTON");
+    }
+
+    // Stored truth renders: the fixture marks plex skipped only.
+    expect(within(plex).getByRole("switch").getAttribute("aria-checked")).toBe("true");
+    expect(within(gone).getByRole("switch").getAttribute("aria-checked")).toBe("false");
+    expect(within(custom).getByRole("switch").getAttribute("aria-checked")).toBe("false");
+
+    // Unreachable mounts cannot back up — their switch is disabled; the
+    // reachable mount's and the custom root's are not.
+    expect(within(gone).getByRole("switch")).toBeDisabled();
+    expect(within(plex).getByRole("switch")).toBeEnabled();
+    expect(within(custom).getByRole("switch")).toBeEnabled();
+
+    // The sub-rows never enter the treeitem set (presentation wrappers).
+    expect(screen.getAllByRole("treeitem")).toHaveLength(3);
+  });
+
+  it("flipping a switch PATCHes the full live map as a caches-only body and renders the flip optimistically, quietly", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: MEDIA_MOUNT, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+      excludeCaches: { [MOUNT]: false, [MEDIA_MOUNT]: true },
+    });
+    await renderEditor();
+
+    const plexSub = cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    await act(async () => {
+      fireEvent.click(within(plexSub).getByRole("switch"));
+    });
+
+    // ONE fetch, caches-only: nothing about backupPaths is owed, so the
+    // composed body carries exactly the excludeCaches class.
+    expect(patchBodies).toHaveLength(1);
+    expect(patchBodies[0]).toEqual({
+      name: "tree",
+      body: { excludeCaches: { [MOUNT]: true, [MEDIA_MOUNT]: true } },
+    });
+    // Optimistic local flip.
+    expect(within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })))
+      .getByRole("switch")
+      .getAttribute("aria-checked")).toBe("true");
+    // Quiet success: no Saved toast for a caches-only save.
+    expect(screen.queryByText("Saved")).toBeNull();
+  });
+
+  it("a caches flip stacked behind an in-flight selection save drains as one further fetch, never overlapping it", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: MEDIA_MOUNT, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+      excludeCaches: { [MOUNT]: false },
+    });
+    await renderEditor(true, 1700000000);
+    let resolveFirst!: (r: { ok: boolean }) => void;
+    patchReplies = [new Promise((res) => (resolveFirst = res))];
+
+    // 1. A selection save goes in flight (uncheck the media mount).
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/media ← / })).getByRole("checkbox", { hidden: true }));
+    });
+    expect(patchBodies).toHaveLength(1);
+
+    // 2. Flip the plex CACHEDIR switch while that save is pending: stacked,
+    //    not concurrent — no second fetch yet, and the switch disables while
+    //    its flip is unacknowledged (in-flight disable).
+    const plexSub = cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    await act(async () => {
+      fireEvent.click(within(plexSub).getByRole("switch"));
+    });
+    expect(patchBodies).toHaveLength(1);
+    expect(within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch")).toBeDisabled();
+
+    // 3. The selection save settles; the queue drains the caches flip as ONE
+    //    further fetch carrying the live map — never two PATCHes at once.
+    await act(async () => {
+      resolveFirst({ ok: true });
+    });
+    expect(patchBodies).toHaveLength(2);
+    expect(patchBodies[1]).toEqual({ name: "tree", body: { excludeCaches: { [MOUNT]: true } } });
+    expect(maxConcurrentPatches).toBe(1);
+    // Acknowledged: the busy flag clears and the switch re-enables.
+    expect(within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch")).toBeEnabled();
+  });
+
+  it("a failed caches PATCH reverts to the stored value, toasts verbatim, and shakes the switch row", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: MEDIA_MOUNT, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+      excludeCaches: { [MOUNT]: false, [MEDIA_MOUNT]: true },
+    });
+    await renderEditor();
+    patchReplies = [{ ok: false, error: "scrubbed failure" }];
+
+    await act(async () => {
+      fireEvent.click(within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch"));
+    });
+
+    expect(screen.getByText("scrubbed failure")).toBeTruthy();
+    expect(patchBodies).toHaveLength(1); // no retry
+    const sub = cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    expect(within(sub).getByRole("switch").getAttribute("aria-checked")).toBe("false");
+    expect(within(sub).getByRole("switch")).toBeEnabled();
+    // The shake lands on the switch's own sub-row (keyed nonce remount).
+    expect(sub.className).toContain("glim-shake");
   });
 });
