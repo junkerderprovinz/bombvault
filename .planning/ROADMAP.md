@@ -70,10 +70,24 @@ Plans:
   4. The whole tree is operable by keyboard (arrows to move/expand/collapse, Space to toggle) with ARIA tree/checkbox roles: `aria-expanded` on parents, `aria-checked="mixed"` for partials, `aria-level`/`setsize`/`posinset` on lazy nodes
   5. An unreadable directory renders a muted "no access" row visually distinct from a plain empty directory; expansion never hangs on an infinite spinner or silently collapses
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Tracer: the mounts/custom list becomes a lazy tri-state tree (pure selectionTree logic, wire types caught up, live-save with selectionSource "tree", exact reopen reconstruction, 4 i18n keys x 42 locales) (TREE-01, TREE-02, TREE-03, TREE-04, INTEG-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — Node outcome states + save-flow guard: TREE-06 no-access/retry rows, D-06 truncated notice, D-04 pre-PATCH zero-include block, serialized one-deep PATCH queue (TREE-06, TREE-02, INTEG-01)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-03-PLAN.md — APG keyboard + aria geometry (TREE-05), sub-include absorption + expansion restore + integration test (INTEG-01), phase gate (full suite, lint, build, committed web/dist, Go regression)
+
 **UI hint**: yes
 
-**Notes**: Spec the click-on-mixed behavior (fill vs cycle) during planning — APG allows either; research expects fill. `--research-phase` only if deeper ARIA-tree detail is wanted; otherwise STACK.md/APG guidance suffices. Both i18n locales; commit `web/dist`.
+**Notes**: Click-on-mixed behavior resolved by CONTEXT D-01 (remembered three-state cycle) — not reopened at planning. i18n: the parity test gates ALL 42 locale tables (en + de inline + 40 lazy chunks), not two; 4 new keys budgeted in plan 01. `web/dist` rebuilt and committed in plan 03 (task 3). Zero backend changes; zero npm installs.
 
 ### Phase 3: Selection Trust & Controls
 
