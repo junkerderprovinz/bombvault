@@ -29,6 +29,7 @@ import {
   isStrictlyUnder,
   loadExpanded,
   partitionCustomPaths,
+  rootIncludeCount,
   saveExpanded,
   splitFlatSet,
   toFlatList,
@@ -580,5 +581,99 @@ describe("partitionCustomPaths", () => {
       underMount,
       standalone,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rootIncludeCount — the per-root "{n} paths" preview (Phase 3, plan 02, D-01)
+//
+// The visible count must equal what the next backup hands restic: stored
+// maximal includes ARE the positional sources (Phase 1 flat-set contract), so
+// the count is computed ONLY from the includes set — never from checked nodes
+// on screen, never from loaded children, and never filtered by existence.
+// ---------------------------------------------------------------------------
+
+describe("rootIncludeCount (D-01: the preview mirrors the flat-set positional truth)", () => {
+  const cases: { name: string; root: string; includes: string[]; want: number }[] = [
+    {
+      name: "a root equal to an include counts exactly 1",
+      root: "/mnt/user/appdata/plex",
+      includes: ["/mnt/user/appdata/plex"],
+      want: 1,
+    },
+    {
+      name: "an include strictly under the root counts 1",
+      root: "/mnt/user/appdata/plex",
+      includes: ["/mnt/user/appdata/plex/Media"],
+      want: 1,
+    },
+    {
+      name: "a sibling sharing the prefix counts 0 (segment alignment)",
+      root: "/mnt/user/appdata/plex",
+      includes: ["/mnt/user/appdata/plex2", "/mnt/user/appdata/plex2/x"],
+      want: 0,
+    },
+    {
+      name: "multiple nested includes count once each (stored form is maximal, no ancestor double-count)",
+      root: "/mnt/user/appdata/plex",
+      includes: ["/mnt/user/appdata/plex/Media", "/mnt/user/appdata/plex/Library"],
+      want: 2,
+    },
+    {
+      name: "an include ABOVE the root counts 0 (a parent include is not this root's entry)",
+      root: "/mnt/user/appdata/plex",
+      includes: ["/mnt/user"],
+      want: 0,
+    },
+    {
+      name: "zero includes yields 0",
+      root: "/mnt/user/appdata/plex",
+      includes: [],
+      want: 0,
+    },
+  ];
+  it.each(cases)("$name", ({ root, includes, want }) => {
+    expect(rootIncludeCount(root, new Set(includes))).toBe(want);
+  });
+
+  it("agrees with toFlatList: the per-root counts sum to the bare entries the serializer emits (D-01)", () => {
+    // A representative mirror across the three root kinds: a mount counted by
+    // its own entry, a mount counted by two strictly-below entries, and a
+    // standalone custom row counted by its own entry. The sum MUST equal the
+    // number of bare entries toFlatList serializes — that list is what the
+    // next backup PATCH carries and what restic receives as positionals, so
+    // any drift here would be the preview lying about the argv.
+    const roots = ["/mnt/user/appdata/plex", "/mnt/user/media", "/mnt/user/backups"];
+    const includes = new Set([
+      "/mnt/user/appdata/plex",
+      "/mnt/user/media/Movies",
+      "/mnt/user/media/Series",
+      "/mnt/user/backups",
+    ]);
+    const exclusions = new Set(["/mnt/user/appdata/plex/transcoding", "/mnt/user/media/Samples"]);
+    const flat = toFlatList(includes, exclusions);
+    const bare = flat.filter((e) => !e.startsWith(EXCLUSION_PREFIX)).length;
+    const summed = roots.reduce((n, root) => n + rootIncludeCount(root, includes), 0);
+    expect(summed).toBe(bare);
+    expect(summed).toBe(4);
+  });
+
+  it("an exclusions-only root counts 0 while its exclusions stay stored (D-04 dormant)", () => {
+    // Fully deselected root with remembered exclusions: the count reads the
+    // includes set alone, so it is 0, and the dormant exclusion set is never
+    // consulted or mutated by the count.
+    const exclusions = new Set(["/mnt/user/appdata/plex/transcoding"]);
+    expect(rootIncludeCount("/mnt/user/appdata/plex", new Set())).toBe(0);
+    expect([...exclusions]).toEqual(["/mnt/user/appdata/plex/transcoding"]);
+  });
+
+  it("is existence-unfiltered BY DESIGN (A3/Pitfall 5): stale and unreachable paths stay counted", () => {
+    // Deliberate divergence from run-time existence filtering: the preview
+    // derives from the stored flat set ONLY. A path whose folder has since
+    // vanished (or sits on an unreachable mount) still counts — those cases
+    // are already row-level-warned (folders.customMissing /
+    // folders.notReachable), and quietly dropping them here would make the
+    // preview disagree with the argv the next backup actually carries.
+    expect(rootIncludeCount("/mnt/user/appdata/plex", new Set(["/mnt/user/appdata/plex/gone-since-yesterday"]))).toBe(1);
   });
 });

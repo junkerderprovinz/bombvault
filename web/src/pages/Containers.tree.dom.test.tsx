@@ -305,3 +305,102 @@ describe("FoldersEditor tree integration (INTEG-01, D-02, D-04, D-05)", () => {
     expect(browseCalls).toHaveLength(66);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Per-root effective-selection preview (Phase 3, plan 02 — SELECT-03 first
+// half, D-01, INTEG-04).
+//
+// Every root row (each mount AND each standalone custom row) carries a muted
+// "{n} paths" line derived from the stored (includes, exclusions) mirror —
+// never from checked nodes on screen — so the count is exactly what the next
+// backup PATCH serializes as bare positionals. Zero is information: a fully
+// deselected root renders "0 paths", never a hidden line.
+// ---------------------------------------------------------------------------
+
+describe("per-root effective-selection preview (SELECT-03 first half, D-01)", () => {
+  it("announces '{n} paths' inside every root row: included mount, deselected mount (0), unreachable mount (0), standalone custom", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/user/media`, dest: "/media", selected: false, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/srv9/elsewhere`, dest: "/gone", selected: false, isAppdata: false, reachable: false },
+      ],
+      custom: [{ path: STANDALONE, exists: true }],
+    });
+    await renderEditor();
+
+    // The preview line renders INSIDE the root treeitem's label column, so it
+    // is announced with the row's accessible name (the appdataDefault /
+    // notReachable placement precedent) — not a detached node beside it.
+    const plex = within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByText("1 paths");
+    expect(plex.className).toContain("text-carbon-textMuted");
+
+    // Fully deselected mount: the 0 case renders (INTEG-04 — zero is
+    // information, not an empty state to hide).
+    within(screen.getByRole("treeitem", { name: /\/media ← \/mnt\/user\/media/ })).getByText("0 paths");
+
+    // Unreachable mount: its own 0 case renders too.
+    within(screen.getByRole("treeitem", { name: /\/mnt\/srv9\/elsewhere/ })).getByText("0 paths");
+
+    // Standalone custom row: included custom paths count as their own root
+    // include on load, so the row announces "1 paths".
+    within(screen.getByRole("treeitem", { name: /user\/backups/ })).getByText("1 paths");
+  });
+
+  it("a carve-out toggle leaves the count unchanged; narrowing the parent to child includes changes it", async () => {
+    // Two selected mounts so the D-04 last-include guard never fires while
+    // the plex root is narrowed below.
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/user/media`, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+    });
+    browseReplies = [plexListing(), plexListing()];
+    await renderEditor();
+
+    // 1. Carve-out: unchecking a child of an included parent creates an
+    //    exclusion and leaves the parent include untouched — the count of
+    //    includes at-or-under the root is unchanged.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
+    });
+    const root = screen.getByRole("treeitem", { name: /user\/appdata\/plex/ });
+    within(root).getByText("1 paths");
+    const child = within(screen.getByRole("treeitem", { name: /transcoding/ })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(child);
+    });
+    within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByText("1 paths");
+    // The carve-out really happened (exclusion stored, mount mixed): the
+    // serialized list carries both mounts' bare includes plus the "!" entry.
+    expect(patches[patches.length - 1]?.paths).toEqual([
+      MOUNT,
+      `${HOST_ROOT}/user/media`,
+      `!${MOUNT}/transcoding`,
+    ]);
+
+    // 2. Narrowing: uncheck the parent (its include drops; the media mount
+    //    keeps the item non-empty), then check two children — the preview now
+    //    counts the child includes (0 paths, then 1, then 2).
+    const parentBox = within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(parentBox);
+    });
+    within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByText("0 paths");
+    // The dormant carve-out exclusion is still stored below it (D-01 memory):
+    // bare includes first, then the "!" entry.
+    expect(patches[patches.length - 1]?.paths).toEqual([
+      `${HOST_ROOT}/user/media`,
+      `!${MOUNT}/transcoding`,
+    ]);
+
+    for (const name of [/^transcoding$/, /^Media$/]) {
+      const box = within(screen.getByRole("treeitem", { name })).getByRole("checkbox", { hidden: true });
+      await act(async () => {
+        fireEvent.click(box);
+      });
+    }
+    within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByText("2 paths");
+  });
+});
