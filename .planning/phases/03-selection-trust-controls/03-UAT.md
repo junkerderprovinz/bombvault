@@ -3,27 +3,47 @@ status: testing
 phase: 03-selection-trust-controls
 source: 03-01-SUMMARY.md, 03-02-SUMMARY.md, 03-03-SUMMARY.md
 started: 2026-09-10T21:10:00Z
-updated: 2026-09-10T21:10:00Z
+updated: 2026-09-10T22:02:00Z
 ---
 
 ## Current Test
 <!-- OVERWRITE each test - shows where we are -->
 
-number: 1
-name: Visual UAT in a real browser (five new surfaces)
+number: 2
+name: Real-instance smoke (optional — same class as Phase 1's item)
 expected: |
-  Open the container panel FoldersEditor with a multi-mount container. Verify:
-  the muted "{n} paths" line inside every root label (including "0 paths" on a
-  deselected mount); expanding an "{n} exclusions" disclosure (chevron rotation,
-  mono ltr break-all relative rows with hover titles); the "Skip cache folders
-  (CACHEDIR.TAG)" switch row with its InfoBubble under every root; the Reset
-  selection button with its fail-tone confirm dialog; and (after unchecking a
-  mount on a backed-up container) the role=status text-statusWarn narrowing
-  note under the tree. Sub-rows sit on the indent-16 py-1 rhythm consistent
-  with the Phase 2 rows; the switch label reads at the 12px register; the
-  confirm dialog carries the destructive treatment; the note renders between
-  the tree and the Add row.
-awaiting: user response
+  On the Unraid instance, flip one mount's CACHEDIR switch, reload the panel
+  (switch state persists from the mounts response), run a backup of that
+  container, confirm the run's restic argv carries --exclude-caches (scrubbed
+  server log: right of the verb, left of --); flip it off and confirm the next
+  backup's argv does not.
+outcome: pass (executed by the gsd orchestrator at the user's request)
+evidence: |
+  Instance: BombVault-test on Unraid, redeployed from image bombvault:phase3-788d018b
+  (HEAD 788d018b built on the host from the committed tree; APP_KEY and volumes
+  preserved; the four stored repo paths had a stray "user/" prefix that broke
+  repo resolution — corrected to bombvault/{container,vms,config,files} against
+  hostSourceRoot /mnt). Target container: mcsmanager-daemon (two mounts; data
+  selected, logs deselected).
+  1. Flip ON via PATCH /api/containers/mcsmanager-daemon
+     {"excludeCaches":{"/mnt/user/appdata/minecraft/daemon/data":true}} -> {"ok":true};
+     GET mounts reload shows "excludeCaches":{"/mnt/user/appdata/minecraft/daemon/data":true}.
+  2. Backup run 1 success (7s, snapshot 90dc9428..., 236,618,861 bytes). Live restic
+     argv captured from /proc/<pid>/cmdline during the run:
+     restic -r /host/user/bombvault/container --retry-lock 5m backup --json
+     --host bombvault --tag container:mcsmanager-daemon --tag p1 --exclude-caches --
+     /host/user/user/appdata/minecraft/daemon/data
+     --exclude-caches sits right of the verb, left of --, between the --tag loop and
+     the positionals (same slot TestBackupArgsExcludeCaches pins).
+  3. Flip OFF via PATCH {"excludeCaches":{}} -> {"ok":true}; GET mounts shows {}.
+  4. Backup run 2 success (4s, snapshot 7c013d45..., 8,687 bytes deduped). Live argv:
+     restic -r /host/user/bombvault/container --retry-lock 5m backup --json
+     --host bombvault --tag container:mcsmanager-daemon --tag p1 --
+     /host/user/user/appdata/minecraft/daemon/data
+     No --exclude-caches — byte-identical to the pre-feature shape (zero-value pin).
+  Final stored state equals the pre-test state (no toggles). Self-backup of
+  BombVault-test is refused by design, so the smoke exercised a real user container.
+awaiting: none — next: item 1 (visual UAT)
 
 ## Tests
 
@@ -33,7 +53,8 @@ result: [pending]
 
 ### 2. Real-instance smoke (optional — same class as Phase 1's item)
 expected: On the Unraid instance, flip one mount's CACHEDIR switch, reload the panel (switch state persists from the mounts response), run a backup of that container, confirm the run's restic argv carries --exclude-caches (scrubbed server log: right of the verb, left of --); flip it off and confirm the next backup's argv does not
-result: [pending]
+result: pass
+reported: orchestrator-executed at the user's request (see Current Test evidence)
 
 ### 3. Judgment-tier prohibition review (2 items)
 expected: A human confirms the 2 non-authoritative LLM verdicts (excludeCaches map keys never reach argv; no fanout affordance / no snapshot-content comparison) or deposits corrections — per ADR-550 D4 they cannot be silently absorbed into a pass
@@ -50,9 +71,9 @@ result: [pending]
 ## Summary
 
 total: 5
-passed: 0
+passed: 1
 issues: 0
-pending: 5
+pending: 4
 skipped: 0
 blocked: 0
 
