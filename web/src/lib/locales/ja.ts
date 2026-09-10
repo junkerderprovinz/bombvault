@@ -914,6 +914,7 @@ const ja: Partial<Translations> = {
   "offsite.wizard.step3": "3 · リポジトリ URL + 認証情報",
   "offsite.wizard.repoUrl": "オフサイトリポジトリ URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL は「{segment}」で始まりますが、この認証情報は「{user}」でサインインします。--private-repos では両者が同じ語である必要があり、違えばサーバーは 401 を返します。",
   "offsite.wizard.credentials": "認証情報",
   "offsite.wizard.credsSharedElsewhere": "共有のクラウド認証情報を使用します。この宛先に専用の認証情報を割り当てるにはセットを選択してください。",
   "offsite.wizard.credsInSet": "この保存先はセット「{name}」を使用します。認証情報はそちらで管理します。",

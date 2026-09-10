@@ -314,6 +314,7 @@ const hi: Partial<Translations> = {
   "offsite.wizard.step3": "3 · रिपॉज़िटरी URL + क्रेडेंशियल्स",
   "offsite.wizard.repoUrl": "ऑफ़-साइट रिपॉज़िटरी URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL “{segment}” से शुरू होता है, लेकिन ये क्रेडेंशियल “{user}” के रूप में साइन इन करते हैं। --private-repos के साथ दोनों एक ही शब्द होने चाहिए, वरना सर्वर 401 लौटाता है।",
   "offsite.wizard.credentials": "क्रेडेंशियल",
   "offsite.wizard.credsSharedElsewhere": "साझा क्लाउड क्रेडेंशियल का उपयोग करता है। इस गंतव्य को अपने खुद के देने के लिए एक सेट चुनें।",
   "offsite.wizard.credsInSet": "यह गंतव्य सेट \u201c{name}\u201d का उपयोग करता है। क्रेडेंशियल वहीं प्रबंधित होते हैं।",

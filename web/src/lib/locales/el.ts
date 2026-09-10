@@ -942,6 +942,7 @@ const el: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL αποθετηρίου + διαπιστευτήρια",
   "offsite.wizard.repoUrl": "URL αποθετηρίου εκτός τόπου",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Η διεύθυνση ξεκινά με «{segment}», αλλά αυτά τα διαπιστευτήρια συνδέονται ως «{user}». Με --private-repos τα δύο πρέπει να είναι η ίδια λέξη, αλλιώς ο διακομιστής απαντά 401.",
   "offsite.wizard.credentials": "Διαπιστευτήρια",
   "offsite.wizard.credsSharedElsewhere": "Χρησιμοποιεί τα κοινόχρηστα διαπιστευτήρια cloud. Επιλέξτε ένα σύνολο για να δώσετε δικά του σε αυτόν τον προορισμό.",
   "offsite.wizard.credsInSet": "Αυτός ο προορισμός χρησιμοποιεί το σύνολο «{name}». Τα στοιχεία διαχειρίζονται εκεί.",

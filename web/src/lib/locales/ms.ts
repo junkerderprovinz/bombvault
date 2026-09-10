@@ -314,6 +314,7 @@ const ms: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL repositori + kelayakan",
   "offsite.wizard.repoUrl": "URL repositori luar tapak",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL bermula dengan “{segment}”, tetapi kelayakan ini log masuk sebagai “{user}”. Dengan --private-repos kedua-duanya mesti perkataan yang sama, jika tidak pelayan menjawab 401.",
   "offsite.wizard.credentials": "Kelayakan",
   "offsite.wizard.credsSharedElsewhere": "Menggunakan kelayakan awan yang dikongsi. Pilih satu set untuk memberi destinasi ini kelayakan sendiri.",
   "offsite.wizard.credsInSet": "Destinasi ini menggunakan set \u201c{name}\u201d. Kelayakan diurus di sana.",

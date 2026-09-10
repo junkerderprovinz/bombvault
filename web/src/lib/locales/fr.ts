@@ -922,6 +922,7 @@ const fr: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL du dépôt + identifiants",
   "offsite.wizard.repoUrl": "URL du dépôt hors site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "L'URL commence par « {segment} », mais ces identifiants se connectent en tant que « {user} ». Avec --private-repos, les deux doivent être le même mot, sinon le serveur répond 401.",
   "offsite.wizard.credentials": "Identifiants",
   "offsite.wizard.credsSharedElsewhere": "Utilise les identifiants cloud partagés. Choisissez un jeu pour donner ses propres identifiants à cette destination.",
   "offsite.wizard.credsInSet": "Cette destination utilise le jeu « {name} ». Les identifiants s'y gèrent.",

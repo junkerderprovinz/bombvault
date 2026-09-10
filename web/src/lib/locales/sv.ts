@@ -942,6 +942,7 @@ const sv: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository-URL + uppgifter",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL:en börjar med ”{segment}”, men dessa uppgifter loggar in som ”{user}”. Med --private-repos måste de två vara samma ord, annars svarar servern 401.",
   "offsite.wizard.credentials": "Autentiseringsuppgifter",
   "offsite.wizard.credsSharedElsewhere": "Använder de delade molnautentiseringsuppgifterna. Välj en uppsättning för att ge det här målet egna.",
   "offsite.wizard.credsInSet": "Den här destinationen använder uppsättningen ”{name}”. Uppgifterna hanteras där.",

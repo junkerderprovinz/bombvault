@@ -918,6 +918,7 @@ const no: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository-URL + legitimasjon",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL-en begynner med «{segment}», men disse påloggingsdataene logger inn som «{user}». Med --private-repos må de to være det samme ordet, ellers svarer serveren 401.",
   "offsite.wizard.credentials": "Legitimasjon",
   "offsite.wizard.credsSharedElsewhere": "Bruker den delte skylegitimasjonen. Velg et sett for å gi dette målet sitt eget.",
   "offsite.wizard.credsInSet": "Denne destinasjonen bruker settet «{name}». Opplysningene forvaltes der.",

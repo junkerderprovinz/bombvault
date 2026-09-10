@@ -314,6 +314,7 @@ const ca: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL del repositori + credencials",
   "offsite.wizard.repoUrl": "URL del repositori extern",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "L'URL comença amb «{segment}», però aquestes credencials inicien sessió com a «{user}». Amb --private-repos totes dues han de ser la mateixa paraula o el servidor respon 401.",
   "offsite.wizard.credentials": "Credencials",
   "offsite.wizard.credsSharedElsewhere": "Utilitza les credencials de núvol compartides. Tria un conjunt per donar-ne de pròpies a aquesta destinació.",
   "offsite.wizard.credsInSet": "Aquesta destinació fa servir el conjunt «{name}». Les credencials es gestionen allà.",

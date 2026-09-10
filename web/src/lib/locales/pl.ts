@@ -913,6 +913,7 @@ const pl: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Adres URL repozytorium + poświadczenia",
   "offsite.wizard.repoUrl": "Adres URL repozytorium poza siedzibą",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Adres zaczyna się od „{segment}”, ale te poświadczenia logują się jako „{user}”. Przy --private-repos oba muszą być tym samym słowem, inaczej serwer odpowie 401.",
   "offsite.wizard.credentials": "Dane logowania",
   "offsite.wizard.credsSharedElsewhere": "Używa współdzielonych danych logowania do chmury. Wybierz zestaw, aby ten cel miał własne.",
   "offsite.wizard.credsInSet": "Ten cel używa zestawu „{name}”. Dane są zarządzane tam.",

@@ -918,6 +918,7 @@ const pt: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL do repositório + credenciais",
   "offsite.wizard.repoUrl": "URL do repositório externo",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "O URL começa por «{segment}», mas estas credenciais iniciam sessão como «{user}». Com --private-repos os dois têm de ser a mesma palavra, ou o servidor responde 401.",
   "offsite.wizard.credentials": "Credenciais",
   "offsite.wizard.credsSharedElsewhere": "Usa as credenciais de nuvem partilhadas. Escolha um conjunto para dar credenciais próprias a este destino.",
   "offsite.wizard.credsInSet": "Este destino usa o conjunto «{name}». As credenciais são geridas ali.",

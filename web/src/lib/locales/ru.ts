@@ -913,6 +913,7 @@ const ru: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL репозитория + учётные данные",
   "offsite.wizard.repoUrl": "URL внешнего репозитория",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Адрес начинается с «{segment}», а эти учётные данные входят как «{user}». С --private-repos оба должны быть одним и тем же словом, иначе сервер отвечает 401.",
   "offsite.wizard.credentials": "Учётные данные",
   "offsite.wizard.credsSharedElsewhere": "Использует общие облачные учётные данные. Выберите набор, чтобы у этой цели были собственные.",
   "offsite.wizard.credsInSet": "Это назначение использует набор «{name}». Данные управляются там.",

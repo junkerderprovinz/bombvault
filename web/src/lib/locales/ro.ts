@@ -921,6 +921,7 @@ const ro: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL depozit + credențiale",
   "offsite.wizard.repoUrl": "URL depozit off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Adresa începe cu „{segment}”, dar aceste credentiale se conectează ca „{user}”. Cu --private-repos cele două trebuie să fie același cuvânt, altfel serverul răspunde 401.",
   "offsite.wizard.credentials": "Credențiale",
   "offsite.wizard.credsSharedElsewhere": "Folosește credențialele cloud partajate. Alegeți un set pentru a-i da acestei destinații propriile credențiale.",
   "offsite.wizard.credsInSet": "Această destinație folosește setul „{name}”. Datele se administrează acolo.",

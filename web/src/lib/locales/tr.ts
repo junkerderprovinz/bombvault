@@ -942,6 +942,7 @@ const tr: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Depo URL'si + kimlik bilgileri",
   "offsite.wizard.repoUrl": "Site dışı depo URL'si",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL “{segment}” ile başlıyor ama bu kimlik bilgileri “{user}” olarak oturum açıyor. --private-repos ile ikisinin aynı sözcük olması gerekir, aksi hâlde sunucu 401 döner.",
   "offsite.wizard.credentials": "Kimlik bilgileri",
   "offsite.wizard.credsSharedElsewhere": "Paylaşılan bulut kimlik bilgilerini kullanır. Bu hedefe kendi bilgilerini vermek için bir küme seçin.",
   "offsite.wizard.credsInSet": "Bu hedef \u201c{name}\u201d kümesini kullanır. Bilgiler orada yönetilir.",

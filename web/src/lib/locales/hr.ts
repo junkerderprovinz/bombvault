@@ -314,6 +314,7 @@ const hr: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL repozitorija + vjerodajnice",
   "offsite.wizard.repoUrl": "URL izvanmrežnog repozitorija",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL počinje s „{segment}“, ali se ove vjerodajnice prijavljuju kao „{user}“. Uz --private-repos oboje mora biti ista riječ, inače poslužitelj vraća 401.",
   "offsite.wizard.credentials": "Vjerodajnice",
   "offsite.wizard.credsSharedElsewhere": "Koristi zajedničke vjerodajnice u oblaku. Odaberite skup da ovo odredište dobije vlastite.",
   "offsite.wizard.credsInSet": "Ovo odredište koristi skup „{name}“. Podaci se uređuju ondje.",

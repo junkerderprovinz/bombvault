@@ -945,6 +945,7 @@ const th: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL รีพอสิทอรี + ข้อมูลรับรอง",
   "offsite.wizard.repoUrl": "URL รีพอสิทอรีนอกสถานที่",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL ขึ้นต้นด้วย “{segment}” แต่ข้อมูลรับรองนี้ลงชื่อเข้าใช้เป็น “{user}” เมื่อใช้ --private-repos ทั้งสองต้องเป็นคำเดียวกัน มิฉะนั้นเซิร์ฟเวอร์จะตอบ 401",
   "offsite.wizard.credentials": "ข้อมูลรับรอง",
   "offsite.wizard.credsSharedElsewhere": "ใช้ข้อมูลรับรองคลาวด์ที่ใช้ร่วมกัน เลือกชุดหนึ่งเพื่อให้ปลายทางนี้มีข้อมูลรับรองของตัวเอง",
   "offsite.wizard.credsInSet": "ปลายทางนี้ใช้ชุด \u201c{name}\u201d ข้อมูลจัดการอยู่ที่นั่น",

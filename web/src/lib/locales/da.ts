@@ -942,6 +942,7 @@ const da: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository-URL + legitimationsoplysninger",
   "offsite.wizard.repoUrl": "Off-site-repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL'en begynder med “{segment}”, men disse legitimationsoplysninger logger ind som “{user}”. Med --private-repos skal de to være det samme ord, ellers svarer serveren 401.",
   "offsite.wizard.credentials": "Legitimationsoplysninger",
   "offsite.wizard.credsSharedElsewhere": "Bruger de delte cloud-legitimationsoplysninger. Vælg et sæt for at give denne destination sine egne.",
   "offsite.wizard.credsInSet": "Denne destination bruger sættet “{name}”. Oplysningerne administreres der.",

@@ -915,6 +915,7 @@ const nl: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository-URL + inloggegevens",
   "offsite.wizard.repoUrl": "Off-site repository-URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "De URL begint met “{segment}”, maar deze inloggegevens melden zich aan als “{user}”. Met --private-repos moeten die twee hetzelfde woord zijn, anders antwoordt de server met 401.",
   "offsite.wizard.credentials": "Inloggegevens",
   "offsite.wizard.credsSharedElsewhere": "Gebruikt de gedeelde cloud-inloggegevens. Kies een set om deze bestemming eigen gegevens te geven.",
   "offsite.wizard.credsInSet": "Deze bestemming gebruikt de set “{name}”. De gegevens worden daar beheerd.",

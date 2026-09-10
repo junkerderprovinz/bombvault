@@ -314,6 +314,7 @@ const id: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL repositori + kredensial",
   "offsite.wizard.repoUrl": "URL repositori off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL diawali “{segment}”, tetapi kredensial ini masuk sebagai “{user}”. Dengan --private-repos keduanya harus kata yang sama, jika tidak server menjawab 401.",
   "offsite.wizard.credentials": "Kredensial",
   "offsite.wizard.credsSharedElsewhere": "Menggunakan kredensial cloud bersama. Pilih satu set agar tujuan ini punya miliknya sendiri.",
   "offsite.wizard.credsInSet": "Tujuan ini memakai set \u201c{name}\u201d. Kredensial dikelola di sana.",

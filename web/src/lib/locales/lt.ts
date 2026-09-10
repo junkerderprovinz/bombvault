@@ -314,6 +314,7 @@ const lt: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Saugyklos URL + prisijungimo duomenys",
   "offsite.wizard.repoUrl": "Nuotolinės saugyklos URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL prasideda „{segment}“, bet šie prisijungimo duomenys prisijungia kaip „{user}“. Su --private-repos abu turi būti tas pats žodis, kitaip serveris atsako 401.",
   "offsite.wizard.credentials": "Prisijungimo duomenys",
   "offsite.wizard.credsSharedElsewhere": "Naudoja bendrus debesijos prisijungimo duomenis. Pasirinkite rinkinį, kad ši paskirtis turėtų savus.",
   "offsite.wizard.credsInSet": "Ši paskirtis naudoja rinkinį „{name}“. Duomenys tvarkomi ten.",

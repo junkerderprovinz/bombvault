@@ -925,6 +925,7 @@ const hu: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repository URL + hitelesítő adatok",
   "offsite.wizard.repoUrl": "Telephelyen kívüli repository URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "A cím „{segment}” szóval kezdődik, de ezek a hitelesítő adatok „{user}” néven jelentkeznek be. A --private-repos kapcsolóval a kettőnek ugyanannak a szónak kell lennie, különben a kiszolgáló 401-et ad.",
   "offsite.wizard.credentials": "Hitelesítő adatok",
   "offsite.wizard.credsSharedElsewhere": "A megosztott felhőbeli hitelesítő adatokat használja. Válasszon készletet, hogy ez a cél sajátot kapjon.",
   "offsite.wizard.credsInSet": "Ez a cél a(z) „{name}” készletet használja. Az adatokat ott kell kezelni.",

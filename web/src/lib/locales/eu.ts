@@ -314,6 +314,7 @@ const eu: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Biltegiaren URLa + kredentzialak",
   "offsite.wizard.repoUrl": "Kanpoko biltegiaren URLa",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URLa «{segment}» hitzarekin hasten da, baina kredentzial hauek «{user}» gisa hasten dute saioa. --private-repos erabiliz gero, biek hitz bera izan behar dute, bestela zerbitzariak 401 erantzuten du.",
   "offsite.wizard.credentials": "Kredentzialak",
   "offsite.wizard.credsSharedElsewhere": "Partekatutako hodeiko kredentzialak erabiltzen ditu. Aukeratu multzo bat helburu honi bereak emateko.",
   "offsite.wizard.credsInSet": "Helmuga honek „{name}“ multzoa erabiltzen du. Kredentzialak han kudeatzen dira.",

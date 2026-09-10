@@ -937,6 +937,7 @@ const uk: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL репозиторію + облікові дані",
   "offsite.wizard.repoUrl": "URL зовнішнього репозиторію",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Адреса починається з «{segment}», а ці облікові дані входять як «{user}». З --private-repos обидва мають бути тим самим словом, інакше сервер відповість 401.",
   "offsite.wizard.credentials": "Облікові дані",
   "offsite.wizard.credsSharedElsewhere": "Використовує спільні хмарні облікові дані. Виберіть набір, щоб ця ціль мала власні.",
   "offsite.wizard.credsInSet": "Це призначення використовує набір «{name}». Дані керуються там.",

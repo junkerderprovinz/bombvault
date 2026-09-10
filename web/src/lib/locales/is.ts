@@ -314,6 +314,7 @@ const is: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Slóð geymslusafns + aðgangsgögn",
   "offsite.wizard.repoUrl": "Slóð fjarlægs geymslusafns",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Slóðin byrjar á „{segment}“ en þessi auðkenni skrá sig inn sem „{user}“. Með --private-repos verða bæði að vera sama orðið, annars svarar þjónninn 401.",
   "offsite.wizard.credentials": "Auðkenni",
   "offsite.wizard.credsSharedElsewhere": "Notar sameiginlegu skýjaauðkennin. Veldu safn til að gefa þessum áfangastað sín eigin.",
   "offsite.wizard.credsInSet": "Þessi áfangastaður notar settið „{name}“. Auðkennin eru vistuð þar.",

@@ -314,6 +314,7 @@ const sr: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL репозиторијума + акредитиви",
   "offsite.wizard.repoUrl": "URL спољног репозиторијума",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Адреса почиње са „{segment}“, али се ови подаци пријављују као „{user}“. Уз --private-repos обоје мора бити иста реч, иначе сервер одговара са 401.",
   "offsite.wizard.credentials": "Акредитиви",
   "offsite.wizard.credsSharedElsewhere": "Користи заједничке акредитиве у облаку. Изаберите скуп да ово одредиште добије сопствене.",
   "offsite.wizard.credsInSet": "Ово одредиште користи скуп „{name}“. Подаци се уређују тамо.",

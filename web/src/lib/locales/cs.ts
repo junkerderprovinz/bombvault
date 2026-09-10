@@ -940,6 +940,7 @@ const cs: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL repozitáře + přihlašovací údaje",
   "offsite.wizard.repoUrl": "URL repozitáře mimo lokalitu",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Adresa začíná „{segment}“, ale tyto přihlašovací údaje se přihlašují jako „{user}“. S --private-repos musí být obě stejné slovo, jinak server odpoví 401.",
   "offsite.wizard.credentials": "Přihlašovací údaje",
   "offsite.wizard.credsSharedElsewhere": "Používá sdílené cloudové přihlašovací údaje. Vyberte sadu, aby měl tento cíl vlastní.",
   "offsite.wizard.credsInSet": "Tento cíl používá sadu „{name}“. Údaje se spravují tam.",

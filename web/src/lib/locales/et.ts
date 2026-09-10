@@ -314,6 +314,7 @@ const et: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Hoidla URL + mandaadid",
   "offsite.wizard.repoUrl": "Välise hoidla URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL algab sõnaga „{segment}“, kuid need mandaadid logivad sisse kui „{user}“. Valikuga --private-repos peavad mõlemad olema sama sõna, muidu vastab server 401.",
   "offsite.wizard.credentials": "Mandaadid",
   "offsite.wizard.credsSharedElsewhere": "Kasutab jagatud pilvemandaate. Vali komplekt, et anda sellele sihtkohale omaenda mandaadid.",
   "offsite.wizard.credsInSet": "See sihtkoht kasutab komplekti „{name}“. Andmeid hallatakse seal.",

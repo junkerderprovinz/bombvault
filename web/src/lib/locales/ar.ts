@@ -945,6 +945,7 @@ const ar: Partial<Translations> = {
   "offsite.wizard.step3": "3 · رابط المستودع + بيانات الاعتماد",
   "offsite.wizard.repoUrl": "رابط المستودع خارج الموقع",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "يبدأ العنوان بـ «{segment}»، لكن بيانات الاعتماد تسجّل الدخول باسم «{user}». مع --private-repos يجب أن يكون الاسمان متطابقين، وإلا ردّ الخادم بـ 401.",
   "offsite.wizard.credentials": "بيانات الاعتماد",
   "offsite.wizard.credsSharedElsewhere": "يستخدم بيانات اعتماد السحابة المشتركة. اختر مجموعة لمنح هذا الهدف بيانات خاصة به.",
   "offsite.wizard.credsInSet": "تستخدم هذه الوجهة المجموعة „{name}\u201c. تُدار البيانات هناك.",

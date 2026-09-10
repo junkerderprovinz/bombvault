@@ -914,6 +914,7 @@ const ko: Partial<Translations> = {
   "offsite.wizard.step3": "3 · 리포지토리 URL + 자격 증명",
   "offsite.wizard.repoUrl": "오프사이트 리포지토리 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL은 “{segment}”로 시작하지만 이 자격 증명은 “{user}”로 로그인합니다. --private-repos에서는 둘이 같은 단어여야 하며, 다르면 서버가 401을 반환합니다.",
   "offsite.wizard.credentials": "자격 증명",
   "offsite.wizard.credsSharedElsewhere": "공유 클라우드 자격 증명을 사용합니다. 이 대상에 전용 자격 증명을 주려면 세트를 선택하세요.",
   "offsite.wizard.credsInSet": "이 대상은 \u201c{name}\u201d 세트를 사용합니다. 자격 증명은 그곳에서 관리됩니다.",

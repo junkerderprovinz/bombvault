@@ -10,9 +10,11 @@ import {
   primaryRemoteTamperTest,
   listOffsiteTargets,
   updateOffsiteTarget,
+  getCloud,
 } from "../lib/api";
 import type { OffsiteTarget } from "../lib/api";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
+import { restPathUserMismatch } from "../lib/restRepo";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { NumberField } from "./NumberField";
@@ -304,6 +306,21 @@ export function OffsiteWizard({
   // Primary: the safety row is created on demand by the PUT, so the only thing
   // to wait for is the initial read that tells us the current value.
   const canPickCredSet = primary ? primaryLoaded : primaryTarget !== null;
+
+  // The username these credentials will actually sign in with: the named set's
+  // when one is chosen, the shared one otherwise. Both are needed, because the
+  // mistake this catches (#194) is just as easy to make in either.
+  const [sharedRestUser, setSharedRestUser] = useState("");
+  useEffect(() => {
+    let alive = true;
+    void getCloud()
+      .then((r) => { if (alive) setSharedRestUser(r.restUser ?? ""); })
+      .catch(() => { /* The hint is a courtesy; a failed read just means no hint. */ });
+    return () => { alive = false; };
+  }, []);
+  // Said while the field is being filled in, rather than after a connection
+  // test comes back 401 (which now says the same thing, one round later).
+  const userMismatch = restPathUserMismatch(repoURL, selectedCredSet ? selectedCredSet.restUser : sharedRestUser);
 
   // Step 3 — connection test verdict. GlimStone follow-up pass (v8.0.0): the
   // ok/uninit/fail verdict below is now a toast, the exact same migration
@@ -854,6 +871,22 @@ export function OffsiteWizard({
               <span className="text-xs text-carbon-textMuted">
                 {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
               </span>
+              {/* The 401 this catches costs days, and it is one character wide
+                  (#194: a credential set signing in as "bombvault_containers"
+                  against a URL beginning "bombvault-containers"). Both words
+                  are on this page already; nothing put them next to each other.
+                    Not a block and not a refusal: a server running without
+                  --private-repos is free to disagree, and the field keeps
+                  saving either way. It is stated in the status colour rather
+                  than the muted one because it is the difference between a
+                  destination that works and one that answers 401. */}
+              {userMismatch && (
+                <span className="text-xs text-statusWarn">
+                  {t("offsite.wizard.repoUserMismatch")
+                    .replace("{segment}", userMismatch.segment)
+                    .replace("{user}", userMismatch.user)}
+                </span>
+              )}
             </label>
             {/* The off-site schedule is edited in Settings › Schedules now; the wizard
                 saves only the repo URL so it can never clobber that cadence.

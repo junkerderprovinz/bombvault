@@ -282,3 +282,33 @@ it("renders for the self-backup domain instead of blanking the page", async () =
   // where the crash used to happen, on inferBackend(settings[repoKey]).
   expect(screen.getByLabelText(/Credentials|Zugangsdaten/)).toBeTruthy();
 });
+
+// ---------------------------------------------------------------------------
+// #194: the 401 that is one character wide.
+//
+// A rest-server with --private-repos hands each htpasswd user only the tree
+// under its own name, so the URL's first path segment IS the user. The
+// reporter's credential set signed in as "bombvault_containers" while his URL
+// began "bombvault-containers", and nothing on this page ever put the two words
+// side by side. Both were already in front of it.
+// ---------------------------------------------------------------------------
+
+it("says so when the URL's user segment is not the user it signs in as", async () => {
+  // The mocked shared credentials sign in as "bombvault" (see getCloud above).
+  await renderWizard("rest:http://192.168.20.199:8000/bombvault-containers/containers");
+
+  const hint = screen.getByText(/bombvault-containers/);
+  expect(hint.textContent).toContain("bombvault-containers");
+  expect(hint.textContent).toContain("bombvault");
+});
+
+it("stays quiet when the two agree, and when there is no user segment", async () => {
+  await renderWizard("rest:http://192.168.20.199:8000/bombvault/containers");
+  expect(screen.queryByText(/--private-repos/)).toBeNull();
+  cleanup();
+
+  // One segment is an ordinary path on a server without --private-repos, where
+  // a 401 means a wrong password: a hint here would be a wrong steer.
+  await renderWizard("rest:http://192.168.20.199:8000/containers");
+  expect(screen.queryByText(/--private-repos/)).toBeNull();
+});

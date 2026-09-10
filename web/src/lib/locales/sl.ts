@@ -314,6 +314,7 @@ const sl: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL repozitorija + poverilnice",
   "offsite.wizard.repoUrl": "URL zunanjega repozitorija",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Naslov se začne z „{segment}“, ti poverilniki pa se prijavijo kot „{user}“. Z --private-repos morata biti oba ista beseda, sicer strežnik odgovori s 401.",
   "offsite.wizard.credentials": "Poverilnice",
   "offsite.wizard.credsSharedElsewhere": "Uporablja skupne oblačne poverilnice. Izberite nabor, da bo ta cilj dobil svoje.",
   "offsite.wizard.credsInSet": "Ta cilj uporablja nabor »{name}«. Podatki se urejajo tam.",

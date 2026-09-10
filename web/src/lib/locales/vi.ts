@@ -934,6 +934,7 @@ const vi: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL kho + thông tin đăng nhập",
   "offsite.wizard.repoUrl": "URL kho off-site",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL bắt đầu bằng “{segment}”, nhưng thông tin đăng nhập này đăng nhập với tên “{user}”. Với --private-repos, hai giá trị phải là cùng một từ, nếu không máy chủ trả về 401.",
   "offsite.wizard.credentials": "Thông tin đăng nhập",
   "offsite.wizard.credsSharedElsewhere": "Dùng thông tin đăng nhập đám mây dùng chung. Chọn một bộ để đích này có thông tin riêng.",
   "offsite.wizard.credsInSet": "Đích đến này dùng bộ \u201c{name}\u201d. Thông tin được quản lý ở đó.",

@@ -314,6 +314,7 @@ const sk: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL repozitára + poverenia",
   "offsite.wizard.repoUrl": "URL externého repozitára",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Adresa začína „{segment}“, ale tieto prihlasovacie údaje sa prihlasujú ako „{user}“. Pri --private-repos musia byť obe rovnaké slovo, inak server odpovie 401.",
   "offsite.wizard.credentials": "Prihlasovacie údaje",
   "offsite.wizard.credsSharedElsewhere": "Používa zdieľané cloudové prihlasovacie údaje. Vyberte súpravu, aby mal tento cieľ vlastné.",
   "offsite.wizard.credsInSet": "Tento cieľ používa sadu „{name}“. Údaje sa spravujú tam.",

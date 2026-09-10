@@ -934,6 +934,7 @@ const zh: Partial<Translations> = {
   "offsite.wizard.step3": "3 · 仓库 URL + 凭据",
   "offsite.wizard.repoUrl": "异地仓库 URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "网址以“{segment}”开头，但这组凭据以“{user}”登录。启用 --private-repos 时两者必须是同一个词，否则服务器会返回 401。",
   "offsite.wizard.credentials": "凭据",
   "offsite.wizard.credsSharedElsewhere": "使用共享的云凭据。选择一个凭据集即可让此目标使用自己的凭据。",
   "offsite.wizard.credsInSet": "此目标使用凭据集“{name}”。凭据在那里管理。",

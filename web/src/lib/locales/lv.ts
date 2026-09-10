@@ -314,6 +314,7 @@ const lv: Partial<Translations> = {
   "offsite.wizard.step3": "3 · Repozitorija URL + akreditācijas dati",
   "offsite.wizard.repoUrl": "Attālinātā repozitorija URL",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "URL sākas ar “{segment}”, bet šie pieteikšanās dati piesakās kā “{user}”. Ar --private-repos abiem jābūt vienam vārdam, citādi serveris atbild ar 401.",
   "offsite.wizard.credentials": "Akreditācijas dati",
   "offsite.wizard.credsSharedElsewhere": "Izmanto koplietotos mākoņa akreditācijas datus. Izvēlieties kopu, lai šim mērķim būtu savi.",
   "offsite.wizard.credsInSet": "Šis galamērķis izmanto komplektu „{name}“. Datus pārvalda tur.",

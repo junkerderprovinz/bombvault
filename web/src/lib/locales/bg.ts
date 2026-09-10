@@ -314,6 +314,7 @@ const bg: Partial<Translations> = {
   "offsite.wizard.step3": "3 · URL на хранилището + данни за достъп",
   "offsite.wizard.repoUrl": "URL на хранилището извън обекта",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "Адресът започва с „{segment}“, а данните за достъп влизат като „{user}“. С --private-repos двете трябва да са една и съща дума, иначе сървърът отговаря с 401.",
   "offsite.wizard.credentials": "Идентификационни данни",
   "offsite.wizard.credsSharedElsewhere": "Използва споделените облачни идентификационни данни. Изберете набор, за да дадете на тази цел собствени.",
   "offsite.wizard.credsInSet": "Тази дестинация използва набора „{name}“. Данните се управляват там.",

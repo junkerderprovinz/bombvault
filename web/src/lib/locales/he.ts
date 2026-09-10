@@ -922,6 +922,7 @@ const he: Partial<Translations> = {
   "offsite.wizard.step3": "3 · כתובת URL של המאגר + פרטי התחברות",
   "offsite.wizard.repoUrl": "כתובת URL של מאגר מחוץ לאתר",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "הכתובת מתחילה ב־“{segment}”, אך פרטי הגישה נכנסים בשם “{user}”. עם --private-repos שני אלה חייבים להיות אותה מילה, אחרת השרת משיב 401.",
   "offsite.wizard.credentials": "פרטי גישה",
   "offsite.wizard.credsSharedElsewhere": "משתמש בפרטי הגישה המשותפים לענן. בחר ערכה כדי להעניק ליעד הזה פרטים משלו.",
   "offsite.wizard.credsInSet": "יעד זה משתמש בערכה \u201e{name}\u201d. הפרטים מנוהלים שם.",

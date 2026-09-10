@@ -314,6 +314,7 @@ const fa: Partial<Translations> = {
   "offsite.wizard.step3": "۳ · نشانی مخزن + اطلاعات ورود",
   "offsite.wizard.repoUrl": "نشانی مخزن خارج از محل",
   "offsite.wizard.repoUrlPlaceholder": "rest:http://192.168.x.x:8000/bombvault-containers/containers",
+  "offsite.wizard.repoUserMismatch": "نشانی با «{segment}» آغاز می‌شود، اما این اعتبارنامه‌ها با نام «{user}» وارد می‌شوند. با --private-repos هر دو باید یک واژه باشند، وگرنه سرور 401 پاسخ می‌دهد.",
   "offsite.wizard.credentials": "اطلاعات ورود",
   "offsite.wizard.credsSharedElsewhere": "از اطلاعات ورود مشترک ابری استفاده می‌کند. یک مجموعه انتخاب کنید تا این مقصد اطلاعات خودش را داشته باشد.",
   "offsite.wizard.credsInSet": "این مقصد از مجموعه‌ی «{name}» استفاده می‌کند. اطلاعات آنجا مدیریت می‌شود.",
