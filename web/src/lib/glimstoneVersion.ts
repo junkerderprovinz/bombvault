@@ -17,4 +17,4 @@
  * turns it into a link to that tag's release page. `gh release list` in the
  * glimstone repo is the check, and it is the check that found the 404 above.
  */
-export const GLIMSTONE_VERSION = "1.8.0";
+export const GLIMSTONE_VERSION = "1.8.1";

@@ -148,9 +148,21 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           Each sentence sits directly above the thing it asks for. Three
           sentences stacked over one row of buttons reads as a form; a sentence
           with its own button under it reads as one offer. */}
-      <p className="max-w-2xl text-sm text-carbon-textSub">{t("about.body")}</p>
+      {/* No reading-width cap on the card's own prose. It carried max-w-2xl
+          (42rem) until 1.8.1, which is a defensible typographic width in the
+          abstract and looked wrong here for a concrete reason: it is the ONLY
+          capped text on its page. Every other card lets its sentences run the
+          card, so three paragraphs stopping two thirds of the way across read
+          as hand-set line breaks rather than as a measure. Reported exactly
+          that way ("in der übercard sind künstliche Zeilenumbrüche") and
+          measured before believing it: 672px of text in a 1244px card.
 
-      <p className="max-w-2xl text-sm text-carbon-textSub">{t("about.coffee")}</p>
+          The rule that follows, and it is the reusable half: a reading width
+          is a property of a PAGE, never of one card on it. Cap all the prose
+          or none of it. */}
+      <p className="text-sm text-carbon-textSub">{t("about.body")}</p>
+
+      <p className="text-sm text-carbon-textSub">{t("about.coffee")}</p>
       <div className="flex flex-wrap items-center gap-2">
         <Button
           label={t("about.coffeeButton")}
@@ -164,7 +176,7 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           (jdp, 2026-09-06). The card holds two offers, and without the break
           the coffee button sits as close to the next sentence as to the one it
           belongs to, so the eye pairs it with the wrong text. */}
-      <p className="mt-2 max-w-2xl text-sm text-carbon-textSub">{t("about.report")}</p>
+      <p className="mt-2 text-sm text-carbon-textSub">{t("about.report")}</p>
 
       {/* Two buttons again, and the sentence names both routes again.
           The mail button had been removed ([501]) for one reason: it pointed at
