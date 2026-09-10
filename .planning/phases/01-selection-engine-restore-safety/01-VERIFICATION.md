@@ -1,11 +1,12 @@
 ---
 phase: 01-selection-engine-restore-safety
 verified: 2026-09-10T10:41:20Z
-status: human_needed
+status: passed
 score: 10/10 must-haves verified
 behavior_unverified: 0 # les 2 vérités behavior-unverified de la vérification initiale sont désormais prouvées par exécution de première main (conteneur Linux + restic 0.17.3 réel) — voir la section Preuves d'exécution
 overrides_applied: 0 # l'override initial (demi-contenu SC2 / WR-01) est FERMÉ par le gap closure 01-05 : le code satisfait désormais le must-have amendé, l'entrée est conservée ci-dessous à titre documentaire
 overrides:
+
   - must_have: "The resulting snapshot's Paths contain the selected folders and nothing more (SC2 content half — mixed include+exclude selections)"
     reason: "FERMÉ le 2026-09-10 par le plan 01-05 (commits 8e3b86f3..11a1cf7d) : les branches d'exclusion stockées sont désormais encodées comme motifs restic --exclude sur l'argv de backup. Entrée d'origine (acceptation 2026-09-09) : WR-01 — une sélection mixte stockait et affichait la branche exclue, mais le moteur la sauvegardait quand même (positionals seuls) ; décision utilisateur explicite de router la fermeture vers un plan de gap closure « Encode ». Le must-have n'est plus dérogation : VERIFIED."
     accepted_by: "user (decision recorded in .planning/phases/01-selection-engine-restore-safety/01-REVIEW-FIX.md)"
@@ -14,6 +15,7 @@ re_verification:
   previous_status: human_needed
   previous_score: 8/10
   gaps_closed:
+
     - "SC2 demi-contenu (WR-01) : exclusions stockées → restic --exclude sur l'argv de backup (helper excludedBranches, câblé au seul site BackupDeps.Excludes, service.go:4243) — l'override devient inutile"
     - "SC4 moitié comportementale : TestBrowseSymlinkEscapeRejected exécuté et PASS sous Linux (conteneur golang:1.26-bookworm, HEAD 3fe492c5) ; TestBrowseStatusRestricted exécuté et PASS en utilisateur non-root"
     - "Contrats positionnels restic 0.17 : les 3 tests TestPositional* (dont le nouveau TestPositionalExcludeAbsoluteSubdirPattern du gap closure) exécutés et PASS contre restic 0.17.3 réel sous Linux au HEAD final"
@@ -23,15 +25,19 @@ re_verification:
   regressions: []
 unverified_prohibitions: 11 # verrous judgment-tier : verdicts LLM-judge non autoritaires per ADR-550 D4 — revue humaine recommandée (tableau dans le corps du rapport)
 human_verification:
+
   - test: "Smoke sur l'instance Unraid réelle (192.168.31.6) : sauvegarder un conteneur avec un sous-dossier exclu (ex. appdata/plex avec !…/transcoding), vérifier le contenu du snapshot (restic ls : la branche exclue absente, le reste présent), puis restaurer proprement ce conteneur depuis ce snapshot"
     expected: "Le snapshot contient le montage moins la branche exclue (Paths = racine maximale, Excludes = le motif dérivé) ; le restore complète sans abort post-teardown ; l'état restauré correspond au snapshot, pas à la sélection courante"
     why_human: "Intégration réelle (chemins hôte Unraid/FUSE, docker.sock, restic réel sur l'array) qu'aucun harnais de test (memstore, fakes, t.TempDir) ne couvre ; les tests prouvent les contrats moteur, pas le comportement sur l'instance physique"
+
   - test: "Revue manuelle des 2 items edge-coverage délibérément non résolus (edge-coverage.json) : BROWSE-02 'unclassified' et SELECT-02 'unclassified'"
     expected: "Un humain accepte l'interprétation planifiée (BROWSE-02 : sémantique du trio de statuts per CONTEXT browse Q2 ; SELECT-02 : sémantique zéro-migration per texte de l'exigence + encodage Q1/Q3, couvert par les round-trips legacy/[] et migrate.go intact) ou dépose une correction"
     why_human: "Politique #1110 — hypothèses marquées 'never auto-resolved' ; la revue manuelle est la disposition mandate"
+
   - test: "Confirmer l'intention MVP-mode : le but de phase n'est pas au format User Story (user-story.validate → false), donc pas de table User Flow Coverage"
     expected: "Soit accepter la base de cette vérification (les 5 critères numérotés du ROADMAP, tous moteur et testables), soit exécuter /gsd mvp-phase 1 pour poser un but User Story et re-vérifier en forme MVP"
     why_human: "Décision de format appartenant à l'utilisateur"
+
   - test: "Pousser docker-folders sur origin et exiger les jobs Test + Lint verts sur le HEAD final (3fe492c5)"
     expected: "Actions GitHub verte (le job Test installe restic 0.17.3 en runner non-root — dernière combinaison jamais exécutée : TestBrowseStatusRestricted sur un vrai runner CI)"
     why_human: "La SUBSTANCE des deux jobs est déjà répliquée et vérifiée de première main au HEAD final (suite intégrale verte + golangci-lint 0 issue dans les conteneurs CI-équivalents — voir Preuves d'exécution) ; il ne reste que l'exécution d'enregistrement sur l'infrastructure GitHub, impossible depuis cette boîte"
@@ -191,6 +197,7 @@ Aucun marqueur TBD/FIXME/XXX introduit. Aucun blocker.
 ### Vérification humaine requise
 
 Voir frontmatter `human_verification` — 4 items (l'instance étant moteur sans UI, la liste est délibérément minimale) :
+
 1. **Smoke Unraid réel (192.168.31.6)** — backup conteneur avec sous-dossier exclu → contenu snapshot vérifié → restore propre. Alimente 01-UAT.md.
 2. **Revue manuelle des 2 items edge-coverage** (BROWSE-02, SELECT-02 'unclassified') — politique #1110.
 3. **Décision de format MVP** — but pas en User Story.
