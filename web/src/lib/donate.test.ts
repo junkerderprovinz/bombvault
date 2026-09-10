@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// The donation addresses, checked as far as each format allows (#3479).
+// The donation addresses, checked as far as each format allows (#3524).
 //
 // This is the one list in the app where a typo costs a stranger real money and
 // nobody ever finds out: the person it happens to is not a user, they are

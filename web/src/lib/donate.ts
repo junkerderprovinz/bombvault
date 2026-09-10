@@ -1,4 +1,4 @@
-// The donation addresses, grouped BY CHAIN rather than by coin (#3479).
+// The donation addresses, grouped BY CHAIN rather than by coin (#3524).
 //
 // That grouping is the whole safety property of this file, and it came out of
 // the list as it was first written down: it named "Tether" with the networks

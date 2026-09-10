@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // ---------------------------------------------------------------------------
-// The crypto donation window (#3479).
+// The crypto donation window (#3524).
 //
 // Everything here guards ONE failure: the donor sends money to a string that is
 // not the string they picked. Nobody would ever report it. There is no error

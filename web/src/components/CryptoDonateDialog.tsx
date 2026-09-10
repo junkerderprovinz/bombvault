@@ -9,7 +9,7 @@ import { useToast } from "../lib/toast";
 import { CRYPTO_CHAINS, type CryptoChain } from "../lib/donate";
 
 // ---------------------------------------------------------------------------
-// The crypto donation window (#3479).
+// The crypto donation window (#3524).
 //
 // A house window (rule 15: a window is a window) rather than a link to somebody
 // else's page. Everything a donor needs is here: pick a chain, get the address
