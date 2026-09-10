@@ -2374,6 +2374,80 @@ func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
 	}
 }
 
+// TestBackupExcludeCachesUnion pins the RESTIC-01 compile step (D-06): Backup
+// folds the stored per-root CACHEDIR.TAG toggles into the item-level boolean
+// union that drives restic's --exclude-caches flag. Literal A1 reading (Phase 3
+// research): the union is computed over the STORED map, independent of whether
+// that root is currently included in the selection — a toggled-on root that is
+// deselected while other roots back up still fires the flag. An all-false or
+// cleared map leaves the union false, so argv stays byte-identical to before
+// the feature existed.
+func TestBackupExcludeCachesUnion(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Two roots on disk so the A1 edge can deselect one while the other still
+	// carries the backup.
+	for _, p := range []string{root + "/user/appdata/plex", root + "/user/media"} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+			{Type: "bind", Source: "/mnt/user/media", Destination: "/media"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	backup := func(want bool, step string) {
+		t.Helper()
+		if _, err := svc.Backup(ctx, "plex"); err != nil {
+			t.Fatalf("%s: backup: %v", step, err)
+		}
+		if eng.lastMode.ExcludeCaches != want {
+			t.Fatalf("%s: Mode.ExcludeCaches = %v, want %v", step, eng.lastMode.ExcludeCaches, want)
+		}
+	}
+
+	// A1 edge: the toggled-on appdata root is DESELECTED (only media backs up)
+	// and the union still fires — the union reads the stored map, never the
+	// current selection.
+	if err := svc.SetExcludeCaches(ctx, "plex", map[string]bool{"/mnt/user/appdata/plex": true}); err != nil {
+		t.Fatalf("SetExcludeCaches: %v", err)
+	}
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"/mnt/user/media"}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	backup(true, "union over the stored map fires with the toggled root deselected")
+
+	// All-false map: union false (byte-identical argv).
+	if err := svc.SetExcludeCaches(ctx, "plex", map[string]bool{"/mnt/user/appdata/plex": false, "/mnt/user/media": false}); err != nil {
+		t.Fatalf("SetExcludeCaches all-false: %v", err)
+	}
+	backup(false, "all-false map")
+
+	// Cleared (never-set) map: union false.
+	if err := svc.SetExcludeCaches(ctx, "plex", nil); err != nil {
+		t.Fatalf("SetExcludeCaches nil: %v", err)
+	}
+	backup(false, "cleared map")
+}
+
 // TestBackupSelectionExcludesMergeAfterUserPatterns pins the merged argv order
 // (WR-01 gap closure, 2026-09-09 user decision): user-owned exclude patterns
 // keep their position — resolved through the existing pattern resolver — and
@@ -4140,6 +4214,7 @@ type fakeResticEngine struct {
 	lastPaths       []string
 	lastTags        []string
 	lastExcludes    []string
+	lastMode        restic.Mode
 	restored        []string
 	restoreErrPath  string // when set, RestoreInclude fails on this include path
 	restoreErr      error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
@@ -4309,7 +4384,7 @@ func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m rest
 	return errors.New("fake: repo did not open")
 }
 
-func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
+func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
 	if f.backupPanic {
 		panic("boom during backup")
 	}
@@ -4327,6 +4402,7 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 	f.lastPaths = paths
 	f.lastTags = tags
 	f.lastExcludes = excludes
+	f.lastMode = m
 	if f.backupErr != nil {
 		return restic.Summary{}, f.backupErr
 	}
