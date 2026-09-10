@@ -65,18 +65,21 @@ const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 /** The handle from .github/FUNDING.yml, so one place in the product knows it. */
 const COFFEE = "https://buymeacoffee.com/junkerderprovinz";
 /**
- * The PayPal.Me page, and it is EMPTY until that page exists.
+ * The PayPal.Me page.
  *
  * The card's own rule, applied to a route rather than to a sentence: never
- * offer a control that reaches nowhere. A PayPal.Me link is created once and
- * cannot be renamed afterwards without asking their support, so the name has
- * to be chosen deliberately rather than guessed at here. Fill this in and the
- * button appears; leave it empty and the card offers coffee and crypto alone.
+ * offer a control that reaches nowhere. This sat empty until the page existed,
+ * because a PayPal.Me name is created once and cannot be renamed afterwards
+ * without asking their support, so it had to be chosen deliberately rather
+ * than guessed at here. It exists now, under the workshop's own name rather
+ * than a product's: one page serves every tool, the same way hello@ below
+ * serves every tool's mail.
  *
- * Typed as `string` rather than inferred, so the emptiness is a value this
- * file expects to change and not a constant the compiler folds away.
+ * Typed as `string` rather than inferred, so the button's gate below stays a
+ * runtime check on a value this file expects to change, and not a comparison
+ * the compiler folds away.
  */
-const PAYPAL: string = "";
+const PAYPAL: string = "https://paypal.me/hallelujadesign";
 /** The workshop's own mailbox, shared by every tool in it: the subject carries
  *  the product name, so one inbox can tell them apart. */
 const MAIL = "hello@halleluja.design";
