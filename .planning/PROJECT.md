@@ -29,13 +29,13 @@ Every container, VM, and config on the host can be backed up consistently and re
 - ✓ Multi-arch Docker image (amd64+arm64) for Unraid / TrueNAS Scale / generic hosts, self-signed TLS, optional login — existing
 - ✓ Selection engine & restore safety: lossless flat `backupPaths` encoding (bare + `!`-prefixed entries, zero migration), maximal-root restic positionals with descendant `--exclude` enforcement (WR-01 gap closure 01-05), hardened `/api/browse` listing (os.Root containment, status trio, cap 500 + truncated), restore longest-prefix mapping with pre-teardown abort — Phase 1
 - ✓ Selection persists through the existing flat `backupPaths` set — the tree is a new view over the same data, no new persistence model — Phase 1
+- ✓ Tree-based per-folder selection in the container panel: lazy-loading subtree per mount/root, tri-state checkboxes (mixed parents), remembered partial via dormant exclusions, unreadable-vs-empty per-node outcome rows, full APG keyboard operation — Phase 2
+- ✓ Container panel volatile-subfolder deselection: unfold a mount, uncheck transcoding/caches/logs without dropping the rest — maximal-root includes with stored exclusions enforced on the backup argv (Phase 1 engine, one-deep serialized save queue client-side) — Phase 2
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Tree-based per-folder backup selection: collapsible lazy-loading subtree per mount/root, checkboxes at every level, mixed-state parent for partial selections
-- [ ] Container panel: unfold a mount, uncheck volatile subfolders (transcoding, caches, logs) without dropping the rest of the mount
 - [ ] File Sets: same tree selection when choosing what a file set covers
 
 ### Out of Scope
@@ -74,6 +74,9 @@ Every container, VM, and config on the host can be backed up consistently and re
 | Lazy-load tree children from a server directory listing (extend `/api/browse`) | Appdata trees can be huge; eager full-tree loads would stall the panel and the backend | Backend landed (Phase 1) |
 | Selections compile to maximal-root restic positional targets; exclusions encode as `!`-prefixed entries in the same flat list, and exclusion branches under included roots are enforced as restic `--exclude` on the backup argv (gap closure 01-05, user decision 2026-09-09) | restic excludes DO filter content within positional sources (contract-proven by TestPositionalExcludesKeepSourceDir); the original claim was corrected as review finding WR-02. Maximal roots stay positionals so snapshot Paths keep stable restore selectors, and encoding stored exclusions as `--exclude` enforces the deselection content-wise — accepting that derived patterns land in the snapshot's restic Excludes metadata (the exclusions editor's user-owned surface) | Decided (Phase 1); exclusion enforcement amended by 01-05 |
 | Future children of an included root are included (allowlist semantic) | narrowing selections communicate the future-children allowlist semantic; UI communication lands with Phase 3 SELECT-03 | Accepted (Phase 1) |
+| Tree node states derive purely from the (includes, exclusions) host-path sets — never from loaded children | Collapsed and never-loaded subtrees classify correctly with zero browsing; the exclusion list below a node IS the remembered-partial memory, so no second UI-side memory can drift | Decided (Phase 2) |
+| FoldersEditor saves serialize through a one-deep PATCH queue; revert re-derives from the live mirror by set-difference inverse | Rapid toggles collapse to one draining request carrying the latest full list; a newer toggle always survives a failing save (never a captured snapshot) | Decided (Phase 2) |
+| Keyboard Space routes through the identical onToggle pipeline as checkbox clicks | One toggle semantics, one D-04 zero-include guard, one save queue — an alternate input path can never bypass a client-side guard | Decided (Phase 2) |
 
 ## Evolution
 
@@ -93,4 +96,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-10 after Phase 1*
+*Last updated: 2026-09-10 after Phase 2*

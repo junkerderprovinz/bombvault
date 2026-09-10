@@ -1,19 +1,19 @@
 ---
 gsd_state_version: 1.0
-current_phase: 2
-current_phase_name: Container Panel Tree Selection
-status: verifying
-stopped_at: Completed 02-03-PLAN.md (phase 02 fully executed; ready for verification)
-last_updated: "2026-09-10T15:01:08.918Z"
+current_phase: 3
+current_phase_name: Selection Trust & Controls
+status: planning
+stopped_at: Phase 02 complete, ready to plan Phase 3
+last_updated: "2026-09-10T17:15:23.706Z"
 last_activity: 2026-09-10
-last_activity_desc: Phase 2 execution started
-state_head: 5ba49147edd616f65af45607f32d86ea71c42c1c
+last_activity_desc: Phase 02 complete, transitioned to Phase 3
+state_head: 5bdf330855113f95fc1de55feb71dab04f378806
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
   completed_plans: 8
-  percent: 25
+  percent: 50
 ---
 
 # Project State
@@ -23,22 +23,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-10)
 
 **Core value:** Every container, VM, and config on the host can be backed up consistently and restored completely — a dead server is rebuilt from the restic repo alone.
-**Current focus:** Phase 2 — Container Panel Tree Selection
+**Current focus:** Phase 3 — Selection Trust & Controls
 
 ## Current Position
 
-Phase: 2 (Container Panel Tree Selection) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-09-10 — Phase 2 execution started
+Phase: 3 — Selection Trust & Controls
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-10 — Phase 02 complete, transitioned to Phase 3
 
-Progress: [████████████████████] 5/5 plans ([███░░░░░░░] 25%)
+Progress: [████████████████████] 8/8 plans ([█████░░░░░] 50%)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 5
+- Total plans completed: 8
 - Average duration: —
 - Total execution time: —
 
@@ -47,6 +47,8 @@ Progress: [████████████████████] 5/5 pla
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 5 | - | - |
+| 02 | 3 | ~71m | ~24m |
+| 02 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -113,7 +115,9 @@ None yet.
 
 *(Resolved 2026-09-10: restic contract test TestPositionalExcludeAbsoluteSubdirPattern now proven — full suite green in the golang:1.26-bookworm + restic 0.17.3 container, docker-folders pushed to fork CatFoxVoyager/bombvault, CI lint.yml Test job green at HEAD c02149eb.)*
 
-None open.
+- ⚠️ [Phase 2] Pre-existing eslint warnings (warn-only, predate this milestone; `eslint src` reports 0 errors): `web/src/components/ActivityLog.tsx:234` exhaustive-deps (useMemo missing `resolveName`), `web/src/components/Sidebar.tsx:567` stale `seqRef.current` in effect cleanup — tracked in phase 02 `deferred-items.md` so they are not rediscovered per plan
+
+None open besides the warn-only lint notes above.
 
 ## Deferred Items
 
@@ -126,6 +130,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T15:01:08.756Z
-Stopped at: Completed 02-03-PLAN.md (phase 02 fully executed; ready for verification)
+Last session: 2026-09-10T17:15:23Z
+Stopped at: Phase 2 complete, ready to plan Phase 3
 Resume file: None
