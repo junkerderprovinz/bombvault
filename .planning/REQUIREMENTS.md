@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Tree Component & Selection Semantics
 
-- [ ] **TREE-01**: Collapsible lazy-loading tree per mount/root — children load on expand; no eager full-tree loads (appdata trees can hold thousands of entries)
-- [ ] **TREE-02**: Checkbox at every level; checking a folder includes everything below it; unchecking a child carves it out as an exclusion (Veeam/Duplicati cascade model)
-- [ ] **TREE-03**: Partially-selected parents display a mixed/indeterminate state (`aria-checked="mixed"`, derived from children); re-activating a remembered-partial checkbox restores its prior partial state
-- [ ] **TREE-04**: On reopen, selection state is reconstructed from the saved `backupPaths` set — fully-included, partially-included, and excluded sub-branches are all distinguishable
+- [x] **TREE-01**: Collapsible lazy-loading tree per mount/root — children load on expand; no eager full-tree loads (appdata trees can hold thousands of entries)
+- [x] **TREE-02**: Checkbox at every level; checking a folder includes everything below it; unchecking a child carves it out as an exclusion (Veeam/Duplicati cascade model)
+- [x] **TREE-03**: Partially-selected parents display a mixed/indeterminate state (`aria-checked="mixed"`, derived from children); re-activating a remembered-partial checkbox restores its prior partial state
+- [x] **TREE-04**: On reopen, selection state is reconstructed from the saved `backupPaths` set — fully-included, partially-included, and excluded sub-branches are all distinguishable
 - [ ] **TREE-05**: Full keyboard navigation + ARIA tree/checkbox roles (APG patterns: arrow expand/collapse/move, Space toggle, `aria-expanded` on parents, `aria-level`/`setsize`/`posinset` for lazy nodes)
 - [ ] **TREE-06**: Unreadable vs empty directories are distinguished per node — muted "no access" row vs plain empty; no infinite spinners, no silent collapses
 
@@ -32,7 +32,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Domain Integration
 
-- [ ] **INTEG-01**: Container panel — unfold any discovered mount or custom path and select subfolders (Plex `transcoding`, caches, logs) without dropping the rest of the mount
+- [x] **INTEG-01**: Container panel — unfold any discovered mount or custom path and select subfolders (Plex `transcoding`, caches, logs) without dropping the rest of the mount
 - [ ] **INTEG-02**: File Sets page — the same tree component is used when choosing what a file set covers
 - [ ] **INTEG-03**: Exclusions are reviewable after the fact — deselected sub-branches render as a visible list near the mount, consistent with existing preview styling
 - [ ] **INTEG-04**: Fully deselecting a mount's tree has defined, UI-documented semantics that never silently re-trigger the empty-list auto-detection fallback (`configuredBackupPaths` treats an empty list as "no explicit selection") — backend PATCH guard landed in Phase 1 (coded empty-selection refusal, prior state preserved); completes with the documented UI semantics in Phase 3 per ROADMAP
@@ -94,13 +94,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SELECT-02 | Phase 1 | Complete |
 | SELECT-04 | Phase 1 | Complete |
 | RESTORE-01 | Phase 1 | Complete |
-| TREE-01 | Phase 2 | Pending |
-| TREE-02 | Phase 2 | Pending |
-| TREE-03 | Phase 2 | Pending |
-| TREE-04 | Phase 2 | Pending |
+| TREE-01 | Phase 2 | Complete |
+| TREE-02 | Phase 2 | Complete |
+| TREE-03 | Phase 2 | Complete |
+| TREE-04 | Phase 2 | Complete |
 | TREE-05 | Phase 2 | Pending |
 | TREE-06 | Phase 2 | Pending |
-| INTEG-01 | Phase 2 | Pending |
+| INTEG-01 | Phase 2 | Complete |
 | SELECT-03 | Phase 3 | Pending |
 | INTEG-03 | Phase 3 | Pending |
 | INTEG-04 | Phase 3 | Backend landed (Phase 1); UI semantics pending |

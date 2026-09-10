@@ -70,12 +70,12 @@ Plans:
   4. The whole tree is operable by keyboard (arrows to move/expand/collapse, Space to toggle) with ARIA tree/checkbox roles: `aria-expanded` on parents, `aria-checked="mixed"` for partials, `aria-level`/`setsize`/`posinset` on lazy nodes
   5. An unreadable directory renders a muted "no access" row visually distinct from a plain empty directory; expansion never hangs on an infinite spinner or silently collapses
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Tracer: the mounts/custom list becomes a lazy tri-state tree (pure selectionTree logic, wire types caught up, live-save with selectionSource "tree", exact reopen reconstruction, 4 i18n keys x 42 locales) (TREE-01, TREE-02, TREE-03, TREE-04, INTEG-01)
+- [x] 02-01-PLAN.md — Tracer: the mounts/custom list becomes a lazy tri-state tree (pure selectionTree logic, wire types caught up, live-save with selectionSource "tree", exact reopen reconstruction, 4 i18n keys x 42 locales) (TREE-01, TREE-02, TREE-03, TREE-04, INTEG-01)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -131,6 +131,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Selection Engine & Restore Safety | 5/5 | Complete    | 2026-09-10 |
-| 2. Container Panel Tree Selection | 0/TBD | Not started | - |
+| 2. Container Panel Tree Selection | 1/3 | In Progress|  |
 | 3. Selection Trust & Controls | 0/TBD | Not started | - |
 | 4. File Sets Parity | 0/TBD | Not started | - |

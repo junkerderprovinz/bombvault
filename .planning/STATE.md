@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 2
 current_phase_name: Container Panel Tree Selection
 status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-09-10T12:53:40.207Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-09-10T14:01:10.116Z"
 last_activity: 2026-09-10
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: d923e122d49ccfd03d2bebc662583024256d5200
+last_activity_desc: Phase 2 execution started
+state_head: 673193fa6736ea51e8ac760d7c4e91bb02fa0242
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
   percent: 25
 ---
 
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 
 ## Current Position
 
-Phase: 2 (Container Panel Tree Selection) — READY TO EXECUTE
-Plan: Not started
+Phase: 2 (Container Panel Tree Selection) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-09-10 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-09-10 — Phase 2 execution started
 
-Progress: [████████████████████] 5/5 plans (100%)
+Progress: [████████████████████] 5/5 plans ([███░░░░░░░] 25%)
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [████████████████████] 5/5 pla
 | Phase 01 P01-03 | 61min | 3 tasks | 12 files |
 | Phase 01 P01-04 | 17min | 2 tasks | 5 files |
 | Phase 01 P05 | 12min | 3 tasks | 8 files |
+| Phase 02 P01 | 39m | 2 tasks | 47 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,10 @@ Recent decisions affecting current work:
 - [Phase 01]: restic 0.17 positional behaviors (excludes keep positionals; absolute Paths preserved) pinned as contract tests that skip locally and prove on CI
 - [Phase 01]: Empty-selection guard is strictly source-gated on the literal selectionSource:"tree" - refusal (errEmptySelection -> code:"empty-selection" envelope) fires before any store write; legacy and unknown sources keep byte-compat clears — RESEARCH Open Question 2 resolved: no payload sniffing (CONTEXT INTEG-04 Q1); a refused deselect leaves prior state structurally untouched, not best-effort
 - [Phase 01]: Stored exclusion branches are enforced as restic --exclude on the backup argv at the single BackupDeps.Excludes site (WR-01 closed, user decision 2026-09-09); positionals stay the maximal-root includes — Content correctness accepted over metadata purity: derived exclude patterns land in the snapshot user-owned restic Excludes metadata; equality and orphan exclusions deliberately never emitted (pinned by TestExcludedBranches)
+- [Phase 2]: Tree node states derive purely from (includes, exclusions) host-path sets (classifyNode/applyToggle), never from loaded children, so collapsed and never-loaded subtrees classify correctly (TREE-04)
+- [Phase 2]: The exclusion list below a node IS the D-01 remembered-partial memory: unchecking a parent keeps strictly-below exclusions stored dormant; no second UI-side memory exists
+- [Phase 2]: browseCache lives for the editor lifetime (useRef Map in FoldersEditor); rejected and ok:false browse responses are evicted so Try again genuinely refetches
+- [Phase 2]: Minimal D-04 empty-selection block pulled forward from plan 02 (Rule 3): the i18n orphan test fails on any en key nothing renders
 
 ### Pending Todos
 
@@ -111,6 +116,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T12:21:45.718Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-container-panel-tree-selection/02-UI-SPEC.md
+Last session: 2026-09-10T14:01:09.966Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
