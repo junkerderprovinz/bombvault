@@ -102,6 +102,12 @@ func TestBrowseStatusRestricted(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("chmod 0o000 does not restrict access on Windows — this fixture proves on Linux CI (house POSIX-skip convention)")
 	}
+	// Root bypasses permission bits (CAP_DAC_OVERRIDE): the 0o000 fixture reads
+	// fine and the endpoint answers status:"ok", so this classification can only
+	// be proven as a non-root user (a root-run Linux CI container would fail here).
+	if os.Geteuid() == 0 {
+		t.Skip("permission bits unenforced for root — restricted-status path requires a non-root runner")
+	}
 	root := t.TempDir()
 	locked := filepath.Join(root, "locked")
 	if err := os.Mkdir(locked, 0o700); err != nil {
