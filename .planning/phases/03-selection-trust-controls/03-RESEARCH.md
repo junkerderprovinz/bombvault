@@ -462,26 +462,33 @@ And the interplay that makes it correct for positional roots: "Excludes do not a
 
 All restic-behavior claims are doc-cited (MEDIUM tier per classify-confidence for context7/webfetch) — the repo's own convention is to pin restic behaviors with contract tests where they matter; here the pinned unit test covers what BombVault controls (argv emission), and the flag's skipping behavior is restic's own.
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All five questions were resolved during Phase 3 planning (03-01/03-02/03-03 PLAN.md); each RESOLVED line cites the adopting plan task. Original context kept for provenance.
 
 1. **Go threading shape for the flag (Option A vs B)**
+   - RESOLVED (03-01 task 1, step 4): **Option A** — `Mode.ExcludeCaches bool` riding the documented `Limits` precedent; `internal/backup` stays untouched.
    - What we know: both work; the repo's Limits precedent argues A; the CONTEXT's "même filière que les --exclude du 01-05" is satisfied by both (service → adapter → engine → BackupArgs).
    - What's unclear: whether the maintainer prefers the explicit `BackupDeps` dataflow over the Mode precedent.
    - Recommendation: Option A (Mode field) — documented precedent, minimal churn, `internal/backup` untouched. Planner decides; a `checkpoint` with the user is optional since either satisfies the locked decisions.
 
 2. **Exact wire names (`excludeCaches` map vs list-of-enabled-roots)**
+   - RESOLVED (03-01 task 2 + 03-03 task 2): the **root→bool map** end-to-end — `excludeCaches` `map[string]bool` on the PATCH body and mounts response (Go, 03-01), mirrored as `Record<string, boolean>` in `api.ts` (03-03); identical shape across both plans.
    - What we know: D-07 locks "JSON map racine→bool" for the COLUMN; the wire field name/shape is discretion ("forme wire exacte … tant qu'elle est additive et validée au boundary").
    - Recommendation: same map shape end-to-end (column ↔ PATCH ↔ mounts response) — one translation layer fewer, keys identical to the roots the panel renders.
 
 3. **Preview vs run-time existence filter (A3)**
+   - RESOLVED (03-02 task 1): **flat-set counting** — `rootIncludeCount` is existence-unfiltered by design; the deliberate divergence from run-time `onlyExistingPaths` filtering is pinned by a test comment (A3/Pitfall 5).
    - What we know: D-01 locks flat-set counting; the engine filters stale paths at run time; row-level warnings exist.
    - Recommendation: count the flat set; add a test comment naming the deliberate divergence for phantom roots; if the user wants strict argv equality, subtract `exists:false` custom rows and `reachable:false` mounts — a one-line filter, decided at planning.
 
 4. **Reset confirmation UX**
+   - RESOLVED (03-03 task 1): **`useConfirm`** dialog, default fail tone, copy naming both consequences (auto-detection returns; remembered exclusions removed).
    - What we know: the reset deletes remembered exclusions and returns to auto-detection (destructive-ish, but recoverable by re-selecting).
    - Recommendation: `useConfirm` dialog naming both consequences (auto-detection returns; remembered exclusions removed). Discretion.
 
 5. **CACHEDIR toggle on custom-path roots**
+   - RESOLVED (03-03 task 2): the toggle **renders on every root row** (mounts and standalone custom rows; disabled on unreachable mounts) — same map, same union.
    - What we know: D-06 says "par racine" — mounts are the named case; custom paths are also roots in the tree.
    - Recommendation: serve the toggle on every root row (mount + custom) — same map, same union; the tooltip already discloses item-level scope. Planner confirms.
 
