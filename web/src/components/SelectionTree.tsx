@@ -18,6 +18,11 @@ import { Button } from "./Button";
 //
 // One role="tree" per FoldersEditor. Its level-1 treeitems are the mount rows
 // followed by the custom-path rows; expanded children wrap in role="group".
+// Notice rows (the D-04 blocked warn line, loading/empty/error/truncated)
+// each ride inside a role="presentation" wrapper: APG allows tree/group
+// children to be treeitem, group, or presentation-wrapped only, and
+// presentation removes the wrapper from that structural contract while its
+// text content stays exposed to assistive tech (review WR-01).
 // Every node's checked/mixed/excluded state comes from classifyNode over the
 // (includes, exclusions) props — pure list arithmetic in HOST path space, so
 // it is correct for collapsed and never-loaded subtrees (TREE-03/04) and
@@ -445,50 +450,66 @@ export function SelectionTree({
           )}
         </div>
         {blockedPath === spec.path && (
-          <p className="text-xs text-statusWarn" style={indent}>
-            {t("folders.emptySelectionBlocked")}
-          </p>
+          // Presentation wrapper (see the header note): the tree root's
+          // children must stay treeitem/group-shaped while the warn text
+          // remains announced.
+          <div role="presentation">
+            <p className="text-xs text-statusWarn" style={indent}>
+              {t("folders.emptySelectionBlocked")}
+            </p>
+          </div>
         )}
         {expanded && spec.expandable && (
           <div role="group" className="flex flex-col">
             {kids.map(renderSpec)}
+            {/* Each notice row below rides in a role="presentation" wrapper
+                (header note, review WR-01): group children stay
+                treeitem/group-shaped, the notice text stays announced. */}
             {listing && listing.status === "loading" && (
-              <div
-                className="flex items-center gap-2 text-xs text-carbon-textMuted py-1"
-                style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
-              >
-                <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />
-                {t("folder.loading")}
+              <div role="presentation">
+                <div
+                  className="flex items-center gap-2 text-xs text-carbon-textMuted py-1"
+                  style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
+                >
+                  <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />
+                  {t("folder.loading")}
+                </div>
               </div>
             )}
             {listing && listing.status === "ok" && listing.dirs.length === 0 && (
-              <p
-                className="text-xs text-carbon-textMuted"
-                style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
-              >
-                {t("folder.none")}
-              </p>
+              <div role="presentation">
+                <p
+                  className="text-xs text-carbon-textMuted"
+                  style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
+                >
+                  {t("folder.none")}
+                </p>
+              </div>
             )}
             {listing && listing.status === "error" && (
-              <div
-                className="flex items-center gap-2 text-xs text-carbon-textMuted py-1"
-                style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
-              >
-                <span className="min-w-0 break-all">{listing.message}</span>
-                <Button
-                  label={t("folders.retry")}
-                  labelKey="folders.retry"
-                  onClick={() => fetchListing(spec.path)}
-                />
+              <div role="presentation">
+                <div
+                  className="flex items-center gap-2 text-xs text-carbon-textMuted py-1"
+                  style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
+                >
+                  <span className="min-w-0 break-all">{listing.message}</span>
+                  <Button
+                    label={t("folders.retry")}
+                    labelKey="folders.retry"
+                    onClick={() => fetchListing(spec.path)}
+                  />
+                </div>
               </div>
             )}
             {listing && listing.status === "ok" && listing.truncated && (
-              <p
-                className="text-xs text-carbon-textMuted"
-                style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
-              >
-                {t("folders.truncatedList")}
-              </p>
+              <div role="presentation">
+                <p
+                  className="text-xs text-carbon-textMuted"
+                  style={{ paddingInlineStart: (spec.depth + 1) * 16 }}
+                >
+                  {t("folders.truncatedList")}
+                </p>
+              </div>
             )}
           </div>
         )}
