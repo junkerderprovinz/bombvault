@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 )
 
@@ -252,16 +253,11 @@ func TestBrowseHidden(t *testing.T) {
 }
 
 // equalStrings reports whether two string slices are element-wise equal.
+// slices.Equal (not an index loop) — gosec G602 flags the constant-bounds
+// pattern of a range-indexed compare, and the stdlib helper is the idiomatic
+// equivalent with the bounds check built in.
 func equalStrings(got, want []string) bool {
-	if len(got) != len(want) {
-		return false
-	}
-	for i := range got {
-		if got[i] != want[i] {
-			return false
-		}
-	}
-	return true
+	return slices.Equal(got, want)
 }
 
 // TestBrowseCap pins the DoS cap (threat T-01-07, D-08 / RESEARCH R1): a
