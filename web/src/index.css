@@ -2170,8 +2170,18 @@ body {
 
    The mail button carries no brand: it reaches the workshop rather than a
    third party, so its call site passes the accent tokens and it follows the
-   user's accent and the rainbow, which the four brands deliberately do not. */
-.glim-brand-btn .glim-btn-glyph svg {
+   user's accent and the rainbow, which the four brands deliberately do not.
+
+   The `svg path` half of each selector is not belt-and-braces, it is the half
+   that works for two of the five. A `fill` set on the <svg> only reaches paths
+   that declare none of their own, which is how donateMarks draws its marks;
+   glyphs.tsx writes `fill="currentColor"` on the PATH, and a presentation
+   attribute there beats an inherited value from the parent. Found live rather
+   than reasoned about: the mail glyph came out #161616, the button's own ink,
+   while GitHub's beside it took the token correctly. Every mark here is a
+   single-colour drawing, so painting both levels is safe. */
+.glim-brand-btn .glim-btn-glyph svg,
+.glim-brand-btn .glim-btn-glyph svg path {
   fill: var(--brand);
   transition: fill 120ms;
 }
@@ -2179,7 +2189,8 @@ body {
   background-color: var(--brand-fill);
   color: var(--brand-ink);
 }
-.glim-brand-btn:hover:not(:disabled) .glim-btn-glyph svg {
+.glim-brand-btn:hover:not(:disabled) .glim-btn-glyph svg,
+.glim-brand-btn:hover:not(:disabled) .glim-btn-glyph svg path {
   fill: currentColor;
 }
 
