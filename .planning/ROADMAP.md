@@ -102,7 +102,18 @@ Plans:
   3. Unchecking the last checked folder in a mount produces an explicit, documented outcome — the item never silently flips to the empty-list auto-detection fallback
   4. A per-mount/root CACHEDIR.TAG toggle sits with the selection controls, and a backup of that item maps it to restic `--exclude-caches` in the built argv (covered by `restic_args_test.go`)
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — RESTIC-01 backend: per-root CACHEDIR.TAG toggle persistence (migration v100 + owned SetExcludeCaches), additive PATCH/mounts fields, any-root-true union via Mode.ExcludeCaches into BackupArgs `--exclude-caches` (RESTIC-01)
+- [ ] 03-02-PLAN.md — Read-only trust layer: rootIncludeCount/rootExclusions pure helpers, per-root "{n} paths" preview line, collapsible reviewable exclusions list, D-04 deselected-root rendering, 2 i18n keys x 42 locales (SELECT-03, INTEG-03, INTEG-04)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-03-PLAN.md — Interactions + gate: per-attempt queue source, Reset selection (PATCH [] without tree source, confirm, refetch-on-ok), narrowing note (lastSavedCount + lastBackup), CACHEDIR toggle UI over plan 01 fields, 5 i18n keys + 2 text changes x 42 locales, phase gate (INTEG-04, SELECT-03, RESTIC-01)
+
 **UI hint**: yes
 
 **Notes**: The future-children semantic accepted in Phase 1 is communicated here (narrowing note under SELECT-03); the fanout "exclude this subfolder instead" affordance routing to the existing ExcludesEditor is a follow-up, not v1 scope.
