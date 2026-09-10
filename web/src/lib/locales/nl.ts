@@ -597,6 +597,7 @@ const nl: Partial<Translations> = {
   "folders.retry": "Opnieuw proberen",
   "folders.emptySelectionBlocked": "Er moet minstens één map geselecteerd blijven. Zet Opnemen in planning uit als je niets van deze container wilt back-uppen.",
   "folders.previewPaths": "{n} paden",
+  "folders.exclusions": "{n} uitsluitingen",
 
   // Notifications
   "notify.title": "Meldingen",

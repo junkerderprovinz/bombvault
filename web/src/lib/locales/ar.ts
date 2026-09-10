@@ -603,6 +603,7 @@ const ar: Partial<Translations> = {
   "folders.retry": "حاول مجددًا",
   "folders.emptySelectionBlocked": "يجب أن يبقى مجلد واحد محددًا على الأقل. لعدم نسخ هذا الحاوية احتياطيًا، أوقف تضمينها في الجدول الزمني.",
   "folders.previewPaths": "{n} مسارات",
+  "folders.exclusions": "{n} استثناءات",
 
   // Notifications
   "notify.title": "الإشعارات",

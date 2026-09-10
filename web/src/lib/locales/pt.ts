@@ -600,6 +600,7 @@ const pt: Partial<Translations> = {
   "folders.retry": "Tentar novamente",
   "folders.emptySelectionBlocked": "Pelo menos uma pasta tem de permanecer selecionada. Para não fazer cópia de segurança de nada deste contentor, desativa a inclusão no agendamento.",
   "folders.previewPaths": "{n} caminhos",
+  "folders.exclusions": "{n} exclusões",
 
   // Notifications
   "notify.title": "Notificações",

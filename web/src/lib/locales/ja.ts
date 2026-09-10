@@ -595,6 +595,7 @@ const ja: Partial<Translations> = {
   "folders.retry": "再試行",
   "folders.emptySelectionBlocked": "少なくとも1つのフォルダーを選択したままにしてください。このコンテナーのバックアップを一切行わない場合は、「スケジュールに含める」をオフにしてください。",
   "folders.previewPaths": "{n} 個のパス",
+  "folders.exclusions": "{n} 件の除外",
 
   // Notifications
   "notify.title": "通知",

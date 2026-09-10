@@ -603,6 +603,7 @@ const sv: Partial<Translations> = {
   "folders.retry": "Försök igen",
   "folders.emptySelectionBlocked": "Minst en mapp måste förbli vald. Stäng av Inkludera i schema om du inte vill säkerhetskopiera något från den här containern.",
   "folders.previewPaths": "{n} sökvägar",
+  "folders.exclusions": "{n} undantag",
 
   // Notifications
   "notify.title": "Aviseringar",

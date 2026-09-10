@@ -601,6 +601,7 @@ const cs: Partial<Translations> = {
   "folders.retry": "Zkusit znovu",
   "folders.emptySelectionBlocked": "Vybrána musí zůstat alespoň jedna složka. Chceš-li z tohoto kontejneru nezálohovat nic, vypni zahrnování do plánu.",
   "folders.previewPaths": "{n} cest",
+  "folders.exclusions": "{n} vyloučení",
 
   // Notifications
   "notify.title": "Oznámení",

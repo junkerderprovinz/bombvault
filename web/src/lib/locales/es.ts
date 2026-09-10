@@ -603,6 +603,7 @@ const es: Partial<Translations> = {
   "folders.retry": "Reintentar",
   "folders.emptySelectionBlocked": "Debe quedar seleccionada al menos una carpeta. Para no respaldar nada de este contenedor, desactiva la inclusión en el calendario.",
   "folders.previewPaths": "{n} rutas",
+  "folders.exclusions": "{n} exclusiones",
 
   // Notifications
   "notify.title": "Notificaciones",

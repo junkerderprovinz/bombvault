@@ -595,6 +595,7 @@ const ru: Partial<Translations> = {
   "folders.retry": "Повторить попытку",
   "folders.emptySelectionBlocked": "Должна остаться выбранной хотя бы одна папка. Чтобы не создавать резервные копии этого контейнера, отключите включение в расписание.",
   "folders.previewPaths": "{n} путей",
+  "folders.exclusions": "{n} исключений",
 
   // Notifications
   "notify.title": "Уведомления",

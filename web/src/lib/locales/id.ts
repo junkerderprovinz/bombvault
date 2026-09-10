@@ -609,6 +609,7 @@ const id: Partial<Translations> = {
   "folders.retry": "Coba lagi",
   "folders.emptySelectionBlocked": "Minimal satu folder harus tetap dipilih. Untuk tidak mencadangkan apa pun dari kontainer ini, matikan penyertaan dalam jadwal.",
   "folders.previewPaths": "{n} jalur",
+  "folders.exclusions": "{n} pengecualian",
   "stophook.title": "Hentikan container lain",
   "stophook.hint": "Hentikan container lain ini selama container ini dicadangkan (misalnya database), lalu jalankan kembali setelahnya.",
   "stophook.noCandidates": "Tidak ditemukan container lain yang terinstal.",

@@ -595,6 +595,7 @@ const zh: Partial<Translations> = {
   "folders.retry": "重试",
   "folders.emptySelectionBlocked": "必须至少保留一个已选择的文件夹。若不备份此容器的任何内容，请关闭加入计划任务。",
   "folders.previewPaths": "{n} 个路径",
+  "folders.exclusions": "{n} 个排除项",
 
   // Notifications
   "notify.title": "通知",

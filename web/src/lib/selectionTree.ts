@@ -189,6 +189,28 @@ export function rootIncludeCount(root: string, includes: ReadonlySet<string>): n
   return n;
 }
 
+/** List the stored exclusions strictly under one root as RELATIVE paths,
+ *  lexically sorted (Phase 3, D-03/D-04 — the "{n} exclusions" review list).
+ *
+ *  This is the audit view of the remembered exclusions, complete by
+ *  construction: it walks the FULL stored exclusion set including dormant
+ *  entries (an exclusion whose root include is gone), never the set of tree
+ *  nodes that happen to be loaded — a collapsed or never-expanded root lists
+ *  its exclusions all the same. An exclusion EQUAL to the root is not listed
+ *  (it would render as an empty relative path); only strictly-below entries
+ *  are this root's rows. Purely presentational: callers render, never mutate. */
+export function rootExclusions(root: string, exclusions: ReadonlySet<string>): string[] {
+  const r = cleanPath(root);
+  const base = r === "/" ? "" : r;
+  const out: string[] = [];
+  for (const raw of exclusions) {
+    const p = cleanPath(raw);
+    if (!isStrictlyUnder(p, r)) continue;
+    out.push(p.slice(base.length + 1));
+  }
+  return out.sort();
+}
+
 /** Classify a node from (I, E) alone (RESEARCH Pattern 1, the pinned shape):
  *  excluded when at/under an E entry (exclusion dominates — the classifier
  *  stays total even for an equal include/exclude pair the reducer can never

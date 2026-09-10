@@ -603,6 +603,7 @@ const it: Partial<Translations> = {
   "folders.retry": "Riprova",
   "folders.emptySelectionBlocked": "Almeno una cartella deve rimanere selezionata. Per non eseguire il backup di nulla di questo contenitore, disattiva l'inclusione nel calendario.",
   "folders.previewPaths": "{n} percorsi",
+  "folders.exclusions": "{n} esclusioni",
 
   // Notifications
   "notify.title": "Notifiche",

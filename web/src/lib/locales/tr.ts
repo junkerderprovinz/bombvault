@@ -603,6 +603,7 @@ const tr: Partial<Translations> = {
   "folders.retry": "Yeniden dene",
   "folders.emptySelectionBlocked": "En az bir klasör seçili kalmalı. Bu kapsayıcının hiçbir şeyini yedeklememek için zamanlamaya eklemeyi kapat.",
   "folders.previewPaths": "{n} yol",
+  "folders.exclusions": "{n} hariç tutma",
 
   // Notifications
   "notify.title": "Bildirimler",

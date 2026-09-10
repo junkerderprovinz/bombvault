@@ -600,6 +600,7 @@ const ro: Partial<Translations> = {
   "folders.retry": "Încearcă din nou",
   "folders.emptySelectionBlocked": "Cel puțin un folder trebuie să rămână selectat. Pentru a nu face copie de rezervă la nimic din acest container, dezactivează includerea în programare.",
   "folders.previewPaths": "{n} căi",
+  "folders.exclusions": "{n} excluderi",
 
   // Notifications
   "notify.title": "Notificări",

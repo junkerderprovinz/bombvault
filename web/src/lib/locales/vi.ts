@@ -595,6 +595,7 @@ const vi: Partial<Translations> = {
   "folders.retry": "Thử lại",
   "folders.emptySelectionBlocked": "Ít nhất một thư mục phải được chọn. Để không sao lưu gì của container này, hãy tắt đưa vào lịch trình.",
   "folders.previewPaths": "{n} đường dẫn",
+  "folders.exclusions": "{n} mục loại trừ",
 
   // Notifications
   "notify.title": "Thông báo",

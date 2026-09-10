@@ -609,6 +609,7 @@ const lv: Partial<Translations> = {
   "folders.retry": "Mēģināt vēlreiz",
   "folders.emptySelectionBlocked": "Jāpaliek atlasītai vismaz vienai mapei. Lai no šī konteinera nekas netiktu dublēts rezerves kopijā, izslēdziet iekļaušanu grafikā.",
   "folders.previewPaths": "{n} ceļi",
+  "folders.exclusions": "{n} izņēmumu",
   "stophook.title": "Apturēt citus konteinerus",
   "stophook.hint": "Apturiet šos citus konteinerus, kamēr tiek dublēts šis (piem., datubāzi), un pēc tam tos atkal palaidiet.",
   "stophook.noCandidates": "Citi instalēti konteineri nav atrasti.",

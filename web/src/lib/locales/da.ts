@@ -603,6 +603,7 @@ const da: Partial<Translations> = {
   "folders.retry": "Prøv igen",
   "folders.emptySelectionBlocked": "Der skal være valgt mindst én mappe. For slet ikke at sikkerhedskopiere denne container skal du slå Inkluder i tidsplan fra.",
   "folders.previewPaths": "{n} stier",
+  "folders.exclusions": "{n} udeladelser",
 
   // Notifications
   "notify.title": "Notifikationer",

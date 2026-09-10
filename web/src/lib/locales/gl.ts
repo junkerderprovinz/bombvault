@@ -609,6 +609,7 @@ const gl: Partial<Translations> = {
   "folders.retry": "Tentar de novo",
   "folders.emptySelectionBlocked": "Ten que quedar seleccionada polo menos un cartafol. Para non facer copia de seguranza de nada deste contedor, desactiva a inclusión na planificación.",
   "folders.previewPaths": "{n} rutas",
+  "folders.exclusions": "{n} exclusións",
   "stophook.title": "Deter outros contedores",
   "stophook.hint": "Detén estes outros contedores mentres se copia este (por exemplo unha base de datos), e volve inicialos despois.",
   "stophook.noCandidates": "Non se atoparon outros contedores instalados.",

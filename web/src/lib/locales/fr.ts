@@ -603,6 +603,7 @@ const fr: Partial<Translations> = {
   "folders.retry": "Réessayer",
   "folders.emptySelectionBlocked": "Au moins un dossier doit rester sélectionné. Pour ne sauvegarder aucun élément de ce conteneur, désactive son inclusion dans le planning.",
   "folders.previewPaths": "{n} chemins",
+  "folders.exclusions": "{n} exclusions",
 
   // Notifications
   "notify.title": "Notifications",

@@ -600,6 +600,7 @@ const no: Partial<Translations> = {
   "folders.retry": "Prøv igjen",
   "folders.emptySelectionBlocked": "Minst én mappe må forbli valgt. Skru av Inkluder i tidsplan hvis du ikke vil sikkerhetskopiere noe fra denne containeren.",
   "folders.previewPaths": "{n} stier",
+  "folders.exclusions": "{n} utelatelser",
 
   // Notifications
   "notify.title": "Varsler",

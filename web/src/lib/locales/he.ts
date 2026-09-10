@@ -603,6 +603,7 @@ const he: Partial<Translations> = {
   "folders.retry": "נסה שוב",
   "folders.emptySelectionBlocked": "חייבת להישאר לפחות תיקייה אחת מסומנת. כדי לא לגבות כלום מהמיכל הזה, כבה את ההכללה בלוח הזמנים.",
   "folders.previewPaths": "{n} נתיבים",
+  "folders.exclusions": "{n} החרגות",
 
   // Notifications
   "notify.title": "התראות",

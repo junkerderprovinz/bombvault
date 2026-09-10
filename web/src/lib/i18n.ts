@@ -741,6 +741,9 @@ export const en = {
   // maximal includes at-or-under the root. Invariant {n} key, no plural
   // fork (stack.members precedent).
   "folders.previewPaths": "{n} paths",
+  // Phase 3 (D-03/D-04): per-root reviewable-exclusions disclosure label;
+  // {n} = stored exclusions strictly under the root (dormant included).
+  "folders.exclusions": "{n} exclusions",
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -2453,6 +2456,7 @@ export const de: Translations = {
   "folders.retry": "Erneut versuchen",
   "folders.emptySelectionBlocked": "Mindestens ein Ordner muss ausgewählt bleiben. Um nichts von diesem Container zu sichern, deaktiviere die Zeitplan-Einbindung.",
   "folders.previewPaths": "{n} Pfade",
+  "folders.exclusions": "{n} Ausschlüsse",
   "stophook.title": "Andere Container stoppen",
   "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",

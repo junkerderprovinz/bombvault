@@ -598,6 +598,7 @@ const uk: Partial<Translations> = {
   "folders.retry": "Спробувати ще раз",
   "folders.emptySelectionBlocked": "Має залишитися вибраною щонайменше одна тека. Щоб не створювати резервних копій нічого з цього контейнера, вимкніть включення до розкладу.",
   "folders.previewPaths": "{n} шляхів",
+  "folders.exclusions": "{n} виключень",
 
   // Notifications
   "notify.title": "Сповіщення",

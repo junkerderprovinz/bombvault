@@ -609,6 +609,7 @@ const et: Partial<Translations> = {
   "folders.retry": "Proovi uuesti",
   "folders.emptySelectionBlocked": "Valitud peab jääma vähemalt üks kaust. Kui sa ei soovi sellest konteinerist midagi varundada, lülita ajakavasse lisamine välja.",
   "folders.previewPaths": "{n} teed",
+  "folders.exclusions": "{n} välistust",
   "stophook.title": "Peata teised konteinerid",
   "stophook.hint": "Peata need teised konteinerid selle konteineri varundamise ajaks (näiteks andmebaas) ja käivita need seejärel uuesti.",
   "stophook.noCandidates": "Teisi installitud konteinereid ei leitud.",

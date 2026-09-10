@@ -595,6 +595,7 @@ const ko: Partial<Translations> = {
   "folders.retry": "다시 시도",
   "folders.emptySelectionBlocked": "최소한 하나의 폴더는 선택된 상태로 유지해야 합니다. 이 컨테이너를 백업하지 않으려면 일정 포함을 끄세요.",
   "folders.previewPaths": "{n}개 경로",
+  "folders.exclusions": "{n}개 제외",
 
   // Notifications
   "notify.title": "알림",

@@ -603,6 +603,7 @@ const hu: Partial<Translations> = {
   "folders.retry": "Újrapróbálás",
   "folders.emptySelectionBlocked": "Legalább egy mappának kiválasztva kell maradnia. Ha nem szeretnél ebből a konténerből semmit menteni, kapcsold ki az ütemezésbe foglalást.",
   "folders.previewPaths": "{n} elérési út",
+  "folders.exclusions": "{n} kizárás",
 
   // Notifications
   "notify.title": "Értesítések",

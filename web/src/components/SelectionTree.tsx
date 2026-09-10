@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
 import { browse, type BrowseDirEntry, type BrowseResponse, type CustomPath, type MountInfo } from "../lib/api";
 import {
@@ -7,6 +7,7 @@ import {
   hostToBrowseRel,
   isAtOrUnder,
   loadExpanded,
+  rootExclusions,
   rootIncludeCount,
   saveExpanded,
 } from "../lib/selectionTree";
@@ -139,6 +140,12 @@ export function SelectionTree({
   const [expandedOrder, setExpandedOrder] = useState<string[]>(() => loadExpanded(containerName));
   const [listings, setListings] = useState<Record<string, Listing>>({});
   const [focusPath, setFocusPath] = useState<string | null>(null);
+  // Exclusions-disclosure expansion (D-03): synchronous component state over
+  // the already-loaded mirror — no async, no loading state by construction.
+  // Deliberately NOT persisted (unlike tree expansion): this is an audit
+  // view, not navigation comfort, so every section reopens collapsed.
+  const [exclOpen, setExclOpen] = useState<ReadonlySet<string>>(new Set());
+  const exclIdPrefix = useId();
   // Roving-tabindex plumbing (TREE-05): the tree element (key target) and the
   // currently rendered treeitem rows, keyed by host path. Callback refs keep
   // the map exact through every expand/collapse — React nulls a row's entry
@@ -202,6 +209,15 @@ export function SelectionTree({
     setExpandedOrder((order) =>
       order.includes(hostPath) ? order.filter((p) => p !== hostPath) : [...order, hostPath],
     );
+  }, []);
+
+  const toggleExclusions = useCallback((root: string) => {
+    setExclOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(root)) next.delete(root);
+      else next.add(root);
+      return next;
+    });
   }, []);
 
   const rootCount = mounts.length + customPaths.length;
@@ -389,6 +405,10 @@ export function SelectionTree({
     const listing = listings[spec.path];
     const kids = expanded ? childSpecs(spec.path, spec.depth + 1) : [];
     const shaken = !!shakeCounts?.[spec.path];
+    // D-03 review list: only ROOT rows carry an exclusions section (children
+    // never do). The id pairs the button's aria-controls with the ul.
+    const rootExcl = spec.depth === 0 ? rootExclusions(spec.path, exclusions) : [];
+    const exclListId = `${exclIdPrefix}excl-${spec.path.replace(/[^a-zA-Z0-9]/g, "-")}`;
     // UI-SPEC tone table: checked/mixed carry the row tone, unchecked is
     // dimmed, excluded (and unreachable) muted. Status hues live on the text
     // lines inside the label, never on a control.
@@ -479,6 +499,59 @@ export function SelectionTree({
             <p className="text-xs text-statusWarn" style={indent}>
               {t("folders.emptySelectionBlocked")}
             </p>
+          </div>
+        )}
+        {spec.depth === 0 && rootExcl.length > 0 && (
+          // Reviewable exclusions (D-03/D-04): a per-root disclosure listing
+          // the remembered exclusions as relative paths. Presentation-wrapped
+          // like every notice row (the tree's structural contract), rendered
+          // for ACTIVE and DORMANT roots identically — the root checkbox
+          // above distinguishes them, and a deselected root's memory is
+          // never hidden. Nothing here mutates state: selection flows only
+          // through the tree's one toggle pipeline (T-02-10).
+          <div role="presentation">
+            <button
+              type="button"
+              aria-expanded={exclOpen.has(spec.path)}
+              aria-controls={exclListId}
+              onClick={() => toggleExclusions(spec.path)}
+              // A normal tabbable control outside the roving set (retry-
+              // Button precedent); the keydown target guard keeps its own
+              // Space/Enter semantics.
+              className="flex w-full items-center gap-2 py-1 text-start text-xs text-carbon-textMuted"
+              style={{ paddingInlineStart: 16 }}
+            >
+              <span className="w-4 shrink-0 flex items-center justify-center" aria-hidden="true">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  className={`transition-transform ${exclOpen.has(spec.path) ? "rotate-90" : "rtl:rotate-180"}`}
+                >
+                  <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+                </svg>
+              </span>
+              {t("folders.exclusions").replace("{n}", String(rootExcl.length))}
+            </button>
+            {exclOpen.has(spec.path) && (
+              // Non-interactive audit rows: relative paths, mono ltr
+              // break-all with a title (house long-path pattern), muted,
+              // lexically sorted, no controls, not focusable.
+              <ul id={exclListId}>
+                {rootExcl.map((rel) => (
+                  <li
+                    key={rel}
+                    dir="ltr"
+                    title={rel}
+                    className="py-1 font-mono break-all text-start text-carbon-textMuted"
+                    style={{ paddingInlineStart: 16 }}
+                  >
+                    {rel}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
         {expanded && spec.expandable && (
