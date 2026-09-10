@@ -805,17 +805,24 @@ function VMRestorePanel({
                 // VMs' own "Eintrag entfernen" button took in that sweep.
                 // The label and the confirm dialog carry the meaning;
                 // `glim-shake` survives untouched.
-                <Badge
+                // A BUTTON now, same as the folder card and the container card.
+                // jdp reported this on the FOLDER card; it is fixed here in the
+                // same round because it is the same control - byte-identical
+                // props, same key, same shake - and a fix that lands on one of
+                // two identical call sites is how the two started disagreeing
+                // in the first place. See Files.tsx's copy for the full
+                // reasoning on the glyph and on why the label stays stable.
+                <Button
                   key={shakeDeleteAll}
-                  as="button"
+                  label={t("snapshots.deleteAll")}
+                  labelKey="snapshots.deleteAll"
+                  tone="neutral"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  tone="neutral"
-                  size="small"
+                  busy={deletingAll}
+                  title={deletingAll ? t("snapshots.deletingAll") : undefined}
                   className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
-                >
-                  {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
-                </Badge>
+                />
               )}
           </div>
           <RecentRunsList name={name} domain="vm" t={t} />

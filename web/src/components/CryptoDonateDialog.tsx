@@ -119,7 +119,18 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
 
           {/* The answer, first. */}
           <div className="flex flex-col items-center gap-3 rounded-card bg-carbon-surface2 p-4">
-            <QRCode value={network.address} size={168} />
+            {/* Bigger (jdp, 2026-09-11: "mach den qr code bitte etwas
+                größer"). 168 was sized against a dialog that had not yet grown
+                square coin tiles under it; at 224 the code is the largest thing
+                in the window, which matches what it is for. The box is about
+                440px wide inside its own padding, so it still sits in open
+                space rather than filling the panel edge to edge.
+
+                It stays black on white in BOTH themes, and that is answered at
+                length in QRCode.tsx: a code drawn light-on-dark is inverted,
+                and the scanners that refuse one are exactly the wallet apps a
+                donor would use. */}
+            <QRCode value={network.address} size={224} />
             {/* Whole, in one piece, in a mono face, and never shortened: an
                 address is read back by eye before somebody sends to it, so an
                 ellipsis in the middle turns the one string that has to be

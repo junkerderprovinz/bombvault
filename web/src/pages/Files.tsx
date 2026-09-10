@@ -8,7 +8,7 @@
 // FolderBrowser path picker and an excludes textarea (one pattern per line).
 // ---------------------------------------------------------------------------
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   listFileSets,
@@ -485,11 +485,21 @@ function FileSetRestoreControl({
             brand-new key to land in every locale in the same pass — not
             worth doing for a screen-reader-only group name that "Restore"
             already names clearly enough in context. */}
+        {/* buttonHeight, because the Restore button sits in this same row
+            (jdp, 2026-09-11, on this exact strip: "soll das nicht besser ein
+            horizontaler selektor sein oder zumindest alle buttons gleiche
+            höhe?"). It already was a horizontal selector, so the answer is the
+            second half. Measured on the running build before changing
+            anything: these three segments came out 24px and the button beside
+            them 32px, which is why the square glyph-mode button read as too
+            tall - it was the only control in the row at the height the house
+            gives a button. */}
         <Selector
           items={destItems}
           label={t("snapshots.restore")}
           select="one"
           active={dest}
+          buttonHeight
           onChange={(id) => setDest(id as RestoreDest)}
           disabled={isPending}
         />
@@ -678,6 +688,7 @@ function FileSetRestorePanel({
   restoreFolder,
   t,
   onSetsChanged,
+  trailing,
 }: {
   set: FileSetView;
   hostMountRoot: string;
@@ -685,6 +696,17 @@ function FileSetRestorePanel({
   t: T;
   /** Delete-all forgets the whole set — the parent must reload the list. */
   onSetsChanged: () => void;
+  /** Always-visible summary shown at the far end of the trigger's own row,
+   *  never inside the panel it opens.
+   *
+   *  This is the container card's shape, adopted here (jdp, 2026-09-11: "kannst
+   *  du die buttons und toggle in den ordner cards genauso anordnen wie in den
+   *  container cards?"). There, "Letztes Backup: …" shares the disclosure
+   *  row rather than occupying the card's top-right corner, and the corner
+   *  carries the action badges instead. A prop rather than a second row,
+   *  because the trigger row already exists and this text is one line of
+   *  summary, not a section of its own. */
+  trailing?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<RepoSource>("local");
@@ -761,12 +783,19 @@ function FileSetRestorePanel({
 
   return (
     <div className="mt-1">
-      <Button
-        label={t("snapshots.title")}
-        labelKey="snapshots.title"
-        tone="neutral"
-        onClick={() => setOpen((prev) => !prev)}
-      />
+      {/* Trigger left, summary flush right — the container card's own
+          disclosure row, class for class (`flex items-center gap-2 flex-wrap`
+          plus `ms-auto shrink-0` on the text), so the two cards line up
+          instead of each arranging the same two things its own way. */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          label={t("snapshots.title")}
+          labelKey="snapshots.title"
+          tone="neutral"
+          onClick={() => setOpen((prev) => !prev)}
+        />
+        {trailing}
+      </div>
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
@@ -816,17 +845,40 @@ function FileSetRestorePanel({
                 // shared confirm dialog. `glim-shake` survives: behaviour,
                 // not colour. bombvault/no-status-color-on-control now fails
                 // the build if this comes back.
-                <Badge
+                // A BUTTON, at the ordinary button size, with the glyph its own
+                // key already earns (jdp, 2026-09-11: "der alle backups löschen
+                // button in der ordner card soll auch normale button größe inkl
+                // glyph sein"). It was a `size="small"` Badge, which is the one
+                // shape this action may not have: Containers.tsx's identical
+                // "Alle Backups löschen" is a full Button and says why in its
+                // own comment - a labelled action that also carries an
+                // in-flight label, not a row-action glyph pair. Two cards
+                // offering the same destructive action in two different sizes
+                // is exactly the drift that comment was written to stop.
+                //
+                // The glyph is not passed: `labelKey` is `snapshots.deleteAll`
+                // and glyphFor's `/\.(delete|remove)/` rule resolves the trash
+                // for it, the same way the container card gets its own. Passing
+                // one here would be a second opinion about a symbol the table
+                // already owns.
+                //
+                // The label is STABLE and the in-flight wording moves to
+                // `title`, which is Button's own documented contract: a label
+                // that changes to "Wird gelöscht…" mid-action resizes the
+                // control at the one moment somebody is watching it. `busy`
+                // carries the spinner instead. Same three props as the
+                // container card, in the same order.
+                <Button
                   key={shakeDeleteAll}
-                  as="button"
+                  label={t("snapshots.deleteAll")}
+                  labelKey="snapshots.deleteAll"
+                  tone="neutral"
                   onClick={() => void handleDeleteAll()}
                   disabled={deletingAll || loading}
-                  tone="neutral"
-                  size="small"
+                  busy={deletingAll}
+                  title={deletingAll ? t("snapshots.deletingAll") : undefined}
                   className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
-                >
-                  {deletingAll ? t("snapshots.deletingAll") : t("snapshots.deleteAll")}
-                </Badge>
+                />
               )}
           </div>
           <RecentRunsList name={set.name} domain="files" t={t} />
@@ -1156,12 +1208,43 @@ function FileSetRow({
           )}
         </div>
 
-        {/* Last backup */}
-        <div className="text-end shrink-0">
-          <p className="text-xs text-carbon-textMuted">{t("containers.lastBackup")}</p>
-          <p className="text-xs text-carbon-textSub">
-            {set.lastBackup ? formatTs(set.lastBackup) : t("containers.never")}
-          </p>
+        {/* Action badges, top-right — the corner "Letztes Backup" used to
+            occupy (jdp, 2026-09-11: "kannst du die buttons und toggle in den
+            ordner cards genauso anordnen wie in den container cards?"). That is
+            exactly the move the container card already made, in the same words
+            from the same reviewer ("Jetzt sichern und Export sollen
+            quadratische Badges mit Glyph sein, die sollen rechts oben in der
+            Ecke sein wo jetzt Letztes Backup steht"), and this card was the one
+            left behind: it kept the badges scattered along a middle row while
+            the corner held text.
+
+            The date is not lost, it moves down beside the Backups trigger, the
+            same place the container card keeps its own `lastBackupText`. One
+            fact, one place.
+
+            Same `ms-auto flex items-start gap-1.5 shrink-0` wrapper, and the
+            same gap-1.5 between adjacent 32px tiles that every icon-badge pair
+            in this app uses. Backup first because it is the thing somebody
+            comes to the card to do; edit and remove follow. */}
+        <div className="ms-auto flex items-start gap-1.5 shrink-0">
+          <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
+          <Button
+            label={t("files.editSet")}
+            labelKey="files.editSet"
+            glyph={<IconPencil />}
+            tone="accent"
+            onClick={onEdit}
+          />
+          <Button
+            key={shake}
+            label={t("files.deleteSet")}
+            labelKey="files.deleteSet"
+            glyph={<IconTrash />}
+            tone="accent"
+            onClick={() => void handleRemove()}
+            disabled={removing}
+            className={shake ? "glim-shake" : ""}
+          />
         </div>
       </div>
 
@@ -1172,92 +1255,42 @@ function FileSetRow({
           sentence as the Schedules card. */}
       <EffectiveScheduleLine effective={set.effectiveSchedule} />
 
-      {/* Actions row */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4 flex-wrap">
+      {/* Actions row — the schedule toggle, flush right and nothing else.
+          The container card's own equivalent row is a single `ms-auto flex
+          flex-col items-end` stack of toggle rows, and it says why: once the
+          action badges moved into the top-right corner, this row was free to
+          become one flush-right column. The folder card now has the same two
+          moves behind it, so it gets the same row.
+
+          The edit and remove badges that used to sit here are in that corner
+          now, next to the backup badge. They are actions, not settings, and a
+          row that mixed a switch with two action tiles read as one group of
+          four unrelated controls. */}
+      <div className="flex items-start">
+        <div className="ms-auto flex flex-col items-end gap-2">
           {/* No wrapping `<label>`/`<span>` anymore: FileSetEnabledToggle now
               renders the full ToggleRow itself (label included, text-first),
               the identical shape Containers.tsx's IncludeToggle call site
               already uses — see that component's own comment. */}
           <FileSetEnabledToggle id={set.id} initial={set.enabled} />
-          {/* Edit + remove, both square icon badges (jdp: "Ordnertab: die
-              Buttons 'Ordnerset bearbeiten' und 'Set entfernen' sollen
-              quadratische Badges mit Glyphen sein. In die Farbmodi integriert.
-              Keine Sonderfarbe fuer den Entfernen-Badge."). Both were plain
-              text `<button>`s: edit a flat `bg-carbon-surface2` grey, remove a
-              `bg-statusFailBg`/`text-statusFail` red.
-                `tone="active"` + `size="icon"` + `shape="square"` + `tip` is
-              the app's whole icon-badge recipe in one line — icon-only +
-              active resolves to the solid `bg-accent`/`text-accentContrast`
-              pair (Badge's own `isIconOnly && tone==="active"` branch), and no
-              `hueIndex` is passed because this card's own root element carries
-              `.glim-hue` with this set's list-position hue: the ordinary CSS
-              custom-property cascade already resolves --accent/--accent-contrast
-              to THIS row's rainbow position, exactly like RestorePanel's
-              restore/delete pair and Containers' Export badge. `size="icon"`
-              is the app's one square-icon-badge size (32px) — see Badge.tsx's
-              "ONE SIZE FOR SQUARE ICON BADGES" block; not a number measured
-              against these two buttons' own old text footprint.
-                The remove badge gets NO special colour treatment — not the red
-              it used to carry, and equally not a grey-neutral exemption
-              (`neutral` is one of the tones Badge deliberately keeps out of the
-              rainbow, so it would have left this badge flat grey beside a hued
-              sibling — the "anders eingefärbt" defect jdp already reported on
-              RestorePanel's delete and Config's snapshot rows). It is the same
-              tone and the same hue as the edit badge next to it. Nothing about
-              the action becomes ambiguous: the destructive meaning is carried
-              by IconTrash and by the tip bubble (t("files.deleteSet") — "Set
-              entfernen"), and handleRemove still routes through the existing
-              useConfirm dialog (t("files.deleteSetConfirm")) before anything is
-              removed — that confirmation is untouched.
-                The `removing` in-flight state used to swap the label to
-              "Prüfe…"; an icon-only badge has no label to swap, so it surfaces
-              as `disabled` alone, matching every other icon badge in the app
-              (RestorePanel's delete does exactly this). `glim-shake` on failure
-              survives on className — behaviour, not colour.
-                Glyphs: IconTrash verbatim (the app's one trash can), and
-              IconPencil — which is Dashboard's own customize pencil, moved into
-              Sidebar.tsx's shared set rather than a second pencil being drawn
-              here; see that component's comment.
-                The pair sits in its own `gap-1.5` wrapper rather than
-              inheriting this row's `gap-4`: 16px between two adjacent 32px
-              glyph tiles reads as two unrelated controls, and every other
-              icon-badge pair in this app already sits at gap-1.5 (Containers.tsx's
-              BackupButton/Export pair in the card's top-right corner is the
-              reference). The row's own gap-4 still separates this pair from the
-              schedule toggle beside it, which is a different kind of control. */}
-          <div className="flex items-center gap-1.5">
-            <Button
-              label={t("files.editSet")}
-              labelKey="files.editSet"
-              glyph={<IconPencil />}
-              tone="accent"
-              onClick={onEdit}
-            />
-            <Button
-              key={shake}
-              label={t("files.deleteSet")}
-              labelKey="files.deleteSet"
-              glyph={<IconTrash />}
-              tone="accent"
-              onClick={() => void handleRemove()}
-              disabled={removing}
-              className={shake ? "glim-shake" : ""}
-            />
-          </div>
-        </div>
-        <div className="ms-auto flex flex-col items-end">
-          <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
         </div>
       </div>
 
-      {/* Backups / Restore disclosure */}
+      {/* Backups / Restore disclosure, with the last-backup date on its own
+          row — the container card's shape. See `trailing`'s own doc. */}
       <FileSetRestorePanel
         set={set}
         hostMountRoot={hostMountRoot}
         restoreFolder={restoreFolder}
         t={t}
         onSetsChanged={onRefresh}
+        trailing={
+          <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">
+            {`${t("containers.lastBackup")}: ${
+              set.lastBackup ? formatTs(set.lastBackup) : t("containers.never")
+            }`}
+          </span>
+        }
       />
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}

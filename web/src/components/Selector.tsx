@@ -351,6 +351,28 @@ interface SelectorCommon {
    *  Badge.tsx's own header comment for why a fourth ad-hoc size never gets
    *  to exist here. */
   size?: SelectorSize;
+  /** Take the BUTTON box (`--btn-h`) rather than letting padding decide, for a
+   *  strip that stands in a row beside a real Button.
+   *
+   *  The same outcome `segmentPadding` already gives a segment that carries a
+   *  glyph, and for the same underlying reason: a padding-derived box is sized
+   *  by its text, and a text-sized box does not match the thing next to it. A
+   *  glyph was simply the first reason anybody hit. Standing beside a button is
+   *  the second, and it is the one this flag names.
+   *
+   *  Measured on the folder card's restore row, which is where jdp reported it
+   *  (2026-09-11: "soll das nicht besser ein horizontaler selektor sein oder
+   *  zumindest alle buttons gleiche höhe?" - it already WAS a horizontal
+   *  selector, so the question was really the second half): the three segments
+   *  came out 24px against the restore button's 32px beside them, and the
+   *  square glyph-mode button read as too tall because it was the only thing
+   *  in the row at its proper height.
+   *
+   *  Opt-in rather than automatic. A strip cannot see what sits next to it, and
+   *  making every `md` strip 32px would grow the weekday pills and the heatmap
+   *  toggle, which are dense on purpose - `segmentPadding`'s own note says so.
+   *  Default false, set it where the row actually holds a button. */
+  buttonHeight?: boolean;
   /** Rainbow position per item, default true. See the file header for the rule
    *  and for the ONE live opt-out: Recovery.tsx's StepDisclosure, a SINGLE-item
    *  expander chip whose "position in the list" is therefore always 0 and
@@ -470,9 +492,17 @@ const SIZE: Record<
  *
  * Text-only chips are deliberately left alone. The weekday pills and the
  * heatmap toggle are dense on purpose and nobody has ever called them short.
+ *
+ * ...unless the strip STANDS BESIDE A BUTTON, which is the `buttonHeight` flag
+ * and the second reason for the same box. A glyph was the first reason anybody
+ * hit, so the rule got written down as "a glyph needs the box a button has";
+ * the rule underneath it is that a control matches what it sits next to, and a
+ * text-only strip in a row with a real Button needs it just as much. See the
+ * prop's own doc for the measurement that made this a second parameter rather
+ * than a wider default.
  */
-function segmentPadding(size: SelectorSize, hasGlyph: boolean): string {
-  return hasGlyph ? SIZE[size].glyphPadding : SIZE[size].padding;
+function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boolean): string {
+  return hasGlyph || buttonHeight ? SIZE[size].glyphPadding : SIZE[size].padding;
 }
 
 // MIN_PINNED_WIDTH — the one standardized floor every `pinWidth` segment (both
@@ -706,6 +736,7 @@ export function Selector(props: SelectorProps) {
     items,
     label,
     size = "md",
+    buttonHeight = false,
     hue = true,
     plain = false,
     variant = "chip",
@@ -1112,10 +1143,10 @@ export function Selector(props: SelectorProps) {
           well && equalWidth
             ? `flex-none justify-center text-center h-[var(--badge-md)] ${SIZE[size].padding}`
             : equalWidth
-              ? `flex-none justify-center text-center ${segmentPadding(size, !!item.icon)}`
+              ? `flex-none justify-center text-center ${segmentPadding(size, !!item.icon, buttonHeight)}`
               : item.iconOnly
                 ? "justify-center h-8 w-8 p-0"
-                : segmentPadding(size, !!item.icon),
+                : segmentPadding(size, !!item.icon, buttonHeight),
         ]
           .filter(Boolean)
           .join(" ");

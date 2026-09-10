@@ -2079,6 +2079,39 @@ body {
   --coin-xrp: #23292f;
 }
 
+/* Reactive mode: the tile answers the pointer in its OWN palette position.
+   ---------------------------------------------------------------------------
+   Reported missing (jdp, 2026-09-11: "die kryptokacheln sind nicht im
+   reaktiven modus"), and the reason is worth writing down because it is not a
+   forgotten class. The tiles carry `.glim-hue` and always have, so
+   [data-rainbow="reactive"] .glim-hue above DOES rebind --accent under the
+   pointer exactly as it does everywhere else. Nothing showed, because nothing
+   on an unselected tile ever READS --accent: its rest is `bg-carbon-surface2`
+   and its hover is `bg-carbon-surface3` (white on the dark theme). A control
+   can be wired to the engine and still be invisible to it if no property of
+   its own is spending the token.
+
+   So the hover takes the fill the SELECTED tile already uses, which also makes
+   the mode legible: in reactive mode the tile you are pointing at looks like
+   the tile you would get by clicking. The plain rainbow and the flat accent
+   keep the white/surface3 hover from KnightLoader - reactive is the one mode
+   whose whole idea is that colour arrives under the pointer.
+
+   Deliberately NOT scoped to :not(.glim-active): the selected tile already
+   carries this exact fill, so the rule is a no-op there rather than a state
+   that needs excluding.
+
+   The mark drops its brand colour here for the same reason it does on the
+   selected tile, and the comment there is the full argument: a fixed brand
+   colour on a fill the engine chooses is a contrast nobody can predict. */
+[data-rainbow="reactive"] .glim-coin-tile:hover {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+}
+[data-rainbow="reactive"] .glim-coin-tile:hover svg {
+  fill: currentColor;
+}
+
 /* Sidebar's Simple/Advanced view toggle (SidebarControls, its own
    call-site marker, NOT Sidebar.tsx's main-nav NavItem any more) — the SAME
    3-state tab-strip rule as .glim-hue-icon above (idle colourless only in
