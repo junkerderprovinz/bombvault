@@ -115,23 +115,91 @@ func NormalizeSelection(entries []string) []string {
 
 // includesOnly returns the bare (included) half of a stored flat selection —
 // the list a backup is actually built from. Exclusion entries are dropped, not
-// transformed: exclusions never become restic positionals and never derive
-// --exclude flags (locked positions L1/L14). That lock is a PRODUCT choice,
-// not a restic limitation — restic excludes DO filter content within positional
-// sources (TestPositionalExcludesKeepSourceDir proves it against real restic:
-// the positional source survives in Paths while the excluded file is filtered
-// from the snapshot), so encoding "!" entries as --exclude patterns would
-// enforce a deselection content-wise. It stays locked anyway because
-// engine-derived patterns would land in the snapshot's restic Excludes
-// metadata, which is user-owned surface (the exclusions editor previews
-// exactly the patterns the user wrote — STACK.md "What NOT to Use"), and
-// machine-generated entries would pollute that round-trip. Readers that need
-// the whole picture call SplitExclusion themselves.
+// transformed: exclusions never become restic positionals (the unchanged half
+// of the original L1/L14 lock — no exclusion ever becomes a positional target).
+// That lock is a PRODUCT choice, not a restic limitation — restic excludes DO
+// filter content within positional sources (TestPositionalExcludesKeepSourceDir
+// proves it against real restic: the positional source survives in Paths while
+// the excluded file is filtered from the snapshot). As of the 2026-09-09
+// gap-closure decision (review finding WR-01), exclusion branches strictly
+// below an included root ARE encoded as --exclude at backup time by
+// excludedBranches; includesOnly itself is unchanged — positionals remain the
+// includes, so snapshot Paths keep the stable maximal-root restore-selector
+// shape. The accepted tradeoff: the derived patterns land in the snapshot's
+// restic Excludes metadata (the exclusions editor's user-owned surface).
+// Readers that need the whole picture call SplitExclusion themselves.
 func includesOnly(entries []string) []string {
 	out := make([]string, 0, len(entries))
 	for _, e := range entries {
 		if bare, excluded := SplitExclusion(e); !excluded && bare != "" {
 			out = append(out, bare)
+		}
+	}
+	return out
+}
+
+// excludedBranches returns the bare paths of the EXCLUSION entries in a stored
+// flat selection that are strict descendants of at least one INCLUDE entry in
+// the same list — the branches a backup must carve out of its positional
+// sources. It is the enforcement half of the stored selection (review finding
+// WR-01, plan 01-05): the "!"-prefixed branch is what the UI advertises as
+// excluded, and before the 2026-09-09 gap-closure user decision the backup
+// engine compiled the selection to positionals only, so a mixed selection
+// stored and advertised the exclusion while the snapshot silently contained
+// the branch anyway — backing up what the user deselected. As of that decision
+// these branches ARE encoded as restic --exclude patterns on the backup argv
+// (service.Backup's BackupDeps literal is the only production caller).
+//
+// The returned paths land in the snapshot's restic Excludes metadata — the
+// user-owned surface the exclusions editor previews — so snapshots of mixed
+// selections carry machine-derived patterns the user did not write there. That
+// tradeoff is accepted by the 2026-09-09 user decision in exchange for content
+// correctness: a backup that silently includes the "excluded" branch is the
+// worse failure.
+//
+// Two stored shapes are deliberately NOT emitted (pinned contract, see
+// TestExcludedBranches):
+//
+//   - an exclusion EQUAL to an included root: isStrictDescendant is strict by
+//     design, and an exact include+exclude pair is a contradictory selection
+//     the normalization deliberately keeps as-is per class (01-CONTEXT.md
+//     encoding Q4). Emitting an exclude equal to the positional source would
+//     ask restic to filter its own source root; the Phase 2 tree UI makes the
+//     pair unconstructable.
+//   - an ORPHAN exclusion (no included ancestor): it cannot carve content out
+//     of any positional (its root is not being backed up), so a pattern for it
+//     would be pure noise in the snapshot's Excludes metadata. Orphan
+//     exclusions keep their storage role as the explicit-none carrier instead
+//     (01-CONTEXT.md encoding Q3).
+//
+// Survivors keep stored (input) order, so the derived argv tail is
+// deterministic. Never nil: the caller appends the result unconditionally.
+//
+// Glob semantics (threat T-01-05-01, accepted): restic patterns are globs.
+// Stored selection entries are path-validated at save time (TrimSpace,
+// SplitExclusion, toContainerPath prefix check) but may technically hold glob
+// metacharacters, so a derived pattern carries glob semantics — the same
+// semantics user-written exclude patterns already have on this authenticated,
+// single-admin surface; the blast radius is the user's own backup scope,
+// bounded by the positional roots.
+func excludedBranches(entries []string) []string {
+	out := make([]string, 0, len(entries))
+	var includes []string
+	for _, e := range entries {
+		if bare, excluded := SplitExclusion(e); !excluded && bare != "" {
+			includes = append(includes, bare)
+		}
+	}
+	for _, e := range entries {
+		bare, excluded := SplitExclusion(e)
+		if !excluded || bare == "" {
+			continue
+		}
+		for _, inc := range includes {
+			if isStrictDescendant(bare, inc) {
+				out = append(out, bare)
+				break
+			}
 		}
 	}
 	return out

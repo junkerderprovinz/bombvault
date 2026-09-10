@@ -4232,11 +4232,19 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		HealthWait:             settings.RestartHealthWait,
 		HealthTimeout:          time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
 		WhileDependentsStopped: whileDepsStopped,
-		Excludes:               s.resolveExcludePatterns(tg.Excludes, in),
-		Docker:                 s.docker,
-		Restic:                 &resticAdapter{engine: s.engine, mode: mode},
-		Templates:              templatesAdapter{},
-		Runs:                   runsAdapter{st: s.store, ctx: ctx, svc: s},
+		// User-owned exclude patterns stay first; the selection-derived tail
+		// enforces the stored exclusion branches strictly below an included
+		// root on the argv (review finding WR-01, gap closure per the
+		// 2026-09-09 user decision) — the snapshot content must match what the
+		// stored selection advertises. tg comes from UpsertTarget's re-read,
+		// which carries SelectedPaths. Patterns travel as typed builder
+		// arguments into BackupArgs (excludes before --, positionals after) —
+		// never through a shell.
+		Excludes:  append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(tg.SelectedPaths)...),
+		Docker:    s.docker,
+		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Templates: templatesAdapter{},
+		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
