@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import type { BrowseResponse, ContainerMountsResponse } from "../lib/api";
+import type { BrowseResponse, ContainerMountsResponse, OkEnvelope } from "../lib/api";
 
 const browseCalls: string[] = [];
 const patches: { name: string; paths: string[]; opts?: { selectionSource?: string } }[] = [];
@@ -28,6 +28,9 @@ let mountsReply: ContainerMountsResponse;
 // Replies may be plain values or promises (a pending promise pins the loading
 // row, which an immediately-resolving mock can never show).
 let browseReplies: (BrowseResponse | Promise<BrowseResponse>)[] = [];
+// Same shape for setBackupPaths: a deferred reply holds a save in flight so
+// the queue's serialize/drain behavior is observable step by step.
+let patchReplies: (OkEnvelope | Promise<OkEnvelope>)[] = [];
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -41,7 +44,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     },
     setBackupPaths: (name: string, paths: string[], opts?: { selectionSource?: string }) => {
       patches.push({ name, paths, opts });
-      return Promise.resolve({ ok: true });
+      const reply = patchReplies.shift() ?? { ok: true };
+      return Promise.resolve(reply);
     },
   };
 });
@@ -54,6 +58,29 @@ const HOST_ROOT = "/mnt";
 const MOUNT = "/mnt/user/appdata/plex";
 const PLEX2 = "/mnt/user/appdata/plex2";
 const OTHER = "/mnt/user/appdata/other";
+const CUSTOM = "/mnt/user/backups";
+
+/** Two selected mounts plus one custom include: unchecking either mount alone
+ *  stays above the D-04 zero-include floor, so toggle bursts are observable
+ *  without tripping the guard. */
+function richMounts(): ContainerMountsResponse {
+  return mountsResponse({
+    mounts: [
+      { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+      { source: PLEX2, dest: "/data", selected: true, isAppdata: false, reachable: true },
+    ],
+    custom: [{ path: CUSTOM, exists: true }],
+  });
+}
+
+/** A controllable promise: `resolve` releases it from inside act(). */
+function deferred<T>(): { promise: Promise<T>; resolve: (v: T) => void } {
+  let resolve!: (v: T) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
 
 function mountsResponse(overrides?: Partial<ContainerMountsResponse>): ContainerMountsResponse {
   return {
@@ -122,6 +149,7 @@ beforeEach(() => {
   browseCalls.length = 0;
   patches.length = 0;
   browseReplies = [];
+  patchReplies = [];
   mountsReply = mountsResponse();
   sharedCache = new Map();
 });
@@ -475,5 +503,125 @@ describe("empty-selection guard (D-04, pulled forward from plan 02)", () => {
       "At least one folder must stay selected. To back up none of this container, turn off Include in schedule.",
     );
     expect(warn.className).toContain("text-statusWarn");
+  });
+});
+
+// Plan 02 Task 2: the one-deep serialized PATCH queue (RESEARCH Open Question
+// 4, Pitfalls 4/5) plus the full D-04 treatment — shake replay + text-xs warn
+// line on the blocked row, whole-item include counting, and the defensive
+// handling of the server's coded empty-selection refusal.
+describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
+  it("blocked last-include uncheck shakes the row and shows the text-xs warn line, mirror untouched", async () => {
+    // One selected mount, no custom: unchecking it would empty the item.
+    await renderEditor();
+
+    const box = within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByRole("checkbox");
+    await act(async () => {
+      fireEvent.click(box);
+    });
+
+    expect(patches).toEqual([]); // no request left
+    const row = screen.getByRole("treeitem", { name: /user\/appdata\/plex/ });
+    expect(row.getAttribute("aria-checked")).toBe("true"); // mirror never flipped
+    expect(row.className).toContain("glim-shake"); // one shake replay via the nonce-in-key technique
+    const warn = screen.getByText(
+      "At least one folder must stay selected. To back up none of this container, turn off Include in schedule.",
+    );
+    expect(warn.className).toContain("text-xs");
+    expect(warn.className).toContain("text-statusWarn");
+  });
+
+  it("unchecking the last MOUNT include PATCHes while a custom include exists (the count spans the whole item)", async () => {
+    mountsReply = richMounts();
+    await renderEditor();
+
+    const box = within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox");
+    await act(async () => {
+      fireEvent.click(box);
+    });
+
+    // The custom path keeps the item non-empty, so the toggle is legitimate
+    // and the save carries the remaining includes.
+    expect(patches).toEqual([{ name: "plex", paths: [PLEX2, CUSTOM], opts: { selectionSource: "tree" } }]);
+  });
+
+  it("serializes two rapid toggles: a failing first save never clobbers the second toggle", async () => {
+    mountsReply = richMounts();
+    const first = deferred<OkEnvelope>();
+    patchReplies = [first.promise];
+    await renderEditor();
+
+    // Toggle 1: uncheck plex. PATCH 1 leaves and is held in flight.
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox"));
+    });
+    expect(patches.length).toBe(1);
+    expect(patches[0].paths).toEqual([PLEX2, CUSTOM]);
+
+    // Toggle 2 while PATCH 1 is in flight: the mirror updates optimistically,
+    // the save is queued dirty — never a concurrent second request.
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/data/ })).getByRole("checkbox"));
+    });
+    expect(patches.length).toBe(1);
+
+    // PATCH 1 fails: the revert is RE-DERIVED from the live mirror (plex
+    // returns; plex2's uncheck SURVIVES — a captured snapshot would wipe it),
+    // then the dirty drain sends the final full list exactly once.
+    await act(async () => {
+      first.resolve({ ok: false, error: "save failed" });
+    });
+    expect(patches.length).toBe(2);
+    expect(patches[1].paths).toEqual([MOUNT, CUSTOM]);
+    expect(screen.getByText("save failed")).toBeTruthy(); // verbatim toast
+
+    expect(screen.getByRole("treeitem", { name: /\/config/ }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("treeitem", { name: /\/data/ }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("treeitem", { name: /user\/backups/ }).getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("collapses a burst: exactly one draining PATCH after the in-flight save resolves, bodies ordered", async () => {
+    mountsReply = richMounts();
+    const first = deferred<OkEnvelope>();
+    patchReplies = [first.promise];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox"));
+    });
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/data/ })).getByRole("checkbox"));
+    });
+    expect(patches.length).toBe(1);
+
+    await act(async () => {
+      first.resolve({ ok: true });
+    });
+    // The two-toggle burst collapsed into ONE drain carrying the latest list.
+    expect(patches.length).toBe(2);
+    expect(patches[0].paths).toEqual([PLEX2, CUSTOM]);
+    expect(patches[1].paths).toEqual([CUSTOM]);
+  });
+
+  it("defensive backstop: a coded empty-selection refusal toasts verbatim and reverts the mirror", async () => {
+    // Unreachable once the D-04 block exists (the client never sends an
+    // empty-include list) — pinned anyway: the coded envelope is toasted
+    // verbatim and the optimistic mirror rolls back.
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: PLEX2, dest: "/data", selected: true, isAppdata: false, reachable: true },
+      ],
+    });
+    patchReplies = [{ ok: false, error: "Selection would be empty", code: "empty-selection" }];
+    await renderEditor();
+
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox"));
+    });
+
+    expect(patches.length).toBe(1); // no drain: the refusal settles the queue
+    expect(screen.getByText("Selection would be empty")).toBeTruthy();
+    expect(screen.getByRole("treeitem", { name: /\/config/ }).getAttribute("aria-checked")).toBe("true");
   });
 });
