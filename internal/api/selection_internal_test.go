@@ -119,3 +119,31 @@ func TestMapRestorePaths(t *testing.T) {
 		}
 	})
 }
+
+// TestExcludedBranches pins the backup-argv enforcement semantics of
+// excludedBranches (stored exclusions encoded as restic --exclude per the
+// 2026-09-09 gap-closure decision), including the two deliberate
+// non-emissions as pinned contract, not accident: an exclusion EQUAL to an
+// included root (a contradictory pair that would ask restic to filter its own
+// positional source) and an ORPHAN exclusion under no included root (nothing
+// to carve content out of; pure noise in the snapshot's Excludes metadata).
+func TestExcludedBranches(t *testing.T) {
+	cases := []struct {
+		name    string
+		entries []string
+		want    []string
+	}{
+		{"both branches qualify, stored order preserved", []string{"/c/a", "!/c/a/b", "!/c/a/z"}, []string{"/c/a/b", "/c/a/z"}},
+		{"orphan exclusion under no include is dropped", []string{"/c/a", "!/c/a/b", "!/c/other"}, []string{"/c/a/b"}},
+		{"exclusions-only: no include to qualify against", []string{"!/c/a"}, []string{}},
+		{"equality is not a strict descendant", []string{"/c/a", "!/c/a"}, []string{}},
+		{"includes only: nothing to enforce", []string{"/c/a"}, []string{}},
+		{"empty list: non-nil empty", nil, []string{}},
+		{"deep branch below one qualifier wins", []string{"/c/a", "!/c/a/b/c"}, []string{"/c/a/b/c"}},
+	}
+	for _, tc := range cases {
+		if got := excludedBranches(tc.entries); !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("%s: excludedBranches(%v) = %v, want %v", tc.name, tc.entries, got, tc.want)
+		}
+	}
+}

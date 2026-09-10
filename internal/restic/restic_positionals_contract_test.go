@@ -21,6 +21,11 @@ import (
 //     relativization, no basename collapse — which is what makes
 //     longest-prefix mapping against Paths meaningful and lets two positional
 //     sources sharing a basename (…/a/end, …/b/end) stay distinct.
+//  3. An ABSOLUTE SUBDIR pattern filters that subtree WITHIN a positional
+//     source without dropping the positional — the exact pattern form the
+//     stored-selection exclusion derivation emits on the backup argv (plan
+//     01-05), and what makes WR-01's exclude-based enforcement of mixed
+//     selections work on the engine floor.
 //
 // They follow restic_roundtrip_test.go verbatim (package restic rather than
 // restic_test, same as restic_args_test.go — the engine identifiers are in
@@ -154,6 +159,91 @@ func TestPositionalAbsolutePathPreserved(t *testing.T) {
 	wantPaths := []string{absDir}
 	if !reflect.DeepEqual(snaps[0].Paths, wantPaths) {
 		t.Fatalf("snapshot Paths = %v, want the absolute path verbatim %v (no relativization)", snaps[0].Paths, wantPaths)
+	}
+}
+
+// TestPositionalExcludeAbsoluteSubdirPattern pins claim 3: backing up srcDir
+// (holding file.txt and sub/inner.txt) with the absolute pattern srcDir+"/sub"
+// keeps srcDir verbatim in snapshot Paths AND proves via ls that file.txt is
+// recoverable while inner.txt is filtered — the EXACT absolute-subdir pattern
+// form the production derivation emits (stored selection entries are
+// container-form POSIX paths). The pattern is built by POSIX concatenation to
+// mirror that namespace; on the Windows dev box the LookPath skip fires before
+// path form could matter, and CI (restic 0.17.3 on Linux) is the arbiter.
+func TestPositionalExcludeAbsoluteSubdirPattern(t *testing.T) {
+	if _, err := exec.LookPath("restic"); err != nil {
+		t.Skip("no restic")
+	}
+
+	ctx := context.Background()
+	dir := t.TempDir()
+	repo := filepath.Join(dir, "repo")
+	srcDir := filepath.Join(dir, "src")
+	if err := os.MkdirAll(filepath.Join(srcDir, "sub"), 0o755); err != nil { //nolint:gosec // G301: test temp dir, relaxed permissions intentional
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(srcDir, "file.txt"), []byte("kept"), 0o644); err != nil { //nolint:gosec // G306: test file, relaxed permissions intentional
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(srcDir, "sub", "inner.txt"), []byte("filtered"), 0o644); err != nil { //nolint:gosec // G306: test file, relaxed permissions intentional
+		t.Fatal(err)
+	}
+
+	r := Restic{Bin: "restic"}
+	m := Mode{Encrypted: false}
+
+	if err := r.Init(ctx, repo, m); err != nil {
+		t.Fatal("Init:", err)
+	}
+
+	// POSIX concatenation — mirrors the production derivation's namespace
+	// (stored container-form POSIX paths), never filepath.Join, so the pattern
+	// form proven here is byte-identical to what a mixed selection emits.
+	excludePattern := srcDir + "/sub"
+
+	sum, err := r.Backup(ctx, repo, []string{srcDir}, []string{"t"}, m, excludePattern)
+	if err != nil {
+		t.Fatal("Backup:", err)
+	}
+	if sum.SnapshotID == "" {
+		t.Fatal("expected non-empty snapshot ID")
+	}
+
+	// Half one: the excluded SUBTREE must not drop the positional SOURCE —
+	// snapshot Paths keep srcDir verbatim, which is what keeps the
+	// restore-selector contract intact while the subtree is filtered.
+	snaps, err := r.Snapshots(ctx, repo, m)
+	if err != nil {
+		t.Fatal("Snapshots:", err)
+	}
+	if len(snaps) != 1 {
+		t.Fatalf("expected 1 snapshot, got %d", len(snaps))
+	}
+	wantPaths := []string{srcDir}
+	if !reflect.DeepEqual(snaps[0].Paths, wantPaths) {
+		t.Fatalf("snapshot Paths = %v, want exactly %v (an absolute subdir exclude must not drop the positional)", snaps[0].Paths, wantPaths)
+	}
+
+	// Half two: within that snapshot, file.txt is recoverable and inner.txt is
+	// genuinely filtered by the absolute subdir pattern.
+	entries, err := r.Ls(ctx, repo, snaps[0].ID, m)
+	if err != nil {
+		t.Fatal("Ls:", err)
+	}
+	var kept, filtered bool
+	for _, e := range entries {
+		switch filepath.Base(e.Path) {
+		case "file.txt":
+			kept = true
+		case "inner.txt":
+			filtered = true
+		}
+	}
+	if !kept {
+		t.Fatalf("file.txt not recoverable from the snapshot; entries = %v", entryPaths(entries))
+	}
+	if filtered {
+		t.Fatalf("inner.txt must be filtered by the absolute subdir pattern; entries = %v", entryPaths(entries))
 	}
 }
 

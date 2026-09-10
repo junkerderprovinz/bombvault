@@ -2374,6 +2374,70 @@ func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
 	}
 }
 
+// TestBackupSelectionExcludesMergeAfterUserPatterns pins the merged argv order
+// (WR-01 gap closure, 2026-09-09 user decision): user-owned exclude patterns
+// keep their position — resolved through the existing pattern resolver — and
+// the selection-derived tail (excludedBranches) is appended AFTER them,
+// additive and deterministic; both classes share the same container-form
+// namespace. The merge must not disturb the positionals: they stay the
+// maximal-root includes.
+func TestBackupSelectionExcludesMergeAfterUserPatterns(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// The excluded branch EXISTS on disk — same fixture discipline as the
+	// narrowed-selection test above (narrowing is the selection's job, not the
+	// existence filter's).
+	for _, p := range []string{root + "/user/appdata/plex/config", root + "/user/appdata/plex/transcoding"} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Seed user excludes through the public setter BEFORE the backup
+	// ("*.tmp" has no slash, so it resolves verbatim as a basename pattern).
+	if err := svc.SetExcludes(ctx, "plex", []string{"*.tmp"}); err != nil {
+		t.Fatalf("SetExcludes: %v", err)
+	}
+	// Mixed selection: the whole appdata mount kept, the transcoding branch
+	// deselected.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{
+		"/mnt/user/appdata/plex", "!/mnt/user/appdata/plex/transcoding",
+	}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if _, err := svc.Backup(ctx, "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	wantExcludes := []string{"*.tmp", root + "/user/appdata/plex/transcoding"}
+	if !reflect.DeepEqual(eng.lastExcludes, wantExcludes) {
+		t.Fatalf("restic excludes = %v, want %v (user patterns first, selection-derived tail appended)", eng.lastExcludes, wantExcludes)
+	}
+	wantPaths := []string{root + "/user/appdata/plex"}
+	if !reflect.DeepEqual(eng.lastPaths, wantPaths) {
+		t.Fatalf("restic positionals = %v, want %v (the merge must not disturb positionals)", eng.lastPaths, wantPaths)
+	}
+}
+
 // TestBackupPathsExclusionsOnlyIsNotRefused pins the explicit-none semantics
 // (01-CONTEXT.md encoding Q3): an exclusions-only stored selection is the user
 // saying "back up nothing of this container on purpose" — NOT a vanished share
