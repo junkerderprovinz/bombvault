@@ -102,12 +102,12 @@ Plans:
   3. Unchecking the last checked folder in a mount produces an explicit, documented outcome — the item never silently flips to the empty-list auto-detection fallback
   4. A per-mount/root CACHEDIR.TAG toggle sits with the selection controls, and a backup of that item maps it to restic `--exclude-caches` in the built argv (covered by `restic_args_test.go`)
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — RESTIC-01 backend: per-root CACHEDIR.TAG toggle persistence (migration v100 + owned SetExcludeCaches), additive PATCH/mounts fields, any-root-true union via Mode.ExcludeCaches into BackupArgs `--exclude-caches` (RESTIC-01)
+- [x] 03-01-PLAN.md — RESTIC-01 backend: per-root CACHEDIR.TAG toggle persistence (migration v100 + owned SetExcludeCaches), additive PATCH/mounts fields, any-root-true union via Mode.ExcludeCaches into BackupArgs `--exclude-caches` (RESTIC-01)
 - [ ] 03-02-PLAN.md — Read-only trust layer: rootIncludeCount/rootExclusions pure helpers, per-root "{n} paths" preview line, collapsible reviewable exclusions list, D-04 deselected-root rendering, 2 i18n keys x 42 locales (SELECT-03, INTEG-03, INTEG-04)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -143,5 +143,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Selection Engine & Restore Safety | 5/5 | Complete    | 2026-09-10 |
 | 2. Container Panel Tree Selection | 3/3 | Complete    | 2026-09-10 |
-| 3. Selection Trust & Controls | 0/TBD | Not started | - |
+| 3. Selection Trust & Controls | 1/3 | In Progress|  |
 | 4. File Sets Parity | 0/TBD | Not started | - |
