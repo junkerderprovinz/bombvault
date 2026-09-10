@@ -599,6 +599,7 @@ const no: Partial<Translations> = {
   "folders.truncatedList": "Første 500 oppføringer vises",
   "folders.retry": "Prøv igjen",
   "folders.emptySelectionBlocked": "Minst én mappe må forbli valgt. Skru av Inkluder i tidsplan hvis du ikke vil sikkerhetskopiere noe fra denne containeren.",
+  "folders.previewPaths": "{n} stier",
 
   // Notifications
   "notify.title": "Varsler",

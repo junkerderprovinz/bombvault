@@ -7,6 +7,7 @@ import {
   hostToBrowseRel,
   isAtOrUnder,
   loadExpanded,
+  rootIncludeCount,
   saveExpanded,
 } from "../lib/selectionTree";
 import { Button } from "./Button";
@@ -246,6 +247,13 @@ export function SelectionTree({
           </span>
           {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
           {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
+          {/* D-01 preview: muted, derived from the includes set alone (never
+              checked nodes, never existence) so it matches the bare entries
+              the next save serializes. Renders on EVERY root incl. "0 paths"
+              (INTEG-04: zero is information, not an empty state). */}
+          <span className="text-xs text-carbon-textMuted">
+            {t("folders.previewPaths").replace("{n}", String(rootIncludeCount(m.source, includes)))}
+          </span>
         </span>
       ),
     })),
@@ -265,6 +273,11 @@ export function SelectionTree({
             {cp.path}
           </span>
           {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
+          {/* Same D-01 preview contract as mount rows: standalone custom
+              roots announce their own at-or-under include count. */}
+          <span className="text-xs text-carbon-textMuted">
+            {t("folders.previewPaths").replace("{n}", String(rootIncludeCount(cp.path, includes)))}
+          </span>
         </span>
       ),
     })),

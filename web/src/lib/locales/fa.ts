@@ -608,6 +608,7 @@ const fa: Partial<Translations> = {
   "folders.truncatedList": "500 مورد اول نمایش داده شد",
   "folders.retry": "تلاش دوباره",
   "folders.emptySelectionBlocked": "حداقل یک پوشه باید انتخاب بماند. برای پشتیبان‌نگرفتن از هیچ‌چیز این کانتینر، افزودن به برنامه زمان‌بندی را خاموش کنید.",
+  "folders.previewPaths": "{n} مسیر",
   "stophook.title": "توقف کانتینرهای دیگر",
   "stophook.hint": "این کانتینرهای دیگر را در حین پشتیبان‌گیری از این یکی متوقف کن (مثلاً یک پایگاه داده)، و بعد دوباره اجرایشان کن.",
   "stophook.noCandidates": "کانتینر نصب‌شدهٔ دیگری پیدا نشد.",

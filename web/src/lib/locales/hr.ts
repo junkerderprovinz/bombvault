@@ -608,6 +608,7 @@ const hr: Partial<Translations> = {
   "folders.truncatedList": "Prikazano prvih 500 unosa",
   "folders.retry": "Pokušaj ponovno",
   "folders.emptySelectionBlocked": "Barem jedna mapa mora ostati odabrana. Da ovaj kontejner ne biste sigurnosno kopirali, isključite uključivanje u raspored.",
+  "folders.previewPaths": "{n} putanja",
   "stophook.title": "Zaustavi druge kontejnere",
   "stophook.hint": "Zaustavite ove druge kontejnere dok se ovaj sigurnosno kopira (npr. bazu podataka), zatim ih naknadno ponovno pokrenite.",
   "stophook.noCandidates": "Nisu pronađeni drugi instalirani kontejneri.",

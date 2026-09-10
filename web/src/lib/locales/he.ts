@@ -602,6 +602,7 @@ const he: Partial<Translations> = {
   "folders.truncatedList": "מוצגות 500 הערכים הראשונים",
   "folders.retry": "נסה שוב",
   "folders.emptySelectionBlocked": "חייבת להישאר לפחות תיקייה אחת מסומנת. כדי לא לגבות כלום מהמיכל הזה, כבה את ההכללה בלוח הזמנים.",
+  "folders.previewPaths": "{n} נתיבים",
 
   // Notifications
   "notify.title": "התראות",

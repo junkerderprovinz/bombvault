@@ -608,6 +608,7 @@ const sk: Partial<Translations> = {
   "folders.truncatedList": "Zobrazených prvých 500 položiek",
   "folders.retry": "Skúsiť znova",
   "folders.emptySelectionBlocked": "Aspoň jeden priečinok musí zostať označený. Ak nechceš z tohto kontajneru zálohovať nič, vypni zahrnutie do plánu.",
+  "folders.previewPaths": "{n} ciest",
   "stophook.title": "Zastaviť iné kontajnery",
   "stophook.hint": "Zastavte tieto iné kontajnery, kým sa tento zálohuje (napríklad databázu), a potom ich znova spustite.",
   "stophook.noCandidates": "Nenašli sa žiadne iné nainštalované kontajnery.",

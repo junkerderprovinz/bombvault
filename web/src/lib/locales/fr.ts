@@ -602,6 +602,7 @@ const fr: Partial<Translations> = {
   "folders.truncatedList": "Les 500 premières entrées sont affichées",
   "folders.retry": "Réessayer",
   "folders.emptySelectionBlocked": "Au moins un dossier doit rester sélectionné. Pour ne sauvegarder aucun élément de ce conteneur, désactive son inclusion dans le planning.",
+  "folders.previewPaths": "{n} chemins",
 
   // Notifications
   "notify.title": "Notifications",

@@ -596,6 +596,7 @@ const nl: Partial<Translations> = {
   "folders.truncatedList": "Eerste 500 items getoond",
   "folders.retry": "Opnieuw proberen",
   "folders.emptySelectionBlocked": "Er moet minstens één map geselecteerd blijven. Zet Opnemen in planning uit als je niets van deze container wilt back-uppen.",
+  "folders.previewPaths": "{n} paden",
 
   // Notifications
   "notify.title": "Meldingen",

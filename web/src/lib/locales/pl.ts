@@ -594,6 +594,7 @@ const pl: Partial<Translations> = {
   "folders.truncatedList": "Wyświetlono pierwsze 500 pozycji",
   "folders.retry": "Spróbuj ponownie",
   "folders.emptySelectionBlocked": "Co najmniej jeden folder musi pozostać wybrany. Aby nie tworzyć kopii zapasowej niczego z tego kontenera, wyłącz uwzględnianie w harmonogramie.",
+  "folders.previewPaths": "{n} ścieżek",
 
   // Notifications
   "notify.title": "Powiadomienia",

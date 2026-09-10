@@ -169,6 +169,26 @@ export function partitionCustomPaths(
   return { underMount, standalone };
 }
 
+/** Count the stored maximal includes at-or-under one root (Phase 3, D-01 —
+ *  the per-root "{n} paths" preview).
+ *
+ *  The flat set IS the positional truth: what toFlatList serializes is what
+ *  the next backup PATCH carries and what restic receives as positional
+ *  sources, so the visible count must be derived from the includes set alone —
+ *  never from checked nodes on screen (which would misread collapsed and
+ *  never-loaded subtrees) and never filtered by existence: a stale or
+ *  unreachable include still counts, because those cases are already
+ *  row-level-warned (folders.notReachable / folders.customMissing) and the
+ *  argv will still carry the entry. An include ABOVE the root does not count —
+ *  only entries the root itself covers are this root's to announce. */
+export function rootIncludeCount(root: string, includes: ReadonlySet<string>): number {
+  let n = 0;
+  for (const p of includes) {
+    if (isAtOrUnder(p, root)) n++;
+  }
+  return n;
+}
+
 /** Classify a node from (I, E) alone (RESEARCH Pattern 1, the pinned shape):
  *  excluded when at/under an E entry (exclusion dominates — the classifier
  *  stays total even for an equal include/exclude pair the reducer can never

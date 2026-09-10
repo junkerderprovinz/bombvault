@@ -599,6 +599,7 @@ const ro: Partial<Translations> = {
   "folders.truncatedList": "Sunt afișate primele 500 de intrări",
   "folders.retry": "Încearcă din nou",
   "folders.emptySelectionBlocked": "Cel puțin un folder trebuie să rămână selectat. Pentru a nu face copie de rezervă la nimic din acest container, dezactivează includerea în programare.",
+  "folders.previewPaths": "{n} căi",
 
   // Notifications
   "notify.title": "Notificări",

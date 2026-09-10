@@ -602,6 +602,7 @@ const el: Partial<Translations> = {
   "folders.truncatedList": "Εμφανίζονται οι πρώτες 500 καταχωρήσεις",
   "folders.retry": "Δοκιμή ξανά",
   "folders.emptySelectionBlocked": "Πρέπει να παραμείνει επιλεγμένος τουλάχιστον ένας φάκελος. Για να μην γίνει αντίγραφο ασφαλείας τίποτα από αυτό το container, απενεργοποίησε τη συμπερίληψη στο χρονοδιάγραμμα.",
+  "folders.previewPaths": "{n} διαδρομές",
 
   // Notifications
   "notify.title": "Ειδοποιήσεις",

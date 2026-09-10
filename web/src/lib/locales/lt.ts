@@ -608,6 +608,7 @@ const lt: Partial<Translations> = {
   "folders.truncatedList": "Rodomi pirmieji 500 įrašų",
   "folders.retry": "Bandyti dar kartą",
   "folders.emptySelectionBlocked": "Turi likti pasirinktas bent vienas aplankas. Jei norite nieko iš šio konteinerio neatsarginiuoti, išjunkite įtraukimą į tvarkaraštį.",
+  "folders.previewPaths": "{n} keliai",
   "stophook.title": "Sustabdyti kitus konteinerius",
   "stophook.hint": "Sustabdykite šiuos kitus konteinerius, kol kopijuojamas šis (pvz., duomenų bazę), tada vėl juos paleiskite po to.",
   "stophook.noCandidates": "Kitų įdiegtų konteinerių nerasta.",

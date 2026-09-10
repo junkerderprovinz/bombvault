@@ -600,6 +600,7 @@ const cs: Partial<Translations> = {
   "folders.truncatedList": "Zobrazeno prvních 500 položek",
   "folders.retry": "Zkusit znovu",
   "folders.emptySelectionBlocked": "Vybrána musí zůstat alespoň jedna složka. Chceš-li z tohoto kontejneru nezálohovat nic, vypni zahrnování do plánu.",
+  "folders.previewPaths": "{n} cest",
 
   // Notifications
   "notify.title": "Oznámení",

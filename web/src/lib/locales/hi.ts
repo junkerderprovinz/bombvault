@@ -608,6 +608,7 @@ const hi: Partial<Translations> = {
   "folders.truncatedList": "पहले 500 प्रविष्टियाँ दिखाई जा रही हैं",
   "folders.retry": "फिर से कोशिश करें",
   "folders.emptySelectionBlocked": "कम से कम एक फ़ोल्डर चयनित रहना चाहिए। इस कंटेनर का कुछ भी बैकअप न लेने के लिए, शेड्यूल में शामिल करना बंद कर दें।",
+  "folders.previewPaths": "{n} पथ",
   "stophook.title": "अन्य कंटेनर रोकें",
   "stophook.hint": "इस कंटेनर का बैकअप लेते समय इन अन्य कंटेनरों को रोकें (जैसे कोई डेटाबेस), फिर बाद में उन्हें फिर से शुरू करें।",
   "stophook.noCandidates": "कोई अन्य इंस्टॉल किया गया कंटेनर नहीं मिला।",

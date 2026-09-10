@@ -602,6 +602,7 @@ const hu: Partial<Translations> = {
   "folders.truncatedList": "Az első 500 bejegyzés látható",
   "folders.retry": "Újrapróbálás",
   "folders.emptySelectionBlocked": "Legalább egy mappának kiválasztva kell maradnia. Ha nem szeretnél ebből a konténerből semmit menteni, kapcsold ki az ütemezésbe foglalást.",
+  "folders.previewPaths": "{n} elérési út",
 
   // Notifications
   "notify.title": "Értesítések",

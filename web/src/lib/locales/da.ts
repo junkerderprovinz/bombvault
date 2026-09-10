@@ -602,6 +602,7 @@ const da: Partial<Translations> = {
   "folders.truncatedList": "Første 500 poster vist",
   "folders.retry": "Prøv igen",
   "folders.emptySelectionBlocked": "Der skal være valgt mindst én mappe. For slet ikke at sikkerhedskopiere denne container skal du slå Inkluder i tidsplan fra.",
+  "folders.previewPaths": "{n} stier",
 
   // Notifications
   "notify.title": "Notifikationer",

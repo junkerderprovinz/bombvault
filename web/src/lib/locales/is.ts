@@ -608,6 +608,7 @@ const is: Partial<Translations> = {
   "folders.truncatedList": "Fyrstu 500 færslur sýndar",
   "folders.retry": "Reyna aftur",
   "folders.emptySelectionBlocked": "Að minnsta kosti ein mappa verður að vera valin. Til að taka ekki öryggisafn af neinu úr þessum gámi skaltu slökkva á því að hann sé í tímaáætlun.",
+  "folders.previewPaths": "{n} slóðir",
   "stophook.title": "Stöðva aðra gáma",
   "stophook.hint": "Stöðvaðu þessa aðra gáma á meðan þessi er afritaður (t.d. gagnagrunn), og ræstu þá svo aftur á eftir.",
   "stophook.noCandidates": "Engir aðrir uppsettir gámar fundust.",

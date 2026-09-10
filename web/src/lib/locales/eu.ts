@@ -608,6 +608,7 @@ const eu: Partial<Translations> = {
   "folders.truncatedList": "Lehen 500 sarrerak erakusten dira",
   "folders.retry": "Saiatu berriro",
   "folders.emptySelectionBlocked": "Gutxienez karpeta bat hautatuta geratu behar da. Kontainde honetan ezer babestu nahi ez baduzu, desaktibatu egutegian sartzea.",
+  "folders.previewPaths": "{n} bide",
   "stophook.title": "Gelditu beste edukiontzi batzuk",
   "stophook.hint": "Gelditu beste edukiontzi hauek hau babesten den bitartean (adibidez datu-base bat), eta abiarazi berriz gero.",
   "stophook.noCandidates": "Ez da beste edukiontzi instalaturik aurkitu.",

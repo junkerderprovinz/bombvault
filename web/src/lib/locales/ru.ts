@@ -594,6 +594,7 @@ const ru: Partial<Translations> = {
   "folders.truncatedList": "Показаны первые 500 записей",
   "folders.retry": "Повторить попытку",
   "folders.emptySelectionBlocked": "Должна остаться выбранной хотя бы одна папка. Чтобы не создавать резервные копии этого контейнера, отключите включение в расписание.",
+  "folders.previewPaths": "{n} путей",
 
   // Notifications
   "notify.title": "Уведомления",

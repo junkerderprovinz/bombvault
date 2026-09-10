@@ -597,6 +597,7 @@ const uk: Partial<Translations> = {
   "folders.truncatedList": "Показано перші 500 записів",
   "folders.retry": "Спробувати ще раз",
   "folders.emptySelectionBlocked": "Має залишитися вибраною щонайменше одна тека. Щоб не створювати резервних копій нічого з цього контейнера, вимкніть включення до розкладу.",
+  "folders.previewPaths": "{n} шляхів",
 
   // Notifications
   "notify.title": "Сповіщення",

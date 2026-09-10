@@ -608,6 +608,7 @@ const sl: Partial<Translations> = {
   "folders.truncatedList": "Prikazanih prvih 500 vnosov",
   "folders.retry": "Poskusi znova",
   "folders.emptySelectionBlocked": "Izbrana mora ostati vsaj ena mapa. Če iz tega vsebnika ne želite varnostno kopirati ničesar, izklopite vključitev v urnik.",
+  "folders.previewPaths": "{n} poti",
   "stophook.title": "Ustavi druge vsebnike",
   "stophook.hint": "Med varnostnim kopiranjem tega vsebnika ustavi te druge vsebnike (na primer bazo podatkov), nato jih po njem znova zaženi.",
   "stophook.noCandidates": "Ni najdenih drugih nameščenih vsebnikov.",

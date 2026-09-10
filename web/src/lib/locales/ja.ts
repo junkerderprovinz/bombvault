@@ -594,6 +594,7 @@ const ja: Partial<Translations> = {
   "folders.truncatedList": "最初の500件を表示しています",
   "folders.retry": "再試行",
   "folders.emptySelectionBlocked": "少なくとも1つのフォルダーを選択したままにしてください。このコンテナーのバックアップを一切行わない場合は、「スケジュールに含める」をオフにしてください。",
+  "folders.previewPaths": "{n} 個のパス",
 
   // Notifications
   "notify.title": "通知",

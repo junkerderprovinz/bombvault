@@ -602,6 +602,7 @@ const fi: Partial<Translations> = {
   "folders.truncatedList": "Näytetään ensimmäiset 500 kohtaa",
   "folders.retry": "Yritä uudelleen",
   "folders.emptySelectionBlocked": "Vähintään yksi kansio on pysyttävä valittuna. Jos et halua varmuuskopioida mitään tästä kontista, poista sisällytys aikatauluun käytöstä.",
+  "folders.previewPaths": "{n} polkua",
 
   // Notifications
   "notify.title": "Ilmoitukset",

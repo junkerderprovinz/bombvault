@@ -602,6 +602,7 @@ const it: Partial<Translations> = {
   "folders.truncatedList": "Mostrate le prime 500 voci",
   "folders.retry": "Riprova",
   "folders.emptySelectionBlocked": "Almeno una cartella deve rimanere selezionata. Per non eseguire il backup di nulla di questo contenitore, disattiva l'inclusione nel calendario.",
+  "folders.previewPaths": "{n} percorsi",
 
   // Notifications
   "notify.title": "Notifiche",

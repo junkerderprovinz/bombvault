@@ -737,6 +737,10 @@ export const en = {
   "folders.retry": "Try again",
   // D-04 empty-selection guard: the inline line under a blocked toggle.
   "folders.emptySelectionBlocked": "At least one folder must stay selected. To back up none of this container, turn off Include in schedule.",
+  // Phase 3 (D-01): per-root effective-selection preview; {n} = stored
+  // maximal includes at-or-under the root. Invariant {n} key, no plural
+  // fork (stack.members precedent).
+  "folders.previewPaths": "{n} paths",
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -2448,6 +2452,7 @@ export const de: Translations = {
   "folders.truncatedList": "Erste 500 Einträge angezeigt",
   "folders.retry": "Erneut versuchen",
   "folders.emptySelectionBlocked": "Mindestens ein Ordner muss ausgewählt bleiben. Um nichts von diesem Container zu sichern, deaktiviere die Zeitplan-Einbindung.",
+  "folders.previewPaths": "{n} Pfade",
   "stophook.title": "Andere Container stoppen",
   "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",

@@ -602,6 +602,7 @@ const th: Partial<Translations> = {
   "folders.truncatedList": "แสดง 500 รายการแรก",
   "folders.retry": "ลองอีกครั้ง",
   "folders.emptySelectionBlocked": "ต้องมีโฟลเดอร์อย่างน้อยหนึ่งโฟลเดอร์ที่ยังถูกเลือกอยู่ หากไม่ต้องการสำรองข้อมูลใด ๆ จากคอนเทนเนอร์นี้ ให้ปิดการรวมในตารางเวลา",
+  "folders.previewPaths": "{n} เส้นทาง",
 
   // Notifications
   "notify.title": "การแจ้งเตือน",

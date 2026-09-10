@@ -608,6 +608,7 @@ const ca: Partial<Translations> = {
   "folders.truncatedList": "Es mostren les primeres 500 entrades",
   "folders.retry": "Torna-ho a provar",
   "folders.emptySelectionBlocked": "Com a mínim una carpeta ha de quedar seleccionada. Per no fer còpia de seguretat de res d'aquest contenidor, desactiva la inclusió a la planificació.",
+  "folders.previewPaths": "{n} camins",
   "stophook.title": "Atura altres contenidors",
   "stophook.hint": "Atura aquests altres contenidors mentre es copia aquest (per exemple una base de dades), i torna'ls a iniciar després.",
   "stophook.noCandidates": "No s'han trobat altres contenidors instal·lats.",

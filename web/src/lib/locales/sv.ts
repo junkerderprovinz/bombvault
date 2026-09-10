@@ -602,6 +602,7 @@ const sv: Partial<Translations> = {
   "folders.truncatedList": "Första 500 posterna visas",
   "folders.retry": "Försök igen",
   "folders.emptySelectionBlocked": "Minst en mapp måste förbli vald. Stäng av Inkludera i schema om du inte vill säkerhetskopiera något från den här containern.",
+  "folders.previewPaths": "{n} sökvägar",
 
   // Notifications
   "notify.title": "Aviseringar",

@@ -594,6 +594,7 @@ const vi: Partial<Translations> = {
   "folders.truncatedList": "Hiển thị 500 mục đầu tiên",
   "folders.retry": "Thử lại",
   "folders.emptySelectionBlocked": "Ít nhất một thư mục phải được chọn. Để không sao lưu gì của container này, hãy tắt đưa vào lịch trình.",
+  "folders.previewPaths": "{n} đường dẫn",
 
   // Notifications
   "notify.title": "Thông báo",

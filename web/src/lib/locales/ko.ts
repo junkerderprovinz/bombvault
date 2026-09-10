@@ -594,6 +594,7 @@ const ko: Partial<Translations> = {
   "folders.truncatedList": "처음 500개 항목 표시됨",
   "folders.retry": "다시 시도",
   "folders.emptySelectionBlocked": "최소한 하나의 폴더는 선택된 상태로 유지해야 합니다. 이 컨테이너를 백업하지 않으려면 일정 포함을 끄세요.",
+  "folders.previewPaths": "{n}개 경로",
 
   // Notifications
   "notify.title": "알림",

@@ -599,6 +599,7 @@ const pt: Partial<Translations> = {
   "folders.truncatedList": "A mostrar as primeiras 500 entradas",
   "folders.retry": "Tentar novamente",
   "folders.emptySelectionBlocked": "Pelo menos uma pasta tem de permanecer selecionada. Para não fazer cópia de segurança de nada deste contentor, desativa a inclusão no agendamento.",
+  "folders.previewPaths": "{n} caminhos",
 
   // Notifications
   "notify.title": "Notificações",

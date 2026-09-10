@@ -608,6 +608,7 @@ const ms: Partial<Translations> = {
   "folders.truncatedList": "500 entri pertama dipaparkan",
   "folders.retry": "Cuba lagi",
   "folders.emptySelectionBlocked": "Sekurang-kurangnya satu folder mesti kekal dipilih. Untuk tidak membuat sandaran daripada kontena ini, matikan penyertaan dalam jadual.",
+  "folders.previewPaths": "{n} laluan",
   "stophook.title": "Hentikan bekas lain",
   "stophook.hint": "Hentikan bekas lain ini semasa bekas ini disandarkan (contohnya pangkalan data), kemudian mulakan semula selepas itu.",
   "stophook.noCandidates": "Tiada bekas terpasang lain ditemui.",

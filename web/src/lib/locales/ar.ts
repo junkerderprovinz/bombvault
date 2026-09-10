@@ -602,6 +602,7 @@ const ar: Partial<Translations> = {
   "folders.truncatedList": "أول 500 عنصر معروض",
   "folders.retry": "حاول مجددًا",
   "folders.emptySelectionBlocked": "يجب أن يبقى مجلد واحد محددًا على الأقل. لعدم نسخ هذا الحاوية احتياطيًا، أوقف تضمينها في الجدول الزمني.",
+  "folders.previewPaths": "{n} مسارات",
 
   // Notifications
   "notify.title": "الإشعارات",
