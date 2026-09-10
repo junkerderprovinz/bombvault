@@ -36,7 +36,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
 import { IconBitcoin, IconBuyMeACoffee, IconPayPal } from "../../components/donateMarks";
-import { IconGithub } from "../../components/glyphs";
+import { IconGithub, IconMail } from "../../components/glyphs";
 import { getHealth } from "../../lib/api";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { useT } from "../../lib/i18n";
@@ -138,6 +138,28 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
   );
 }
 
+/**
+ * The class pair that makes one of this card's buttons wear a brand.
+ *
+ * jdp, 2026-09-11: "alle button in der über card sollen ein farbiges logo
+ * haben und bei mousover farbig werden".
+ *
+ * Two classes and NO colour at this call site, deliberately. index.css owns
+ * every value: `.glim-brand-btn` spends them (mark at rest, brand fill on
+ * hover) and `.glim-brand-<name>` supplies them. Three per brand, and only one
+ * of the three is a token - the mark's resting colour, which is adjusted per
+ * theme because a published brand colour fails on one of our two button
+ * grounds every time. The other two are literals: a brand's true colour as
+ * the hover surface, and the ink measured against it.
+ *
+ * Passing them as inline style would have meant hex in this file and a new
+ * `style` prop on Button, which computes its own for the colour engine. A
+ * class costs neither.
+ */
+function brand(name: string): string {
+  return `glim-brand-btn glim-brand-${name}`;
+}
+
 export function AboutCard({ hueIndex }: { hueIndex?: number }) {
   const { t } = useT();
   const [version, setVersion] = useState<string | null>(null);
@@ -204,6 +226,7 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           labelKey="about.coffeeButton"
           glyph={<IconBuyMeACoffee />}
           tone="neutral"
+          className={brand("coffee")}
           onClick={() => window.open(COFFEE, "_blank", "noopener,noreferrer")}
         />
         <Button
@@ -211,6 +234,7 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           labelKey="about.crypto"
           glyph={<IconBitcoin />}
           tone="neutral"
+          className={brand("bitcoin")}
           onClick={() => setCryptoOpen(true)}
         />
         {PAYPAL !== "" && (
@@ -219,6 +243,7 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
             labelKey="about.paypal"
             glyph={<IconPayPal />}
             tone="neutral"
+            className={brand("paypal")}
             onClick={() => window.open(PAYPAL, "_blank", "noopener,noreferrer")}
           />
         )}
@@ -252,16 +277,32 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           labelKey="about.repo"
           glyph={<IconGithub />}
           tone="neutral"
+          className={brand("github")}
           onClick={() => window.open(REPO, "_blank", "noopener,noreferrer")}
         />
         {/* Subject only, never a body: a prefilled body reads as a form to fill
             in, and this is meant to be a message somebody writes. The product
             name rides in the subject so a mail arrives already saying which of
-            the workshop's tools it is about — one inbox serves them all. */}
+            the workshop's tools it is about — one inbox serves them all.
+
+            The only button on this card with no brand behind it, and the only
+            one that follows the COLOUR ENGINE. It reaches the workshop rather
+            than a third party, so it wears the app's own accent: the mark takes
+            --accent-text (the token that exists precisely for accent-coloured
+            graphics on an ordinary surface) and the hover takes the accent
+            itself. That also means it is the one button here that changes with
+            the user's accent and with rainbow mode, which the four brands may
+            not - a vendor's mark is not ours to repaint.
+
+            An envelope, passed explicitly like every other mark on this card.
+            It had no glyph at all until now, which made it the odd one out in
+            a row where jdp asked for all of them to carry one. */}
         <Button
           label={t("about.mail")}
           labelKey="about.mail"
+          glyph={<IconMail />}
           tone="neutral"
+          className={brand("house")}
           onClick={() =>
             window.open(
               `mailto:${MAIL}?subject=${encodeURIComponent(`BombVault ${t("about.mailSubject")}`)}`,

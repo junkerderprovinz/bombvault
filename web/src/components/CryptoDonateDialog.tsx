@@ -126,11 +126,20 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                 440px wide inside its own padding, so it still sits in open
                 space rather than filling the panel edge to edge.
 
-                It stays black on white in BOTH themes, and that is answered at
-                length in QRCode.tsx: a code drawn light-on-dark is inverted,
-                and the scanners that refuse one are exactly the wallet apps a
-                donor would use. */}
-            <QRCode value={network.address} size={224} />
+                It stays black on white in BOTH themes (jdp asked whether it
+                could go light in the dark theme, 2026-09-11, and chose to keep
+                it): a code drawn light-on-dark is inverted, the standard does
+                not describe one, and the scanners that refuse it are exactly
+                the wallet apps a donor would be holding. QRCode.tsx carries the
+                full argument.
+
+                What DOES change is the plate. `rounded-card` makes the white
+                square read as a deliberate card on the dark ground instead of
+                a raw slab with hard corners, which is what made it look out of
+                place. Safe to clip: the outermost four modules are the quiet
+                zone, which is white by spec, so a rounded corner never touches
+                a dark module. */}
+            <QRCode value={network.address} size={224} className="rounded-card" />
             {/* Whole, in one piece, in a mono face, and never shortened: an
                 address is read back by eye before somebody sends to it, so an
                 ellipsis in the middle turns the one string that has to be

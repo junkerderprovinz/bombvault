@@ -668,6 +668,32 @@
      takes it. See donateMarks.tsx's PATHS. */
   --coin-xrp: #ffffff;
 
+  /* The About card's brand marks, at REST, on a neutral button.
+     ------------------------------------------------------------------------
+     These are the brand colours ADJUSTED to be visible, not the brand colours
+     themselves - the hover fill below is where the true ones live. Measured
+     before choosing them, because the problem is not obvious until you do: a
+     brand colour is designed against white or against its own fill, and every
+     one of these fails on one of our two button grounds. On the light theme's
+     #d1d1d1, Bitcoin's #F7931A reads 1.5:1 and Buy Me a Coffee's #FFDD00
+     reads 1.14:1; on the dark theme's #525252, PayPal's #003087 and GitHub's
+     #181717 fail just as badly at the other end. A graphic needs 3:1.
+
+     So each mark gets the value that clears it on the ground it actually sits
+     on, per theme: the warm brands deepen for the light theme, the dark ones
+     lighten for the dark theme. Same treatment XRP already gets in the crypto
+     window, and the same reasoning --accent-text carries for the accent.
+     Measured after choosing: 5.7, 3.3, 3.1 and 7.7 to one on the dark ground,
+     3.2, 3.2, 8.7 and 11.9 on the light one.
+
+     The mail button is not here on purpose: it reaches the workshop rather
+     than a third party, so it wears the app's own accent and follows the
+     colour engine, which none of the brands may do. */
+  --brand-coffee:  #ffdd00;
+  --brand-bitcoin: #f7931a;
+  --brand-paypal:  #4fb5f0;
+  --brand-github:  #ffffff;
+
   --carbon-bg:        #161616;
   --carbon-surface:   #262626;
   --carbon-surface2:  #393939;
@@ -976,6 +1002,17 @@
 [data-theme="light"] {
   /* XRP's own near-black, which is right on a light ground. */
   --coin-xrp: #23292f;
+
+  /* The About card's brand marks on a LIGHT button (#d1d1d1) — see the dark
+     block's own note for the measurements and for why these are adjusted
+     rather than literal. The two cool brands can be their true colours here,
+     because a light ground is what those were drawn against; the two warm ones
+     are deepened until they clear 3:1, which yellow on light grey never does
+     at its published value (1.14:1, effectively a ghost). */
+  --brand-coffee:  #8a6d00;
+  --brand-bitcoin: #a85d00;
+  --brand-paypal:  #003087;
+  --brand-github:  #181717;
   color-scheme: light;
 
   /* GlimStone form-engine #1 — corrected against reference/tokens.css's
@@ -2110,6 +2147,78 @@ body {
 }
 [data-rainbow="reactive"] .glim-coin-tile:hover svg {
   fill: currentColor;
+}
+
+/* The About card's brand buttons (AboutCard).
+   ---------------------------------------------------------------------------
+   jdp, 2026-09-11: "alle button in der über card sollen ein farbiges logo
+   haben und bei mousover farbig werden". Two states, one rule between them.
+
+   AT REST the button is ordinary neutral chrome and only the MARK is
+   coloured, in --brand: the adjusted, per-theme value defined beside the
+   palette, because a brand's published colour fails on one of our two button
+   grounds every time.
+
+   ON HOVER the button becomes the brand — and here it is the TRUE colour,
+   --brand-fill, because the mark is no longer a small graphic on a grey
+   button, it IS the surface, which is the one ground every brand colour was
+   drawn for. Everything on it flips to --brand-ink, the mark included: the
+   same rule the crypto tiles follow, that a fixed colour on a fill somebody
+   else chose is a contrast nobody can predict. Set as CSS `fill`, which beats
+   the `fill` attribute donateMarks.tsx writes, so all five marks obey one rule
+   instead of four obeying it and Bitcoin's opting out.
+
+   The mail button carries no brand: it reaches the workshop rather than a
+   third party, so its call site passes the accent tokens and it follows the
+   user's accent and the rainbow, which the four brands deliberately do not. */
+.glim-brand-btn .glim-btn-glyph svg {
+  fill: var(--brand);
+  transition: fill 120ms;
+}
+.glim-brand-btn:hover:not(:disabled) {
+  background-color: var(--brand-fill);
+  color: var(--brand-ink);
+}
+.glim-brand-btn:hover:not(:disabled) .glim-btn-glyph svg {
+  fill: currentColor;
+}
+
+/* One block per brand: the adjusted resting mark (a token, because it changes
+   with the theme), then the true colour and its measured ink, which do not. */
+.glim-brand-coffee {
+  --brand: var(--brand-coffee);
+  --brand-fill: #ffdd00;
+  /* Buy Me a Coffee's own near-black, the ink their button uses. 13.8:1. */
+  --brand-ink: #0d0c22;
+}
+.glim-brand-bitcoin {
+  --brand: var(--brand-bitcoin);
+  --brand-fill: #f7931a;
+  --brand-ink: #161616; /* 7.9:1 */
+}
+.glim-brand-paypal {
+  --brand: var(--brand-paypal);
+  --brand-fill: #003087;
+  --brand-ink: #ffffff; /* 13.4:1 */
+}
+.glim-brand-github {
+  --brand: var(--brand-github);
+  --brand-fill: #181717;
+  --brand-ink: #ffffff; /* 18.3:1 */
+}
+
+/* The house's own button: the mail route, which reaches the workshop rather
+   than a third party. It is the one button in that row that follows the colour
+   engine, so all three values are engine tokens: --accent-text is the token
+   for accent-coloured GRAPHICS on an ordinary surface (it carries its own
+   light-theme value to clear WCAG, which is the same job --brand-* does for
+   the four brands), and the hover pair is the ordinary accent pairing. This
+   one changes with the user's accent and with rainbow mode; a vendor's mark
+   may not. */
+.glim-brand-house {
+  --brand: var(--accent-text);
+  --brand-fill: var(--accent);
+  --brand-ink: var(--accent-contrast);
 }
 
 /* Sidebar's Simple/Advanced view toggle (SidebarControls, its own
