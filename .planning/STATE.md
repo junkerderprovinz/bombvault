@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 2
 current_phase_name: Container Panel Tree Selection
-status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-09-10T14:31:54.269Z"
+status: verifying
+stopped_at: Completed 02-03-PLAN.md (phase 02 fully executed; ready for verification)
+last_updated: "2026-09-10T15:01:08.918Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 2 execution started
-state_head: c6ef55c2d71926524612fa2955d3909bd5f5d095
+state_head: 5ba49147edd616f65af45607f32d86ea71c42c1c
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 25
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 
 Phase: 2 (Container Panel Tree Selection) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-10 — Phase 2 execution started
 
 Progress: [████████████████████] 5/5 plans ([███░░░░░░░] 25%)
@@ -65,6 +65,7 @@ Progress: [████████████████████] 5/5 pla
 | Phase 01 P05 | 12min | 3 tasks | 8 files |
 | Phase 02 P01 | 39m | 2 tasks | 47 files |
 | Phase 02 P02 | 10m | 2 tasks | 2 files |
+| Phase 02 P03 | 22m | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,10 @@ Recent decisions affecting current work:
 - [Phase 2]: PATCH failure revert re-derives from the live mirror via set-difference inverse of the failed mutation (never a captured snapshot), so a newer toggle always survives a failing save (Pitfall 5 closed, plan-02)
 - [Phase 2]: Custom add/remove ride the same serialized queue as structural saves (toast-only failure preserved) so no two backupPaths PATCHes from the editor are ever concurrent (T-02-08, Rule 2 deviation in 02-02)
 - [Phase 2]: Plan-02 outcome-row tests are pins (rows landed with plan-01 deviations), mutation-verified - fallback/truncated mutations fail 5 of the new cases
+- [Phase 2]: Keyboard acts on flatNodes (the render walk's flat output with parent links): focus order, geometry, and DOM can never diverge; stale focusPath falls back to firstRoot keeping exactly one tabbable treeitem
+- [Phase 2]: aria-expanded on every expandable treeitem, honestly omitted on leaves (APG end-node rule, RESEARCH Pitfall 7) — both directions pinned in tests
+- [Phase 2]: Sub-includes the server classifies as custom (exact-match rule, service.go) are absorbed under their reachable mount via partitionCustomPaths — presentation-only filter; addCustom duplicate guard keeps the raw list; one presentation per path (D-02/INTEG-01)
+- [Phase 2]: Space routes through the exact onToggle pipeline clicks use (one D-04 guard, one save queue — T-02-10); inner native controls keep their own key semantics via the keydown target guard
 
 ### Pending Todos
 
@@ -121,6 +126,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T14:31:54.113Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-09-10T15:01:08.756Z
+Stopped at: Completed 02-03-PLAN.md (phase 02 fully executed; ready for verification)
 Resume file: None

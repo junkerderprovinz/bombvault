@@ -70,7 +70,7 @@ Plans:
   4. The whole tree is operable by keyboard (arrows to move/expand/collapse, Space to toggle) with ARIA tree/checkbox roles: `aria-expanded` on parents, `aria-checked="mixed"` for partials, `aria-level`/`setsize`/`posinset` on lazy nodes
   5. An unreadable directory renders a muted "no access" row visually distinct from a plain empty directory; expansion never hangs on an infinite spinner or silently collapses
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 
 Plans:
 **Wave 1**
@@ -83,7 +83,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03-PLAN.md — APG keyboard + aria geometry (TREE-05), sub-include absorption + expansion restore + integration test (INTEG-01), phase gate (full suite, lint, build, committed web/dist, Go regression)
+- [x] 02-03-PLAN.md — APG keyboard + aria geometry (TREE-05), sub-include absorption + expansion restore + integration test (INTEG-01), phase gate (full suite, lint, build, committed web/dist, Go regression)
 
 **UI hint**: yes
 
@@ -131,6 +131,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Selection Engine & Restore Safety | 5/5 | Complete    | 2026-09-10 |
-| 2. Container Panel Tree Selection | 2/3 | In Progress|  |
+| 2. Container Panel Tree Selection | 3/3 | In Progress|  |
 | 3. Selection Trust & Controls | 0/TBD | Not started | - |
 | 4. File Sets Parity | 0/TBD | Not started | - |
