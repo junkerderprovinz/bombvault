@@ -27,12 +27,20 @@ const browseCalls: string[] = [];
 const patches: { name: string; paths: string[]; opts?: { selectionSource?: string } }[] = [];
 let mountsReply: ContainerMountsResponse;
 let browseReplies: (BrowseResponse | Promise<BrowseResponse>)[] = [];
+// Same deferred-reply machinery the SelectionTree dom harness uses: a pending
+// promise pins a save in flight so the queue's serialize/drain behavior (and
+// the Phase 3 reset/narrowing contracts over it) is observable step by step.
+let patchReplies: ({ ok: boolean; error?: string } | Promise<{ ok: boolean; error?: string }>)[] = [];
+let mountsCalls = 0;
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    getContainerMounts: () => Promise.resolve(mountsReply),
+    getContainerMounts: () => {
+      mountsCalls += 1;
+      return Promise.resolve(mountsReply);
+    },
     browse: (path: string) => {
       browseCalls.push(path);
       const reply = browseReplies.shift() ?? { ok: true, dirs: [], status: "ok", truncated: false };
@@ -40,7 +48,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     },
     setBackupPaths: (name: string, paths: string[], opts?: { selectionSource?: string }) => {
       patches.push({ name, paths, opts });
-      return Promise.resolve({ ok: true });
+      return Promise.resolve(patchReplies.shift() ?? { ok: true });
     },
   };
 });
@@ -79,9 +87,9 @@ function plexListing(): BrowseResponse {
   };
 }
 
-function EditorHarness({ open }: { open: boolean }) {
+function EditorHarness({ open, lastBackup }: { open: boolean; lastBackup?: number | null }) {
   const { t } = useT();
-  return <FoldersEditor name="tree" stack="" open={open} t={t} />;
+  return <FoldersEditor name="tree" stack="" open={open} t={t} lastBackup={lastBackup ?? null} />;
 }
 
 function Providers({ children }: { children: React.ReactNode }) {
@@ -92,10 +100,10 @@ function Providers({ children }: { children: React.ReactNode }) {
   );
 }
 
-async function renderEditor(open = true) {
+async function renderEditor(open = true, lastBackup: number | null = null) {
   const view = render(
     <Providers>
-      <EditorHarness open={open} />
+      <EditorHarness open={open} lastBackup={lastBackup} />
     </Providers>,
   );
   // Flush the getContainerMounts load effect.
@@ -109,6 +117,8 @@ beforeEach(() => {
   browseCalls.length = 0;
   patches.length = 0;
   browseReplies = [];
+  patchReplies = [];
+  mountsCalls = 0;
   mountsReply = mountsResponse();
 });
 
@@ -153,7 +163,7 @@ describe("FoldersEditor tree integration (INTEG-01, D-02, D-04, D-05)", () => {
     expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked")).toBe("true");
     expect(
       screen.getByText(
-        "At least one folder must stay selected. To back up none of this container, turn off Include in schedule.",
+        "At least one folder must stay selected. To back up none of this container, turn off Include in schedule. To return to automatic detection, use Reset selection.",
       ),
     ).toBeTruthy();
   });
@@ -513,5 +523,231 @@ describe("per-root reviewable exclusions (INTEG-03, D-03, D-04)", () => {
     });
     expect(browseCalls).toEqual([]);
     expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["Media", "transcoding"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Reset selection and the narrowing note (Phase 3, plan 03 — INTEG-04 D-05,
+// SELECT-03 D-02).
+//
+// The reset is the ONE sanctioned exit back to auto-detection: confirmed
+// (fail tone, both consequences named), serialized through the same one-deep
+// queue as toggles, body exactly {backupPaths: []} with NO selectionSource
+// (the Phase 1 guard is strictly tree-source-gated, so the reset passes it by
+// design — while tree toggles keep the guard live), and non-optimistic: the
+// editor refetches on ok and the served auto-detected state replaces
+// everything, remembered exclusions gone. The narrowing note is event-driven
+// (D-02): a successful save whose attempted include count is lower than the
+// last-SAVED count, gated on container.lastBackup, announced as a polite
+// role="status" warn line, transient for the editor session only.
+// ---------------------------------------------------------------------------
+
+const NARROWED_NOTE_EN =
+  "The selection now covers fewer folders than before. From the next backup on, snapshots will contain only the selected folders. Existing snapshots are unchanged.";
+const RESET_CONFIRM_EN =
+  "Reset the folder selection? The container returns to automatic detection (appdata default) and all remembered exclusions are removed.";
+
+describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, SELECT-03 D-02)", () => {
+  it("Reset selection: fail-tone confirm naming both consequences, one serialized PATCH {backupPaths: []} with no selectionSource, refetch renders the auto-detected selection", async () => {
+    mountsReply = mountsResponse({ excluded: [`${MOUNT}/transcoding`] });
+    await renderEditor(true, 1700000000);
+    // Pre-reset: the remembered exclusion is visible and the mount included.
+    expect(screen.getByRole("button", { name: /1 exclusions/ })).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Reset selection" }));
+    });
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText(RESET_CONFIRM_EN)).toBeTruthy();
+    // Fail tone: the confirm control is the destructive treatment (Pitfall 2's
+    // companion — the dialog itself carries the weight, not the trigger).
+    const confirmBtn = within(dialog).getByRole("button", { name: "Confirm" });
+    expect(confirmBtn.className).toContain("bg-statusFailSolid");
+
+    // The server's post-reset state: auto-detected default, exclusions gone.
+    mountsReply = mountsResponse();
+    await act(async () => {
+      fireEvent.click(confirmBtn);
+    });
+
+    // Exactly one PATCH for the reset, empty list, NO selection source: the
+    // Phase 1 guard is strictly gated on the literal "tree", so only this
+    // shape reaches auto-detection (the api helper omits the key when no
+    // source is passed — pinned here by the helper call carrying no opts).
+    expect(patches).toHaveLength(1);
+    expect(patches[0]).toEqual({ name: "tree", paths: [] });
+    expect(patches[0].opts).toBeUndefined();
+    // On ok the editor refetches mounts (non-optimistic: state comes from the
+    // served response, never a local emptying).
+    expect(mountsCalls).toBe(2);
+    expect(screen.queryByRole("button", { name: /1 exclusions/ })).toBeNull();
+    expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("the reset save does not fire the narrowing note (auto-detection is not a narrowed selection)", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/user/media`, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+      excluded: [`${MOUNT}/transcoding`],
+    });
+    await renderEditor(true, 1700000000);
+    mountsReply = mountsResponse(); // post-reset: one auto-detected include
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Reset selection" }));
+    });
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    });
+    expect(screen.queryByText(NARROWED_NOTE_EN)).toBeNull();
+  });
+
+  it("a failed reset PATCH toasts the verbatim server error, shakes the button, and leaves selection state untouched", async () => {
+    mountsReply = mountsResponse({ excluded: [`${MOUNT}/transcoding`] });
+    await renderEditor(true, 1700000000);
+    patchReplies = [{ ok: false, error: "scrubbed failure" }];
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Reset selection" }));
+    });
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    });
+    expect(screen.getByText("scrubbed failure")).toBeTruthy();
+    expect(patches).toHaveLength(1);
+    // Non-optimistic failure: nothing was ever mutated locally.
+    expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("button", { name: /1 exclusions/ })).toBeTruthy();
+    expect(mountsCalls).toBe(1); // no refetch on failure
+    expect(screen.getByRole("button", { name: "Reset selection" }).className).toContain("glim-shake");
+  });
+
+  it("a successful narrowing save with lastBackup non-null renders the role=status warn note under the tree", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/user/media`, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+    });
+    await renderEditor(true, 1700000000);
+    // 2 includes at load; unchecking one mount narrows the attempted save 2 -> 1.
+    const box = within(screen.getByRole("treeitem", { name: /\/media ← / })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(box);
+    });
+    // Queried by text (the success toast is a role="status" live region too);
+    // the role/token are then asserted on the element itself.
+    const note = screen.getByText(NARROWED_NOTE_EN);
+    expect(note.tagName).toBe("P");
+    expect(note.getAttribute("role")).toBe("status");
+    expect(note.className).toContain("text-statusWarn");
+    // The note sits under the tree, before the Add row (D-02 placement).
+    const add = screen.getByRole("button", { name: "Add" });
+    expect(note.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("no narrowing note when lastBackup is null (never backed up: nothing narrowed relative to a snapshot)", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/user/media`, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+    });
+    await renderEditor(true, null);
+    const box = within(screen.getByRole("treeitem", { name: /\/media ← / })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(box);
+    });
+    expect(screen.queryByText(NARROWED_NOTE_EN)).toBeNull();
+  });
+
+  it("no narrowing note on a net-widening save", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/user/media`, dest: "/media", selected: false, isAppdata: false, reachable: true },
+      ],
+    });
+    await renderEditor(true, 1700000000);
+    const box = within(screen.getByRole("treeitem", { name: /\/media ← / })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(box); // 1 -> 2: widening
+    });
+    expect(screen.queryByText(NARROWED_NOTE_EN)).toBeNull();
+  });
+
+  it("a queue-collapsed burst nets to narrowing: 5 -> 3 -> 4 during one in-flight save fires the note and drains once", async () => {
+    const mounts: MountInfo[] = Array.from({ length: 5 }, (_, i) => ({
+      source: `${HOST_ROOT}/user/appdata/d${String(i)}`,
+      dest: `/d${i}`,
+      selected: true,
+      isAppdata: false,
+      reachable: true,
+    }));
+    mountsReply = mountsResponse({ mounts });
+    await renderEditor(true, 1700000000);
+    let resolveFirst!: (r: { ok: boolean }) => void;
+    patchReplies = [new Promise((res) => (resolveFirst = res))];
+    // First toggle starts the in-flight attempt (live list: 4 includes).
+    const d0 = within(screen.getByRole("treeitem", { name: /appdata\/d0/ })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(d0);
+    });
+    // While in flight: uncheck d1 (3), then re-check d1 (4). The burst
+    // collapses into the next drain; the ATTEMPTED count of the first
+    // attempt (4) is already lower than the load-time 5, so the note fires
+    // on that attempt's ok — comparing against last-SAVED, not pre-mutation,
+    // is what nets stacked toggles correctly (RESEARCH Pitfall 3).
+    const d1 = within(screen.getByRole("treeitem", { name: /appdata\/d1/ })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(d1);
+    });
+    await act(async () => {
+      fireEvent.click(d1);
+    });
+    await act(async () => {
+      resolveFirst({ ok: true });
+    });
+    expect(screen.getByText(NARROWED_NOTE_EN)).toBeTruthy();
+    // The burst drained as ONE further fetch carrying the live 4-include list.
+    expect(patches).toHaveLength(2);
+    expect(patches[1].paths).toEqual(
+      Array.from({ length: 5 }, (_, i) => `${HOST_ROOT}/user/appdata/d${String(i)}`).filter((p) => !p.endsWith("d0")),
+    );
+    expect(patches[1].opts).toEqual({ selectionSource: "tree" });
+  });
+
+  it("the hint teaches the reset and no longer claims unticking everything reverts to the automatic default", async () => {
+    await renderEditor();
+    expect(screen.getByText(/Unticking everything is blocked; use Reset selection to return to the automatic appdata default\.$/)).toBeTruthy();
+    expect(screen.queryByText(/reverts to the automatic appdata default/)).toBeNull();
+  });
+
+  it("the narrowing note is transient: closing and reopening the section clears it (no server-side include-count history)", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: `${HOST_ROOT}/user/media`, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+    });
+    const view = await renderEditor(true, 1700000000);
+    const box = within(screen.getByRole("treeitem", { name: /\/media ← / })).getByRole("checkbox", { hidden: true });
+    await act(async () => {
+      fireEvent.click(box);
+    });
+    expect(screen.getByText(NARROWED_NOTE_EN)).toBeTruthy();
+
+    view.rerender(
+      <Providers>
+        <EditorHarness open={false} lastBackup={1700000000} />
+      </Providers>,
+    );
+    view.rerender(
+      <Providers>
+        <EditorHarness open lastBackup={1700000000} />
+      </Providers>,
+    );
+    await act(async () => {});
+    expect(screen.queryByText(NARROWED_NOTE_EN)).toBeNull();
   });
 });
