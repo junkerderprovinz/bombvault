@@ -1,10 +1,11 @@
 ---
 phase: 2
 slug: container-panel-tree-selection
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-09-10
+reviewed_at: 2026-09-10
 ---
 
 # Phase 2 — UI Design Contract
@@ -269,18 +270,23 @@ consistency with FolderBrowser).
 
 ## UI Considerations
 
-Applicable state considerations resolved: 8 covered, 0 backstop, 0 unresolved.
+Resolved by the ui-consideration-probe over 4 surfaces (E1 the `role="tree"` listing,
+E2 the node row, E3 the D-04 guard line, E4 the unreadable-node error row;
+kind-confirmation authored in `--auto` mode — kinds corrected per surface, not just
+heuristic-detected). 18 applicable considerations: 18 resolved (explicit), 0 backstop,
+0 unresolved. Empty-state and error-state COPY lives in Copywriting Contract above;
+this section carries the shape-rooted STATE coverage.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| empty | tree (list-collection) | ✅ covered | Zero roots → existing `folders.empty` line; expanded empty dir → one muted `folder.none` child row (distinct from loading) |
-| loading | tree nodes (list-collection, interactive-control) | ✅ covered | Per-node spinner + `folder.loading` muted row while the browse call is in flight; spinner always clears (finally-settled state); "expanded but loading" keyboard state defined (second Right = no-op) |
-| error | tree nodes (list-collection) | ✅ covered | status trio → muted "no access" row: scrubbed server error verbatim, `folder.couldNotRead` fallback, retry Button; silent-collapse and infinite-spinner paths explicitly forbidden |
-| populated | tree (list-collection) | ✅ covered | Typical volume = mount root + tens of dirs; 12px mono rows, 16px/level indent, clamp(12rem,55vh,32rem) scroll region; cap-500 sibling sets covered by overflow row |
-| partial | tree nodes (form/list) | ✅ covered | Mixed state IS the partial state: indeterminate checkbox + `aria-checked="mixed"`, derived purely from (I, E) — works for collapsed/never-loaded subtrees (TREE-04) |
-| overflow | tree (list-collection) | ✅ covered | truncated:true → muted non-interactive "First 500 entries shown" notice row, excluded from setsize/posinset; scroll region clamps total height |
-| zero-one-many | roots list (list-collection) | ✅ covered | Zero → `folders.empty`; one/many mounts render identically to today (same rows, now expandable); no singular/plural copy added |
-| long-text | node names/paths (static-content, interactive-control) | ✅ covered | `truncate` + `title={path}` on every node span (`min-w-0 flex-1`); `dir="ltr"` + `break-all` preserved on root rows showing `dest ← source`; deep nesting shrinks the name area, never the indent |
+| Category | Element(s) | Status | Truth (acceptance criterion) |
+|----------|------------|--------|------------------------------|
+| empty | E1 tree | ✅ resolved (explicit) | Zero roots → existing `folders.empty` line; expanded empty dir → one muted `folder.none` child row, visibly distinct from loading |
+| loading | E1 tree; E2 node row; E4 error row | ✅ resolved (explicit) | Per-node spinner + `folder.loading` muted row while browse is in flight; state settled in `finally` (no infinite spinner); "expanded but loading" keyboard state defined (second Right = no-op); retry re-enters the in-flight state |
+| error | E1 tree; E2 node row; E4 error row | ✅ resolved (explicit) | status trio → muted no-access row: scrubbed server error verbatim, `folder.couldNotRead` fallback, retry Button; selection state untouched; silent-collapse and infinite-spinner paths explicitly forbidden |
+| populated | E1 tree | ✅ resolved (explicit) | Typical volume = mount root + tens of dirs; 12px mono rows, 16px/level indent, clamp(12rem,55vh,32rem) scroll region; cap-500 sibling sets covered by the overflow row |
+| partial | E1 tree | ✅ resolved (explicit) | Mixed state IS the partial state: indeterminate checkbox + `aria-checked="mixed"`, derived purely from (I, E) flat lists — correct for collapsed/never-loaded subtrees (TREE-04) |
+| overflow | E1 tree; E2 node row; E3 guard line; E4 error row | ✅ resolved (explicit) | truncated:true → muted non-interactive `folders.truncatedList` notice row excluded from setsize/posinset; scroll region clamps total tree height; node paths truncate + title; guard/error messages wrap as normal inline text (user-facing copy is never truncated) |
+| zero-one-many | E1 tree | ✅ resolved (explicit) | Zero → `folders.empty`; one/many mounts render identically to today (same rows, now expandable); no singular/plural copy added |
+| long-text | E1 tree; E2 node row; E3 guard line; E4 error row | ✅ resolved (explicit) | Node names/paths: `truncate` + `title={path}` on every node span (`min-w-0 flex-1`), `dir="ltr"`, `break-all` preserved on root rows showing `dest ← source`; deep nesting shrinks the name area, never the indent. Guard and error messages wrap (no truncate) |
 
 ---
 
@@ -349,11 +355,11 @@ Zero npm dependencies added this phase (RESEARCH: "Installation: NONE").
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-09-10 (gsd-ui-checker, 6/6 PASS)
