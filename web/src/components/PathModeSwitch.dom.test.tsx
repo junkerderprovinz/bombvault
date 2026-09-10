@@ -58,23 +58,29 @@ describe("PathModeSwitch — icon-only Selector integration", () => {
 
   // These two segments used to be pinned to a square glyph with `iconOnly`, in
   // every mode, which is the square badge jdp asked to abolish: neither the
-  // label mode nor the width system could reach them. They now follow the
-  // "tabs" axis like every other selector, and the accessible name survives
-  // the glyph-only mode, which is the part that must never regress.
-  it("follows the tabs label mode instead of being pinned to a glyph", () => {
-    setLabelMode("tabs", "textGlyph");
+  // label mode nor the width system could reach them. They follow the label
+  // engine now, and the accessible name survives the glyph-only mode, which is
+  // the part that must never regress.
+  //
+  // The axis is "buttons", not "tabs" (2026-09-11). This pair sits in a PATH
+  // ROW beside a text field and a browse button; it is a control, not a tab
+  // strip, so it obeys the setting a reader is changing when they change how
+  // buttons are labelled. Selector resolves that from its own size - see the
+  // axis tests in Selector.dom.test.tsx.
+  it("follows the buttons label mode instead of being pinned to a glyph", () => {
+    setLabelMode("buttons", "textGlyph");
     renderSwitch();
     expect(screen.getByRole("tab", { name: "Local" }).querySelector("span.truncate")).toBeTruthy();
     cleanup();
 
-    setLabelMode("tabs", "glyph");
+    setLabelMode("buttons", "glyph");
     renderSwitch();
     for (const tab of screen.getAllByRole("tab")) {
       expect(tab.querySelector("span.truncate")).toBeNull();
     }
     expect(screen.getByRole("tab", { name: "Local" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Remote" })).toBeTruthy();
-    setLabelMode("tabs", "textGlyph");
+    setLabelMode("buttons", "textGlyph");
   });
 
   it("starts in Local mode for a plain relative path, Remote mode for a restic remote URL", () => {

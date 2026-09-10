@@ -699,13 +699,16 @@ describe("Selector — glyph mode names its segments (#178)", () => {
   ];
 
   afterEach(() => {
-    // This axis is stored, so it would otherwise leak into every later file.
+    // Both axes are stored, so either would otherwise leak into every later
+    // file. "buttons" joined the list when a strip stopped always obeying
+    // "tabs" - see the axis test at the end of this block.
     setLabelMode("tabs", "textGlyph");
+    setLabelMode("buttons", "textGlyph");
     localStorage.clear();
   });
 
   it("falls back to the label when a hidden segment carries no tip of its own", () => {
-    setLabelMode("tabs", "glyph");
+    setLabelMode("buttons", "glyph");
     render(<Selector items={PLAIN} label="Test strip" active="a" onChange={() => {}} />);
     const alpha = screen.getByRole("tab", { name: "Alpha" });
     expect(alpha.querySelector("span.truncate")).toBeNull();
@@ -714,7 +717,7 @@ describe("Selector — glyph mode names its segments (#178)", () => {
   });
 
   it("lets an explicit tip win outright rather than joining it to the label", () => {
-    setLabelMode("tabs", "glyph");
+    setLabelMode("buttons", "glyph");
     render(<Selector items={WITH_TIPS} label="Path mode" active="local" onChange={() => {}} />);
     fireEvent.mouseEnter(screen.getByRole("tab", { name: "Local" }));
     // These tips are already written as the fuller sentence that REPLACES the
@@ -747,8 +750,36 @@ describe("Selector — glyph mode names its segments (#178)", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Pick a target folder first");
   });
 
-  it("joins `title` to the name once the label is hidden, keeping both", () => {
+  // A strip follows the axis its SIZE says it is: `lg` is the page-level tab
+  // strip and obeys "tabs", every other stage is a control in a form row and
+  // obeys "buttons".
+  //
+  // Reported (jdp, 2026-09-11: "die button Graceful, live-snapshot, lokal und
+  // offsite sind nicht richtig in der beschriftungsengine"). Every strip in
+  // the app used to read "tabs", so somebody who set Buttons to glyph-only
+  // watched the buttons change while the source toggle and the VM method
+  // switch beside them stayed put - obeying a setting nobody had touched.
+  //
+  // Both directions are asserted. One alone would pass on a component that
+  // simply reads the wrong axis for everything.
+  it("reads the buttons axis for a form-row strip, and only that one", () => {
     setLabelMode("tabs", "glyph");
+    render(<Selector items={PLAIN} label="Test strip" active="a" onChange={() => {}} />);
+    // Tabs is hiding labels and this strip does not care: its words stay.
+    expect(screen.getByRole("tab", { name: "Alpha" }).querySelector("span.truncate")).not.toBeNull();
+  });
+
+  it("reads the tabs axis for a page-level strip, and only that one", () => {
+    setLabelMode("buttons", "glyph");
+    render(
+      <Selector items={PLAIN} label="Test strip" size="lg" active="a" onChange={() => {}} />
+    );
+    // Buttons is hiding labels and the tab strip does not care.
+    expect(screen.getByRole("tab", { name: "Alpha" }).querySelector("span.truncate")).not.toBeNull();
+  });
+
+  it("joins `title` to the name once the label is hidden, keeping both", () => {
+    setLabelMode("buttons", "glyph");
     render(
       <Selector
         items={[{ id: "a", label: "Alpha", icon: <span />, title: "Busy right now" }]}

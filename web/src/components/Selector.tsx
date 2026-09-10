@@ -284,6 +284,7 @@ import {
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { useLabelMode } from "../lib/useLabelMode";
+import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
 
@@ -621,6 +622,8 @@ interface SelectorTabProps {
   style?: CSSProperties;
   onSelect: () => void;
   registerRef: (el: HTMLButtonElement | null) => void;
+  /** Which labelling axis this strip obeys - see `labelAxis` at the strip. */
+  axis: ControlAxis;
 }
 
 function SelectorTab({
@@ -633,11 +636,17 @@ function SelectorTab({
   style,
   onSelect,
   registerRef,
+  axis,
 }: SelectorTabProps) {
-  // #178: how much of a segment is shown follows the "tabs" axis, the same
-  // shared setting the Settings tab strip and every other horizontal selector
-  // obey, so the app has one answer rather than one per strip.
-  const labelMode = useLabelMode("tabs");
+  // #178: how much of a segment is shown follows the axis the STRIP resolved -
+  // see `labelAxis` there. It used to be hard-coded to "tabs" for every strip
+  // in the app, which is what jdp reported (2026-09-11: "die button Graceful,
+  // live-snapshot, lokal und offsite sind nicht richtig in der
+  // beschriftungsengine"): those four are form-row controls standing beside
+  // buttons, so somebody who sets Buttons to glyph-only watches the buttons
+  // change and these stay put, because they were quietly obeying the Tabs
+  // setting instead.
+  const labelMode = useLabelMode(axis);
 
   // Whether this segment's own words are off the screen right now — either
   // because the call site pinned it to its glyph (`iconOnly`) or because the
@@ -784,9 +793,25 @@ export function Selector(props: SelectorProps) {
   // pipeline, three call sites that pass it. No `stretch` alias any more
   // either: the "chip"-only guard existed to stop `equalWidth` engaging on a
   // "track" segment, and there is no "track" to protect.
+  // WHICH AXIS THIS STRIP OBEYS, resolved once and handed to every segment.
+  //
+  // `lg` is the page-level scale and nothing else: the Settings tab strip and
+  // the Theme/Shape/Motion/Labels pickers, per SIZE's own note above. Those
+  // ARE tabs, so they follow the Tabs setting. Every other stage is a control
+  // in a form row - the source toggle, the VM method switch, the weekday
+  // pills, the disclosure triggers - and those follow the Buttons setting,
+  // because that is what they stand beside and what a reader is changing when
+  // they change it.
+  //
+  // Derived from the size rather than asked for at the call site, because the
+  // split already exists there and a second, hand-set flag would be a second
+  // place to get it wrong. It is the same line `.glim-seg` (lg, rail height)
+  // and `.glim-seg-btn` (the rest, button height) already draw in the
+  // stylesheet.
+  const labelAxis: ControlAxis = size === "lg" ? "tabs" : "buttons";
   // The strip needs the axis too, not just each segment: whether to pin is a
   // decision about the whole row.
-  const labelModeForStrip = useLabelMode("tabs");
+  const labelModeForStrip = useLabelMode(labelAxis);
 
   //   A STRIP WHOSE LABELS ARE OFF SCREEN DOES NOT PIN AT ALL. The pinned
   // width is measured from TEXT and floored at MIN_PINNED_WIDTH (200px) — for
@@ -1171,6 +1196,7 @@ export function Selector(props: SelectorProps) {
           <SelectorTab
             key={item.id}
             item={item}
+            axis={labelAxis}
             many={many}
             on={on}
             disabled={itemDisabled}
