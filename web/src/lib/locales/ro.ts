@@ -18,7 +18,7 @@ const ro: Partial<Translations> = {
   "about.coffeeButton": "Fă-mi cinste cu o cafea",
   "about.crypto": "Cripto",
   "about.cryptoTitle": "Donează în cripto",
-  "about.cryptoIntro": "Alege un lanț, apoi scanează codul sau copiază adresa.",
+  "about.cryptoIntro": "Alege o monedă și o rețea, apoi scanează codul sau copiază adresa.",
   "about.cryptoNetworks": "Rețele",
   "about.cryptoNoTag": "Nu sunt necesare destination tag sau memo.",
   "about.version": "Versiune",

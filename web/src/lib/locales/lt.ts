@@ -23,7 +23,7 @@ const lt: Partial<Translations> = {
   "about.coffeeButton": "Pavaišinti kava",
   "about.crypto": "Kripto",
   "about.cryptoTitle": "Paremti kriptovaliuta",
-  "about.cryptoIntro": "Pasirink grandinę, tada nuskaityk kodą arba nukopijuok adresą.",
+  "about.cryptoIntro": "Pasirink monetą ir tinklą, tada nuskaityk kodą arba nukopijuok adresą.",
   "about.cryptoNetworks": "Tinklai",
   "about.cryptoNoTag": "Destination tag ir memo nereikia.",
   "about.version": "Versija",

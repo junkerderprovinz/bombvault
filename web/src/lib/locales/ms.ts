@@ -23,7 +23,7 @@ const ms: Partial<Translations> = {
   "about.coffeeButton": "Belanja saya kopi",
   "about.crypto": "Kripto",
   "about.cryptoTitle": "Derma dengan kripto",
-  "about.cryptoIntro": "Pilih rantaian, kemudian imbas kod atau salin alamat.",
+  "about.cryptoIntro": "Pilih syiling dan rangkaian, kemudian imbas kod atau salin alamat.",
   "about.cryptoNetworks": "Rangkaian",
   "about.cryptoNoTag": "Destination tag dan memo tidak diperlukan.",
   "about.version": "Versi",

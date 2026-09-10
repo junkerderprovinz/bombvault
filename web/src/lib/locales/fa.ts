@@ -23,7 +23,7 @@ const fa: Partial<Translations> = {
   "about.coffeeButton": "یک قهوه مهمانم کن",
   "about.crypto": "رمزارز",
   "about.cryptoTitle": "کمک با رمزارز",
-  "about.cryptoIntro": "یک شبکه را انتخاب کن، سپس کد را اسکن کن یا نشانی را کپی کن.",
+  "about.cryptoIntro": "یک ارز و یک شبکه انتخاب کن، سپس کد را اسکن کن یا نشانی را کپی کن.",
   "about.cryptoNetworks": "شبکه‌ها",
   "about.cryptoNoTag": "به Destination Tag یا Memo نیازی نیست.",
   "about.version": "نسخه",

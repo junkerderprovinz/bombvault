@@ -298,8 +298,19 @@ describe("buttons", () => {
         for (let j = i - 1; j >= 0 && above.length < 3; j--) {
           if (lines[j].trim()) above.unshift(lines[j]);
         }
-        const shell = /className=[`"]([^`"]*\brelative\b[^`"]*\bmax-w-[^`"]*)/.exec(above.join("\n"));
+        const joined = above.join("\n");
+        const shell = /className=[`"]([^`"]*\brelative\b[^`"]*\bmax-w-[^`"]*)/.exec(joined);
         if (!shell || /\bp[xl]?-\d/.test(shell[1])) continue;
+        // A wrapper BETWEEN the shell and the heading that already insets it.
+        // Then the heading is not flush with the card edge and this rule has
+        // nothing to say about it — it is the ordinary dialog header row, the
+        // shape ConfirmDialog has always had. Without this the test reads the
+        // next `p-N rounded-card` it can find below the heading, which is only
+        // the heading's own box when nothing sits between them: a window whose
+        // first content block happens to be a padded card gets reported for
+        // markup that is correct. Found when one grew a QR panel directly under
+        // its header ([3554]).
+        if (/\bpx-\d/.test(joined.slice(shell.index + shell[0].length))) continue;
         const box = /\bp-(\d+)\b/.exec(
           lines.slice(i, i + 16).filter((l) => /rounded-card|bg-carbon-surface/.test(l)).join("\n")
         );

@@ -18,7 +18,7 @@ const da: Partial<Translations> = {
   "about.coffeeButton": "Køb mig en kaffe",
   "about.crypto": "Krypto",
   "about.cryptoTitle": "Doner med krypto",
-  "about.cryptoIntro": "Vælg en kæde, og scan så koden eller kopiér adressen.",
+  "about.cryptoIntro": "Vælg en mønt og et netværk, og scan så koden eller kopiér adressen.",
   "about.cryptoNetworks": "Netværk",
   "about.cryptoNoTag": "Hverken destination tag eller memo er nødvendigt.",
   "about.version": "Version",

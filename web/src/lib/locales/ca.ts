@@ -23,7 +23,7 @@ const ca: Partial<Translations> = {
   "about.coffeeButton": "Convida’m a un cafè",
   "about.crypto": "Cripto",
   "about.cryptoTitle": "Donar amb cripto",
-  "about.cryptoIntro": "Tria una cadena i després escaneja el codi o copia l'adreça.",
+  "about.cryptoIntro": "Tria una moneda i una xarxa, després escaneja el codi o copia l'adreça.",
   "about.cryptoNetworks": "Xarxes",
   "about.cryptoNoTag": "No calen destination tag ni memo.",
   "about.version": "Versió",

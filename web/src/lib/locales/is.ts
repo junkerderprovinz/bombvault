@@ -23,7 +23,7 @@ const is: Partial<Translations> = {
   "about.coffeeButton": "Bjóddu mér kaffi",
   "about.crypto": "Rafmynt",
   "about.cryptoTitle": "Styrkja með rafmynt",
-  "about.cryptoIntro": "Veldu keðju og skannaðu svo kóðann eða afritaðu vistfangið.",
+  "about.cryptoIntro": "Veldu mynt og netkerfi, skannaðu svo kóðann eða afritaðu vistfangið.",
   "about.cryptoNetworks": "Netkerfi",
   "about.cryptoNoTag": "Hvorki destination tag né memo er nauðsynlegt.",
   "about.version": "Útgáfa",

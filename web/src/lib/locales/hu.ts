@@ -18,7 +18,7 @@ const hu: Partial<Translations> = {
   "about.coffeeButton": "Hívj meg egy kávéra",
   "about.crypto": "Kripto",
   "about.cryptoTitle": "Támogatás kriptóval",
-  "about.cryptoIntro": "Válassz láncot, majd olvasd be a kódot vagy másold ki a címet.",
+  "about.cryptoIntro": "Válassz érmét és hálózatot, majd olvasd be a kódot vagy másold ki a címet.",
   "about.cryptoNetworks": "Hálózatok",
   "about.cryptoNoTag": "Nem kell sem destination tag, sem memo.",
   "about.version": "Verzió",

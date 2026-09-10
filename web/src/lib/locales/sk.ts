@@ -23,7 +23,7 @@ const sk: Partial<Translations> = {
   "about.coffeeButton": "Kúp mi kávu",
   "about.crypto": "Krypto",
   "about.cryptoTitle": "Prispieť kryptom",
-  "about.cryptoIntro": "Vyber reťazec, potom naskenuj kód alebo skopíruj adresu.",
+  "about.cryptoIntro": "Vyber mincu a sieť, potom naskenuj kód alebo skopíruj adresu.",
   "about.cryptoNetworks": "Siete",
   "about.cryptoNoTag": "Destination tag ani memo nie sú potrebné.",
   "about.version": "Verzia",

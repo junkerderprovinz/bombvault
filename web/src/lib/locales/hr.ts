@@ -23,7 +23,7 @@ const hr: Partial<Translations> = {
   "about.coffeeButton": "Počasti me kavom",
   "about.crypto": "Kripto",
   "about.cryptoTitle": "Doniraj kriptom",
-  "about.cryptoIntro": "Odaberi lanac, zatim skeniraj kod ili kopiraj adresu.",
+  "about.cryptoIntro": "Odaberi novčić i mrežu, zatim skeniraj kod ili kopiraj adresu.",
   "about.cryptoNetworks": "Mreže",
   "about.cryptoNoTag": "Destination tag ni memo nisu potrebni.",
   "about.version": "Verzija",

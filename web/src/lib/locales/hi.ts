@@ -23,7 +23,7 @@ const hi: Partial<Translations> = {
   "about.coffeeButton": "मुझे कॉफ़ी पिलाएँ",
   "about.crypto": "क्रिप्टो",
   "about.cryptoTitle": "क्रिप्टो से दान करें",
-  "about.cryptoIntro": "एक चेन चुनें, फिर कोड स्कैन करें या पता कॉपी करें।",
+  "about.cryptoIntro": "एक कॉइन और नेटवर्क चुनें, फिर कोड स्कैन करें या पता कॉपी करें।",
   "about.cryptoNetworks": "नेटवर्क",
   "about.cryptoNoTag": "destination tag या memo की ज़रूरत नहीं है।",
   "about.version": "संस्करण",

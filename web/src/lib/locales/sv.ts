@@ -18,7 +18,7 @@ const sv: Partial<Translations> = {
   "about.coffeeButton": "Bjud på en kaffe",
   "about.crypto": "Krypto",
   "about.cryptoTitle": "Donera med krypto",
-  "about.cryptoIntro": "Välj en kedja och skanna sedan koden eller kopiera adressen.",
+  "about.cryptoIntro": "Välj ett mynt och ett nätverk och skanna sedan koden eller kopiera adressen.",
   "about.cryptoNetworks": "Nätverk",
   "about.cryptoNoTag": "Varken destination tag eller memo behövs.",
   "about.version": "Version",

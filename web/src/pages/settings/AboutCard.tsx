@@ -31,6 +31,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
+import { IconBitcoin, IconBuyMeACoffee } from "../../components/donateMarks";
 import { IconGithub } from "../../components/glyphs";
 import { getHealth } from "../../lib/api";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
@@ -172,15 +173,23 @@ export function AboutCard({ hueIndex }: { hueIndex?: number }) {
           is the card's own rule: a sentence directly above the thing it asks
           for. */}
       <div className="flex flex-wrap items-center gap-2">
+        {/* Both marks are passed here rather than resolved from the label key,
+            which is the house rule for a BRAND (see the GitHub button below).
+            A pattern on "coffee" would put another company's cup on anything
+            that mentions coffee, and one on "crypto" would put the Bitcoin
+            symbol on settings that have nothing to do with it. jdp asked for
+            both by name (2026-09-10). */}
         <Button
           label={t("about.coffeeButton")}
           labelKey="about.coffeeButton"
+          glyph={<IconBuyMeACoffee />}
           tone="neutral"
           onClick={() => window.open(COFFEE, "_blank", "noopener,noreferrer")}
         />
         <Button
           label={t("about.crypto")}
           labelKey="about.crypto"
+          glyph={<IconBitcoin />}
           tone="neutral"
           onClick={() => setCryptoOpen(true)}
         />

@@ -18,7 +18,7 @@ const th: Partial<Translations> = {
   "about.coffeeButton": "เลี้ยงกาแฟ",
   "about.crypto": "คริปโท",
   "about.cryptoTitle": "บริจาคด้วยคริปโท",
-  "about.cryptoIntro": "เลือกเชน แล้วสแกนโค้ดหรือคัดลอกที่อยู่",
+  "about.cryptoIntro": "เลือกเหรียญและเครือข่าย แล้วสแกนโค้ดหรือคัดลอกที่อยู่",
   "about.cryptoNetworks": "เครือข่าย",
   "about.cryptoNoTag": "ไม่ต้องใช้ destination tag และไม่ต้องใช้ memo",
   "about.version": "รุ่น",

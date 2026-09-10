@@ -18,7 +18,7 @@ const uk: Partial<Translations> = {
   "about.coffeeButton": "Пригостити кавою",
   "about.crypto": "Крипто",
   "about.cryptoTitle": "Підтримати криптовалютою",
-  "about.cryptoIntro": "Обери мережу, потім скануй код або скопіюй адресу.",
+  "about.cryptoIntro": "Обери монету та мережу, потім скануй код або скопіюй адресу.",
   "about.cryptoNetworks": "Мережі",
   "about.cryptoNoTag": "Ані destination tag, ані memo не потрібні.",
   "about.version": "Версія",

@@ -18,7 +18,7 @@ const fr: Partial<Translations> = {
   "about.coffeeButton": "Offrir un café",
   "about.crypto": "Crypto",
   "about.cryptoTitle": "Faire un don en crypto",
-  "about.cryptoIntro": "Choisissez une chaîne, puis scannez le code ou copiez l'adresse.",
+  "about.cryptoIntro": "Choisissez une monnaie et un réseau, puis scannez le code ou copiez l'adresse.",
   "about.cryptoNetworks": "Réseaux",
   "about.cryptoNoTag": "Ni destination tag ni memo ne sont nécessaires.",
   "about.version": "Version",

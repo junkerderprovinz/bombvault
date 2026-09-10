@@ -18,7 +18,7 @@ const vi: Partial<Translations> = {
   "about.coffeeButton": "Mời tôi ly cà phê",
   "about.crypto": "Tiền mã hoá",
   "about.cryptoTitle": "Ủng hộ bằng tiền mã hoá",
-  "about.cryptoIntro": "Chọn một chuỗi, rồi quét mã hoặc sao chép địa chỉ.",
+  "about.cryptoIntro": "Chọn một đồng tiền và một mạng, rồi quét mã hoặc sao chép địa chỉ.",
   "about.cryptoNetworks": "Mạng",
   "about.cryptoNoTag": "Không cần destination tag hay memo.",
   "about.version": "Phiên bản",

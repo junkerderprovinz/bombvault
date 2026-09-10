@@ -18,7 +18,7 @@ const tr: Partial<Translations> = {
   "about.coffeeButton": "Bana bir kahve ısmarla",
   "about.crypto": "Kripto",
   "about.cryptoTitle": "Kripto ile bağış",
-  "about.cryptoIntro": "Bir zincir seç, sonra kodu tara veya adresi kopyala.",
+  "about.cryptoIntro": "Bir kripto para ve ağ seç, sonra kodu tara veya adresi kopyala.",
   "about.cryptoNetworks": "Ağlar",
   "about.cryptoNoTag": "Destination tag da memo da gerekmiyor.",
   "about.version": "Sürüm",

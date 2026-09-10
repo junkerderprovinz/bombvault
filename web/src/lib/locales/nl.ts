@@ -18,7 +18,7 @@ const nl: Partial<Translations> = {
   "about.coffeeButton": "Trakteer op koffie",
   "about.crypto": "Crypto",
   "about.cryptoTitle": "Doneren met crypto",
-  "about.cryptoIntro": "Kies een keten en scan dan de code of kopieer het adres.",
+  "about.cryptoIntro": "Kies een munt en een netwerk en scan dan de code of kopieer het adres.",
   "about.cryptoNetworks": "Netwerken",
   "about.cryptoNoTag": "Een destination tag of memo is niet nodig.",
   "about.version": "Versie",

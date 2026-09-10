@@ -18,7 +18,7 @@ const ja: Partial<Translations> = {
   "about.coffeeButton": "コーヒーをおごる",
   "about.crypto": "暗号資産",
   "about.cryptoTitle": "暗号資産で寄付",
-  "about.cryptoIntro": "チェーンを選び、コードを読み取るかアドレスをコピーしてください。",
+  "about.cryptoIntro": "通貨とネットワークを選び、コードを読み取るかアドレスをコピーしてください。",
   "about.cryptoNetworks": "ネットワーク",
   "about.cryptoNoTag": "destination tag も memo も不要です。",
   "about.version": "バージョン",

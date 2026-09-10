@@ -23,7 +23,7 @@ const et: Partial<Translations> = {
   "about.coffeeButton": "Osta mulle kohv",
   "about.crypto": "Krüpto",
   "about.cryptoTitle": "Anneta krüptoga",
-  "about.cryptoIntro": "Vali ahel ja seejärel skanni kood või kopeeri aadress.",
+  "about.cryptoIntro": "Vali münt ja võrk, seejärel skanni kood või kopeeri aadress.",
   "about.cryptoNetworks": "Võrgud",
   "about.cryptoNoTag": "Destination tag'i ega memo pole vaja.",
   "about.version": "Versioon",

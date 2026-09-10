@@ -23,7 +23,7 @@ const lv: Partial<Translations> = {
   "about.coffeeButton": "Uzsauc kafiju",
   "about.crypto": "Kripto",
   "about.cryptoTitle": "Ziedot ar kripto",
-  "about.cryptoIntro": "Izvēlies ķēdi, tad noskenē kodu vai nokopē adresi.",
+  "about.cryptoIntro": "Izvēlies monētu un tīklu, tad noskenē kodu vai nokopē adresi.",
   "about.cryptoNetworks": "Tīkli",
   "about.cryptoNoTag": "Destination tag un memo nav vajadzīgi.",
   "about.version": "Versija",

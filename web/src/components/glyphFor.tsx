@@ -20,7 +20,6 @@ import {
   IconCancel,
   IconClearSelection,
   IconCoffee,
-  IconWallet,
   IconEye,
   IconForward,
   IconInfo,
@@ -126,26 +125,23 @@ const RULES: Rule[] = [
   // switches — without swallowing every key that merely mentions locality.
   [/\.local$|Local$/i, () => <IconLocal />],
 
-  // The About card's two non-brand offers. Both are nouns rather than verbs,
-  // which is why nothing above them matched: this table is built around what a
-  // button DOES, and "coffee" and "mail" are what it is ABOUT. They earn their
-  // own rules rather than an explicit glyph at the call site because the
-  // meanings are general — any future "write to us" wears the same envelope.
+  // Giving and writing in, as MEANINGS. Both are nouns rather than verbs, which
+  // is why nothing above them matched: this table is built around what a button
+  // DOES, and "coffee" and "mail" are what it is ABOUT. They earn rules rather
+  // than an explicit glyph because the meanings are general — any future "write
+  // to us" wears the same envelope.
   //
-  // The third button on that card, the repository one, is deliberately NOT
-  // here: it wears GitHub's own mark, and a brand mark must never be reachable
-  // by pattern (a rule keyed on "repo" would put GitHub's logo on repository
-  // settings that have nothing to do with GitHub). It is passed explicitly at
-  // its one call site. See gen_glyphs.py's IconGithub entry for the full rule.
+  // NONE of the About card's four buttons resolves through here any more, and
+  // that is the point rather than an oversight: every one of them goes to a
+  // named company, so each carries that company's own mark, passed explicitly
+  // at the call site (GitHub, Buy Me a Coffee, Bitcoin). A brand must never be
+  // reachable by pattern — a rule keyed on "repo" would put GitHub's logo on
+  // repository settings that have nothing to do with GitHub, and one keyed on
+  // "coffee" would put another company's cup on anything that mentions coffee.
+  // These two rules stay for the generic sites: a plain cup for a donation
+  // route that is nobody's brand, and an envelope for any address at all. See
+  // gen_glyphs.py's IconGithub entry for the full reasoning.
   [/coffee|donate|sponsor/i, () => <IconCoffee />],
-  // The second way to give, and the reason it cannot share the cup: the
-  // two buttons stand in one row under one sentence, and two offers
-  // wearing one mark is the collision this table exists to avoid. A
-  // WALLET rather than a coin and never a Bitcoin symbol, because the
-  // window behind it offers five chains and a brand mark would name one
-  // of them while misleading about the other four. Anchored to the exact
-  // key: "crypto" anywhere else in this app means encryption.
-  [/^about\.crypto$/i, () => <IconWallet />],
   [/\.mail|contact|writeToUs/i, () => <IconMail />],
 
   // Places and configuration, last because they are the vaguest.
