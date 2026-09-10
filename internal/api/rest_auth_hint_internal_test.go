@@ -34,6 +34,18 @@ func TestRestAuthHint(t *testing.T) {
 			want: true,
 		},
 		{
+			// The message the program ACTUALLY shows, taken off a reporter's
+			// screenshot rather than composed here. Every case above carries the
+			// repository URL; this one cannot, because runError keeps the most
+			// informative stderr line and restic prints the URL on the next one,
+			// which lastReason steps over as boilerplate. The hint therefore
+			// never fired on the single path #194 is about, and the reporter met
+			// the bare 401 again two releases after it was "fixed".
+			name: "the message BombVault itself shows, which carries no URL",
+			msg:  "restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized",
+			want: true,
+		},
+		{
 			// An S3 403 is a different problem with different causes (a wrong
 			// access key, a bucket policy, a clock skew), and the rest-server
 			// advice would send that user looking for an htpasswd file that

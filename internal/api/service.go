@@ -3344,6 +3344,13 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 	// mode's failure (the user's actual configured encryption setting) instead of a
 	// silent false/false, so the UI can show the real reason (issue: roachman,
 	// off-site "not reachable" with no detail).
+	//
+	// This is the one place that holds the repository URL and the credentials it
+	// was tried with at the same time, so a 401 whose cause is the two disagreeing
+	// gets named here rather than guessed at downstream (#194).
+	if named := restPathUserMismatch(primaryErr, repo, mode.Env); named != nil {
+		return false, false, named
+	}
 	return false, false, primaryErr
 }
 

@@ -201,6 +201,14 @@ func scrubBypassMessage(err error) (string, bool) {
 		// Same deal again: the ZFS dataset/pool names ARE the message, and
 		// necessarily contain "/" — see errZvolRebaseFailed.
 		return err.Error(), true
+	case errors.Is(err, errRestPathUser):
+		// This one is here for a different reason than its neighbours: the
+		// message holds no path-shaped content at all (two htpasswd-user words,
+		// built by restPathUserMismatch, never a secret). It bypasses because it
+		// has to reach the operator INSTEAD OF restAuthHint's generic two-cause
+		// list further down, which would otherwise replace a message naming the
+		// exact difference with one listing the possibilities.
+		return err.Error(), true
 	}
 	return "", false
 }
@@ -256,12 +264,41 @@ func scrubError(err error) string {
 // it. Caught by the test, not by reading the line back.
 var restStatus401 = regexp.MustCompile(`(^|[^0-9])401([^0-9]|$)`)
 
+// isAuthRefusal reports whether a lowercased restic message is a rejection
+// rather than any other failure. Shared with restPathUserMismatch so the two
+// cannot drift on what counts as a 401.
+func isAuthRefusal(low string) bool {
+	return restStatus401.MatchString(low) || strings.Contains(low, "unauthorized")
+}
+
+// isRestBackendMessage reports whether a lowercased restic message came from the
+// REST backend.
+//
+// It takes TWO markers, and the second one is the whole point. The first version
+// asked only for "rest:" in the message, on the assumption that a failure names
+// the repository it failed on. The message a BombVault user actually sees does
+// not: runError builds it from the most informative stderr line, which for a
+// refused rest-server is
+//
+//	restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized
+//
+// restic prints the URL underneath that, on its "Is there a repository at the
+// following location?" line, which lastReason deliberately steps over as
+// boilerplate. So the hint written for issue #194 never fired on the one path
+// that issue is about, and the reporter got the bare 401 again in v8.6.x. Every
+// case in the first test carried a URL because they were composed by hand rather
+// than taken from the running program.
+//
+// "unexpected HTTP response" is restic's own REST-backend phrasing (backend/rest
+// formats exactly that string). S3, sftp and the local backend word their
+// failures differently, so this stays as narrow as the "rest:" marker was.
+func isRestBackendMessage(low string) bool {
+	return strings.Contains(low, "rest:") || strings.Contains(low, "unexpected http response")
+}
+
 func restAuthHint(msg string) string {
 	low := strings.ToLower(msg)
-	if !restStatus401.MatchString(low) && !strings.Contains(low, "unauthorized") {
-		return ""
-	}
-	if !strings.Contains(low, "rest:") {
+	if !isAuthRefusal(low) || !isRestBackendMessage(low) {
 		return ""
 	}
 	return "the rest-server rejected these credentials (401). Two things cause almost every one of these. " +
