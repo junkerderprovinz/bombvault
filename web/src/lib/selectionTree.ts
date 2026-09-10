@@ -138,6 +138,37 @@ export function toFlatList(includes: ReadonlySet<string>, exclusions: ReadonlySe
   return [...inc, ...exc.map((e) => EXCLUSION_PREFIX + e)];
 }
 
+/** Split custom-row paths into under-mount (absorbed by the tree) and
+ *  standalone entries (INTEG-01, D-02, RESEARCH Q1).
+ *
+ * The server classifies a stored include as custom when it is not EXACTLY a
+ * mount root (service.go ContainerMounts — matched[cp] only on equality), so
+ * a sub-include under a reachable mount arrives as a custom row. Rendering it
+ * as one would duplicate the path on screen (once under its mount, once as a
+ * level-1 row). The tree instead absorbs it: the entry stays in the (I, E)
+ * mirror — which already renders its mount mixed via the whitelist start-state
+ * and the sub-include checked once browsed — and is filtered from the custom
+ * row list. Exact mount-root equality is NOT a sub-include (that path IS the
+ * mount row), and the test is segment-aligned like every prefix here:
+ * "/mnt/user/appdata/plex2" is a sibling of "/mnt/user/appdata/plex", not a
+ * descendant. Only REACHABLE mounts absorb — the caller passes their sources;
+ * an unreachable mount cannot be browsed, so its sub-includes keep their
+ * standalone rows. */
+export function partitionCustomPaths(
+  customPaths: readonly string[],
+  mountSources: readonly string[],
+): { underMount: string[]; standalone: string[] } {
+  const underMount: string[] = [];
+  const standalone: string[] = [];
+  for (const raw of customPaths) {
+    const host = cleanPath(raw);
+    if (host === ".") continue;
+    if (mountSources.some((m) => isStrictlyUnder(host, m))) underMount.push(host);
+    else standalone.push(host);
+  }
+  return { underMount, standalone };
+}
+
 /** Classify a node from (I, E) alone (RESEARCH Pattern 1, the pinned shape):
  *  excluded when at/under an E entry (exclusion dominates — the classifier
  *  stays total even for an equal include/exclude pair the reducer can never

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { listContainers, deleteBackups, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setBackupPaths, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError } from "../lib/api";
 import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
-import { applyToggle, toFlatList } from "../lib/selectionTree";
+import { applyToggle, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
@@ -971,6 +971,24 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
     });
   }
 
+  // Sub-include absorption (INTEG-01, D-02, RESEARCH Q1): the server files
+  // every include that is not EXACTLY a mount root under custom[], so a
+  // sub-include under a reachable mount arrives here as a custom row. Those
+  // entries stay in the includes mirror (their mount then classifies mixed
+  // via the whitelist start-state and the sub-include renders checked inside
+  // the tree once browsed) but are filtered from the RENDERED custom rows —
+  // one presentation of every path, never a duplicate level-1 row beside the
+  // mount that already contains it. Only reachable mounts absorb: an
+  // unreachable mount cannot be browsed, so its sub-includes keep standalone
+  // rows. addCustom's duplicate guard above still checks the RAW custom list,
+  // so an absorbed path cannot be re-added as a row either.
+  const { standalone: standaloneCustom } = partitionCustomPaths(
+    custom.map((c) => c.path),
+    mounts.filter((m) => m.reachable).map((m) => m.source),
+  );
+  const standaloneSet = new Set(standaloneCustom);
+  const customRows = custom.filter((c) => standaloneSet.has(c.path));
+
   if (!open) return null;
 
   return (
@@ -1001,7 +1019,7 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
       {!loading && (mounts.length > 0 || custom.length > 0) && (
         <SelectionTree
           mounts={mounts}
-          customPaths={custom}
+          customPaths={customRows}
           includes={includes}
           exclusions={exclusions}
           hostSourceRoot={hostSourceRoot}
