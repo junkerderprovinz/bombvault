@@ -14,7 +14,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **TREE-03**: Partially-selected parents display a mixed/indeterminate state (`aria-checked="mixed"`, derived from children); re-activating a remembered-partial checkbox restores its prior partial state
 - [x] **TREE-04**: On reopen, selection state is reconstructed from the saved `backupPaths` set — fully-included, partially-included, and excluded sub-branches are all distinguishable
 - [ ] **TREE-05**: Full keyboard navigation + ARIA tree/checkbox roles (APG patterns: arrow expand/collapse/move, Space toggle, `aria-expanded` on parents, `aria-level`/`setsize`/`posinset` for lazy nodes)
-- [ ] **TREE-06**: Unreadable vs empty directories are distinguished per node — muted "no access" row vs plain empty; no infinite spinners, no silent collapses
+- [x] **TREE-06**: Unreadable vs empty directories are distinguished per node — muted "no access" row vs plain empty; no infinite spinners, no silent collapses
 
 ### Browse Backend
 
@@ -99,7 +99,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TREE-03 | Phase 2 | Complete |
 | TREE-04 | Phase 2 | Complete |
 | TREE-05 | Phase 2 | Pending |
-| TREE-06 | Phase 2 | Pending |
+| TREE-06 | Phase 2 | Complete |
 | INTEG-01 | Phase 2 | Complete |
 | SELECT-03 | Phase 3 | Pending |
 | INTEG-03 | Phase 3 | Pending |

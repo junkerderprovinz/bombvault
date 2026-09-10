@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 2
 current_phase_name: Container Panel Tree Selection
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-09-10T14:01:10.116Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-09-10T14:31:54.269Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 2 execution started
-state_head: 673193fa6736ea51e8ac760d7c4e91bb02fa0242
+state_head: c6ef55c2d71926524612fa2955d3909bd5f5d095
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 25
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 ## Current Position
 
 Phase: 2 (Container Panel Tree Selection) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 2 execution started
 
@@ -64,6 +64,7 @@ Progress: [████████████████████] 5/5 pla
 | Phase 01 P01-04 | 17min | 2 tasks | 5 files |
 | Phase 01 P05 | 12min | 3 tasks | 8 files |
 | Phase 02 P01 | 39m | 2 tasks | 47 files |
+| Phase 02 P02 | 10m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,10 @@ Recent decisions affecting current work:
 - [Phase 2]: The exclusion list below a node IS the D-01 remembered-partial memory: unchecking a parent keeps strictly-below exclusions stored dormant; no second UI-side memory exists
 - [Phase 2]: browseCache lives for the editor lifetime (useRef Map in FoldersEditor); rejected and ok:false browse responses are evicted so Try again genuinely refetches
 - [Phase 2]: Minimal D-04 empty-selection block pulled forward from plan 02 (Rule 3): the i18n orphan test fails on any en key nothing renders
+- [Phase 2]: FoldersEditor saves serialize through a one-deep queue over a ref mirror (inFlight/dirty + pendingDesc); the drain sends the LIVE mirror's latest full list once, so rapid toggles in one React batch each see their predecessor
+- [Phase 2]: PATCH failure revert re-derives from the live mirror via set-difference inverse of the failed mutation (never a captured snapshot), so a newer toggle always survives a failing save (Pitfall 5 closed, plan-02)
+- [Phase 2]: Custom add/remove ride the same serialized queue as structural saves (toast-only failure preserved) so no two backupPaths PATCHes from the editor are ever concurrent (T-02-08, Rule 2 deviation in 02-02)
+- [Phase 2]: Plan-02 outcome-row tests are pins (rows landed with plan-01 deviations), mutation-verified - fallback/truncated mutations fail 5 of the new cases
 
 ### Pending Todos
 
@@ -116,6 +121,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T14:01:09.966Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-09-10T14:31:54.113Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
