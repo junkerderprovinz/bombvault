@@ -33,7 +33,7 @@ hadolint Dockerfile
 3. `git tag vX.Y.Z && git push origin vX.Y.Z` → the tag build publishes `:X.Y.Z / :X.Y / :X / :latest` to GHCR + Docker Hub.
 4. `gh release create vX.Y.Z --title "vX.Y.Z" --notes-file .github/release-notes/vX.Y.Z.md` (title = version only).
 5. Verify all Docker Hub tags return 200, then reply to any fixed issue **once** and close it.
-6. **Pull the new image onto the maintainer's own box and recreate the container there** — a release that sits on Docker Hub and not on the server it was written for is not finished. `docker pull junkerderprovinz/bombvault:latest`, then RECREATE (a restart keeps running the old image): `docker_xml_to_cmd` on `my-BombVault.xml` prints the full run command from the saved template, so nothing about paths, ports or variables is lost. Check the running thing, not the image: `/api/health` has to name the new version.
+6. **Pull the new image onto the maintainer's own box and recreate the container there** — a release that sits on Docker Hub and not on the server it was written for is not finished. `docker pull junkerderprovinz/bombvault:latest`, then RECREATE, because a restart keeps running the old image: `/usr/local/emhttp/plugins/dynamix.docker.manager/scripts/rebuild_container BombVault` is Unraid's own force-update path — it rebuilds from the saved template, so no path, port or variable is lost, and it drops the orphaned image afterwards. Check the running thing, not the image: `/api/health` has to name the new version.
 
 Version SemVer is 3-digit. Main builds stamp `v<lastTag>+main.<sha>` into the binary; tag builds use the tag.
 
