@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **SELECT-01**: Tree state normalizes to/from the existing flat `backupPaths` set — store maximal included paths (highest ticked node) + exclusion sub-paths below included roots; drop redundant descendants
 - [x] **SELECT-02**: Persistence format unchanged — zero migration; existing deployments keep their saved `backupPaths` selections working without action
-- [ ] **SELECT-03**: Effective-selection preview — the panel shows what will actually be backed up per mount ("N paths"), matching exactly the positional paths handed to restic (explicit sources bypass excludes, so the effective set must equal the ticked paths)
+- [x] **SELECT-03**: Effective-selection preview — the panel shows what will actually be backed up per mount ("N paths"), matching exactly the positional paths handed to restic (explicit sources bypass excludes, so the effective set must equal the ticked paths)
 - [x] **SELECT-04**: Whitelist start-state — starting from nothing checked and ticking keep-lists works through the same normalization (no special-casing)
 
 ### Domain Integration
@@ -45,7 +45,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Restic Engine
 
-- [ ] **RESTIC-01**: Per-mount/root `CACHEDIR.TAG` toggle maps to restic `--exclude-caches` in `BackupArgs` (argv change covered by `restic_args_test.go`)
+- [x] **RESTIC-01**: Per-mount/root `CACHEDIR.TAG` toggle maps to restic `--exclude-caches` in `BackupArgs` (argv change covered by `restic_args_test.go`)
 
 ## v2 Requirements
 
@@ -101,10 +101,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TREE-05 | Phase 2 | Complete |
 | TREE-06 | Phase 2 | Complete |
 | INTEG-01 | Phase 2 | Complete |
-| SELECT-03 | Phase 3 | Pending |
+| SELECT-03 | Phase 3 | Complete |
 | INTEG-03 | Phase 3 | Complete |
 | INTEG-04 | Phase 3 | Backend landed (Phase 1); UI semantics pending |
-| RESTIC-01 | Phase 3 | Pending |
+| RESTIC-01 | Phase 3 | Complete |
 | INTEG-02 | Phase 4 | Pending |
 
 **Coverage:**

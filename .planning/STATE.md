@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 3
 current_phase_name: Selection Trust & Controls
-status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-09-10T19:32:42.246Z"
+status: verifying
+stopped_at: Completed 03-03-PLAN.md (phase 3 complete)
+last_updated: "2026-09-10T20:14:49.890Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 3 execution started
-state_head: 0e86f5455d587cbaa0a9d5c11096c1c23fbf397c
+state_head: 27a29a556eb65bc35dfb2c0cb55d35aa01e490b7
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 
 Phase: 3 (Selection Trust & Controls) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-10 — Phase 3 execution started
 
 Progress: [████████████████████] 8/8 plans ([█████░░░░░] 50%)
@@ -70,6 +70,7 @@ Progress: [████████████████████] 8/8 pla
 | Phase 02 P03 | 22m | 3 tasks | 6 files |
 | Phase 03 P01 | 13min | 2 tasks | 9 files |
 | Phase 03 P02 | 10min | 2 tasks | 46 files |
+| Phase 3 P03 | 40m | 3 tasks | 48 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Phase 3 plan 02: preview counts stored maximal includes at-or-under the root only (include above the root does not count) - exactly the per-root toFlatList membership, so the visible number equals the bare positionals the next backup hands restic
 - [Phase 03]: Phase 3 plan 02: count and exclusions list are existence-unfiltered by design (A3/Pitfall 5) - stale/unreachable paths stay counted and listed; folders.notReachable/customMissing warn at row level
 - [Phase 03]: Phase 3 plan 02: exclusions disclosure is a plain button (backupOrder precedent) tabbable outside the roving set; expansion is per-root component state deliberately NOT persisted (audit view, not navigation comfort); active and dormant roots render the identical section
+- [Phase 3]: Reset selection rides the serialized queue as a no-source {backupPaths:[]} descriptor - the strictly tree-gated Phase 1 guard passes it by omission, making the confirmed reset the one sanctioned exit to auto-detection
+- [Phase 3]: CACHEDIR flips are a second owed class in the one PATCH queue: the drain composes a single body from the owed classes (T-03-07), caches failure reverts only when the live map still equals the attempted flip
 
 ### Pending Todos
 
@@ -137,6 +140,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T19:32:41.990Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-09-10T20:14:49.637Z
+Stopped at: Completed 03-03-PLAN.md (phase 3 complete)
 Resume file: None

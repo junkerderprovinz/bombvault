@@ -102,7 +102,7 @@ Plans:
   3. Unchecking the last checked folder in a mount produces an explicit, documented outcome — the item never silently flips to the empty-list auto-detection fallback
   4. A per-mount/root CACHEDIR.TAG toggle sits with the selection controls, and a backup of that item maps it to restic `--exclude-caches` in the built argv (covered by `restic_args_test.go`)
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 
 Plans:
 **Wave 1**
@@ -112,7 +112,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-03-PLAN.md — Interactions + gate: per-attempt queue source, Reset selection (PATCH [] without tree source, confirm, refetch-on-ok), narrowing note (lastSavedCount + lastBackup), CACHEDIR toggle UI over plan 01 fields, 5 i18n keys + 2 text changes x 42 locales, phase gate (INTEG-04, SELECT-03, RESTIC-01)
+- [x] 03-03-PLAN.md — Interactions + gate: per-attempt queue source, Reset selection (PATCH [] without tree source, confirm, refetch-on-ok), narrowing note (lastSavedCount + lastBackup), CACHEDIR toggle UI over plan 01 fields, 5 i18n keys + 2 text changes x 42 locales, phase gate (INTEG-04, SELECT-03, RESTIC-01)
 
 **UI hint**: yes
 
@@ -143,5 +143,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Selection Engine & Restore Safety | 5/5 | Complete    | 2026-09-10 |
 | 2. Container Panel Tree Selection | 3/3 | Complete    | 2026-09-10 |
-| 3. Selection Trust & Controls | 2/3 | In Progress|  |
+| 3. Selection Trust & Controls | 3/3 | In Progress|  |
 | 4. File Sets Parity | 0/TBD | Not started | - |
