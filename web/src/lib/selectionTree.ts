@@ -219,9 +219,16 @@ export function classifyNode(
  *                                   stored dormant (the remembered partial).
  *    checked via ancestor only  -> carve-out: add "!"+node to E; the parent
  *                                   include stays (TREE-02).
- *    mixed, no own include      -> whitelist unselect: drop every
- *                                   strictly-below include (pinned research
- *                                   reading of D-01, assumption A2).
+ *    mixed, no own include      -> two flavors by what sits below. An
+ *                                   include strictly below is the whitelist
+ *                                   unselect: drop each of those (pinned
+ *                                   research reading of D-01). Otherwise the
+ *                                   mixed-ness is a carve-out (an ancestor
+ *                                   include applies, the exclusion is
+ *                                   strictly below, nothing of ours lives
+ *                                   below to drop) and the click deselects
+ *                                   the branch — add "!"+node to E, same as
+ *                                   "checked via ancestor only".
  *    excluded                   -> re-include: delete every COVERING exclusion
  *                                   (deeper ones stay, so the branch returns
  *                                   as the same partial state); add an own
@@ -259,13 +266,32 @@ export function applyToggle(
       // this node out of that coverage.
       next.exclusions.add(node);
       return next;
-    case "mixed":
-      // Whitelist flavor (include strictly below, none at/under): deselect
-      // everything below without inventing coverage-level exclusions.
+    case "mixed": {
+      // Whitelist flavor (an include strictly below): deselect everything
+      // below without inventing coverage-level exclusions.
+      let dropped = false;
       for (const i of includes) {
-        if (isStrictlyUnder(i, node)) next.includes.delete(i);
+        if (isStrictlyUnder(i, node)) {
+          next.includes.delete(i);
+          dropped = true;
+        }
+      }
+      if (!dropped) {
+        // Carve-out flavor: an ANCESTOR include applies and the mixed-ness
+        // is an exclusion strictly below, so nothing of ours lives under
+        // this node to deselect — the loop above dropped nothing and this
+        // click used to be a silent no-op while the editor still PATCHed
+        // the identical list and toasted "Saved" (review CR-01). The click
+        // is a deselect of this whole branch, identical in spirit to the
+        // "checked" case above: the rendered box reads checked/indeterminate
+        // (an ancestor include covers it), so it can only turn OFF. The
+        // strictly-below exclusion stays stored — redundant under ours now,
+        // but preserved like every orphan E entry so the remembered partial
+        // wakes again if the branch is re-included.
+        next.exclusions.add(node);
       }
       return next;
+    }
     default:
       next.includes.add(node);
       return next;

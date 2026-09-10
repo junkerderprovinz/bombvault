@@ -136,6 +136,20 @@ describe("applyToggle D-01 transitions", () => {
       after: { includes: [], exclusions: ["/a/b"] },
     },
     {
+      // Carve-out flavor of mixed (review CR-01): an ancestor include
+      // applies, the exclusion is strictly below, and nothing of ours lives
+      // under the node to drop — the whitelist loop alone deleted zero
+      // entries, making the toggle a silent no-op that the editor still
+      // PATCHed and toasted "Saved" over. The click must be a state change:
+      // it deselects the branch exactly like the checked-via-ancestor case,
+      // and the deeper exclusion stays stored (redundant under ours, but
+      // preserved like every orphan E entry).
+      name: "carve-out mixed node deselects its branch as a ! exclusion",
+      before: { includes: ["/a"], exclusions: ["/a/b/c"] },
+      node: "/a/b",
+      after: { includes: ["/a"], exclusions: ["/a/b", "/a/b/c"] },
+    },
+    {
       name: "excluded node loses the covering exclusion and needs no new include (already covered)",
       before: { includes: ["/a"], exclusions: ["/a/b"] },
       node: "/a/b",

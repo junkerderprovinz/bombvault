@@ -907,6 +907,17 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
   function onToggle(hostPath: string): void {
     const pre = { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc };
     const next = applyToggle(hostPath, pre.includes, pre.exclusions);
+    // Defense-in-depth (review CR-01): a reducer no-op must never become a
+    // save. If both sets round-trip identical, the toggle changed nothing —
+    // return before the mirror apply, busy flag, and queue, so no request
+    // leaves and no "Saved" toast claims one did. Equal sizes plus one-way
+    // membership is set equality (subset of same cardinality).
+    const unchanged =
+      next.includes.size === pre.includes.size &&
+      [...next.includes].every((p) => pre.includes.has(p)) &&
+      next.exclusions.size === pre.exclusions.size &&
+      [...next.exclusions].every((p) => pre.exclusions.has(p));
+    if (unchanged) return;
     if (next.includes.size === 0) {
       setBlockedPath(hostPath);
       setRowShake((s) => ({ ...s, [hostPath]: (s[hostPath] ?? 0) + 1 }));
