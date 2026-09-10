@@ -68,7 +68,7 @@ awaiting: none — items 3 (human judgment review) and 4 (MVP-format decision) r
 ### 1. Visual UAT in a real browser (five new surfaces)
 expected: Preview line, exclusions disclosure, CACHEDIR switch + InfoBubble, reset confirm, narrowing note — rendered register, tone legibility and dialog feel (jsdom asserts classes/roles/wire bodies/text only)
 result: pass
-reported: orchestrator-executed over the live instance (see Current Test evidence); screenshots shown to the user in-session
+reported: orchestrator-executed over the live instance (see Current Test evidence); screenshots shown to the user in-session. POST-UAT finding from the user: the CACHEDIR sub-row (indent 16 = the depth-1 child indent) rendered between an expanded root and its first child, reading as that subtree's first subfolder. Fixed in ec4d4044: the row now renders AFTER the expanded children group (option chosen by the user over outdenting or hoisting out of the tree); dom pin relaxed from immediate-sibling to own-fragment scan; redeployed to the test instance (phase3-9d53ef7a) and re-verified live — root + subfolders contiguous, switch below the branch, collapsed roots unchanged (switch directly beneath)
 
 ### 2. Real-instance smoke (optional — same class as Phase 1's item)
 expected: On the Unraid instance, flip one mount's CACHEDIR switch, reload the panel (switch state persists from the mounts response), run a backup of that container, confirm the run's restic argv carries --exclude-caches (scrubbed server log: right of the verb, left of --); flip it off and confirm the next backup's argv does not
