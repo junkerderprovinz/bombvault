@@ -1,6 +1,6 @@
 ---
 phase: 01-selection-engine-restore-safety
-reviewed: 2026-09-09T19:21:36Z
+reviewed: 2026-09-10T12:00:00Z
 depth: standard
 files_reviewed: 19
 files_reviewed_list:
@@ -25,84 +25,153 @@ files_reviewed_list:
   - internal/store/targets.go
 findings:
   critical: 0
-  warning: 2
-  info: 2
-  total: 4
+  warning: 1
+  info: 4
+  total: 5
 status: issues_found
 ---
 
-# Phase 1: Code Review Report
+# Phase 01: Code Review Report
 
-**Reviewed:** 2026-09-09T19:21:36Z
+**Reviewed:** 2026-09-10T12:00:00Z
 **Depth:** standard
 **Files Reviewed:** 19
 **Status:** issues_found
 
-## Narrative Findings (AI reviewer)
+## Summary
 
-### Summary
+Reviewed the phase 1 selection engine and restore-safety work: the `!`-prefixed
+flat selection encoding (`internal/api/selection.go`), the save/read paths
+(`service.SetBackupPaths`, `ContainerMounts`, the stored-data guards), the WR-01
+gap closure (`excludedBranches` wired into `BackupDeps.Excludes` at
+`service.go:4243`), the RESTORE-01 snapshot-path mapping (`mapRestorePaths` +
+`chosenSnapshot` + `SkippedPaths` run note), and the additive `/api/browse`
+extension (os.Root containment, status kinds, hidden opt-in, 500-entry cap).
 
-Reviewed the full Phase 01 diff (base `121ee887`): the selection encoding keystone (`selection.go` + normalized `SetBackupPaths` + reader classification), the os.Root browse contract, RESTORE-01 longest-prefix mapping with pre-teardown abort, exclusion visibility + empty-selection guard, and the additive `RestoreDeps.SkippedPaths` plumbing — 19 source files at standard depth, cross-referenced against the four plans, CONTEXT/RESEARCH, the milestone ROADMAP success criteria, and the research SUMMARY's UI-rewrite rule.
+The core invariants hold under trace: positionals are always the maximal-root
+includes (`configuredBackupPaths` → `includesOnly`; lock L1/L14 respected — no
+exclusion ever becomes a positional, restore argv carries no excludes); argv
+discipline holds (`BackupArgs` puts `--exclude` before `--`, positionals after);
+`UpsertTarget`'s re-read really does carry `SelectedPaths`, so the WR-01 wiring
+is not silently dead; normalization is idempotent and order-canonical; the
+empty-selection guard returns before any store write; the exclusions-only
+explicit-none state is correctly excluded from the auto-detect fallback, the
+#181 "gone" guard, and the empty-selection refusal. House rules are respected
+in the tests (no new detached goroutines; POSIX-only fixtures skip loudly).
+`gofmt`, `go build`, and the targeted pure-Go tests all pass locally.
 
-The implementation is solid where it is riskiest. `mapRestorePaths` is pure, deterministic, and its two-pass longest-ancestor semantics are table-proven; the empty-intersection abort provably fires before any destructive teardown (`TestRestoreEmptyIntersection` inspects the docker call log). The os.Root browse path is genuinely containment-safe (`os.OpenRoot` + `Root.Open` + `ReadDir(-1)`), the traversal-rejection response stays byte-identical to the legacy shape, and the cap/truncated/hidden trio matches BROWSE-01..04. The restic positional contract tests correctly prove engine behavior (not just argv shape) against real restic 0.17.3 on CI and skip locally, per house convention. The empty-selection guard is correctly source-gated on `selectionSource:"tree"` and preserves the `[]` = auto-detection byte-for-byte. I traced and dropped several candidate findings after verification: `chosenSnapshot` first-match is safe because `resticAdapter.VerifySnapshot` rejects ambiguous prefix ids pre-teardown; `Root.Open` accepts trailing slashes and `./` components (probed empirically), so the legacy `?path=x/` form does not regress; success run rows carrying the skip note in `runs.error` follow the existing `finishRestoreRunWarn` precedent; and mapped restore paths cannot escape containment (segment-aligned strict prefixes of already-validated stored paths, plus the orchestrator SEC guard).
-
-Two warnings remain. The headline one (WR-01) is a real semantic gap at the heart of the phase: a mixed include+exclude selection is accepted, stored, and advertised as `excluded` by the mounts API, yet the next backup silently backs the "excluded" branch up. It is the deliberate locked L1/L14 design, but the locked position is justified by a factually wrong restic claim (WR-02), and nothing currently prevents Phase 2 from building UI on top of an API whose advertised semantics the engine does not deliver. Both should be resolved — by enforcement, by exclude-encoding, or by explicit documentation — before Phase 2 lands.
+One warning (a defense-in-depth asymmetry in the restore path) and four info
+items. No critical findings.
 
 ## Warnings
 
-### WR-01: Mixed include+exclude selections are stored and advertised as exclusions, but the engine silently backs the "excluded" branch up
+### WR-01: Mapped restore selectors bypass the mount-root revalidation applied to the stored list
 
-**File:** `internal/api/selection.go:118-124` (with `internal/api/service.go:3817-3874`, `internal/api/service.go:3783-3795`, `internal/api/service.go:3916-3922`)
-**Classification:** WARNING
-**Issue:** A client can store the selection `["/x", "!/x/branch"]`. It passes validation, survives `PruneMaximal` per-class pruning (`selection.go:53-60`: "an included root and an excluded branch deliberately coexist"), and persists via `SetBackupPaths` (`service.go:3817-3874`). The read-back paths then advertise semantics the engine never enforces: `GET /api/containers/{name}/mounts` renders `excluded:["branch"]` (`service.go:3787`), and the stored pair round-trips as "this branch is deselected." But the backup path compiles the selection through `includesOnly` (`selection.go:124`, consumed at `service.go:3919`), so the next run hands restic the positional `["/x"]` with zero derived excludes (L14) — and restic backs up **all** of `/x`, `branch` included. Snapshot `Paths` will read `[<mount root>]`, so even the Roadmap's own success criterion 2 ("the resulting snapshot's `Paths` contain the selected folders and nothing more") is only half-met: positionally yes, content-wise no. For a backup product this is a silent contract violation with user-visible consequences: a user who believes `transcoding` is excluded accumulates gigabytes of unwanted data and, worse, a restore will resurrect data they believed was deselected. This matches the hard-error class `.planning/research/ARCHITECTURE.md:146` describes ("silently wins as backed up"). The mitigation "the UI decomposes before sending" (research SUMMARY.md:43 rewrite rule) does not hold at the API boundary: the engine accepts mixed pairs from any client, stores them, and *renders them as truth* in `mounts.excluded` between now and whenever Phase 3's trust/controls land.
+**File:** `internal/api/service.go:5496-5521`
+**Issue:** `prepareRestoreForTarget` re-validates every stored path with
+`paths.Within(s.cfg.HostMountRoot, p)` (lines 5496-5501, "defense-in-depth in
+case the DB was tampered with"), but the list it actually hands to the
+destructive phase is the MAPPED list (`appdataForRestore = mapped`, line 5521)
+derived from `mapRestorePaths(tg.AppdataPaths, chosen.Paths)` — i.e. from
+restic snapshot metadata, a different (and lower-trust) source than the DB row.
+The mapped values are ancestors or descendants of validated stored paths, so
+they are lexically contained in practice, and a `..`-bearing crafted value
+fails closed at the orchestrator's SEC check (`orchestrator.go:712-716`) — but
+the guarantee now rests on transitive reasoning instead of the explicit check
+the design comment promises. Pass 2 can also emit a raw (uncleaned) snapshot
+metadata string as the selector/target, and the mount root itself is reachable
+as an ancestor of a validated path. Given the house posture is explicit
+re-validation of everything crossing into a destructive restore, the output
+list should get the same check its input gets.
 
-**Fix:** Close the gap one of three ways, and do it before Phase 2 builds on this API:
-1. **Enforce:** in `NormalizeSelection` or `SetBackupPaths`, reject (or auto-decompose) an include that carries a stored excluded descendant, so the mixed pair can never persist — the stored form then always matches what the engine will do.
-2. **Encode:** append the bare halves of stored exclusion entries as restic `--exclude` patterns while keeping maximal roots as positionals. This is *not* the no-op L14 claims (see WR-02): the phase's own contract test `TestPositionalExcludesKeepSourceDir` proves excludes filter content *within* positional sources while `Paths` keep the positional verbatim — which would satisfy criterion 2's "nothing more" exactly. Caveat to design around: derived patterns would land in the snapshot's `Excludes` metadata, which is currently user-owned (STACK.md:78).
-3. **Document honestly:** if neither is wanted in Phase 1, change `mounts.excluded` to distinguish "recorded deselection" from "will not be backed up" (or omit entries under included roots), and write the deliberate over-capture into the phase summary and PROJECT.md Key Decisions so Phase 2/3 inherit an accurate contract.
-
-### WR-02: Locked position L14 is justified by a factually wrong restic claim (in production and test comments)
-
-**File:** `internal/api/selection.go:118-122`, `internal/api/service_test.go:2298-2304`
-**Classification:** WARNING
-**Issue:** Both comments state that "restic excludes do not apply to positional sources, so exclude-encoding a deselection would silently no-op / silently back the branch up anyway." That is not restic's behavior: per restic's documentation, excludes do not drop a positional *source directory*, but "content within those directories remains subject to filtering." The phase's own contract test proves it — `internal/restic/restic_positionals_contract_test.go:86-107` asserts `ex.txt` is genuinely filtered out of the snapshot taken with positional `srcDir` and exclude `ex.txt`. This matters beyond pedantry: these are load-bearing "why" comments (the house convention) justifying a *locked design decision* (L14, no `--exclude` derived from selection). A future maintainer reading them will conclude exclude-encoding is technically impossible (it is not — it is a metadata-ownership tradeoff) and may either wrongly "fix" WR-01 by exclude-encoding without considering the snapshot `Excludes` pollution, or leave WR-01 unfixable-looking. The true rationale for L14 is product-level: snapshot `Excludes` metadata is user-owned, and selection-derived patterns would corrupt round-tripping of the stored selection.
-
-**Fix:** Reword both comments to the accurate tradeoff, e.g. for `selection.go:118-122`:
-
+**Fix:**
 ```go
-// includesOnly returns the bare (included) half of a stored flat selection —
-// the list a backup is actually built from. Exclusion entries are dropped, not
-// transformed (locked positions L1/L14). Note this is a PRODUCT choice, not a
-// restic limitation: restic excludes DO filter content within positional
-// sources (restic_positionals_contract_test.go), so encoding "!" entries as
-// --exclude would enforce the deselection content-wise. We do not, because
-// snapshot.Excludes metadata is user-owned (STACK.md:78) and selection-derived
-// patterns would pollute it; content-level narrowing is delegated to the UI
-// decomposition rule (research SUMMARY.md:43) until Phase 3 decides otherwise.
+chosen := chosenSnapshot(snaps, snapshotID)
+mapped, skipped := mapRestorePaths(tg.AppdataPaths, chosen.Paths)
+...
+// Same defense-in-depth as the stored list above, now over the mapped
+// selectors: they come from the snapshot's recorded Paths (repo metadata),
+// not the DB row the loop above validated.
+for _, q := range mapped {
+    if !paths.Within(s.cfg.HostMountRoot, q) {
+        return containerRestorePlan{}, errors.New("a mapped restore path is outside the host mount, so refusing to restore")
+    }
+}
+appdataForRestore = mapped
 ```
-
-(And the matching correction at `service_test.go:2302-2304`.)
 
 ## Info
 
-### IN-01: `storedDataIsGone` stats the raw stored list, including `!`-prefixed entries that can never exist
+### IN-01: Ancestor-fallback mapping restores more than the current selection, and only the under-restore is reported
 
-**File:** `internal/api/service.go:3988-3992`
-**Classification:** INFO
-**Issue:** `storedDataIsGone` correctly early-returns for the explicit-none case (`len(existing.SelectedPaths) > 0 && len(includesOnly(...)) == 0`, `service.go:3972-3993`), but the subsequent stat loop iterates the RAW `existing.SelectedPaths`, so `!`-prefixed entries are stat'd as literal paths. Traced harmless in practice: `stat("!/host/...")` resolves relative to cwd and virtually never exists, so such entries only ever vote "gone" — which cannot flip the outcome, because the vote only matters when every include has already failed its stat (in which case the result is "gone" with or without them). The only theoretical inversion (a file literally named `!`-leading in cwd) is pathological. Still, iterating the wrong list is a latent trap: a future refactor of this guard could be bitten by entries that are classes, not paths.
+**File:** `internal/api/selection.go:252-278`, `internal/backup/orchestrator.go:958-980`
+**Issue:** When a stored path maps only via the pass-2 longest-ancestor
+fallback, the restore replays the FULL ancestor subtree from the snapshot —
+including branches the user has since deselected (e.g. a snapshot taken before
+a narrowing brings the excluded branch back). The behavior is correct (a
+snapshot restore restores that snapshot's content) and the mechanism is
+documented, but reporting is asymmetric: `skippedPathsNote` tells the operator
+what was left OUT, while nothing records that a path was restored via an
+ancestor and therefore covered MORE than the stored selection claims. For a
+DR-audit channel built precisely to prevent "success" being misread as
+"everything as configured", this is a one-line doc/note gap.
 
-**Fix:** Stat `includesOnly(existing.SelectedPaths)` in the loop, matching the reader convention every other consumer uses (`service.go:3919`, `service.go:3722-3799`).
+**Fix:** Either extend the doc comment in `mapRestorePaths` to state the
+over-restore consequence explicitly, or (better) tag pass-2 mappings and add
+them to the run-record note, e.g. "...; N stored path(s) were restored via
+their snapshot ancestor subtree, which may include more than the current
+selection."
 
-### IN-02: Inaccurate `//nolint:gosec // G706` justifications on browse-path log lines
+### IN-02: Legacy nested snapshot Paths can produce overlapping restore selectors
 
-**File:** `internal/api/handlers.go:4276`, `internal/api/handlers.go:4288`
-**Classification:** INFO
-**Issue:** Both nolint justifications claim "no raw user bytes reach the log formatter." That is not true: `rel` *is* client-influenced data (the request's `path` query parameter after `paths.Resolve` validation) and it does reach the `%q` verb. The code is in fact safe, but for a different reason than stated: `%q` escapes quotes, backslashes, newlines, and control characters, and `paths.Resolve` rejects traversal — that combination is what removes the log-injection/format surface G706 targets. House convention requires nolint justifications to name the *actual* reason (the model comment at `internal/restic/proc_unix.go:26-41`); a justification citing a property the code does not have invites a future edit that preserves the (wrong) stated rationale while dropping the (load-bearing) escaping.
+**File:** `internal/api/selection.go:243-251`
+**Issue:** Pass 1 maps every snapshot path at-or-below a stored path, and
+pre-normalization selections (stored before this phase; `SetBackupPaths` did
+not prune maximal roots) could yield snapshots whose `Paths` are nested
+(e.g. `["/a", "/a/b"]`). With a now-normalized stored `["/a"]`, both snapshot
+paths map, so `RestorePaths` runs `restore <id>:/a --target /a` and then the
+fully-overlapping `restore <id>:/a/b --target /a/b`. Content-wise idempotent
+(same data rewritten), so no corruption — just redundant destructive-phase
+work on old data. Self-heals as new snapshots replace old ones.
 
-**Fix:** Reword both to, e.g.: `//nolint:gosec // G706: rel is user-influenced but paths.Resolve-validated and rendered via %q, which escapes quotes/newlines/control chars — no log-injection or format surface.`
+**Fix:** Optional: in pass 1, skip a snapshot path already covered by an
+earlier mapped path (`isStrictDescendant(q, mappedSoFar)`), or note it as
+accepted in the function doc.
+
+### IN-03: Empty-selection guard fails open on a store read error
+
+**File:** `internal/api/service.go:3868-3872`
+**Issue:** The T-01-13 guard treats any `GetTargetByContainer` error
+(identical to the no-rows case) as "nothing to protect" and lets the clear
+proceed. For a genuine (transient) DB error this silently disables the
+protection the feature exists to provide. Low impact — the subsequent
+`SetBackupPaths` write would most likely fail on the same fault — but the
+guard's contract ("a non-empty selection is stored to protect") is not
+distinguishable from "read failed" in the current shape.
+
+**Fix:** Distinguish `errors.Is(gErr, sql.ErrNoRows)` (proceed — fresh
+container) from other errors (return the wrapped store error rather than
+failing the guard open).
+
+### IN-04: Exclusion branches under vanished includes emit no-op `--exclude` patterns into snapshot metadata
+
+**File:** `internal/api/service.go:4243`, `internal/api/selection.go:185-206`
+**Issue:** `excludedBranches` qualifies an exclusion against ALL includes in
+the raw stored list, but the positionals come from
+`onlyExistingPaths(includesOnly(...))`. When an include folder has vanished
+from disk while its excluded sub-branch entry remains stored, the derived
+pattern is emitted for a positional that no longer exists — a harmless no-op
+to restic, but it lands in the snapshot's Excludes metadata (the same
+user-owned surface the WR-01 tradeoff already accepted) as a machine-derived
+pattern matching nothing. Cosmetic/metadata hygiene only.
+
+**Fix:** Optional: intersect the include set with the `effective` list before
+deriving (`excludedBranches` against only the includes that survived the
+existence filter), or accept and document it next to the existing
+Excludes-metadata tradeoff paragraph.
 
 ---
 
-_Reviewed: 2026-09-09T19:21:36Z_
+_Reviewed: 2026-09-10T12:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
