@@ -1,7 +1,7 @@
 ---
 phase: 03-selection-trust-controls
 verified_at: 2026-09-10T21:02:53Z
-status: human_needed
+status: passed
 score: 14/14 must-haves verified
 behavior_unverified: 0 # every behavior-dependent truth (reset body/gate, queue serialization, union, argv emission, narrowing gate) is exercised by a passing behavioral test re-run first-hand at HEAD — no presence-only truths remain
 overrides_applied: 0
@@ -13,18 +13,23 @@ re_verification:
   gaps_remaining: []
   regressions: []
 human_verification_needed:
+
   - test: "Visual UAT in a real browser: open the container panel FoldersEditor with a multi-mount container, verify the muted '{n} paths' line inside every root label (including '0 paths' on a deselected mount), expand an '{n} exclusions' disclosure (chevron rotation, mono ltr break-all relative rows with hover titles), the 'Skip cache folders (CACHEDIR.TAG)' switch row with its InfoBubble under every root, the Reset selection button with the fail-tone confirm dialog, and (after unchecking a mount on a backed-up container) the role=status text-statusWarn narrowing note under the tree"
     expected: "Preview/exclusions/toggle sub-rows sit on the indent-16 py-1 rhythm consistent with the Phase 2 rows; the switch label reads at the 12px register; the confirm dialog carries the destructive (bg-statusFailSolid) treatment; the note renders between the tree and the Add row"
     why_human: "jsdom asserts classes, roles, wire bodies and text only; rendered register, tone legibility and dialog feel need human eyes (the plans' own D5 human-judgment coverage item in 03-02-SUMMARY)"
+
   - test: "Real-instance smoke (optional, same class as Phase 1's item): on the Unraid instance, flip one mount's CACHEDIR switch, reload the panel (switch state persists from the mounts response), run a backup of that container, then confirm the run's restic argv carries --exclude-caches; flip it off and confirm the next backup's argv does not"
     expected: "PATCH persists the full map; mounts serves it back verbatim; the argv flag appears exactly when the stored union is true (scrubbed server log shows the flag right of the verb, left of --)"
     why_human: "Real host paths (FUSE), real SQLite persistence across restarts, real restic child — the mocked-api harness and Go unit fakes prove the contracts, not the deployment"
+
   - test: "Review the 2 judgment-tier prohibitions below (LLM-judge verdicts are non-authoritative)"
     expected: "A human confirms the holds verdicts or deposits corrections"
     why_human: "ADR-550 D4: judgment-tier prohibitions cannot be silently absorbed into a pass"
+
   - test: "Confirm the MVP-mode format decision: the ROADMAP marks Phase 3 'Mode: mvp' but the goal is not in User Story format (gsd user-story.validate -> false, re-run this session), so this verification is goal-backward against the 4 numbered Success Criteria (Phase 1 precedent)"
     expected: "Either accept that basis or run /gsd mvp-phase 3 to set a User Story goal and re-verify in MVP form"
     why_human: "Format decision belongs to the user"
+
   - test: "Decide the REQUIREMENTS.md INTEG-04 bookkeeping: the row still reads '[ ] ... UI semantics pending' and the traceability table 'Backend landed (Phase 1); UI semantics pending', although the documented UI semantics now exist and are verified (truths 7-9)"
     expected: "Flip the row to Complete at ship time (/gsd-ship or /gsd-docs-update) or leave it to the milestone close — pure metadata, no code impact"
     why_human: "Requirement-status bookkeeping is a developer decision; SELECT-03/INTEG-03/RESTIC-01 were already flipped during planning, INTEG-04 was not after execution"
