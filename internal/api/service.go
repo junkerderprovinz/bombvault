@@ -5518,6 +5518,21 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 			// skips flow to the run record via RestoreDeps.SkippedPaths below.
 			log.Printf("api: restore: %d stored path(s) absent from snapshot %s, skipping: %s", len(skipped), snapshotID, scrubSecrets(strings.Join(skipped, ", "))) //nolint:gosec // G706: paths scrubbed to [path] before the formatter sees them
 		}
+		// Same defense-in-depth as the stored list above, now over the mapped
+		// selectors: they come from the snapshot's recorded Paths (repo
+		// metadata), a different and lower-trust source than the DB row the
+		// loop above validated (phase 01 code review, WR-01). Within cleans
+		// both sides, so a raw uncleaned metadata string (or a ".."-bearing
+		// crafted one) is judged on its cleaned form; the mount root itself
+		// fails the strict-within check, which is the intended fail-closed
+		// outcome for a pass-2 ancestor selector that would replay the whole
+		// root subtree in a single-container restore.
+		for _, q := range mapped {
+			if !paths.Within(s.cfg.HostMountRoot, q) {
+				log.Printf("api: restore: mapped path %q escapes mount root", q) //nolint:gosec // G706: %q-quoted
+				return containerRestorePlan{}, errors.New("a mapped restore path is outside the host mount, so refusing to restore")
+			}
+		}
 		appdataForRestore = mapped
 		planSkipped = skipped
 		// Cross-instance / cross-pool remap (destBase set: foreign restore, #123/#125).
