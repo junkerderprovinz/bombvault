@@ -1,22 +1,14 @@
 ---
-status: passed
+status: complete
 phase: 01-selection-engine-restore-safety
 source: [01-VERIFICATION.md]
 started: 2026-09-09T22:38:24Z
-updated: 2026-09-10T11:20:00Z
+updated: 2026-09-10T11:29:12Z
 ---
 
 ## Current Test
 
-number: 1
-name: Smoke Unraid réel — backup d'un conteneur avec sous-dossier exclu, inspection du snapshot, restore propre
-expected: |
-  Sur l'instance Unraid (192.168.31.6) : sélectionner un conteneur, exclure un sous-dossier de son appdata,
-  lancer un backup, vérifier via restic ls que le snapshot contient les dossiers sélectionnés SANS la branche
-  exclue (positionals = racines maximales inchangées, --exclude strictement descendants), puis restaurer et
-  confirmer le contenu propre. L'intégration physique (FUSE Unraid, docker.sock, chemins hôtes) n'est couverte
-  par aucun harnais de test.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
