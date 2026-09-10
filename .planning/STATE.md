@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 1
 current_phase_name: selection-engine-restore-safety
-status: executing
-stopped_at: Completed 01-04-PLAN.md
-last_updated: "2026-09-10T09:23:13.135Z"
+status: verifying
+stopped_at: Completed 01-05-PLAN.md
+last_updated: "2026-09-10T09:48:14.076Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 01 execution started
-state_head: edc5484551c59c2c1985204f98205357f52e9c90
+state_head: 0735929ac72276b93d0ecc8d82fdf3ed8babbeeb
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 
 Phase: 1 (selection-engine-restore-safety) — READY TO EXECUTE
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-09 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01-02 | 19 min | 2 tasks | 3 files |
 | Phase 01 P01-03 | 61min | 3 tasks | 12 files |
 | Phase 01 P01-04 | 17min | 2 tasks | 5 files |
+| Phase 01 P05 | 12min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,7 @@ Recent decisions affecting current work:
 - [Phase 01]: Fixtures predating RESTORE-01 now seed snapshot Paths — fake-engine container snapshots must model the positional truth the mapping reads
 - [Phase 01]: restic 0.17 positional behaviors (excludes keep positionals; absolute Paths preserved) pinned as contract tests that skip locally and prove on CI
 - [Phase 01]: Empty-selection guard is strictly source-gated on the literal selectionSource:"tree" - refusal (errEmptySelection -> code:"empty-selection" envelope) fires before any store write; legacy and unknown sources keep byte-compat clears — RESEARCH Open Question 2 resolved: no payload sniffing (CONTEXT INTEG-04 Q1); a refused deselect leaves prior state structurally untouched, not best-effort
+- [Phase 01]: Stored exclusion branches are enforced as restic --exclude on the backup argv at the single BackupDeps.Excludes site (WR-01 closed, user decision 2026-09-09); positionals stay the maximal-root includes — Content correctness accepted over metadata purity: derived exclude patterns land in the snapshot user-owned restic Excludes metadata; equality and orphan exclusions deliberately never emitted (pinned by TestExcludedBranches)
 
 ### Pending Todos
 
@@ -92,9 +94,9 @@ None yet.
 
 ### Blockers/Concerns
 
-None.
-
 *(Resolved 2026-09-09: backup-time coverage diff deferred to v2 as SELECT-06 by user decision — the Phase 3 narrowing note under SELECT-03 remains the sole future-children mitigation for v1.)*
+
+- restic contract test TestPositionalExcludeAbsoluteSubdirPattern never executed anywhere yet: skips locally (no restic on PATH) and the docker-folders branch is unpushed - CI green Test job is the closure step
 
 ## Deferred Items
 
@@ -107,6 +109,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-09T18:52:15.816Z
-Stopped at: Completed 01-04-PLAN.md
+Last session: 2026-09-10T09:47:59.756Z
+Stopped at: Completed 01-05-PLAN.md
 Resume file: None

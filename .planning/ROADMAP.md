@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Listing a tree node's children is a cheap per-node call that distinguishes "empty directory" from "unreadable directory" (scrubbed messages), never escapes its root boundary even through symlinks, and agrees with the existing folder browser on hidden entries
   5. Restoring an older snapshot after the user reshaped their selection completes instead of aborting mid-restore after destructive teardown; restore maps by the chosen snapshot's recorded `Paths` (longest-prefix), not by the current selection
 
-**Plans**: 5 plans (4/4 executed + 1 gap-closure)
+**Plans**: 5/5 plans executed (4/4 executed + 1 gap-closure)
 
 Plans:
 **Wave 1**
@@ -52,7 +52,7 @@ Plans:
 
 **Wave 4** *(gap closure — WR-01, user decision 2026-09-09 "Encode")*
 
-- [ ] 01-05-PLAN.md — WR-01 gap closure: enforce stored exclusion branches as restic `--exclude` on the backup argv (positionals stay maximal-root includes) + docs drift fixes (SELECT-01, SELECT-02, SELECT-04, BROWSE-01)
+- [x] 01-05-PLAN.md — WR-01 gap closure: enforce stored exclusion branches as restic `--exclude` on the backup argv (positionals stay maximal-root includes) + docs drift fixes (SELECT-01, SELECT-02, SELECT-04, BROWSE-01)
 
 **Notes**: Research flag: none — fully specified by `.planning/research/SUMMARY.md` (its Phase 1–3 merged here). During this phase, log the positional-targets Key Decision and the future-children allowlist semantic in PROJECT.md. The empty-selection PATCH-boundary guard (backend half of INTEG-04) lands here; INTEG-04 completes with documented UI semantics in Phase 3.
 
@@ -116,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Selection Engine & Restore Safety | 4/4 | In Progress|  |
+| 1. Selection Engine & Restore Safety | 5/5 | In Progress|  |
 | 2. Container Panel Tree Selection | 0/TBD | Not started | - |
 | 3. Selection Trust & Controls | 0/TBD | Not started | - |
 | 4. File Sets Parity | 0/TBD | Not started | - |
