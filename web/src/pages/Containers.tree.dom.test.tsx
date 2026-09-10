@@ -122,7 +122,9 @@ describe("FoldersEditor tree integration (INTEG-01, D-02, D-04, D-05)", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
     });
-    const child = within(screen.getByRole("treeitem", { name: /transcoding/ })).getByRole("checkbox");
+    // hidden: true — the input carries aria-hidden (WR-02), so ByRole's
+    // default a11y-tree filter would not return it.
+    const child = within(screen.getByRole("treeitem", { name: /transcoding/ })).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(child);
     });
@@ -142,7 +144,7 @@ describe("FoldersEditor tree integration (INTEG-01, D-02, D-04, D-05)", () => {
   it("unchecking the item's LAST include fires no request (D-04 through the real FoldersEditor)", async () => {
     await renderEditor();
 
-    const box = within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByRole("checkbox");
+    const box = within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
     });

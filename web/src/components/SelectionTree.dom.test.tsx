@@ -200,7 +200,10 @@ describe("SelectionTree toggle live-save (TREE-02, D-03)", () => {
       fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
     });
     const child = screen.getByRole("treeitem", { name: /transcoding/ });
-    const box = within(child).getByRole("checkbox");
+    // hidden: true — the input carries aria-hidden (the treeitem's
+    // aria-checked is the single announcement; review WR-02), so ByRole's
+    // default a11y-tree filter would not return it.
+    const box = within(child).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
     });
@@ -470,7 +473,7 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
 
     // The unreadable folder only failed to LIST: its own include still
     // toggles, the save still leaves — selection and browse stay independent.
-    const box = within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox");
+    const box = within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
     });
@@ -487,7 +490,7 @@ describe("empty-selection guard (D-04, pulled forward from plan 02)", () => {
     // The single selected mount root IS the only include: unchecking it
     // would empty the item's selection.
     const root = screen.getByRole("treeitem", { name: /user\/appdata\/plex/ });
-    const box = within(root).getByRole("checkbox");
+    const box = within(root).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
     });
@@ -515,7 +518,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     // One selected mount, no custom: unchecking it would empty the item.
     await renderEditor();
 
-    const box = within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByRole("checkbox");
+    const box = within(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ })).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
     });
@@ -535,7 +538,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     mountsReply = richMounts();
     await renderEditor();
 
-    const box = within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox");
+    const box = within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
     });
@@ -553,7 +556,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
 
     // Toggle 1: uncheck plex. PATCH 1 leaves and is held in flight.
     await act(async () => {
-      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox"));
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true }));
     });
     expect(patches.length).toBe(1);
     expect(patches[0].paths).toEqual([PLEX2, CUSTOM]);
@@ -561,7 +564,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     // Toggle 2 while PATCH 1 is in flight: the mirror updates optimistically,
     // the save is queued dirty — never a concurrent second request.
     await act(async () => {
-      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/data/ })).getByRole("checkbox"));
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/data/ })).getByRole("checkbox", { hidden: true }));
     });
     expect(patches.length).toBe(1);
 
@@ -587,10 +590,10 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     await renderEditor();
 
     await act(async () => {
-      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox"));
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true }));
     });
     await act(async () => {
-      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/data/ })).getByRole("checkbox"));
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/data/ })).getByRole("checkbox", { hidden: true }));
     });
     expect(patches.length).toBe(1);
 
@@ -617,7 +620,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     await renderEditor();
 
     await act(async () => {
-      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox"));
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true }));
     });
 
     expect(patches.length).toBe(1); // no drain: the refusal settles the queue

@@ -427,9 +427,18 @@ export function SelectionTree({
               </svg>
             )}
           </span>
+          {/* aria-hidden on the input (review WR-02): the treeitem's
+              aria-checked is the ONE selection announcement. For a mixed node
+              the real input would otherwise say "checkbox checked" (the DOM
+              indeterminate property has no ARIA reflection), contradicting
+              "mixed" one row-element later. The input is tabIndex -1 and
+              keyboard selection routes through Space on the treeitem
+              (T-02-10), so hiding it from the a11y tree costs nothing; mouse
+              users keep clicking it. */}
           <input
             ref={boxRef}
             type="checkbox"
+            aria-hidden="true"
             tabIndex={-1}
             checked={state === "checked" || state === "mixed"}
             disabled={spec.unreachable || !!busyPaths?.has(spec.path)}
