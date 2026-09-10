@@ -297,8 +297,7 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
         // `justify-center` — the glyph centres in whatever column it is given.
         // That started as the answer to the rail-width question (the rail kept
         // its 224px and the glyphs centred in it) and it is still what the
-        // narrowed 6rem rail needs, since the row is wider than the glyph in
-        // both. Without it the glyphs sat hard left with 178px of empty rail
+        // narrowed rail needs, since the row is wider than the glyph in both. Without it the glyphs sat hard left with 178px of empty rail
         // beside each one.
         className={({ isActive }) =>
           `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
@@ -607,9 +606,9 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         className={`glim-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"}${railReactive ? " glim-reactive" : ""} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
         {/* The narrow rail gets the smaller mark, which is the second logo the
-            rail-width question always needed: 64px in a 96px column leaves 16px
-            of air either side and reads as a mark wedged into a gap. 48px sits
-            in it. `--egg-mark` carries the size into CSS, because the shatter
+            rail-width question always needed: the big 64px mark in an 85px column
+            leaves ten and a half pixels either side and reads as a mark wedged
+            into a gap. 48px sits in it, with 18.5 on each side (measured). `--egg-mark` carries the size into CSS, because the shatter
             tiles paint slices of a background sized to the WHOLE mark while each
             tile is a sixth of it, so a hard-coded 64px there would cut the wrong
             slices as soon as the mark changed size. */}

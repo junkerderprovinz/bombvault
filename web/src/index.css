@@ -176,8 +176,8 @@
      survive someone changing the sidebar.
 
      200px is the rail's own `w-56` (224px) minus its `p-3` on both sides. The
-     rail narrows to 6rem in glyph mode and this token deliberately does not
-     follow it: what a settings tab matches is the rail's row box, not whichever
+     rail narrows to `--rail-narrow` (85px) in glyph mode and this token
+     deliberately does not follow it: what a settings tab matches is the rail's row box, not whichever
      label mode the rail happens to be in, and the tabs have their own axis.
      43px is what its `py-2.5` plus a 15px line box came to. Both were
      padding-derived and are stated here so a tab can be given the same box

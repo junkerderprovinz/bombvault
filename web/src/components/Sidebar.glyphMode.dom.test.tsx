@@ -3,8 +3,8 @@
 // Sidebar — what the rail does once the "sidebar" axis is set to glyphs, which
 // is where jdp's two standing decisions for this round land:
 //
-//   1. THE RAIL NARROWS, AND ONLY IN THIS MODE. Glyph mode drops to 6rem with
-//      the smaller mark (#178, manilx: "When using only buttons in sidebar it
+//   1. THE RAIL NARROWS, AND ONLY IN THIS MODE. Glyph mode drops to the house
+//      width (`--rail-narrow`, 85px) with the smaller mark (#178, manilx: "When using only buttons in sidebar it
 //      should shrink in width"); text and text+glyph need the words' width,
 //      and REACTIVE keeps 224px because its words slide back inside the row
 //      and its active row keeps them permanently, so a narrow rail would clip
