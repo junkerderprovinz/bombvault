@@ -107,9 +107,36 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
             <p dir="ltr" className="w-full break-all text-center font-mono text-xs text-carbon-text">
               {network.address}
             </p>
-            <p className="text-center text-xs text-carbon-textMuted">
-              {coin.symbol} · {network.name}
-            </p>
+            {/* The chain, switched HERE, directly under the address it changes
+                (jdp, 2026-09-10: "die netzwerke soll man unter der Adresse
+                umschalten können"). A picker one box away from its own effect
+                makes somebody look twice to see whether the address moved; a
+                row of chips under it changes the string in front of their
+                eyes. Shown even when a coin has only one chain, because this
+                is also the line that SAYS which network the address belongs
+                to, and that fact may not come and go with the tile. */}
+            <div
+              className="flex flex-wrap justify-center gap-2"
+              role="listbox"
+              aria-label={t("about.cryptoNetworks")}
+            >
+              {coin.networks.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  role="option"
+                  aria-selected={n.id === network.id}
+                  onClick={() => setNetwork(n)}
+                  className={`rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
+                    n.id === network.id
+                      ? "bg-accent text-accentContrast"
+                      : "bg-carbon-surface3 text-carbon-textSub hover:bg-carbon-hoverRaised hover:text-carbon-text"
+                  }`}
+                >
+                  {n.name}
+                </button>
+              ))}
+            </div>
             {/* Warn-coloured, and it is not a warning: it is the line a donor
                 would otherwise go hunting for. Exchanges train people to look
                 for a destination tag or a memo, so the chain that wants
@@ -147,32 +174,6 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
             ))}
           </div>
 
-          {/* The chain, always shown, because it decides where the money goes. */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-carbon-textMuted">{t("about.cryptoNetworks")}</span>
-            <div
-              className="flex flex-wrap gap-2"
-              role="listbox"
-              aria-label={t("about.cryptoNetworks")}
-            >
-              {coin.networks.map((n) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  role="option"
-                  aria-selected={n.id === network.id}
-                  onClick={() => setNetwork(n)}
-                  className={`rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
-                    n.id === network.id
-                      ? "bg-accent text-accentContrast"
-                      : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
-                  }`}
-                >
-                  {n.name}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="flex justify-end gap-2 px-5 pb-5">
