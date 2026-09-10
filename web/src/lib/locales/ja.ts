@@ -638,6 +638,8 @@ const ja: Partial<Translations> = {
   "snapshot.tags": "タグ",
   "snapshot.addTag": "タグを追加",
   "snapshot.compare": "比較",
+  "snapshot.compareFrom": "比較の開始",
+  "snapshot.compareTo": "比較の対象",
   "snapshot.pickTwo": "比較するスナップショットを2つ選択してください",
   "snapshot.added": "追加",
   "snapshot.removed": "削除",

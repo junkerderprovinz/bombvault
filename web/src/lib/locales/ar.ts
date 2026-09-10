@@ -646,6 +646,8 @@ const ar: Partial<Translations> = {
   "snapshot.tags": "العلامات",
   "snapshot.addTag": "إضافة علامة",
   "snapshot.compare": "مقارنة",
+  "snapshot.compareFrom": "المقارنة من",
+  "snapshot.compareTo": "المقارنة إلى",
   "snapshot.pickTwo": "اختر لقطتين للمقارنة",
   "snapshot.added": "مضاف",
   "snapshot.removed": "محذوف",

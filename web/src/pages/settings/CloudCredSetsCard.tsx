@@ -5,6 +5,8 @@
 // by id) preserve the real stored secret, so an untouched set's key/password
 // survives a save that only edited a DIFFERENT set in the same list.
 import { Button } from "../../components/Button";
+import { SelectField } from "../../components/SelectField";
+import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { RevealInput } from "../../components/RevealInput";
 import { setCloudCredSets, type CloudCredSet, type CloudCredSetInfo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
@@ -238,14 +240,16 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
             <label className={fieldCls}>AWS_DEFAULT_REGION
               <input value={editing.s3Region} onChange={(e) => setField("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={inputCls} /></label>
             <label className={fieldCls}>{t("cloud.storageClass.label")}
-              <select value={editing.s3StorageClass} onChange={(e) => setField("s3StorageClass", e.target.value)} className={inputCls}>
-                <option value="">{t("cloud.storageClass.default")}</option>
-                <option value="STANDARD">STANDARD</option>
-                <option value="STANDARD_IA">STANDARD_IA</option>
-                <option value="ONEZONE_IA">ONEZONE_IA</option>
-                <option value="INTELLIGENT_TIERING">INTELLIGENT_TIERING</option>
-                <option value="GLACIER_IR">GLACIER_IR</option>
-              </select></label>
+              <SelectField
+                value={editing.s3StorageClass}
+                onChange={(v) => setField("s3StorageClass", v)}
+                label={t("cloud.storageClass.label")}
+                options={[
+                  { value: "", label: t("cloud.storageClass.default") },
+                  ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc })),
+                ]}
+                className={inputCls}
+              /></label>
           </div>
           <div className="flex flex-col gap-2 rounded-card bg-carbon-surface3 p-3">
             <span className="text-xs font-semibold text-carbon-textSub">restic REST server</span>

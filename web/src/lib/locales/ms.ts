@@ -149,6 +149,8 @@ const ms: Partial<Translations> = {
   "snapshot.tags": "Tag",
   "snapshot.addTag": "Tambah tag",
   "snapshot.compare": "Bandingkan",
+  "snapshot.compareFrom": "Bandingkan dari",
+  "snapshot.compareTo": "Bandingkan dengan",
   "snapshot.pickTwo": "Pilih dua snapshot untuk dibandingkan",
   "snapshot.added": "ditambah",
   "snapshot.removed": "dialih keluar",

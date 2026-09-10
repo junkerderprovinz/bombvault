@@ -100,20 +100,27 @@ describe("DropdownListbox — escaping the clipping ancestor", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
-  it("sizes itself to the width of the element the triggerRef points at", () => {
+  it("takes the trigger's width as a FLOOR, and its content decides the rest", () => {
     // Caught live and only live: the ref used to sit on the trigger's
     // `inline-block` WRAPPER, which — being a flex item of the editor's
     // `flex flex-col` box — is blockified and stretched to the card's full
     // content width. The panel dutifully took that width and opened ~970px
     // wide instead of the button's 256px. jsdom reports 0 for every layout
-    // read, so the width has to be stubbed for this to mean anything; what is
-    // being pinned down is "the panel measures exactly what it was handed".
+    // read, so the width has to be stubbed for this to mean anything.
+    //
+    // It is a MINIMUM rather than the width since #3425, and that correction
+    // also came off the running app: pinned exactly, a compact filter bar's
+    // panel truncated every one of its own options, because each row spends
+    // 24px of the trigger's width on padding. A replacement narrower than its
+    // own options is a downgrade on the native control it replaces.
     render(<Harness />);
     const trigger = screen.getByRole("button", { name: "Trigger" });
     trigger.getBoundingClientRect = () =>
       ({ left: 100, right: 356, top: 40, bottom: 68, width: 256, height: 28, x: 100, y: 40, toJSON: () => ({}) }) as DOMRect;
     fireEvent.click(trigger);
-    expect(screen.getByRole("listbox").style.width).toBe("256px");
+    const panel = screen.getByRole("listbox");
+    expect(panel.style.minWidth).toBe("256px");
+    expect(panel.style.width).toBe("max-content");
   });
 });
 

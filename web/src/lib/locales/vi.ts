@@ -638,6 +638,8 @@ const vi: Partial<Translations> = {
   "snapshot.tags": "Thẻ",
   "snapshot.addTag": "Thêm thẻ",
   "snapshot.compare": "So sánh",
+  "snapshot.compareFrom": "So sánh từ",
+  "snapshot.compareTo": "So sánh với",
   "snapshot.pickTwo": "Chọn hai snapshot để so sánh",
   "snapshot.added": "đã thêm",
   "snapshot.removed": "đã xóa",

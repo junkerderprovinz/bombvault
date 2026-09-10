@@ -149,6 +149,8 @@ const gl: Partial<Translations> = {
   "snapshot.tags": "Etiquetas",
   "snapshot.addTag": "Engadir etiqueta",
   "snapshot.compare": "Comparar",
+  "snapshot.compareFrom": "Comparar desde",
+  "snapshot.compareTo": "Comparar con",
   "snapshot.pickTwo": "Escolle dúas instantáneas para comparar",
   "snapshot.added": "engadidos",
   "snapshot.removed": "eliminados",

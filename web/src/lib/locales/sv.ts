@@ -646,6 +646,8 @@ const sv: Partial<Translations> = {
   "snapshot.tags": "Taggar",
   "snapshot.addTag": "Lägg till tagg",
   "snapshot.compare": "Jämför",
+  "snapshot.compareFrom": "Jämför från",
+  "snapshot.compareTo": "Jämför med",
   "snapshot.pickTwo": "Välj två ögonblicksbilder att jämföra",
   "snapshot.added": "tillagd",
   "snapshot.removed": "borttagen",

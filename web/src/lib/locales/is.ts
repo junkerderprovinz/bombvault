@@ -149,6 +149,8 @@ const is: Partial<Translations> = {
   "snapshot.tags": "Merki",
   "snapshot.addTag": "Bæta við merki",
   "snapshot.compare": "Bera saman",
+  "snapshot.compareFrom": "Bera saman frá",
+  "snapshot.compareTo": "Bera saman við",
   "snapshot.pickTwo": "Veldu tvö snapshot til að bera saman",
   "snapshot.added": "bætt við",
   "snapshot.removed": "fjarlægt",

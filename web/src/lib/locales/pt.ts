@@ -643,6 +643,8 @@ const pt: Partial<Translations> = {
   "snapshot.tags": "Etiquetas",
   "snapshot.addTag": "Adicionar etiqueta",
   "snapshot.compare": "Comparar",
+  "snapshot.compareFrom": "Comparar de",
+  "snapshot.compareTo": "Comparar com",
   "snapshot.pickTwo": "Escolha dois instantâneos para comparar",
   "snapshot.added": "adicionado",
   "snapshot.removed": "removido",

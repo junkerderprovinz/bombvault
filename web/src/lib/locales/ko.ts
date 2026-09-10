@@ -638,6 +638,8 @@ const ko: Partial<Translations> = {
   "snapshot.tags": "태그",
   "snapshot.addTag": "태그 추가",
   "snapshot.compare": "비교",
+  "snapshot.compareFrom": "비교 시작",
+  "snapshot.compareTo": "비교 대상",
   "snapshot.pickTwo": "비교할 스냅샷 두 개를 선택하세요",
   "snapshot.added": "추가됨",
   "snapshot.removed": "제거됨",

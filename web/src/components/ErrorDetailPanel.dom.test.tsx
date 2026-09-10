@@ -17,7 +17,7 @@
 // listRuns/ackRuns are mocked; nothing here talks to a server.
 // ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
 import type { Run } from "../lib/api";
 
@@ -72,13 +72,12 @@ describe("ErrorDetailPanel — the Backup Everything domain", () => {
     renderPanel([run()]);
     await waitFor(() => expect(listRuns).toHaveBeenCalled());
 
-    const domainSelect = screen.getAllByRole("combobox")[0] as HTMLSelectElement;
-    const values = [...domainSelect.options].map((o) => o.value);
-    expect(values).toContain("everything");
-
-    // …and it is labelled with the shared, translated key, not a raw literal.
-    const option = [...domainSelect.options].find((o) => o.value === "everything")!;
-    expect(option.text).toBe(en["activityLog.domainEverything"]);
+    // The picker is the app's own listbox now, not a native <select> (#3425),
+    // so its options exist while it is OPEN. Same question either way: does the
+    // domain filter offer the pseudo-domain, with the shared label.
+    fireEvent.click(screen.getAllByRole("combobox")[0]!);
+    const labels = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(labels).toContain(en["activityLog.domainEverything"]);
   });
 
   it("labels a failed pass with its translated domain, not the raw tag", async () => {
@@ -97,9 +96,18 @@ describe("ErrorDetailPanel — the Backup Everything domain", () => {
     renderPanel([run()]);
     await waitFor(() => expect(listRuns).toHaveBeenCalled());
 
-    const domainSelect = screen.getAllByRole("combobox")[0] as HTMLSelectElement;
-    const values = [...domainSelect.options].map((o) => o.value);
-    // The new option is an addition, not a replacement.
-    expect(values).toEqual(["all", "containers", "vms", "flash", "config", "files", "everything"]);
+    fireEvent.click(screen.getAllByRole("combobox")[0]!);
+    const labels = screen.getAllByRole("option").map((o) => o.textContent);
+    // The new option is an addition, not a replacement, and the order is the
+    // one the shared list defines.
+    expect(labels).toEqual([
+      en["activityLog.filterAllDomains"],
+      en["activityLog.domainContainers"],
+      en["activityLog.domainVMs"],
+      en["activityLog.domainFlash"],
+      en["activityLog.domainConfig"],
+      en["activityLog.domainFiles"],
+      en["activityLog.domainEverything"],
+    ]);
   });
 });

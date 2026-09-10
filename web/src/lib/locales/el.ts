@@ -646,6 +646,8 @@ const el: Partial<Translations> = {
   "snapshot.tags": "Ετικέτες",
   "snapshot.addTag": "Προσθήκη ετικέτας",
   "snapshot.compare": "Σύγκριση",
+  "snapshot.compareFrom": "Σύγκριση από",
+  "snapshot.compareTo": "Σύγκριση με",
   "snapshot.pickTwo": "Επιλέξτε δύο στιγμιότυπα για σύγκριση",
   "snapshot.added": "προστέθηκαν",
   "snapshot.removed": "αφαιρέθηκαν",

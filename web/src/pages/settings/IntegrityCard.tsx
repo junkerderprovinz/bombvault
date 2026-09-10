@@ -18,6 +18,7 @@ import { Button } from "../../components/Button";
 import { CheckDraw } from "../../components/CheckDraw";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Selector } from "../../components/Selector";
+import { SelectField } from "../../components/SelectField";
 import { IconCheckCircle } from "../../components/Sidebar";
 import { RepoSource, SourceToggle, isOffsiteSource } from "../../components/SourceToggle";
 import { IconKey, IconPrune } from "../../components/glyphs";
@@ -402,43 +403,41 @@ export function IntegrityCard({
               {t("drill.target")}
               <InfoBubble tip={t("drill.drNote")} />
             </span>
-            <select
+            <SelectField
               value={settings.drDrillTarget}
-              onChange={(e) => {
-                const v = e.target.value;
+              onChange={(v) => {
                 setSettings((prev) => (prev ? { ...prev, drDrillTarget: v } : prev));
                 void save({ drDrillTarget: v }, setTgtState, setTgtError);
               }}
+              label={t("drill.target")}
+              options={[
+                { value: "", label: t("drill.targetMostRecent") },
+                ...containers.map((c) => ({ value: c.name, label: c.name })),
+              ]}
               className={selectCls}
-            >
-              <option value="">{t("drill.targetMostRecent")}</option>
-              {containers.map((c) => (
-                <option key={c.name} value={c.name}>{c.name}</option>
-              ))}
-            </select>
+            />
           </label>
           {/* GlimStone follow-up pass (v8.0.0): the "saved"/"error" flash this
               used to render is gone — the shared save() now pushes a toast
               on both outcomes (see its own header comment). */}
           <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
             {t("drill.targetVM")}
-            <select
+            <SelectField
               value={settings.drDrillTargetVm}
-              onChange={(e) => {
-                const v = e.target.value;
+              onChange={(v) => {
                 setSettings((prev) => (prev ? { ...prev, drDrillTargetVm: v } : prev));
                 void save({ drDrillTargetVm: v }, setTgtVMState, setTgtVMError);
               }}
-              className={selectCls}
-            >
-              <option value="">{t("drill.targetMostRecent")}</option>
-              {vms.map((v) => (
-                // value must be the raw libvirt name: pickDRSnapshot (service.go)
+              label={t("drill.targetVM")}
+              options={[
+                { value: "", label: t("drill.targetMostRecent") },
+                // The VALUE is the raw libvirt name: pickDRSnapshot (service.go)
                 // matches it against the "vm:"+name backup tag, never the
                 // display-only friendly name a TrueNAS VM shows here.
-                <option key={v.libvirtName} value={v.libvirtName}>{v.name}</option>
-              ))}
-            </select>
+                ...vms.map((vm) => ({ value: vm.libvirtName, label: vm.name })),
+              ]}
+              className={selectCls}
+            />
           </label>
         </div>
       )}

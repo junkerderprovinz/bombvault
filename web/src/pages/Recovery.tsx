@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
+import { SelectField } from "../components/SelectField";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
@@ -538,19 +539,20 @@ function ForeignItemRow({
           Card 5. */}
       <div className="flex items-center gap-3 text-sm flex-wrap">
         <span className="text-carbon-text font-medium flex-1 min-w-0 truncate">{item.name}</span>
-        <select
+        <SelectField
           value={snapshot}
-          onChange={(e) => setSnapshot(e.target.value)}
+          onChange={setSnapshot}
+          label={t("recovery.foreignLatest")}
           disabled={busy}
+          options={[
+            { value: "latest", label: t("recovery.foreignLatest") },
+            ...snaps.map((s) => ({
+              value: s.id,
+              label: `${new Date(s.time).toLocaleString()}, ${s.id.slice(0, 8)}`,
+            })),
+          ]}
           className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text glim-field-focus"
-        >
-          <option value="latest">{t("recovery.foreignLatest")}</option>
-          {snaps.map((s) => (
-            <option key={s.id} value={s.id}>
-              {new Date(s.time).toLocaleString()}, {s.id.slice(0, 8)}
-            </option>
-          ))}
-        </select>
+        />
         <Button
           key={shake}
           label={t("recovery.foreignRestore")}

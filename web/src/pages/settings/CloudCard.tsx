@@ -13,6 +13,8 @@ import { useEffect, useRef, useState } from "react";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { SelectField } from "../../components/SelectField";
+import { STORAGE_CLASSES } from "../../lib/storageClasses";
 
 // CloudCard stores credentials for off-site restic backends (S3 + restic REST),
 // kept encrypted. Secrets are write-only: blank on load, blank-on-save keeps the
@@ -176,14 +178,16 @@ export function CloudCard({
             {t("cloud.storageClass.label")}
             <InfoBubble tip={t("cloud.storageClass.hint")} />
           </span>
-          <select value={c.s3StorageClass} onChange={(e) => setImmediate("s3StorageClass", e.target.value)} className={inputCls}>
-            <option value="">{t("cloud.storageClass.default")}</option>
-            <option value="STANDARD">STANDARD</option>
-            <option value="STANDARD_IA">STANDARD_IA</option>
-            <option value="ONEZONE_IA">ONEZONE_IA</option>
-            <option value="INTELLIGENT_TIERING">INTELLIGENT_TIERING</option>
-            <option value="GLACIER_IR">GLACIER_IR</option>
-          </select></label>
+          <SelectField
+            value={c.s3StorageClass}
+            onChange={(v) => setImmediate("s3StorageClass", v)}
+            label={t("cloud.storageClass.label")}
+            options={[
+              { value: "", label: t("cloud.storageClass.default") },
+              ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc })),
+            ]}
+            className={inputCls}
+          /></label>
       </div>
 
       <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">

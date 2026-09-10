@@ -638,6 +638,8 @@ const ru: Partial<Translations> = {
   "snapshot.tags": "Теги",
   "snapshot.addTag": "Добавить тег",
   "snapshot.compare": "Сравнить",
+  "snapshot.compareFrom": "Сравнить с",
+  "snapshot.compareTo": "Сравнить с чем",
   "snapshot.pickTwo": "Выберите два снимка для сравнения",
   "snapshot.added": "добавлено",
   "snapshot.removed": "удалено",

@@ -1,4 +1,5 @@
 import { useT } from "../lib/i18n";
+import { SelectField } from "./SelectField";
 import type { OffsiteDomain } from "../lib/useOffsiteTargets";
 import {
   offsiteTargetLabel,
@@ -126,19 +127,17 @@ export function SourceToggle({
         size="md"
       />
       {multi && isOffsiteSource(source) && (
-        <select
-          aria-label={t("source.offsiteTarget")}
+        <SelectField
+          label={t("source.offsiteTarget")}
           value={source}
           disabled={disabled}
-          onChange={(e) => onChange(e.target.value as RepoSource)}
+          onChange={(v) => onChange(v as RepoSource)}
+          options={targets.map((target, i) => ({
+            value: offsiteTargetSource(target, i),
+            label: offsiteTargetLabel(target),
+          }))}
           className="rounded-control bg-carbon-surface2 text-carbon-text text-xs px-2 py-1 disabled:opacity-50 glim-field-focus"
-        >
-          {targets.map((target, i) => (
-            <option key={target.id} value={offsiteTargetSource(target, i)}>
-              {offsiteTargetLabel(target)}
-            </option>
-          ))}
-        </select>
+        />
       )}
     </span>
   );

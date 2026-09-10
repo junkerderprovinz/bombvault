@@ -57,6 +57,7 @@
 // and was left as-is with its own comment rather than force that call here.
 import { Button } from "../../components/Button";
 import { NumberField } from "../../components/NumberField";
+import { SelectField } from "../../components/SelectField";
 import { Card, ToggleRow, type SaveState } from "./shared";
 import { InfoBubble } from "../../components/InfoBubble";
 import { RevealInput } from "../../components/RevealInput";
@@ -551,14 +552,20 @@ export function NotifyCard({
             </label>
             <label className={labelCls}>
               {t("notify.webhookFormat")}
-              <select key={fieldShake.webhookFormat} value={cfg.webhookFormat} onChange={(e) => setImmediate("webhookFormat", e.target.value)}
-                className={`${selectCls}${fieldShake.webhookFormat ? " glim-shake" : ""}`}>
-                <option value="generic">Generic JSON</option>
-                <option value="discord">Discord</option>
-                <option value="slack">Slack</option>
-                <option value="gotify">Gotify</option>
-                <option value="ntfy">ntfy</option>
-              </select>
+              <SelectField
+                key={fieldShake.webhookFormat}
+                value={cfg.webhookFormat}
+                onChange={(v) => setImmediate("webhookFormat", v)}
+                label={t("notify.webhookFormat")}
+                options={[
+                  { value: "generic", label: "Generic JSON" },
+                  { value: "discord", label: "Discord" },
+                  { value: "slack", label: "Slack" },
+                  { value: "gotify", label: "Gotify" },
+                  { value: "ntfy", label: "ntfy" },
+                ]}
+                className={`${selectCls}${fieldShake.webhookFormat ? " glim-shake" : ""}`}
+              />
             </label>
           </>
         )}
@@ -686,12 +693,18 @@ export function NotifyCard({
             </label>
             <label className={labelCls}>
               {t("notify.smtpTls")}
-              <select key={fieldShake.smtpTls} value={cfg.smtpTls} onChange={(e) => setImmediate("smtpTls", e.target.value)}
-                className={`${selectCls}${fieldShake.smtpTls ? " glim-shake" : ""}`}>
-                <option value="starttls">STARTTLS</option>
-                <option value="tls">TLS (implicit)</option>
-                <option value="none">None</option>
-              </select>
+              <SelectField
+                key={fieldShake.smtpTls}
+                value={cfg.smtpTls}
+                onChange={(v) => setImmediate("smtpTls", v)}
+                label={t("notify.smtpTls")}
+                options={[
+                  { value: "starttls", label: "STARTTLS" },
+                  { value: "tls", label: "TLS (implicit)" },
+                  { value: "none", label: "None" },
+                ]}
+                className={`${selectCls}${fieldShake.smtpTls ? " glim-shake" : ""}`}
+              />
             </label>
             <label className={labelCls}>
               {t("notify.smtpUser")}

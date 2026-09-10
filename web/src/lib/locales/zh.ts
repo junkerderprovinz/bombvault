@@ -638,6 +638,8 @@ const zh: Partial<Translations> = {
   "snapshot.tags": "标签",
   "snapshot.addTag": "添加标签",
   "snapshot.compare": "比较",
+  "snapshot.compareFrom": "比较起点",
+  "snapshot.compareTo": "比较终点",
   "snapshot.pickTwo": "选择两个快照进行比较",
   "snapshot.added": "新增",
   "snapshot.removed": "移除",

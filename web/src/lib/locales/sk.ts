@@ -149,6 +149,8 @@ const sk: Partial<Translations> = {
   "snapshot.tags": "Značky",
   "snapshot.addTag": "Pridať značku",
   "snapshot.compare": "Porovnať",
+  "snapshot.compareFrom": "Porovnať od",
+  "snapshot.compareTo": "Porovnať s",
   "snapshot.pickTwo": "Vyberte dve snímky na porovnanie",
   "snapshot.added": "pridané",
   "snapshot.removed": "odstránené",

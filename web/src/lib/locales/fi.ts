@@ -646,6 +646,8 @@ const fi: Partial<Translations> = {
   "snapshot.tags": "Tunnisteet",
   "snapshot.addTag": "Lisää tunniste",
   "snapshot.compare": "Vertaa",
+  "snapshot.compareFrom": "Vertaa alkaen",
+  "snapshot.compareTo": "Vertaa kohteeseen",
   "snapshot.pickTwo": "Valitse kaksi tilannevedosta vertailtavaksi",
   "snapshot.added": "lisätty",
   "snapshot.removed": "poistettu",

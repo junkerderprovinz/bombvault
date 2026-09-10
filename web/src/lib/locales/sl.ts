@@ -149,6 +149,8 @@ const sl: Partial<Translations> = {
   "snapshot.tags": "Oznake",
   "snapshot.addTag": "Dodaj oznako",
   "snapshot.compare": "Primerjaj",
+  "snapshot.compareFrom": "Primerjaj od",
+  "snapshot.compareTo": "Primerjaj z",
   "snapshot.pickTwo": "Izberi dva posnetka za primerjavo",
   "snapshot.added": "dodano",
   "snapshot.removed": "odstranjeno",

@@ -149,6 +149,8 @@ const ca: Partial<Translations> = {
   "snapshot.tags": "Etiquetes",
   "snapshot.addTag": "Afegeix etiqueta",
   "snapshot.compare": "Compara",
+  "snapshot.compareFrom": "Comparar des de",
+  "snapshot.compareTo": "Comparar fins a",
   "snapshot.pickTwo": "Tria dos instantanis per comparar",
   "snapshot.added": "afegits",
   "snapshot.removed": "eliminats",

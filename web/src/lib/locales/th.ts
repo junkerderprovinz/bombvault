@@ -646,6 +646,8 @@ const th: Partial<Translations> = {
   "snapshot.tags": "แท็ก",
   "snapshot.addTag": "เพิ่มแท็ก",
   "snapshot.compare": "เปรียบเทียบ",
+  "snapshot.compareFrom": "เปรียบเทียบจาก",
+  "snapshot.compareTo": "เปรียบเทียบกับ",
   "snapshot.pickTwo": "เลือกสองสแนปช็อตเพื่อเปรียบเทียบ",
   "snapshot.added": "เพิ่ม",
   "snapshot.removed": "ลบ",

@@ -149,6 +149,8 @@ const lv: Partial<Translations> = {
   "snapshot.tags": "Birkas",
   "snapshot.addTag": "Pievienot birku",
   "snapshot.compare": "Salīdzināt",
+  "snapshot.compareFrom": "Salīdzināt no",
+  "snapshot.compareTo": "Salīdzināt ar",
   "snapshot.pickTwo": "Izvēlieties divus momentuzņēmumus salīdzināšanai",
   "snapshot.added": "pievienots",
   "snapshot.removed": "noņemts",

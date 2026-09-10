@@ -197,14 +197,28 @@ export function DropdownListbox({
     // positioned. Same value goes into `pos` below, so React's own next
     // render writes back an identical inline width — this is a measurement
     // pre-pass, not a source of truth React doesn't know about.
-    panel.style.width = `${rect.width}px`;
+    // The trigger's width is a FLOOR, not the width, and that correction came
+    // off the running app (#3425): pinned to the trigger exactly, a compact
+    // filter bar's panel rendered "Alle Bereic…", "Selbst-Bac…", "Gesamt-Ba…"
+    // — every option truncated, because each row spends 24px of the trigger's
+    // own width on its padding. A native select's list is as wide as it needs;
+    // a replacement that is narrower than its own options is a downgrade.
+    // `max-content` is the same mechanism `.glim-bubble` uses and is
+    // load-bearing here for the same reason: a fixed box with only `left` set
+    // otherwise sizes itself by shrink-to-fit against the space to its right,
+    // so its width — and with it the height measured below — would depend on
+    // where it happens to sit.
+    panel.style.minWidth = `${rect.width}px`;
+    panel.style.width = "max-content";
     const viewport = {
       width: document.documentElement.clientWidth || window.innerWidth,
       height: document.documentElement.clientHeight || window.innerHeight,
     };
+    // Measured, not assumed: the box being positioned is the rendered one.
+    const measured = panel.offsetWidth;
     const { left, top } = computeBubblePosition(
       rect,
-      { width: rect.width, height: panel.offsetHeight },
+      { width: measured, height: panel.offsetHeight },
       viewport,
       DROPDOWN_GAP
     );
@@ -375,7 +389,11 @@ export function DropdownListbox({
         // when something focuses/scrolls an element still sitting at -9999px.
         left: pos?.left ?? -9999,
         top: pos?.top ?? -9999,
-        width: pos?.width,
+        // The trigger's width as a floor; the content decides the rest, capped
+        // so a long option cannot run off the window (see the effect above).
+        minWidth: pos?.width,
+        width: "max-content",
+        maxWidth: "min(92vw, 28rem)",
         transform: "translateX(-50%)",
         scrollbarColor: "var(--carbon-border) transparent",
         // Spread LAST so the rainbow position the trigger stands in reaches

@@ -646,6 +646,8 @@ const da: Partial<Translations> = {
   "snapshot.tags": "Tags",
   "snapshot.addTag": "Tilføj tag",
   "snapshot.compare": "Sammenlign",
+  "snapshot.compareFrom": "Sammenlign fra",
+  "snapshot.compareTo": "Sammenlign med",
   "snapshot.pickTwo": "Vælg to øjebliksbilleder at sammenligne",
   "snapshot.added": "tilføjet",
   "snapshot.removed": "fjernet",

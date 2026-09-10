@@ -646,6 +646,8 @@ const he: Partial<Translations> = {
   "snapshot.tags": "תגיות",
   "snapshot.addTag": "הוסף תגית",
   "snapshot.compare": "השווה",
+  "snapshot.compareFrom": "השוואה מ־",
+  "snapshot.compareTo": "השוואה אל",
   "snapshot.pickTwo": "בחר שני snapshots להשוואה",
   "snapshot.added": "נוסף",
   "snapshot.removed": "הוסר",

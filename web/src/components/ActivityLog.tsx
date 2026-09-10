@@ -16,8 +16,9 @@ import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
 import { useT } from "../lib/i18n";
+import { SelectField } from "./SelectField";
 import type { TranslationKey } from "../lib/i18n";
-import { buildLogLines, filterLogLines, formatLogDate } from "../lib/activityLog";
+import { buildLogLines, filterLogLines, formatLogDate, LOG_FILTER_DOMAINS, LOG_FILTER_KINDS } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
 import { Badge } from "./Badge";
 import { formatClockTime } from "../lib/reltime";
@@ -325,38 +326,20 @@ export function ActivityLog({
           aria-label={t("activityLog.filterPlaceholder")}
           className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted glim-field-focus"
         />
-        <select
+        <SelectField
           value={filterDomain}
-          onChange={(e) => setFilterDomain(e.target.value as LogFilterDomain)}
+          onChange={(v) => setFilterDomain(v as LogFilterDomain)}
+          label={t("activityLog.filterAllDomains")}
+          options={LOG_FILTER_DOMAINS.map((o) => ({ value: o.value, label: t(o.key as TranslationKey) }))}
           className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
-        >
-          <option value="all">{t("activityLog.filterAllDomains")}</option>
-          <option value="containers">{t("activityLog.domainContainers")}</option>
-          <option value="vms">{t("activityLog.domainVMs")}</option>
-          <option value="flash">{t("activityLog.domainFlash")}</option>
-          <option value="config">{t("activityLog.domainConfig")}</option>
-          <option value="files">{t("activityLog.domainFiles")}</option>
-          <option value="everything">{t("activityLog.domainEverything")}</option>
-        </select>
-        <select
+        />
+        <SelectField
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value as LogFilterKind)}
+          onChange={(v) => setFilterType(v as LogFilterKind)}
+          label={t("activityLog.filterAllTypes")}
+          options={LOG_FILTER_KINDS.map((o) => ({ value: o.value, label: t(o.key as TranslationKey) }))}
           className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
-        >
-          <option value="all">{t("activityLog.filterAllTypes")}</option>
-          <option value="backup">{t("activityLog.typeBackup")}</option>
-          <option value="restore">{t("activityLog.typeRestore")}</option>
-          <option value="prune">{t("activityLog.typePrune")}</option>
-          <option value="verify">{t("activityLog.typeVerify")}</option>
-          <option value="offsite">{t("activityLog.typeOffsite")}</option>
-          {/* Persisted kinds since the everything-in-the-log wave. Drill/tamper
-              reuse the existing job-label keys; the off-site DR check ("drdrill")
-              is its own kind and reuses Run History's kind label. */}
-          <option value="drill">{t("activityLog.jobDrill")}</option>
-          <option value="drdrill">{t("run.kindDRDrill")}</option>
-          <option value="tamper">{t("activityLog.jobTamper")}</option>
-          <option value="export">{t("activityLog.typeExport")}</option>
-        </select>
+        />
         {/* Heatmap day-filter chip — a filled pill (accent, no border, same
             language as the heatmap's active domain toggle) showing which day
             the Dashboard heatmap narrowed the log to; its × hands the clear

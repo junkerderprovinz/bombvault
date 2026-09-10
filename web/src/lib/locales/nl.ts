@@ -704,6 +704,8 @@ const nl: Partial<Translations> = {
   "snapshot.tags": "Tags",
   "snapshot.addTag": "Tag toevoegen",
   "snapshot.compare": "Vergelijken",
+  "snapshot.compareFrom": "Vergelijken vanaf",
+  "snapshot.compareTo": "Vergelijken met",
   "snapshot.pickTwo": "Kies twee snapshots om te vergelijken",
   "snapshot.added": "toegevoegd",
   "snapshot.removed": "verwijderd",

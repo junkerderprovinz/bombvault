@@ -15,6 +15,7 @@ import {
 import type { OffsiteTarget } from "../lib/api";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { restPathUserMismatch } from "../lib/restRepo";
+import { SelectField } from "./SelectField";
 import { useT } from "../lib/i18n";
 import { InfoBubble } from "./InfoBubble";
 import { NumberField } from "./NumberField";
@@ -920,19 +921,16 @@ export function OffsiteWizard({
                 moves to aria-label so the control still announces itself. */}
             {canPickCredSet && (
               <label className="flex flex-col gap-1">
-                <select
-                  aria-label={t("offsite.targets.credsLabel")}
+                <SelectField
+                  label={t("offsite.targets.credsLabel")}
                   value={credsRef}
-                  onChange={(e) => void (primary ? pickPrimaryCredSet(e.target.value) : pickCredSet(e.target.value))}
+                  onChange={(v) => void (primary ? pickPrimaryCredSet(v) : pickCredSet(v))}
+                  options={[
+                    { value: "", label: t("offsite.targets.credsDefault") },
+                    ...credSets.map((c) => ({ value: c.id, label: c.name })),
+                  ]}
                   className={inputCls}
-                >
-                  <option value="">{t("offsite.targets.credsDefault")}</option>
-                  {credSets.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
             )}
             {/* One place to CHOOSE credentials (this dropdown), one place to

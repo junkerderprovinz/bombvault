@@ -733,6 +733,41 @@ export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" 
  *  keep matching the drill filter. */
 export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite" | "drill" | "drdrill" | "tamper" | "export";
 
+/** The two lists the filter bar offers, as (value, translation key) pairs.
+ *
+ *  They live here rather than in the bar because there are TWO bars — the
+ *  activity log's own and the error panel's — and they were two hand-kept
+ *  copies of the same fourteen entries. A copy is where a new kind gets added
+ *  to one filter and not the other, and the panel had already drifted: it
+ *  offered the same options with no comment about why "update" is missing,
+ *  which is a rule that lives with the type above.
+ *
+ *  Keys, not labels: a list of options is not a place to call the translator. */
+export const LOG_FILTER_DOMAINS: { value: LogFilterDomain; key: string }[] = [
+  { value: "all", key: "activityLog.filterAllDomains" },
+  { value: "containers", key: "activityLog.domainContainers" },
+  { value: "vms", key: "activityLog.domainVMs" },
+  { value: "flash", key: "activityLog.domainFlash" },
+  { value: "config", key: "activityLog.domainConfig" },
+  { value: "files", key: "activityLog.domainFiles" },
+  { value: "everything", key: "activityLog.domainEverything" },
+];
+
+export const LOG_FILTER_KINDS: { value: LogFilterKind; key: string }[] = [
+  { value: "all", key: "activityLog.filterAllTypes" },
+  { value: "backup", key: "activityLog.typeBackup" },
+  { value: "restore", key: "activityLog.typeRestore" },
+  { value: "prune", key: "activityLog.typePrune" },
+  { value: "verify", key: "activityLog.typeVerify" },
+  { value: "offsite", key: "activityLog.typeOffsite" },
+  // Drill/tamper reuse the existing job-label keys; the off-site DR check
+  // ("drdrill") is its own kind and reuses Run History's kind label.
+  { value: "drill", key: "activityLog.jobDrill" },
+  { value: "drdrill", key: "run.kindDRDrill" },
+  { value: "tamper", key: "activityLog.jobTamper" },
+  { value: "export", key: "activityLog.typeExport" },
+];
+
 export interface LogFilter {
   domain: LogFilterDomain;
   kind: LogFilterKind;

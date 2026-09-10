@@ -646,6 +646,8 @@ const hu: Partial<Translations> = {
   "snapshot.tags": "Címkék",
   "snapshot.addTag": "Címke hozzáadása",
   "snapshot.compare": "Összehasonlítás",
+  "snapshot.compareFrom": "Összehasonlítás ettől",
+  "snapshot.compareTo": "Összehasonlítás ezzel",
   "snapshot.pickTwo": "Válassz két pillanatképet az összehasonlításhoz",
   "snapshot.added": "hozzáadva",
   "snapshot.removed": "eltávolítva",

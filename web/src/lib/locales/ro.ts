@@ -714,6 +714,8 @@ const ro: Partial<Translations> = {
   "snapshot.tags": "Etichete",
   "snapshot.addTag": "Adaugă etichetă",
   "snapshot.compare": "Compară",
+  "snapshot.compareFrom": "Compară de la",
+  "snapshot.compareTo": "Compară cu",
   "snapshot.pickTwo": "Alege două instantanee pentru comparare",
   "snapshot.added": "adăugate",
   "snapshot.removed": "eliminate",

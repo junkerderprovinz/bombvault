@@ -5,7 +5,6 @@ import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
-import { enableSelectScrollHere } from "../lib/selectScroll";
 
 // Per-browser record of the last BombVault version this browser saw. When the
 // running version differs, the "What's new" dialog (#48) is shown once.
@@ -105,11 +104,13 @@ export function Layout() {
     void syncDisplayPrefs();
   }, [authGate]);
 
-  // The mouse wheel steps a closed picker (GlimStone rule 14). One delegated
-  // listener covers every native <select> in the app, including the ones a
-  // route or a disclosure renders later — see enableSelectScrollHere for why
-  // this app attaches once here rather than per element.
-  useEffect(() => enableSelectScrollHere(), []);
+  // The delegated <select> wheel listener that used to sit here is GONE, and
+  // that is the end of a story rather than a deletion: this app has no native
+  // <select> left (#3425), so it had nothing to attach to. The rule it served
+  // (rule 14, a closed picker answers the wheel) is now SelectField's own, and
+  // the reason it cannot come back is lib/noNativeSelect.test.ts, which fails
+  // the build over a native one. A listener kept "just in case" against a case
+  // a test already forbids is dead code with an alibi.
 
   // Live-refresh when settings change elsewhere (e.g. enabling a domain on the
   // Settings page) so a newly-enabled tab appears immediately — no page reload.

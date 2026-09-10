@@ -149,6 +149,8 @@ const fa: Partial<Translations> = {
   "snapshot.tags": "برچسب‌ها",
   "snapshot.addTag": "افزودن برچسب",
   "snapshot.compare": "مقایسه",
+  "snapshot.compareFrom": "مقایسه از",
+  "snapshot.compareTo": "مقایسه تا",
   "snapshot.pickTwo": "دو اسنپ‌شات برای مقایسه انتخاب کنید",
   "snapshot.added": "افزوده‌شده",
   "snapshot.removed": "حذف‌شده",

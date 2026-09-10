@@ -149,6 +149,8 @@ const sr: Partial<Translations> = {
   "snapshot.tags": "Ознаке",
   "snapshot.addTag": "Додај ознаку",
   "snapshot.compare": "Упореди",
+  "snapshot.compareFrom": "Упореди од",
+  "snapshot.compareTo": "Упореди са",
   "snapshot.pickTwo": "Изабери два снимка за поређење",
   "snapshot.added": "додато",
   "snapshot.removed": "уклоњено",

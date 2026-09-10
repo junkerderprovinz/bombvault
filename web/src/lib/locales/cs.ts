@@ -644,6 +644,8 @@ const cs: Partial<Translations> = {
   "snapshot.tags": "Štítky",
   "snapshot.addTag": "Přidat štítek",
   "snapshot.compare": "Porovnat",
+  "snapshot.compareFrom": "Porovnat od",
+  "snapshot.compareTo": "Porovnat s",
   "snapshot.pickTwo": "Vyberte dva snímky k porovnání",
   "snapshot.added": "přidáno",
   "snapshot.removed": "odebráno",

@@ -643,6 +643,8 @@ const no: Partial<Translations> = {
   "snapshot.tags": "Tagger",
   "snapshot.addTag": "Legg til tagg",
   "snapshot.compare": "Sammenlign",
+  "snapshot.compareFrom": "Sammenlign fra",
+  "snapshot.compareTo": "Sammenlign med",
   "snapshot.pickTwo": "Velg to snapshots å sammenligne",
   "snapshot.added": "lagt til",
   "snapshot.removed": "fjernet",

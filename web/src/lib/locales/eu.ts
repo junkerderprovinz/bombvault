@@ -149,6 +149,8 @@ const eu: Partial<Translations> = {
   "snapshot.tags": "Etiketak",
   "snapshot.addTag": "Gehitu etiketa",
   "snapshot.compare": "Alderatu",
+  "snapshot.compareFrom": "Konparatu hemendik",
+  "snapshot.compareTo": "Konparatu honekin",
   "snapshot.pickTwo": "Aukeratu bi argazki alderatzeko",
   "snapshot.added": "gehituta",
   "snapshot.removed": "kenduta",

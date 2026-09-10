@@ -168,11 +168,17 @@ afterEach(() => {
 it("writes the chosen credential set onto this domain's primary destination", async () => {
   await renderWizard();
 
-  const select = screen.getByLabelText(/Credentials|Zugangsdaten/) as HTMLSelectElement;
-  expect(select.value).toBe(""); // shared by default, as before
+  // The picker is the app's own listbox now, not a native <select> (#3425):
+  // it opens, and an option is picked, rather than a value being written into
+  // the element. Same question, one interaction further.
+  const picker = screen.getByRole("combobox", { name: /Credentials|Zugangsdaten/ });
+  expect(picker.textContent).toContain("Shared");
 
   await act(async () => {
-    fireEvent.change(select, { target: { value: "set-a" } });
+    fireEvent.click(picker);
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("option", { name: "Backblaze" }));
   });
 
   expect(updateTargetCalls).toEqual([{ id: "tgt-primary", credsRef: "set-a" }]);
@@ -237,9 +243,11 @@ it("re-reads the destination after saving the repository", async () => {
 it("offers the credential selector for an S3 destination, not just a REST one", async () => {
   await renderWizard("s3:https://s3.eu-central-1.example/bucket");
 
-  const select = screen.getByLabelText(/Credentials|Zugangsdaten/) as HTMLSelectElement;
-  expect(select).toBeTruthy();
-  expect([...select.options].map((o) => o.textContent)).toContain("Backblaze");
+  const picker = screen.getByRole("combobox", { name: /Credentials|Zugangsdaten/ });
+  expect(picker).toBeTruthy();
+  // Every option is carried in the trigger (that is what keeps its width from
+  // moving), so the set is offered here whether the list is open or not.
+  expect(picker.textContent).toContain("Backblaze");
 
   // The REST-only fields must stay away: S3 keys live in the credential set or
   // the shared cloud credentials, never in this block (#131).

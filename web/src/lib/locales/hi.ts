@@ -149,6 +149,8 @@ const hi: Partial<Translations> = {
   "snapshot.tags": "टैग",
   "snapshot.addTag": "टैग जोड़ें",
   "snapshot.compare": "तुलना करें",
+  "snapshot.compareFrom": "इससे तुलना करें",
+  "snapshot.compareTo": "इससे तुलना का अंत",
   "snapshot.pickTwo": "तुलना के लिए दो स्नैपशॉट चुनें",
   "snapshot.added": "जोड़े गए",
   "snapshot.removed": "हटाए गए",

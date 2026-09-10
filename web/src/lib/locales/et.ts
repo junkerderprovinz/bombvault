@@ -149,6 +149,8 @@ const et: Partial<Translations> = {
   "snapshot.tags": "Sildid",
   "snapshot.addTag": "Lisa silt",
   "snapshot.compare": "Võrdle",
+  "snapshot.compareFrom": "Võrdle alates",
+  "snapshot.compareTo": "Võrdle kuni",
   "snapshot.pickTwo": "Vali võrdlemiseks kaks hetktõmmist",
   "snapshot.added": "lisatud",
   "snapshot.removed": "eemaldatud",

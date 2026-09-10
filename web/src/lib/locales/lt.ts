@@ -149,6 +149,8 @@ const lt: Partial<Translations> = {
   "snapshot.tags": "Žymės",
   "snapshot.addTag": "Pridėti žymę",
   "snapshot.compare": "Palyginti",
+  "snapshot.compareFrom": "Palyginti nuo",
+  "snapshot.compareTo": "Palyginti su",
   "snapshot.pickTwo": "Pasirinkite dvi momentines kopijas palyginimui",
   "snapshot.added": "pridėta",
   "snapshot.removed": "pašalinta",

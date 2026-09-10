@@ -33,6 +33,7 @@ import { credSetsChanged } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
+import { SelectField } from "../components/SelectField";
 import { relativeTime } from "../lib/reltime";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconFleet } from "../components/Sidebar";
@@ -264,15 +265,13 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
         <div className="flex items-center gap-2 flex-wrap">
           <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
             {t("fleet.mesh.applyTo")}
-            <select
+            <SelectField
               value={domain}
-              onChange={(e) => setDomain(e.target.value)}
+              onChange={setDomain}
+              label={t("fleet.mesh.applyTo")}
+              options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
               className="rounded-control bg-carbon-surface3 text-carbon-text text-xs px-2 py-1 glim-field-focus-well"
-            >
-              {MESH_DOMAINS.map((d) => (
-                <option key={d} value={d}>{t(domainLabelKey(d))}</option>
-              ))}
-            </select>
+            />
           </label>
           <Button
             key={shakeAccept}
@@ -385,11 +384,13 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
           <>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-carbon-textSub">{t("fleet.mesh.domain")}</label>
-              <select value={domain} onChange={(e) => setDomain(e.target.value)} className={inputCls}>
-                {MESH_DOMAINS.map((d) => (
-                  <option key={d} value={d}>{t(domainLabelKey(d))}</option>
-                ))}
-              </select>
+              <SelectField
+                value={domain}
+                onChange={setDomain}
+                label={t("fleet.mesh.domain")}
+                options={MESH_DOMAINS.map((d) => ({ value: d, label: t(domainLabelKey(d)) }))}
+                className={inputCls}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-carbon-textSub">{t("fleet.mesh.baseUrl")}</label>

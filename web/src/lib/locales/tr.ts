@@ -646,6 +646,8 @@ const tr: Partial<Translations> = {
   "snapshot.tags": "Etiketler",
   "snapshot.addTag": "Etiket ekle",
   "snapshot.compare": "Karşılaştır",
+  "snapshot.compareFrom": "Karşılaştırma başlangıcı",
+  "snapshot.compareTo": "Karşılaştırma hedefi",
   "snapshot.pickTwo": "Karşılaştırmak için iki anlık görüntü seçin",
   "snapshot.added": "eklendi",
   "snapshot.removed": "kaldırıldı",

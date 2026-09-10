@@ -149,6 +149,8 @@ const bg: Partial<Translations> = {
   "snapshot.tags": "Етикети",
   "snapshot.addTag": "Добави етикет",
   "snapshot.compare": "Сравни",
+  "snapshot.compareFrom": "Сравнение от",
+  "snapshot.compareTo": "Сравнение до",
   "snapshot.pickTwo": "Избери два снапшота за сравнение",
   "snapshot.added": "добавени",
   "snapshot.removed": "премахнати",

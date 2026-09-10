@@ -641,6 +641,8 @@ const uk: Partial<Translations> = {
   "snapshot.tags": "Теги",
   "snapshot.addTag": "Додати тег",
   "snapshot.compare": "Порівняти",
+  "snapshot.compareFrom": "Порівняти від",
+  "snapshot.compareTo": "Порівняти з",
   "snapshot.pickTwo": "Виберіть два знімки для порівняння",
   "snapshot.added": "додано",
   "snapshot.removed": "видалено",
