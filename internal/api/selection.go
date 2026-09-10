@@ -106,9 +106,7 @@ func NormalizeSelection(entries []string) []string {
 	excludes = PruneMaximal(dedupe(excludes))
 	sort.Strings(includes)
 	sort.Strings(excludes)
-	for _, p := range includes {
-		out = append(out, p)
-	}
+	out = append(out, includes...)
 	for _, p := range excludes {
 		out = append(out, ExclusionPrefix+p)
 	}
