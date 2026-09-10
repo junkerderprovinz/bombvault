@@ -31,6 +31,7 @@ Every container, VM, and config on the host can be backed up consistently and re
 - ✓ Selection persists through the existing flat `backupPaths` set — the tree is a new view over the same data, no new persistence model — Phase 1
 - ✓ Tree-based per-folder selection in the container panel: lazy-loading subtree per mount/root, tri-state checkboxes (mixed parents), remembered partial via dormant exclusions, unreadable-vs-empty per-node outcome rows, full APG keyboard operation — Phase 2
 - ✓ Container panel volatile-subfolder deselection: unfold a mount, uncheck transcoding/caches/logs without dropping the rest — maximal-root includes with stored exclusions enforced on the backup argv (Phase 1 engine, one-deep serialized save queue client-side) — Phase 2
+- ✓ Selection trust & controls: per-root "{n} paths" preview agreeing with the restic positionals + narrowing note on shrink (SELECT-03), per-root reviewable exclusions list (INTEG-03), defined empty-deselect semantics (client guard + fail-tone confirmed Reset as the one sanctioned exit, INTEG-04), per-root CACHEDIR.TAG toggle mapping to restic `--exclude-caches` (RESTIC-01) — Phase 3
 
 ### Active
 
@@ -45,6 +46,7 @@ Every container, VM, and config on the host can be backed up consistently and re
 - Changing the `backupPaths` persistence format — existing deployments must keep working without migration
 - Auto-detection of "junk" folders (heuristic cache/transcoding suggestions) — suggestions may come later; not part of this effort
 - Per-subfolder selection for stacks' compose project dirs beyond what per-stack backup already does — covered by issue #189's per-stack design
+- Fanout affordance from the tree into the ExcludesEditor ("exclude this subfolder instead") — noted as a follow-up at Phase 3 verification; the per-root exclusions disclosure is the v1 review surface, and the snapshot-content-comparison alternative is prohibited
 
 ## Context
 
@@ -77,6 +79,8 @@ Every container, VM, and config on the host can be backed up consistently and re
 | Tree node states derive purely from the (includes, exclusions) host-path sets — never from loaded children | Collapsed and never-loaded subtrees classify correctly with zero browsing; the exclusion list below a node IS the remembered-partial memory, so no second UI-side memory can drift | Decided (Phase 2) |
 | FoldersEditor saves serialize through a one-deep PATCH queue; revert re-derives from the live mirror by set-difference inverse | Rapid toggles collapse to one draining request carrying the latest full list; a newer toggle always survives a failing save (never a captured snapshot) | Decided (Phase 2) |
 | Keyboard Space routes through the identical onToggle pipeline as checkbox clicks | One toggle semantics, one D-04 zero-include guard, one save queue — an alternate input path can never bypass a client-side guard | Decided (Phase 2) |
+| Per-root CACHEDIR.TAG toggles compile to the item-level boolean union `anyRootExcludeCaches` → one constant `--exclude-caches` flag; map keys never reach argv | restic.Mode precedent (Limits); no user-controlled string crosses the argv boundary (toContainerPath containment + 64-entry cap on the keys); the container-wide scope is disclosed in the UI tooltip, not hidden | Decided (Phase 3) |
+| Reset selection = no-source `{backupPaths: [], excludeCaches: {}}` through the serialized queue, fail-tone confirm naming both consequences | Passes the tree-gated Phase 1 guard by omission — the one sanctioned exit to auto-detection; a refused deselect never silently flips the item | Decided (Phase 3) |
 
 ## Evolution
 
@@ -96,4 +100,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-10 after Phase 2*
+*Last updated: 2026-09-10 after Phase 3*

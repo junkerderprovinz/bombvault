@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Selection Engine & Restore Safety** - Normalize selections losslessly into the unchanged flat `backupPaths`, harden per-node listing, and make restores survive selection changes — proven end-to-end at the API/backup level before any UI is built on it. (completed 2026-09-10)
 - [x] **Phase 2: Container Panel Tree Selection** - The lazy tri-state tree lands in the container panel: unfold a mount, tick subfolders, keyboard-accessible, state exact on reopen. (completed 2026-09-10)
-- [ ] **Phase 3: Selection Trust & Controls** - Users can see and control what will be backed up: effective-selection preview, reviewable exclusions, defined empty-deselect semantics, per-root CACHEDIR.TAG toggle.
+- [x] **Phase 3: Selection Trust & Controls** - Users can see and control what will be backed up: effective-selection preview, reviewable exclusions, defined empty-deselect semantics, per-root CACHEDIR.TAG toggle. (completed 2026-09-10)
 - [ ] **Phase 4: File Sets Parity** - The same tree selection powers File Sets coverage.
 
 ## Phase Details
@@ -143,5 +143,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Selection Engine & Restore Safety | 5/5 | Complete    | 2026-09-10 |
 | 2. Container Panel Tree Selection | 3/3 | Complete    | 2026-09-10 |
-| 3. Selection Trust & Controls | 3/3 | In Progress|  |
+| 3. Selection Trust & Controls | 3/3 | Complete    | 2026-09-10 |
 | 4. File Sets Parity | 0/TBD | Not started | - |
