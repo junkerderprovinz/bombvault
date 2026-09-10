@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../lib/i18n";
 import { browse, type BrowseDirEntry, type BrowseResponse, type CustomPath, type MountInfo } from "../lib/api";
 import {
@@ -37,9 +37,21 @@ import { Button } from "./Button";
 // no prop for it; this is the app's first tri-state checkbox (Pattern 5).
 // aria-expanded sits on every expandable treeitem (every directory is a
 // potential parent — Phase 1 rejected emptiness probes; an expanded empty dir
-// honestly reports true with zero children). Basic roving tabindex here: the
-// last-focused treeitem (first root initially) carries tabIndex 0, all
-// others -1. The full APG key map is plan 03.
+// honestly reports true with zero children); it is omitted on the two honest
+// leaf kinds (an unreachable mount, a custom path outside the served root),
+// because APG end nodes must not announce themselves as parents (Pitfall 7).
+//
+// Keyboard (TREE-05, plan 03): the full APG TreeView checkbox-variant map on
+// one onKeyDown on the tree element, with roving tabindex — exactly one
+// treeitem (the focused, or last-focused, node; first root initially) carries
+// tabIndex 0. Right expands with focus STAYING on the parent and descends to
+// the first child only on a second press (a no-op while the loading row is
+// the only child, since notice rows are not focusable); Left collapses /
+// walks to the parent / does nothing on a closed root; Down/Up/Home/End move
+// focus between treeitems without ever expanding; Enter is the expansion
+// default action; Space is the ONLY selection toggler and routes through the
+// same onToggle as checkbox clicks — one toggle semantics, so the editor's
+// D-04 guard and serialized save queue cannot be bypassed by key (T-02-10).
 //
 // Expansion is comfort state only (D-05): persisted per container in
 // localStorage, capped; selection NEVER goes there.
@@ -92,6 +104,15 @@ interface RowSpec {
   label: ReactNode;
 }
 
+/** One VISIBLE treeitem in visual order, with its parent treeitem's host path
+ *  (null at level 1). The keyboard handler navigates this flat model; it is
+ *  built by the exact same walk that renders (spec.expandable && expanded),
+ *  so focus can never disagree with what is on screen. */
+interface FlatNode {
+  spec: RowSpec;
+  parent: string | null;
+}
+
 export function SelectionTree({
   mounts,
   customPaths,
@@ -112,6 +133,12 @@ export function SelectionTree({
   const [expandedOrder, setExpandedOrder] = useState<string[]>(() => loadExpanded(containerName));
   const [listings, setListings] = useState<Record<string, Listing>>({});
   const [focusPath, setFocusPath] = useState<string | null>(null);
+  // Roving-tabindex plumbing (TREE-05): the tree element (key target) and the
+  // currently rendered treeitem rows, keyed by host path. Callback refs keep
+  // the map exact through every expand/collapse — React nulls a row's entry
+  // the moment it unmounts.
+  const treeRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
 
   const fetchListing = useCallback(
     (hostPath: string) => {
@@ -173,7 +200,6 @@ export function SelectionTree({
 
   const rootCount = mounts.length + customPaths.length;
   const firstRoot = mounts[0]?.source ?? customPaths[0]?.path ?? null;
-  const tabTarget = focusPath ?? firstRoot;
 
   function childSpecs(parent: string, depth: number): RowSpec[] {
     const listing = listings[parent];
@@ -239,9 +265,109 @@ export function SelectionTree({
     })),
   ];
 
+  // The flat visible model the keyboard navigates: same walk that renders, so
+  // the order a user sees and the order arrows move through cannot diverge.
+  const expandedSet = new Set(expandedOrder);
+  function walk(specs: RowSpec[], parent: string | null, out: FlatNode[]): void {
+    for (const spec of specs) {
+      out.push({ spec, parent });
+      if (spec.expandable && expandedSet.has(spec.path)) {
+        walk(childSpecs(spec.path, spec.depth + 1), spec.path, out);
+      }
+    }
+  }
+  const flatNodes: FlatNode[] = [];
+  walk(rootSpecs, null, flatNodes);
+  const flatPaths = new Set(flatNodes.map((n) => n.spec.path));
+
+  // Roving tabindex home: the focused node, or the first root before any
+  // focus. A focusPath that is no longer VISIBLE (its ancestor collapsed
+  // underneath it) falls back to the first root so exactly one tabbable
+  // treeitem always exists in the DOM.
+  const tabTarget = focusPath && flatPaths.has(focusPath) ? focusPath : firstRoot;
+
+  /** Move the roving tabindex AND the real DOM focus to a treeitem. */
+  function focusNode(hostPath: string): void {
+    setFocusPath(hostPath);
+    const row = rowRefs.current.get(hostPath);
+    row?.scrollIntoView({ block: "nearest" });
+    row?.focus();
+  }
+
+  // The APG TreeView key map (TREE-05). It acts on the roving-focus node, and
+  // only when the event came from the tree itself or a treeitem row: focus
+  // sitting on an inner control (a checkbox, the retry Button, a remove chip)
+  // keeps that control's own key semantics — Space on a focused checkbox is
+  // the input's click, which already routes through the same onToggle.
+  function handleTreeKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
+    const el = e.target as HTMLElement;
+    if (el !== treeRef.current && el.getAttribute("role") !== "treeitem") return;
+    const idx = flatNodes.findIndex((n) => n.spec.path === tabTarget);
+    if (idx < 0) return;
+    const { spec, parent } = flatNodes[idx];
+    const expanded = expandedSet.has(spec.path);
+    switch (e.key) {
+      case "ArrowRight":
+        e.preventDefault();
+        if (!spec.expandable) return; // honest leaf: nothing to descend into
+        if (!expanded) {
+          // APG: expand with focus STAYING on the parent (children may still
+          // be loading); the browse fires through the toggleExpansion path.
+          toggleExpansion(spec.path);
+          return;
+        }
+        // Expanded: descend to the first child — but only once a child
+        // treeitem EXISTS. While the loading notice row is the only thing
+        // under the node there is nothing focusable, so this is a no-op.
+        {
+          const child = flatNodes.find((n) => n.parent === spec.path);
+          if (child) focusNode(child.spec.path);
+        }
+        return;
+      case "ArrowLeft":
+        e.preventDefault();
+        if (spec.expandable && expanded) {
+          toggleExpansion(spec.path); // collapse, focus stays
+          return;
+        }
+        // Closed child: walk up. A closed level-1 root has no parent: no-op.
+        if (parent) focusNode(parent);
+        return;
+      case "ArrowDown":
+        e.preventDefault();
+        if (idx + 1 < flatNodes.length) focusNode(flatNodes[idx + 1].spec.path);
+        return;
+      case "ArrowUp":
+        e.preventDefault();
+        if (idx > 0) focusNode(flatNodes[idx - 1].spec.path);
+        return;
+      case "Home":
+        e.preventDefault();
+        if (flatNodes.length > 0) focusNode(flatNodes[0].spec.path);
+        return;
+      case "End":
+        e.preventDefault();
+        if (flatNodes.length > 0) focusNode(flatNodes[flatNodes.length - 1].spec.path);
+        return;
+      case "Enter":
+        e.preventDefault();
+        // Default action is expansion; a leaf has no default action.
+        if (spec.expandable) toggleExpansion(spec.path);
+        return;
+      case " ":
+        e.preventDefault();
+        // The ONLY selection toggler, routed through the identical onToggle
+        // pipeline as checkbox clicks (T-02-10) — and it respects the same
+        // disabled rule the rendered checkbox has (unreachable row, save in
+        // flight for that node).
+        if (!spec.unreachable && !busyPaths?.has(spec.path)) onToggle(spec.path);
+        return;
+    }
+  }
+
   function renderSpec(spec: RowSpec): ReactNode {
     const state = classifyNode(spec.path, includes, exclusions);
-    const expanded = expandedOrder.includes(spec.path);
+    const expanded = expandedSet.has(spec.path);
     const listing = listings[spec.path];
     const kids = expanded ? childSpecs(spec.path, spec.depth + 1) : [];
     const shaken = !!shakeCounts?.[spec.path];
@@ -271,6 +397,10 @@ export function SelectionTree({
           aria-setsize={spec.setSize}
           aria-posinset={spec.posInSet}
           tabIndex={tabTarget === spec.path ? 0 : -1}
+          ref={(el) => {
+            if (el) rowRefs.current.set(spec.path, el);
+            else rowRefs.current.delete(spec.path);
+          }}
           className={`flex items-start gap-2 text-xs min-w-0 ${spec.depth === 0 ? "min-h-8" : "min-h-7"} ${tone}${shaken ? " glim-shake" : ""}`}
           style={indent}
           onFocus={() => setFocusPath(spec.path)}
@@ -368,8 +498,10 @@ export function SelectionTree({
 
   return (
     <div
+      ref={treeRef}
       role="tree"
       aria-label={t("folders.treeLabel")}
+      onKeyDown={handleTreeKeyDown}
       className="h-[clamp(12rem,55vh,32rem)] overflow-y-auto"
     >
       {rootSpecs.map(renderSpec)}

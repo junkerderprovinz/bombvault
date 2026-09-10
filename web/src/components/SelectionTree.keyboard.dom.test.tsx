@@ -154,6 +154,19 @@ function item(name: string | RegExp): HTMLElement {
   return screen.getByRole("treeitem", { name });
 }
 
+/** Focus a treeitem the way a keyboard user reaches it. The act() wrapper
+ *  matters: focusing fires the row's onFocus (which moves the roving tabindex
+ *  in component state), and that commit must land BEFORE the next key press
+ *  reads it — exactly the browser's own ordering, where the discrete focus
+ *  event is always dispatched before the subsequent keydown. */
+async function focusItem(name: string | RegExp): Promise<HTMLElement> {
+  const el = item(name);
+  await act(async () => {
+    el.focus();
+  });
+  return el;
+}
+
 /** One act-wrapped keyDown on the tree element, as a keyboard user fires it
  *  (focus sits on a treeitem; the event bubbles to the tree). */
 async function press(key: string): Promise<void> {
@@ -186,8 +199,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [plexListing()];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight");
 
     // APG: focus STAYS on the parent while (async) children load.
@@ -205,8 +217,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [hold.promise];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight");
     expect(screen.getByText("Loading…")).toBeTruthy();
 
@@ -225,8 +236,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [plexListing()];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight"); // expand, focus stays
     await press("ArrowRight"); // focus first child
     expect(focused()).toBe(item(/transcoding/));
@@ -241,8 +251,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     expect(focused()).toBe(root);
 
     // Closed level-1 root: nothing at all.
-    const other = item(/user\/appdata\/other/);
-    other.focus();
+    const other = await focusItem(/user\/appdata\/other/);
     await press("ArrowLeft");
     expect(focused()).toBe(other);
     expect(other.getAttribute("aria-expanded")).toBe("false");
@@ -252,8 +261,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [plexListing()];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight"); // expand plex only
 
     const transcoding = item(/transcoding/);
@@ -283,8 +291,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [plexListing()];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight");
     await press("ArrowDown"); // somewhere in the middle
 
@@ -298,8 +305,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [otherListing()];
     await renderEditor();
 
-    const other = item(/user\/appdata\/other/);
-    other.focus();
+    const other = await focusItem(/user\/appdata\/other/);
     await press("Enter");
     expect(other.getAttribute("aria-expanded")).toBe("true");
     expect(browseCalls).toEqual(["user/appdata/other"]);
@@ -308,8 +314,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
 
     // The outside-root custom is a leaf: Enter and Right are no-ops, and
     // aria-expanded is honestly OMITTED (APG end-node rule, Pitfall 7).
-    const leaf = item(/srv\/data/);
-    leaf.focus();
+    const leaf = await focusItem(/srv\/data/);
     await press("Enter");
     expect(focused()).toBe(leaf);
     expect(browseCalls).toEqual(["user/appdata/other"]);
@@ -323,13 +328,11 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [plexListing()];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight"); // expand
 
     const before = [OTHER, MOUNT, CUSTOM, OUTSIDE]; // canonical sorted wire order
-    const transcoding = item(/transcoding/);
-    transcoding.focus();
+    const transcoding = await focusItem(/transcoding/);
 
     // Space = the checkbox: the carve-out PATCH changes for exactly this node
     // (one new "!"+host entry; every bare include untouched).
@@ -361,7 +364,9 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     expect(root.tabIndex).toBe(0);
     expect(tree().querySelectorAll('[role="treeitem"][tabindex="0"]').length).toBe(1);
 
-    root.focus();
+    await act(async () => {
+      root.focus();
+    });
     await press("ArrowRight");
     await press("ArrowRight"); // focus the first child
 
@@ -376,11 +381,9 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [plexListing(), transcodingListing()];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight"); // plex children (level 2)
-    const transcoding = item(/transcoding/);
-    transcoding.focus();
+    const transcoding = await focusItem(/transcoding/);
     await press("ArrowRight"); // transcoding children (level 3, lazily loaded)
 
     // Geometry on the deep lazy node — uniform, not a post-load special case.
@@ -418,8 +421,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [{ ...plexListing(), truncated: true }, hold.promise];
     await renderEditor();
 
-    const root = item(/user\/appdata\/plex/);
-    root.focus();
+    const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight");
 
     // The truncated notice is a plain row: no treeitem role, not counted.
@@ -428,8 +430,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     expect(notice.closest('[role="treeitem"]')).toBeNull();
 
     // The loading row of a second, still-pending node likewise.
-    const other = item(/user\/appdata\/other/);
-    other.focus();
+    const other = await focusItem(/user\/appdata\/other/);
     await press("ArrowRight");
     const loading = screen.getByText("Loading…");
     expect(loading.closest('[role="treeitem"]')).toBeNull();
