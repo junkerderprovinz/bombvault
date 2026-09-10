@@ -728,7 +728,9 @@ interface MirrorSets {
  *    reset descriptor (reset: true) carries NO source — its drain sends
  *    exactly {backupPaths: []}, which the strictly tree-source-gated guard
  *    passes by design, making the confirmed reset the ONE sanctioned exit to
- *    auto-detection. Stacked cases resolve through latest-descriptor-wins.
+ *    auto-detection. Stacked cases resolve through latest-descriptor-wins,
+ *    with one deliberate exception (WR-01): a PENDING reset desc is sticky,
+ *    so a toggle arriving behind it cannot displace it in scheduleSave.
  *
  *  - "caches": a per-root CACHEDIR.TAG flip (D-06, RESTIC-01). The drain
  *    always sends the FULL live map (the server replaces it wholesale), so
@@ -928,16 +930,32 @@ export function FoldersEditor({
   // Queue entry point — called AFTER the mirror has been updated. If an
   // attempt is in flight, the mutation's effect rides the next drain: mark
   // dirty and remember its class's desc (latest desc per class wins, matching
-  // the latest-state drain). Otherwise the mutation becomes the in-flight
-  // attempt itself.
+  // the latest-state drain — EXCEPT a pending reset, which is sticky, see
+  // WR-01 below). Otherwise the mutation becomes the in-flight attempt
+  // itself.
   function scheduleSave(desc: SaveDesc): void {
     if (queueRef.current.inFlight) {
       queueRef.current.dirty = true;
       owedRef.current.add(desc.cls);
       // Discriminant-narrowed writes: a dynamic [desc.cls] index would lose
       // the cls-to-shape correlation TypeScript needs here.
-      if (desc.cls === "paths") pendingDescsRef.current.paths = desc;
-      else pendingDescsRef.current.caches = desc;
+      if (desc.cls === "paths") {
+        // WR-01: a confirmed reset descriptor is STICKY. Overwriting it with
+        // a later toggle's desc would make the drain send the live pre-reset
+        // list under "tree" — the confirmed destructive reset would silently
+        // never reach the server while the toggle's drain still toasts the
+        // ordinary "Saved". A toggle stacked behind a PENDING reset is
+        // therefore superseded: it still marks the class owed (the drain must
+        // fire) and still flips the mirror optimistically, but the reset body
+        // is what goes out, and the ok refetch re-derives the whole editor
+        // from the served auto-detected state — a toggle's effect is defined
+        // relative to that post-reset state, so its optimistic flip simply
+        // reverts when the served state lands (re-click after it does). A
+        // second reset desc may still replace it (reset replaces reset).
+        if (!pendingDescsRef.current.paths?.reset) pendingDescsRef.current.paths = desc;
+      } else {
+        pendingDescsRef.current.caches = desc;
+      }
       return;
     }
     owedRef.current = new Set([desc.cls]);
@@ -981,9 +999,14 @@ export function FoldersEditor({
         // NO selectionSource — the Phase 1 empty-selection guard is strictly
         // gated on the literal "tree", so this is the one sanctioned shape
         // that passes it back into auto-detection. Every other drain carries
-        // the live flat list under the "tree" source (a toggle stacked behind
-        // a reset is latest-intent-wins: its drain re-sends the live NON-empty
-        // list, which the guard never bites on).
+        // the live flat list under the "tree" source. Stacking semantics
+        // around a reset split by window (WR-01): while the reset is PENDING
+        // its desc is sticky in scheduleSave, so the drain sends this reset
+        // body and the stacked toggle is superseded by the ok refetch; once
+        // the reset's own drain has STARTED (its desc consumed here) a later
+        // toggle stacks normally and its drain re-sends the live NON-empty
+        // list — latest-intent-wins over the just-landed auto-detection,
+        // which the guard never bites on and the WR-02 reload then re-serves.
         if (isReset) {
           body.backupPaths = [];
           body.excludeCaches = {};

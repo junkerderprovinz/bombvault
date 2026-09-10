@@ -687,6 +687,67 @@ describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, S
     expect(screen.getByRole("button", { name: "Reset selection" }).className).toContain("glim-shake");
   });
 
+  it("a toggle stacked behind a PENDING reset never displaces it: the drain sends the reset body and the reload re-derives the editor (WR-01)", async () => {
+    // Three selected mounts so both stacked toggles stay above the D-04
+    // zero-include floor, plus a remembered exclusion for the reset to clear.
+    const mounts: MountInfo[] = Array.from({ length: 3 }, (_, i) => ({
+      source: `${HOST_ROOT}/user/appdata/w${i}`,
+      dest: `/w${i}`,
+      selected: true,
+      isAppdata: false,
+      reachable: true,
+    }));
+    mountsReply = mountsResponse({ mounts, excluded: [`${HOST_ROOT}/user/appdata/w0/x`] });
+    await renderEditor(true, 1700000000);
+    let resolveFirst!: (r: { ok: boolean }) => void;
+    patchReplies = [new Promise((res) => (resolveFirst = res))];
+
+    // 1. Toggle A (uncheck w1) goes in flight; its PATCH is held pending.
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /appdata\/w1/ })).getByRole("checkbox", { hidden: true }));
+    });
+    expect(patchBodies).toHaveLength(1);
+
+    // 2. The user confirms the reset while toggle A is in flight: the reset
+    //    descriptor is PENDING behind it — stacked, never concurrent.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Reset selection" }));
+    });
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    });
+    expect(patchBodies).toHaveLength(1);
+
+    // 3. Toggle B (uncheck w2) lands while the reset is still pending (w1's
+    //    row is busy from toggle A, w2's is not; w0 keeps the item non-empty,
+    //    so the D-04 floor allows it). Pre-WR-01 this overwrote the pending
+    //    reset desc; it must not.
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("treeitem", { name: /appdata\/w2/ })).getByRole("checkbox", { hidden: true }));
+    });
+    expect(patchBodies).toHaveLength(1);
+
+    // The served post-reset state: all three mounts auto-detected, the
+    // remembered exclusion gone.
+    mountsReply = mountsResponse({ mounts });
+    // 4. Toggle A settles ok: the drain carries the RESET body — the empty
+    //    no-source list plus the cleared caches map — NOT the live pre-reset
+    //    list under "tree".
+    await act(async () => {
+      resolveFirst({ ok: true });
+    });
+    expect(patchBodies).toHaveLength(2);
+    expect(patchBodies[1]).toEqual({ name: "tree", body: { backupPaths: [], excludeCaches: {} } });
+    expect(maxConcurrentPatches).toBe(1);
+
+    // 5. The reload re-derives everything from the served auto-detected
+    //    state: toggle B's optimistic uncheck is superseded (w2 back to
+    //    checked), the exclusion disclosure is gone.
+    expect(mountsCalls).toBe(2);
+    expect(screen.getByRole("treeitem", { name: /appdata\/w2/ }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.queryByRole("button", { name: /1 exclusions/ })).toBeNull();
+  });
+
   it("a successful narrowing save with lastBackup non-null renders the role=status warn note under the tree", async () => {
     mountsReply = mountsResponse({
       mounts: [
