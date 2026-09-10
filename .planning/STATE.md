@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 3
 current_phase_name: Selection Trust & Controls
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-09-10T19:15:32.517Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-09-10T19:32:42.246Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 3 execution started
-state_head: a35a7cfdf8267a6dba907e85bd2ee33902eab2c3
+state_head: 0e86f5455d587cbaa0a9d5c11096c1c23fbf397c
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 50
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 ## Current Position
 
 Phase: 3 (Selection Trust & Controls) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 3 execution started
 
@@ -69,6 +69,7 @@ Progress: [████████████████████] 8/8 pla
 | Phase 02 P02 | 10m | 2 tasks | 2 files |
 | Phase 02 P03 | 22m | 3 tasks | 6 files |
 | Phase 03 P01 | 13min | 2 tasks | 9 files |
+| Phase 03 P02 | 10min | 2 tasks | 46 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,9 @@ Recent decisions affecting current work:
 - [Phase 2]: Space routes through the exact onToggle pipeline clicks use (one D-04 guard, one save queue — T-02-10); inner native controls keep their own key semantics via the keydown target guard
 - [Phase 03]: [Phase 3]: exclude-caches rides restic.Mode (Limits precedent) — the per-root CACHEDIR.TAG toggles compile at backup time into the item-level boolean union anyRootExcludeCaches, set from the UpsertTarget re-read (fresh per backup, literal A1 union over the stored map independent of selection inclusion); internal/backup stays untouched
 - [Phase 03]: [Phase 3]: PATCH excludeCaches is a non-pointer map[string]bool — absent decodes to nil (untouched), explicit {} clears every root; keys validated through the toContainerPath containment discipline with atomic whole-save rejection plus a 64-entry cap
+- [Phase 03]: Phase 3 plan 02: preview counts stored maximal includes at-or-under the root only (include above the root does not count) - exactly the per-root toFlatList membership, so the visible number equals the bare positionals the next backup hands restic
+- [Phase 03]: Phase 3 plan 02: count and exclusions list are existence-unfiltered by design (A3/Pitfall 5) - stale/unreachable paths stay counted and listed; folders.notReachable/customMissing warn at row level
+- [Phase 03]: Phase 3 plan 02: exclusions disclosure is a plain button (backupOrder precedent) tabbable outside the roving set; expansion is per-root component state deliberately NOT persisted (audit view, not navigation comfort); active and dormant roots render the identical section
 
 ### Pending Todos
 
@@ -133,6 +137,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-10T19:15:24.321Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-09-10T19:32:41.990Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

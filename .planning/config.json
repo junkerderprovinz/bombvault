@@ -18,6 +18,7 @@
     "quick_branch_template": null
   },
   "workflow": {
+    "use_worktrees": false,
     "research": true,
     "plan_check": true,
     "verifier": true,
@@ -46,7 +47,8 @@
     "post_planning_gaps": true,
     "security_enforcement": true,
     "security_asvs_level": 1,
-    "security_block_on": "high"
+    "security_block_on": "high",
+    "_auto_chain_active": true
   },
   "ship": {
     "pr_body_sections": []
