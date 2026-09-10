@@ -261,7 +261,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [plexListing()];
     await renderEditor();
 
-    const root = await focusItem(/user\/appdata\/plex/);
+    await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight"); // expand plex only
 
     const transcoding = item(/transcoding/);
@@ -421,7 +421,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     browseReplies = [{ ...plexListing(), truncated: true }, hold.promise];
     await renderEditor();
 
-    const root = await focusItem(/user\/appdata\/plex/);
+    await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight");
 
     // The truncated notice is a plain row: no treeitem role, not counted.
