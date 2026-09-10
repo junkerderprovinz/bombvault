@@ -32,49 +32,28 @@ import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import { IconGithub } from "../../components/glyphs";
 import { getHealth } from "../../lib/api";
+import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { useT } from "../../lib/i18n";
 import { Card } from "./shared";
 
 /**
- * The GlimStone release this interface is built against.
+ * The GlimStone release this interface is built against, re-exported from the
+ * copied file that owns it.
  *
- * Bumped by hand when index.css / lib/appearance.ts / lib/controls.ts are
- * re-copied from a newer release; check that repo's CHANGELOG before moving
- * it. Raised 1.2.0 -> 1.6.0 in [362] after an audit found it four releases
- * behind while the engines themselves had been kept current - a number that
- * had come to say the opposite of what it is for. 1.7.0 in [411], the release
- * this app's own number field was built from.
+ * The number USED TO LIVE HERE, and GlimStone 1.8.0 moved it out for a reason
+ * this card proved twice over. A constant beside the card is a second place:
+ * the engines were re-copied and the number was not, so the card said 1.7.5
+ * while the files were newer, and 1.7.5 had never been cut as a release at all,
+ * because the language folded 1.7.1 through 1.7.10 into 1.8.0. Every version on
+ * this card is a link to its own tag's release page, so the string was not just
+ * stale, it opened a 404 (measured: v1.7.5 answers 404, v1.8.0 answers 200).
  *
- * BACK to 1.6.0 in [552], and the reason is the rule this card is built on.
- * -------------------------------------------------------------------------
- * Every version here links to ITS OWN tag's release page. 1.7.0 through 1.7.3
- * were four same-day versions in GlimStone's changelog that were never cut as
- * releases; GlimStone has since folded all four into the 1.6.0 that actually
- * ships (its own commit puts it as "The version on screen must be a published
- * release, not a tag"). So this card was linking to
- * /releases/tag/v1.7.2 - measured, HTTP 404, while v1.6.0 answers 200.
- *
- * The failure is worth naming because nothing local could catch it: the string
- * was accurate about a CHANGELOG heading and wrong about the world, and a
- * version number is only as good as the page it opens. Read the RELEASE list
- * when moving this, not the changelog - `gh release list` is the check.
- *
- * 1.7.5 now, and the check above was run before writing it: all six tags from
- * v1.7.0 to v1.7.5 answer 200 on their own release page, so what was a
- * changelog heading in [552] is a published release today. The engines moved
- * with the number rather than after it, which is the whole point of this
- * string: the second button height, the transition duration the motion switch
- * reaches, the wheel on the number field, the stepper wrapper that stopped
- * stretching, and the confirmation dialog's four changes are all in this
- * build. The class prefix moved too, in a sweep of its own right after: the
- * forty classes and fourteen keyframes this app had under `bv-` are `glim-`
- * now, the same names the language uses. What deliberately did NOT move are the
- * browser storage keys, which also begin with `bv-` and are not classes at all
- * (`bv-theme`, `bv-lang`, `bv-accent`, the filters); renaming those would have
- * silently reset every user's language, colour and filters, and broken the
- * display-prefs round trip with the server, which names the same keys in Go.
+ * So it comes from lib/glimstoneVersion.ts now, which is a copy of the design
+ * language's own version.ts and travels with the other copied files. Read the
+ * RELEASE list before moving it, never the changelog: `gh release list` is the
+ * check, and it is what caught this.
  */
-export const GLIMSTONE_VERSION = "1.7.5";
+export { GLIMSTONE_VERSION };
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 /** The handle from .github/FUNDING.yml, so one place in the product knows it. */

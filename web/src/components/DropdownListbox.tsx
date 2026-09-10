@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { computeBubblePosition } from "../lib/bubblePosition";
 import { usePortalHue } from "../lib/portalHue";
+import { enableWheelStep } from "../lib/selectScroll";
 
 // ---------------------------------------------------------------------------
 // DropdownListbox — the shared `role="listbox"` panel every button-opens-a-
@@ -82,6 +83,22 @@ export interface DropdownListboxProps {
   label: string;
   /** `aria-multiselectable` — set for a checkbox multi-select list. */
   multiselectable?: boolean;
+  /** What one wheel notch on the TRIGGER means: 1 rolling down the list, -1
+   *  rolling up (GlimStone 1.8.0). A closed native `<select>` answers the wheel,
+   *  and rule 18 replaces that select with this component, so the behaviour has
+   *  to arrive here or it disappears with the last one it was attached to.
+   *
+   *  The step lives at the call site because only the call site knows what the
+   *  list holds and what "the next one" means. Clamp with `stepIndex`, which is
+   *  why it does not wrap: one notch too many should not land a value from the
+   *  other end. Leave it out for a multi-select, which has no current value for
+   *  a notch to move.
+   *
+   *  It is attached as a real listener on the trigger rather than as an
+   *  `onWheel` prop at the call site: React registers onWheel as passive, so
+   *  `preventDefault` there does nothing but warn, and the page scrolls away
+   *  under the pointer while the value changes. */
+  wheelStep?: (delta: 1 | -1) => void;
   /** The `role="option"` buttons. */
   children: ReactNode;
 }
@@ -92,6 +109,7 @@ export function DropdownListbox({
   triggerRef,
   label,
   multiselectable,
+  wheelStep,
   children,
 }: DropdownListboxProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -111,6 +129,22 @@ export function DropdownListbox({
   // that happens on literally every option toggle in the multi-select case.
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  // The wheel on the TRIGGER, whether the panel is open or not (GlimStone
+  // 1.8.0). Read through a ref for the same reason onClose is: a call site
+  // passing an inline arrow would otherwise detach and re-attach the listener
+  // on every one of its own re-renders, and one of those re-renders is the
+  // value change this handler just caused.
+  const wheelStepRef = useRef(wheelStep);
+  wheelStepRef.current = wheelStep;
+  useEffect(() => {
+    const trigger = triggerRef.current;
+    if (!trigger || !wheelStepRef.current) return;
+    return enableWheelStep(trigger, (delta) => wheelStepRef.current?.(delta));
+    // `open` is in the deps so the listener is re-attached against whatever the
+    // trigger is after a re-render, not so the behaviour is gated on it: the
+    // wheel works on the closed picker, which is the whole point of the rule.
+  }, [triggerRef, open]);
 
   // Reset the measured position on every close, so the next open re-measures
   // from scratch (the trigger may have moved, the list may have changed

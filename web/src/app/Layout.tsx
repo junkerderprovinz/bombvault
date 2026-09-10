@@ -5,6 +5,7 @@ import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
+import { enableSelectScrollHere } from "../lib/selectScroll";
 
 // Per-browser record of the last BombVault version this browser saw. When the
 // running version differs, the "What's new" dialog (#48) is shown once.
@@ -104,6 +105,12 @@ export function Layout() {
     void syncDisplayPrefs();
   }, [authGate]);
 
+  // The mouse wheel steps a closed picker (GlimStone rule 14). One delegated
+  // listener covers every native <select> in the app, including the ones a
+  // route or a disclosure renders later — see enableSelectScrollHere for why
+  // this app attaches once here rather than per element.
+  useEffect(() => enableSelectScrollHere(), []);
+
   // Live-refresh when settings change elsewhere (e.g. enabling a domain on the
   // Settings page) so a newly-enabled tab appears immediately — no page reload.
   useEffect(() => {
@@ -172,8 +179,15 @@ export function Layout() {
     return <LoginPage onLogin={checkAuth} />;
   }
 
+  // The page gutter lives on the FRAME that holds the rail and the content,
+  // rather than on either of them (GlimStone 1.8.0, "the rail is a card, not a
+  // wall"). One number then produces three gaps that used to be two settings:
+  // around the rail, around the content, and between them. The rail used to be
+  // welded to the window edge while every card beside it floated, which made
+  // the one element that was neither read as window chrome rather than as part
+  // of the app.
   return (
-    <div className="flex h-screen overflow-hidden bg-carbon-background">
+    <div className="flex h-screen overflow-hidden bg-carbon-background gap-6 p-6">
       <Sidebar settings={settings} authEnabled={authEnabled} />
       {/* `flex flex-col` added here (sticky-footer page-shell fix, jdp live
           review — "die Versionsnummer soll unterhalb der untersten Card
@@ -187,7 +201,7 @@ export function Layout() {
           OTHER route: a page that doesn't opt into filling that height (see
           `glim-page-enter` below) just renders at its own natural height with
           invisible blank flex space below it — no visible change. */}
-      <main className="flex-1 flex flex-col overflow-y-auto p-6 min-w-0">
+      <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
         {/* `flex-1 flex flex-col` added (same fix as above): makes this
             per-route wrapper fill `main`'s available height (a definite size,
             since it's now a flex item of a sized flex column) AND pass a flex

@@ -585,7 +585,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     //     avoid.
     // 6rem holds the 48px mark plus the row's own `px-3.5`, with the glyph
     // column still centred in it.
-    <aside className={`flex flex-col ${railNarrow ? "w-24" : "w-56"} shrink-0 h-full bg-carbon-sidebar`}>
+    <aside className={`flex flex-col ${railNarrow ? "w-24" : "w-56"} shrink-0 h-full overflow-hidden rounded-card bg-carbon-sidebar`}>
       {/* Logo + wordmark → Dashboard. Two theme-specific marks auto-switch via the
           `dark:` variant (dark mark on the light surface, light mark on the dark
           surface). A short click navigates to the Dashboard; press-and-hold fires

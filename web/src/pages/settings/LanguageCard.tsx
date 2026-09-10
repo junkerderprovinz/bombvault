@@ -9,6 +9,7 @@ import { DropdownListbox } from "../../components/DropdownListbox";
 import { Flag } from "../../components/Sidebar";
 import { useRef, useState } from "react";
 import { useT } from "../../lib/i18n";
+import { stepIndex } from "../../lib/selectScroll";
 
 // ---------------------------------------------------------------------------
 // Language Card (GlimStone follow-up pass, live-review point 9) — the app's
@@ -89,6 +90,17 @@ export function LanguageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
           onClose={() => setOpen(false)}
           triggerRef={ref}
           label={t("language.label")}
+          // The wheel on the closed trigger, clamped at both ends (GlimStone
+          // 1.8.0). The language picker is the rule's own example of a value
+          // people reach for and should not have to open a list of 42 to
+          // change, and this app has no native <select> left here for the
+          // platform behaviour to ride on.
+          wheelStep={(delta) => {
+            const at = languages.findIndex((l) => l.code === lang);
+            const next = stepIndex(languages.length, at < 0 ? 0 : at, delta);
+            const picked = languages[next];
+            if (picked && picked.code !== lang) setLanguage(picked.code);
+          }}
         >
           {languages.map((l) => (
             <button

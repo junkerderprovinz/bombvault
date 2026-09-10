@@ -125,7 +125,7 @@ export type ButtonVariant = "default" | "chip" | "icon";
 // destructive-confirm button looks the same after moving into this component.
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:opacity-90",
-  neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hover",
+  neutral: "bg-carbon-surface3 text-carbon-text hover:bg-carbon-hoverRaised",
   subtle: "bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3",
   danger: "bg-statusFailSolid text-carbon-background hover:opacity-90",
   warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
