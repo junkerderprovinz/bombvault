@@ -1,9 +1,9 @@
 ---
-status: testing
+status: passed
 phase: 01-selection-engine-restore-safety
 source: [01-VERIFICATION.md]
 started: 2026-09-09T22:38:24Z
-updated: 2026-09-10T10:45:00Z
+updated: 2026-09-10T11:20:00Z
 ---
 
 ## Current Test
@@ -22,15 +22,18 @@ awaiting: user response
 
 ### 1. Smoke Unraid réel (192.168.31.6) — round-trip sélection / exclusion / restore sur l'instance physique
 expected: Backup d'un conteneur avec sous-dossier exclu → `restic ls` montre la branche exclue absente du snapshot (positionals = racines maximales, excludes descendants après `--`) → restore propre, contenu conforme. Couvre FUSE Unraid, docker.sock et les chemins hôtes — hors de portée des harnais.
-result: [pending]
+result: passed
+evidence: Attesté par l'utilisateur le 2026-09-10 (« le smoke a déjà été fait ») — validation humaine sur l'instance physique, faisant autorité pour cet item UAT.
 
 ### 2. Revue manuelle des 2 items edge-coverage (edge-coverage.json) : BROWSE-02 et SELECT-02 « unclassified »
 expected: Un humain accepte l'interprétation planifiée (BROWSE-02 : sémantique du trio de statuts selon CONTEXT browse Q2 ; SELECT-02 : sémantique zéro-migration selon le texte de l'exigence + encodage Q1/Q3, couverte par les tests round-trip legacy `[]` et migrate.go intact) ou dépose une correction. Politique #1110 — jamais auto-résolus.
-result: [pending]
+result: passed
+evidence: Accepté par l'utilisateur le 2026-09-10 (choix explicite « Accepter l'interprétation planifiée »).
 
 ### 3. Décision de format MVP — le but de phase n'est pas une User Story
 expected: Soit accepter la base de vérification actuelle (les 5 critères numérotés du ROADMAP, tous de niveau moteur et testables — 10/10 vérifiés), soit exécuter `/gsd mvp-phase 1` pour poser un but en User Story et re-vérifier sous cette forme.
-result: [pending]
+result: passed
+evidence: Accepté par l'utilisateur le 2026-09-10 (choix explicite « Accepter base ROADMAP ») — la base de vérification demeure les 5 critères numérotés du ROADMAP.
 
 ### 4. Push docker-folders + jobs GitHub Actions Test/Lint verts au HEAD final (c02149eb)
 expected: |
@@ -54,9 +57,9 @@ evidence: |
 ## Summary
 
 total: 4
-passed: 1
+passed: 4
 issues: 0
-pending: 3
+pending: 0
 skipped: 0
 blocked: 0
 
