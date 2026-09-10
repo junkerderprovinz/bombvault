@@ -135,6 +135,9 @@ const zh: Partial<Translations> = {
   "restore.confirmBody":
     "此操作将停止容器、替换其 appdata 并从备份中重新创建。是否继续？",
   "restore.cancel": "取消还原",
+  "backup.cancel": "取消备份",
+  "backup.cancelConfirm": "要取消 {name} 的备份吗？本次运行将不写入快照即结束，已保存的内容不会丢失。",
+  "runReason.cancelled": "已由用户取消",
   "restore.cancelConfirmSafe": "取消还原？部分已写入的输出文件夹将保持原样。",
   "restore.cancelConfirmInPlace": "{name} 正在还原中。取消会使本次还原处于未完成状态，可能需要再次运行。仍要取消吗？",
   "restore.cancelling": "正在取消…",

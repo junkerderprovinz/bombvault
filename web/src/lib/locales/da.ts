@@ -135,6 +135,9 @@ const da: Partial<Translations> = {
   "restore.confirmBody":
     "Containeren stoppes, dens appdata erstattes og den genoprettes fra sikkerhedskopien. Fortsæt?",
   "restore.cancel": "Annuller gendannelse",
+  "backup.cancel": "Annullér sikkerhedskopi",
+  "backup.cancelConfirm": "Annullér sikkerhedskopien af {name}? Kørslen stopper uden øjebliksbillede, og intet allerede gemt går tabt.",
+  "runReason.cancelled": "Annulleret af brugeren",
   "restore.cancelConfirmSafe": "Annuller gendannelsen? Den delvist skrevne målmappe bevares som den er.",
   "restore.cancelConfirmInPlace": "{name} er midt i en gendannelse. Annullering efterlader denne gendannelse ufuldstændig. Du skal muligvis køre den igen. Annuller alligevel?",
   "restore.cancelling": "Annullerer…",

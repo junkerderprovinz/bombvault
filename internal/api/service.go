@@ -265,6 +265,14 @@ type Service struct {
 	// prefix and quietly cancels a restore.
 	backupCancels map[string]context.CancelFunc
 
+	// cancelledBackups marks the keys a USER cancelled (#200), so the run that
+	// is about to fail with a context error can be recorded as "cancelled"
+	// instead. Same guard, same lifetime as backupCancels: set by
+	// CancelBackupRun, cleared by unregisterBackupCancel. It is a separate map
+	// rather than a sentinel inside backupCancels because the cancel func must
+	// stay callable by shutdown even after a user cancellation raced ahead of it.
+	cancelledBackups map[string]bool
+
 	// shuttingDown is set once, by BeginShutdown, and never cleared: the process
 	// is on its way out. runsAdapter.Finish reads it to tell a run we ABORTED
 	// from a run that FAILED, which is the difference between a red row nobody
@@ -4135,7 +4143,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		Docker:                 s.docker,
 		Restic:                 &resticAdapter{engine: s.engine, mode: mode},
 		Templates:              templatesAdapter{},
-		Runs:                   runsAdapter{st: s.store, ctx: ctx, svc: s},
+		Runs:                   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
@@ -6815,11 +6823,18 @@ func (templatesAdapter) Write(dir, name, xml string) error           { return te
 type runsAdapter struct {
 	st  *store.Repo
 	ctx context.Context
-	// svc is read ONLY to ask whether the process is shutting down ([375]).
+	// svc is read ONLY to ask whether the process is shutting down ([375]) and,
+	// since #200, whether a user cancelled this particular backup.
 	// Optional on purpose: the bookkeeping-only call sites below pass nil, and a
 	// nil here costs nothing but the shutdown relabel, which those sites do not
 	// need because they are not the run a backup finishes on.
 	svc *Service
+	// cancelKey is this run's progress key ("files:<id>", "container:<name>",
+	// "vm:<name>", "flash"), set only by the call sites that also register a
+	// backup cancel func under it. Empty everywhere else, which is what makes
+	// the user-cancellation relabel below reach exactly the runs a user can
+	// actually cancel and no others.
+	cancelKey string
 }
 
 var _ backup.Runs = runsAdapter{}
@@ -6871,6 +6886,20 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 	if r.svc != nil {
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
+			// A user cancelled this backup (#200). The error in hand is the
+			// context cancellation that followed, and recording it as a failure
+			// would put a red row in Run History, count it on the dashboard and
+			// fire an alert for something somebody asked for on purpose.
+			//
+			// As narrow as the shutdown relabel above, and for the same reason:
+			// it only ever downgrades a FAILED run, and only one whose key was
+			// actually marked. A real failure in a backup nobody cancelled keeps
+			// its status. The error text is not consulted at all - by the time
+			// the mark is set, every failure from that run is downstream of the
+			// cancellation, and matching on text would be a weaker second guess
+			// at something the mark already knows.
+			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
 	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
@@ -6895,6 +6924,12 @@ type startedRunsAdapter struct {
 	// this path as well; the two adapters differ only in where the run id comes
 	// from, never in what a finished run means.
 	svc *Service
+	// cancelKey: same role as runsAdapter.cancelKey (#200), and it has to be
+	// here for the same reason the line above gives. A VM backup registers
+	// "vm:<name>" like every other domain registers its own key, so a user who
+	// cancels one must get the same "cancelled" row a cancelled folder backup
+	// gets, not a red failure.
+	cancelKey string
 }
 
 var _ backup.Runs = startedRunsAdapter{}
@@ -6905,6 +6940,12 @@ func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64
 	if r.svc != nil {
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
+		} else if status == "failed" && r.svc.backupWasCancelled(r.cancelKey) {
+			// See runsAdapter.Finish for the whole reasoning (#200). Repeated
+			// rather than shared because these two adapters have deliberately
+			// stayed separate types, and a helper taking (svc, status, key)
+			// would read as indirection over three lines of condition.
+			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
 	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
@@ -7463,7 +7504,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 			log.Printf("api: BackupVM: run %s: stamp group %s failed: %v", runID, gid, serr) //nolint:gosec // G706: runID/gid are internal ids, not user input
 		}
 	}
-	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s}
+	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name}
 	// RunTag correlates every snapshot ONE backup invocation produces — only
 	// meaningful (and only set) when this backup will actually produce MORE
 	// than one restic snapshot (a file-only VM's single snapshot is already
@@ -8374,7 +8415,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
+		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "flash"},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "flash", "", err == nil, sum, err)
@@ -8528,8 +8569,6 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
-	s.registerBackupCancel("files:"+id, cancel) // reachable by shutdown ([375])
-	defer s.unregisterBackupCancel("files:" + id)
 	defer s.lockDomain("files")() // serialise per repo; blocks maintenance ops meanwhile
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -8539,6 +8578,25 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("files backup: load file set: %w", err)
 	}
+	// Registered under the set's NAME, not its id, and registered here rather
+	// than at the top of the function for that reason (#200).
+	//
+	// This is the key the progress stream already publishes under
+	// ("files:"+set.Name, a few lines below), and the key containers and VMs
+	// have always used for both purposes. Files was the one domain where the
+	// two disagreed: progress said "files:<name>" while the cancel entry said
+	// "files:<id>". Nothing noticed, because the only caller was shutdown and
+	// it walks the whole map without looking at keys. The moment a user can
+	// press Cancel, the interface has exactly one key in hand - the one it got
+	// from the progress stream - and a mismatch here would mean a button that
+	// answers "cancelled: false" and does nothing, forever, with no error
+	// anywhere to explain it.
+	//
+	// Moving the registration down costs nothing: what now runs before it is a
+	// settings read and a row lookup, neither of which can hang, and neither of
+	// which is worth cancelling.
+	s.registerBackupCancel("files:"+set.Name, cancel)
+	defer s.unregisterBackupCancel("files:" + set.Name)
 	// A set without a path cannot be backed up (Discover creates path-less,
 	// disabled sets from fileset: tags alone) — say so instead of letting
 	// paths.Resolve report a misleading traversal error for "".
@@ -8590,7 +8648,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		SetName:   set.Name,
 		Excludes:  set.Excludes,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
+		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
@@ -9407,7 +9465,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		Repo:      repo,
 		TargetID:  store.ConfigTargetID,
 		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
+		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "config"},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "config", "", err == nil, sum, err)

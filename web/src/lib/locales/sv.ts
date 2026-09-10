@@ -135,6 +135,9 @@ const sv: Partial<Translations> = {
   "restore.confirmBody":
     "Containern stoppas, dess appdata ersätts och den återskapas från säkerhetskopian. Fortsätta?",
   "restore.cancel": "Avbryt återställning",
+  "backup.cancel": "Avbryt säkerhetskopiering",
+  "backup.cancelConfirm": "Avbryta säkerhetskopieringen av {name}? Körningen stoppas utan ögonblicksbild, och inget som redan sparats går förlorat.",
+  "runReason.cancelled": "Avbruten av användaren",
   "restore.cancelConfirmSafe": "Avbryta återställningen? Den delvis skrivna målmappen lämnas som den är.",
   "restore.cancelConfirmInPlace": "{name} håller på att återställas. Att avbryta lämnar den här återställningen ofullständig. Du kan behöva köra den igen. Avbryta ändå?",
   "restore.cancelling": "Avbryter…",

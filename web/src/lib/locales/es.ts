@@ -135,6 +135,9 @@ const es: Partial<Translations> = {
   "restore.confirmBody":
     "Se detendrá el contenedor, se reemplazarán sus datos y se recreará desde la copia. ¿Continuar?",
   "restore.cancel": "Cancelar restauración",
+  "backup.cancel": "Cancelar copia",
+  "backup.cancelConfirm": "¿Cancelar la copia de {name}? La ejecución se detiene sin escribir una instantánea y no se pierde nada ya guardado.",
+  "runReason.cancelled": "Cancelado por el usuario",
   "restore.cancelConfirmSafe": "¿Cancelar la restauración? La carpeta de salida parcial se deja tal cual.",
   "restore.cancelConfirmInPlace": "{name} está a medio restaurar. Cancelar deja esta restauración incompleta. Puede que tengas que volver a ejecutarla. ¿Cancelar de todos modos?",
   "restore.cancelling": "Cancelando…",

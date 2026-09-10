@@ -699,6 +699,24 @@ export function cancelRestore(key: string): Promise<{ ok: boolean; cancelled: bo
 }
 
 /**
+ * POST /api/backup/cancel {key} — stop a backup that is running, by its progress
+ * key ("files:<id>" / "container:<name>" / "vm:<name>" / "flash" / "config").
+ * A key that is not running answers {ok:true,cancelled:false} and changes
+ * nothing, so a stale button cannot produce an error.
+ *
+ * Safe in a way the restore counterpart is not: restic writes its snapshot last,
+ * so an aborted backup leaves unreferenced data and no snapshot, collected by
+ * the next prune, and nothing on the host is touched. The run is recorded as
+ * "cancelled" rather than "failed" and fires no failure alert.
+ */
+export function cancelBackup(key: string): Promise<{ ok: boolean; cancelled: boolean }> {
+  return fetchJSON("/api/backup/cancel", {
+    method: "POST",
+    body: JSON.stringify({ key }),
+  });
+}
+
+/**
  * POST /api/stacks/{project}/restore — restore every backed-up container in a
  * compose stack from its latest backup, left stopped; when startAfter is true they
  * are then started in dependency order.

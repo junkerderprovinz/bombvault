@@ -29,6 +29,7 @@ func TestRunReasonsMatchTheFrontend(t *testing.T) {
 		{"ReasonInterrupted", ReasonInterrupted},
 		{"ReasonShutdown", ReasonShutdown},
 		{"ReasonContainerGone", ReasonContainerGone},
+		{"ReasonCancelled", ReasonCancelled},
 	} {
 		// The key in the table is the reason wrapped in quotes, so a substring
 		// check would pass on a partial reword. Match the quoted form.

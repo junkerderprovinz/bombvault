@@ -135,6 +135,9 @@ const vi: Partial<Translations> = {
   "restore.confirmBody":
     "Thao tác này sẽ dừng container, thay thế dữ liệu và tạo lại từ bản sao lưu. Tiếp tục?",
   "restore.cancel": "Hủy khôi phục",
+  "backup.cancel": "Hủy sao lưu",
+  "backup.cancelConfirm": "Hủy sao lưu {name}? Lần chạy dừng lại mà không ghi ảnh chụp, và không mất gì đã lưu.",
+  "runReason.cancelled": "Người dùng đã hủy",
   "restore.cancelConfirmSafe": "Hủy khôi phục? Thư mục đầu ra đã ghi một phần sẽ được giữ nguyên.",
   "restore.cancelConfirmInPlace": "{name} đang khôi phục dở dang. Việc hủy sẽ khiến lần khôi phục này không hoàn tất. Bạn có thể cần chạy lại. Vẫn hủy chứ?",
   "restore.cancelling": "Đang hủy…",

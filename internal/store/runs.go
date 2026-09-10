@@ -166,6 +166,13 @@ const (
 	// ReasonContainerGone marks a definition whose container is no longer on the
 	// host. Not a failure: BombVault deliberately did not run.
 	ReasonContainerGone = "container no longer exists on the host"
+
+	// ReasonCancelled is written when somebody pressed Cancel on a running
+	// backup (#200). It sits beside ReasonShutdown for the same reason that one
+	// exists: the row is not a failure and must not read like one. The wording
+	// says WHO stopped it, because that is the whole difference between this and
+	// the two reasons above, both of which are about the process ending.
+	ReasonCancelled = "cancelled by the user"
 )
 
 // ReapInterruptedRuns marks any run still in 'running' as failed. It is meant to

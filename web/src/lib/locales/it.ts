@@ -135,6 +135,9 @@ const it: Partial<Translations> = {
   "restore.confirmBody":
     "Il container verrà fermato, i suoi dati sostituiti e ricreato dal backup. Continuare?",
   "restore.cancel": "Annulla ripristino",
+  "backup.cancel": "Annulla backup",
+  "backup.cancelConfirm": "Annullare il backup di {name}? L'esecuzione si ferma senza scrivere uno snapshot e nulla di già salvato va perso.",
+  "runReason.cancelled": "Annullato dall'utente",
   "restore.cancelConfirmSafe": "Annullare il ripristino? La cartella di output parziale viene lasciata così com'è.",
   "restore.cancelConfirmInPlace": "{name} è a metà ripristino. Annullando questo ripristino resta incompleto. Potrebbe essere necessario eseguirlo di nuovo. Annullare comunque?",
   "restore.cancelling": "Annullamento…",

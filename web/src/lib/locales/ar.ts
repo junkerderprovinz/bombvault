@@ -135,6 +135,9 @@ const ar: Partial<Translations> = {
   "restore.confirmBody":
     "سيُوقف هذا الـ container وتُستبدل بياناته ويُعاد إنشاؤه من النسخة الاحتياطية. هل تريد المتابعة؟",
   "restore.cancel": "إلغاء الاستعادة",
+  "backup.cancel": "إلغاء النسخ الاحتياطي",
+  "backup.cancelConfirm": "إلغاء النسخ الاحتياطي لـ {name}؟ يتوقف التشغيل دون كتابة لقطة، ولا يُفقد أي شيء محفوظ بالفعل.",
+  "runReason.cancelled": "أُلغي من قبل المستخدم",
   "restore.cancelConfirmSafe": "إلغاء الاستعادة؟ سيبقى مجلد الإخراج الجزئي كما هو.",
   "restore.cancelConfirmInPlace": "{name} قيد الاستعادة حاليًا. الإلغاء يترك هذه الاستعادة غير مكتملة. قد تحتاج إلى تنفيذها مرة أخرى. الإلغاء على أي حال؟",
   "restore.cancelling": "جارٍ الإلغاء…",

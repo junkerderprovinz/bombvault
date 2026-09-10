@@ -35,6 +35,7 @@ import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { DEFAULT_RESTORE_FOLDER } from "../components/RestorePanel";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
+import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { RestoreProgress } from "../components/restore/RestoreProgress";
@@ -1266,6 +1267,21 @@ function FileSetRow({
           active={progress.active}
           label={progress.phase === "restore" ? t("common.restoring") : t("common.backingUp")}
         />
+      )}
+      {/* Stop a backup that is running (#200). Beside the bar that shows it,
+          because that bar is the only place this card admits something is
+          happening at all, and a control for stopping a thing belongs where the
+          thing is visible.
+            Only while a BACKUP is actually running: the restore has its own
+          cancel inside the Backups panel above, with its own confirmation about
+          a half-restored target, and two cancel buttons on one card that mean
+          different things is worse than none. `progress.active` gates it so a
+          finished run's last frame does not leave a button that can only ever
+          answer "nothing to cancel". */}
+      {progress && progress.active && progress.phase !== "restore" && (
+        <div className="flex justify-end">
+          <BackupCancelButton cancelKey={`files:${set.name}`} name={set.name} t={t} />
+        </div>
       )}
       {confirmDialog}
     </div>

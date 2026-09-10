@@ -35,6 +35,7 @@ export const RUN_REASONS: Record<string, TranslationKey> = {
   "interrupted (BombVault restarted mid-run)": "runReason.interrupted",
   "aborted: BombVault was shut down": "runReason.shutdown",
   "container no longer exists on the host": "runReason.containerGone",
+  "cancelled by the user": "runReason.cancelled",
 };
 
 /**

@@ -135,6 +135,9 @@ const hu: Partial<Translations> = {
   "restore.confirmBody":
     "Ez leállítja a konténert, kicseréli az appdata-t, és visszaállítja a mentésből. Folytatja?",
   "restore.cancel": "Visszaállítás megszakítása",
+  "backup.cancel": "Mentés megszakítása",
+  "backup.cancelConfirm": "Megszakítja a(z) {name} mentését? A futás pillanatkép írása nélkül áll le, és a már elmentettekből semmi sem vész el.",
+  "runReason.cancelled": "A felhasználó megszakította",
   "restore.cancelConfirmSafe": "Megszakítja a visszaállítást? A részlegesen kiírt célmappa változatlanul megmarad.",
   "restore.cancelConfirmInPlace": "A(z) {name} visszaállítása folyamatban van. A megszakítás félbehagyja ezt a visszaállítást. Lehet, hogy újra kell futtatni. Mégis megszakítja?",
   "restore.cancelling": "Megszakítás…",

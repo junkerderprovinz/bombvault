@@ -958,6 +958,31 @@ func (h *Handler) handleRestoreCancel(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
 }
 
+// handleBackupCancel cancels an in-flight BACKUP by its progress key
+// (POST /api/backup/cancel {key}), the counterpart of handleRestoreCancel
+// above (#200).
+//
+// Deliberately a second route rather than a shared one that switches on the
+// key's prefix. The two are not the same operation: a cancelled backup is safe
+// and leaves nothing half-written, a cancelled restore leaves a container gone
+// and its appdata partial. Keeping them apart is what stops a caller reaching
+// the destructive one by getting a prefix wrong, which is the same reasoning
+// the Service uses for keeping two cancel maps.
+//
+// Cancelling a key that is not running is an idempotent success
+// (cancelled:false): a browser tab that still shows the button for a backup
+// that finished a second ago must not produce an error.
+func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Key string `json:"key"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	cancelled := h.svc.CancelBackupRun(body.Key)
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
+}
+
 // handleRestoreStack restores every backed-up member of a compose stack STOPPED,
 // then (optionally) starts them in dependency order. POST /api/stacks/{project}/restore
 // The {project} is a compose project name, which is laxer than a container name

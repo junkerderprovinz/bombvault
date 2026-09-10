@@ -134,6 +134,9 @@ const pt: Partial<Translations> = {
   "restore.confirmBody":
     "O container será parado, os seus dados substituídos e recriado a partir do backup. Continuar?",
   "restore.cancel": "Cancelar restauro",
+  "backup.cancel": "Cancelar cópia",
+  "backup.cancelConfirm": "Cancelar a cópia de {name}? A execução para sem escrever um instantâneo e nada do que já foi guardado se perde.",
+  "runReason.cancelled": "Cancelado pelo utilizador",
   "restore.cancelConfirmSafe": "Cancelar o restauro? A pasta de saída parcial é mantida como está.",
   "restore.cancelConfirmInPlace": "{name} está a meio de um restauro. Cancelar deixa este restauro incompleto. Poderá ser necessário executá-lo novamente. Cancelar mesmo assim?",
   "restore.cancelling": "A cancelar…",

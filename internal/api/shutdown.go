@@ -50,11 +50,62 @@ func (s *Service) registerBackupCancel(key string, cancel context.CancelFunc) {
 	s.cancelMu.Unlock()
 }
 
-// unregisterBackupCancel drops a backup's entry once it has finished.
+// unregisterBackupCancel drops a backup's entry once it has finished, along
+// with any user-cancellation mark against the same key: the next backup under
+// that key must start from a clean slate, or it would relabel its own genuine
+// failure as somebody's cancellation.
 func (s *Service) unregisterBackupCancel(key string) {
 	s.cancelMu.Lock()
 	delete(s.backupCancels, key)
+	delete(s.cancelledBackups, key)
 	s.cancelMu.Unlock()
+}
+
+// CancelBackupRun cancels an in-flight backup by its progress key (#200,
+// scooterscott1: "Is there a way to cancel an in flight backup of folders?").
+//
+// Every running backup has held its own cancel func since [375]; until now the
+// only caller was shutdown. This is the same mechanism with a second door, and
+// the reason it is safe to open is written out at backupCancels' own
+// declaration: restic writes its snapshot as the last act of a run, so an
+// aborted backup leaves unreferenced data and no snapshot, which the next prune
+// collects. Nothing on the host is touched. That is why backups may be
+// cancelled and restores may not, and why this deliberately reaches only
+// backupCancels.
+//
+// Returns false for a key that is not running - already finished, never
+// started, or misspelled - so the call is idempotent and a stale button in a
+// browser tab cannot produce an error.
+//
+// The mark is what turns the resulting failure into a "cancelled" run rather
+// than a red row nobody asked for; runsAdapter.Finish reads it, and
+// unregisterBackupCancel clears it.
+func (s *Service) CancelBackupRun(key string) bool {
+	s.cancelMu.Lock()
+	cancel, ok := s.backupCancels[key]
+	if ok {
+		if s.cancelledBackups == nil {
+			s.cancelledBackups = map[string]bool{}
+		}
+		s.cancelledBackups[key] = true
+	}
+	s.cancelMu.Unlock()
+	if ok {
+		cancel()
+	}
+	return ok
+}
+
+// backupWasCancelled reports whether the user cancelled the backup running
+// under this key. Read once, while the run is being finished; the mark itself
+// is cleared by unregisterBackupCancel a moment later.
+func (s *Service) backupWasCancelled(key string) bool {
+	if key == "" {
+		return false
+	}
+	s.cancelMu.Lock()
+	defer s.cancelMu.Unlock()
+	return s.cancelledBackups[key]
 }
 
 // inFlightBackups reports how many backups currently hold a cancel entry.

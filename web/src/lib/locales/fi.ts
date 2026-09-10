@@ -135,6 +135,9 @@ const fi: Partial<Translations> = {
   "restore.confirmBody":
     "Kontti pysäytetään, sen appdata korvataan ja se luodaan uudelleen varmuuskopiosta. Jatketaanko?",
   "restore.cancel": "Peruuta palautus",
+  "backup.cancel": "Peruuta varmuuskopiointi",
+  "backup.cancelConfirm": "Peruutetaanko kohteen {name} varmuuskopiointi? Ajo pysähtyy kirjoittamatta tilannevedosta, eikä mitään jo tallennettua menetetä.",
+  "runReason.cancelled": "Käyttäjä peruutti",
   "restore.cancelConfirmSafe": "Peruutetaanko palautus? Osittain kirjoitettu kohdekansio jätetään ennalleen.",
   "restore.cancelConfirmInPlace": "{name} on kesken palautuksen. Peruutus jättää tämän palautuksen keskeneräiseksi. Se on ehkä suoritettava uudelleen. Peruutetaanko silti?",
   "restore.cancelling": "Peruutetaan…",

@@ -135,6 +135,9 @@ const he: Partial<Translations> = {
   "restore.confirmBody":
     "פעולה זו תעצור את ה-container, תחליף את הנתונים שלו ותיצור אותו מחדש מהגיבוי. להמשיך?",
   "restore.cancel": "ביטול השחזור",
+  "backup.cancel": "ביטול הגיבוי",
+  "backup.cancelConfirm": "לבטל את הגיבוי של {name}? ההרצה נעצרת בלי לכתוב תמונת מצב, ודבר ממה שכבר נשמר לא הולך לאיבוד.",
+  "runReason.cancelled": "בוטל על ידי המשתמש",
   "restore.cancelConfirmSafe": "לבטל את השחזור? תיקיית הפלט החלקית תישאר כפי שהיא.",
   "restore.cancelConfirmInPlace": "{name} נמצא באמצע שחזור. ביטול ישאיר את השחזור הזה חלקי, ייתכן שיהיה צורך להריץ אותו שוב. לבטל בכל זאת?",
   "restore.cancelling": "מבטל…",

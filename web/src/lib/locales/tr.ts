@@ -135,6 +135,9 @@ const tr: Partial<Translations> = {
   "restore.confirmBody":
     "Bu işlem konteyneri durduracak, appdata'yı değiştirecek ve yedekten yeniden oluşturacak. Devam edilsin mi?",
   "restore.cancel": "Geri yüklemeyi iptal et",
+  "backup.cancel": "Yedeklemeyi iptal et",
+  "backup.cancelConfirm": "{name} yedeklemesi iptal edilsin mi? Çalışma anlık görüntü yazmadan durur ve halihazırda kaydedilmiş hiçbir şey kaybolmaz.",
+  "runReason.cancelled": "Kullanıcı iptal etti",
   "restore.cancelConfirmSafe": "Geri yükleme iptal edilsin mi? Kısmen yazılan hedef klasör olduğu gibi bırakılır.",
   "restore.cancelConfirmInPlace": "{name} geri yükleme aşamasında. İptal etmek bu geri yüklemeyi yarım bırakır. Onu yeniden çalıştırmanız gerekebilir. Yine de iptal edilsin mi?",
   "restore.cancelling": "İptal ediliyor…",

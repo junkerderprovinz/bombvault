@@ -135,6 +135,9 @@ const ko: Partial<Translations> = {
   "restore.confirmBody":
     "컨테이너를 중지하고, appdata를 교체하며, 백업에서 재생성합니다. 계속하시겠습니까?",
   "restore.cancel": "복원 취소",
+  "backup.cancel": "백업 취소",
+  "backup.cancelConfirm": "{name} 백업을 취소할까요? 스냅샷을 기록하지 않고 중단되며, 이미 저장된 내용은 사라지지 않습니다.",
+  "runReason.cancelled": "사용자가 취소함",
   "restore.cancelConfirmSafe": "복원을 취소하시겠습니까? 일부만 기록된 출력 폴더는 그대로 유지됩니다.",
   "restore.cancelConfirmInPlace": "{name}이(가) 복원 중입니다. 취소하면 이 복원이 불완전한 상태로 남습니다. 다시 실행해야 할 수도 있습니다. 그래도 취소하시겠습니까?",
   "restore.cancelling": "취소하는 중…",

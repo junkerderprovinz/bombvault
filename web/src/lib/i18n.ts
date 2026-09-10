@@ -234,6 +234,9 @@ export const en = {
   "restore.confirmBody":
     "This will stop the container, replace its appdata and recreate it from the backup. Continue?",
   "restore.cancel": "Cancel restore",
+  "backup.cancel": "Cancel backup",
+  "backup.cancelConfirm": "Cancel the backup of {name}? The run stops without writing a snapshot, and nothing already stored is lost.",
+  "runReason.cancelled": "Cancelled by the user",
   "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
   "restore.cancelConfirmInPlace":
     "{name} is mid-restore. Cancelling leaves this restore partial. You may need to restore it again. Cancel anyway?",
@@ -2016,6 +2019,9 @@ export const de: Translations = {
   "restore.confirmBody":
     "Der Container wird gestoppt, seine Appdata ersetzt und aus dem Backup neu erstellt. Fortfahren?",
   "restore.cancel": "Wiederherstellung abbrechen",
+  "backup.cancel": "Sicherung abbrechen",
+  "backup.cancelConfirm": "Sicherung von {name} abbrechen? Der Lauf endet ohne Schnappschuss, und nichts bereits Gesichertes geht verloren.",
+  "runReason.cancelled": "Von der Benutzerin abgebrochen",
   "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
   "restore.cancelConfirmInPlace":
     "{name} wird gerade wiederhergestellt. Ein Abbruch lässt diese Wiederherstellung unvollständig zurück. Möglicherweise musst du sie erneut ausführen. Trotzdem abbrechen?",
