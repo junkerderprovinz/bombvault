@@ -957,8 +957,18 @@ export function FoldersEditor({ name, stack, open, t }: { name: string; stack: s
     // too. An already-absolute path still passes through untranslated
     // (cleaned only), the established manual-fallback precedent.
     const p = browseRelToHost(raw, hostSourceRoot);
+    if (custom.some((c) => c.path === p) || includes.has(p)) {
+      // Duplicate: leave the staged pick IN the input (review WR-04). This
+      // guard used to run AFTER setBrowseValue(""), so adding an
+      // already-present path silently wiped the user's entry — no row
+      // change, no toast, nothing to retry from. A "duplicate path" toast
+      // was the review's alternative; it needs a brand-new folders.* key
+      // across all 42 locales, parity churn not worth it for a guard this
+      // rare — the kept text IS the feedback that the path is already in
+      // the list.
+      return;
+    }
     setBrowseValue("");
-    if (custom.some((c) => c.path === p) || includes.has(p)) return;
     const nextCustom = [...custom, { path: p, exists: true }];
     const pre = { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc };
     const nextIncludes = new Set(pre.includes);
