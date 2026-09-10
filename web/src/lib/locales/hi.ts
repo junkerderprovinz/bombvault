@@ -946,6 +946,8 @@ const hi: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "कार्रवाई विफल रही",
   "common.deleteFailed": "हटाना विफल रहा",
+  "common.edit": "एडिट करें",
+  "common.delete": "हटाएँ",
   "common.removeFailed": "निकालना विफल रहा",
   "common.saveFailed": "सहेजना विफल रहा",
   "common.discoverFailed": "खोज विफल रही",

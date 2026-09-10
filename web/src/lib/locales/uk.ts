@@ -568,6 +568,8 @@ const uk: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Не вдалося виконати дію",
   "common.deleteFailed": "Не вдалося видалити",
+  "common.edit": "Редагувати",
+  "common.delete": "Видалити",
   "common.removeFailed": "Не вдалося прибрати",
   "common.saveFailed": "Не вдалося зберегти",
   "common.discoverFailed": "Пошук не вдався",

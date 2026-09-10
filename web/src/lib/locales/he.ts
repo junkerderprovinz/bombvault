@@ -573,6 +573,8 @@ const he: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "הפעולה נכשלה",
   "common.deleteFailed": "המחיקה נכשלה",
+  "common.edit": "עריכה",
+  "common.delete": "מחיקה",
   "common.removeFailed": "ההסרה נכשלה",
   "common.saveFailed": "השמירה נכשלה",
   "common.discoverFailed": "הגילוי נכשל",

@@ -571,6 +571,8 @@ const cs: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Akce se nezdařila",
   "common.deleteFailed": "Smazání se nezdařilo",
+  "common.edit": "Upravit",
+  "common.delete": "Smazat",
   "common.removeFailed": "Odebrání se nezdařilo",
   "common.saveFailed": "Uložení se nezdařilo",
   "common.discoverFailed": "Hledání se nezdařilo",

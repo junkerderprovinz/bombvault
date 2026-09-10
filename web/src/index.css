@@ -2116,6 +2116,30 @@ body {
   --coin-xrp: #23292f;
 }
 
+/* Reactive LABELS on a coin tile: the vertical twin of `.glim-btn.glim-reactive`.
+   ---------------------------------------------------------------------------
+   That rule drops a reactive button's `gap` at rest for a reason this tile has
+   in the other axis: a collapsed label is still a flex item, so the container's
+   gap reserves space beside a zero-width box and pushes the glyph off centre.
+   On a button the axis is horizontal and the gap comes back as the label's own
+   `margin-inline-start`. This tile is a COLUMN, so the same trade has to be
+   made block-wise - the shared reveal rule hands back an inline margin, which
+   in a column direction means nothing.
+
+   Only in reactive mode: in every other mode the tile keeps its ordinary
+   `gap-2`, because the ticker is really there. */
+.glim-coin-tile.glim-reactive {
+  gap: 0;
+}
+.glim-coin-tile.glim-reactive.glim-active .glim-label-reactive,
+.glim-coin-tile.glim-reactive:hover .glim-label-reactive,
+.glim-coin-tile.glim-reactive:focus-visible .glim-label-reactive,
+.glim-coin-tile.glim-reactive:focus-within .glim-label-reactive {
+  /* The `gap-2` the tile gives up above, handed back by the label itself so
+     the spacing is unchanged once the word is out. */
+  margin-block-start: 0.5rem;
+}
+
 /* Reactive mode: the tile answers the pointer in its OWN palette position.
    ---------------------------------------------------------------------------
    Reported missing (jdp, 2026-09-11: "die kryptokacheln sind nicht im

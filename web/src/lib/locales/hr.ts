@@ -946,6 +946,8 @@ const hr: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Radnja nije uspjela",
   "common.deleteFailed": "Brisanje nije uspjelo",
+  "common.edit": "Uredi",
+  "common.delete": "Izbriši",
   "common.removeFailed": "Uklanjanje nije uspjelo",
   "common.saveFailed": "Spremanje nije uspjelo",
   "common.discoverFailed": "Pretraživanje nije uspjelo",

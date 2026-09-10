@@ -565,6 +565,8 @@ const ja: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "操作に失敗しました",
   "common.deleteFailed": "削除に失敗しました",
+  "common.edit": "編集",
+  "common.delete": "削除",
   "common.removeFailed": "削除できませんでした",
   "common.saveFailed": "保存に失敗しました",
   "common.discoverFailed": "検出に失敗しました",

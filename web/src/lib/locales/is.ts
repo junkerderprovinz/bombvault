@@ -946,6 +946,8 @@ const is: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Aðgerðin mistókst",
   "common.deleteFailed": "Eyðingin mistókst",
+  "common.edit": "Breyta",
+  "common.delete": "Eyða",
   "common.removeFailed": "Ekki tókst að fjarlægja",
   "common.saveFailed": "Vistun mistókst",
   "common.discoverFailed": "Leitin mistókst",

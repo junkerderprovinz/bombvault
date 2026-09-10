@@ -565,6 +565,8 @@ const vi: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Thao tác thất bại",
   "common.deleteFailed": "Xóa thất bại",
+  "common.edit": "Chỉnh sửa",
+  "common.delete": "Xóa",
   "common.removeFailed": "Gỡ bỏ thất bại",
   "common.saveFailed": "Lưu thất bại",
   "common.discoverFailed": "Tìm kiếm thất bại",

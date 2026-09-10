@@ -946,6 +946,8 @@ const id: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Tindakan gagal",
   "common.deleteFailed": "Penghapusan gagal",
+  "common.edit": "Edit",
+  "common.delete": "Hapus",
   "common.removeFailed": "Gagal menghapus",
   "common.saveFailed": "Gagal menyimpan",
   "common.discoverFailed": "Pencarian gagal",

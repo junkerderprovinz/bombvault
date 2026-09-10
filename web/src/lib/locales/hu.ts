@@ -573,6 +573,8 @@ const hu: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "A művelet sikertelen",
   "common.deleteFailed": "A törlés sikertelen",
+  "common.edit": "Szerkesztés",
+  "common.delete": "Törlés",
   "common.removeFailed": "Az eltávolítás sikertelen",
   "common.saveFailed": "A mentés sikertelen",
   "common.discoverFailed": "A felfedezés sikertelen",

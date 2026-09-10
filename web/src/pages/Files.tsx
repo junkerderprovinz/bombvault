@@ -543,7 +543,15 @@ function FileSetRestoreControl({
             {t(busyPhraseKey(otherActive.phase))}
           </span>
         )}
-        {trailing}
+        {/* `ms-auto` on the wrapper, so whatever the caller puts here is pushed
+            to the row's far end (jdp, 2026-09-11: "Der löschen button in den
+            Backupzeilen soll ganz rechts sein"). Sitting straight after the
+            Restore button, the delete badge read as a third step in the same
+            sequence; at the far edge it reads as what it is - the one control
+            on the row that is not part of restoring. Applied here rather than
+            by the caller because `ms-auto` only means anything inside THIS
+            flex row. */}
+        {trailing && <span className="ms-auto flex items-center">{trailing}</span>}
       </div>
       {/* Target folder picker for the non-destructive whole-set extract */}
       {dest === "folder" && (
@@ -1266,19 +1274,38 @@ function FileSetRow({
             comes to the card to do; edit and remove follow. */}
         <div className="ms-auto flex items-start gap-1.5 shrink-0">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
+          {/* Just the verb (jdp, 2026-09-11: "Odner-Set bearbeiten soll nur
+              Bearbeiten heißen, Ordner-Set löschen nur Löschen"). These two sit
+              INSIDE the card of the set they act on, so naming the set again on
+              the badge repeats what the heading two lines up already says - and
+              in reactive mode that repetition is the whole word that appears
+              under the pointer.
+
+              New `common.edit` / `common.delete` rather than editing
+              files.editSet: that key is ALSO the edit dialog's own heading
+              (see FileSetDialog), where "Bearbeiten" alone would stop saying
+              what is being edited. Two call sites, two jobs, two keys.
+
+              The words are not new translations - they are lifted from what
+              the app already says for these verbs (offsite.targets.edit and
+              snapshots.delete), so the house key cannot drift from the rest.
+              `common.delete` still matches glyphFor's `/\.(delete|remove)/`,
+              so the trash resolves the same way. */}
           <Button
-            label={t("files.editSet")}
-            labelKey="files.editSet"
+            label={t("common.edit")}
+            labelKey="common.edit"
             glyph={<IconPencil />}
             tone="accent"
+            title={t("files.editSet")}
             onClick={onEdit}
           />
           <Button
             key={shake}
-            label={t("files.deleteSet")}
-            labelKey="files.deleteSet"
+            label={t("common.delete")}
+            labelKey="common.delete"
             glyph={<IconTrash />}
             tone="accent"
+            title={t("files.deleteSet")}
             onClick={() => void handleRemove()}
             disabled={removing}
             className={shake ? "glim-shake" : ""}

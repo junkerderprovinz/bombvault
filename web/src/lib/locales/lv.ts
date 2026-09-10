@@ -946,6 +946,8 @@ const lv: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Darbība neizdevās",
   "common.deleteFailed": "Neizdevās izdzēst",
+  "common.edit": "Rediģēt",
+  "common.delete": "Dzēst",
   "common.removeFailed": "Neizdevās noņemt",
   "common.saveFailed": "Neizdevās saglabāt",
   "common.discoverFailed": "Meklēšana neizdevās",

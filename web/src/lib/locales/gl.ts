@@ -946,6 +946,8 @@ const gl: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "A acción fallou",
   "common.deleteFailed": "A eliminación fallou",
+  "common.edit": "Editar",
+  "common.delete": "Eliminar",
   "common.removeFailed": "Non se puido eliminar",
   "common.saveFailed": "Non se puido gardar",
   "common.discoverFailed": "A busca fallou",

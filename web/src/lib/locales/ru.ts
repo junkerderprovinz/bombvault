@@ -565,6 +565,8 @@ const ru: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Не удалось выполнить действие",
   "common.deleteFailed": "Не удалось удалить",
+  "common.edit": "Изменить",
+  "common.delete": "Удалить",
   "common.removeFailed": "Не удалось убрать",
   "common.saveFailed": "Не удалось сохранить",
   "common.discoverFailed": "Поиск не удался",

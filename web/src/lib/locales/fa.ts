@@ -946,6 +946,8 @@ const fa: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "عملیات ناموفق بود",
   "common.deleteFailed": "حذف ناموفق بود",
+  "common.edit": "ویرایش",
+  "common.delete": "حذف",
   "common.removeFailed": "برداشتن ناموفق بود",
   "common.saveFailed": "ذخیره ناموفق بود",
   "common.discoverFailed": "جست‌وجو ناموفق بود",

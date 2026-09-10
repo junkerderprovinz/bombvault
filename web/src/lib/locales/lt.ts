@@ -946,6 +946,8 @@ const lt: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Nepavyko atlikti veiksmo",
   "common.deleteFailed": "Nepavyko ištrinti",
+  "common.edit": "Redaguoti",
+  "common.delete": "Ištrinti",
   "common.removeFailed": "Nepavyko pašalinti",
   "common.saveFailed": "Nepavyko išsaugoti",
   "common.discoverFailed": "Paieška nepavyko",

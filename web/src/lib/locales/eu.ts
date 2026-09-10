@@ -946,6 +946,8 @@ const eu: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Ekintzak huts egin du",
   "common.deleteFailed": "Ezabatzeak huts egin du",
+  "common.edit": "Editatu",
+  "common.delete": "Ezabatu",
   "common.removeFailed": "Kentzeak huts egin du",
   "common.saveFailed": "Gordetzeak huts egin du",
   "common.discoverFailed": "Bilaketak huts egin du",

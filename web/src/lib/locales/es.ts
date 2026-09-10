@@ -573,6 +573,8 @@ const es: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "La acción ha fallado",
   "common.deleteFailed": "Error al eliminar",
+  "common.edit": "Editar",
+  "common.delete": "Eliminar",
   "common.removeFailed": "Error al quitar",
   "common.saveFailed": "Error al guardar",
   "common.discoverFailed": "Error al descubrir",

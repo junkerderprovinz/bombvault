@@ -946,6 +946,8 @@ const sk: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Akcia zlyhala",
   "common.deleteFailed": "Odstránenie zlyhalo",
+  "common.edit": "Upraviť",
+  "common.delete": "Odstrániť",
   "common.removeFailed": "Odobratie zlyhalo",
   "common.saveFailed": "Uloženie zlyhalo",
   "common.discoverFailed": "Hľadanie zlyhalo",

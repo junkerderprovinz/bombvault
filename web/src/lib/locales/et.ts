@@ -946,6 +946,8 @@ const et: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Toiming ebaõnnestus",
   "common.deleteFailed": "Kustutamine ebaõnnestus",
+  "common.edit": "Muuda",
+  "common.delete": "Kustuta",
   "common.removeFailed": "Eemaldamine ebaõnnestus",
   "common.saveFailed": "Salvestamine ebaõnnestus",
   "common.discoverFailed": "Otsing ebaõnnestus",

@@ -570,6 +570,8 @@ const ro: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Acțiunea a eșuat",
   "common.deleteFailed": "Ștergerea a eșuat",
+  "common.edit": "Editează",
+  "common.delete": "Șterge",
   "common.removeFailed": "Eliminarea a eșuat",
   "common.saveFailed": "Salvarea a eșuat",
   "common.discoverFailed": "Descoperirea a eșuat",

@@ -50,15 +50,25 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
 
   // Both engines, joined the way every other control on the page is.
   //
-  // The label mode decides what a tile SHOWS. `reactive` deliberately resolves
-  // to the same thing as text-and-glyph HERE and nowhere else: reactive means
-  // the words appear under the pointer, which is right for a strip of verbs
-  // somebody already knows and wrong for a grid of eight coins somebody is
-  // SEARCHING - it would turn "find USDT" into hovering every tile in turn. A
-  // picker is the one surface where hiding the labels until asked defeats the
-  // surface; the sibling app's provider picker made the same call for the same
-  // reason.
+  // The label mode decides what a tile SHOWS, and `reactive` now means here
+  // what it means everywhere else: the ticker is collapsed at rest and comes
+  // back under the pointer, with the SELECTED tile keeping its word.
+  //
+  // This reverses what the file used to do. It resolved reactive to the same
+  // thing as text-and-glyph, on the argument that a grid of eight coins is
+  // something people SEARCH, so hiding the tickers turns "find USDT" into
+  // hovering every tile in turn. That argument is not wrong, and it is not
+  // mine to make: reactive is a setting somebody chose, and a control that
+  // quietly opts out of the mode is exactly the complaint that started this
+  // round for the source toggle and the VM method switch. jdp, 2026-09-11:
+  // "Die Kryptokacheln sind nicht im reaktiven beschriftungsmodus."
+  //
+  // What keeps it usable is that the marks stay: in reactive mode the grid is
+  // eight brand logos in their own colours, which is how a donor recognises
+  // their coin faster than they read a ticker anyway - the argument
+  // donateMarks.tsx already makes for having the colours at all.
   const mode = useLabelMode("buttons");
+  const reactive = mode === "reactive";
   const showMark = mode !== "text";
   const showTicker = mode !== "glyph";
   // Subscribed once for the whole window rather than once per tile: the
@@ -254,6 +264,8 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                 // sibling's own lint rule would have caught the literal here,
                 // and did.
                 className={`glim-coin-tile glim-hue flex aspect-square flex-col items-center justify-center gap-2 rounded-control px-2 transition-colors ${
+                  reactive ? "glim-reactive " : ""
+                }${
                   c.id === coin.id
                     ? "glim-active bg-accent text-accentContrast"
                     : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text dark:hover:bg-white dark:hover:text-carbon-background"
@@ -266,7 +278,21 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                     became a square it was a fifth of it, and a logo floating in
                     an empty square is not the grid jdp pointed at. */}
                 {showMark && <CoinMark coin={c.id} size={44} />}
-                {showTicker && <span className="text-xs font-medium">{c.symbol}</span>}
+                {showTicker && (
+                  // The house's own reactive label, not a second mechanism:
+                  // `.glim-label-reactive` collapses at rest and is handed back
+                  // by the shared rule on hover, focus and `.glim-active`, so
+                  // the selected coin keeps its ticker for free. In the other
+                  // modes the class is simply absent and this is a plain span.
+                  // `--reactive-chars` is the label's own length, which for a
+                  // three or four letter ticker keeps the reveal snappy.
+                  <span
+                    className={`text-xs font-medium${reactive ? " glim-label-reactive" : ""}`}
+                    style={reactive ? ({ "--reactive-chars": c.symbol.length } as CSSProperties) : undefined}
+                  >
+                    {c.symbol}
+                  </span>
+                )}
               </button>
             ))}
           </div>

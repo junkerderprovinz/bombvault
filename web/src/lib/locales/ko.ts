@@ -565,6 +565,8 @@ const ko: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "작업에 실패했습니다",
   "common.deleteFailed": "삭제하지 못했습니다",
+  "common.edit": "편집",
+  "common.delete": "삭제",
   "common.removeFailed": "제거하지 못했습니다",
   "common.saveFailed": "저장하지 못했습니다",
   "common.discoverFailed": "검색하지 못했습니다",

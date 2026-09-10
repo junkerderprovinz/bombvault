@@ -946,6 +946,8 @@ const bg: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Действието е неуспешно",
   "common.deleteFailed": "Изтриването е неуспешно",
+  "common.edit": "Редактирай",
+  "common.delete": "Изтрий",
   "common.removeFailed": "Премахването е неуспешно",
   "common.saveFailed": "Запазването е неуспешно",
   "common.discoverFailed": "Откриването е неуспешно",

@@ -573,6 +573,8 @@ const sv: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Åtgärden misslyckades",
   "common.deleteFailed": "Borttagningen misslyckades",
+  "common.edit": "Redigera",
+  "common.delete": "Ta bort",
   "common.removeFailed": "Kunde inte tas bort",
   "common.saveFailed": "Sparandet misslyckades",
   "common.discoverFailed": "Sökningen misslyckades",

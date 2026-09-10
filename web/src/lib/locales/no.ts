@@ -570,6 +570,8 @@ const no: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Handlingen mislyktes",
   "common.deleteFailed": "Slettingen mislyktes",
+  "common.edit": "Rediger",
+  "common.delete": "Slett",
   "common.removeFailed": "Fjerningen mislyktes",
   "common.saveFailed": "Lagringen mislyktes",
   "common.discoverFailed": "Søket mislyktes",

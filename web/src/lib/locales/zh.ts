@@ -565,6 +565,8 @@ const zh: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "操作失败",
   "common.deleteFailed": "删除失败",
+  "common.edit": "编辑",
+  "common.delete": "删除",
   "common.removeFailed": "移除失败",
   "common.saveFailed": "保存失败",
   "common.discoverFailed": "发现失败",

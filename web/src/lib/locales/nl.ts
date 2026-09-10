@@ -567,6 +567,8 @@ const nl: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Actie mislukt",
   "common.deleteFailed": "Verwijderen mislukt",
+  "common.edit": "Bewerken",
+  "common.delete": "Verwijderen",
   "common.removeFailed": "Kon niet worden verwijderd",
   "common.saveFailed": "Opslaan mislukt",
   "common.discoverFailed": "Ontdekken mislukt",

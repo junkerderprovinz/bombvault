@@ -573,6 +573,8 @@ const th: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "การดำเนินการล้มเหลว",
   "common.deleteFailed": "ลบไม่สำเร็จ",
+  "common.edit": "แก้ไข",
+  "common.delete": "ลบ",
   "common.removeFailed": "นำออกไม่สำเร็จ",
   "common.saveFailed": "บันทึกไม่สำเร็จ",
   "common.discoverFailed": "ค้นหาไม่สำเร็จ",

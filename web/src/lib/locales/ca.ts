@@ -946,6 +946,8 @@ const ca: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "L'acció ha fallat",
   "common.deleteFailed": "L'eliminació ha fallat",
+  "common.edit": "Edita",
+  "common.delete": "Elimina",
   "common.removeFailed": "No s'ha pogut eliminar",
   "common.saveFailed": "No s'ha pogut desar",
   "common.discoverFailed": "El descobriment ha fallat",

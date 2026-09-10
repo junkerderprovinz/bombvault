@@ -573,6 +573,8 @@ const tr: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "İşlem başarısız",
   "common.deleteFailed": "Silinemedi",
+  "common.edit": "Düzenle",
+  "common.delete": "Sil",
   "common.removeFailed": "Kaldırılamadı",
   "common.saveFailed": "Kaydedilemedi",
   "common.discoverFailed": "Keşif başarısız",

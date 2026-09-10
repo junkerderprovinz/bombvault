@@ -26,6 +26,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
+import { setLabelMode } from "../lib/controls";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { CryptoDonateDialog } from "./CryptoDonateDialog";
 import { QRCode } from "./QRCode";
@@ -222,4 +223,36 @@ it("keeps the tiles square", () => {
   for (const option of coinTiles().getAllByRole("option")) {
     expect(option.className).toContain("aspect-square");
   }
+});
+
+it("puts the tickers into the reactive label mode, and only there", () => {
+  // jdp, 2026-09-11: "Die Kryptokacheln sind nicht im reaktiven
+  // beschriftungsmodus." They used to resolve reactive to plain text-and-glyph
+  // on the argument that a picker is a bad place to hide labels - a defensible
+  // argument, and not this component's to make against a setting somebody
+  // chose.
+  //
+  // Asserted through the shared class rather than through a hover: the reveal
+  // itself is `.glim-label-reactive`'s own CSS, which jsdom does not apply, so
+  // testing "the word appears on hover" here would assert nothing. What this
+  // CAN hold is that the tile opted into the house mechanism, in that mode and
+  // not in the others.
+  // The window is a PORTAL into document.body, so `container` is empty and the
+  // query has to go through the document, exactly like every other test here
+  // reaches the tiles through `screen`.
+  // Counted inside the GRID, not the document: the Copy and Close buttons are
+  // ordinary Buttons on the same axis and carry the same class, so a
+  // document-wide count would pass with the tiles left out entirely.
+  const grid = () => screen.getByRole("listbox", { name: en["about.cryptoTitle"] });
+
+  setLabelMode("buttons", "reactive");
+  const { unmount } = open();
+  expect(grid().querySelectorAll(".glim-label-reactive").length).toBe(CRYPTO_COINS.length);
+  expect(coinTiles().getAllByRole("option")[0]!.className).toContain("glim-reactive");
+  unmount();
+
+  setLabelMode("buttons", "textGlyph");
+  open();
+  expect(grid().querySelectorAll(".glim-label-reactive").length).toBe(0);
+  expect(coinTiles().getAllByRole("option")[0]!.className).not.toContain("glim-reactive");
 });

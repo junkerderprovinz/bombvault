@@ -946,6 +946,8 @@ const ms: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Tindakan gagal",
   "common.deleteFailed": "Gagal memadam",
+  "common.edit": "Edit",
+  "common.delete": "Padam",
   "common.removeFailed": "Gagal mengalih keluar",
   "common.saveFailed": "Gagal menyimpan",
   "common.discoverFailed": "Carian gagal",

@@ -573,6 +573,8 @@ const el: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Η ενέργεια απέτυχε",
   "common.deleteFailed": "Η διαγραφή απέτυχε",
+  "common.edit": "Επεξεργασία",
+  "common.delete": "Διαγραφή",
   "common.removeFailed": "Η αφαίρεση απέτυχε",
   "common.saveFailed": "Η αποθήκευση απέτυχε",
   "common.discoverFailed": "Ο εντοπισμός απέτυχε",

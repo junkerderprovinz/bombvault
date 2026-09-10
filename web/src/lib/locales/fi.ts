@@ -573,6 +573,8 @@ const fi: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Toiminto epäonnistui",
   "common.deleteFailed": "Poisto epäonnistui",
+  "common.edit": "Muokkaa",
+  "common.delete": "Poista",
   "common.removeFailed": "Poistaminen epäonnistui",
   "common.saveFailed": "Tallennus epäonnistui",
   "common.discoverFailed": "Haku epäonnistui",

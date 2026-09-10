@@ -1181,6 +1181,8 @@ export const en = {
   // is exactly the case a hardcoded string served worst.
   "common.actionFailed": "Action failed",
   "common.deleteFailed": "Delete failed",
+  "common.edit": "Edit",
+  "common.delete": "Delete",
   "common.removeFailed": "Remove failed",
   "common.saveFailed": "Save failed",
   "common.discoverFailed": "Discover failed",
@@ -2790,6 +2792,8 @@ export const de: Translations = {
   // Fehler-Rückfalltexte — siehe den englischen Block für die Herkunft.
   "common.actionFailed": "Aktion fehlgeschlagen",
   "common.deleteFailed": "Löschen fehlgeschlagen",
+  "common.edit": "Bearbeiten",
+  "common.delete": "Löschen",
   "common.removeFailed": "Entfernen fehlgeschlagen",
   "common.saveFailed": "Speichern fehlgeschlagen",
   "common.discoverFailed": "Suche fehlgeschlagen",

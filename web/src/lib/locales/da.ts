@@ -573,6 +573,8 @@ const da: Partial<Translations> = {
   // Failure fallbacks
   "common.actionFailed": "Handlingen mislykkedes",
   "common.deleteFailed": "Sletningen mislykkedes",
+  "common.edit": "Rediger",
+  "common.delete": "Slet",
   "common.removeFailed": "Fjernelsen mislykkedes",
   "common.saveFailed": "Kunne ikke gemme",
   "common.discoverFailed": "Søgningen mislykkedes",
