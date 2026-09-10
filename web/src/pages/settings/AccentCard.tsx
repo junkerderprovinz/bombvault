@@ -6,6 +6,7 @@
 // stops here rather than continuing into SettingsPage itself.
 import { AccentPresetSwatch } from "../settings/shared";
 import { Badge } from "../../components/Badge";
+import { InfoBubble } from "../../components/InfoBubble";
 import { getAccent, setAccent, DEFAULT_ACCENT, getAccentPresets, setAccentPresets, DEFAULT_ACCENT_PRESETS } from "../../lib/accent";
 import { useState } from "react";
 import { useT } from "../../lib/i18n";
@@ -28,9 +29,9 @@ export function AccentCard({
    *  (`[data-rainbow] .glim-hue` in index.css), so a handful of controls that
    *  were never given a palette position still paint the flat accent. Those
    *  are being brought into the engine in a pass of their own; until then the
-   *  hint below deliberately says "turn rainbow off to choose one again"
-   *  rather than "the accent does nothing", which would be a promise the CSS
-   *  does not yet keep. */
+   *  hint in the row's (i) deliberately says "turn rainbow off to choose one
+   *  again" rather than "the accent does nothing", which would be a promise
+   *  the CSS does not yet keep. */
   rainbowOn?: boolean;
 }) {
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
@@ -60,10 +61,19 @@ export function AccentCard({
   const nothingToReset = accentIsDefault && presetsAreDefault;
 
   return (
-    <div className="flex flex-col gap-2">
-    <div
-      className={`flex items-center gap-3 flex-wrap ${rainbowOn ? "opacity-45" : ""}`}
-    >
+    // The dimming sits on the two PARTS, not on the row.
+    //
+    // It used to sit here, on the flex container, which was right while the row
+    // held nothing but the label and the colours. It stopped being right the
+    // moment the (i) moved in: opacity applies to a whole subtree and a child
+    // cannot be less transparent than its parent, so the one element that has
+    // to stay readable while everything else recedes would have been the one
+    // rendered at 45 percent. The explanation for a greyed-out control may not
+    // be greyed out with it.
+    //
+    // Nothing else changes: the label and the swatch group carry exactly the
+    // class the row carried, so both dim exactly as before.
+    <div className="flex items-center gap-3 flex-wrap">
       {/* Row label — bare now, no trailing colon (jdp, live-review: "Der
           Doppelpunkt nach Akzentfarbe und Farbpalette weg"). The colon was
           only ever appended here in JSX, never baked into the
@@ -72,7 +82,27 @@ export function AccentCard({
           this key's history a few rounds back) — checked across all 42
           locales, none bakes a colon into the translated text either, so
           dropping the literal ":" here is the complete, single-source fix. */}
-      <span className="text-sm text-carbon-text">{t("settings.accentColor")}</span>
+      <span className={`text-sm text-carbon-text ${rainbowOn ? "opacity-45" : ""}`}>
+        {t("settings.accentColor")}
+      </span>
+      {/* WHY the row beside this went quiet, in the house's own place for an
+          explanation: an (i) on the label it belongs to (jdp, 2026-09-10:
+          "soll bitte nicht in eine neue Zeile sondern in eine i infobubble die
+          nur erscheint wenn der rainbowmode aktiviert ist").
+
+          It was a line of muted text under the row until now. That was not
+          wrong, it was simply the one explanation in this app still written as
+          prose: the rule is that an explanation hangs off the control it
+          explains, and a sentence on its own line makes the card taller for
+          everybody in order to answer a question only somebody who just
+          switched the rainbow on is asking.
+
+          Conditional, not permanent. An (i) that is always there says "this
+          control needs explaining"; this one says "this control is currently
+          taken over", which is only true while the rainbow owns the colours.
+          The dimmed swatches stay the signal that something changed, and the
+          bubble is where the reason lives. */}
+      {rainbowOn && <InfoBubble tip={t("settings.accentRainbowHint")} />}
       {/* EVERYTHING else on this row — the presets and their reset — is one
           right-aligned group (jdp, live-review: "Das Akzentfarbeauswahlfeld
           auch nach rechts"). Same `ms-auto` idiom this app uses everywhere
@@ -82,7 +112,7 @@ export function AccentCard({
             The group used to hold a standalone custom-colour swatch and a
           "Voreinstellungen:" caption as well; both are gone ([432]) and the
           reasoning is at the next comment down. */}
-      <div className="flex items-center gap-2 flex-wrap ms-auto">
+      <div className={`flex items-center gap-2 flex-wrap ms-auto ${rainbowOn ? "opacity-45" : ""}`}>
         {/* The standalone custom-colour swatch and the "Voreinstellungen:"
             caption are GONE ([432], jdp: "das Farbpickerfeld und der text
             Voreinstellungen soll weg").
@@ -228,14 +258,6 @@ export function AccentCard({
           <IconResetArrow />
         </Badge>
       </div>
-    </div>
-    {/* The one line that says WHY the row above went quiet. Without it a dimmed
-        row is just a broken row: the reader sees eight colours they cannot
-        click and no reason anywhere on screen, and the switch that caused it
-        sits below rather than above. Rendered only while it is true. */}
-    {rainbowOn && (
-      <p className="text-xs text-carbon-textMuted">{t("settings.accentRainbowHint")}</p>
-    )}
     </div>
   );
 }

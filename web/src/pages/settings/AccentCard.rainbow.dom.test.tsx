@@ -33,12 +33,29 @@ afterEach(cleanup);
 describe("AccentCard under rainbow mode", () => {
   it("says nothing extra while rainbow is off", () => {
     draw(false);
-    expect(screen.queryByText("settings.accentRainbowHint")).toBeNull();
+    expect(screen.queryByLabelText("settings.accentRainbowHint")).toBeNull();
   });
 
-  it("explains itself while rainbow is on", () => {
+  it("explains itself while rainbow is on, in a bubble rather than a line", () => {
+    const { container } = draw(true);
+    // jdp, 2026-09-10: "soll bitte nicht in eine neue Zeile sondern in eine i
+    // infobubble die nur erscheint wenn der rainbowmode aktiviert ist".
+    expect(screen.getByLabelText("settings.accentRainbowHint")).toBeTruthy();
+    // And the half that keeps it a bubble: the sentence may not ALSO stand in
+    // the card as its own text. Without this the test passes for a call site
+    // that renders both.
+    expect(container.textContent).not.toContain("settings.accentRainbowHint");
+  });
+
+  it("keeps the explanation readable while the row it explains is dimmed", () => {
+    // The reason a greyed-out control is greyed out may not be greyed out with
+    // it. Opacity applies to a whole subtree and a child cannot be less
+    // transparent than its parent, so this holds only as long as the dimming
+    // sits on the label and the swatch group rather than on the row that also
+    // carries the bubble.
     draw(true);
-    expect(screen.getByText("settings.accentRainbowHint")).toBeTruthy();
+    const bubble = screen.getByLabelText("settings.accentRainbowHint");
+    expect(bubble.closest(".opacity-45")).toBeNull();
   });
 
   it("dims the row rather than removing it", () => {
