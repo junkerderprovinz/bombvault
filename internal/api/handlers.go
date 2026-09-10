@@ -4263,7 +4263,7 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	defer root.Close()
+	defer root.Close() //nolint:errcheck // read-only browse descriptor: close error is not actionable
 
 	// An empty subpath opens the root itself — "." is the root directory's own
 	// name under the Root naming contract.
