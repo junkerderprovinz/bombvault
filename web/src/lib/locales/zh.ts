@@ -1152,7 +1152,7 @@ const zh: Partial<Translations> = {
   "files.pathMissing": "找不到文件夹",
   "files.noPath": "未设置文件夹",
   "files.noPathHint": "从没有文件夹信息的备份中重建。设置文件夹后即可再次备份。恢复到文件夹现在就可用。",
-  "files.deleteSet": "移除文件集",
+  "files.deleteSet": "删除文件夹集",
   "files.deleteSetConfirm": "从列表中移除此文件夹集？其备份不会被删除，之后可以重新发现。",
   "files.deleteBackupsConfirm": "删除此文件夹集的所有备份？快照将被永久移除，仓库将被清理，文件夹集将被遗忘。此操作无法撤销。",
   "files.restoreOriginal": "恢复到原始位置",

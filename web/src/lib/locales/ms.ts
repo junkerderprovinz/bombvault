@@ -1330,7 +1330,7 @@ const ms: Partial<Translations> = {
   "files.pathMissing": "Folder tidak dijumpai",
   "files.noPath": "Tiada folder ditetapkan",
   "files.noPathHint": "Dibina semula daripada sandaran tanpa folder. Tetapkan folder untuk menyandarkan semula. Pemulihan ke folder sudah berfungsi.",
-  "files.deleteSet": "Alih keluar set",
+  "files.deleteSet": "Padam set folder",
   "files.deleteSetConfirm": "Alih keluar set folder ini daripada senarai? Sandarannya tidak dipadamkan dan boleh ditemui semula kemudian.",
   "files.deleteBackupsConfirm": "Padam SEMUA sandaran set folder ini? Snapshot dipadamkan secara kekal, repositori di-prune, dan set dilupakan. Ini tidak boleh dibuat asal.",
   "files.restoreOriginal": "Pulihkan ke lokasi asal",

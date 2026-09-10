@@ -1330,7 +1330,7 @@ const id: Partial<Translations> = {
   "files.pathMissing": "Folder tidak ditemukan",
   "files.noPath": "Tidak ada folder yang diatur",
   "files.noPathHint": "Dibangun ulang dari cadangan tanpa folder. Atur folder untuk mencadangkan lagi. Pemulihan ke folder sudah berfungsi.",
-  "files.deleteSet": "Hapus set",
+  "files.deleteSet": "Hapus set folder",
   "files.deleteSetConfirm": "Hapus set folder ini dari daftar? Cadangannya tidak dihapus dan dapat ditemukan kembali nanti.",
   "files.deleteBackupsConfirm": "Hapus SEMUA cadangan set folder ini? Snapshot dihapus secara permanen, repositori di-prune, dan set dilupakan. Ini tidak dapat dibatalkan.",
   "files.restoreOriginal": "Pulihkan ke lokasi asli",

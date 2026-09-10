@@ -1160,7 +1160,7 @@ const fi: Partial<Translations> = {
   "files.pathMissing": "Kansiota ei löydy",
   "files.noPath": "Kansiota ei asetettu",
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",
-  "files.deleteSet": "Poista joukko",
+  "files.deleteSet": "Poista kansiojoukko",
   "files.deleteSetConfirm": "Poistetaanko tämä kansiojoukko luettelosta? Sen varmuuskopioita ei poisteta, ja ne voi löytää myöhemmin uudelleen.",
   "files.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kansiojoukon varmuuskopiot? Tilannevedokset poistetaan pysyvästi, repositorio karsitaan ja joukko unohdetaan. Tätä ei voi peruuttaa.",
   "files.restoreOriginal": "Palauta alkuperäiseen sijaintiin",

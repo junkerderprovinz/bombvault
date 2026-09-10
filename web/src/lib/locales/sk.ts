@@ -1330,7 +1330,7 @@ const sk: Partial<Translations> = {
   "files.pathMissing": "Priečinok sa nenašiel",
   "files.noPath": "Priečinok nie je nastavený",
   "files.noPathHint": "Znova zostavené zo záloh bez priečinka. Nastavte priečinok, aby ste znova zálohovali. Obnovenie do priečinka už funguje.",
-  "files.deleteSet": "Odstrániť sadu",
+  "files.deleteSet": "Odstrániť sadu priečinkov",
   "files.deleteSetConfirm": "Odstrániť túto sadu priečinkov zo zoznamu? Jej zálohy sa neodstránia a možno ich neskôr znova nájsť.",
   "files.deleteBackupsConfirm": "Odstrániť VŠETKY zálohy tejto sady priečinkov? Snímky sa natrvalo odstránia, repozitár sa vyčistí a sada sa zabudne. Túto akciu nemožno vrátiť späť.",
   "files.restoreOriginal": "Obnoviť na pôvodné miesto",

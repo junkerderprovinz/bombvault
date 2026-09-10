@@ -1152,7 +1152,7 @@ const ko: Partial<Translations> = {
   "files.pathMissing": "폴더를 찾을 수 없음",
   "files.noPath": "폴더가 설정되지 않음",
   "files.noPathHint": "폴더 정보 없이 백업에서 재구성되었습니다. 다시 백업하려면 폴더를 설정하세요. 폴더로 복원은 지금도 가능합니다.",
-  "files.deleteSet": "세트 제거",
+  "files.deleteSet": "폴더 세트 삭제",
   "files.deleteSetConfirm": "이 폴더 세트를 목록에서 제거할까요? 백업은 삭제되지 않으며 나중에 다시 발견할 수 있습니다.",
   "files.deleteBackupsConfirm": "이 폴더 세트의 모든 백업을 삭제할까요? 스냅샷이 영구적으로 제거되고 저장소가 정리되며 세트는 잊혀집니다. 되돌릴 수 없습니다.",
   "files.restoreOriginal": "원래 위치로 복원",

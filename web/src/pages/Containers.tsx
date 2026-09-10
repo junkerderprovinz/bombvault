@@ -1894,11 +1894,21 @@ function ContainerRow({
           `flex-wrap` this row already needs for the chips themselves. */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
+          {/* buttonHeight, so this row's triggers are the same size as the
+              folder card's (jdp, 2026-09-11: "auf der container cards und der
+              ordner cards sind diese buttons unterschiedlich groß"). Measured:
+              these chips were 24px and the folder card's own Backups trigger
+              32px, because one card expresses its disclosure as a Selector and
+              the other as a Button. Both are the same THING - the control that
+              opens a section of the card - so both take the height the house
+              gives a button, and the two cards stop disagreeing about how big
+              "Backups" is. */}
           <Selector
             items={sectionItems}
             label={t("containers.sectionsLabel")}
             select="many"
             active={openSections}
+            buttonHeight
             onChange={toggleSection}
           />
           <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">

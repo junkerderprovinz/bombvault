@@ -1157,7 +1157,7 @@ const nl: Partial<Translations> = {
   "files.pathMissing": "Map niet gevonden",
   "files.noPath": "Geen map ingesteld",
   "files.noPathHint": "Opnieuw opgebouwd uit back-ups zonder map. Stel een map in om weer te back-uppen. Herstellen naar een map werkt nu al.",
-  "files.deleteSet": "Set verwijderen",
+  "files.deleteSet": "Mappenset verwijderen",
   "files.deleteSetConfirm": "Deze mappenset uit de lijst verwijderen? De back-ups worden niet verwijderd en kunnen later opnieuw worden ontdekt.",
   "files.deleteBackupsConfirm": "ALLE back-ups van deze mappenset verwijderen? De snapshots worden permanent verwijderd, de repository wordt opgeschoond en de set wordt vergeten. Kan niet ongedaan worden gemaakt.",
   "files.restoreOriginal": "Herstellen op oorspronkelijke locatie",

@@ -1163,7 +1163,7 @@ const hu: Partial<Translations> = {
   "files.pathMissing": "A mappa nem található",
   "files.noPath": "Nincs mappa beállítva",
   "files.noPathHint": "Mappa nélkül, mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",
-  "files.deleteSet": "Készlet eltávolítása",
+  "files.deleteSet": "Mappakészlet törlése",
   "files.deleteSetConfirm": "Eltávolítod ezt a mappakészletet a listáról? A mentései nem törlődnek, és később újra felfedezhetők.",
   "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az ÖSSZES mentését? A pillanatképek véglegesen eltávolításra kerülnek, a tároló megnyesésre kerül, és a készlet elfelejtődik. Nem vonható vissza.",
   "files.restoreOriginal": "Visszaállítás az eredeti helyre",

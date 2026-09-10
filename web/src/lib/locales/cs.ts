@@ -1158,7 +1158,7 @@ const cs: Partial<Translations> = {
   "files.pathMissing": "Složka nenalezena",
   "files.noPath": "Složka není nastavena",
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastavte složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",
-  "files.deleteSet": "Odebrat sadu",
+  "files.deleteSet": "Smazat sadu složek",
   "files.deleteSetConfirm": "Odebrat tuto sadu složek ze seznamu? Její zálohy se nesmažou a lze je později znovu objevit.",
   "files.deleteBackupsConfirm": "Smazat VŠECHNY zálohy této sady složek? Snímky budou trvale odstraněny, repozitář vyčištěn a sada zapomenuta. Nelze vrátit zpět.",
   "files.restoreOriginal": "Obnovit na původní místo",

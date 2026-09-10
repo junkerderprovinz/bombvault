@@ -1330,7 +1330,7 @@ const eu: Partial<Translations> = {
   "files.pathMissing": "Karpeta ez da aurkitu",
   "files.noPath": "Karpetarik ez da ezarri",
   "files.noPathHint": "Karpetarik gabeko babeskopietatik berreraikita. Ezarri karpeta bat berriz babesteko. Karpeta batean berrezartzea jada funtzionatzen du.",
-  "files.deleteSet": "Kendu multzoa",
+  "files.deleteSet": "Ezabatu karpeta multzoa",
   "files.deleteSetConfirm": "Karpeta-multzo hau zerrendatik kendu nahi duzu? Bere babeskopiak ez dira ezabatzen eta geroago berriz aurki daitezke.",
   "files.deleteBackupsConfirm": "Karpeta-multzo honen babeskopia GUZTIAK ezabatu nahi dituzu? Argazkiak betiko ezabatzen dira, biltegia garbitzen da eta multzoa ahazten da. Ezin da desegin.",
   "files.restoreOriginal": "Berrezarri jatorrizko kokapenean",

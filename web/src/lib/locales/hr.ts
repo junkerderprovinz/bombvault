@@ -1330,7 +1330,7 @@ const hr: Partial<Translations> = {
   "files.pathMissing": "Mapa nije pronađena",
   "files.noPath": "Nije postavljena mapa",
   "files.noPathHint": "Ponovno izgrađeno iz sigurnosnih kopija bez mape. Postavite mapu za ponovnu sigurnosnu kopiju. Vraćanje u mapu već radi.",
-  "files.deleteSet": "Ukloni skup",
+  "files.deleteSet": "Izbriši skup mapa",
   "files.deleteSetConfirm": "Ukloniti ovaj skup mapa s popisa? Njegove sigurnosne kopije ne brišu se i mogu se kasnije ponovno otkriti.",
   "files.deleteBackupsConfirm": "Izbrisati SVE sigurnosne kopije ovog skupa mapa? Snimke se trajno uklanjaju, repozitorij se čisti, a skup se zaboravlja. Ovo se ne može poništiti.",
   "files.restoreOriginal": "Vrati na izvornu lokaciju",

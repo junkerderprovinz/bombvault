@@ -227,9 +227,21 @@ function FileSetBackupButton({
         busy={isPending}
         title={stateTip}
       />
-      {blockedByOther && (
-        <span className="text-xs text-carbon-textMuted text-end">{t(busyPhraseKey(running?.phase))}</span>
-      )}
+      {/* The "something else is running" note does NOT live here any more
+          (jdp, 2026-09-11: "eine sicherung läuft... text bitte über den text
+          von letztes backup"). It hung directly under the badge corner, which
+          put a status line at the top of the card and the fact it qualifies -
+          the last backup - at the bottom. FileSetRow renders it above that
+          line now.
+
+          Worth noting what the sibling does, because it is the reason this was
+          drift rather than a choice: components/BackupButton.tsx, the container
+          card's own, renders NO visible note at all and puts the same phrase in
+          `title`, per #178's "the button's name is stable, only exceptional
+          states get a tooltip". This button keeps its tooltip too (`stateTip`
+          above), so the phrase is in both places for the same reason it is on
+          the container card - the text below is the card talking, the tooltip
+          is the button talking. */}
       {state.phase === "success" && (
         <span className="inline-flex items-center gap-1 text-xs text-statusOk">
           <CheckDraw />
@@ -413,6 +425,7 @@ function FileSetRestoreControl({
   restoreFolder,
   otherActive,
   t,
+  trailing,
 }: {
   set: FileSetView;
   snapshotId: string;
@@ -421,6 +434,14 @@ function FileSetRestoreControl({
   restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
   t: T;
+  /** Rendered at the end of the destination row, after the Restore button.
+   *
+   *  The snapshot's delete badge, in practice: everything a snapshot DOES sits
+   *  in one row (jdp, 2026-09-11: "der löschen button in die gleiche zeile der
+   *  anderen buttons"). A prop rather than the caller wrapping this component,
+   *  because the row it joins is this component's own flex line - a wrapper
+   *  outside it would land on the next one. */
+  trailing?: ReactNode;
 }) {
   // A path-less discovered set can only restore into a chosen folder — the
   // server refuses an in-place restore when it doesn't know the original path.
@@ -522,6 +543,7 @@ function FileSetRestoreControl({
             {t(busyPhraseKey(otherActive.phase))}
           </span>
         )}
+        {trailing}
       </div>
       {/* Target folder picker for the non-destructive whole-set extract */}
       {dest === "folder" && (
@@ -622,18 +644,27 @@ function FileSetSnapshotRow({
     // a list of unchanged density, rather than a list that grew. Config.tsx's
     // ConfigSnapshotRow carries the same pairing.
     <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
+      {/* Identity FIRST, then when it was taken, on the line under it (jdp,
+          2026-09-11: "datum und uhrzeit unter die backup kennung"). They were
+          side by side in one row with the delete button, which made a snapshot
+          read as three unrelated columns; stacked, the date is plainly a
+          property OF the id above it. The id keeps its own mono face and the
+          date the muted caption tone, so the two stay told apart without a
+          fixed column width holding them.
+
+          The `w-20` on the id is gone with the row it was measured for, and so
+          is the `ps-24` indent that used to align the action row under it. */}
+      <div className="flex flex-col">
+        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs">
           {snap.id.slice(0, 8)}
         </span>
-        <span className="text-carbon-textMuted text-xs flex-1">
+        <span className="text-carbon-textMuted text-xs">
           {new Date(snap.time).toLocaleString()}
+          {snap.tags && snap.tags.length > 0 && (
+            <span className="hidden sm:inline">{` · ${snap.tags.join(", ")}`}</span>
+          )}
         </span>
-        {snap.tags && snap.tags.length > 0 && (
-          <span className="text-carbon-textMuted text-xs hidden sm:block">
-            {snap.tags.join(", ")}
-          </span>
-        )}
+      </div>
         {/* Whole-area sweep finding, not part of jdp's two named buttons: this
             per-snapshot delete was the LAST surviving copy of the exact defect
             already fixed in components/RestorePanel.tsx and pages/Config.tsx —
@@ -654,19 +685,14 @@ function FileSetSnapshotRow({
             (t("snapshots.deleteConfirm")), which is untouched. The "…"
             in-flight label has nowhere to live on an icon-only badge, so
             `deleting` shows as `disabled`, exactly like RestorePanel's. */}
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || busy}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
-      </div>
-      {/* Restore control, indented under the id column to match the row. */}
-      <div className="ps-24">
+      {/* The delete badge moved DOWN into the action row (jdp, 2026-09-11:
+          "der löschen button in die gleiche zeile der anderen buttons"). It
+          used to sit alone at the far end of the identity line, which put the
+          one destructive control on this row as far as possible from the two
+          controls it belongs with, and left it as the only reason that line
+          was a flex row at all. Everything a snapshot DOES is now in one row;
+          the line above only says which snapshot. */}
+      <div>
         <FileSetRestoreControl
           set={set}
           snapshotId={snap.id}
@@ -675,6 +701,18 @@ function FileSetSnapshotRow({
           restoreFolder={restoreFolder}
           otherActive={running}
           t={t}
+          trailing={
+            <Button
+              key={shake}
+              label={t("snapshots.delete")}
+              labelKey="snapshots.delete"
+              glyph={<IconTrash />}
+              tone="accent"
+              onClick={() => void handleDelete()}
+              disabled={deleting || busy}
+              className={`shrink-0${shake ? " glim-shake" : ""}`}
+            />
+          }
         />
       </div>
       {confirmDialog}
@@ -1248,13 +1286,6 @@ function FileSetRow({
         </div>
       </div>
 
-      {/* #199: the consequence of the toggle right below, in words. This tab is
-          where a set is created and where the include switch is flipped, so it
-          is the second place a reader can walk away with the wrong belief about
-          whether the folder is protected. Same component, same server-computed
-          sentence as the Schedules card. */}
-      <EffectiveScheduleLine effective={set.effectiveSchedule} />
-
       {/* Actions row — the schedule toggle, flush right and nothing else.
           The container card's own equivalent row is a single `ms-auto flex
           flex-col items-end` stack of toggle rows, and it says why: once the
@@ -1276,6 +1307,20 @@ function FileSetRow({
         </div>
       </div>
 
+      {/* #199: the consequence of the toggle right ABOVE, in words. This tab is
+          where a set is created and where the include switch is flipped, so it
+          is the second place a reader can walk away with the wrong belief about
+          whether the folder is protected. Same component, same server-computed
+          sentence as the Schedules card.
+
+          It sat between the badge corner and the toggle until now, which put a
+          sentence between the switch and the badges it belongs under. jdp asked
+          for the toggle directly beneath the buttons (2026-09-11: "der toggle
+          im zeitplan einschließen bitte direkt unter die oberen buttons"), so
+          the line moves below the switch it describes. It reads better there
+          anyway: a consequence after the control, not before it. */}
+      <EffectiveScheduleLine effective={set.effectiveSchedule} />
+
       {/* Backups / Restore disclosure, with the last-backup date on its own
           row — the container card's shape. See `trailing`'s own doc. */}
       <FileSetRestorePanel
@@ -1285,10 +1330,21 @@ function FileSetRow({
         t={t}
         onSetsChanged={onRefresh}
         trailing={
-          <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">
-            {`${t("containers.lastBackup")}: ${
-              set.lastBackup ? formatTs(set.lastBackup) : t("containers.never")
-            }`}
+          // A column, so the running note sits ON TOP of the date it qualifies
+          // (jdp, 2026-09-11). The two belong together: one says the card is
+          // busy right now, the other says when it last was not. Only ever one
+          // line tall at rest - the note renders only while something else is
+          // actually running, and `text-end` keeps both flush with the card's
+          // right edge whether or not it is there.
+          <span className="ms-auto shrink-0 flex flex-col items-end text-xs whitespace-nowrap">
+            {running.active && !progress?.active && (
+              <span className="text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+            )}
+            <span className="text-carbon-textMuted">
+              {`${t("containers.lastBackup")}: ${
+                set.lastBackup ? formatTs(set.lastBackup) : t("containers.never")
+              }`}
+            </span>
           </span>
         }
       />

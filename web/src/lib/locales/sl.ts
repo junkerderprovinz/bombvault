@@ -1315,7 +1315,7 @@ const sl: Partial<Translations> = {
   "files.pathMissing": "Mapa ni najdena",
   "files.noPath": "Ni nastavljene mape",
   "files.noPathHint": "Ponovno zgrajeno iz varnostnih kopij brez mape. Za ponovno varnostno kopiranje nastavi mapo. Obnovitev v mapo že deluje.",
-  "files.deleteSet": "Odstrani nabor",
+  "files.deleteSet": "Izbriši nabor map",
   "files.deleteSetConfirm": "Odstranim ta nabor map s seznama? Njegove varnostne kopije se ne izbrišejo in jih je mogoče pozneje ponovno odkriti.",
   "files.deleteBackupsConfirm": "Izbrišem VSE varnostne kopije tega nabora map? Posnetki se trajno odstranijo, repozitorij se počisti in nabor se pozabi. Tega ni mogoče razveljaviti.",
   "files.restoreOriginal": "Obnovi na izvorno lokacijo",

@@ -1160,7 +1160,7 @@ const pt: Partial<Translations> = {
   "files.pathMissing": "Pasta não encontrada",
   "files.noPath": "Nenhuma pasta definida",
   "files.noPathHint": "Reconstruído a partir dos backups sem pasta. Defina uma pasta para voltar a fazer backup. Restaurar para uma pasta já funciona.",
-  "files.deleteSet": "Remover conjunto",
+  "files.deleteSet": "Eliminar conjunto de pastas",
   "files.deleteSetConfirm": "Remover este conjunto de pastas da lista? Os seus backups não são eliminados e podem ser redescobertos mais tarde.",
   "files.deleteBackupsConfirm": "Eliminar TODOS os backups deste conjunto de pastas? Os snapshots são removidos permanentemente, o repositório é podado e o conjunto é esquecido. Não pode ser desfeito.",
   "files.restoreOriginal": "Restaurar no local original",

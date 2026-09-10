@@ -1160,7 +1160,7 @@ const fr: Partial<Translations> = {
   "files.pathMissing": "Dossier introuvable",
   "files.noPath": "Aucun dossier défini",
   "files.noPathHint": "Reconstruit depuis les sauvegardes sans dossier. Définissez un dossier pour le sauvegarder à nouveau. La restauration dans un dossier fonctionne déjà.",
-  "files.deleteSet": "Retirer le jeu",
+  "files.deleteSet": "Supprimer le jeu de dossiers",
   "files.deleteSetConfirm": "Retirer ce jeu de dossiers de la liste ? Ses sauvegardes ne sont pas supprimées et pourront être redécouvertes plus tard.",
   "files.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de ce jeu de dossiers ? Les instantanés sont définitivement supprimés, le dépôt est élagué et le jeu est oublié. Irréversible.",
   "files.restoreOriginal": "Restaurer à l'emplacement d'origine",

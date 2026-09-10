@@ -1160,7 +1160,7 @@ const it: Partial<Translations> = {
   "files.pathMissing": "Cartella non trovata",
   "files.noPath": "Nessuna cartella impostata",
   "files.noPathHint": "Ricostruito dai backup senza cartella. Imposta una cartella per eseguirne di nuovo il backup. Il ripristino in una cartella funziona già.",
-  "files.deleteSet": "Rimuovi set",
+  "files.deleteSet": "Elimina set di cartelle",
   "files.deleteSetConfirm": "Rimuovere questo set di cartelle dall'elenco? I suoi backup non vengono eliminati e potranno essere riscoperti in seguito.",
   "files.deleteBackupsConfirm": "Eliminare TUTTI i backup di questo set di cartelle? Gli snapshot vengono rimossi definitivamente, il repository viene potato e il set viene dimenticato. Operazione irreversibile.",
   "files.restoreOriginal": "Ripristina nella posizione originale",

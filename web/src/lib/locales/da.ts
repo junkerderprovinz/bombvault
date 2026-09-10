@@ -1160,7 +1160,7 @@ const da: Partial<Translations> = {
   "files.pathMissing": "Mappen blev ikke fundet",
   "files.noPath": "Ingen mappe angivet",
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",
-  "files.deleteSet": "Fjern sæt",
+  "files.deleteSet": "Slet mappesæt",
   "files.deleteSetConfirm": "Fjerne dette mappesæt fra listen? Dets sikkerhedskopier slettes ikke og kan genopdages senere.",
   "files.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, repositoriet beskæres, og sættet glemmes. Kan ikke fortrydes.",
   "files.restoreOriginal": "Gendan på oprindelig placering",

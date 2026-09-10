@@ -1031,11 +1031,19 @@ export function VMRow({
           row, same place, one item instead of five. */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
+          {/* buttonHeight, same as the container card's own trigger row and
+              the folder card's Backups button. jdp asked whether the VM tab
+              has the same size mismatch (2026-09-11); it does, because it is
+              the same control in the same row - answered from the source
+              rather than from the screen, since the tab is gated behind VM
+              backup being enabled. Fixed in the same pass, so the three cards
+              never ship disagreeing about how big "Backups" is. */}
           <Selector
             items={[{ id: "backups", label: t("snapshots.title") }]}
             label={t("containers.sectionsLabel")}
             select="many"
             active={openSections}
+            buttonHeight
             onChange={toggleSection}
           />
           <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">

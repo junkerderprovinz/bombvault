@@ -1160,7 +1160,7 @@ const he: Partial<Translations> = {
   "files.pathMissing": "התיקייה לא נמצאה",
   "files.noPath": "לא הוגדרה תיקייה",
   "files.noPathHint": "שוחזר מגיבויים ללא תיקייה. הגדר תיקייה כדי לגבות שוב. שחזור לתיקייה עובד כבר עכשיו.",
-  "files.deleteSet": "הסר ערכה",
+  "files.deleteSet": "מחק ערכת תיקיות",
   "files.deleteSetConfirm": "להסיר את ערכת התיקיות הזו מהרשימה? הגיבויים שלה לא יימחקו וניתן לגלות אותם מחדש מאוחר יותר.",
   "files.deleteBackupsConfirm": "למחוק את כל הגיבויים של ערכת התיקיות הזו? ה-snapshots יוסרו לצמיתות, המאגר ייגזם והערכה תישכח. לא ניתן לבטל.",
   "files.restoreOriginal": "שחזור למיקום המקורי",

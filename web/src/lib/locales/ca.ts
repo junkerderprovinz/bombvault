@@ -1330,7 +1330,7 @@ const ca: Partial<Translations> = {
   "files.pathMissing": "Carpeta no trobada",
   "files.noPath": "Cap carpeta configurada",
   "files.noPathHint": "Reconstruït des de còpies sense carpeta. Configura una carpeta per tornar a copiar. Restaurar a una carpeta ja funciona.",
-  "files.deleteSet": "Elimina el conjunt",
+  "files.deleteSet": "Suprimeix el conjunt de carpetes",
   "files.deleteSetConfirm": "Vols eliminar aquest conjunt de carpetes de la llista? Les seves còpies no s'eliminen i es poden tornar a descobrir més endavant.",
   "files.deleteBackupsConfirm": "Vols eliminar TOTES les còpies d'aquest conjunt de carpetes? Els instantanis s'eliminen permanentment, el repositori es neteja i el conjunt s'oblida. Això no es pot desfer.",
   "files.restoreOriginal": "Restaura a la ubicació original",

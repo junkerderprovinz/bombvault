@@ -1158,7 +1158,7 @@ const es: Partial<Translations> = {
   "files.pathMissing": "Carpeta no encontrada",
   "files.noPath": "Sin carpeta definida",
   "files.noPathHint": "Reconstruido desde las copias sin carpeta. Define una carpeta para volver a copiarlo. Restaurar en una carpeta ya funciona.",
-  "files.deleteSet": "Quitar conjunto",
+  "files.deleteSet": "Eliminar conjunto de carpetas",
   "files.deleteSetConfirm": "¿Quitar este conjunto de carpetas de la lista? Sus copias no se eliminan y podrán redescubrirse más tarde.",
   "files.deleteBackupsConfirm": "¿Eliminar TODAS las copias de este conjunto de carpetas? Las instantáneas se eliminan permanentemente, el repositorio se poda y el conjunto se olvida. No se puede deshacer.",
   "files.restoreOriginal": "Restaurar en la ubicación original",

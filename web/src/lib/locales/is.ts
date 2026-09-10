@@ -1330,7 +1330,7 @@ const is: Partial<Translations> = {
   "files.pathMissing": "Mappa fannst ekki",
   "files.noPath": "Engin mappa stillt",
   "files.noPathHint": "Endurbyggt úr afritum án möppu. Stilltu möppu til að afrita aftur. Endurheimt í möppu virkar þegar.",
-  "files.deleteSet": "Fjarlægja sett",
+  "files.deleteSet": "Eyða möppusetti",
   "files.deleteSetConfirm": "Fjarlægja þetta möppusett úr listanum? Afritum þess er ekki eytt og hægt er að finna þau aftur síðar.",
   "files.deleteBackupsConfirm": "Eyða ÖLLUM afritum þessa möppusetts? Snapshottin eru fjarlægð varanlega, geymslusafnið er hreinsað og settið gleymist. Þessu verður ekki afturkallað.",
   "files.restoreOriginal": "Endurheimta á upprunalega staðinn",
