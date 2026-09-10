@@ -341,3 +341,147 @@ describe("EXCLUSION_PREFIX", () => {
     expect(EXCLUSION_PREFIX).toBe("!");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Determinism and set semantics (plan 02 edge tables)
+// ---------------------------------------------------------------------------
+
+describe("toggle-sequence determinism", () => {
+  it("produces byte-identical flat lists when the same sequence runs twice from the same start", () => {
+    // Three toggles: carve out a subfolder, uncheck its parent (dormant),
+    // re-check the parent (dormant wakes) — the D-01 heart of the cycle.
+    const run = () => {
+      let inc = new Set(["/a"]);
+      let exc = new Set<string>([]);
+      ({ includes: inc, exclusions: exc } = applyToggle("/a/b/c", inc, exc));
+      ({ includes: inc, exclusions: exc } = applyToggle("/a/b", inc, exc));
+      ({ includes: inc, exclusions: exc } = applyToggle("/a/b", inc, exc));
+      return toFlatList(inc, exc);
+    };
+    const first = run();
+    const second = run();
+    expect(first).toEqual(second);
+    // And the end state itself is pinned: parent include restored, exclusion
+    // awake below it — exactly the pre-carve-out partial state.
+    expect(first).toEqual(["/a", "!/a/b/c"]);
+  });
+});
+
+describe("permutation-insensitive classification", () => {
+  // All orderings of a 4-entry list — small enough to exhaust.
+  function permutations(items: string[]): string[][] {
+    if (items.length <= 1) return [items];
+    const out: string[][] = [];
+    items.forEach((item, i) => {
+      const rest = [...items.slice(0, i), ...items.slice(i + 1)];
+      for (const tail of permutations(rest)) out.push([item, ...tail]);
+    });
+    return out;
+  }
+
+  it("classifies a fixed node corpus identically for every permutation of the same flat list", () => {
+    const flat = [
+      "/mnt/user/appdata/plex",
+      "/mnt/user/media",
+      "!/mnt/user/appdata/plex/transcoding",
+      "!/mnt/user/appdata/plex/cache/tmp",
+    ];
+    const corpus = [
+      "/mnt/user/appdata/plex", // include applies, exclusion strictly below
+      "/mnt/user/appdata/plex/transcoding", // own exclusion
+      "/mnt/user/appdata/plex/cache/tmp/x", // under an exclusion
+      "/mnt/user/appdata/plex/library", // covered by the include, nothing carved out
+      "/mnt/user/media", // own include
+      "/mnt/user", // includes strictly below (whitelist parent)
+      "/mnt/user/other", // nothing stored at/under it
+    ];
+    const baseline = splitFlatSet(flat);
+    const expected = corpus.map((n) => classifyNode(n, baseline.includes, baseline.exclusions));
+    // The states themselves are the point — set semantics, not order reading.
+    expect(expected).toEqual([
+      "mixed",
+      "excluded",
+      "excluded",
+      "checked",
+      "checked",
+      "mixed",
+      "unchecked",
+    ]);
+
+    const perms = permutations(flat);
+    expect(perms.length).toBe(24);
+    for (const perm of perms) {
+      const { includes, exclusions } = splitFlatSet(perm);
+      expect(corpus.map((n) => classifyNode(n, includes, exclusions))).toEqual(expected);
+    }
+  });
+});
+
+describe("toFlatList totality", () => {
+  it("serializes exactly what it is given — exclusions-only input round-trips as the explicit-none carrier", () => {
+    // Phase 1's storedDataIsGone decision: an exclusions-only list is a
+    // deliberate full deselect, a stored state the client must display and
+    // never repair. The serializer has no item-level knowledge (whether some
+    // OTHER mount still holds includes) and must not invent any.
+    expect(toFlatList(new Set(), new Set(["e2", "e1"]))).toEqual(["!e1", "!e2"]);
+    const { includes, exclusions } = splitFlatSet(["!e1", "!e2"]);
+    expect(includes.size).toBe(0);
+    expect(toFlatList(includes, exclusions)).toEqual(["!e1", "!e2"]);
+  });
+
+  it("serializes a single-include input with no exclusion noise", () => {
+    expect(toFlatList(new Set(["i"]), new Set())).toEqual(["i"]);
+  });
+});
+
+describe("expansion persistence bounds (D-05, plan 02 tables)", () => {
+  beforeEach(() => {
+    installStorage(new Map());
+  });
+  afterEach(() => {
+    delete (globalThis as unknown as Record<string, unknown>).localStorage;
+  });
+
+  it("returns [] and never throws under a throwing storage, in both directions", () => {
+    // D-05: expansion is comfort state ONLY — a broken private-window
+    // storage can never break the panel, let alone leak into selection.
+    (globalThis as unknown as Record<string, unknown>).localStorage = {
+      getItem: () => {
+        throw new Error("unavailable");
+      },
+      setItem: () => {
+        throw new Error("unavailable");
+      },
+      removeItem: () => {
+        throw new Error("unavailable");
+      },
+      clear: () => {
+        throw new Error("unavailable");
+      },
+    };
+    expect(loadExpanded("plex")).toEqual([]);
+    expect(() => saveExpanded("plex", ["/a"])).not.toThrow();
+  });
+
+  it("evicts the oldest-expanded first across successive saves (write order = recency)", () => {
+    // Expanding one node at a time mirrors the real call pattern: every
+    // expand appends and saves the whole current list.
+    const expanded: string[] = [];
+    for (let i = 0; i <= 65; i++) {
+      expanded.push(`/mnt/user/appdata/d${i}`);
+      saveExpanded("plex", expanded);
+    }
+    const stored = loadExpanded("plex");
+    expect(stored).toHaveLength(64);
+    expect(stored[0]).toBe("/mnt/user/appdata/d2"); // d0, d1 evicted
+    expect(stored[63]).toBe("/mnt/user/appdata/d65");
+
+    // Re-expanding a long-expanded node refreshes its recency: it moves to
+    // the end and the next-oldest becomes the eviction candidate.
+    const refreshed = [...stored.filter((p) => p !== "/mnt/user/appdata/d2"), "/mnt/user/appdata/d2"];
+    saveExpanded("plex", refreshed);
+    const reloaded = loadExpanded("plex");
+    expect(reloaded[0]).toBe("/mnt/user/appdata/d3");
+    expect(reloaded[63]).toBe("/mnt/user/appdata/d2");
+  });
+});
