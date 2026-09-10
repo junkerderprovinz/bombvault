@@ -48,6 +48,13 @@ ACTION = [
     # an unmatched key deliberately returns undefined rather than a stand-in.
     ("IconCoffee", "food-drink/coffee-takeaway-cup.svg", "Buy the author a coffee"),
     ("IconMail", "mail/mail-send-email-message.svg", "Write to us"),
+    # The second way to give. A WALLET rather than a coin and never a
+    # Bitcoin mark: the window behind that button offers five chains, so
+    # a brand symbol would name one of them and mislead about the other
+    # four. It also has to differ from the coffee, since both buttons
+    # stand in one row and two offers wearing one symbol is the glyph
+    # collision the table exists to avoid.
+    ("IconWallet", "money-shopping/wallet.svg", "Give with crypto"),
 ]
 
 # The navigation and domain set Sidebar.tsx used to draw by hand. Same source

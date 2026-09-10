@@ -20,6 +20,7 @@ import {
   IconCancel,
   IconClearSelection,
   IconCoffee,
+  IconWallet,
   IconEye,
   IconForward,
   IconInfo,
@@ -137,6 +138,14 @@ const RULES: Rule[] = [
   // settings that have nothing to do with GitHub). It is passed explicitly at
   // its one call site. See gen_glyphs.py's IconGithub entry for the full rule.
   [/coffee|donate|sponsor/i, () => <IconCoffee />],
+  // The second way to give, and the reason it cannot share the cup: the
+  // two buttons stand in one row under one sentence, and two offers
+  // wearing one mark is the collision this table exists to avoid. A
+  // WALLET rather than a coin and never a Bitcoin symbol, because the
+  // window behind it offers five chains and a brand mark would name one
+  // of them while misleading about the other four. Anchored to the exact
+  // key: "crypto" anywhere else in this app means encryption.
+  [/^about\.crypto$/i, () => <IconWallet />],
   [/\.mail|contact|writeToUs/i, () => <IconMail />],
 
   // Places and configuration, last because they are the vaguest.
