@@ -18,7 +18,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Browse Backend
 
-- [x] **BROWSE-01**: Listing children of a tree node is cheap and per-node (child list + `hasChildren` hint via emptiness probe), suitable for lazy expansion of huge appdata trees
+- [x] **BROWSE-01**: Listing children of a tree node is cheap and per-node (single per-node directory listing, no eager recursion, every directory expandable, an empty directory returns ok with no children — a probe-based child-count hint was rejected as an N+1 latency multiplier per D-07), suitable for lazy expansion of huge appdata trees
 - [x] **BROWSE-02**: Listing responses distinguish "empty directory" from "error reading directory", with scrubbed messages (paths → `[path]` first)
 - [x] **BROWSE-03**: Listing is containment-safe — lexical/symlink-safe (`os.Root`) and never lists outside the discovered/custom root boundary; the tree must not become an arbitrary filesystem probe
 - [x] **BROWSE-04**: Hidden-entry visibility is consistent between the tree and the existing folder browser, so both views agree on what they list
@@ -35,7 +35,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **INTEG-01**: Container panel — unfold any discovered mount or custom path and select subfolders (Plex `transcoding`, caches, logs) without dropping the rest of the mount
 - [ ] **INTEG-02**: File Sets page — the same tree component is used when choosing what a file set covers
 - [ ] **INTEG-03**: Exclusions are reviewable after the fact — deselected sub-branches render as a visible list near the mount, consistent with existing preview styling
-- [x] **INTEG-04**: Fully deselecting a mount's tree has defined, UI-documented semantics that never silently re-trigger the empty-list auto-detection fallback (`configuredBackupPaths` treats an empty list as "no explicit selection")
+- [ ] **INTEG-04**: Fully deselecting a mount's tree has defined, UI-documented semantics that never silently re-trigger the empty-list auto-detection fallback (`configuredBackupPaths` treats an empty list as "no explicit selection") — backend PATCH guard landed in Phase 1 (coded empty-selection refusal, prior state preserved); completes with the documented UI semantics in Phase 3 per ROADMAP
 
 ### Restore Robustness
 
@@ -103,7 +103,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTEG-01 | Phase 2 | Pending |
 | SELECT-03 | Phase 3 | Pending |
 | INTEG-03 | Phase 3 | Pending |
-| INTEG-04 | Phase 3 | Complete |
+| INTEG-04 | Phase 3 | Backend landed (Phase 1); UI semantics pending |
 | RESTIC-01 | Phase 3 | Pending |
 | INTEG-02 | Phase 4 | Pending |
 
