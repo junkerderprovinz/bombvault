@@ -1,7 +1,8 @@
 ---
 phase: 3
 slug: selection-trust-controls
-status: draft
+status: approved
+reviewed_at: 2026-09-10
 shadcn_initialized: false
 preset: none
 created: 2026-09-10
@@ -313,24 +314,27 @@ i18n Budget).
 
 ## UI Considerations
 
-Resolved by the ui-consideration probe over 5 surfaces (E1 the per-root preview
-line, E2 the exclusions disclosure + list, E3 the narrowing note, E4 the
-CACHEDIR toggle row, E5 the reset control + confirm; kinds assigned explicitly,
-not heuristic). 16 applicable considerations: 16 resolved (explicit), 0
-backstop, 0 unresolved. Empty-state and error-state COPY lives in the
-Copywriting Contract above; this section carries the shape-rooted STATE
-coverage.
+Resolved by the ui-consideration-probe engine over 5 surfaces (E1 the per-root
+preview line, E2 the exclusions disclosure + list, E3 the narrowing note, E4 the
+CACHEDIR toggle row, E5 the reset control + confirm; kinds author-assigned per
+the --auto kind-confirmation union: E1/E3 static-content, E2 list-collection +
+interactive-control, E4/E5 interactive-control). 18 applicable considerations:
+18 resolved (explicit), 0 backstop, 0 unresolved. Empty-state and error-state
+COPY lives in the Copywriting Contract above; this section carries the
+shape-rooted STATE coverage.
 
 | Category | Element(s) | Status | Truth (acceptance criterion) |
 |----------|------------|--------|------------------------------|
 | empty | E2 exclusions list | ✅ resolved (explicit) | Zero exclusions under a root → the section does not render at all (no "no exclusions" copy); zero roots → existing `folders.empty` unchanged |
-| loading | E4 toggle row; E5 reset | ✅ resolved (explicit) | In-flight PATCH disables the switch / button; no spinner, no layout shift; E1/E2/E3 are pure derivations with NO loading state by construction (zero async) |
+| loading | E2 disclosure | ✅ resolved (explicit) | Expansion is synchronous component state over the already-loaded editor mirror — zero async by construction, no loading state exists to design; the list renders from data the tree already holds |
+| loading | E4 toggle row; E5 reset | ✅ resolved (explicit) | In-flight PATCH disables the switch / button; no spinner, no layout shift; E1/E3 are pure derivations with NO loading state by construction (zero async) |
+| error | E2 disclosure + list | ✅ resolved (explicit) | The list derives from the same loaded mounts + stored set as the tree — load failures surface through the panel's existing mounts-load error path, and a failed PATCH never mutates the stored exclusions the list renders |
 | error | E4 toggle; E5 reset | ✅ resolved (explicit) | Failure → verbatim server error in a fail toast + `.glim-shake` on the trigger + revert to stored value; selection state never partially mutated (reset is non-optimistic) |
 | populated | E2 exclusions list | ✅ resolved (explicit) | Typical volume = a handful of hand-toggled exclusions per root: 12px mono muted `li` rows, indent 16, `py-1`, lexical sort; realistically never large, and the tree's clamp() scroll region bounds any outlier |
 | partial | E2 exclusions list | ✅ resolved (explicit) | The list is complete by construction — derived from the full stored exclusion set (dormant entries included), never from which tree nodes happen to be loaded; a collapsed root still lists its exclusions |
 | overflow | E2 list; E3 note; E1 preview | ✅ resolved (explicit) | Long exclusion lists extend within the tree's existing scroll region (no pagination, no cap — the 500-entry browse cap is unrelated); the preview line is short by construction; the narrowing note wraps as normal inline text (user-facing copy is never truncated) |
 | zero-one-many | E1 preview; E2 list | ✅ resolved (explicit) | n=0 renders "0 paths" (information, never hidden); n=1 and n>1 use the same invariant key ("{n} paths", "{n} exclusions") — house precedent `stack.members`/`receiver.snapshotsCount`, no singular/plural fork |
-| long-text | E2 list items; E4 label + tooltip; E5 confirm | ✅ resolved (explicit) | Relative paths: `font-mono dir="ltr" break-all` + `title` (house pattern); InfoBubble text wraps within `.glim-bubble`'s 280px max-width and viewport clamp (component contract); toggle label wraps as inline text; confirm message wraps in ConfirmDialog |
+| long-text | E1 preview; E2 list items; E3 note; E4 label + tooltip; E5 confirm | ✅ resolved (explicit) | Relative paths (E2): `font-mono dir="ltr" break-all` + `title` (house pattern); InfoBubble text wraps within `.glim-bubble`'s 280px max-width and viewport clamp (component contract); toggle label (E4) and confirm message (E5) wrap as inline text; E1 preview + E3 note wrap as normal inline text (user-facing copy is never truncated) |
 
 ---
 
@@ -413,11 +417,11 @@ Zero dependencies added (npm and Go — RESEARCH "Installation: none").
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-09-10 (gsd-ui-checker, 6/6 PASS, no recommendations)
