@@ -748,6 +748,77 @@ describe("Reset selection, narrowing note, guard and hint copy (INTEG-04 D-05, S
     expect(screen.queryByRole("button", { name: /1 exclusions/ })).toBeNull();
   });
 
+  it("the post-reset refetch waits for a mutation stacked during the reset PATCH's flight (WR-02)", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: MEDIA_MOUNT, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+      excluded: [`${MOUNT}/transcoding`],
+      excludeCaches: { [MOUNT]: false },
+    });
+    await renderEditor(true, 1700000000);
+    let resolveReset!: (r: { ok: boolean }) => void;
+    let resolveFlip!: (r: { ok: boolean }) => void;
+    patchReplies = [new Promise((res) => (resolveReset = res)), new Promise((res) => (resolveFlip = res))];
+
+    // 1. The confirmed reset PATCH goes in flight (held pending).
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Reset selection" }));
+    });
+    await act(async () => {
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    });
+    expect(patchBodies).toHaveLength(1);
+    expect(patchBodies[0]).toEqual({ name: "tree", body: { backupPaths: [], excludeCaches: {} } });
+
+    // 2. A CACHEDIR flip stacks DURING the reset PATCH's flight — the same
+    //    window a tree toggle or another flip could land in.
+    await act(async () => {
+      fireEvent.click(within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch"));
+    });
+    expect(patchBodies).toHaveLength(1); // stacked, never concurrent
+    expect(
+      (within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+
+    // The served post-reset state: auto-detected mounts, and the caches map
+    // the server holds after the reset cleared it and the flip's whole-map
+    // drain re-persisted the flipped entry (the fixed-server model).
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
+        { source: MEDIA_MOUNT, dest: "/media", selected: true, isAppdata: false, reachable: true },
+      ],
+      excludeCaches: { [MOUNT]: true },
+    });
+
+    // 3. The reset settles ok: the flip drains as one further PATCH (held) —
+    //    and the reload GET must NOT leave while that drain is in flight,
+    //    or its response could reflect pre-drain server state and clobber
+    //    the flip's optimistic apply locally.
+    await act(async () => {
+      resolveReset({ ok: true });
+    });
+    expect(patchBodies).toHaveLength(2);
+    expect(patchBodies[1]).toEqual({ name: "tree", body: { excludeCaches: { [MOUNT]: true } } });
+    expect(maxConcurrentPatches).toBe(1);
+    expect(mountsCalls).toBe(1); // WR-02: refetch deferred behind the drain
+
+    // 4. The flip's drain settles: only now does the reload GET leave, and
+    //    the served (post-drain) state re-seeds the editor — the flip's
+    //    effect is what the UI ends up showing.
+    await act(async () => {
+      resolveFlip({ ok: true });
+    });
+    expect(mountsCalls).toBe(2);
+    expect(
+      within(cachedirRow(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }))).getByRole("switch").getAttribute("aria-checked"),
+    ).toBe("true");
+    expect(screen.queryByRole("button", { name: /1 exclusions/ })).toBeNull();
+  });
+
   it("a successful narrowing save with lastBackup non-null renders the role=status warn note under the tree", async () => {
     mountsReply = mountsResponse({
       mounts: [

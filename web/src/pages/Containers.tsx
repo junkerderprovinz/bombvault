@@ -821,12 +821,19 @@ export function FoldersEditor({
   // can therefore never clobber a newer toggle, and a burst collapses to one
   // draining request (T-02-08).
   //
+  // PHASE 3 review WR-02: the queue also serializes the post-reset RELOAD —
+  // the `reload` flag below is set by a successful reset drain and consumed
+  // by the finally chain only when no drain is owed, so the refetch GET
+  // always starts with the queue idle and can never race (and locally
+  // clobber, via its apply) a mutation stacked during the reset PATCH's
+  // flight.
+  //
   // The queue reads the mirror through a REF, not the state closure: two
   // rapid toggles inside one React batch must each see their predecessor's
   // effect, and batched setIncludes calls are not visible to the second
   // call's closure.
   const mirrorRef = useRef<{ inc: Set<string>; exc: Set<string> }>({ inc: new Set(), exc: new Set() });
-  const queueRef = useRef<{ inFlight: boolean; dirty: boolean }>({ inFlight: false, dirty: false });
+  const queueRef = useRef<{ inFlight: boolean; dirty: boolean; reload: boolean }>({ inFlight: false, dirty: false, reload: false });
   // Descs of the mutations that most recently marked each CLASS dirty — the
   // failure-revert recipes (and reset flag) for the drain attempt they cause.
   // Per-class because a drain can owe paths AND caches at once while each
@@ -1037,11 +1044,18 @@ export function FoldersEditor({
           if (pathsDesc?.reset) {
             // Non-optimistic success: nothing was ever emptied locally, so
             // the served auto-detected state (mounts re-selected, remembered
-            // exclusions and custom rows gone) must REPLACE everything — the
-            // refetch re-runs the load block above, re-seeding the mirror,
-            // the custom list, the caches map and the lastSavedCount baseline
-            // together.
-            setLoaded(false);
+            // exclusions, custom rows and cache toggles gone) must REPLACE
+            // everything — the refetch re-runs the load block above,
+            // re-seeding the mirror, the custom list, the caches map and the
+            // lastSavedCount baseline together. WR-02: the refetch does NOT
+            // start here. Flag it and let the finally chain below issue it
+            // only once every stacked drain has settled — a GET fired at this
+            // spot would race the drain the finally starts for a mutation
+            // stacked during THIS reset PATCH's flight, and a response
+            // reflecting pre-drain server state would then clobber that
+            // mutation's optimistic apply locally, silently losing the
+            // user's click.
+            queueRef.current.reload = true;
           } else {
             // D-02 narrowing gate (SELECT-03 second half): compare THIS
             // attempt's acknowledged include count against the last-SAVED
@@ -1088,9 +1102,28 @@ export function FoldersEditor({
         for (const p of rows) n[p] = false;
         return n;
       });
+      // `chained` must capture the drain decision BEFORE attemptSave() runs:
+      // its first synchronous step consumes owedRef, so checking owedRef
+      // after the call would always read empty and fire the reload below
+      // while the chained drain is still in flight.
+      let chained = false;
       if (queueRef.current.dirty) {
         queueRef.current.dirty = false;
-        if (owedRef.current.size > 0) void attemptSave();
+        if (owedRef.current.size > 0) {
+          chained = true;
+          void attemptSave();
+        }
+      }
+      // WR-02: the post-reset reload rides the queue TAIL — issued only when
+      // this finally did NOT chain a drain and nothing else is owed, so the
+      // GET starts after every stacked drain has settled and its response
+      // can only reflect final server state. When a drain WAS chained the
+      // flag stays set and that drain's own finally re-reaches this check;
+      // the reload keeps deferring while the user keeps stacking mutations,
+      // which is the correct order (mutations settle, then state reloads).
+      if (!chained && queueRef.current.reload && owedRef.current.size === 0) {
+        queueRef.current.reload = false;
+        setLoaded(false);
       }
     }
   }
