@@ -419,7 +419,15 @@ export function SelectionTree({
     // D-03 review list: only ROOT rows carry an exclusions section (children
     // never do). The id pairs the button's aria-controls with the ul.
     const rootExcl = spec.depth === 0 ? rootExclusions(spec.path, exclusions) : [];
-    const exclListId = `${exclIdPrefix}excl-${spec.path.replace(/[^a-zA-Z0-9]/g, "-")}`;
+    // WR-03: the id derivation must be collision-free per root. The previous
+    // non-alphanumeric stripping collided for paths that differ only in
+    // stripped characters — "/mnt/user/app-data" and "/mnt/user/app_data"
+    // both sanitized to "mnt-user-app-data", and any two CJK-named segments
+    // collapsed the same way — producing duplicate DOM ids and an
+    // aria-controls that resolved every button to the FIRST list. The
+    // useId() prefix keeps trees apart; encodeURIComponent is injective on
+    // the path, so distinct roots within one tree can never share an id.
+    const exclListId = `${exclIdPrefix}excl-${encodeURIComponent(spec.path)}`;
     // UI-SPEC tone table: checked/mixed carry the row tone, unchecked is
     // dimmed, excluded (and unreachable) muted. Status hues live on the text
     // lines inside the label, never on a control.

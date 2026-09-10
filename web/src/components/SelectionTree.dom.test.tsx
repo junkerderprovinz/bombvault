@@ -490,6 +490,65 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
   });
 });
 
+// Phase 3 review WR-03: the exclusions-disclosure DOM id must be
+// collision-free per root. The retired non-alphanumeric stripping made
+// "/mnt/user/app-data" and "/mnt/user/app_data" share one sanitized id, so
+// two open disclosures rendered duplicate ids and every button's
+// aria-controls resolved to the FIRST list. Rendered directly against
+// SelectionTree (the remount tests' precedent): the id derivation is pure
+// tree arithmetic, no editor queue involved.
+describe("SelectionTree exclusions-disclosure ids (WR-03)", () => {
+  it("roots whose sanitized paths agree get distinct ids, and each button controls its own list", async () => {
+    const DASH = `${HOST_ROOT}/user/app-data`;
+    const UNDER = `${HOST_ROOT}/user/app_data`;
+    render(
+      <I18nProvider>
+        <SelectionTree
+          mounts={[
+            { source: DASH, dest: "/a", selected: true, isAppdata: false, reachable: true },
+            { source: UNDER, dest: "/b", selected: true, isAppdata: false, reachable: true },
+          ]}
+          customPaths={[]}
+          includes={new Set([DASH, UNDER])}
+          exclusions={new Set([`${DASH}/x`, `${UNDER}/y`])}
+          hostSourceRoot={HOST_ROOT}
+          containerName="collide"
+          browseCache={sharedCache}
+          onToggle={() => {}}
+          onRemoveCustom={() => {}}
+          excludeCaches={{}}
+          onToggleCaches={() => {}}
+        />
+      </I18nProvider>,
+    );
+
+    // Both roots carry exactly one exclusion each: two disclosure buttons.
+    const btns = screen.getAllByRole("button", { name: /1 exclusions/ });
+    expect(btns).toHaveLength(2);
+    // The collision pin: distinct aria-controls values for distinct roots
+    // (the stripped derivation yielded one shared id here).
+    const ids = btns.map((b) => b.getAttribute("aria-controls"));
+    expect(ids[0]).toBeTruthy();
+    expect(new Set(ids).size).toBe(2);
+
+    // Open both: each button's aria-controls resolves to ITS OWN list —
+    // "x" under app-data, "y" under app_data — never the first list twice.
+    await act(async () => {
+      for (const b of btns) fireEvent.click(b);
+    });
+    const expected: [HTMLElement, string][] = [
+      [btns[0], "x"],
+      [btns[1], "y"],
+    ];
+    for (const [btn, rel] of expected) {
+      const list = document.getElementById(btn.getAttribute("aria-controls") ?? "");
+      expect(list, `list for ${rel}`).not.toBeNull();
+      expect(list?.tagName).toBe("UL");
+      expect(within(list as HTMLElement).getAllByRole("listitem").map((li) => li.textContent)).toEqual([rel]);
+    }
+  });
+});
+
 describe("empty-selection guard (D-04, pulled forward from plan 02)", () => {
   it("blocks the toggle that would leave zero includes before any PATCH, with the inline warn line", async () => {
     mountsReply = mountsResponse();
