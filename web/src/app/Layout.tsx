@@ -186,8 +186,25 @@ export function Layout() {
   // welded to the window edge while every card beside it floated, which made
   // the one element that was neither read as window chrome rather than as part
   // of the app.
+  //
+  // THE NUMBER IS 1rem, AND IT IS THE HOUSE'S, NOT THIS APP'S (GlimStone's
+  // `--page-gutter`; `p-4` is that number, and it is what the sibling app
+  // writes too). It shipped here as 1.5rem, which is what the content padding
+  // happened to be, and side by side the difference was the whole impression:
+  // the rail sat further from the edge and, at 0.5rem off the top and the
+  // bottom each, visibly shorter than the same 14rem rail there (jdp: "die
+  // sidebar in BV hat größere abstände zum fensterrand und ist kleiner als in
+  // AL. Sie soll aber exakt wie in AL sein"). A gutter that is picked per app
+  // is not a gutter, it is a coincidence, so the language names the number now.
+  //
+  // Measured side by side at 1440x900 after the change, both live: rail at
+  // x=16, y=16, 224x868, radius 16, no shadow, 16 to the content. Identical.
+  //
+  // The content keeps its own 1.5rem, which is a SEPARATE distance: the gutter
+  // is the frame's, the padding is the page's, and they add up between the rail
+  // and the first card exactly as they do in the sibling.
   return (
-    <div className="flex h-screen overflow-hidden bg-carbon-background gap-6 p-6">
+    <div className="flex h-screen overflow-hidden bg-carbon-background gap-4 p-4">
       <Sidebar settings={settings} authEnabled={authEnabled} />
       {/* `flex flex-col` added here (sticky-footer page-shell fix, jdp live
           review — "die Versionsnummer soll unterhalb der untersten Card
@@ -211,7 +228,11 @@ export function Layout() {
             fixed to the viewport (see AboutFooter's own header comment for
             the full before/after). Every other page ignores the extra
             height exactly as described above. */}
-        <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col">
+        {/* The page's own padding, which the frame's gutter above does NOT
+            replace: it used to sit on `main` and moved down one level so the
+            scroll container is the padded box's parent, the way the sibling app
+            has it. Same 1.5rem the content has always had. */}
+        <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6">
           <Outlet />
         </div>
       </main>
