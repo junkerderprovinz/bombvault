@@ -972,13 +972,21 @@ const CACHEDIR_SCOPE_EN = "Applies to the entire backup of this container, not o
 const MEDIA_MOUNT = `${HOST_ROOT}/user/media`;
 
 /** The CACHEDIR sub-row that belongs to a root: the presentation wrapper
- *  rendered as the treeitem's IMMEDIATE next sibling (the blocked-line /
- *  exclusions-section placement precedent). */
+ *  carrying that root's switch. Since the UAT 2026-09-10 reposition it
+ *  renders AFTER the root's expanded children group (a 16px-indented row
+ *  wedged between the root and its first child read as that subtree's first
+ *  subfolder), so it is the treeitem's immediate next sibling only while the
+ *  root is collapsed — scan forward within the root's own fragment (up to
+ *  the next treeitem) instead of assuming adjacency. The exclusions
+ *  disclosure wrapper is role="presentation" too but carries a button, not
+ *  a switch, so the switch query discriminates. */
 function cachedirRow(row: HTMLElement): HTMLElement {
-  const sub = row.nextElementSibling;
-  expect(sub, "the CACHEDIR sub-row renders immediately after its treeitem").toBeTruthy();
-  expect(sub?.getAttribute("role")).toBe("presentation");
-  return sub as HTMLElement;
+  let el: HTMLElement | null = row.nextElementSibling;
+  while (el && el.getAttribute("role") !== "treeitem") {
+    if (el.getAttribute("role") === "presentation" && el.querySelector('[role="switch"]')) return el;
+    el = el.nextElementSibling;
+  }
+  throw new Error("the root's CACHEDIR sub-row must render inside its own fragment, before the next treeitem");
 }
 
 describe("per-root CACHEDIR.TAG toggle (D-06, RESTIC-01, T-03-07)", () => {

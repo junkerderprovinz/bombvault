@@ -510,37 +510,6 @@ export function SelectionTree({
             </span>
           )}
         </div>
-        {spec.depth === 0 && (
-          // CACHEDIR.TAG sub-row (D-06, RESTIC-01): one switch per ROOT —
-          // mounts and standalone customs alike, regardless of expand state —
-          // in the same presentation-wrapped shape as the blocked warn line
-          // (the tree root's children stay treeitem/group-shaped). The
-          // switch carries hideLabel because the CALLER draws the visible
-          // label right beside it: Toggle's internal caption span is text-sm
-          // and would break the tree's 12px register (the sanctioned
-          // caller-drawn-label case from Toggle's own contract). The
-          // InfoBubble discloses the item-wide scope — the flag applies to
-          // the whole backup, not only this folder. glim-shake rides the row
-          // wrapper, replayed by the keyed nonce remount above; unreachable
-          // mounts cannot back up, so their switch disables. indent 16 / py-1
-          // match the exclusions disclosure's sub-row rhythm.
-          <div role="presentation">
-            <div
-              className={`flex items-center gap-2 py-1${shakeCounts?.[spec.path] ? " glim-shake" : ""}`}
-              style={{ paddingInlineStart: 16 }}
-            >
-              <Toggle
-                checked={excludeCaches[spec.path] === true}
-                onChange={(next) => onToggleCaches(spec.path, next)}
-                label={t("folders.cachedirToggle")}
-                hideLabel
-                disabled={spec.unreachable || !!busyPaths?.has(spec.path)}
-              />
-              <span className="text-xs text-carbon-textSub">{t("folders.cachedirToggle")}</span>
-              <InfoBubble tip={t("folders.cachedirScope")} />
-            </div>
-          </div>
-        )}
         {blockedPath === spec.path && (
           // Presentation wrapper (see the header note): the tree root's
           // children must stay treeitem/group-shaped while the warn text
@@ -656,6 +625,47 @@ export function SelectionTree({
                 </p>
               </div>
             )}
+          </div>
+        )}
+        {spec.depth === 0 && (
+          // CACHEDIR.TAG sub-row (D-06, RESTIC-01): one switch per ROOT —
+          // mounts and standalone customs alike, regardless of expand state —
+          // in the same presentation-wrapped shape as the blocked warn line
+          // (the tree root's children stay treeitem/group-shaped). The
+          // switch carries hideLabel because the CALLER draws the visible
+          // label right beside it: Toggle's internal caption span is text-sm
+          // and would break the tree's 12px register (the sanctioned
+          // caller-drawn-label case from Toggle's own contract). The
+          // InfoBubble discloses the item-wide scope — the flag applies to
+          // the whole backup, not only this folder. glim-shake rides the row
+          // wrapper, replayed by the keyed nonce remount above; unreachable
+          // mounts cannot back up, so their switch disables. indent 16 / py-1
+          // match the exclusions disclosure's sub-row rhythm.
+          //
+          // The row renders AFTER the expanded children group, not between
+          // the root and its first child (UAT finding 2026-09-10): indent 16
+          // is exactly the depth-1 child indent, so a switch wedged above an
+          // expanded subtree read as that subtree's first subfolder. Below
+          // the group the root and its subfolders stay one contiguous visual
+          // block and the control reads as the root's affordance; a collapsed
+          // root still carries it directly beneath (no group renders). DOM
+          // order follows the same rule, so Tab reaches the switch after the
+          // subtree — one position, no roving-tabindex interaction.
+          <div role="presentation">
+            <div
+              className={`flex items-center gap-2 py-1${shakeCounts?.[spec.path] ? " glim-shake" : ""}`}
+              style={{ paddingInlineStart: 16 }}
+            >
+              <Toggle
+                checked={excludeCaches[spec.path] === true}
+                onChange={(next) => onToggleCaches(spec.path, next)}
+                label={t("folders.cachedirToggle")}
+                hideLabel
+                disabled={spec.unreachable || !!busyPaths?.has(spec.path)}
+              />
+              <span className="text-xs text-carbon-textSub">{t("folders.cachedirToggle")}</span>
+              <InfoBubble tip={t("folders.cachedirScope")} />
+            </div>
           </div>
         )}
       </Fragment>
