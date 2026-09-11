@@ -288,8 +288,9 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 		// (mirrors backupPanicTag's own discipline).
 		restorePanicSnapshot: "aaaa1111",
 		snaps: []restic.Snapshot{
-			{ID: "aaaa1111", Tags: []string{"container:web"}},
-			{ID: "bbbb2222", Tags: []string{"container:worker"}},
+			// Paths mirrors a real backup's recorded positional (RESTORE-01).
+			{ID: "aaaa1111", Tags: []string{"container:web"}, Paths: []string{"/host/user/appdata/web"}},
+			{ID: "bbbb2222", Tags: []string{"container:worker"}, Paths: []string{"/host/user/appdata/worker"}},
 		},
 	}
 	// A REMOTE containers repo skips the local-existence probe so the restore

@@ -806,7 +806,13 @@ func mustContainerDefWithBind(t *testing.T, binds ...string) string {
 // target or reaches executeRestore's destructive Stop/Remove — so appdata can
 // never be written to an unmounted path (the RAM rootfs).
 func TestForeignContainerRestoreGuardAbortsWhenDestPoolMissing(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	// Paths mirrors a real backup's recorded positional (RESTORE-01 maps the
+	// stored selection against the chosen snapshot's Paths).
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/appdata/web"},
+	}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -829,7 +835,11 @@ func TestForeignContainerRestoreGuardAbortsWhenDestPoolMissing(t *testing.T) {
 // /host/user/appdata shfs case) the guard passes, a plan is built with the remap
 // restoreDirs, and preparation itself performs no restic restore.
 func TestForeignContainerRestoreGuardAllowsMountedDest(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/appdata/web"}, // RESTORE-01: snapshot Paths must record the positional
+	}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -854,7 +864,11 @@ func TestForeignContainerRestoreGuardAllowsMountedDest(t *testing.T) {
 // remapped to the chosen destination (/host/user/appdata), so restoreDirs restore
 // the source subtree's CONTENTS into the dest and the recreated binds point there.
 func TestForeignContainerRestoreRemapsCrossPool(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/zfs/appdata/web"}, // RESTORE-01: snapshot Paths must record the positional
+	}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -889,7 +903,11 @@ func TestForeignContainerRestoreRemapsCrossPool(t *testing.T) {
 // silent half-remap where the data moves but the bind keeps pointing at the
 // absent source pool.
 func TestForeignContainerRestoreRewritesNonCanonicalBind(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/zfs/appdata/web"}, // RESTORE-01: snapshot Paths must record the positional
+	}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -910,7 +928,11 @@ func TestForeignContainerRestoreRewritesNonCanonicalBind(t *testing.T) {
 // container's own source path and already holds data is refused unless overwrite
 // is confirmed.
 func TestForeignContainerRestoreOverwriteGuard(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/zfs/appdata/web"}, // RESTORE-01: snapshot Paths must record the positional
+	}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -935,7 +957,11 @@ func TestForeignContainerRestoreOverwriteGuard(t *testing.T) {
 // same-instance restore (destBase="") keeps its historical in-place behaviour —
 // no restoreDirs, appdataPaths intact — even when a pool is unmounted.
 func TestLocalContainerRestoreSkipsRemap(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "abcdef0123456789", Tags: []string{"container:web"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/appdata/web"}, // RESTORE-01: snapshot Paths must record the positional
+	}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)

@@ -293,7 +293,10 @@ func (r *Repo) SetUpdateCheck(containerName string, at int64, result string) err
 // SetBackupPaths sets the explicit backup-folder selection (container-translated
 // paths) for a container, creating the target row if it does not exist yet. An
 // empty slice clears the selection so backups fall back to automatic appdata
-// detection. Owned by this setter; never reset by UpsertTarget.
+// detection. Entries may carry the "!" exclusion prefix (a deselected
+// sub-branch): the store treats them as opaque strings — prefix semantics are
+// owned by internal/api/selection.go. Owned by this setter; never reset by
+// UpsertTarget.
 func (r *Repo) SetBackupPaths(containerName string, selected []string) error {
 	if selected == nil {
 		selected = []string{}
