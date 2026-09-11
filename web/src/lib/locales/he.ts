@@ -597,7 +597,7 @@ const he: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "תיקיות לגיבוי",
-  "folders.hint": "בחר אילו מהתיקיות הממופות של מכל זה לגבות. תיקיית appdata נבחרת כברירת מחדל. סמן אחרות כדי לכלול אותן, או הוסף נתיב מותאם אישית תחת נקודת העיגון של המארח. ביטול הסימון של הכול חוזר לברירת המחדל האוטומטית של appdata.",
+  "folders.hint": "בחר אילו מהתיקיות הממופות של מכל זה לגבות. תיקיית appdata נבחרת כברירת מחדל. סמן אחרות כדי לכלול אותן, או הוסף נתיב מותאם אישית תחת נקודת העיגון של המארח. ביטול הסימון של הכול חסום; השתמש באיפוס הבחירה כדי לחזור לברירת המחדל האוטומטית של appdata.",
   "folders.appdataDefault": "appdata (ברירת מחדל)",
   "folders.stackNote":
     "מכולה זו שייכת למקבץ Compose ‏{stack}. תיקיית הפרויקט מגובה פעם אחת עבור כל המקבץ, לא פעם לכל שירות, ולכן אינה מופיעה כאן.",
@@ -609,7 +609,17 @@ const he: Partial<Translations> = {
   "folders.save": "שמור תיקיות",
   "folders.saved": "נשמר",
   "folders.empty": "לא נמצאו תיקיות ממופות עבור מכל זה.",
-
+  "folders.treeLabel": "בחירת תיקיות גיבוי",
+  "folders.truncatedList": "מוצגות 500 הערכים הראשונים",
+  "folders.retry": "נסה שוב",
+  "folders.emptySelectionBlocked": "חייבת להישאר לפחות תיקייה אחת מסומנת. כדי לא לגבות כלום מהמיכל הזה, כבה את ההכללה בלוח הזמנים. כדי לחזור לזיהוי האוטומטי, השתמש באיפוס הבחירה.",
+  "folders.previewPaths": "{n} נתיבים",
+  "folders.exclusions": "{n} החרגות",
+  "folders.resetSelection": "איפוס הבחירה",
+  "folders.resetConfirm": "לאפס את בחירת התיקיות? המכל חוזר לזיהוי האוטומטי (ברירת המחדל של appdata) וכל ההחרגות הזכורות והגדרות תיקיות המטמון יימחקו.",
+  "folders.narrowedNote": "הבחירה מכסה כעת פחות תיקיות מלפני כן. החל מהגיבוי הבא, תמונות המצב יכילו רק את התיקיות שנבחרו. תמונות מצב קיימות אינן משתנות.",
+  "folders.cachedirToggle": "דלג על תיקיות מטמון (CACHEDIR.TAG)",
+  "folders.cachedirScope": "חל על הגיבוי המלא של המכל הזה, לא רק על תיקייה זו.",
   // Notifications
   "notify.title": "התראות",
   "notify.hint": "קבל התראה כשגיבוי מסתיים, ובחר למטה אילו אירועים מפעילים אותה. התראות Unraid פועלות כאן גם במצב פשוט; ערוצי מסירה נוספים (webhook, Matrix, Healthchecks, דוא\"ל) נמצאים תחת מתקדם.",
@@ -1175,7 +1185,14 @@ const he: Partial<Translations> = {
   "files.cancel": "ביטול",
   "files.addPreset": "הוספת תבנית מוכנה: תצורת המערכת",
   "files.addPresetHint": "נקודת התחלה שמרנית לתצורה ברמת המארח מחוץ למכולות שלך, לא טענה לשלמות. בדקו את התיקייה לפני השמירה.",
-  "settings.filesEnabled": "תיקיות",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "בחירת תיקיות",
+  "files.foldersHint": "סמן את התיקיות שהערכה הזו מכסה. בטל סימון של תת־תיקייה כדי להשאיר אותה בחוץ; המספר מציג כמה נתיבים הגיבוי הבא מעביר אל restic.",
+  "files.emptySelectionBlocked": "לערכה נדרשת לפחות תיקייה אחת, ולכן אי אפשר להסיר את הסימון האחרון. השתמש במחק ערכת תיקיות אם אינך רוצה עוד את הערכה הזו.",
+  "files.pathChangeHint": "שינוי התיקייה מנקה את הבחירה של תתי התיקיות המסומנות.",  "settings.filesEnabled": "תיקיות",
   "settings.filesEnabledHint": "גיבוי תיקיות שרירותיות מתחת לנקודות העגינה שלך, בנפרד מהתחומים האחרים.",
   "settings.filesPath": "נתיב תיקיות",
   "jobs.filesSection": "תיקיות",

@@ -589,7 +589,7 @@ const ja: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "バックアップ対象フォルダ",
-  "folders.hint": "このコンテナのマッピング済みフォルダのうち、どれをバックアップするか選択します。appdata フォルダはデフォルトで選択されています。他のフォルダを含めるにはチェックを入れるか、ホストマウント配下のカスタムパスを追加してください。すべてのチェックを外すと、自動の appdata デフォルトに戻ります。",
+  "folders.hint": "このコンテナのマッピング済みフォルダのうち、どれをバックアップするか選択します。appdata フォルダはデフォルトで選択されています。他のフォルダを含めるにはチェックを入れるか、ホストマウント配下のカスタムパスを追加してください。すべてのチェックを外すことはできません。自動の appdata デフォルトに戻るには「選択をリセット」を使用してください。",
   "folders.appdataDefault": "appdata（デフォルト）",
   "folders.stackNote":
     "このコンテナは Compose スタック {stack} に属します。プロジェクトフォルダーはサービスごとではなくスタック全体で一度だけバックアップされるため、ここには表示されません。",
@@ -601,7 +601,17 @@ const ja: Partial<Translations> = {
   "folders.save": "フォルダを保存",
   "folders.saved": "保存しました",
   "folders.empty": "このコンテナにマッピングされたフォルダが見つかりません。",
-
+  "folders.treeLabel": "バックアップフォルダーの選択",
+  "folders.truncatedList": "最初の500件を表示しています",
+  "folders.retry": "再試行",
+  "folders.emptySelectionBlocked": "少なくとも1つのフォルダーを選択したままにしてください。このコンテナーのバックアップを一切行わない場合は、「スケジュールに含める」をオフにしてください。自動検出に戻るには「選択をリセット」を使用してください。",
+  "folders.previewPaths": "{n} 個のパス",
+  "folders.exclusions": "{n} 件の除外",
+  "folders.resetSelection": "選択をリセット",
+  "folders.resetConfirm": "フォルダの選択をリセットしますか？コンテナは自動検出（appdata デフォルト）に戻り、記憶されているすべての除外とキャッシュフォルダの設定が削除されます。",
+  "folders.narrowedNote": "選択範囲は以前より少ないフォルダをカバーしています。次回のバックアップから、スナップショットには選択されたフォルダのみが含まれます。既存のスナップショットは変更されません。",
+  "folders.cachedirToggle": "キャッシュフォルダをスキップ（CACHEDIR.TAG）",
+  "folders.cachedirScope": "このコンテナのバックアップ全体に適用されます。このフォルダだけではありません。",
   // Notifications
   "notify.title": "通知",
   "notify.hint": "バックアップ完了時に通知を受け取り、どのイベントで発火するかを下で選びます。Unraid通知はシンプルモードでも動作します。ほかの配信チャネル（Webhook、Matrix、Healthchecks、メール）は詳細設定にあります。",
@@ -1167,7 +1177,14 @@ const ja: Partial<Translations> = {
   "files.cancel": "キャンセル",
   "files.addPreset": "プリセットを追加: ホストのシステム構成",
   "files.addPresetHint": "コンテナの外側にあるホストレベルの構成のための、控えめな出発点です。網羅性を保証するものではありません。保存前にフォルダを確認してください。",
-  "settings.filesEnabled": "フォルダー",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "フォルダーを選択",
+  "files.foldersHint": "このセットが対象とするフォルダーにチェックを入れてください。サブフォルダーのチェックを外すと除外されます。数値は、次のバックアップが restic に渡すパスの数です。",
+  "files.emptySelectionBlocked": "セットにはフォルダーが最低 1 つ必要なため、最後のチェックは外せません。このセットが不要になったら、フォルダーセットを削除を使用してください。",
+  "files.pathChangeHint": "フォルダーを変更すると、チェックしたサブフォルダーの選択はクリアされます。",  "settings.filesEnabled": "フォルダー",
   "settings.filesEnabledHint": "他の領域とは独立して、マウント配下の任意のフォルダーをバックアップします。",
   "settings.filesPath": "フォルダーパス",
   "jobs.filesSection": "フォルダー",

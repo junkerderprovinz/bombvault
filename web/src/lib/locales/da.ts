@@ -597,7 +597,7 @@ const da: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Sikkerhedskopierede mapper",
-  "folders.hint": "Vælg hvilke af denne containers tilknyttede mapper der skal sikkerhedskopieres. appdata-mappen er valgt som standard. Sæt flueben ved andre for at inkludere dem, eller tilføj en brugerdefineret sti under host-monteringen. Fjernes alle flueben, vendes der tilbage til den automatiske appdata-standard.",
+  "folders.hint": "Vælg hvilke af denne containers tilknyttede mapper der skal sikkerhedskopieres. appdata-mappen er valgt som standard. Sæt flueben ved andre for at inkludere dem, eller tilføj en brugerdefineret sti under host-monteringen. At fjerne alle flueben er blokeret; brug Nulstil valg for at vende tilbage til den automatiske appdata-standard.",
   "folders.appdataDefault": "appdata (standard)",
   "folders.stackNote":
     "Denne container hører til Compose-stakken {stack}. Projektmappen sikkerhedskopieres én gang for hele stakken, ikke én gang pr. tjeneste, og står derfor ikke her.",
@@ -609,7 +609,17 @@ const da: Partial<Translations> = {
   "folders.save": "Gem mapper",
   "folders.saved": "Gemt",
   "folders.empty": "Ingen tilknyttede mapper fundet for denne container.",
-
+  "folders.treeLabel": "Valg af sikkerhedskopimapper",
+  "folders.truncatedList": "Første 500 poster vist",
+  "folders.retry": "Prøv igen",
+  "folders.emptySelectionBlocked": "Der skal være valgt mindst én mappe. For slet ikke at sikkerhedskopiere denne container skal du slå Inkluder i tidsplan fra. For at vende tilbage til automatisk registrering skal du bruge Nulstil valg.",
+  "folders.previewPaths": "{n} stier",
+  "folders.exclusions": "{n} udeladelser",
+  "folders.resetSelection": "Nulstil valg",
+  "folders.resetConfirm": "Nulstil mappevalget? Containeren vender tilbage til automatisk registrering (appdata-standard), og alle huskede udeladelser og cachemappeindstillinger fjernes.",
+  "folders.narrowedNote": "Valget dækker nu færre mapper end før. Fra den næste sikkerhedskopi og fremefter indeholder snapshots kun de valgte mapper. Eksisterende snapshots er uændrede.",
+  "folders.cachedirToggle": "Spring cachemapper over (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Gælder for hele sikkerhedskopien af denne container, ikke kun denne mappe.",
   // Notifications
   "notify.title": "Notifikationer",
   "notify.hint": "Bliv underrettet, når en sikkerhedskopi er færdig, og vælg nedenfor hvilke hændelser der udløser det. Unraid-notifikationer virker allerede i Enkel tilstand; flere leveringskanaler (webhook, Matrix, Healthchecks, e-mail) findes under Avanceret.",
@@ -1175,7 +1185,14 @@ const da: Partial<Translations> = {
   "files.cancel": "Annuller",
   "files.addPreset": "Tilføj forudindstilling: Systemkonfiguration",
   "files.addPresetHint": "Et forsigtigt udgangspunkt for konfiguration på værtsniveau uden for dine containere, ikke en påstand om fuldstændighed. Gennemgå mappen før du gemmer.",
-  "settings.filesEnabled": "Mapper",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Vælg mapper",
+  "files.foldersHint": "Sæt flueben ved de mapper, dette sæt dækker. Fjern fluebenet i en undermappe for at lade den være ude; tallet viser, hvor mange stier den næste backup giver til restic.",
+  "files.emptySelectionBlocked": "Et sæt kræver mindst én mappe, så det sidste flueben kan ikke fjernes. Brug Slet mappesæt, hvis du ikke vil have dette sæt længere.",
+  "files.pathChangeHint": "Ændrer du mappen, ryddes valget af de afkrydsede undermapper.",  "settings.filesEnabled": "Mapper",
   "settings.filesEnabledHint": "Sikkerhedskopiér vilkårlige mapper under dine mountpunkter, uafhængigt af de andre domæner.",
   "settings.filesPath": "Mapper-sti",
   "jobs.filesSection": "Mapper",

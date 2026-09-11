@@ -604,7 +604,7 @@ const lv: Partial<Translations> = {
   "hooks.pre": "Komanda pirms rezerves kopijas",
   "hooks.post": "Komanda pēc rezerves kopijas",
   "folders.title": "Rezerves kopēšanas mapes",
-  "folders.hint": "Izvēlieties, kuras no šī konteinera piesaistītajām mapēm dublēt. Mape appdata ir izvēlēta pēc noklusējuma. Atzīmējiet citas, lai tās iekļautu, vai pievienojiet pielāgotu ceļu zem saimniekdatora piesaistes. Noņemot visas atzīmes, atgriežas automātiskais appdata noklusējums.",
+  "folders.hint": "Izvēlieties, kuras no šī konteinera piesaistītajām mapēm dublēt. Mape appdata ir izvēlēta pēc noklusējuma. Atzīmējiet citas, lai tās iekļautu, vai pievienojiet pielāgotu ceļu zem saimniekdatora piesaistes. Visu atzīmju noņemšana ir bloķēta; izmantojiet Atiestatīt atlasi, lai atgrieztos pie automātiskā appdata noklusējuma.",
   "folders.appdataDefault": "appdata (noklusējums)",
   "folders.stackNote":
     "Šis konteiners pieder Compose kaudzei {stack}. Projekta mape tiek dublēta vienreiz visai kaudzei, nevis vienreiz katram pakalpojumam, tāpēc tā šeit nav norādīta.",
@@ -616,6 +616,17 @@ const lv: Partial<Translations> = {
   "folders.save": "Saglabāt mapes",
   "folders.saved": "Saglabāts",
   "folders.empty": "Šim konteinerim nav atrasta neviena piesaistīta mape.",
+  "folders.treeLabel": "Rezerves kopiju mapju atlasīšana",
+  "folders.truncatedList": "Rādītas pirmās 500 ierakstu",
+  "folders.retry": "Mēģināt vēlreiz",
+  "folders.emptySelectionBlocked": "Jāpaliek atlasītai vismaz vienai mapei. Lai no šī konteinera nekas netiktu dublēts rezerves kopijā, izslēdziet iekļaušanu grafikā. Lai atgrieztos pie automātiskās noteikšanas, izmantojiet Atiestatīt atlasi.",
+  "folders.previewPaths": "{n} ceļi",
+  "folders.exclusions": "{n} izņēmumu",
+  "folders.resetSelection": "Atiestatīt atlasi",
+  "folders.resetConfirm": "Atiestatīt mapju atlasi? Konteiners atgriežas pie automātiskās noteikšanas (appdata noklusējums), un visas atcerētās izslēgšanas un kešatmiņas mapju iestatījumi tiek noņemti.",
+  "folders.narrowedNote": "Atlase tagad aptver mazāk mapju nekā iepriekš. Sākot ar nākamo rezerves kopiju, momentuzņēmumi saturēs tikai atlasītās mapes. Esošie momentuzņēmumi nemainās.",
+  "folders.cachedirToggle": "Izlaist kešatmiņas mapes (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Attiecas uz visu šī konteinera rezerves kopiju, ne tikai uz šo mapi.",
   "stophook.title": "Apturēt citus konteinerus",
   "stophook.hint": "Apturiet šos citus konteinerus, kamēr tiek dublēts šis (piem., datubāzi), un pēc tam tos atkal palaidiet.",
   "stophook.noCandidates": "Citi instalēti konteineri nav atrasti.",
@@ -1345,7 +1356,14 @@ const lv: Partial<Translations> = {
   "files.cancel": "Atcelt",
   "files.addPreset": "Pievienot sākotnējo iestatījumu: Saimniekdatora sistēmas konfigurācija",
   "files.addPresetHint": "Konservatīvs sākumpunkts saimniekdatora līmeņa konfigurācijai ārpus jūsu konteineriem, nav apgalvojums par pilnīgumu. Pārskatiet mapi pirms saglabāšanas.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Izvēlēties mapes",
+  "files.foldersHint": "Atzīmējiet mapes, kuras sedz šī kopa. Noņemiet atzīmi no apakšmapes, lai to izlaistu; skaitlis rāda, cik ceļus nākamā dublējumkopija nodos restic.",
+  "files.emptySelectionBlocked": "Kopai nepieciešama vismaz viena mape, tāpēc pēdējo atzīmi nevar noņemt. Ja šī kopa vairs nav vajadzīga, izmantojiet Dzēst mapju kopu.",
+  "files.pathChangeHint": "Mainot mapi, tiek notīrīta atzīmēto apakšmapu izvēle.",  // Files domain integration
   "settings.filesEnabled": "Mapes",
   "settings.filesEnabledHint": "Dublējiet patvaļīgas mapes zem savām piesaistēm kā failu kopas, neatkarīgi no citiem domēniem.",
   "settings.filesPath": "Mapju ceļš",

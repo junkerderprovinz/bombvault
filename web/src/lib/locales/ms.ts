@@ -604,7 +604,7 @@ const ms: Partial<Translations> = {
   "hooks.pre": "Arahan sebelum sandaran",
   "hooks.post": "Arahan selepas sandaran",
   "folders.title": "Folder sandaran",
-  "folders.hint": "Pilih folder terpeta bekas ini yang mana hendak disandarkan. Folder appdata dipilih secara lalai. Tandakan yang lain untuk memasukkannya, atau tambah laluan tersuai di bawah mount hos. Menyahtanda semua akan kembali kepada lalai appdata automatik.",
+  "folders.hint": "Pilih folder terpeta bekas ini yang mana hendak disandarkan. Folder appdata dipilih secara lalai. Tandakan yang lain untuk memasukkannya, atau tambah laluan tersuai di bawah mount hos. Menyahtanda semua disekat; gunakan Set semula pilihan untuk kembali kepada lalai appdata automatik.",
   "folders.appdataDefault": "appdata (lalai)",
   "folders.stackNote":
     "Bekas ini tergolong dalam tindanan Compose {stack}. Folder projeknya disandarkan sekali untuk keseluruhan tindanan, bukan sekali bagi setiap perkhidmatan, jadi ia tidak disenaraikan di sini.",
@@ -616,6 +616,17 @@ const ms: Partial<Translations> = {
   "folders.save": "Simpan folder",
   "folders.saved": "Disimpan",
   "folders.empty": "Tiada folder terpeta dijumpai untuk bekas ini.",
+  "folders.treeLabel": "Pemilihan folder sandaran",
+  "folders.truncatedList": "500 entri pertama dipaparkan",
+  "folders.retry": "Cuba lagi",
+  "folders.emptySelectionBlocked": "Sekurang-kurangnya satu folder mesti kekal dipilih. Untuk tidak membuat sandaran daripada kontena ini, matikan penyertaan dalam jadual. Untuk kembali kepada pengesanan automatik, gunakan Set semula pilihan.",
+  "folders.previewPaths": "{n} laluan",
+  "folders.exclusions": "{n} pengecualian",
+  "folders.resetSelection": "Set semula pilihan",
+  "folders.resetConfirm": "Set semula pilihan folder? Bekas kembali kepada pengesanan automatik (lalai appdata) dan semua pengecualian yang diingati serta tetapan folder cache dibuang.",
+  "folders.narrowedNote": "Pilihan kini meliputi lebih kurang folder berbanding sebelumnya. Mulai sandaran seterusnya, snapshot hanya akan mengandungi folder yang dipilih. Snapshot sedia ada tidak berubah.",
+  "folders.cachedirToggle": "Langkau folder cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Terpakai kepada keseluruhan sandaran bekas ini, bukan hanya folder ini.",
   "stophook.title": "Hentikan bekas lain",
   "stophook.hint": "Hentikan bekas lain ini semasa bekas ini disandarkan (contohnya pangkalan data), kemudian mulakan semula selepas itu.",
   "stophook.noCandidates": "Tiada bekas terpasang lain ditemui.",
@@ -1345,7 +1356,14 @@ const ms: Partial<Translations> = {
   "files.cancel": "Batal",
   "files.addPreset": "Tambah praset: Konfigurasi sistem hos",
   "files.addPresetHint": "Titik permulaan yang berhati-hati untuk konfigurasi peringkat hos di luar bekas anda, bukan tuntutan kesempurnaan. Semak folder sebelum menyimpan.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Pilih folder",
+  "files.foldersHint": "Tandakan folder yang diliputi set ini. Nyahcentang subfolder untuk mengecualikannya; bilangan menunjukkan berapa laluan yang akan diserahkan sandaran seterusnya kepada restic.",
+  "files.emptySelectionBlocked": "Set memerlukan sekurang-kurangnya satu folder, jadi tanda terakhir tidak boleh dibuang. Guna Padam set folder jika anda tidak mahu set ini lagi.",
+  "files.pathChangeHint": "Menukar folder akan mengosongkan pilihan subfolder yang ditandakan.",  // Files domain integration
   "settings.filesEnabled": "Folder",
   "settings.filesEnabledHint": "Sandarkan folder sewenang-wenangnya di bawah mount anda sebagai set fail, tanpa mengira domain lain.",
   "settings.filesPath": "Laluan folder",

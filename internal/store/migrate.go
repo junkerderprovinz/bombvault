@@ -1303,6 +1303,42 @@ ALTER TABLE settings ADD COLUMN totp_recovery TEXT    NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("file_sets", "schedule_cadence"),
 		sql:              "ALTER TABLE file_sets ADD COLUMN schedule_cadence TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Per-root CACHEDIR.TAG toggle (RESTIC-01, D-07): a JSON map of
+		// backup-root host path → bool, the same JSON-column shape excludes uses.
+		// '{}' = no root opted in. Owned by SetExcludeCaches (never reset by
+		// Upsert). Only the boolean UNION of the values ever reaches restic argv
+		// (the constant --exclude-caches flag) — the keys are UI state, never
+		// emitted.
+		version: 100, name: "target_exclude_caches",
+		sql: "ALTER TABLE targets ADD COLUMN exclude_caches TEXT NOT NULL DEFAULT '{}';",
+	},
+	{
+		// The file set's tree selection (Phase 4 file-sets parity, D-03): the
+		// same flat encoding as the containers' backupPaths set — bare entries
+		// are included roots, "!"-prefixed entries are deselected branches —
+		// stored as ONE JSON array in one nullable TEXT column.
+		//
+		// Nullable, deliberately with NO default and NO NOT NULL: NULL means
+		// "never touched by the tree" and is the legacy switch — a NULL set
+		// backs up exactly as it did before this column existed (the single
+		// positional [resolved Path]), so every existing row reads NULL after
+		// the ALTER and nothing about existing sets changes. A nullable ADD
+		// COLUMN also accepts the existing CreateFileSet INSERT, which omits
+		// the column, unchanged. '[]' is never stored for that state (a
+		// non-nil empty slice would be a third, meaningless state); the
+		// nil/NULL vs written distinction IS the compile-time switch
+		// (internal/api service.go BackupFileSet is its only reader).
+		//
+		// Owned by SetFileSetSelectedPaths, never written by UpdateFileSet —
+		// the same split as schedule_cadence above: an edit that does not know
+		// about the selection must not be able to clear one by omitting it.
+		// This package treats the column as an opaque TEXT blob; normalization
+		// and compilation of the entries live in the API tier
+		// (internal/api/selection.go), which owns the meaning of "!".
+		version: 101, name: "file_set_selected_paths",
+		sql: "ALTER TABLE file_sets ADD COLUMN selected_paths TEXT;",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

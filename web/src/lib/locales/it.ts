@@ -597,7 +597,7 @@ const it: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Cartelle da salvare",
-  "folders.hint": "Scegli quali cartelle mappate di questo contenitore salvare. La cartella appdata è selezionata per impostazione predefinita. Spunta le altre per includerle, oppure aggiungi un percorso personalizzato sotto il mount dell'host. Deselezionando tutto si torna al valore automatico di appdata.",
+  "folders.hint": "Scegli quali cartelle mappate di questo contenitore salvare. La cartella appdata è selezionata per impostazione predefinita. Spunta le altre per includerle, oppure aggiungi un percorso personalizzato sotto il mount dell'host. Deselezionare tutto è bloccato; usa Azzera selezione per tornare al valore automatico di appdata.",
   "folders.appdataDefault": "appdata (predefinita)",
   "folders.stackNote":
     "Questo contenitore appartiene allo stack Compose {stack}. La cartella del progetto viene salvata una volta per l'intero stack, non una per servizio, quindi non compare qui.",
@@ -609,7 +609,17 @@ const it: Partial<Translations> = {
   "folders.save": "Salva cartelle",
   "folders.saved": "Salvato",
   "folders.empty": "Nessuna cartella mappata trovata per questo contenitore.",
-
+  "folders.treeLabel": "Selezione delle cartelle di backup",
+  "folders.truncatedList": "Mostrate le prime 500 voci",
+  "folders.retry": "Riprova",
+  "folders.emptySelectionBlocked": "Almeno una cartella deve rimanere selezionata. Per non eseguire il backup di nulla di questo contenitore, disattiva l'inclusione nel calendario. Per tornare al rilevamento automatico, usa Azzera selezione.",
+  "folders.previewPaths": "{n} percorsi",
+  "folders.exclusions": "{n} esclusioni",
+  "folders.resetSelection": "Azzera selezione",
+  "folders.resetConfirm": "Azzerare la selezione delle cartelle? Il contenitore torna al rilevamento automatico (appdata predefinita) e tutte le esclusioni memorizzate e le impostazioni delle cartelle di cache vengono rimosse.",
+  "folders.narrowedNote": "La selezione ora comprende meno cartelle di prima. Dal prossimo backup in poi, le istantanee conterranno solo le cartelle selezionate. Le istantanee esistenti restano invariate.",
+  "folders.cachedirToggle": "Salta le cartelle di cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Si applica all'intero backup di questo contenitore, non solo a questa cartella.",
   // Notifications
   "notify.title": "Notifiche",
   "notify.hint": "Ricevi una notifica al termine di un backup e scegli qui sotto quali eventi la attivano. Le notifiche Unraid funzionano già in modalità Semplice; altri canali di consegna (webhook, Matrix, Healthchecks, email) si trovano in Avanzate.",
@@ -1175,7 +1185,14 @@ const it: Partial<Translations> = {
   "files.cancel": "Annulla",
   "files.addPreset": "Aggiungi preset: Configurazione di sistema",
   "files.addPresetHint": "Un punto di partenza prudente per la configurazione a livello host al di fuori dei container, non è una garanzia di completezza. Controlla la cartella prima di salvare.",
-  "settings.filesEnabled": "Cartelle",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Scegli le cartelle",
+  "files.foldersHint": "Spunta le cartelle che questo set copre. Togli la spunta a una sottocartella per escluderla; il numero indica quanti percorsi il prossimo backup passerà a restic.",
+  "files.emptySelectionBlocked": "Un set richiede almeno una cartella, quindi l'ultima spunta non può essere tolta. Usa Elimina set di cartelle se non vuoi più questo set.",
+  "files.pathChangeHint": "Cambiare la cartella cancella la selezione delle sottocartelle spuntate.",  "settings.filesEnabled": "Cartelle",
   "settings.filesEnabledHint": "Backup di cartelle arbitrarie sotto i tuoi mount, indipendente dagli altri domini.",
   "settings.filesPath": "Percorso delle cartelle",
   "jobs.filesSection": "Cartelle",

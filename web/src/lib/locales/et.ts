@@ -604,7 +604,7 @@ const et: Partial<Translations> = {
   "hooks.pre": "Varunduse-eelne käsk",
   "hooks.post": "Varundusjärgne käsk",
   "folders.title": "Varundatavad kaustad",
-  "folders.hint": "Vali, millised selle konteineri kaardistatud kaustadest varundatakse. Kaust appdata on vaikimisi valitud. Märgi teisi kaasamiseks või lisa oma rada hosti haakepunkti all. Kõigi märke eemaldamine taastab automaatse appdata vaikeväärtuse.",
+  "folders.hint": "Vali, millised selle konteineri kaardistatud kaustadest varundatakse. Kaust appdata on vaikimisi valitud. Märgi teisi kaasamiseks või lisa oma rada hosti haakepunkti all. Kõigi märkide eemaldamine on blokeeritud; automaatsele appdata vaikeväärtusele naasmiseks kasuta Lähtesta valik.",
   "folders.appdataDefault": "appdata (vaikimisi)",
   "folders.stackNote":
     "See konteiner kuulub Compose'i virna {stack}. Projektikaust varundatakse korra kogu virna jaoks, mitte korra teenuse kohta, seetõttu seda siin ei ole.",
@@ -616,6 +616,17 @@ const et: Partial<Translations> = {
   "folders.save": "Salvesta kaustad",
   "folders.saved": "Salvestatud",
   "folders.empty": "Selle konteineri jaoks ei leitud kaardistatud kaustu.",
+  "folders.treeLabel": "Varundatavate kaustade valik",
+  "folders.truncatedList": "Kuvatud on esimesed 500 kirjet",
+  "folders.retry": "Proovi uuesti",
+  "folders.emptySelectionBlocked": "Valitud peab jääma vähemalt üks kaust. Kui sa ei soovi sellest konteinerist midagi varundada, lülita ajakavasse lisamine välja. Automaatse tuvastamise juurde naasmiseks kasuta Lähtesta valik.",
+  "folders.previewPaths": "{n} teed",
+  "folders.exclusions": "{n} välistust",
+  "folders.resetSelection": "Lähtesta valik",
+  "folders.resetConfirm": "Lähtestada kaustade valik? Konteiner naaseb automaatsele tuvastamisele (appdata vaikeväärtus) ja kõik meeldejäetud välistused ning vahemälu kaustade seaded eemaldatakse.",
+  "folders.narrowedNote": "Valik hõlmab nüüd vähem kaustu kui varem. Alates järgmisest varukoopiast sisaldavad hetktõmmised ainult valitud kaustu. Olemasolevad hetktõmmised jäävad muutmata.",
+  "folders.cachedirToggle": "Jäta vahemälu kaustad vahele (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Kehtib kogu selle konteineri varukoopia kohta, mitte ainult selle kausta kohta.",
   "stophook.title": "Peata teised konteinerid",
   "stophook.hint": "Peata need teised konteinerid selle konteineri varundamise ajaks (näiteks andmebaas) ja käivita need seejärel uuesti.",
   "stophook.noCandidates": "Teisi installitud konteinereid ei leitud.",
@@ -1345,7 +1356,14 @@ const et: Partial<Translations> = {
   "files.cancel": "Loobu",
   "files.addPreset": "Lisa eelseade: Hosti süsteemi seadistus",
   "files.addPresetHint": "Ettevaatlik lähtepunkt hosti tasandi seadistusele väljaspool sinu konteinereid, mitte täielikkuse lubadus. Vaata kaust enne salvestamist üle.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Vali kaustad",
+  "files.foldersHint": "Märgi kaustad, mida see komplekt hõlmab. Tühista alamkausta märge, et jätta see välja; arv näitab, mitu teed järgmine varukoopia resticile annab.",
+  "files.emptySelectionBlocked": "Komplekt vajab vähemalt ühte kausta, seetõttu viimast märget eemaldada ei saa. Kasuta Kustuta kaustakomplekt, kui seda komplekti enam ei vaja.",
+  "files.pathChangeHint": "Kausta muutmine tühistab märgitud alamkaustade valiku.",  // Files domain integration
   "settings.filesEnabled": "Kaustad",
   "settings.filesEnabledHint": "Varunda suvalisi kaustu oma haakepunktide all failikomplektidena, sõltumata teistest valdkondadest.",
   "settings.filesPath": "Kaustade rada",

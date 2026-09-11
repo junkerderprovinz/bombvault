@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"mime"
 	"net"
@@ -58,6 +59,16 @@ func okEnvelope(extra map[string]any) map[string]any {
 // adapters already scrub their own errors).
 func failEnvelope(err error) map[string]any {
 	return map[string]any{"ok": false, "error": scrubError(err)}
+}
+
+// codedFailEnvelope is failEnvelope plus a machine-routable code. The code lets
+// a client branch on the failure KIND without parsing error text — used for the
+// empty-selection refusal ("empty-selection"), which the Phase 3 tree UI turns
+// into guidance instead of a bare failure (CONTEXT INTEG-04 Q2). Error text is
+// scrubbed exactly like failEnvelope, and the response stays in the house HTTP
+// 200 envelope.
+func codedFailEnvelope(err error, code string) map[string]any {
+	return map[string]any{"ok": false, "error": scrubError(err), "code": code}
 }
 
 // absPathRe matches absolute unix paths so they can be stripped from any error
@@ -1161,10 +1172,29 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		PreHook           *string   `json:"preHook"`
 		PostHook          *string   `json:"postHook"`
 		BackupPaths       *[]string `json:"backupPaths"`
-		StopContainers    *[]string `json:"stopContainers"`
-		Excludes          *[]string `json:"excludes"`
-		UpdateAfterBackup *bool     `json:"updateAfterBackup"`
-		ScheduleCadence   *string   `json:"scheduleCadence"`
+		// SelectionSource is the optional intent carrier for a backupPaths save.
+		// Only the literal "tree" carries meaning (it enables the empty-selection
+		// guard — a deselect-everything from the tree over a prior non-empty
+		// selection is refused); any other value is ignored and treated exactly
+		// as absent, so no source value can ever fail a save (CONTEXT INTEG-04
+		// Q1 / RESEARCH Pitfall 7). The field MUST be declared even though it is
+		// optional: decodeBody runs DisallowUnknownFields, so an undeclared
+		// selectionSource would reject every tree save at the boundary. Omitting
+		// it stays legal (pointer field), and SPA + server ship in one binary
+		// (embedded web/dist), so version skew is a non-issue.
+		SelectionSource *string   `json:"selectionSource"`
+		StopContainers  *[]string `json:"stopContainers"`
+		Excludes        *[]string `json:"excludes"`
+		// ExcludeCaches is the per-mount-root CACHEDIR.TAG toggle (RESTIC-01):
+		// a map of host path → bool. nil means untouched (the key was absent),
+		// an explicit empty object clears every root toggle. Non-pointer map is
+		// deliberate: an absent key decodes to nil, which IS the untouched
+		// signal — maps natively distinguish absent from zero, unlike scalars.
+		// Keys are host paths, boundary-validated in Service.SetExcludeCaches;
+		// only the boolean union of the values ever reaches restic argv (D-06).
+		ExcludeCaches     map[string]bool `json:"excludeCaches"`
+		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
+		ScheduleCadence   *string         `json:"scheduleCadence"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -1183,7 +1213,16 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if body.BackupPaths != nil {
-		if err := h.svc.SetBackupPaths(r.Context(), name, *body.BackupPaths); err != nil {
+		if err := h.svc.SetBackupPaths(r.Context(), name, *body.BackupPaths, strOr(body.SelectionSource)); err != nil {
+			// The empty-selection refusal gets a machine-routable code so the
+			// Phase 3 UI can offer guidance ("nothing would be backed up")
+			// instead of a bare failure; every other error keeps the plain
+			// envelope (CONTEXT INTEG-04 Q2). Both stay in the HTTP 200
+			// envelope.
+			if errors.Is(err, errEmptySelection) {
+				writeJSON(w, http.StatusOK, codedFailEnvelope(err, "empty-selection"))
+				return
+			}
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -1196,6 +1235,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Excludes != nil {
 		if err := h.svc.SetExcludes(r.Context(), name, *body.Excludes); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.ExcludeCaches != nil {
+		if err := h.svc.SetExcludeCaches(r.Context(), name, body.ExcludeCaches); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -1340,14 +1385,16 @@ func (h *Handler) handleSetVmBackupOrder(w http.ResponseWriter, r *http.Request)
 }
 
 // handleContainerMounts lists a container's bind mounts (annotated with the
-// current selection) for the backup-folder selector.
+// current selection) for the backup-folder selector. Stored exclusions come
+// back additively in a top-level excluded array (host form) — never mixed into
+// custom as stale paths (INTEG-04 read side).
 // GET /api/containers/{name}/mounts
 func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
 		return
 	}
-	mounts, custom, err := h.svc.ContainerMounts(r.Context(), name)
+	mounts, custom, excluded, excludeCaches, err := h.svc.ContainerMounts(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1358,11 +1405,21 @@ func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) 
 	if custom == nil {
 		custom = []CustomPath{}
 	}
+	if excluded == nil {
+		excluded = []string{}
+	}
+	if excludeCaches == nil {
+		// Nil-safe wire shape: the SPA must always read an OBJECT under
+		// excludeCaches, never null (RESTIC-01 read side).
+		excludeCaches = map[string]bool{}
+	}
 	// hostMountRoot/hostSourceRoot let the folder picker translate a browsed path
 	// (relative to the host mount) back to the host path SetBackupPaths expects.
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"mounts":         mounts,
 		"custom":         custom,
+		"excluded":       excluded,
+		"excludeCaches":  excludeCaches,
 		"hostMountRoot":  h.cfg.HostMountRoot,
 		"hostSourceRoot": h.cfg.HostSourceRoot,
 	}))
@@ -2999,13 +3056,15 @@ type browseDirEntry struct {
 	Path string `json:"path"` // relative to HostMountRoot (e.g. "appdata/plex")
 }
 
-// handleBrowse serves GET /api/browse?path=<subpath>.
-// It lists the immediate subdirectories of <HostMountRoot>/<subpath>,
-// excluding hidden entries (dot-prefixed names), sorted alphabetically.
-//
-// The response is always HTTP 200; errors use {ok:false,error} so the UI can
-// display a graceful message. A missing or empty `path` query parameter lists
-// the mount root itself.
+// maxBrowseEntries caps one browse listing (D-08 / phase research R1): appdata
+// trees can hold tens of thousands of entries and a single unbounded ReadDir
+// response would balloon into a multi-megabyte JSON body the SPA has to parse
+// just to render one tree level (threat T-01-07). The cap is deterministic —
+// the lexically-FIRST maxBrowseEntries after the sort — and the response's
+// "truncated" flag tells the tree a deeper listing exists beyond this page.
+// 500 entries is tens of KB of JSON, fine on the LAN this is served on.
+const maxBrowseEntries = 500
+
 // ---------------------------------------------------------------------------
 // Authentication
 // ---------------------------------------------------------------------------
@@ -4202,21 +4261,66 @@ func (h *Handler) handleVMSSHTest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// classifyReadDirError maps a browse read failure to the additive per-listing
+// `status` KIND (BROWSE-02, threat T-01-08): the status carries the error
+// CLASS and never the path, so the wire keeps the generic scrubbed "could not
+// read directory" message while the tree can still tell a vanished node
+// ("missing") from an unreadable one ("restricted"). errors.Is on the
+// *fs.PathError, not text matching — error text breaks across platforms and
+// locales. Anything else, including an os.Root escape rejection, lands in the
+// opaque "error" bucket on purpose: an attempted escape must be
+// indistinguishable from any other failure on the wire.
+func classifyReadDirError(err error) string {
+	switch {
+	case errors.Is(err, fs.ErrPermission):
+		return "restricted"
+	case errors.Is(err, fs.ErrNotExist):
+		return "missing"
+	default:
+		return "error"
+	}
+}
+
+// handleBrowse serves GET /api/browse?path=<subpath>[&hidden=1].
+// It lists the immediate subdirectories of <HostMountRoot>/<subpath>,
+// excluding hidden entries (dot-prefixed names) unless hidden=1 opts in,
+// sorted alphabetically and capped at maxBrowseEntries with a "truncated"
+// flag on overflow.
+//
+// Containment is two-layered (BROWSE-03): paths.Resolve is the cheap lexical
+// first reject (its rejection response is byte-identical to the pre-Root
+// handler and carries NO status field — the FolderBrowser contract), then
+// os.OpenRoot/Root.Open (Go 1.24+ stdlib) enforces the same boundary in the
+// kernel, so a symlink planted inside the mount root cannot be listed through
+// to a location outside it. Every read outcome — success, empty, missing,
+// restricted, failed — lands in the HTTP 200 envelope carrying a "status"
+// kind; empty + status:"ok" is the real-empty signal.
+//
+// The hidden flag is a pinned additive opt-in (BROWSE-04): absent or anything
+// but "1" keeps the default byte-identical behavior, so the existing
+// FolderBrowser and every destination picker keep agreeing with the tree.
+//
+// The response is always HTTP 200; errors use {ok:false,error,status} so the
+// UI can display a graceful message. A missing or empty `path` query parameter
+// lists the mount root itself.
 func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	subpath := r.URL.Query().Get("path")
+	// Opt-in hidden visibility (D-05): only the literal "1" opts in, so a
+	// client cannot turn hidden entries on by accident with an empty or
+	// mistyped value.
+	includeHidden := r.URL.Query().Get("hidden") == "1"
 
-	// Resolve the absolute path to read.
-	// An empty subpath lists the mount root itself — paths.Resolve requires a
-	// non-empty child (strict containment), so we use the root directly.
-	var abs string
-	if subpath == "" {
-		abs = h.cfg.HostMountRoot
-	} else {
-		var err error
-		abs, err = paths.Resolve(h.cfg.HostMountRoot, subpath)
-		if err != nil {
+	// Lexical containment check. An empty subpath lists the mount root itself —
+	// paths.Resolve requires a non-empty child (strict containment). Only the
+	// verdict is used here; Root.Open below does the actual resolution, so the
+	// resolved absolute is no longer needed.
+	if subpath != "" {
+		if _, err := paths.Resolve(h.cfg.HostMountRoot, subpath); err != nil {
 			// paths.Resolve returns ErrTraversal or ErrAbsoluteSub — neither
 			// leaks host paths; report a generic message for defense-in-depth.
+			// Deliberately no "status" field: this rejection response stays
+			// byte-identical to the pre-Root handler (contract drift on an
+			// untouched branch would break the existing FolderBrowser tests).
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":    false,
 				"error": "invalid path: must be a relative subpath under the mount root",
@@ -4225,12 +4329,49 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	entries, err := os.ReadDir(abs)
+	// os.Root containment (BROWSE-03, threat T-01-05): paths.Resolve above is
+	// purely lexical and cannot see a symlink created INSIDE the mount root
+	// that points outside it, but os.Root re-checks every component against
+	// the root at open time — "symbolic links may not reference a location
+	// outside the root" (stdlib contract). One fd per request, closed on
+	// return; goroutine-safe per the stdlib docs.
+	root, err := os.OpenRoot(h.cfg.HostMountRoot)
 	if err != nil {
-		log.Printf("api: browse: ReadDir %q: %v", abs, err) //nolint:gosec // G706: abs is always either cfg.HostMountRoot or a Resolve-validated child path; no raw user bytes reach the log formatter
+		log.Printf("api: browse: OpenRoot: %v", err)
 		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":    false,
-			"error": "could not read directory",
+			"ok":     false,
+			"error":  "could not read directory",
+			"status": classifyReadDirError(err),
+		})
+		return
+	}
+	defer root.Close() //nolint:errcheck // read-only browse descriptor: close error is not actionable
+
+	// An empty subpath opens the root itself — "." is the root directory's own
+	// name under the Root naming contract.
+	rel := subpath
+	if rel == "" {
+		rel = "."
+	}
+	f, err := root.Open(rel)
+	if err != nil {
+		log.Printf("api: browse: open %q: %v", rel, err) //nolint:gosec // G706: rel is client-influenced (the request's path query) but paths.Resolve-validated upstream, and %q escapes quotes/backslashes/newlines/control chars — no log-injection or format-string surface
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":     false,
+			"error":  "could not read directory",
+			"status": classifyReadDirError(err),
+		})
+		return
+	}
+	defer f.Close() //nolint:errcheck // read-only browse descriptor: close error is not actionable
+
+	entries, err := f.ReadDir(-1)
+	if err != nil {
+		log.Printf("api: browse: ReadDir %q: %v", rel, err) //nolint:gosec // G706: rel is client-influenced (the request's path query) but paths.Resolve-validated upstream, and %q escapes quotes/backslashes/newlines/control chars — no log-injection or format-string surface
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":     false,
+			"error":  "could not read directory",
+			"status": classifyReadDirError(err),
 		})
 		return
 	}
@@ -4241,28 +4382,38 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		name := e.Name()
-		if strings.HasPrefix(name, ".") {
-			continue // skip hidden entries
+		if !includeHidden && strings.HasPrefix(name, ".") {
+			continue // skip hidden entries unless hidden=1 opted in
 		}
 		// Build the relative path from HostMountRoot to this entry.
-		var rel string
+		var entryPath string
 		if subpath == "" {
-			rel = name
+			entryPath = name
 		} else {
-			rel = subpath + "/" + name
+			entryPath = subpath + "/" + name
 		}
-		dirs = append(dirs, browseDirEntry{Name: name, Path: rel})
+		dirs = append(dirs, browseDirEntry{Name: name, Path: entryPath})
 	}
 
-	// os.ReadDir returns entries in directory order (usually alphabetical on
-	// most filesystems), but sort explicitly to guarantee it.
+	// ReadDir(-1) returns entries in directory order (usually alphabetical on
+	// most filesystems), but sort explicitly to guarantee it. The sort runs on
+	// the FILTERED slice, then truncation takes the lexically-first page — so
+	// a capped listing is a deterministic prefix of the full sorted one.
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name < dirs[j].Name })
 
+	truncated := false
+	if len(dirs) > maxBrowseEntries {
+		dirs = dirs[:maxBrowseEntries]
+		truncated = true
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":   true,
-		"root": h.cfg.HostMountRoot,
-		"path": subpath,
-		"dirs": dirs,
+		"ok":        true,
+		"root":      h.cfg.HostMountRoot,
+		"path":      subpath,
+		"dirs":      dirs,
+		"status":    "ok",
+		"truncated": truncated,
 	})
 }
 
@@ -4398,9 +4549,10 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePatchFileSet partially updates a file set. PATCH /api/files/sets/{id}
-// body {name?, path?, excludes?, enabled?} — pointers so an enabled-only PATCH
-// doesn't reset the other fields; the MERGED set is re-validated so a patch
-// can never sneak an invalid name/path past the create-time checks.
+// body {name?, path?, excludes?, enabled?, selectedPaths?} — pointers so an
+// enabled-only PATCH doesn't reset the other fields; the MERGED set is
+// re-validated so a patch can never sneak an invalid name/path past the
+// create-time checks.
 func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
@@ -4415,6 +4567,14 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		// setter is separate for the same reason: a form that does not know
 		// about the cadence must not be able to clear one by omitting it.
 		ScheduleCadence *string `json:"scheduleCadence"`
+		// The set's tree selection (Phase 4 plan 02, D-03). A pointer like the
+		// fields above, and declared explicitly because decodeBody runs
+		// DisallowUnknownFields — the container PATCH's SelectionSource field
+		// exists for exactly this reason. Absent (nil) = untouched: the tree
+		// editor always sends the full list, but an ordinary name/path form
+		// must never clear a selection by omitting it. [] decodes non-nil and
+		// is refused downstream (D-06), never silently stored.
+		SelectedPaths *[]string `json:"selectedPaths"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -4425,6 +4585,10 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	oldName := fs.Name
+	// Captured before the merge — the path edit below overwrites fs.Path, and
+	// the clear-on-path-edit rule needs the OLD value as the anchor the stored
+	// selection was validated against.
+	oldPath := fs.Path
 	if body.Name != nil {
 		fs.Name = strings.TrimSpace(*body.Name)
 	}
@@ -4456,13 +4620,59 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := h.store.UpdateFileSet(fs); err != nil {
-		if strings.Contains(err.Error(), "UNIQUE") {
+	// Selection handling (Phase 4 plan 02; review WR-01). A path change moves
+	// the anchor every stored entry was validated against, so it CLEARS the
+	// selection in the same save (RESEARCH Pitfall 2 layer 1 / A3; the
+	// compile-time re-anchor in fileSetPositionals stays layer 2) — and the
+	// clear WINS over entries in the same request: honoring both would
+	// silently rewrite the selection's meaning under the new root. Comparison
+	// is on the RESOLVED roots (paths.Resolve, the same anchor space), so a
+	// cosmetic re-send of the identical path is not a change; an unresolvable
+	// old or new path counts as changed (defensive — validateFileSet above
+	// already rejected a bad new path, and a path-less set has no selection to
+	// clear).
+	pathChanged := false
+	if body.Path != nil {
+		oldResolved, oldErr := paths.Resolve(h.cfg.HostMountRoot, oldPath)
+		newResolved, newErr := paths.Resolve(h.cfg.HostMountRoot, fs.Path)
+		pathChanged = oldErr != nil || newErr != nil || newResolved != oldResolved
+	}
+	// The path-change branch persists the row AND the selection clear as ONE
+	// statement (UpdateFileSetClearingSelection), so a failure can no longer
+	// leave the new path live while the response reports failure with the
+	// old-anchor selection still stored (WR-01): either the whole save lands
+	// or the row is untouched.
+	var upErr error
+	if pathChanged {
+		upErr = h.store.UpdateFileSetClearingSelection(fs)
+	} else {
+		upErr = h.store.UpdateFileSet(fs)
+	}
+	if upErr != nil {
+		if strings.Contains(upErr.Error(), "UNIQUE") {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
 			return
 		}
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, failEnvelope(upErr))
 		return
+	}
+	switch {
+	case pathChanged:
+		// The selection was already cleared atomically by
+		// UpdateFileSetClearingSelection above — nothing further to write, and
+		// no second write to fail after the path went live.
+	case body.SelectedPaths != nil:
+		if err := h.svc.SetFileSetSelectedPaths(r.Context(), id, *body.SelectedPaths); err != nil {
+			if errors.Is(err, errFileSetEmptySelection) {
+				// D-06: machine-routable, so the tree can tell "empty" apart
+				// from any other failure and keep its local state (nothing was
+				// stored).
+				writeJSON(w, http.StatusOK, codedFailEnvelope(err, "empty-selection"))
+				return
+			}
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	if body.ScheduleCadence != nil {
 		if err := h.svc.SetFileSetScheduleCadence(r.Context(), id, *body.ScheduleCadence); err != nil {

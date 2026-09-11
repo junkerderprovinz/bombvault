@@ -604,7 +604,7 @@ const sk: Partial<Translations> = {
   "hooks.pre": "Príkaz pred zálohou",
   "hooks.post": "Príkaz po zálohe",
   "folders.title": "Zálohované priečinky",
-  "folders.hint": "Vyberte, ktoré z namapovaných priečinkov tohto kontajnera sa majú zálohovať. Priečinok appdata je predvolene vybraný. Zaškrtnite ostatné, aby ste ich zahrnuli, alebo pridajte vlastnú cestu pod pripojením hostiteľa. Zrušením zaškrtnutia všetkého sa vrátite k automatickej predvolenej hodnote appdata.",
+  "folders.hint": "Vyberte, ktoré z namapovaných priečinkov tohto kontajnera sa majú zálohovať. Priečinok appdata je predvolene vybraný. Zaškrtnite ostatné, aby ste ich zahrnuli, alebo pridajte vlastnú cestu pod pripojením hostiteľa. Zrušenie zaškrtnutia všetkého je zablokované; na návrat k automatickej predvolenej hodnote appdata použite Obnoviť výber.",
   "folders.appdataDefault": "appdata (predvolené)",
   "folders.stackNote":
     "Tento kontajner patrí do Compose stacku {stack}. Priečinok projektu sa zálohuje raz pre celý stack, nie raz na službu, preto tu nie je uvedený.",
@@ -616,6 +616,17 @@ const sk: Partial<Translations> = {
   "folders.save": "Uložiť priečinky",
   "folders.saved": "Uložené",
   "folders.empty": "Pre tento kontajner sa nenašiel žiadny namapovaný priečinok.",
+  "folders.treeLabel": "Výber zálohovaných priečinkov",
+  "folders.truncatedList": "Zobrazených prvých 500 položiek",
+  "folders.retry": "Skúsiť znova",
+  "folders.emptySelectionBlocked": "Aspoň jeden priečinok musí zostať označený. Ak nechceš z tohto kontajneru zálohovať nič, vypni zahrnutie do plánu. Pre návrat k automatickej detekcii použite Obnoviť výber.",
+  "folders.previewPaths": "{n} ciest",
+  "folders.exclusions": "{n} vylúčení",
+  "folders.resetSelection": "Obnoviť výber",
+  "folders.resetConfirm": "Obnoviť výber priečinkov? Kontajner sa vráti k automatickej detekcii (predvolené appdata) a všetky zapamätané vylúčenia aj nastavenia priečinkov vyrovnávacej pamäte sa odstránia.",
+  "folders.narrowedNote": "Výber teraz zahŕňa menej priečinkov ako predtým. Od ďalšieho zálohovania budú snímky obsahovať iba vybraté priečinky. Existujúce snímky sa nezmenia.",
+  "folders.cachedirToggle": "Preskočiť priečinky vyrovnávacej pamäte (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Vzťahuje sa na celú zálohu tohto kontajnera, nielen na tento priečinok.",
   "stophook.title": "Zastaviť iné kontajnery",
   "stophook.hint": "Zastavte tieto iné kontajnery, kým sa tento zálohuje (napríklad databázu), a potom ich znova spustite.",
   "stophook.noCandidates": "Nenašli sa žiadne iné nainštalované kontajnery.",
@@ -1345,7 +1356,14 @@ const sk: Partial<Translations> = {
   "files.cancel": "Zrušiť",
   "files.addPreset": "Pridať predvoľbu: Konfigurácia systému hostiteľa",
   "files.addPresetHint": "Konzervatívny východiskový bod pre konfiguráciu na úrovni hostiteľa mimo vašich kontajnerov, nie tvrdenie o úplnosti. Pred uložením skontrolujte priečinok.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Zvoliť priečinky",
+  "files.foldersHint": "Zaškrtnite priečinky, ktoré má táto sada zahŕňať. Odškrtnutím podpriečinka ho vynecháte; počet ukazuje, koľko ciest odovzdá ďalšia záloha resticu.",
+  "files.emptySelectionBlocked": "Sada potrebuje aspoň jeden priečinok, takže posledné zaškrtnutie nemožno odstrániť. Použite Odstrániť sadu priečinkov, ak túto sadu už nechcete.",
+  "files.pathChangeHint": "Zmena priečinka vymaže výber zaškrtnutých podpriečinkov.",  // Files domain integration
   "settings.filesEnabled": "Priečinky",
   "settings.filesEnabledHint": "Zálohujte ľubovoľné priečinky pod vašimi pripojeniami ako sady súborov, nezávisle od ostatných domén.",
   "settings.filesPath": "Cesta priečinkov",

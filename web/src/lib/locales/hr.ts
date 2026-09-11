@@ -604,7 +604,7 @@ const hr: Partial<Translations> = {
   "hooks.pre": "Naredba prije sigurnosne kopije",
   "hooks.post": "Naredba nakon sigurnosne kopije",
   "folders.title": "Mape sigurnosne kopije",
-  "folders.hint": "Odaberite koje od mapiranih mapa ovog kontejnera sigurnosno kopirati. Mapa appdata odabrana je zadano. Označite ostale za uključivanje, ili dodajte prilagođenu putanju ispod montiranja hosta. Odznačivanje svega vraća automatski zadani appdata.",
+  "folders.hint": "Odaberite koje od mapiranih mapa ovog kontejnera sigurnosno kopirati. Mapa appdata odabrana je zadano. Označite ostale za uključivanje, ili dodajte prilagođenu putanju ispod montiranja hosta. Odznačivanje svega je blokirano; za povratak na automatski zadani appdata koristite Ponastavi odabir.",
   "folders.appdataDefault": "appdata (zadano)",
   "folders.stackNote":
     "Ovaj spremnik pripada Compose stogu {stack}. Mapa projekta sigurnosno se kopira jednom za cijeli stog, a ne jednom po usluzi, pa nije navedena ovdje.",
@@ -616,6 +616,17 @@ const hr: Partial<Translations> = {
   "folders.save": "Spremi mape",
   "folders.saved": "Spremljeno",
   "folders.empty": "Za ovaj kontejner nije pronađena nijedna mapirana mapa.",
+  "folders.treeLabel": "Odabir mapa za sigurnosnu kopiju",
+  "folders.truncatedList": "Prikazano prvih 500 unosa",
+  "folders.retry": "Pokušaj ponovno",
+  "folders.emptySelectionBlocked": "Barem jedna mapa mora ostati odabrana. Da ovaj kontejner ne biste sigurnosno kopirali, isključite uključivanje u raspored. Za povratak na automatsko otkrivanje koristite Ponastavi odabir.",
+  "folders.previewPaths": "{n} putanja",
+  "folders.exclusions": "{n} isključenja",
+  "folders.resetSelection": "Ponastavi odabir",
+  "folders.resetConfirm": "Ponovno postaviti odabir mapa? Kontejner se vraća na automatsko otkrivanje (zadano appdata), a sva zapamćena isključenja i postavke mapa predmemorije uklanjaju se.",
+  "folders.narrowedNote": "Odabir sada obuhvaća manje mapa nego prije. Od sljedeće sigurnosne kopije snimke će sadržavati samo odabrane mape. Postojeće snimke ostaju nepromijenjene.",
+  "folders.cachedirToggle": "Preskoči mape predmemorije (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Primjenjuje se na cijelu sigurnosnu kopiju ovog kontejnera, ne samo na ovu mapu.",
   "stophook.title": "Zaustavi druge kontejnere",
   "stophook.hint": "Zaustavite ove druge kontejnere dok se ovaj sigurnosno kopira (npr. bazu podataka), zatim ih naknadno ponovno pokrenite.",
   "stophook.noCandidates": "Nisu pronađeni drugi instalirani kontejneri.",
@@ -1345,7 +1356,14 @@ const hr: Partial<Translations> = {
   "files.cancel": "Otkaži",
   "files.addPreset": "Dodaj predložak: Konfiguracija sustava hosta",
   "files.addPresetHint": "Konzervativna polazna točka za konfiguraciju na razini hosta izvan vaših kontejnera, nije tvrdnja o potpunosti. Pregledajte mapu prije spremanja.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Odaberi mape",
+  "files.foldersHint": "Označite mape koje ovaj skup pokriva. Uklonite oznaku s podmape da biste je izostavili; broj pokazuje koliko će putanja sljedeća sigurnosna kopija predati resticu.",
+  "files.emptySelectionBlocked": "Skup treba barem jednu mapu, pa se posljednja oznaka ne može ukloniti. Koristite Izbriši skup mapa ako vam ovaj skup više nije potreban.",
+  "files.pathChangeHint": "Promjena mape briše odabir označenih podmapa.",  // Files domain integration
   "settings.filesEnabled": "Mape",
   "settings.filesEnabledHint": "Sigurnosno kopirajte proizvoljne mape ispod svojih montiranja kao skupove datoteka, neovisno o ostalim domenama.",
   "settings.filesPath": "Putanja mapa",

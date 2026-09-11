@@ -220,9 +220,11 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 	eng := &fakeResticEngine{
 		restoreErr: context.Canceled,
 		snaps: []restic.Snapshot{
-			{ID: "aaaa1111", Tags: []string{"container:svc-a"}},
-			{ID: "bbbb2222", Tags: []string{"container:svc-b"}},
-			{ID: "cccc3333", Tags: []string{"container:svc-c"}},
+			// Paths mirrors a real backup's recorded positional (RESTORE-01 maps
+			// the stored selection against the chosen snapshot's Paths).
+			{ID: "aaaa1111", Tags: []string{"container:svc-a"}, Paths: []string{"/host/user/appdata/svc-a"}},
+			{ID: "bbbb2222", Tags: []string{"container:svc-b"}, Paths: []string{"/host/user/appdata/svc-b"}},
+			{ID: "cccc3333", Tags: []string{"container:svc-c"}, Paths: []string{"/host/user/appdata/svc-c"}},
 		},
 	}
 	// A REMOTE containers repo skips the local-existence probe so the restore
@@ -366,8 +368,9 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 		blockRestore:   make(chan struct{}),
 		restoreEntered: make(chan struct{}, 1),
 		snaps: []restic.Snapshot{
-			{ID: "aaaa1111", Tags: []string{"container:web"}},
-			{ID: "bbbb2222", Tags: []string{"container:worker"}},
+			// Paths mirrors a real backup's recorded positional (RESTORE-01).
+			{ID: "aaaa1111", Tags: []string{"container:web"}, Paths: []string{"/host/user/appdata/web"}},
+			{ID: "bbbb2222", Tags: []string{"container:worker"}, Paths: []string{"/host/user/appdata/worker"}},
 		},
 	}
 	dir := t.TempDir()

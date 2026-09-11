@@ -595,7 +595,7 @@ const cs: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Zálohované složky",
-  "folders.hint": "Vyberte, které z namapovaných složek tohoto kontejneru se mají zálohovat. Složka appdata je vybrána ve výchozím nastavení. Zaškrtnutím zahrnete další, nebo přidejte vlastní cestu v rámci připojení hostitele. Odškrtnutí všeho se vrátí k automatickému výchozímu nastavení appdata.",
+  "folders.hint": "Vyberte, které z namapovaných složek tohoto kontejneru se mají zálohovat. Složka appdata je vybrána ve výchozím nastavení. Zaškrtnutím zahrnete další, nebo přidejte vlastní cestu v rámci připojení hostitele. Odškrtnutí všeho je zablokované; k návratu k automatickému výchozímu nastavení appdata použijte Resetovat výběr.",
   "folders.appdataDefault": "appdata (výchozí)",
   "folders.stackNote":
     "Tento kontejner patří do Compose stacku {stack}. Adresář projektu se zálohuje jednou pro celý stack, ne jednou za službu, proto zde není uveden.",
@@ -607,7 +607,17 @@ const cs: Partial<Translations> = {
   "folders.save": "Uložit složky",
   "folders.saved": "Uloženo",
   "folders.empty": "Pro tento kontejner nebyly nalezeny žádné namapované složky.",
-
+  "folders.treeLabel": "Výběr zálohovaných složek",
+  "folders.truncatedList": "Zobrazeno prvních 500 položek",
+  "folders.retry": "Zkusit znovu",
+  "folders.emptySelectionBlocked": "Vybrána musí zůstat alespoň jedna složka. Chceš-li z tohoto kontejneru nezálohovat nic, vypni zahrnování do plánu. K návratu k automatické detekci použijte Resetovat výběr.",
+  "folders.previewPaths": "{n} cest",
+  "folders.exclusions": "{n} vyloučení",
+  "folders.resetSelection": "Resetovat výběr",
+  "folders.resetConfirm": "Resetovat výběr složek? Kontejner se vrátí k automatické detekci (výchozí appdata) a všechna zapamatovaná vyloučení i nastavení složek mezipaměti se odstraní.",
+  "folders.narrowedNote": "Výběr nyní zahrnuje méně složek než dříve. Od příštího zálohování budou snímky obsahovat pouze vybrané složky. Stávající snímky zůstávají beze změny.",
+  "folders.cachedirToggle": "Přeskočit složky mezipaměti (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Platí pro celou zálohu tohoto kontejneru, nejen pro tuto složku.",
   // Notifications
   "notify.title": "Oznámení",
   "notify.hint": "Nechte si poslat upozornění po dokončení zálohy a níže vyberte, jaké události ho spustí. Upozornění Unraid fungují už v jednoduchém režimu; další doručovací kanály (webhook, Matrix, Healthchecks, e-mail) najdete v Pokročilém.",
@@ -1173,7 +1183,14 @@ const cs: Partial<Translations> = {
   "files.cancel": "Zrušit",
   "files.addPreset": "Přidat předvolbu: Systémová konfigurace",
   "files.addPresetHint": "Konzervativní výchozí bod pro konfiguraci na úrovni hostitele mimo kontejnery. Nejde o tvrzení úplnosti. Před uložením zkontrolujte složku.",
-  "settings.filesEnabled": "Složky",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Zvolit složky",
+  "files.foldersHint": "Zaškrtněte složky, které má tato sada pokrývat. Odškrtnutím podsložky ji vynecháte; počet ukazuje, kolik cest předá další záloha resticu.",
+  "files.emptySelectionBlocked": "Sada potřebuje alespoň jednu složku, takže poslední zaškrtnutí nelze odebrat. Použijte Smazat sadu složek, pokud už tuto sadu nechcete.",
+  "files.pathChangeHint": "Změna složky vymaže výběr zaškrtnutých podsložek.",  "settings.filesEnabled": "Složky",
   "settings.filesEnabledHint": "Zálohování libovolných složek pod tvými přípojnými body, nezávisle na ostatních doménách.",
   "settings.filesPath": "Cesta ke složkám",
   "jobs.filesSection": "Složky",

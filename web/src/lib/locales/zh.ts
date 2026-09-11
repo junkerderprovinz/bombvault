@@ -589,7 +589,7 @@ const zh: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "备份文件夹",
-  "folders.hint": "选择此容器映射的哪些文件夹进行备份。appdata 文件夹默认已选中。勾选其他文件夹以将其包含在内，或在主机挂载下添加自定义路径。取消所有勾选将恢复到自动的 appdata 默认值。",
+  "folders.hint": "选择此容器映射的哪些文件夹进行备份。appdata 文件夹默认已选中。勾选其他文件夹以将其包含在内，或在主机挂载下添加自定义路径。取消所有勾选已被阻止；如需恢复自动的 appdata 默认值，请使用重置选择。",
   "folders.appdataDefault": "appdata（默认）",
   "folders.stackNote":
     "此容器属于 Compose 堆栈 {stack}。项目文件夹按整个堆栈备份一次，而不是每个服务各备份一次，因此不在此列表中。",
@@ -601,7 +601,17 @@ const zh: Partial<Translations> = {
   "folders.save": "保存文件夹",
   "folders.saved": "已保存",
   "folders.empty": "未找到此容器的映射文件夹。",
-
+  "folders.treeLabel": "选择备份文件夹",
+  "folders.truncatedList": "显示前 500 项",
+  "folders.retry": "重试",
+  "folders.emptySelectionBlocked": "必须至少保留一个已选择的文件夹。若不备份此容器的任何内容，请关闭加入计划任务。如需恢复自动检测，请使用重置选择。",
+  "folders.previewPaths": "{n} 个路径",
+  "folders.exclusions": "{n} 个排除项",
+  "folders.resetSelection": "重置选择",
+  "folders.resetConfirm": "重置文件夹选择？容器将恢复自动检测（appdata 默认值），并移除所有已记住的排除项和缓存文件夹设置。",
+  "folders.narrowedNote": "选择现在涵盖的文件夹比之前少。从下次备份开始，快照将只包含选定的文件夹。现有快照保持不变。",
+  "folders.cachedirToggle": "跳过缓存文件夹（CACHEDIR.TAG）",
+  "folders.cachedirScope": "适用于此容器的整个备份，而不仅仅是此文件夹。",
   // Notifications
   "notify.title": "通知",
   "notify.hint": "在备份完成时获得通知，并在下方选择触发通知的事件。Unraid 通知在简单模式下即可使用；更多送达渠道（Webhook、Matrix、Healthchecks、邮件）位于高级设置中。",
@@ -1167,7 +1177,14 @@ const zh: Partial<Translations> = {
   "files.cancel": "取消",
   "files.addPreset": "添加预设：主机系统配置",
   "files.addPresetHint": "这是容器之外主机级配置的保守起点，并不代表完整性。保存前请检查文件夹。",
-  "settings.filesEnabled": "文件夹",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "选择文件夹",
+  "files.foldersHint": "勾选此文件集要涵盖的文件夹。取消勾选某个子文件夹可将其排除；数字显示下次备份会交给 restic 的路径数量。",
+  "files.emptySelectionBlocked": "文件集至少需要一个文件夹，因此不能移除最后一项勾选。如果不再需要此文件集，请使用删除文件夹集。",
+  "files.pathChangeHint": "更改文件夹会清空已勾选子文件夹的选择。",  "settings.filesEnabled": "文件夹",
   "settings.filesEnabledHint": "备份挂载点下的任意文件夹，独立于其他域。",
   "settings.filesPath": "文件夹路径",
   "jobs.filesSection": "文件夹",

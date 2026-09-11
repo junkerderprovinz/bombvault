@@ -604,7 +604,7 @@ const is: Partial<Translations> = {
   "hooks.pre": "Skipun fyrir afritun",
   "hooks.post": "Skipun eftir afritun",
   "folders.title": "Afritaðar möppur",
-  "folders.hint": "Veldu hvaða af skjalfestum möppum þessa gáms á að afrita. Appdata-mappan er valin sjálfgefið. Merktu aðrar til að bæta þeim við, eða bættu við sérsniðinni slóð undir tengipunkti hýsilsins. Ef allt er afmerkt fer það aftur í sjálfvirku appdata-sjálfgefna stillinguna.",
+  "folders.hint": "Veldu hvaða af skjalfestum möppum þessa gáms á að afrita. Appdata-mappan er valin sjálfgefið. Merktu aðrar til að bæta þeim við, eða bættu við sérsniðinni slóð undir tengipunkti hýsilsins. Að afmerkja allt er lokað; notaðu Endurstilla val til að fara aftur í sjálfvirku appdata-sjálfgefna stillinguna.",
   "folders.appdataDefault": "appdata (sjálfgefið)",
   "folders.stackNote":
     "Þessi gámur tilheyrir Compose-staflanum {stack}. Verkefnamappan er afrituð einu sinni fyrir allan staflann, ekki einu sinni fyrir hverja þjónustu, og birtist því ekki hér.",
@@ -616,6 +616,17 @@ const is: Partial<Translations> = {
   "folders.save": "Vista möppur",
   "folders.saved": "Vistað",
   "folders.empty": "Engin skjalfest mappa fannst fyrir þennan gám.",
+  "folders.treeLabel": "Val á öryggisafnmöppum",
+  "folders.truncatedList": "Fyrstu 500 færslur sýndar",
+  "folders.retry": "Reyna aftur",
+  "folders.emptySelectionBlocked": "Að minnsta kosti ein mappa verður að vera valin. Til að taka ekki öryggisafn af neinu úr þessum gámi skaltu slökkva á því að hann sé í tímaáætlun. Til að fara aftur í sjáfvirka greiningu skaltu nota Endurstilla val.",
+  "folders.previewPaths": "{n} slóðir",
+  "folders.exclusions": "{n} undantök",
+  "folders.resetSelection": "Endurstilla val",
+  "folders.resetConfirm": "Endurstilla möppuvalið? Gámurinn fer aftur í sjáfvirka greiningu (appdata-sjálfgefið) og öll munduð undantekning og stillingar skyndiminnismappa eru fjarlægð.",
+  "folders.narrowedNote": "Valið nær nú yfir færri möppur en áður. Frá og með næstu öryggisafritun munu skyggnur aðeins innihalda valdar möppur. Fyrirliggjandi skyggnur breytast ekki.",
+  "folders.cachedirToggle": "Sleppa skyndiminnismöppum (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Á við allt öryggisafrit þessa gáms, ekki aðeins þessa möppu.",
   "stophook.title": "Stöðva aðra gáma",
   "stophook.hint": "Stöðvaðu þessa aðra gáma á meðan þessi er afritaður (t.d. gagnagrunn), og ræstu þá svo aftur á eftir.",
   "stophook.noCandidates": "Engir aðrir uppsettir gámar fundust.",
@@ -1345,7 +1356,14 @@ const is: Partial<Translations> = {
   "files.cancel": "Hætta við",
   "files.addPreset": "Bæta við forstillingu: Kerfisstilling hýsils",
   "files.addPresetHint": "Íhaldssamur upphafspunktur fyrir stillingar á hýsilsstigi utan gáma þinna, ekki fullyrðing um að vera tæmandi. Yfirfarðu möppuna áður en þú vistar.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Velja möppur",
+  "files.foldersHint": "Merktu möppurnar sem þetta sett nær yfir. Afmerktu undirmöppu til að sleppa henni; talan sýnir hversu margar slóðir næsta afritun gefur restic.",
+  "files.emptySelectionBlocked": "Sett þarfnast að minnsta kosti einnar möppu, svo síðasta merkingin er ekki hægt að fjarlægja. Notaðu Eyða möppusetti ef þú vilt ekki lengur hafa þetta sett.",
+  "files.pathChangeHint": "Ef þú breytir möppunni er valið á merktum undirmöppum hreinsað.",  // Files domain integration
   "settings.filesEnabled": "Möppur",
   "settings.filesEnabledHint": "Afritaðu handahófskenndar möppur undir tengipunktum þínum sem skráasett, óháð öðrum svæðum.",
   "settings.filesPath": "Slóð möppu",

@@ -604,7 +604,7 @@ const ca: Partial<Translations> = {
   "hooks.pre": "Ordre prèvia a la còpia",
   "hooks.post": "Ordre posterior a la còpia",
   "folders.title": "Carpetes de la còpia",
-  "folders.hint": "Tria quines de les carpetes mapejades d'aquest contenidor es copien. La carpeta appdata està seleccionada per defecte. Marca'n d'altres per incloure-les, o afegeix un camí propi sota el muntatge de l'amfitrió. Si desmarques tot, es torna a la detecció automàtica d'appdata.",
+  "folders.hint": "Tria quines de les carpetes mapejades d'aquest contenidor es copien. La carpeta appdata està seleccionada per defecte. Marca'n d'altres per incloure-les, o afegeix un camí propi sota el muntatge de l'amfitrió. Desmarcar-ho tot està blocat; usa Restableix la selecció per tornar al valor per defecte automàtic d'appdata.",
   "folders.appdataDefault": "appdata (per defecte)",
   "folders.stackNote":
     "Aquest contenidor pertany a la pila Compose {stack}. La carpeta del projecte es còpia un cop per a tota la pila, no un cop per servei, i per això no apareix aquí.",
@@ -616,6 +616,17 @@ const ca: Partial<Translations> = {
   "folders.save": "Desa les carpetes",
   "folders.saved": "Desat",
   "folders.empty": "No s'ha trobat cap carpeta mapejada per a aquest contenidor.",
+  "folders.treeLabel": "Selecció de carpetes de còpia de seguretat",
+  "folders.truncatedList": "Es mostren les primeres 500 entrades",
+  "folders.retry": "Torna-ho a provar",
+  "folders.emptySelectionBlocked": "Com a mínim una carpeta ha de quedar seleccionada. Per no fer còpia de seguretat de res d'aquest contenidor, desactiva la inclusió a la planificació. Per tornar a la detecció automàtica, usa Restableix la selecció.",
+  "folders.previewPaths": "{n} camins",
+  "folders.exclusions": "{n} exclusions",
+  "folders.resetSelection": "Restableix la selecció",
+  "folders.resetConfirm": "Restablir la selecció de carpetes? El contenidor torna a la detecció automàtica (per defecte appdata) i s'eliminen totes les exclusions recordades i la configuració de les carpetes de memòria cau.",
+  "folders.narrowedNote": "La selecció ara inclou menys carpetes que abans. A partir de la propera còpia de seguretat, les instantànies contindran només les carpetes seleccionades. Les instantànies existents no canvien.",
+  "folders.cachedirToggle": "Omet les carpetes de memòria cau (CACHEDIR.TAG)",
+  "folders.cachedirScope": "S'aplica a tota la còpia de seguretat d'aquest contenidor, no només a aquesta carpeta.",
   "stophook.title": "Atura altres contenidors",
   "stophook.hint": "Atura aquests altres contenidors mentre es copia aquest (per exemple una base de dades), i torna'ls a iniciar després.",
   "stophook.noCandidates": "No s'han trobat altres contenidors instal·lats.",
@@ -1345,7 +1356,14 @@ const ca: Partial<Translations> = {
   "files.cancel": "Cancel·la",
   "files.addPreset": "Afegeix predefinit: Configuració del sistema de l'amfitrió",
   "files.addPresetHint": "Un punt de partida conservador per a la configuració a nivell d'amfitrió fora dels teus contenidors, no una pretensió de completesa. Revisa la carpeta abans de desar.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Tria les carpetes",
+  "files.foldersHint": "Marca les carpetes que cobreix aquest conjunt. Desmarca una subcarpeta per deixar-la fora; el nombre mostra quantes rutes lliurarà la propera còpia a restic.",
+  "files.emptySelectionBlocked": "Un conjunt necessita com a mínim una carpeta, per tant l'última marca no es pot treure. Usa Suprimeix el conjunt de carpetes si ja no vols aquest conjunt.",
+  "files.pathChangeHint": "Canviar la carpeta esborra la selecció de subcarpetes marcades.",  // Files domain integration
   "settings.filesEnabled": "Carpetes",
   "settings.filesEnabledHint": "Fes còpia de carpetes arbitràries sota els teus muntatges com a conjunts de fitxers, independentment dels altres dominis.",
   "settings.filesPath": "Camí de carpetes",

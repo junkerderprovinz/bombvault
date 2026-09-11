@@ -597,7 +597,7 @@ const fr: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Dossiers à sauvegarder",
-  "folders.hint": "Choisissez quels dossiers mappés de ce conteneur sauvegarder. Le dossier appdata est sélectionné par défaut. Cochez-en d'autres pour les inclure, ou ajoutez un chemin personnalisé sous le montage de l'hôte. Tout décocher revient au comportement automatique du dossier appdata.",
+  "folders.hint": "Choisissez quels dossiers mappés de ce conteneur sauvegarder. Le dossier appdata est sélectionné par défaut. Cochez-en d'autres pour les inclure, ou ajoutez un chemin personnalisé sous le montage de l'hôte. Tout décocher est bloqué ; utilise Réinitialiser la sélection pour revenir au comportement automatique du dossier appdata.",
   "folders.appdataDefault": "appdata (par défaut)",
   "folders.stackNote":
     "Ce conteneur appartient à la pile Compose {stack}. Son dossier de projet est sauvegardé une fois pour toute la pile, et non une fois par service, il n'apparaît donc pas ici.",
@@ -609,7 +609,17 @@ const fr: Partial<Translations> = {
   "folders.save": "Enregistrer les dossiers",
   "folders.saved": "Enregistré",
   "folders.empty": "Aucun dossier mappé trouvé pour ce conteneur.",
-
+  "folders.treeLabel": "Sélection des dossiers de sauvegarde",
+  "folders.truncatedList": "Les 500 premières entrées sont affichées",
+  "folders.retry": "Réessayer",
+  "folders.emptySelectionBlocked": "Au moins un dossier doit rester sélectionné. Pour ne sauvegarder aucun élément de ce conteneur, désactive son inclusion dans le planning. Pour revenir à la détection automatique, utilise Réinitialiser la sélection.",
+  "folders.previewPaths": "{n} chemins",
+  "folders.exclusions": "{n} exclusions",
+  "folders.resetSelection": "Réinitialiser la sélection",
+  "folders.resetConfirm": "Réinitialiser la sélection des dossiers ? Le conteneur revient à la détection automatique (appdata par défaut) et toutes les exclusions mémorisées et les paramètres des dossiers de cache sont supprimés.",
+  "folders.narrowedNote": "La sélection couvre désormais moins de dossiers qu'avant. À partir de la prochaine sauvegarde, les instantanés ne contiendront que les dossiers sélectionnés. Les instantanés existants restent inchangés.",
+  "folders.cachedirToggle": "Ignorer les dossiers de cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "S'applique à toute la sauvegarde de ce conteneur, pas seulement à ce dossier.",
   // Notifications
   "notify.title": "Notifications",
   "notify.hint": "Soyez averti à la fin d'une sauvegarde, et choisissez ci-dessous les événements qui le déclenchent. Les notifications Unraid fonctionnent déjà en mode Simple ; d'autres canaux de diffusion (webhook, Matrix, Healthchecks, e-mail) se trouvent dans Avancé.",
@@ -1175,7 +1185,14 @@ const fr: Partial<Translations> = {
   "files.cancel": "Annuler",
   "files.addPreset": "Ajouter un préréglage : Configuration système",
   "files.addPresetHint": "Un point de départ prudent pour la configuration au niveau de l'hôte, en dehors de vos conteneurs. Ce n'est pas une garantie d'exhaustivité. Vérifiez le dossier avant d'enregistrer.",
-  "settings.filesEnabled": "Dossiers",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Choisir les dossiers",
+  "files.foldersHint": "Coche les dossiers que ce jeu couvre. Décoche un sous-dossier pour le laisser de côté ; le nombre indique combien de chemins la prochaine sauvegarde confie à restic.",
+  "files.emptySelectionBlocked": "Un jeu a besoin d'au moins un dossier, donc le dernier cochage ne peut pas être retiré. Utilise Supprimer le jeu de dossiers si tu ne veux plus de ce jeu.",
+  "files.pathChangeHint": "Changer le dossier efface la sélection des sous-dossiers cochés.",  "settings.filesEnabled": "Dossiers",
   "settings.filesEnabledHint": "Sauvegarder des dossiers arbitraires sous vos points de montage, indépendamment des autres domaines.",
   "settings.filesPath": "Chemin des dossiers",
   "jobs.filesSection": "Dossiers",

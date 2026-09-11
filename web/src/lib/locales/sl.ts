@@ -604,7 +604,7 @@ const sl: Partial<Translations> = {
   "hooks.pre": "Predhodni ukaz",
   "hooks.post": "Naknadni ukaz",
   "folders.title": "Mape za varnostno kopiranje",
-  "folders.hint": "Izberi, katere od map vsebnika, ki so preslikane na gostitelja, se varnostno kopirajo. Mapa appdata je izbrana privzeto. Označi druge, da jih vključiš, ali dodaj svojo pot pod priklopno točko gostitelja. Če odznačiš vse, se povrne samodejni privzeti appdata.",
+  "folders.hint": "Izberi, katere od map vsebnika, ki so preslikane na gostitelja, se varnostno kopirajo. Mapa appdata je izbrana privzeto. Označi druge, da jih vključiš, ali dodaj svojo pot pod priklopno točko gostitelja. Odznačiti vse je blokirano; za vrnitev na samodejno privzeto vrednost appdata uporabi Ponastavi izbiro.",
   "folders.appdataDefault": "appdata (privzeto)",
   "folders.stackNote":
     "Ta vsebnik pripada skladu Compose {stack}. Mapa projekta se varnostno kopira enkrat za ves sklad, ne enkrat na storitev, zato je tu ni.",
@@ -616,6 +616,17 @@ const sl: Partial<Translations> = {
   "folders.save": "Shrani mape",
   "folders.saved": "Shranjeno",
   "folders.empty": "Za ta vsebnik ni najdenih preslikanih map.",
+  "folders.treeLabel": "Izbira map za varnostne kopije",
+  "folders.truncatedList": "Prikazanih prvih 500 vnosov",
+  "folders.retry": "Poskusi znova",
+  "folders.emptySelectionBlocked": "Izbrana mora ostati vsaj ena mapa. Če iz tega vsebnika ne želite varnostno kopirati ničesar, izklopite vključitev v urnik. Za vrnitev na samodejno zaznavo uporabi Ponastavi izbiro.",
+  "folders.previewPaths": "{n} poti",
+  "folders.exclusions": "{n} izključitev",
+  "folders.resetSelection": "Ponastavi izbiro",
+  "folders.resetConfirm": "Ponastavi izbiro map? Vsebnik se vrne na samodejno zaznavo (privzeto appdata), vsa zapomnjena izključenja in nastavitve predpomnilniških map pa se odstranijo.",
+  "folders.narrowedNote": "Izbira zdaj zajema manj map kot prej. Od naslednje varnostne kopije naprej bodo posnetki vsebovali samo izbrane mape. Obstoječi posnetki se ne spremenijo.",
+  "folders.cachedirToggle": "Preskoči mape predpomnilnika (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Velja za celotno varnostno kopijo tega vsebnika, ne samo za to mapo.",
   "stophook.title": "Ustavi druge vsebnike",
   "stophook.hint": "Med varnostnim kopiranjem tega vsebnika ustavi te druge vsebnike (na primer bazo podatkov), nato jih po njem znova zaženi.",
   "stophook.noCandidates": "Ni najdenih drugih nameščenih vsebnikov.",
@@ -1330,7 +1341,14 @@ const sl: Partial<Translations> = {
   "files.cancel": "Prekliči",
   "files.addPreset": "Dodaj prednastavitev: Konfiguracija sistema gostitelja",
   "files.addPresetHint": "Previdno izhodišče za konfiguracijo na ravni gostitelja izven tvojih vsebnikov, ne trdi, da je popolno. Pred shranjevanjem preglej mapo.",
-  "settings.filesEnabled": "Mape",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Izberi mape",
+  "files.foldersHint": "Označi mape, ki jih pokriva ta nabor. Odznači podmapo, da jo izključiš; številka pokaže, koliko poti bo naslednja varnostna kopija posredovala resticu.",
+  "files.emptySelectionBlocked": "Nabor potrebuje vsaj eno mapo, zato zadnje oznake ni mogoče odstraniti. Uporabi Izbriši nabor map, če tega nabora ne potrebuješ več.",
+  "files.pathChangeHint": "Sprememba mape počisti izbiro označenih podmap.",  "settings.filesEnabled": "Mape",
   "settings.filesEnabledHint": "Varnostno kopiraj poljubne mape pod svojimi priklopnimi točkami kot nabore datotek, neodvisno od drugih domen.",
   "settings.filesPath": "Pot za mape",
   "jobs.filesSection": "Mape",

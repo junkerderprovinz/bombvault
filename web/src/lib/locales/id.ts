@@ -604,7 +604,7 @@ const id: Partial<Translations> = {
   "hooks.pre": "Perintah sebelum pencadangan",
   "hooks.post": "Perintah setelah pencadangan",
   "folders.title": "Folder pencadangan",
-  "folders.hint": "Pilih folder terpetakan mana dari container ini yang akan dicadangkan. Folder appdata dipilih secara bawaan. Centang lainnya untuk menyertakannya, atau tambahkan jalur khusus di bawah mount host. Menghapus semua centang akan mengembalikan ke bawaan appdata otomatis.",
+  "folders.hint": "Pilih folder terpetakan mana dari container ini yang akan dicadangkan. Folder appdata dipilih secara bawaan. Centang lainnya untuk menyertakannya, atau tambahkan jalur khusus di bawah mount host. Menghapus semua centang diblokir; gunakan Atur ulang pilihan untuk kembali ke bawaan appdata otomatis.",
   "folders.appdataDefault": "appdata (bawaan)",
   "folders.stackNote":
     "Kontainer ini termasuk stack Compose {stack}. Folder proyeknya dicadangkan sekali untuk seluruh stack, bukan sekali per layanan, jadi tidak tercantum di sini.",
@@ -616,6 +616,17 @@ const id: Partial<Translations> = {
   "folders.save": "Simpan folder",
   "folders.saved": "Tersimpan",
   "folders.empty": "Tidak ada folder terpetakan yang ditemukan untuk container ini.",
+  "folders.treeLabel": "Pemilihan folder cadangan",
+  "folders.truncatedList": "500 entri pertama ditampilkan",
+  "folders.retry": "Coba lagi",
+  "folders.emptySelectionBlocked": "Minimal satu folder harus tetap dipilih. Untuk tidak mencadangkan apa pun dari kontainer ini, matikan penyertaan dalam jadwal. Untuk kembali ke deteksi otomatis, gunakan Atur ulang pilihan.",
+  "folders.previewPaths": "{n} jalur",
+  "folders.exclusions": "{n} pengecualian",
+  "folders.resetSelection": "Atur ulang pilihan",
+  "folders.resetConfirm": "Atur ulang pilihan folder? Kontainer kembali ke deteksi otomatis (default appdata) dan semua pengecualian yang diingat serta pengaturan folder cache dihapus.",
+  "folders.narrowedNote": "Pilihan sekarang mencakup lebih sedikit folder dari sebelumnya. Mulai dari pencadangan berikutnya, snapshot hanya akan berisi folder yang dipilih. Snapshot yang ada tidak berubah.",
+  "folders.cachedirToggle": "Lewati folder cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Berlaku untuk seluruh pencadangan kontainer ini, bukan hanya folder ini.",
   "stophook.title": "Hentikan container lain",
   "stophook.hint": "Hentikan container lain ini selama container ini dicadangkan (misalnya database), lalu jalankan kembali setelahnya.",
   "stophook.noCandidates": "Tidak ditemukan container lain yang terinstal.",
@@ -1345,7 +1356,14 @@ const id: Partial<Translations> = {
   "files.cancel": "Batal",
   "files.addPreset": "Tambah preset: Konfigurasi sistem host",
   "files.addPresetHint": "Titik awal yang konservatif untuk konfigurasi tingkat host di luar container Anda, bukan klaim kelengkapan. Tinjau folder sebelum menyimpan.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Pilih folder",
+  "files.foldersHint": "Centang folder yang dicakup set ini. Hapus centang pada subfolder untuk mengecualikannya; angkanya menunjukkan berapa banyak jalur yang akan diserahkan pencadangan berikutnya ke restic.",
+  "files.emptySelectionBlocked": "Set butuh setidaknya satu folder, jadi centang terakhir tidak bisa dihapus. Gunakan Hapus set folder jika kamu tidak ingin set ini lagi.",
+  "files.pathChangeHint": "Mengubah folder akan menghapus pilihan subfolder yang dicentang.",  // Files domain integration
   "settings.filesEnabled": "Folder",
   "settings.filesEnabledHint": "Cadangkan folder sembarang di bawah mount Anda sebagai set file, terlepas dari domain lain.",
   "settings.filesPath": "Jalur folder",

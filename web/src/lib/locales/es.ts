@@ -597,7 +597,7 @@ const es: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Carpetas a copiar",
-  "folders.hint": "Elige qué carpetas mapeadas de este contenedor copiar. La carpeta appdata está seleccionada por defecto. Marca otras para incluirlas, o añade una ruta personalizada dentro del montaje del host. Si lo desmarcas todo, vuelve al valor automático de appdata.",
+  "folders.hint": "Elige qué carpetas mapeadas de este contenedor copiar. La carpeta appdata está seleccionada por defecto. Marca otras para incluirlas, o añade una ruta personalizada dentro del montaje del host. Desmarcarlo todo está bloqueado; usa Restablecer selección para volver al valor automático de appdata.",
   "folders.appdataDefault": "appdata (por defecto)",
   "folders.stackNote":
     "Este contenedor pertenece a la pila Compose {stack}. Su carpeta de proyecto se copia una vez para toda la pila, no una vez por servicio, por eso no aparece aquí.",
@@ -609,7 +609,17 @@ const es: Partial<Translations> = {
   "folders.save": "Guardar carpetas",
   "folders.saved": "Guardado",
   "folders.empty": "No se encontraron carpetas mapeadas para este contenedor.",
-
+  "folders.treeLabel": "Selección de carpetas de copia de seguridad",
+  "folders.truncatedList": "Se muestran las primeras 500 entradas",
+  "folders.retry": "Reintentar",
+  "folders.emptySelectionBlocked": "Debe quedar seleccionada al menos una carpeta. Para no respaldar nada de este contenedor, desactiva la inclusión en el calendario. Para volver a la detección automática, usa Restablecer selección.",
+  "folders.previewPaths": "{n} rutas",
+  "folders.exclusions": "{n} exclusiones",
+  "folders.resetSelection": "Restablecer selección",
+  "folders.resetConfirm": "¿Restablecer la selección de carpetas? El contenedor vuelve a la detección automática (appdata por defecto) y se eliminan todas las exclusiones recordadas y la configuración de carpetas de caché.",
+  "folders.narrowedNote": "La selección ahora abarca menos carpetas que antes. A partir de la próxima copia, las instantáneas contendrán solo las carpetas seleccionadas. Las instantáneas existentes no cambian.",
+  "folders.cachedirToggle": "Omitir carpetas de caché (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Se aplica a toda la copia de seguridad de este contenedor, no solo a esta carpeta.",
   // Notifications
   "notify.title": "Notificaciones",
   "notify.hint": "Recibe un aviso cuando termine una copia y elige abajo qué eventos lo activan. Las notificaciones de Unraid ya funcionan en modo Simple; más canales de entrega (webhook, Matrix, Healthchecks, correo) están en Avanzado.",
@@ -1173,7 +1183,14 @@ const es: Partial<Translations> = {
   "files.cancel": "Cancelar",
   "files.addPreset": "Añadir preset: Configuración del sistema",
   "files.addPresetHint": "Un punto de partida conservador para la configuración a nivel de host fuera de tus contenedores. No es una afirmación de completitud. Revisa la carpeta antes de guardar.",
-  "settings.filesEnabled": "Carpetas",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Elegir carpetas",
+  "files.foldersHint": "Marca las carpetas que cubre este conjunto. Desmarca una subcarpeta para dejarla fuera; el número muestra cuántas rutas entregará la próxima copia a restic.",
+  "files.emptySelectionBlocked": "Un conjunto necesita al menos una carpeta, así que no se puede quitar la última marca. Usa Eliminar conjunto de carpetas si ya no quieres este conjunto.",
+  "files.pathChangeHint": "Cambiar la carpeta borra la selección de subcarpetas marcadas.",  "settings.filesEnabled": "Carpetas",
   "settings.filesEnabledHint": "Copia de seguridad de carpetas arbitrarias bajo tus puntos de montaje, independiente de los demás dominios.",
   "settings.filesPath": "Ruta de carpetas",
   "jobs.filesSection": "Carpetas",

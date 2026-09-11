@@ -597,7 +597,7 @@ const fi: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Varmuuskopioitavat kansiot",
-  "folders.hint": "Valitse, mitkä tämän kontin liitetyistä kansioista varmuuskopioidaan. appdata-kansio on valittuna oletuksena. Rastita muut sisällyttääksesi ne, tai lisää oma polku host-liitoksen alle. Kaikkien rastien poistaminen palauttaa automaattisen appdata-oletuksen.",
+  "folders.hint": "Valitse, mitkä tämän kontin liitetyistä kansioista varmuuskopioidaan. appdata-kansio on valittuna oletuksena. Rastita muut sisällyttääksesi ne, tai lisää oma polku host-liitoksen alle. Kaikkien rastien poistaminen on estetty; automaattiseen appdata-oletukseen palataan Valinnan nollaus -toiminnolla.",
   "folders.appdataDefault": "appdata (oletus)",
   "folders.stackNote":
     "Tämä kontti kuuluu Compose-pinoon {stack}. Projektikansio varmuuskopioidaan kerran koko pinolle, ei kerran per palvelu, joten sitä ei näy tässä.",
@@ -609,7 +609,17 @@ const fi: Partial<Translations> = {
   "folders.save": "Tallenna kansiot",
   "folders.saved": "Tallennettu",
   "folders.empty": "Tälle kontille ei löytynyt liitettyjä kansioita.",
-
+  "folders.treeLabel": "Varmuuskopioitavien kansioiden valinta",
+  "folders.truncatedList": "Näytetään ensimmäiset 500 kohtaa",
+  "folders.retry": "Yritä uudelleen",
+  "folders.emptySelectionBlocked": "Vähintään yksi kansio on pysyttävä valittuna. Jos et halua varmuuskopioida mitään tästä kontista, poista sisällytys aikatauluun käytöstä. Palataksesi automaattiseen tunnistukseen käytä Valinnan nollaus -toimintoa.",
+  "folders.previewPaths": "{n} polkua",
+  "folders.exclusions": "{n} poissjoukkoa",
+  "folders.resetSelection": "Valinnan nollaus",
+  "folders.resetConfirm": "Nollataanko kansioiden valinta? Kontti palaa automaattiseen tunnistukseen (appdata-oletus), ja kaikki muistissa pidetyt poissulkemiset ja välimuistikansioiden asetukset poistetaan.",
+  "folders.narrowedNote": "Valinta kattaa nyt vähemmän kansioita kuin aiemmin. Seuraavasta varmuuskopiosta alkaen tilannekuvat sisältävät vain valitut kansiot. Olemassa olevat tilannekuvat eivät muutu.",
+  "folders.cachedirToggle": "Ohita välimuistikansiot (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Koskee koko tämän kontin varmuuskopiota, ei vain tätä kansiota.",
   // Notifications
   "notify.title": "Ilmoitukset",
   "notify.hint": "Saat ilmoituksen, kun varmuuskopiointi valmistuu, ja valitse alta mitkä tapahtumat sen laukaisevat. Unraid-ilmoitukset toimivat jo yksinkertaisessa tilassa; lisää toimituskanavia (webhook, Matrix, Healthchecks, sähköposti) löytyy Lisäasetuksista.",
@@ -1175,7 +1185,14 @@ const fi: Partial<Translations> = {
   "files.cancel": "Peruuta",
   "files.addPreset": "Lisää esiasetus: Järjestelmäasetukset",
   "files.addPresetHint": "Varovainen lähtökohta isäntätason asetuksille konttiesi ulkopuolella, ei täydellisyysväite. Tarkista kansio ennen tallennusta.",
-  "settings.filesEnabled": "Kansiot",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Valitse kansiot",
+  "files.foldersHint": "Valitse kansiot, jotka tämä joukko kattaa. Poista alikansion valinta jättääksesi sen ulos; lukumäärä kertoo, kuinka monta polkua seuraava varmuuskopio antaa resticille.",
+  "files.emptySelectionBlocked": "Joukko tarvitsee vähintään yhden kansion, joten viimeistä valintaa ei voi poistaa. Käytä Poista kansiojoukko -toimintoa, jos et enää tarvitse tätä joukkoa.",
+  "files.pathChangeHint": "Kansion vaihtaminen tyhjää valittujen alikansioiden valinnan.",  "settings.filesEnabled": "Kansiot",
   "settings.filesEnabledHint": "Mielivaltaisten kansioiden varmuuskopiointi liitospisteidesi alta, muista alueista riippumatta.",
   "settings.filesPath": "Kansioiden polku",
   "jobs.filesSection": "Kansiot",

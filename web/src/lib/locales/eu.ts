@@ -604,7 +604,7 @@ const eu: Partial<Translations> = {
   "hooks.pre": "Babeskopiaren aurretiazko komandoa",
   "hooks.post": "Babeskopiaren ondorengo komandoa",
   "folders.title": "Babeskopiaren karpetak",
-  "folders.hint": "Aukeratu edukiontzi honen zein karpeta mapatu babestuko diren. appdata karpeta lehenespenez hautatuta dago. Markatu besterik sartzeko, edo gehitu ostalariaren muntaketaren azpian bide pertsonalizatu bat. Guztiak desmarkatzeak appdata-ren lehenespen automatikora itzultzen du.",
+  "folders.hint": "Aukeratu edukiontzi honen zein karpeta mapatu babestuko diren. appdata karpeta lehenespenez hautatuta dago. Markatu besterik sartzeko, edo gehitu ostalariaren muntaketaren azpian bide pertsonalizatu bat. Guztiak desmarkatzea blokeatuta dago; erabili Hautapena berrezarri appdata-ren lehenespen automatikora itzultzeko.",
   "folders.appdataDefault": "appdata (lehenetsia)",
   "folders.stackNote":
     "Edukiontzi hau {stack} Compose pilakoa da. Proiektuaren karpeta pila osorako behin egiten da babeskopia, ez zerbitzu bakoitzeko, eta horregatik ez da hemen agertzen.",
@@ -616,6 +616,17 @@ const eu: Partial<Translations> = {
   "folders.save": "Gorde karpetak",
   "folders.saved": "Gordeta",
   "folders.empty": "Ez da edukiontzi honentzat mapatutako karpetarik aurkitu.",
+  "folders.treeLabel": "Babeskopiako karpeten hautapena",
+  "folders.truncatedList": "Lehen 500 sarrerak erakusten dira",
+  "folders.retry": "Saiatu berriro",
+  "folders.emptySelectionBlocked": "Gutxienez karpeta bat hautatuta geratu behar da. Kontainde honetan ezer babestu nahi ez baduzu, desaktibatu egutegian sartzea. Detekzio automatikora itzultzeko, erabili Hautapena berrezarri.",
+  "folders.previewPaths": "{n} bide",
+  "folders.exclusions": "{n} bazterketa",
+  "folders.resetSelection": "Hautapena berrezarri",
+  "folders.resetConfirm": "Karpeten hautapena berrezarri? Edukiontza detekzio automatikora itzultzen da (appdata lehenespena) eta gogoratutako bazterketa guztiak eta cache karpeten ezarpenak kentzen dira.",
+  "folders.narrowedNote": "Hautapenak orain aurrekoa baino karpeta gutxiago hartzen ditu barne. Hurrengo babeskopiatik aurrera, snapshot-ek hautatutako karpetak bakarrik edukiko dituzte. Existitzen diren snapshot-ek ez dute aldatzen.",
+  "folders.cachedirToggle": "Saltatu cache karpetak (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Edukiontzi honen babeskopia osoari aplikatzen zaio, ez bakarrik karpeta honi.",
   "stophook.title": "Gelditu beste edukiontzi batzuk",
   "stophook.hint": "Gelditu beste edukiontzi hauek hau babesten den bitartean (adibidez datu-base bat), eta abiarazi berriz gero.",
   "stophook.noCandidates": "Ez da beste edukiontzi instalaturik aurkitu.",
@@ -1345,7 +1356,14 @@ const eu: Partial<Translations> = {
   "files.cancel": "Utzi",
   "files.addPreset": "Gehitu aurrezarpena: Ostalariaren sistema-konfigurazioa",
   "files.addPresetHint": "Zure edukiontzietatik kanpoko ostalari-mailako konfiguraziorako abiapuntu kontserbadore bat, ez osotasun-eskaera bat. Berrikusi karpeta gorde aurretik.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Aukeratu karpetak",
+  "files.foldersHint": "Markatu multzo honek hartzen dituen karpetak. Desmarkatu azpikarpeta bat kanpoan uzteko; zenbakiak erakusten du hurrengo babeskopiak restic-i zenbat bide emango dizkion.",
+  "files.emptySelectionBlocked": "Multzoak gutxienez karpeta bat behar du, beraz azken marka ezin da kendu. Erabili Ezabatu karpeta multzoa multzo hau jada nahi ez baduzu.",
+  "files.pathChangeHint": "Karpeta aldatzeak markatutako azpikarpeten hautapena garbitzen du.",  // Files domain integration
   "settings.filesEnabled": "Karpetak",
   "settings.filesEnabledHint": "Babestu zure muntaketen azpiko edozein karpeta fitxategi-multzo gisa, beste domeinuetatik independenteki.",
   "settings.filesPath": "Karpeten bidea",

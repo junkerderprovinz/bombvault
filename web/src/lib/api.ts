@@ -6,6 +6,11 @@
 export interface OkEnvelope {
   ok: boolean;
   error?: string;
+  /** Machine-readable refusal kind on coded failures (handlers.go
+   *  codedFailEnvelope), e.g. "empty-selection" when the tree selector's
+   *  PATCH is refused because it would empty the selection. Absent on
+   *  success and on plain uncoded failures. */
+  code?: string;
 }
 
 /** A container row from GET /api/containers */
@@ -481,6 +486,14 @@ export interface BrowseResponse {
   path?: string;
   dirs?: BrowseDirEntry[];
   error?: string;
+  /** Error KIND, not a message (handlers.go classifyReadDirError): "ok" on
+   *  success; "restricted" (fs.ErrPermission), "missing" (ErrNotExist) or
+   *  "error" (opaque bucket — an os.Root escape rejection deliberately lands
+   *  here so an escape attempt never announces itself on the wire). */
+  status?: "ok" | "restricted" | "missing" | "error";
+  /** True when the listing hit the server-side cap (maxBrowseEntries = 500):
+   *  the first lexical page was returned, the rest exist but are not shown. */
+  truncated?: boolean;
 }
 
 /** Response from GET /api/auth */
@@ -876,6 +889,15 @@ export interface CustomPath {
 export interface ContainerMountsResponse extends OkEnvelope {
   mounts?: MountInfo[];
   custom?: CustomPath[];
+  /** Stored exclusion branches ("!" entries of selected_paths, prefix
+   *  stripped) in HOST path form — served since Phase 1 so the tree can
+   *  reconstruct its (includes, exclusions) mirror without loading children. */
+  excluded?: string[];
+  /** Per-root CACHEDIR.TAG toggles (RESTIC-01, plan 03-01) in HOST path form.
+   *  The Go handler ALWAYS serves an object, never null (empty = nothing
+   *  skipped); optional in the type only because the field postdates older
+   *  fixtures, so callers default it to {}. */
+  excludeCaches?: Record<string, boolean>;
   hostMountRoot?: string;
   hostSourceRoot?: string;
 }
@@ -885,11 +907,32 @@ export function getContainerMounts(name: string): Promise<ContainerMountsRespons
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/mounts`);
 }
 
-/** PATCH /api/containers/{name} — set the explicit backup-folder selection (host paths). */
-export function setBackupPaths(name: string, backupPaths: string[]): Promise<OkEnvelope> {
+/** The composed PATCH body the FoldersEditor queue serializes (plan 03 Task 2,
+ *  T-03-07): one request carrying ONLY the classes the drain owes.
+ *  `backupPaths` replaces the stored selection wholesale; when present with a
+ *  non-empty list, `selectionSource` tags the writer ("tree" = the selection
+ *  tree) — the server gates its empty-selection refusal on that literal and
+ *  keeps legacy sources byte-compatible, and the reset deliberately sends
+ *  backupPaths WITHOUT a source (the one sanctioned pass to auto-detection)
+ *  together with `excludeCaches: {}` (review WR-04: the reset clears the
+ *  per-root CACHEDIR map too, so a toggle keyed by a root the reset removes
+ *  cannot survive as an orphaned --exclude-caches with no switch to turn it
+ *  off). `excludeCaches` replaces the whole per-root CACHEDIR.TAG map; the
+ *  server treats a nil map as untouched, so omitting the class leaves it
+ *  alone. */
+export interface ContainerTargetsBody {
+  backupPaths?: string[];
+  selectionSource?: string;
+  excludeCaches?: Record<string, boolean>;
+}
+
+/** PATCH /api/containers/{name} — the editor's ONE save entry point: paths
+ *  saves, the reset, and CACHEDIR flips all serialize through here so no two
+ *  container PATCHes from the panel are ever concurrent. */
+export function setContainerTargets(name: string, body: ContainerTargetsBody): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
-    body: JSON.stringify({ backupPaths }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -2257,6 +2300,13 @@ export interface FileSetView {
   effectiveSchedule?: EffectiveSchedule;
   /** Whether the resolved source path currently exists on disk. */
   pathExists: boolean;
+  /** The set's tree selection (Phase 4, D-03): the same flat encoding as the
+   *  containers' backupPaths (bare entries are included roots, "!"-prefixed
+   *  are deselected branches), in mount-root absolute space. Absent = the set
+   *  was never touched by the tree (the NULL legacy switch: the backup still
+   *  compiles to the single whole-folder positional), deliberately
+   *  distinguishable from a written selection. */
+  selectedPaths?: string[];
 }
 
 /** The resolved outcome for one folder set (schedule.EffectiveFileSetSchedule).
@@ -2330,6 +2380,12 @@ export function patchFileSet(
     /** #199. Sent alone by the cadence editor, so an edit there cannot disturb
      *  the rest of the set. An empty string clears the override. */
     scheduleCadence?: string;
+    /** The tree selection, sent as the FULL list by the tree editor (a save
+     *  overwrites the column). Omit the key entirely for an ordinary edit —
+     *  absent = untouched, never a clear. An empty list is refused by the
+     *  server with code "empty-selection" (a set cannot mean "back up
+     *  nothing"; remove the set instead), and the stored selection is kept. */
+    selectedPaths?: string[];
   }
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}`, {

@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -412,6 +414,147 @@ func TestPatchExcludesAndPreview(t *testing.T) {
 	first, _ := preview[0].(map[string]any)
 	if first["raw"] != "/config/Cache" || first["status"] == nil {
 		t.Fatalf("unexpected first preview entry: %v", preview[0])
+	}
+}
+
+// excludeCachesRouterHarness builds a router whose HostSourceRoot=/mnt sits on a
+// temp HostMountRoot (split-root translation, mirroring TestEmptySelectionGuard)
+// with a "plex" container carrying one bind mount, so exclude-caches PATCH keys
+// (host paths) can be validated against the mount exactly like backupPaths.
+func excludeCachesRouterHarness(t *testing.T) (http.Handler, *store.Repo) {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+	return h, st
+}
+
+// TestPatchContainerExcludeCaches pins the RESTIC-01 write side: the PATCH
+// excludeCaches field persists a root-to-bool map on the target, rejects a map
+// whose keys fall outside the host mount ATOMICALLY (whole save refused, nothing
+// partially written), lets decodeBody reject non-boolean values, and leaves the
+// stored column untouched when the key is absent (nil = untouched, like the
+// sibling pointer fields).
+func TestPatchContainerExcludeCaches(t *testing.T) {
+	patch := func(t *testing.T, h http.Handler, body string) map[string]any {
+		t.Helper()
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", body)
+		return m
+	}
+	storedMap := func(t *testing.T, st *store.Repo) map[string]bool {
+		t.Helper()
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tg.ExcludeCaches
+	}
+
+	t.Run("valid host-path keys persist as the stored map", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true,"/mnt/user/appdata/plex/custom":false}}`)
+		if m["ok"] != true {
+			t.Fatalf("patch must succeed, got %v", m)
+		}
+		want := map[string]bool{"/mnt/user/appdata/plex": true, "/mnt/user/appdata/plex/custom": false}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, want) {
+			t.Fatalf("stored excludeCaches = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("a key outside the host mount rejects the whole save atomically", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		if m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true}}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		before := storedMap(t, st)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true,"/elsewhere/evil":true}}`)
+		if m["ok"] == true {
+			t.Fatal("a key not under the host mount must fail the whole save")
+		}
+		if m["error"] == nil || m["error"] == "" {
+			t.Fatalf("the refusal must carry a scrubbed error, got %v", m)
+		}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, before) {
+			t.Fatalf("a rejected save must not partially write: got %v, want %v", got, before)
+		}
+	})
+
+	t.Run("a non-boolean value is rejected at decode", func(t *testing.T) {
+		h, _ := excludeCachesRouterHarness(t)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":"yes"}}`)
+		if m["ok"] == true {
+			t.Fatal("a string value must fail the map[string]bool decode in decodeBody")
+		}
+	})
+
+	t.Run("an absent key leaves the stored column untouched", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		if m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true}}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		before := storedMap(t, st)
+		// A sibling-field PATCH that omits excludeCaches entirely.
+		m := patch(t, h, `{"excludes":[".git"]}`)
+		if m["ok"] != true {
+			t.Fatalf("sibling patch must succeed, got %v", m)
+		}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, before) {
+			t.Fatalf("absent key must leave the column untouched: got %v, want %v", got, before)
+		}
+	})
+}
+
+// TestContainerMountsExcludeCaches pins the RESTIC-01 read side: the mounts
+// response always carries excludeCaches as a JSON OBJECT ({} when never set, so
+// the SPA can read it unconditionally) and serves back the identical stored map
+// once set.
+func TestContainerMountsExcludeCaches(t *testing.T) {
+	h, st := excludeCachesRouterHarness(t)
+
+	// Never set: {} on the wire, never null.
+	_, m := doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+	if m["ok"] != true {
+		t.Fatalf("mounts must succeed, got %v", m)
+	}
+	ec, ok := m["excludeCaches"].(map[string]any)
+	if !ok {
+		t.Fatalf("excludeCaches must be a JSON object when unset, got %T (%v)", m["excludeCaches"], m["excludeCaches"])
+	}
+	if len(ec) != 0 {
+		t.Fatalf("excludeCaches must be empty when never set, got %v", ec)
+	}
+
+	// Set: the identical map serves back under the same key.
+	if _, pm := doJSON(t, h, http.MethodPatch, "/api/containers/plex",
+		`{"excludeCaches":{"/mnt/user/appdata/plex":true,"/mnt/user/appdata/plex/custom":false}}`); pm["ok"] != true {
+		t.Fatalf("seed patch must succeed, got %v", pm)
+	}
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tg.ExcludeCaches) != 2 {
+		t.Fatalf("seed must have stored the map, got %v", tg.ExcludeCaches)
+	}
+	_, m = doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+	ec, ok = m["excludeCaches"].(map[string]any)
+	if !ok || len(ec) != 2 || ec["/mnt/user/appdata/plex"] != true || ec["/mnt/user/appdata/plex/custom"] != false {
+		t.Fatalf("excludeCaches on the wire = %v (%T), want the identical stored map", m["excludeCaches"], m["excludeCaches"])
 	}
 }
 
@@ -1677,6 +1820,10 @@ type fileSetRow struct {
 	Enabled    bool     `json:"enabled"`
 	LastBackup int64    `json:"lastBackup"`
 	PathExists bool     `json:"pathExists"`
+	// SelectedPaths is the set's tree selection served back by the view
+	// (Phase 4 plan 02, D-03); absent for a set never touched by the tree
+	// (the NULL legacy switch stays distinguishable from a written selection).
+	SelectedPaths []string `json:"selectedPaths"`
 }
 
 // fileSetsOf decodes the GET /api/files list response.
@@ -2228,6 +2375,434 @@ func TestDiscoverFileSets(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Phase 4 plan 02: the file-set PATCH selectedPaths boundary (D-03/D-06)
+// ---------------------------------------------------------------------------
+
+// newDocsSet creates the "docs" set over the harness' data/docs folder through
+// the wire and returns its id plus the set's resolved absolute root — the
+// anchor space selection entries are stored in (A2: entries live in mount-root
+// absolute space, never container-translated). The root is computed with the
+// same paths.Resolve the service uses, so expectations hold on every OS's
+// temp-dir shape.
+func newDocsSet(t *testing.T, h http.Handler, dir string) (string, string) {
+	t.Helper()
+	root, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+	if id == "" {
+		t.Fatalf("create failed: %v", m)
+	}
+	return id, root
+}
+
+// patchFileSet marshals body and PATCHes /api/files/sets/{id}. Bodies are built
+// as values, never string literals: selection entries contain the resolved
+// root, whose raw OS separators (backslashes on the Windows dev box) must be
+// JSON-escaped by the marshaller, not hand-interpolated.
+func patchFileSet(t *testing.T, h http.Handler, id string, body map[string]any) (*httptest.ResponseRecorder, map[string]any) {
+	t.Helper()
+	b, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, string(b))
+}
+
+// storedFileSetSelection reads the set's stored selection straight from the
+// store — the PATCH boundary's ground truth (the wire view is asserted
+// separately).
+func storedFileSetSelection(t *testing.T, st *store.Repo, id string) []string {
+	t.Helper()
+	fs, err := st.GetFileSet(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return fs.SelectedPaths
+}
+
+// TestPatchFileSetSelectedPaths pins the PATCH boundary for a file set's tree
+// selection (Phase 4 plan 02, D-03): entries are validated against the set's
+// resolved root BEFORE any store write (atomic whole-save rejection), the
+// stored list is the normalized canonical form no matter what order the client
+// sent, a 64-entry cap bounds the column, an absent key never touches the
+// stored selection, and a path change clears the selection with clear-wins
+// precedence over entries in the same request (Pitfall 2 layer 1 / A3 — the
+// PATCH is the only writer that can move the anchor a stored selection
+// dangles from).
+func TestPatchFileSetSelectedPaths(t *testing.T) {
+	t.Run("stores the normalized canonical form and the view serves it back", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+
+		// Wire order is deliberately non-canonical (reversed, exclusion in the
+		// middle): the stored form must be the normalized canonical set
+		// regardless of what order the client sent.
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{
+				root + "/b.md",
+				"!" + root + "/tmp",
+				root + "/a.md",
+			},
+		})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("PATCH failed: %d %v", w.Code, m)
+		}
+		want := []string{root + "/a.md", root + "/b.md", "!" + root + "/tmp"}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, want) {
+			t.Fatalf("stored = %v, want %v", got, want)
+		}
+		// The list view carries the selection back for the tree editor.
+		sets := fileSetsOf(t, h)
+		if len(sets) != 1 || !reflect.DeepEqual(sets[0].SelectedPaths, want) {
+			t.Fatalf("view selection = %+v, want %v", sets[0].SelectedPaths, want)
+		}
+	})
+
+	t.Run("collapses a redundant descendant to its maximal root", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root, root + "/child"},
+		})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, []string{root}) {
+			t.Fatalf("stored = %v, want [%s]", got, root)
+		}
+	})
+
+	t.Run("atomic rejection keeps the prior selection byte-identical", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		prior := []string{root + "/kept"}
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": prior}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		// One escaping entry (cleans outside the root) and one sibling-prefix
+		// trap (data/doc vs data/docs — a naive prefix check accepts it): the
+		// whole save must be rejected before ANY store write.
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{
+				root + "/../escape",
+				strings.TrimSuffix(root, "docs") + "doc",
+			},
+		})
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("expected a graceful refusal, got %d %v", w.Code, m)
+		}
+		if errMsg, _ := m["error"].(string); errMsg == "" {
+			t.Fatalf("refusal must carry a scrubbed message, got %v", m)
+		}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, prior) {
+			t.Fatalf("prior selection must be byte-identical after the refusal, got %v", got)
+		}
+	})
+
+	t.Run("refuses more than 64 entries and accepts exactly 64", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		entries := func(n int) []string {
+			out := make([]string, 0, n)
+			for i := 0; i < n; i++ {
+				out = append(out, fmt.Sprintf("%s/f%02d", root, i))
+			}
+			return out
+		}
+		w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": entries(65)})
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("65 entries must be refused, got %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("a refused save must write nothing, got %v", got)
+		}
+		w, m = patchFileSet(t, h, id, map[string]any{"selectedPaths": entries(64)})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("64 entries must be accepted, got %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); len(got) != 64 {
+			t.Fatalf("stored %d entries, want 64", len(got))
+		}
+	})
+
+	t.Run("an absent selectedPaths key leaves the stored selection untouched", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		prior := []string{root + "/kept"}
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": prior}); m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+		// An ordinary name edit must not clear (or rewrite) the selection —
+		// the pointer-nil decode path is "untouched", not "clear".
+		w, m := patchFileSet(t, h, id, map[string]any{"name": "docs2"})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("name PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, prior) {
+			t.Fatalf("selection = %v, want %v (an absent key never touches it)", got, prior)
+		}
+	})
+
+	t.Run("changing the set path clears the stored selection", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": []string{root + "/kept"}}); m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+		// validateFileSet stats the new path, so the folder must exist first.
+		if err := os.MkdirAll(filepath.Join(dir, "data", "other"), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		w, m := patchFileSet(t, h, id, map[string]any{"path": "data/other"})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("path PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("a path edit must clear the selection to the NULL legacy state, got %v", got)
+		}
+	})
+
+	t.Run("a path change wins over entries in the same request", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		if err := os.MkdirAll(filepath.Join(dir, "data", "other"), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		// Entries valid under the OLD root arrive alongside the path change:
+		// clear-wins precedence means they must not survive re-anchored under
+		// the new root (the client asked to move the set AND select folders —
+		// honoring both would silently rewrite the selection's meaning).
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"path":          "data/other",
+			"selectedPaths": []string{root + "/kept"},
+		})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("clear must win over same-request entries, got %v", got)
+		}
+		fs, err := st.GetFileSet(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if fs.Path != "data/other" {
+			t.Fatalf("path = %q, want data/other", fs.Path)
+		}
+	})
+}
+
+// TestFileSetEmptySelection pins D-06 on the file-set boundary: a selection
+// that normalizes to zero includes is refused with the machine-routable
+// empty-selection code and a message that orients to removing the set (the
+// tree cannot express "back up nothing" for a set — DELETE is the exit), and
+// the refusal leaves the prior selection structurally untouched.
+func TestFileSetEmptySelection(t *testing.T) {
+	refused := func(t *testing.T, h http.Handler, id string, entries []string) {
+		t.Helper()
+		w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": entries})
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("expected a graceful refusal, got %d %v", w.Code, m)
+		}
+		if m["code"] != "empty-selection" {
+			t.Fatalf("code = %v, want empty-selection (machine-routable)", m["code"])
+		}
+		if errMsg, _ := m["error"].(string); !strings.Contains(errMsg, "Remove set") {
+			t.Fatalf("refusal must orient to removing the set, got %q", errMsg)
+		}
+	}
+
+	t.Run("an exclusions-only selection is refused", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		refused(t, h, id, []string{"!" + root + "/x"})
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("prior state must be untouched (NULL), got %v", got)
+		}
+	})
+
+	t.Run("an empty list is refused", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, _ := newDocsSet(t, h, dir)
+		refused(t, h, id, []string{})
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("prior state must be untouched (NULL), got %v", got)
+		}
+	})
+
+	t.Run("a refusal never clears an existing selection", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		prior := []string{root + "/kept"}
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": prior}); m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+		refused(t, h, id, []string{})
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, prior) {
+			t.Fatalf("prior selection must survive the refusal byte-identically, got %v", got)
+		}
+	})
+}
+
+// TestFileSetSelectedPathsViewShape pins the wire contract of the view field:
+// a set never touched by the tree omits selectedPaths entirely (the NULL
+// legacy switch must stay distinguishable on the wire from a written
+// selection), while an edited set carries the stored entries back.
+func TestFileSetSelectedPathsViewShape(t *testing.T) {
+	h, _, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+	id, root := newDocsSet(t, h, dir)
+
+	rawList := func() string {
+		t.Helper()
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/files", nil))
+		if w.Code != http.StatusOK {
+			t.Fatalf("GET /api/files status = %d", w.Code)
+		}
+		return w.Body.String()
+	}
+
+	if body := rawList(); strings.Contains(body, "selectedPaths") {
+		t.Fatalf("a never-edited set must omit selectedPaths (NULL legacy switch), got %s", body)
+	}
+
+	if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": []string{root + "/a.md"}}); w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("PATCH failed: %d %v", w.Code, m)
+	}
+	if body := rawList(); !strings.Contains(body, "selectedPaths") {
+		t.Fatalf("an edited set must serve selectedPaths back, got %s", body)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 plan 02: the D-08 restore selection guard
+// ---------------------------------------------------------------------------
+
+// TestRestoreFileSetSelectionGuard pins the file-set twin of the container
+// restore mapping guard (D-08): an IN-PLACE restore replays the set's compiled
+// selection against the chosen snapshot's recorded Paths via mapRestorePaths,
+// and an empty intersection is refused synchronously in prepare — before any
+// destructive work starts. The to-folder route deliberately keeps its
+// whole-snapshot-subtree semantics (Open Question 1).
+func TestRestoreFileSetSelectionGuard(t *testing.T) {
+	t.Run("old mono-path snapshot still restores a multi-root selection in place", func(t *testing.T) {
+		// The snapshot predates the tree: one whole-root Paths entry, the shape
+		// every pre-phase backup produced. mapRestorePaths' pass-2 fallback
+		// maps both stored branches onto that ancestor, so the restore
+		// proceeds exactly as before the selection existed.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs"}},
+		}
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a", root + "/keep-b"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:" + dir + "/data/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+
+	t.Run("disjoint snapshot paths abort before any destructive work", func(t *testing.T) {
+		// The selection's branches and the snapshot's recorded path share no
+		// ancestor/descendant relation: restoring would overwrite the source
+		// folder with a snapshot that contains none of what the set now
+		// selects. The refusal must land synchronously (prepare), with zero
+		// restic calls.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs/elsewhere"}},
+		}
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("expected a synchronous refusal, got %d %v", w.Code, m)
+		}
+		if errMsg, _ := m["error"].(string); !strings.Contains(errMsg, "nothing to restore") {
+			t.Fatalf("expected the nothing-to-restore error, got %q", errMsg)
+		}
+		waitForBackupDone(t, svc)
+		if len(eng.restored) != 0 {
+			t.Fatalf("a refused restore must start no restic work, got %v", eng.restored)
+		}
+	})
+
+	t.Run("to-folder route keeps whole-snapshot semantics even when the selection maps empty", func(t *testing.T) {
+		// Non-destructive and snapshot-shaped by design (Open Question 1): a
+		// selection disjoint from the snapshot's cross-root path must NOT
+		// abort a to-folder restore — the subtree comes from the snapshot, not
+		// the stored selection (the TestRestoreFileSetToFolder contract, now
+		// pinned against the guard over-reaching).
+		eng := &fakeResticEngine{snaps: []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
+		}}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:/host/olduser/data/docs->" + dir + "/restore-here/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+
+	t.Run("NULL selection compiles to the legacy root and maps a mono-path snapshot", func(t *testing.T) {
+		// The never-tree-edited set: the guard's compile is the legacy single
+		// positional, which EQUALS the snapshot's recorded path — the restore
+		// proceeds, byte-compat with the pre-phase behavior.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs"}},
+		}
+		id, _ := newDocsSet(t, h, dir)
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:" + dir + "/data/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+}
+
 // TestReleaseNotesHandler covers the "What's new" dialog's backend (#54, #68):
 // there was no existing coverage of this handler at all. It confirms the
 // embedded-notes lookup, the ok=false degrade path for a version with no
@@ -2266,4 +2841,287 @@ func TestReleaseNotesHandler(t *testing.T) {
 	if m["ok"] != true || m["version"] != "v6.1.0" {
 		t.Fatalf("default-to-running-version result = %v", m)
 	}
+}
+
+// TestMountsExcluded pins the mounts endpoint's exclusions contract (the read
+// side of INTEG-04): stored "!-prefixed entries render in a top-level excluded
+// array in HOST form and never leak into custom as stale Exists:false phantom
+// paths (01-RESEARCH.md Pitfall 3 — the interim window recorded by plan 01-01),
+// MountInfo.Selected keeps its include-only semantics, and an include-only
+// save's response is unchanged apart from the additive empty (never null)
+// excluded field.
+func TestMountsExcluded(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	hostPlex := "/mnt/user/appdata/plex"
+	patch := func(paths []string) map[string]any {
+		t.Helper()
+		b, err := json.Marshal(map[string]any{"backupPaths": paths})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", string(b))
+		return m
+	}
+	getMounts := func() map[string]any {
+		t.Helper()
+		_, m := doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+		if m["ok"] != true {
+			t.Fatalf("mounts list must succeed, got %v", m)
+		}
+		return m
+	}
+	mountByDest := func(m map[string]any, dest string) map[string]any {
+		t.Helper()
+		ms, _ := m["mounts"].([]any)
+		for _, e := range ms {
+			if mm, ok := e.(map[string]any); ok && mm["dest"] == dest {
+				return mm
+			}
+		}
+		t.Fatalf("no mount with dest %q in %+v", dest, m)
+		return nil
+	}
+	customPaths := func(m map[string]any) []string {
+		t.Helper()
+		cs, _ := m["custom"].([]any)
+		out := make([]string, 0, len(cs))
+		for _, e := range cs {
+			if cm, ok := e.(map[string]any); ok {
+				out = append(out, fmt.Sprint(cm["path"]))
+			}
+		}
+		return out
+	}
+
+	// Mixed save: the root is a selected mount, the branch is a first-class
+	// excluded entry (host form), and neither shows up as a custom path.
+	if m := patch([]string{hostPlex, "!" + hostPlex + "/transcoding"}); m["ok"] != true {
+		t.Fatalf("mixed save must succeed: %v", m)
+	}
+	m := getMounts()
+	if got := mountByDest(m, "/config")["selected"]; got != true {
+		t.Fatalf("included root must select its mount, got %v", got)
+	}
+	excluded, ok := m["excluded"].([]any)
+	if !ok {
+		t.Fatalf("excluded must be a JSON array, got %T (%v)", m["excluded"], m)
+	}
+	if len(excluded) != 1 || excluded[0] != hostPlex+"/transcoding" {
+		t.Fatalf("excluded = %v, want [%s] in HOST form", excluded, hostPlex+"/transcoding")
+	}
+	for _, cp := range customPaths(m) {
+		if strings.Contains(cp, "transcoding") {
+			t.Fatalf("an exclusion must never render as a custom path, got %q", cp)
+		}
+	}
+
+	// Exclusions-only save (the deselected branch is the mount root itself, the
+	// strongest discriminator: a raw-list selSet would wrongly match the
+	// mount): the entry shows up in excluded, the mount is NOT selected
+	// (Selected is computed from includes only), and no Exists:false phantom
+	// custom path is fabricated.
+	if m := patch([]string{"!" + hostPlex}); m["ok"] != true {
+		t.Fatalf("exclusions-only save must succeed: %v", m)
+	}
+	m = getMounts()
+	excluded, ok = m["excluded"].([]any)
+	if !ok || len(excluded) != 1 || excluded[0] != hostPlex {
+		t.Fatalf("excluded = %v (%T), want [%s]", m["excluded"], m["excluded"], hostPlex)
+	}
+	if got := mountByDest(m, "/config")["selected"]; got == true {
+		t.Fatal("an exclusion must never mark a mount selected")
+	}
+	if cps := customPaths(m); len(cps) != 0 {
+		t.Fatalf("exclusions-only save must fabricate no custom paths, got %v", cps)
+	}
+
+	// Include-only save: today's behavior byte-for-byte apart from the additive
+	// excluded field, which is an empty ARRAY, never null.
+	if m := patch([]string{hostPlex}); m["ok"] != true {
+		t.Fatalf("include-only save must succeed: %v", m)
+	}
+	m = getMounts()
+	excluded, ok = m["excluded"].([]any)
+	if !ok {
+		t.Fatalf("excluded must be an empty array, not null: %T (%v)", m["excluded"], m)
+	}
+	if len(excluded) != 0 {
+		t.Fatalf("excluded = %v, want empty", excluded)
+	}
+	if got := mountByDest(m, "/config")["selected"]; got != true {
+		t.Fatalf("include-only behavior must be unchanged, selected = %v", got)
+	}
+	if cps := customPaths(m); len(cps) != 0 {
+		t.Fatalf("include-only save must fabricate no custom paths, got %v", cps)
+	}
+}
+
+// TestEmptySelectionGuard pins the PATCH boundary's empty-selection guard
+// (the write side of INTEG-04): a tree-sourced save that normalizes to NOTHING
+// is refused with a machine-routable code when a non-empty selection is stored
+// to protect — a bare [] silently re-enables automatic appdata detection, the
+// exact surprise deselect-all must never produce (threat T-01-13). Strictly
+// source-gated per RESEARCH Open Question 2: legacy clients (no
+// selectionSource) and unknown source values keep today's clears-to-auto
+// behavior byte-for-byte, an exclusions-only save IS the explicitly-deselected
+// state and passes (D-03), and a fresh container has nothing to protect.
+func TestEmptySelectionGuard(t *testing.T) {
+	// harness builds a router whose HostSourceRoot=/mnt sits on a temp
+	// HostMountRoot (split-root translation), mirroring
+	// TestServiceContainerMountsAndSelection.
+	harness := func(t *testing.T) (http.Handler, *store.Repo, string) {
+		t.Helper()
+		dir := t.TempDir()
+		root := filepath.ToSlash(dir)
+		cfg := config.Config{
+			AppKey: strings.Repeat("a", 64), DataDir: dir,
+			HostMountRoot: root, HostSourceRoot: "/mnt",
+		}
+		st := newMemStore(t)
+		mustSettings(t, st)
+		d := &fakeServiceDocker{}
+		svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+		sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+		h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+		return h, st, root
+	}
+	patch := func(t *testing.T, h http.Handler, name string, body map[string]any) map[string]any {
+		t.Helper()
+		b, err := json.Marshal(body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/"+name, string(b))
+		return m
+	}
+	// preSave stores a non-empty explicit selection and asserts it landed.
+	preSave := func(t *testing.T, h http.Handler, st *store.Repo, root string) {
+		t.Helper()
+		if m := patch(t, h, "plex", map[string]any{"backupPaths": []string{"/mnt/user/appdata/plex"}}); m["ok"] != true {
+			t.Fatalf("prior save must succeed: %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := []string{root + "/user/appdata/plex"}; !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("prior selection = %v, want %v", tg.SelectedPaths, want)
+		}
+	}
+
+	t.Run("tree-source empty list over a non-empty selection is refused", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		m := patch(t, h, "plex", map[string]any{"backupPaths": []string{}, "selectionSource": "tree"})
+		if m["ok"] != false {
+			t.Fatalf("tree-source deselect-everything must be refused, got %v", m)
+		}
+		if m["code"] != "empty-selection" {
+			t.Fatalf("code = %v, want empty-selection (machine-routable)", m["code"])
+		}
+		if errMsg, _ := m["error"].(string); errMsg == "" {
+			t.Fatalf("refusal must carry a scrubbed error message, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := []string{root + "/user/appdata/plex"}; !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("stored selection must be untouched after a refusal, got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("legacy empty list still clears to auto-detection", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// No selectionSource field at all — the legacy client shape.
+		m := patch(t, h, "plex", map[string]any{"backupPaths": []string{}})
+		if m["ok"] != true {
+			t.Fatalf("legacy empty list must clear byte-for-byte as today, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("legacy empty list must persist [] (auto-detect), got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("exclusions-only tree save is accepted", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// An exclusions-only result is non-empty: it IS the explicitly
+		// deselected state (D-03), never refused — even from the tree source.
+		m := patch(t, h, "plex", map[string]any{
+			"backupPaths":     []string{"!/mnt/user/appdata/plex/transcoding"},
+			"selectionSource": "tree",
+		})
+		if m["ok"] != true {
+			t.Fatalf("exclusions-only save must succeed, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"!" + root + "/user/appdata/plex/transcoding"}
+		if !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("stored selection = %v, want %v", tg.SelectedPaths, want)
+		}
+	})
+
+	t.Run("unknown selectionSource is ignored", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// Only the literal "tree" carries meaning; any other value is treated
+		// as absent, so no source value can fail a save (T-01-14).
+		m := patch(t, h, "plex", map[string]any{
+			"backupPaths":     []string{},
+			"selectionSource": "future-client-value",
+		})
+		if m["ok"] != true {
+			t.Fatalf("unknown source must behave exactly as absent, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("unknown-source empty list must clear to auto-detect, got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("fresh container has nothing to protect", func(t *testing.T) {
+		h, st, _ := harness(t)
+		// No prior selection exists: a tree-source empty list is a no-op save,
+		// not a destructive deselect, so it must succeed.
+		m := patch(t, h, "fresh", map[string]any{"backupPaths": []string{}, "selectionSource": "tree"})
+		if m["ok"] != true {
+			t.Fatalf("fresh container tree-source empty list must succeed, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("fresh")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("stored selection = %v, want empty", tg.SelectedPaths)
+		}
+	})
 }

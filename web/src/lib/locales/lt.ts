@@ -604,7 +604,7 @@ const lt: Partial<Translations> = {
   "hooks.pre": "Komanda prieš atsarginę kopiją",
   "hooks.post": "Komanda po atsarginės kopijos",
   "folders.title": "Atsarginio kopijavimo aplankai",
-  "folders.hint": "Pasirinkite, kurie iš šio konteinerio susietų aplankų bus kopijuojami. Aplankas appdata pasirinktas pagal numatytuosius nustatymus. Pažymėkite kitus, kad juos įtrauktumėte, arba pridėkite pasirinktinį kelią po pagrindinio kompiuterio prijungimu. Nužymėjus viską, grįžtama prie automatinio numatytojo appdata.",
+  "folders.hint": "Pasirinkite, kurie iš šio konteinerio susietų aplankų bus kopijuojami. Aplankas appdata pasirinktas pagal numatytuosius nustatymus. Pažymėkite kitus, kad juos įtrauktumėte, arba pridėkite pasirinktinį kelią po pagrindinio kompiuterio prijungimu. Visko nužymėjimas yra užblokuotas; į automatinį numatytąjį appdata grįšite naudodami Atstatyti pasirinkimą.",
   "folders.appdataDefault": "appdata (numatytoji)",
   "folders.stackNote":
     "Šis konteineris priklauso Compose kaminui {stack}. Projekto katalogas kopijuojamas kartą visam kaminui, o ne po kartą kiekvienai tarnybai, todėl čia nerodomas.",
@@ -616,6 +616,17 @@ const lt: Partial<Translations> = {
   "folders.save": "Išsaugoti aplankus",
   "folders.saved": "Išsaugota",
   "folders.empty": "Šiam konteineriui susietų aplankų nerasta.",
+  "folders.treeLabel": "Atsarginių kopijų aplankų pasirinkimas",
+  "folders.truncatedList": "Rodomi pirmieji 500 įrašų",
+  "folders.retry": "Bandyti dar kartą",
+  "folders.emptySelectionBlocked": "Turi likti pasirinktas bent vienas aplankas. Jei norite nieko iš šio konteinerio neatsarginiuoti, išjunkite įtraukimą į tvarkaraštį. Norėdami grįžti prie automatinio aptikimo, naudokite Atstatyti pasirinkimą.",
+  "folders.previewPaths": "{n} keliai",
+  "folders.exclusions": "{n} išimčių",
+  "folders.resetSelection": "Atstatyti pasirinkimą",
+  "folders.resetConfirm": "Atstatyti aplankų pasirinkimą? Konteineris grįš prie automatinio aptikimo (numatomasis appdata), o visi įsiminti neįtraukimai ir podėlio aplankų nustatymai bus pašalinti.",
+  "folders.narrowedNote": "Pasirinkimas dabar apima mažiau aplankų nei anksčiau. Nuo kito atsarginio kopijavimo momentinės kopijos talpins tik pasirinktus aplankus. Esamos momentinės kopijos lieka nepakitusios.",
+  "folders.cachedirToggle": "Praleisti podėlio aplankus (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Taikoma visai šio konteinerio atsarginei kopijai, o ne tik šiam aplankui.",
   "stophook.title": "Sustabdyti kitus konteinerius",
   "stophook.hint": "Sustabdykite šiuos kitus konteinerius, kol kopijuojamas šis (pvz., duomenų bazę), tada vėl juos paleiskite po to.",
   "stophook.noCandidates": "Kitų įdiegtų konteinerių nerasta.",
@@ -1345,7 +1356,14 @@ const lt: Partial<Translations> = {
   "files.cancel": "Atšaukti",
   "files.addPreset": "Pridėti išankstinį nustatymą: Pagrindinio kompiuterio sistemos konfigūracija",
   "files.addPresetHint": "Konservatyvus pradinis taškas pagrindinio kompiuterio lygio konfigūracijai už jūsų konteinerių ribų, ne teiginys apie išsamumą. Peržiūrėkite aplanką prieš išsaugant.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Pasirinkti aplankus",
+  "files.foldersHint": "Pažymėkite aplankus, kuriuos dengia šis rinkinys. Nuimkite poaplankio pažymėjimą, kad jo neįtrauktumėte; skaičius rodo, kiek maršrutų kita atsarginė kopija perduos restic.",
+  "files.emptySelectionBlocked": "Rinkiniui reikia bent vieno aplanko, todėl paskutinio pažymėjimo pašalinti negalima. Jei šio rinkinio jau nebereikia, naudokite Ištrinti aplankų rinkinį.",
+  "files.pathChangeHint": "Pakeitus aplanką, pažymėtų poaplankių žymėjimas išvalomas.",  // Files domain integration
   "settings.filesEnabled": "Aplankai",
   "settings.filesEnabledHint": "Kurkite savavališkų aplankų po jūsų prijungimais atsargines kopijas kaip failų rinkinius, nepriklausomai nuo kitų sričių.",
   "settings.filesPath": "Aplankų kelias",

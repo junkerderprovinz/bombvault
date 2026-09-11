@@ -589,7 +589,7 @@ const ko: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "백업 폴더",
-  "folders.hint": "이 컨테이너의 매핑된 폴더 중 백업할 폴더를 선택하세요. appdata 폴더는 기본으로 선택되어 있습니다. 다른 폴더를 포함하려면 체크하거나, 호스트 마운트 아래에 사용자 지정 경로를 추가하세요. 모든 체크를 해제하면 자동 appdata 기본값으로 돌아갑니다.",
+  "folders.hint": "이 컨테이너의 매핑된 폴더 중 백업할 폴더를 선택하세요. appdata 폴더는 기본으로 선택되어 있습니다. 다른 폴더를 포함하려면 체크하거나, 호스트 마운트 아래에 사용자 지정 경로를 추가하세요. 모든 체크를 해제하는 것은 차단됩니다. 자동 appdata 기본값으로 돌아가려면 선택 초기화를 사용하세요.",
   "folders.appdataDefault": "appdata (기본값)",
   "folders.stackNote":
     "이 컨테이너는 Compose 스택 {stack}에 속합니다. 프로젝트 폴더는 서비스마다가 아니라 스택 전체에 대해 한 번만 백업되므로 여기에는 나오지 않습니다.",
@@ -601,7 +601,17 @@ const ko: Partial<Translations> = {
   "folders.save": "폴더 저장",
   "folders.saved": "저장됨",
   "folders.empty": "이 컨테이너에 매핑된 폴더를 찾을 수 없습니다.",
-
+  "folders.treeLabel": "백업 폴더 선택",
+  "folders.truncatedList": "처음 500개 항목 표시됨",
+  "folders.retry": "다시 시도",
+  "folders.emptySelectionBlocked": "최소한 하나의 폴더는 선택된 상태로 유지해야 합니다. 이 컨테이너를 백업하지 않으려면 일정 포함을 끄세요. 자동 감지로 돌아가려면 선택 초기화를 사용하세요.",
+  "folders.previewPaths": "{n}개 경로",
+  "folders.exclusions": "{n}개 제외",
+  "folders.resetSelection": "선택 초기화",
+  "folders.resetConfirm": "폴더 선택을 초기화할까요? 컨테이너가 자동 감지(appdata 기본값)로 돌아가고 기억된 모든 제외와 캐시 폴더 설정이 제거됩니다.",
+  "folders.narrowedNote": "선택이 이전보다 적은 폴더를 포함합니다. 다음 백업부터 스냅샷에는 선택한 폴더만 포함됩니다. 기존 스냅샷은 변경되지 않습니다.",
+  "folders.cachedirToggle": "캐시 폴더 건너뛰기 (CACHEDIR.TAG)",
+  "folders.cachedirScope": "이 컨테이너의 전체 백업에 적용되며, 이 폴더에만 적용되는 것이 아닙니다.",
   // Notifications
   "notify.title": "알림",
   "notify.hint": "백업이 완료되면 알림을 받고, 아래에서 어떤 이벤트에 발생시킬지 선택하세요. Unraid 알림은 간단 모드에서도 작동합니다. 웹훅, Matrix, Healthchecks, 이메일 등 더 많은 전달 채널은 고급 설정에 있습니다.",
@@ -1167,7 +1177,14 @@ const ko: Partial<Translations> = {
   "files.cancel": "취소",
   "files.addPreset": "프리셋 추가: 호스트 시스템 구성",
   "files.addPresetHint": "컨테이너 외부의 호스트 수준 구성을 위한 신중한 시작점입니다. 완전함을 보장하지 않습니다. 저장하기 전에 폴더를 확인하세요.",
-  "settings.filesEnabled": "폴더",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "폴더 선택",
+  "files.foldersHint": "이 세트가 포괄할 폴더에 체크하세요. 하위 폴더의 체크를 해제하면 제외됩니다. 숫자는 다음 백업이 restic에 넘길 경로 수입니다.",
+  "files.emptySelectionBlocked": "세트에는 폴더가 최소 하나 필요하므로 마지막 체크는 해제할 수 없습니다. 이 세트가 더 이상 필요 없다면 폴더 세트 삭제를 사용하세요.",
+  "files.pathChangeHint": "폴더를 변경하면 체크한 하위 폴더 선택이 지워집니다.",  "settings.filesEnabled": "폴더",
   "settings.filesEnabledHint": "다른 영역과 무관하게 마운트 아래의 임의 폴더를 백업합니다.",
   "settings.filesPath": "폴더 경로",
   "jobs.filesSection": "폴더",

@@ -594,7 +594,7 @@ const pt: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Pastas a copiar",
-  "folders.hint": "Escolha quais das pastas mapeadas deste contentor copiar. A pasta appdata está selecionada por predefinição. Marque outras para as incluir, ou adicione um caminho personalizado dentro do mount do host. Desmarcar tudo volta à predefinição automática da appdata.",
+  "folders.hint": "Escolha quais das pastas mapeadas deste contentor copiar. A pasta appdata está selecionada por predefinição. Marque outras para as incluir, ou adicione um caminho personalizado dentro do mount do host. Desmarcar tudo está bloqueado; usa Repor seleção para voltar à predefinição automática da appdata.",
   "folders.appdataDefault": "appdata (predefinição)",
   "folders.stackNote":
     "Este contentor pertence à pilha Compose {stack}. A pasta do projeto é copiada uma vez para toda a pilha, não uma vez por serviço, por isso não aparece aqui.",
@@ -606,7 +606,17 @@ const pt: Partial<Translations> = {
   "folders.save": "Guardar pastas",
   "folders.saved": "Guardado",
   "folders.empty": "Não foram encontradas pastas mapeadas para este contentor.",
-
+  "folders.treeLabel": "Seleção de pastas de cópia de segurança",
+  "folders.truncatedList": "A mostrar as primeiras 500 entradas",
+  "folders.retry": "Tentar novamente",
+  "folders.emptySelectionBlocked": "Pelo menos uma pasta tem de permanecer selecionada. Para não fazer cópia de segurança de nada deste contentor, desativa a inclusão no agendamento. Para voltar à deteção automática, usa Repor seleção.",
+  "folders.previewPaths": "{n} caminhos",
+  "folders.exclusions": "{n} exclusões",
+  "folders.resetSelection": "Repor seleção",
+  "folders.resetConfirm": "Repor a seleção de pastas? O contentor volta à deteção automática (appdata predefinida) e todas as exclusões memorizadas e as definições de pastas de cache são removidas.",
+  "folders.narrowedNote": "A seleção agora abrange menos pastas do que antes. A partir da próxima cópia, as snapshots conterão apenas as pastas selecionadas. As snapshots existentes ficam inalteradas.",
+  "folders.cachedirToggle": "Ignorar pastas de cache (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Aplica-se a toda a cópia de segurança deste contentor, não apenas a esta pasta.",
   // Notifications
   "notify.title": "Notificações",
   "notify.hint": "Seja notificado quando uma cópia terminar e escolha abaixo quais eventos a acionam. As notificações do Unraid já funcionam no modo Simples; mais canais de entrega (webhook, Matrix, Healthchecks, e-mail) estão em Avançado.",
@@ -1175,7 +1185,14 @@ const pt: Partial<Translations> = {
   "files.cancel": "Cancelar",
   "files.addPreset": "Adicionar predefinição: Configuração do sistema",
   "files.addPresetHint": "Um ponto de partida conservador para a configuração ao nível do host fora dos seus contêineres, não é uma garantia de integralidade. Revise a pasta antes de salvar.",
-  "settings.filesEnabled": "Pastas",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Escolher pastas",
+  "files.foldersHint": "Marca as pastas que este conjunto cobre. Desmarca uma subpasta para a deixar de fora; o número mostra quantos caminhos o próximo backup entrega ao restic.",
+  "files.emptySelectionBlocked": "Um conjunto precisa de pelo menos uma pasta, por isso a última marca não pode ser removida. Usa Eliminar conjunto de pastas se já não queres este conjunto.",
+  "files.pathChangeHint": "Mudar a pasta limpa a seleção das subpastas marcadas.",  "settings.filesEnabled": "Pastas",
   "settings.filesEnabledHint": "Backup de pastas arbitrárias sob seus pontos de montagem, independente dos outros domínios.",
   "settings.filesPath": "Caminho das pastas",
   "jobs.filesSection": "Pastas",

@@ -597,7 +597,7 @@ const hu: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Mentett mappák",
-  "folders.hint": "Válaszd ki, hogy a konténer leképezett mappái közül melyeket szeretnéd menteni. Az appdata mappa alapértelmezetten ki van jelölve. Pipáld ki a többit a felvételhez, vagy adj hozzá egyéni elérési utat a gazdagép csatolásán belül. Ha mindent kiveszel, visszaáll az automatikus appdata alapértelmezés.",
+  "folders.hint": "Válaszd ki, hogy a konténer leképezett mappái közül melyeket szeretnéd menteni. Az appdata mappa alapértelmezetten ki van jelölve. Pipáld ki a többit a felvételhez, vagy adj hozzá egyéni elérési utat a gazdagép csatolásán belül. Minden kijelölés megszüntetése tiltott; az automatikus appdata alapértelmezéshez a Kijelölés visszaállítása gombbal térhetsz vissza.",
   "folders.appdataDefault": "appdata (alapértelmezett)",
   "folders.stackNote":
     "Ez a konténer a(z) {stack} Compose veremhez tartozik. A projektmappa az egész veremhez egyszer kerül mentésre, nem szolgáltatásonként, ezért nem szerepel itt.",
@@ -609,7 +609,17 @@ const hu: Partial<Translations> = {
   "folders.save": "Mappák mentése",
   "folders.saved": "Mentve",
   "folders.empty": "Nem található leképezett mappa ehhez a konténerhez.",
-
+  "folders.treeLabel": "Biztonsági mentési mappák kiválasztása",
+  "folders.truncatedList": "Az első 500 bejegyzés látható",
+  "folders.retry": "Újrapróbálás",
+  "folders.emptySelectionBlocked": "Legalább egy mappának kiválasztva kell maradnia. Ha nem szeretnél ebből a konténerből semmit menteni, kapcsold ki az ütemezésbe foglalást. Az automatikus felismeréshez használd a Kijelölés visszaállítása gombot.",
+  "folders.previewPaths": "{n} elérési út",
+  "folders.exclusions": "{n} kizárás",
+  "folders.resetSelection": "Kijelölés visszaállítása",
+  "folders.resetConfirm": "Visszaállítod a mappakijelölést? A konténer visszatér az automatikus felismeréshez (appdata alapértelmezés), és minden megjegyzett kizárás és gyorsítótár-mappa beállítás törlődik.",
+  "folders.narrowedNote": "A kijelölés most kevesebb mappát foglal magában, mint korábban. A következő mentéstől kezdve a pillanatképek csak a kijelölt mappákat tartalmazzák. A meglévő pillanatképek változatlanok maradnak.",
+  "folders.cachedirToggle": "Gyorsítótár-mappák kihagyása (CACHEDIR.TAG)",
+  "folders.cachedirScope": "A konténer teljes mentésére vonatkozik, nem csak erre a mappára.",
   // Notifications
   "notify.title": "Értesítések",
   "notify.hint": "Kapj értesítést, amikor egy mentés befejeződik, és válaszd ki alább, mely események váltják ki. Az Unraid-értesítések már Egyszerű módban is működnek; további kézbesítési csatornák (webhook, Matrix, Healthchecks, e-mail) a Speciálisban találhatók.",
@@ -1178,7 +1188,14 @@ const hu: Partial<Translations> = {
   "files.cancel": "Mégse",
   "files.addPreset": "Előbeállítás hozzáadása: Rendszerkonfiguráció",
   "files.addPresetHint": "Óvatos kiindulópont a konténereken kívüli, host-szintű konfigurációhoz, nem teljességi igény. Mentés előtt ellenőrizd a mappát.",
-  "settings.filesEnabled": "Mappák",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Mappák kiválasztása",
+  "files.foldersHint": "Jelöld be azokat a mappákat, amelyeket ez a készlet lefed. Egy almappa kijelölésének törlésével kihagyod; a szám azt mutatja, hány elérési utat ad át a következő mentés a resticnek.",
+  "files.emptySelectionBlocked": "A készlethez legalább egy mappa kell, ezért az utolsó jelölés nem távolítható el. Ha már nem kell ez a készlet, használd a Mappakészlet törlése lehetőséget.",
+  "files.pathChangeHint": "A mappa megváltoztatása törli a bejelölt almappák kijelölését.",  "settings.filesEnabled": "Mappák",
   "settings.filesEnabledHint": "Tetszőleges mappák mentése a csatolási pontjaid alatt, a többi területtől függetlenül.",
   "settings.filesPath": "Mappák útvonala",
   "jobs.filesSection": "Mappák",

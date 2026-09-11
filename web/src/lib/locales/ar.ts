@@ -597,7 +597,7 @@ const ar: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "مجلدات النسخ الاحتياطي",
-  "folders.hint": "اختر أي من المجلدات المربوطة بهذه الحاوية تريد نسخها احتياطياً. مجلد appdata محدد بشكل افتراضي. حدّد مجلدات أخرى لتضمينها، أو أضف مساراً مخصصاً ضمن نقطة تركيب المضيف. إلغاء تحديد كل شيء يعيد الوضع إلى الافتراضي التلقائي لمجلد appdata.",
+  "folders.hint": "اختر أي من المجلدات المربوطة بهذه الحاوية تريد نسخها احتياطياً. مجلد appdata محدد بشكل افتراضي. حدّد مجلدات أخرى لتضمينها، أو أضف مساراً مخصصاً ضمن نقطة تركيب المضيف. إلغاء تحديد كل شيء محجوب؛ استخدم إعادة تعيين التحديد للعودة إلى الافتراضي التلقائي لمجلد appdata.",
   "folders.appdataDefault": "appdata (افتراضي)",
   "folders.stackNote":
     "تنتمي هذه الحاوية إلى حزمة Compose ‏{stack}. يُنسخ مجلد المشروع مرة واحدة للحزمة كلها، لا مرة لكل خدمة، ولذلك لا يظهر هنا.",
@@ -609,7 +609,17 @@ const ar: Partial<Translations> = {
   "folders.save": "حفظ المجلدات",
   "folders.saved": "تم الحفظ",
   "folders.empty": "لم يتم العثور على مجلدات مربوطة لهذه الحاوية.",
-
+  "folders.treeLabel": "اختيار مجلدات النسخ الاحتياطي",
+  "folders.truncatedList": "أول 500 عنصر معروض",
+  "folders.retry": "حاول مجددًا",
+  "folders.emptySelectionBlocked": "يجب أن يبقى مجلد واحد محددًا على الأقل. لعدم نسخ هذا الحاوية احتياطيًا، أوقف تضمينها في الجدول الزمني. للعودة إلى الاكتشاف التلقائي، استخدم إعادة تعيين التحديد.",
+  "folders.previewPaths": "{n} مسارات",
+  "folders.exclusions": "{n} استثناءات",
+  "folders.resetSelection": "إعادة تعيين التحديد",
+  "folders.resetConfirm": "إعادة تعيين تحديد المجلدات؟ سيعود المحتوي إلى الاكتشاف التلقائي (افتراضي appdata) وستتم إزالة جميع الاستثناءات المتذكّرة وإعدادات مجلدات الكاش.",
+  "folders.narrowedNote": "يغطي التحديد الآن مجلدات أقل من قبل. بدءاً من النسخة الاحتياطية التالية، ستحتوي اللقطات على المجلدات المحددة فقط. اللقطات الحالية تبقى دون تغيير.",
+  "folders.cachedirToggle": "تخطي مجلدات الكاش (CACHEDIR.TAG)",
+  "folders.cachedirScope": "ينطبق على النسخة الاحتياطية الكاملة لهذه الحاوية، وليس على هذا المجلد فقط.",
   // Notifications
   "notify.title": "الإشعارات",
   "notify.hint": "احصل على إشعار عند انتهاء النسخ الاحتياطي، واختر أدناه الأحداث التي تُفعّله. تعمل إشعارات Unraid هنا في الوضع البسيط؛ مزيد من قنوات التسليم (Webhook وMatrix وHealthchecks والبريد الإلكتروني) تجدها ضمن الإعدادات المتقدمة.",
@@ -1178,7 +1188,14 @@ const ar: Partial<Translations> = {
   "files.cancel": "إلغاء",
   "files.addPreset": "إضافة قالب جاهز: تهيئة النظام",
   "files.addPresetHint": "نقطة بداية متحفظة لتهيئة النظام على مستوى المضيف خارج الحاويات، وليست ادعاءً بالاكتمال. راجع المجلد قبل الحفظ.",
-  "settings.filesEnabled": "المجلدات",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "اختيار المجلدات",
+  "files.foldersHint": "ضع علامة على المجلدات التي يغطيها هذا المجموعة. لاستبعاد مجلد فرعي، أزل علامته؛ الرقم يوضح كم مسارًا سيقدمه النسخ الاحتياطي التالي إلى restic.",
+  "files.emptySelectionBlocked": "يحتاج المجموعة إلى مجلد واحد على الأقل، لذا لا يمكن إزالة العلامة الأخيرة. استخدم حذف مجموعة المجلدات إذا لم تعد تريد هذه المجموعة.",
+  "files.pathChangeHint": "تغيير المجلد يمسح اختيار المجلدات الفرعية المعلّمة.",  "settings.filesEnabled": "المجلدات",
   "settings.filesEnabledHint": "نسخ مجلدات عشوائية تحت نقاط التحميل احتياطيًا، بشكل مستقل عن المجالات الأخرى.",
   "settings.filesPath": "مسار المجلدات",
   "jobs.filesSection": "المجلدات",
