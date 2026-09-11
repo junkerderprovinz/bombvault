@@ -18,7 +18,19 @@ name: Instant Repo-Watch Ping
 on:
   issues:
     types: [opened]
-  pull_request:
+  # pull_request_target statt pull_request: ein PR aus einem FORK bekommt keine
+  # Repository-Secrets, also laeuft `gh` unten ohne REPOWATCH_PAT und bricht mit
+  # Exit 4 ab - ein roter Haken an jedem fremden PR, und keine Meldung genau
+  # dann, wenn sie am wichtigsten ist. pull_request_target laeuft im Kontext
+  # DIESES Repos und bekommt das Secret.
+  #
+  # Sicher, weil dieser Job keinen Code auscheckt: er liest Ereignisfelder und
+  # ruft eine API. Die Felder reisen ausserdem ausnahmslos ueber
+  # Umgebungsvariablen statt ueber ${{ }}-Interpolation (siehe den Kommentar am
+  # run-Block), also gibt es keinen Weg, ueber den fremder Inhalt zur
+  # Ausfuehrung kaeme. Genau diese zwei Eigenschaften sind es, die
+  # pull_request_target hier zulaessig machen.
+  pull_request_target:
     types: [opened]
   issue_comment:
     types: [created]
