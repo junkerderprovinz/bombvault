@@ -1,7 +1,12 @@
-# GitHub Sponsors only. The other ways live in the README, as a row of all
-# three, and a second place holding the same links is a place where they go
-# stale.
+# GitHub Sponsors, plus one custom link.
+#
+# The Sponsor menu has no label field: GitHub prints a `custom` entry as the
+# bare URL, measured on syncthing/syncthing, whose menu reads
+# "https://syncthing.net/donations/". So the only place to say something is the
+# path, and docs/more-ways-to-support/ exists for exactly that - it is a
+# redirect to the donation page, not a second copy of it.
 #
 # The commented-out platforms from GitHub's template are deliberately gone: a
-# file full of services nobody uses hides the one line that matters.
+# file full of services nobody uses hides the lines that matter.
 github: [junkerderprovinz]
+custom: ["https://junkerderprovinz.github.io/junkerderprovinz/more-ways-to-support/"]
