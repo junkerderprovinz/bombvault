@@ -1342,7 +1342,14 @@ const id: Partial<Translations> = {
   "files.cancel": "Batal",
   "files.addPreset": "Tambah preset: Konfigurasi sistem host",
   "files.addPresetHint": "Titik awal yang konservatif untuk konfigurasi tingkat host di luar container Anda, bukan klaim kelengkapan. Tinjau folder sebelum menyimpan.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Pilih folder",
+  "files.foldersHint": "Centang folder yang dicakup set ini. Hapus centang pada subfolder untuk mengecualikannya; angkanya menunjukkan berapa banyak jalur yang akan diserahkan pencadangan berikutnya ke restic.",
+  "files.emptySelectionBlocked": "Set butuh setidaknya satu folder, jadi centang terakhir tidak bisa dihapus. Gunakan Hapus set jika kamu tidak ingin set ini lagi.",
+  "files.pathChangeHint": "Mengubah folder akan menghapus pilihan subfolder yang dicentang.",  // Files domain integration
   "settings.filesEnabled": "Folder",
   "settings.filesEnabledHint": "Cadangkan folder sembarang di bawah mount Anda sebagai set file, terlepas dari domain lain.",
   "settings.filesPath": "Jalur folder",

@@ -1174,7 +1174,14 @@ const th: Partial<Translations> = {
   "files.cancel": "ยกเลิก",
   "files.addPreset": "เพิ่มค่าตั้งไว้ล่วงหน้า: การกำหนดค่าระบบ",
   "files.addPresetHint": "จุดเริ่มต้นแบบระมัดระวังสำหรับการกำหนดค่าระดับโฮสต์นอกคอนเทนเนอร์ของคุณ ไม่ได้อ้างว่าครบถ้วนสมบูรณ์ ตรวจสอบโฟลเดอร์ก่อนบันทึก",
-  "settings.filesEnabled": "โฟลเดอร์",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "เลือกโฟลเดอร์",
+  "files.foldersHint": "ทำเครื่องหมายที่โฟลเดอร์ที่ชุดนี้ครอบคลุม ยกเลิกเครื่องหมายของโฟลเดอร์ย่อยเพื่อตัดออก ตัวเลขแสดงจำนวนพาธที่การสำรองข้อมูลครั้งถัดไปส่งให้ restic",
+  "files.emptySelectionBlocked": "ชุดต้องมีโฟลเดอร์อย่างน้อยหนึ่งโฟลเดอร์ จึงถอดเครื่องหมายสุดท้ายออกไม่ได้ หากไม่ต้องการชุดนี้อีกต่อไป ใช้นำชุดออก",
+  "files.pathChangeHint": "การเปลี่ยนโฟลเดอร์จะล้างการเลือกโฟลเดอร์ย่อยที่ทำเครื่องหมายไว้",  "settings.filesEnabled": "โฟลเดอร์",
   "settings.filesEnabledHint": "สำรองข้อมูลโฟลเดอร์ใดก็ได้ภายใต้จุดเมานต์ของคุณ แยกจากโดเมนอื่น",
   "settings.filesPath": "พาธโฟลเดอร์",
   "jobs.filesSection": "โฟลเดอร์",

@@ -1166,7 +1166,14 @@ const ru: Partial<Translations> = {
   "files.cancel": "Отмена",
   "files.addPreset": "Добавить пресет: Системная конфигурация",
   "files.addPresetHint": "Осторожная отправная точка для конфигурации на уровне хоста вне ваших контейнеров — не претендует на полноту. Проверьте папку перед сохранением.",
-  "settings.filesEnabled": "Папки",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Выбрать папки",
+  "files.foldersHint": "Отметьте папки, которые покрывает этот набор. Снимите отметку с подпапки, чтобы исключить её; число показывает, сколько путей следующее резервное копирование передаст restic.",
+  "files.emptySelectionBlocked": "У набора должна остаться хотя бы одна папка, поэтому последнюю отметку убрать нельзя. Используйте Удалить набор, если этот набор вам больше не нужен.",
+  "files.pathChangeHint": "При изменении папки выбор отмеченных подпапок сбрасывается.",  "settings.filesEnabled": "Папки",
   "settings.filesEnabledHint": "Резервное копирование произвольных папок в ваших точках монтирования, независимо от других доменов.",
   "settings.filesPath": "Путь к папкам",
   "jobs.filesSection": "Папки",

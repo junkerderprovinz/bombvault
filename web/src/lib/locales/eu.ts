@@ -1342,7 +1342,14 @@ const eu: Partial<Translations> = {
   "files.cancel": "Utzi",
   "files.addPreset": "Gehitu aurrezarpena: Ostalariaren sistema-konfigurazioa",
   "files.addPresetHint": "Zure edukiontzietatik kanpoko ostalari-mailako konfiguraziorako abiapuntu kontserbadore bat, ez osotasun-eskaera bat. Berrikusi karpeta gorde aurretik.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Aukeratu karpetak",
+  "files.foldersHint": "Markatu multzo honek hartzen dituen karpetak. Desmarkatu azpikarpeta bat kanpoan uzteko; zenbakiak erakusten du hurrengo babeskopiak restic-i zenbat bide emango dizkion.",
+  "files.emptySelectionBlocked": "Multzoak gutxienez karpeta bat behar du, beraz azken marka ezin da kendu. Erabili Kendu multzoa multzo hau jada nahi ez baduzu.",
+  "files.pathChangeHint": "Karpeta aldatzeak markatutako azpikarpeten hautapena garbitzen du.",  // Files domain integration
   "settings.filesEnabled": "Karpetak",
   "settings.filesEnabledHint": "Babestu zure muntaketen azpiko edozein karpeta fitxategi-multzo gisa, beste domeinuetatik independenteki.",
   "settings.filesPath": "Karpeten bidea",

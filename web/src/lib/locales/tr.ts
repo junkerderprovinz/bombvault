@@ -1171,7 +1171,14 @@ const tr: Partial<Translations> = {
   "files.cancel": "İptal",
   "files.addPreset": "Ön ayar ekle: Sistem yapılandırması",
   "files.addPresetHint": "Konteynerlerinizin dışındaki host düzeyi yapılandırma için temkinli bir başlangıç noktası. Eksiksizlik iddiası değildir. Kaydetmeden önce klasörü gözden geçirin.",
-  "settings.filesEnabled": "Klasörler",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Klasörleri seç",
+  "files.foldersHint": "Bu setin kapsadığı klasörleri işaretleyin. Bir alt klasörün işaretini kaldırarak onu hariç tutun; sayı, sonraki yedeklemenin restic'e vereceği yol sayısını gösterir.",
+  "files.emptySelectionBlocked": "Bir setin en az bir klasöre ihtiyacı vardır, bu yüzden son işaret kaldırılamaz. Bu seti artık istemiyorsanız Seti kaldır'ı kullanın.",
+  "files.pathChangeHint": "Klasörü değiştirmek, işaretlenen alt klasör seçimini temizler.",  "settings.filesEnabled": "Klasörler",
   "settings.filesEnabledHint": "Bağlama noktalarındaki rastgele klasörleri, diğer alanlardan bağımsız olarak yedekle.",
   "settings.filesPath": "Klasörler yolu",
   "jobs.filesSection": "Klasörler",

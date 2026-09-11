@@ -1342,7 +1342,14 @@ const lt: Partial<Translations> = {
   "files.cancel": "Atšaukti",
   "files.addPreset": "Pridėti išankstinį nustatymą: Pagrindinio kompiuterio sistemos konfigūracija",
   "files.addPresetHint": "Konservatyvus pradinis taškas pagrindinio kompiuterio lygio konfigūracijai už jūsų konteinerių ribų, ne teiginys apie išsamumą. Peržiūrėkite aplanką prieš išsaugant.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Pasirinkti aplankus",
+  "files.foldersHint": "Pažymėkite aplankus, kuriuos dengia šis rinkinys. Nuimkite poaplankio pažymėjimą, kad jo neįtrauktumėte; skaičius rodo, kiek maršrutų kita atsarginė kopija perduos restic.",
+  "files.emptySelectionBlocked": "Rinkiniui reikia bent vieno aplanko, todėl paskutinio pažymėjimo pašalinti negalima. Jei šio rinkinio jau nebereikia, naudokite Pašalinti rinkinį.",
+  "files.pathChangeHint": "Pakeitus aplanką, pažymėtų poaplankių žymėjimas išvalomas.",  // Files domain integration
   "settings.filesEnabled": "Aplankai",
   "settings.filesEnabledHint": "Kurkite savavališkų aplankų po jūsų prijungimais atsargines kopijas kaip failų rinkinius, nepriklausomai nuo kitų sričių.",
   "settings.filesPath": "Aplankų kelias",

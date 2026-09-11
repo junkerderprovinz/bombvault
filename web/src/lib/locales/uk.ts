@@ -1166,7 +1166,14 @@ const uk: Partial<Translations> = {
   "files.cancel": "Скасувати",
   "files.addPreset": "Додати пресет: Системна конфігурація",
   "files.addPresetHint": "Обережна відправна точка для конфігурації на рівні хоста поза вашими контейнерами — не претендує на повноту. Перевірте теку перед збереженням.",
-  "settings.filesEnabled": "Папки",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Вибрати папки",
+  "files.foldersHint": "Позначте папки, які охоплює цей набір. Зніміть позначку з підпапки, щоб виключити її; число показує, скільки шляхів наступне резервне копіювання передасть restic.",
+  "files.emptySelectionBlocked": "Набір потребує принаймні однієї папки, тож останню позначку прибрати не можна. Використовуйте Видалити набір, якщо цей набір вам більше не потрібен.",
+  "files.pathChangeHint": "Зміна папки скидає вибір позначених підпапок.",  "settings.filesEnabled": "Папки",
   "settings.filesEnabledHint": "Резервне копіювання довільних тек у ваших точках монтування, незалежно від інших доменів.",
   "settings.filesPath": "Шлях до папок",
   "jobs.filesSection": "Папки",

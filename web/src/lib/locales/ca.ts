@@ -1342,7 +1342,14 @@ const ca: Partial<Translations> = {
   "files.cancel": "Cancel·la",
   "files.addPreset": "Afegeix predefinit: Configuració del sistema de l'amfitrió",
   "files.addPresetHint": "Un punt de partida conservador per a la configuració a nivell d'amfitrió fora dels teus contenidors, no una pretensió de completesa. Revisa la carpeta abans de desar.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Tria les carpetes",
+  "files.foldersHint": "Marca les carpetes que cobreix aquest conjunt. Desmarca una subcarpeta per deixar-la fora; el nombre mostra quantes rutes lliurarà la propera còpia a restic.",
+  "files.emptySelectionBlocked": "Un conjunt necessita com a mínim una carpeta, per tant l'última marca no es pot treure. Usa Elimina el conjunt si ja no vols aquest conjunt.",
+  "files.pathChangeHint": "Canviar la carpeta esborra la selecció de subcarpetes marcades.",  // Files domain integration
   "settings.filesEnabled": "Carpetes",
   "settings.filesEnabledHint": "Fes còpia de carpetes arbitràries sota els teus muntatges com a conjunts de fitxers, independentment dels altres dominis.",
   "settings.filesPath": "Camí de carpetes",

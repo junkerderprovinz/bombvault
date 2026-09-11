@@ -1342,7 +1342,14 @@ const fa: Partial<Translations> = {
   "files.cancel": "انصراف",
   "files.addPreset": "افزودن پیش‌تنظیم: پیکربندی سیستم میزبان",
   "files.addPresetHint": "نقطه شروعی محافظه‌کارانه برای پیکربندی سطح میزبان خارج از کانتینرهای شما، ادعای کامل بودن ندارد. پیش از ذخیره، پوشه را بررسی کنید.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "انتخاب پوشه‌ها",
+  "files.foldersHint": "پوشه‌هایی را که این مجموعه پوشش می‌دهد علامت بزنید. برای کنار گذاشتن یک زیرپوشه، علامتش را بردارید؛ عدد نشان می‌دهد پشتیبان بعدی چند مسیر به restic می‌دهد.",
+  "files.emptySelectionBlocked": "هر مجموعه به دست‌کم یک پوشه نیاز دارد، پس آخرین علامت را نمی‌توان برداشت. اگر دیگر این مجموعه را نمی‌خواهید از حذف مجموعه استفاده کنید.",
+  "files.pathChangeHint": "تغییر پوشه، انتخاب زیرپوشه‌های علامت‌خورده را پاک می‌کند.",  // Files domain integration
   "settings.filesEnabled": "پوشه‌ها",
   "settings.filesEnabledHint": "از پوشه‌های دلخواه زیر اتصال‌های خود به‌صورت مجموعه فایل، مستقل از سایر حوزه‌ها پشتیبان بگیرید.",
   "settings.filesPath": "مسیر پوشه‌ها",

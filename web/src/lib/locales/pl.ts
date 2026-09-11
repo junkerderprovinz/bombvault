@@ -1166,7 +1166,14 @@ const pl: Partial<Translations> = {
   "files.cancel": "Anuluj",
   "files.addPreset": "Dodaj ustawienie: Konfiguracja systemu",
   "files.addPresetHint": "Ostrożny punkt wyjścia dla konfiguracji na poziomie hosta poza kontenerami, nie jest to gwarancja kompletności. Sprawdź folder przed zapisaniem.",
-  "settings.filesEnabled": "Foldery",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Wybierz foldery",
+  "files.foldersHint": "Zaznacz foldery, które ten zestaw ma obejmować. Odznacz podfolder, aby go pominąć; liczba pokazuje, ile ścieżek następna kopia przekaże resticowi.",
+  "files.emptySelectionBlocked": "Zestaw potrzebuje co najmniej jednego folderu, więc ostatniego zaznaczenia nie można usunąć. Skorzystaj z Usuń zestaw, jeśli nie chcesz już tego zestawu.",
+  "files.pathChangeHint": "Zmiana folderu czyści zaznaczenie podfolderów.",  "settings.filesEnabled": "Foldery",
   "settings.filesEnabledHint": "Kopia zapasowa dowolnych folderów w twoich punktach montowania, niezależnie od pozostałych domen.",
   "settings.filesPath": "Ścieżka folderów",
   "jobs.filesSection": "Foldery",

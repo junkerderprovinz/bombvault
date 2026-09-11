@@ -1169,7 +1169,14 @@ const cs: Partial<Translations> = {
   "files.cancel": "Zrušit",
   "files.addPreset": "Přidat předvolbu: Systémová konfigurace",
   "files.addPresetHint": "Konzervativní výchozí bod pro konfiguraci na úrovni hostitele mimo kontejnery. Nejde o tvrzení úplnosti. Před uložením zkontrolujte složku.",
-  "settings.filesEnabled": "Složky",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Zvolit složky",
+  "files.foldersHint": "Zaškrtněte složky, které má tato sada pokrývat. Odškrtnutím podsložky ji vynecháte; počet ukazuje, kolik cest předá další záloha resticu.",
+  "files.emptySelectionBlocked": "Sada potřebuje alespoň jednu složku, takže poslední zaškrtnutí nelze odebrat. Použijte Odebrat sadu, pokud už tuto sadu nechcete.",
+  "files.pathChangeHint": "Změna složky vymaže výběr zaškrtnutých podsložek.",  "settings.filesEnabled": "Složky",
   "settings.filesEnabledHint": "Zálohování libovolných složek pod tvými přípojnými body, nezávisle na ostatních doménách.",
   "settings.filesPath": "Cesta ke složkám",
   "jobs.filesSection": "Složky",

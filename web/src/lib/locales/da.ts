@@ -1171,7 +1171,14 @@ const da: Partial<Translations> = {
   "files.cancel": "Annuller",
   "files.addPreset": "Tilføj forudindstilling: Systemkonfiguration",
   "files.addPresetHint": "Et forsigtigt udgangspunkt for konfiguration på værtsniveau uden for dine containere, ikke en påstand om fuldstændighed. Gennemgå mappen før du gemmer.",
-  "settings.filesEnabled": "Mapper",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Vælg mapper",
+  "files.foldersHint": "Sæt flueben ved de mapper, dette sæt dækker. Fjern fluebenet i en undermappe for at lade den være ude; tallet viser, hvor mange stier den næste backup giver til restic.",
+  "files.emptySelectionBlocked": "Et sæt kræver mindst én mappe, så det sidste flueben kan ikke fjernes. Brug Fjern sæt, hvis du ikke vil have dette sæt længere.",
+  "files.pathChangeHint": "Ændrer du mappen, ryddes valget af de afkrydsede undermapper.",  "settings.filesEnabled": "Mapper",
   "settings.filesEnabledHint": "Sikkerhedskopiér vilkårlige mapper under dine mountpunkter, uafhængigt af de andre domæner.",
   "settings.filesPath": "Mapper-sti",
   "jobs.filesSection": "Mapper",

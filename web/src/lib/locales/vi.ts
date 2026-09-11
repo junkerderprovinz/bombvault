@@ -1163,7 +1163,14 @@ const vi: Partial<Translations> = {
   "files.cancel": "Hủy",
   "files.addPreset": "Thêm cấu hình sẵn: Cấu hình hệ thống",
   "files.addPresetHint": "Một điểm khởi đầu thận trọng cho cấu hình cấp máy chủ bên ngoài các container của bạn, không phải là tuyên bố về tính đầy đủ. Hãy xem lại thư mục trước khi lưu.",
-  "settings.filesEnabled": "Thư mục",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Chọn thư mục",
+  "files.foldersHint": "Đánh dấu các thư mục mà bộ này bao phủ. Bỏ đánh dấu một thư mục con để loại nó ra; con số cho biết bản sao lưu tiếp theo sẽ đưa bao nhiêu đường dẫn cho restic.",
+  "files.emptySelectionBlocked": "Bộ cần ít nhất một thư mục, nên không thể bỏ dấu tích cuối cùng. Dùng Gỡ bộ nếu bạn không còn muốn bộ này.",
+  "files.pathChangeHint": "Thay đổi thư mục sẽ xóa lựa chọn các thư mục con đã tích.",  "settings.filesEnabled": "Thư mục",
   "settings.filesEnabledHint": "Sao lưu các thư mục tùy ý dưới các điểm gắn kết của bạn, độc lập với các miền khác.",
   "settings.filesPath": "Đường dẫn thư mục",
   "jobs.filesSection": "Thư mục",

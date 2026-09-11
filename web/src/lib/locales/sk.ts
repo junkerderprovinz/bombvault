@@ -1342,7 +1342,14 @@ const sk: Partial<Translations> = {
   "files.cancel": "Zrušiť",
   "files.addPreset": "Pridať predvoľbu: Konfigurácia systému hostiteľa",
   "files.addPresetHint": "Konzervatívny východiskový bod pre konfiguráciu na úrovni hostiteľa mimo vašich kontajnerov, nie tvrdenie o úplnosti. Pred uložením skontrolujte priečinok.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Zvoliť priečinky",
+  "files.foldersHint": "Zaškrtnite priečinky, ktoré má táto sada zahŕňať. Odškrtnutím podpriečinka ho vynecháte; počet ukazuje, koľko ciest odovzdá ďalšia záloha resticu.",
+  "files.emptySelectionBlocked": "Sada potrebuje aspoň jeden priečinok, takže posledné zaškrtnutie nemožno odstrániť. Použite Odstrániť sadu, ak túto sadu už nechcete.",
+  "files.pathChangeHint": "Zmena priečinka vymaže výber zaškrtnutých podpriečinkov.",  // Files domain integration
   "settings.filesEnabled": "Priečinky",
   "settings.filesEnabledHint": "Zálohujte ľubovoľné priečinky pod vašimi pripojeniami ako sady súborov, nezávisle od ostatných domén.",
   "settings.filesPath": "Cesta priečinkov",

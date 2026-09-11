@@ -1171,7 +1171,14 @@ const sv: Partial<Translations> = {
   "files.cancel": "Avbryt",
   "files.addPreset": "Lägg till förinställning: Systemkonfiguration",
   "files.addPresetHint": "En försiktig utgångspunkt för konfiguration på värdnivå utanför dina containrar, inget anspråk på fullständighet. Granska mappen innan du sparar.",
-  "settings.filesEnabled": "Mappar",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Välj mappar",
+  "files.foldersHint": "Kryssa i de mappar som denna uppsättning täcker. Kryssa av en undermapp för att lämna den utanför; siffran visar hur många sökvägar nästa säkerhetskopiering lämnar till restic.",
+  "files.emptySelectionBlocked": "En uppsättning behöver minst en mapp, så den sista kryssan kan inte tas bort. Använd Ta bort uppsättning om du inte vill ha denna uppsättning längre.",
+  "files.pathChangeHint": "Ändrar du mappen rensas valet av ikryssade undermappar.",  "settings.filesEnabled": "Mappar",
   "settings.filesEnabledHint": "Säkerhetskopiera valfria mappar under dina monteringspunkter, oberoende av de andra domänerna.",
   "settings.filesPath": "Mappar-sökväg",
   "jobs.filesSection": "Mappar",

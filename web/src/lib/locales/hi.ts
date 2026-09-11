@@ -1342,7 +1342,14 @@ const hi: Partial<Translations> = {
   "files.cancel": "रद्द करें",
   "files.addPreset": "प्रीसेट जोड़ें: होस्ट सिस्टम कॉन्फ़िगरेशन",
   "files.addPresetHint": "आपके कंटेनरों के बाहर होस्ट-स्तर कॉन्फ़िगरेशन के लिए एक सतर्क शुरुआती बिंदु, पूर्णता का दावा नहीं। सहेजने से पहले फ़ोल्डर की समीक्षा करें।",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "फ़ोल्डर चुनें",
+  "files.foldersHint": "उन फ़ोल्डरों पर निशान लगाएँ जिन्हें यह सेट कवर करता है। किसी सबफ़ोल्डर का निशान हटाने पर वह छूट जाता है; संख्या दिखाती है कि अगला बैकअप restic को कितने पाथ देगा।",
+  "files.emptySelectionBlocked": "सेट में कम से कम एक फ़ोल्डर चाहिए, इसलिए आखिरी निशान नहीं हटाया जा सकता। अगर आप यह सेट नहीं रखना चाहते तो सेट हटाएँ का उपयोग करें।",
+  "files.pathChangeHint": "फ़ोल्डर बदलने पर चिह्नित सबफ़ोल्डर का चयन साफ़ हो जाता है।",  // Files domain integration
   "settings.filesEnabled": "फ़ोल्डर",
   "settings.filesEnabledHint": "अन्य डोमेन से स्वतंत्र रूप से, अपने माउंट के अंतर्गत मनमाने फ़ोल्डरों का बैकअप फ़ाइल सेट के रूप में लें।",
   "settings.filesPath": "फ़ोल्डर पथ",

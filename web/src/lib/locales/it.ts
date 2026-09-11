@@ -1171,7 +1171,14 @@ const it: Partial<Translations> = {
   "files.cancel": "Annulla",
   "files.addPreset": "Aggiungi preset: Configurazione di sistema",
   "files.addPresetHint": "Un punto di partenza prudente per la configurazione a livello host al di fuori dei container, non è una garanzia di completezza. Controlla la cartella prima di salvare.",
-  "settings.filesEnabled": "Cartelle",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Scegli le cartelle",
+  "files.foldersHint": "Spunta le cartelle che questo set copre. Togli la spunta a una sottocartella per escluderla; il numero indica quanti percorsi il prossimo backup passerà a restic.",
+  "files.emptySelectionBlocked": "Un set richiede almeno una cartella, quindi l'ultima spunta non può essere tolta. Usa Rimuovi set se non vuoi più questo set.",
+  "files.pathChangeHint": "Cambiare la cartella cancella la selezione delle sottocartelle spuntate.",  "settings.filesEnabled": "Cartelle",
   "settings.filesEnabledHint": "Backup di cartelle arbitrarie sotto i tuoi mount, indipendente dagli altri domini.",
   "settings.filesPath": "Percorso delle cartelle",
   "jobs.filesSection": "Cartelle",

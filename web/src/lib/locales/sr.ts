@@ -1327,7 +1327,14 @@ const sr: Partial<Translations> = {
   "files.cancel": "Откажи",
   "files.addPreset": "Додај претподешавање: Конфигурација система хоста",
   "files.addPresetHint": "Опрезна почетна тачка за конфигурацију на нивоу хоста ван твојих контејнера — не тврди да је потпуна. Прегледај фасциклу пре чувања.",
-  "settings.filesEnabled": "Фасцикле",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Избор фасцикли",
+  "files.foldersHint": "Означи фасцикле које овај скуп покрива. Уклони ознаку са подфасцикле да би је искључио; број показује колико путања следећа резервна копија предаје restic-у.",
+  "files.emptySelectionBlocked": "Скупу је потребна најмање једна фасцикла, па последњу ознаку није могуће уклонити. Користи Уклони скуп ако ти више не треба овај скуп.",
+  "files.pathChangeHint": "Промена фасцикле брише избор означених подфасцикли.",  "settings.filesEnabled": "Фасцикле",
   "settings.filesEnabledHint": "Прави резервну копију произвољних фасцикли под својим тачкама монтирања као скупова датотека, независно од других домена.",
   "settings.filesPath": "Путања за фасцикле",
   "jobs.filesSection": "Фасцикле",
