@@ -39,3 +39,9 @@ web/dist/*
 .DS_Store
 Thumbs.db
 *conflicted copy*
+
+# Assistant scratch files never belong in a public repo (jdp, standing rule:
+# no reference to any assistant, anywhere). The repo guide that used to live
+# in CLAUDE.md is in the project vault note instead.
+CLAUDE.md
+.claude/
