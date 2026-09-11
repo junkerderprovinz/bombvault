@@ -1,13 +1,7 @@
-# The three ways the README offers, so GitHub's own Sponsor button offers the
-# same ones. The placeholder platforms that ship with GitHub's template are
-# gone: a file of commented-out services nobody uses hides the two lines that
-# matter.
+# GitHub Sponsors only. The other ways live in the README, as a row of all
+# three, and a second place holding the same links is a place where they go
+# stale.
 #
-# `custom` takes up to four links and is where anything without its own field
-# goes. PayPal has no field, and the crypto addresses live on a page rather
-# than in a list, so both ride here.
+# The commented-out platforms from GitHub's template are deliberately gone: a
+# file full of services nobody uses hides the one line that matters.
 github: [junkerderprovinz]
-buy_me_a_coffee: junkerderprovinz
-custom:
-  - https://paypal.me/hallelujadesign
-  - https://junkerderprovinz.github.io/junkerderprovinz/
