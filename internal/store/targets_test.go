@@ -1,6 +1,8 @@
 package store_test
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -92,6 +94,90 @@ func TestSetExcludesRoundTripAndUpsertPreserves(t *testing.T) {
 	got, _ = r.GetTargetByContainer("plex")
 	if len(got.Excludes) != 0 {
 		t.Fatalf("excludes should be cleared, got %v", got.Excludes)
+	}
+}
+
+// TestSetExcludeCachesRoundTripAndUpsertPreserves mirrors the excludes lifecycle
+// for the per-root CACHEDIR.TAG toggle (RESTIC-01, D-07): a root-to-bool JSON map
+// on the targets row, owned by SetExcludeCaches and never reset by Upsert.
+func TestSetExcludeCachesRoundTripAndUpsertPreserves(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// SetExcludeCaches creates the target row when none exists yet.
+	m := map[string]bool{"/host/user/user/appdata/plex": true, "/host/user/user/appdata/plex/custom": false}
+	if err := r.SetExcludeCaches("plex", m); err != nil {
+		t.Fatalf("SetExcludeCaches: %v", err)
+	}
+	got, err := r.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got.ExcludeCaches, m) {
+		t.Fatalf("exclude caches not stored: %v", got.ExcludeCaches)
+	}
+
+	// A subsequent backup-time UpsertTarget (which sets AppdataPaths/Definition)
+	// must NOT clobber the user's per-root toggles (the ON CONFLICT omission).
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = r.GetTargetByContainer("plex")
+	if !reflect.DeepEqual(got.ExcludeCaches, m) {
+		t.Fatalf("Upsert clobbered exclude caches: %v", got.ExcludeCaches)
+	}
+
+	// A row created before the column existed (a pre-v100 deployment) carries the
+	// schema default '{}' and must scan as an empty map without error.
+	if _, err := db.Exec(`INSERT INTO targets (id, container_name, appdata_paths, created_at) VALUES ('legacy', 'legacyrow', '[]', 1)`); err != nil {
+		t.Fatal(err)
+	}
+	legacy, err := r.GetTargetByContainer("legacyrow")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(legacy.ExcludeCaches) != 0 {
+		t.Fatalf("never-set column should scan empty, got %v", legacy.ExcludeCaches)
+	}
+
+	// Re-setting the same logical map stores byte-identical JSON: encoding/json
+	// sorts map keys, so the stored column is deterministic regardless of the
+	// order the caller built the map in (idempotent whole-map replace).
+	again := map[string]bool{"/host/user/user/appdata/plex/custom": false, "/host/user/user/appdata/plex": true}
+	if err := r.SetExcludeCaches("plex", again); err != nil {
+		t.Fatalf("SetExcludeCaches again: %v", err)
+	}
+	wantJSON, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var raw1, raw2 string
+	if err := db.QueryRow(`SELECT exclude_caches FROM targets WHERE container_name = 'plex'`).Scan(&raw1); err != nil {
+		t.Fatal(err)
+	}
+	if raw1 != string(wantJSON) {
+		t.Fatalf("stored JSON %q, want %q", raw1, wantJSON)
+	}
+	if err := r.SetExcludeCaches("plex", again); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`SELECT exclude_caches FROM targets WHERE container_name = 'plex'`).Scan(&raw2); err != nil {
+		t.Fatal(err)
+	}
+	if raw1 != raw2 {
+		t.Fatalf("re-setting the same map changed the stored JSON: %q vs %q", raw1, raw2)
+	}
+
+	// An empty (or nil) map clears every root toggle.
+	if err := r.SetExcludeCaches("plex", nil); err != nil {
+		t.Fatalf("SetExcludeCaches nil: %v", err)
+	}
+	got, _ = r.GetTargetByContainer("plex")
+	if len(got.ExcludeCaches) != 0 {
+		t.Fatalf("exclude caches should be cleared, got %v", got.ExcludeCaches)
 	}
 }
 

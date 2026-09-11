@@ -99,6 +99,19 @@ type Mode struct {
 	// local-primary and unconfigured-remote-primary backup is byte-identical to
 	// before this field existed.
 	Limits Limits
+	// ExcludeCaches, when true, adds --exclude-caches to BackupArgs, so restic
+	// skips directories carrying a CACHEDIR.TAG from this item's snapshots
+	// (RESTIC-01). It is the ITEM-LEVEL UNION of the per-root exclude-caches
+	// toggles stored on the target (D-06): the service compiles "any root
+	// enabled" into this single boolean at backup time, because restic's flag is
+	// positional-source-wide, not per-path. It travels on Mode for the same
+	// reason as Limits (above): Mode is already threaded through every Backup
+	// call site via the per-domain adapters, and a new positional parameter would
+	// widen the backup.Restic interface and every fake in internal/backup. The
+	// flag itself is a constant — no user-controlled string reaches argv through
+	// this knob — and the zero value is a no-op, so argv stays byte-identical
+	// for every item with no root enabled.
+	ExcludeCaches bool
 }
 
 // AllowedStorageClasses is the whitelist of S3 storage classes BombVault will emit
@@ -374,6 +387,15 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...
 	args = append(args, "--host", backupHost)
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
+	}
+	// --exclude-caches is a backup-SUBCOMMAND flag: it must stay right of the
+	// verb and left of the -- separator (restic rejects subcommand flags placed
+	// in the global slot before the verb — argv discipline, Phase 3 research
+	// Pitfall 4). Emitted as the bare constant for the item-level union of the
+	// per-root CACHEDIR.TAG toggles (RESTIC-01, D-06); no user-controlled string
+	// reaches argv here, and the zero value emits nothing.
+	if m.ExcludeCaches {
+		args = append(args, "--exclude-caches")
 	}
 	for _, ex := range excludes {
 		args = append(args, "--exclude", ex)

@@ -729,7 +729,7 @@ export const en = {
   "hooks.pre": "Pre-backup command",
   "hooks.post": "Post-backup command",
   "folders.title": "Backup folders",
-  "folders.hint": "Choose which of this container's mapped folders to back up. The appdata folder is selected by default. Tick others to include them, or add a custom path under the host mount. Unticking everything reverts to the automatic appdata default.",
+  "folders.hint": "Choose which of this container's mapped folders to back up. The appdata folder is selected by default. Tick others to include them, or add a custom path under the host mount. Unticking everything is blocked; use Reset selection to return to the automatic appdata default.",
   "folders.appdataDefault": "appdata (default)",
   "folders.stackNote":
     "This container belongs to the Compose stack {stack}. Its project folder is backed up once for the whole stack, not once per service, so it is not listed here.",
@@ -741,6 +741,45 @@ export const en = {
   "folders.save": "Save folders",
   "folders.saved": "Saved",
   "folders.empty": "No mapped folders found for this container.",
+  // Selection tree (Phase 2) — aria-label on the role="tree" element.
+  "folders.treeLabel": "Backup folder selection",
+  // Truncated listing notice (D-06): the server caps listings at 500 entries.
+  "folders.truncatedList": "First 500 entries shown",
+  // Retry affordance on a node whose listing could not be read (TREE-06).
+  "folders.retry": "Try again",
+  // D-04 empty-selection guard: the inline line under a blocked toggle.
+  // Phase 3 plan 03: the reset is now the named exit to auto-detection, so
+  // the line teaches it instead of implying unticking everything reverts.
+  "folders.emptySelectionBlocked":
+    "At least one folder must stay selected. To back up none of this container, turn off Include in schedule. To return to automatic detection, use Reset selection.",
+  // Phase 3 (D-01): per-root effective-selection preview; {n} = stored
+  // maximal includes at-or-under the root. Invariant {n} key, no plural
+  // fork (stack.members precedent).
+  "folders.previewPaths": "{n} paths",
+  // Phase 3 (D-03/D-04): per-root reviewable-exclusions disclosure label;
+  // {n} = stored exclusions strictly under the root (dormant included).
+  "folders.exclusions": "{n} exclusions",
+  // Phase 3 plan 03 (D-05, INTEG-04): the reset control and its fail-tone
+  // confirm. The confirm message names every consequence (auto-detection
+  // returns, remembered exclusions are removed, and the per-root cache-folder
+  // settings go with them — review WR-04 made the reset body clear the
+  // CACHEDIR map, so the copy must promise exactly that) — the dialog carries
+  // the destructive weight, the trigger stays neutral.
+  "folders.resetSelection": "Reset selection",
+  "folders.resetConfirm":
+    "Reset the folder selection? The container returns to automatic detection (appdata default) and all remembered exclusions and cache-folder settings are removed.",
+  // Phase 3 plan 03 (D-02, SELECT-03): the narrowing note — event-driven
+  // (attempted < last-saved includes, gated on a prior backup), transient
+  // for the editor session. The message scopes the change to FUTURE
+  // snapshots explicitly; existing snapshots are named as unchanged.
+  "folders.narrowedNote":
+    "The selection now covers fewer folders than before. From the next backup on, snapshots will contain only the selected folders. Existing snapshots are unchanged.",
+  // Phase 3 plan 03 Task 2 (D-06, RESTIC-01): the per-root CACHEDIR.TAG
+  // switch. The scope line is the honest disclosure — the flag compiles into
+  // the backup argv for the WHOLE container, so a per-folder reading would
+  // over-promise what the switch does.
+  "folders.cachedirToggle": "Skip cache folders (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Applies to the entire backup of this container, not only this folder.",
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -2450,7 +2489,7 @@ export const de: Translations = {
   "hooks.pre": "Pre-Backup-Befehl",
   "hooks.post": "Post-Backup-Befehl",
   "folders.title": "Gesicherte Ordner",
-  "folders.hint": "Wähle, welche gemappten Ordner dieses Containers gesichert werden. Der appdata-Ordner ist standardmäßig ausgewählt. Hake weitere an, um sie einzuschließen, oder füge einen eigenen Pfad unterhalb des Host-Mounts hinzu. Hakst du alles ab, gilt wieder die automatische appdata-Erkennung.",
+  "folders.hint": "Wähle, welche gemappten Ordner dieses Containers gesichert werden. Der appdata-Ordner ist standardmäßig ausgewählt. Hake weitere an, um sie einzuschließen, oder füge einen eigenen Pfad unterhalb des Host-Mounts hinzu. Einen Haken überall zu entfernen ist blockiert; nutze Auswahl zurücksetzen, um zum automatischen appdata-Standard zurückzukehren.",
   "folders.appdataDefault": "appdata (Standard)",
   "folders.stackNote":
     "Dieser Container gehört zum Compose-Stack {stack}. Sein Projektordner wird einmal für den ganzen Stack gesichert, nicht einmal je Dienst, und steht deshalb nicht in dieser Liste.",
@@ -2462,6 +2501,20 @@ export const de: Translations = {
   "folders.save": "Ordner speichern",
   "folders.saved": "Gespeichert",
   "folders.empty": "Keine gemappten Ordner für diesen Container gefunden.",
+  "folders.treeLabel": "Auswahl der Sicherungsordner",
+  "folders.truncatedList": "Erste 500 Einträge angezeigt",
+  "folders.retry": "Erneut versuchen",
+  "folders.emptySelectionBlocked":
+    "Mindestens ein Ordner muss ausgewählt bleiben. Um nichts von diesem Container zu sichern, deaktiviere die Zeitplan-Einbindung. Um zur automatischen Erkennung zurückzukehren, nutze Auswahl zurücksetzen.",
+  "folders.previewPaths": "{n} Pfade",
+  "folders.exclusions": "{n} Ausschlüsse",
+  "folders.resetSelection": "Auswahl zurücksetzen",
+  "folders.resetConfirm":
+    "Ordnerauswahl zurücksetzen? Der Container kehrt zur automatischen Erkennung zurück (appdata-Standard), und alle gemerkten Ausschlüsse und Cache-Ordner-Einstellungen werden entfernt.",
+  "folders.narrowedNote":
+    "Die Auswahl umfasst jetzt weniger Ordner als zuvor. Ab der nächsten Sicherung enthalten Snapshots nur noch die ausgewählten Ordner. Bestehende Snapshots bleiben unverändert.",
+  "folders.cachedirToggle": "Cache-Ordner überspringen (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Gilt für die gesamte Sicherung dieses Containers, nicht nur für diesen Ordner.",
   "stophook.title": "Andere Container stoppen",
   "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",

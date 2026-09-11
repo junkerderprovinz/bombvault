@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -412,6 +413,147 @@ func TestPatchExcludesAndPreview(t *testing.T) {
 	first, _ := preview[0].(map[string]any)
 	if first["raw"] != "/config/Cache" || first["status"] == nil {
 		t.Fatalf("unexpected first preview entry: %v", preview[0])
+	}
+}
+
+// excludeCachesRouterHarness builds a router whose HostSourceRoot=/mnt sits on a
+// temp HostMountRoot (split-root translation, mirroring TestEmptySelectionGuard)
+// with a "plex" container carrying one bind mount, so exclude-caches PATCH keys
+// (host paths) can be validated against the mount exactly like backupPaths.
+func excludeCachesRouterHarness(t *testing.T) (http.Handler, *store.Repo) {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+	return h, st
+}
+
+// TestPatchContainerExcludeCaches pins the RESTIC-01 write side: the PATCH
+// excludeCaches field persists a root-to-bool map on the target, rejects a map
+// whose keys fall outside the host mount ATOMICALLY (whole save refused, nothing
+// partially written), lets decodeBody reject non-boolean values, and leaves the
+// stored column untouched when the key is absent (nil = untouched, like the
+// sibling pointer fields).
+func TestPatchContainerExcludeCaches(t *testing.T) {
+	patch := func(t *testing.T, h http.Handler, body string) map[string]any {
+		t.Helper()
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", body)
+		return m
+	}
+	storedMap := func(t *testing.T, st *store.Repo) map[string]bool {
+		t.Helper()
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tg.ExcludeCaches
+	}
+
+	t.Run("valid host-path keys persist as the stored map", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true,"/mnt/user/appdata/plex/custom":false}}`)
+		if m["ok"] != true {
+			t.Fatalf("patch must succeed, got %v", m)
+		}
+		want := map[string]bool{"/mnt/user/appdata/plex": true, "/mnt/user/appdata/plex/custom": false}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, want) {
+			t.Fatalf("stored excludeCaches = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("a key outside the host mount rejects the whole save atomically", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		if m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true}}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		before := storedMap(t, st)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true,"/elsewhere/evil":true}}`)
+		if m["ok"] == true {
+			t.Fatal("a key not under the host mount must fail the whole save")
+		}
+		if m["error"] == nil || m["error"] == "" {
+			t.Fatalf("the refusal must carry a scrubbed error, got %v", m)
+		}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, before) {
+			t.Fatalf("a rejected save must not partially write: got %v, want %v", got, before)
+		}
+	})
+
+	t.Run("a non-boolean value is rejected at decode", func(t *testing.T) {
+		h, _ := excludeCachesRouterHarness(t)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":"yes"}}`)
+		if m["ok"] == true {
+			t.Fatal("a string value must fail the map[string]bool decode in decodeBody")
+		}
+	})
+
+	t.Run("an absent key leaves the stored column untouched", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		if m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true}}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		before := storedMap(t, st)
+		// A sibling-field PATCH that omits excludeCaches entirely.
+		m := patch(t, h, `{"excludes":[".git"]}`)
+		if m["ok"] != true {
+			t.Fatalf("sibling patch must succeed, got %v", m)
+		}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, before) {
+			t.Fatalf("absent key must leave the column untouched: got %v, want %v", got, before)
+		}
+	})
+}
+
+// TestContainerMountsExcludeCaches pins the RESTIC-01 read side: the mounts
+// response always carries excludeCaches as a JSON OBJECT ({} when never set, so
+// the SPA can read it unconditionally) and serves back the identical stored map
+// once set.
+func TestContainerMountsExcludeCaches(t *testing.T) {
+	h, st := excludeCachesRouterHarness(t)
+
+	// Never set: {} on the wire, never null.
+	_, m := doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+	if m["ok"] != true {
+		t.Fatalf("mounts must succeed, got %v", m)
+	}
+	ec, ok := m["excludeCaches"].(map[string]any)
+	if !ok {
+		t.Fatalf("excludeCaches must be a JSON object when unset, got %T (%v)", m["excludeCaches"], m["excludeCaches"])
+	}
+	if len(ec) != 0 {
+		t.Fatalf("excludeCaches must be empty when never set, got %v", ec)
+	}
+
+	// Set: the identical map serves back under the same key.
+	if _, pm := doJSON(t, h, http.MethodPatch, "/api/containers/plex",
+		`{"excludeCaches":{"/mnt/user/appdata/plex":true,"/mnt/user/appdata/plex/custom":false}}`); pm["ok"] != true {
+		t.Fatalf("seed patch must succeed, got %v", pm)
+	}
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tg.ExcludeCaches) != 2 {
+		t.Fatalf("seed must have stored the map, got %v", tg.ExcludeCaches)
+	}
+	_, m = doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+	ec, ok = m["excludeCaches"].(map[string]any)
+	if !ok || len(ec) != 2 || ec["/mnt/user/appdata/plex"] != true || ec["/mnt/user/appdata/plex/custom"] != false {
+		t.Fatalf("excludeCaches on the wire = %v (%T), want the identical stored map", m["excludeCaches"], m["excludeCaches"])
 	}
 }
 
@@ -2266,4 +2408,287 @@ func TestReleaseNotesHandler(t *testing.T) {
 	if m["ok"] != true || m["version"] != "v6.1.0" {
 		t.Fatalf("default-to-running-version result = %v", m)
 	}
+}
+
+// TestMountsExcluded pins the mounts endpoint's exclusions contract (the read
+// side of INTEG-04): stored "!-prefixed entries render in a top-level excluded
+// array in HOST form and never leak into custom as stale Exists:false phantom
+// paths (01-RESEARCH.md Pitfall 3 — the interim window recorded by plan 01-01),
+// MountInfo.Selected keeps its include-only semantics, and an include-only
+// save's response is unchanged apart from the additive empty (never null)
+// excluded field.
+func TestMountsExcluded(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	hostPlex := "/mnt/user/appdata/plex"
+	patch := func(paths []string) map[string]any {
+		t.Helper()
+		b, err := json.Marshal(map[string]any{"backupPaths": paths})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", string(b))
+		return m
+	}
+	getMounts := func() map[string]any {
+		t.Helper()
+		_, m := doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+		if m["ok"] != true {
+			t.Fatalf("mounts list must succeed, got %v", m)
+		}
+		return m
+	}
+	mountByDest := func(m map[string]any, dest string) map[string]any {
+		t.Helper()
+		ms, _ := m["mounts"].([]any)
+		for _, e := range ms {
+			if mm, ok := e.(map[string]any); ok && mm["dest"] == dest {
+				return mm
+			}
+		}
+		t.Fatalf("no mount with dest %q in %+v", dest, m)
+		return nil
+	}
+	customPaths := func(m map[string]any) []string {
+		t.Helper()
+		cs, _ := m["custom"].([]any)
+		out := make([]string, 0, len(cs))
+		for _, e := range cs {
+			if cm, ok := e.(map[string]any); ok {
+				out = append(out, fmt.Sprint(cm["path"]))
+			}
+		}
+		return out
+	}
+
+	// Mixed save: the root is a selected mount, the branch is a first-class
+	// excluded entry (host form), and neither shows up as a custom path.
+	if m := patch([]string{hostPlex, "!" + hostPlex + "/transcoding"}); m["ok"] != true {
+		t.Fatalf("mixed save must succeed: %v", m)
+	}
+	m := getMounts()
+	if got := mountByDest(m, "/config")["selected"]; got != true {
+		t.Fatalf("included root must select its mount, got %v", got)
+	}
+	excluded, ok := m["excluded"].([]any)
+	if !ok {
+		t.Fatalf("excluded must be a JSON array, got %T (%v)", m["excluded"], m)
+	}
+	if len(excluded) != 1 || excluded[0] != hostPlex+"/transcoding" {
+		t.Fatalf("excluded = %v, want [%s] in HOST form", excluded, hostPlex+"/transcoding")
+	}
+	for _, cp := range customPaths(m) {
+		if strings.Contains(cp, "transcoding") {
+			t.Fatalf("an exclusion must never render as a custom path, got %q", cp)
+		}
+	}
+
+	// Exclusions-only save (the deselected branch is the mount root itself, the
+	// strongest discriminator: a raw-list selSet would wrongly match the
+	// mount): the entry shows up in excluded, the mount is NOT selected
+	// (Selected is computed from includes only), and no Exists:false phantom
+	// custom path is fabricated.
+	if m := patch([]string{"!" + hostPlex}); m["ok"] != true {
+		t.Fatalf("exclusions-only save must succeed: %v", m)
+	}
+	m = getMounts()
+	excluded, ok = m["excluded"].([]any)
+	if !ok || len(excluded) != 1 || excluded[0] != hostPlex {
+		t.Fatalf("excluded = %v (%T), want [%s]", m["excluded"], m["excluded"], hostPlex)
+	}
+	if got := mountByDest(m, "/config")["selected"]; got == true {
+		t.Fatal("an exclusion must never mark a mount selected")
+	}
+	if cps := customPaths(m); len(cps) != 0 {
+		t.Fatalf("exclusions-only save must fabricate no custom paths, got %v", cps)
+	}
+
+	// Include-only save: today's behavior byte-for-byte apart from the additive
+	// excluded field, which is an empty ARRAY, never null.
+	if m := patch([]string{hostPlex}); m["ok"] != true {
+		t.Fatalf("include-only save must succeed: %v", m)
+	}
+	m = getMounts()
+	excluded, ok = m["excluded"].([]any)
+	if !ok {
+		t.Fatalf("excluded must be an empty array, not null: %T (%v)", m["excluded"], m)
+	}
+	if len(excluded) != 0 {
+		t.Fatalf("excluded = %v, want empty", excluded)
+	}
+	if got := mountByDest(m, "/config")["selected"]; got != true {
+		t.Fatalf("include-only behavior must be unchanged, selected = %v", got)
+	}
+	if cps := customPaths(m); len(cps) != 0 {
+		t.Fatalf("include-only save must fabricate no custom paths, got %v", cps)
+	}
+}
+
+// TestEmptySelectionGuard pins the PATCH boundary's empty-selection guard
+// (the write side of INTEG-04): a tree-sourced save that normalizes to NOTHING
+// is refused with a machine-routable code when a non-empty selection is stored
+// to protect — a bare [] silently re-enables automatic appdata detection, the
+// exact surprise deselect-all must never produce (threat T-01-13). Strictly
+// source-gated per RESEARCH Open Question 2: legacy clients (no
+// selectionSource) and unknown source values keep today's clears-to-auto
+// behavior byte-for-byte, an exclusions-only save IS the explicitly-deselected
+// state and passes (D-03), and a fresh container has nothing to protect.
+func TestEmptySelectionGuard(t *testing.T) {
+	// harness builds a router whose HostSourceRoot=/mnt sits on a temp
+	// HostMountRoot (split-root translation), mirroring
+	// TestServiceContainerMountsAndSelection.
+	harness := func(t *testing.T) (http.Handler, *store.Repo, string) {
+		t.Helper()
+		dir := t.TempDir()
+		root := filepath.ToSlash(dir)
+		cfg := config.Config{
+			AppKey: strings.Repeat("a", 64), DataDir: dir,
+			HostMountRoot: root, HostSourceRoot: "/mnt",
+		}
+		st := newMemStore(t)
+		mustSettings(t, st)
+		d := &fakeServiceDocker{}
+		svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+		sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+		h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+		return h, st, root
+	}
+	patch := func(t *testing.T, h http.Handler, name string, body map[string]any) map[string]any {
+		t.Helper()
+		b, err := json.Marshal(body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/"+name, string(b))
+		return m
+	}
+	// preSave stores a non-empty explicit selection and asserts it landed.
+	preSave := func(t *testing.T, h http.Handler, st *store.Repo, root string) {
+		t.Helper()
+		if m := patch(t, h, "plex", map[string]any{"backupPaths": []string{"/mnt/user/appdata/plex"}}); m["ok"] != true {
+			t.Fatalf("prior save must succeed: %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := []string{root + "/user/appdata/plex"}; !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("prior selection = %v, want %v", tg.SelectedPaths, want)
+		}
+	}
+
+	t.Run("tree-source empty list over a non-empty selection is refused", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		m := patch(t, h, "plex", map[string]any{"backupPaths": []string{}, "selectionSource": "tree"})
+		if m["ok"] != false {
+			t.Fatalf("tree-source deselect-everything must be refused, got %v", m)
+		}
+		if m["code"] != "empty-selection" {
+			t.Fatalf("code = %v, want empty-selection (machine-routable)", m["code"])
+		}
+		if errMsg, _ := m["error"].(string); errMsg == "" {
+			t.Fatalf("refusal must carry a scrubbed error message, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := []string{root + "/user/appdata/plex"}; !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("stored selection must be untouched after a refusal, got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("legacy empty list still clears to auto-detection", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// No selectionSource field at all — the legacy client shape.
+		m := patch(t, h, "plex", map[string]any{"backupPaths": []string{}})
+		if m["ok"] != true {
+			t.Fatalf("legacy empty list must clear byte-for-byte as today, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("legacy empty list must persist [] (auto-detect), got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("exclusions-only tree save is accepted", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// An exclusions-only result is non-empty: it IS the explicitly
+		// deselected state (D-03), never refused — even from the tree source.
+		m := patch(t, h, "plex", map[string]any{
+			"backupPaths":     []string{"!/mnt/user/appdata/plex/transcoding"},
+			"selectionSource": "tree",
+		})
+		if m["ok"] != true {
+			t.Fatalf("exclusions-only save must succeed, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"!" + root + "/user/appdata/plex/transcoding"}
+		if !reflect.DeepEqual(tg.SelectedPaths, want) {
+			t.Fatalf("stored selection = %v, want %v", tg.SelectedPaths, want)
+		}
+	})
+
+	t.Run("unknown selectionSource is ignored", func(t *testing.T) {
+		h, st, root := harness(t)
+		preSave(t, h, st, root)
+		// Only the literal "tree" carries meaning; any other value is treated
+		// as absent, so no source value can fail a save (T-01-14).
+		m := patch(t, h, "plex", map[string]any{
+			"backupPaths":     []string{},
+			"selectionSource": "future-client-value",
+		})
+		if m["ok"] != true {
+			t.Fatalf("unknown source must behave exactly as absent, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("unknown-source empty list must clear to auto-detect, got %v", tg.SelectedPaths)
+		}
+	})
+
+	t.Run("fresh container has nothing to protect", func(t *testing.T) {
+		h, st, _ := harness(t)
+		// No prior selection exists: a tree-source empty list is a no-op save,
+		// not a destructive deselect, so it must succeed.
+		m := patch(t, h, "fresh", map[string]any{"backupPaths": []string{}, "selectionSource": "tree"})
+		if m["ok"] != true {
+			t.Fatalf("fresh container tree-source empty list must succeed, got %v", m)
+		}
+		tg, err := st.GetTargetByContainer("fresh")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(tg.SelectedPaths) != 0 {
+			t.Fatalf("stored selection = %v, want empty", tg.SelectedPaths)
+		}
+	})
 }

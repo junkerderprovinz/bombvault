@@ -1135,3 +1135,34 @@ func TestRestoreGuardSentinels(t *testing.T) {
 		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
 	}
 }
+
+// TestRestoreDepsSkippedPathsEmptyIsByteIdentical pins the RESTORE-01
+// zero-value contract (same pattern as the TestRunTagEmptyIsByteIdentical
+// family in vm_orchestrator_test.go): a restore whose SkippedPaths is empty —
+// nil OR non-nil-empty, both "nothing was skipped" forms — records exactly the
+// pre-feature run log, with NO note suffix on the success Finish. Every
+// cleanly-mapping restore (the overwhelmingly common case) must stay
+// byte-identical to before the field existed, and its runs.error column must
+// remain untouched.
+func TestRestoreDepsSkippedPathsEmptyIsByteIdentical(t *testing.T) {
+	run := func(skipped []string) []string {
+		d := &fakeDocker{liveName: "/plex"}
+		r := &fakeRestic{}
+		runs := &fakeRuns{}
+		deps := restoreDeps(d, r, &fakeTemplates{}, runs)
+		deps.SkippedPaths = skipped
+		if err := backup.RestoreContainer(t.Context(), deps); err != nil {
+			t.Fatalf("restore with SkippedPaths=%#v: %v", skipped, err)
+		}
+		return runs.log
+	}
+	nilLog := run(nil)
+	emptyLog := run([]string{})
+	if strings.Join(nilLog, "|") != strings.Join(emptyLog, "|") {
+		t.Fatalf("nil vs empty SkippedPaths produce different run logs:\nnil:   %v\nempty: %v", nilLog, emptyLog)
+	}
+	want := "runFinish:run-1:success"
+	if got := nilLog[len(nilLog)-1]; got != want {
+		t.Fatalf("final run log entry = %q, want exactly %q (no note suffix — byte-identical to pre-SkippedPaths behavior)", got, want)
+	}
+}

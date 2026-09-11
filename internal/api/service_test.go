@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -23,8 +25,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
+	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
@@ -538,7 +542,7 @@ func TestContainerMountsNoPhantomAppdata(t *testing.T) {
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/stateless", Image: "x:latest"}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 
-	mounts, custom, err := svc.ContainerMounts(context.Background(), "stateless")
+	mounts, custom, _, _, err := svc.ContainerMounts(context.Background(), "stateless")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2100,7 +2104,7 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	ctx := context.Background()
 
 	// Default selection: appdata selected, media not, localtime unreachable.
-	mounts, custom, err := svc.ContainerMounts(ctx, "plex")
+	mounts, custom, _, _, err := svc.ContainerMounts(ctx, "plex")
 	if err != nil {
 		t.Fatalf("ContainerMounts: %v", err)
 	}
@@ -2122,10 +2126,10 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}
 
 	// Storing an explicit selection (host paths) flips media to selected.
-	if err := svc.SetBackupPaths(ctx, "plex", []string{appdataHost, mediaHost}); err != nil {
+	if err := svc.SetBackupPaths(ctx, "plex", []string{appdataHost, mediaHost}, ""); err != nil {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
-	mounts, _, _ = svc.ContainerMounts(ctx, "plex")
+	mounts, _, _, _, _ = svc.ContainerMounts(ctx, "plex")
 	for _, m := range mounts {
 		if m.Dest == "/media" && !m.Selected {
 			t.Fatal("media should be selected after SetBackupPaths")
@@ -2133,7 +2137,7 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}
 
 	// An unreachable path is rejected.
-	if err := svc.SetBackupPaths(ctx, "plex", []string{"/etc/localtime"}); err == nil {
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"/etc/localtime"}, ""); err == nil {
 		t.Fatal("SetBackupPaths must reject a path outside the host mount")
 	}
 
@@ -2143,6 +2147,413 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}
 	if !contains(eng.lastPaths, mediaCP) {
 		t.Fatalf("selected media not backed up: %v", eng.lastPaths)
+	}
+}
+
+// TestSetBackupPathsMixedSelectionRoundTrip drives the REAL router end to end:
+// PATCH a mixed host-path selection (includes + "!"-exclusions) and require the
+// stored target to carry the normalized container-form list — maximal roots,
+// bare includes, prefixed exclusions, canonical order (SELECT-01). The two
+// legacy shapes are pinned in the same test: a prefix-free list round-trips as
+// all-includes (no "!" invented, still normalized for maximality), and []
+// persists as [] (the auto-detect boundary untouched — SELECT-02, zero
+// migration). Run for both root configs, mirroring paths.go's
+// split-root/identity-root framing.
+func TestSetBackupPathsMixedSelectionRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	for _, tc := range []struct {
+		name       string
+		sourceRoot string
+	}{
+		{"split-root", "/mnt"},
+		{"identity-root", root},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.Config{
+				AppKey: strings.Repeat("a", 64), DataDir: dir,
+				HostMountRoot: root, HostSourceRoot: tc.sourceRoot,
+			}
+			st := newMemStore(t)
+			d := &fakeServiceDocker{}
+			svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+			sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+			h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+			// Host paths: the plex appdata root, a config subfolder (redundant
+			// once the root is included), and the transcoding branch the user
+			// deselected (its cache subfolder redundant once the branch is).
+			hostPlex := tc.sourceRoot + "/user/appdata/plex"
+			body := func(paths []string) string {
+				b, err := json.Marshal(map[string][]string{"backupPaths": paths})
+				if err != nil {
+					t.Fatal(err)
+				}
+				return string(b)
+			}
+
+			// Mixed selection → normalized maximal-root form, exclusions prefixed.
+			_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", body([]string{
+				hostPlex,
+				hostPlex + "/config",
+				"!" + hostPlex + "/transcoding",
+				"!" + hostPlex + "/transcoding/cache",
+			}))
+			if m["ok"] != true {
+				t.Fatalf("mixed PATCH must save, got %v", m)
+			}
+			tg, err := st.GetTargetByContainer("plex")
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []string{root + "/user/appdata/plex", "!" + root + "/user/appdata/plex/transcoding"}
+			if !reflect.DeepEqual(tg.SelectedPaths, want) {
+				t.Fatalf("stored selection = %v, want %v (container-form maximal roots + prefixed exclusions)", tg.SelectedPaths, want)
+			}
+
+			// Legacy prefix-free list: stored as all-includes, still normalized.
+			_, m = doJSON(t, h, http.MethodPatch, "/api/containers/plex", body([]string{hostPlex, hostPlex + "/config"}))
+			if m["ok"] != true {
+				t.Fatalf("legacy PATCH must save, got %v", m)
+			}
+			tg, err = st.GetTargetByContainer("plex")
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantLegacy := []string{root + "/user/appdata/plex"}
+			if !reflect.DeepEqual(tg.SelectedPaths, wantLegacy) {
+				t.Fatalf("legacy stored selection = %v, want %v (all-includes, no prefix invented)", tg.SelectedPaths, wantLegacy)
+			}
+
+			// [] persists as [] — the auto-detection boundary, byte-identical.
+			_, m = doJSON(t, h, http.MethodPatch, "/api/containers/plex", body([]string{}))
+			if m["ok"] != true {
+				t.Fatalf("empty PATCH must save, got %v", m)
+			}
+			tg, err = st.GetTargetByContainer("plex")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(tg.SelectedPaths) != 0 {
+				t.Fatalf("empty PATCH must persist [] (auto-detect), got %v", tg.SelectedPaths)
+			}
+		})
+	}
+}
+
+// TestSetBackupPathsLegacySourceKeepsPlan01Behavior pins that the widened
+// SetBackupPaths signature is behavior-identical to plan 01's when
+// selectionSource is empty (the legacy/absent encoding): normalization to the
+// canonical maximal-root form, the exclusions-only explicit-none carrier, and
+// [] clearing to auto-detection all unchanged. The empty-selection guard is
+// strictly source-gated, so an empty source must never trip it.
+func TestSetBackupPathsLegacySourceKeepsPlan01Behavior(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	ctx := context.Background()
+	hostPlex := "/mnt/user/appdata/plex"
+	stored := func() []string {
+		t.Helper()
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tg.SelectedPaths
+	}
+
+	// Mixed selection stores the normalized maximal-root form (plan 01).
+	if err := svc.SetBackupPaths(ctx, "plex", []string{
+		hostPlex, hostPlex + "/config", "!" + hostPlex + "/transcoding", "!" + hostPlex + "/transcoding/cache",
+	}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	want := []string{root + "/user/appdata/plex", "!" + root + "/user/appdata/plex/transcoding"}
+	if got := stored(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("stored selection = %v, want %v", got, want)
+	}
+
+	// Exclusions-only stays the explicit-none carrier (never auto-detect).
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"!" + hostPlex}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if want := []string{"!" + root + "/user/appdata/plex"}; !reflect.DeepEqual(stored(), want) {
+		t.Fatalf("exclusions-only stored = %v, want %v", stored(), want)
+	}
+
+	// [] clears to auto-detection byte-for-byte.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if got := stored(); len(got) != 0 {
+		t.Fatalf("empty list must persist [] (auto-detect), got %v", got)
+	}
+}
+
+// TestBackupNarrowedSelectionUsesMaximalIncludes pins success criterion 2 as
+// amended by the 2026-09-09 gap-closure decision (review finding WR-01, plan
+// 01-05): after a narrowed tree selection (whole mount kept, one branch
+// deselected), a backup hands restic EXACTLY the maximal-root container-form
+// includes as positionals AND enforces the stored exclusion branch strictly
+// below an included root as a restic --exclude pattern appended to the backup
+// argv — the snapshot content finally matches what the stored selection
+// advertises. The accepted cost: the derived pattern lands in the snapshot's
+// restic Excludes metadata (the exclusions editor's user-owned surface), a
+// consequence the user decision explicitly accepts. The positional half is
+// unchanged, and the stored AppdataPaths stays excludes-free — restore mapping
+// (mapRestorePaths) consumes it, so no "!"-prefixed entry may ever reach it.
+func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// The excluded branch EXISTS on disk — the maximal-root include must still
+	// be the only positional (narrowing is the selection's job, not the
+	// existence filter's).
+	for _, p := range []string{root + "/user/appdata/plex/config", root + "/user/appdata/plex/transcoding"} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Narrow: the whole appdata mount kept, the transcoding branch deselected.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{
+		"/mnt/user/appdata/plex", "!/mnt/user/appdata/plex/transcoding",
+	}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if _, err := svc.Backup(ctx, "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	wantPaths := []string{root + "/user/appdata/plex"}
+	if !reflect.DeepEqual(eng.lastPaths, wantPaths) {
+		t.Fatalf("restic positionals = %v, want %v (maximal-root includes only)", eng.lastPaths, wantPaths)
+	}
+	// The exclusion branch, in the same container-form namespace the positionals
+	// walk (stored entries are already absolute container paths — no translation).
+	wantExcludes := []string{root + "/user/appdata/plex/transcoding"}
+	if !reflect.DeepEqual(eng.lastExcludes, wantExcludes) {
+		t.Fatalf("restic excludes = %v, want %v (the stored exclusion branch enforced on the argv)", eng.lastExcludes, wantExcludes)
+	}
+	// Restore-safety half: AppdataPaths is what mapRestorePaths consumes — it
+	// must stay exactly the positional list with no "!"-prefixed entry.
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(tg.AppdataPaths, wantPaths) {
+		t.Fatalf("stored AppdataPaths = %v, want %v (includes only)", tg.AppdataPaths, wantPaths)
+	}
+	for _, p := range tg.AppdataPaths {
+		if strings.HasPrefix(p, api.ExclusionPrefix) {
+			t.Fatalf("stored AppdataPaths must never carry an exclusion entry, got %q", p)
+		}
+	}
+}
+
+// TestBackupExcludeCachesUnion pins the RESTIC-01 compile step (D-06): Backup
+// folds the stored per-root CACHEDIR.TAG toggles into the item-level boolean
+// union that drives restic's --exclude-caches flag. Literal A1 reading (Phase 3
+// research): the union is computed over the STORED map, independent of whether
+// that root is currently included in the selection — a toggled-on root that is
+// deselected while other roots back up still fires the flag. An all-false or
+// cleared map leaves the union false, so argv stays byte-identical to before
+// the feature existed.
+func TestBackupExcludeCachesUnion(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Two roots on disk so the A1 edge can deselect one while the other still
+	// carries the backup.
+	for _, p := range []string{root + "/user/appdata/plex", root + "/user/media"} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+			{Type: "bind", Source: "/mnt/user/media", Destination: "/media"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	backup := func(want bool, step string) {
+		t.Helper()
+		if _, err := svc.Backup(ctx, "plex"); err != nil {
+			t.Fatalf("%s: backup: %v", step, err)
+		}
+		if eng.lastMode.ExcludeCaches != want {
+			t.Fatalf("%s: Mode.ExcludeCaches = %v, want %v", step, eng.lastMode.ExcludeCaches, want)
+		}
+	}
+
+	// A1 edge: the toggled-on appdata root is DESELECTED (only media backs up)
+	// and the union still fires — the union reads the stored map, never the
+	// current selection.
+	if err := svc.SetExcludeCaches(ctx, "plex", map[string]bool{"/mnt/user/appdata/plex": true}); err != nil {
+		t.Fatalf("SetExcludeCaches: %v", err)
+	}
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"/mnt/user/media"}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	backup(true, "union over the stored map fires with the toggled root deselected")
+
+	// All-false map: union false (byte-identical argv).
+	if err := svc.SetExcludeCaches(ctx, "plex", map[string]bool{"/mnt/user/appdata/plex": false, "/mnt/user/media": false}); err != nil {
+		t.Fatalf("SetExcludeCaches all-false: %v", err)
+	}
+	backup(false, "all-false map")
+
+	// Cleared (never-set) map: union false.
+	if err := svc.SetExcludeCaches(ctx, "plex", nil); err != nil {
+		t.Fatalf("SetExcludeCaches nil: %v", err)
+	}
+	backup(false, "cleared map")
+}
+
+// TestBackupSelectionExcludesMergeAfterUserPatterns pins the merged argv order
+// (WR-01 gap closure, 2026-09-09 user decision): user-owned exclude patterns
+// keep their position — resolved through the existing pattern resolver — and
+// the selection-derived tail (excludedBranches) is appended AFTER them,
+// additive and deterministic; both classes share the same container-form
+// namespace. The merge must not disturb the positionals: they stay the
+// maximal-root includes.
+func TestBackupSelectionExcludesMergeAfterUserPatterns(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// The excluded branch EXISTS on disk — same fixture discipline as the
+	// narrowed-selection test above (narrowing is the selection's job, not the
+	// existence filter's).
+	for _, p := range []string{root + "/user/appdata/plex/config", root + "/user/appdata/plex/transcoding"} {
+		if err := os.MkdirAll(p, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Seed user excludes through the public setter BEFORE the backup
+	// ("*.tmp" has no slash, so it resolves verbatim as a basename pattern).
+	if err := svc.SetExcludes(ctx, "plex", []string{"*.tmp"}); err != nil {
+		t.Fatalf("SetExcludes: %v", err)
+	}
+	// Mixed selection: the whole appdata mount kept, the transcoding branch
+	// deselected.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{
+		"/mnt/user/appdata/plex", "!/mnt/user/appdata/plex/transcoding",
+	}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	if _, err := svc.Backup(ctx, "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	wantExcludes := []string{"*.tmp", root + "/user/appdata/plex/transcoding"}
+	if !reflect.DeepEqual(eng.lastExcludes, wantExcludes) {
+		t.Fatalf("restic excludes = %v, want %v (user patterns first, selection-derived tail appended)", eng.lastExcludes, wantExcludes)
+	}
+	wantPaths := []string{root + "/user/appdata/plex"}
+	if !reflect.DeepEqual(eng.lastPaths, wantPaths) {
+		t.Fatalf("restic positionals = %v, want %v (the merge must not disturb positionals)", eng.lastPaths, wantPaths)
+	}
+}
+
+// TestBackupPathsExclusionsOnlyIsNotRefused pins the explicit-none semantics
+// (01-CONTEXT.md encoding Q3): an exclusions-only stored selection is the user
+// saying "back up nothing of this container on purpose" — NOT a vanished share
+// — so the #181 guard must let it through and the run proceeds definition-only
+// via the existing empty-AppdataPaths orchestrator path. Before the
+// classification this container was refused as "not reachable" forever
+// (01-RESEARCH.md Pitfall 2).
+func TestBackupPathsExclusionsOnlyIsNotRefused(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest", Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Everything deselected: the stored list is non-empty (explicit) but holds
+	// zero includes.
+	if err := svc.SetBackupPaths(ctx, "plex", []string{"!/mnt/user/appdata/plex"}, ""); err != nil {
+		t.Fatalf("SetBackupPaths: %v", err)
+	}
+	sum, err := svc.Backup(ctx, "plex")
+	if err != nil {
+		t.Fatalf("an explicitly deselected container must not be refused as not reachable: %v", err)
+	}
+	if sum.SnapshotID != "" || len(eng.backedUp) != 0 {
+		t.Fatalf("expected a definition-only backup (no restic), got sum=%+v calls=%d", sum, len(eng.backedUp))
 	}
 }
 
@@ -2171,11 +2582,11 @@ func TestContainerMountsFlagsMissingCustomPath(t *testing.T) {
 
 	// Store both as explicit custom selections (host paths, both reachable; only
 	// one exists on disk). SetBackupPaths does not require existence.
-	if err := svc.SetBackupPaths(ctx, "app", []string{"/mnt/user/present", "/mnt/user/gone"}); err != nil {
+	if err := svc.SetBackupPaths(ctx, "app", []string{"/mnt/user/present", "/mnt/user/gone"}, ""); err != nil {
 		t.Fatalf("SetBackupPaths: %v", err)
 	}
 
-	_, custom, err := svc.ContainerMounts(ctx, "app")
+	_, custom, _, _, err := svc.ContainerMounts(ctx, "app")
 	if err != nil {
 		t.Fatalf("ContainerMounts: %v", err)
 	}
@@ -3665,7 +4076,13 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 	// The snapshot must exist for the restore preflight (VerifySnapshot) to pass,
 	// and carry the ownership tag every backup writes, since Restore now verifies
 	// an explicit snapshot id belongs to the container BEFORE anything runs.
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "deadbeef", Tags: []string{"container:Pingvin-Share-X"}}}}
+	// Paths mirrors a real backup's recorded positional (RESTORE-01 maps the
+	// stored selection against the chosen snapshot's Paths).
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{
+		ID:    "deadbeef",
+		Tags:  []string{"container:Pingvin-Share-X"},
+		Paths: []string{"/host/user/user/appdata/pingvin_share_x"},
+	}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
@@ -3797,6 +4214,7 @@ type fakeResticEngine struct {
 	lastPaths       []string
 	lastTags        []string
 	lastExcludes    []string
+	lastMode        restic.Mode
 	restored        []string
 	restoreErrPath  string // when set, RestoreInclude fails on this include path
 	restoreErr      error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
@@ -3966,7 +4384,7 @@ func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m rest
 	return errors.New("fake: repo did not open")
 }
 
-func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
+func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
 	if f.backupPanic {
 		panic("boom during backup")
 	}
@@ -3984,6 +4402,7 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 	f.lastPaths = paths
 	f.lastTags = tags
 	f.lastExcludes = excludes
+	f.lastMode = m
 	if f.backupErr != nil {
 		return restic.Summary{}, f.backupErr
 	}

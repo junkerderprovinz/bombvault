@@ -1303,6 +1303,16 @@ ALTER TABLE settings ADD COLUMN totp_recovery TEXT    NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("file_sets", "schedule_cadence"),
 		sql:              "ALTER TABLE file_sets ADD COLUMN schedule_cadence TEXT NOT NULL DEFAULT '';",
 	},
+	{
+		// Per-root CACHEDIR.TAG toggle (RESTIC-01, D-07): a JSON map of
+		// backup-root host path → bool, the same JSON-column shape excludes uses.
+		// '{}' = no root opted in. Owned by SetExcludeCaches (never reset by
+		// Upsert). Only the boolean UNION of the values ever reaches restic argv
+		// (the constant --exclude-caches flag) — the keys are UI state, never
+		// emitted.
+		version: 100, name: "target_exclude_caches",
+		sql: "ALTER TABLE targets ADD COLUMN exclude_caches TEXT NOT NULL DEFAULT '{}';",
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

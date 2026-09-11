@@ -591,7 +591,7 @@ const nl: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Back-upmappen",
-  "folders.hint": "Kies welke van de gekoppelde mappen van deze container je wilt back-uppen. De appdata-map is standaard geselecteerd. Vink andere aan om ze mee te nemen, of voeg een eigen pad toe binnen de host-mount. Alles uitvinken keert terug naar de automatische appdata-standaard.",
+  "folders.hint": "Kies welke van de gekoppelde mappen van deze container je wilt back-uppen. De appdata-map is standaard geselecteerd. Vink andere aan om ze mee te nemen, of voeg een eigen pad toe binnen de host-mount. Alles uitvinken is geblokkeerd; gebruik Selectie herstellen om terug te keren naar de automatische appdata-standaard.",
   "folders.appdataDefault": "appdata (standaard)",
   "folders.stackNote":
     "Deze container hoort bij de Compose-stack {stack}. De projectmap wordt één keer voor de hele stack geback-upt, niet per service, en staat daarom niet in deze lijst.",
@@ -603,7 +603,17 @@ const nl: Partial<Translations> = {
   "folders.save": "Mappen opslaan",
   "folders.saved": "Opgeslagen",
   "folders.empty": "Geen gekoppelde mappen gevonden voor deze container.",
-
+  "folders.treeLabel": "Keuze van back-upmappen",
+  "folders.truncatedList": "Eerste 500 items getoond",
+  "folders.retry": "Opnieuw proberen",
+  "folders.emptySelectionBlocked": "Er moet minstens één map geselecteerd blijven. Zet Opnemen in planning uit als je niets van deze container wilt back-uppen. Gebruik Selectie herstellen om terug te keren naar automatische detectie.",
+  "folders.previewPaths": "{n} paden",
+  "folders.exclusions": "{n} uitsluitingen",
+  "folders.resetSelection": "Selectie herstellen",
+  "folders.resetConfirm": "Mapselectie herstellen? De container keert terug naar automatische detectie (appdata-standaard) en alle bewaarde uitsluitingen en cachemapinstellingen worden verwijderd.",
+  "folders.narrowedNote": "De selectie beslaat nu minder mappen dan voorheen. Vanaf de volgende back-up bevatten snapshots alleen de geselecteerde mappen. Bestaande snapshots blijven ongewijzigd.",
+  "folders.cachedirToggle": "Cachemappen overslaan (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Geldt voor de volledige back-up van deze container, niet alleen voor deze map.",
   // Notifications
   "notify.title": "Meldingen",
   "notify.hint": "Krijg een melding wanneer een back-up klaar is, en kies hieronder welke gebeurtenissen dit activeren. Unraid-meldingen werken al in de eenvoudige modus; meer bezorgkanalen (webhook, Matrix, Healthchecks, e-mail) vind je bij Geavanceerd.",
