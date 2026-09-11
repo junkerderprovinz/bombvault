@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 4
 current_phase_name: File Sets Parity
-status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-09-11T04:17:46.907Z"
+status: verifying
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-09-11T04:36:26.120Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 4 execution started
-state_head: 6ca7a6dc94313e855419f87d72904c912e68d9ed
+state_head: f3bfbd8d4a98d686b7dd4366c399d6045b746169
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 
 Phase: 4 (File Sets Parity) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-10 — Phase 4 execution started
 
 Progress: [████████████████████] 11/11 plans ([████████░░] 75%)
@@ -75,6 +75,7 @@ Progress: [████████████████████] 11/11 p
 | Phase 04 P01 | 22min | 2 tasks | 10 files |
 | Phase 4 P02 | 40min | 2 tasks | 4 files |
 | Phase 4 P03 | 38 min | 3 tasks | 7 files |
+| Phase 04 P04 | 8 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,8 @@ Recent decisions affecting current work:
 - [Phase 4]: Phase 4 plan 02: a file-set path change clears the selection (to SQL NULL) with clear-wins precedence over same-request entries, compared on resolved roots - Pitfall 2 layer 1; the compile-time re-anchor stays layer 2
 - [Phase 4]: Phase 4 plan 02: D-08 restore guard scoped to the in-place route with len(chosen.Paths) > 0 (Rule 1: the literal broader scope contradicted the plan's own acceptance criteria - TestRestoreFileSetToFolder and TestRestoreFileSetInPlaceConfirmed must stay green unmodified; Open Question 1 resolution honored)
 - [Phase 4]: Files page tree reuses SelectionTree via additive-optional props only (blockedMessage routes refusal copy per domain); NULL selectedPaths seeds a synthetic root include with zero writes until first toggle; file-set PATCH body is exactly { selectedPaths } with no selectionSource
+- [Phase 04]: Files-page exclusions audit list rides the shared SelectionTree disclosure (rootExclusions, Phase 3) that plan 03's mount already carries - Files.tsx documents the single implementation in the editor block comment instead of adding a second surface — Restating it per page would duplicate the audit surface and violate the phase zero-second-implementation lock; the Files dom pins lock this page's rendering instead
+- [Phase 04]: FileSetDialog renders files.pathChangeHint unconditionally under the FolderBrowser - it states the consequence of the 04-02 PATCH-time clear rule, not a condition on stored selection — A conditional hint would hide the consequence exactly when the user is about to trigger it; UI-SPEC A3 disclosure
 
 ### Pending Todos
 
@@ -148,6 +151,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T04:17:46.469Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-09-11T04:36:15.358Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
