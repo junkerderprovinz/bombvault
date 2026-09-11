@@ -6,6 +6,8 @@ boundary; recorded for a future phase or ad-hoc pass.
 
 ## From plan 02-03 (phase gate, 2026-09-10)
 
+- **Status:** acknowledged
+<!-- v1.0 milestone close, 2026-09-11 — user decision; warn-only, predates the milestone -->
 - **Pre-existing eslint warnings (2), unrelated to this phase's files:**
   - `web/src/components/ActivityLog.tsx:234` — `react-hooks/exhaustive-deps`
     warning: `useMemo` missing dependency `resolveName`.

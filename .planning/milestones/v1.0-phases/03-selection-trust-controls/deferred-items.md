@@ -5,6 +5,8 @@ GSD decision before any work happens.
 
 ## Stacked-descriptor failure-revert window (plan 02 queue, carried over by plan 03)
 
+- **Status:** acknowledged
+<!-- v1.0 milestone close, 2026-09-11 — user decision; pre-existing plan-02 behavior, next successful save re-converges -->
 - **Found during:** 03-03 Task 2 (queue generalization to two classes)
 - **What:** When two mutations of the SAME class stack behind an in-flight save,
   `pendingDescsRef` keeps only the LATEST descriptor per class
