@@ -98,6 +98,45 @@ func (r *Repo) UpdateFileSet(fs FileSet) error {
 	return nil
 }
 
+// UpdateFileSetClearingSelection updates name, path, excludes, and enabled for
+// the set with fs.ID AND stores SQL NULL in selected_paths, in the ONE UPDATE
+// statement. It is the path-change writer (the A3 clear rule, review WR-01): a
+// path edit moves the anchor every stored selection entry was validated
+// against, so the old selection must never survive the save — and writing row
+// + clear atomically makes that invariant hold at the storage layer, where the
+// handler's previous two-write sequence could fail in between and leave the
+// NEW path live while the response reported failure and the OLD-anchor
+// selection stayed stored. Either this statement lands whole or the row is
+// byte-identical to before.
+//
+// Deliberately a separate method, NOT a field on UpdateFileSet: the ownership
+// rule documented on both UpdateFileSet and SetFileSetSelectedPaths (an edit
+// that does not know about the selection must not be able to clear one by
+// omitting it) stands untouched — this method exists precisely for the caller
+// that DOES know the selection must go, and its name says so. The tree editor
+// remains the only writer of a non-NULL selection.
+func (r *Repo) UpdateFileSetClearingSelection(fs FileSet) error {
+	if fs.Excludes == nil {
+		fs.Excludes = []string{}
+	}
+	exJSON, err := json.Marshal(fs.Excludes)
+	if err != nil {
+		return fmt.Errorf("UpdateFileSetClearingSelection marshal excludes: %w", err)
+	}
+	res, err := r.db.Exec(`
+		UPDATE file_sets SET name = ?, path = ?, excludes = ?, enabled = ?, selected_paths = NULL
+		WHERE id = ?`,
+		fs.Name, fs.Path, string(exJSON), boolInt(fs.Enabled), fs.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("UpdateFileSetClearingSelection: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("UpdateFileSetClearingSelection: file set %q not found", fs.ID)
+	}
+	return nil
+}
+
 // ListFileSets returns all file sets ordered by name.
 func (r *Repo) ListFileSets() ([]FileSet, error) {
 	rows, err := r.db.Query(`

@@ -4558,36 +4558,47 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := h.store.UpdateFileSet(fs); err != nil {
-		if strings.Contains(err.Error(), "UNIQUE") {
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
-			return
-		}
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	// Selection handling (Phase 4 plan 02). A path change moves the anchor
-	// every stored entry was validated against, so it CLEARS the selection in
-	// the same save (RESEARCH Pitfall 2 layer 1 / A3; the compile-time
-	// re-anchor in fileSetPositionals stays layer 2) — and the clear WINS over
-	// entries in the same request: honoring both would silently rewrite the
-	// selection's meaning under the new root. Comparison is on the RESOLVED
-	// roots (paths.Resolve, the same anchor space), so a cosmetic re-send of
-	// the identical path is not a change; an unresolvable old or new path
-	// counts as changed (defensive — validateFileSet above already rejected a
-	// bad new path, and a path-less set has no selection to clear).
+	// Selection handling (Phase 4 plan 02; review WR-01). A path change moves
+	// the anchor every stored entry was validated against, so it CLEARS the
+	// selection in the same save (RESEARCH Pitfall 2 layer 1 / A3; the
+	// compile-time re-anchor in fileSetPositionals stays layer 2) — and the
+	// clear WINS over entries in the same request: honoring both would
+	// silently rewrite the selection's meaning under the new root. Comparison
+	// is on the RESOLVED roots (paths.Resolve, the same anchor space), so a
+	// cosmetic re-send of the identical path is not a change; an unresolvable
+	// old or new path counts as changed (defensive — validateFileSet above
+	// already rejected a bad new path, and a path-less set has no selection to
+	// clear).
 	pathChanged := false
 	if body.Path != nil {
 		oldResolved, oldErr := paths.Resolve(h.cfg.HostMountRoot, oldPath)
 		newResolved, newErr := paths.Resolve(h.cfg.HostMountRoot, fs.Path)
 		pathChanged = oldErr != nil || newErr != nil || newResolved != oldResolved
 	}
-	switch {
-	case pathChanged:
-		if err := h.store.SetFileSetSelectedPaths(id, nil); err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
+	// The path-change branch persists the row AND the selection clear as ONE
+	// statement (UpdateFileSetClearingSelection), so a failure can no longer
+	// leave the new path live while the response reports failure with the
+	// old-anchor selection still stored (WR-01): either the whole save lands
+	// or the row is untouched.
+	var upErr error
+	if pathChanged {
+		upErr = h.store.UpdateFileSetClearingSelection(fs)
+	} else {
+		upErr = h.store.UpdateFileSet(fs)
+	}
+	if upErr != nil {
+		if strings.Contains(upErr.Error(), "UNIQUE") {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
 			return
 		}
+		writeJSON(w, http.StatusOK, failEnvelope(upErr))
+		return
+	}
+	switch {
+	case pathChanged:
+		// The selection was already cleared atomically by
+		// UpdateFileSetClearingSelection above — nothing further to write, and
+		// no second write to fail after the path went live.
 	case body.SelectedPaths != nil:
 		if err := h.svc.SetFileSetSelectedPaths(r.Context(), id, *body.SelectedPaths); err != nil {
 			if errors.Is(err, errFileSetEmptySelection) {

@@ -227,6 +227,54 @@ func TestUpdateFileSet(t *testing.T) {
 	}
 }
 
+// TestUpdateFileSetClearingSelection pins the path-change writer (review
+// WR-01): the row fields update AND selected_paths is stored as SQL NULL in
+// the ONE UPDATE statement, so a path change can never coexist with an
+// old-anchor selection — and a failure of the statement leaves the row
+// untouched, keeping the handler's fail envelope consistent with storage.
+func TestUpdateFileSetClearingSelection(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	fs, err := r.CreateFileSet(store.FileSet{Name: "docs", Path: "user/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := []string{"/host/user/docs/keep", "!/host/user/docs/keep/tmp"}
+	if err := r.SetFileSetSelectedPaths(fs.ID, sel); err != nil {
+		t.Fatalf("seed selection: %v", err)
+	}
+
+	fs.Name = "docs-moved"
+	fs.Path = "user/docs/2026"
+	fs.Excludes = []string{"*.iso"}
+	fs.Enabled = false
+	if err := r.UpdateFileSetClearingSelection(fs); err != nil {
+		t.Fatalf("update+clear: %v", err)
+	}
+
+	got, err := r.GetFileSet(fs.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "docs-moved" || got.Path != "user/docs/2026" || got.Enabled {
+		t.Fatalf("row fields not persisted: %+v", got)
+	}
+	// The clear is SQL NULL (re-reads nil), never the JSON literal '[]' — the
+	// NULL/nil state IS the legacy argv switch at the compile site.
+	if got.SelectedPaths != nil {
+		t.Fatalf("selection must clear to SQL NULL, got %v", got.SelectedPaths)
+	}
+
+	// Unknown id must error, mirroring every other owned setter.
+	if err := r.UpdateFileSetClearingSelection(store.FileSet{ID: "ghost", Name: "x", Path: "y"}); err == nil {
+		t.Fatal("update+clear of unknown id must fail")
+	}
+}
+
 func TestListFileSets(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
