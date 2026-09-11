@@ -60,7 +60,11 @@ const INK: Record<string, readonly [number, number, number, number]> = {
   IconCheckCircle: [2, 1.9934, 20.0078, 20.0143],
   IconTabIntegrity: [3, 1, 18, 22],
   IconTabStorage: [0, 0, 448, 512],
-  IconSave: [0, 32, 448, 448],
+  // Re-measured on 2026-09-11, when the drawing became Vecteezy's. The source
+  // declares `0 0 492 492` and the ink is a 368.7 square inside it, so this is
+  // the number the crop exists for: carried through unchanged the mark would
+  // render at three quarters of every glyph beside it.
+  IconSave: [61.8, 62.4, 368.7, 368.7],
 };
 
 /** Mirrors gen_glyphs.py's `cropped_box`. */

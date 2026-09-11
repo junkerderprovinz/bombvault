@@ -10,11 +10,17 @@
 //   Tabler Icons - https://tabler.io/icons (MIT)
 //   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
 //   Simple Icons - https://simpleicons.org (CC0)
+//   IconSave from Vecteezy - https://www.vecteezy.com
 //
 // Only the FREE 1000-icon subset is used (github.com/webalys-hq/streamline-vectors,
 // core/solid), which is CC BY 4.0 and explicitly redistributable. The larger
 // 5771-icon set sold on streamlinehq.com is a different product whose licence
 // forbids redistribution, which is exactly what a public repository does.
+//
+// The save mark comes from Vecteezy under its Free License, which is not one of
+// the public-licence families above and asks for something specific: attribute
+// the author by adding Vecteezy.com to the design and linking to vecteezy.com
+// where possible. The line above is that attribution, and it is not optional.
 //
 // One glyph comes from Font Awesome Free instead: the off-site cloud
 // (scripts/cloud-path.txt, their `cloud` solid). Font Awesome Free splits its

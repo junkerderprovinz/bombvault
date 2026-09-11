@@ -10,11 +10,17 @@
 //   Tabler Icons - https://tabler.io/icons (MIT)
 //   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
 //   Simple Icons - https://simpleicons.org (CC0)
+//   IconSave from Vecteezy - https://www.vecteezy.com
 //
 // Only the FREE 1000-icon subset is used (github.com/webalys-hq/streamline-vectors,
 // core/solid), which is CC BY 4.0 and explicitly redistributable. The larger
 // 5771-icon set sold on streamlinehq.com is a different product whose licence
 // forbids redistribution, which is exactly what a public repository does.
+//
+// The save mark comes from Vecteezy under its Free License, which is not one of
+// the public-licence families above and asks for something specific: attribute
+// the author by adding Vecteezy.com to the design and linking to vecteezy.com
+// where possible. The line above is that attribution, and it is not optional.
 //
 // One glyph comes from Font Awesome Free instead: the off-site cloud
 // (scripts/cloud-path.txt, their `cloud` solid). Font Awesome Free splits its
@@ -235,12 +241,12 @@ export function IconSave() {
     <svg
       width="16"
       height="16"
-      viewBox="0 32 448 448"
+      viewBox="61.8 62.4 368.7 368.7"
       fill="currentColor"
       className="shrink-0"
       aria-hidden="true"
     >
-      <path d="M433.941 129.941l-83.882-83.882A48 48 0 0 0 316.118 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V163.882a48 48 0 0 0-14.059-33.941zM224 416c-35.346 0-64-28.654-64-64 0-35.346 28.654-64 64-64s64 28.654 64 64c0 35.346-28.654 64-64 64zm96-304.52V212c0 6.627-5.373 12-12 12H76c-6.627 0-12-5.373-12-12V108c0-6.627 5.373-12 12-12h228.52c3.183 0 6.235 1.264 8.485 3.515l3.48 3.48A11.996 11.996 0 0 1 320 111.48z" />
+      <path fillRule="evenodd" d="M267.8,79.6v86.4c0,1.7.7,3.2,1.8,4.3,1.1,1.1,2.6,1.8,4.3,1.8h34.4c1.7,0,3.2-.7,4.3-1.8,1.1-1.1,1.8-2.6,1.8-4.3v-86.4c0-1.7-.7-3.2-1.8-4.3-1.1-1.1-2.6-1.8-4.3-1.8h-34.4c-1.7,0-3.2.7-4.3,1.8-1.1,1.1-1.8,2.6-1.8,4.3Z" /><path fillRule="evenodd" d="M77.3,431.1h337.8c8.5,0,15.4-6.9,15.4-15.4V108.7l-46.3-46.3h-51.8v120.7h-172.5V62.4h-82.7c-8.5,0-15.4,6.9-15.4,15.4v337.8c0,8.5,6.9,15.4,15.4,15.4h0ZM152.1,265.2h188.4c7.8,0,14.1,6.4,14.1,14.1v108.4c0,7.8-6.4,14.1-14.1,14.1h-188.4c-7.8,0-14.1-6.4-14.1-14.1v-108.4c0-7.8,6.4-14.1,14.1-14.1Z" />
     </svg>
   );
 }

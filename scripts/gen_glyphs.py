@@ -202,13 +202,26 @@ def cropped_box(ink):
     )
 
 
-def imported(name, note, source_box, ink, path_file):
-    """One glyph imported whole from an outside set, cropped to its ink."""
+def imported(name, note, source_box, ink, path_file, even_odd=False):
+    """One glyph imported whole from an outside set, cropped to its ink.
+
+    `even_odd` carries the source's own fill rule through. It is not cosmetic:
+    a drawing whose outline and its cut-out wind the SAME way is a solid blob
+    under the default `nonzero` rule and only becomes the shape it was drawn as
+    under `evenodd`. The save mark is exactly that - its label panel is a hole
+    in the body - and its source file declares the rule, so dropping it on
+    import would be losing part of the drawing.
+    """
     paths = io.open(
         "../scripts/glyph-paths/%s.txt" % path_file, encoding="utf-8"
     ).read().strip().split("\n")
     del source_box  # kept in the call for the record; the crop supersedes it
-    return (name, note, cropped_box(ink), "".join('<path d="%s" />' % d for d in paths))
+    # `fillRule`, not `fill-rule`: this markup goes into a .tsx file as JSX, and
+    # the converter in `body()` that fixes the hyphenated SVG names only runs on
+    # the Streamline import path. Written the SVG way it would reach React as an
+    # unknown property.
+    rule = ' fillRule="evenodd"' if even_odd else ""
+    return (name, note, cropped_box(ink), "".join('<path%s d="%s" />' % (rule, d) for d in paths))
 
 
 # Defined once and emitted twice, because the Off-site TAB and every off-site
@@ -371,7 +384,8 @@ EXTRA_NAV = [
     # arrived on screen at three different sizes.
     #
     # Sources and licences, all attributed in the header above:
-    #   save, storage, local  - Font Awesome Free (CC BY 4.0)
+    #   save                  - Vecteezy, Free License (attribution required)
+    #   storage, local        - Font Awesome Free (CC BY 4.0)
     #   copy                  - Tabler Icons, filled variant (MIT)
     #   integrity             - Material Design Icons (Apache 2.0)
     #   verify                - shipped as an Illustrator export
@@ -404,7 +418,20 @@ EXTRA_ACTION = [
     ("IconCancel", CANCEL_NOTE, CROSS_BOX, CROSS),
     # jdp's save glyph ([316]), replacing Streamline's floppy-disk everywhere a
     # button means "save".
-    imported("IconSave", "Save", "0 0 448 512", (0.0, 32.0, 448.0, 448.0), "save"),
+    #
+    # The drawing changed on 2026-09-11: Font Awesome's floppy became Vecteezy's,
+    # which jdp asked for in every repo at once, so this glyph and ArrowLoop's
+    # are now the same mark from the same file. Vecteezy's Free License wants
+    # the name and a link, both in the attribution block above.
+    #
+    # The ink was MEASURED rather than read off the file, which is the whole
+    # point of the crop: the source declares `0 0 492 492` and the drawing
+    # occupies a 368.7 square inside it, so carried through unchanged the mark
+    # would arrive at three quarters of every glyph beside it - the exact
+    # complaint that produced these rules. ArrowLoop's scripts/measure_ink.py
+    # produces the number without a browser.
+    imported("IconSave", "Save", "0 0 492 492", (61.80, 62.40, 368.70, 368.70), "save",
+             even_odd=True),
     # A BRAND MARK, and the second one in the app (jdp, 2026-09-08: "der
     # github button soll das github logo als glyph haben. bitte so vermerken").
     # EXTRA_NAV's Docker whale set the precedent and carries the trademark
@@ -446,11 +473,17 @@ ATTRIBUTION = """// ------------------------------------------------------------
 //   Tabler Icons - https://tabler.io/icons (MIT)
 //   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
 //   Simple Icons - https://simpleicons.org (CC0)
+//   IconSave from Vecteezy - https://www.vecteezy.com
 //
 // Only the FREE 1000-icon subset is used (github.com/webalys-hq/streamline-vectors,
 // core/solid), which is CC BY 4.0 and explicitly redistributable. The larger
 // 5771-icon set sold on streamlinehq.com is a different product whose licence
 // forbids redistribution, which is exactly what a public repository does.
+//
+// The save mark comes from Vecteezy under its Free License, which is not one of
+// the public-licence families above and asks for something specific: attribute
+// the author by adding Vecteezy.com to the design and linking to vecteezy.com
+// where possible. The line above is that attribution, and it is not optional.
 //
 // One glyph comes from Font Awesome Free instead: the off-site cloud
 // (scripts/cloud-path.txt, their `cloud` solid). Font Awesome Free splits its
