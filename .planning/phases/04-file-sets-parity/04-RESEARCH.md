@@ -512,21 +512,26 @@ Nothing in this phase's stack moved since the milestone research (2026-09-09) �
 | A5 | Expansion localStorage for files is keyed per set id (comfort state, D-05 analogy) | Pitfall 6 | Cosmetic; wrong keying only affects expansion restore |
 | A6 | The tree renders even for sets whose root is currently missing (`pathExists:false`), classifying from (I, E) with browse rendering `missing` status rows | Architecture | If undesired, gate rendering on `pathExists` — one-line planner call |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All three recommendations below were adopted during planning; the resolving plan/task is cited per question.
 
 1. **Restore wiring depth for D-08** (in-place only vs also to-folder)
    - What we know: in-place restore (`RestorePath`) restores the whole snapshot; to-folder uses `Paths[0]` via `snapshotSubtree`. `mapRestorePaths` returns per-selector lists; the adapter's `RestorePaths` loops `RestorePath` per selector (`service.go:6939-6946`).
    - What's unclear: whether the planner wires mapping into the in-place path only (minimum D-08) or also reworks to-folder's single-subtree assumption for multi-root snapshots.
    - Recommendation: wire mapping into in-place restore (the destructive-overwrite case D-08 names); leave to-folder whole-tree semantics unless multi-root snapshots demonstrably break it — document the choice in the plan.
+   - **RESOLVED → 04-02 Task 2:** adopted. The guard computes the compiled list in `prepareRestoreFileSet` and aborts pre-teardown on empty mapping; to-folder `snapshotSubtree` whole-tree semantics deliberately untouched, with the choice recorded in a why-comment at the guard.
 
 2. **Empty-selection refusal code + message routing**
    - What we know: container refusal uses `code:"empty-selection"`; D-06 prescribes client + server refusal with a DELETE-orienting message.
    - What's unclear: reuse `"empty-selection"` (uniform UI routing) vs a files-specific code (cleaner telemetry).
    - Recommendation: reuse `"empty-selection"` — the Files page can share the Phase 2/3 guard plumbing and wording pattern.
+   - **RESOLVED → 04-02 Task 1:** adopted. New files-specific sentinel (`errFileSetEmptySelection`, DELETE-orienting message per D-06) routed through `codedFailEnvelope(err, "empty-selection")` so the SPA keeps one refusal code.
 
 3. **Where the Files-page tree lives visually** (row-expansion like Containers vs inside `FileSetDialog`)
    - What we know: D-02 says the tree appears whenever a `Path` exists; the dialog owns name/path/excludes editing; live-save toggles favor a row-level editor with the serialized queue (dialog PATCHes are full-set saves — mixing a live mirror into the dialog's `patchFileSet(initial.id, {name, path, excludes, enabled})` at `Files.tsx:911` would race).
    - Recommendation: row-level expansion (FoldersEditor precedent) with a dedicated selection queue; dialog stays as-is.
+   - **RESOLVED → 04-03 Task 2:** adopted. Row-level "Choose folders" disclosure with the dedicated one-deep queue; `FileSetDialog` keeps its full-set PATCH (04-04 adds only the `files.pathChangeHint` caption under the FolderBrowser, no selection surface in the dialog).
 
 ## Environment Availability
 
