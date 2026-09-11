@@ -862,7 +862,9 @@ function FileSetRestorePanel({
 // Add / edit dialog
 // ---------------------------------------------------------------------------
 
-function FileSetDialog({
+// Exported for this page's dom harness (the FoldersEditor precedent — the
+// harness renders the dialog against the mocked api client, not a whole page).
+export function FileSetDialog({
   initial,
   presetSeed,
   hostMountRoot,
@@ -993,6 +995,14 @@ function FileSetDialog({
             hostMountRoot={hostMountRoot}
             onChange={setPath}
           />
+          {/* A3 disclosure (04-02's PATCH-time clear rule): saving a changed
+              path clears the ticked sub-folder selection server-side, so the
+              consequence is named HERE, before it happens. Unconditional by
+              design — it states the consequence, not a condition, so it fires
+              whether or not a selection is stored (and for a create, where
+              none can exist yet). The tree-editing surface itself lives on the
+              card (FileSetFoldersEditor), never in this dialog. */}
+          <p className="text-caption text-carbon-textMuted">{t("files.pathChangeHint")}</p>
           <p className="text-caption text-carbon-textMuted">{t("files.pathHint")}</p>
         </div>
 
@@ -1069,6 +1079,16 @@ function FileSetDialog({
 // it unchecked would contradict both the trust posture and D-06's own logic.
 // The seed lives in client state only; nothing PATCHes until the first
 // toggle, so the column stays NULL (legacy argv pinned by plan 01's tests).
+//
+// The D-07 exclusions audit list needs no Files-side code either: the per-root
+// review disclosure (rootExclusions over the mirror — folders.exclusions
+// count + relative mono muted rows, collapsed on every reopen, rendered
+// identically for active and dormant roots, zero interactive controls) is
+// INSIDE SelectionTree since Phase 3 and lights up for this synthetic root the
+// moment the mirror holds exclusions. Restating it here would be a second
+// audit surface — the exact duplication the phase's zero-second-
+// implementation lock forbids; the Files.tree.dom pins lock this page's
+// rendering of it instead.
 //
 // Exported for this page's dom harness (the FoldersEditor precedent — the
 // harness renders the editor against the mocked api client, not a whole card).
