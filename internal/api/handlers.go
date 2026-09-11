@@ -4487,9 +4487,10 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePatchFileSet partially updates a file set. PATCH /api/files/sets/{id}
-// body {name?, path?, excludes?, enabled?} — pointers so an enabled-only PATCH
-// doesn't reset the other fields; the MERGED set is re-validated so a patch
-// can never sneak an invalid name/path past the create-time checks.
+// body {name?, path?, excludes?, enabled?, selectedPaths?} — pointers so an
+// enabled-only PATCH doesn't reset the other fields; the MERGED set is
+// re-validated so a patch can never sneak an invalid name/path past the
+// create-time checks.
 func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
@@ -4504,6 +4505,14 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		// setter is separate for the same reason: a form that does not know
 		// about the cadence must not be able to clear one by omitting it.
 		ScheduleCadence *string `json:"scheduleCadence"`
+		// The set's tree selection (Phase 4 plan 02, D-03). A pointer like the
+		// fields above, and declared explicitly because decodeBody runs
+		// DisallowUnknownFields — the container PATCH's SelectionSource field
+		// exists for exactly this reason. Absent (nil) = untouched: the tree
+		// editor always sends the full list, but an ordinary name/path form
+		// must never clear a selection by omitting it. [] decodes non-nil and
+		// is refused downstream (D-06), never silently stored.
+		SelectedPaths *[]string `json:"selectedPaths"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -4514,6 +4523,10 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	oldName := fs.Name
+	// Captured before the merge — the path edit below overwrites fs.Path, and
+	// the clear-on-path-edit rule needs the OLD value as the anchor the stored
+	// selection was validated against.
+	oldPath := fs.Path
 	if body.Name != nil {
 		fs.Name = strings.TrimSpace(*body.Name)
 	}
@@ -4552,6 +4565,41 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	// Selection handling (Phase 4 plan 02). A path change moves the anchor
+	// every stored entry was validated against, so it CLEARS the selection in
+	// the same save (RESEARCH Pitfall 2 layer 1 / A3; the compile-time
+	// re-anchor in fileSetPositionals stays layer 2) — and the clear WINS over
+	// entries in the same request: honoring both would silently rewrite the
+	// selection's meaning under the new root. Comparison is on the RESOLVED
+	// roots (paths.Resolve, the same anchor space), so a cosmetic re-send of
+	// the identical path is not a change; an unresolvable old or new path
+	// counts as changed (defensive — validateFileSet above already rejected a
+	// bad new path, and a path-less set has no selection to clear).
+	pathChanged := false
+	if body.Path != nil {
+		oldResolved, oldErr := paths.Resolve(h.cfg.HostMountRoot, oldPath)
+		newResolved, newErr := paths.Resolve(h.cfg.HostMountRoot, fs.Path)
+		pathChanged = oldErr != nil || newErr != nil || newResolved != oldResolved
+	}
+	switch {
+	case pathChanged:
+		if err := h.store.SetFileSetSelectedPaths(id, nil); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	case body.SelectedPaths != nil:
+		if err := h.svc.SetFileSetSelectedPaths(r.Context(), id, *body.SelectedPaths); err != nil {
+			if errors.Is(err, errFileSetEmptySelection) {
+				// D-06: machine-routable, so the tree can tell "empty" apart
+				// from any other failure and keep its local state (nothing was
+				// stored).
+				writeJSON(w, http.StatusOK, codedFailEnvelope(err, "empty-selection"))
+				return
+			}
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	if body.ScheduleCadence != nil {
 		if err := h.svc.SetFileSetScheduleCadence(r.Context(), id, *body.ScheduleCadence); err != nil {

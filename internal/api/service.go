@@ -8805,6 +8805,14 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 // raw store error would leak SQL wording through the API surface).
 var errFileSetNotFound = errors.New("file set not found")
 
+// errFileSetEmptySelection is D-06's refusal shape for the file-set boundary;
+// the PATCH handler maps it (errors.Is) to the machine-routable
+// "empty-selection" envelope code, exactly as the containers' boundary does
+// for errEmptySelection. A file set cannot mean "back up nothing" — a set with
+// zero included folders is either a mistake or a set the user no longer wants,
+// so the message orients to removing the set rather than "select something".
+var errFileSetEmptySelection = errors.New("a file set needs at least one folder selected; use Remove set if you no longer want this set")
+
 // FileSetView is the per-set row returned by ListFileSetViews — the files
 // domain's counterpart of VMView. LastBackup is the unix time of the last
 // successful backup run (0 = never; runs-based, so listing never spawns a
@@ -8820,6 +8828,13 @@ type FileSetView struct {
 	Enabled    bool     `json:"enabled"`
 	LastBackup int64    `json:"lastBackup"`
 	PathExists bool     `json:"pathExists"`
+	// SelectedPaths is the set's tree selection (Phase 4, D-03) served back for
+	// the editor: the same flat encoding the containers' backupPaths uses
+	// (bare entries are included roots, "!"-prefixed are deselected branches),
+	// in mount-root absolute space. Omitempty keeps the NULL legacy switch
+	// ("never touched by the tree") distinguishable on the wire from a written
+	// selection — a never-edited set must not render a tree state it never had.
+	SelectedPaths []string `json:"selectedPaths,omitempty"`
 	// ScheduleCadence is the set's per-item schedule override (#199); empty means
 	// it follows the Folders domain schedule. Always sent, so the interface can
 	// show the cadence without a second request, and only acted on while the
@@ -8861,6 +8876,11 @@ func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
 		if v.Excludes == nil {
 			v.Excludes = []string{}
 		}
+		// The stored form is served back verbatim — never re-normalized here:
+		// the compile (fileSetPositionals) is what re-runs the shared
+		// NormalizeSelection, and the view is a mirror of the column. nil stays
+		// nil so omitempty drops the key (the NULL legacy switch).
+		v.SelectedPaths = set.SelectedPaths
 		if run, _ := s.store.LastSuccessfulBackup(set.ID); run != nil && run.FinishedAt != nil {
 			v.LastBackup = *run.FinishedAt
 		}
@@ -8900,6 +8920,79 @@ func (s *Service) validateFileSet(fs store.FileSet) error {
 	}
 	if _, statErr := os.Stat(resolved); statErr != nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
 		return errors.New("source path not found under the host mount")
+	}
+	return nil
+}
+
+// maxFileSetSelectedPaths caps one file-set selection: a tree save is a full
+// overwrite of the column, so the cap bounds both the JSON blob and the
+// normalize/compile work per save — the same ceiling SetExcludeCaches puts on
+// the per-root exclusion map, matched so no editor surface can differ.
+const maxFileSetSelectedPaths = 64
+
+// SetFileSetSelectedPaths validates and stores a file set's tree selection —
+// the file-set twin of SetBackupPaths (the containers' flat-set setter), and
+// the only writer the tree editor reaches through (the PATCH handler's
+// selectedPaths field lands here). Adapted, not copied, from SetBackupPaths:
+// the anchor is the set's OWN resolved root (its Path under the host mount),
+// not a mount translation, and entries live in mount-root absolute space (A2)
+// — they are never container-translated.
+//
+// Per-entry validation runs BEFORE any store write (atomic whole-save
+// rejection): a list whose 40th entry escapes the root must leave the prior
+// selection untouched, not half-apply. Each entry is trimmed, split into its
+// class (SplitExclusion — the "!" prefix is the excluded-branch carrier),
+// cleaned, and must EQUAL the set's resolved root or lie strictly below it
+// (isStrictDescendant — segment-aligned, so /data/doc can never pass for a
+// root /data/docs; the same containment primitive fileSetPositionals
+// re-anchors with at compile time, which stays layer 2 of RESEARCH Pitfall 2).
+// The raw entry text goes back into the error so the log identifies the
+// offender; the envelope scrubs it to [path] on the way out.
+//
+// The validated list is then normalized through the shared NormalizeSelection
+// (dedupe, per-class maximal-root prune, canonical order — never a second
+// pruning site), and only a list that still has at least one INCLUDE survives:
+// zero includes is refused with errFileSetEmptySelection (D-06) before any
+// write, so a refused deselect leaves the prior selection structurally
+// untouched — the read-side stale-root re-anchor in fileSetPositionals remains
+// the defense for anything already stored.
+func (s *Service) SetFileSetSelectedPaths(_ context.Context, id string, entries []string) error {
+	if len(entries) > maxFileSetSelectedPaths {
+		return fmt.Errorf("too many selected paths (%d, max %d)", len(entries), maxFileSetSelectedPaths)
+	}
+	set, err := s.store.GetFileSet(id)
+	if err != nil {
+		return errFileSetNotFound
+	}
+	root, err := paths.Resolve(s.cfg.HostMountRoot, set.Path)
+	if err != nil {
+		return fmt.Errorf("file set %q has no valid source path to select folders under", set.Name)
+	}
+	cleaned := make([]string, 0, len(entries))
+	for _, e := range entries {
+		e = strings.TrimSpace(e)
+		if e == "" {
+			return errors.New("empty selected path")
+		}
+		bare, excluded := SplitExclusion(e)
+		if bare == "" {
+			return fmt.Errorf("empty excluded path %q", e)
+		}
+		bare = path.Clean(bare)
+		if bare != root && !isStrictDescendant(bare, root) {
+			return fmt.Errorf("selected path %q is not under the set's source folder", e)
+		}
+		if excluded {
+			bare = ExclusionPrefix + bare
+		}
+		cleaned = append(cleaned, bare)
+	}
+	normalized := NormalizeSelection(cleaned)
+	if len(includesOnly(normalized)) == 0 {
+		return errFileSetEmptySelection
+	}
+	if err := s.store.SetFileSetSelectedPaths(id, normalized); err != nil {
+		return fmt.Errorf("store file set selection: %w", err)
 	}
 	return nil
 }
