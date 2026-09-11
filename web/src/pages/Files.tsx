@@ -1107,6 +1107,25 @@ interface FileSetSaveDesc {
   sent: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
 }
 
+/** Remount key for FileSetFoldersEditor (review CR-01): set id + anchor +
+ *  selection PRESENCE. The editor seeds its (includes, exclusions) mirror from
+ *  the mount-time `set` prop and never re-syncs, so an edited `set` prop alone
+ *  reaches nothing: after a folder edit through FileSetDialog — which fires the
+ *  server-side A3 clear (selected_paths = NULL) — the still-mounted editor kept
+ *  the OLD anchor's mirror, whose next full-list PATCH was either atomically
+ *  refused against the new root (the editor wedged until a page reload) or,
+ *  when the path moved deeper, silently resurrected entries the clear had just
+ *  deleted. Keying the element on this string remounts the editor on every
+ *  anchor/selection-presence change and reseeds from the fresh (post-clear)
+ *  view — NULL reseeds to the synthetic root include (UI-SPEC item 9).
+ *  Content-only changes of a PRESENT selection deliberately keep the same key:
+ *  a list refetch must not reset the editor's expansion memory or browse
+ *  cache, nor tear down the serialized save queue while a PATCH is in flight
+ *  (Pattern 4). */
+export function fileSetEditorKey(set: FileSetView): string {
+  return `${set.id}:${set.path}:${set.selectedPaths ? "set" : "null"}`;
+}
+
 export function FileSetFoldersEditor({
   set,
   hostMountRoot,
@@ -1125,8 +1144,14 @@ export function FileSetFoldersEditor({
   // The (includes, exclusions) mirror in host path space — splitFlatSet over
   // the stored selection, with the NULL case seeded as a synthetic include of
   // the root (UI-SPEC item 9; see the block comment above). Seeded once per
-  // editor instance; rows are keyed by set id, so instance identity IS set
-  // identity and no reseed path exists.
+  // editor instance — these seed inputs are read exactly here, never
+  // reactively. Reseeding is the CALL SITE's job (review CR-01): the element
+  // is keyed by fileSetEditorKey(set) (id + anchor + selection presence), so a
+  // folder edit through FileSetDialog — which fires the server-side A3 clear —
+  // remounts this component and re-runs this seed against the fresh
+  // (post-clear) view, instead of the mounted editor keeping the old anchor's
+  // mirror (wedged PATCHes against the new root, or silent resurrection of
+  // cleared entries).
   const seed = splitFlatSet(noPath ? [] : (set.selectedPaths ?? [root]));
   const [includes, setIncludes] = useState<Set<string>>(seed.includes);
   const [exclusions, setExclusions] = useState<Set<string>>(seed.exclusions);
@@ -1557,8 +1582,13 @@ export function FileSetRow({
       {/* Choose folders — the Phase 2 SelectionTree over this set's own root
           (Phase 4, INTEG-02; UI-SPEC item 1: below the restore disclosure,
           separated by the editor's own top border). A no-Path set renders no
-          disclosure — the files.noPathHint line in the header stands in. */}
-      {!noPath && <FileSetFoldersEditor set={set} hostMountRoot={hostMountRoot} t={t} />}
+          disclosure — the files.noPathHint line in the header stands in.
+          Keyed by fileSetEditorKey (review CR-01): the editor seeds its mirror
+          from mount-time props only, so an anchor or selection-presence change
+          (a dialog path edit and its server-side A3 clear) must remount it. */}
+      {!noPath && (
+        <FileSetFoldersEditor key={fileSetEditorKey(set)} set={set} hostMountRoot={hostMountRoot} t={t} />
+      )}
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (

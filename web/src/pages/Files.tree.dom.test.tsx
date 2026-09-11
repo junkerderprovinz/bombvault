@@ -77,6 +77,9 @@ vi.mock("../lib/api", async (importOriginal) => {
 // page's dom harness only).
 const FilesModule = await import("./Files");
 const { FileSetFoldersEditor, FileSetRow } = FilesModule;
+// Bound from the namespace like FileSetDialog: the reseed pins below depend on
+// this call-site key helper (review CR-01).
+const fileSetEditorKey = FilesModule.fileSetEditorKey;
 // Bound from the namespace rather than a destructured ESM import: a missing
 // named export fails the whole file at link time, while a missing namespace
 // property fails only the dialog tests — the honest RED before the plan 04
@@ -120,7 +123,9 @@ function documentsListing(): BrowseResponse {
 
 function EditorHarness({ set, hostMountRoot = HOST_MOUNT_ROOT }: { set: FileSetView; hostMountRoot?: string }) {
   const { t } = useT();
-  return <FileSetFoldersEditor set={set} hostMountRoot={hostMountRoot} t={t} />;
+  // The call site's exact keying (FileSetRow in Files.tsx): the CR-01 reseed
+  // pin only means something if the harness remounts the way the page does.
+  return <FileSetFoldersEditor key={fileSetEditorKey(set)} set={set} hostMountRoot={hostMountRoot} t={t} />;
 }
 
 function RowHarness({ set, hostMountRoot = HOST_MOUNT_ROOT, index = 0 }: { set: FileSetView; hostMountRoot?: string; index?: number }) {
@@ -290,6 +295,74 @@ describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1
     expect(browseCalls).toEqual([REL]);
     expect(screen.getByRole("treeitem", { name: /^media$/ })).toBeTruthy();
     expect(view).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Review CR-01: the mirror-reseed contract. The editor seeds from mount-time
+// props only, so the call site keys it by fileSetEditorKey — an anchor or
+// selection-presence change remounts it onto the fresh view.
+// ---------------------------------------------------------------------------
+
+describe("FileSetFoldersEditor mirror reseed (review CR-01)", () => {
+  it("a refetched view after a dialog path edit (new anchor, cleared selection) remounts to the honest post-clear seed — no stale mirror, no wedge", async () => {
+    browseReplies = [documentsListing()];
+    const view = await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
+    await openDisclosure();
+    const root = screen.getByRole("treeitem", { name: /documents/ });
+    expect(root.getAttribute("aria-checked")).toBe("mixed");
+
+    // What FileSetDialog's save + loadSets() serve back: a DEEPER anchor and
+    // a CLEARED selection (the server-side A3 clear stored NULL; the view
+    // omits the key). Without the remount the mounted editor kept the old
+    // anchor's mixed mirror here.
+    view.rerender(
+      <Providers>
+        <EditorHarness set={setView({ path: "documents/docs", selectedPaths: undefined })} />
+      </Providers>,
+    );
+    // The remount reset the disclosure; reopen onto the new root.
+    await openDisclosure();
+    await act(async () => {});
+    const moved = screen.getByRole("treeitem", { name: /documents\/docs/ });
+    // Honest NULL seed (UI-SPEC item 9), not the old anchor's stale mirror:
+    // the root reads CHECKED at 1 paths — what the server actually has.
+    expect(moved.getAttribute("aria-checked")).toBe("true");
+    expect(within(moved).getByText("1 paths")).toBeTruthy();
+
+    // The wedge pin: a toggle under the new anchor PATCHes ONLY fresh-anchor
+    // entries — no stale old-root entry rides along to be atomically refused
+    // against the new root (or, on a deeper move, to resurrect the cleared
+    // selection).
+    browseReplies = [
+      { ok: true, status: "ok", truncated: false, dirs: [{ name: "media", path: "documents/docs/media" }] },
+    ];
+    await act(async () => {
+      fireEvent.click(moved);
+    });
+    const media = screen.getByRole("treeitem", { name: /^media$/ });
+    await act(async () => {
+      fireEvent.click(within(media).getByRole("checkbox", { hidden: true }));
+    });
+    expect(patches).toHaveLength(1);
+    expect(patches[0].body.selectedPaths).toEqual(["/host/user/documents/docs", "!/host/user/documents/docs/media"]);
+  });
+
+  it("a same-anchor refetch keeps the editor instance mounted: open disclosure and mirror survive", async () => {
+    browseReplies = [documentsListing()];
+    const view = await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
+    await openDisclosure();
+    // A refetch that serves the same id/path/selection-presence (e.g. a
+    // finished backup's onRefresh) must NOT remount: the disclosure stays
+    // open — a remount would reset it to closed — and the mirror state is
+    // preserved.
+    view.rerender(
+      <Providers>
+        <EditorHarness set={setView({ selectedPaths: [ROOT, `!${SUB}`] })} />
+      </Providers>,
+    );
+    await act(async () => {});
+    expect(screen.getByRole("treeitem", { name: /documents/ }).getAttribute("aria-checked")).toBe("mixed");
   });
 });
 
