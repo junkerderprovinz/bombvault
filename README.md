@@ -51,15 +51,15 @@ Three ways below, whichever suits you.
 
 <p align="center">
   <a href="https://buymeacoffee.com/junkerderprovinz">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="160">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="160">
   </a>
   &nbsp;
   <a href="https://paypal.me/hallelujadesign">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="160">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-paypal.png" alt="PayPal" width="160">
   </a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/donate/">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="160">
+  <a href="https://junkerderprovinz.github.io/junkerderprovinz/">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-crypto.png" alt="Donate with crypto" width="160">
   </a>
 </p>
 
@@ -457,16 +457,16 @@ This is a one-person project. I put a lot of work into building it, keeping it r
 
 <p align="center">
   <a href="https://buymeacoffee.com/junkerderprovinz">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="160">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="160">
   </a>
   &nbsp;
   <a href="https://paypal.me/hallelujadesign">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="160">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-paypal.png" alt="PayPal" width="160">
   </a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/donate/">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="160">
+  <a href="https://junkerderprovinz.github.io/junkerderprovinz/">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-crypto.png" alt="Donate with crypto" width="160">
   </a>
 </p>
 
-The crypto addresses live on their own [donation page](https://junkerderprovinz.github.io/donate/) rather than here, grouped by chain: what decides whether the money arrives is the network you send on, and a list that reads coin-first invites somebody to send USDT on the wrong one. The app's own window under **Settings > About BombVault > Crypto** is better still, because it gives you a QR code and an address cannot be mistyped from one.
+The crypto addresses live on their own [donation page](https://junkerderprovinz.github.io/junkerderprovinz/) rather than here, grouped by chain: what decides whether the money arrives is the network you send on, and a list that reads coin-first invites somebody to send USDT on the wrong one. The app's own window under **Settings > About BombVault > Crypto** is better still, because it gives you a QR code and an address cannot be mistyped from one.
