@@ -35,7 +35,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **INTEG-01**: Container panel — unfold any discovered mount or custom path and select subfolders (Plex `transcoding`, caches, logs) without dropping the rest of the mount
 - [x] **INTEG-02**: File Sets page — the same tree component is used when choosing what a file set covers
 - [x] **INTEG-03**: Exclusions are reviewable after the fact — deselected sub-branches render as a visible list near the mount, consistent with existing preview styling
-- [ ] **INTEG-04**: Fully deselecting a mount's tree has defined, UI-documented semantics that never silently re-trigger the empty-list auto-detection fallback (`configuredBackupPaths` treats an empty list as "no explicit selection") — backend PATCH guard landed in Phase 1 (coded empty-selection refusal, prior state preserved); completes with the documented UI semantics in Phase 3 per ROADMAP
+- [x] **INTEG-04**: Fully deselecting a mount's tree has defined, UI-documented semantics that never silently re-trigger the empty-list auto-detection fallback (`configuredBackupPaths` treats an empty list as "no explicit selection") — backend PATCH guard landed in Phase 1 (coded empty-selection refusal, prior state preserved); completes with the documented UI semantics in Phase 3 per ROADMAP
 
 ### Restore Robustness
 
@@ -103,7 +103,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTEG-01 | Phase 2 | Complete |
 | SELECT-03 | Phase 3 | Complete |
 | INTEG-03 | Phase 3 | Complete |
-| INTEG-04 | Phase 3 | Backend landed (Phase 1); UI semantics pending |
+| INTEG-04 | Phase 3 | Complete |
 | RESTIC-01 | Phase 3 | Complete |
 | INTEG-02 | Phase 4 | Complete |
 
