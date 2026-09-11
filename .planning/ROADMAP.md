@@ -129,7 +129,25 @@ Plans:
   1. On the File Sets page, the user picks what a file set covers through the same tree component — lazy expand, cascading checkboxes, mixed-state parents, exact reconstruction on reopen
   2. A file set's tree selection round-trips through the same flat persistence and normalization (no separate format), and the file set's next backup produces a snapshot whose `Paths` match the ticked roots
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Tracer: selection round-trip keystone — migration v101 (`selected_paths` nullable) + owned setter + orchestrator `SourcePaths` + `BackupFileSet` compile (re-anchor filter, derived excludes), legacy NULL argv pinned byte-identical (INTEG-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — `selectedPaths` PATCH boundary (containment, 64 cap, atomic, D-06 refusal, path-change clear) + FileSetView/api.ts wire mirror + D-08 restore guard via the one `mapRestorePaths` (INTEG-02)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-03-PLAN.md — Files-page tree editor: optional CACHEDIR props, "Choose folders" disclosure, one-root SelectionTree, NULL synthetic-root seed, serialized one-deep queue, client refusal, 4 i18n keys x 42 locales (INTEG-02)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 04-04-PLAN.md — Audit surfaces: per-root exclusions review list (D-07) + dialog path-change hint (A3) + phase gate (INTEG-02)
+
 **UI hint**: yes
 
 **Notes**: Decide single-root picker vs multi-root selection during planning — research recommends multi-root (strict superset, matches the Active requirement); multi-root needs only an append-only SQLite migration (`selected_paths` nullable — never edit a shipped migration).
@@ -144,4 +162,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Selection Engine & Restore Safety | 5/5 | Complete    | 2026-09-10 |
 | 2. Container Panel Tree Selection | 3/3 | Complete    | 2026-09-10 |
 | 3. Selection Trust & Controls | 3/3 | Complete    | 2026-09-10 |
-| 4. File Sets Parity | 0/TBD | Not started | - |
+| 4. File Sets Parity | 0/4 | Not started | - |
