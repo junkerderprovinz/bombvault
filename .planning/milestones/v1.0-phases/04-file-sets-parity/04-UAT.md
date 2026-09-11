@@ -30,7 +30,7 @@ expected: Sur la page Files d'une instance réelle : la divulgation « Choose fo
 result: pass
 reported: |
   Instance : BombVault-test redéployée sur bombvault:phase4-ad1c12a5 (healthy,
-  /api/health ok) ; navigateur playwright sur http://192.168.31.6:13000/files.
+  /api/health ok) ; navigateur playwright sur http://<unraid-host>:13000/files.
   Set créé pour l'UAT (« uat-test », planification décochée). Vérifié :
   - Dialog « Add folder set » : caption « Changing the folder clears the ticked
     sub-folder selection. » rendue sous le contrôle Folder/Browse, avant le hint

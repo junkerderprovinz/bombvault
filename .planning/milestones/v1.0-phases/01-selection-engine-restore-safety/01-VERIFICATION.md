@@ -26,7 +26,7 @@ re_verification:
 unverified_prohibitions: 11 # verrous judgment-tier : verdicts LLM-judge non autoritaires per ADR-550 D4 — revue humaine recommandée (tableau dans le corps du rapport)
 human_verification:
 
-  - test: "Smoke sur l'instance Unraid réelle (192.168.31.6) : sauvegarder un conteneur avec un sous-dossier exclu (ex. appdata/plex avec !…/transcoding), vérifier le contenu du snapshot (restic ls : la branche exclue absente, le reste présent), puis restaurer proprement ce conteneur depuis ce snapshot"
+  - test: "Smoke sur l'instance Unraid réelle (<unraid-host>) : sauvegarder un conteneur avec un sous-dossier exclu (ex. appdata/plex avec !…/transcoding), vérifier le contenu du snapshot (restic ls : la branche exclue absente, le reste présent), puis restaurer proprement ce conteneur depuis ce snapshot"
     expected: "Le snapshot contient le montage moins la branche exclue (Paths = racine maximale, Excludes = le motif dérivé) ; le restore complète sans abort post-teardown ; l'état restauré correspond au snapshot, pas à la sélection courante"
     why_human: "Intégration réelle (chemins hôte Unraid/FUSE, docker.sock, restic réel sur l'array) qu'aucun harnais de test (memstore, fakes, t.TempDir) ne couvre ; les tests prouvent les contrats moteur, pas le comportement sur l'instance physique"
 
@@ -198,7 +198,7 @@ Aucun marqueur TBD/FIXME/XXX introduit. Aucun blocker.
 
 Voir frontmatter `human_verification` — 4 items (l'instance étant moteur sans UI, la liste est délibérément minimale) :
 
-1. **Smoke Unraid réel (192.168.31.6)** — backup conteneur avec sous-dossier exclu → contenu snapshot vérifié → restore propre. Alimente 01-UAT.md.
+1. **Smoke Unraid réel (<unraid-host>)** — backup conteneur avec sous-dossier exclu → contenu snapshot vérifié → restore propre. Alimente 01-UAT.md.
 2. **Revue manuelle des 2 items edge-coverage** (BROWSE-02, SELECT-02 'unclassified') — politique #1110.
 3. **Décision de format MVP** — but pas en User Story.
 4. **Push docker-folders + Actions vertes** — la substance des jobs est déjà prouvée de première main au HEAD final (suite intégrale + lint) ; reste l'exécution d'enregistrement GitHub (et le runner non-root de CI pour TestBrowseStatusRestricted, couvert ici en non-root Docker).

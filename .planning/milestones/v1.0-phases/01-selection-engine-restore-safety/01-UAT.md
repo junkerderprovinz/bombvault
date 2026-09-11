@@ -12,7 +12,7 @@ updated: 2026-09-10T11:29:12Z
 
 ## Tests
 
-### 1. Smoke Unraid réel (192.168.31.6) — round-trip sélection / exclusion / restore sur l'instance physique
+### 1. Smoke Unraid réel (<unraid-host>) — round-trip sélection / exclusion / restore sur l'instance physique
 expected: Backup d'un conteneur avec sous-dossier exclu → `restic ls` montre la branche exclue absente du snapshot (positionals = racines maximales, excludes descendants après `--`) → restore propre, contenu conforme. Couvre FUSE Unraid, docker.sock et les chemins hôtes — hors de portée des harnais.
 result: passed
 evidence: Attesté par l'utilisateur le 2026-09-10 (« le smoke a déjà été fait ») — validation humaine sur l'instance physique, faisant autorité pour cet item UAT.
