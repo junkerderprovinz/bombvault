@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 4
 current_phase_name: File Sets Parity
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-09-11T02:18:05.088Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-09-11T03:08:03.144Z"
 last_activity: 2026-09-10
 last_activity_desc: Phase 4 execution started
-state_head: 2776eb4a6c419476a1f526f839b81a6bc9613fbd
+state_head: 77ddb4956ed1fd5d2c4cfee653ea3ef835bdd520
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
   percent: 75
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-10)
 ## Current Position
 
 Phase: 4 (File Sets Parity) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-09-10 — Phase 4 execution started
 
@@ -73,6 +73,7 @@ Progress: [████████████████████] 11/11 p
 | Phase 03 P02 | 10min | 2 tasks | 46 files |
 | Phase 3 P03 | 40m | 3 tasks | 48 files |
 | Phase 04 P01 | 22min | 2 tasks | 10 files |
+| Phase 4 P02 | 40min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Phase 3 plan 02: exclusions disclosure is a plain button (backupOrder precedent) tabbable outside the roving set; expansion is per-root component state deliberately NOT persisted (audit view, not navigation comfort); active and dormant roots render the identical section
 - [Phase 3]: Reset selection rides the serialized queue as a no-source {backupPaths:[]} descriptor - the strictly tree-gated Phase 1 guard passes it by omission, making the confirmed reset the one sanctioned exit to auto-detection
 - [Phase 3]: CACHEDIR flips are a second owed class in the one PATCH queue: the drain composes a single body from the owed classes (T-03-07), caches failure reverts only when the live map still equals the attempted flip
+- [Phase 4]: Phase 4 plan 02: file-set PATCH selectedPaths is a three-state pointer field - absent = untouched, [] = coded empty-selection refusal (D-06), list = atomic validated normalized overwrite capped at 64 with per-entry containment via isStrictDescendant against the resolved root
+- [Phase 4]: Phase 4 plan 02: a file-set path change clears the selection (to SQL NULL) with clear-wins precedence over same-request entries, compared on resolved roots - Pitfall 2 layer 1; the compile-time re-anchor stays layer 2
+- [Phase 4]: Phase 4 plan 02: D-08 restore guard scoped to the in-place route with len(chosen.Paths) > 0 (Rule 1: the literal broader scope contradicted the plan's own acceptance criteria - TestRestoreFileSetToFolder and TestRestoreFileSetInPlaceConfirmed must stay green unmodified; Open Question 1 resolution honored)
 
 ### Pending Todos
 
@@ -142,6 +146,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-11T02:18:04.603Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-09-11T03:08:02.701Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
