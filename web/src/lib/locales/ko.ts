@@ -1177,7 +1177,14 @@ const ko: Partial<Translations> = {
   "files.cancel": "취소",
   "files.addPreset": "프리셋 추가: 호스트 시스템 구성",
   "files.addPresetHint": "컨테이너 외부의 호스트 수준 구성을 위한 신중한 시작점입니다. 완전함을 보장하지 않습니다. 저장하기 전에 폴더를 확인하세요.",
-  "settings.filesEnabled": "폴더",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "폴더 선택",
+  "files.foldersHint": "이 세트가 포괄할 폴더에 체크하세요. 하위 폴더의 체크를 해제하면 제외됩니다. 숫자는 다음 백업이 restic에 넘길 경로 수입니다.",
+  "files.emptySelectionBlocked": "세트에는 폴더가 최소 하나 필요하므로 마지막 체크는 해제할 수 없습니다. 이 세트가 더 이상 필요 없다면 폴더 세트 삭제를 사용하세요.",
+  "files.pathChangeHint": "폴더를 변경하면 체크한 하위 폴더 선택이 지워집니다.",  "settings.filesEnabled": "폴더",
   "settings.filesEnabledHint": "다른 영역과 무관하게 마운트 아래의 임의 폴더를 백업합니다.",
   "settings.filesPath": "폴더 경로",
   "jobs.filesSection": "폴더",

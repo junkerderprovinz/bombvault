@@ -1182,7 +1182,14 @@ const nl: Partial<Translations> = {
   "files.cancel": "Annuleren",
   "files.addPreset": "Preset toevoegen: Systeemconfiguratie",
   "files.addPresetHint": "Een voorzichtig startpunt voor configuratie op hostniveau buiten je containers, geen claim van volledigheid. Controleer de map voordat je opslaat.",
-  "settings.filesEnabled": "Mappen",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Mappen kiezen",
+  "files.foldersHint": "Vink de mappen aan die deze set omvat. Vink een submap uit om die weg te laten; het getal toont hoeveel paden de volgende back-up aan restic geeft.",
+  "files.emptySelectionBlocked": "Een set heeft minstens één map nodig, dus de laatste vink kan niet worden weggehaald. Gebruik Mappenset verwijderen als je deze set niet meer wilt.",
+  "files.pathChangeHint": "Als je de map wijzigt, wordt de aangevinkte submapselectie gewist.",  "settings.filesEnabled": "Mappen",
   "settings.filesEnabledHint": "Willekeurige mappen onder je mounts back-uppen, los van de andere domeinen.",
   "settings.filesPath": "Mappen-pad",
   "jobs.filesSection": "Mappen",

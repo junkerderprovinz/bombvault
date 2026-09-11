@@ -1188,7 +1188,14 @@ const ar: Partial<Translations> = {
   "files.cancel": "إلغاء",
   "files.addPreset": "إضافة قالب جاهز: تهيئة النظام",
   "files.addPresetHint": "نقطة بداية متحفظة لتهيئة النظام على مستوى المضيف خارج الحاويات، وليست ادعاءً بالاكتمال. راجع المجلد قبل الحفظ.",
-  "settings.filesEnabled": "المجلدات",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "اختيار المجلدات",
+  "files.foldersHint": "ضع علامة على المجلدات التي يغطيها هذا المجموعة. لاستبعاد مجلد فرعي، أزل علامته؛ الرقم يوضح كم مسارًا سيقدمه النسخ الاحتياطي التالي إلى restic.",
+  "files.emptySelectionBlocked": "يحتاج المجموعة إلى مجلد واحد على الأقل، لذا لا يمكن إزالة العلامة الأخيرة. استخدم حذف مجموعة المجلدات إذا لم تعد تريد هذه المجموعة.",
+  "files.pathChangeHint": "تغيير المجلد يمسح اختيار المجلدات الفرعية المعلّمة.",  "settings.filesEnabled": "المجلدات",
   "settings.filesEnabledHint": "نسخ مجلدات عشوائية تحت نقاط التحميل احتياطيًا، بشكل مستقل عن المجالات الأخرى.",
   "settings.filesPath": "مسار المجلدات",
   "jobs.filesSection": "المجلدات",

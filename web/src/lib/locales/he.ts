@@ -1185,7 +1185,14 @@ const he: Partial<Translations> = {
   "files.cancel": "ביטול",
   "files.addPreset": "הוספת תבנית מוכנה: תצורת המערכת",
   "files.addPresetHint": "נקודת התחלה שמרנית לתצורה ברמת המארח מחוץ למכולות שלך, לא טענה לשלמות. בדקו את התיקייה לפני השמירה.",
-  "settings.filesEnabled": "תיקיות",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "בחירת תיקיות",
+  "files.foldersHint": "סמן את התיקיות שהערכה הזו מכסה. בטל סימון של תת־תיקייה כדי להשאיר אותה בחוץ; המספר מציג כמה נתיבים הגיבוי הבא מעביר אל restic.",
+  "files.emptySelectionBlocked": "לערכה נדרשת לפחות תיקייה אחת, ולכן אי אפשר להסיר את הסימון האחרון. השתמש במחק ערכת תיקיות אם אינך רוצה עוד את הערכה הזו.",
+  "files.pathChangeHint": "שינוי התיקייה מנקה את הבחירה של תתי התיקיות המסומנות.",  "settings.filesEnabled": "תיקיות",
   "settings.filesEnabledHint": "גיבוי תיקיות שרירותיות מתחת לנקודות העגינה שלך, בנפרד מהתחומים האחרים.",
   "settings.filesPath": "נתיב תיקיות",
   "jobs.filesSection": "תיקיות",

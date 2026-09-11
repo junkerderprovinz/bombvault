@@ -1356,7 +1356,14 @@ const hr: Partial<Translations> = {
   "files.cancel": "Otkaži",
   "files.addPreset": "Dodaj predložak: Konfiguracija sustava hosta",
   "files.addPresetHint": "Konzervativna polazna točka za konfiguraciju na razini hosta izvan vaših kontejnera, nije tvrdnja o potpunosti. Pregledajte mapu prije spremanja.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Odaberi mape",
+  "files.foldersHint": "Označite mape koje ovaj skup pokriva. Uklonite oznaku s podmape da biste je izostavili; broj pokazuje koliko će putanja sljedeća sigurnosna kopija predati resticu.",
+  "files.emptySelectionBlocked": "Skup treba barem jednu mapu, pa se posljednja oznaka ne može ukloniti. Koristite Izbriši skup mapa ako vam ovaj skup više nije potreban.",
+  "files.pathChangeHint": "Promjena mape briše odabir označenih podmapa.",  // Files domain integration
   "settings.filesEnabled": "Mape",
   "settings.filesEnabledHint": "Sigurnosno kopirajte proizvoljne mape ispod svojih montiranja kao skupove datoteka, neovisno o ostalim domenama.",
   "settings.filesPath": "Putanja mapa",

@@ -18,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -1819,6 +1820,10 @@ type fileSetRow struct {
 	Enabled    bool     `json:"enabled"`
 	LastBackup int64    `json:"lastBackup"`
 	PathExists bool     `json:"pathExists"`
+	// SelectedPaths is the set's tree selection served back by the view
+	// (Phase 4 plan 02, D-03); absent for a set never touched by the tree
+	// (the NULL legacy switch stays distinguishable from a written selection).
+	SelectedPaths []string `json:"selectedPaths"`
 }
 
 // fileSetsOf decodes the GET /api/files list response.
@@ -2368,6 +2373,434 @@ func TestDiscoverFileSets(t *testing.T) {
 	if len(sets) != 1 || sets[0].Enabled {
 		t.Fatalf("re-discover must not duplicate or enable: %+v", sets)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 plan 02: the file-set PATCH selectedPaths boundary (D-03/D-06)
+// ---------------------------------------------------------------------------
+
+// newDocsSet creates the "docs" set over the harness' data/docs folder through
+// the wire and returns its id plus the set's resolved absolute root — the
+// anchor space selection entries are stored in (A2: entries live in mount-root
+// absolute space, never container-translated). The root is computed with the
+// same paths.Resolve the service uses, so expectations hold on every OS's
+// temp-dir shape.
+func newDocsSet(t *testing.T, h http.Handler, dir string) (string, string) {
+	t.Helper()
+	root, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+	if id == "" {
+		t.Fatalf("create failed: %v", m)
+	}
+	return id, root
+}
+
+// patchFileSet marshals body and PATCHes /api/files/sets/{id}. Bodies are built
+// as values, never string literals: selection entries contain the resolved
+// root, whose raw OS separators (backslashes on the Windows dev box) must be
+// JSON-escaped by the marshaller, not hand-interpolated.
+func patchFileSet(t *testing.T, h http.Handler, id string, body map[string]any) (*httptest.ResponseRecorder, map[string]any) {
+	t.Helper()
+	b, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, string(b))
+}
+
+// storedFileSetSelection reads the set's stored selection straight from the
+// store — the PATCH boundary's ground truth (the wire view is asserted
+// separately).
+func storedFileSetSelection(t *testing.T, st *store.Repo, id string) []string {
+	t.Helper()
+	fs, err := st.GetFileSet(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return fs.SelectedPaths
+}
+
+// TestPatchFileSetSelectedPaths pins the PATCH boundary for a file set's tree
+// selection (Phase 4 plan 02, D-03): entries are validated against the set's
+// resolved root BEFORE any store write (atomic whole-save rejection), the
+// stored list is the normalized canonical form no matter what order the client
+// sent, a 64-entry cap bounds the column, an absent key never touches the
+// stored selection, and a path change clears the selection with clear-wins
+// precedence over entries in the same request (Pitfall 2 layer 1 / A3 — the
+// PATCH is the only writer that can move the anchor a stored selection
+// dangles from).
+func TestPatchFileSetSelectedPaths(t *testing.T) {
+	t.Run("stores the normalized canonical form and the view serves it back", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+
+		// Wire order is deliberately non-canonical (reversed, exclusion in the
+		// middle): the stored form must be the normalized canonical set
+		// regardless of what order the client sent.
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{
+				root + "/b.md",
+				"!" + root + "/tmp",
+				root + "/a.md",
+			},
+		})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("PATCH failed: %d %v", w.Code, m)
+		}
+		want := []string{root + "/a.md", root + "/b.md", "!" + root + "/tmp"}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, want) {
+			t.Fatalf("stored = %v, want %v", got, want)
+		}
+		// The list view carries the selection back for the tree editor.
+		sets := fileSetsOf(t, h)
+		if len(sets) != 1 || !reflect.DeepEqual(sets[0].SelectedPaths, want) {
+			t.Fatalf("view selection = %+v, want %v", sets[0].SelectedPaths, want)
+		}
+	})
+
+	t.Run("collapses a redundant descendant to its maximal root", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root, root + "/child"},
+		})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, []string{root}) {
+			t.Fatalf("stored = %v, want [%s]", got, root)
+		}
+	})
+
+	t.Run("atomic rejection keeps the prior selection byte-identical", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		prior := []string{root + "/kept"}
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": prior}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		// One escaping entry (cleans outside the root) and one sibling-prefix
+		// trap (data/doc vs data/docs — a naive prefix check accepts it): the
+		// whole save must be rejected before ANY store write.
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{
+				root + "/../escape",
+				strings.TrimSuffix(root, "docs") + "doc",
+			},
+		})
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("expected a graceful refusal, got %d %v", w.Code, m)
+		}
+		if errMsg, _ := m["error"].(string); errMsg == "" {
+			t.Fatalf("refusal must carry a scrubbed message, got %v", m)
+		}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, prior) {
+			t.Fatalf("prior selection must be byte-identical after the refusal, got %v", got)
+		}
+	})
+
+	t.Run("refuses more than 64 entries and accepts exactly 64", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		entries := func(n int) []string {
+			out := make([]string, 0, n)
+			for i := 0; i < n; i++ {
+				out = append(out, fmt.Sprintf("%s/f%02d", root, i))
+			}
+			return out
+		}
+		w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": entries(65)})
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("65 entries must be refused, got %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("a refused save must write nothing, got %v", got)
+		}
+		w, m = patchFileSet(t, h, id, map[string]any{"selectedPaths": entries(64)})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("64 entries must be accepted, got %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); len(got) != 64 {
+			t.Fatalf("stored %d entries, want 64", len(got))
+		}
+	})
+
+	t.Run("an absent selectedPaths key leaves the stored selection untouched", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		prior := []string{root + "/kept"}
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": prior}); m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+		// An ordinary name edit must not clear (or rewrite) the selection —
+		// the pointer-nil decode path is "untouched", not "clear".
+		w, m := patchFileSet(t, h, id, map[string]any{"name": "docs2"})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("name PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, prior) {
+			t.Fatalf("selection = %v, want %v (an absent key never touches it)", got, prior)
+		}
+	})
+
+	t.Run("changing the set path clears the stored selection", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": []string{root + "/kept"}}); m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+		// validateFileSet stats the new path, so the folder must exist first.
+		if err := os.MkdirAll(filepath.Join(dir, "data", "other"), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		w, m := patchFileSet(t, h, id, map[string]any{"path": "data/other"})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("path PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("a path edit must clear the selection to the NULL legacy state, got %v", got)
+		}
+	})
+
+	t.Run("a path change wins over entries in the same request", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		if err := os.MkdirAll(filepath.Join(dir, "data", "other"), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		// Entries valid under the OLD root arrive alongside the path change:
+		// clear-wins precedence means they must not survive re-anchored under
+		// the new root (the client asked to move the set AND select folders —
+		// honoring both would silently rewrite the selection's meaning).
+		w, m := patchFileSet(t, h, id, map[string]any{
+			"path":          "data/other",
+			"selectedPaths": []string{root + "/kept"},
+		})
+		if w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("PATCH failed: %d %v", w.Code, m)
+		}
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("clear must win over same-request entries, got %v", got)
+		}
+		fs, err := st.GetFileSet(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if fs.Path != "data/other" {
+			t.Fatalf("path = %q, want data/other", fs.Path)
+		}
+	})
+}
+
+// TestFileSetEmptySelection pins D-06 on the file-set boundary: a selection
+// that normalizes to zero includes is refused with the machine-routable
+// empty-selection code and a message that orients to removing the set (the
+// tree cannot express "back up nothing" for a set — DELETE is the exit), and
+// the refusal leaves the prior selection structurally untouched.
+func TestFileSetEmptySelection(t *testing.T) {
+	refused := func(t *testing.T, h http.Handler, id string, entries []string) {
+		t.Helper()
+		w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": entries})
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("expected a graceful refusal, got %d %v", w.Code, m)
+		}
+		if m["code"] != "empty-selection" {
+			t.Fatalf("code = %v, want empty-selection (machine-routable)", m["code"])
+		}
+		if errMsg, _ := m["error"].(string); !strings.Contains(errMsg, "Remove set") {
+			t.Fatalf("refusal must orient to removing the set, got %q", errMsg)
+		}
+	}
+
+	t.Run("an exclusions-only selection is refused", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		refused(t, h, id, []string{"!" + root + "/x"})
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("prior state must be untouched (NULL), got %v", got)
+		}
+	})
+
+	t.Run("an empty list is refused", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, _ := newDocsSet(t, h, dir)
+		refused(t, h, id, []string{})
+		if got := storedFileSetSelection(t, st, id); got != nil {
+			t.Fatalf("prior state must be untouched (NULL), got %v", got)
+		}
+	})
+
+	t.Run("a refusal never clears an existing selection", func(t *testing.T) {
+		h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+		id, root := newDocsSet(t, h, dir)
+		prior := []string{root + "/kept"}
+		if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": prior}); m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+		refused(t, h, id, []string{})
+		if got := storedFileSetSelection(t, st, id); !reflect.DeepEqual(got, prior) {
+			t.Fatalf("prior selection must survive the refusal byte-identically, got %v", got)
+		}
+	})
+}
+
+// TestFileSetSelectedPathsViewShape pins the wire contract of the view field:
+// a set never touched by the tree omits selectedPaths entirely (the NULL
+// legacy switch must stay distinguishable on the wire from a written
+// selection), while an edited set carries the stored entries back.
+func TestFileSetSelectedPathsViewShape(t *testing.T) {
+	h, _, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+	id, root := newDocsSet(t, h, dir)
+
+	rawList := func() string {
+		t.Helper()
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/files", nil))
+		if w.Code != http.StatusOK {
+			t.Fatalf("GET /api/files status = %d", w.Code)
+		}
+		return w.Body.String()
+	}
+
+	if body := rawList(); strings.Contains(body, "selectedPaths") {
+		t.Fatalf("a never-edited set must omit selectedPaths (NULL legacy switch), got %s", body)
+	}
+
+	if w, m := patchFileSet(t, h, id, map[string]any{"selectedPaths": []string{root + "/a.md"}}); w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("PATCH failed: %d %v", w.Code, m)
+	}
+	if body := rawList(); !strings.Contains(body, "selectedPaths") {
+		t.Fatalf("an edited set must serve selectedPaths back, got %s", body)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 plan 02: the D-08 restore selection guard
+// ---------------------------------------------------------------------------
+
+// TestRestoreFileSetSelectionGuard pins the file-set twin of the container
+// restore mapping guard (D-08): an IN-PLACE restore replays the set's compiled
+// selection against the chosen snapshot's recorded Paths via mapRestorePaths,
+// and an empty intersection is refused synchronously in prepare — before any
+// destructive work starts. The to-folder route deliberately keeps its
+// whole-snapshot-subtree semantics (Open Question 1).
+func TestRestoreFileSetSelectionGuard(t *testing.T) {
+	t.Run("old mono-path snapshot still restores a multi-root selection in place", func(t *testing.T) {
+		// The snapshot predates the tree: one whole-root Paths entry, the shape
+		// every pre-phase backup produced. mapRestorePaths' pass-2 fallback
+		// maps both stored branches onto that ancestor, so the restore
+		// proceeds exactly as before the selection existed.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs"}},
+		}
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a", root + "/keep-b"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:" + dir + "/data/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+
+	t.Run("disjoint snapshot paths abort before any destructive work", func(t *testing.T) {
+		// The selection's branches and the snapshot's recorded path share no
+		// ancestor/descendant relation: restoring would overwrite the source
+		// folder with a snapshot that contains none of what the set now
+		// selects. The refusal must land synchronously (prepare), with zero
+		// restic calls.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs/elsewhere"}},
+		}
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("expected a synchronous refusal, got %d %v", w.Code, m)
+		}
+		if errMsg, _ := m["error"].(string); !strings.Contains(errMsg, "nothing to restore") {
+			t.Fatalf("expected the nothing-to-restore error, got %q", errMsg)
+		}
+		waitForBackupDone(t, svc)
+		if len(eng.restored) != 0 {
+			t.Fatalf("a refused restore must start no restic work, got %v", eng.restored)
+		}
+	})
+
+	t.Run("to-folder route keeps whole-snapshot semantics even when the selection maps empty", func(t *testing.T) {
+		// Non-destructive and snapshot-shaped by design (Open Question 1): a
+		// selection disjoint from the snapshot's cross-root path must NOT
+		// abort a to-folder restore — the subtree comes from the snapshot, not
+		// the stored selection (the TestRestoreFileSetToFolder contract, now
+		// pinned against the guard over-reaching).
+		eng := &fakeResticEngine{snaps: []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
+		}}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:/host/olduser/data/docs->" + dir + "/restore-here/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+
+	t.Run("NULL selection compiles to the legacy root and maps a mono-path snapshot", func(t *testing.T) {
+		// The never-tree-edited set: the guard's compile is the legacy single
+		// positional, which EQUALS the snapshot's recorded path — the restore
+		// proceeds, byte-compat with the pre-phase behavior.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs"}},
+		}
+		id, _ := newDocsSet(t, h, dir)
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:" + dir + "/data/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
 }
 
 // TestReleaseNotesHandler covers the "What's new" dialog's backend (#54, #68):

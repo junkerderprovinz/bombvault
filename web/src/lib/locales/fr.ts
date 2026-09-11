@@ -1185,7 +1185,14 @@ const fr: Partial<Translations> = {
   "files.cancel": "Annuler",
   "files.addPreset": "Ajouter un préréglage : Configuration système",
   "files.addPresetHint": "Un point de départ prudent pour la configuration au niveau de l'hôte, en dehors de vos conteneurs. Ce n'est pas une garantie d'exhaustivité. Vérifiez le dossier avant d'enregistrer.",
-  "settings.filesEnabled": "Dossiers",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Choisir les dossiers",
+  "files.foldersHint": "Coche les dossiers que ce jeu couvre. Décoche un sous-dossier pour le laisser de côté ; le nombre indique combien de chemins la prochaine sauvegarde confie à restic.",
+  "files.emptySelectionBlocked": "Un jeu a besoin d'au moins un dossier, donc le dernier cochage ne peut pas être retiré. Utilise Supprimer le jeu de dossiers si tu ne veux plus de ce jeu.",
+  "files.pathChangeHint": "Changer le dossier efface la sélection des sous-dossiers cochés.",  "settings.filesEnabled": "Dossiers",
   "settings.filesEnabledHint": "Sauvegarder des dossiers arbitraires sous vos points de montage, indépendamment des autres domaines.",
   "settings.filesPath": "Chemin des dossiers",
   "jobs.filesSection": "Dossiers",

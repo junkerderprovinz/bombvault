@@ -1356,7 +1356,14 @@ const lv: Partial<Translations> = {
   "files.cancel": "Atcelt",
   "files.addPreset": "Pievienot sākotnējo iestatījumu: Saimniekdatora sistēmas konfigurācija",
   "files.addPresetHint": "Konservatīvs sākumpunkts saimniekdatora līmeņa konfigurācijai ārpus jūsu konteineriem, nav apgalvojums par pilnīgumu. Pārskatiet mapi pirms saglabāšanas.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Izvēlēties mapes",
+  "files.foldersHint": "Atzīmējiet mapes, kuras sedz šī kopa. Noņemiet atzīmi no apakšmapes, lai to izlaistu; skaitlis rāda, cik ceļus nākamā dublējumkopija nodos restic.",
+  "files.emptySelectionBlocked": "Kopai nepieciešama vismaz viena mape, tāpēc pēdējo atzīmi nevar noņemt. Ja šī kopa vairs nav vajadzīga, izmantojiet Dzēst mapju kopu.",
+  "files.pathChangeHint": "Mainot mapi, tiek notīrīta atzīmēto apakšmapu izvēle.",  // Files domain integration
   "settings.filesEnabled": "Mapes",
   "settings.filesEnabledHint": "Dublējiet patvaļīgas mapes zem savām piesaistēm kā failu kopas, neatkarīgi no citiem domēniem.",
   "settings.filesPath": "Mapju ceļš",

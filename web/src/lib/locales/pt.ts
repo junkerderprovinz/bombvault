@@ -1185,7 +1185,14 @@ const pt: Partial<Translations> = {
   "files.cancel": "Cancelar",
   "files.addPreset": "Adicionar predefinição: Configuração do sistema",
   "files.addPresetHint": "Um ponto de partida conservador para a configuração ao nível do host fora dos seus contêineres, não é uma garantia de integralidade. Revise a pasta antes de salvar.",
-  "settings.filesEnabled": "Pastas",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Escolher pastas",
+  "files.foldersHint": "Marca as pastas que este conjunto cobre. Desmarca uma subpasta para a deixar de fora; o número mostra quantos caminhos o próximo backup entrega ao restic.",
+  "files.emptySelectionBlocked": "Um conjunto precisa de pelo menos uma pasta, por isso a última marca não pode ser removida. Usa Eliminar conjunto de pastas se já não queres este conjunto.",
+  "files.pathChangeHint": "Mudar a pasta limpa a seleção das subpastas marcadas.",  "settings.filesEnabled": "Pastas",
   "settings.filesEnabledHint": "Backup de pastas arbitrárias sob seus pontos de montagem, independente dos outros domínios.",
   "settings.filesPath": "Caminho das pastas",
   "jobs.filesSection": "Pastas",

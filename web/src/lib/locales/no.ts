@@ -1185,7 +1185,14 @@ const no: Partial<Translations> = {
   "files.cancel": "Avbryt",
   "files.addPreset": "Legg til forhåndsinnstilling: Systemkonfigurasjon",
   "files.addPresetHint": "Et forsiktig utgangspunkt for konfigurasjon på vertsnivå utenfor containerne dine, ingen påstand om fullstendighet. Sjekk mappen før du lagrer.",
-  "settings.filesEnabled": "Mapper",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Velg mapper",
+  "files.foldersHint": "Huk av mappene dette settet skal dekke. Fjern haken for en undermappe for å la den være utenfor; tallet viser hvor mange stier neste sikkerhetskopiering sender til restic.",
+  "files.emptySelectionBlocked": "Et sett trenger minst én mappe, så den siste haken kan ikke fjernes. Bruk Slett mappesett hvis du ikke vil ha dette settet lenger.",
+  "files.pathChangeHint": "Endrer du mappen, slettes valget av de avkrysde undermappene.",  "settings.filesEnabled": "Mapper",
   "settings.filesEnabledHint": "Sikkerhetskopiér vilkårlige mapper under monteringspunktene dine, uavhengig av de andre domenene.",
   "settings.filesPath": "Mapper-sti",
   "jobs.filesSection": "Mapper",

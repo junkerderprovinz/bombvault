@@ -1185,7 +1185,14 @@ const fi: Partial<Translations> = {
   "files.cancel": "Peruuta",
   "files.addPreset": "Lisää esiasetus: Järjestelmäasetukset",
   "files.addPresetHint": "Varovainen lähtökohta isäntätason asetuksille konttiesi ulkopuolella, ei täydellisyysväite. Tarkista kansio ennen tallennusta.",
-  "settings.filesEnabled": "Kansiot",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Valitse kansiot",
+  "files.foldersHint": "Valitse kansiot, jotka tämä joukko kattaa. Poista alikansion valinta jättääksesi sen ulos; lukumäärä kertoo, kuinka monta polkua seuraava varmuuskopio antaa resticille.",
+  "files.emptySelectionBlocked": "Joukko tarvitsee vähintään yhden kansion, joten viimeistä valintaa ei voi poistaa. Käytä Poista kansiojoukko -toimintoa, jos et enää tarvitse tätä joukkoa.",
+  "files.pathChangeHint": "Kansion vaihtaminen tyhjää valittujen alikansioiden valinnan.",  "settings.filesEnabled": "Kansiot",
   "settings.filesEnabledHint": "Mielivaltaisten kansioiden varmuuskopiointi liitospisteidesi alta, muista alueista riippumatta.",
   "settings.filesPath": "Kansioiden polku",
   "jobs.filesSection": "Kansiot",

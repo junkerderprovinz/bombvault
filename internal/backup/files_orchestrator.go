@@ -20,7 +20,21 @@ type FileSetBackupDeps struct {
 	// SourceDir is the container-visible resolved path of the set's folder
 	// (paths.Resolve(HostMountRoot, set.Path), e.g. /host/user/data/docs).
 	SourceDir string
-	Repo      string
+	// SourcePaths is the COMPILED positional source list (Phase 4 file-sets
+	// parity): the maximal-root includes of the set's stored tree selection,
+	// re-anchored against SourceDir by the single compile site in
+	// service.BackupFileSet. Additive beside SourceDir because CONTEXT D-01's
+	// "orchestrator unchanged" is true of the FilesRestic interface (Backup
+	// already takes paths []string) and false of this file: the old
+	// []string{d.SourceDir} wrap capped positionals at one, so multi-root
+	// selections were unreachable without this field (RESEARCH A1/Pitfall 1).
+	// nil (or empty — a zero-include list must never reach restic as zero
+	// positionals) is the legacy switch: the wrap falls back to
+	// []string{SourceDir} byte-identically, so a set never edited via the tree
+	// backs up exactly as before. Set together with SourceDir by the compile;
+	// SourceDir stays the anchor either way.
+	SourcePaths []string
+	Repo        string
 	// TargetID is the set's stable file_sets.id — runs are attributed to it so
 	// renames never orphan run history.
 	TargetID string
@@ -41,7 +55,15 @@ func BackupFileSetDir(ctx context.Context, d FileSetBackupDeps) (Summary, error)
 	if err != nil {
 		return Summary{}, fmt.Errorf("files backup: start run: %w", err)
 	}
-	summary, err := d.Restic.Backup(ctx, d.Repo, []string{d.SourceDir}, []string{"fileset:" + d.SetName}, d.Excludes...)
+	// Compiled multi-root positionals when the set carries a tree selection;
+	// the nil/empty fallback keeps the legacy single-positional argv
+	// byte-identical for a set never touched by the tree (D-03). Positionals
+	// travel after -- in restic.Backup's typed builder — never as flags.
+	paths := []string{d.SourceDir}
+	if len(d.SourcePaths) > 0 {
+		paths = d.SourcePaths
+	}
+	summary, err := d.Restic.Backup(ctx, d.Repo, paths, []string{"fileset:" + d.SetName}, d.Excludes...)
 	if err != nil {
 		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(err))
 		return Summary{}, err

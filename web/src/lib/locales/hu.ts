@@ -1188,7 +1188,14 @@ const hu: Partial<Translations> = {
   "files.cancel": "Mégse",
   "files.addPreset": "Előbeállítás hozzáadása: Rendszerkonfiguráció",
   "files.addPresetHint": "Óvatos kiindulópont a konténereken kívüli, host-szintű konfigurációhoz, nem teljességi igény. Mentés előtt ellenőrizd a mappát.",
-  "settings.filesEnabled": "Mappák",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Mappák kiválasztása",
+  "files.foldersHint": "Jelöld be azokat a mappákat, amelyeket ez a készlet lefed. Egy almappa kijelölésének törlésével kihagyod; a szám azt mutatja, hány elérési utat ad át a következő mentés a resticnek.",
+  "files.emptySelectionBlocked": "A készlethez legalább egy mappa kell, ezért az utolsó jelölés nem távolítható el. Ha már nem kell ez a készlet, használd a Mappakészlet törlése lehetőséget.",
+  "files.pathChangeHint": "A mappa megváltoztatása törli a bejelölt almappák kijelölését.",  "settings.filesEnabled": "Mappák",
   "settings.filesEnabledHint": "Tetszőleges mappák mentése a csatolási pontjaid alatt, a többi területtől függetlenül.",
   "settings.filesPath": "Mappák útvonala",
   "jobs.filesSection": "Mappák",

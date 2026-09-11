@@ -1667,6 +1667,23 @@ export const en = {
   // flash domain for this). Platform-expansion plan Task 7.
   "files.addPreset": "Add preset: Host system config",
   "files.addPresetHint": "A conservative starting point for host-level configuration outside your containers, not a claim of completeness. Review the folder before saving.",
+  // Phase 4 (INTEG-02): the Files-page selection tree, mounted per the UI-SPEC
+  // reuse contract with one root (the set's resolved Path, D-02). Copy is the
+  // UI-SPEC Copywriting Contract's en source of truth, pinned byte-exact by
+  // i18n.filesSelection.test.ts. Deliberately NOT the container folders.*
+  // wordings: folders.emptySelectionBlocked teaches "Reset selection", which
+  // does not exist here (D-06 - the files domain has no auto-detection to
+  // reset to, so the refusal orients to Delete folder set instead).
+  "files.foldersToggle": "Choose folders",
+  "files.foldersHint":
+    "Tick the folders this set covers. Untick a subfolder to leave it out; the count shows how many paths the next backup hands restic.",
+  "files.emptySelectionBlocked":
+    "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
+  // A3: the dialog disclosure for plan 02's PATCH-time clear rule - changing
+  // the set's folder clears the ticked selection (clear-wins precedence),
+  // so the consequence is named before it happens. Rendered under the
+  // FolderBrowser in FileSetDialog (plan 04-04).
+  "files.pathChangeHint": "Changing the folder clears the ticked sub-folder selection.",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Folders",
   "settings.filesEnabledHint": "Back up arbitrary folders under your mounts as file sets, independent of the other domains.",
@@ -3253,6 +3270,16 @@ export const de: Translations = {
   "files.cancel": "Abbrechen",
   "files.addPreset": "Preset hinzufügen: Systemkonfiguration",
   "files.addPresetHint": "Ein vorsichtiger Ausgangspunkt für die Konfiguration auf Host-Ebene außerhalb deiner Container, kein Anspruch auf Vollständigkeit. Ordner vor dem Speichern prüfen.",
+  // Phase 4 (INTEG-02): Auswahlbaum der Files-Seite (de-Übersetzungen der
+  // en-Quelle oben). Bewusst NICHT die Container-Wortwahl von folders.*:
+  // Der files-Domain hat keine automatische Erkennung als Rückfallebene,
+  // deshalb orientiert die Ablehnung an „Set entfernen" statt an einem Reset.
+  "files.foldersToggle": "Ordner auswählen",
+  "files.foldersHint":
+    "Kreuze die Ordner an, die dieses Set abdecken soll. Wähle ein Unterverzeichnis ab, um es wegzulassen; die Zahl zeigt, wie viele Pfade die nächste Sicherung an restic übergibt.",
+  "files.emptySelectionBlocked":
+    "Ein Set braucht mindestens einen Ordner, deshalb kann der letzte Haken nicht entfernt werden. Nutze Set entfernen, wenn du dieses Set nicht mehr brauchst.",
+  "files.pathChangeHint": "Wenn du den Ordner änderst, wird die angekreuzte Unterordner-Auswahl gelöscht.",
   // Files domain integration — Settings, Dashboard, Recovery (#62 task 7)
   "settings.filesEnabled": "Ordner",
   "settings.filesEnabledHint": "Beliebige Ordner unter deinen Mounts als Datei-Sets sichern, unabhängig von den anderen Domänen.",

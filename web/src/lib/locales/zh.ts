@@ -1177,7 +1177,14 @@ const zh: Partial<Translations> = {
   "files.cancel": "取消",
   "files.addPreset": "添加预设：主机系统配置",
   "files.addPresetHint": "这是容器之外主机级配置的保守起点，并不代表完整性。保存前请检查文件夹。",
-  "settings.filesEnabled": "文件夹",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "选择文件夹",
+  "files.foldersHint": "勾选此文件集要涵盖的文件夹。取消勾选某个子文件夹可将其排除；数字显示下次备份会交给 restic 的路径数量。",
+  "files.emptySelectionBlocked": "文件集至少需要一个文件夹，因此不能移除最后一项勾选。如果不再需要此文件集，请使用删除文件夹集。",
+  "files.pathChangeHint": "更改文件夹会清空已勾选子文件夹的选择。",  "settings.filesEnabled": "文件夹",
   "settings.filesEnabledHint": "备份挂载点下的任意文件夹，独立于其他域。",
   "settings.filesPath": "文件夹路径",
   "jobs.filesSection": "文件夹",

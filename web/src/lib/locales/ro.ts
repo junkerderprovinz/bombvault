@@ -1188,7 +1188,14 @@ const ro: Partial<Translations> = {
   "files.cancel": "Anulare",
   "files.addPreset": "Adaugă presetare: Configurația sistemului",
   "files.addPresetHint": "Un punct de plecare prudent pentru configurația la nivel de host, în afara containerelor tale, nu este o garanție de completitudine. Verifică folderul înainte de salvare.",
-  "settings.filesEnabled": "Foldere",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Alege dosarele",
+  "files.foldersHint": "Bifează dosarele pe care le acoperă acest set. Debifează un subdosar pentru a-l exclude; numărul arată câte căi va preda următoarea copie de siguranță către restic.",
+  "files.emptySelectionBlocked": "Un set are nevoie de cel puțin un dosar, deci ultima bifă nu poate fi scoasă. Folosește Șterge setul de foldere dacă nu mai vrei acest set.",
+  "files.pathChangeHint": "Schimbarea dosarului șterge selecția subdosarelor bifate.",  "settings.filesEnabled": "Foldere",
   "settings.filesEnabledHint": "Copiere de rezervă a unor foldere oarecare de sub punctele tale de montare, independent de celelalte domenii.",
   "settings.filesPath": "Cale foldere",
   "jobs.filesSection": "Foldere",

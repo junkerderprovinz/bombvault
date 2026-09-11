@@ -1183,7 +1183,14 @@ const es: Partial<Translations> = {
   "files.cancel": "Cancelar",
   "files.addPreset": "Añadir preset: Configuración del sistema",
   "files.addPresetHint": "Un punto de partida conservador para la configuración a nivel de host fuera de tus contenedores. No es una afirmación de completitud. Revisa la carpeta antes de guardar.",
-  "settings.filesEnabled": "Carpetas",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Elegir carpetas",
+  "files.foldersHint": "Marca las carpetas que cubre este conjunto. Desmarca una subcarpeta para dejarla fuera; el número muestra cuántas rutas entregará la próxima copia a restic.",
+  "files.emptySelectionBlocked": "Un conjunto necesita al menos una carpeta, así que no se puede quitar la última marca. Usa Eliminar conjunto de carpetas si ya no quieres este conjunto.",
+  "files.pathChangeHint": "Cambiar la carpeta borra la selección de subcarpetas marcadas.",  "settings.filesEnabled": "Carpetas",
   "settings.filesEnabledHint": "Copia de seguridad de carpetas arbitrarias bajo tus puntos de montaje, independiente de los demás dominios.",
   "settings.filesPath": "Ruta de carpetas",
   "jobs.filesSection": "Carpetas",

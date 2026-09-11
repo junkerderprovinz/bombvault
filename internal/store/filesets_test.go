@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -88,6 +89,104 @@ func TestFileSetExcludesRoundtrip(t *testing.T) {
 	}
 }
 
+// TestFileSetSelectedPathsRoundTrip pins the selected_paths column contract
+// (Phase 4, D-03): a set created through CreateFileSet scans with nil
+// SelectedPaths (the INSERT omits the column, so it stores SQL NULL — NULL is
+// the "never touched by the tree" legacy switch); SetFileSetSelectedPaths
+// persists a written selection and re-reads it equal through ALL THREE select
+// paths; nil stores SQL NULL again (never the JSON literal '[]' — a stored
+// '[]' would scan to a non-nil empty slice and silently flip the legacy
+// switch); and UpdateFileSet's name/path/excludes/enabled save never clears a
+// stored selection.
+func TestFileSetSelectedPathsRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	// Created via CreateFileSet (which omits the column) → NULL → nil.
+	fs, err := r.CreateFileSet(store.FileSet{Name: "sel", Path: "user/sel", Enabled: true})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	got, err := r.GetFileSet(fs.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.SelectedPaths != nil {
+		t.Fatalf("a fresh set must scan with nil SelectedPaths (NULL column), got %v", got.SelectedPaths)
+	}
+
+	// A written selection round-trips — by id, by name, and through the list
+	// (all three SELECT lists must carry the column together).
+	sel := []string{"/host/user/sel", "!/host/user/sel/cache"}
+	if err := r.SetFileSetSelectedPaths(fs.ID, sel); err != nil {
+		t.Fatalf("set selection: %v", err)
+	}
+	got, err = r.GetFileSet(fs.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got.SelectedPaths, sel) {
+		t.Fatalf("selection not round-tripped by id: %v vs %v", got.SelectedPaths, sel)
+	}
+	byName, err := r.GetFileSetByName("sel")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(byName.SelectedPaths, sel) {
+		t.Fatalf("selection not round-tripped by name: %v vs %v", byName.SelectedPaths, sel)
+	}
+	list, err := r.ListFileSets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 1 || !reflect.DeepEqual(list[0].SelectedPaths, sel) {
+		t.Fatalf("selection not round-tripped through the list: %+v", list)
+	}
+
+	// Three consecutive UpdateFileSet saves (name/path/excludes/enabled only)
+	// leave the stored selection byte-identical — the owned-setter split means
+	// a form that does not know about the selection can never clear one by
+	// omitting it (the #199 cadence rationale applied to the tree selection).
+	for i := range 3 {
+		got.Name = fmt.Sprintf("sel-renamed-%d", i)
+		got.Path = fmt.Sprintf("user/sel-%d", i)
+		got.Excludes = []string{fmt.Sprintf("*.tmp%d", i)}
+		got.Enabled = i%2 == 0
+		if err := r.UpdateFileSet(got); err != nil {
+			t.Fatalf("update %d: %v", i, err)
+		}
+		after, err := r.GetFileSet(fs.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(after.SelectedPaths, sel) {
+			t.Fatalf("UpdateFileSet %d clobbered the selection: %v vs %v", i, after.SelectedPaths, sel)
+		}
+	}
+
+	// nil stores SQL NULL and re-reads nil — never the JSON string '[]' (which
+	// would scan to a non-nil empty slice and mean something different: the
+	// NULL/nil distinction IS the legacy argv switch at the compile site).
+	if err := r.SetFileSetSelectedPaths(fs.ID, nil); err != nil {
+		t.Fatalf("clear selection: %v", err)
+	}
+	got, err = r.GetFileSet(fs.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.SelectedPaths != nil {
+		t.Fatalf("nil selection must store SQL NULL (re-read nil), got %v", got.SelectedPaths)
+	}
+
+	// Unknown id must error, mirroring every other owned setter.
+	if err := r.SetFileSetSelectedPaths("ghost", sel); err == nil {
+		t.Fatal("SetFileSetSelectedPaths on unknown id must fail")
+	}
+}
+
 func TestUpdateFileSet(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -125,6 +224,54 @@ func TestUpdateFileSet(t *testing.T) {
 	// Updating an unknown id must error.
 	if err := r.UpdateFileSet(store.FileSet{ID: "ghost", Name: "x", Path: "y"}); err == nil {
 		t.Fatal("update of unknown id must fail")
+	}
+}
+
+// TestUpdateFileSetClearingSelection pins the path-change writer (review
+// WR-01): the row fields update AND selected_paths is stored as SQL NULL in
+// the ONE UPDATE statement, so a path change can never coexist with an
+// old-anchor selection — and a failure of the statement leaves the row
+// untouched, keeping the handler's fail envelope consistent with storage.
+func TestUpdateFileSetClearingSelection(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	fs, err := r.CreateFileSet(store.FileSet{Name: "docs", Path: "user/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := []string{"/host/user/docs/keep", "!/host/user/docs/keep/tmp"}
+	if err := r.SetFileSetSelectedPaths(fs.ID, sel); err != nil {
+		t.Fatalf("seed selection: %v", err)
+	}
+
+	fs.Name = "docs-moved"
+	fs.Path = "user/docs/2026"
+	fs.Excludes = []string{"*.iso"}
+	fs.Enabled = false
+	if err := r.UpdateFileSetClearingSelection(fs); err != nil {
+		t.Fatalf("update+clear: %v", err)
+	}
+
+	got, err := r.GetFileSet(fs.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "docs-moved" || got.Path != "user/docs/2026" || got.Enabled {
+		t.Fatalf("row fields not persisted: %+v", got)
+	}
+	// The clear is SQL NULL (re-reads nil), never the JSON literal '[]' — the
+	// NULL/nil state IS the legacy argv switch at the compile site.
+	if got.SelectedPaths != nil {
+		t.Fatalf("selection must clear to SQL NULL, got %v", got.SelectedPaths)
+	}
+
+	// Unknown id must error, mirroring every other owned setter.
+	if err := r.UpdateFileSetClearingSelection(store.FileSet{ID: "ghost", Name: "x", Path: "y"}); err == nil {
+		t.Fatal("update+clear of unknown id must fail")
 	}
 }
 

@@ -1356,7 +1356,14 @@ const et: Partial<Translations> = {
   "files.cancel": "Loobu",
   "files.addPreset": "Lisa eelseade: Hosti süsteemi seadistus",
   "files.addPresetHint": "Ettevaatlik lähtepunkt hosti tasandi seadistusele väljaspool sinu konteinereid, mitte täielikkuse lubadus. Vaata kaust enne salvestamist üle.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Vali kaustad",
+  "files.foldersHint": "Märgi kaustad, mida see komplekt hõlmab. Tühista alamkausta märge, et jätta see välja; arv näitab, mitu teed järgmine varukoopia resticile annab.",
+  "files.emptySelectionBlocked": "Komplekt vajab vähemalt ühte kausta, seetõttu viimast märget eemaldada ei saa. Kasuta Kustuta kaustakomplekt, kui seda komplekti enam ei vaja.",
+  "files.pathChangeHint": "Kausta muutmine tühistab märgitud alamkaustade valiku.",  // Files domain integration
   "settings.filesEnabled": "Kaustad",
   "settings.filesEnabledHint": "Varunda suvalisi kaustu oma haakepunktide all failikomplektidena, sõltumata teistest valdkondadest.",
   "settings.filesPath": "Kaustade rada",

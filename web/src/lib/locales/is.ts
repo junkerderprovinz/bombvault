@@ -1356,7 +1356,14 @@ const is: Partial<Translations> = {
   "files.cancel": "Hætta við",
   "files.addPreset": "Bæta við forstillingu: Kerfisstilling hýsils",
   "files.addPresetHint": "Íhaldssamur upphafspunktur fyrir stillingar á hýsilsstigi utan gáma þinna, ekki fullyrðing um að vera tæmandi. Yfirfarðu möppuna áður en þú vistar.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Velja möppur",
+  "files.foldersHint": "Merktu möppurnar sem þetta sett nær yfir. Afmerktu undirmöppu til að sleppa henni; talan sýnir hversu margar slóðir næsta afritun gefur restic.",
+  "files.emptySelectionBlocked": "Sett þarfnast að minnsta kosti einnar möppu, svo síðasta merkingin er ekki hægt að fjarlægja. Notaðu Eyða möppusetti ef þú vilt ekki lengur hafa þetta sett.",
+  "files.pathChangeHint": "Ef þú breytir möppunni er valið á merktum undirmöppum hreinsað.",  // Files domain integration
   "settings.filesEnabled": "Möppur",
   "settings.filesEnabledHint": "Afritaðu handahófskenndar möppur undir tengipunktum þínum sem skráasett, óháð öðrum svæðum.",
   "settings.filesPath": "Slóð möppu",

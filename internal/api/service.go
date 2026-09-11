@@ -8828,14 +8828,30 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	s.notifyBackupStart(ctx, "files")
 	key := "files:" + set.Name
 	fctx, startedAt := s.progBegin(ctx, key, "backup")
+	// The single compile site for the files domain (D-05): the set was read
+	// fresh above (a selection saved between two backups affects exactly the
+	// later one, and a concurrent edit can never tear a mid-run argv), and
+	// fileSetPositionals re-anchors the stored entries against THIS run's
+	// resolved root, so a Path edit can never hand restic a positional outside
+	// the set's current scope (T-04-01). set.SelectedPaths == nil (the NULL
+	// column) compiles to []string{src} byte-identically — the legacy argv the
+	// untouched TestBackupFileSet pin holds. User-owned exclude patterns stay
+	// first; the selection-derived tail enforces the stored exclusion branches
+	// on the argv, mirroring the container compile line in the BackupDeps
+	// literal (excludedBranches(nil) is empty, so the unconditional append is
+	// legacy-safe). Patterns travel as typed builder arguments (excludes
+	// before --, positionals after) — never through a shell.
+	positionals := fileSetPositionals(set.SelectedPaths, src)
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
-		SourceDir: src,
-		Repo:      repo,
-		TargetID:  set.ID,
-		SetName:   set.Name,
-		Excludes:  set.Excludes,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
+		SourceDir:   src,
+		SourcePaths: positionals,
+		Repo:        repo,
+		TargetID:    set.ID,
+		SetName:     set.Name,
+		Excludes: append(append([]string{}, set.Excludes...),
+			excludedBranches(set.SelectedPaths)...),
+		Restic: &resticAdapter{engine: s.engine, mode: mode},
+		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)
@@ -8854,6 +8870,14 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 // raw store error would leak SQL wording through the API surface).
 var errFileSetNotFound = errors.New("file set not found")
 
+// errFileSetEmptySelection is D-06's refusal shape for the file-set boundary;
+// the PATCH handler maps it (errors.Is) to the machine-routable
+// "empty-selection" envelope code, exactly as the containers' boundary does
+// for errEmptySelection. A file set cannot mean "back up nothing" — a set with
+// zero included folders is either a mistake or a set the user no longer wants,
+// so the message orients to removing the set rather than "select something".
+var errFileSetEmptySelection = errors.New("a file set needs at least one folder selected; use Remove set if you no longer want this set")
+
 // FileSetView is the per-set row returned by ListFileSetViews — the files
 // domain's counterpart of VMView. LastBackup is the unix time of the last
 // successful backup run (0 = never; runs-based, so listing never spawns a
@@ -8869,6 +8893,13 @@ type FileSetView struct {
 	Enabled    bool     `json:"enabled"`
 	LastBackup int64    `json:"lastBackup"`
 	PathExists bool     `json:"pathExists"`
+	// SelectedPaths is the set's tree selection (Phase 4, D-03) served back for
+	// the editor: the same flat encoding the containers' backupPaths uses
+	// (bare entries are included roots, "!"-prefixed are deselected branches),
+	// in mount-root absolute space. Omitempty keeps the NULL legacy switch
+	// ("never touched by the tree") distinguishable on the wire from a written
+	// selection — a never-edited set must not render a tree state it never had.
+	SelectedPaths []string `json:"selectedPaths,omitempty"`
 	// ScheduleCadence is the set's per-item schedule override (#199); empty means
 	// it follows the Folders domain schedule. Always sent, so the interface can
 	// show the cadence without a second request, and only acted on while the
@@ -8910,6 +8941,11 @@ func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
 		if v.Excludes == nil {
 			v.Excludes = []string{}
 		}
+		// The stored form is served back verbatim — never re-normalized here:
+		// the compile (fileSetPositionals) is what re-runs the shared
+		// NormalizeSelection, and the view is a mirror of the column. nil stays
+		// nil so omitempty drops the key (the NULL legacy switch).
+		v.SelectedPaths = set.SelectedPaths
 		if run, _ := s.store.LastSuccessfulBackup(set.ID); run != nil && run.FinishedAt != nil {
 			v.LastBackup = *run.FinishedAt
 		}
@@ -8949,6 +8985,79 @@ func (s *Service) validateFileSet(fs store.FileSet) error {
 	}
 	if _, statErr := os.Stat(resolved); statErr != nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
 		return errors.New("source path not found under the host mount")
+	}
+	return nil
+}
+
+// maxFileSetSelectedPaths caps one file-set selection: a tree save is a full
+// overwrite of the column, so the cap bounds both the JSON blob and the
+// normalize/compile work per save — the same ceiling SetExcludeCaches puts on
+// the per-root exclusion map, matched so no editor surface can differ.
+const maxFileSetSelectedPaths = 64
+
+// SetFileSetSelectedPaths validates and stores a file set's tree selection —
+// the file-set twin of SetBackupPaths (the containers' flat-set setter), and
+// the only writer the tree editor reaches through (the PATCH handler's
+// selectedPaths field lands here). Adapted, not copied, from SetBackupPaths:
+// the anchor is the set's OWN resolved root (its Path under the host mount),
+// not a mount translation, and entries live in mount-root absolute space (A2)
+// — they are never container-translated.
+//
+// Per-entry validation runs BEFORE any store write (atomic whole-save
+// rejection): a list whose 40th entry escapes the root must leave the prior
+// selection untouched, not half-apply. Each entry is trimmed, split into its
+// class (SplitExclusion — the "!" prefix is the excluded-branch carrier),
+// cleaned, and must EQUAL the set's resolved root or lie strictly below it
+// (isStrictDescendant — segment-aligned, so /data/doc can never pass for a
+// root /data/docs; the same containment primitive fileSetPositionals
+// re-anchors with at compile time, which stays layer 2 of RESEARCH Pitfall 2).
+// The raw entry text goes back into the error so the log identifies the
+// offender; the envelope scrubs it to [path] on the way out.
+//
+// The validated list is then normalized through the shared NormalizeSelection
+// (dedupe, per-class maximal-root prune, canonical order — never a second
+// pruning site), and only a list that still has at least one INCLUDE survives:
+// zero includes is refused with errFileSetEmptySelection (D-06) before any
+// write, so a refused deselect leaves the prior selection structurally
+// untouched — the read-side stale-root re-anchor in fileSetPositionals remains
+// the defense for anything already stored.
+func (s *Service) SetFileSetSelectedPaths(_ context.Context, id string, entries []string) error {
+	if len(entries) > maxFileSetSelectedPaths {
+		return fmt.Errorf("too many selected paths (%d, max %d)", len(entries), maxFileSetSelectedPaths)
+	}
+	set, err := s.store.GetFileSet(id)
+	if err != nil {
+		return errFileSetNotFound
+	}
+	root, err := paths.Resolve(s.cfg.HostMountRoot, set.Path)
+	if err != nil {
+		return fmt.Errorf("file set %q has no valid source path to select folders under", set.Name)
+	}
+	cleaned := make([]string, 0, len(entries))
+	for _, e := range entries {
+		e = strings.TrimSpace(e)
+		if e == "" {
+			return errors.New("empty selected path")
+		}
+		bare, excluded := SplitExclusion(e)
+		if bare == "" {
+			return fmt.Errorf("empty excluded path %q", e)
+		}
+		bare = path.Clean(bare)
+		if bare != root && !isStrictDescendant(bare, root) {
+			return fmt.Errorf("selected path %q is not under the set's source folder", e)
+		}
+		if excluded {
+			bare = ExclusionPrefix + bare
+		}
+		cleaned = append(cleaned, bare)
+	}
+	normalized := NormalizeSelection(cleaned)
+	if len(includesOnly(normalized)) == 0 {
+		return errFileSetEmptySelection
+	}
+	if err := s.store.SetFileSetSelectedPaths(id, normalized); err != nil {
+		return fmt.Errorf("store file set selection: %w", err)
 	}
 	return nil
 }
@@ -9137,6 +9246,37 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	// fail. Empty (a path-less snapshot) falls back to a whole-tree restore in
 	// runRestoreFileSet; it is unused for an in-place restore.
 	plan.subtree = snapshotSubtree(snaps, snapshotID)
+
+	// D-08 (Phase 4 file-sets parity): an in-place restore writes back over the
+	// set's source folder, so before anything destructive the set's COMPILED
+	// selection — the same fileSetPositionals the backup ran, so guard and
+	// backup can never disagree about what the set selects — is mapped against
+	// the chosen snapshot's recorded Paths (RESTORE-01: selectors come from the
+	// snapshot, never replayed from storage). An empty intersection is refused
+	// here, synchronously, the exact failure mode the container route's
+	// mapRestorePaths guard prevents: a restore that would miss mid-loop AFTER
+	// the folder was torn down.
+	//
+	// Scoped to the in-place route on purpose (plan Open Question 1): a
+	// to-folder restore is non-destructive and its subtree comes from the
+	// SNAPSHOT, so a selection that no longer matches it must not abort
+	// (TestRestoreFileSetToFolder's cross-root snapshot keeps restoring).
+	// Snapshots with no recorded Paths (pre-RESTORE-01 shapes) have nothing to
+	// map against and keep restoring whole — the degenerate case the
+	// pre-existing in-place pin covers.
+	if plan.inPlace != "" {
+		if chosen := chosenSnapshot(snaps, snapshotID); chosen != nil && len(chosen.Paths) > 0 {
+			compiled := fileSetPositionals(set.SelectedPaths, plan.inPlace)
+			// skipped is deliberately unreported: this guard's only job is the
+			// empty-intersection abort (minimum D-08) — the restore itself
+			// hands restic the whole-snapshot path, so there are no per-path
+			// skips to surface on this route.
+			mapped, _ := mapRestorePaths(compiled, chosen.Paths)
+			if len(mapped) == 0 {
+				return fileSetRestorePlan{}, errors.New("nothing to restore for this set from this snapshot")
+			}
+		}
+	}
 
 	settings, err := s.store.GetSettings()
 	if err != nil {

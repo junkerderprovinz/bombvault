@@ -1341,7 +1341,14 @@ const sl: Partial<Translations> = {
   "files.cancel": "Prekliči",
   "files.addPreset": "Dodaj prednastavitev: Konfiguracija sistema gostitelja",
   "files.addPresetHint": "Previdno izhodišče za konfiguracijo na ravni gostitelja izven tvojih vsebnikov, ne trdi, da je popolno. Pred shranjevanjem preglej mapo.",
-  "settings.filesEnabled": "Mape",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Izberi mape",
+  "files.foldersHint": "Označi mape, ki jih pokriva ta nabor. Odznači podmapo, da jo izključiš; številka pokaže, koliko poti bo naslednja varnostna kopija posredovala resticu.",
+  "files.emptySelectionBlocked": "Nabor potrebuje vsaj eno mapo, zato zadnje oznake ni mogoče odstraniti. Uporabi Izbriši nabor map, če tega nabora ne potrebuješ več.",
+  "files.pathChangeHint": "Sprememba mape počisti izbiro označenih podmap.",  "settings.filesEnabled": "Mape",
   "settings.filesEnabledHint": "Varnostno kopiraj poljubne mape pod svojimi priklopnimi točkami kot nabore datotek, neodvisno od drugih domen.",
   "settings.filesPath": "Pot za mape",
   "jobs.filesSection": "Mape",

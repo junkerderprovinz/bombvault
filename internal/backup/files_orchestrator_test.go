@@ -68,6 +68,56 @@ func TestBackupFileSetDir(t *testing.T) {
 	}
 }
 
+// TestBackupFileSetDirSourcePaths pins the additive SourcePaths passthrough
+// (Phase 4 file-sets parity; D-01 as corrected by RESEARCH A1/Pitfall 1 —
+// "orchestrator unchanged" is interface-true and file-false): a compiled
+// multi-root selection travels to restic as the positional source list
+// verbatim, while nil (or empty — a zero-include list must never reach argv)
+// keeps the legacy []string{SourceDir} wrap byte-identical.
+func TestBackupFileSetDirSourcePaths(t *testing.T) {
+	t.Run("nil SourcePaths is the legacy single-positional wrap", func(t *testing.T) {
+		rc := &fakeFilesRestic{}
+		runs := &fakeRuns{}
+		if _, err := backup.BackupFileSetDir(context.Background(), backup.FileSetBackupDeps{
+			SourceDir: "/host/user/data/docs",
+			Repo:      "/repo/files", TargetID: "set-1", SetName: "docs",
+			Restic: rc, Runs: runs,
+		}); err != nil {
+			t.Fatalf("BackupFileSetDir: %v", err)
+		}
+		if len(rc.backedUpPaths) != 1 || rc.backedUpPaths[0] != "/host/user/data/docs" {
+			t.Fatalf("nil SourcePaths must back up [SourceDir], got %v", rc.backedUpPaths)
+		}
+	})
+
+	t.Run("non-nil SourcePaths is the positional list verbatim", func(t *testing.T) {
+		rc := &fakeFilesRestic{}
+		runs := &fakeRuns{}
+		paths := []string{"/host/user/data/docs/a", "/host/user/data/docs/b"}
+		if _, err := backup.BackupFileSetDir(context.Background(), backup.FileSetBackupDeps{
+			SourceDir:   "/host/user/data/docs",
+			SourcePaths: paths,
+			Repo:        "/repo/files", TargetID: "set-1", SetName: "docs",
+			Excludes: []string{"*.tmp"},
+			Restic:   rc, Runs: runs,
+		}); err != nil {
+			t.Fatalf("BackupFileSetDir: %v", err)
+		}
+		if len(rc.backedUpPaths) != 2 || rc.backedUpPaths[0] != paths[0] || rc.backedUpPaths[1] != paths[1] {
+			t.Fatalf("expected SourcePaths passed through verbatim, got %v", rc.backedUpPaths)
+		}
+		// The snapshot tag and excludes are unchanged by the multi-root compile:
+		// the fileset:<Name> tag stays the ONLY snapshot↔set link, and excludes
+		// pass through positionally.
+		if len(rc.tags) != 1 || rc.tags[0] != "fileset:docs" {
+			t.Fatalf("expected tag fileset:docs, got %v", rc.tags)
+		}
+		if len(rc.excludes) != 1 || rc.excludes[0] != "*.tmp" {
+			t.Fatalf("expected excludes passed through, got %v", rc.excludes)
+		}
+	})
+}
+
 func TestBackupFileSetDirRecordsFailure(t *testing.T) {
 	rc := &fakeFilesRestic{backupErr: errors.New("restic boom")}
 	runs := &fakeRuns{}

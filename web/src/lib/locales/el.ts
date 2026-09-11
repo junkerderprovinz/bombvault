@@ -1185,7 +1185,14 @@ const el: Partial<Translations> = {
   "files.cancel": "Άκυρο",
   "files.addPreset": "Προσθήκη προεπιλογής: Διαμόρφωση συστήματος",
   "files.addPresetHint": "Ένα συντηρητικό σημείο εκκίνησης για τη διαμόρφωση σε επίπεδο κεντρικού υπολογιστή εκτός των container σας. Δεν αποτελεί ισχυρισμό πληρότητας. Ελέγξτε τον φάκελο πριν την αποθήκευση.",
-  "settings.filesEnabled": "Φάκελοι",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Επιλογή φακέλων",
+  "files.foldersHint": "Τσεκάρετε τους φακέλους που καλύπτει αυτό το σύνολο. Ξετσεκάρετε έναν υποφάκελο για να τον εξαιρέσετε; ο αριθμός δείχνει πόσες διαδρομές θα δώσει το επόμενο αντίγραφο ασφαλείας στο restic.",
+  "files.emptySelectionBlocked": "Ένα σύνολο χρειάζεται τουλάχιστον έναν φάκελο, οπότε το τελευταίο τσεκ δεν μπορεί να αφαιρεθεί. Χρησιμοποιήστε Διαγραφή συνόλου φακέλων αν δεν θέλετε πια αυτό το σύνολο.",
+  "files.pathChangeHint": "Η αλλαγή φακέλου μηδενίζει την επιλογή των τσεκαρισμένων υποφακέλων.",  "settings.filesEnabled": "Φάκελοι",
   "settings.filesEnabledHint": "Δημιουργία αντιγράφων ασφαλείας αυθαίρετων φακέλων κάτω από τα σημεία προσάρτησής σου, ανεξάρτητα από τους άλλους τομείς.",
   "settings.filesPath": "Διαδρομή φακέλων",
   "jobs.filesSection": "Φάκελοι",

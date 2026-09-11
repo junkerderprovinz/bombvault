@@ -30,7 +30,21 @@ type FileSet struct {
 	// did. Owned by SetFileSetScheduleCadence, never by UpdateFileSet, so an
 	// ordinary edit of the name or path cannot silently drop a cadence.
 	ScheduleCadence string
-	CreatedAt       int64
+	// SelectedPaths is the set's OPTIONAL tree selection (Phase 4 file-sets
+	// parity, D-03/D-05): the same flat encoding as the containers' flat
+	// backupPaths set — bare mount-root-space absolute paths are included
+	// roots, "!"-prefixed entries are deselected branches (internal/api/
+	// selection.go owns the meaning of "!"; web selectionTree.ts mirrors it).
+	// nil means the column is NULL: "never touched by the tree" — the legacy
+	// switch that keeps the backup compiling to the single positional
+	// [resolved Path] byte-identically. Opaque to this package: the store
+	// marshals and scans the JSON blob and interprets nothing; normalization
+	// and backup-time compilation live in the API tier. Owned by
+	// SetFileSetSelectedPaths, never by UpdateFileSet (same rationale as the
+	// cadence above, verbatim: an edit that does not know about the selection
+	// must not be able to clear one by omitting it).
+	SelectedPaths []string
+	CreatedAt     int64
 }
 
 // CreateFileSet inserts a new file set. An empty ID is assigned via newID();
@@ -84,10 +98,49 @@ func (r *Repo) UpdateFileSet(fs FileSet) error {
 	return nil
 }
 
+// UpdateFileSetClearingSelection updates name, path, excludes, and enabled for
+// the set with fs.ID AND stores SQL NULL in selected_paths, in the ONE UPDATE
+// statement. It is the path-change writer (the A3 clear rule, review WR-01): a
+// path edit moves the anchor every stored selection entry was validated
+// against, so the old selection must never survive the save — and writing row
+// + clear atomically makes that invariant hold at the storage layer, where the
+// handler's previous two-write sequence could fail in between and leave the
+// NEW path live while the response reported failure and the OLD-anchor
+// selection stayed stored. Either this statement lands whole or the row is
+// byte-identical to before.
+//
+// Deliberately a separate method, NOT a field on UpdateFileSet: the ownership
+// rule documented on both UpdateFileSet and SetFileSetSelectedPaths (an edit
+// that does not know about the selection must not be able to clear one by
+// omitting it) stands untouched — this method exists precisely for the caller
+// that DOES know the selection must go, and its name says so. The tree editor
+// remains the only writer of a non-NULL selection.
+func (r *Repo) UpdateFileSetClearingSelection(fs FileSet) error {
+	if fs.Excludes == nil {
+		fs.Excludes = []string{}
+	}
+	exJSON, err := json.Marshal(fs.Excludes)
+	if err != nil {
+		return fmt.Errorf("UpdateFileSetClearingSelection marshal excludes: %w", err)
+	}
+	res, err := r.db.Exec(`
+		UPDATE file_sets SET name = ?, path = ?, excludes = ?, enabled = ?, selected_paths = NULL
+		WHERE id = ?`,
+		fs.Name, fs.Path, string(exJSON), boolInt(fs.Enabled), fs.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("UpdateFileSetClearingSelection: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("UpdateFileSetClearingSelection: file set %q not found", fs.ID)
+	}
+	return nil
+}
+
 // ListFileSets returns all file sets ordered by name.
 func (r *Repo) ListFileSets() ([]FileSet, error) {
 	rows, err := r.db.Query(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, created_at
 		FROM file_sets ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListFileSets: %w", err)
@@ -108,7 +161,7 @@ func (r *Repo) ListFileSets() ([]FileSet, error) {
 // GetFileSet returns the file set with the given id.
 func (r *Repo) GetFileSet(id string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, created_at
 		FROM file_sets WHERE id = ?`, id)
 	return scanFileSet(row)
 }
@@ -116,7 +169,7 @@ func (r *Repo) GetFileSet(id string) (FileSet, error) {
 // GetFileSetByName returns the file set with the given (unique) name.
 func (r *Repo) GetFileSetByName(name string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, created_at
 		FROM file_sets WHERE name = ?`, name)
 	return scanFileSet(row)
 }
@@ -156,6 +209,39 @@ func (r *Repo) SetFileSetScheduleCadence(id, cadence string) error {
 	return nil
 }
 
+// SetFileSetSelectedPaths writes a file set's tree selection (Phase 4, D-03)
+// as its JSON encoding — the same flat set the container backupPaths column
+// stores, but in its own column. A nil slice stores SQL NULL, never the JSON
+// literal '[]': the NULL/nil state IS the "never touched by the tree" legacy
+// switch the backup compile reads (a stored '[]' would decode to a non-nil
+// empty slice and mean something no caller can express). This package does
+// not interpret the entries — opaque blob in, opaque blob out; normalization
+// and boundary validation live in the API tier.
+//
+// Deliberately its own statement rather than a field on UpdateFileSet, for
+// exactly the reason SetFileSetScheduleCadence is (comment above): a save that
+// does not know about the selection must not be able to clear one by omitting
+// it. The tree editor is the only writer.
+func (r *Repo) SetFileSetSelectedPaths(id string, selected []string) error {
+	var encoded any // nil interface binds as SQL NULL for the legacy state
+	if selected != nil {
+		b, err := json.Marshal(selected)
+		if err != nil {
+			return fmt.Errorf("SetFileSetSelectedPaths marshal: %w", err)
+		}
+		encoded = string(b)
+	}
+	res, err := r.db.Exec(
+		`UPDATE file_sets SET selected_paths = ? WHERE id = ?`, encoded, id)
+	if err != nil {
+		return fmt.Errorf("SetFileSetSelectedPaths: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("SetFileSetSelectedPaths: no file set %q", id)
+	}
+	return nil
+}
+
 func (r *Repo) DeleteFileSet(id string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -176,12 +262,25 @@ func scanFileSet(s scanner) (FileSet, error) {
 	var fs FileSet
 	var exJSON string
 	var enabled int
-	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &fs.CreatedAt)
+	// selected_paths is the table's only nullable column (v101): NULL is the
+	// COMMON state (every row created before the tree existed, and every
+	// CreateFileSet INSERT omits the column), so it scans into *string —
+	// scanning a plain string would fail every legacy row and take down
+	// ListFileSets/GetFileSet at runtime. NULL ⇒ the field stays nil; any
+	// written value decodes as JSON below. Same nullable-scan precedent as
+	// received_repos.last_check_ok (migrate.go v76).
+	var selJSON *string
+	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &selJSON, &fs.CreatedAt)
 	if err != nil {
 		return FileSet{}, fmt.Errorf("scanFileSet: %w", err)
 	}
 	if err := json.Unmarshal([]byte(exJSON), &fs.Excludes); err != nil {
 		return FileSet{}, fmt.Errorf("scanFileSet unmarshal excludes: %w", err)
+	}
+	if selJSON != nil {
+		if err := json.Unmarshal([]byte(*selJSON), &fs.SelectedPaths); err != nil {
+			return FileSet{}, fmt.Errorf("scanFileSet unmarshal selected_paths: %w", err)
+		}
 	}
 	fs.Enabled = enabled != 0
 	return fs, nil

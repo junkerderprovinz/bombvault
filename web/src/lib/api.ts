@@ -2300,6 +2300,13 @@ export interface FileSetView {
   effectiveSchedule?: EffectiveSchedule;
   /** Whether the resolved source path currently exists on disk. */
   pathExists: boolean;
+  /** The set's tree selection (Phase 4, D-03): the same flat encoding as the
+   *  containers' backupPaths (bare entries are included roots, "!"-prefixed
+   *  are deselected branches), in mount-root absolute space. Absent = the set
+   *  was never touched by the tree (the NULL legacy switch: the backup still
+   *  compiles to the single whole-folder positional), deliberately
+   *  distinguishable from a written selection. */
+  selectedPaths?: string[];
 }
 
 /** The resolved outcome for one folder set (schedule.EffectiveFileSetSchedule).
@@ -2373,6 +2380,12 @@ export function patchFileSet(
     /** #199. Sent alone by the cadence editor, so an edit there cannot disturb
      *  the rest of the set. An empty string clears the override. */
     scheduleCadence?: string;
+    /** The tree selection, sent as the FULL list by the tree editor (a save
+     *  overwrites the column). Omit the key entirely for an ordinary edit —
+     *  absent = untouched, never a clear. An empty list is refused by the
+     *  server with code "empty-selection" (a set cannot mean "back up
+     *  nothing"; remove the set instead), and the stored selection is kept. */
+    selectedPaths?: string[];
   }
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}`, {

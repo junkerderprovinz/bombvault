@@ -1356,7 +1356,14 @@ const bg: Partial<Translations> = {
   "files.cancel": "Отказ",
   "files.addPreset": "Добави готова настройка: Конфигурация на системата на хоста",
   "files.addPresetHint": "Консервативна отправна точка за конфигурация на ниво хост извън контейнерите ти — не претенция за пълнота. Прегледай папката преди запазването.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Избор на папки",
+  "files.foldersHint": "Отбележи папките, които този набор покрива. Махни отметката от подпапка, за да я изключиш; числото показва колко пътища следващото резервно копие предава на restic.",
+  "files.emptySelectionBlocked": "Наборът се нуждае от поне една папка, затова последната отметка не може да бъде премахната. Използвай Изтриване на набора от папки, ако вече не искаш този набор.",
+  "files.pathChangeHint": "Промяната на папката изчиства отбелязаните подпапки.",  // Files domain integration
   "settings.filesEnabled": "Папки",
   "settings.filesEnabledHint": "Архивирай произволни папки под монтиранията си като набори от файлове, независимо от другите области.",
   "settings.filesPath": "Път за папките",

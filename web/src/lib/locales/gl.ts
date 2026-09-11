@@ -1356,7 +1356,14 @@ const gl: Partial<Translations> = {
   "files.cancel": "Cancelar",
   "files.addPreset": "Engadir predefinición: Configuración do sistema do host",
   "files.addPresetHint": "Un punto de partida conservador para a configuración a nivel de host fóra dos teus contedores, non unha pretensión de integridade. Revisa o cartafol antes de gardar.",
-  // Files domain integration
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "Escoller cartafoles",
+  "files.foldersHint": "Marca os cartafoles que cobre este conxunto. Desmarca un subcartafol para deixalo fóra; o número mostra cantas rutas entregará a seguinte copia a restic.",
+  "files.emptySelectionBlocked": "Un conxunto precisa polo menos un cartafol, polo que non se pode eliminar a última marca. Usa Eliminar conxunto de cartafoles se xa non queres este conxunto.",
+  "files.pathChangeHint": "Cambiar o cartafol borra a selección de subcartafoles marcados.",  // Files domain integration
   "settings.filesEnabled": "Cartafoles",
   "settings.filesEnabledHint": "Fai copia de cartafoles arbitrarios baixo as túas montaxes como conxuntos de ficheiros, independentemente doutros dominios.",
   "settings.filesPath": "Camiño de cartafoles",

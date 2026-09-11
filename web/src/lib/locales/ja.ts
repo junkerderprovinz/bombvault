@@ -1177,7 +1177,14 @@ const ja: Partial<Translations> = {
   "files.cancel": "キャンセル",
   "files.addPreset": "プリセットを追加: ホストのシステム構成",
   "files.addPresetHint": "コンテナの外側にあるホストレベルの構成のための、控えめな出発点です。網羅性を保証するものではありません。保存前にフォルダを確認してください。",
-  "settings.filesEnabled": "フォルダー",
+
+  // Phase 4 (INTEG-02): Files-page selection tree keys. The en copy in i18n.ts
+  // is the source of truth (UI-SPEC Copywriting Contract); the refusal orients
+  // to this locale's own files.deleteSet label (D-06, no Reset exists here).
+  "files.foldersToggle": "フォルダーを選択",
+  "files.foldersHint": "このセットが対象とするフォルダーにチェックを入れてください。サブフォルダーのチェックを外すと除外されます。数値は、次のバックアップが restic に渡すパスの数です。",
+  "files.emptySelectionBlocked": "セットにはフォルダーが最低 1 つ必要なため、最後のチェックは外せません。このセットが不要になったら、フォルダーセットを削除を使用してください。",
+  "files.pathChangeHint": "フォルダーを変更すると、チェックしたサブフォルダーの選択はクリアされます。",  "settings.filesEnabled": "フォルダー",
   "settings.filesEnabledHint": "他の領域とは独立して、マウント配下の任意のフォルダーをバックアップします。",
   "settings.filesPath": "フォルダーパス",
   "jobs.filesSection": "フォルダー",
