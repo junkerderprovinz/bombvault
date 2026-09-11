@@ -129,12 +129,12 @@ Plans:
   1. On the File Sets page, the user picks what a file set covers through the same tree component — lazy expand, cascading checkboxes, mixed-state parents, exact reconstruction on reopen
   2. A file set's tree selection round-trips through the same flat persistence and normalization (no separate format), and the file set's next backup produces a snapshot whose `Paths` match the ticked roots
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Tracer: selection round-trip keystone — migration v101 (`selected_paths` nullable) + owned setter + orchestrator `SourcePaths` + `BackupFileSet` compile (re-anchor filter, derived excludes), legacy NULL argv pinned byte-identical (INTEG-02)
+- [x] 04-01-PLAN.md — Tracer: selection round-trip keystone — migration v101 (`selected_paths` nullable) + owned setter + orchestrator `SourcePaths` + `BackupFileSet` compile (re-anchor filter, derived excludes), legacy NULL argv pinned byte-identical (INTEG-02)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -162,4 +162,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Selection Engine & Restore Safety | 5/5 | Complete    | 2026-09-10 |
 | 2. Container Panel Tree Selection | 3/3 | Complete    | 2026-09-10 |
 | 3. Selection Trust & Controls | 3/3 | Complete    | 2026-09-10 |
-| 4. File Sets Parity | 0/4 | Not started | - |
+| 4. File Sets Parity | 1/4 | In Progress|  |
