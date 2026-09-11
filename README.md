@@ -20,16 +20,16 @@
 <br>
 
 <p align="center">
-Your Unraid data, <b>sealed in a vault</b>. Drop a backup. Detonate a restore.<br>
-BombVault backs up Docker containers, KVM VMs, appdata, the Unraid flash config — and even itself —
-and restores everything with a single click. Containers <b>automatically reappear in the
-Docker tab</b>, VMs <b>automatically in the VM tab</b> — no manual reinstall, no
-reconfiguration, no drama.<br>
+Your Unraid server, <b>sealed in a vault</b>. Drop a backup. Detonate a restore.<br>
 <br>
-<b>Your data, locked in. Loss, locked out.</b> Data loss doesn't stand a chance.<br>
-Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental, always encrypted.<br>
+Containers, VMs, appdata, the flash drive and any folder you point it at. BombVault also backs up
+<b>itself</b>, because a backup tool that cannot save its own skin is a hobby project. One click puts
+it all back: containers reappear in the <b>Docker tab</b>, VMs in the <b>VM tab</b>, already configured.
+No reinstall, no rebuild, no evening lost.<br>
 <br>
-<b>Status:</b> one-click <b>Docker container</b>, <b>KVM/libvirt VM</b>, <b>Unraid flash</b>, <b>app configuration</b> and <b>files/folders</b> backup &amp; restore are all live (VMs over SSH — no libvirt mount), with <b>off-site repos</b> (SMB/NFS/rclone/SSH-sftp), <b>per-source retention</b>, <b>file-level restore</b>, <b>integrity checks</b>, <b>pre/post-backup hooks</b>, a <b>protection-status dashboard</b> with <b>restore-verification drills</b>, <b>immutable/append-only off-site</b> with <b>tamper verification</b> (ransomware-resistant), <b>live restore progress + cancel</b>, <b>restore from another BombVault repo</b> (one-time, read-only), a read-only <b>fleet view</b> over your other BombVault boxes, <b>self-healing maintenance</b> (orphaned-lock auto-recovery), a whole-server <b>"Backup Everything"</b> pass (every domain in one run, with global pre/post commands for a dead-man's-switch ping), and <b>notifications</b> (webhook / Matrix / email / Apprise / Healthchecks / Unraid-native / Prometheus), each channel with its own on/off switch.
+Built on <a href="https://restic.net">restic</a>, so every snapshot is deduplicated, incremental and
+encrypted before it leaves the box. Off-site copies can be <b>append-only</b>, which is a polite way of
+saying ransomware is welcome to knock.
 </p>
 
 <br>
@@ -41,7 +41,12 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 <br>
 
 <p align="center">
-Maintained solo, in whatever spare time there is. Questions via the <a href="https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/">support thread</a>, bugs, ideas and feature requests via <a href="https://github.com/junkerderprovinz/bombvault/issues">GitHub issues</a>. If it's useful to you, a coffee is always welcome.
+This is a one-person project. I put a lot of time and effort into building and maintaining it, in
+whatever free time I have. If it has helped you, I would genuinely appreciate the support. Three ways
+below, whichever suits you.<br>
+<br>
+Questions via the <a href="https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/">support thread</a>,
+bugs and ideas via <a href="https://github.com/junkerderprovinz/bombvault/issues">GitHub issues</a>.
 </p>
 
 <br>
@@ -49,6 +54,14 @@ Maintained solo, in whatever spare time there is. Questions via the <a href="htt
 <p align="center">
   <a href="https://buymeacoffee.com/junkerderprovinz">
     <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="220">
+  </a>
+  &nbsp;
+  <a href="https://paypal.me/hallelujadesign">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="220">
+  </a>
+  &nbsp;
+  <a href="https://junkerderprovinz.github.io/bombvault/donate/">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="220">
   </a>
 </p>
 
@@ -442,10 +455,20 @@ BombVault is free software under the **GNU Affero General Public License v3.0** 
 
 Questions? Check the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs, ideas or feature requests? Please [open a GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).
 
-This is a one-person project. I put a lot of time and effort into building and maintaining it, in whatever free time I have. If it's helped you, I'd genuinely appreciate the support: you're welcome to buy me a coffee.
+This is a one-person project. I put a lot of time and effort into building and maintaining it, in whatever free time I have. If it has helped you, I would genuinely appreciate the support. Three ways below, whichever suits you.
 
 <p align="center">
   <a href="https://buymeacoffee.com/junkerderprovinz">
     <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="220">
   </a>
+  &nbsp;
+  <a href="https://paypal.me/hallelujadesign">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="220">
+  </a>
+  &nbsp;
+  <a href="https://junkerderprovinz.github.io/bombvault/donate/">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="220">
+  </a>
 </p>
+
+The crypto addresses live on their own [donation page](https://junkerderprovinz.github.io/bombvault/donate/) rather than here, grouped by chain: what decides whether the money arrives is the network you send on, and a list that reads coin-first invites somebody to send USDT on the wrong one. The app's own window under **Settings > About BombVault > Crypto** is better still, because it gives you a QR code and an address cannot be mistyped from one.
