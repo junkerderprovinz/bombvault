@@ -2679,6 +2679,130 @@ func TestFileSetSelectedPathsViewShape(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Phase 4 plan 02: the D-08 restore selection guard
+// ---------------------------------------------------------------------------
+
+// TestRestoreFileSetSelectionGuard pins the file-set twin of the container
+// restore mapping guard (D-08): an IN-PLACE restore replays the set's compiled
+// selection against the chosen snapshot's recorded Paths via mapRestorePaths,
+// and an empty intersection is refused synchronously in prepare — before any
+// destructive work starts. The to-folder route deliberately keeps its
+// whole-snapshot-subtree semantics (Open Question 1).
+func TestRestoreFileSetSelectionGuard(t *testing.T) {
+	t.Run("old mono-path snapshot still restores a multi-root selection in place", func(t *testing.T) {
+		// The snapshot predates the tree: one whole-root Paths entry, the shape
+		// every pre-phase backup produced. mapRestorePaths' pass-2 fallback
+		// maps both stored branches onto that ancestor, so the restore
+		// proceeds exactly as before the selection existed.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs"}},
+		}
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a", root + "/keep-b"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:" + dir + "/data/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+
+	t.Run("disjoint snapshot paths abort before any destructive work", func(t *testing.T) {
+		// The selection's branches and the snapshot's recorded path share no
+		// ancestor/descendant relation: restoring would overwrite the source
+		// folder with a snapshot that contains none of what the set now
+		// selects. The refusal must land synchronously (prepare), with zero
+		// restic calls.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs/elsewhere"}},
+		}
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != false {
+			t.Fatalf("expected a synchronous refusal, got %d %v", w.Code, m)
+		}
+		if errMsg, _ := m["error"].(string); !strings.Contains(errMsg, "nothing to restore") {
+			t.Fatalf("expected the nothing-to-restore error, got %q", errMsg)
+		}
+		waitForBackupDone(t, svc)
+		if len(eng.restored) != 0 {
+			t.Fatalf("a refused restore must start no restic work, got %v", eng.restored)
+		}
+	})
+
+	t.Run("to-folder route keeps whole-snapshot semantics even when the selection maps empty", func(t *testing.T) {
+		// Non-destructive and snapshot-shaped by design (Open Question 1): a
+		// selection disjoint from the snapshot's cross-root path must NOT
+		// abort a to-folder restore — the subtree comes from the snapshot, not
+		// the stored selection (the TestRestoreFileSetToFolder contract, now
+		// pinned against the guard over-reaching).
+		eng := &fakeResticEngine{snaps: []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
+		}}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		id, root := newDocsSet(t, h, dir)
+		if w, m := patchFileSet(t, h, id, map[string]any{
+			"selectedPaths": []string{root + "/keep-a"},
+		}); w.Code != http.StatusOK || m["ok"] != true {
+			t.Fatalf("seed PATCH failed: %d %v", w.Code, m)
+		}
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:/host/olduser/data/docs->" + dir + "/restore-here/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+
+	t.Run("NULL selection compiles to the legacy root and maps a mono-path snapshot", func(t *testing.T) {
+		// The never-tree-edited set: the guard's compile is the legacy single
+		// positional, which EQUALS the snapshot's recorded path — the restore
+		// proceeds, byte-compat with the pre-phase behavior.
+		eng := &fakeResticEngine{}
+		h, _, svc, dir := newFilesTestRouter(t, eng)
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs"}},
+		}
+		id, _ := newDocsSet(t, h, dir)
+
+		w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
+		if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
+			t.Fatalf("expected ok/started, got %d %v", w.Code, m)
+		}
+		waitForBackupDone(t, svc)
+		repo := dir + "/backups/files"
+		want := repo + ":deadbeef12345678:" + dir + "/data/docs"
+		if len(eng.restored) != 1 || eng.restored[0] != want {
+			t.Fatalf("restored = %v, want [%s]", eng.restored, want)
+		}
+	})
+}
+
 // TestReleaseNotesHandler covers the "What's new" dialog's backend (#54, #68):
 // there was no existing coverage of this handler at all. It confirms the
 // embedded-notes lookup, the ok=false degrade path for a version with no
