@@ -41,27 +41,25 @@ saying ransomware is welcome to knock.
 <br>
 
 <p align="center">
-This is a one-person project. I put a lot of time and effort into building and maintaining it, in
-whatever free time I have. If it has helped you, I would genuinely appreciate the support. Three ways
-below, whichever suits you.<br>
-<br>
-Questions via the <a href="https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/">support thread</a>,
-bugs and ideas via <a href="https://github.com/junkerderprovinz/bombvault/issues">GitHub issues</a>.
+This is a one-person project. I put a lot of work into building it, keeping it running, helping people
+get it working and building the things they ask for, all in whatever free time I have. If it has
+helped you, I would genuinely appreciate your support to cover my costs and keep this project alive.
+Three ways below, whichever suits you.
 </p>
 
 <br>
 
 <p align="center">
   <a href="https://buymeacoffee.com/junkerderprovinz">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="220">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="160">
   </a>
   &nbsp;
   <a href="https://paypal.me/hallelujadesign">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="220">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="160">
   </a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/bombvault/donate/">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="220">
+  <a href="https://junkerderprovinz.github.io/donate/">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="160">
   </a>
 </p>
 
@@ -455,20 +453,20 @@ BombVault is free software under the **GNU Affero General Public License v3.0** 
 
 Questions? Check the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs, ideas or feature requests? Please [open a GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).
 
-This is a one-person project. I put a lot of time and effort into building and maintaining it, in whatever free time I have. If it has helped you, I would genuinely appreciate the support. Three ways below, whichever suits you.
+This is a one-person project. I put a lot of work into building it, keeping it running, helping people get it working and building the things they ask for, all in whatever free time I have. If it has helped you, I would genuinely appreciate your support to cover my costs and keep this project alive. Three ways below, whichever suits you.
 
 <p align="center">
   <a href="https://buymeacoffee.com/junkerderprovinz">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="220">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-buy-me-a-coffee.svg" alt="Buy me a coffee" width="160">
   </a>
   &nbsp;
   <a href="https://paypal.me/hallelujadesign">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="220">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-paypal.png" alt="PayPal" width="160">
   </a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/bombvault/donate/">
-    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="220">
+  <a href="https://junkerderprovinz.github.io/donate/">
+    <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/button-crypto.png" alt="Donate with crypto" width="160">
   </a>
 </p>
 
-The crypto addresses live on their own [donation page](https://junkerderprovinz.github.io/bombvault/donate/) rather than here, grouped by chain: what decides whether the money arrives is the network you send on, and a list that reads coin-first invites somebody to send USDT on the wrong one. The app's own window under **Settings > About BombVault > Crypto** is better still, because it gives you a QR code and an address cannot be mistyped from one.
+The crypto addresses live on their own [donation page](https://junkerderprovinz.github.io/donate/) rather than here, grouped by chain: what decides whether the money arrives is the network you send on, and a list that reads coin-first invites somebody to send USDT on the wrong one. The app's own window under **Settings > About BombVault > Crypto** is better still, because it gives you a QR code and an address cannot be mistyped from one.

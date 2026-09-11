@@ -142,7 +142,3 @@ nav:
   - configuration.md
   - offsite-recovery.md
   - troubleshooting.md
-  # Last on purpose: it is not documentation, it is the page the README's own
-  # Crypto button opens. Addresses and QR codes stay out of the README itself
-  # (jdp, 2026-09-11), and the app's donation window cannot be opened from one.
-  - donate.md
