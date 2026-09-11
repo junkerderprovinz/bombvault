@@ -9182,6 +9182,37 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 	// runRestoreFileSet; it is unused for an in-place restore.
 	plan.subtree = snapshotSubtree(snaps, snapshotID)
 
+	// D-08 (Phase 4 file-sets parity): an in-place restore writes back over the
+	// set's source folder, so before anything destructive the set's COMPILED
+	// selection — the same fileSetPositionals the backup ran, so guard and
+	// backup can never disagree about what the set selects — is mapped against
+	// the chosen snapshot's recorded Paths (RESTORE-01: selectors come from the
+	// snapshot, never replayed from storage). An empty intersection is refused
+	// here, synchronously, the exact failure mode the container route's
+	// mapRestorePaths guard prevents: a restore that would miss mid-loop AFTER
+	// the folder was torn down.
+	//
+	// Scoped to the in-place route on purpose (plan Open Question 1): a
+	// to-folder restore is non-destructive and its subtree comes from the
+	// SNAPSHOT, so a selection that no longer matches it must not abort
+	// (TestRestoreFileSetToFolder's cross-root snapshot keeps restoring).
+	// Snapshots with no recorded Paths (pre-RESTORE-01 shapes) have nothing to
+	// map against and keep restoring whole — the degenerate case the
+	// pre-existing in-place pin covers.
+	if plan.inPlace != "" {
+		if chosen := chosenSnapshot(snaps, snapshotID); chosen != nil && len(chosen.Paths) > 0 {
+			compiled := fileSetPositionals(set.SelectedPaths, plan.inPlace)
+			// skipped is deliberately unreported: this guard's only job is the
+			// empty-intersection abort (minimum D-08) — the restore itself
+			// hands restic the whole-snapshot path, so there are no per-path
+			// skips to surface on this route.
+			mapped, _ := mapRestorePaths(compiled, chosen.Paths)
+			if len(mapped) == 0 {
+				return fileSetRestorePlan{}, errors.New("nothing to restore for this set from this snapshot")
+			}
+		}
+	}
+
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fileSetRestorePlan{}, fmt.Errorf("read settings: %w", err)
