@@ -247,6 +247,101 @@ func TestPositionalExcludeAbsoluteSubdirPattern(t *testing.T) {
 	}
 }
 
+// TestMultiPositionalPathsMirrorSelection pins the file-sets-parity engine
+// floor (Phase 4, INTEG-02 success criterion 2): a backup invoked with TWO
+// positional sources — a shallower root plus a disjoint deeper root in another
+// branch, exactly the shape fileSetPositionals emits for a narrowed set — and
+// one derived absolute-subdir --exclude records snapshot Paths EXACTLY equal
+// to the positional list (verbatim, absolute, input order preserved), with the
+// excluded branch's file filtered while both positionals survive as restore
+// selectors. The argv-shape pins above prove shape; this proves the ENGINE
+// behavior success criterion 2 is built on: snapshot Paths == the ticked
+// roots, so the stored compiled list stays a valid mapRestorePaths input.
+func TestMultiPositionalPathsMirrorSelection(t *testing.T) {
+	if _, err := exec.LookPath("restic"); err != nil {
+		t.Skip("no restic")
+	}
+
+	ctx := context.Background()
+	dir := t.TempDir()
+	repo := filepath.Join(dir, "repo")
+	// The set root itself is NOT a positional; the two positionals are two
+	// disjoint branches under it, one shallower and one deeper — the narrowed
+	// multi-root compile output (fileSetPositionals never emits a positional
+	// nested inside another one, so disjoint branches are the maximal shape).
+	setRoot := filepath.Join(dir, "setroot")
+	docs := filepath.Join(setRoot, "docs")
+	photos := filepath.Join(setRoot, "photos", "2024")
+	private := filepath.Join(photos, "private")
+	for _, d := range []string{docs, private} {
+		if err := os.MkdirAll(d, 0o755); err != nil { //nolint:gosec // G301: test temp dir, relaxed permissions intentional
+			t.Fatal(err)
+		}
+	}
+	for path, content := range map[string]string{
+		filepath.Join(docs, "keep-doc.txt"):     "doc",
+		filepath.Join(photos, "keep-photo.txt"): "photo",
+		filepath.Join(private, "secret.txt"):    "secret",
+	} {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil { //nolint:gosec // G306: test file, relaxed permissions intentional
+			t.Fatal(err)
+		}
+	}
+
+	r := Restic{Bin: "restic"}
+	m := Mode{Encrypted: false}
+
+	if err := r.Init(ctx, repo, m); err != nil {
+		t.Fatal("Init:", err)
+	}
+
+	// The derived exclude uses POSIX concatenation (the production
+	// derivation's namespace — stored entries are POSIX paths), never
+	// filepath.Join, mirroring TestPositionalExcludeAbsoluteSubdirPattern.
+	// Input order [docs, photos] is asserted below as-is: Paths must preserve
+	// the positional order, not sort or dedupe it.
+	positionals := []string{docs, photos}
+	if _, err := r.Backup(ctx, repo, positionals, []string{"t"}, m, photos+"/private"); err != nil {
+		t.Fatal("Backup:", err)
+	}
+
+	snaps, err := r.Snapshots(ctx, repo, m)
+	if err != nil {
+		t.Fatal("Snapshots:", err)
+	}
+	if len(snaps) != 1 {
+		t.Fatalf("expected 1 snapshot, got %d", len(snaps))
+	}
+	if !reflect.DeepEqual(snaps[0].Paths, positionals) {
+		t.Fatalf("snapshot Paths = %v, want exactly the positional list %v (verbatim, absolute, order preserved)", snaps[0].Paths, positionals)
+	}
+
+	// Both positionals remain live selectors — each has a recoverable file —
+	// and the excluded branch's file is genuinely filtered out of the
+	// snapshot content.
+	entries, err := r.Ls(ctx, repo, snaps[0].ID, m)
+	if err != nil {
+		t.Fatal("Ls:", err)
+	}
+	var keptDoc, keptPhoto, secret bool
+	for _, e := range entries {
+		switch filepath.Base(e.Path) {
+		case "keep-doc.txt":
+			keptDoc = true
+		case "keep-photo.txt":
+			keptPhoto = true
+		case "secret.txt":
+			secret = true
+		}
+	}
+	if !keptDoc || !keptPhoto {
+		t.Fatalf("both positionals must remain restorable selectors; entries = %v", entryPaths(entries))
+	}
+	if secret {
+		t.Fatalf("the excluded branch's file must be filtered from the snapshot; entries = %v", entryPaths(entries))
+	}
+}
+
 // entryPaths flattens an Ls listing for failure messages.
 func entryPaths(entries []FileEntry) []string {
 	paths := make([]string, 0, len(entries))

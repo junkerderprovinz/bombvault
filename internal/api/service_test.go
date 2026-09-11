@@ -423,6 +423,51 @@ func TestBackupFileSetSelectedPaths(t *testing.T) {
 			t.Fatalf("expected tag fileset:docs, got %v", eng.lastTags)
 		}
 	})
+
+	t.Run("entries under an edited-away root are never emitted (stale-root re-anchor)", func(t *testing.T) {
+		// A selection saved while the set's Path pointed at data/old, followed
+		// by a Path edit to data/docs (allowed — only a rename is refused once
+		// backups exist): the compile must re-anchor every entry against the
+		// FRESHLY resolved root, so the stale entries are filtered and the
+		// backup covers exactly the set's current root — never a positional
+		// outside the set's declared scope (threat T-04-01, RESEARCH Pitfall 2
+		// layer 2; the PATCH-time clear rule is plan 02 and layers on top).
+		oldSrc := root + "/data/old"
+		if err := os.MkdirAll(srcDir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.FilesPath = "backups/files"
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/old", Enabled: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Seeded through the store setter directly — the PATCH boundary that
+		// would clear on a path edit does not exist until plan 02, so the rows
+		// stay stale in storage. This is exactly the state the compile must
+		// survive defensively.
+		if err := st.SetFileSetSelectedPaths(set.ID, []string{oldSrc, oldSrc + "/sub"}); err != nil {
+			t.Fatal(err)
+		}
+		set.Path = "data/docs"
+		if err := st.UpdateFileSet(set); err != nil {
+			t.Fatal(err)
+		}
+		eng := &fakeResticEngine{}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
+			t.Fatalf("BackupFileSet: %v", err)
+		}
+		if len(eng.lastPaths) != 1 || eng.lastPaths[0] != srcDir {
+			t.Fatalf("expected exactly the resolved NEW root %q, got %v (stale-root positionals must never be emitted)", srcDir, eng.lastPaths)
+		}
+	})
 }
 
 // TestBackupFileSetMissingSourceRecordsFailedRun pins the pre-flight guard: a

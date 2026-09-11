@@ -105,6 +105,9 @@ func TestFileSetPositionals(t *testing.T) {
 		{"entries outside the root are filtered (re-anchor)", []string{"/elsewhere/other", src + "/a"}, []string{src + "/a"}},
 		{"all-outside entries fall back to the root (never unanchored)", []string{"/elsewhere/other"}, []string{src}},
 		{"zero includes after filtering fall back to the root", []string{"!" + src + "/gone"}, []string{src}},
+		{"exact child entry is kept as-is", []string{src + "/exact"}, []string{src + "/exact"}},
+		{"deeply nested descendant collapses to the maximal root", []string{src, src + "/child/deep"}, []string{src}},
+		{"/data/doc-style sibling must not anchor-match /data/docs (segment-aligned trap)", []string{src[:len(src)-1] /* ".../doc" sibling of ".../docs" */}, []string{src}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -114,6 +117,25 @@ func TestFileSetPositionals(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("compile is deterministic and canonically ordered", func(t *testing.T) {
+		// Same stored set → deep-equal positional lists in the same canonical
+		// (NormalizeSelection sorted) order on every call, so snapshot Paths
+		// are reproducible across saves, reloads, and restarts. Stored out of
+		// order on purpose: the compile, not the writer, owns the order. (No
+		// bare src among the entries — a redundant-descendant collapse is the
+		// maximal-prune rows' job; here every survivor stays maximal.)
+		stored := []string{src + "/zeta", src + "/alpha/inner", "/elsewhere/filtered-out"}
+		want := []string{src + "/alpha/inner", src + "/zeta"}
+		first := fileSetPositionals(stored, src)
+		second := fileSetPositionals(stored, src)
+		if !reflect.DeepEqual(first, want) {
+			t.Fatalf("first compile = %v, want the canonical order %v", first, want)
+		}
+		if !reflect.DeepEqual(first, second) {
+			t.Fatalf("compile is not deterministic: %v vs %v", first, second)
+		}
+	})
 }
 
 // TestBeginRestoreRunForTarget pins the generalized restore bookkeeping the
