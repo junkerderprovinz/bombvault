@@ -8763,14 +8763,30 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	s.notifyBackupStart(ctx, "files")
 	key := "files:" + set.Name
 	fctx, startedAt := s.progBegin(ctx, key, "backup")
+	// The single compile site for the files domain (D-05): the set was read
+	// fresh above (a selection saved between two backups affects exactly the
+	// later one, and a concurrent edit can never tear a mid-run argv), and
+	// fileSetPositionals re-anchors the stored entries against THIS run's
+	// resolved root, so a Path edit can never hand restic a positional outside
+	// the set's current scope (T-04-01). set.SelectedPaths == nil (the NULL
+	// column) compiles to []string{src} byte-identically — the legacy argv the
+	// untouched TestBackupFileSet pin holds. User-owned exclude patterns stay
+	// first; the selection-derived tail enforces the stored exclusion branches
+	// on the argv, mirroring the container compile line in the BackupDeps
+	// literal (excludedBranches(nil) is empty, so the unconditional append is
+	// legacy-safe). Patterns travel as typed builder arguments (excludes
+	// before --, positionals after) — never through a shell.
+	positionals := fileSetPositionals(set.SelectedPaths, src)
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
-		SourceDir: src,
-		Repo:      repo,
-		TargetID:  set.ID,
-		SetName:   set.Name,
-		Excludes:  set.Excludes,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s},
+		SourceDir:   src,
+		SourcePaths: positionals,
+		Repo:        repo,
+		TargetID:    set.ID,
+		SetName:     set.Name,
+		Excludes: append(append([]string{}, set.Excludes...),
+			excludedBranches(set.SelectedPaths)...),
+		Restic: &resticAdapter{engine: s.engine, mode: mode},
+		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, err == nil, sum, err)

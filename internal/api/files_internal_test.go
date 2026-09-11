@@ -3,6 +3,7 @@ package api
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -81,6 +82,38 @@ func TestDefaultHostConfigFileSet(t *testing.T) {
 // OS-dependent IsAbs for a one-line check in a single test.
 func filepathIsAbs(p string) bool {
 	return len(p) > 0 && p[0] == '/'
+}
+
+// TestFileSetPositionals is the white-box table for the file-set compile
+// helper (Phase 4, D-05): the single place a stored file-set selection turns
+// into the restic positional source list. nil = the legacy single positional
+// (the NULL column); any written selection is re-anchored against the freshly
+// resolved set root on every compile — entries outside it are filtered, a
+// list that filters to empty falls back to the root, and an unanchored
+// positional is never emitted (RESEARCH Pitfall 2 layer 2).
+func TestFileSetPositionals(t *testing.T) {
+	const src = "/host/user/data/docs"
+	cases := []struct {
+		name     string
+		selected []string
+		want     []string
+	}{
+		{"nil selection is the legacy single positional", nil, []string{src}},
+		{"entry equal to the root anchors", []string{src}, []string{src}},
+		{"disjoint entries under the root are kept, canonically ordered", []string{src + "/b", src + "/a"}, []string{src + "/a", src + "/b"}},
+		{"redundant descendant collapses to the maximal root", []string{src, src + "/child"}, []string{src}},
+		{"entries outside the root are filtered (re-anchor)", []string{"/elsewhere/other", src + "/a"}, []string{src + "/a"}},
+		{"all-outside entries fall back to the root (never unanchored)", []string{"/elsewhere/other"}, []string{src}},
+		{"zero includes after filtering fall back to the root", []string{"!" + src + "/gone"}, []string{src}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := fileSetPositionals(c.selected, src)
+			if !reflect.DeepEqual(got, c.want) {
+				t.Fatalf("fileSetPositionals(%v, %q) = %v, want %v", c.selected, src, got, c.want)
+			}
+		})
+	}
 }
 
 // TestBeginRestoreRunForTarget pins the generalized restore bookkeeping the

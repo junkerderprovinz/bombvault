@@ -308,6 +308,123 @@ func TestBackupFileSet(t *testing.T) {
 	}
 }
 
+// TestBackupFileSetSelectedPaths pins the backup-time compile of a tree-written
+// selection (Phase 4, D-05): the stored flat set compiles at the single site
+// (BackupFileSet) into maximal-root positionals plus derived --exclude patterns
+// for the stored exclusion branches, mirroring the container line at the
+// container BackupDeps literal. The selection here is seeded through the store
+// setter directly — the PATCH boundary does not exist until plan 02.
+func TestBackupFileSetSelectedPaths(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	srcDir := root + "/data/docs"
+
+	t.Run("multi-root selection compiles to the maximal root only", func(t *testing.T) {
+		if err := os.MkdirAll(srcDir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.FilesPath = "backups/files"
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		// A redundant descendant rides along in the stored list (as it would
+		// through any writer that bypasses normalization) — the maximal prune
+		// still happens at this compile, through the shared selection helpers;
+		// there is no second pruning site.
+		if err := st.SetFileSetSelectedPaths(set.ID, []string{srcDir, srcDir + "/child"}); err != nil {
+			t.Fatal(err)
+		}
+		eng := &fakeResticEngine{}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
+			t.Fatalf("BackupFileSet: %v", err)
+		}
+		if len(eng.lastPaths) != 1 || eng.lastPaths[0] != srcDir {
+			t.Fatalf("expected the maximal root only, got %v", eng.lastPaths)
+		}
+	})
+
+	t.Run("disjoint branches compile to two positionals in canonical order", func(t *testing.T) {
+		if err := os.MkdirAll(srcDir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.FilesPath = "backups/files"
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Stored out of canonical order on purpose: the compile is deterministic
+		// (same stored set → same positional list in the same order), so snapshot
+		// Paths are reproducible across saves, reloads, and restarts.
+		if err := st.SetFileSetSelectedPaths(set.ID, []string{srcDir + "/b", srcDir + "/a"}); err != nil {
+			t.Fatal(err)
+		}
+		eng := &fakeResticEngine{}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
+			t.Fatalf("BackupFileSet: %v", err)
+		}
+		want := []string{srcDir + "/a", srcDir + "/b"}
+		if len(eng.lastPaths) != 2 || eng.lastPaths[0] != want[0] || eng.lastPaths[1] != want[1] {
+			t.Fatalf("expected canonical order %v, got %v", want, eng.lastPaths)
+		}
+	})
+
+	t.Run("stored exclusion branch rides the argv as a derived exclude", func(t *testing.T) {
+		if err := os.MkdirAll(srcDir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.FilesPath = "backups/files"
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Excludes: []string{"*.tmp", "cache/**"}, Enabled: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Same shape as the container compile (service.go, BackupDeps literal):
+		// user-owned exclude patterns stay first, the selection-derived tail
+		// enforces the stored exclusion branch strictly below the included root.
+		if err := st.SetFileSetSelectedPaths(set.ID, []string{srcDir, "!" + srcDir + "/transcoding"}); err != nil {
+			t.Fatal(err)
+		}
+		eng := &fakeResticEngine{}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
+			t.Fatalf("BackupFileSet: %v", err)
+		}
+		if len(eng.lastPaths) != 1 || eng.lastPaths[0] != srcDir {
+			t.Fatalf("expected the included root as the only positional, got %v", eng.lastPaths)
+		}
+		wantExcludes := []string{"*.tmp", "cache/**", srcDir + "/transcoding"}
+		if len(eng.lastExcludes) != 3 || eng.lastExcludes[0] != wantExcludes[0] || eng.lastExcludes[1] != wantExcludes[1] || eng.lastExcludes[2] != wantExcludes[2] {
+			t.Fatalf("expected user excludes first then the derived branch, got %v", eng.lastExcludes)
+		}
+		if len(eng.lastTags) != 1 || eng.lastTags[0] != "fileset:docs" {
+			t.Fatalf("expected tag fileset:docs, got %v", eng.lastTags)
+		}
+	})
+}
+
 // TestBackupFileSetMissingSourceRecordsFailedRun pins the pre-flight guard: a
 // file set whose source folder does not exist under the host mount fails with
 // a clear "source path not found" error BEFORE any restic call — and records a

@@ -205,6 +205,54 @@ func excludedBranches(entries []string) []string {
 	return out
 }
 
+// fileSetPositionals compiles a stored FILE SET selection into the restic
+// positional source list (Phase 4 file-sets parity, D-05) — the single
+// compile helper the files domain has, consumed only by service.BackupFileSet
+// (manual, batch, and Backup Everything all funnel there).
+//
+//	nil selected (the NULL column, D-03)  ⇒ []string{src}   — the legacy argv,
+//	                                        byte-identical to the pre-phase
+//	                                        single-positional backup;
+//	otherwise                             ⇒ the selection's maximal-root
+//	                                        includes, re-anchored against src.
+//
+// The list the caller passes was persisted by the tree (plan 02's PATCH
+// boundary normalizes before storing), but the compile never TRUSTS that: it
+// re-runs the shared NormalizeSelection first — canonical order, dedupe, and
+// the maximal-root prune all come from the one existing implementation, never
+// a second files-domain pruning site — and then re-anchors every include
+// against the FRESHLY resolved set root src (RESEARCH Pitfall 2 layer 2,
+// threat T-04-01). Re-anchoring is load-bearing because the anchor the entries
+// were validated against (set.Path) is user-mutable: a selection saved under
+// root A, followed by a Path edit to root B, must not silently broaden the
+// backup scope to folders under A. Containment is segment-aligned — equality
+// or isStrictDescendant, so "/data/doc" never matches a root "/data/docs"
+// (the raw-prefix trap).
+//
+// A list that filters to empty — every entry stale, or a zero-include set —
+// falls back to []string{src}: an unanchored positional is never emitted
+// (the write-side refusal of a tree-written empty selection is D-06, plan 02;
+// this is the read-side defense that keeps a bad row from zeroing the argv).
+//
+// Deterministic: the same stored set always yields the same positional list in
+// the same canonical (sorted) order, so snapshot Paths are reproducible across
+// saves, reloads, and restarts. Pure: no receiver, no store access, no config.
+func fileSetPositionals(selected []string, src string) []string {
+	if selected == nil {
+		return []string{src}
+	}
+	positionals := make([]string, 0, len(selected))
+	for _, p := range includesOnly(NormalizeSelection(selected)) {
+		if p == src || isStrictDescendant(p, src) {
+			positionals = append(positionals, p)
+		}
+	}
+	if len(positionals) == 0 {
+		return []string{src}
+	}
+	return positionals
+}
+
 // mapRestorePaths intersects the stored selection (the positional truth
 // recorded at backup time, tg.AppdataPaths) with the CHOSEN snapshot's
 // recorded Paths, producing the restore selector list plus the stored paths
