@@ -14,6 +14,15 @@
 //
 // Task 3 adds the live-save pipeline pins (serialized queue, client/server D-06
 // refusal, revert-from-live-mirror, exact reopen) over the same harness.
+//
+// Plan 04 adds the audit surfaces: the per-root exclusions review list and the
+// dialog's path-change disclosure. The list itself is NOT reimplemented here —
+// it rides the shared SelectionTree disclosure (rootExclusions, the Phase 3
+// implementation) which the plan 03 mount already carries, so those pins are
+// characterization pins locking the FILES-page rendering (relative mono muted
+// rows, no controls, collapsed on reopen, dormant-root parity,
+// existence-unfiltered); the genuinely new implementation the RED gate drives
+// is the files.pathChangeHint caption in FileSetDialog.
 // ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
@@ -62,8 +71,18 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-// Imported AFTER vi.mock so the components pick up the mocked client.
-const { FileSetFoldersEditor, FileSetRow } = await import("./Files");
+// Imported AFTER vi.mock so the components pick up the mocked client. The
+// namespace import additionally reaches FileSetDialog, whose export lands with
+// the plan 04 GREEN (the FoldersEditor harness precedent: exported for this
+// page's dom harness only).
+const FilesModule = await import("./Files");
+const { FileSetFoldersEditor, FileSetRow } = FilesModule;
+// Bound from the namespace rather than a destructured ESM import: a missing
+// named export fails the whole file at link time, while a missing namespace
+// property fails only the dialog tests — the honest RED before the plan 04
+// GREEN adds the export (the FoldersEditor harness precedent: exported for
+// this page's dom harness only).
+const FileSetDialog = FilesModule.FileSetDialog;
 
 const HOST_MOUNT_ROOT = "/host/user";
 const REL = "documents";
@@ -107,6 +126,20 @@ function EditorHarness({ set, hostMountRoot = HOST_MOUNT_ROOT }: { set: FileSetV
 function RowHarness({ set, hostMountRoot = HOST_MOUNT_ROOT, index = 0 }: { set: FileSetView; hostMountRoot?: string; index?: number }) {
   const { t } = useT();
   return <FileSetRow set={set} hostMountRoot={hostMountRoot} restoreFolder="/restore" t={t} onRefresh={() => {}} onEdit={() => {}} index={index} />;
+}
+
+function DialogHarness({ initial }: { initial: FileSetView | null }) {
+  const { t } = useT();
+  return (
+    <FileSetDialog
+      initial={initial}
+      presetSeed={null}
+      hostMountRoot={HOST_MOUNT_ROOT}
+      t={t}
+      onClose={() => {}}
+      onSaved={() => {}}
+    />
+  );
 }
 
 function Providers({ children }: { children: React.ReactNode }) {
@@ -514,5 +547,144 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     expect(patches).toHaveLength(1);
     expect(patches[0].body.selectedPaths).toEqual([ROOT]);
     expect(screen.getByRole("treeitem", { name: /^sub$/ }).getAttribute("aria-checked")).toBe("true");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Plan 04: the audit surfaces — the per-root exclusions review list (D-07)
+// and the dialog's path-change disclosure (A3).
+// ---------------------------------------------------------------------------
+
+describe("FileSetFoldersEditor exclusions audit list (D-07, INTEG-03 pattern parity)", () => {
+  it("renders the per-root audit disclosure: count line, relative mono muted rows, zero interactive controls", async () => {
+    await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`, `!${ROOT}/media`] }));
+    await openDisclosure();
+
+    // The count line is the shared folders.exclusions key over rootExclusions —
+    // the same classification the compile consumes (never a DOM count).
+    const disc = screen.getByRole("button", { name: "2 exclusions" });
+    expect(disc.getAttribute("aria-expanded")).toBe("false");
+    // A plain tabbable control OUTSIDE the roving set: no tabindex attribute of
+    // its own (backupOrder precedent), unlike the treeitems' 0/-1 roving.
+    expect(disc.getAttribute("tabindex")).toBeNull();
+    await act(async () => {
+      fireEvent.click(disc);
+    });
+    expect(disc.getAttribute("aria-expanded")).toBe("true");
+
+    // Relative display paths, lexically sorted, mono ltr break-all muted with
+    // the house long-path title.
+    const list = document.getElementById(disc.getAttribute("aria-controls") ?? "");
+    expect(list).toBeTruthy();
+    const rows = within(list as HTMLElement).getAllByRole("listitem");
+    expect(rows.map((r) => r.textContent)).toEqual(["media", "sub"]);
+    for (const row of rows) {
+      expect(row.className).toContain("font-mono");
+      expect(row.className).toContain("break-all");
+      expect(row.className).toContain("text-carbon-textMuted");
+      expect(row.getAttribute("dir")).toBe("ltr");
+      expect(row.getAttribute("title")).toBe(row.textContent);
+    }
+    // Audit-only prohibition (T-04-14): the rows render NO controls — no
+    // per-row remove, no ExcludesEditor fanout. The only toggle path is the
+    // tree's one checkbox pipeline.
+    expect(within(list as HTMLElement).queryByRole("button")).toBeNull();
+    expect(within(list as HTMLElement).queryByRole("checkbox")).toBeNull();
+  });
+
+  it("collapses on every reopen: the expansion is component state, deliberately not persisted", async () => {
+    await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
+    await openDisclosure();
+    const disc = screen.getByRole("button", { name: "1 exclusions" });
+    await act(async () => {
+      fireEvent.click(disc);
+    });
+    expect(screen.getByTitle("sub")).toBeTruthy();
+
+    // Close the whole Choose folders disclosure (the tree unmounts) and
+    // reopen: the audit section is collapsed again — an audit view, not
+    // navigation comfort (STATE.md Phase 3 decision), so nothing about it
+    // reaches localStorage.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Choose folders" }));
+    });
+    await openDisclosure();
+    const reopened = screen.getByRole("button", { name: "1 exclusions" });
+    expect(reopened.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("listitem")).toBeNull();
+    // No audit-state key leaks into storage (only the tree's expansion comfort
+    // key may exist).
+    expect(localStorage.getItem("bv-tree-expanded-fileset-set1")).not.toBeNull();
+    const bvKeys = Object.keys(localStorage).filter((k) => k.startsWith("bv-"));
+    expect(bvKeys.every((k) => k === "bv-lang" || k.startsWith("bv-tree-expanded-"))).toBe(true);
+  });
+
+  it("lists stored exclusions existence-unfiltered and renders a dormant root identically to an active one", async () => {
+    // The listing no longer contains "sub" (gone on disk since the selection
+    // was stored) — the audit list still names it (Phase 3 A3 rule: the list
+    // is existence-unfiltered; row-level warnings are the container panel's
+    // concern and are not re-implemented here).
+    browseReplies = [
+      { ok: true, status: "ok", truncated: false, dirs: [{ name: "media", path: "documents/media" }] },
+    ];
+    const active = await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
+    await openDisclosure();
+    const disc = screen.getByRole("button", { name: "1 exclusions" });
+    await act(async () => {
+      fireEvent.click(disc);
+    });
+    const activeRowClass = screen.getByTitle("sub").className;
+    active.unmount();
+
+    // Dormant-root parity: a stored exclusions-only list (root include gone —
+    // not reachable through this UI, where D-06 refuses the last untick on
+    // both halves, but the classifier is total) renders the IDENTICAL section
+    // for the same root: same count line, same rows, and the row carries the
+    // exact same classes as the active case (no extra gating, no different
+    // tone for a dormant root).
+    const dormant = await renderEditor(setView({ selectedPaths: [`!${SUB}`] }));
+    await openDisclosure();
+    const dormantDisc = screen.getByRole("button", { name: "1 exclusions" });
+    await act(async () => {
+      fireEvent.click(dormantDisc);
+    });
+    expect(screen.getByTitle("sub").className).toBe(activeRowClass);
+    expect(screen.getByTitle("sub").className).toContain("text-carbon-textMuted");
+    expect(screen.getByTitle("sub").className).toContain("font-mono");
+    dormant.unmount();
+  });
+});
+
+describe("FileSetDialog path-change disclosure (A3, plan 02 PATCH-time clear rule)", () => {
+  it("discloses the clear consequence under the FolderBrowser, unconditionally", async () => {
+    render(
+      <Providers>
+        <DialogHarness initial={setView()} />
+      </Providers>,
+    );
+    await act(async () => {});
+    const hint = screen.getByText("Changing the folder clears the ticked sub-folder selection.");
+    // "Under the FolderBrowser": the caption follows the path input in DOM
+    // order, inside the same field block.
+    const pathInput = screen.getByPlaceholderText("user/appdata");
+    expect(pathInput.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // It states the consequence, not a condition: it renders even though this
+    // fixture stores no selection at all. The generic path hint is untouched.
+    expect(
+      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
+    ).toBeTruthy();
+  });
+
+  it("keeps the existing hint behavior for a path-less set (both captions render, nothing conditioned on the selection)", async () => {
+    render(
+      <Providers>
+        <DialogHarness initial={setView({ path: "", selectedPaths: undefined })} />
+      </Providers>,
+    );
+    await act(async () => {});
+    expect(screen.getByText("Changing the folder clears the ticked sub-folder selection.")).toBeTruthy();
+    expect(
+      screen.getByText("The folder to back up, a relative subpath under the host mount root."),
+    ).toBeTruthy();
   });
 });
