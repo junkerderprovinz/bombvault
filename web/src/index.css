@@ -2131,12 +2131,23 @@ body {
 .glim-coin-tile.glim-reactive {
   gap: 0;
 }
+
+/* ...and the label gives up its LINE BOX as well, which the horizontal case
+   never had to think about. Dropping the gap alone leaves a zero-WIDTH span
+   that is still a full text line tall, so the mark sits above the middle of a
+   square tile - measured at 8px before this rule. At rest a reactive tile has
+   to look exactly like glyph mode, because looking like glyph mode until you
+   point at it is the whole of what reactive means. */
+.glim-coin-tile.glim-reactive .glim-label-reactive {
+  max-height: 0;
+}
 .glim-coin-tile.glim-reactive.glim-active .glim-label-reactive,
 .glim-coin-tile.glim-reactive:hover .glim-label-reactive,
 .glim-coin-tile.glim-reactive:focus-visible .glim-label-reactive,
 .glim-coin-tile.glim-reactive:focus-within .glim-label-reactive {
-  /* The `gap-2` the tile gives up above, handed back by the label itself so
-     the spacing is unchanged once the word is out. */
+  /* The line box and the `gap-2` the tile gives up above, both handed back by
+     the label itself, so the spacing is unchanged once the word is out. */
+  max-height: 1.5em;
   margin-block-start: 0.5rem;
 }
 
