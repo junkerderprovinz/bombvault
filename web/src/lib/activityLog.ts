@@ -127,7 +127,7 @@ const JOB_KEYS: Record<string, string> = {
 
 /** Translates a domain literal ("containers"/"vms"/"flash"/"config"/"files");
  *  an unknown literal (should not happen) falls back to the raw string. */
-function domainLabel(resolveName: ResolveName, domain: string): string {
+export function domainLabel(resolveName: ResolveName, domain: string): string {
   const key = DOMAIN_KEYS[domain];
   return key ? resolveName(key) : domain;
 }

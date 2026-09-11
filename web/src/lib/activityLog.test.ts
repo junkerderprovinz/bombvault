@@ -6,7 +6,7 @@
 // interpolated params assertable without any i18n context.
 // ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
-import { buildLogLines, filterLogLines, formatLogDate } from "./activityLog";
+import { buildLogLines, domainLabel, filterLogLines, formatLogDate } from "./activityLog";
 import type { LogLine } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
 import type { ProgressMap } from "./progress";
@@ -648,5 +648,29 @@ describe("a live line whose stream has gone quiet", () => {
     });
     const lines = buildLogLines([otherRunning], quiet, [], resolveName, muchLater);
     expect(lines.filter((l) => l.live)).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// domainLabel — the label the log now prints on every line.
+//
+// The line used to carry the item NAME alone, and a container and a folder set
+// may well share one. A user chasing a running backup read "Backing up HomeDVR"
+// on the dashboard, went to the Folders page, and found the set of that name
+// idle with no Stop button, because it was the CONTAINER that was running
+// (issue #200). The domain was in the data the whole time - it drives the filter
+// above the log - it just never reached the line.
+// ---------------------------------------------------------------------------
+describe("domainLabel", () => {
+  const t = (k: string) => `T:${k}`;
+
+  it("gives the two domains that share names apart-tellable labels", () => {
+    expect(domainLabel(t, "containers")).not.toBe(domainLabel(t, "files"));
+  });
+
+  it("labels every domain the log can emit, none falling through to the raw literal", () => {
+    for (const d of ["containers", "vms", "flash", "config", "files", "everything"]) {
+      expect(domainLabel(t, d)).toBe(`T:activityLog.domain${d[0].toUpperCase()}${d.slice(1)}`.replace("domainVms", "domainVMs"));
+    }
   });
 });

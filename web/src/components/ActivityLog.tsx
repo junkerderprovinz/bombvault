@@ -18,7 +18,7 @@ import { useProgress } from "../lib/progress";
 import { useT } from "../lib/i18n";
 import { SelectField } from "./SelectField";
 import type { TranslationKey } from "../lib/i18n";
-import { buildLogLines, filterLogLines, formatLogDate, LOG_FILTER_DOMAINS, LOG_FILTER_KINDS } from "../lib/activityLog";
+import { buildLogLines, domainLabel, filterLogLines, formatLogDate, LOG_FILTER_DOMAINS, LOG_FILTER_KINDS } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../lib/activityLog";
 import { Badge } from "./Badge";
 import { formatClockTime } from "../lib/reltime";
@@ -375,6 +375,18 @@ export function ActivityLog({
               <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
                 {glyphFor(l.status)}
               </span>
+              {/* Which domain the line belongs to. The line used to carry the
+                  NAME alone, and a container and a folder set may well share
+                  one: a user chasing a running backup read "Backing up HomeDVR"
+                  on the dashboard, went to the Folders page and found the set of
+                  that name sitting idle with no Stop button, because it was the
+                  CONTAINER that was running ([#200]). The domain was in the data
+                  all along - it drives the filter above - just never on the
+                  line. The idle "next up" line has no domain of its own and is
+                  exempt, the same way the filters exempt it. */}
+              {!l.idle && (
+                <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>
+              )}
               <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
             </div>
           ))}
