@@ -94,11 +94,18 @@ export interface SelectionTreeProps {
   onRemoveCustom: (hostPath: string) => void;
   /** Per-root CACHEDIR.TAG toggles in HOST path form (D-06, RESTIC-01) —
    *  the stored map the switches render from, exactly as the mounts response
-   *  served it plus the editor's optimistic flips. */
-  excludeCaches: Readonly<Record<string, boolean>>;
+   *  served it plus the editor's optimistic flips.
+   *  Optional since Phase 4 (INTEG-02): the Files page reuses this tree over
+   *  a single set root, where RESTIC-01 deliberately does not apply (D-07
+   *  deferral). When this or onToggleCaches is absent the CACHEDIR sub-row is
+   *  skipped entirely — an empty map plus a no-op handler would render a dead
+   *  switch, a silent lie (UI-SPEC reuse contract item 5). Container callers
+   *  pass both, unchanged. */
+  excludeCaches?: Readonly<Record<string, boolean>>;
   /** CACHEDIR switch flip; carries the root's HOST path and the new value.
-   *  Rides the SAME serialized save queue as onToggle (T-03-07). */
-  onToggleCaches: (hostPath: string, next: boolean) => void;
+   *  Rides the SAME serialized save queue as onToggle (T-03-07). Optional
+   *  together with excludeCaches — see that prop's note. */
+  onToggleCaches?: (hostPath: string, next: boolean) => void;
   /** Paths with a save in flight; their checkboxes disable. */
   busyPaths?: ReadonlySet<string>;
   /** Shake nonces per path; a bumped key replays .glim-shake on that row. */
@@ -270,7 +277,13 @@ export function SelectionTree({
       label: (
         <span className="flex flex-col min-w-0">
           <span dir="ltr" className="font-mono break-all text-start">
-            {m.dest} ← {m.source}
+            {/* Phase 4 (INTEG-02, UI-SPEC item 2): a dest-less synthetic mount
+                row (the Files page's single set root) labels itself with the
+                bare host path — the dest ← source arrow only describes a
+                container mount. Container rows always carry a non-empty dest,
+                so this branch never fires there and the container panel is
+                byte-identical. */}
+            {m.dest === "" ? m.source : `${m.dest} ← ${m.source}`}
           </span>
           {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
           {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
@@ -627,7 +640,7 @@ export function SelectionTree({
             )}
           </div>
         )}
-        {spec.depth === 0 && (
+        {spec.depth === 0 && excludeCaches !== undefined && onToggleCaches !== undefined && (
           // CACHEDIR.TAG sub-row (D-06, RESTIC-01): one switch per ROOT —
           // mounts and standalone customs alike, regardless of expand state —
           // in the same presentation-wrapped shape as the blocked warn line

@@ -8,7 +8,7 @@
 // FolderBrowser path picker and an excludes textarea (one pattern per line).
 // ---------------------------------------------------------------------------
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   listFileSets,
@@ -27,7 +27,9 @@ import {
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
-import type { FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import type { BrowseResponse, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import { applyToggle, browseRelToHost, splitFlatSet } from "../lib/selectionTree";
+import { SelectionTree } from "../components/SelectionTree";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -1047,10 +1049,153 @@ function FileSetDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Choose folders — the Files-page selection tree (Phase 4, INTEG-02)
+// ---------------------------------------------------------------------------
+
+// The Phase 2 SelectionTree remounted over ONE set root, per the UI-SPEC reuse
+// contract (items 1-9): a row-level disclosure on the set card — never inside
+// FileSetDialog, whose full-set PATCHes would race the live-selection queue —
+// one synthetic root (the set's resolved host path), lazy children through
+// GET /api/browse with hostMountRoot as the browse prefix, and NO container
+// surfaces: no CACHEDIR switch (optional props skip the sub-row), no custom
+// rows, no dest←source arrow, no Reset (the files domain has no
+// auto-detection fallback; D-06's exit is Remove set, named by the refusal
+// copy).
+//
+// The genuinely new decision is the NULL mirror seed (UI-SPEC item 9): a set
+// whose selected_paths is NULL — never touched by this tree — is seeded with a
+// SYNTHETIC include of its root, so the root renders CHECKED and the preview
+// reads "1 path": exactly what the legacy argv [SourceDir] covers. Rendering
+// it unchecked would contradict both the trust posture and D-06's own logic.
+// The seed lives in client state only; nothing PATCHes until the first
+// toggle, so the column stays NULL (legacy argv pinned by plan 01's tests).
+//
+// Exported for this page's dom harness (the FoldersEditor precedent — the
+// harness renders the editor against the mocked api client, not a whole card).
+export function FileSetFoldersEditor({
+  set,
+  hostMountRoot,
+  t,
+}: {
+  set: FileSetView;
+  hostMountRoot: string;
+  t: T;
+}) {
+  const regionId = useId();
+  const [open, setOpen] = useState(false);
+  const noPath = set.path === "";
+  // The set's resolved host path, cleaned on both segments (browseRelToHost is
+  // the exact inverse of the browse prefix swap the tree performs below).
+  const root = noPath ? "" : browseRelToHost(set.path, hostMountRoot);
+  // The (includes, exclusions) mirror in host path space — splitFlatSet over
+  // the stored selection, with the NULL case seeded as a synthetic include of
+  // the root (UI-SPEC item 9; see the block comment above). Seeded once per
+  // editor instance; rows are keyed by set id, so instance identity IS set
+  // identity and no reseed path exists.
+  const seed = splitFlatSet(noPath ? [] : (set.selectedPaths ?? [root]));
+  const [includes, setIncludes] = useState<Set<string>>(seed.includes);
+  const [exclusions, setExclusions] = useState<Set<string>>(seed.exclusions);
+  // The mirror the queue will read through a ref (Containers.tsx Pattern 4):
+  // the ref the save pipeline reads and the state the tree renders can never
+  // drift apart, because every mutation lands in this one helper.
+  const mirrorRef = useRef<{ inc: Set<string>; exc: Set<string> }>({ inc: seed.includes, exc: seed.exclusions });
+  // Editor-lifetime listings cache (Phase 2 research, Pitfall 3): survives the
+  // disclosure closing (this component stays mounted above its null return),
+  // dies with the page.
+  const browseCache = useRef(new Map<string, Promise<BrowseResponse>>());
+
+  function applyMirror(inc: Set<string>, exc: Set<string>): void {
+    mirrorRef.current = { inc, exc };
+    setIncludes(inc);
+    setExclusions(exc);
+  }
+
+  // One tree checkbox toggle. Optimistic reducer apply over the LIVE mirror
+  // (the ref, not the state closure) — the shared applyToggle is the ONLY
+  // mutation path (T-02-10; no second selection implementation exists here).
+  // The live-save queue that PATCHes this state is Task 3 of the plan; the
+  // optimistic apply is identical from the first commit so the rendered states
+  // this task pins never move.
+  function onToggle(hostPath: string): void {
+    const next = applyToggle(hostPath, mirrorRef.current.inc, mirrorRef.current.exc);
+    // A reducer no-op must never look like a change (review CR-01 discipline).
+    const unchanged =
+      next.includes.size === mirrorRef.current.inc.size &&
+      [...next.includes].every((p) => mirrorRef.current.inc.has(p)) &&
+      next.exclusions.size === mirrorRef.current.exc.size &&
+      [...next.exclusions].every((p) => mirrorRef.current.exc.has(p));
+    if (unchanged) return;
+    applyMirror(next.includes, next.exclusions);
+  }
+
+  // A no-Path set has nothing to present — the card's files.noPathHint line
+  // stands in (D-02). Guarded here AND at the FileSetRow call site, so the
+  // disclosure can never render for a set the tree cannot represent, even if
+  // a future caller forgets the gate. After the hooks (rules of hooks).
+  if (noPath) return null;
+
+  return (
+    // UI-SPEC item 1 placement: below the Backups/Restore disclosure,
+    // separated by a top border; full-width text button, rotating chevron,
+    // aria-expanded + aria-controls to the region it reveals.
+    <div className="border-t border-carbon-border pt-3">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={regionId}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 py-1 text-start text-sm text-carbon-textSub"
+      >
+        <span className="w-4 shrink-0 flex items-center justify-center" aria-hidden="true">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            className={`transition-transform ${open ? "rotate-90" : "rtl:rotate-180"}`}
+          >
+            <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+          </svg>
+        </span>
+        {t("files.foldersToggle")}
+      </button>
+      {open && (
+        <div id={regionId} role="region" aria-label={t("folders.title")} className="mt-2 flex flex-col gap-2">
+          <p className="text-xs text-carbon-textMuted">{t("files.foldersHint")}</p>
+          {/* One synthetic root, per UI-SPEC item 2: source = the resolved
+              host path, dest = "" (the tree then labels the row with the bare
+              path — no dest←source arrow), reachable always. The preview count
+              line on that root row renders from rootIncludeCount inside
+              SelectionTree — the exact maximal-include membership the next
+              backup hands restic (T-04-10: never a DOM or loaded-children
+              count; pinned against toFlatList membership in the harness). */}
+          <SelectionTree
+            mounts={[{ source: root, dest: "", selected: true, isAppdata: false, reachable: true }]}
+            customPaths={[]}
+            includes={includes}
+            exclusions={exclusions}
+            hostSourceRoot={hostMountRoot}
+            containerName={`fileset-${set.id}`}
+            browseCache={browseCache.current}
+            onToggle={onToggle}
+            // customPaths is always [] so the remove chip can never render;
+            // the prop stays required on SelectionTreeProps (container shape).
+            onRemoveCustom={() => {}}
+            // busyPaths / shakeCounts / blockedPath ride the live-save queue
+            // (plan Task 3): the refusal, shake and in-flight disable states
+            // all key off save-pipeline events, so they land with it.
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // File-set row
 // ---------------------------------------------------------------------------
 
-function FileSetRow({
+export function FileSetRow({
   set,
   hostMountRoot,
   restoreFolder,
@@ -1258,6 +1403,12 @@ function FileSetRow({
         t={t}
         onSetsChanged={onRefresh}
       />
+
+      {/* Choose folders — the Phase 2 SelectionTree over this set's own root
+          (Phase 4, INTEG-02; UI-SPEC item 1: below the restore disclosure,
+          separated by the editor's own top border). A no-Path set renders no
+          disclosure — the files.noPathHint line in the header stands in. */}
+      {!noPath && <FileSetFoldersEditor set={set} hostMountRoot={hostMountRoot} t={t} />}
 
       {/* Live backup/restore progress, pinned to the card's bottom edge */}
       {progress && (
