@@ -33,6 +33,12 @@ type Target struct {
 	// Excludes are restic --exclude patterns applied to this container's backup.
 	// Owned by SetExcludes (never reset by Upsert).
 	Excludes []string
+	// ExcludeCaches is the per-root CACHEDIR.TAG toggle (RESTIC-01, D-07): a map
+	// of backup-root host path → bool. At backup time only the boolean union of
+	// the values compiles into restic's constant --exclude-caches flag — the
+	// keys are per-root UI state and never reach argv. Owned by SetExcludeCaches
+	// (never reset by Upsert).
+	ExcludeCaches map[string]bool
 	// UpdateAfterBackup opts this container into a post-backup image update (#52):
 	// after a successful backup, pull the image and recreate the container if a
 	// newer image is available. Owned by SetUpdateAfterBackup (never reset by
@@ -116,21 +122,26 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget marshal excludes: %w", err)
 	}
+	ecJSON, err := json.Marshal(t.ExcludeCaches)
+	if err != nil {
+		return Target{}, fmt.Errorf("UpsertTarget marshal exclude caches: %w", err)
+	}
 
-	// selected_paths, stop_containers and excludes are owned by their setters and
-	// intentionally NOT in the ON CONFLICT update set, so a backup's UpsertTarget
-	// never clobbers the user's choices (same pattern as include_in_schedule/hooks).
+	// selected_paths, stop_containers, excludes and exclude_caches are owned by
+	// their setters and intentionally NOT in the ON CONFLICT update set, so a
+	// backup's UpsertTarget never clobbers the user's choices (same pattern as
+	// include_in_schedule/hooks).
 	// backup_order (like selected_paths/stop_containers/excludes) is owned by its
 	// setter and intentionally NOT in the ON CONFLICT update set, so a backup's
 	// UpsertTarget never clobbers the user's chosen sequence.
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, backup_order, schedule_cadence)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -143,7 +154,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -151,7 +162,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -193,7 +204,7 @@ func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	// there is and drifts to the end of the queue for good — quietly, since the
 	// ordering is a preference rather than an error.
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -511,6 +522,32 @@ func (r *Repo) SetExcludes(containerName string, excludes []string) error {
 	return nil
 }
 
+// SetExcludeCaches sets the per-root CACHEDIR.TAG toggles (RESTIC-01, D-07) for
+// a container's backup, creating the target row if it does not exist yet. The
+// map is a whole-map replace keyed by backup-root host path; an empty (or nil)
+// map clears every toggle. Owned by this setter; never reset by UpsertTarget.
+func (r *Repo) SetExcludeCaches(containerName string, m map[string]bool) error {
+	if m == nil {
+		m = map[string]bool{}
+	}
+	ecJSON, err := json.Marshal(m)
+	if err != nil {
+		return fmt.Errorf("SetExcludeCaches marshal: %w", err)
+	}
+	res, err := r.db.Exec(
+		`UPDATE targets SET exclude_caches = ? WHERE container_name = ?`,
+		string(ecJSON), containerName)
+	if err != nil {
+		return fmt.Errorf("SetExcludeCaches: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, ExcludeCaches: m}); err != nil {
+			return fmt.Errorf("SetExcludeCaches create target: %w", err)
+		}
+	}
+	return nil
+}
+
 // DeleteTarget removes a target and ALL its run history by container name, in a
 // single transaction. It is a no-op (no error) if the target does not exist.
 // Used to forget a container that is no longer installed once its backups have
@@ -541,9 +578,9 @@ type scanner interface {
 
 func scanTarget(s scanner) (Target, error) {
 	var t Target
-	var pathsJSON, selJSON, stopJSON, exJSON string
+	var pathsJSON, selJSON, stopJSON, exJSON, ecJSON string
 	var include, updateAfter int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
@@ -558,6 +595,11 @@ func scanTarget(s scanner) (Target, error) {
 	}
 	if err := json.Unmarshal([]byte(exJSON), &t.Excludes); err != nil {
 		return Target{}, fmt.Errorf("scanTarget unmarshal excludes: %w", err)
+	}
+	// A never-set column carries the schema default '{}' and unmarshals to an
+	// empty map without error; only hand-corrupted rows reach the error path.
+	if err := json.Unmarshal([]byte(ecJSON), &t.ExcludeCaches); err != nil {
+		return Target{}, fmt.Errorf("scanTarget unmarshal exclude caches: %w", err)
 	}
 	t.IncludeInSchedule = include != 0
 	t.UpdateAfterBackup = updateAfter != 0

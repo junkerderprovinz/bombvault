@@ -589,7 +589,7 @@ const vi: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Thư mục sao lưu",
-  "folders.hint": "Chọn những thư mục được ánh xạ của container này để sao lưu. Thư mục appdata được chọn theo mặc định. Đánh dấu các thư mục khác để bao gồm chúng, hoặc thêm một đường dẫn tùy chỉnh bên trong điểm gắn kết của host. Bỏ chọn tất cả sẽ trở về mặc định appdata tự động.",
+  "folders.hint": "Chọn những thư mục được ánh xạ của container này để sao lưu. Thư mục appdata được chọn theo mặc định. Đánh dấu các thư mục khác để bao gồm chúng, hoặc thêm một đường dẫn tùy chỉnh bên trong điểm gắn kết của host. Bỏ chọn tất cả bị chặn; dùng Đặt lại lựa chọn để quay về mặc định appdata tự động.",
   "folders.appdataDefault": "appdata (mặc định)",
   "folders.stackNote":
     "Container này thuộc stack Compose {stack}. Thư mục dự án được sao lưu một lần cho cả stack, không phải mỗi dịch vụ một lần, nên không có trong danh sách này.",
@@ -601,7 +601,17 @@ const vi: Partial<Translations> = {
   "folders.save": "Lưu thư mục",
   "folders.saved": "Đã lưu",
   "folders.empty": "Không tìm thấy thư mục được ánh xạ nào cho container này.",
-
+  "folders.treeLabel": "Chọn thư mục sao lưu",
+  "folders.truncatedList": "Hiển thị 500 mục đầu tiên",
+  "folders.retry": "Thử lại",
+  "folders.emptySelectionBlocked": "Ít nhất một thư mục phải được chọn. Để không sao lưu gì của container này, hãy tắt đưa vào lịch trình. Để quay về phát hiện tự động, dùng Đặt lại lựa chọn.",
+  "folders.previewPaths": "{n} đường dẫn",
+  "folders.exclusions": "{n} mục loại trừ",
+  "folders.resetSelection": "Đặt lại lựa chọn",
+  "folders.resetConfirm": "Đặt lại lựa chọn thư mục? Container sẽ quay về phát hiện tự động (mặc định appdata) và mọi ngoại lệ đã ghi nhớ cùng cài đặt thư mục bộ nhớ đệm sẽ bị xóa.",
+  "folders.narrowedNote": "Lựa chọn hiện bao phủ ít thư mục hơn trước. Từ bản sao lưu tiếp theo, các snapshot sẽ chỉ chứa các thư mục đã chọn. Các snapshot hiện có không thay đổi.",
+  "folders.cachedirToggle": "Bỏ qua thư mục bộ nhớ đệm (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Áp dụng cho toàn bộ bản sao lưu của container này, không chỉ thư mục này.",
   // Notifications
   "notify.title": "Thông báo",
   "notify.hint": "Nhận thông báo khi một bản sao lưu hoàn tất, và chọn bên dưới sự kiện nào sẽ kích hoạt nó. Thông báo Unraid đã hoạt động ở chế độ Đơn giản; thêm các kênh gửi (webhook, Matrix, Healthchecks, email) có trong phần Nâng cao.",

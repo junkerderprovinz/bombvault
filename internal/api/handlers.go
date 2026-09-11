@@ -1182,11 +1182,19 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// selectionSource would reject every tree save at the boundary. Omitting
 		// it stays legal (pointer field), and SPA + server ship in one binary
 		// (embedded web/dist), so version skew is a non-issue.
-		SelectionSource   *string   `json:"selectionSource"`
-		StopContainers    *[]string `json:"stopContainers"`
-		Excludes          *[]string `json:"excludes"`
-		UpdateAfterBackup *bool     `json:"updateAfterBackup"`
-		ScheduleCadence   *string   `json:"scheduleCadence"`
+		SelectionSource *string   `json:"selectionSource"`
+		StopContainers  *[]string `json:"stopContainers"`
+		Excludes        *[]string `json:"excludes"`
+		// ExcludeCaches is the per-mount-root CACHEDIR.TAG toggle (RESTIC-01):
+		// a map of host path → bool. nil means untouched (the key was absent),
+		// an explicit empty object clears every root toggle. Non-pointer map is
+		// deliberate: an absent key decodes to nil, which IS the untouched
+		// signal — maps natively distinguish absent from zero, unlike scalars.
+		// Keys are host paths, boundary-validated in Service.SetExcludeCaches;
+		// only the boolean union of the values ever reaches restic argv (D-06).
+		ExcludeCaches     map[string]bool `json:"excludeCaches"`
+		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
+		ScheduleCadence   *string         `json:"scheduleCadence"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -1227,6 +1235,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Excludes != nil {
 		if err := h.svc.SetExcludes(r.Context(), name, *body.Excludes); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.ExcludeCaches != nil {
+		if err := h.svc.SetExcludeCaches(r.Context(), name, body.ExcludeCaches); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -1380,7 +1394,7 @@ func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	mounts, custom, excluded, err := h.svc.ContainerMounts(r.Context(), name)
+	mounts, custom, excluded, excludeCaches, err := h.svc.ContainerMounts(r.Context(), name)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1394,12 +1408,18 @@ func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) 
 	if excluded == nil {
 		excluded = []string{}
 	}
+	if excludeCaches == nil {
+		// Nil-safe wire shape: the SPA must always read an OBJECT under
+		// excludeCaches, never null (RESTIC-01 read side).
+		excludeCaches = map[string]bool{}
+	}
 	// hostMountRoot/hostSourceRoot let the folder picker translate a browsed path
 	// (relative to the host mount) back to the host path SetBackupPaths expects.
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"mounts":         mounts,
 		"custom":         custom,
 		"excluded":       excluded,
+		"excludeCaches":  excludeCaches,
 		"hostMountRoot":  h.cfg.HostMountRoot,
 		"hostSourceRoot": h.cfg.HostSourceRoot,
 	}))

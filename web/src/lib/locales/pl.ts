@@ -589,7 +589,7 @@ const pl: Partial<Translations> = {
 
   // Backup folders selector
   "folders.title": "Foldery do kopii",
-  "folders.hint": "Wybierz, które z zamapowanych folderów tego kontenera mają być kopiowane. Folder appdata jest zaznaczony domyślnie. Zaznacz inne, aby je dołączyć, lub dodaj własną ścieżkę w obrębie montowania hosta. Odznaczenie wszystkiego przywraca automatyczne domyślne ustawienie appdata.",
+  "folders.hint": "Wybierz, które z zamapowanych folderów tego kontenera mają być kopiowane. Folder appdata jest zaznaczony domyślnie. Zaznacz inne, aby je dołączyć, lub dodaj własną ścieżkę w obrębie montowania hosta. Odznaczenie wszystkiego jest zablokowane; użyj Resetuj wybór, aby wrócić do automatycznego ustawienia domyślnego appdata.",
   "folders.appdataDefault": "appdata (domyślnie)",
   "folders.stackNote":
     "Ten kontener należy do stosu Compose {stack}. Katalog projektu jest kopiowany raz dla całego stosu, a nie raz na usługę, dlatego nie ma go na tej liście.",
@@ -601,7 +601,17 @@ const pl: Partial<Translations> = {
   "folders.save": "Zapisz foldery",
   "folders.saved": "Zapisano",
   "folders.empty": "Nie znaleziono zamapowanych folderów dla tego kontenera.",
-
+  "folders.treeLabel": "Wybór folderów kopii zapasowej",
+  "folders.truncatedList": "Wyświetlono pierwsze 500 pozycji",
+  "folders.retry": "Spróbuj ponownie",
+  "folders.emptySelectionBlocked": "Co najmniej jeden folder musi pozostać wybrany. Aby nie tworzyć kopii zapasowej niczego z tego kontenera, wyłącz uwzględnianie w harmonogramie. Aby wrócić do automatycznego wykrywania, użyj Resetuj wybór.",
+  "folders.previewPaths": "{n} ścieżek",
+  "folders.exclusions": "{n} wykluczeń",
+  "folders.resetSelection": "Resetuj wybór",
+  "folders.resetConfirm": "Zresetować wybór folderów? Kontener wraca do automatycznego wykrywania (domyślne appdata), a wszystkie zapamiętane wykluczenia i ustawienia folderów pamięci podręcznej zostaną usunięte.",
+  "folders.narrowedNote": "Wybór obejmuje teraz mniej folderów niż wcześniej. Od następnej kopii zapasowej migawki będą zawierać tylko wybrane foldery. Istniejące migawki pozostają bez zmian.",
+  "folders.cachedirToggle": "Pomiń foldery pamięci podręcznej (CACHEDIR.TAG)",
+  "folders.cachedirScope": "Dotyczy całej kopii zapasowej tego kontenera, a nie tylko tego folderu.",
   // Notifications
   "notify.title": "Powiadomienia",
   "notify.hint": "Otrzymuj powiadomienie po zakończeniu kopii zapasowej i wybierz poniżej, które zdarzenia je wyzwalają. Powiadomienia Unraid działają już w trybie prostym; więcej kanałów dostarczania (webhook, Matrix, Healthchecks, e-mail) znajdziesz w trybie zaawansowanym.",

@@ -416,6 +416,147 @@ func TestPatchExcludesAndPreview(t *testing.T) {
 	}
 }
 
+// excludeCachesRouterHarness builds a router whose HostSourceRoot=/mnt sits on a
+// temp HostMountRoot (split-root translation, mirroring TestEmptySelectionGuard)
+// with a "plex" container carrying one bind mount, so exclude-caches PATCH keys
+// (host paths) can be validated against the mount exactly like backupPaths.
+func excludeCachesRouterHarness(t *testing.T) (http.Handler, *store.Repo) {
+	t.Helper()
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt",
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/plex", Image: "plex:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+	return h, st
+}
+
+// TestPatchContainerExcludeCaches pins the RESTIC-01 write side: the PATCH
+// excludeCaches field persists a root-to-bool map on the target, rejects a map
+// whose keys fall outside the host mount ATOMICALLY (whole save refused, nothing
+// partially written), lets decodeBody reject non-boolean values, and leaves the
+// stored column untouched when the key is absent (nil = untouched, like the
+// sibling pointer fields).
+func TestPatchContainerExcludeCaches(t *testing.T) {
+	patch := func(t *testing.T, h http.Handler, body string) map[string]any {
+		t.Helper()
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", body)
+		return m
+	}
+	storedMap := func(t *testing.T, st *store.Repo) map[string]bool {
+		t.Helper()
+		tg, err := st.GetTargetByContainer("plex")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tg.ExcludeCaches
+	}
+
+	t.Run("valid host-path keys persist as the stored map", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true,"/mnt/user/appdata/plex/custom":false}}`)
+		if m["ok"] != true {
+			t.Fatalf("patch must succeed, got %v", m)
+		}
+		want := map[string]bool{"/mnt/user/appdata/plex": true, "/mnt/user/appdata/plex/custom": false}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, want) {
+			t.Fatalf("stored excludeCaches = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("a key outside the host mount rejects the whole save atomically", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		if m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true}}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		before := storedMap(t, st)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true,"/elsewhere/evil":true}}`)
+		if m["ok"] == true {
+			t.Fatal("a key not under the host mount must fail the whole save")
+		}
+		if m["error"] == nil || m["error"] == "" {
+			t.Fatalf("the refusal must carry a scrubbed error, got %v", m)
+		}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, before) {
+			t.Fatalf("a rejected save must not partially write: got %v, want %v", got, before)
+		}
+	})
+
+	t.Run("a non-boolean value is rejected at decode", func(t *testing.T) {
+		h, _ := excludeCachesRouterHarness(t)
+		m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":"yes"}}`)
+		if m["ok"] == true {
+			t.Fatal("a string value must fail the map[string]bool decode in decodeBody")
+		}
+	})
+
+	t.Run("an absent key leaves the stored column untouched", func(t *testing.T) {
+		h, st := excludeCachesRouterHarness(t)
+		if m := patch(t, h, `{"excludeCaches":{"/mnt/user/appdata/plex":true}}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		before := storedMap(t, st)
+		// A sibling-field PATCH that omits excludeCaches entirely.
+		m := patch(t, h, `{"excludes":[".git"]}`)
+		if m["ok"] != true {
+			t.Fatalf("sibling patch must succeed, got %v", m)
+		}
+		if got := storedMap(t, st); !reflect.DeepEqual(got, before) {
+			t.Fatalf("absent key must leave the column untouched: got %v, want %v", got, before)
+		}
+	})
+}
+
+// TestContainerMountsExcludeCaches pins the RESTIC-01 read side: the mounts
+// response always carries excludeCaches as a JSON OBJECT ({} when never set, so
+// the SPA can read it unconditionally) and serves back the identical stored map
+// once set.
+func TestContainerMountsExcludeCaches(t *testing.T) {
+	h, st := excludeCachesRouterHarness(t)
+
+	// Never set: {} on the wire, never null.
+	_, m := doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+	if m["ok"] != true {
+		t.Fatalf("mounts must succeed, got %v", m)
+	}
+	ec, ok := m["excludeCaches"].(map[string]any)
+	if !ok {
+		t.Fatalf("excludeCaches must be a JSON object when unset, got %T (%v)", m["excludeCaches"], m["excludeCaches"])
+	}
+	if len(ec) != 0 {
+		t.Fatalf("excludeCaches must be empty when never set, got %v", ec)
+	}
+
+	// Set: the identical map serves back under the same key.
+	if _, pm := doJSON(t, h, http.MethodPatch, "/api/containers/plex",
+		`{"excludeCaches":{"/mnt/user/appdata/plex":true,"/mnt/user/appdata/plex/custom":false}}`); pm["ok"] != true {
+		t.Fatalf("seed patch must succeed, got %v", pm)
+	}
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tg.ExcludeCaches) != 2 {
+		t.Fatalf("seed must have stored the map, got %v", tg.ExcludeCaches)
+	}
+	_, m = doJSON(t, h, http.MethodGet, "/api/containers/plex/mounts", "")
+	ec, ok = m["excludeCaches"].(map[string]any)
+	if !ok || len(ec) != 2 || ec["/mnt/user/appdata/plex"] != true || ec["/mnt/user/appdata/plex/custom"] != false {
+		t.Fatalf("excludeCaches on the wire = %v (%T), want the identical stored map", m["excludeCaches"], m["excludeCaches"])
+	}
+}
+
 // TestSettingsGetPlatformField pins the platform.Kind exposure added for
 // Task 7 of the platform-expansion plan (the "Host system config" preset
 // needs a way to know it shouldn't be offered on Unraid): "platform" is a

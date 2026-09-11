@@ -3732,12 +3732,14 @@ type CustomPath struct {
 // ContainerMounts returns the container's bind mounts annotated for the folder
 // selector, plus any selected custom paths (in host form) that do not match a
 // current mount, each flagged with whether it still exists, plus the stored
-// exclusions in host form. The selection is the stored explicit choice, or the
-// automatic appdata default when none is configured.
-func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []CustomPath, []string, error) {
+// exclusions in host form, plus the stored per-root CACHEDIR.TAG toggles
+// (RESTIC-01; host-form keys, nil when never set — the handler normalizes to {}
+// on the wire). The selection is the stored explicit choice, or the automatic
+// appdata default when none is configured.
+func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []CustomPath, []string, map[string]bool, error) {
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("inspect container: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("inspect container: %w", err)
 	}
 
 	auto := s.resolveAppdataPaths(name, in)
@@ -3803,7 +3805,7 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 	for _, cp := range exclCPs {
 		excluded = append(excluded, s.toHostPath(cp))
 	}
-	return mounts, custom, excluded, nil
+	return mounts, custom, excluded, tg.ExcludeCaches, nil
 }
 
 // errEmptySelection refuses a tree-sourced save that would deselect everything:
@@ -4187,6 +4189,17 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("upsert target: %w", err)
 	}
+
+	// Compile the per-root CACHEDIR.TAG toggles into the item-level union the
+	// argv flag needs (RESTIC-01, D-06). tg comes from UpsertTarget's
+	// authoritative re-read — the ON CONFLICT clause never touches
+	// exclude_caches — so this is a FRESH read of the stored map on every
+	// backup: a toggle saved between two backups affects exactly the later one.
+	// Literal A1 reading (Phase 3 research): the union runs over the STORED map,
+	// independent of whether that root is currently included in the selection —
+	// restic's --exclude-caches is positional-source-wide, so per-root gating on
+	// selection inclusion would be a lie either way.
+	mode.ExcludeCaches = anyRootExcludeCaches(tg.ExcludeCaches)
 
 	// Give each dependency its own run-state so the backup never starts a
 	// container the user had already stopped (#33): inspect each by name and
@@ -10176,6 +10189,50 @@ func (s *Service) SetExcludes(_ context.Context, name string, excludes []string)
 		clean = append(clean, e)
 	}
 	return s.store.SetExcludes(name, clean)
+}
+
+// maxExcludeCachesEntries caps the per-root CACHEDIR.TAG toggle map (RESTIC-01)
+// as defense-in-depth on top of decodeBody's 1 MiB cap and the map[string]bool
+// decode (which already fails non-boolean values): a mount list is bounded by
+// the container's real bind mounts, so anything near this size is abuse, not
+// intent (threat T-03-02).
+const maxExcludeCachesEntries = 64
+
+// SetExcludeCaches stores the per-root CACHEDIR.TAG toggles (RESTIC-01, D-07)
+// for a container's backup. The map is a whole-map replace keyed by HOST path
+// (what the UI shows); every key must translate under the host mount exactly
+// like a SetBackupPaths entry, otherwise the WHOLE save is rejected BEFORE any
+// store write (atomic — a bad key can never leave a partially-written map).
+// An empty (or nil) map clears every toggle. The keys are validated UI state
+// only: nothing but the boolean union of the values ever reaches restic.
+func (s *Service) SetExcludeCaches(_ context.Context, name string, m map[string]bool) error {
+	if len(m) > maxExcludeCachesEntries {
+		return fmt.Errorf("too many exclude-caches entries (%d, max %d)", len(m), maxExcludeCachesEntries)
+	}
+	for hp := range m {
+		// toContainerPath path.Cleans the key first (resolving any "..") and
+		// then requires the host-source-root prefix, so its ok result is
+		// guaranteed containment — the same discipline SetBackupPaths applies
+		// to every user path (threat T-03-01).
+		if _, ok := s.toContainerPath(hp); !ok {
+			return fmt.Errorf("path %q is not under the host mount and can't be backed up", hp)
+		}
+	}
+	return s.store.SetExcludeCaches(name, m)
+}
+
+// anyRootExcludeCaches reports whether any per-root CACHEDIR.TAG toggle is on:
+// the item-level union restic's positional-source-wide --exclude-caches flag
+// expresses (RESTIC-01, D-06). Deliberately independent of selection inclusion
+// (A1 in the Phase 3 research): the stored map is the user's remembered intent
+// per root, and restic cannot scope the flag per positional anyway.
+func anyRootExcludeCaches(m map[string]bool) bool {
+	for _, on := range m {
+		if on {
+			return true
+		}
+	}
+	return false
 }
 
 // PreviewExcludes resolves candidate exclude lines against the container's live

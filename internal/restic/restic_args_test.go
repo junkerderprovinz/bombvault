@@ -392,6 +392,42 @@ func TestBackupArgsSameBasenamePositionals(t *testing.T) {
 	}
 }
 
+// TestBackupArgsExcludeCaches pins the CACHEDIR.TAG toggle's argv shape (RESTIC-01,
+// D-06): when the item-level union of a container's per-root exclude-caches
+// toggles is true, BackupArgs emits the constant --exclude-caches flag exactly
+// between the --tag loop and the --exclude loop — a backup-subcommand flag,
+// always after the verb and before the -- separator, never in the global-flag
+// slot (Pitfall 4, Phase 3 research). No user-controlled string reaches argv
+// through this feature: only the boolean union emits the bare constant flag.
+func TestBackupArgsExcludeCaches(t *testing.T) {
+	t.Run("union true emits the flag between tags and excludes", func(t *testing.T) {
+		got := BackupArgs("/repo", []string{"/host/user/user/appdata/plex"}, []string{"container:plex"}, Mode{Encrypted: true, ExcludeCaches: true},
+			"/host/user/user/appdata/plex/Cache", "logs")
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "container:plex",
+			"--exclude-caches", "--exclude", "/host/user/user/appdata/plex/Cache", "--exclude", "logs", "--", "/host/user/user/appdata/plex"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("zero value omits the flag — byte-identical to before ExcludeCaches existed", func(t *testing.T) {
+		got := BackupArgs("/repo", []string{"/host/user/user/appdata/plex"}, []string{"container:plex"}, Mode{Encrypted: true},
+			"/host/user/user/appdata/plex/Cache", "logs")
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault", "--tag", "container:plex",
+			"--exclude", "/host/user/user/appdata/plex/Cache", "--exclude", "logs", "--", "/host/user/user/appdata/plex"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("Limits set but ExcludeCaches false still omits the flag", func(t *testing.T) {
+		got := BackupArgs("s3:bucket/repo", []string{"/src"}, []string{"container:plex"}, Mode{Encrypted: true, Limits: Limits{UploadKBps: 1024}})
+		want := []string{"-r", "s3:bucket/repo", "--retry-lock", "5m", "--limit-upload", "1024",
+			"backup", "--json", "--host", "bombvault", "--tag", "container:plex", "--", "/src"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestDumpZipArgsEncrypted(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}
