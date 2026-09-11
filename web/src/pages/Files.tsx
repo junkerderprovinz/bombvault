@@ -28,7 +28,7 @@ import {
   getFileSetPreset,
 } from "../lib/api";
 import type { BrowseResponse, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
-import { applyToggle, browseRelToHost, splitFlatSet } from "../lib/selectionTree";
+import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL } from "../lib/pageShell";
@@ -1072,6 +1072,21 @@ function FileSetDialog({
 //
 // Exported for this page's dom harness (the FoldersEditor precedent — the
 // harness renders the editor against the mocked api client, not a whole card).
+
+/** What one queued file-set PATCH was initiated for (Containers.tsx Pattern 4,
+ *  narrowed to the files editor's single owed class — there are no caches or
+ *  reset descriptors here). `pre`/`sent` carry the initiating mutation's
+ *  mirror effect so a FAILURE can revert by set-difference inverse
+ *  (revertFrom below) instead of a captured snapshot — a snapshot would also
+ *  undo newer toggles stacked behind the failed one (Pitfall 5). `node` is
+ *  the row a failure blames: its shake replays and (for a coded
+ *  empty-selection refusal) the inline warn line routes under it. */
+interface FileSetSaveDesc {
+  node: string;
+  pre: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
+  sent: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
+}
+
 export function FileSetFoldersEditor({
   set,
   hostMountRoot,
@@ -1095,14 +1110,33 @@ export function FileSetFoldersEditor({
   const seed = splitFlatSet(noPath ? [] : (set.selectedPaths ?? [root]));
   const [includes, setIncludes] = useState<Set<string>>(seed.includes);
   const [exclusions, setExclusions] = useState<Set<string>>(seed.exclusions);
-  // The mirror the queue will read through a ref (Containers.tsx Pattern 4):
-  // the ref the save pipeline reads and the state the tree renders can never
+  // The mirror the queue reads through a ref (Containers.tsx Pattern 4): the
+  // ref the save pipeline reads and the state the tree renders can never
   // drift apart, because every mutation lands in this one helper.
   const mirrorRef = useRef<{ inc: Set<string>; exc: Set<string> }>({ inc: seed.includes, exc: seed.exclusions });
+  // Per-row busy/shake maps keyed by HOST path, exactly like FoldersEditor's;
+  // blockedPath carries the row whose last toggle was refused (client or
+  // server D-06) so SelectionTree renders the inline warn line under it.
+  const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
+  const [rowShake, setRowShake] = useState<Record<string, number>>({});
+  const [blockedPath, setBlockedPath] = useState<string | null>(null);
   // Editor-lifetime listings cache (Phase 2 research, Pitfall 3): survives the
   // disclosure closing (this component stays mounted above its null return),
   // dies with the page.
   const browseCache = useRef(new Map<string, Promise<BrowseResponse>>());
+  const { push } = useToast();
+  // The one-deep serialized PATCH queue (T-04-11; Containers.tsx Pattern 4
+  // narrowed to ONE owed class): while an attempt is in flight a further
+  // toggle just updates the mirror and marks the queue dirty; when the
+  // attempt resolves, a single drain sends the LATEST full flat list. A slow
+  // or failing save can therefore never clobber a newer toggle, and a burst
+  // collapses to one draining request.
+  const queueRef = useRef<{ inFlight: boolean; dirty: boolean }>({ inFlight: false, dirty: false });
+  const pendingDescRef = useRef<FileSetSaveDesc | null>(null);
+  // Rows whose toggles are folded into the next attempt's body (an attempt
+  // always carries the live mirror); each row's busy flag clears exactly when
+  // the attempt that acknowledges its effect settles.
+  const pendingRowsRef = useRef<Set<string>>(new Set());
 
   function applyMirror(inc: Set<string>, exc: Set<string>): void {
     mirrorRef.current = { inc, exc };
@@ -1110,22 +1144,114 @@ export function FileSetFoldersEditor({
     setExclusions(exc);
   }
 
-  // One tree checkbox toggle. Optimistic reducer apply over the LIVE mirror
-  // (the ref, not the state closure) — the shared applyToggle is the ONLY
-  // mutation path (T-02-10; no second selection implementation exists here).
-  // The live-save queue that PATCHes this state is Task 3 of the plan; the
-  // optimistic apply is identical from the first commit so the rendered states
-  // this task pins never move.
+  // Queue entry point — called AFTER the mirror has been updated (the exact
+  // FoldersEditor shape, minus the reset-stickiness: the files editor has no
+  // reset class).
+  function scheduleSave(desc: FileSetSaveDesc): void {
+    if (queueRef.current.inFlight) {
+      queueRef.current.dirty = true;
+      pendingDescRef.current = desc; // latest desc wins, matching the drain
+      return;
+    }
+    pendingDescRef.current = desc;
+    void attemptSave();
+  }
+
+  // One save attempt. The body is composed at attempt start from the LIVE
+  // mirror — never from desc.sent, which is already stale when later
+  // mutations stacked behind it. Every file-set selection PATCH the editor
+  // sends comes through here as a single fetchJSON call, so no two saves are
+  // ever concurrent (maxConcurrentPatches === 1, pinned in the harness).
+  async function attemptSave(): Promise<void> {
+    queueRef.current.inFlight = true;
+    const rows = [...pendingRowsRef.current];
+    pendingRowsRef.current.clear();
+    const desc = pendingDescRef.current;
+    pendingDescRef.current = null;
+    try {
+      const live = mirrorRef.current;
+      const r = await patchFileSet(set.id, { selectedPaths: toFlatList(live.inc, live.exc) });
+      if (r.ok) {
+        // The live-save house shape (FoldersEditor's paths class): the saved
+        // toast announces each acknowledged pick.
+        push(t("folders.saved"), "success");
+      } else {
+        // Server error text VERBATIM, coded envelope or not. A coded
+        // "empty-selection" refusal additionally routes to the same inline
+        // warn line the client-side block uses (defense-in-depth: unreachable
+        // while the client block below exists, honored when it fires — a
+        // concurrent writer or a stale anchor can still produce it).
+        push(r.error ?? t("settings.error"), "fail");
+        if (desc) {
+          if (r.code === "empty-selection") setBlockedPath(desc.node);
+          revertFrom(desc);
+        }
+      }
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      if (desc) revertFrom(desc);
+    } finally {
+      queueRef.current.inFlight = false;
+      setRowBusy((b) => {
+        const n = { ...b };
+        for (const p of rows) n[p] = false;
+        return n;
+      });
+      if (queueRef.current.dirty) {
+        queueRef.current.dirty = false;
+        if (pendingDescRef.current) void attemptSave();
+      }
+    }
+  }
+
+  // Failure revert: un-apply the failed mutation's DELTA onto the live
+  // mirror — delete what it added, re-add what it removed. applyToggle's
+  // inverse computed as set differences, so a toggle that happened AFTER the
+  // failed one (but before its save resolved) survives untouched; restoring a
+  // captured pre-mutation snapshot here is the exact Pitfall 5 bug.
+  function revertFrom(desc: FileSetSaveDesc): void {
+    const live = mirrorRef.current;
+    const inc = new Set(live.inc);
+    const exc = new Set(live.exc);
+    for (const p of desc.sent.includes) if (!desc.pre.includes.has(p)) inc.delete(p);
+    for (const p of desc.pre.includes) if (!desc.sent.includes.has(p)) inc.add(p);
+    for (const p of desc.sent.exclusions) if (!desc.pre.exclusions.has(p)) exc.delete(p);
+    for (const p of desc.pre.exclusions) if (!desc.sent.exclusions.has(p)) exc.add(p);
+    applyMirror(inc, exc);
+    setRowShake((s) => ({ ...s, [desc.node]: (s[desc.node] ?? 0) + 1 }));
+  }
+
+  // One tree checkbox toggle — optimistic reducer apply over the LIVE mirror
+  // (the ref, not the state closure), then the queue. The shared applyToggle
+  // is the ONLY mutation path (T-02-10; no second selection implementation
+  // exists here). D-06's client half runs BEFORE anything else: a toggle that
+  // would leave ZERO includes for the set never PATCHes — the refusal copy
+  // orients to Remove set (the files domain has no Reset and no
+  // auto-detection fallback to return to).
   function onToggle(hostPath: string): void {
-    const next = applyToggle(hostPath, mirrorRef.current.inc, mirrorRef.current.exc);
-    // A reducer no-op must never look like a change (review CR-01 discipline).
+    const pre = { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc };
+    const next = applyToggle(hostPath, pre.includes, pre.exclusions);
+    // A reducer no-op must never become a save (review CR-01 discipline).
     const unchanged =
-      next.includes.size === mirrorRef.current.inc.size &&
-      [...next.includes].every((p) => mirrorRef.current.inc.has(p)) &&
-      next.exclusions.size === mirrorRef.current.exc.size &&
-      [...next.exclusions].every((p) => mirrorRef.current.exc.has(p));
+      next.includes.size === pre.includes.size &&
+      [...next.includes].every((p) => pre.includes.has(p)) &&
+      next.exclusions.size === pre.exclusions.size &&
+      [...next.exclusions].every((p) => pre.exclusions.has(p));
     if (unchanged) return;
+    if (next.includes.size === 0) {
+      setBlockedPath(hostPath);
+      setRowShake((s) => ({ ...s, [hostPath]: (s[hostPath] ?? 0) + 1 }));
+      return;
+    }
+    setBlockedPath(null);
     applyMirror(next.includes, next.exclusions);
+    setRowBusy((b) => ({ ...b, [hostPath]: true }));
+    pendingRowsRef.current.add(hostPath);
+    scheduleSave({
+      node: hostPath,
+      pre,
+      sent: { includes: next.includes, exclusions: next.exclusions },
+    });
   }
 
   // A no-Path set has nothing to present — the card's files.noPathHint line
@@ -1181,9 +1307,13 @@ export function FileSetFoldersEditor({
             // customPaths is always [] so the remove chip can never render;
             // the prop stays required on SelectionTreeProps (container shape).
             onRemoveCustom={() => {}}
-            // busyPaths / shakeCounts / blockedPath ride the live-save queue
-            // (plan Task 3): the refusal, shake and in-flight disable states
-            // all key off save-pipeline events, so they land with it.
+            busyPaths={new Set(Object.keys(rowBusy).filter((k) => rowBusy[k]))}
+            shakeCounts={rowShake}
+            blockedPath={blockedPath}
+            // D-06 copy routing: the refusal orients to THIS card's exit
+            // ("Remove set"), not the folders page's "Reset" (UI-SPEC copy
+            // table; the files domain has no Reset and no auto-detect).
+            blockedMessage={t("files.emptySelectionBlocked")}
           />
         </div>
       )}

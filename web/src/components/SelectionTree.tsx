@@ -112,6 +112,13 @@ export interface SelectionTreeProps {
   shakeCounts?: Readonly<Record<string, number>>;
   /** Path whose last toggle was blocked (D-04); shows the inline warn line. */
   blockedPath?: string | null;
+  /** Copy for the blocked warn line. Optional since Phase 4 (INTEG-02): the
+   *  Files page reuses this tree, and its refusal copy orients to that
+   *  domain's own exit ("Remove set", D-06) — reusing the folders wording
+   *  ("Use Reset") would name an action the card does not have (UI-SPEC
+   *  copy table). Absent keeps the folders key, byte-identical for the
+   *  container callers. */
+  blockedMessage?: string;
 }
 
 /** What one treeitem row needs; children specs derive from listings. */
@@ -151,6 +158,7 @@ export function SelectionTree({
   busyPaths,
   shakeCounts,
   blockedPath,
+  blockedMessage,
 }: SelectionTreeProps) {
   const { t } = useT();
   // D-05: expansion restored once on mount; the save effect below keeps the
@@ -529,7 +537,7 @@ export function SelectionTree({
           // remains announced.
           <div role="presentation">
             <p className="text-xs text-statusWarn" style={indent}>
-              {t("folders.emptySelectionBlocked")}
+              {blockedMessage ?? t("folders.emptySelectionBlocked")}
             </p>
           </div>
         )}

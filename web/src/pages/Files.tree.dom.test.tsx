@@ -266,13 +266,14 @@ describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1
 
 describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, exact reopen)", () => {
   it("applies a toggle optimistically and PATCHes the full flat list once, with no selectionSource field anywhere", async () => {
+    browseReplies = [documentsListing()];
     await renderEditor(setView());
     await openDisclosure();
     const root = screen.getByRole("treeitem", { name: /documents/ });
     await act(async () => {
       fireEvent.click(root);
     });
-    const media = within(root).getByRole("treeitem", { name: /^media$/ });
+    const media = screen.getByRole("treeitem", { name: /^media$/ });
     await act(async () => {
       fireEvent.click(within(media).getByRole("checkbox", { hidden: true }));
     });
@@ -291,6 +292,7 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
   });
 
   it("collapses a rapid burst to maxConcurrentPatches === 1 and one drain carrying the LIVE mirror's latest state", async () => {
+    browseReplies = [documentsListing()];
     const first = deferred<{ ok: boolean }>();
     patchReplies = [first.promise];
     await renderEditor(setView());
@@ -299,8 +301,8 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     await act(async () => {
       fireEvent.click(root);
     });
-    const media = within(root).getByRole("treeitem", { name: /^media$/ });
-    const sub = within(root).getByRole("treeitem", { name: /^sub$/ });
+    const media = screen.getByRole("treeitem", { name: /^media$/ });
+    const sub = screen.getByRole("treeitem", { name: /^sub$/ });
 
     // Burst: two toggles land while PATCH #1 is still in flight.
     await act(async () => {
@@ -328,30 +330,47 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     });
 
     expect(patches).toEqual([]);
-    // The mirror is untouched: the root still reads checked.
-    expect(root.getAttribute("aria-checked")).toBe("true");
     // The inline warn line routes under the blocked row, orienting to Remove
-    // set (the files domain has no Reset; D-06), and the row shakes.
+    // set (the files domain has no Reset; D-06).
     expect(
       screen.getByText(
         "A set needs at least one folder, so the last tick cannot be removed. Use Remove set if you no longer want this set.",
       ),
     ).toBeTruthy();
-    expect(root.className).toContain("glim-shake");
+    // Re-query: the shake nonce remounts the row (keyed Fragment), so the
+    // pre-toggle reference is detached. The fresh row still reads checked
+    // (mirror untouched) and carries the replayed shake class.
+    const shakenRoot = screen.getByRole("treeitem", { name: /documents/ });
+    expect(shakenRoot.getAttribute("aria-checked")).toBe("true");
+    expect(shakenRoot.className).toContain("glim-shake");
   });
 
   it("routes a server code empty-selection refusal to the same warn line plus a fail toast and reverts from the LIVE mirror (a stacked toggle survives)", async () => {
-    patchReplies = [{ ok: false, error: "selection refused", code: "empty-selection" }];
+    browseReplies = [documentsListing()];
+    const first = deferred<{ ok: boolean; error?: string; code?: string }>();
+    patchReplies = [first.promise, { ok: true }];
     await renderEditor(setView());
     await openDisclosure();
     const root = screen.getByRole("treeitem", { name: /documents/ });
     await act(async () => {
       fireEvent.click(root);
     });
-    const media = within(root).getByRole("treeitem", { name: /^media$/ });
+    const media = screen.getByRole("treeitem", { name: /^media$/ });
+    const sub = screen.getByRole("treeitem", { name: /^sub$/ });
 
+    // Toggle media (PATCH #1 goes in flight), then toggle sub: it stacks as
+    // dirty while #1 is unresolved.
     await act(async () => {
       fireEvent.click(within(media).getByRole("checkbox", { hidden: true }));
+    });
+    await act(async () => {
+      fireEvent.click(within(sub).getByRole("checkbox", { hidden: true }));
+    });
+    expect(patches).toHaveLength(1);
+
+    // PATCH #1 comes back as a coded empty-selection refusal.
+    await act(async () => {
+      first.resolve({ ok: false, error: "selection refused", code: "empty-selection" });
     });
 
     // The refusal lands as the fail toast (server text verbatim) AND the same
@@ -362,13 +381,23 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
         "A set needs at least one folder, so the last tick cannot be removed. Use Remove set if you no longer want this set.",
       ),
     ).toBeTruthy();
-    // The revert re-derives from the live mirror: media is back covered by
-    // the root include (checked), the row shook.
-    expect(media.getAttribute("aria-checked")).toBe("true");
-    expect(media.className).toContain("glim-shake");
+    // The revert re-derives from the LIVE mirror by set-difference inverse of
+    // the FAILED mutation: media returns to covered (checked), while sub —
+    // the newer toggle stacked behind the failing save — survives unchecked.
+    // Re-queried: the revert's shake nonce remounts media's row.
+    const revertedMedia = screen.getByRole("treeitem", { name: /^media$/ });
+    const revertedSub = screen.getByRole("treeitem", { name: /^sub$/ });
+    expect(revertedMedia.getAttribute("aria-checked")).toBe("true");
+    expect(revertedSub.getAttribute("aria-checked")).toBe("false");
+    expect(revertedMedia.className).toContain("glim-shake");
+    // The drain re-sends the live post-revert list: the root include plus
+    // sub's carve-out, nothing else.
+    expect(patches).toHaveLength(2);
+    expect(patches[1].body.selectedPaths).toEqual([ROOT, `!${ROOT}/sub`]);
   });
 
   it("on a generic failure toasts and reverts by set-difference inverse, clearing the row's busy state", async () => {
+    browseReplies = [documentsListing()];
     const first = deferred<{ ok: boolean; error?: string }>();
     patchReplies = [first.promise];
     await renderEditor(setView());
@@ -377,7 +406,7 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     await act(async () => {
       fireEvent.click(root);
     });
-    const media = within(root).getByRole("treeitem", { name: /^media$/ });
+    const media = screen.getByRole("treeitem", { name: /^media$/ });
     const box = within(media).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
@@ -389,21 +418,27 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
       first.resolve({ ok: false, error: "disk on fire" });
     });
     expect(screen.getByText("disk on fire")).toBeTruthy();
-    // Reverted to checked, busy state cleared, row shook.
-    expect(box.disabled).toBe(false);
-    expect(media.getAttribute("aria-checked")).toBe("true");
-    expect(media.className).toContain("glim-shake");
+    // Re-queried: the revert's shake nonce remounts the row, so the captured
+    // checkbox belongs to the detached node. The fresh row reads reverted to
+    // checked with the busy state cleared and the shake replayed.
+    const revertedMedia = screen.getByRole("treeitem", { name: /^media$/ });
+    const revertedBox = within(revertedMedia).getByRole("checkbox", { hidden: true });
+    expect(revertedBox.disabled).toBe(false);
+    expect(revertedMedia.getAttribute("aria-checked")).toBe("true");
+    expect(revertedMedia.className).toContain("glim-shake");
   });
 
   it("reopens exactly: the toggled selection reconstructs identically after a remount, with zero refetch on plain close/reopen", async () => {
-    browseReplies = [documentsListing()];
+    // Two listings: one for the first expansion, one for the remount's
+    // expansion (the mock's default reply is an EMPTY listing).
+    browseReplies = [documentsListing(), documentsListing()];
     const view = await renderEditor(setView());
     await openDisclosure();
     const root = screen.getByRole("treeitem", { name: /documents/ });
     await act(async () => {
       fireEvent.click(root);
     });
-    const media = within(root).getByRole("treeitem", { name: /^media$/ });
+    const media = screen.getByRole("treeitem", { name: /^media$/ });
     await act(async () => {
       fireEvent.click(within(media).getByRole("checkbox", { hidden: true }));
     });
@@ -430,38 +465,54 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     const reopened = screen.getByRole("treeitem", { name: /documents/ });
     expect(reopened.getAttribute("aria-expanded")).toBe("true");
     expect(reopened.getAttribute("aria-checked")).toBe("mixed");
-    expect(within(reopened).getByRole("treeitem", { name: /^media$/ }).getAttribute("aria-checked")).toBe("false");
+    // Child treeitems are DOM siblings of the root (role="group" wrapper), so
+    // the state query is screen-level.
+    expect(screen.getByRole("treeitem", { name: /^media$/ }).getAttribute("aria-checked")).toBe("false");
     expect(JSON.parse(localStorage.getItem("bv-tree-expanded-fileset-set1") ?? "[]")).toEqual([ROOT]);
 
     // Full remount with the SAVED view (what a page revisit serves): states
-    // reconstruct identically from FileSetView.selectedPaths.
+    // reconstruct identically from FileSetView.selectedPaths. The expansion
+    // memory also survives (localStorage), so the root renders pre-expanded
+    // — the mount browse consumes the second listing; no manual expansion.
     cleanup();
     view.unmount();
     await renderEditor(setView({ selectedPaths: saved }));
     await openDisclosure();
+    await act(async () => {});
     const remounted = screen.getByRole("treeitem", { name: /documents/ });
+    expect(remounted.getAttribute("aria-expanded")).toBe("true");
     expect(remounted.getAttribute("aria-checked")).toBe("mixed");
-    await act(async () => {
-      fireEvent.click(remounted);
-    });
-    expect(within(remounted).getByRole("treeitem", { name: /^media$/ }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("treeitem", { name: /^media$/ }).getAttribute("aria-checked")).toBe("false");
   });
 
   it("routes Space through the same onToggle pipeline as clicks (one toggle semantics, T-02-10)", async () => {
-    await renderEditor(setView());
+    // Stored [root, !sub]: sub renders EXCLUDED, so Space re-includes it.
+    browseReplies = [documentsListing()];
+    await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
     await openDisclosure();
     const root = screen.getByRole("treeitem", { name: /documents/ });
     await act(async () => {
       fireEvent.click(root);
     });
-    const sub = within(root).getByRole("treeitem", { name: /^sub$/ });
-    // Space on the EXCLUDED child re-includes it — converging to the root's
-    // maximal include, exactly what a click on the checkbox produces.
+    const sub = screen.getByRole("treeitem", { name: /^sub$/ });
+    expect(sub.getAttribute("aria-checked")).toBe("false");
+    // Roving tabindex: focusing the row is what aims the tree's key map at it
+    // (the handler acts on the roving-focus node, per the component's own
+    // keyboard harness); the keyDown then fires on the tree element as a
+    // real keyboard user's bubbling event.
     await act(async () => {
-      fireEvent.keyDown(sub, { key: " " });
+      sub.focus();
     });
+    expect(sub.getAttribute("tabindex")).toBe("0");
+    const tree = screen.getByRole("tree");
+    await act(async () => {
+      fireEvent.keyDown(tree, { key: " " });
+    });
+    // Space on the EXCLUDED child re-includes it — converging to the root's
+    // maximal include (applyToggle re-adds no own include when an ancestor
+    // covers it), exactly what a click on the checkbox produces.
     expect(patches).toHaveLength(1);
     expect(patches[0].body.selectedPaths).toEqual([ROOT]);
-    expect(sub.getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("treeitem", { name: /^sub$/ }).getAttribute("aria-checked")).toBe("true");
   });
 });
