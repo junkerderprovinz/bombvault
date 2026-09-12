@@ -18,8 +18,8 @@ const ms: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Perihal BombVault",
-  "about.body": "Seorang kesateria, satu kempen: alat bebas sumber terbuka yang tidak pernah wujud begini. Tiada akaun, tiada telemetri, dan tiada apa pun yang boleh dibaca meninggalkan tembokmu sendiri. Ditempa pada waktu malam dan hujung minggu dengan sepenuh hati, kerana menunggu bukan pilihan.",
-  "about.coffee": "BombVault percuma dan akan kekal begitu. Derma memastikan projek ini terus hidup dan menampung kosnya: domain, pelayan dan malam-malam yang dicurahkan padanya.",
+  "about.body": "Seorang kesateria, satu kempen suci: alat bebas, elok dipandang dan bersumber terbuka, yang tidak wujud dalam bentuk yang saya mahukan. Dibina sehingga tiada apa yang kurang. Tiada akaun, tiada telemetri, tiada iklan. Tiada tempoh percubaan, tiada pakej berbayar, tiada nota kecil bertanda bintang. Tiada apa pun yang boleh dibaca meninggalkan tembokmu sendiri. Ditempa pada waktu malam dan hujung minggu, dengan hati dan kedegilan.",
+  "about.coffee": "Kalau BombVault berguna kepadamu, derma menampung kos untuk terus menghidupkannya: domain, pelayan dan malam-malam yang dicurahkan padanya. Lagipun jantung kesateria ini berdegup sedikit lebih laju. Ada tiga jalan di bawah, ambil yang sesuai untukmu.",
   "about.coffeeButton": "Belanja saya kopi",
   "about.crypto": "Kripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const ms: Partial<Translations> = {
   "about.cryptoNetworks": "Rangkaian",
   "about.cryptoNoTag": "Destination tag dan memo tidak diperlukan.",
   "about.version": "Versi",
-  "about.report": "Masalah, kehendak atau cadangan? Buka isu di GitHub, atau hantar e-mel.",
+  "about.report": "Masalah, kehendak atau cadangan? Jangan segan membuka isu di GitHub, atau hantar e-mel.",
   "about.repo": "GitHub",
   "about.mailSubject": "Maklum balas",
   "about.mail": "Hantar e-mel",

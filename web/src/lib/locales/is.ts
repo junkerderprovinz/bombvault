@@ -18,8 +18,8 @@ const is: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Um BombVault",
-  "about.body": "Einn riddari, ein krossferð: frjáls verkfæri með opnum kóða sem voru ekki til svona. Engir reikningar, engin fjarmæling og ekkert læsilegt fer nokkurn tíma út fyrir þína eigin múra. Smíðað á kvöldin og um helgar af heilum hug, því að bíða var ekki valkostur.",
-  "about.coffee": "BombVault er ókeypis og verður það áfram. Framlag heldur verkefninu á lífi og stendur undir því sem það kostar: léninu, þjóninum og kvöldunum sem fara í það.",
+  "about.body": "Einn riddari, ein krossferð: frjáls, falleg verkfæri með opnum kóða sem voru ekki til í þeirri mynd sem mig langaði í. Smíðuð þar til ekkert vantar. Engir reikningar, engin fjarmæling, engar auglýsingar. Engin prufa, engin greiðsluþrep, ekkert smáa letrið. Ekkert læsilegt fer nokkurn tíma út fyrir þína eigin múra. Smíðað á kvöldin og um helgar, af hjarta og þrjósku.",
+  "about.coffee": "Ef BombVault nýtist þér þá stendur framlag undir því sem rekstrinum fylgir: léninu, þjóninum og kvöldunum sem fara í það. Og það lætur hjarta þessa riddara slá aðeins hraðar. Hér fyrir neðan eru þrjár leiðir, taktu þá sem hentar þér.",
   "about.coffeeButton": "Bjóddu mér kaffi",
   "about.crypto": "Rafmynt",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const is: Partial<Translations> = {
   "about.cryptoNetworks": "Netkerfi",
   "about.cryptoNoTag": "Hvorki destination tag né memo er nauðsynlegt.",
   "about.version": "Útgáfa",
-  "about.report": "Vandamál, óskir eða ábendingar? Opnaðu mál á GitHub, eða sendu tölvupóst.",
+  "about.report": "Vandamál, óskir eða ábendingar? Þér er velkomið að opna mál á GitHub, eða senda tölvupóst.",
   "about.repo": "GitHub",
   "about.mailSubject": "Ábendingar",
   "about.mail": "Senda tölvupóst",

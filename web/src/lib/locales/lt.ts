@@ -18,8 +18,8 @@ const lt: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Apie BombVault",
-  "about.body": "Vienas riteris, vienas žygis: laisvi, atvirojo kodo įrankiai, kokių tokių nebuvo. Jokių paskyrų, jokios telemetrijos, ir niekas skaitomo niekada nepalieka tavo paties sienų. Kalta vakarais ir savaitgaliais iš širdies, nes laukti nebuvo išeitis.",
-  "about.coffee": "BombVault yra nemokamas ir toks liks. Auka palaiko projektą gyvą ir padengia jo išlaidas: domeną, serverį ir vakarus, kurie į jį sudedami.",
+  "about.body": "Vienas riteris, vienas žygis: laisvi, gražūs atvirojo kodo įrankiai, kokių tokio pavidalo, kokio norėjau, nebuvo. Statoma tol, kol nieko netrūks. Jokių paskyrų, jokios telemetrijos, jokių reklamų. Jokio bandomojo laikotarpio, jokių mokamų pakopų, jokios žvaigždutės smulkiu šriftu. Niekas skaitomo niekada nepalieka tavo paties sienų. Kalta vakarais ir savaitgaliais, iš širdies ir užsispyrimo.",
+  "about.coffee": "Jei BombVault tau praverčia, auka padengia tai, kiek kainuoja jį išlaikyti: domeną, serverį ir vakarus, kurie į jį sudedami. Ir dar priverčia šio riterio širdį plakti kiek greičiau. Žemiau yra trys keliai, rinkis tą, kuris tau tinka.",
   "about.coffeeButton": "Pavaišinti kava",
   "about.crypto": "Kripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const lt: Partial<Translations> = {
   "about.cryptoNetworks": "Tinklai",
   "about.cryptoNoTag": "Destination tag ir memo nereikia.",
   "about.version": "Versija",
-  "about.report": "Problemos, pageidavimai ar pasiūlymai? Sukurk problemą GitHub arba parašyk el. laišką.",
+  "about.report": "Problemos, pageidavimai ar pasiūlymai? Drąsiai sukurk problemą GitHub arba parašyk el. laišką.",
   "about.repo": "GitHub",
   "about.mailSubject": "Atsiliepimas",
   "about.mail": "Rašyti el. laišką",

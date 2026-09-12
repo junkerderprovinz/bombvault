@@ -18,8 +18,8 @@ const et: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Teave BombVaulti kohta",
-  "about.body": "Üks rüütel, üks sõjaretk: vabad, avatud lähtekoodiga tööriistad, mida sellisel kujul polnud. Ei ühtki kontot, ei mingit telemeetriat ja miski loetav ei lahku kunagi sinu enda müüride vahelt. Sepistatud õhtuti ja nädalavahetustel südamega, sest ootamine polnud valik.",
-  "about.coffee": "BombVault on tasuta ja jääb selleks. Annetus hoiab projekti elus ja katab selle kulud: domeeni, serveri ja õhtud, mis sellesse lähevad.",
+  "about.body": "Üks rüütel, üks sõjaretk: vabad, kena väljanägemisega avatud lähtekoodiga tööriistad, mida sellisel kujul, nagu ma tahtsin, polnud. Ehitatakse seni, kuni midagi ei puudu. Ei ühtki kontot, ei mingit telemeetriat, ei ühtki reklaami. Ei prooviaega, ei tasulisi pakette, ei peenikest kirja. Miski loetav ei lahku kunagi sinu enda müüride vahelt. Sepistatud õhtuti ja nädalavahetustel, südame ja kangekaelsusega.",
+  "about.coffee": "Kui BombVaultist on sulle kasu, katab annetus selle, mis ülalhoidmine maksab: domeeni, serveri ja õhtud, mis sellesse lähevad. Ja paneb selle rüütli südame veidi kiiremini põksuma. Allpool on kolm teed, vali see, mis sulle sobib.",
   "about.coffeeButton": "Osta mulle kohv",
   "about.crypto": "Krüpto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const et: Partial<Translations> = {
   "about.cryptoNetworks": "Võrgud",
   "about.cryptoNoTag": "Destination tag'i ega memo pole vaja.",
   "about.version": "Versioon",
-  "about.report": "Probleeme, soove või ettepanekuid? Ava GitHubis teema või saada e-kiri.",
+  "about.report": "Probleeme, soove või ettepanekuid? Ava julgelt GitHubis teema või saada e-kiri.",
   "about.repo": "GitHub",
   "about.mailSubject": "Tagasiside",
   "about.mail": "Saada e-kiri",

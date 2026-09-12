@@ -18,8 +18,8 @@ const ca: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Quant a BombVault",
-  "about.body": "Un sol cavaller, una croada: eines lliures i de codi obert que no existien així. Sense comptes, sense telemetria, i res llegible no surt mai de les teves pròpies muralles. Forjat als vespres i els caps de setmana amb molt de cor, perquè esperar no era una opció.",
-  "about.coffee": "BombVault és gratuït i ho seguirà sent. Un donatiu manté viu el projecte i cobreix el que costa: el domini, el servidor i els vespres que hi van.",
+  "about.body": "Un sol cavaller, una croada: eines lliures i de codi obert, ben fetes, que no existien de la manera que jo volia. Construïdes fins que no hi falti res. Sense comptes, sense telemetria, sense anuncis. Sense prova, sense plans de pagament, sense lletra petita. Res llegible no surt mai de les teves pròpies muralles. Forjat als vespres i els caps de setmana, amb cor i tossuderia.",
+  "about.coffee": "Si BombVault et serveix, un donatiu cobreix el que costa mantenir-lo en marxa: el domini, el servidor i els vespres que hi van. I també fa que el cor d'aquest cavaller bategui una mica més de pressa. A sota hi ha tres maneres, tria la que et vagi bé.",
   "about.coffeeButton": "Convida’m a un cafè",
   "about.crypto": "Cripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const ca: Partial<Translations> = {
   "about.cryptoNetworks": "Xarxes",
   "about.cryptoNoTag": "No calen destination tag ni memo.",
   "about.version": "Versió",
-  "about.report": "Problemes, desitjos o suggeriments? Obre una incidència a GitHub, o envia un correu.",
+  "about.report": "Problemes, desitjos o suggeriments? Obre tranquil·lament una incidència a GitHub, o envia un correu.",
   "about.repo": "GitHub",
   "about.mailSubject": "Comentaris",
   "about.mail": "Envia un correu",

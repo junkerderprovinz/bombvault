@@ -18,8 +18,8 @@ const gl: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Sobre BombVault",
-  "about.body": "Un só cabaleiro, unha cruzada: ferramentas libres e de código aberto que non existían así. Sen contas, sen telemetría, e nada lexible sae nunca dos teus propios muros. Forxado polas noites e as fins de semana con moito corazón, porque agardar non era unha opción.",
-  "about.coffee": "BombVault é gratuíto e seguirao sendo. Unha doazón mantén vivo o proxecto e cobre o que custa: o dominio, o servidor e as noites que van nel.",
+  "about.body": "Un só cabaleiro, unha cruzada: ferramentas libres, ben feitas e de código aberto que non existían coa forma que eu quería. Construídas ata que non falte nada. Sen contas, sen telemetría, sen anuncios. Sen período de proba, sen plans de pago, sen letra pequena. Nada lexible sae nunca dos teus propios muros. Forxado polas noites e as fins de semana, con corazón e teimosía.",
+  "about.coffee": "Se BombVault che serve, unha doazón cobre o que custa mantelo en pé: o dominio, o servidor e as noites que van nel. E ademais fai que o corazón deste cabaleiro lata un pouco máis rápido. Abaixo hai tres camiños, colle o que che veña ben.",
   "about.coffeeButton": "Convídame a un café",
   "about.crypto": "Cripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const gl: Partial<Translations> = {
   "about.cryptoNetworks": "Redes",
   "about.cryptoNoTag": "Non fan falta destination tag nin memo.",
   "about.version": "Versión",
-  "about.report": "Problemas, desexos ou suxestións? Abre unha incidencia en GitHub, ou envía un correo.",
+  "about.report": "Problemas, desexos ou suxestións? Abre sen problema unha incidencia en GitHub, ou envía un correo.",
   "about.repo": "GitHub",
   "about.mailSubject": "Comentarios",
   "about.mail": "Enviar un correo",

@@ -18,8 +18,8 @@ const sk: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "O aplikácii BombVault",
-  "about.body": "Jeden rytier, jedno ťaženie: slobodné nástroje s otvoreným kódom, ktoré takto neexistovali. Žiadne účty, žiadna telemetria a nič čitateľné nikdy neopustí tvoje vlastné hradby. Kované po večeroch a cez víkendy so srdcom, pretože čakať sa nedalo.",
-  "about.coffee": "BombVault je zadarmo a zostane. Dar drží projekt nažive a pokryje, čo stojí: doménu, server a večery, ktoré doň idú.",
+  "about.body": "Jeden rytier, jedno ťaženie: slobodné, pekné nástroje s otvoreným kódom, ktoré v podobe, akú som chcel, neexistovali. Stavia sa, kým nebude nič chýbať. Žiadne účty, žiadna telemetria, žiadne reklamy. Žiadna skúšobná verzia, žiadne platené úrovne, žiadna hviezdička v drobnom písme. Nič čitateľné nikdy neopustí tvoje vlastné hradby. Kované po večeroch a cez víkendy, so srdcom a tvrdohlavosťou.",
+  "about.coffee": "Ak ti je BombVault na osoh, dar pokryje, čo stojí jeho chod: doménu, server a večery, ktoré doň idú. A srdce tohto rytiera pri tom bije o čosi rýchlejšie. Dole sú tri cesty, vyber si tú, ktorá ti sadne.",
   "about.coffeeButton": "Kúp mi kávu",
   "about.crypto": "Krypto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const sk: Partial<Translations> = {
   "about.cryptoNetworks": "Siete",
   "about.cryptoNoTag": "Destination tag ani memo nie sú potrebné.",
   "about.version": "Verzia",
-  "about.report": "Problémy, želania alebo návrhy? Založ issue na GitHube, alebo pošli e-mail.",
+  "about.report": "Problémy, želania alebo návrhy? Pokojne založ issue na GitHube, alebo pošli e-mail.",
   "about.repo": "GitHub",
   "about.mailSubject": "Spätná väzba",
   "about.mail": "Poslať e-mail",

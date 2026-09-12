@@ -18,8 +18,8 @@ const lv: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Par BombVault",
-  "about.body": "Viens bruņinieks, viens karagājiens: brīvi, atvērtā pirmkoda rīki, kādu tādā veidā nebija. Nekādu kontu, nekādas telemetrijas, un nekas lasāms nekad nepamet tavus paša mūrus. Kalts vakaros un nedēļas nogalēs ar sirdi, jo gaidīt nebija variants.",
-  "about.coffee": "BombVault ir bez maksas un tāds paliks. Ziedojums uztur projektu dzīvu un sedz tā izmaksas: domēnu, serveri un vakarus, kas tajā ieguldīti.",
+  "about.body": "Viens bruņinieks, viens karagājiens: brīvi, glīti atvērtā pirmkoda rīki, kādu tādā veidā, kā es gribēju, nebija. Tiek būvēts, līdz nekā netrūkst. Nekādu kontu, nekādas telemetrijas, nekādu reklāmu. Nekāda izmēģinājuma, nekādu maksas līmeņu, nekādas zvaigznītes sīkajā drukā. Nekas lasāms nekad nepamet tavus paša mūrus. Kalts vakaros un nedēļas nogalēs, ar sirdi un spītību.",
+  "about.coffee": "Ja BombVault tev noder, ziedojums sedz to, ko maksā tā uzturēšana: domēnu, serveri un vakarus, kas tajā ieguldīti. Un liek šī bruņinieka sirdij pukstēt mazliet ātrāk. Zemāk ir trīs ceļi, ņem to, kurš tev der.",
   "about.coffeeButton": "Uzsauc kafiju",
   "about.crypto": "Kripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const lv: Partial<Translations> = {
   "about.cryptoNetworks": "Tīkli",
   "about.cryptoNoTag": "Destination tag un memo nav vajadzīgi.",
   "about.version": "Versija",
-  "about.report": "Problēmas, vēlmes vai ieteikumi? Atver problēmu GitHub vai sūti e-pastu.",
+  "about.report": "Problēmas, vēlmes vai ieteikumi? Droši atver problēmu GitHub vai sūti e-pastu.",
   "about.repo": "GitHub",
   "about.mailSubject": "Atsauksme",
   "about.mail": "Sūtīt e-pastu",

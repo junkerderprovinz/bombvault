@@ -18,8 +18,8 @@ const eu: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "BombVault-i buruz",
-  "about.body": "Zaldun bakar bat, kanpaina bat: horrela existitzen ez ziren tresna libre eta kode irekikoak. Konturik ez, telemetriarik ez, eta irakur daitekeen ezerk ez ditu inoiz zure harresiak uzten. Arratsaldeetan eta asteburuetan bihotzez forjatua, itxarotea aukera ez zelako.",
-  "about.coffee": "BombVault doakoa da eta hala jarraituko du. Dohaintza batek proiektua bizirik mantentzen du eta kostuak estaltzen ditu: domeinua, zerbitzaria eta bertan sartzen diren arratsaldeak.",
+  "about.body": "Zaldun bakar bat, gurutzada bat: tresna libreak, itxura onekoak eta kode irekikoak, nik nahi nuen moduan existitzen ez zirenak. Ezer falta ez den arte eraikitzen dira. Konturik ez, telemetriarik ez, iragarkirik ez. Probaldirik ez, ordainketa-mailarik ez, letra txikirik ez. Irakur daitekeen ezerk ez ditu inoiz zure harresiak uzten. Arratsaldeetan eta asteburuetan forjatua, bihotzez eta setaz.",
+  "about.coffee": "BombVault baliagarria bazaizu, dohaintza batek martxan mantentzeak kostatzen duena estaltzen du: domeinua, zerbitzaria eta bertan sartzen diren arratsaldeak. Eta zaldun honen bihotza pixka bat azkarrago taupadaka jartzen du. Behean hiru bide dituzu, hartu ondoen datorkizuna.",
   "about.coffeeButton": "Erosi kafe bat",
   "about.crypto": "Kripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const eu: Partial<Translations> = {
   "about.cryptoNetworks": "Sareak",
   "about.cryptoNoTag": "Ez da destination tag-ik ez memorik behar.",
   "about.version": "Bertsioa",
-  "about.report": "Arazoak, nahiak edo iradokizunak? Ireki gai bat GitHuben, edo bidali mezu bat.",
+  "about.report": "Arazoak, nahiak edo iradokizunak? Lasai ireki gai bat GitHuben, edo bidali mezu bat.",
   "about.repo": "GitHub",
   "about.mailSubject": "Iritzia",
   "about.mail": "Bidali mezu bat",

@@ -18,8 +18,8 @@ const sl: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "O programu BombVault",
-  "about.body": "En vitez, en pohod: prosta odprtokodna orodja, kakršnih ni bilo. Nobenih računov, nobene telemetrije in nič berljivega nikoli ne zapusti tvojih zidov. Kovano ob večerih in koncih tedna s srcem, ker čakanje ni bilo možnost.",
-  "about.coffee": "BombVault je brezplačen in tak ostaja. Donacija ohranja projekt pri življenju in pokrije, kar stane: domeno, strežnik in večere, ki gredo vanj.",
+  "about.body": "En vitez, en pohod: prosta, lepa odprtokodna orodja, kakršnih v obliki, kakršno sem si želel, ni bilo. Gradi se, dokler ne bo nič manjkalo. Nobenih računov, nobene telemetrije, nobenih oglasov. Nobenega preizkusa, nobenih plačljivih stopenj, nobene zvezdice v drobnem tisku. Nič berljivega nikoli ne zapusti tvojih zidov. Kovano ob večerih in koncih tedna, s srcem in trmo.",
+  "about.coffee": "Če ti BombVault koristi, donacija pokrije to, kar stane njegovo delovanje: domeno, strežnik in večere, ki gredo vanj. Poleg tega srce tega viteza zaradi nje utripa malce hitreje. Spodaj so tri poti, vzemi tisto, ki ti ustreza.",
   "about.coffeeButton": "Časti kavo",
   "about.crypto": "Kripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const sl: Partial<Translations> = {
   "about.cryptoNetworks": "Omrežja",
   "about.cryptoNoTag": "Destination tag in memo nista potrebna.",
   "about.version": "Različica",
-  "about.report": "Težave, želje ali predlogi? Odpri težavo na GitHubu ali pošlji e-pošto.",
+  "about.report": "Težave, želje ali predlogi? Kar odpri težavo na GitHubu ali pošlji e-pošto.",
   "about.repo": "GitHub",
   "about.mailSubject": "Povratna informacija",
   "about.mail": "Pošlji e-pošto",

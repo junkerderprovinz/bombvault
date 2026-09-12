@@ -18,8 +18,8 @@ const id: Partial<Translations> = {
 
   // Mode toggle
   "about.title": "Tentang BombVault",
-  "about.body": "Satu ksatria, satu kampanye: perkakas bebas dan sumber terbuka yang belum pernah ada seperti ini. Tanpa akun, tanpa telemetri, dan tidak ada yang terbaca pernah meninggalkan tembokmu sendiri. Ditempa pada malam hari dan akhir pekan dengan sepenuh hati, karena menunggu bukan pilihan.",
-  "about.coffee": "BombVault gratis dan akan tetap begitu. Donasi menjaga proyek ini tetap hidup dan menutup biayanya: domain, server, dan malam-malam yang tercurah ke dalamnya.",
+  "about.body": "Satu ksatria, satu perang salib: perkakas bebas, enak dipandang dan sumber terbuka, yang tidak ada dalam bentuk yang saya inginkan. Dibangun sampai tidak ada yang kurang. Tanpa akun, tanpa telemetri, tanpa iklan. Tanpa masa coba, tanpa paket berbayar, tanpa catatan kecil bertanda bintang. Tidak ada yang terbaca pernah meninggalkan tembokmu sendiri. Ditempa pada malam hari dan akhir pekan, dengan hati dan kekeraskepalaan.",
+  "about.coffee": "Kalau BombVault berguna bagimu, donasi menutup biaya untuk tetap menyalakannya: domain, server, dan malam-malam yang tercurah ke dalamnya. Lagi pula, jantung ksatria ini jadi berdetak sedikit lebih cepat. Ada tiga jalan di bawah, ambil yang cocok untukmu.",
   "about.coffeeButton": "Traktir saya kopi",
   "about.crypto": "Kripto",
   "about.paypal": "PayPal",
@@ -28,7 +28,7 @@ const id: Partial<Translations> = {
   "about.cryptoNetworks": "Jaringan",
   "about.cryptoNoTag": "Tidak perlu destination tag maupun memo.",
   "about.version": "Versi",
-  "about.report": "Masalah, keinginan, atau saran? Buka isu di GitHub, atau kirim surel.",
+  "about.report": "Masalah, keinginan, atau saran? Jangan ragu membuka isu di GitHub, atau kirim surel.",
   "about.repo": "GitHub",
   "about.mailSubject": "Masukan",
   "about.mail": "Kirim surel",
