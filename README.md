@@ -44,6 +44,10 @@ saying ransomware is welcome to knock.
 One knight's job: I build it, keep it running, work through the issues and add what people ask for, until nothing is missing. No accounts, no telemetry, no ads. No trial, no tier, no asterisk. Nothing readable ever leaves your own walls.
 </p>
 
+<p align="center">
+If it has earned a place on your computer or server, a donation covers what it costs: the domain, the server, and the evenings that go into it. It also makes this knight's heart beat a little faster. Three ways below, whichever suits you.
+</p>
+
 <br>
 
 <p align="center">
@@ -444,6 +448,8 @@ BombVault is free software under the **GNU Affero General Public License v3.0** 
 
 Questions? Check the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs, ideas or feature requests? Please [open a GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).
 
+One knight's job: I build it, keep it running, work through the issues and add what people ask for, until nothing is missing. No accounts, no telemetry, no ads. No trial, no tier, no asterisk. Nothing readable ever leaves your own walls.
+
 If it has earned a place on your computer or server, a donation covers what it costs: the domain, the server, and the evenings that go into it. It also makes this knight's heart beat a little faster. Three ways below, whichever suits you.
 
 <p align="center">
@@ -453,5 +459,3 @@ If it has earned a place on your computer or server, a donation covers what it c
   &nbsp;
   <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/junkerderprovinz/main/donate/buttons/button-crypto-live.svg" alt="Donate with crypto" width="160"></a>
 </p>
-
-The crypto addresses live on their own [donation page](https://junkerderprovinz.github.io/junkerderprovinz/) rather than here, grouped by chain: what decides whether the money arrives is the network you send on, and a list that reads coin-first invites somebody to send USDT on the wrong one. The app's own window under **Settings > About BombVault > Crypto** is better still, because it gives you a QR code and an address cannot be mistyped from one.
