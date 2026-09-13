@@ -19,7 +19,7 @@ ARG BUILDPLATFORM
 
 # ---- Stage 1: web (build the React SPA → web/dist) --------------------------
 # Arch-independent JS output: build once on the native runner platform.
-FROM --platform=$BUILDPLATFORM node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 AS web
+FROM --platform=$BUILDPLATFORM node:24-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS web
 WORKDIR /src
 COPY web/ ./web/
 RUN npm --prefix web ci --no-audit --no-fund
