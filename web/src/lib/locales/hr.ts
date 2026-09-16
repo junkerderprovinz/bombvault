@@ -1091,6 +1091,7 @@ const hr: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) malen je, moderan alat za enkripciju datoteka: jednostavnija alternativa GPG-u za zatvaranje datoteke za jednog ili više primatelja.",
   "export.encrypt.enable": "Šifriraj izvoze pomoću age",
   "export.encrypt.enableHint": "Kad je uključeno, izvozi kontejnera, VM-a i Flasha zatvaraju se pomoću age prije zapisivanja na disk i dobivaju nastavak .age.",
+  "export.encrypt.kitSealed": "I komplet za oporavak se zatvara te stiže kao bombvault-recovery-kit.md.age. Ostaje čitljiv tekst (ASCII armor), pa se i dalje može zalijepiti u upravitelj lozinki ili ispisati, ali za otvaranje vam treba vaš privatni age ključ: čuvajte taj ključ negdje gdje ne ovisi o samom kompletu.",
   "export.encrypt.recipients": "age primatelji",
   "export.encrypt.recipientsHint": "Jedan primatelj po retku. Koristite javni age ključ (age1...) ili javni SSH ključ. Za dešifriranje izvan uređaja potreban je odgovarajući privatni ključ. Uz uključenu enkripciju i bez valjanog primatelja, izvoz ne uspijeva umjesto da zapiše čisti tekst.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

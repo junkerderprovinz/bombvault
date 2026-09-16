@@ -543,6 +543,7 @@ const sv: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) är ett litet, modernt filkrypteringsverktyg, ett enklare alternativ till GPG för att försegla en fil åt en eller flera mottagare.",
   "export.encrypt.enable": "Kryptera exporter med age",
   "export.encrypt.enableHint": "När på förseglas container-, VM- och flash-exporter med age innan de skrivs till disk och får ändelsen .age.",
+  "export.encrypt.kitSealed": "Återställningskitet förseglas också och kommer som bombvault-recovery-kit.md.age. Det förblir läsbar text (ASCII armor), så det går fortfarande att klistra in i en lösenordshanterare eller skriva ut, men du behöver din privata age-nyckel för att öppna det: förvara den nyckeln någonstans som inte är beroende av kitet självt.",
   "export.encrypt.recipients": "age-mottagare",
   "export.encrypt.recipientsHint": "En mottagare per rad. Använd en age-publik nyckel (age1...) eller en SSH-publik nyckel. Motsvarande privat nyckel behövs för att dekryptera utanför servern. Med kryptering på och ingen giltig mottagare misslyckas exporten istället för att skriva klartext.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

@@ -1091,6 +1091,7 @@ const sk: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) je malý, moderný nástroj na šifrovanie súborov, jednoduchšia alternatíva GPG na zapečatenie súboru pre jedného alebo viacerých príjemcov.",
   "export.encrypt.enable": "Šifrovať exporty pomocou age",
   "export.encrypt.enableHint": "Keď je zapnuté, exporty kontajnera, VM a Flash sú pred zapísaním na disk zapečatené pomocou age a získajú príponu .age.",
+  "export.encrypt.kitSealed": "Súprava na obnovenie sa zapečatí tiež a príde ako bombvault-recovery-kit.md.age. Zostáva čitateľným textom (ASCII armor), takže sa dá stále vložiť do správcu hesiel alebo vytlačiť, no na jej otvorenie budete potrebovať svoj súkromný kľúč age: uchovávajte ten kľúč niekde, kde nezávisí od samotnej súpravy.",
   "export.encrypt.recipients": "Príjemcovia age",
   "export.encrypt.recipientsHint": "Jeden príjemca na riadok. Použite verejný kľúč age (age1...) alebo verejný kľúč SSH. Na dešifrovanie mimo boxu je potrebný zodpovedajúci súkromný kľúč. Pri zapnutom šifrovaní a bez platného príjemcu export zlyhá namiesto zápisu obyčajného textu.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

@@ -539,6 +539,7 @@ const zh: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) 是一个小巧的现代文件加密工具：为一个或多个接收者封装文件时，比 GPG 更简单的替代方案。",
   "export.encrypt.enable": "使用 age 加密导出",
   "export.encrypt.enableHint": "开启后，容器、虚拟机和闪存导出在写入磁盘前会用 age 封装，并带上 .age 后缀。",
+  "export.encrypt.kitSealed": "恢复工具包同样会被封装，输出为 bombvault-recovery-kit.md.age。它仍然是可读文本 (ASCII armor)，因此依旧可以粘贴进密码管理器或打印出来，但打开它需要你的 age 私钥：请把该私钥保存在不依赖工具包本身的地方。",
   "export.encrypt.recipients": "age 收件人",
   "export.encrypt.recipientsHint": "每行一个收件人。使用 age 公钥 (age1...) 或 SSH 公钥。在服务器外解密需要对应的私钥。启用加密但没有有效收件人时，导出会失败而不是写入明文。",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

@@ -1657,6 +1657,20 @@ export function recoveryKitUrl(): string {
  * download), but immune to a toolchain whose DOM lib resolution is broken and
  * would spuriously flag the bare global names.
  */
+/**
+ * Pulls the filename out of a Content-Disposition header.
+ *
+ * The server decides what a download is called, because only the server knows
+ * what it produced: a recovery kit is .md when it is plaintext and .md.age when
+ * export encryption sealed it. Returns null when the header is absent or
+ * carries no filename, so the caller can fall back to its own default.
+ */
+export function filenameFromDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const match = /filename="?([^";]+)"?/i.exec(header);
+  return match ? match[1] : null;
+}
+
 export async function downloadRecoveryKit(): Promise<string | null> {
   const g = globalThis as unknown as {
     fetch(url: string): Promise<{
@@ -1699,7 +1713,13 @@ export async function downloadRecoveryKit(): Promise<string | null> {
     const url = g.URL.createObjectURL(blob);
     const a = g.document.createElement("a");
     a.href = url;
-    a.download = "bombvault-recovery-kit.md";
+    // The name comes from the SERVER, not from here. With export encryption on
+    // the kit is age-sealed and arrives as bombvault-recovery-kit.md.age;
+    // saving that under a hard-coded .md would hand the user a file whose name
+    // lies about its contents, and an editor would open a wall of ciphertext.
+    a.download =
+      filenameFromDisposition(res.headers.get("content-disposition")) ??
+      "bombvault-recovery-kit.md";
     g.document.body.appendChild(a);
     a.click();
     a.remove();

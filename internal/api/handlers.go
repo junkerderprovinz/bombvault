@@ -22,6 +22,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -2706,6 +2707,25 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 	if !h.requireAuthForSecrets(w, "downloading the recovery kit") {
 		return
 	}
+	// The seal decision is made BEFORE the kit is built, from ONE settings read,
+	// and a failed read refuses outright. Deliberately not ExportEncryptionOn():
+	// that is a second, best-effort read which reports false when the store
+	// errors — harmless where it only picks a filename, and catastrophic here,
+	// where it would answer "encryption off" to a transient error and hand out
+	// the master key in the clear.
+	settings, sErr := h.store.GetSettings()
+	if sErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(sErr))
+		return
+	}
+	recipients, sealing, rErr := h.svc.exportRecipients(settings)
+	if rErr != nil {
+		// Encryption on with no usable recipient. Refuse; never fall back to
+		// the plaintext this setting exists to prevent.
+		writeJSON(w, http.StatusOK, failEnvelope(rErr))
+		return
+	}
+
 	kit, err := h.svc.RecoveryKit()
 	if err != nil {
 		// A build failure (settings read) is reported as JSON before any body is
@@ -2713,10 +2733,27 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="bombvault-recovery-kit.md"`)
+
+	body := []byte(kit)
+	contentType := "text/markdown; charset=utf-8"
+	filename := "bombvault-recovery-kit.md"
+	if sealing {
+		sealed, sealErr := ageseal.SealArmored(body, recipients)
+		if sealErr != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(sealErr))
+			return
+		}
+		body = sealed
+		// Armored, so it stays text: the kit is meant to be pasted into a
+		// password manager or printed, and that has to keep working sealed.
+		contentType = "application/octet-stream"
+		filename = "bombvault-recovery-kit.md.age"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 	w.WriteHeader(http.StatusOK)
-	if _, wErr := w.Write([]byte(kit)); wErr != nil {
+	if _, wErr := w.Write(body); wErr != nil {
 		// Log only the failure, never the body (it contains the master key).
 		log.Printf("api: recovery-kit: write failed: %v", wErr)
 	}

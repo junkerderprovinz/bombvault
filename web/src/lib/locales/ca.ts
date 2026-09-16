@@ -1091,6 +1091,7 @@ const ca: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) és una eina de xifratge de fitxers petita i moderna, una alternativa més senzilla a GPG per segellar un fitxer per a un o més destinataris.",
   "export.encrypt.enable": "Xifra les exportacions amb age",
   "export.encrypt.enableHint": "Quan està activat, les exportacions de contenidor, MV i Flash es segellen amb age abans d'escriure's al disc i obtenen el sufix .age.",
+  "export.encrypt.kitSealed": "El kit de recuperació també se segella i arriba com a bombvault-recovery-kit.md.age. Continua sent text llegible (armadura ASCII), de manera que encara es pot enganxar en un gestor de contrasenyes o imprimir, però et caldrà la teva clau privada age per obrir-lo: guarda aquesta clau en un lloc que no depengui del mateix kit.",
   "export.encrypt.recipients": "Destinataris d'age",
   "export.encrypt.recipientsHint": "Un destinatari per línia. Fes servir una clau pública age (age1...) o una clau pública SSH. Per desxifrar fora de la caixa cal la clau privada corresponent. Amb el xifratge actiu i sense destinatari vàlid, l'exportació falla en comptes d'escriure text pla.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

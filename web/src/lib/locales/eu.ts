@@ -1091,6 +1091,7 @@ const eu: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) fitxategi bat zifratzeko tresna txiki eta moderno bat da, GPGren alternatiba erraztu bat, fitxategi bat hartzaile bati edo gehiagori ixteko.",
   "export.encrypt.enable": "Zifratu esportazioak age-rekin",
   "export.encrypt.enableHint": "Piztuta dagoenean, edukiontziaren, MBren eta Flash-en esportazioak diskoan idatzi aurretik age-rekin ixten dira eta .age atzizkia hartzen dute.",
+  "export.encrypt.kitSealed": "Berreskuratze-kita ere ixten da, eta bombvault-recovery-kit.md.age gisa iristen da. Testu irakurgarria izaten jarraitzen du (ASCII armor), beraz oraindik pasahitz-kudeatzaile batean itsatsi edo inprimatu daiteke, baina zure age gako pribatua beharko duzu irekitzeko: gorde gako hori kitaren beraren mende ez dagoen leku batean.",
   "export.encrypt.recipients": "age hartzaileak",
   "export.encrypt.recipientsHint": "Hartzaile bat lerroko. Erabili age gako publiko bat (age1...) edo SSH gako publiko bat. Kutxatik kanpo deszifratzeko dagokion gako pribatua behar da. Zifratzea piztuta eta hartzaile baliozkorik gabe, esportazioak huts egingo du testu argia idatzi ordez.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

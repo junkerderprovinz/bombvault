@@ -539,6 +539,7 @@ const vi: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) là một công cụ mã hóa tệp nhỏ gọn, hiện đại, một lựa chọn thay thế đơn giản hơn GPG để niêm phong một tệp cho một hoặc nhiều người nhận.",
   "export.encrypt.enable": "Mã hóa bản xuất bằng age",
   "export.encrypt.enableHint": "Khi bật, các bản xuất container, VM và flash được niêm phong bằng age trước khi ghi ra đĩa và có thêm hậu tố .age.",
+  "export.encrypt.kitSealed": "Bộ khôi phục cũng được niêm phong và xuất ra dưới dạng bombvault-recovery-kit.md.age. Nó vẫn là văn bản đọc được (ASCII armor) nên vẫn có thể dán vào trình quản lý mật khẩu hoặc in ra, nhưng bạn sẽ cần khóa riêng age của mình để mở: hãy giữ khóa đó ở nơi không phụ thuộc vào chính bộ khôi phục.",
   "export.encrypt.recipients": "Người nhận age",
   "export.encrypt.recipientsHint": "Mỗi người nhận một dòng. Dùng khóa công khai age (age1...) hoặc khóa công khai SSH. Cần khóa riêng tương ứng để giải mã bên ngoài máy chủ. Khi bật mã hóa mà không có người nhận hợp lệ, bản xuất sẽ thất bại thay vì ghi văn bản thô.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
