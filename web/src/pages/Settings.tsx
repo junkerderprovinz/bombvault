@@ -24,6 +24,7 @@ import {
 } from "../lib/controls";
 import { labelModeChanged } from "../lib/useLabelMode";
 import { InfoBubble } from "../components/InfoBubble";
+import { RetentionPreview } from "../components/RetentionPreview";
 import { OffsiteTargetsSection } from "../components/OffsiteTargetsSection";
 // No EXACT_CADENCE_MODES here any more (#166): every cadence PICKER on this page
 // edits a schedule that can now count an interval — the five domains and Backup
@@ -3280,6 +3281,21 @@ export function SettingsPage() {
             </label>
           ))}
         </div>
+        {/* The answer the numbers above never give: which restore points the
+            next run is about to delete. Advanced-only, because it costs one
+            restic call per item per repository and is a question you ask
+            deliberately rather than one a page should poll. */}
+        {advanced && (
+          <div className="mt-4 border-t border-carbon-border pt-3">
+            <div className="flex items-center gap-1 text-sm text-carbon-text">
+              {t("retentionPreview.title")}
+              <InfoBubble tip={t("retentionPreview.hint")} />
+            </div>
+            <div className="mt-2">
+              <RetentionPreview t={t} source="local" />
+            </div>
+          </div>
+        )}
       </Card>
       )}
 
@@ -4086,6 +4102,20 @@ export function SettingsPage() {
             </label>
           ))}
         </div>
+        {/* The off-site twin. Its own source, because the off-site policy is a
+            SEPARATE policy: an archive kept longer off-site than locally would
+            otherwise be previewed against the wrong rule. */}
+        {advanced && (
+          <div className="mt-4 border-t border-carbon-border pt-3">
+            <div className="flex items-center gap-1 text-sm text-carbon-text">
+              {t("retentionPreview.title")}
+              <InfoBubble tip={t("retentionPreview.hint")} />
+            </div>
+            <div className="mt-2">
+              <RetentionPreview t={t} source="offsite" />
+            </div>
+          </div>
+        )}
       </Card>
       )}
 
