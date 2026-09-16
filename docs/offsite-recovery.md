@@ -141,6 +141,15 @@ One click downloads the **master key**, the **derived restic password**, and the
 !!! danger "Store the recovery kit off the server"
     The kit contains the secret that decrypts your backups. Keep it somewhere safe and separate from the server (a password manager, a printed copy in a safe). If you lose both BombVault and `APP_KEY` with no recovery kit, your encrypted backups cannot be recovered.
 
+### Sealing the kit
+
+If you have turned on age encryption for the plain exports (Settings), the kit is sealed with it too and downloads as `bombvault-recovery-kit.md.age`. It is ASCII-armored rather than binary, so it is still plain text: pasting it into a password manager or printing it works exactly as before, the contents are simply unreadable without your key.
+
+!!! warning "Do not store the age key inside the kit"
+    You need your age **private** key to open a sealed kit. Keep it somewhere that does not depend on the kit itself, or you will have two things to recover instead of one. Sealing is worth it when the kit is stored somewhere you do not fully control (a shared password manager, cloud notes, a printout in an office); a kit in your own safe is already protected by the safe.
+
+    With encryption on and no usable recipient configured, the download is refused outright. BombVault never falls back to handing out the master key in the clear.
+
 ### If you do not have the kit to hand
 
 The password is not stored anywhere, it is **computed** from `APP_KEY`, so you can reproduce it yourself with nothing but the key and a shell:

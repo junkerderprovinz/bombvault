@@ -1064,6 +1064,7 @@ const et: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) on väike, moodne failikrüpteerimistööriist, lihtsam alternatiiv GPG-le faili sulgemiseks ühele või mitmele saajale.",
   "export.encrypt.enable": "Krüpteeri eksport age-abil",
   "export.encrypt.enableHint": "Kui see on sees, sulgetakse konteineri, VM-i ja flashi eksport age-abil enne kettale kirjutamist ning saab .age lõpu.",
+  "export.encrypt.kitSealed": "Ka taastekomplekt suletakse ja saabub failina bombvault-recovery-kit.md.age. See jääb loetavaks tekstiks (ASCII armor), nii et selle saab ikka paroolihaldurisse kleepida või välja printida, aga avamiseks on vaja sinu age privaatvõtit: hoia seda võtit kohas, mis ei sõltu komplektist endast.",
   "export.encrypt.recipients": "age saajad",
   "export.encrypt.recipientsHint": "Üks saaja rea kohta. Kasuta age avalikku võtit (age1...) või SSH avalikku võtit. Väljaspool kasti dekrüpteerimiseks on vaja vastavat privaatvõtit. Kui krüpteering on sees ja kehtivat saajat pole, ekspordi asemel avatekstiga see ebaõnnestub.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

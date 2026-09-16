@@ -1064,6 +1064,7 @@ const is: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) er lítið, nútímalegt dulkóðunartól fyrir skrár, einfaldari valkostur en GPG til að loka skrá fyrir einn eða fleiri viðtakendur.",
   "export.encrypt.enable": "Dulkóða útflutning með age",
   "export.encrypt.enableHint": "Þegar þetta er virkt eru útflutningar gáms, sýndarvélar og Flash lokaðir með age áður en þeir eru skrifaðir á disk, og fá viðskeytið .age.",
+  "export.encrypt.kitSealed": "Endurheimtarpakkinn er líka lokaður og kemur sem bombvault-recovery-kit.md.age. Hann helst læsilegur texti (ASCII armor), svo enn er hægt að líma hann inn í lykilorðastjóra eða prenta hann út, en þú þarft einkalykilinn þinn fyrir age til að opna hann: geymdu þann lykil einhvers staðar sem er ekki háður pakkanum sjálfum.",
   "export.encrypt.recipients": "age-viðtakendur",
   "export.encrypt.recipientsHint": "Einn viðtakandi á línu. Notaðu opinberan age-lykil (age1...) eða opinberan SSH-lykil. Til að afkóða utan vélarinnar þarf samsvarandi einkalykil. Ef dulkóðun er virk og enginn gildur viðtakandi til staðar, mistekst útflutningurinn frekar en að skrifa ódulkóðaðan texta.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

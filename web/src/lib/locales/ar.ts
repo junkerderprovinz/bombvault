@@ -516,6 +516,7 @@ const ar: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) هي أداة تشفير ملفات صغيرة وحديثة: بديل أبسط لـ GPG لتشفير ملف لمستلم واحد أو أكثر.",
   "export.encrypt.enable": "تشفير عمليات التصدير باستخدام age",
   "export.encrypt.enableHint": "عند التفعيل، تُختم عمليات تصدير الحاوية والجهاز الافتراضي وflash باستخدام age قبل كتابتها على القرص، وتحصل على اللاحقة .age.",
+  "export.encrypt.kitSealed": "حقيبة الاستعادة تُختم هي الأخرى، وتصل باسم bombvault-recovery-kit.md.age. تبقى نصًا مقروءًا (ASCII armor)، فيمكن لصقها في مدير كلمات المرور أو طباعتها، لكنك ستحتاج إلى المفتاح الخاص لـ age لفتحها: احفظ ذلك المفتاح في مكان لا يعتمد على الحقيبة نفسها.",
   "export.encrypt.recipients": "مستلمو age",
   "export.encrypt.recipientsHint": "مستلم واحد لكل سطر. استخدم مفتاح age العام (age1...) أو مفتاح SSH العام. المفتاح الخاص المطابق مطلوب لفك التشفير خارج الخادم. مع تفعيل التشفير وعدم وجود مستلم صالح، يفشل التصدير بدلًا من كتابة نص عادي.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

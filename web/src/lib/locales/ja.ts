@@ -512,6 +512,7 @@ const ja: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) は小さくてモダンなファイル暗号化ツールです。1人以上の受信者に向けてファイルを封印するための、GPGよりシンプルな代替手段です。",
   "export.encrypt.enable": "age でエクスポートを暗号化",
   "export.encrypt.enableHint": "オンにすると、コンテナ、VM、フラッシュのエクスポートはディスクに書き込む前に age で封印され、.age の拡張子が付きます。",
+  "export.encrypt.kitSealed": "リカバリーキットも封印され、bombvault-recovery-kit.md.age として届きます。読み取り可能なテキスト (ASCII アーマー) のままなので、パスワードマネージャーに貼り付けたり印刷したりできますが、開くには age の秘密鍵が必要です。その鍵は、キット自体に依存しない場所に保管してください。",
   "export.encrypt.recipients": "age の受信者",
   "export.encrypt.recipientsHint": "1 行に 1 つの受信者。age 公開鍵 (age1...) または SSH 公開鍵を使用します。サーバー外で復号するには対応する秘密鍵が必要です。暗号化がオンで有効な受信者がない場合、エクスポートは平文を書き込まずに失敗します。",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

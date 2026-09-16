@@ -516,6 +516,7 @@ const he: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) הוא כלי הצפנת קבצים קטן ומודרני, חלופה פשוטה יותר ל-GPG לאיטום קובץ עבור נמען אחד או יותר.",
   "export.encrypt.enable": "הצפנת ייצוא באמצעות age",
   "export.encrypt.enableHint": "כשמופעל, ייצוא של קונטיינר, VM ו-flash נאטם באמצעות age לפני הכתיבה לדיסק ומקבל סיומת .age.",
+  "export.encrypt.kitSealed": "גם ערכת השחזור נאטמת, והיא מגיעה בשם bombvault-recovery-kit.md.age. היא נשארת טקסט קריא (ASCII armor), כך שעדיין אפשר להדביק אותה במנהל סיסמאות או להדפיס אותה, אבל כדי לפתוח אותה נדרש מפתח age הפרטי שלך: שמור את המפתח במקום שאינו תלוי בערכה עצמה.",
   "export.encrypt.recipients": "נמעני age",
   "export.encrypt.recipientsHint": "נמען אחד בכל שורה. השתמש במפתח ציבורי age (age1...) או במפתח ציבורי SSH. כדי לפענח מחוץ לשרת נדרש המפתח הפרטי התואם. כשההצפנה מופעלת ואין נמען תקף, הייצוא נכשל במקום לכתוב טקסט גלוי.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
