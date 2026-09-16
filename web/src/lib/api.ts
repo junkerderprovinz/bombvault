@@ -3683,3 +3683,40 @@ export async function downloadDiagnostics(): Promise<string | null> {
     return e instanceof Error ? e.message : String(e);
   }
 }
+
+/** One item nothing backs up automatically. */
+export type CoverageItem = {
+  name: string;
+  /** "not-set-up" | "not-included" | "override-off" | "no-schedule" */
+  reason: string;
+  neverBackedUp: boolean;
+};
+
+/** One domain's part of the coverage answer. */
+export type CoverageDomain = {
+  domain: "containers" | "vms" | "files";
+  /** A switched-off domain reports neither protected nor unprotected items: it
+   *  is a decision, not a gap. */
+  enabled: boolean;
+  total: number;
+  protected: number;
+  unprotected: CoverageItem[];
+};
+
+/** What on this server is not backed up by anything. */
+export type CoverageReport = {
+  domains: CoverageDomain[];
+  total: number;
+  protected: number;
+};
+
+/**
+ * GET /api/coverage — the items nothing backs up.
+ *
+ * Distinct from getStatus(), which is per domain: it reports whether the items
+ * that ARE scheduled ran on time and cannot see the container nobody ever
+ * added.
+ */
+export function getCoverage(): Promise<OkEnvelope & { coverage: CoverageReport }> {
+  return fetchJSON("/api/coverage");
+}
