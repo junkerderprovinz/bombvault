@@ -492,6 +492,8 @@ const tr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Anlık görüntü saklama",
   "settings.retentionHint": "Öğe başına kaç yedek tutulacağı. Her yedeklemeden sonra restic, eski anlık görüntüleri bu ilkeye göre budar. Tümü sıfır = her şeyi tut (kapalı).",
+  "excludes.advisoryImmichDb": "Immich her fotoğrafın albümlerini, yüzlerini ve tarihlerini kendi ayrı konteynerinde çalışan bir PostgreSQL veritabanında tutar, bu yüzden bu yedek onu içermez. Buradan geri yükleme resimleri bunlar olmadan geri getirir. O veritabanına kendi yedeğini verin ya da Immich'in yerleşik veritabanı dışa aktarmasını açın, böylece bu yedeğin kapsadığı bir klasöre düşer.",
+  "excludes.advisoryNextcloudDb": "Nextcloud hesapları, paylaşımları ve etiketleri genellikle ayrı bir konteynerde çalışan bir veritabanında tutar, bu yüzden bu yedek onu içermez. Dosyalar geri gelir, paylaşımlar gelmez. O veritabanını da yedekleyin.",
   "coverage.title": "Yedeklenmedi",
   "coverage.hint": "Bu sunucuda hiçbir otomatik yedeklemenin kapsamadığı her şey. Yukarıdaki koruma kartı, zamanlanmış yedeklemelerin zamanında çalışıp çalışmadığını söyler; burada ise hiç zamanlanmamış olanlar yazılıdır, başka hiçbir yerde görünmeyen boşluk da budur. Kapatılmış bir yedekleme türü bir karardır ve burada sayılmaz.",
   "coverage.ratio": "{total} öğeden {protected} tanesi korumalı",

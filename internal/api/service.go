@@ -587,12 +587,18 @@ func backupHardCap() time.Duration {
 // configurable hard cap (backupHardCap). With an unlimited cap
 // (BACKUP_MAX_HOURS=0) no deadline is set; the returned context is still
 // cancelled by the deferred cancel func when the run returns.
+// It is also where the stall guard is armed, because this function is the one
+// gate every backup run passes and nothing else does. Arming it any further
+// down (at progBegin, say) would have caught restores and maintenance runs too:
+// a restore is deliberately not cancellable, and a prune emits no byte counters
+// at all, so silence there means nothing and cancelling on it would be wrong.
 func backupHoldCtx(ctx context.Context) (context.Context, context.CancelFunc) {
 	base := context.WithoutCancel(ctx)
+	held, cancel := context.WithCancel(base)
 	if cap := backupHardCap(); cap > 0 {
-		return context.WithTimeout(base, cap)
+		held, cancel = context.WithTimeout(base, cap)
 	}
-	return context.WithCancel(base)
+	return armStallGuard(held, cancel, "backup"), cancel
 }
 
 // drillLockWait is the most a SCHEDULED drill waits for the per-domain lock to

@@ -486,6 +486,8 @@ const nl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Bewaarbeleid voor snapshots",
   "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
+  "excludes.advisoryImmichDb": "Immich bewaart de albums, gezichten en datums van elke foto in een PostgreSQL-database die in een andere container draait dan deze, dus deze back-up bevat die niet. Herstellen vanaf hier brengt de foto's terug, maar zonder albums, gezichten en datums. Geef die database een eigen back-up, of zet Immichs ingebouwde database-export aan zodat die in een map belandt die deze back-up wel meeneemt.",
+  "excludes.advisoryNextcloudDb": "Nextcloud bewaart accounts, gedeelde items en tags in een database die meestal in een aparte container draait, dus deze back-up bevat die niet. De bestanden komen terug, het delen niet. Maak ook van die database een back-up.",
   "coverage.title": "Zonder back-up",
   "coverage.hint": "Alles op deze server waar geen enkele automatische back-up over gaat. De beschermingskaart hierboven zegt of de geplande back-ups op tijd liepen; hier staat wat helemaal niet gepland is, en juist dat gat blijft overal elders onzichtbaar. Een uitgeschakeld back-uptype is een keuze en telt hier niet mee.",
   "coverage.ratio": "{protected} van {total} beschermd",

@@ -492,6 +492,8 @@ const it: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Conservazione degli snapshot",
   "settings.retentionHint": "Quanti backup conservare per elemento. Dopo ogni backup, restic elimina gli snapshot più vecchi secondo questa regola. Tutto a zero = conserva tutto (disattivato).",
+  "excludes.advisoryImmichDb": "Immich tiene gli album, i volti e le date di ogni foto in un database PostgreSQL che gira in un container del tutto separato, quindi questo backup non lo contiene. Un ripristino da qui riporta le immagini, ma senza niente di tutto questo. Dai a quel database un backup suo, oppure attiva l'esportazione del database integrata in Immich, così finisce in una cartella coperta da questo backup.",
+  "excludes.advisoryNextcloudDb": "Nextcloud tiene account, condivisioni e tag in un database che di solito gira in un container separato, quindi questo backup non lo contiene. I file tornano, le condivisioni no. Fai il backup anche di quel database.",
   "coverage.title": "Senza backup",
   "coverage.hint": "Tutto ciò che su questo server non è coperto da alcun backup automatico. La scheda di protezione qui sopra dice se i backup pianificati sono stati eseguiti in orario; questa dice che cosa non è affatto pianificato, ed è la lacuna che resta invisibile ovunque altrove. Un dominio di backup disattivato è una scelta e qui non viene conteggiato.",
   "coverage.ratio": "{protected} di {total} protetti",

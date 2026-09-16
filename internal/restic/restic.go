@@ -1107,7 +1107,7 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 		// TTY or RESTIC_PROGRESS_FPS is set. Our stdout is a pipe, so without this
 		// restic prints only the final summary and the bar would never fill.
 		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
-		out, err = runStreaming(cmd, args, sink)
+		out, err = runStreaming(cmd, args, sink, watcherFrom(ctx))
 	} else {
 		cmd.Env = env
 		out, err = runBuffered(cmd, args)
@@ -1315,10 +1315,20 @@ func (r Restic) LsStream(ctx context.Context, repo, snapshotID string, m Mode, o
 // runStreaming runs restic and scans its --json stdout line by line, forwarding
 // each "status" line's percent_done to the sink while still accumulating the
 // full output so a trailing summary line can be parsed afterwards.
-func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink) ([]byte, error) {
+func runStreaming(cmd *exec.Cmd, args []string, sink progress.Sink, watch ProgressWatcher) ([]byte, error) {
 	return scanLines(cmd, args, func(line []byte) {
 		if pct, ok := statusPercent(line); ok {
 			sink(pct)
+		}
+		// The second, optional reader: the full counter set, for callers that
+		// need to know whether anything is still HAPPENING rather than how far
+		// along it is. Parsed separately from statusPercent above rather than
+		// folded into it, so the progress bar keeps working byte-for-byte as
+		// before even if this ever changes.
+		if watch != nil {
+			if p, ok := ParseProgress(line); ok {
+				watch(p)
+			}
 		}
 	})
 }

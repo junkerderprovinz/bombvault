@@ -429,6 +429,8 @@ const lt: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Momentinių kopijų saugojimas",
   "settings.retentionHint": "Kiek atsarginių kopijų saugoti kiekvienam elementui. Po kiekvienos atsarginės kopijos restic pagal šią politiką išvalo senesnes momentines kopijas. Visi nuliai = saugoti viską (išjungta).",
+  "excludes.advisoryImmichDb": "Immich kiekvienos nuotraukos albumus, veidus ir datas laiko PostgreSQL duomenų bazėje. Ji veikia ne šiame, o atskirame konteineryje, todėl į šią atsarginę kopiją nepatenka. Atkūrus iš čia, nuotraukos sugrįš, bet be viso to. Pasidarykite atskirą šios duomenų bazės atsarginę kopiją arba įjunkite Immich integruotą duomenų bazės eksportą, kad jis atsidurtų aplanke, kurį ši atsarginė kopija apima.",
+  "excludes.advisoryNextcloudDb": "Nextcloud paskyras, bendrinimus ir žymes laiko duomenų bazėje, kuri paprastai veikia atskirame konteineryje, todėl į šią atsarginę kopiją nepatenka. Failai sugrįš, bendrinimai ne. Pasidarykite ir šios duomenų bazės atsarginę kopiją.",
   "coverage.title": "Nėra atsarginės kopijos",
   "coverage.hint": "Visa, kas šiame serveryje nepatenka į jokį automatinį kopijavimą. Apsaugos kortelė viršuje rodo, ar suplanuotos kopijos buvo sukurtos laiku; čia matyti tai, kas apskritai nesuplanuota, o būtent ši spraga niekur kitur nesimato. Išjungta atsarginio kopijavimo sritis yra sąmoningas sprendimas ir čia neskaičiuojama.",
   "coverage.ratio": "{protected} iš {total} apsaugota",
