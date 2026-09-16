@@ -33,6 +33,14 @@ None of this is required: a hand-typed remote path with no saved safety settings
 !!! note "Cloud/REST credentials are shared"
     A remote primary authenticates with the same S3/REST credentials configured under Settings, Off-site, Cloud credentials — there is no separate credential store for primary repos.
 
+### SMB and WebDAV without a host mount {#smb-webdav}
+
+Settings, Off-site, rclone has a form for a Windows or Samba share and for a WebDAV server (Nextcloud, ownCloud, SharePoint or any other). Fill in a short name, the host and share (SMB) or the URL and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password itself before it is stored; adding a destination with a name that already exists replaces that section instead of adding a second one.
+
+The form answers with the finished location, for example `rclone:nas:backups`. Put that into a Backup Path or an off-site destination and add a sub-folder if you want one (`rclone:nas:backups/bombvault`). The share is the first path segment, not part of the name.
+
+This is the better route than mounting the share on Unraid: restic advises against keeping a repository on a mounted CIFS share, and here nothing is mounted. NFS is not in the form because neither restic nor rclone has an NFS backend; for NFS, mount the export on the host and point a Backup Path at it.
+
 ## Immutable (append-only) off-site
 
 Flag an off-site repo append-only so ransomware, or a compromised host, cannot delete or rewrite your backups. The far side (a `restic/rest-server` running in `--append-only` mode) **enforces** it. BombVault only ever **verifies** it and never shows green on a configuration claim alone.
