@@ -492,6 +492,8 @@ const es: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cuántas copias conservar por elemento. Tras cada copia, restic poda las instantáneas más antiguas según esta política. Todo a cero = conservar todo (desactivado).",
+  "excludes.advisoryImmichDb": "Immich guarda los álbumes, las caras y las fechas de cada foto en una base de datos PostgreSQL que se ejecuta en un contenedor propio, aparte, así que esta copia de seguridad no la contiene. Restaurar desde aquí devuelve las fotos, pero sin nada de eso. Haz una copia de seguridad propia de esa base de datos, o activa el volcado de base de datos integrado de Immich para que acabe en una carpeta que esta copia sí cubra.",
+  "excludes.advisoryNextcloudDb": "Nextcloud guarda sus cuentas, sus recursos compartidos y sus etiquetas en una base de datos que normalmente se ejecuta en un contenedor aparte, así que esta copia de seguridad no la contiene. Los archivos vuelven, lo compartido no. Haz también una copia de seguridad de esa base de datos.",
   "coverage.title": "Sin copia de seguridad",
   "coverage.hint": "Todo lo que hay en este servidor y que ninguna copia automática cubre. La tarjeta de protección de arriba dice si las copias programadas se hicieron a tiempo, y esto dice qué no está programado en absoluto, que es el hueco que en todas partes queda invisible. Un tipo de copia desactivado es una decisión y aquí no se cuenta.",
   "coverage.ratio": "{protected} de {total} protegidos",

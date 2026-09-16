@@ -90,6 +90,15 @@ function snapshotIsStale(rfc3339: string): boolean {
 // no backup yet" on every one of them, including the folder scan offered after
 // an index read failed — a container that demonstrably HAS a backup, which is
 // the only reason its index was read at all.
+// An advisory id from the server mapped to its sentence. Unknown ids answer
+// null and render nothing: a newer server may know caveats this interface does
+// not, and a raw "immich-db-separate" on screen would be worse than silence.
+function advisoryKey(id: string): TranslationKey | null {
+  if (id === "immich-db-separate") return "excludes.advisoryImmichDb";
+  if (id === "nextcloud-db-separate") return "excludes.advisoryNextcloudDb";
+  return null;
+}
+
 function liveSourceKey(reason: "no-snapshot" | "requested" | "not-in-snapshot"): TranslationKey {
   if (reason === "requested") return "excludes.assistSourceLiveRequested";
   if (reason === "not-in-snapshot") return "excludes.assistSourceLiveNotInSnapshot";
@@ -1871,6 +1880,11 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
   // there was no backup to read instead. "Nothing left to exclude" would be the
   // loudest lie this panel can tell.
   const [pathsUnavailable, setPathsUnavailable] = useState(false);
+  // Caveats about the container itself, which the folder scan cannot see. Held
+  // apart from the suggestion list on purpose: they are true whether or not a
+  // single exclusion is offered, and the most important one is true precisely
+  // when the list is empty.
+  const [advisories, setAdvisories] = useState<string[]>([]);
   // The backup index could not be read. Not a failed scan: the panel stays up
   // and offers the folder scan as an explicit second request.
   const [indexFailed, setIndexFailed] = useState(false);
@@ -1901,6 +1915,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
     setUnexamined([]);
     setUnreadable([]);
     setPathsUnavailable(false);
+    setAdvisories([]);
     try {
       const r = await suggestContainerExcludes(name, live ? "live" : undefined);
       if (r.ok) {
@@ -1917,6 +1932,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
         setUnreadable(r.unreadableRoots ?? []);
         setPathsUnavailable(r.pathsUnavailable === true);
         setIndexFailed(r.indexFailed === true);
+        setAdvisories(r.advisories ?? []);
       } else {
         setSuggestions([]);
         setScanFailed(true);
@@ -2090,6 +2106,15 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
                 reasons. Both are claims no per-row flag can make, and with
                 several roots their absence read as a finished scan of all of
                 them. */}
+            {!scanning &&
+              advisories.map((id) => {
+                const key = advisoryKey(id);
+                return key ? (
+                  <p key={id} className="text-xs text-statusWarn">
+                    {t(key)}
+                  </p>
+                ) : null;
+              })}
             {!scanning && unexamined.length > 0 && (
               <p className="text-xs text-statusWarn">
                 {withLtrPlaceholder(t("excludes.assistUnexamined"), "{paths}", unexamined.join(", "))}

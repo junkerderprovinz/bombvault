@@ -492,6 +492,8 @@ const da: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Opbevaring af snapshots",
   "settings.retentionHint": "Hvor mange sikkerhedskopier der beholdes pr. element. Efter hver sikkerhedskopiering renser restic ældre øjebliksbilleder efter denne politik. Alt 0 = behold alt (fra).",
+  "excludes.advisoryImmichDb": "Immich gemmer hvert billedes album, ansigter og datoer i en PostgreSQL-database, der kører i sin egen, separate container, så denne sikkerhedskopi indeholder den ikke. En gendannelse herfra henter billederne tilbage uden alt det. Giv den database sin egen sikkerhedskopi, eller slå Immichs indbyggede database-dump til, så den havner i en mappe, som denne sikkerhedskopi dækker.",
+  "excludes.advisoryNextcloudDb": "Nextcloud gemmer konti, delinger og tags i en database, der som regel kører i en separat container, så denne sikkerhedskopi indeholder den ikke. Filerne kommer tilbage, delingerne gør ikke. Sikkerhedskopier også den database.",
   "coverage.title": "Ikke sikkerhedskopieret",
   "coverage.hint": "Alt på denne server, som ingen automatisk sikkerhedskopi dækker. Beskyttelseskortet ovenfor siger, om de planlagte sikkerhedskopier kørte til tiden, og her står, hvad der slet ikke er planlagt, og netop det forbliver usynligt alle andre steder. En slukket sikkerhedskopitype er en beslutning og tælles ikke med her.",
   "coverage.ratio": "{protected} af {total} beskyttet",

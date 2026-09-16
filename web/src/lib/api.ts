@@ -1232,6 +1232,12 @@ export function suggestContainerExcludes(
   unreadableRoots?: string[] | null;
   pathsUnavailable?: boolean;
   indexFailed?: boolean;
+  /** Caveats about the CONTAINER rather than about any one suggested line:
+   *  things a folder scan cannot see, such as an application keeping its
+   *  metadata in a database that runs in another container. IDs, not prose, so
+   *  the text stays translatable and an unknown id from a newer server renders
+   *  nothing. Optional, so an older server still typechecks. */
+  advisories?: string[] | null;
 }> {
   const q = source ? `?source=${source}` : "";
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/excludes/suggest${q}`);
