@@ -3607,7 +3607,7 @@ export function SettingsPage() {
               heading standing in front of it. */}
           <ToggleRow
             label={t("export.encrypt.enable")}
-            hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")}`}
+            hint={`${t("export.encrypt.hint")} ${t("export.encrypt.ageInfo")} ${t("export.encrypt.enableHint")} ${t("export.encrypt.kitSealed")}`}
             checked={settings.exportEncryptEnabled}
             onChange={(v) => void autoSaveField("exportEncryptEnabled", v, setExportEncSaveState, setExportEncSaveError)}
             disabled={mergedFieldBusy.exportEncryptEnabled}

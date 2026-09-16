@@ -1091,6 +1091,7 @@ const ms: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) ialah alat penyulitan fail yang kecil dan moden, alternatif yang lebih ringkas kepada GPG untuk menutup fail bagi seorang atau lebih penerima.",
   "export.encrypt.enable": "Sulitkan eksport dengan age",
   "export.encrypt.enableHint": "Apabila dihidupkan, eksport bekas, VM dan Flash ditutup dengan age sebelum ditulis ke cakera, dan mendapat sufiks .age.",
+  "export.encrypt.kitSealed": "Kit pemulihan turut ditutup dan sampai sebagai bombvault-recovery-kit.md.age. Ia kekal sebagai teks yang boleh dibaca (perisai ASCII), jadi ia masih boleh ditampal ke dalam pengurus kata laluan atau dicetak, tetapi anda perlukan kunci peribadi age anda untuk membukanya: simpan kunci itu di tempat yang tidak bergantung pada kit itu sendiri.",
   "export.encrypt.recipients": "Penerima age",
   "export.encrypt.recipientsHint": "Satu penerima setiap baris. Gunakan kunci awam age (age1...) atau kunci awam SSH. Kunci peribadi yang sepadan diperlukan untuk menyahsulit di luar kotak. Dengan penyulitan dihidupkan dan tiada penerima yang sah, eksport gagal dan bukannya menulis teks biasa.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

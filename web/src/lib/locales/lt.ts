@@ -1091,6 +1091,7 @@ const lt: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) yra mažas, modernus failų šifravimo įrankis, paprastesnė alternatyva GPG, skirta failui užsandarinti vienam ar keliems gavėjams.",
   "export.encrypt.enable": "Šifruoti eksportus su age",
   "export.encrypt.enableHint": "Kai įjungta, konteinerio, VM ir Flash eksportai užsandarinami su age prieš įrašant į diską, ir gauna .age galūnę.",
+  "export.encrypt.kitSealed": "Atkūrimo rinkinys taip pat užsandarinamas ir pateikiamas kaip bombvault-recovery-kit.md.age. Jis lieka skaitomas tekstas (ASCII šarvas), todėl jį vis tiek galima įklijuoti į slaptažodžių tvarkyklę arba atspausdinti, bet jam atidaryti reikės jūsų privataus age rakto: laikykite tą raktą ten, kur nereikia paties rinkinio.",
   "export.encrypt.recipients": "age gavėjai",
   "export.encrypt.recipientsHint": "Vienas gavėjas eilutėje. Naudokite viešą age raktą (age1...) arba viešą SSH raktą. Norint iššifruoti už dėžės ribų, reikalingas atitinkamas privatus raktas. Jei šifravimas įjungtas ir nėra tinkamo gavėjo, eksportas nepavyksta vietoj to, kad būtų įrašytas paprastas tekstas.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

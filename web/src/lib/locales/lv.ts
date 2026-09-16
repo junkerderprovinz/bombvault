@@ -1091,6 +1091,7 @@ const lv: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) ir neliels, modernāks failu šifrēšanas rīks, vienkāršāka alternatīva GPG, lai aizzīmogotu failu vienam vai vairākiem saņēmējiem.",
   "export.encrypt.enable": "Šifrēt eksportus ar age",
   "export.encrypt.enableHint": "Kad ieslēgts, konteinera, VM un Flash eksporti tiek aizzīmogoti ar age pirms tie tiek ierakstīti diskā, un iegūst .age paplašinājumu.",
+  "export.encrypt.kitSealed": "Atkopšanas komplekts arī tiek aizzīmogots un nonāk pie jums kā bombvault-recovery-kit.md.age. Tas paliek lasāms teksts (ASCII bruņas), tāpēc to joprojām var ielīmēt paroļu pārvaldniekā vai izdrukāt, taču tā atvēršanai būs vajadzīga jūsu privātā age atslēga: glabājiet to atslēgu vietā, kas nav atkarīga no paša komplekta.",
   "export.encrypt.recipients": "age saņēmēji",
   "export.encrypt.recipientsHint": "Viens saņēmējs vienā rindā. Izmantojiet publisku age atslēgu (age1...) vai publisku SSH atslēgu. Lai atšifrētu ārpus ierīces, nepieciešama atbilstoša privātā atslēga. Ja šifrēšana ir ieslēgta un nav derīga saņēmēja, eksports neizdodas, nevis raksta vienkāršu tekstu.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

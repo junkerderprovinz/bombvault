@@ -1091,6 +1091,7 @@ const gl: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) é unha ferramenta de cifrado de ficheiros pequena e moderna, unha alternativa máis sinxela a GPG para selar un ficheiro para un ou máis destinatarios.",
   "export.encrypt.enable": "Cifrar as exportacións con age",
   "export.encrypt.enableHint": "Cando está activado, as exportacións de contedor, MV e Flash sélanse con age antes de escribirse no disco e obteñen o sufixo .age.",
+  "export.encrypt.kitSealed": "O kit de recuperación tamén se sela e chega como bombvault-recovery-kit.md.age. Segue sendo texto lexible (ASCII armor), así que aínda se pode pegar nun xestor de contrasinais ou imprimir, pero para abrilo fai falta a túa clave privada age: garda esa clave nalgún sitio que non dependa do propio kit.",
   "export.encrypt.recipients": "Destinatarios de age",
   "export.encrypt.recipientsHint": "Un destinatario por liña. Usa unha clave pública age (age1...) ou unha clave pública SSH. Para descifrar fóra da caixa faise falta a clave privada correspondente. Co cifrado activo e sen destinatario válido, a exportación falla en vez de escribir texto plano.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
