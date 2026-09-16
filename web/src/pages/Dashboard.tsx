@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { hueVars } from "../lib/appearance";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext } from "../lib/api";
-import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getCoverage, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext } from "../lib/api";
+import type { Run, SpikeCheck, Container, Settings, DomainStatus, CoverageReport, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
@@ -609,6 +609,75 @@ function chipForRpo(status: string): string {
 // nothing is scheduled there and an unscheduled domain takes the "off" branch
 // long before the badge is reached. That is correct behaviour and a bad way to
 // verify a change, so the card is rendered directly instead.
+/**
+ * What on this server nothing backs up.
+ *
+ * The protection card above is per DOMAIN and answers "did the scheduled
+ * backups run on time". It cannot see the container nobody ever added: that one
+ * is absent from every list and every error, so no traffic light turns amber
+ * for it. This card names it.
+ *
+ * A switched-off backup type is left out of the ratio entirely. Counting an
+ * operator VMs they deliberately do not back up would put a permanent red list
+ * in front of a correctly configured server, and a card that cries wolf is a
+ * card people hide.
+ */
+export function CoverageCard({
+  t,
+  coverage,
+  loading,
+  hueIndex,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  coverage: CoverageReport | null;
+  loading: boolean;
+  hueIndex?: number;
+}) {
+  const reasonKey: Record<string, TranslationKey> = {
+    "not-set-up": "coverage.reason.notSetUp",
+    "not-included": "coverage.reason.notIncluded",
+    "override-off": "coverage.reason.overrideOff",
+    "no-schedule": "coverage.reason.noSchedule",
+  };
+
+  const rows = (coverage?.domains ?? [])
+    .filter((d) => d.enabled)
+    .flatMap((d) => d.unprotected.map((i) => ({ ...i, domain: d.domain })));
+
+  return (
+    <Card title={t("coverage.title")} hueIndex={hueIndex}>
+      {/* The card says what it counts and what it deliberately does not, right
+          where it is read. Without it the ratio invites the wrong reading: a
+          switched-off backup type is missing from it on purpose. */}
+      <p className="mb-2 text-xs text-carbon-textSub">{t("coverage.hint")}</p>
+      {loading ? (
+        <p className="text-sm text-carbon-textSub">{t("folder.loading")}</p>
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-carbon-textSub">{t("coverage.allProtected")}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-carbon-textSub">
+            {t("coverage.ratio")
+              .replace("{protected}", String(coverage?.protected ?? 0))
+              .replace("{total}", String(coverage?.total ?? 0))}
+          </p>
+          <ul className="flex flex-col gap-1">
+            {rows.map((r) => (
+              <li key={r.domain + ":" + r.name} className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-sm text-carbon-text">{r.name}</span>
+                <span className="text-xs text-carbon-textSub">{t(reasonKey[r.reason] ?? "coverage.reason.noSchedule")}</span>
+                {r.neverBackedUp && (
+                  <span className="text-xs text-statusWarn">{t("coverage.neverBackedUp")}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function ProtectionCard({
   t,
   domains,
@@ -2225,6 +2294,8 @@ export function Dashboard() {
   // duplicate round-trip — both cards read the same extended domain status).
   const [statusDomains, setStatusDomains] = useState<DomainStatus[]>([]);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [coverage, setCoverage] = useState<CoverageReport | null>(null);
+  const [coverageLoading, setCoverageLoading] = useState(true);
 
   // Newest run for the summary tier's "Last result" cell. listRuns returns
   // newest-first, so runs[0] is the latest. Polled (not fetched once) so the
@@ -2303,6 +2374,17 @@ export function Dashboard() {
         .catch(() => {/* non-fatal */})
         .finally(() => {
           if (active) setStatusLoading(false);
+        });
+      // Same trigger as the status above: adding a container to a schedule, or
+      // switching a whole domain off, changes what is covered, and both of
+      // those dispatch bv:settings-changed.
+      getCoverage()
+        .then((res) => {
+          if (active && res.ok) setCoverage(res.coverage);
+        })
+        .catch(() => {/* non-fatal */})
+        .finally(() => {
+          if (active) setCoverageLoading(false);
         });
     };
     load();
@@ -2418,6 +2500,16 @@ export function Dashboard() {
       label: t("dashboard.protectionTitle"),
       render: (nextHue) => (
         <ProtectionCard t={t} domains={statusDomains} loading={statusLoading} hueIndex={nextHue()} />
+      ),
+    },
+    {
+      // Directly after protection, because the two answer halves of one
+      // question: that card says whether what IS scheduled ran on time, this
+      // one says what is not scheduled at all.
+      id: "coverage",
+      label: t("coverage.title"),
+      render: (nextHue) => (
+        <CoverageCard t={t} coverage={coverage} loading={coverageLoading} hueIndex={nextHue()} />
       ),
     },
     {
