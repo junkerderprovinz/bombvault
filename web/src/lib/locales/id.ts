@@ -398,6 +398,10 @@ const id: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retensi snapshot",
   "settings.retentionHint": "Berapa banyak cadangan yang disimpan per item. Setelah setiap pencadangan, restic melakukan prune snapshot lama sesuai kebijakan ini. Semua nol = simpan semuanya (mati).",
+  "diagnostics.heading": "Paket dukungan",
+  "diagnostics.hint": "Sebuah ZIP yang disunting untuk laporan bug: pemeriksaan integrasi host, konfigurasi Anda dengan semua rahasia dihapus, eksekusi terbaru, apa yang dijadwalkan berikutnya, dan log terbaru. Ini bukan cadangan konfigurasi dan tidak dapat dipakai untuk memulihkan. Perlu kata sandi masuk, karena berisi seluruh konfigurasi Anda.",
+  "diagnostics.button": "Unduh diagnostik",
+  "diagnostics.busy": "Mengumpulkan…",
   "retentionPreview.title": "Apa yang akan dihapus oleh eksekusi berikutnya",
   "retentionPreview.hint": "Retensi memberi tahu apa yang disimpan. Ini menunjukkan apa yang akan dihapus, sebelum hal itu terjadi. Tidak ada yang diubah dan tidak ada repositori yang dikunci, jadi ini tetap menjawab meskipun pencadangan sedang berjalan.",
   "retentionPreview.domain": "Jenis cadangan",

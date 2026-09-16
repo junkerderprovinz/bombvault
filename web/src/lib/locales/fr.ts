@@ -465,6 +465,10 @@ const fr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Rétention des instantanés",
   "settings.retentionHint": "Combien de sauvegardes conserver par élément. Après chaque sauvegarde, restic élague les instantanés plus anciens selon cette règle. Tout à zéro = tout conserver (désactivé).",
+  "diagnostics.heading": "Paquet d'assistance",
+  "diagnostics.hint": "Un ZIP expurgé pour un rapport de bogue : la vérification d'intégration hôte, votre configuration avec tous les secrets retirés, les exécutions récentes, ce qui est planifié ensuite, et le journal récent. Ce n'est pas une sauvegarde de configuration et il ne permet aucune restauration. Il demande un mot de passe de connexion, car il contient toute votre configuration.",
+  "diagnostics.button": "Télécharger les diagnostics",
+  "diagnostics.busy": "Collecte…",
   "retentionPreview.title": "Ce que la prochaine exécution supprimerait",
   "retentionPreview.hint": "La rétention indique ce qu'elle conserve. Ceci montre ce qu'elle s'apprête à supprimer, avant que cela n'arrive. Rien n'est modifié et aucun dépôt n'est verrouillé, la réponse arrive donc même pendant une sauvegarde en cours.",
   "retentionPreview.domain": "Type de sauvegarde",

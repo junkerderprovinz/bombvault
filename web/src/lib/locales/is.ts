@@ -398,6 +398,10 @@ const is: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Varðveisla snapshotta",
   "settings.retentionHint": "Hversu mörg afrit eru geymd fyrir hvern hlut. Eftir hverja afritun hreinsar restic eldri snapshot samkvæmt þessari stefnu. Allt núll = geyma allt (slökkt).",
+  "diagnostics.heading": "Stuðningspakki",
+  "diagnostics.hint": "Ritskoðuð ZIP-skrá fyrir villuskýrslu: samþættingarpróf hýsils, stillingarnar þínar án allra leyndarmála, nýlegar keyrslur, hvað er næst á áætlun og nýlegar skráningar. Þetta er ekki afrit af stillingum og ekki er hægt að endurheimta út frá því. Krefst innskráningarlykilorðs, því það inniheldur allar stillingarnar þínar.",
+  "diagnostics.button": "Sækja greiningargögn",
+  "diagnostics.busy": "Safna…",
   "retentionPreview.title": "Hverju næsta keyrsla myndi eyða",
   "retentionPreview.hint": "Varðveislan segir þér hverju er haldið. Þetta sýnir hverju á að eyða, áður en það gerist. Engu er breytt og ekkert geymslusafn er læst, svo þetta svarar líka á meðan afritun stendur yfir.",
   "retentionPreview.domain": "Tegund afrits",

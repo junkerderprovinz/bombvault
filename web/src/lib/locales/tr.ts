@@ -465,6 +465,10 @@ const tr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Anlık görüntü saklama",
   "settings.retentionHint": "Öğe başına kaç yedek tutulacağı. Her yedeklemeden sonra restic, eski anlık görüntüleri bu ilkeye göre budar. Tümü sıfır = her şeyi tut (kapalı).",
+  "diagnostics.heading": "Destek paketi",
+  "diagnostics.hint": "Hata bildirimine eklemek için gizli bilgileri temizlenmiş bir ZIP: host entegrasyon denetimi, tüm sırları çıkarılmış yapılandırmanız, son çalışmalar, zamanlamada sıradaki iş ve son günlük. Bu bir yapılandırma yedeği değildir ve ondan geri yükleme yapılamaz. Tüm yapılandırmanızı taşıdığı için oturum açma parolası ister.",
+  "diagnostics.button": "Tanılamayı indir",
+  "diagnostics.busy": "Toplanıyor…",
   "retentionPreview.title": "Sonraki çalışmanın kaldıracakları",
   "retentionPreview.hint": "Saklama sana neyi tuttuğunu söyler. Bu panel ise neyi silmek üzere olduğunu, daha olmadan gösterir. Hiçbir şey değiştirilmez ve hiçbir depo kilitlenmez, bu yüzden bir yedekleme çalışırken bile yanıt verir.",
   "retentionPreview.domain": "Yedekleme türü",

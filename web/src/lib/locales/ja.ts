@@ -462,6 +462,10 @@ const ja: Partial<Translations> = {
 
   "settings.retentionTitle": "スナップショットの保持",
   "settings.retentionHint": "項目ごとに保持するバックアップ数。バックアップのたびに restic がこのポリシーに従って古いスナップショットを削除します。すべて 0 = すべて保持（オフ）。",
+  "diagnostics.heading": "サポートバンドル",
+  "diagnostics.hint": "バグ報告用に秘匿処理を施した ZIP です。ホスト統合チェック、シークレットをすべて取り除いた構成、最近の実行、次にスケジュールされている内容、そして最近のログが入っています。これは構成のバックアップではなく、ここから復元することはできません。構成全体が含まれるため、ログインパスワードが必要です。",
+  "diagnostics.button": "診断情報をダウンロード",
+  "diagnostics.busy": "収集中…",
   "retentionPreview.title": "次回の実行で削除されるもの",
   "retentionPreview.hint": "保持の設定は何を残すかを示します。ここでは、実際に消される前に、これから削除されるものを表示します。何も変更されず、リポジトリもロックされないため、バックアップの実行中でも答えが得られます。",
   "retentionPreview.domain": "バックアップの種類",

@@ -462,6 +462,10 @@ const no: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Oppbevaring av øyeblikksbilder",
   "settings.retentionHint": "Hvor mange sikkerhetskopier som beholdes per element. Etter hver sikkerhetskopiering rydder restic eldre snapshots etter denne regelen. Alt 0 = behold alt (av).",
+  "diagnostics.heading": "Støttepakke",
+  "diagnostics.hint": "En renset ZIP til en feilrapport: host-integrasjonssjekken, konfigurasjonen din med alle hemmeligheter fjernet, nylige kjøringer, hva som er planlagt neste gang, og den nyeste loggen. Den er ikke en sikkerhetskopi av konfigurasjonen, og ingenting kan gjenopprettes fra den. Krever et påloggingspassord, fordi den inneholder hele konfigurasjonen din.",
+  "diagnostics.button": "Last ned diagnostikk",
+  "diagnostics.busy": "Samler inn…",
   "retentionPreview.title": "Hva neste kjøring ville fjerne",
   "retentionPreview.hint": "Oppbevaringspolicyen forteller deg hva den beholder. Dette viser hva den er i ferd med å slette, før det skjer. Ingenting endres og ingen repository låses, så den svarer også mens en sikkerhetskopiering pågår.",
   "retentionPreview.domain": "Type sikkerhetskopi",

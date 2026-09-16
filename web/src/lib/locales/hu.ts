@@ -465,6 +465,10 @@ const hu: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pillanatképek megőrzése",
   "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
+  "diagnostics.heading": "Támogatási csomag",
+  "diagnostics.hint": "Egy kitakart ZIP hibajelentéshez: a hosztellenőrzés, a beállításaid minden titok nélkül, a legutóbbi futások, a következő ütemezett feladatok és a legutóbbi napló. Ez nem konfigurációmentés, és nem lehet belőle visszaállítani. Belépési jelszó kell hozzá, mert a teljes konfigurációdat tartalmazza.",
+  "diagnostics.button": "Diagnosztika letöltése",
+  "diagnostics.busy": "Gyűjtés…",
   "retentionPreview.title": "Mit törölne a következő futás",
   "retentionPreview.hint": "A megőrzés azt mondja meg, mi marad meg. Ez azt mutatja, mit fog törölni, még mielőtt megtenné. Semmi nem változik, és egyetlen tároló sem záródik le, így futó mentés közben is válaszol.",
   "retentionPreview.domain": "Mentés típusa",

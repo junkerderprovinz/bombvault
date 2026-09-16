@@ -465,6 +465,10 @@ const fi: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Tilannevedosten säilytys",
   "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
+  "diagnostics.heading": "Tukipaketti",
+  "diagnostics.hint": "Siivottu ZIP vikailmoitusta varten: isäntäintegraation tarkistus, asetuksesi kaikki salaisuudet poistettuina, viimeisimmät ajot, mitä on seuraavaksi ajastettu, ja tuore loki. Se ei ole asetusten varmuuskopio eikä siitä voi palauttaa mitään. Vaatii kirjautumissalasanan, koska se sisältää koko kokoonpanosi.",
+  "diagnostics.button": "Lataa diagnostiikka",
+  "diagnostics.busy": "Kerätään…",
   "retentionPreview.title": "Mitä seuraava ajo poistaisi",
   "retentionPreview.hint": "Säilytys kertoo, mitä se säilyttää. Tämä näyttää, mitä se on poistamassa, ennen kuin se tapahtuu. Mitään ei muuteta eikä yhtään repositoriota lukita, joten vastaus tulee myös varmuuskopioinnin ollessa käynnissä.",
   "retentionPreview.domain": "Varmuuskopion laji",

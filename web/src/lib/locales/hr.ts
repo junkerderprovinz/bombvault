@@ -398,6 +398,10 @@ const hr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Zadržavanje snimki",
   "settings.retentionHint": "Koliko sigurnosnih kopija zadržati po stavci. Nakon svake sigurnosne kopije, restic čisti starije snimke prema ovoj politici. Sve nula = zadrži sve (isključeno).",
+  "diagnostics.heading": "Paket podrške",
+  "diagnostics.hint": "Pročišćeni ZIP za prijavu greške: provjera integracije s hostom, vaše postavke s uklonjenim svim tajnama, nedavna izvršavanja, što je sljedeće zakazano, i nedavni zapisnik. To nije sigurnosna kopija postavki i iz njega se ništa ne može vratiti. Traži lozinku za prijavu jer nosi cijelu vašu konfiguraciju.",
+  "diagnostics.button": "Preuzmi dijagnostiku",
+  "diagnostics.busy": "Prikupljanje…",
   "retentionPreview.title": "Što bi sljedeće izvršavanje uklonilo",
   "retentionPreview.hint": "Zadržavanje vam govori što se čuva. Ovo prikazuje što će biti izbrisano, prije nego što se to dogodi. Ništa se ne mijenja i nijedan repozitorij se ne zaključava, pa odgovara i dok sigurnosna kopija traje.",
   "retentionPreview.domain": "Vrsta sigurnosne kopije",

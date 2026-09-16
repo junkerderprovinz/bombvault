@@ -465,6 +465,10 @@ const he: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "שמירת תמונות מצב",
   "settings.retentionHint": "כמה גיבויים לשמור לכל פריט. אחרי כל גיבוי, restic גוזם snapshots ישנים לפי מדיניות זו. הכל 0 = לשמור הכל (כבוי).",
+  "diagnostics.heading": "חבילת תמיכה",
+  "diagnostics.hint": "קובץ ZIP מנוקה לדיווח על באג: בדיקת שילוב מארח, ההגדרות שלך כשכל הסודות הוסרו מהן, ההרצות האחרונות, מה מתוזמן בהמשך, והלוג האחרון. זה אינו גיבוי של ההגדרות ואי אפשר לשחזר ממנו. נדרשת סיסמת כניסה, כי הקובץ נושא את כל התצורה שלך.",
+  "diagnostics.button": "הורד אבחון",
+  "diagnostics.busy": "אוסף…",
   "retentionPreview.title": "מה ההרצה הבאה תסיר",
   "retentionPreview.hint": "השמירה אומרת מה נשמר. כאן רואים מה עומד להימחק, לפני שזה קורה. שום דבר לא משתנה ואף מאגר לא ננעל, ולכן יש תשובה גם בזמן שגיבוי רץ.",
   "retentionPreview.domain": "סוג הגיבוי",

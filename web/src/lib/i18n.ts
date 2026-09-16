@@ -514,6 +514,10 @@ export const en = {
   // Retention
   "settings.retentionTitle": "Snapshot retention",
   "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
+  "diagnostics.heading": "Support bundle",
+  "diagnostics.hint": "A redacted ZIP for a bug report: the host integration check, your configuration with every secret removed, recent runs, what is scheduled next, and the recent log. It is not a configuration backup and cannot be restored from. Needs a login password, because it carries your whole configuration.",
+  "diagnostics.button": "Download diagnostics",
+  "diagnostics.busy": "Collecting…",
   "retentionPreview.title": "What the next run would remove",
   "retentionPreview.hint": "Retention tells you what it keeps. This shows what it is about to delete, before it happens. Nothing is changed and no repository is locked, so it answers even while a backup is running.",
   "retentionPreview.domain": "Backup type",
@@ -2410,6 +2414,10 @@ export const de: Translations = {
   // Retention
   "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
+  "diagnostics.heading": "Support-Paket",
+  "diagnostics.hint": "Ein bereinigtes ZIP für einen Fehlerbericht: die Host-Integrationsprüfung, deine Konfiguration ohne jedes Geheimnis, die letzten Läufe, die nächsten geplanten Termine und das jüngste Protokoll. Es ist keine Sicherung der Konfiguration und lässt sich nicht zurückspielen. Braucht ein Login-Passwort, weil es die gesamte Konfiguration enthält.",
+  "diagnostics.button": "Diagnose herunterladen",
+  "diagnostics.busy": "Wird gesammelt…",
   "retentionPreview.title": "Was der nächste Lauf entfernen würde",
   "retentionPreview.hint": "Die Aufbewahrung sagt, was sie behält. Hier steht, was sie löschen wird, bevor es passiert. Es wird nichts verändert und kein Depot gesperrt, die Antwort kommt also auch während eines laufenden Backups.",
   "retentionPreview.domain": "Backup-Art",
