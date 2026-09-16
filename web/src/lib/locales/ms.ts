@@ -429,6 +429,10 @@ const ms: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pengekalan snapshot",
   "settings.retentionHint": "Berapa banyak sandaran untuk disimpan bagi setiap item. Selepas setiap sandaran, restic mem-prune snapshot yang lebih lama mengikut polisi ini. Semua sifar = simpan semua (mati).",
+  "diagnostics.heading": "Pakej sokongan",
+  "diagnostics.hint": "Fail ZIP yang ditapis untuk laporan pepijat: semakan integrasi hos, konfigurasi anda dengan setiap rahsia dibuang, larian terkini, apa yang dijadualkan seterusnya, dan log terkini. Ia bukan sandaran konfigurasi dan tidak boleh dipulihkan daripadanya. Memerlukan kata laluan log masuk, kerana ia membawa keseluruhan konfigurasi anda.",
+  "diagnostics.button": "Muat turun diagnostik",
+  "diagnostics.busy": "Mengumpul…",
   "retentionPreview.title": "Apa yang akan dibuang oleh larian seterusnya",
   "retentionPreview.hint": "Pengekalan memberitahu anda apa yang disimpan. Ini menunjukkan apa yang bakal dipadamkannya, sebelum ia berlaku. Tiada apa-apa yang diubah dan tiada repositori dikunci, jadi ia tetap menjawab walaupun sandaran sedang berjalan.",
   "retentionPreview.domain": "Jenis sandaran",

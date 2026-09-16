@@ -486,6 +486,10 @@ const nl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Bewaarbeleid voor snapshots",
   "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
+  "diagnostics.heading": "Supportpakket",
+  "diagnostics.hint": "Een geschoonde ZIP voor een bugrapport: de host-integratiecontrole, je configuratie met elk geheim verwijderd, recente uitvoeringen, wat er als volgende gepland staat, en het recente logboek. Het is geen back-up van je configuratie en er kan niets uit worden teruggezet. Vereist een inlogwachtwoord, omdat het je hele configuratie bevat.",
+  "diagnostics.button": "Diagnostiek downloaden",
+  "diagnostics.busy": "Verzamelen…",
   "retentionPreview.title": "Wat de volgende uitvoering zou verwijderen",
   "retentionPreview.hint": "Het bewaarbeleid vertelt je wat het bewaart. Dit toont wat het gaat verwijderen, voordat het gebeurt. Er wordt niets gewijzigd en geen enkele repository wordt vergrendeld, dus het geeft ook antwoord terwijl er een back-up loopt.",
   "retentionPreview.domain": "Soort back-up",

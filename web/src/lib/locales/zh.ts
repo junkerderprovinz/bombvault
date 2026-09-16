@@ -489,6 +489,10 @@ const zh: Partial<Translations> = {
 
   "settings.retentionTitle": "快照保留",
   "settings.retentionHint": "每个项目保留的备份数量。每次备份后，restic 会按此策略清理较旧的快照。全部为 0 = 全部保留（关闭）。",
+  "diagnostics.heading": "支持包",
+  "diagnostics.hint": "用于提交错误报告的脱敏 ZIP 文件，包含主机集成检查、已移除全部机密的配置、最近运行、计划中的下一项任务，以及最近的日志。它不是配置备份，也无法用它恢复配置。需要登录密码，因为它携带了你的全部配置。",
+  "diagnostics.button": "下载诊断信息",
+  "diagnostics.busy": "正在收集…",
   "retentionPreview.title": "下次运行将删除的内容",
   "retentionPreview.hint": "保留策略告诉你它会保留什么，这里显示的则是它即将删除什么，在删除发生之前。不会改动任何内容，也不会锁定任何仓库，所以即使备份正在运行也能给出答案。",
   "retentionPreview.domain": "备份类型",

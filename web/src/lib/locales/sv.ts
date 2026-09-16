@@ -492,6 +492,10 @@ const sv: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Lagring av ögonblicksbilder",
   "settings.retentionHint": "Hur många säkerhetskopior som behålls per objekt. Efter varje säkerhetskopiering rensar restic äldre ögonblicksbilder enligt den här policyn. Allt 0 = behåll allt (av).",
+  "diagnostics.heading": "Supportpaket",
+  "diagnostics.hint": "En rensad ZIP för en felrapport: värdintegrationskontrollen, din konfiguration med alla hemligheter borttagna, senaste körningar, vad som står näst på schemat och den senaste loggen. Det är ingen säkerhetskopia av konfigurationen och går inte att återställa från. Kräver ett inloggningslösenord, eftersom den bär hela din konfiguration.",
+  "diagnostics.button": "Ladda ner diagnostik",
+  "diagnostics.busy": "Samlar in…",
   "retentionPreview.title": "Vad nästa körning skulle ta bort",
   "retentionPreview.hint": "Lagringspolicyn talar om vad som behålls. Det här visar vad den är på väg att ta bort, innan det sker. Inget ändras och inget arkiv låses, så den svarar även medan en säkerhetskopiering pågår.",
   "retentionPreview.domain": "Typ av säkerhetskopia",

@@ -20,6 +20,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/logring"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -165,7 +166,12 @@ func run() error {
 	// Send the standard logger to stdout so all runtime logs share ONE stream
 	// with the ASCII banner (printed via fmt to stdout). Otherwise Docker/Unraid
 	// interleaves stderr (log default) above the stdout banner.
-	log.SetOutput(os.Stdout)
+	//
+	// Tee'd through the log ring so the diagnostics bundle can carry the recent
+	// output. A TEE, not a replacement: stdout stays exactly what it was, so
+	// `docker logs` is unaffected and the ring is an extra copy rather than a
+	// redirection of the log everyone already knows how to reach.
+	log.SetOutput(logring.Default.Tee(os.Stdout))
 
 	cfg, err := config.LoadFromEnv()
 	if err != nil {

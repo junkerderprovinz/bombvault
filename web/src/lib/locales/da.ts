@@ -492,6 +492,10 @@ const da: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Opbevaring af snapshots",
   "settings.retentionHint": "Hvor mange sikkerhedskopier der beholdes pr. element. Efter hver sikkerhedskopiering renser restic ældre øjebliksbilleder efter denne politik. Alt 0 = behold alt (fra).",
+  "diagnostics.heading": "Supportpakke",
+  "diagnostics.hint": "En renset ZIP til en fejlrapport: vært-integrationstjekket, din konfiguration med alle hemmeligheder fjernet, de seneste kørsler, hvad der er planlagt som det næste, og den seneste log. Det er ikke en sikkerhedskopi af konfigurationen, og der kan ikke gendannes fra den. Kræver en adgangskode til login, fordi den indeholder hele din konfiguration.",
+  "diagnostics.button": "Download diagnostik",
+  "diagnostics.busy": "Indsamler…",
   "retentionPreview.title": "Hvad den næste kørsel ville fjerne",
   "retentionPreview.hint": "Opbevaring fortæller dig, hvad der beholdes. Her ser du, hvad der er ved at blive slettet, før det sker. Intet ændres, og intet arkiv låses, så den svarer også mens en sikkerhedskopiering kører.",
   "retentionPreview.domain": "Backuptype",
