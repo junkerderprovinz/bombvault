@@ -489,6 +489,10 @@ const ko: Partial<Translations> = {
 
   "settings.retentionTitle": "스냅샷 보존",
   "settings.retentionHint": "항목별로 유지할 백업 수입니다. 백업할 때마다 restic이 이 정책에 따라 오래된 스냅샷을 정리합니다. 모두 0 = 전부 보존(끔).",
+  "diagnostics.heading": "지원 번들",
+  "diagnostics.hint": "버그 신고용으로 민감한 정보를 지운 ZIP입니다. 호스트 통합 확인, 비밀을 모두 제거한 구성, 최근 실행, 다음에 예약된 항목, 최근 로그가 들어 있습니다. 구성 백업이 아니며 이 파일로는 복원할 수 없습니다. 구성 전체가 들어 있으므로 로그인 비밀번호가 필요합니다.",
+  "diagnostics.button": "진단 정보 다운로드",
+  "diagnostics.busy": "수집 중…",
   "retentionPreview.title": "다음 실행에서 제거될 항목",
   "retentionPreview.hint": "보존 설정은 무엇을 남길지 알려줍니다. 여기서는 실제로 지워지기 전에 무엇이 지워질지 보여줍니다. 아무것도 바뀌지 않고 저장소를 잠그지도 않으므로, 백업이 실행 중일 때도 답을 줍니다.",
   "retentionPreview.domain": "백업 종류",

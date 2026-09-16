@@ -429,6 +429,10 @@ const gl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cantas copias conservar por elemento. Despois de cada copia, restic limpa instantáneas máis antigas segundo esta política. Todo a 0 = conservar todo (desactivado).",
+  "diagnostics.heading": "Paquete de asistencia",
+  "diagnostics.hint": "Un ZIP depurado para un informe de erro: a comprobación de integración co host, a túa configuración con todos os segredos eliminados, as execucións recentes, o que está programado a continuación, e o rexistro recente. Non é unha copia de seguridade da configuración e non se pode restaurar a partir del. Precisa un contrasinal de acceso, porque leva toda a túa configuración.",
+  "diagnostics.button": "Descargar diagnósticos",
+  "diagnostics.busy": "Recollendo…",
   "retentionPreview.title": "O que eliminaría a próxima execución",
   "retentionPreview.hint": "A retención indica o que conserva. Isto amosa o que vai eliminar, antes de que suceda. Non se cambia nada nin se bloquea ningún repositorio, así que responde mesmo mentres se está a executar unha copia.",
   "retentionPreview.domain": "Tipo de copia",

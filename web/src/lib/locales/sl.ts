@@ -429,6 +429,10 @@ const sl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Hramba posnetkov",
   "settings.retentionHint": "Koliko varnostnih kopij ohraniti na posamezen element. Po vsaki varnostni kopiji restic po tej politiki počisti starejše posnetke. Vse ničle = ohrani vse (izklopljeno).",
+  "diagnostics.heading": "Paket za podporo",
+  "diagnostics.hint": "Očiščen arhiv ZIP za prijavo napake: preverjanje integracije z gostiteljem, tvoja konfiguracija z odstranjenimi vsemi skrivnostmi, nedavni zagoni, kaj je naslednje na urniku, in nedavni dnevnik. To ni varnostna kopija konfiguracije in iz nje ni mogoče ničesar obnoviti. Potrebuje prijavno geslo, ker nosi celotno tvojo konfiguracijo.",
+  "diagnostics.button": "Prenesi diagnostiko",
+  "diagnostics.busy": "Zbiranje…",
   "retentionPreview.title": "Kaj bi naslednji zagon odstranil",
   "retentionPreview.hint": "Hramba ti pove, kaj ohrani. Tukaj vidiš, kaj bo izbrisano, še preden se to zgodi. Nič se ne spremeni in noben repozitorij se ne zaklene, zato odgovori tudi med tekočim varnostnim kopiranjem.",
   "retentionPreview.domain": "Vrsta varnostne kopije",

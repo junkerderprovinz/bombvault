@@ -429,6 +429,10 @@ const ca: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenció d'instantanis",
   "settings.retentionHint": "Quantes còpies conservar per element. Després de cada còpia, restic neteja instantanis més antics segons aquesta política. Tot a 0 = conserva-ho tot (desactivat).",
+  "diagnostics.heading": "Paquet de suport",
+  "diagnostics.hint": "Un ZIP depurat per a un informe d'error: la comprovació d'integració amb l'amfitrió, la teva configuració amb tots els secrets eliminats, les execucions recents, què hi ha programat a continuació i el registre recent. No és una còpia de seguretat de la configuració i no s'hi pot restaurar res. Cal una contrasenya d'accés, perquè conté tota la teva configuració.",
+  "diagnostics.button": "Descarrega els diagnòstics",
+  "diagnostics.busy": "Recopilant…",
   "retentionPreview.title": "Què eliminaria la propera execució",
   "retentionPreview.hint": "La retenció et diu què conserva. Això mostra què està a punt d'esborrar, abans que passi. No es canvia res ni es bloqueja cap repositori, així que respon fins i tot mentre s'està fent una còpia.",
   "retentionPreview.domain": "Tipus de còpia",

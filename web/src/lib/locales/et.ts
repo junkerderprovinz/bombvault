@@ -429,6 +429,10 @@ const et: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Hetktõmmiste säilitamine",
   "settings.retentionHint": "Mitu varundust iga üksuse kohta säilitatakse. Pärast iga varundust puhastab restic vanemad hetktõmmised selle reegli järgi. Kõik nullid = säilita kõik (väljas).",
+  "diagnostics.heading": "Tugipakett",
+  "diagnostics.hint": "Puhastatud ZIP veateate jaoks: hosti integratsiooni kontroll, sinu seadistus, millest on kõik saladused eemaldatud, hiljutised käivitused, mis on järgmisena plaanis, ja hiljutine logi. See ei ole seadistuse varukoopia ja sellest ei saa taastada. Vajab sisselogimisparooli, sest see sisaldab kogu sinu seadistust.",
+  "diagnostics.button": "Laadi diagnostika alla",
+  "diagnostics.busy": "Kogumine…",
   "retentionPreview.title": "Mida järgmine käivitus eemaldaks",
   "retentionPreview.hint": "Säilitamine ütleb sulle, mida ta alles jätab. See näitab, mida ta kohe kustutab, enne kui see juhtub. Midagi ei muudeta ja ühtegi hoidlat ei lukustata, nii et see vastab ka siis, kui varundus parajasti käib.",
   "retentionPreview.domain": "Varunduse tüüp",

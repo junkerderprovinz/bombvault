@@ -429,6 +429,10 @@ const lt: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Momentinių kopijų saugojimas",
   "settings.retentionHint": "Kiek atsarginių kopijų saugoti kiekvienam elementui. Po kiekvienos atsarginės kopijos restic pagal šią politiką išvalo senesnes momentines kopijas. Visi nuliai = saugoti viską (išjungta).",
+  "diagnostics.heading": "Palaikymo rinkinys",
+  "diagnostics.hint": "Nuasmenintas ZIP failas klaidos pranešimui: pagrindinio kompiuterio integracijos patikra, jūsų konfigūracija be jokių paslapčių, naujausi vykdymai, kas suplanuota toliau, ir naujausias žurnalas. Tai nėra konfigūracijos atsarginė kopija ir iš jos atkurti negalima. Reikia prisijungimo slaptažodžio, nes jame yra visa jūsų konfigūracija.",
+  "diagnostics.button": "Atsisiųsti diagnostiką",
+  "diagnostics.busy": "Renkama…",
   "retentionPreview.title": "Ką pašalintų kitas vykdymas",
   "retentionPreview.hint": "Saugojimo nustatymai nurodo, kas bus išsaugota. Čia matote, ką ketinama ištrinti, dar prieš tai įvykstant. Niekas nekeičiama ir jokia saugykla neužrakinama, todėl atsakymą gausite net ir tuomet, kai vyksta atsarginis kopijavimas.",
   "retentionPreview.domain": "Kopijavimo tipas",

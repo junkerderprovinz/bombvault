@@ -3663,3 +3663,66 @@ export function renamePasskey(id: string, name: string): Promise<OkEnvelope> {
 export function deletePasskey(id: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/auth/passkeys/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
+
+/**
+ * GET /api/diagnostics — download the redacted support bundle.
+ *
+ * Modelled on downloadRecoveryKit, and for the same reason: every failure path
+ * (the 403 refusal when no login password is set, a 200 fail envelope while
+ * building) answers JSON, while the bundle itself streams as application/zip.
+ * Detecting that difference is what stops an error body being saved to disk as
+ * a .zip the user then tries to open.
+ *
+ * Returns null on success, or the server's own message to show.
+ */
+export async function downloadDiagnostics(): Promise<string | null> {
+  const g = globalThis as unknown as {
+    fetch(url: string): Promise<{
+      ok: boolean;
+      status: number;
+      headers: { get(name: string): string | null };
+      json(): Promise<unknown>;
+      blob(): Promise<unknown>;
+    }>;
+    document: {
+      createElement(tag: string): {
+        href: string;
+        download: string;
+        click(): void;
+        remove(): void;
+      };
+      body: { appendChild(node: unknown): void };
+    };
+    URL: {
+      createObjectURL(blob: unknown): string;
+      revokeObjectURL(url: string): void;
+    };
+  };
+  try {
+    const res = await g.fetch("/api/diagnostics");
+    const ct = res.headers.get("content-type") ?? "";
+    if (!res.ok || ct.includes("application/json")) {
+      // Backend-provided error text shown verbatim BY DESIGN — the API answers
+      // English and is not translated client-side (i18n-wave decision).
+      try {
+        const body = (await res.json()) as { error?: string };
+        return body.error || `download failed (HTTP ${res.status})`;
+      } catch {
+        return `download failed (HTTP ${res.status})`;
+      }
+    }
+    const blob = await res.blob();
+    const url = g.URL.createObjectURL(blob);
+    const a = g.document.createElement("a");
+    a.href = url;
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.download = `bombvault-diagnostics-${stamp}.zip`;
+    g.document.body.appendChild(a);
+    a.click();
+    a.remove();
+    g.URL.revokeObjectURL(url);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
