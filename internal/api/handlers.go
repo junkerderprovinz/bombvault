@@ -2652,6 +2652,40 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleRetentionPreview reports what the next retention run would remove for a
+// domain, without removing anything.
+// GET /api/retention/preview/{domain}[?source=offsite|offsite:<id>]
+//
+// A GET on purpose: csrfGate exempts GET, so a read-only question needs no
+// token, while authGate still protects it like every other /api route. The
+// domain whitelist matches handlePrune's deliberately — the preview and the
+// prune must never disagree about which domains exist.
+func (h *Handler) handleRetentionPreview(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash", "config", "files":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	preview, err := h.svc.PreviewRetention(r.Context(), domain, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// Nil slices are normalised so the client always meets a list, never null —
+	// the same courtesy handleExcludesPreview extends.
+	if preview.Repos == nil {
+		preview.Repos = []RetentionPreviewRepo{}
+	}
+	for i := range preview.Repos {
+		if preview.Repos[i].Items == nil {
+			preview.Repos[i].Items = []RetentionPreviewItem{}
+		}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": preview}))
+}
+
 // handleDeleteSnapshot forgets a single snapshot from a domain's repo.
 // DELETE /api/snapshots/{domain}/{id}
 func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
