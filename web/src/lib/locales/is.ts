@@ -398,6 +398,8 @@ const is: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Varðveisla snapshotta",
   "settings.retentionHint": "Hversu mörg afrit eru geymd fyrir hvern hlut. Eftir hverja afritun hreinsar restic eldri snapshot samkvæmt þessari stefnu. Allt núll = geyma allt (slökkt).",
+  "excludes.advisoryImmichDb": "Immich geymir albúm, andlit og dagsetningar hverrar myndar í PostgreSQL-gagnagrunni sem keyrir í alveg sérstökum gámi, svo þetta afrit inniheldur hann ekki. Endurheimt héðan skilar myndunum aftur án alls þessa. Gefðu þeim gagnagrunni sitt eigið afrit, eða kveiktu á innbyggðum gagnagrunnsútflutningi Immich svo hann lendi í möppu sem þetta afrit nær yfir.",
+  "excludes.advisoryNextcloudDb": "Nextcloud geymir reikninga, deilingar og merki í gagnagrunni sem keyrir yfirleitt í sérstökum gámi, svo þetta afrit inniheldur hann ekki. Skrárnar koma aftur, deilingarnar ekki. Taktu líka afrit af þeim gagnagrunni.",
   "coverage.title": "Ekki afritað",
   "coverage.hint": "Allt á þessum þjóni sem engin sjálfvirk afritun nær yfir. Verndarspjaldið að ofan segir hvort áætlaðar afritanir hafi keyrt á réttum tíma; þetta segir hvað er alls ekki á áætlun, og það er gatið sem er ósýnilegt alls staðar annars staðar. Slökkt afritunarsvæði er ákvörðun og telst ekki með hér.",
   "coverage.ratio": "{protected} af {total} varin",

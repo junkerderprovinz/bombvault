@@ -465,6 +465,8 @@ const hu: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pillanatképek megőrzése",
   "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
+  "excludes.advisoryImmichDb": "Az Immich minden fénykép albumait, arcait és dátumait egy PostgreSQL adatbázisban tartja, amely egy teljesen külön konténerben fut, így ez a mentés nem tartalmazza. Az innen való visszaállítás visszahozza a képeket, csak mindezek nélkül. Adj annak az adatbázisnak saját mentést, vagy kapcsold be az Immich beépített adatbázis-kiírását, hogy olyan mappába kerüljön, amelyre ez a mentés kiterjed.",
+  "excludes.advisoryNextcloudDb": "A Nextcloud a fiókjait, megosztásait és címkéit egy adatbázisban tartja, amely általában külön konténerben fut, így ez a mentés nem tartalmazza. A fájlok visszajönnek, a megosztások nem. Mentsd el azt az adatbázist is.",
   "coverage.title": "Nincs mentve",
   "coverage.hint": "Minden ezen a szerveren, amire nem terjed ki automatikus mentés. A fenti védelmi kártya azt mutatja, hogy az ütemezett mentések időben lefutottak-e; ez pedig azt, ami egyáltalán nincs ütemezve, vagyis azt a hiányt, ami máshol mindenhol láthatatlan marad. A kikapcsolt mentési tartomány döntés, ezért itt nem számít bele.",
   "coverage.ratio": "{total} elemből {protected} védett",

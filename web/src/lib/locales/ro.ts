@@ -462,6 +462,8 @@ const ro: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenția instantaneelor",
   "settings.retentionHint": "Câte copii de rezervă să se păstreze per element. După fiecare backup, restic curăță instantaneele mai vechi conform acestei politici. Toate zero = păstrează tot (oprit).",
+  "excludes.advisoryImmichDb": "Immich ține albumele, fețele și data fiecărei fotografii într-o bază de date PostgreSQL care rulează în alt container, nu în acesta, așa că acest backup nu o conține. O restaurare de aici aduce pozele înapoi, dar fără toate acestea. Fă-i acelei baze de date un backup separat sau pornește exportul de bază de date integrat în Immich, ca să ajungă într-un folder acoperit de acest backup.",
+  "excludes.advisoryNextcloudDb": "Nextcloud ține conturile, partajările și etichetele într-o bază de date care de obicei rulează în alt container, așa că acest backup nu o conține. Fișierele revin, partajările nu. Fă backup și acelei baze de date.",
   "coverage.title": "Fără backup",
   "coverage.hint": "Tot ce se află pe acest server și nu este acoperit de niciun backup automat. Cardul de protecție de mai sus spune dacă backupurile programate au rulat la timp; aici scrie ce nu este programat deloc, adică exact golul care în rest rămâne invizibil. Un tip de backup oprit este o decizie și nu se numără aici.",
   "coverage.ratio": "{protected} din {total} protejate",

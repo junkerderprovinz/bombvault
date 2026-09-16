@@ -398,6 +398,8 @@ const hr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Zadržavanje snimki",
   "settings.retentionHint": "Koliko sigurnosnih kopija zadržati po stavci. Nakon svake sigurnosne kopije, restic čisti starije snimke prema ovoj politici. Sve nula = zadrži sve (isključeno).",
+  "excludes.advisoryImmichDb": "Immich čuva albume, lica i datume svake fotografije u PostgreSQL bazi podataka koja radi u posve zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Vraćanje odavde vraća slike, ali bez svega toga. Napravite zasebnu sigurnosnu kopiju te baze podataka ili uključite Immichov ugrađeni izvoz baze podataka kako bi završio u mapi koju ova kopija obuhvaća.",
+  "excludes.advisoryNextcloudDb": "Nextcloud čuva svoje račune, dijeljenja i oznake u bazi podataka koja obično radi u zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Datoteke se vraćaju, dijeljenja ne. Sigurnosno kopirajte i tu bazu podataka.",
   "coverage.title": "Bez sigurnosne kopije",
   "coverage.hint": "Sve na ovom poslužitelju što nijedna automatska sigurnosna kopija ne pokriva. Kartica zaštite iznad govori jesu li zakazane sigurnosne kopije izvedene na vrijeme; ovdje piše što uopće nije zakazano, a upravo ta rupa ostaje nevidljiva svugdje drugdje. Isključena vrsta sigurnosne kopije odluka je i ovdje se ne broji.",
   "coverage.ratio": "{protected} od {total} zaštićeno",

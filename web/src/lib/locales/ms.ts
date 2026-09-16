@@ -398,6 +398,8 @@ const ms: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pengekalan snapshot",
   "settings.retentionHint": "Berapa banyak sandaran untuk disimpan bagi setiap item. Selepas setiap sandaran, restic mem-prune snapshot yang lebih lama mengikut polisi ini. Semua sifar = simpan semua (mati).",
+  "excludes.advisoryImmichDb": "Immich menyimpan album, wajah dan tarikh bagi setiap foto dalam pangkalan data PostgreSQL yang berjalan dalam bekas yang berasingan, bukan bekas ini, jadi sandaran ini tidak mengandunginya. Pemulihan dari sini mengembalikan gambar, tetapi tanpa album, wajah dan tarikh. Beri pangkalan data itu sandarannya sendiri, atau hidupkan eksport pangkalan data terbina dalam Immich supaya ia disimpan dalam folder yang diliputi sandaran ini.",
+  "excludes.advisoryNextcloudDb": "Nextcloud menyimpan akaun, perkongsian dan tag dalam pangkalan data yang biasanya berjalan dalam bekas yang berasingan, jadi sandaran ini tidak mengandunginya. Fail kembali, perkongsian tidak. Sandarkan pangkalan data itu juga.",
   "coverage.title": "Tidak disandarkan",
   "coverage.hint": "Semua yang ada pada pelayan ini yang tidak dicakupi oleh sebarang sandaran automatik. Kad perlindungan di atas memberitahu sama ada sandaran berjadual berjalan tepat pada masanya; di sini tertera apa yang langsung tidak dijadualkan, dan itulah jurang yang di tempat lain kekal tidak kelihatan. Jenis sandaran yang dimatikan ialah satu keputusan dan tidak dikira di sini.",
   "coverage.ratio": "{protected} daripada {total} dilindungi",

@@ -398,6 +398,8 @@ const eu: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Argazkien mantentzea",
   "settings.retentionHint": "Elementu bakoitzeko zenbat babeskopia gorde. Babeskopia bakoitzaren ondoren, restic-ek argazki zaharrenak politika honen arabera garbitzen ditu. Denak 0 = gorde dena (itzalita).",
+  "excludes.advisoryImmichDb": "Immichek argazki bakoitzaren albumak, aurpegiak eta datak PostgreSQL datu-base batean gordetzen ditu, eta datu-base hori bere edukiontzi bereizian exekutatzen da, beraz babeskopia honek ez du barne hartzen. Hemendik berrezartzeak argazkiak itzultzen ditu, baina horrelakorik gabe. Eman babeskopia propio bat datu-base horri, edo piztu Immicheko datu-base iraulketa integratua, babeskopia honek hartzen duen karpeta batean amai dezan.",
+  "excludes.advisoryNextcloudDb": "Nextcloudek kontuak, partekatzeak eta etiketak datu-base batean gordetzen ditu, eta datu-base hori normalean edukiontzi bereizi batean exekutatzen da, beraz babeskopia honek ez du barne hartzen. Fitxategiak itzultzen dira, partekatzeak ez. Egin datu-base horren babeskopia ere.",
   "coverage.title": "Babeskopiarik gabe",
   "coverage.hint": "Zerbitzari honetan babeskopia automatiko batek ere estaltzen ez duen guztia. Goiko babes-txartelak esaten du programatutako babeskopiak garaiz exekutatu diren; honek esaten du zer ez dagoen batere programatuta, eta hori da beste inon ikusten ez den hutsunea. Itzalitako babeskopia mota bat erabaki bat da, eta ez da hemen zenbatzen.",
   "coverage.ratio": "{total}(e)tik {protected} babestuta",

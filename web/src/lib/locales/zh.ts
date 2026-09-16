@@ -462,6 +462,8 @@ const zh: Partial<Translations> = {
 
   "settings.retentionTitle": "快照保留",
   "settings.retentionHint": "每个项目保留的备份数量。每次备份后，restic 会按此策略清理较旧的快照。全部为 0 = 全部保留（关闭）。",
+  "excludes.advisoryImmichDb": "Immich 把每张照片的相册、人脸和日期都存放在一个 PostgreSQL 数据库里，而这个数据库跑在另一个单独的容器中，不在这个容器里，所以这份备份并不包含它。从这里还原会把照片找回来，却没有这些信息。请给那个数据库单独做一份备份，或者打开 Immich 自带的数据库导出，让它落在这份备份覆盖得到的文件夹里。",
+  "excludes.advisoryNextcloudDb": "Nextcloud 把账户、共享和标签存放在一个数据库里，它通常跑在单独的容器中，所以这份备份并不包含它。文件会回来，共享不会。请把那个数据库也一并备份。",
   "coverage.title": "未备份",
   "coverage.hint": "此服务器上没有任何自动备份覆盖的内容。上方的保护卡片说明计划备份是否按时运行；这里说明的是根本没有安排计划的内容，也正是别处始终看不见的缺口。已关闭的备份类型是一项决定，不计入此处。",
   "coverage.ratio": "{total} 项中有 {protected} 项已受保护",

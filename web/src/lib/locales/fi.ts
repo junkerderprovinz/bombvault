@@ -465,6 +465,8 @@ const fi: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Tilannevedosten säilytys",
   "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
+  "excludes.advisoryImmichDb": "Immich säilyttää jokaisen kuvan albumit, kasvot ja päivämäärät PostgreSQL-tietokannassa, joka pyörii omassa erillisessä kontissaan, joten tämä varmuuskopio ei sisällä sitä. Täältä palauttaminen tuo kuvat takaisin ilman niitä. Anna sille tietokannalle oma varmuuskopionsa tai kytke päälle Immichin sisäänrakennettu tietokannan dumppaus, jotta se päätyy kansioon, jonka tämä varmuuskopio kattaa.",
+  "excludes.advisoryNextcloudDb": "Nextcloud säilyttää tilinsä, jakonsa ja tunnisteensa tietokannassa, joka pyörii yleensä erillisessä kontissa, joten tämä varmuuskopio ei sisällä sitä. Tiedostot palaavat, jaot eivät. Varmuuskopioi myös se tietokanta.",
   "coverage.title": "Ei varmuuskopioitu",
   "coverage.hint": "Kaikki tällä palvelimella, mitä mikään automaattinen varmuuskopio ei kata. Yllä oleva suojauskortti kertoo, suoritettiinko aikataulutetut varmuuskopiot ajallaan; tässä lukee, mitä ei ole lainkaan aikataulutettu, ja juuri se aukko jää muualla näkymättömiin. Pois kytketty varmuuskopion laji on päätös, eikä sitä lasketa tähän.",
   "coverage.ratio": "{protected} / {total} suojattu",

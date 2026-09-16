@@ -398,6 +398,8 @@ const sl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Hramba posnetkov",
   "settings.retentionHint": "Koliko varnostnih kopij ohraniti na posamezen element. Po vsaki varnostni kopiji restic po tej politiki počisti starejše posnetke. Vse ničle = ohrani vse (izklopljeno).",
+  "excludes.advisoryImmichDb": "Immich hrani albume, obraze in datume vsake fotografije v bazi podatkov PostgreSQL, ki teče v svojem lastnem, ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Obnovitev od tod vrne slike, a brez vsega tega. Tej bazi podatkov naredi lastno varnostno kopijo ali vklopi Immichev vgrajeni izvoz baze podatkov, da pristane v mapi, ki jo ta varnostna kopija zajema.",
+  "excludes.advisoryNextcloudDb": "Nextcloud hrani račune, deljenja in oznake v bazi podatkov, ki običajno teče v ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Datoteke se vrnejo, deljenja ne. Varnostno kopiraj tudi to bazo podatkov.",
   "coverage.title": "Brez varnostne kopije",
   "coverage.hint": "Vse na tem strežniku, česar ne zajame nobena samodejna varnostna kopija. Kartica zaščite zgoraj pove, ali so se načrtovane varnostne kopije izvedle pravočasno; tukaj piše, kaj sploh ni na urniku, in prav to drugod ostane nevidno. Izklopljena vrsta varnostnega kopiranja je odločitev in se tukaj ne šteje.",
   "coverage.ratio": "{protected} od {total} zaščitenih",

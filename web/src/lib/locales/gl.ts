@@ -398,6 +398,8 @@ const gl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cantas copias conservar por elemento. Despois de cada copia, restic limpa instantáneas máis antigas segundo esta política. Todo a 0 = conservar todo (desactivado).",
+  "excludes.advisoryImmichDb": "Immich garda os álbums, as caras e as datas de cada foto nunha base de datos PostgreSQL que se executa nun contedor totalmente aparte, así que esta copia non a contén. Restaurar desde aquí devolve as imaxes sen nada diso. Dálle a esa base de datos a súa propia copia de seguranza, ou activa o volcado de base de datos integrado de Immich para que remate nun cartafol que esta copia si cubra.",
+  "excludes.advisoryNextcloudDb": "Nextcloud garda as contas, as comparticións e as etiquetas nunha base de datos que adoita executarse nun contedor á parte, así que esta copia non a contén. Os ficheiros volven, as comparticións non. Fai tamén unha copia de seguranza desa base de datos.",
   "coverage.title": "Sen copia de seguranza",
   "coverage.hint": "Todo o que hai neste servidor que ningunha copia automática cobre. A tarxeta de protección de arriba di se as copias planificadas se executaron a tempo; aquí ves o que non está planificado en absoluto, que é o oco que queda invisible en todas as demais partes. Un tipo de copia desactivado é unha decisión e non se conta aquí.",
   "coverage.ratio": "{protected} de {total} protexidos",

@@ -465,6 +465,8 @@ const fr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Rétention des instantanés",
   "settings.retentionHint": "Combien de sauvegardes conserver par élément. Après chaque sauvegarde, restic élague les instantanés plus anciens selon cette règle. Tout à zéro = tout conserver (désactivé).",
+  "excludes.advisoryImmichDb": "Immich conserve les albums, les visages et les dates de chaque photo dans une base de données PostgreSQL qui tourne dans un tout autre conteneur, donc cette sauvegarde ne la contient pas. Une restauration depuis ici ramène les photos, mais sans rien de tout cela. Donnez à cette base de données sa propre sauvegarde, ou activez le dump de base de données intégré à Immich pour qu'il se retrouve dans un dossier couvert par cette sauvegarde.",
+  "excludes.advisoryNextcloudDb": "Nextcloud conserve ses comptes, ses partages et ses tags dans une base de données qui tourne en général dans un conteneur distinct, donc cette sauvegarde ne la contient pas. Les fichiers reviennent, pas les partages. Sauvegardez aussi cette base de données.",
   "coverage.title": "Non sauvegardé",
   "coverage.hint": "Tout ce qui, sur ce serveur, n'est couvert par aucune sauvegarde automatique. La carte de protection ci-dessus indique si les sauvegardes planifiées se sont exécutées à l'heure ; ici figure ce qui n'est pas planifié du tout, la lacune qui reste invisible partout ailleurs. Un type de sauvegarde désactivé est une décision et n'est pas compté ici.",
   "coverage.ratio": "{protected} sur {total} protégés",

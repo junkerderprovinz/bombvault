@@ -465,6 +465,8 @@ const sv: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Lagring av ögonblicksbilder",
   "settings.retentionHint": "Hur många säkerhetskopior som behålls per objekt. Efter varje säkerhetskopiering rensar restic äldre ögonblicksbilder enligt den här policyn. Allt 0 = behåll allt (av).",
+  "excludes.advisoryImmichDb": "Immich sparar varje fotos album, ansikten och datum i en PostgreSQL-databas som körs i en egen, separat container, så den här säkerhetskopian innehåller den inte. En återställning härifrån ger tillbaka bilderna utan allt det. Ge den databasen en egen säkerhetskopia, eller slå på Immichs inbyggda databasexport så att den hamnar i en mapp som den här säkerhetskopian täcker.",
+  "excludes.advisoryNextcloudDb": "Nextcloud sparar konton, delningar och taggar i en databas som oftast körs i en separat container, så den här säkerhetskopian innehåller den inte. Filerna kommer tillbaka, delningarna gör det inte. Säkerhetskopiera den databasen också.",
   "coverage.title": "Inte säkerhetskopierat",
   "coverage.hint": "Allt på den här servern som ingen automatisk säkerhetskopiering täcker. Skyddskortet ovan säger om de schemalagda säkerhetskopiorna kördes i tid; det här säger vad som inte är schemalagt alls, och det är luckan som förblir osynlig överallt annars. En avstängd typ av säkerhetskopiering är ett beslut och räknas inte här.",
   "coverage.ratio": "{protected} av {total} skyddade",
