@@ -545,6 +545,17 @@ export const en = {
   // Retention
   "settings.retentionTitle": "Snapshot retention",
   "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
+  "retentionPreview.title": "What the next run would remove",
+  "retentionPreview.hint": "Retention tells you what it keeps. This shows what it is about to delete, before it happens. Nothing is changed and no repository is locked, so it answers even while a backup is running.",
+  "retentionPreview.domain": "Backup type",
+  "retentionPreview.show": "Show what would be removed",
+  "retentionPreview.off": "Retention is off, so nothing would be removed.",
+  "retentionPreview.nothing": "Nothing would be removed by the next run.",
+  "retentionPreview.appendOnly": "append-only: retention never runs here",
+  "retentionPreview.wholeRepo": "whole repository",
+  "retentionPreview.keeps": "keeps",
+  "retentionPreview.skipped": "These repositories were not covered:",
+  "retentionPreview.failed": "The preview could not be produced.",
   // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
   // A) — image cleanup, Unraid's own update-status reconciliation, and
   // private registry credentials all sit under one roof: everything the
@@ -2456,6 +2467,17 @@ export const de: Translations = {
   // Retention
   "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
+  "retentionPreview.title": "Was der nächste Lauf entfernen würde",
+  "retentionPreview.hint": "Die Aufbewahrung sagt, was sie behält. Hier steht, was sie löschen wird, bevor es passiert. Es wird nichts verändert und kein Depot gesperrt, die Antwort kommt also auch während eines laufenden Backups.",
+  "retentionPreview.domain": "Backup-Art",
+  "retentionPreview.show": "Zeigen, was entfernt würde",
+  "retentionPreview.off": "Die Aufbewahrung ist aus, es würde nichts entfernt.",
+  "retentionPreview.nothing": "Der nächste Lauf würde nichts entfernen.",
+  "retentionPreview.appendOnly": "nur anhängend: hier läuft nie eine Aufbewahrung",
+  "retentionPreview.wholeRepo": "ganzes Depot",
+  "retentionPreview.keeps": "behält",
+  "retentionPreview.skipped": "Diese Depots wurden nicht abgedeckt:",
+  "retentionPreview.failed": "Die Vorschau konnte nicht erstellt werden.",
   "settings.imageMaintenanceTitle": "Image-Bereinigung & Update-Status",
   "settings.imageMaintenanceHint": "Wartung rund um das Container-Update nach dem Backup: das abgelöste Image aufräumen und Unraids eigenen Update-Status zurücksetzen.",
   "settings.pruneImageAfterUpdate": "Altes Image nach Update entfernen",
