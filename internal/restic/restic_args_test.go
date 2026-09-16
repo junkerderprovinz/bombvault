@@ -139,6 +139,72 @@ func TestForgetPolicyArgs(t *testing.T) {
 	})
 }
 
+// TestForgetPreviewArgs pins the read-only twin of ForgetPolicyArgs: same
+// selection and same keep dimensions, but it answers "what WOULD retention
+// remove" without touching the repository.
+//
+// The two flags that matter are --dry-run and --no-lock, and they are only
+// correct TOGETHER. In restic 0.17.3 cmd_forget.go the repository is opened
+// with openWithExclusiveLock(ctx, gopts, opts.DryRun && gopts.NoLock): with
+// --dry-run alone restic still takes the EXCLUSIVE lock, so a "preview" would
+// block a running backup (or be blocked by it) and would write lock files into
+// a remote repository just to answer a question. --no-lock alone is refused
+// outright with "--no-lock is only applicable in combination with --dry-run
+// for forget command". Hence: both, always.
+func TestForgetPreviewArgs(t *testing.T) {
+	t.Run("tag-scoped: --tag + ungrouped, mirroring the real per-identity pass", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo",
+			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, "container:plex")
+		want := []string{"-r", "/repo", "forget", "--dry-run", "--no-lock", "--json",
+			"--tag", "container:plex", "--group-by", "", "--keep-last", "5"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("legacy repo-wide pass: paths grouping, only set dimensions", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo",
+			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, "")
+		want := []string{"-r", "/repo", "forget", "--dry-run", "--no-lock", "--json",
+			"--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted adds insecure flag, full policy", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo",
+			RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
+			Mode{Encrypted: false}, "vm:win11")
+		want := []string{"-r", "/repo", "forget", "--insecure-no-password", "--dry-run", "--no-lock", "--json",
+			"--tag", "vm:win11", "--group-by", "",
+			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	// The negative half is the important one: --prune would turn a cheap
+	// question into a full index read over the network, and --retry-lock is
+	// meaningless once nothing is locked.
+	t.Run("never prunes, never waits for a lock, always both dry-run and no-lock", func(t *testing.T) {
+		got := ForgetPreviewArgs("/repo", RetentionPolicy{KeepLast: 1}, Mode{Encrypted: true}, "flash")
+		var dryRun, noLock bool
+		for _, a := range got {
+			switch a {
+			case "--prune":
+				t.Fatalf("a preview must never prune, got %v", got)
+			case "--retry-lock":
+				t.Fatalf("a preview takes no lock, so it must not wait for one, got %v", got)
+			case "--dry-run":
+				dryRun = true
+			case "--no-lock":
+				noLock = true
+			}
+		}
+		if !dryRun || !noLock {
+			t.Fatalf("restic 0.17.3 locks exclusively unless --dry-run AND --no-lock are both present, got %v", got)
+		}
+	})
+}
+
 // TestForgetArgs pins that ForgetArgs (forgetting specific snapshot IDs, as
 // opposed to the keep-policy sweep in ForgetPolicyArgs) also carries
 // --retry-lock so a transient cross-process/cross-domain lock on the repo is
