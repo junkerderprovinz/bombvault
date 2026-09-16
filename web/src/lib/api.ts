@@ -3726,3 +3726,32 @@ export type CoverageReport = {
 export function getCoverage(): Promise<OkEnvelope & { coverage: CoverageReport }> {
   return fetchJSON("/api/coverage");
 }
+
+/** An SMB or WebDAV destination as the form describes it. */
+export type RcloneRemoteForm = {
+  name: string;
+  type: "smb" | "webdav";
+  host?: string;
+  share?: string;
+  url?: string;
+  vendor?: string;
+  user: string;
+  password: string;
+};
+
+/**
+ * POST /api/offsite/rclone-remote — store an SMB or WebDAV destination.
+ *
+ * The password is obscured server-side by rclone itself and never stored in
+ * the clear. On success the answer carries the finished repository location to
+ * paste into a backup path, because "name:share/path" is the shape that goes
+ * wrong quietly.
+ */
+export function addRcloneRemote(
+  form: RcloneRemoteForm
+): Promise<OkEnvelope & { location?: string }> {
+  return fetchJSON("/api/offsite/rclone-remote", {
+    method: "POST",
+    body: JSON.stringify(form),
+  });
+}
