@@ -511,6 +511,7 @@ const ro: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) este un instrument mic și modern de criptare a fișierelor, o alternativă mai simplă la GPG pentru sigilarea unui fișier către unul sau mai mulți destinatari.",
   "export.encrypt.enable": "Criptează exporturile cu age",
   "export.encrypt.enableHint": "Când este activat, exporturile de container, VM și flash sunt sigilate cu age înainte de a fi scrise pe disc și primesc sufixul .age.",
+  "export.encrypt.kitSealed": "Kitul de recuperare este și el sigilat și ajunge ca bombvault-recovery-kit.md.age. Rămâne text lizibil (armură ASCII), deci poate fi în continuare lipit într-un manager de parole sau tipărit, dar ai nevoie de cheia ta privată age ca să îl deschizi: păstrează acea cheie undeva care nu depinde de kitul însuși.",
   "export.encrypt.recipients": "Destinatari age",
   "export.encrypt.recipientsHint": "Un destinatar pe linie. Folosește o cheie publică age (age1...) sau o cheie publică SSH. Cheia privată corespunzătoare este necesară pentru decriptare în afara serverului. Cu criptarea activată și fără un destinatar valid, exportul eșuează în loc să scrie text în clar.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

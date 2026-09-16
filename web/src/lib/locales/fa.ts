@@ -1062,6 +1062,7 @@ const fa: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) یک ابزار رمزنگاری فایل کوچک و مدرن است، جایگزینی ساده‌تر برای GPG جهت بستن یک فایل برای یک یا چند گیرنده.",
   "export.encrypt.enable": "رمزنگاری خروجی‌ها با age",
   "export.encrypt.enableHint": "وقتی روشن است، خروجی‌های کانتینر، ماشین مجازی و فلش پیش از نوشته شدن روی دیسک با age بسته می‌شوند و پسوند .age می‌گیرند.",
+  "export.encrypt.kitSealed": "کیت بازیابی هم بسته می‌شود و با نام bombvault-recovery-kit.md.age می‌رسد. متن آن خوانا می‌ماند (ASCII armor)، پس همچنان می‌توان آن را در مدیر رمز عبور چسباند یا چاپ کرد، اما برای باز کردنش به کلید خصوصی age خود نیاز دارید: آن کلید را جایی نگه دارید که به خود کیت وابسته نباشد.",
   "export.encrypt.recipients": "گیرندگان age",
   "export.encrypt.recipientsHint": "یک گیرنده در هر خط. از یک کلید عمومی age (age1...) یا یک کلید عمومی SSH استفاده کنید. برای رمزگشایی خارج از دستگاه، کلید خصوصی متناظر لازم است. با روشن بودن رمزنگاری و بدون گیرنده معتبر، خروجی‌گیری به‌جای نوشتن متن ساده، شکست می‌خورد.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

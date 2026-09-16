@@ -506,6 +506,7 @@ const pl: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) to małe, nowoczesne narzędzie do szyfrowania plików, prostsza alternatywa dla GPG do zapieczętowania pliku dla jednego lub wielu odbiorców.",
   "export.encrypt.enable": "Szyfruj eksporty za pomocą age",
   "export.encrypt.enableHint": "Gdy włączone, eksporty kontenera, VM i flash są pieczętowane za pomocą age przed zapisem na dysk i otrzymują przyrostek .age.",
+  "export.encrypt.kitSealed": "Zestaw odzyskiwania też jest pieczętowany i trafia do Ciebie jako bombvault-recovery-kit.md.age. Pozostaje czytelnym tekstem (pancerz ASCII), więc nadal można go wkleić do menedżera haseł lub wydrukować, ale do jego otwarcia potrzebny jest Twój klucz prywatny age: przechowuj ten klucz tam, gdzie nie zależy on od samego zestawu.",
   "export.encrypt.recipients": "Odbiorcy age",
   "export.encrypt.recipientsHint": "Jeden odbiorca na wiersz. Użyj klucza publicznego age (age1...) lub klucza publicznego SSH. Do odszyfrowania poza serwerem potrzebny jest pasujący klucz prywatny. Przy włączonym szyfrowaniu i braku prawidłowego odbiorcy eksport kończy się błędem zamiast zapisać tekst jawny.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

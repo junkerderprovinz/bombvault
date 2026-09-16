@@ -7,6 +7,7 @@
 package ageseal
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"strings"
 
 	"filippo.io/age"
+	"filippo.io/age/armor"
 )
 
 // ParseRecipients parses a whitespace/newline-separated list of age recipients.
@@ -92,4 +94,37 @@ func EncryptFile(srcPath, dstPath string, recipients []age.Recipient) (err error
 		return err
 	}
 	return dst.Close()
+}
+
+// SealArmored encrypts plain to recipients and returns ASCII-armored ciphertext
+// (the "-----BEGIN AGE ENCRYPTED FILE-----" form).
+//
+// Armored rather than binary because of where the sealed artifact goes. The
+// recovery kit's whole job is to survive the machine: it gets pasted into a
+// password manager, printed, or typed out from a photo. A binary blob is
+// technically sealed and practically unusable for all three, while armored text
+// survives copy-paste, email and a printer.
+//
+// It errors on an empty recipient set for the same reason WrapWriter does: a
+// caller that asked for encryption must never receive plaintext back.
+func SealArmored(plain []byte, recipients []age.Recipient) ([]byte, error) {
+	if len(recipients) == 0 {
+		return nil, errors.New("ageseal: no recipients")
+	}
+	var out bytes.Buffer
+	aw := armor.NewWriter(&out)
+	w, err := age.Encrypt(aw, recipients...)
+	if err != nil {
+		return nil, fmt.Errorf("ageseal: encrypt: %w", err)
+	}
+	if _, err := w.Write(plain); err != nil {
+		return nil, fmt.Errorf("ageseal: write: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("ageseal: finalize: %w", err)
+	}
+	if err := aw.Close(); err != nil {
+		return nil, fmt.Errorf("ageseal: finalize armor: %w", err)
+	}
+	return out.Bytes(), nil
 }

@@ -514,6 +514,7 @@ const hu: Partial<Translations> = {
   "export.encrypt.ageInfo": "Az age (age-encryption.org) egy kicsi, modern fájltitkosító eszköz: egyszerűbb alternatíva a GPG-nek egy fájl egy vagy több címzett számára történő lezárásához.",
   "export.encrypt.enable": "Exportok titkosítása age-dzsel",
   "export.encrypt.enableHint": "Ha be van kapcsolva, a konténer-, VM- és flash-exportok age-dzsel lezárásra kerülnek, mielőtt lemezre írnák őket, és .age kiterjesztést kapnak.",
+  "export.encrypt.kitSealed": "A helyreállítási csomag is lezárásra kerül, és bombvault-recovery-kit.md.age néven érkezik. Olvasható szöveg marad (ASCII armor), így továbbra is beilleszthető egy jelszókezelőbe vagy kinyomtatható, de a megnyitásához szükséged lesz a privát age kulcsodra: tartsd ezt a kulcsot olyan helyen, ami nem függ magától a csomagtól.",
   "export.encrypt.recipients": "age címzettek",
   "export.encrypt.recipientsHint": "Soronként egy címzett. Használj age nyilvános kulcsot (age1...) vagy SSH nyilvános kulcsot. A szerveren kívüli visszafejtéshez a hozzá tartozó privát kulcs szükséges. Ha a titkosítás be van kapcsolva és nincs érvényes címzett, az export hibával leáll ahelyett, hogy sima szöveget írna.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

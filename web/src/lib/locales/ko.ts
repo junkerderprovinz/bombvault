@@ -510,6 +510,7 @@ const ko: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) 는 작고 현대적인 파일 암호화 도구입니다. 하나 이상의 수신자를 위해 파일을 봉인하는, GPG보다 더 간단한 대안입니다.",
   "export.encrypt.enable": "age 로 내보내기 암호화",
   "export.encrypt.enableHint": "켜면 컨테이너, VM, 플래시 내보내기가 디스크에 기록되기 전에 age 로 봉인되고 .age 접미사가 붙습니다.",
+  "export.encrypt.kitSealed": "복구 키트도 함께 봉인되어 bombvault-recovery-kit.md.age 로 전달됩니다. 읽을 수 있는 텍스트(ASCII 아머)로 남아 있어 비밀번호 관리자에 붙여넣거나 인쇄할 수 있지만, 열려면 age 개인 키가 필요합니다. 그 키는 키트 자체에 의존하지 않는 곳에 보관하세요.",
   "export.encrypt.recipients": "age 수신자",
   "export.encrypt.recipientsHint": "한 줄에 수신자 하나. age 공개 키 (age1...) 또는 SSH 공개 키를 사용하세요. 서버 밖에서 복호화하려면 해당 개인 키가 필요합니다. 암호화가 켜져 있고 유효한 수신자가 없으면 내보내기는 평문을 쓰는 대신 실패합니다.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

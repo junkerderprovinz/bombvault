@@ -508,6 +508,7 @@ const nl: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) is een klein, modern bestandsversleutelingsprogramma, een eenvoudiger alternatief voor GPG om een bestand voor een of meer ontvangers te verzegelen.",
   "export.encrypt.enable": "Exports versleutelen met age",
   "export.encrypt.enableHint": "Indien aan worden container-, VM- en flash-exports met age verzegeld voordat ze naar schijf worden geschreven, en krijgen ze een .age-achtervoegsel.",
+  "export.encrypt.kitSealed": "De herstelkit wordt ook verzegeld en komt binnen als bombvault-recovery-kit.md.age. Hij blijft leesbare tekst (ASCII-armor), dus je kunt hem nog steeds in een wachtwoordmanager plakken of afdrukken, maar je hebt je age-privésleutel nodig om hem te openen: bewaar die sleutel ergens dat niet van de kit zelf afhangt.",
   "export.encrypt.recipients": "age-ontvangers",
   "export.encrypt.recipientsHint": "Eén ontvanger per regel. Gebruik een age-publieke sleutel (age1...) of een SSH-publieke sleutel. De bijbehorende privésleutel is nodig om buiten de server te ontsleutelen. Met versleuteling aan en geen geldige ontvanger mislukt de export in plaats van platte tekst te schrijven.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

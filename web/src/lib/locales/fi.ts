@@ -514,6 +514,7 @@ const fi: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org) on pieni, moderni tiedostojen salaustyökalu, yksinkertaisempi vaihtoehto GPG:lle tiedoston sinetöimiseen yhdelle tai useammalle vastaanottajalle.",
   "export.encrypt.enable": "Salaa viennit age:lla",
   "export.encrypt.enableHint": "Kun päällä, kontin, virtuaalikoneen ja flashin viennit sinetöidään age:lla ennen levylle kirjoittamista, ja ne saavat .age-päätteen.",
+  "export.encrypt.kitSealed": "Myös palautuspaketti sinetöidään, ja se saapuu nimellä bombvault-recovery-kit.md.age. Se pysyy luettavana tekstinä (ASCII armor), joten sen voi edelleen liittää salasanojen hallintaan tai tulostaa, mutta avaamiseen tarvitset yksityisen age-avaimesi: säilytä avain paikassa, joka ei riipu itse paketista.",
   "export.encrypt.recipients": "age-vastaanottajat",
   "export.encrypt.recipientsHint": "Yksi vastaanottaja riviä kohti. Käytä age-julkista avainta (age1...) tai SSH-julkista avainta. Vastaava yksityinen avain tarvitaan salauksen purkuun palvelimen ulkopuolella. Jos salaus on päällä eikä kelvollista vastaanottajaa ole, vienti epäonnistuu selkokielisen tekstin kirjoittamisen sijaan.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",

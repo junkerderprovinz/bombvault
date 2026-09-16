@@ -514,6 +514,7 @@ const tr: Partial<Translations> = {
   "export.encrypt.ageInfo": "age (age-encryption.org), küçük ve modern bir dosya şifreleme aracıdır. Bir dosyayı bir veya daha fazla alıcı için mühürlemek üzere GPG'ye göre daha basit bir alternatiftir.",
   "export.encrypt.enable": "Dışa aktarmaları age ile şifrele",
   "export.encrypt.enableHint": "Açıkken konteyner, VM ve flash dışa aktarmaları diske yazılmadan önce age ile mühürlenir ve .age uzantısı alır.",
+  "export.encrypt.kitSealed": "Kurtarma kiti de mühürlenir ve bombvault-recovery-kit.md.age olarak gelir. Okunabilir metin olarak kalır (ASCII armor), yani hâlâ bir parola yöneticisine yapıştırılabilir veya yazdırılabilir, ancak açmak için age özel anahtarınız gerekir: o anahtarı kitin kendisine bağlı olmayan bir yerde saklayın.",
   "export.encrypt.recipients": "age alıcıları",
   "export.encrypt.recipientsHint": "Her satıra bir alıcı. Bir age genel anahtarı (age1...) veya bir SSH genel anahtarı kullanın. Sunucu dışında şifre çözmek için eşleşen özel anahtar gerekir. Şifreleme açıkken ve geçerli alıcı yoksa, dışa aktarma düz metin yazmak yerine başarısız olur.",
   "export.encrypt.recipientsPlaceholder": "age1qz...\nssh-ed25519 AAAA...",
