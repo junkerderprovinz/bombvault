@@ -35,8 +35,10 @@ type fakeVM struct {
 	snapshotErr     error
 	blockcommitErr  error
 	guestAgent      bool
-	freezeOnQuiesce bool   // fail a quiesced snapshot with a freeze error (then a no-quiesce retry succeeds)
-	snapshotQuiesce []bool // records the quiesce arg of each SnapshotCreateDiskOnly call
+	freezeOnQuiesce bool    // fail a quiesced snapshot with a freeze error (then a no-quiesce retry succeeds)
+	snapshotQuiesce []bool  // records the quiesce arg of each SnapshotCreateDiskOnly call
+	startCtxErrs    []error // ctx.Err() at every Start, for the cancelled-backup restart test
+	commitCtxErrs   []error // ctx.Err() at every BlockCommitActivePivot, same purpose
 }
 
 func (f *fakeVM) State(_ context.Context, name string) (string, error) {
@@ -64,8 +66,9 @@ func (f *fakeVM) Destroy(_ context.Context, name string) error {
 	return f.destroyErr
 }
 
-func (f *fakeVM) Start(_ context.Context, name string) error {
+func (f *fakeVM) Start(ctx context.Context, name string) error {
 	f.log = append(f.log, "start:"+name)
+	f.startCtxErrs = append(f.startCtxErrs, ctx.Err())
 	return f.startErr
 }
 
@@ -98,8 +101,9 @@ func (f *fakeVM) SnapshotCreateDiskOnly(_ context.Context, name, _ string, quies
 	return f.snapshotErr
 }
 
-func (f *fakeVM) BlockCommitActivePivot(_ context.Context, name, device string) error {
+func (f *fakeVM) BlockCommitActivePivot(ctx context.Context, name, device string) error {
 	f.log = append(f.log, "blockcommit:"+name+":"+device)
+	f.commitCtxErrs = append(f.commitCtxErrs, ctx.Err())
 	return f.blockcommitErr
 }
 

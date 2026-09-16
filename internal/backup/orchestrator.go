@@ -408,13 +408,21 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// depends_on ordering.
 		var stoppedDeps []StopContainer
 
+		// The restart runs on a context the run's cancellation does not reach.
+		// Cancel, BACKUP_MAX_HOURS and shutdown all end ctx, and the Docker SDK
+		// refuses a request on a done context at once, so a restart on ctx left
+		// every container stopped for its backup stopped for good: cancelling a
+		// backup took the app down. Each step below is bounded on its own
+		// (runningWaitTimeout, the per-container health timeout).
+		restartCtx := context.WithoutCancel(ctx)
+
 		// The restart is split across TWO defers so a dependency is NEVER left
 		// stopped. This one is registered FIRST, so it runs LAST on unwind: it always
 		// brings the stopped dependents back (in compose depends_on order, optionally
 		// health-gated — see restartStoppedDeps), even if the target-restart/hook
 		// defer below fails or panics. It is the "never leave a dep stopped" guard.
 		defer func() {
-			restartStoppedDeps(ctx, d, stoppedDeps)
+			restartStoppedDeps(restartCtx, d, stoppedDeps)
 		}()
 
 		// Registered SECOND, so it runs FIRST on unwind. Order matters: bring the
@@ -432,11 +440,11 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		defer func() {
 			targetUp := false
 			if d.WasRunning {
-				if startErr := d.Docker.Start(ctx, d.ContainerRef); startErr != nil {
+				if startErr := d.Docker.Start(restartCtx, d.ContainerRef); startErr != nil {
 					if backupErr == nil {
 						backupErr = fmt.Errorf("backup: restart container: %w", startErr)
 					}
-				} else if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+				} else if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
 					if backupErr == nil {
 						backupErr = fmt.Errorf("backup: wait container running: %w", waitErr)
 					}
@@ -449,7 +457,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 				// The hook may have recreated the target (stop/remove/create+start);
 				// re-wait so it is Running before its netns dependents are restarted.
 				if targetUp {
-					if waitErr := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
+					if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
 						log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, waitErr)
 					}
 				}
