@@ -460,6 +460,10 @@ const pt: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenção de instantâneos",
   "settings.retentionHint": "Quantos backups manter por item. Após cada backup, o restic elimina os instantâneos mais antigos segundo esta política. Tudo a zero = manter tudo (desativado).",
+  "diagnostics.heading": "Pacote de suporte",
+  "diagnostics.hint": "Um ficheiro ZIP depurado para um relatório de erro: a verificação de integração com o host, a sua configuração com todos os segredos removidos, as execuções recentes, o que está agendado a seguir e o registo recente. Não é uma cópia de segurança da configuração e não pode ser usado para restaurar. Requer uma palavra-passe de acesso, porque transporta toda a sua configuração.",
+  "diagnostics.button": "Descarregar diagnóstico",
+  "diagnostics.busy": "A recolher…",
   "retentionPreview.title": "O que a próxima execução iria remover",
   "retentionPreview.hint": "A retenção diz-lhe o que mantém. Isto mostra o que está prestes a eliminar, antes de acontecer. Nada é alterado e nenhum repositório é bloqueado, por isso responde mesmo enquanto um backup está a decorrer.",
   "retentionPreview.domain": "Tipo de backup",

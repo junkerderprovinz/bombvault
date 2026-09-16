@@ -397,6 +397,10 @@ const sk: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Uchovávanie snímok",
   "settings.retentionHint": "Koľko záloh sa má uchovávať pre každú položku. Po každej zálohe restic podľa tejto zásady vyčistí staršie snímky. Všetko nula = uchovať všetko (vypnuté).",
+  "diagnostics.heading": "Balík podpory",
+  "diagnostics.hint": "Očistený súbor ZIP pre hlásenie chyby: kontrola integrácie hostiteľa, vaša konfigurácia so všetkými odstránenými tajomstvami, nedávne behy, čo je naplánované ďalej, a nedávny denník. Nie je to záloha konfigurácie a nedá sa z nej nič obnoviť. Vyžaduje prihlasovacie heslo, pretože obsahuje celú vašu konfiguráciu.",
+  "diagnostics.button": "Stiahnuť diagnostiku",
+  "diagnostics.busy": "Zbiera sa…",
   "retentionPreview.title": "Čo by ďalší beh odstránil",
   "retentionPreview.hint": "Uchovávanie vám povie, čo si ponechá. Toto ukazuje, čo sa chystá odstrániť, ešte predtým, než sa to stane. Nič sa nemení a žiadny repozitár sa nezamyká, takže odpovie aj počas prebiehajúcej zálohy.",
   "retentionPreview.domain": "Typ zálohy",

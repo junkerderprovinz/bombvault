@@ -460,6 +460,10 @@ const vi: Partial<Translations> = {
 
   "settings.retentionTitle": "Lưu giữ ảnh chụp nhanh",
   "settings.retentionHint": "Số bản sao lưu cần giữ cho mỗi mục. Sau mỗi lần sao lưu, restic sẽ dọn các snapshot cũ theo chính sách này. Tất cả bằng 0 = giữ tất cả (tắt).",
+  "diagnostics.heading": "Gói hỗ trợ",
+  "diagnostics.hint": "Tệp ZIP đã lược bỏ thông tin nhạy cảm để gửi kèm báo cáo lỗi: kiểm tra tích hợp máy chủ, cấu hình của bạn với mọi bí mật đã được gỡ bỏ, các lần chạy gần đây, việc tiếp theo trong lịch trình và nhật ký gần đây. Đây không phải bản sao lưu cấu hình và không thể khôi phục từ nó. Cần mật khẩu đăng nhập, vì tệp mang toàn bộ cấu hình của bạn.",
+  "diagnostics.button": "Tải chẩn đoán",
+  "diagnostics.busy": "Đang thu thập…",
   "retentionPreview.title": "Những gì lần chạy tới sẽ xóa",
   "retentionPreview.hint": "Lưu giữ cho bạn biết nó giữ lại những gì. Phần này cho thấy nó sắp xóa những gì, trước khi điều đó xảy ra. Không có gì bị thay đổi và không kho lưu trữ nào bị khóa, nên nó vẫn trả lời được ngay cả khi một bản sao lưu đang chạy.",
   "retentionPreview.domain": "Loại sao lưu",

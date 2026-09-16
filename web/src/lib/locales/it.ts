@@ -463,6 +463,10 @@ const it: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Conservazione degli snapshot",
   "settings.retentionHint": "Quanti backup conservare per elemento. Dopo ogni backup, restic elimina gli snapshot più vecchi secondo questa regola. Tutto a zero = conserva tutto (disattivato).",
+  "diagnostics.heading": "Pacchetto di supporto",
+  "diagnostics.hint": "Uno ZIP oscurato per una segnalazione di bug: la verifica integrazione host, la tua configurazione senza alcun segreto, le esecuzioni recenti, cosa è pianificato dopo e il log recente. Non è un backup della configurazione e non consente di ripristinare nulla. Richiede la password di accesso, perché contiene tutta la tua configurazione.",
+  "diagnostics.button": "Scarica la diagnostica",
+  "diagnostics.busy": "Raccolta in corso…",
   "retentionPreview.title": "Cosa rimuoverebbe la prossima esecuzione",
   "retentionPreview.hint": "La conservazione ti dice cosa mantiene. Questo mostra cosa sta per eliminare, prima che accada. Non cambia nulla e non blocca alcun repository, quindi risponde anche mentre un backup è in corso.",
   "retentionPreview.domain": "Tipo di backup",

@@ -460,6 +460,10 @@ const ro: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenția instantaneelor",
   "settings.retentionHint": "Câte copii de rezervă să se păstreze per element. După fiecare backup, restic curăță instantaneele mai vechi conform acestei politici. Toate zero = păstrează tot (oprit).",
+  "diagnostics.heading": "Pachet de asistență",
+  "diagnostics.hint": "O arhivă ZIP curățată pentru un raport de eroare: verificarea integrării cu gazda, configurația ta cu toate secretele eliminate, rulările recente, ce este programat în continuare și jurnalul recent. Nu este o copie de rezervă a configurației și nu se poate restaura nimic din ea. Necesită o parolă de autentificare, pentru că poartă întreaga ta configurație.",
+  "diagnostics.button": "Descarcă diagnosticele",
+  "diagnostics.busy": "Se colectează…",
   "retentionPreview.title": "Ce ar șterge următoarea rulare",
   "retentionPreview.hint": "Retenția îți spune ce păstrează. Aici vezi ce urmează să șteargă, înainte să se întâmple. Nu se modifică nimic și niciun depozit nu este blocat, așa că răspunde chiar și în timp ce rulează o copie de rezervă.",
   "retentionPreview.domain": "Tip de copie de rezervă",

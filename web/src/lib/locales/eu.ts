@@ -397,6 +397,10 @@ const eu: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Argazkien mantentzea",
   "settings.retentionHint": "Elementu bakoitzeko zenbat babeskopia gorde. Babeskopia bakoitzaren ondoren, restic-ek argazki zaharrenak politika honen arabera garbitzen ditu. Denak 0 = gorde dena (itzalita).",
+  "diagnostics.heading": "Laguntza-paketea",
+  "diagnostics.hint": "Akats-txosten baterako ZIP garbitua: ostalariaren integrazio-egiaztapena, zure konfigurazioa sekretu guztiak kenduta, azken exekuzioak, hurrengo zer dagoen programatuta, eta azken erregistroa. Ez da konfigurazioaren babeskopia bat, eta ezin da hortik ezer berrezarri. Saioa hasteko pasahitza behar du, zure konfigurazio osoa daramalako.",
+  "diagnostics.button": "Deskargatu diagnostikoak",
+  "diagnostics.busy": "Biltzen…",
   "retentionPreview.title": "Hurrengo exekuzioak zer kenduko lukeen",
   "retentionPreview.hint": "Mantentzeak zer gordetzen duen esaten dizu. Honek zer ezabatzera doan erakusten du, gertatu aurretik. Ez da ezer aldatzen eta ez da biltegirik blokeatzen, beraz babeskopia bat exekutatzen ari den bitartean ere erantzuten du.",
   "retentionPreview.domain": "Babeskopia mota",

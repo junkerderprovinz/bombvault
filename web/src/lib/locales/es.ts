@@ -463,6 +463,10 @@ const es: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cuántas copias conservar por elemento. Tras cada copia, restic poda las instantáneas más antiguas según esta política. Todo a cero = conservar todo (desactivado).",
+  "diagnostics.heading": "Paquete de soporte",
+  "diagnostics.hint": "Un ZIP depurado para un informe de error: la comprobación de integración con el host, tu configuración con todos los secretos eliminados, las ejecuciones recientes, lo que está programado a continuación y el registro reciente. No es una copia de seguridad de la configuración y no se puede restaurar a partir de él. Necesita una contraseña de acceso, porque lleva toda tu configuración.",
+  "diagnostics.button": "Descargar diagnósticos",
+  "diagnostics.busy": "Recopilando…",
   "retentionPreview.title": "Lo que eliminaría la próxima ejecución",
   "retentionPreview.hint": "La retención te dice lo que conserva. Esto muestra lo que está a punto de borrar, antes de que ocurra. No se cambia nada ni se bloquea ningún repositorio, así que responde incluso mientras se ejecuta una copia.",
   "retentionPreview.domain": "Tipo de copia",

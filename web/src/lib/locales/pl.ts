@@ -455,6 +455,10 @@ const pl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Przechowywanie migawek",
   "settings.retentionHint": "Ile kopii zapasowych zachować dla każdego elementu. Po każdej kopii restic usuwa starsze migawki zgodnie z tą zasadą. Wszystkie zero = zachowaj wszystko (wyłączone).",
+  "diagnostics.heading": "Pakiet wsparcia",
+  "diagnostics.hint": "Oczyszczony plik ZIP do zgłoszenia błędu: sprawdzenie integracji z hostem, Twoja konfiguracja z usuniętymi wszystkimi sekretami, ostatnie uruchomienia, co jest zaplanowane jako następne, oraz najnowszy dziennik. To nie jest kopia zapasowa konfiguracji i nie da się z niej niczego przywrócić. Wymaga hasła logowania, ponieważ zawiera całą Twoją konfigurację.",
+  "diagnostics.button": "Pobierz diagnostykę",
+  "diagnostics.busy": "Zbieranie…",
   "retentionPreview.title": "Co usunęłoby następne uruchomienie",
   "retentionPreview.hint": "Retencja mówi, co zostaje zachowane. To pokazuje, co zaraz zostanie usunięte, zanim to nastąpi. Nic nie jest zmieniane i żadne repozytorium nie jest blokowane, więc odpowiada nawet w trakcie trwającej kopii zapasowej.",
   "retentionPreview.domain": "Typ kopii zapasowej",

@@ -397,6 +397,10 @@ const lv: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Momentuzņēmumu saglabāšana",
   "settings.retentionHint": "Cik rezerves kopiju saglabāt katram vienumam. Pēc katras rezerves kopijas restic pēc šīs politikas iztīra vecākus momentuzņēmumus. Viss uz nulli = saglabāt visu (izslēgts).",
+  "diagnostics.heading": "Atbalsta komplekts",
+  "diagnostics.hint": "Anonimizēts ZIP fails kļūdas ziņojumam: saimniekdatora integrācijas pārbaude, jūsu konfigurācija bez jebkādiem noslēpumiem, nesenie izpildījumi, kas ieplānots tālāk, un nesenais žurnāls. Tā nav konfigurācijas rezerves kopija, un no tās nevar atjaunot. Nepieciešama pieteikšanās parole, jo tajā ir visa jūsu konfigurācija.",
+  "diagnostics.button": "Lejupielādēt diagnostiku",
+  "diagnostics.busy": "Apkopo…",
   "retentionPreview.title": "Ko noņemtu nākamā izpilde",
   "retentionPreview.hint": "Saglabāšanas iestatījumi norāda, kas tiek paturēts. Šeit redzams, ko tā gatavojas dzēst, pirms tas notiek. Nekas netiek mainīts un neviens repozitorijs netiek bloķēts, tāpēc atbildi saņemsiet arī tad, kad notiek rezerves kopēšana.",
   "retentionPreview.domain": "Rezerves kopijas veids",
