@@ -49,6 +49,12 @@ type fakeDocker struct {
 	healthSeq map[string][]model.Health
 	// healthErr scripts a Health inspect error per name (graceful-degradation test).
 	healthErr map[string]error
+
+	// startCtxErrs and waitCtxErrs record ctx.Err() at every Start / WaitRunning,
+	// so a test can prove the restart after a cancelled backup did not inherit
+	// the cancellation (the real SDK fails at once on a done context).
+	startCtxErrs []error
+	waitCtxErrs  []error
 }
 
 func (d *fakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
@@ -56,14 +62,16 @@ func (d *fakeDocker) Stop(_ context.Context, name string, _ time.Duration) error
 	return d.stopErr
 }
 
-func (d *fakeDocker) Start(_ context.Context, name string) error {
+func (d *fakeDocker) Start(ctx context.Context, name string) error {
 	d.log = append(d.log, "start:"+name)
+	d.startCtxErrs = append(d.startCtxErrs, ctx.Err())
 	d.started = true
 	return d.startErr
 }
 
-func (d *fakeDocker) WaitRunning(_ context.Context, name string, _ time.Duration) error {
+func (d *fakeDocker) WaitRunning(ctx context.Context, name string, _ time.Duration) error {
 	d.log = append(d.log, "waitRunning:"+name)
+	d.waitCtxErrs = append(d.waitCtxErrs, ctx.Err())
 	return d.waitRunningErr
 }
 
@@ -135,6 +143,8 @@ type fakeRestic struct {
 	capturedPaths    []string
 	capturedExcludes []string // --exclude args passed to the last Backup call
 	capturedTags     []string // tags passed to the last Backup call
+	// onBackup runs inside Backup, e.g. to cancel the run's context mid-backup.
+	onBackup func()
 }
 
 func (r *fakeRestic) VerifySnapshot(_ context.Context, repo, snapshotID string) error {
@@ -146,6 +156,9 @@ func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string
 	r.log = append(r.log, "backup:"+repo+":"+strings.Join(paths, ",")+":"+strings.Join(tags, ","))
 	r.capturedExcludes = excludes
 	r.capturedTags = tags
+	if r.onBackup != nil {
+		r.onBackup()
+	}
 	if r.backupErr != nil {
 		return backup.Summary{}, r.backupErr
 	}

@@ -421,7 +421,9 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			if !wasRunning {
 				return
 			}
-			if startErr := d.VM.Start(ctx, d.Name); startErr != nil && backupErr == nil {
+			// Not ctx: a cancelled or timed-out backup ends ctx, and a start on a
+			// done context is refused at once, which left the VM shut off.
+			if startErr := d.VM.Start(context.WithoutCancel(ctx), d.Name); startErr != nil && backupErr == nil {
 				backupErr = fmt.Errorf("vm backup: restart vm: %w", startErr)
 			}
 		}()
@@ -546,9 +548,12 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	// ALWAYS commit EVERY overlay back, even if the backup failed, so no disk keeps
 	// diverging on an uncommitted overlay. Attempt all devices; report the first
 	// failure (the VM keeps running on its overlay either way — no data lost).
+	// Not ctx: a cancelled or timed-out backup ends ctx, a commit on a done
+	// context is refused at once, and the VM would stay on its overlay.
 	var commitErr error
+	commitCtx := context.WithoutCancel(ctx)
 	for _, dev := range commitDevs {
-		if cErr := d.VM.BlockCommitActivePivot(ctx, d.Name, dev); cErr != nil && commitErr == nil {
+		if cErr := d.VM.BlockCommitActivePivot(commitCtx, d.Name, dev); cErr != nil && commitErr == nil {
 			commitErr = cErr
 		}
 	}
