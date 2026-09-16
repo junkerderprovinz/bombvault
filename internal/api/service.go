@@ -118,6 +118,11 @@ type ResticEngine interface {
 	// to the repo-wide paths-grouped pass. prune reclaims freed space in the
 	// same run; batch callers pass false and Prune once at the end.
 	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error
+	// ForgetPreview reports what ForgetPolicy WOULD remove for the same policy
+	// and tag, without changing the repository and without taking a lock, so it
+	// can answer while a backup is running. Inert when the policy has no
+	// dimension set, for the same reason ForgetPolicy is.
+	ForgetPreview(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string) ([]restic.ForgetGroup, error)
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
 	// LsStream lists a snapshot's nodes like Ls but hands each entry to onEntry
@@ -1823,6 +1828,44 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 		return "former:" + tag, false
 	}
 	return tag, false
+}
+
+// previewRetentionPerIdentity is the read-only twin of
+// applyRetentionPerIdentity: it reports what that pass WOULD remove, asking the
+// same question in the same shape — one tag-scoped preview per identity, with
+// the same repo-wide fallback when the listing fails or carries no identity
+// tags. Mirroring it is the whole point. A single repo-wide dry run is cheaper
+// and answers a DIFFERENT question: it would show removals that never happen
+// and hide ones that do, because the per-identity pass is what actually runs.
+//
+// It deliberately does not go through forgetWithLockHeal. That helper's first
+// act is unlockStale, which DELETES lock files — a preview must never write to
+// a repository, least of all one another process is holding.
+//
+// One failing identity does not blank the answer: the remaining tags are still
+// previewed and the failures come back alongside the groups that succeeded, so
+// an operator learns about the repositories that answered instead of seeing a
+// bare error for all of them.
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, error) {
+	if !p.Any() {
+		return nil, nil
+	}
+	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	tags := identityTags(snaps)
+	if err != nil || len(tags) == 0 {
+		return s.engine.ForgetPreview(ctx, repo, p, mode, "")
+	}
+	var out []restic.ForgetGroup
+	var errs []error
+	for _, tag := range tags {
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, tag)
+		if pErr != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", tag, pErr))
+			continue
+		}
+		out = append(out, groups...)
+	}
+	return out, errors.Join(errs...)
 }
 
 // notifyRetentionFailed sends a best-effort alert when the post-backup
