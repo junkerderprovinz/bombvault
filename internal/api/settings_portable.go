@@ -109,14 +109,30 @@ func locationRedacted(loc string) bool {
 }
 
 // redactExportLocations strips URL-embedded credentials out of every repo
-// location the envelope carries: the five per-domain off-site locations in the
-// settings block and each off-site target's repo.
+// location the envelope carries: the five per-domain BACKUP PATHS, the five
+// per-domain off-site locations, and each off-site target's or named
+// repository's repo.
+//
+// The backup paths belong here for a reason that is easy to miss, because they
+// are called paths: a domain path may itself BE a restic remote. resolveRepo
+// hands "b2:…", "s3:…", "sftp:…", "rest:…" and "rclone:…" to restic verbatim
+// (see itemRepoPath's note in service.go), and restic accepts
+// rest:https://user:pass@host:8000/repo. So a primary location can carry a live
+// password exactly the way an off-site one can. It was scrubbed on the off-site
+// half from the start and not on this one, which put a password into the file
+// that is explicitly meant to be portable: mailed to someone, pasted into a
+// forum thread, attached to a support request.
 //
 // Applied to the PLAIN export only. The credentialed variant already hands out
 // every stored secret in the clear behind requireAuthForSecrets, so scrubbing
 // there would leave the one export that is meant to be a complete, portable copy
 // as the only one that is not.
 func redactExportLocations(exp *settingsExport) {
+	exp.Settings.ContainersPath = scrubRepoLocation(exp.Settings.ContainersPath)
+	exp.Settings.VMsPath = scrubRepoLocation(exp.Settings.VMsPath)
+	exp.Settings.FlashPath = scrubRepoLocation(exp.Settings.FlashPath)
+	exp.Settings.ConfigPath = scrubRepoLocation(exp.Settings.ConfigPath)
+	exp.Settings.FilesPath = scrubRepoLocation(exp.Settings.FilesPath)
 	exp.Settings.ContainersOffsite = scrubRepoLocation(exp.Settings.ContainersOffsite)
 	exp.Settings.VMsOffsite = scrubRepoLocation(exp.Settings.VMsOffsite)
 	exp.Settings.FlashOffsite = scrubRepoLocation(exp.Settings.FlashOffsite)
@@ -940,11 +956,17 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashEnabled = v.FlashEnabled
 	out.ConfigEnabled = v.ConfigEnabled
 	out.FilesEnabled = v.FilesEnabled
-	out.ContainersPath = v.ContainersPath
-	out.VMsPath = v.VMsPath
-	out.FlashPath = v.FlashPath
-	out.ConfigPath = v.ConfigPath
-	out.FilesPath = v.FilesPath
+	// Backup paths, via importedLocation for the same reason the off-site
+	// locations below use it: a domain path may itself be a restic remote, so a
+	// plain export can carry a stripped credential here too. Writing the marker
+	// into the live settings would point the domain at a repository nobody can
+	// open. A path that is an ordinary subpath is unaffected: it never contains
+	// the marker, so importedLocation passes it straight through.
+	out.ContainersPath = importedLocation(existing.ContainersPath, v.ContainersPath)
+	out.VMsPath = importedLocation(existing.VMsPath, v.VMsPath)
+	out.FlashPath = importedLocation(existing.FlashPath, v.FlashPath)
+	out.ConfigPath = importedLocation(existing.ConfigPath, v.ConfigPath)
+	out.FilesPath = importedLocation(existing.FilesPath, v.FilesPath)
 	out.RestoreFolder = v.RestoreFolder
 	// Off-site locations, via importedLocation: a location the plain export
 	// stripped a credential out of never overwrites a working one here.
