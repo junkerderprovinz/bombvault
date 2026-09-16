@@ -852,6 +852,65 @@ func (p RetentionPolicy) Any() bool {
 	return p.KeepLast > 0 || p.KeepDaily > 0 || p.KeepWeekly > 0 || p.KeepMonthly > 0
 }
 
+// ForgetGroup is one entry of `restic forget --json`: the snapshots a keep
+// policy would KEEP and those it would REMOVE, for one selection group. With
+// the tag-scoped, ungrouped selection BombVault uses (see ForgetPolicyArgs)
+// there is exactly one group per identity; the legacy paths-grouped pass can
+// produce several.
+//
+// restic's forget JSON also carries a "reasons" array explaining WHY each kept
+// snapshot survived. It is deliberately not modelled: nothing reads it yet, and
+// an unknown field is simply ignored on unmarshal, so adding it later is not a
+// breaking change.
+type ForgetGroup struct {
+	Tags   []string   `json:"tags"`
+	Host   string     `json:"host"`
+	Paths  []string   `json:"paths"`
+	Keep   []Snapshot `json:"keep"`
+	Remove []Snapshot `json:"remove"`
+}
+
+// parseForgetGroups reads `restic forget --json` output.
+//
+// Empty output is NOT an error: restic 0.17.3 prints the JSON array only under
+// `if gopts.JSON && len(jsonGroups) > 0`, so a policy that matches no group
+// writes nothing at all to stdout. That is the ordinary "nothing would be
+// removed" answer, and treating it as malformed would put a parse error in
+// front of the user for the most common case of all.
+func parseForgetGroups(out []byte) ([]ForgetGroup, error) {
+	if len(bytes.TrimSpace(out)) == 0 {
+		return nil, nil
+	}
+	var groups []ForgetGroup
+	if err := json.Unmarshal(out, &groups); err != nil {
+		return nil, fmt.Errorf("restic forget: parse JSON: %w", err)
+	}
+	return groups, nil
+}
+
+// keepFlags renders a policy's set dimensions as restic --keep-* flags, in a
+// fixed order so the argv is stable and testable. An unset (zero) dimension is
+// omitted rather than sent as 0, which restic would read as "keep none".
+// Shared by the real pass (ForgetPolicyArgs) and the preview
+// (ForgetPreviewArgs) so the two can never drift into answering different
+// questions.
+func keepFlags(p RetentionPolicy) []string {
+	var args []string
+	if p.KeepLast > 0 {
+		args = append(args, "--keep-last", strconv.Itoa(p.KeepLast))
+	}
+	if p.KeepDaily > 0 {
+		args = append(args, "--keep-daily", strconv.Itoa(p.KeepDaily))
+	}
+	if p.KeepWeekly > 0 {
+		args = append(args, "--keep-weekly", strconv.Itoa(p.KeepWeekly))
+	}
+	if p.KeepMonthly > 0 {
+		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
+	}
+	return args
+}
+
 // ForgetPolicyArgs returns the argv for `restic forget --keep-* [--prune]`.
 // Only the set dimensions are emitted.
 //
@@ -884,22 +943,46 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tag string, prune 
 		// host+paths — hosts vary across container incarnations (issue #17).
 		args = append(args, "--group-by", "paths")
 	}
-	if p.KeepLast > 0 {
-		args = append(args, "--keep-last", strconv.Itoa(p.KeepLast))
-	}
-	if p.KeepDaily > 0 {
-		args = append(args, "--keep-daily", strconv.Itoa(p.KeepDaily))
-	}
-	if p.KeepWeekly > 0 {
-		args = append(args, "--keep-weekly", strconv.Itoa(p.KeepWeekly))
-	}
-	if p.KeepMonthly > 0 {
-		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
-	}
+	args = append(args, keepFlags(p)...)
 	if prune {
 		args = append(args, "--prune")
 	}
 	return args
+}
+
+// ForgetPreviewArgs returns the argv for the READ-ONLY twin of
+// ForgetPolicyArgs: `restic forget --dry-run --no-lock --json --keep-*`, which
+// reports what the policy WOULD remove without removing anything. Selection
+// and keep dimensions are identical to ForgetPolicyArgs, so the preview models
+// the pass that really runs (tag-scoped and ungrouped per identity, paths-
+// grouped for the legacy repo-wide case) rather than a different question.
+//
+// --dry-run and --no-lock are only correct TOGETHER. restic 0.17.3 opens the
+// repository with openWithExclusiveLock(ctx, gopts, opts.DryRun && gopts.NoLock):
+// with --dry-run alone it still takes the EXCLUSIVE lock, so a "preview" would
+// collide with a running backup and would write lock files into a remote
+// repository merely to answer a question. --no-lock on its own is refused with
+// "--no-lock is only applicable in combination with --dry-run for forget
+// command". The same trade SnapshotsArgs (see above) already makes applies
+// here: without a lock the answer can be marginally stale if a forget races it,
+// never wrong in a way that destroys data, and a writer is never blocked.
+//
+// Deliberately absent: --prune (restic would run a full prune dry run, reading
+// the whole index — expensive, and over the network for a remote repo) and
+// --retry-lock (there is no lock to wait for).
+func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tag string) []string {
+	args := repoFlag(repo)
+	args = append(args, "forget")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--dry-run", "--no-lock", "--json")
+	if tag != "" {
+		args = append(args, "--tag", tag, "--group-by", "")
+	} else {
+		args = append(args, "--group-by", "paths")
+	}
+	return append(args, keepFlags(p)...)
 }
 
 // UnlockArgs returns the argv slice for `restic unlock`. removeAll adds
@@ -2164,6 +2247,26 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 	}
 	_, err := r.run(ctx, ForgetPolicyArgs(repo, p, m, tag, prune), m)
 	return err
+}
+
+// ForgetPreview reports what ForgetPolicy WOULD remove for the same policy and
+// the same tag, without changing the repository (see ForgetPreviewArgs). It
+// takes no lock, so a concurrent backup is never blocked and the answer can be
+// marginally stale — the same trade Snapshots and Stats already make.
+//
+// An inert policy is a no-op, exactly as in ForgetPolicy: retention that is
+// switched off removes nothing, and asking restic anyway would report the whole
+// repository as about to be deleted (forget with no --keep-* flag keeps
+// nothing).
+func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolicy, m Mode, tag string) ([]ForgetGroup, error) {
+	if !p.Any() {
+		return nil, nil
+	}
+	out, err := r.run(ctx, ForgetPreviewArgs(repo, p, m, tag), m)
+	if err != nil {
+		return nil, err
+	}
+	return parseForgetGroups(out)
 }
 
 // Unlock removes locks from the repo (`restic unlock`). removeAll clears ALL
