@@ -1743,6 +1743,60 @@ export function pruneDomain(
   return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
+/** One snapshot in a retention preview, as restic reports it. */
+export type RetentionPreviewSnapshot = {
+  id: string;
+  time: string;
+  paths?: string[] | null;
+  tags?: string[] | null;
+  hostname?: string;
+};
+
+/** One item's verdict: what the policy keeps, and what the next run removes. */
+export type RetentionPreviewItem = {
+  tag: string;
+  keep?: RetentionPreviewSnapshot[] | null;
+  remove?: RetentionPreviewSnapshot[] | null;
+};
+
+/**
+ * One repository's part of the answer. A domain can write to several
+ * repositories (#204), so the preview is reported per repository — and an
+ * append-only one is named as such rather than shown with an empty list, which
+ * would read as "nothing to do" instead of "retention never runs here".
+ */
+export type RetentionPreviewRepo = {
+  name: string;
+  appendOnly: boolean;
+  items: RetentionPreviewItem[];
+  error?: string;
+};
+
+/** What the next retention run would remove, without removing anything. */
+export type RetentionPreview = {
+  policy: {
+    on: boolean;
+    keepLast: number;
+    keepDaily: number;
+    keepWeekly: number;
+    keepMonthly: number;
+  };
+  repos: RetentionPreviewRepo[];
+  skipped?: string[] | null;
+};
+
+/**
+ * GET /api/retention/preview/{domain} — what the next retention run WOULD
+ * remove. Read-only: it takes no repository lock and answers while a backup is
+ * running, which is exactly when someone wants to know what tonight will delete.
+ */
+export function previewRetention(
+  domain: "containers" | "vms" | "flash" | "config" | "files",
+  source?: string
+): Promise<OkEnvelope & { preview: RetentionPreview }> {
+  return fetchJSON(`/api/retention/preview/${domain}${srcParam(source)}`);
+}
+
 /**
  * The five domains that can carry an off-site destination, a remote primary
  * path, or both. Defined here because api.ts is the layer everything else
