@@ -4390,7 +4390,14 @@ type fakeResticEngine struct {
 	forgotModes []restic.Mode
 	prunedRepos []string
 	forgetTags  []string // identity tags passed to ForgetPolicy (issue #91)
-	checked     []string
+	// The read-only retention preview, kept apart from the slices above so a
+	// preview can never satisfy an assertion that retention actually ran.
+	previewRepos  []string
+	previewModes  []restic.Mode
+	previewTags   []string
+	previewGroups []restic.ForgetGroup
+	previewErr    error
+	checked       []string
 	// The MODE each maintenance call was made with, parallel to the repo slices
 	// above. Without these a test can only see WHICH repositories an operation
 	// reached, not whether each was addressed with its own credentials, storage
@@ -4749,6 +4756,20 @@ func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic
 		f.forgetTags = append(f.forgetTags, tag)
 	}
 	return f.forgetPolicyErr
+}
+
+// ForgetPreview records the read-only retention preview. It keeps its own
+// recorders rather than reusing forgetTags/prunedRepos: those pin that
+// retention REALLY ran, and a preview must never be able to satisfy an
+// assertion about the repository having been changed.
+func (f *fakeResticEngine) ForgetPreview(_ context.Context, repo string, p restic.RetentionPolicy, m restic.Mode, tag string) ([]restic.ForgetGroup, error) {
+	if !p.Any() {
+		return nil, nil
+	}
+	f.previewRepos = append(f.previewRepos, repo)
+	f.previewModes = append(f.previewModes, m)
+	f.previewTags = append(f.previewTags, tag)
+	return f.previewGroups, f.previewErr
 }
 
 func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]restic.FileEntry, error) {
