@@ -244,6 +244,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/verify", h.handleDrills)
 	mux.HandleFunc("POST /api/unlock/{domain}", h.handleUnlock)
 	mux.HandleFunc("POST /api/prune/{domain}", h.handlePrune)
+	// What the prune above WOULD remove, without removing it. Read-only, so a
+	// GET: no CSRF token needed, and it answers while a backup is running.
+	mux.HandleFunc("GET /api/retention/preview/{domain}", h.handleRetentionPreview)
 	mux.HandleFunc("DELETE /api/snapshots/{domain}/{id}", h.handleDeleteSnapshot)
 	// Off-site target CRUD (multi-off-site). The literal "targets" segment is more
 	// specific than "{domain}", so these never collide with the per-domain routes.

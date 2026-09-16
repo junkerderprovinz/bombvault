@@ -3,10 +3,39 @@ package api
 import (
 	"context"
 	"errors"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
+
+// TestPreviewRetentionTakesNoLockAndKeepsNoRecord guards the four things that
+// separate a preview from a prune, by reading the source rather than by
+// exercising it — the same technique the repo already uses where a behaviour is
+// easier to state than to provoke.
+//
+//   - tryLockDomainFor would make the preview refuse with errDomainBusy while a
+//     backup runs, i.e. unavailable exactly when an operator wants to know what
+//     tonight's run is about to delete.
+//   - unlockStale DELETES lock files. A read-only endpoint that does that is a
+//     repository writer, and it would break the promise
+//     readonly_never_unlocks_internal_test.go was written to defend.
+//   - progBegin and StartRun would put phantom prune rows in the Activity Log
+//     and the run history for an operation that changed nothing.
+func TestPreviewRetentionTakesNoLockAndKeepsNoRecord(t *testing.T) {
+	raw, err := os.ReadFile("retention_preview.go")
+	if err != nil {
+		t.Fatalf("read retention_preview.go: %v", err)
+	}
+	body := receiverFuncBody(t, string(raw), `\(s \*Service\)`, "PreviewRetention", "retention_preview.go")
+	for _, forbidden := range []string{"tryLockDomainFor", "lockDomainFor", "unlockStale", "progBegin", "StartRun"} {
+		if strings.Contains(body, forbidden) {
+			t.Errorf("PreviewRetention calls %s — a preview must neither lock the domain, "+
+				"clear a lock, nor leave a record of an operation that changed nothing", forbidden)
+		}
+	}
+}
 
 // previewEngine records what a retention preview asks the engine for. Every
 // call that is NOT overridden here panics through the nil ResticEngine embed,
