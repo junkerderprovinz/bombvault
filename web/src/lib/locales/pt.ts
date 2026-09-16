@@ -460,6 +460,8 @@ const pt: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenção de instantâneos",
   "settings.retentionHint": "Quantos backups manter por item. Após cada backup, o restic elimina os instantâneos mais antigos segundo esta política. Tudo a zero = manter tudo (desativado).",
+  "excludes.advisoryImmichDb": "O Immich guarda os álbuns, os rostos e as datas de cada fotografia numa base de dados PostgreSQL que corre noutro container, não neste, por isso este backup não a contém. Restaurar a partir daqui devolve as fotografias, mas sem os álbuns, os rostos e as datas. Dê a essa base de dados um backup próprio, ou ligue a exportação de base de dados integrada no Immich para que fique numa pasta que este backup cobre.",
+  "excludes.advisoryNextcloudDb": "O Nextcloud guarda as contas, as partilhas e as etiquetas numa base de dados que normalmente corre noutro container, por isso este backup não a contém. Os ficheiros voltam, as partilhas não. Faça também backup dessa base de dados.",
   "coverage.title": "Sem backup",
   "coverage.hint": "Tudo o que existe neste servidor e que nenhum backup automático cobre. O cartão de proteção acima diz se os backups agendados correram a horas; aqui fica o que não está agendado de todo, que é a falha que em todo o resto permanece invisível. Um tipo de backup desativado é uma decisão e não é contado aqui.",
   "coverage.ratio": "{protected} de {total} protegidos",

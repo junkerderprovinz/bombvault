@@ -41,6 +41,7 @@ type SuggestReply = {
   unreadableRoots?: string[];
   pathsUnavailable?: boolean;
   indexFailed?: boolean;
+  advisories?: string[];
 };
 
 const suggestCalls: (string | undefined)[] = [];
@@ -414,5 +415,28 @@ describe("exclusion assistant size presentation", () => {
     expect(screen.queryByText(/more than a day old/)).toBeNull();
     // The live scan stays available regardless: it answers a different question.
     expect(screen.getByRole("button", { name: "Check the folders as they are now" })).toBeTruthy();
+  });
+});
+
+// The advisory banner.
+//
+// The assistant answers a size question. The most expensive mistake it can
+// witness is not one: an Immich install whose database lives in another
+// container restores the photos and loses the albums, and no folder size hints
+// at it. The banner therefore has to appear even when the scan has nothing to
+// suggest, which is exactly the case an empty appdata folder produces.
+describe("the container advisory", () => {
+  it("shows even when the scan suggests nothing", async () => {
+    replies = [{ ok: true, suggestions: [], truncated: false, source: "snapshot", advisories: ["immich-db-separate"] }];
+    await openAssistant();
+    expect(screen.getByText(/PostgreSQL/i)).toBeTruthy();
+  });
+
+  // A newer server may know caveats this build does not. Rendering the raw id
+  // would be worse than saying nothing.
+  it("renders nothing for an id it does not know", async () => {
+    replies = [{ ok: true, suggestions: [], truncated: false, source: "snapshot", advisories: ["some-future-advisory"] }];
+    await openAssistant();
+    expect(screen.queryByText(/some-future-advisory/)).toBeNull();
   });
 });

@@ -455,6 +455,8 @@ const pl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Przechowywanie migawek",
   "settings.retentionHint": "Ile kopii zapasowych zachować dla każdego elementu. Po każdej kopii restic usuwa starsze migawki zgodnie z tą zasadą. Wszystkie zero = zachowaj wszystko (wyłączone).",
+  "excludes.advisoryImmichDb": "Immich trzyma albumy, twarze i daty każdego zdjęcia w bazie danych PostgreSQL, która działa w osobnym kontenerze, nie w tym, więc ta kopia zapasowa jej nie zawiera. Odtworzenie stąd przywróci zdjęcia, ale bez albumów, twarzy i dat. Zrób tej bazie danych własną kopię zapasową albo włącz wbudowany w Immich eksport bazy danych, tak aby trafiał do folderu objętego tą kopią zapasową.",
+  "excludes.advisoryNextcloudDb": "Nextcloud trzyma konta, udostępnienia i tagi w bazie danych, która zwykle działa w osobnym kontenerze, więc ta kopia zapasowa jej nie zawiera. Pliki wrócą, udostępnienia nie. Zrób kopię zapasową także tej bazy danych.",
   "coverage.title": "Bez kopii zapasowej",
   "coverage.hint": "Wszystko na tym serwerze, czego nie obejmuje żadna automatyczna kopia zapasowa. Karta ochrony powyżej mówi, czy zaplanowane kopie wykonały się na czas; tutaj widać, co w ogóle nie jest zaplanowane, a właśnie ta luka wszędzie indziej pozostaje niewidoczna. Wyłączony rodzaj kopii to decyzja i nie jest tu liczony.",
   "coverage.ratio": "{protected} z {total} chronionych",

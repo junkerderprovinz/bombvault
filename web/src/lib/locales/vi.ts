@@ -460,6 +460,8 @@ const vi: Partial<Translations> = {
 
   "settings.retentionTitle": "Lưu giữ ảnh chụp nhanh",
   "settings.retentionHint": "Số bản sao lưu cần giữ cho mỗi mục. Sau mỗi lần sao lưu, restic sẽ dọn các snapshot cũ theo chính sách này. Tất cả bằng 0 = giữ tất cả (tắt).",
+  "excludes.advisoryImmichDb": "Immich lưu album, khuôn mặt và ngày tháng của từng ảnh trong một cơ sở dữ liệu PostgreSQL chạy trong một container riêng, không phải container này, nên bản sao lưu này không chứa nó. Khôi phục từ đây sẽ đưa ảnh trở lại nhưng không có những thứ đó. Hãy tạo bản sao lưu riêng cho cơ sở dữ liệu đó, hoặc bật tính năng xuất cơ sở dữ liệu có sẵn của Immich để nó rơi vào một thư mục mà bản sao lưu này bao phủ.",
+  "excludes.advisoryNextcloudDb": "Nextcloud lưu tài khoản, chia sẻ và thẻ trong một cơ sở dữ liệu thường chạy trong một container riêng, nên bản sao lưu này không chứa nó. Tập tin sẽ trở lại, còn chia sẻ thì không. Hãy sao lưu cả cơ sở dữ liệu đó.",
   "coverage.title": "Chưa được sao lưu",
   "coverage.hint": "Mọi thứ trên máy chủ này mà không có bản sao lưu tự động nào bao phủ. Thẻ bảo vệ ở trên cho biết các bản sao lưu theo lịch có chạy đúng giờ hay không; phần này cho biết những gì hoàn toàn không được lên lịch, và đó chính là lỗ hổng vẫn vô hình ở mọi nơi khác. Một loại sao lưu đã tắt là một quyết định và không được tính ở đây.",
   "coverage.ratio": "{protected} trên {total} được bảo vệ",

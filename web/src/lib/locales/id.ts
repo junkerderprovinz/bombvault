@@ -397,6 +397,8 @@ const id: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retensi snapshot",
   "settings.retentionHint": "Berapa banyak cadangan yang disimpan per item. Setelah setiap pencadangan, restic melakukan prune snapshot lama sesuai kebijakan ini. Semua nol = simpan semuanya (mati).",
+  "excludes.advisoryImmichDb": "Immich menyimpan album, wajah, dan tanggal setiap foto di database PostgreSQL yang berjalan di container yang sama sekali terpisah, jadi pencadangan ini tidak memuatnya. Pemulihan dari sini mengembalikan fotonya tanpa semua itu. Beri database tersebut pencadangannya sendiri, atau aktifkan dump database bawaan Immich agar hasilnya tersimpan di folder yang dicakup pencadangan ini.",
+  "excludes.advisoryNextcloudDb": "Nextcloud menyimpan akun, data berbagi, dan tag di database yang biasanya berjalan di container terpisah, jadi pencadangan ini tidak memuatnya. File kembali, data berbagi tidak. Cadangkan juga database itu.",
   "coverage.title": "Tidak dicadangkan",
   "coverage.hint": "Semua yang ada di server ini yang tidak tercakup oleh pencadangan otomatis. Kartu perlindungan di atas memberi tahu apakah cadangan terjadwal berjalan tepat waktu; bagian ini menunjukkan apa yang sama sekali tidak dijadwalkan, celah yang tetap tak terlihat di tempat lain mana pun. Domain pencadangan yang dimatikan adalah sebuah keputusan dan tidak dihitung di sini.",
   "coverage.ratio": "{protected} dari {total} terlindungi",

@@ -397,6 +397,8 @@ const lv: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Momentuzņēmumu saglabāšana",
   "settings.retentionHint": "Cik rezerves kopiju saglabāt katram vienumam. Pēc katras rezerves kopijas restic pēc šīs politikas iztīra vecākus momentuzņēmumus. Viss uz nulli = saglabāt visu (izslēgts).",
+  "excludes.advisoryImmichDb": "Immich katras fotogrāfijas albumus, sejas un datumus glabā PostgreSQL datubāzē, kas darbojas nevis šajā, bet atsevišķā konteinerā, tāpēc šajā rezerves kopijā tās nav. Atjaunojot no šejienes, attēli atgriezīsies, bet bez visa tā. Izveidojiet šai datubāzei atsevišķu rezerves kopiju vai ieslēdziet Immich iebūvēto datubāzes eksportu, lai tas nonāktu mapē, ko šī rezerves kopija aptver.",
+  "excludes.advisoryNextcloudDb": "Nextcloud kontus, koplietojumus un birkas glabā datubāzē, kas parasti darbojas atsevišķā konteinerā, tāpēc šajā rezerves kopijā tās nav. Faili atgriezīsies, koplietojumi ne. Izveidojiet rezerves kopiju arī šai datubāzei.",
   "coverage.title": "Nav dublēti",
   "coverage.hint": "Viss šajā serverī, ko nesedz neviena automātiska dublēšana. Aizsardzības karte augstāk rāda, vai ieplānotās rezerves kopijas tika izveidotas laikā; šeit redzams tas, kas vispār nav ieplānots, un tieši šī sprauga citur nekur nav pamanāma. Izslēgts rezerves kopēšanas domēns ir apzināts lēmums, un tas šeit netiek skaitīts.",
   "coverage.ratio": "{protected} no {total} aizsargāti",

@@ -397,6 +397,8 @@ const et: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Hetktõmmiste säilitamine",
   "settings.retentionHint": "Mitu varundust iga üksuse kohta säilitatakse. Pärast iga varundust puhastab restic vanemad hetktõmmised selle reegli järgi. Kõik nullid = säilita kõik (väljas).",
+  "excludes.advisoryImmichDb": "Immich hoiab iga foto albumeid, nägusid ja kuupäevi PostgreSQLi andmebaasis, mis töötab omaette, eraldi konteineris, nii et see varundus seda ei sisalda. Siit taastamine toob pildid tagasi, aga ilma kõige selleta. Anna sellele andmebaasile oma varundus või lülita sisse Immichi enda andmebaasi dumpimine, et see satuks kausta, mille see varundus katab.",
+  "excludes.advisoryNextcloudDb": "Nextcloud hoiab kontosid, jagamisi ja silte andmebaasis, mis tavaliselt töötab eraldi konteineris, nii et see varundus seda ei sisalda. Failid tulevad tagasi, jagamised mitte. Varunda ka see andmebaas.",
   "coverage.title": "Varundamata",
   "coverage.hint": "Kõik selles serveris, mida ükski automaatne varundus ei kata. Ülal olev kaitsekaart ütleb, kas ajastatud varundused käivitusid õigel ajal, siin aga on see, mis pole üldse ajakavas, ja just see auk jääb mujal nähtamatuks. Väljalülitatud varunduseliik on teadlik otsus ja seda siin ei loeta.",
   "coverage.ratio": "{protected} {total}-st kaitstud",

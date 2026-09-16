@@ -460,6 +460,8 @@ const no: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Oppbevaring av øyeblikksbilder",
   "settings.retentionHint": "Hvor mange sikkerhetskopier som beholdes per element. Etter hver sikkerhetskopiering rydder restic eldre snapshots etter denne regelen. Alt 0 = behold alt (av).",
+  "excludes.advisoryImmichDb": "Immich lagrer album, ansikter og datoer for hvert bilde i en PostgreSQL-database som kjører i en annen container enn denne, så denne sikkerhetskopien inneholder den ikke. Gjenoppretting herfra henter bildene tilbake, men uten album, ansikter og datoer. Gi den databasen sin egen sikkerhetskopi, eller slå på Immichs innebygde databaseeksport slik at den havner i en mappe denne sikkerhetskopien dekker.",
+  "excludes.advisoryNextcloudDb": "Nextcloud lagrer kontoer, delinger og tagger i en database som vanligvis kjører i en egen container, så denne sikkerhetskopien inneholder den ikke. Filene kommer tilbake, delingene gjør det ikke. Ta sikkerhetskopi av den databasen også.",
   "coverage.title": "Ikke sikkerhetskopiert",
   "coverage.hint": "Alt på denne serveren som ingen automatisk sikkerhetskopi dekker. Beskyttelseskortet over sier om de planlagte sikkerhetskopiene kjørte i tide; her står det som ikke er planlagt i det hele tatt, og nettopp det hullet forblir usynlig alle andre steder. En avslått sikkerhetskopitype er en beslutning og telles ikke med her.",
   "coverage.ratio": "{protected} av {total} beskyttet",

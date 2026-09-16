@@ -513,6 +513,8 @@ export const en = {
   // Retention
   "settings.retentionTitle": "Snapshot retention",
   "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
+  "excludes.advisoryImmichDb": "Immich keeps every photo's albums, faces and dates in a PostgreSQL database that runs in a SEPARATE container, so this backup does not contain it. Restoring from here brings the pictures back without them. Give that database its own backup, or turn on Immich's built-in database dump so it lands in a folder this backup covers.",
+  "excludes.advisoryNextcloudDb": "Nextcloud keeps its accounts, shares and tags in a database that usually runs in a separate container, so this backup does not contain it. The files come back, the sharing does not. Back that database up as well.",
   "coverage.title": "Not backed up",
   "coverage.hint": "Everything on this server that no automatic backup covers. The protection card above says whether the scheduled backups ran on time; this says what is not scheduled at all, which is the gap that stays invisible everywhere else. A switched-off backup type is a decision and is not counted here.",
   "coverage.ratio": "{protected} of {total} protected",
@@ -2421,6 +2423,8 @@ export const de: Translations = {
   // Retention
   "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
+  "excludes.advisoryImmichDb": "Immich speichert Alben, Gesichter und Datumsangaben zu jedem Foto in einer PostgreSQL-Datenbank, die in einem EIGENEN Container läuft. Dieses Backup enthält sie nicht. Eine Wiederherstellung von hier bringt die Bilder zurück, aber ohne all das. Sichere diese Datenbank getrennt, oder schalte Immichs eingebauten Datenbank-Export ein, damit er in einem Ordner landet, den dieses Backup erfasst.",
+  "excludes.advisoryNextcloudDb": "Nextcloud speichert Konten, Freigaben und Schlagworte in einer Datenbank, die meist in einem eigenen Container läuft. Dieses Backup enthält sie nicht. Die Dateien kommen zurück, die Freigaben nicht. Sichere diese Datenbank zusätzlich.",
   "coverage.title": "Nicht gesichert",
   "coverage.hint": "Alles auf diesem Server, das kein automatisches Backup erfasst. Die Karte darüber sagt, ob die geplanten Backups pünktlich liefen; hier steht, was gar nicht eingeplant ist, und genau das bleibt sonst überall unsichtbar. Eine abgeschaltete Backup-Art ist eine Entscheidung und wird hier nicht mitgezählt.",
   "coverage.ratio": "{protected} von {total} geschützt",

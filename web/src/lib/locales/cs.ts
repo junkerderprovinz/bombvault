@@ -461,6 +461,8 @@ const cs: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Uchovávání snímků",
   "settings.retentionHint": "Kolik záloh ponechat pro každou položku. Po každé záloze restic prořeže starší snímky podle této zásady. Vše nula = ponechat vše (vypnuto).",
+  "excludes.advisoryImmichDb": "Immich ukládá alba, tváře a data pořízení ke každé fotce do databáze PostgreSQL, která běží ve vlastním, odděleném kontejneru, takže tato záloha ji neobsahuje. Obnova odsud vrátí obrázky, ale bez toho všeho. Zálohujte tuto databázi zvlášť, nebo zapněte vestavěný dump databáze v Immichi, aby skončil ve složce, kterou tato záloha pokrývá.",
+  "excludes.advisoryNextcloudDb": "Nextcloud ukládá účty, sdílení a štítky do databáze, která obvykle běží v odděleném kontejneru, takže tato záloha ji neobsahuje. Soubory se vrátí, sdílení ne. Zálohujte i tuto databázi.",
   "coverage.title": "Nezálohováno",
   "coverage.hint": "Vše na tomto serveru, co nepokrývá žádná automatická záloha. Karta ochrany nahoře říká, jestli plánované zálohy proběhly včas, a tady stojí, co není naplánováno vůbec, což je mezera, která všude jinde zůstane neviditelná. Vypnutý druh zálohy je rozhodnutí a nepočítá se sem.",
   "coverage.ratio": "{protected} z {total} chráněno",
