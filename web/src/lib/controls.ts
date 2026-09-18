@@ -3,9 +3,11 @@ import { save as saveDisplayPrefs } from "./displayPrefs";
 // Control label engine (#178) — how much of a control's identity is shown:
 // its text, its glyph, or both.
 //
-// Three INDEPENDENT axes, because the same answer is rarely right for all
-// three: the action buttons scattered through the pages, the sidebar's
-// navigation rail, and the tab strips inside Settings. jdp asked for one
+// INDEPENDENT axes, because the same answer is rarely right for all of them:
+// the action buttons scattered through the pages, the sidebar's navigation
+// rail, the tab strips inside Settings, and the mobile bottom bar (whose
+// captions are a shell-layout decision, like the rail's, not a density
+// preference). jdp asked for one
 // selector each rather than a single global switch, since a sidebar reduced to
 // glyphs is a layout decision (the rail gets narrower) while a button reduced
 // to glyphs is only a density preference.
@@ -50,24 +52,26 @@ export function hidesLabel(mode: LabelMode): boolean {
 }
 
 /**
- * The three axes. Kept as a list rather than three copies of the same code so
- * a fourth axis is one entry, and so the settings card can iterate instead of
- * repeating itself three times.
+ * The axes. Kept as a list rather than copies of the same code so a new axis
+ * is one entry, and so the settings card can iterate instead of repeating
+ * itself per axis.
  */
-export type ControlAxis = "buttons" | "sidebar" | "tabs";
+export type ControlAxis = "buttons" | "sidebar" | "tabs" | "bottombar";
 
-export const CONTROL_AXES: ControlAxis[] = ["buttons", "sidebar", "tabs"];
+export const CONTROL_AXES: ControlAxis[] = ["buttons", "sidebar", "tabs", "bottombar"];
 
 const STORAGE_KEY: Record<ControlAxis, string> = {
   buttons: "bv-labels-buttons",
   sidebar: "bv-labels-sidebar",
   tabs: "bv-labels-tabs",
+  bottombar: "bv-labels-bottombar",
 };
 
 const ATTRIBUTE: Record<ControlAxis, string> = {
   buttons: "data-labels-buttons",
   sidebar: "data-labels-sidebar",
   tabs: "data-labels-tabs",
+  bottombar: "data-labels-bottombar",
 };
 
 /**

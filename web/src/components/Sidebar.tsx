@@ -598,7 +598,15 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     // mark, and the two rails then did the same job at different widths. The
     // mark fits the rail now: 48px still sits centred at 85 with room on both
     // sides. See GlimStone's own bullet for the reversal.
-    <aside className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-hidden rounded-card bg-carbon-sidebar`}>
+    // `data-testid="desktop-sidebar"` — the Playwright harness's
+    // desktop-untouched spec locates the rail by this testid (asserting it is
+    // visible at >= 48rem and the mobile bar is absent). A hook, not a
+    // styling surface: no class reads it, and the desktop render is otherwise
+    // untouched.
+    <aside
+      data-testid="desktop-sidebar"
+      className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-hidden rounded-card bg-carbon-sidebar`}
+    >
       {/* Logo + wordmark → Dashboard. Two theme-specific marks auto-switch via the
           `dark:` variant (dark mark on the light surface, light mark on the dark
           surface). A short click navigates to the Dashboard; press-and-hold fires

@@ -12,6 +12,8 @@ const it: Partial<Translations> = {
   "nav.vms": "VM",
   "nav.flash": "Flash",
   "nav.settings": "Impostazioni",
+  "nav.more": "Altro",
+  "nav.mobileNavigation": "Navigazione mobile",
   "about.title": "Informazioni su BombVault",
   "about.body": "Un solo cavaliere, una crociata: strumenti open source curati che non esistevano nella forma che volevo, costruiti finché non manca più niente. Tutto gratuito, senza account, senza telemetria, senza pubblicità e senza piani a pagamento. Nessun asterisco da nessuna parte. Niente di leggibile lascia mai le tue mura. Forgiato di sera e nei fine settimana, con cuore e testardaggine.",
   "about.coffee": "Se BombVault si è guadagnato un posto sul tuo server o sul tuo computer, getta una moneta al tuo cavaliere: aiuta a coprire i costi e tiene vivo il progetto. E fa battere un po' più forte il cuore di questo cavaliere. Qui sotto trovi tre strade, scegli quella che preferisci.",
@@ -173,6 +175,10 @@ const it: Partial<Translations> = {
   "run.colStarted": "Avviato",
   "run.colFinished": "Terminato",
   "run.colContainer": "Container",
+  "home.newBackup": "Nuovo backup",
+  "home.newBackupConfirm": "Avviare ora un backup di tutti i domini attivati? I container vengono fermati e riavviati uno alla volta, mentre il loro backup è in esecuzione. Il ripristino conserva solo ciò che salverà la prossima esecuzione.",
+  "run.statVolume": "Volume dati",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Impostazioni",
@@ -243,6 +249,7 @@ const it: Partial<Translations> = {
   "settings.labels.buttons": "Pulsanti",
   "settings.labels.sidebar": "Barra laterale",
   "settings.labels.tabs": "Schede",
+  "settings.labels.bottombar": "Barra inferiore",
   "settings.labels.mode.text": "Testo",
   "settings.labels.mode.textGlyph": "Testo e simbolo",
   "settings.labels.mode.glyph": "Simbolo",

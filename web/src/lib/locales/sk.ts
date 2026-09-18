@@ -13,6 +13,8 @@ const sk: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Vlastná záloha",
   "nav.settings": "Nastavenia",
+  "nav.more": "Viac",
+  "nav.mobileNavigation": "Mobilná navigácia",
 
   // Mode toggle
   "about.title": "O aplikácii BombVault",
@@ -243,6 +245,10 @@ const sk: Partial<Translations> = {
   "run.colStarted": "Spustené",
   "run.colFinished": "Dokončené",
   "run.colContainer": "Kontajner",
+  "home.newBackup": "Nová záloha",
+  "home.newBackupConfirm": "Spustiť teraz zálohu všetkých povolených oblastí? Kontajnery sa po jednom zastavia a znova spustia, kým beží ich záloha. Obnova zachová iba to, čo uloží ďalší priebeh.",
+  "run.statVolume": "Objem dát",
+  "run.statSnapshot": "Snímka",
 
   // Settings
   "settings.title": "Nastavenia",
@@ -696,6 +702,7 @@ const sk: Partial<Translations> = {
   "settings.labels.buttons": "Tlačidlá",
   "settings.labels.sidebar": "Bočný panel",
   "settings.labels.tabs": "Karty",
+  "settings.labels.bottombar": "Spodný panel",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text a symbol",
   "settings.labels.mode.glyph": "Symbol",

@@ -13,6 +13,8 @@ const et: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Iseenda varundus",
   "nav.settings": "Seaded",
+  "nav.more": "Rohkem",
+  "nav.mobileNavigation": "Mobiilne navigeerimine",
 
   // Mode toggle
   "about.title": "Teave BombVaulti kohta",
@@ -243,6 +245,10 @@ const et: Partial<Translations> = {
   "run.colStarted": "Alustatud",
   "run.colFinished": "Lõpetatud",
   "run.colContainer": "Konteiner",
+  "home.newBackup": "Uus varukoopia",
+  "home.newBackupConfirm": "Käivitada kohe varukoopia kõigist lubatud valdkondadest? Konteinerid peatatakse ja taaskäivitatakse ükshaaval, samal ajal kui nende varukoopia töötab. Taastamine säilitab ainult selle, mida salvestab järgmine käik.",
+  "run.statVolume": "Andmete maht",
+  "run.statSnapshot": "Hetktõmmis",
 
   // Settings
   "settings.title": "Seaded",
@@ -696,6 +702,7 @@ const et: Partial<Translations> = {
   "settings.labels.buttons": "Nupud",
   "settings.labels.sidebar": "Külgriba",
   "settings.labels.tabs": "Vahekaardid",
+  "settings.labels.bottombar": "Alumine riba",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst ja sümbol",
   "settings.labels.mode.glyph": "Sümbol",

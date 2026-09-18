@@ -13,6 +13,8 @@ const sl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Lastna varnostna kopija",
   "nav.settings": "Nastavitve",
+  "nav.more": "Več",
+  "nav.mobileNavigation": "Mobilna navigacija",
 
   // Mode toggle
   "about.title": "O programu BombVault",
@@ -243,6 +245,10 @@ const sl: Partial<Translations> = {
   "run.colStarted": "Začeto",
   "run.colFinished": "Končano",
   "run.colContainer": "Vsebnik",
+  "home.newBackup": "Nova varnostna kopija",
+  "home.newBackupConfirm": "Želite zdaj začeti varnostno kopijo vseh omogočenih področij? Vsebniki se med delom njihove varnostne kopije enega za drugim ustavijo in znova zaženejo. Obnovitev ohrani samo tisto, kar shrani naslednji zagon.",
+  "run.statVolume": "Količina podatkov",
+  "run.statSnapshot": "Posnetek",
 
   // Settings
   "settings.title": "Nastavitve",
@@ -694,6 +700,7 @@ const sl: Partial<Translations> = {
   "settings.labels.buttons": "Gumbi",
   "settings.labels.sidebar": "Stranska vrstica",
   "settings.labels.tabs": "Zavihki",
+  "settings.labels.bottombar": "Spodnja vrstica",
   "settings.labels.mode.text": "Besedilo",
   "settings.labels.mode.textGlyph": "Besedilo in simbol",
   "settings.labels.mode.glyph": "Simbol",

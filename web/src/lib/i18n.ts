@@ -65,6 +65,11 @@ export const en = {
   "nav.flash": "Flash",
   "nav.config": "Self-Backup",
   "nav.settings": "Settings",
+  "nav.more": "More",
+  // The bottom bar's landmark name: the bar is the mobile counterpart of
+  // the desktop Sidebar's nav, and a <nav> landmark needs an accessible
+  // name even though exactly one of the two mounts at a time.
+  "nav.mobileNavigation": "Mobile navigation",
   "about.title": "About BombVault",
   "about.body":
     "A one-knight crusade: good-looking open-source tools that did not exist in the shape I wanted, built until nothing is missing. It is free, with no accounts, no telemetry, no ads and no paid tier. No asterisk anywhere. Nothing readable ever leaves your own walls. Forged on evenings and weekends, with heart and stubbornness.",
@@ -301,6 +306,13 @@ export const en = {
   "run.colStarted": "Started",
   "run.colFinished": "Finished",
   "run.colContainer": "Container",
+  // Phone Dashboard additions: the home.newBackup pair drives the
+  // "back up everything now" trigger and its confirm; run.statVolume/
+  // run.statSnapshot label the run-detail sheet's stat tiles.
+  "home.newBackup": "New backup",
+  "home.newBackupConfirm": "Start a backup of every enabled domain now? Containers are stopped and restarted one at a time while their backup runs. Restore keeps only what the next run saves.",
+  "run.statVolume": "Data volume",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Settings",
@@ -894,6 +906,7 @@ export const en = {
   "settings.labels.buttons": "Buttons",
   "settings.labels.sidebar": "Sidebar",
   "settings.labels.tabs": "Tabs",
+  "settings.labels.bottombar": "Bottom bar",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text and symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -2014,6 +2027,8 @@ export const de: Translations = {
   "nav.flash": "Flash",
   "nav.config": "Selbst-Backup",
   "nav.settings": "Einstellungen",
+  "nav.more": "Mehr",
+  "nav.mobileNavigation": "Mobile Navigation",
   "about.title": "Über BombVault",
   "about.body":
     "Ein einzelner Ritter, ein Feldzug: ansehnliche quelloffene Werkzeuge, die es in der Form, die ich wollte, nicht gab, gebaut, bis nichts mehr fehlt. Alles kostenlos, ohne Konten, ohne Telemetrie, ohne Werbung, ohne Bezahlstufen. Nirgends ein Sternchen. Nichts Lesbares verlässt je deine eigenen Mauern. An Abenden und Wochenenden geschmiedet, mit Herz und Dickkopf.",
@@ -2242,6 +2257,10 @@ export const de: Translations = {
   "run.colStarted": "Gestartet",
   "run.colFinished": "Abgeschlossen",
   "run.colContainer": "Container",
+  "home.newBackup": "Neues Backup",
+  "home.newBackupConfirm": "Jetzt ein Backup aller aktivierten Bereiche starten? Container werden während ihrer Sicherung nacheinander gestoppt und neu gestartet. Eine Wiederherstellung behält nur, was der nächste Lauf sichert.",
+  "run.statVolume": "Datenmenge",
+  "run.statSnapshot": "Snapshot",
 
   "settings.title": "Einstellungen",
   "settings.encryptionLabel": "Passwort",
@@ -2700,6 +2719,7 @@ export const de: Translations = {
   "settings.labels.buttons": "Buttons",
   "settings.labels.sidebar": "Seitenleiste",
   "settings.labels.tabs": "Tabs",
+  "settings.labels.bottombar": "Untere Leiste",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text und Symbol",
   "settings.labels.mode.glyph": "Symbol",

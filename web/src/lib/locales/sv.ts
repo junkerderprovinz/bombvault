@@ -12,6 +12,8 @@ const sv: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Inställningar",
+  "nav.more": "Mer",
+  "nav.mobileNavigation": "Mobil navigering",
   "about.title": "Om BombVault",
   "about.body": "En riddare, ett korståg: snygga öppna verktyg som inte fanns i den form jag ville ha, byggda tills inget saknas. Allt gratis, utan konton, utan telemetri, utan reklam och utan betalnivåer. Ingen asterisk någonstans. Inget läsbart lämnar någonsin dina egna murar. Smitt på kvällar och helger, med hjärta och envishet.",
   "about.coffee": "Om BombVault har förtjänat en plats på din server eller dator, kasta ett mynt till din riddare: det hjälper till att täcka kostnaderna och håller projektet vid liv. Och det får den här riddarens hjärta att slå lite snabbare. Nedan finns tre vägar, ta den som passar dig.",
@@ -173,6 +175,10 @@ const sv: Partial<Translations> = {
   "run.colStarted": "Startad",
   "run.colFinished": "Avslutad",
   "run.colContainer": "Container",
+  "home.newBackup": "Ny säkerhetskopia",
+  "home.newBackupConfirm": "Starta en säkerhetskopia av alla aktiverade domäner nu? Containrar stoppas och startas om en i taget medan deras säkerhetskopia körs. Återställningen behåller bara det som nästa körning sparar.",
+  "run.statVolume": "Datamängd",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Inställningar",
@@ -243,6 +249,7 @@ const sv: Partial<Translations> = {
   "settings.labels.buttons": "Knappar",
   "settings.labels.sidebar": "Sidofält",
   "settings.labels.tabs": "Flikar",
+  "settings.labels.bottombar": "Nedre fält",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text och symbol",
   "settings.labels.mode.glyph": "Symbol",

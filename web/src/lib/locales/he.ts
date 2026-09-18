@@ -12,6 +12,8 @@ const he: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "הגדרות",
+  "nav.more": "עוד",
+  "nav.mobileNavigation": "ניווט בנייד",
   "about.title": "אודות BombVault",
   "about.body": "אביר אחד, מסע צלב אחד: כלים נאים בקוד פתוח שלא היו קיימים בצורה שרציתי, נבנים עד שלא חסר דבר. הכול בחינם, בלי חשבונות, בלי טלמטריה, בלי פרסומות ובלי מסלולים בתשלום. שום כוכבית בשום מקום. שום דבר קריא לא עוזב אף פעם את החומות שלך. מחושל בערבים ובסופי שבוע, עם לב ועקשנות.",
   "about.coffee": "אם BombVault הרוויח את מקומו בשרת או במחשב שלך, השלך מטבע לאביר שלך: זה עוזר לכסות את העלויות ומשאיר את הפרויקט בחיים. וזה גם גורם ללב של האביר הזה לפעום קצת יותר מהר. למטה יש שלוש דרכים, בחר את זו שמתאימה לך.",
@@ -173,6 +175,10 @@ const he: Partial<Translations> = {
   "run.colStarted": "התחיל",
   "run.colFinished": "הסתיים",
   "run.colContainer": "Container",
+  "home.newBackup": "גיבוי חדש",
+  "home.newBackupConfirm": "להתחיל גיבוי של כל התחומים המופעלים עכשיו? הקונטיינרים נעצרים ומופעלים מחדש אחד בכל פעם בזמן שהגיבוי שלהם רץ. השחזור שומר רק את מה שהריצה הבאה תשמור.",
+  "run.statVolume": "נפח נתונים",
+  "run.statSnapshot": "תמונת מצב",
 
   // Settings
   "settings.title": "הגדרות",
@@ -243,6 +249,7 @@ const he: Partial<Translations> = {
   "settings.labels.buttons": "כפתורים",
   "settings.labels.sidebar": "סרגל צד",
   "settings.labels.tabs": "לשוניות",
+  "settings.labels.bottombar": "סרגל תחתון",
   "settings.labels.mode.text": "טקסט",
   "settings.labels.mode.textGlyph": "טקסט וסמל",
   "settings.labels.mode.glyph": "סמל",

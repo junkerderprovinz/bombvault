@@ -13,6 +13,8 @@ const ms: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Sandaran Sendiri",
   "nav.settings": "Tetapan",
+  "nav.more": "Lagi",
+  "nav.mobileNavigation": "Navigasi mudah alih",
 
   // Mode toggle
   "about.title": "Perihal BombVault",
@@ -243,6 +245,10 @@ const ms: Partial<Translations> = {
   "run.colStarted": "Dimulakan",
   "run.colFinished": "Selesai",
   "run.colContainer": "Bekas",
+  "home.newBackup": "Sandaran baharu",
+  "home.newBackupConfirm": "Mulakan sandaran untuk semua domain yang diaktifkan sekarang? Bekas dihentikan dan dimulakan semula satu demi satu semasa sandarannya berjalan. Pemulihan hanya menyimpan apa yang disimpan oleh jalan seterusnya.",
+  "run.statVolume": "Isipadu data",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Tetapan",
@@ -696,6 +702,7 @@ const ms: Partial<Translations> = {
   "settings.labels.buttons": "Butang",
   "settings.labels.sidebar": "Bar sisi",
   "settings.labels.tabs": "Tab",
+  "settings.labels.bottombar": "Bar bawah",
   "settings.labels.mode.text": "Teks",
   "settings.labels.mode.textGlyph": "Teks dan simbol",
   "settings.labels.mode.glyph": "Simbol",

@@ -2,22 +2,38 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { hueVars, rainbowAt } from "../lib/appearance";
-import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext } from "../lib/api";
+import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext, backupEverythingNow } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
 import { isOwnReason, runReason } from "../lib/runReason";
-import { PAGE_SHELL } from "../lib/pageShell";
+// Run kind/target labels + status chips live in lib/runDisplay so the mobile
+// RunDetailSheet renders the exact same vocabulary — verbatim move, no
+// behavior change.
+import { runKindLabel, runTargetText, statusLabel, statusTone } from "../lib/runDisplay";
+// The responsive page rhythm — gap-6 below the 48rem breakpoint, the
+// PAGE_SHELL gap-10 at and above (identical on desktop by construction).
+// Dashboard joins Containers/Files as a stated exception in eslint.config.js.
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
+import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
+// MobileSectionLabel is the single source of the phone section-label markup;
+// every phone block on this page composes it instead of a private copy.
+import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
+import { StickyActionBar } from "../components/mobile/StickyActionBar";
+import { useBackupWatch } from "../lib/backupWatch";
+import { useConfirm } from "../lib/useConfirm";
+import { useToast } from "../lib/toast";
 import { formatCadence } from "../components/CadenceBuilder";
 import { relativeTime, formatTs, formatDuration } from "../lib/reltime";
 import { isFreshInstall } from "../lib/freshInstall";
 import { useDashboardLayout, CustomizableBlock, type BlockDragHandlers } from "../lib/dashboardLayout";
 import { ActivityLog } from "../components/ActivityLog";
-import { Badge, type BadgeTone } from "../components/Badge";
-import { IconPencil } from "../components/Sidebar";
+import { Badge } from "../components/Badge";
+import { IconPencil, IconBackupNow } from "../components/Sidebar";
 import { IconTipButton } from "../components/IconTipButton";
 import { Selector } from "../components/Selector";
 // humanBytes (binary 1024 units, one decimal) moved to lib/forecast so the
@@ -34,83 +50,6 @@ const SUMMARY_RUNS_POLL_MS = 10000;
 // Same cadence ActivityLog.tsx polls /api/schedule/next at, deliberately: two
 // widgets reading one endpoint at different rates can show two answers.
 const SUMMARY_SCHEDULE_POLL_MS = 30000;
-
-// ---------------------------------------------------------------------------
-// Run kind/target label helpers — shared by every dashboard card that renders
-// a Run's kind and target (RunsCard, SummaryTier's "Last result" cell). A
-// prune/verify run's targetId IS the domain literal it ran against
-// ("containers"/"vms"/"files", or store.FlashTargetID/ConfigTargetID —
-// "flash"/"config" — see internal/api/service.go domainRunTargetID), never a
-// resolvable item id, so it needs its own kind label + domain-name
-// resolution instead of falling through to the generic backup/restore/update
-// display (which would otherwise show it mislabeled as "Restore" with a
-// blank/truncated target — #run-activity-log finding 1).
-// ---------------------------------------------------------------------------
-
-function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string {
-  switch (domain) {
-    case "containers":
-      return t("activityLog.domainContainers");
-    case "vms":
-      return t("activityLog.domainVMs");
-    case "flash":
-      return t("activityLog.domainFlash");
-    case "config":
-      return t("activityLog.domainConfig");
-    case "files":
-      return t("activityLog.domainFiles");
-    default:
-      return domain;
-  }
-}
-
-function runKindLabel(t: ReturnType<typeof useT>["t"], kind: string): string {
-  switch (kind) {
-    case "backup":
-      return t("run.kindBackup");
-    case "restore":
-      return t("run.kindRestore");
-    case "update":
-      return t("run.kindUpdate");
-    case "prune":
-      return t("activityLog.typePrune");
-    case "verify":
-      return t("activityLog.typeVerify");
-    case "offsite":
-      return t("activityLog.typeOffsite");
-    case "drill":
-      return t("activityLog.jobDrill");
-    case "drdrill":
-      return t("run.kindDRDrill");
-    case "tamper":
-      return t("activityLog.jobTamper");
-    case "export":
-      return t("run.kindExport");
-    default:
-      // An unknown future kind shows its raw literal rather than a wrong label.
-      return kind;
-  }
-}
-
-// isDomainOpRunKind mirrors the backend's domainRunTargetID users: these kinds
-// carry the DOMAIN literal (or the flash/config singleton id) in targetId, never
-// a resolvable item id.
-function isDomainOpRunKind(kind: string): boolean {
-  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
-}
-
-// runTargetText resolves what to show in a run's "target" column. Domain-op
-// runs (prune/verify/offsite/drill/tamper/export) carry the domain literal in
-// targetId (see above) — reuse the same domain-name keys the activity log uses
-// instead of the generic target/targetId fallback, which would show the raw
-// literal (e.g. "containers…") since it is never in the backend's
-// target-name map.
-function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string {
-  if (isDomainOpRunKind(run.kind)) {
-    return runDomainLabel(t, run.targetId);
-  }
-  return run.target || `${run.targetId.slice(0, 12)}…`;
-}
 
 // ---------------------------------------------------------------------------
 // Stat cards row
@@ -284,128 +223,6 @@ function StatCardsRow({ t, advanced }: { t: ReturnType<typeof useT>["t"]; advanc
       )}
     </>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Status chip — statusTone maps a raw status string to the shared Badge's
-// tone; statusLabel (defined right after it) maps that same string to
-// translated, badge-length text. Every call site renders both together —
-// `<Badge tone={statusTone(s)}>{statusLabel(s, t)}</Badge>` — instead of the
-// tone alone.
-//
-// Task 9 fix: until this task, every one of these Badges rendered the raw
-// English status word verbatim (`{overallStatus}` / `{chipFor(c)}` /
-// `{chipForRpo(...)}` / `{protectionChip(...)}` / `{run.status}` /
-// `{newestRun.status}`) — the exact untranslated-badge-text bug class Phase 1
-// Task 5 already fixed for SpikePanel.tsx's OK/FAIL/INFO chips, sitting the
-// whole time right next to an already-translated sibling label
-// (overallLabel/rpoLabel/protLabel/healthLabel) that made the raw word's
-// presence obvious on close reading. A prior version of this exact comment
-// claimed the opposite — that showing the raw word was deliberate because
-// "these are backend-sourced run-status words, not prose to translate" — but
-// that rationale doesn't hold: `run.statusRunning`/`Success`/`Failed` already
-// existed as real, fully-translated keys in all 26 locales (added for this
-// exact fix, then never wired up), and `chipFor`/`chipForRpo`/`protectionChip`
-// below don't return backend text at all — they're this file's own derived
-// vocabulary. Task 7 (fifth hue) only ever touched statusTone's tone mapping,
-// never what the Badge's children rendered, so the bug (and the incorrect
-// comment defending it) survived that task untouched.
-//
-// KNOWN LIMITATION, documented on purpose (spec-compliance review of Task 7,
-// not fixed in that task — see index.css's matching comment on
-// --status-warn-text's dark value for the full writeup): tone="warn" and
-// tone="active" render as near-identical amber in BOTH themes — dark with
-// the DEFAULT accent (#f1c21b vs #FCC419, RGB-distance ~11, 1.05:1 between
-// them), and light on a GOLD accent, where --accent-text mixes down to roughly
-// the same hue as the warn tone (#8e6a00 against about #71580b on the default
-// Sunflower). It no longer holds for every accent: the token is derived from
-// the accent now, so a blue or teal one separates the two by hue on its own.
-// SummaryTier below is a real, live site where both can appear in the same
-// row at once — the "Overall health" cell showing tone="warn" (an RPO
-// lapsing) next to "Last result" showing tone="active" (a run literally
-// running). Not a bare SC 1.4.1 violation (each badge's own text still
-// differs), but a real glance-level regression.
-// The mitigation is the same in both themes now: the presets that are not
-// gold or yellow do not collide, because --accent-text follows whichever
-// accent the user picked in light theme as well. Only a gold accent still
-// lands beside the warn tone, which is where this note started.
-// Left unresolved rather than force a disproportionate fix (recolouring warn off Carbon's
-// actual yellow token, changing the app's default accent, or adding a new
-// icon system to Badge all reach well past a contrast-arithmetic bugfix) —
-// flagged for a future task. Task 8 (focus system) was checked against this,
-// since it also works the hue-vs-accent boundary via [data-rainbow]
-// .glim-hue's --item-hue-ring — no shared fix: that mechanism only ever
-// touches outline colour on :focus-visible, never badge fill/text colour,
-// so it doesn't reach statusTone's tone="warn"/tone="active" at all. Still
-// open for whichever task picks it up next.
-// ---------------------------------------------------------------------------
-
-function statusTone(status: string): BadgeTone {
-  switch (status.toLowerCase()) {
-    case "success":
-    case "ok":
-      return "ok";
-    case "failed":
-    case "degraded":
-      return "fail";
-    // Genuine activity (Task 7: resolve the fifth hue) — a run that is
-    // literally in progress right now. "active" is the accent-soft Badge
-    // tone, not a solid fill: this list can show several running rows at
-    // once (independent domains backing up concurrently), and rule 3's
-    // "at most one solid accent" cap doesn't apply to a soft/tinted chip
-    // reading at the same weight as its ok/fail/warn siblings.
-    case "running":
-    case "checking":
-      return "active";
-    // The literal backend/derived string "info" (chipForRpo's "warn" SLA
-    // lapse, protectionChip's "amber" aggregate, chipFor's best-effort
-    // check failure) always meant a real caution, never activity — routes
-    // to warn, matching SpikePanel.tsx's own hard-coded tone="warn" for the
-    // identical best-effort-fail case. Unaffected by the "active" rename
-    // above; this is a separate switch arm.
-    case "info":
-      return "warn";
-    // A skip is neither success nor failure: a muted, neutral chip so a removed
-    // container's scheduled target reads as "intentionally not run", distinct
-    // from green success and red failure (#57).
-    case "skipped":
-      return "neutral";
-    default:
-      return "neutral";
-  }
-}
-
-// statusLabel is statusTone's translation-side twin (Task 9). It keys off
-// the SAME tone bucket statusTone already computes — not the raw string a
-// second time — so every raw word any helper below can produce (chipFor:
-// ok/info/failed — chipForRpo: success/info/failed/neutral — protectionChip:
-// ok/info/failed/neutral — run.status/newestRun.status: success/failed/
-// running/skipped) resolves to translated, badge-length text without a
-// second switch to keep in sync. Reuses spike.ok/spike.fail/spike.info —
-// SpikePanel.tsx's own OK/FAIL/INFO wording (Phase 1 Task 5) — for the
-// ok/fail/warn buckets, and run.statusRunning for active (added alongside
-// statusSuccess/statusFailed back when this bug was first anticipated, then
-// never wired up until now). neutral/default gets the one genuinely new key
-// this task adds, run.statusSkipped, translated into all 26 locales.
-function statusLabel(status: string, t: ReturnType<typeof useT>["t"]): string {
-  // Checked BEFORE the tone lookup, because "cancelled" and "skipped" share the
-  // neutral tone and the tone is all the switch below can see. A restore the
-  // user cancelled therefore read "Skipped" in Last Result and in the run
-  // history — a different claim about a different event, and the one the user
-  // themselves had just caused.
-  if (status === "cancelled") return t("run.statusCancelled");
-  switch (statusTone(status)) {
-    case "ok":
-      return t("spike.ok");
-    case "fail":
-      return t("spike.fail");
-    case "warn":
-      return t("spike.info");
-    case "active":
-      return t("run.statusRunning");
-    default:
-      return t("run.statusSkipped");
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1950,20 +1767,35 @@ function FreshInstallNudge({
             (e.g. Config.tsx's Save button) — matching an established idiom
             rather than routing through Badge's tone system, which has no
             "primary CTA" tone of its own and isn't the right place to invent
-            one for a single call site. */}
+            one for a single call site. Under 48rem the CTA also takes the
+            app's link-as-control height (the same value the Config/Flash
+            destinations-gate links carry), staying a real touch target on a
+            phone; desktop keeps the engine's 32px control height. Still not
+            a Button: that renders a plain <button>, which cannot navigate. */}
         <Link
           to="/recovery"
-          className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity"
+          className="self-start inline-flex items-center gap-1 rounded-control bg-accent px-4 py-1.5 text-sm font-medium text-accentContrast hover:opacity-90 transition-opacity max-md:min-h-[2.75rem]"
         >
           {t("recovery.freshNudgeCta")} <span className="inline-block rtl:-scale-x-100">→</span>
         </Link>
       </div>
+      {/* The chip variant deliberately leaves out the shared mobile bleed
+          (Button.tsx's "Scoped to the DEFAULT variant only" block): a chip
+          normally rides INSIDE a host pill whose own row carries the touch
+          floor. HERE the chip is not in a pill — it is the card's only close
+          control, loose in a flex row — so this call site lays the floor
+          itself by re-passing the bleed classes, with a wider inset than
+          Button.tsx's shared one: the chip's engine box is 18px, and 18 plus
+          2x12 stays under the 44px floor, so each side gets 14px (46 total).
+          An ::after owned by the button is what makes bleed taps register on
+          it; a padded wrapper would just be dead zone. Every class is
+          max-md:-scoped, so nothing applies above 48rem. */}
       <Button
         label={t("common.close")}
         labelKey="common.close"
         variant="chip"
         onClick={onDismiss}
-        className="shrink-0"
+        className="shrink-0 max-md:relative max-md:after:absolute max-md:after:-inset-3.5 max-md:after:content-['']"
       />
     </div>
   );
@@ -2063,6 +1895,106 @@ function SummaryCell({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Shared summary derivations — extracted so the phone Home blocks read the
+// SAME source of truth as the desktop summary tier: this file's own stated
+// principle for /api/schedule/next ("the two read the same source and must
+// not be able to disagree with each other on screen") now applies to the
+// mobile Next-run card and repo-health card too. Pure functions over
+// props/state that already exist; no fetch of their own.
+// ---------------------------------------------------------------------------
+
+/** Worst RPO status across enabled, non-off domains: any overdue/never is red,
+ *  else any warn is amber, else any ok is green, else all off = neutral. The
+ *  summary tier's "Overall health" cell and the mobile repo-health card's
+ *  four-status line are the two consumers. */
+function worstRpoStatus(domains: DomainStatus[]): "overdue" | "warn" | "ok" | "off" {
+  const active = domains.filter((d) => d.enabled && d.status !== "off");
+  return active.some((d) => d.status === "overdue" || d.status === "never")
+    ? "overdue"
+    : active.some((d) => d.status === "warn")
+      ? "warn"
+      : active.some((d) => d.status === "ok")
+        ? "ok"
+        : "off";
+}
+
+/** The reader-facing label for worstRpoStatus — the same four keys the
+ *  summary tier's health cell has always mapped, now shared. */
+function worstRpoLabel(t: ReturnType<typeof useT>["t"], health: "overdue" | "warn" | "ok" | "off"): string {
+  return health === "overdue"
+    ? t("dashboard.rpoOverdue")
+    : health === "warn"
+      ? t("dashboard.rpoWarn")
+      : health === "ok"
+        ? t("dashboard.rpoOk")
+        : t("dashboard.rpoOff");
+}
+
+/**
+ * When the next backup actually fires, from the scheduler ([545], issue #187).
+ * ------------------------------------------------------------------------
+ * The note that used to sit in SummaryTier said "there is no next-run
+ * timestamp on the backend and no client-side cron calculator", and it had
+ * outlived its truth: GET /api/schedule/next has existed for a while, the
+ * activity log a few hundred pixels below already reads it, and so does the
+ * Unraid widget. The desktop cell was the last consumer still deriving the
+ * answer itself, by ranking cadence STRINGS on an approximate period.
+ *
+ * The approximation could not be made right, only less wrong. It ranks
+ * "weekly Sun 04:00" as seven days out whatever today is, and it cannot walk
+ * an `everyN` entry through its due gate, so an `everyN 7` pass that last ran
+ * three days ago is four days out to the scheduler and seven to this tile.
+ * Two issues came out of that (#177, #186), both patched by teaching the
+ * weaker mechanism about the case rather than retiring it. This retires it.
+ *
+ * The result names a MOMENT rather than a schedule, which is jdp's call at
+ * the review: "Täglich um 05:00" describes a rule, and the question a
+ * dashboard is asked is when the next one runs. Filtered to job "backup" —
+ * the list also carries offsite/drill/tamper/digest/watchdog fires, and this
+ * is labelled "Next backup".
+ *
+ * The gate main learned in #177/#186, carried over: the scheduler registers
+ * the "Backup Everything" pass even when all five domains are switched off,
+ * because its entry has no off field of its own. A pass over zero enabled
+ * domains backs nothing up (internal/api/everything.go logs exactly that and
+ * writes no snapshot), so without this condition the result names a moment at
+ * which nothing gets backed up.
+ */
+function nextBackupFireAt(
+  scheduleNext: ScheduleNext[],
+  domains: DomainStatus[]
+): { at: ScheduleNext | null; ms: number } {
+  const anyDomainOn = domains.some((d) => d.enabled);
+  const at =
+    scheduleNext.find((n) => n.job === "backup" && (n.domain !== "everything" || anyDomainOn)) ??
+    null;
+  return { at, ms: at ? new Date(at.next).getTime() : NaN };
+}
+
+/** Reader-facing label for a ScheduleNext domain — the same vocabulary the
+ *  protection rows and the activity log use, so the mobile Next-run card
+ *  cannot invent a second name for a domain the rest of the app already
+ *  names. */
+function scheduleDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string {
+  switch (domain) {
+    case "containers":
+      return t("dashboard.domainContainers");
+    case "vms":
+      return t("dashboard.domainVMs");
+    case "flash":
+      return t("dashboard.domainFlash");
+    case "files":
+      return t("dashboard.domainFiles");
+    case "config":
+      return t("dashboard.domainConfig");
+    case "everything":
+      return t("activityLog.domainEverything");
+    default:
+      return domain;
+  }
+}
+
 function SummaryTier({
   t,
   domains,
@@ -2102,62 +2034,19 @@ function SummaryTier({
    *  and the Unraid widget uses (issue #187, [545]). */
   scheduleNext: ScheduleNext[];
 }) {
-  // Cell 1 — worst RPO status across enabled, non-off domains: any overdue/never
-  // is red, else any warn is amber, else any ok is green, else all off = neutral.
-  // The representative status reuses chipForRpo + the existing rpo* labels below.
-  const active = domains.filter((d) => d.enabled && d.status !== "off");
-  const health: "overdue" | "warn" | "ok" | "off" = active.some(
-    (d) => d.status === "overdue" || d.status === "never"
-  )
-    ? "overdue"
-    : active.some((d) => d.status === "warn")
-      ? "warn"
-      : active.some((d) => d.status === "ok")
-        ? "ok"
-        : "off";
-  const healthLabel =
-    health === "overdue"
-      ? t("dashboard.rpoOverdue")
-      : health === "warn"
-        ? t("dashboard.rpoWarn")
-        : health === "ok"
-          ? t("dashboard.rpoOk")
-          : t("dashboard.rpoOff");
+  // Cell 1 — worst RPO status across enabled, non-off domains (the shared
+  // worstRpoStatus/worstRpoLabel derivation above; identical mapping to the
+  // pre-extraction inline version). The representative status reuses chipForRpo
+  // + the existing rpo* labels.
+  const health = worstRpoStatus(domains);
+  const healthLabel = worstRpoLabel(t, health);
 
   // Cell 2 — when the next backup actually fires, from the scheduler ([545],
-  // issue #187).
-  // ------------------------------------------------------------------------
-  // The note that used to sit here said "there is no next-run timestamp on the
-  // backend and no client-side cron calculator", and it had outlived its truth:
-  // GET /api/schedule/next has existed for a while, the activity log a few
-  // hundred pixels below already reads it, and so does the Unraid widget. This
-  // cell was the last consumer still deriving the answer itself, by ranking
-  // cadence STRINGS on an approximate period.
-  //
-  // The approximation could not be made right, only less wrong. It ranks
-  // "weekly Sun 04:00" as seven days out whatever today is, and it cannot walk
-  // an `everyN` entry through its due gate, so an `everyN 7` pass that last ran
-  // three days ago is four days out to the scheduler and seven to this tile.
-  // Two issues came out of that (#177, #186), both patched by teaching the
-  // weaker mechanism about the case rather than retiring it. This retires it.
-  //
-  // The cell now names a MOMENT rather than a schedule, which is jdp's call at
-  // the review: "Täglich um 05:00" describes a rule, and the question a
-  // dashboard is asked is when the next one runs. Filtered to job "backup" —
-  // the list also carries offsite/drill/tamper/digest/watchdog fires, and this
-  // cell is labelled "Next backup".
-  //
-  // The gate main learned in #177/#186, carried over: the scheduler registers
-  // the "Backup Everything" pass even when all five domains are switched off,
-  // because its entry has no off field of its own. A pass over zero enabled
-  // domains backs nothing up (internal/api/everything.go logs exactly that and
-  // writes no snapshot), so without this condition the cell names a moment at
-  // which nothing gets backed up.
-  const anyDomainOn = domains.some((d) => d.enabled);
-  const nextBackupAt = scheduleNext.find(
-    (n) => n.job === "backup" && (n.domain !== "everything" || anyDomainOn)
-  );
-  const nextBackupMs = nextBackupAt ? new Date(nextBackupAt.next).getTime() : NaN;
+  // issue #187). The derivation (and its #177/#186 history) lives in the
+  // shared nextBackupFireAt helper above — the mobile Next-run card reads the
+  // same function, so the two surfaces cannot disagree. (The cell itself only
+  // needs the moment, not the entry.)
+  const { ms: nextBackupMs } = nextBackupFireAt(scheduleNext, domains);
   const nextCadence = Number.isFinite(nextBackupMs)
     ? t("dashboard.summaryNextIn").replace(
         "{countdown}",
@@ -2214,12 +2103,365 @@ function SummaryTier({
 }
 
 // ---------------------------------------------------------------------------
+// Mobile Home blocks — the glanceable phone surface.
+//
+// Below the 48rem breakpoint the desktop customizable block grid is replaced
+// by THESE four blocks in a fixed order: identity (the page header above),
+// next run, recent runs, repository health (plus the thumb-zone trigger that
+// joins the page column's last child, the StickyActionBar below). The phone
+// density contract: cards p-4, gap-4 between blocks, gap-2 inside a card,
+// 12px uppercase section labels. Every consumer here reads state the page has
+// ALREADY fetched (runs, scheduleNext, statusDomains) or the same endpoint a
+// desktop card already reads — zero new endpoints.
+//
+// Mount discipline: the blocks are JSX-gated on `!isDesktop` (jsdom's
+// matchMedia answers desktop, so these surfaces render only in real mobile
+// browsers/e2e), and the desktop grid is JSX-gated on `isDesktop` in return —
+// a CSS-hidden grid would stay MOUNTED on the phone and its cards (RunsCard,
+// LastBackupsCard, the heatmap, StorageCard) would keep fetching behind the
+// user's back, doubling every phone load's round-trips. With both faces
+// JSX-gated exactly one surface is ever alive, and at the 48rem boundary the
+// two switches agree.
+// ---------------------------------------------------------------------------
+
+function MobileNextRunCard({
+  t,
+  scheduleNext,
+  domains,
+  loading,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  scheduleNext: ScheduleNext[];
+  domains: DomainStatus[];
+  loading: boolean;
+}) {
+  // The SAME derivation the summary tier's "Next backup" cell uses — one
+  // source of truth (nextBackupFireAt above), two surfaces that cannot
+  // disagree. Accent here is sanctioned: soft tint + accent-derived text on
+  // the card's one icon and the countdown chip (accentSoft backdrop +
+  // accentText chip), never a solid accent fill.
+  const { at, ms } = nextBackupFireAt(scheduleNext, domains);
+  const countdown = Number.isFinite(ms)
+    ? t("dashboard.summaryNextIn").replace(
+        "{countdown}",
+        formatDuration(Math.max(0, Math.round((ms - Date.now()) / 1000)))
+      )
+    : "";
+  return (
+    <section className="flex flex-col gap-2">
+      <MobileSectionLabel t={t} labelKey="dashboard.summaryNextBackup" />
+      <div className="flex items-center gap-2 rounded-card bg-carbon-surface p-4">
+        {loading ? (
+          <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>
+        ) : at ? (
+          <>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-accentSoft text-accentText">
+              <IconBackupNow />
+            </span>
+            <span className="min-w-0 flex-1">
+              {/* Schedule name (14px ≈ text-sm / 600) + when · what meta (12px).
+                  "what" is the run kind the scheduler entry names — the card
+                  labels a backup fire, so run.kindBackup is the honest kind. */}
+              <span className="block truncate text-sm font-semibold text-carbon-text">
+                {scheduleDomainLabel(t, at.domain)}
+              </span>
+              <span className="mt-0.5 block truncate text-xs text-carbon-textMuted">
+                {t("run.kindBackup")} · {formatTs(Math.round(ms / 1000))}
+              </span>
+            </span>
+            {countdown && (
+              <span className="shrink-0 rounded-pill bg-accentSoft px-2 py-1 text-xs font-semibold text-accentText">
+                {countdown}
+              </span>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-carbon-textMuted">{t("dashboard.rpoOff")}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MobileRecentRunsCard({
+  t,
+  runs,
+  onOpenRun,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  runs: Run[];
+  onOpenRun: (run: Run) => void;
+}) {
+  // The four most recent runs, newest first (listRuns returns newest-first).
+  // Each row is a >=44px touch target (min-h-[2.75rem]) whose tap opens the
+  // shared RunDetailSheet for THAT run, hosted by the page component-locally —
+  // no route (router.tsx frozen). Four-status badges always carry their text
+  // label (never color alone, WCAG 1.4.1); failed/skipped runs keep the
+  // desktop RunsCard's scrubbed-reason treatment (runReason + the dir
+  // contract) so the phone never shows a red line the user cannot read.
+  const recent = runs.slice(0, 4);
+  return (
+    <section className="flex flex-col gap-2">
+      <MobileSectionLabel t={t} labelKey="dashboard.recentRuns" />
+      <div className="rounded-card bg-carbon-surface p-2">
+        {recent.length === 0 ? (
+          <p className="px-2 py-2 text-sm text-carbon-textMuted">{t("dashboard.noRuns")}</p>
+        ) : (
+          <div className="divide-y divide-carbon-border">
+            {recent.map((run) => (
+              <button
+                key={run.id}
+                type="button"
+                onClick={() => onOpenRun(run)}
+                aria-label={`${statusLabel(run.status, t)} · ${runKindLabel(t, run.kind)} ${runTargetText(t, run)}`}
+                className="flex min-h-[2.75rem] w-full items-center gap-2 px-2 py-2 text-start"
+              >
+                <span className="shrink-0">
+                  <Badge tone={statusTone(run.status)}>{statusLabel(run.status, t)}</Badge>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-carbon-text">
+                    {runKindLabel(t, run.kind)} · {runTargetText(t, run)}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-carbon-textMuted">
+                    {relativeTime(t, run.startedAt)}
+                    {run.bytes > 0 ? ` · ${humanBytes(run.bytes)}` : ""}
+                  </span>
+                  {run.status === "failed" && run.error && (
+                    <span
+                      dir={isOwnReason(run.error) ? undefined : "ltr"}
+                      className="mt-0.5 block text-xs text-statusFail wrap-break-word text-start"
+                    >
+                      {runReason(run.error, t)}
+                    </span>
+                  )}
+                  {run.status === "skipped" && run.error && (
+                    <span
+                      dir={isOwnReason(run.error) ? undefined : "ltr"}
+                      className="mt-0.5 block text-xs text-carbon-textMuted wrap-break-word text-start"
+                    >
+                      {runReason(run.error, t)}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MobileRepoHealthCard({
+  t,
+  domains,
+}: {
+  t: ReturnType<typeof useT>["t"];
+  domains: DomainStatus[];
+}) {
+  // Repo totals from the SAME endpoint the desktop Storage card reads
+  // (/api/stats/{domain}/local, 90-day window — same shape: rawSize,
+  // restoreSize, snapshots). This component mounts only on phones (it is the
+  // !isDesktop complement of the desktop grid, which unmounts its side of the
+  // switch in return), so its four calls never run alongside the Storage
+  // card's own — no duplicated round-trip on either surface, and no new
+  // endpoint anywhere.
+  const [totals, setTotals] = useState<{
+    rawSize: number;
+    restoreSize: number;
+    snapshots: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const repoDomains: StorageDomain[] = ["containers", "vms", "flash", "files"];
+    Promise.all(repoDomains.map((d) => getStats(d, "local", 90)))
+      .then((results) => {
+        if (!active) return;
+        let rawSize = 0;
+        let restoreSize = 0;
+        let snapshots = 0;
+        let any = false;
+        for (const res of results) {
+          const latest = res.ok ? res.latest : null;
+          if (latest) {
+            any = true;
+            rawSize += latest.rawSize;
+            restoreSize += latest.restoreSize;
+            snapshots += latest.snapshots;
+          }
+        }
+        setTotals(any ? { rawSize, restoreSize, snapshots } : null);
+      })
+      .catch(() => {
+        /* non-fatal — the card falls back to the shared no-data copy */
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Four-status language for repo state: the same worst-RPO derivation the
+  // summary tier's health cell uses — Badge + text label, never color alone.
+  const health = worstRpoStatus(domains);
+  // Off-site copy age: the most recent replication across the configured
+  // domains. Offsite blue is the offsite DOMAIN identity, rendered in the
+  // OffsiteIndicator line language (↗ + relative age, text-statusOffsite —
+  // the token is text-only by design), never a fifth status hue. With a repo
+  // configured but nothing replicated yet, the replication row's own
+  // "not replicated yet" says so; with none configured, the protection
+  // card's existing "No off-site copy".
+  const configured = domains.filter((d) => d.offsiteConfigured);
+  const newestReplication = configured.reduce<DomainStatus | null>(
+    (newest, d) =>
+      d.lastReplicationAt > 0 && (newest === null || d.lastReplicationAt > newest.lastReplicationAt)
+        ? d
+        : newest,
+    null
+  );
+  const dedup =
+    totals && totals.rawSize > 0 && totals.restoreSize > 0
+      ? `${(totals.restoreSize / totals.rawSize).toFixed(1)}x`
+      : "—";
+  return (
+    <section className="flex flex-col gap-2">
+      <MobileSectionLabel t={t} labelKey="dashboard.storageTitle" />
+      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone={statusTone(chipForRpo(health))}>{statusLabel(chipForRpo(health), t)}</Badge>
+          <span className="truncate text-sm text-carbon-text">{worstRpoLabel(t, health)}</span>
+        </div>
+        <p className="text-xs text-carbon-textMuted">
+          {loading
+            ? t("dashboard.checking")
+            : totals
+              ? `${humanBytes(totals.rawSize)} · ${t("dashboard.dedup")} ${dedup} · ${totals.snapshots} ${t("dashboard.snapshotsLabel")}`
+              : t("dashboard.noStats")}
+        </p>
+        <p className="text-xs">
+          {newestReplication ? (
+            <span className="font-semibold text-statusOffsite">
+              ↗ {relativeTime(t, newestReplication.lastReplicationAt)}
+            </span>
+          ) : configured.length > 0 ? (
+            <span className="text-carbon-textMuted">{t("ransomware.replicationNever")}</span>
+          ) : (
+            <span className="text-carbon-textMuted">{t("dashboard.noOffsite")}</span>
+          )}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard page
 // ---------------------------------------------------------------------------
 
 export function Dashboard() {
   const { t } = useT();
   const { advanced } = useAdvanced();
+  // The phone surface switch. Below the 48rem breakpoint the page renders the
+  // four glanceable Home blocks INSTEAD of the desktop customizable grid —
+  // each face JSX-gated (see the Mobile Home blocks banner above for why a
+  // CSS-hidden grid would double the phone's fetches). jsdom's matchMedia
+  // answers desktop, so the mobile blocks stay e2e-only and every existing
+  // dom test sees the desktop page.
+  const isDesktop = useIsDesktop();
+
+  // Component-local run-sheet host (the Containers.tsx contract): the
+  // recent-run rows open the shared RunDetailSheet for their own record here —
+  // no route (router.tsx frozen). The dismissal latch exists for the
+  // thumb-zone backup watch below: once the user closes a sheet, later onRun
+  // polls refresh sheetRun but never re-open it; an explicit row tap or a NEW
+  // fire always re-arms.
+  const [sheetRun, setSheetRun] = useState<Run | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetDismissed = useRef(false);
+  // The run id the watch last correlated: polls refresh the SAME run, so only
+  // a DIFFERENT id is a new fire — the latch's re-arm signal. Without it, one
+  // dismissal would silence every later "New backup" press (the latch would
+  // never re-arm outside openRun), and the user would wait out the whole run
+  // for nothing but the terminal toast.
+  const lastCorrelatedRun = useRef<string | null>(null);
+  const openRun = (run: Run) => {
+    sheetDismissed.current = false;
+    setSheetRun(run);
+    setSheetOpen(true);
+  };
+
+  // Thumb-zone trigger watch (BackupButton's semantics verbatim). The
+  // everything pass is async on the server, so the press only
+  // STARTS it ({ok:true,started:true} is never read for the outcome) and the
+  // watch resolves from the recorded run — baseline ids seeded from listRuns
+  // BEFORE firing (never a client clock), then polled until the pass's run
+  // turns terminal. `progressKey: ""` is the honest key: the everything PARENT
+  // run publishes no SSE entry of its own (its per-domain children do — see
+  // RunDetailSheet's progressKeyFor), so the watch resolves via the run-poll
+  // belt exactly like a target whose key never appears.
+  //
+  // The moment the pass's run is correlated (and on every later poll,
+  // with the refreshed record) it deep-links into the run-sheet host above —
+  // landing the user INSIDE the live run they just started. The dismissal
+  // latch guards the open decision, not the record refresh: a sheet the user
+  // closed must not re-open from a later poll; an open one must track the run
+  // to its true terminal state.
+  const { state: everythingState, fire: fireEverything, isPending: everythingPending } = useBackupWatch({
+    progressKey: "",
+    start: backupEverythingNow,
+    matchRun: (r) => r.domain === "everything",
+    onRun: (run) => {
+      if (lastCorrelatedRun.current !== run.id) {
+        lastCorrelatedRun.current = run.id;
+        sheetDismissed.current = false; // new fire re-arms the deep-link
+      }
+      setSheetRun(run);
+      if (!sheetDismissed.current) setSheetOpen(true);
+    },
+  });
+
+  // Terminal outcomes toast per BackupButton's contract ("failed action toasts
+  // AND shakes its button"); success mirrors its snapshot-id form, falling back
+  // to plain Done when the parent run carries no snapshot (the everything pass
+  // aggregates its domains, so the parent snapshot is often empty — the
+  // container-specific configOnly fallback does not apply here). cancelled and
+  // skipped stay silent like BackupButton's cancelled arm: the deep-linked
+  // sheet is already showing the run's own record.
+  const { push } = useToast();
+  const [shake, setShake] = useState(0);
+  const seenPhase = useRef(everythingState.phase);
+  useEffect(() => {
+    if (everythingState.phase === seenPhase.current) return;
+    seenPhase.current = everythingState.phase;
+    if (everythingState.phase === "success") {
+      push(
+        everythingState.snapshotId ? `${t("common.done")} · ${everythingState.snapshotId.slice(0, 8)}` : t("common.done"),
+        "success"
+      );
+    } else if (everythingState.phase === "error") {
+      push(everythingState.message, "fail");
+      setShake((n) => n + 1);
+    }
+  }, [everythingState, push, t]);
+
+  // The consequence sheet stands between the press and the POST — useConfirm
+  // presents it below the breakpoint automatically (the fail-toned
+  // ConfirmSheet, destructive control on top, safe cancel in the thumb-default
+  // slot). The confirm button reuses home.newBackup so its press names the
+  // outcome; cancel is the shared safe default.
+  const { confirm, confirmDialog } = useConfirm();
+  const confirmThenFireEverything = useCallback(async () => {
+    const ok = await confirm(t("home.newBackupConfirm"), {
+      confirmLabel: t("home.newBackup"),
+      cancelLabel: t("common.cancel"),
+    });
+    if (ok) await fireEverything();
+  }, [confirm, fireEverything, t]);
 
   // Single /api/status fetch shared by the Protection + Ransomware cards (no
   // duplicate round-trip — both cards read the same extended domain status).
@@ -2540,7 +2782,10 @@ export function Dashboard() {
     //   The nested gap-6 group below stays: heading + banner are a tight pair
     // that deliberately sits closer than the 40px Card rhythm, the same
     // two-level shape Settings.tsx uses for its heading + tab strip.
-    <div className={PAGE_SHELL}>
+    // The responsive rhythm (gap-6 below 48rem, the PAGE_SHELL
+    // gap-10 at and above — identical on desktop by construction). See
+    // lib/pageShell.ts's PAGE_SHELL_RESPONSIVE and the eslint exceptions data.
+    <div className={PAGE_SHELL_RESPONSIVE}>
       <div className="flex flex-col gap-6">
       {/* Page heading — fixed (contextual, not customizable). The pencil in the
           top-right corner toggles the customize/edit mode.
@@ -2556,10 +2801,40 @@ export function Dashboard() {
           SIZE FOR SQUARE ICON BADGES" block. */}
       <div className="flex items-start justify-between gap-4">
         <div>
+          {/* Identity header, mobile half: the app wordmark (the same
+              theme-switching mark pair the desktop sidebar renders) leads the
+              phone page; md+ never sees this row. "BombVault" is the brand
+              proper noun, not a translation unit — the same standing choice as
+              the logo marks' own alt text in Sidebar.tsx. */}
+          <div className="mb-2 flex items-center gap-2 md:hidden">
+            <img
+              src="/logo.svg"
+              alt=""
+              draggable={false}
+              className="h-6 w-6 object-contain block dark:hidden"
+            />
+            <img
+              src="/logo-light.svg"
+              alt=""
+              draggable={false}
+              className="h-6 w-6 object-contain hidden dark:block"
+            />
+            <span className="text-lg font-semibold tracking-tight text-carbon-text">
+              BombVault
+            </span>
+          </div>
+          {/* The house heading form, every tab identical (pageHeading guard):
+              no max-md shrink here even on mobile — a tab whose title is
+              smaller than its siblings' reads as less important than they
+              are, and every other tab's h1 is text-2xl at every width. */}
           <h1 className="text-2xl font-semibold text-carbon-text">
             {t("dashboard.title")}
           </h1>
-          <p className="mt-1 text-sm text-carbon-textSub">
+          {/* The 12px meta line under the 20px heading: the subtitle
+              steps down to text-xs below the breakpoint. The live instance
+              facts beneath it (per-domain off-site replication indicators)
+              are shared with desktop and untouched. */}
+          <p className="mt-1 text-sm max-md:text-xs text-carbon-textSub">
             {t("dashboard.subtitle")}
           </p>
           <div className="mt-2 flex flex-col gap-1">
@@ -2596,7 +2871,11 @@ export function Dashboard() {
           onClick={() => setEditing((v) => !v)}
           tip={editing ? t("dashboard.customizeDone") : t("dashboard.customize")}
           ariaPressed={editing}
-          className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
+          /* The pencil toggles the customizable desktop grid's edit
+             mode; on phones that grid is replaced by the fixed Home block
+             order, so the control has nothing to edit and stays desktop-only.
+             md+ renders it exactly as before. */
+          className={`max-md:hidden shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-control motion-safe:transition-colors ${
             editing
               ? "bg-accent text-accentContrast"
               : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text"
@@ -2650,7 +2929,7 @@ export function Dashboard() {
       {/* Customize controls — the pencil in the heading toggles edit mode; while
           editing, the Reset button + hint appear here. */}
       {editing && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 max-md:hidden">
           <Button
             label={t("dashboard.resetLayout")}
           labelKey="dashboard.resetLayout"
@@ -2663,10 +2942,35 @@ export function Dashboard() {
       )}
       </div>
 
+      {/* The phone Home blocks — the four glanceable surfaces in the
+          contracted order (identity header is the page header above). JSX-gated
+          on !isDesktop; see the Mobile Home blocks banner above for the mount
+          discipline and the phone density contract. The thumb-zone trigger
+          joins as this column's last child (the StickyActionBar below). */}
+      {!isDesktop && (
+        <div className="flex flex-col gap-4">
+          <MobileNextRunCard t={t} scheduleNext={scheduleNext} domains={statusDomains} loading={statusLoading} />
+          <MobileRecentRunsCard t={t} runs={runs} onOpenRun={openRun} />
+          <MobileRepoHealthCard t={t} domains={statusDomains} />
+          {/* The activity log reaches mobile here — the component is
+              self-contained (own card chrome + heading, per its header
+              comment), so the mount is one line. NO hueIndex: this hue counter
+              is the DESKTOP grid's rainbow sequence — the desktop ActivityLog
+              block already drew its slot from it; a second draw here would
+              advance the counter and silently shift every later block's
+              rainbow position. The mobile heading rides the flat
+              MobileSectionLabel default instead (same as every other block in
+              this column). dayFilter stays shared: a heatmap tap narrows BOTH
+              presentations because they render the same state. */}
+          <ActivityLog dayFilter={logDayFilter} onClearDayFilter={() => setLogDayFilter(null)} />
+        </div>
+      )}
+
       {/* Ordered, visible blocks in a responsive grid: full-width cards span
-          both columns, half-width cards flow two-per-row (request B). Below
-          the md breakpoint everything stacks in a single column regardless of
-          width. The col-span lives on this wrapper div (not on
+          both columns, half-width cards flow two-per-row (request B). The
+          grid is JSX-gated on isDesktop (see the max-md note by the gate
+          below) — the phone reads the Home blocks above instead. The
+          col-span lives on this wrapper div (not on
           CustomizableBlock's own root) so it applies in BOTH edit mode (where
           CustomizableBlock renders its control-bar div) and view mode (where
           it renders only `<>{children}</>`). In edit mode each block carries a
@@ -2682,7 +2986,8 @@ export function Dashboard() {
           own current drag-reorder/hide-show layout, not this file's fixed
           `blocks` definition order (GlimStone follow-up pass, jdp: "Alle
           sind nicht im Regenbogenmodus" — every heading on this page was
-          still the flat, un-hued Task-5 default; see the `blocks` array's
+          still the flat, un-hued default before the counter landed; see the
+          `blocks` array's
           own `render` comment above for why a plain per-block literal index
           can't do this and a shared counter can). Each block's own `render`
           callback calls this DIRECTLY, once per real heading badge it owns,
@@ -2698,6 +3003,17 @@ export function Dashboard() {
           SummaryTier's own `healthHueIndex` doc for the exact live numbers)
           and fixed by resolving all three of its indices to plain numbers
           right here, the same way every other block already does. */}
+      {/* The isDesktop JSX gate, not a max-md:hidden class: below the
+          breakpoint the desktop customizable grid must not merely be invisible
+          but UNMOUNTED — a CSS-hidden grid stays mounted, and its cards keep
+          fetching behind the user's back (the storage card re-reads its four
+          stats windows; the runs list and heatmap keep polling) on top of the
+          phone blocks' own reads, doubling every phone load's round-trips for
+          data the user cannot see. Gating both faces on the same isDesktop
+          (the phone column above uses its complement) means exactly one face
+          is ever alive, whichever way the breakpoint is crossed. At md+ the
+          gate is transparent, so the desktop grid is unchanged. */}
+      {isDesktop && (
       <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
         {(() => {
           let hueSeq = 0;
@@ -2736,10 +3052,16 @@ export function Dashboard() {
           ));
         })()}
       </div>
+      )}
 
-      {/* Hidden-cards tray — only while editing and something is hidden. */}
+      {/* Hidden-cards tray — only while editing and something is hidden.
+          Desktop-only like the grid it serves: editing is only reachable
+          through the pencil, which the isDesktop gate unmounts on the phone.
+          The max-md:hidden class stays as the belt covering the resize window
+          where editing is on and the viewport drops below the breakpoint
+          before React commits the unmount. */}
       {editing && hiddenBlocks.length > 0 && (
-        <div className="relative flex flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
+        <div className="relative flex max-md:hidden flex-col gap-3 rounded-card border border-dashed border-carbon-border p-4">
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("dashboard.hiddenCards")}</Badge>
           </h2>
@@ -2763,6 +3085,51 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* The run detail sheet, hosted component-locally (the
+          Containers.tsx contract): opened by a recent-run row tap and by the
+          backup watch's onRun correlation (the thumb-zone trigger deep-links
+          the live run into the same sheet). A closed sheet stays closed
+          against later watch polls (the latch); an explicit row tap re-arms
+          it. */}
+      {sheetRun && (
+        <RunDetailSheet
+          run={sheetRun}
+          open={sheetOpen}
+          onClose={() => {
+            sheetDismissed.current = true;
+            setSheetOpen(false);
+          }}
+        />
+      )}
+
+      {/* Thumb-zone trigger: the StickyActionBar as the LAST DIRECT CHILD of
+          the page column — sticky resolves against main#bv-main, so nothing
+          may wrap it — holding the surface's ONE solid-accent control. The
+          gate is belt-and-braces (the !isDesktop JSX plus the StickyActionBar's
+          own md:hidden class): the class covers the width-boundary window
+          where the media query and the JS matchMedia could briefly disagree,
+          which on a sticky bar is free insurance. Never a FAB, never
+          position:fixed. While the pass runs the button shows its busy
+          spinner and is disabled; a failed start also shakes (the glim-shake
+          key remount, Containers' Save-bar pattern). */}
+      {!isDesktop && (
+        <StickyActionBar className="md:hidden">
+          <Button
+            key={shake}
+            label={t("home.newBackup")}
+            labelKey="home.newBackup"
+            glyph={<IconBackupNow />}
+            tone="accent"
+            keepLabel
+            disabled={everythingPending}
+            busy={everythingPending}
+            onClick={() => void confirmThenFireEverything()}
+            className={`w-full min-h-[2.75rem] justify-center${shake ? " glim-shake" : ""}`}
+          />
+        </StickyActionBar>
+      )}
+      {confirmDialog}
     </div>
   );
 }

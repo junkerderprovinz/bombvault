@@ -12,6 +12,8 @@ const cs: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Nastavení",
+  "nav.more": "Více",
+  "nav.mobileNavigation": "Mobilní navigace",
   "about.title": "O aplikaci BombVault",
   "about.body": "Jeden rytíř, jedna výprava: pěkné open source nástroje, které v podobě, jakou jsem chtěl, neexistovaly, stavěné, dokud nic nechybí. Všechno zdarma, bez účtů, bez telemetrie, bez reklam a bez placených verzí. Nikde žádná hvězdička. Nic čitelného nikdy neopustí tvoje vlastní zdi. Kováno po večerech a o víkendech, se srdcem a tvrdohlavostí.",
   "about.coffee": "Jestli si BombVault zasloužil místo na tvém serveru nebo počítači, hoď groš svému rytíři: pomůže pokrýt náklady a udrží projekt naživu. A srdce tohohle rytíře díky tomu bije o něco rychleji. Níže jsou tři cesty, vyber si tu, která ti vyhovuje.",
@@ -173,6 +175,10 @@ const cs: Partial<Translations> = {
   "run.colStarted": "Spuštěno",
   "run.colFinished": "Dokončeno",
   "run.colContainer": "Kontejner",
+  "home.newBackup": "Nová záloha",
+  "home.newBackupConfirm": "Spustit nyní zálohu všech povolených oblastí? Kontejnery jsou zastaveny a znovu spuštěny postupně, zatímco jejich záloha běží. Obnova zachová jen to, co uloží další běh.",
+  "run.statVolume": "Objem dat",
+  "run.statSnapshot": "Snímek",
 
   // Settings
   "settings.title": "Nastavení",
@@ -243,6 +249,7 @@ const cs: Partial<Translations> = {
   "settings.labels.buttons": "Tlačítka",
   "settings.labels.sidebar": "Postranní panel",
   "settings.labels.tabs": "Karty",
+  "settings.labels.bottombar": "Spodní panel",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text a symbol",
   "settings.labels.mode.glyph": "Symbol",

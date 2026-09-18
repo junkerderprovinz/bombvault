@@ -1320,13 +1320,16 @@ export function SettingsPage() {
   const [discoFound, setDiscoFound] = useState(false);
   const [disco, setDiscoLocal] = useState<boolean>(() => getDisco());
   const discoClicks = useRef({ taps: 0, last: 0 });
-  // #178: the three label modes, mirrored into local state so the selectors
-  // show the current choice; the controls themselves read through
-  // useLabelMode, which the labelModeChanged() call below wakes.
+  // #178: the label modes, mirrored into local state so the selectors show
+  // the current choice; the controls themselves read through useLabelMode,
+  // which the labelModeChanged() call below wakes. The card renders one
+  // selector per CONTROL_AXES entry, so the mobile bottom bar's axis appears
+  // here the same way the other three do.
   const [labelModes, setLabelModes] = useState<Record<ControlAxis, LabelMode>>(() => ({
     buttons: getLabelMode("buttons"),
     sidebar: getLabelMode("sidebar"),
     tabs: getLabelMode("tabs"),
+    bottombar: getLabelMode("bottombar"),
   }));
 
   // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to

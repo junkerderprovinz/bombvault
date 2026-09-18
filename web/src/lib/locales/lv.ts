@@ -13,6 +13,8 @@ const lv: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Pašrezerve",
   "nav.settings": "Iestatījumi",
+  "nav.more": "Vēl",
+  "nav.mobileNavigation": "Mobilā navigācija",
 
   // Mode toggle
   "about.title": "Par BombVault",
@@ -243,6 +245,10 @@ const lv: Partial<Translations> = {
   "run.colStarted": "Sākts",
   "run.colFinished": "Pabeigts",
   "run.colContainer": "Konteiners",
+  "home.newBackup": "Jauns dublējums",
+  "home.newBackupConfirm": "Sākt tagad visu iespējoto jomu dublējumu? Konteineri tiek apturēti un pārstartēti pa vienam, kamēr darbojas to dublējums. Atjaunošana saglabā tikai to, ko saglabās nākamā izpilde.",
+  "run.statVolume": "Datu apjoms",
+  "run.statSnapshot": "Momentuzņēmums",
 
   // Settings
   "settings.title": "Iestatījumi",
@@ -696,6 +702,7 @@ const lv: Partial<Translations> = {
   "settings.labels.buttons": "Pogas",
   "settings.labels.sidebar": "Sānjosla",
   "settings.labels.tabs": "Cilnes",
+  "settings.labels.bottombar": "Apakšjosla",
   "settings.labels.mode.text": "Teksts",
   "settings.labels.mode.textGlyph": "Teksts un simbols",
   "settings.labels.mode.glyph": "Simbols",

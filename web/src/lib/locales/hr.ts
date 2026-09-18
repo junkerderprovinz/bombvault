@@ -13,6 +13,8 @@ const hr: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Samostalna sigurnosna kopija",
   "nav.settings": "Postavke",
+  "nav.more": "Više",
+  "nav.mobileNavigation": "Mobilna navigacija",
 
   // Mode toggle
   "about.title": "O aplikaciji BombVault",
@@ -243,6 +245,10 @@ const hr: Partial<Translations> = {
   "run.colStarted": "Pokrenuto",
   "run.colFinished": "Završeno",
   "run.colContainer": "Kontejner",
+  "home.newBackup": "Nova sigurnosna kopija",
+  "home.newBackupConfirm": "Započeti sada sigurnosnu kopiju svih omogućenih domena? Kontejneri se zaustavljaju i ponovno pokreću jedan po jedan dok traje njihova sigurnosna kopija. Obnova čuva samo ono što sljedeći zapis sprema.",
+  "run.statVolume": "Volumen podataka",
+  "run.statSnapshot": "Snimka",
 
   // Settings
   "settings.title": "Postavke",
@@ -696,6 +702,7 @@ const hr: Partial<Translations> = {
   "settings.labels.buttons": "Gumbi",
   "settings.labels.sidebar": "Bočna traka",
   "settings.labels.tabs": "Kartice",
+  "settings.labels.bottombar": "Donja traka",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst i simbol",
   "settings.labels.mode.glyph": "Simbol",

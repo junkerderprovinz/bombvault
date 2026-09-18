@@ -12,6 +12,8 @@ const zh: Partial<Translations> = {
   "nav.vms": "虚拟机",
   "nav.flash": "闪存",
   "nav.settings": "设置",
+  "nav.more": "更多",
+  "nav.mobileNavigation": "移动端导航",
   "about.title": "关于 BombVault",
   "about.body": "一位骑士，一场远征：我想要的样子本来并不存在，于是做出这些好看的开源工具，一直做到什么都不缺。全部免费，没有账号，没有遥测，没有广告，也没有付费档位。哪里都没有小星号。可读的东西永远不会离开你自己的城墙。在夜晚和周末锻造，带着心气和倔劲。",
   "about.coffee": "如果 BombVault 在你的服务器或电脑上挣得了一席之地，就给你的骑士打赏一枚硬币：它帮着覆盖开销，也让项目继续活着。而且会让这位骑士的心跳快上一点。下面有三条路，挑顺手的那条。",
@@ -173,6 +175,10 @@ const zh: Partial<Translations> = {
   "run.colStarted": "开始时间",
   "run.colFinished": "完成时间",
   "run.colContainer": "容器",
+  "home.newBackup": "新建备份",
+  "home.newBackupConfirm": "立即开始备份所有已启用的域？容器会在备份运行期间逐个停止并重新启动。恢复只保留下一次运行所保存的内容。",
+  "run.statVolume": "数据量",
+  "run.statSnapshot": "快照",
 
   // Settings
   "settings.title": "设置",
@@ -243,6 +249,7 @@ const zh: Partial<Translations> = {
   "settings.labels.buttons": "按钮",
   "settings.labels.sidebar": "侧边栏",
   "settings.labels.tabs": "标签页",
+  "settings.labels.bottombar": "底栏",
   "settings.labels.mode.text": "文字",
   "settings.labels.mode.textGlyph": "文字和符号",
   "settings.labels.mode.glyph": "符号",

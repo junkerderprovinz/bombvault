@@ -39,7 +39,11 @@ const LIVE_TICK_MS = 1000;
 // auto-follow — a few pixels of rounding slack, not a hard 0.
 const BOTTOM_THRESHOLD_PX = 24;
 
-function glyphFor(status: LogStatus): string {
+// Exported so RunDetailSheet renders the ONE glyph vocabulary over
+// buildLogLines output — a second private copy in the sheet would fork the
+// one glyph vocabulary (the same drift extracting runDisplay.ts prevented
+// for the label helpers).
+export function glyphFor(status: LogStatus): string {
   switch (status) {
     case "running":
       return "⋯";
@@ -101,7 +105,9 @@ export function colorFor(status: LogStatus): string {
   }
 }
 
-function glyphLabelKey(status: LogStatus): TranslationKey {
+// Exported for RunDetailSheet, same reason as glyphFor above — the glyph's
+// aria-label key and the glyph itself must never be re-authored apart.
+export function glyphLabelKey(status: LogStatus): TranslationKey {
   switch (status) {
     case "running":
       return "activityLog.glyphRunning";

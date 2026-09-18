@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { ConfirmSheet, type ConfirmTone } from "../components/mobile/ConfirmSheet";
 import { useT } from "./i18n";
+import { useIsDesktop } from "./useMediaQuery";
 
 // ---------------------------------------------------------------------------
 // useConfirm — the stateful half of ConfirmDialog (GlimStone form-engine
@@ -65,6 +67,7 @@ import { useT } from "./i18n";
 export interface ConfirmOptions {
   confirmLabel?: string;
   cancelLabel?: string;
+  tone?: ConfirmTone;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -83,6 +86,13 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 
 export function useConfirm() {
   const { t } = useT();
+  // The presentation half swaps at the ONE width breakpoint — ConfirmDialog
+  // (the desktop card, byte-identical to before this hook grew the branch)
+  // at/above 48rem, ConfirmSheet (the fail-toned bottom sheet, destructive
+  // control on top, safe cancel in the thumb-default bottom slot) below it.
+  // Nothing else about the contract moves: same confirm() promise, same
+  // settle paths, same translated strings, zero per-call-site changes.
+  const isDesktop = useIsDesktop();
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
   // The dialog card's DOM node (for the Tab trap) and whatever had focus the
@@ -151,18 +161,42 @@ export function useConfirm() {
   // any ancestor of the call site with a CSS transform (e.g. .glim-page-enter)
   // creates a new containing block, so a `position: fixed` backdrop nested
   // under it only covers that ancestor's box, not the real viewport.
+  //
+  // The sheet branch deliberately does NOT attach dialogRef: the ref drives
+  // THIS hook's Tab trap, and BottomSheet already runs its own (same
+  // FOCUSABLE_SELECTOR lift) over the panel — leaving the ref null makes the
+  // trap below a no-op instead of fighting the sheet's. Escape fires from
+  // both listeners on one keypress in the sheet branch; settle() nulls its
+  // resolver on the first call, so the double dispatch is benign (the second
+  // is a guarded no-op) — asserted once-and-only-once in
+  // ConfirmSheet.dom.test.tsx.
   const confirmDialog = pending
     ? createPortal(
-        <ConfirmDialog
-          ref={dialogRef}
-          title={t("confirmDialog.title")}
-          message={pending.message}
-          confirmLabel={pending.confirmLabel ?? t("common.confirm")}
-          cancelLabel={pending.cancelLabel ?? t("common.cancel")}
-          closeLabel={t("common.close")}
-          onConfirm={() => settle(true)}
-          onCancel={() => settle(false)}
-        />,
+        isDesktop ? (
+          <ConfirmDialog
+            ref={dialogRef}
+            title={t("confirmDialog.title")}
+            message={pending.message}
+            confirmLabel={pending.confirmLabel ?? t("common.confirm")}
+            cancelLabel={pending.cancelLabel ?? t("common.cancel")}
+            closeLabel={t("common.close")}
+            // No tone prop: GlimStone 1.12.0 removed it — the desktop commit
+            // button takes its siblings' colour. The mobile sheet branch below
+            // keeps the tone mapping (documented divergence).
+            onConfirm={() => settle(true)}
+            onCancel={() => settle(false)}
+          />
+        ) : (
+          <ConfirmSheet
+            title={t("confirmDialog.title")}
+            message={pending.message}
+            confirmLabel={pending.confirmLabel ?? t("common.confirm")}
+            cancelLabel={pending.cancelLabel ?? t("common.cancel")}
+            tone={pending.tone ?? "fail"}
+            onConfirm={() => settle(true)}
+            onCancel={() => settle(false)}
+          />
+        ),
         document.body
       )
     : null;

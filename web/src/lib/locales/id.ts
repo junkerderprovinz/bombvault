@@ -13,6 +13,8 @@ const id: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Cadangan Mandiri",
   "nav.settings": "Pengaturan",
+  "nav.more": "Lainnya",
+  "nav.mobileNavigation": "Navigasi seluler",
 
   // Mode toggle
   "about.title": "Tentang BombVault",
@@ -243,6 +245,10 @@ const id: Partial<Translations> = {
   "run.colStarted": "Dimulai",
   "run.colFinished": "Selesai",
   "run.colContainer": "Container",
+  "home.newBackup": "Pencadangan baru",
+  "home.newBackupConfirm": "Mulai pencadangan untuk semua domain yang diaktifkan sekarang? Kontainer dihentikan dan dimulai ulang satu per satu selama pencadangannya berjalan. Pemulihan hanya menyimpan apa yang disimpan oleh proses berikutnya.",
+  "run.statVolume": "Volume data",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Pengaturan",
@@ -696,6 +702,7 @@ const id: Partial<Translations> = {
   "settings.labels.buttons": "Tombol",
   "settings.labels.sidebar": "Bilah sisi",
   "settings.labels.tabs": "Tab",
+  "settings.labels.bottombar": "Bilah bawah",
   "settings.labels.mode.text": "Teks",
   "settings.labels.mode.textGlyph": "Teks dan simbol",
   "settings.labels.mode.glyph": "Simbol",

@@ -13,6 +13,8 @@ const lt: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Savarankiška atsarga",
   "nav.settings": "Nustatymai",
+  "nav.more": "Daugiau",
+  "nav.mobileNavigation": "Mobilioji navigacija",
 
   // Mode toggle
   "about.title": "Apie BombVault",
@@ -243,6 +245,10 @@ const lt: Partial<Translations> = {
   "run.colStarted": "Pradėta",
   "run.colFinished": "Baigta",
   "run.colContainer": "Konteineris",
+  "home.newBackup": "Nauja atsarginė kopija",
+  "home.newBackupConfirm": "Pradėti dabar visų įjungtų sričių atsarginę kopiją? Konteineriai sustabdomi ir paleidžiami iš naujo po vieną, kol vyksta jų atsarginė kopija. Atkūrimas išsaugo tik tai, ką įrašys kitas vykdymas.",
+  "run.statVolume": "Duomenų apimtis",
+  "run.statSnapshot": "Momentinė kopija",
 
   // Settings
   "settings.title": "Nustatymai",
@@ -696,6 +702,7 @@ const lt: Partial<Translations> = {
   "settings.labels.buttons": "Mygtukai",
   "settings.labels.sidebar": "Šoninė juosta",
   "settings.labels.tabs": "Kortelės",
+  "settings.labels.bottombar": "Apatinė juosta",
   "settings.labels.mode.text": "Tekstas",
   "settings.labels.mode.textGlyph": "Tekstas ir simbolis",
   "settings.labels.mode.glyph": "Simbolis",

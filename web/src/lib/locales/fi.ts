@@ -12,6 +12,8 @@ const fi: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Asetukset",
+  "nav.more": "Lisää",
+  "nav.mobileNavigation": "Mobiilinavigointi",
   "about.title": "Tietoja BombVaultista",
   "about.body": "Yksi ritari, yksi ristiretki: siistejä avoimen lähdekoodin työkaluja, joita ei ollut siinä muodossa kuin halusin, rakennettuna kunnes mitään ei puutu. Kaikki ilmaista, ilman tilejä, ilman telemetriaa, ilman mainoksia ja ilman maksullisia tasoja. Ei tähteä missään. Mikään luettava ei koskaan poistu omien muuriesi sisältä. Taottu iltaisin ja viikonloppuisin, sydämellä ja itsepäisyydellä.",
   "about.coffee": "Jos BombVault on ansainnut paikkansa palvelimellasi tai koneellasi, heitä kolikko ritarillesi: se auttaa kattamaan kulut ja pitää projektin hengissä. Ja se saa tämän ritarin sydämen lyömään hieman nopeammin. Alla on kolme tietä, valitse sinulle sopiva.",
@@ -173,6 +175,10 @@ const fi: Partial<Translations> = {
   "run.colStarted": "Aloitettu",
   "run.colFinished": "Valmis",
   "run.colContainer": "Kontti",
+  "home.newBackup": "Uusi varmuuskopio",
+  "home.newBackupConfirm": "Aloita varmuuskopio kaikista käytössä olevista alueista nyt? Kontit pysäytetään ja käynnistetään uudelleen yksi kerrallaan niiden varmuuskopion aikana. Palautus säilyttää vain sen, mitä seuraava ajo tallentaa.",
+  "run.statVolume": "Datamäärä",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Asetukset",
@@ -243,6 +249,7 @@ const fi: Partial<Translations> = {
   "settings.labels.buttons": "Painikkeet",
   "settings.labels.sidebar": "Sivupalkki",
   "settings.labels.tabs": "Välilehdet",
+  "settings.labels.bottombar": "Alapalkki",
   "settings.labels.mode.text": "Teksti",
   "settings.labels.mode.textGlyph": "Teksti ja symboli",
   "settings.labels.mode.glyph": "Symboli",

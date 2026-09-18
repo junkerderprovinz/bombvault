@@ -13,6 +13,8 @@ const gl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Autocopia",
   "nav.settings": "Configuración",
+  "nav.more": "Máis",
+  "nav.mobileNavigation": "Navegación móbil",
 
   // Mode toggle
   "about.title": "Sobre BombVault",
@@ -243,6 +245,10 @@ const gl: Partial<Translations> = {
   "run.colStarted": "Iniciado",
   "run.colFinished": "Rematado",
   "run.colContainer": "Contedor",
+  "home.newBackup": "Nova copia de seguranza",
+  "home.newBackupConfirm": "Iniciar agora unha copia de seguranza de todos os dominios activados? Os contedores detense e reinícianse de un en un mentres se executa a súa copia. A restauración só conserva o que garde a seguinte execución.",
+  "run.statVolume": "Volume de datos",
+  "run.statSnapshot": "Instantánea",
 
   // Settings
   "settings.title": "Configuración",
@@ -696,6 +702,7 @@ const gl: Partial<Translations> = {
   "settings.labels.buttons": "Botóns",
   "settings.labels.sidebar": "Barra lateral",
   "settings.labels.tabs": "Lapelas",
+  "settings.labels.bottombar": "Barra inferior",
   "settings.labels.mode.text": "Texto",
   "settings.labels.mode.textGlyph": "Texto e símbolo",
   "settings.labels.mode.glyph": "Símbolo",

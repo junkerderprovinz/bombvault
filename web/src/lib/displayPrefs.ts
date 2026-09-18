@@ -38,6 +38,7 @@ const KEYS = [
   "bv-labels-buttons",
   "bv-labels-sidebar",
   "bv-labels-tabs",
+  "bv-labels-bottombar",
   "bv-lang",
   "bombvault.advanced",
   // Whether a Fleet peer card shows its scorecard. It sits on this side of the

@@ -13,6 +13,8 @@ const eu: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Autobabeskopia",
   "nav.settings": "Ezarpenak",
+  "nav.more": "Gehiago",
+  "nav.mobileNavigation": "Mugikorreko nabigazioa",
 
   // Mode toggle
   "about.title": "BombVault-i buruz",
@@ -243,6 +245,10 @@ const eu: Partial<Translations> = {
   "run.colStarted": "Hasita",
   "run.colFinished": "Amaituta",
   "run.colContainer": "Edukiontzia",
+  "home.newBackup": "Babeskopia berria",
+  "home.newBackupConfirm": "Aktibatutako domeinu guztien babeskopia hastu orain? Edukiontiak banan-banan gelditu eta berrabiarazten dira beren babeskopia exekutatzen den bitartean. Leheneratzeak hurrengo exekuzioak gordetzen duena soilik gordetzen du.",
+  "run.statVolume": "Datu-bolumena",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Ezarpenak",
@@ -696,6 +702,7 @@ const eu: Partial<Translations> = {
   "settings.labels.buttons": "Botoiak",
   "settings.labels.sidebar": "Alboko barra",
   "settings.labels.tabs": "Fitxak",
+  "settings.labels.bottombar": "Beheko barra",
   "settings.labels.mode.text": "Testua",
   "settings.labels.mode.textGlyph": "Testua eta ikurra",
   "settings.labels.mode.glyph": "Ikurra",
