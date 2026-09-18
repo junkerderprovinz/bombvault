@@ -167,7 +167,7 @@ export const en = {
   "containers.deleteBackups": "Delete all backups",
   "containers.deleteBackupsConfirm": "Delete ALL backups of this container? The snapshots are permanently removed from the repository and cannot be undone.",
   "containers.removeEntryConfirm": "Remove this container's entry from the list? Its backups, if any, are not deleted.",
-  "containers.filter": "Filter:",
+  "containers.filter": "Filter",
   "containers.filterAll": "All",
   "containers.filterInstalled": "Installed",
   "containers.sectionsLabel": "Sections",
@@ -792,6 +792,9 @@ export const en = {
   // over-promise what the switch does.
   "folders.cachedirToggle": "Skip cache folders (CACHEDIR.TAG)",
   "folders.cachedirScope": "Applies to the entire backup of this container, not only this folder.",
+  // Live count for the mobile Save bar: how many folders the next backup
+  // hands restic. Invariant {n}, no plural forms — zero is a real answer.
+  "folders.handedToRestic": "{n} folders handed to restic",
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -1066,7 +1069,7 @@ export const en = {
   "jobs.cadenceDaily": "Daily at {time}",
   "jobs.cadenceWeekly": "Weekly ({days}) at {time}",
   "jobs.cadenceEveryN": "Every {n} days at {time}",
-  "sort.label": "Sort:",
+  "sort.label": "Sort",
   "sort.nameAsc": "Name (A–Z)",
   "sort.status": "Status",
   "sort.ip": "IP",
@@ -1232,6 +1235,11 @@ export const en = {
   // button would stutter.
   "common.expand": "Expand",
   "common.collapse": "Collapse",
+  // Mobile stacked-detail back row: a visible label, never an icon-only
+  // affordance — the row reads chevron + "Back".
+  "common.back": "Back",
+  // Load-more affordance for windowed lists.
+  "common.loadMore": "Load more",
   "common.loadingBackups": "Loading backups…",
   "common.saving": "Saving…",
   "common.restoreRunning": "A restore is running…",
@@ -2129,7 +2137,7 @@ export const de: Translations = {
   "containers.deleteBackups": "Alle Backups löschen",
   "containers.deleteBackupsConfirm": "ALLE Backups dieses Containers löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden.",
   "containers.removeEntryConfirm": "Den Eintrag dieses Containers aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
-  "containers.filter": "Filter:",
+  "containers.filter": "Filter",
   "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installiert",
   "containers.sectionsLabel": "Bereiche",
@@ -2658,6 +2666,7 @@ export const de: Translations = {
     "Die Auswahl umfasst jetzt weniger Ordner als zuvor. Ab der nächsten Sicherung enthalten Snapshots nur noch die ausgewählten Ordner. Bestehende Snapshots bleiben unverändert.",
   "folders.cachedirToggle": "Cache-Ordner überspringen (CACHEDIR.TAG)",
   "folders.cachedirScope": "Gilt für die gesamte Sicherung dieses Containers, nicht nur für diesen Ordner.",
+  "folders.handedToRestic": "{n} Ordner an restic übergeben",
   "stophook.title": "Andere Container stoppen",
   "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",
@@ -2853,7 +2862,7 @@ export const de: Translations = {
   "jobs.cadenceDaily": "Täglich um {time}",
   "jobs.cadenceWeekly": "Wöchentlich ({days}) um {time}",
   "jobs.cadenceEveryN": "Alle {n} Tage um {time}",
-  "sort.label": "Sortieren:",
+  "sort.label": "Sortieren",
   "sort.nameAsc": "Name (A–Z)",
   "sort.status": "Status",
   "sort.ip": "IP",
@@ -3002,6 +3011,8 @@ export const de: Translations = {
   "common.close": "Schließen",
   "common.expand": "Ausklappen",
   "common.collapse": "Einklappen",
+  "common.back": "Zurück",
+  "common.loadMore": "Mehr laden",
   "common.loadingBackups": "Sicherungen werden geladen…",
   "common.saving": "Speichern…",
   "common.restoreRunning": "Eine Wiederherstellung läuft…",

@@ -1,19 +1,25 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody } from "../lib/api";
-import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody, type ContainerMountsResponse } from "../lib/api";
+import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, Run } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
+import { useIsCoarsePointer, useIsDesktop } from "../lib/useMediaQuery";
 import { SelectionTree } from "../components/SelectionTree";
+import { StickyActionBar } from "../components/mobile/StickyActionBar";
+import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
+import { ListToolbar } from "../components/mobile/ListToolbar";
+import { useLoadMore } from "../lib/useLoadMore";
 import { RepoPicker } from "../components/RepoPicker";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
+import { ChipFilter, loadStoredFilterKey } from "../components/ChipFilter";
 import { IconTipButton } from "../components/IconTipButton";
 import { DropdownListbox } from "../components/DropdownListbox";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel, type TranslationKey } from "../lib/i18n";
 import { InfoBubble } from "../components/InfoBubble";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
@@ -178,7 +184,9 @@ const SORT_KEYS = {
 // Home/End, RTL) and rainbow hueing all now live in Selector itself, not
 // copy-pasted here — that duplicated rendering (with zero keyboard support)
 // was exactly what had drifted apart between this file and VMs.tsx's own
-// near-identical copies.
+// near-identical copies. ChipFilter, the most generic of the three
+// (parameterised over its option set), has since moved to
+// components/ChipFilter.tsx to serve Containers and VMs from one copy.
 //
 // All three render the SMALL horizontal selector (`variant="well"`, no
 // `equalWidth`) — jdp, live review: "Im Filtermenü: die Optionen bitte in
@@ -272,40 +280,18 @@ const SCHEDULE_FILTER_STORAGE_KEY = "bv-containers-schedule-filter";
 const BACKUP_FILTER_STORAGE_KEY = "bv-containers-backup-filter";
 
 function loadScheduleFilterKey(): ScheduleFilterKey {
-  const v = localStorage.getItem(SCHEDULE_FILTER_STORAGE_KEY);
-  if (v === "all" || v === "scheduled" || v === "notScheduled") return v;
-  return "all";
+  return loadStoredFilterKey(
+    SCHEDULE_FILTER_STORAGE_KEY,
+    ["all", "scheduled", "notScheduled"] as const,
+    "all",
+  );
 }
 
 function loadBackupFilterKey(): BackupFilterKey {
-  const v = localStorage.getItem(BACKUP_FILTER_STORAGE_KEY);
-  if (v === "all" || v === "backedUp" || v === "neverBackedUp") return v;
-  return "all";
-}
-
-function ChipFilter<K extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { key: K; label: string }[];
-  value: K;
-  onChange: (k: K) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs text-carbon-textMuted">{label}</span>
-      <Selector
-        items={options.map((o) => ({ id: o.key, label: o.label }))}
-        label={label}
-        variant="well"
-        select="one"
-        active={value}
-        onChange={(id) => onChange(id as K)}
-      />
-    </div>
+  return loadStoredFilterKey(
+    BACKUP_FILTER_STORAGE_KEY,
+    ["all", "backedUp", "neverBackedUp"] as const,
+    "all",
   );
 }
 
@@ -688,12 +674,30 @@ type SaveDesc =
  *  can never collide with a tree row's key in the same maps. */
 const RESET_ROW_KEY = "__resetSelection__";
 
+/** Busy/shake map key for the mobile Save bar's flush.
+ *  Same "not a host path" guarantee as RESET_ROW_KEY: a failed flush shakes
+ *  THIS key, and the published shakeNonce re-keys the Save button so the bar
+ *  itself shakes — the row-row maps it rides in are never touched by a tree
+ *  row, and vice versa. */
+const SAVE_FLUSH_KEY = "__saveBarFlush__";
+
+/** The live state the container editor publishes to the mobile Save bar:
+ *  how many folders the next backup hands restic, whether the
+ *  serialized queue currently has an attempt in flight (spinner + disabled
+ *  Save), and the flush-failure shake nonce. Published through an additive
+ *  FoldersEditor prop so the ONE desktop-identical queue stays the only
+ *  source of save truth — the bar derives everything it shows from it. */
+export type SaveBarState = { ticked: number; inFlight: boolean; shakeNonce: number };
+
 export function FoldersEditor({
   name,
   stack,
   open,
   t,
   lastBackup = null,
+  onSaveState,
+  flushRef,
+  treeViewportClassName,
   repo = "",
 }: {
   name: string;
@@ -713,6 +717,28 @@ export function FoldersEditor({
    *  about. Optional only so the dom harnesses can omit it; the production
    *  caller (ContainerRow) always passes container.lastBackup. */
   lastBackup?: number | null;
+  /** Receives the Save bar's live state — the
+   *  ticked-include count, whether the queue has an attempt in flight, and
+   *  the flush-failure shake nonce. Read-only plumbing: the bar derives
+   *  everything it shows from the SAME queue the desktop editor drives, so
+   *  there is no second save mechanism to keep in sync. Optional; the mobile
+   *  stacked detail (Containers()) is the only caller that passes it — the
+   *  desktop ContainerRow mount simply omits it and nothing publishes.
+   *  useState's setter is a stable function identity, so the publishing
+   *  effect below can list it in its deps without re-firing per render. */
+  onSaveState?: (s: SaveBarState) => void;
+  /** Filled with the flush closure the Save bar's press
+   *  invokes — drain any pending attempt of the serialized queue, then
+   *  re-assert the live mirror so an idle press still lands a confirmation
+   *  save through the one existing path. Assigned every render (no dep
+   *  array) so the closure can never go stale against the mirror refs.
+   *  Optional; same single-caller story as onSaveState. */
+  flushRef?: RefObject<(() => void) | null>;
+  /** Passed through to SelectionTree's viewportClassName —
+   *  the stacked detail renders the tree at natural height so the PAGE owns
+   *  scrolling instead of an inner clamp-height scrollbox. Optional; every
+   *  existing mount (desktop ContainerRow) omits it and keeps the clamp. */
+  treeViewportClassName?: string;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -748,10 +774,22 @@ export function FoldersEditor({
   // revert/shake — see addCustom/removeCustomPath's own comments below.
   const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
   const [rowShake, setRowShake] = useState<Record<string, number>>({});
-  // D-04 (pulled forward from plan 02 — see the plan-01 SUMMARY deviations):
-  // the path whose last toggle was refused client-side for emptying the
+  // A React-state MIRROR of queueRef.current.inFlight, so
+  // the Save bar (rendered by the parent, outside this component) can re-render
+  // when a drain starts and settles. The queue itself stays ref-driven — this
+  // flag is publish-only and never read by the save logic.
+  const [queueBusy, setQueueBusy] = useState(false);
+  // The path whose last toggle was refused client-side for emptying the
   // selection; SelectionTree renders the inline warn line under that row.
   const [blockedPath, setBlockedPath] = useState<string | null>(null);
+  // The tree's interaction mode derives from POINTER capability, never from
+  // viewport width — a landscape phone (>=48rem, the width-only chrome switch
+  // keeps the desktop Sidebar there) still has a coarse primary pointer and
+  // gets the touch tree (tap = check),
+  // while a hybrid touchpad laptop stays on the pointer tree. jsdom answers
+  // no coarse-pointer query, so the hook's false default keeps every existing
+  // editor harness on the pointer mode it was written against.
+  const coarsePointer = useIsCoarsePointer();
   // Editor-lifetime listings cache (Phase 2 research, Pitfall 3): survives
   // section close because this component stays mounted above its null
   // return, dies with the page — exactly the panel-lifetime scope the tree
@@ -922,6 +960,7 @@ export function FoldersEditor({
   // CACHEDIR flip riding behind a selection save (T-03-07).
   async function attemptSave(): Promise<void> {
     queueRef.current.inFlight = true;
+    setQueueBusy(true);
     const rows = [...pendingRowsRef.current];
     pendingRowsRef.current.clear();
     const owed = new Set(owedRef.current);
@@ -1051,6 +1090,7 @@ export function FoldersEditor({
       if (owed.has("caches") && cachesDesc) revertCachesFrom(cachesDesc);
     } finally {
       queueRef.current.inFlight = false;
+      setQueueBusy(false);
       setRowBusy((b) => {
         const n = { ...b };
         for (const p of rows) n[p] = false;
@@ -1344,6 +1384,70 @@ export function FoldersEditor({
     scheduleSave({ cls: "caches", node: hostPath, caches: { path: hostPath, pre, next } });
   }
 
+  // The mobile Save bar's flush descriptor — a
+  // paths-class desc whose pre and sent are BOTH the live mirror (an EMPTY
+  // delta). It exists so an idle Save press still routes through the ONE
+  // serialized queue: the drain sends the live flat list under "tree", the ok
+  // path toasts t("folders.saved") exactly as a toggle's save does, and a
+  // failure reverts a zero delta (a no-op on the mirror) while shaking
+  // SAVE_FLUSH_KEY — which the published shakeNonce turns into a bar shake.
+  // A toggle desc's revert recipe is never displaced by it in the idle case
+  // (scheduleSave composes a fresh pendingDescs per attempt); in the
+  // mid-flight case flushSaveQueue only fills an ABSENT paths slot, so a
+  // pending toggle's or reset's desc always wins.
+  function flushDesc(): Extract<SaveDesc, { cls: "paths" }> {
+    const live = mirrorRef.current;
+    return {
+      cls: "paths",
+      node: SAVE_FLUSH_KEY,
+      pre: { includes: live.inc, exclusions: live.exc },
+      sent: { includes: live.inc, exclusions: live.exc },
+      structural: false,
+      source: "tree",
+    };
+  }
+
+  // The Save bar press itself. Two queues states, two honest behaviours:
+  // mid-drain, the press marks the queue dirty and owes the paths class so
+  // the running attempt's finally chain drains again with the LATEST mirror —
+  // the same stacking a tree toggle during flight gets, byte for byte. Idle,
+  // the press schedules the empty-delta flush — which re-asserts the live
+  // mirror against the server and lands the confirmation toast, so "Save"
+  // with nothing pending still completes as a save, not a dead button. A
+  // zero-tick idle press is a deliberate no-op: the zero-include guard
+  // forbids a "tree"-sourced empty selection, and the count row above already
+  // states exactly what would be handed to restic (nothing).
+  function flushSaveQueue(): void {
+    if (queueRef.current.inFlight) {
+      queueRef.current.dirty = true;
+      owedRef.current.add("paths");
+      if (!pendingDescsRef.current.paths) pendingDescsRef.current.paths = flushDesc();
+      return;
+    }
+    if (mirrorRef.current.inc.size === 0) return;
+    scheduleSave(flushDesc());
+  }
+
+  // Publish the Save bar's live state. One effect per state change burst —
+  // the parent's setter is stable (a useState setter from the only caller
+  // that passes it), so this fires only when the count, the queue's in-flight
+  // mirror, or a shake nonce actually moves.
+  useEffect(() => {
+    if (!onSaveState) return;
+    onSaveState({
+      ticked: includes.size,
+      inFlight: queueBusy,
+      shakeNonce: rowShake[SAVE_FLUSH_KEY] ?? 0,
+    });
+  }, [onSaveState, includes, queueBusy, rowShake]);
+
+  // Hand the flush closure to the Save bar. Re-assigned every render (no dep
+  // array) so the closure always reads the live mirror refs — the same
+  // fresh-closure discipline the queue's own read path follows.
+  useEffect(() => {
+    if (flushRef) flushRef.current = flushSaveQueue;
+  });
+
   // Sub-include absorption (INTEG-01, D-02, RESEARCH Q1): the server files
   // every include that is not EXACTLY a mount root under custom[], so a
   // sub-include under a reachable mount arrives here as a custom row. Those
@@ -1413,7 +1517,6 @@ export function FoldersEditor({
           locked={lastBackup !== null}
         />
       )}
-
       {/* D-02: the mount rows and custom rows ARE the tree's level-1 items —
           rendered by SelectionTree with lazy children under each, per-node
           state derived from the (includes, exclusions) mirror. The row's
@@ -1439,6 +1542,8 @@ export function FoldersEditor({
           busyPaths={new Set(Object.keys(rowBusy).filter((k) => rowBusy[k]))}
           shakeCounts={rowShake}
           blockedPath={blockedPath}
+          interactionMode={coarsePointer ? "touch" : "pointer"}
+          viewportClassName={treeViewportClassName}
         />
       )}
       {/* D-02 (SELECT-03 second half): the narrowing note — event-driven,
@@ -1453,8 +1558,16 @@ export function FoldersEditor({
           {t("folders.narrowedNote")}
         </p>
       )}
-      <div className="flex items-end gap-2 pt-1">
-        <div className="flex-1 min-w-0">
+      {/* Under 48rem this panel's column (~223px at a 390px viewport) is
+          narrower than the browser field's minimum width plus the add
+          control, so the horizontal row let the field's right edge run under
+          the button (the one P0 of the 2026-09-14 390px review, proven via
+          elementFromPoint). Below that breakpoint the row therefore wraps:
+          the field takes the full line and the add action drops onto its
+          own, left-aligned; from 48rem up the horizontal items-end row is
+          untouched. */}
+      <div className="flex items-end gap-2 pt-1 max-md:flex-wrap">
+        <div className="flex-1 min-w-0 max-md:min-w-full">
           <FolderBrowser
             label={t("folders.addCustom")}
             value={browseValue}
@@ -1482,7 +1595,11 @@ export function FoldersEditor({
             BADGES" block). The 32px value is still exactly right here for the
             reason it always was — this badge shares an `items-end` row with a
             FolderBrowser field that measures 32px live (`text-sm px-3 py-1.5`)
-            — it is simply no longer a number this call site owns. `tip`
+            — it is simply no longer a number this call site owns. That shared
+            row is the desktop presentation: under 48rem the row wraps (see
+            the block directly above this control), so the badge's
+            neighbourhood becomes the vertical one instead of the horizontal.
+            `tip`
             carries the exact text this button showed before becoming
             icon-only. */}
         <Button
@@ -1509,6 +1626,241 @@ export function FoldersEditor({
         />
       </div>
       {confirmDialog}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The mobile card list + locally stacked detail.
+//
+// Both components render ONLY below the breakpoint (the page JSX-gates them
+// on `!isDesktop`, and every desktop-only block above them is gated on
+// `isDesktop` in return), so exactly one face of the page is ever mounted at
+// a given width — no CSS-hidden second copy doing fetch work in the
+// background. The stacked detail lives IN this page (component-local
+// openContainer state) — it is not a BottomSheet and not a route.
+//
+// The per-card selection summary reuses the EXISTING mounts endpoint — the
+// container list payload carries no mount data, and no new endpoint is
+// authorised. One lazy GET per card, cached at module scope so re-renders and
+// list refetches never re-fire it; a cache entry is dropped when its detail
+// closes so the card refetches a post-edit count. A failed fetch renders NO
+// count at all rather than a wrong one.
+// ---------------------------------------------------------------------------
+
+/** Page-lifetime cache for the card summary/detail-meta fetches. Plain Map of
+ *  promises — a failed fetch resolves to null and is NOT retried for the
+ *  page's lifetime (a card without a count line beats a spinner forever). */
+const cardMountsCache = new Map<string, Promise<ContainerMountsResponse | null>>();
+
+function mountsMeta(name: string): Promise<ContainerMountsResponse | null> {
+  let p = cardMountsCache.get(name);
+  if (!p) {
+    p = getContainerMounts(name)
+      .then((r) => (r.ok ? r : null))
+      .catch(() => null);
+    cardMountsCache.set(name, p);
+  }
+  return p;
+}
+
+/** The ticked-include count a fresh FoldersEditor would seed from this
+ *  response — selected AND reachable mount sources plus custom paths, the
+ *  exact load-block rule (Containers.tsx FoldersEditor). Same derivation
+ *  family as folders.handedToRestic, so the card's count line and the Save
+ *  bar's can never disagree about what "n" means. */
+function tickedCountFrom(r: ContainerMountsResponse): number {
+  return new Set([
+    ...(r.mounts ?? []).filter((m) => m.selected && m.reachable).map((m) => m.source),
+    ...(r.custom ?? []).map((c) => c.path),
+  ]).size;
+}
+
+function MobileContainerCard({
+  container,
+  t,
+  index,
+  nonce,
+  onOpen,
+}: {
+  container: Container;
+  t: T;
+  /** Rainbow position — continues the desktop list's index space so the two
+   *  presentations of one list never hand the same hue to two containers. */
+  index: number;
+  /** Bumped by the page when a detail closes: cards of the edited container
+   *  re-read the (refreshed) cache and drop the pre-edit count. */
+  nonce: number;
+  onOpen: () => void;
+}) {
+  // null = not fetched yet / fetch failed — both render NO count line (a
+  // missing number is honest, a wrong one is not).
+  const [ticked, setTicked] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void mountsMeta(container.name).then((r) => {
+      if (!alive || !r) return;
+      setTicked(tickedCountFrom(r));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [container.name, nonce]);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{ ...hueVars(rainbowAt(index)) } as CSSProperties}
+      className="w-full text-start bg-carbon-surface rounded-card p-4 flex items-center gap-3 glim-hue min-h-[2.75rem] glim-content-fade"
+    >
+      <span
+        aria-hidden
+        className="h-10 w-10 shrink-0 rounded-card bg-carbon-surface2 flex items-center justify-center text-sm font-semibold text-carbon-textSub"
+      >
+        {container.name.charAt(0).toUpperCase()}
+      </span>
+      <span className="flex-1 min-w-0 flex flex-col gap-1">
+        <span className="text-sm font-semibold text-carbon-text truncate">{container.name}</span>
+        <span className="text-xs text-carbon-textMuted">
+          {/* folders.previewPaths ("{n} paths") is the sanctioned existing key
+              for this line: the ticked include count IS the mount+custom
+              folder count the editor and the Save bar both derive. */}
+          {ticked === null ? "" : t("folders.previewPaths").replace("{n}", String(ticked))}
+        </span>
+      </span>
+      {container.installed ? (
+        <Badge tone={stateTone(container.state)}>{stateLabel(t, container.state)}</Badge>
+      ) : (
+        <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
+      )}
+    </button>
+  );
+}
+
+function MobileContainerDetail({
+  container,
+  t,
+  nonce,
+  onBack,
+  onSaveState,
+  flushRef,
+}: {
+  container: Container;
+  t: T;
+  nonce: number;
+  onBack: () => void;
+  /** Save-bar plumbing, passed straight through to the FoldersEditor — see
+   *  the props' own comments there. */
+  onSaveState: (s: SaveBarState) => void;
+  flushRef: RefObject<(() => void) | null>;
+}) {
+  // The host mount root for the detail's mono meta line — served by the same
+  // already-cached mounts response the cards use (React escaping
+  // plus LTR isolation on the path; break-all wraps long host paths).
+  const [hostMountRoot, setHostMountRoot] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void mountsMeta(container.name).then((r) => {
+      if (alive) setHostMountRoot(r?.hostMountRoot ?? null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [container.name, nonce]);
+  // ---- Backup trigger + run deep-link --------------------------------------
+  // The trigger IS the desktop row's BackupButton component (zero new trigger
+  // path; the #197 stop-ack confirm inherits the ConfirmSheet below the
+  // breakpoint through useConfirm's own media switch). On correlation the
+  // RunDetailSheet opens over the detail with the LIVE run (component-
+  // local hosting, no route). onRun fires on every poll,
+  // so sheetRun always holds the freshest record (running → terminal renders
+  // truthfully); a sheet the user closed is NEVER re-opened by later polls
+  // of the same watch — the terminal outcome still toasts from BackupButton.
+  const running = anyActive(useProgress());
+  const [sheetRun, setSheetRun] = useState<Run | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetDismissed = useRef(false);
+  // The run id the watch last correlated: polls refresh the SAME run, so only
+  // a DIFFERENT id is a new fire — the latch's re-arm signal. Without it, one
+  // dismissal would silence every later "Back up now" press, and the user
+  // would wait out the whole run for nothing but the terminal toast.
+  const lastCorrelatedRun = useRef<string | null>(null);
+  return (
+    <div className="flex flex-col gap-4 glim-content-fade">
+      {/* Back row: chevron + VISIBLE label, never icon-only. The
+          accessible name leads with the container so a screen-reader user
+          coming from the card knows exactly what they are leaving. The
+          chevron is the SnapshotFileTree/SelectionTree presentational
+          triangle, mirrored left. */}
+      <button
+        type="button"
+        onClick={onBack}
+        aria-label={`${container.name}, ${t("common.back")}`}
+        className="flex items-center gap-2 -ms-2 pe-3 rounded-control text-sm font-medium text-carbon-text hover:bg-carbon-surface2 min-h-[2.75rem]"
+      >
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path fill="currentColor" d="M8 1.3 3.5 6 8 10.7Z" />
+        </svg>
+        {t("common.back")}
+      </button>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-semibold text-carbon-text">{container.name}</h2>
+        {hostMountRoot && (
+          <p dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">
+            {hostMountRoot}
+          </p>
+        )}
+      </div>
+      {/* The trigger: the desktop row's own BackupButton (semantics AND
+          confirm inherited verbatim), presented in the detail's flow. Gated
+          on installed, mirroring the desktop row's actions block. */}
+      {container.installed && (
+        <BackupButton
+          name={container.name}
+          t={t}
+          running={running}
+          onRunCorrelated={(run) => {
+            if (lastCorrelatedRun.current !== run.id) {
+              lastCorrelatedRun.current = run.id;
+              sheetDismissed.current = false; // new fire re-arms the deep-link
+            }
+            setSheetRun(run);
+            if (!sheetDismissed.current) setSheetOpen(true);
+          }}
+        />
+      )}
+      {/* The SAME editor the desktop row expands — one tree, one queue, zero
+          forks. Keyed by container identity: switching targets can
+          never inherit the previous container's mirror, browse cache or save
+          queue. Advanced+installed gating mirrors the desktop row's folders
+          chip exactly. */}
+      <Advanced when={container.installed}>
+        <FoldersEditor
+          key={container.name}
+          name={container.name}
+          stack={container.stack}
+          open
+          t={t}
+          lastBackup={container.lastBackup}
+          repo={container.repo ?? ""}
+          treeViewportClassName="h-auto"
+          onSaveState={onSaveState}
+          flushRef={flushRef}
+        />
+      </Advanced>
+      {/* The run sheet, hosted component-locally: opens on the
+          useBackupWatch baseline-id correlation, closes through BottomSheet's
+          three paths, and never re-opens itself after dismissal. */}
+      {sheetRun && (
+        <RunDetailSheet
+          run={sheetRun}
+          open={sheetOpen}
+          onClose={() => {
+            sheetDismissed.current = true;
+            setSheetOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -3227,11 +3579,16 @@ function BackupOrderPanel({
                       duplicate native `title`, i.e. the OS balloon
                       IconTipButton.tsx exists to replace. Same tips, same
                       handlers, same disabled chrome. */}
+                  {/* Same 44px touch bleed the row actions and the small-well
+                      segments carry: the
+                      arrow hosts measure 20px, so the invisible ::after
+                      inset-negative pseudo grows the tap area to the floor
+                      without painting anything. */}
                   <IconTipButton
                     tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
                     disabled={i === 0 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30 max-md:relative max-md:after:absolute max-md:after:-inset-3 max-md:after:content-['']"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 8.7 6 3.3 10.7 8.7Z" />
@@ -3241,7 +3598,7 @@ function BackupOrderPanel({
                     tip={t("backupOrder.moveDown")}
                     onClick={() => move(i, 1)}
                     disabled={i === names.length - 1 || saveState === "saving"}
-                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30"
+                    className="shrink-0 inline-flex items-center rounded-control p-1 text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-30 max-md:relative max-md:after:absolute max-md:after:-inset-3 max-md:after:content-['']"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path fill="currentColor" d="M1.3 3.3 6 8.7 10.7 3.3Z" />
@@ -3328,6 +3685,61 @@ export function Containers() {
   // hint, instead of relying on the 409 round-trip.
   const running = anyActive(progress);
 
+  // The locally stacked detail's target. Component-local state on purpose —
+  // the detail is NOT a route and NOT a BottomSheet; it stacks IN the page
+  // column while the list itself is taken off the tree, so the phone shows
+  // ONE surface at a time and Back restores the list plus its scroll offset.
+  const isDesktop = useIsDesktop();
+  const [openContainer, setOpenContainer] = useState<Container | null>(null);
+  // Scroll handoff: captured from main#bv-main when a card opens the detail,
+  // restored when Back closes it (after the commit that unhides the list, so
+  // the full list height exists to scroll back into).
+  const listScrollRef = useRef(0);
+  const restoreScrollRef = useRef(false);
+  // The Save bar's published live state + the flush closure handle — see
+  // SaveBarState and FoldersEditor's onSaveState/flushRef props. saveState is
+  // reset per open so the bar can never show the PREVIOUS container's count
+  // in the frame before this editor's first publish.
+  const [saveState, setSaveState] = useState<SaveBarState>({ ticked: 0, inFlight: false, shakeNonce: 0 });
+  const saveFlushRef = useRef<(() => void) | null>(null);
+  // Bumped when a detail closes: cards of the edited container re-read the
+  // (cache-invalidated) mounts response so their count line reflects the edit.
+  const [cardNonce, setCardNonce] = useState(0);
+
+  function openCard(c: Container) {
+    listScrollRef.current = document.getElementById("bv-main")?.scrollTop ?? 0;
+    setSaveState({ ticked: 0, inFlight: false, shakeNonce: 0 });
+    setOpenContainer(c);
+    // After the detail commits, the page reads from the top (the back row is
+    // the first thing on screen).
+    requestAnimationFrame(() => {
+      document.getElementById("bv-main")?.scrollTo(0, 0);
+    });
+  }
+
+  function closeDetail() {
+    if (!openContainer) return;
+    // The editor session is over: drop this container's cached mounts
+    // response so the card list refetches the just-saved selection, then let
+    // the post-commit effect below put the scroll position back.
+    cardMountsCache.delete(openContainer.name);
+    restoreScrollRef.current = true;
+    setCardNonce((n) => n + 1);
+    setOpenContainer(null);
+  }
+
+  useEffect(() => {
+    if (openContainer !== null || !restoreScrollRef.current) return;
+    restoreScrollRef.current = false;
+    document.getElementById("bv-main")?.scrollTo(0, listScrollRef.current);
+  }, [openContainer]);
+
+  // While the stacked detail is open on a phone, the list CHROME (toolbar,
+  // bulk bar, feature panels) hides with the list — the detail replaces the
+  // list experience instead of stacking under its controls. Desktop is
+  // untouched: isDesktop is always true there, so this is permanently false.
+  const listChromeHidden = !isDesktop && openContainer !== null;
+
   function loadContainers() {
     return listContainers()
       .then((res) => {
@@ -3393,8 +3805,16 @@ export function Containers() {
 
   // Compose search (#40) + schedule/backup chips (#41) into one predicate applied
   // BEFORE sort + live/orphans split, so they combine with the installed toggle.
+  //
+  // useMemo'd (the shape VMs.tsx's toolbar derivation uses): the mobile block's
+  // useLoadMore
+  // resets its window when the items array IDENTITY changes, so every array in
+  // the chain must be stable across renders that don't change the filter result
+  // (lib/useLoadMore.ts's consumer contract). The desktop derivation below reads
+  // the SAME memos — one predicate, two presentations; the two lists can never
+  // disagree.
   const query = search.trim().toLowerCase();
-  const filtered = containers.filter((c) => {
+  const filtered = useMemo(() => containers.filter((c) => {
     if (query && !(c.name.toLowerCase().includes(query) || c.image.toLowerCase().includes(query)))
       return false;
     if (scheduleFilter === "scheduled" && !c.includeInSchedule) return false;
@@ -3402,7 +3822,7 @@ export function Containers() {
     if (backupFilter === "backedUp" && c.lastBackup == null) return false;
     if (backupFilter === "neverBackedUp" && c.lastBackup != null) return false;
     return true;
-  });
+  }), [containers, query, scheduleFilter, backupFilter]);
 
   // Any contained filter off its default narrows the list. The chips persist to
   // localStorage, so a restored non-"all" value would silently shrink the list
@@ -3413,9 +3833,9 @@ export function Containers() {
     scheduleFilter !== "all" ||
     backupFilter !== "all";
 
-  const sorted = sortContainers(filtered, sortKey);
-  const live = sorted.filter((c) => c.installed);
-  const orphans = sorted.filter((c) => !c.installed);
+  const sorted = useMemo(() => sortContainers(filtered, sortKey), [filtered, sortKey]);
+  const live = useMemo(() => sorted.filter((c) => c.installed), [sorted]);
+  const orphans = useMemo(() => sorted.filter((c) => !c.installed), [sorted]);
 
   // The FULL installed-container set, unaffected by the search/schedule/
   // backup/installed filters above — StopContainersEditor's own multi-select
@@ -3439,6 +3859,27 @@ export function Containers() {
   const liveVisible = filterKey !== "notInstalled" && live.length > 0;
   const orphansVisible = filterKey !== "installed" && orphans.length > 0;
   const noMatch = containers.length > 0 && !liveVisible && !orphansVisible;
+
+  // The mobile card list paginates the RENDERED card array —
+  // the filtered+sorted rows in server order, with the installed toggle's
+  // section gate already applied. That gate is why this is its own array rather
+  // than `sorted`: windowing all of `sorted` under filterKey="installed" would
+  // let the window fill with not-installed rows that never render, and hasMore
+  // would then offer a "Load more" that shows nothing new — a dishonest button.
+  // Slicing what renders keeps hasMore honest by construction. Identity (not
+  // deep equality) is useLoadMore's reset signal, so the memo keeps the window
+  // stable across unrelated renders and resets it exactly when a filter —
+  // search, schedule/backup chips, or the installed toggle — changes the list.
+  const mobileCards = useMemo(
+    () => [
+      ...(filterKey !== "notInstalled" ? live : []),
+      ...(filterKey !== "installed" ? orphans : []),
+    ],
+    [live, orphans, filterKey]
+  );
+  const { visible: visibleCards, showMore, hasMore } = useLoadMore(mobileCards);
+  const visibleLive = useMemo(() => visibleCards.filter((c) => c.installed), [visibleCards]);
+  const visibleOrphans = useMemo(() => visibleCards.filter((c) => !c.installed), [visibleCards]);
 
   function toggleSelect(name: string) {
     setSelected((prev) => {
@@ -3627,7 +4068,11 @@ export function Containers() {
     // loading/error/empty branches), so it takes the same 40px as everything
     // else — verified live at 1152px, where it reads as its own band between
     // heading and list rather than looking orphaned.
-    <div className={PAGE_SHELL}>
+    //   Responsive rhythm: PAGE_SHELL_RESPONSIVE — gap-6 below the 48rem
+    // breakpoint (the stacked detail + Save bar live on a phone), gap-10 at
+    // and above, byte-identical to this page's settled desktop rhythm by
+    // construction. Exception declared in eslint.config.js.
+    <div className={PAGE_SHELL_RESPONSIVE}>
       {/* Page heading + Discover (disaster-recovery) action */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -3667,6 +4112,24 @@ export function Containers() {
             {t("containers.batchRunning")} ({Math.round(batch?.percent ?? 0)}%)
           </span>
         </div>
+      )}
+
+      {/* The locally stacked container detail, mobile only. Renders in the
+          page column ABOVE where the list sits — the back row is the first
+          thing on screen after openCard scrolls to top. The list itself is
+          off the tree while the detail is open (its scroll position saved and
+          restored on Back); the shared StickyActionBar Save bar for this
+          detail renders as the page column's LAST child, further down.
+          Desktop never evaluates this branch (`!isDesktop`). */}
+      {!isDesktop && openContainer !== null && (
+        <MobileContainerDetail
+          container={openContainer}
+          t={t}
+          nonce={cardNonce}
+          onBack={closeDetail}
+          onSaveState={setSaveState}
+          flushRef={saveFlushRef}
+        />
       )}
 
       {/* Container list */}
@@ -3713,7 +4176,7 @@ export function Containers() {
           because it moved together with the stacks panel — the two kept their
           relative order, and both still precede the not-installed section's
           own notch. Re-check that if a notch is ever added to the toolbar. */}
-      {!loading && !error && (
+      {!loading && !error && !listChromeHidden && (
         <Advanced>
           <BackupOrderPanel containers={containers} t={t} hueIndex={advanced ? nextHue() : undefined} />
         </Advanced>
@@ -3730,7 +4193,7 @@ export function Containers() {
           one index late. Gating on the parent's own precomputed
           `stackGroups` (see its own comment above) keeps the counter
           honest, same reasoning as BackupOrderPanel's `advanced` gate. */}
-      {!loading && !error && (
+      {!loading && !error && !listChromeHidden && (
         <StacksPanel
           containers={containers}
           onRestored={() => void loadContainers()}
@@ -3741,8 +4204,13 @@ export function Containers() {
 
       {/* Controls: search + filter (installed / schedule / backup) + sort.
           Directly above the list it filters — see the backup-order card's own
-          comment above for why the two feature cards moved above this row. */}
-      {!loading && containers.length > 0 && (
+          comment above for why the two feature cards moved above this row.
+          Desktop face: below the breakpoint the mobile card list's ListToolbar
+          carries the SAME state (search/filterKey/schedule/backup/sort) on the
+          shared primitives — the shape VMs.tsx's toolbar uses. One state, two
+          presentations; the `isDesktop` gate mounts exactly one of them per
+          width. */}
+      {isDesktop && !loading && !listChromeHidden && containers.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
           <FilterPopover label={t("filter.button")} active={filtersActive}>
             <input
@@ -3804,7 +4272,7 @@ export function Containers() {
       )}
 
       {/* Bulk action bar — appears when one or more containers are selected. */}
-      {!loading && selected.size > 0 && (
+      {!loading && !listChromeHidden && selected.size > 0 && (
         <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
           <span className="text-xs text-carbon-textSub">
             {selected.size} {t("containers.selectedCount")}
@@ -3855,7 +4323,12 @@ export function Containers() {
         <p className="text-xs text-carbon-textSub">{t("containers.working")}</p>
       )}
 
-      {!loading && filterKey !== "notInstalled" && live.length > 0 && (
+      {/* The desktop list — full row cards with their inline editors. JSX-gated
+          on `isDesktop`: at >=48rem this is the list; below it the phone gets
+          the card list further down instead, and these rows (with their
+          editors' weight) never mount at all — the point of the gate, versus
+          a CSS-hidden second copy. */}
+      {isDesktop && !loading && filterKey !== "notInstalled" && live.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           {live.map((c, i) => (
             <ContainerRow
@@ -3872,8 +4345,112 @@ export function Containers() {
         </div>
       )}
 
-      {/* Not-installed containers that still have backups. */}
-      {!loading && filterKey !== "installed" && orphans.length > 0 && (
+      {/* The mobile card list — summary line, toolbar, one card per installed
+          container, then the not-installed section. Phone-only (`!isDesktop`
+          keeps it out of the desktop DOM entirely); off the tree while the
+          stacked detail is open (listChromeHidden), with the saved scroll
+          position restored on Back.
+          The ListToolbar binds the page's OWN search/filter/sort state — the
+          exact state the desktop FilterPopover above reads, so there is one
+          predicate with two presentations and no parallel mobile filter state
+          to drift. Cards paginate through the ONE useLoadMore primitive over
+          `mobileCards` (the section-gated rendered array, see its own
+          comment); the not-installed section's cards append under the same
+          visible window. */}
+      {!isDesktop && !loading && !error && !listChromeHidden && (live.length > 0 || orphans.length > 0 || noMatch) && (
+        <div className="flex flex-col gap-3 glim-content-fade">
+          {live.length > 0 && (
+            <p className="text-xs text-carbon-textMuted">
+              {/* Derived from the same list payload the desktop protection
+                  summary reads — no new endpoint, no new key. */}
+              {`${live.length} ${t("nav.containers")}${
+                live.some((c) => c.includeInSchedule)
+                  ? ` · ${live.filter((c) => c.includeInSchedule).length} ${t("filter.scheduled")}`
+                  : ""
+              }`}
+            </p>
+          )}
+          {/* Rendered whenever the list has settled (mirrors the desktop
+              controls row's own `!loading` condition) — including when the
+              active filters currently match nothing, so a cleared search stays
+              clearable (an unreachable toolbar would strand the empty state). */}
+          <ListToolbar search={search} onSearch={setSearch} placeholder="containers.searchPlaceholder">
+            <FilterControl value={filterKey} onChange={handleFilterChange} t={t} />
+            <ChipFilter<ScheduleFilterKey>
+              label={t("filter.schedule")}
+              value={scheduleFilter}
+              onChange={handleScheduleFilterChange}
+              options={[
+                { key: "all", label: t("filter.all") },
+                { key: "scheduled", label: t("filter.scheduled") },
+                { key: "notScheduled", label: t("filter.notScheduled") },
+              ]}
+            />
+            <ChipFilter<BackupFilterKey>
+              label={t("filter.backup")}
+              value={backupFilter}
+              onChange={handleBackupFilterChange}
+              options={[
+                { key: "all", label: t("filter.all") },
+                { key: "backedUp", label: t("filter.backedUp") },
+                { key: "neverBackedUp", label: t("filter.neverBackedUp") },
+              ]}
+            />
+            <SortControl value={sortKey} onChange={handleSortChange} t={t} />
+          </ListToolbar>
+          {filterKey !== "notInstalled" &&
+            visibleLive.map((c, i) => (
+              <MobileContainerCard key={c.name} container={c} t={t} index={i} nonce={cardNonce} onOpen={() => openCard(c)} />
+            ))}
+          {filterKey !== "installed" && visibleOrphans.length > 0 && (
+            <div className="flex flex-col gap-3 pt-2">
+              <div>
+                <h2 className="relative flex items-center">
+                  {/* Continues the page hue sequence after both panels — the
+                      same render-order discipline the desktop heading below
+                      follows (see its comment). */}
+                  <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>
+                    {t("containers.notInstalledTitle")}
+                  </Badge>
+                </h2>
+                <p className="mt-1 text-xs text-carbon-textMuted">{t("containers.notInstalledHint")}</p>
+                <p className="mt-1 text-xs text-carbon-textMuted">{t("containers.notInstalledSkipped")}</p>
+              </div>
+              {visibleOrphans.map((c, i) => (
+                <MobileContainerCard key={c.name} container={c} t={t} index={live.length + i} nonce={cardNonce} onOpen={() => openCard(c)} />
+              ))}
+            </div>
+          )}
+          {/* The one load-more affordance, gated on hasMore — no
+              rows beyond the window, no button (hasMore is the ONLY signal
+              this may gate on); never auto-loads (no observer, no scroll
+              listener — lib/useLoadMore.ts's construction-level ban). */}
+          {hasMore && (
+            <button
+              type="button"
+              onClick={showMore}
+              className="min-h-[2.75rem] w-full rounded-control bg-carbon-surface2 px-3 text-sm font-medium text-carbon-text"
+            >
+              {t("common.loadMore")}
+            </button>
+          )}
+          {/* Zero-match honesty: an explicit empty state, never a blank
+              column below the toolbar. The EXISTING filter.noMatch copy — the
+              same sentence the desktop face renders as a bare line — as a
+              card, the mobile empty-state language. Exactly one presentation
+              renders at any width. */}
+          {noMatch && (
+            <div className="rounded-card bg-carbon-surface p-4">
+              <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Not-installed containers that still have backups. Desktop face —
+          the phone's card list renders its own not-installed section inline
+          (see the mobile block above). */}
+      {isDesktop && !loading && filterKey !== "installed" && orphans.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           {/* `hueIndex={nextHue()}` (GlimStone follow-up pass, proactive sweep
               of this same file per the standing colour-engine rule): threaded
@@ -3881,7 +4458,7 @@ export function Containers() {
               after BackupOrderPanel's and StacksPanel's own calls, so none of
               the three heading notches ever collide on the same rainbow
               position.
-                The skip sentence ([378]) connects the skipped runs in the log to
+                The skip sentence connects the skipped runs in the log to
               this list: measured on jdp's box, three definitions here (OpenRGB,
               QDirStat, MinIO) had produced twelve skipped runs in the visible
               window. Since #232 it names the switch on each card that ends
@@ -3908,9 +4485,54 @@ export function Containers() {
         </div>
       )}
 
-      {/* No container matches the active search / schedule / backup / installed filters. */}
-      {!loading && !error && noMatch && (
+      {/* No container matches the active search / schedule / backup / installed
+          filters. Desktop face — the mobile block's no-match card carries this
+          same copy below the breakpoint, so exactly one renders per width. */}
+      {isDesktop && !loading && !error && !listChromeHidden && noMatch && (
         <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
+      )}
+      {/* The container detail's sticky Save bar — the page column's LAST
+          visible child, so its sticky positioning resolves against
+          main#bv-main (nested in a Card it would stick only within the
+          card's own box). Two rows: row 1 = live "handed to restic" count
+          (accentSoft chip, tabular) + the queue spinner; row 2 = Save, which
+          flushes the ONE serialized queue. A former row 3 — the CACHEDIR.TAG
+          plain-language line — was removed, a recorded decision: it
+          duplicated what the tree's per-set toggles already show IN PLACE,
+          next to the state they switch; one presentation, where the flag
+          actually lives. Rendered only while the detail is open AND its
+          editor is present (advanced + installed) — with no editor there is
+          no queue to flush. */}
+      {!isDesktop && openContainer !== null && openContainer.installed && advanced && (
+        <StickyActionBar>
+          <div className="flex items-center gap-2 min-h-[1.25rem]">
+            {saveState.inFlight && (
+              <span
+                aria-hidden
+                className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+              />
+            )}
+            <Badge tone="active" className="tabular-nums">
+              {t("folders.handedToRestic").replace("{n}", String(saveState.ticked))}
+            </Badge>
+          </div>
+          {/* Save = FLUSH: no mobile buffer, no second save path — the press
+              drains the desktop-identical queue. Re-keyed by the published
+              shake nonce so a failed flush shakes THIS button (failure toasts
+              AND shakes, the house live-save semantics). */}
+          <Button
+            key={saveState.shakeNonce}
+            label={t("folders.save")}
+            labelKey="folders.save"
+            tone="accent"
+            keepLabel
+            disabled={saveState.inFlight}
+            busy={saveState.inFlight}
+            onClick={() => saveFlushRef.current?.()}
+            className={`w-full min-h-[2.75rem] justify-center${saveState.shakeNonce ? " glim-shake" : ""}`}
+          />
+        </StickyActionBar>
       )}
       {confirmDialog}
     </div>

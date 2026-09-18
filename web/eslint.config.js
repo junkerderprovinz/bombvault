@@ -131,6 +131,10 @@ export default [
             // gap-10 at/above it, so desktop is unchanged by construction).
             // Same 1152px cap. See PAGE_SHELL_RESPONSIVE in pageShell.ts.
             "Dashboard.tsx": "PAGE_SHELL_RESPONSIVE",
+            // Second page on the responsive root, same deal: 24px rhythm
+            // below 48rem for the stacked detail and the card list, the
+            // settled 40px/1152px desktop above it by construction.
+            "Containers.tsx": "PAGE_SHELL_RESPONSIVE",
             // Not a routed page at all: Layout.tsx returns it BEFORE the
             // sidebar/<main> shell when auth is blocked, so it never sits
             // under <Outlet />. Its `w-full max-w-sm` is a centred
