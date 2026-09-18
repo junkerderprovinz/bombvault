@@ -63,9 +63,14 @@ describe("the engine's shape", () => {
     expect(LABEL_MODES.filter(hidesLabel)).toEqual(["glyph", "reactive"]);
   });
 
-  it("keeps the three axes separately settable", () => {
+  it("keeps the four axes separately settable", () => {
     // Sidebar and tabs share the same options but not the same value: a
     // sidebar reduced to glyphs changes the page layout, tabs do not.
-    expect(CONTROL_AXES).toEqual(["buttons", "sidebar", "tabs"]);
+    // "bottombar" is the mobile bottom nav's own axis: same four modes as
+    // the desktop axes, but a value the bar consumes independently — the
+    // phone has no sidebar or tabs, so it needed a fourth register rather
+    // than borrowing one (Settings' label card renders the axis
+    // automatically from settings.labels.bottombar).
+    expect(CONTROL_AXES).toEqual(["buttons", "sidebar", "tabs", "bottombar"]);
   });
 });

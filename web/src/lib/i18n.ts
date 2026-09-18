@@ -65,6 +65,11 @@ export const en = {
   "nav.flash": "Flash",
   "nav.config": "Self-Backup",
   "nav.settings": "Settings",
+  "nav.more": "More",
+  // The bottom bar's landmark name: the bar is the mobile counterpart of
+  // the desktop Sidebar's nav, and a <nav> landmark needs an accessible
+  // name even though exactly one of the two mounts at a time.
+  "nav.mobileNavigation": "Mobile navigation",
   "about.title": "About BombVault",
   "about.body":
     "A one-knight crusade: good-looking open-source tools that did not exist in the shape I wanted, built until nothing is missing. It is free, with no accounts, no telemetry, no ads and no paid tier. No asterisk anywhere. Nothing readable ever leaves your own walls. Forged on evenings and weekends, with heart and stubbornness.",
@@ -162,7 +167,7 @@ export const en = {
   "containers.deleteBackups": "Delete all backups",
   "containers.deleteBackupsConfirm": "Delete ALL backups of this container? The snapshots are permanently removed from the repository and cannot be undone.",
   "containers.removeEntryConfirm": "Remove this container's entry from the list? Its backups, if any, are not deleted.",
-  "containers.filter": "Filter:",
+  "containers.filter": "Filter",
   "containers.filterAll": "All",
   "containers.filterInstalled": "Installed",
   "containers.sectionsLabel": "Sections",
@@ -301,6 +306,13 @@ export const en = {
   "run.colStarted": "Started",
   "run.colFinished": "Finished",
   "run.colContainer": "Container",
+  // Phone Dashboard additions: the home.newBackup pair drives the
+  // "back up everything now" trigger and its confirm; run.statVolume/
+  // run.statSnapshot label the run-detail sheet's stat tiles.
+  "home.newBackup": "New backup",
+  "home.newBackupConfirm": "Start a backup of every enabled domain now? Containers are stopped and restarted one at a time while their backup runs. Restore keeps only what the next run saves.",
+  "run.statVolume": "Data volume",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Settings",
@@ -780,6 +792,9 @@ export const en = {
   // over-promise what the switch does.
   "folders.cachedirToggle": "Skip cache folders (CACHEDIR.TAG)",
   "folders.cachedirScope": "Applies to the entire backup of this container, not only this folder.",
+  // Live count for the mobile Save bar: how many folders the next backup
+  // hands restic. Invariant {n}, no plural forms — zero is a real answer.
+  "folders.handedToRestic": "{n} folders handed to restic",
   "stophook.title": "Stop other containers",
   "stophook.hint": "Stop these other containers while this one is backed up (for example a database), then start them again afterwards.",
   "stophook.noCandidates": "No other installed containers found.",
@@ -894,6 +909,7 @@ export const en = {
   "settings.labels.buttons": "Buttons",
   "settings.labels.sidebar": "Sidebar",
   "settings.labels.tabs": "Tabs",
+  "settings.labels.bottombar": "Bottom bar",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text and symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -1053,7 +1069,7 @@ export const en = {
   "jobs.cadenceDaily": "Daily at {time}",
   "jobs.cadenceWeekly": "Weekly ({days}) at {time}",
   "jobs.cadenceEveryN": "Every {n} days at {time}",
-  "sort.label": "Sort:",
+  "sort.label": "Sort",
   "sort.nameAsc": "Name (A–Z)",
   "sort.status": "Status",
   "sort.ip": "IP",
@@ -1211,6 +1227,19 @@ export const en = {
   "common.restoring": "Restoring…",
   "common.done": "Done",
   "common.close": "Close",
+  // SelectionTree's touch chevron: on a touch tree the expand affordance is
+  // a real button (>=44x44, dedicated zone disjoint from the row's
+  // tap-to-toggle), so unlike the desktop glyph it needs a spoken name.
+  // Generic on purpose — the treeitem's own accessible name already carries
+  // the path; announcing "Expand /mnt/user/appdata" a second time over the
+  // button would stutter.
+  "common.expand": "Expand",
+  "common.collapse": "Collapse",
+  // Mobile stacked-detail back row: a visible label, never an icon-only
+  // affordance — the row reads chevron + "Back".
+  "common.back": "Back",
+  // Load-more affordance for windowed lists.
+  "common.loadMore": "Load more",
   "common.loadingBackups": "Loading backups…",
   "common.saving": "Saving…",
   "common.restoreRunning": "A restore is running…",
@@ -2014,6 +2043,8 @@ export const de: Translations = {
   "nav.flash": "Flash",
   "nav.config": "Selbst-Backup",
   "nav.settings": "Einstellungen",
+  "nav.more": "Mehr",
+  "nav.mobileNavigation": "Mobile Navigation",
   "about.title": "Über BombVault",
   "about.body":
     "Ein einzelner Ritter, ein Feldzug: ansehnliche quelloffene Werkzeuge, die es in der Form, die ich wollte, nicht gab, gebaut, bis nichts mehr fehlt. Alles kostenlos, ohne Konten, ohne Telemetrie, ohne Werbung, ohne Bezahlstufen. Nirgends ein Sternchen. Nichts Lesbares verlässt je deine eigenen Mauern. An Abenden und Wochenenden geschmiedet, mit Herz und Dickkopf.",
@@ -2106,7 +2137,7 @@ export const de: Translations = {
   "containers.deleteBackups": "Alle Backups löschen",
   "containers.deleteBackupsConfirm": "ALLE Backups dieses Containers löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden.",
   "containers.removeEntryConfirm": "Den Eintrag dieses Containers aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
-  "containers.filter": "Filter:",
+  "containers.filter": "Filter",
   "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installiert",
   "containers.sectionsLabel": "Bereiche",
@@ -2242,6 +2273,10 @@ export const de: Translations = {
   "run.colStarted": "Gestartet",
   "run.colFinished": "Abgeschlossen",
   "run.colContainer": "Container",
+  "home.newBackup": "Neues Backup",
+  "home.newBackupConfirm": "Jetzt ein Backup aller aktivierten Bereiche starten? Container werden während ihrer Sicherung nacheinander gestoppt und neu gestartet. Eine Wiederherstellung behält nur, was der nächste Lauf sichert.",
+  "run.statVolume": "Datenmenge",
+  "run.statSnapshot": "Snapshot",
 
   "settings.title": "Einstellungen",
   "settings.encryptionLabel": "Passwort",
@@ -2631,6 +2666,7 @@ export const de: Translations = {
     "Die Auswahl umfasst jetzt weniger Ordner als zuvor. Ab der nächsten Sicherung enthalten Snapshots nur noch die ausgewählten Ordner. Bestehende Snapshots bleiben unverändert.",
   "folders.cachedirToggle": "Cache-Ordner überspringen (CACHEDIR.TAG)",
   "folders.cachedirScope": "Gilt für die gesamte Sicherung dieses Containers, nicht nur für diesen Ordner.",
+  "folders.handedToRestic": "{n} Ordner an restic übergeben",
   "stophook.title": "Andere Container stoppen",
   "stophook.hint": "Diese anderen Container während des Backups dieses Containers stoppen (zum Beispiel eine Datenbank) und danach wieder starten.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",
@@ -2700,6 +2736,7 @@ export const de: Translations = {
   "settings.labels.buttons": "Buttons",
   "settings.labels.sidebar": "Seitenleiste",
   "settings.labels.tabs": "Tabs",
+  "settings.labels.bottombar": "Untere Leiste",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text und Symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -2825,7 +2862,7 @@ export const de: Translations = {
   "jobs.cadenceDaily": "Täglich um {time}",
   "jobs.cadenceWeekly": "Wöchentlich ({days}) um {time}",
   "jobs.cadenceEveryN": "Alle {n} Tage um {time}",
-  "sort.label": "Sortieren:",
+  "sort.label": "Sortieren",
   "sort.nameAsc": "Name (A–Z)",
   "sort.status": "Status",
   "sort.ip": "IP",
@@ -2972,6 +3009,10 @@ export const de: Translations = {
   "common.restoring": "Stelle wieder her…",
   "common.done": "Fertig",
   "common.close": "Schließen",
+  "common.expand": "Ausklappen",
+  "common.collapse": "Einklappen",
+  "common.back": "Zurück",
+  "common.loadMore": "Mehr laden",
   "common.loadingBackups": "Sicherungen werden geladen…",
   "common.saving": "Speichern…",
   "common.restoreRunning": "Eine Wiederherstellung läuft…",

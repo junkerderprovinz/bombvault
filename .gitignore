@@ -33,6 +33,12 @@ web/dist/*
 /data/
 /config/
 
+# Playwright harness scratch (the e2e webServer's fresh-DB DATA_DIR and the
+# runner's output dirs) — throwaway per run, never tracked.
+web/test-results/
+web/playwright-report/
+.playwright-data/
+
 # Brainstorm / tooling
 
 # Agent worktree scratch space (isolated Agent-tool dispatches)

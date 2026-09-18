@@ -31,7 +31,22 @@
     </script>
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover extends the layout viewport into the device's own
+         unsafe edges (notch, rounded corners, home indicator). Without it the
+         system chrome insets the viewport and every env(safe-area-inset-*)
+         expression — surfaced as the --safe-area-* custom properties in
+         src/index.css — silently resolves to 0px, so the two declarations are
+         one contract and must change together. interactive-widget=resizes-
+         content makes the Android keyboard resize the layout viewport instead
+         of overlaying it, which is the behavior the Layout-level keyboard
+         mechanism builds on. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <!-- Static first-paint theme-color fallback (#161616 = dark --carbon-bg).
+         src/lib/theme.ts's paint() mirrors the live theme into this tag on
+         EVERY theme application (#f4f4f4 light) — this static value is only
+         what shows before JS runs, so the two sets of values must change
+         together. -->
+    <meta name="theme-color" content="#161616" />
     <title>BombVault</title>
   </head>
   <body>

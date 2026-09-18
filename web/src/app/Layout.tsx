@@ -1,7 +1,9 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "../components/Sidebar";
-import { useEffect, useState, useCallback } from "react";
+import { BottomNav } from "../components/mobile/BottomNav";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
@@ -37,6 +39,110 @@ export function Layout() {
   // The version to show the "What's new" dialog for (null = don't show).
   const [whatsNewVersion, setWhatsNewVersion] = useState<string | null>(null);
   const location = useLocation();
+  // THE ONE chrome switch: at/above Tailwind's md breakpoint the
+  // desktop shell renders exactly as it always has; below it the mobile shell
+  // renders in its place. The breakpoint literal lives only in
+  // lib/useMediaQuery.ts, and this hook call is its only consumer — a second
+  // JS breakpoint anywhere else would let the two chrome systems disagree for
+  // the 1px window where their answers differ.
+  const isDesktop = useIsDesktop();
+
+  // Tap-on-active: tapping the ALREADY-active destination scrolls
+  // the main scroller back to the top instead of navigating. The scroller is
+  // THIS component's <main id="bv-main"> below, so the mechanism lives here
+  // and the chrome surfaces receive it as a prop — they never query the DOM
+  // for the scroller themselves. `?.` guards the guarded: the element exists
+  // in every state this can be called from, but a callback that throws because
+  // of a render-order surprise is worse than a no-op.
+  const scrollMainToTop = useCallback(() => {
+    document.getElementById("bv-main")?.scrollTo({ top: 0 });
+  }, []);
+
+  // Ref on the shell root: the keyboard mechanism's focus listeners attach
+  // HERE (not document-wide), so they exist only while a shell is rendered.
+  const shellRef = useRef<HTMLDivElement>(null);
+
+  // THE keyboard mechanism — ONE listener set at Layout level:
+  // a per-component listener would multiply with every new input-bearing page
+  // and drift exactly the way duplicated logic does.
+  //
+  // Why it exists at all: index.html's `interactive-widget=resizes-content`
+  // viewport meta makes the LAYOUT viewport shrink when the Android keyboard
+  // opens, and the h-dvh root tracks that shrinkage — but a focused field can
+  // still end up ABOVE the shrunken scroller's visible area if it sat below
+  // the fold before the keyboard opened. This mechanism guarantees the field
+  // the user is typing into stays visible: when the visual viewport resizes
+  // while a text field inside the shell holds focus, that field is scrolled
+  // back into view within the bv-main scroller (block "nearest" — never a
+  // jump, only the minimal scroll that reveals it), deferred to the next
+  // frame so the resize has settled and the browser's own scroll anchoring
+  // has had its pass first.
+  //
+  // The mechanism only ever SCROLLS (no layout mutation, no focus stealing —
+  // the failure class it could add is an availability one, and scrolling is
+  // the gentlest possible response). The visualViewport presence guard is the
+  // jsdom discipline (lib/testSetup/matchMedia.ts): environments without the
+  // API — jsdom, old browsers — no-op the whole mechanism.
+  //
+  // Attachment discipline: active ONLY on the mobile branch (desktop never
+  // pays the cost, and a desktop resize is a window resize the browser
+  // already handles), and only while the shell actually renders — hence the
+  // authGate dependency, because blocked/loading render no shell root at all.
+  // Every listener added here is removed in the cleanup, so a branch switch
+  // or unmount tears the whole set down (asserted by mobileShellSource.test).
+  useEffect(() => {
+    if (isDesktop || authGate !== "pass") return;
+    const root = shellRef.current;
+    if (!root) return;
+    // The field currently holding focus, or null. focusout carries
+    // relatedTarget (where focus is GOING), so a hop between two fields
+    // never blips the tracking through null.
+    let focusedField: HTMLElement | null = null;
+    const isTextField = (el: EventTarget | null): el is HTMLElement => {
+      if (!(el instanceof HTMLElement)) return false;
+      if (el.isContentEditable) return true;
+      if (el.tagName === "TEXTAREA") return true;
+      if (el.tagName === "INPUT") {
+        // Buttons and pickers open no keyboard; tracking them would scroll
+        // on pure UI clicks.
+        const type = (el as HTMLInputElement).type;
+        return type !== "checkbox" && type !== "radio" && type !== "button" && type !== "submit" && type !== "file";
+      }
+      return false;
+    };
+    const onFocusIn = (e: FocusEvent) => {
+      if (isTextField(e.target)) focusedField = e.target;
+    };
+    const onFocusOut = (e: FocusEvent) => {
+      if (isTextField(e.relatedTarget)) return;
+      focusedField = null;
+    };
+    // The guard IS the contract: without visualViewport there is no resize
+    // signal to listen to, and synthesizing one (polling innerHeight) is the
+    // kind of cleverness that fires spuriously on desktop-browser chrome.
+    if (typeof window === "undefined" || typeof window.visualViewport === "undefined") return;
+    const viewport = window.visualViewport;
+    // TS's lib types keep `| null` after the typeof guard, and some engines
+    // report the property as null rather than absent — the bail-out covers
+    // both shapes of "no visual viewport here".
+    if (!viewport) return;
+    const onViewportResize = () => {
+      if (!focusedField) return;
+      // Next frame: the resize event lands before the layout viewport has
+      // settled; scrolling in the same tick measures a stale box.
+      requestAnimationFrame(() => {
+        focusedField?.scrollIntoView({ block: "nearest" });
+      });
+    };
+    root.addEventListener("focusin", onFocusIn);
+    root.addEventListener("focusout", onFocusOut);
+    viewport.addEventListener("resize", onViewportResize);
+    return () => {
+      root.removeEventListener("focusin", onFocusIn);
+      root.removeEventListener("focusout", onFocusOut);
+      viewport.removeEventListener("resize", onViewportResize);
+    };
+  }, [isDesktop, authGate]);
 
   // Check auth state; used on mount and after a successful login.
   const checkAuth = useCallback(() => {
@@ -60,14 +166,17 @@ export function Layout() {
     checkAuth();
   }, [checkAuth]);
 
-  // Load settings to drive the sidebar's domain tabs.
+  // Load settings to drive the chrome's destination lists (desktop sidebar and
+  // mobile bar/sheet alike — both read the ONE registry through this state).
   const loadSettings = useCallback(() => {
     getSettings()
       .then((res) => {
         if (res.ok) setSettings(res.settings);
       })
       .catch(() => {
-        // Non-fatal: sidebar simply won't reveal VMs/Flash tabs.
+        // Non-fatal: chrome simply won't reveal VMs/Flash tabs. The mobile
+        // surfaces inherit exactly this degradation (the chrome performs no
+        // fetches; settings stays non-fatal here).
       });
   }, []);
 
@@ -175,7 +284,9 @@ export function Layout() {
     return null;
   }
 
-  // Auth is ON and not authenticated — show the login screen.
+  // Auth is ON and not authenticated — show the login screen. This branch
+  // returns BEFORE the shell root below, which is why login never renders any
+  // chrome (no Sidebar, no bottom bar): the guarantee is structural, not CSS.
   if (authGate === "blocked") {
     return <LoginPage onLogin={checkAuth} />;
   }
@@ -201,51 +312,93 @@ export function Layout() {
   // Measured side by side at 1440x900 after the change, both live: rail at
   // x=16, y=16, 224x868, radius 16, no shadow, 16 to the content. Identical.
   //
-  // The content keeps its own 1.5rem, which is a SEPARATE distance: the gutter
-  // is the frame's, the padding is the page's, and they add up between the rail
-  // and the first card exactly as they do in the sibling.
+  // DESKTOP ONLY. The mobile shell stacks the scroller over its bottom bar
+  // (a normal-flow flex sibling, never a fixed overlay) and the phone carries
+  // its own 16px gutter on `main` instead — the desktop 24px gutter is half a
+  // 360px phone's width wasted on air around the same Cards.
+  //
+  // The scroller — per-page content (the Outlet subtree) must never know which
+  // chrome is mounted around it, so each branch keeps its own `main` contract
+  // and both carry the `bv-main` id, the stable scroll target the bottom bar
+  // addresses (tap-on-active). A page cannot tell, and a resize across the
+  // breakpoint re-attaches to the same id either way.
+  //
+  // `flex flex-col` on the per-route wrapper (sticky-footer page-shell fix,
+  // jdp live review — "die Versionsnummer soll unterhalb der untersten Card
+  // stehen, nicht die Cards durchfahren lassen"): the wrapper fills `main`'s
+  // available height (a definite size, since it's now a flex item of a sized
+  // flex column) AND passes a flex column context down to whichever page
+  // Outlet renders — Settings.tsx is the one page that currently uses this to
+  // push its own AboutFooter to the bottom of the column instead of leaving
+  // it fixed to the viewport (see AboutFooter's own header comment for the
+  // full before/after). Harmless for every OTHER route: a page that doesn't
+  // opt into filling that height just renders at its own natural height with
+  // invisible blank flex space below it — no visible change.
+  const scroller = isDesktop ? (
+    // Desktop: the frame owns the gutter (`gap-4 p-4` on the shell root below)
+    // and the page's own 1.5rem padding lives on the per-route wrapper —
+    // NO padding at the BOTTOM, and that is the point: the rail ends flush
+    // with the frame's own gutter, so 1.5rem of padding inside the scroll
+    // container stopped the last card 24 measured pixels short of it. At
+    // the end of a scroll the two columns have to end on one line, and a
+    // gutter that only one of them has is what makes it read as unfinished.
+    // The frame's p-4 still keeps both off the window edge.
+    <main id="bv-main" className="flex-1 flex flex-col overflow-y-auto min-w-0">
+      <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
+        {/* …which leaves the LAST element sitting on the container's edge.
+            That is what flush means, and it is only true at the very end of
+            the scroll: everywhere else the content simply continues. */}
+        <Outlet />
+      </div>
+    </main>
+  ) : (
+    // Mobile: `main` carries the 16px gutter itself and the per-route wrapper
+    // stays padding-free — the byte-form of the phone shell (the hard
+    // guarantee on the desktop branch is that not one class token moves;
+    // this is the mobile half of that swap).
+    <main id="bv-main" className="flex-1 flex flex-col overflow-y-auto p-4 min-w-0">
+      <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col">
+        <Outlet />
+      </div>
+    </main>
+  );
+
+  // The shell root. `h-dvh` tracks the visual viewport as mobile
+  // browser chrome collapses/expands — the static screen-height class it
+  // replaced kept the LARGEST viewport height and stranded bottom-docked
+  // content under expanded browser chrome. On desktop dvh equals the viewport
+  // height, so the desktop shell renders unchanged. The flex DIRECTION is the
+  // chrome switch's other half: desktop is the historical row (rail | main)
+  // plus the house gutter (`gap-4 p-4`, the GlimStone 1.8.0 frame above);
+  // mobile stacks the scroller over its normal-flow bottom bar (the bar is a
+  // flex SIBLING of `main`, never a fixed overlay, so the browser reserves
+  // its height and the scroller ends above it by construction).
   return (
-    <div className="flex h-screen overflow-hidden bg-carbon-background gap-4 p-4">
-      <Sidebar settings={settings} authEnabled={authEnabled} />
-      {/* `flex flex-col` added here (sticky-footer page-shell fix, jdp live
-          review — "die Versionsnummer soll unterhalb der untersten Card
-          stehen, nicht die Cards durchfahren lassen"): `main` is the actual
-          scrollable viewport (overflow-y-auto, sized to exactly 100vh minus
-          its own p-6 padding via the h-screen row's flex-stretch above) — a
-          page that wants its own footer to sit flush with the BOTTOM of this
-          box when its content is short, while still scrolling normally
-          underneath it when content is tall, needs `main`'s direct child to
-          become a flex item it can measure/fill against. Harmless for every
-          OTHER route: a page that doesn't opt into filling that height (see
-          `glim-page-enter` below) just renders at its own natural height with
-          invisible blank flex space below it — no visible change. */}
-      <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
-        {/* `flex-1 flex flex-col` added (same fix as above): makes this
-            per-route wrapper fill `main`'s available height (a definite size,
-            since it's now a flex item of a sized flex column) AND pass a flex
-            column context down to whichever page Outlet renders — Settings.tsx
-            is the one page that currently uses this to push its own
-            AboutFooter to the bottom of the column instead of leaving it
-            fixed to the viewport (see AboutFooter's own header comment for
-            the full before/after). Every other page ignores the extra
-            height exactly as described above. */}
-        {/* The page's own padding, which the frame's gutter above does NOT
-            replace: it used to sit on `main` and moved down one level so the
-            scroll container is the padded box's parent, the way the sibling app
-            has it. Same 1.5rem the content has always had.
-            NO padding at the BOTTOM, and that is the point: the rail ends flush
-            with the frame's own gutter, so 1.5rem of padding inside the scroll
-            container stopped the last card 24 measured pixels short of it. At
-            the end of a scroll the two columns have to end on one line, and a
-            gutter that only one of them has is what makes it read as unfinished.
-            The frame's p-4 still keeps both off the window edge. */}
-        <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
-          {/* …which leaves the LAST element sitting on the container's edge.
-              That is what flush means, and it is only true at the very end of
-              the scroll: everywhere else the content simply continues. */}
-          <Outlet />
-        </div>
-      </main>
+    <div ref={shellRef} className={`flex h-dvh overflow-hidden bg-carbon-background ${isDesktop ? "gap-4 p-4" : "flex-col"}`}>
+      {/* THE ONE CHROME SWITCH — exactly one chrome surface renders at a time.
+          The desktop branch is upstream's desktop tree verbatim (same Sidebar,
+          same frame gutter, same wrapper padding); the mobile branch is the
+          same scroller with the bottom bar as its flex sibling BELOW it. The
+          hidden surface is NOT RENDERED at all, never CSS-hidden: a
+          display:none Sidebar would still run its subscriptions, dialogs and
+          label engine below the breakpoint. What'sNewDialog renders outside
+          the switch — it is a fixed-position dialog and belongs to both
+          shells. */}
+      {isDesktop ? (
+        <>
+          <Sidebar settings={settings} authEnabled={authEnabled} />
+          {scroller}
+        </>
+      ) : (
+        <>
+          {scroller}
+          <BottomNav
+            settings={settings}
+            authEnabled={authEnabled}
+            scrollMainToTop={scrollMainToTop}
+          />
+        </>
+      )}
       {whatsNewVersion && (
         <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
       )}
