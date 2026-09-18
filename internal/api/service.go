@@ -1013,28 +1013,9 @@ func (s *Service) filesRepoPath(settings store.Settings) (string, error) {
 	return s.resolveRepo(settings.FilesPath)
 }
 
-// fileSetRepoPath resolves the restic repo for ONE file set (#204): its own
-// repository if it has one, otherwise the Folders domain repository.
-//
-// WHAT THIS IS FOR: "I would like to back up a VM or folder directly to a B2 or
-// NAS share, bypassing the primary backup location. This is useful for large,
-// static folders where only an offsite copy is needed." A domain path could
-// already be a restic remote, but that moved EVERY folder set at once; this
-// moves one.
-//
-// The override goes through the same resolveRepo as the domain path, so the
-// same string shapes work and the same containment rules apply: a relative
-// subpath is resolved under the host mount root, a raw remote ("b2:…", "s3:…",
-// "sftp:…", "rest:…", "rclone:…") is handed to restic verbatim.
-//
-// WHAT STILL FOLLOWS THE DOMAIN, and it is worth being plain about it, because
-// it is the part a user will meet: PruneDomain and CheckDomain operate on the
-// DOMAIN repository. A set living in its own repository is backed up there and
-// restored from there, and its retention runs with it (applyRetention already
-// takes the repo it was handed, which is this one) - but a whole-domain prune or
-// integrity check does not reach into it. That gap is disclosed in the UI rather
-// than hidden, and closing it means teaching those two to iterate repositories,
-// which is its own change.
+// fileSetRepoPath resolves the repository of one file set: its own named
+// repository if it has one (#204), otherwise the Folders domain repository.
+// Whole-domain prune and check reach the named one through domainReposForOp.
 func (s *Service) fileSetRepoPath(settings store.Settings, set store.FileSet) (string, error) {
 	return s.itemRepoPath(set.Repo, func() (string, error) { return s.filesRepoPath(settings) })
 }
