@@ -1981,6 +1981,10 @@ export interface NamedRepo {
    *  delete refuse rather than repack it. */
   immutable: boolean;
   enabled: boolean;
+  /** A local location that is a second copy in its own right (a NAS on another
+   *  machine), so off-site replication leaves it out. A remote one is left out
+   *  whatever this says. */
+  alreadyOffsite: boolean;
   inUse: number;
 }
 

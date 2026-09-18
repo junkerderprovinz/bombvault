@@ -50,6 +50,9 @@ type namedRepoView struct {
 	// short-circuited past it on a local path.
 	Immutable bool `json:"immutable"`
 	Enabled   bool `json:"enabled"`
+	// AlreadyOffsite leaves a local repository out of off-site replication; see
+	// alreadyOffSite.
+	AlreadyOffsite bool `json:"alreadyOffsite"`
 	// InUse is how many containers, VMs and folder sets currently point here.
 	// The interface needs it to explain why a repository cannot be deleted
 	// BEFORE the attempt, rather than only in the error afterwards.
@@ -72,7 +75,8 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 		out = append(out, namedRepoView{
 			ID: t.ID, Name: t.Name, Repo: t.Repo, CredsRef: t.CredsRef,
 			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
-			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled, InUse: n,
+			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled,
+			AlreadyOffsite: t.AlreadyOffsite, InUse: n,
 		})
 	}
 	return out
@@ -93,14 +97,15 @@ func (h *Handler) handleListNamedRepos(w http.ResponseWriter, r *http.Request) {
 // setters use, and for the same reason: a repository that moves by accident
 // looks exactly like a working one.
 type namedRepoBody struct {
-	Name          *string `json:"name"`
-	Repo          *string `json:"repo"`
-	CredsRef      *string `json:"credsRef"`
-	StorageClass  *string `json:"storageClass"`
-	LimitUpload   *int    `json:"limitUpload"`
-	LimitDownload *int    `json:"limitDownload"`
-	Immutable     *bool   `json:"immutable"`
-	Enabled       *bool   `json:"enabled"`
+	Name           *string `json:"name"`
+	Repo           *string `json:"repo"`
+	CredsRef       *string `json:"credsRef"`
+	StorageClass   *string `json:"storageClass"`
+	LimitUpload    *int    `json:"limitUpload"`
+	LimitDownload  *int    `json:"limitDownload"`
+	Immutable      *bool   `json:"immutable"`
+	Enabled        *bool   `json:"enabled"`
+	AlreadyOffsite *bool   `json:"alreadyOffsite"`
 }
 
 // applyTo merges the sent fields onto a row.
@@ -139,6 +144,9 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 	}
 	if b.Enabled != nil {
 		t.Enabled = *b.Enabled
+	}
+	if b.AlreadyOffsite != nil {
+		t.AlreadyOffsite = *b.AlreadyOffsite
 	}
 }
 

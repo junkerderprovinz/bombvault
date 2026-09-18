@@ -10,6 +10,7 @@ Keep the fast local backup and add one or more off-site replicas. Set a repo per
 - **Per-domain off-site schedule** (edited alongside every other schedule on Settings, Schedules): leave it blank to replicate after every local backup, or set a cadence (for example `weekly Sun 03:00`) to ship off-site less often than you back up locally. A **Replicate now** button covers on-demand runs.
 - **Off-site retention** lives on Settings, Off-site so you can keep off-site copies longer as an archive. Leave the policy all-zero to never auto-trim off-site snapshots.
 - **Bandwidth limits** (Settings, Off-site) cap the restic upload/download rate so replication does not saturate your WAN.
+- **Items on their own repository.** A container, VM or folder set pointed at a named repository (Settings, Storage, Repositories) is replicated from there along with the rest of its domain, with two exceptions. A remote repository is never copied again, because it is already off the box. A local one is left out once you switch on **Already off site** on its row, which is meant for a share on another machine, such as a NAS used as cold storage. Leave that switch off for a disk or share on this box, which still needs the off-site copy.
 - A **replication indicator** shows which domain is replicating while it runs (on its page and the Dashboard). It is an active indicator, not a percentage bar, because `restic copy` exposes no machine-readable progress.
 
 !!! note "Restore straight from off-site"

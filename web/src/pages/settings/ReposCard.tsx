@@ -4,6 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { Toggle } from "../../components/Toggle";
+import { isRemotePath } from "../../components/PathModeSwitch";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { createRepo, deleteRepo, listRepos, updateRepo, type NamedRepo } from "../../lib/api";
@@ -94,16 +95,12 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
           : t("repos.disableWarn").replace("{n}", String(row.inUse));
       if (!(await confirm(question))) return;
     }
-    const r = await updateRepo(row.id, { enabled: next });
-    if (!r.ok) {
-      push(r.error ?? t("settings.error"), "fail");
-      return;
-    }
-    await reload();
+    await patch(row, { enabled: next });
   }
 
-  async function setImmutable(row: NamedRepo, next: boolean) {
-    const r = await updateRepo(row.id, { immutable: next });
+  // The one save path for the row's switches.
+  async function patch(row: NamedRepo, body: Parameters<typeof updateRepo>[1]) {
+    const r = await updateRepo(row.id, body);
     if (!r.ok) {
       push(r.error ?? t("settings.error"), "fail");
       return;
@@ -170,6 +167,31 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 {r.repo}
               </p>
             </div>
+            {/* hideLabel on every switch in this row: the wrapping <label>
+                already prints the caption, which is the one case Toggle's
+                hideLabel is for. Without it each caption showed twice. */}
+            {/* Already off site (see alreadyOffSite in internal/api). A remote
+                location has nothing to decide, so it gets the reason in place
+                of a switch. */}
+            {isRemotePath(r.repo) ? (
+              <span className="flex items-center gap-2 text-xs text-carbon-textSub">
+                <Badge tone="neutral" wrap>
+                  {t("repos.offsiteRemote")}
+                </Badge>
+                <InfoBubble tip={t("repos.offsiteRemoteHint")} />
+              </span>
+            ) : (
+              <label className="flex items-center gap-2 text-xs text-carbon-textSub">
+                {t("repos.offsite")}
+                <InfoBubble tip={t("repos.offsiteHint")} />
+                <Toggle
+                  checked={r.alreadyOffsite}
+                  onChange={(v) => void patch(r, { alreadyOffsite: v })}
+                  label={t("repos.offsite")}
+                  hideLabel
+                />
+              </label>
+            )}
             {/* Append-only. Prune and snapshot delete refuse on a repository
                 marked this way, which is the only thing standing between an
                 on-box credential and an archive somebody meant to keep. It was
@@ -180,13 +202,19 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
               <InfoBubble tip={t("repos.immutableHint")} />
               <Toggle
                 checked={r.immutable}
-                onChange={(v) => void setImmutable(r, v)}
+                onChange={(v) => void patch(r, { immutable: v })}
                 label={t("repos.immutable")}
+                hideLabel
               />
             </label>
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">
               {t("repos.enabled")}
-              <Toggle checked={r.enabled} onChange={(v) => void setEnabled(r, v)} label={t("repos.enabled")} />
+              <Toggle
+                checked={r.enabled}
+                onChange={(v) => void setEnabled(r, v)}
+                label={t("repos.enabled")}
+                hideLabel
+              />
             </label>
             {/* The location is not editable here on purpose - see the card's
                 own note. The tooltip says why rather than leaving a greyed

@@ -46,7 +46,7 @@ func TestAnImportIsCheckedAgainstTheRowsTheApplyKEEPS(t *testing.T) {
 
 	exp := settingsExport{
 		Settings:   settingsView{ContainersPath: "backups/cold"},
-		NamedRepos: []offsiteTargetView{{Name: "Warm", Repo: "backups/warm", Enabled: true}},
+		NamedRepos: []namedRepoFileView{{offsiteTargetView: offsiteTargetView{Name: "Warm", Repo: "backups/warm", Enabled: true}}},
 	}
 	msg := h.rejectImportCollisions(exp)
 	if msg == "" {
@@ -72,7 +72,7 @@ func TestTheImportGuardDoesNotRewriteTheFileItValidates(t *testing.T) {
 
 	exp := settingsExport{
 		Settings:   settingsView{ContainersPath: "backups/containers"},
-		NamedRepos: []offsiteTargetView{{ID: r.ID, Name: "Cold", Repo: "backups/moved", Enabled: true}},
+		NamedRepos: []namedRepoFileView{{offsiteTargetView: offsiteTargetView{ID: r.ID, Name: "Cold", Repo: "backups/moved", Enabled: true}}},
 	}
 	if msg := h.rejectImportCollisions(exp); msg != "" {
 		t.Fatalf("nothing collides here: %s", msg)
@@ -108,8 +108,8 @@ func TestTheGuardValidatesTheLocationTheApplyWillActuallyStore(t *testing.T) {
 	// Containers path below.
 	exp := settingsExport{
 		Settings: settingsView{ContainersPath: "backups/cold"},
-		NamedRepos: []offsiteTargetView{
-			{ID: r.ID, Name: "Cold", Repo: "rest:https://" + redactedLocationMarker + "@host:8000/repo", Enabled: true},
+		NamedRepos: []namedRepoFileView{
+			{offsiteTargetView: offsiteTargetView{ID: r.ID, Name: "Cold", Repo: "rest:https://" + redactedLocationMarker + "@host:8000/repo", Enabled: true}},
 		},
 	}
 	msg := h.rejectImportCollisions(exp)

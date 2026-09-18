@@ -82,6 +82,13 @@ type OffsiteTarget struct {
 	Enabled              bool
 	CreatedAt            int64
 	SortOrder            int
+	// AlreadyOffsite marks a NAMED repository (RoleRepo) as a second copy in its
+	// own right, so off-site replication leaves it out. Meaningful for a local
+	// location only: a remote one is left out regardless (alreadyOffSite in
+	// internal/api). The case it exists for is a NAS on another machine mounted
+	// into Unraid, which is a path to BombVault and off the box in fact. Read on
+	// the named-repository role only.
+	AlreadyOffsite bool
 }
 
 // Off-site target roles (see OffsiteTarget.Role's doc comment).
@@ -129,8 +136,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	_, err := r.db.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, already_offsite)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 		  domain                 = excluded.domain,
 		  name                   = excluded.name,
@@ -148,10 +155,12 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		  limit_download         = excluded.limit_download,
 		  growth_budget_gb       = excluded.growth_budget_gb,
 		  enabled                = excluded.enabled,
-		  sort_order             = excluded.sort_order`,
+		  sort_order             = excluded.sort_order,
+		  already_offsite        = excluded.already_offsite`,
 		t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
+		boolInt(t.AlreadyOffsite),
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
@@ -161,7 +170,7 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order`
+	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, already_offsite`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -419,16 +428,18 @@ func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 
 func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	var t OffsiteTarget
-	var immutable, enabled int
+	var immutable, enabled, alreadyOffsite int
 	err := s.Scan(
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
+		&alreadyOffsite,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)
 	}
 	t.Immutable = immutable != 0
 	t.Enabled = enabled != 0
+	t.AlreadyOffsite = alreadyOffsite != 0
 	return t, nil
 }

@@ -1559,6 +1559,19 @@ ALTER TABLE settings ADD COLUMN pull_enabled INTEGER NOT NULL DEFAULT 0;`,
 		// writes both.
 		alreadySatisfied: columnPresent("settings", "pull_enabled"),
 	},
+	{
+		// The "already off site" mark on a named repository (#204); see
+		// OffsiteTarget.AlreadyOffsite.
+		//
+		// Guarded because the rename work (#233) claimed 109 on its own branch
+		// at the same time, and whichever merges second has to move to a fresh
+		// number. With the guard this body can be renumbered safely, for the same
+		// reason v108 carries one.
+		version:          109,
+		name:             "named_repo_already_offsite",
+		sql:              `ALTER TABLE offsite_targets ADD COLUMN already_offsite INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("offsite_targets", "already_offsite"),
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

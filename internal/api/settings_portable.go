@@ -54,8 +54,31 @@ type settingsExport struct {
 	AppVersion     string              `json:"appVersion"`
 	Settings       settingsView        `json:"settings"`
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
-	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
+	NamedRepos     []namedRepoFileView `json:"namedRepos,omitempty"`
 	Credentials    *exportCredentials  `json:"credentials,omitempty"`
+}
+
+// namedRepoFileView is a named repository in the settings file: the off-site
+// target shape the rows share, plus the fields only a named repository has. The
+// embedded view flattens into the same JSON object, so files written before the
+// extra fields existed read back unchanged.
+type namedRepoFileView struct {
+	offsiteTargetView
+	AlreadyOffsite bool `json:"alreadyOffsite,omitempty"`
+}
+
+func namedReposToFileViews(ts []store.OffsiteTarget) []namedRepoFileView {
+	out := make([]namedRepoFileView, 0, len(ts))
+	for _, t := range ts {
+		out = append(out, namedRepoFileView{offsiteTargetView: offsiteTargetToView(t), AlreadyOffsite: t.AlreadyOffsite})
+	}
+	return out
+}
+
+func (v namedRepoFileView) toStoreTarget() store.OffsiteTarget {
+	t := v.offsiteTargetView.toStoreTarget()
+	t.AlreadyOffsite = v.AlreadyOffsite
+	return t
 }
 
 // buildSettingsView returns the export's settings block: the user-facing view with
@@ -215,7 +238,7 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		AppVersion:     Version,
 		Settings:       buildSettingsView(s),
 		OffsiteTargets: offsiteTargetsToViews(targets),
-		NamedRepos:     offsiteTargetsToViews(namedRepos),
+		NamedRepos:     namedReposToFileViews(namedRepos),
 	}
 
 	if withCredentials {
@@ -796,7 +819,7 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
 // would put those items silently back on their domain repository and send their
 // next backup somewhere else, which is exactly the failure the delete endpoint
 // refuses outright; an import must not be the way around that refusal.
-func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
+func (h *Handler) replaceNamedRepos(views []namedRepoFileView) error {
 	current, err := h.store.ListNamedRepos()
 	if err != nil {
 		return err

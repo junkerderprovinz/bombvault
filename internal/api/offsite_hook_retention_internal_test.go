@@ -339,11 +339,17 @@ func TestTheHookDoesNotReportASwitchedOffRepositoryAsAFailure(t *testing.T) {
 // reaction to a share dying.
 func switchTheNamedRepositoryOff(t *testing.T, st *store.Repo) {
 	t.Helper()
+	editTheNamedRepository(t, st, func(r *store.OffsiteTarget) { r.Enabled = false })
+}
+
+// editTheNamedRepository changes the fixture's one named repository in place.
+func editTheNamedRepository(t *testing.T, st *store.Repo, edit func(*store.OffsiteTarget)) {
+	t.Helper()
 	rows, err := st.ListNamedRepos()
 	if err != nil || len(rows) != 1 {
 		t.Fatalf("ListNamedRepos = %v, %v", rows, err)
 	}
-	rows[0].Enabled = false
+	edit(&rows[0])
 	if _, err := st.UpsertOffsiteTarget(rows[0]); err != nil {
 		t.Fatal(err)
 	}

@@ -1027,14 +1027,12 @@ func (s *Service) filesRepoPath(settings store.Settings) (string, error) {
 // subpath is resolved under the host mount root, a raw remote ("b2:…", "s3:…",
 // "sftp:…", "rest:…", "rclone:…") is handed to restic verbatim.
 //
-// WHAT STILL FOLLOWS THE DOMAIN, and it is worth being plain about it, because
-// it is the part a user will meet: PruneDomain and CheckDomain operate on the
-// DOMAIN repository. A set living in its own repository is backed up there and
-// restored from there, and its retention runs with it (applyRetention already
-// takes the repo it was handed, which is this one) - but a whole-domain prune or
-// integrity check does not reach into it. That gap is disclosed in the UI rather
-// than hidden, and closing it means teaching those two to iterate repositories,
-// which is its own change.
+// A set living in its own repository is backed up there and restored from
+// there, and its retention runs with it (applyRetention takes the repo it was
+// handed, which is this one). The whole-domain operations reach it too: prune,
+// integrity check and unlock go through domainReposForOp, which covers every
+// repository the domain's items write to. Off-site replication covers it unless
+// the repository is already off site (alreadyOffSite).
 func (s *Service) fileSetRepoPath(settings store.Settings, set store.FileSet) (string, error) {
 	return s.itemRepoPath(set.Repo, func() (string, error) { return s.filesRepoPath(settings) })
 }
@@ -3622,7 +3620,7 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 	// narrowed at all: a one-element slice is always "index 0".
 	ref := s.refFor(settings, domain, localRepo)
 	if alreadyOffSite(ref) {
-		log.Printf("api: offsite %s: this item's repository is remote and is already off site; not copied again", domain) //nolint:gosec // G706: domain is a fixed literal
+		log.Printf("api: offsite %s: this item's repository %s; not copied again", domain, offSiteReason(ref)) //nolint:gosec // G706: domain is a fixed literal, the reason one of two fixed phrases
 		return
 	}
 	// The skip list of the WHOLE domain, even though this hook copies exactly one
@@ -7546,7 +7544,7 @@ func (s *Service) offsiteReplicationSources(settings store.Settings, domain stri
 			// operator can do makes b2: stop being remote, so reporting it as an
 			// incomplete pass condemns a supported configuration to fail forever
 			// over a repository that was never meant to be copied.
-			log.Printf("api: offsite %s: named repository %s is remote and is already off site; not copied again", domain, scrubRepoLocation(r.Loc)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted
+			log.Printf("api: offsite %s: named repository %s %s; not copied again", domain, scrubRepoLocation(r.Loc), offSiteReason(r)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted, the reason one of two fixed phrases
 			continue
 		}
 		out = append(out, r)
@@ -7638,7 +7636,15 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 }
 
 // alreadyOffSite reports whether a source is one the off-site copy deliberately
-// leaves out: a repository that is not the domain's own and is remote.
+// leaves out: a repository that is not the domain's own and is either remote or
+// marked as already off site on the Repositories card.
+//
+// The mark exists because a local path says nothing about where the disk is. A
+// NAS on another machine, mounted into Unraid, is a path to BombVault and the
+// operator's second copy in fact; copying it to the cloud as well is the
+// transfer bill #204 asked to avoid. The mark rides on the reference's named row,
+// so it takes no store read of its own. When refFor could not read the rows the
+// reference carries none and the hook copies - the direction that loses nothing.
 //
 // ONE predicate, shared by the post-backup hook and the whole-domain pass, and
 // it is shared because they drifted. The hook additionally required a non-empty
@@ -7654,7 +7660,22 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 // ownership: see offsiteReplicationSources for why a domain's OWN remote primary
 // stays in.
 func alreadyOffSite(r domainRepoRef) bool {
-	return !r.Own && restic.IsRemoteRepo(r.Loc)
+	return offSiteReason(r) != ""
+}
+
+// offSiteReason is alreadyOffSite with its reason, worded for the log, or ""
+// when the source is copied. The two reasons need different next steps from
+// whoever reads the log, so they get different words.
+func offSiteReason(r domainRepoRef) string {
+	switch {
+	case r.Own:
+		return ""
+	case restic.IsRemoteRepo(r.Loc):
+		return "is remote and is already off site"
+	case r.Named.AlreadyOffsite:
+		return "is marked as already off site"
+	}
+	return ""
 }
 
 // refName names a repository for a message: a named repository by its NAME, the
