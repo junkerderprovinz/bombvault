@@ -602,6 +602,8 @@ const ro: Partial<Translations> = {
   "common.confirm": "Confirmare",
   "common.cancel": "Anulare",
   "common.close": "Închide",
+  "common.expand": "Extinde",
+  "common.collapse": "Restrânge",
 
   // Failure fallbacks
   "common.actionFailed": "Acțiunea a eșuat",

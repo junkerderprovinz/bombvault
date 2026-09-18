@@ -975,6 +975,8 @@ const hi: Partial<Translations> = {
   "common.restoring": "रीस्टोर हो रहा है…",
   "common.done": "हो गया",
   "common.close": "बंद करें",
+  "common.expand": "विस्तारित करें",
+  "common.collapse": "संकुचित करें",
   "common.loadingBackups": "बैकअप लोड हो रहे हैं…",
   "common.saving": "सहेजा जा रहा है…",
   "common.restoreRunning": "एक रीस्टोर चल रहा है…",

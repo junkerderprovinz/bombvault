@@ -975,6 +975,8 @@ const ca: Partial<Translations> = {
   "common.restoring": "Restaurant…",
   "common.done": "Fet",
   "common.close": "Tanca",
+  "common.expand": "Desplega",
+  "common.collapse": "Replega",
   "common.loadingBackups": "Carregant còpies…",
   "common.saving": "Desant…",
   "common.restoreRunning": "S'està executant una restauració…",

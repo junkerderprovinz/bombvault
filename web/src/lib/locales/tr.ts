@@ -605,6 +605,8 @@ const tr: Partial<Translations> = {
   "common.confirm": "Onayla",
   "common.cancel": "İptal",
   "common.close": "Kapat",
+  "common.expand": "Genişlet",
+  "common.collapse": "Daralt",
 
   // Failure fallbacks
   "common.actionFailed": "İşlem başarısız",

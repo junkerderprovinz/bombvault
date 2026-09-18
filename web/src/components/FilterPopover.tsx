@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useIsDesktop } from "../lib/useMediaQuery";
+import { TapPopover } from "./mobile/TapPopover";
 
 // ---------------------------------------------------------------------------
 // FilterPopover — shared, accessible filter disclosure (#2.6)
@@ -20,6 +22,30 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 // the list behind the collapsed button with no hint. The accent dot on the
 // trigger surfaces that a filter is applied; each page computes `active` from
 // its own current filter state.
+//
+// Two presentations, ONE state model:
+//   - Desktop (>= 48rem, useIsDesktop — the ONE width authority): the original
+//     in-flow presentation, byte-identical — the absolutely-positioned panel
+//     hangs off the wrapper and the component's own outside-mousedown +
+//     Escape listeners own dismissal.
+//   - Below the breakpoint: the panel mounts through TapPopover instead. The
+//     in-flow absolute panel is positioned relative to this wrapper with no
+//     viewport awareness, so on a phone a trigger near the screen's start or
+//     end edge shoves its own panel off-screen and clips it — the same class
+//     of bug computeBubblePosition was written to fix for bubbles. TapPopover
+//     supplies the viewport-clamped anchoring (computeBubblePosition), the
+//     consuming backdrop (outside taps die on it, never click through),
+//     Escape, re-tap, and the light focus contract; this component keeps
+//     owning the CONTENT and every bit of filter state, which passes through
+//     as children untouched.
+//
+// The mobile branch deliberately does NOT touch this component's own `open`
+// state: it stays false on mobile forever, so the desktop dismissal effect
+// below no-ops and the two dismissal systems can never fight over one
+// boolean. The trigger content (funnel glyph, label, active dot) is shared
+// verbatim between the branches; the trigger's >=44px touch floor comes from
+// TapPopover's baked-in min-h-11/min-w-11 (the desktop glim-btn keeps its
+// token height).
 
 export function FilterPopover({
   label,
@@ -32,6 +58,7 @@ export function FilterPopover({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     if (!open) return;
@@ -48,6 +75,45 @@ export function FilterPopover({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  const trigger = (
+    <>
+      {/* FILLED funnel glyph (a filled silhouette reads as the active
+          filter affordance at this size — the closed path was already
+          fill-capable, so it flips directly: same path data,
+          `fill="currentColor"`, no redraw). */}
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+        <path d="M1 2.5h10L7 7v3.5L5 11.5V7z" />
+      </svg>
+      {label}
+      {/* Active-filter indicator: a persisted non-default filter silently
+          shrinks the list behind the collapsed button, so hint that one is on. */}
+      {active && <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />}
+    </>
+  );
+
+  if (!isDesktop) {
+    return (
+      <TapPopover
+        label={label}
+        trigger={trigger}
+        /* `glim-btn` rather than its own padding ([327], jdp: "Der Filter
+           button größer machen und ins größensystem einbinden") — see the
+           desktop branch below; the surface colour and its hover stay local
+           because this trigger opens a popover and should not read as one of
+           the page's actions. The 44px touch floor is TapPopover's. */
+        /* hover:bg-carbon-hover sits BELOW the surface2 this trigger is filled
+           with (the hover-tier order hoverRamp.test.ts pins): surface2's own
+           hover tier is surface3. */
+        triggerClassName="glim-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-carbon-surface3 transition-colors"
+        /* Same surface recipe as the desktop panel below (p-4, min-w, max-w,
+           column layout) — only the positioning system changed. */
+        panelClassName="flex flex-col gap-4 p-4 min-w-[16rem] max-w-[min(90vw,26rem)]"
+      >
+        {children}
+      </TapPopover>
+    );
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -67,16 +133,7 @@ export function FilterPopover({
            popover and should not read as one of the page's actions. */
         className="glim-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-carbon-surface3 transition-colors"
       >
-        {/* FILLED funnel (design-language.md "Icon glyphs", rule 218 — this
-            silhouette was already closed under its old stroke, so it flips
-            directly: same path data, `fill="currentColor"`, no redraw). */}
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-          <path d="M1 2.5h10L7 7v3.5L5 11.5V7z" />
-        </svg>
-        {label}
-        {/* Active-filter indicator: a persisted non-default filter silently
-            shrinks the list behind the collapsed button, so hint that one is on. */}
-        {active && <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />}
+        {trigger}
       </button>
       {open && (
         <div

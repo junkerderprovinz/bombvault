@@ -975,6 +975,8 @@ const gl: Partial<Translations> = {
   "common.restoring": "Restaurando…",
   "common.done": "Feito",
   "common.close": "Pechar",
+  "common.expand": "Despregar",
+  "common.collapse": "Pregar",
   "common.loadingBackups": "Cargando copias…",
   "common.saving": "Gardando…",
   "common.restoreRunning": "Hai unha restauración en execución…",

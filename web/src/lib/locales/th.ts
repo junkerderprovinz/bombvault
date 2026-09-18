@@ -605,6 +605,8 @@ const th: Partial<Translations> = {
   "common.confirm": "ยืนยัน",
   "common.cancel": "ยกเลิก",
   "common.close": "ปิด",
+  "common.expand": "ขยาย",
+  "common.collapse": "ย่อ",
 
   // Failure fallbacks
   "common.actionFailed": "การดำเนินการล้มเหลว",

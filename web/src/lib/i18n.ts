@@ -1224,6 +1224,14 @@ export const en = {
   "common.restoring": "Restoring…",
   "common.done": "Done",
   "common.close": "Close",
+  // SelectionTree's touch chevron: on a touch tree the expand affordance is
+  // a real button (>=44x44, dedicated zone disjoint from the row's
+  // tap-to-toggle), so unlike the desktop glyph it needs a spoken name.
+  // Generic on purpose — the treeitem's own accessible name already carries
+  // the path; announcing "Expand /mnt/user/appdata" a second time over the
+  // button would stutter.
+  "common.expand": "Expand",
+  "common.collapse": "Collapse",
   "common.loadingBackups": "Loading backups…",
   "common.saving": "Saving…",
   "common.restoreRunning": "A restore is running…",
@@ -2992,6 +3000,8 @@ export const de: Translations = {
   "common.restoring": "Stelle wieder her…",
   "common.done": "Fertig",
   "common.close": "Schließen",
+  "common.expand": "Ausklappen",
+  "common.collapse": "Einklappen",
   "common.loadingBackups": "Sicherungen werden geladen…",
   "common.saving": "Speichern…",
   "common.restoreRunning": "Eine Wiederherstellung läuft…",

@@ -597,6 +597,8 @@ const ja: Partial<Translations> = {
   "common.confirm": "確認",
   "common.cancel": "キャンセル",
   "common.close": "閉じる",
+  "common.expand": "展開",
+  "common.collapse": "折りたたみ",
 
   // Failure fallbacks
   "common.actionFailed": "操作に失敗しました",

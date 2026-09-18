@@ -597,6 +597,8 @@ const ko: Partial<Translations> = {
   "common.confirm": "확인",
   "common.cancel": "취소",
   "common.close": "닫기",
+  "common.expand": "펼치기",
+  "common.collapse": "접기",
 
   // Failure fallbacks
   "common.actionFailed": "작업에 실패했습니다",

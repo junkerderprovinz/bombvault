@@ -152,6 +152,21 @@
 //      gets exactly that larger number. Scoped to every EXISTING pinWidth
 //      call site (all three are "lg") — see that constant's own doc for why
 //      a per-size table isn't warranted yet.
+//   5d. Mobile suppression: the 200px pin is a
+//      DESKTOP-scale decision. Measured at 390px, a ~303px phone column fits
+//      exactly ONE MIN_PINNED_WIDTH segment per row, so the Settings General
+//      tab stacked 12+ pinned 200x43 blocks into ~2400px of page scroll —
+//      every picker rendered as a vertical pillar of mostly-empty pills. So
+//      below 48rem the pinning measurement is SUPPRESSED: the `pinWidth` gate
+//      also requires useIsDesktop (lib/useMediaQuery — the one DESKTOP_QUERY
+//      authority, the same query the CSS max-md:/md: variants flip on; no
+//      second width literal anywhere), and these strips fall back to the
+//      content-hugging presentation, which already wraps per this file's own
+//      "wraps, never scrolls" rule — nothing new had to be built for the
+//      fallback, the unpinned well IS that presentation. Desktop >=48rem is
+//      byte-identical by construction: above the breakpoint `pinWidth`
+//      evaluates exactly as items 5b/5c left it, so both the classes AND the
+//      inline widths are unchanged.
 //   5. `variant` ("chip", default, vs "well"). Live-review follow-up: "turn
 //      the shape picker into a horizontal selector styled like the one in
 //      TrickWork." TrickWork's own segmentedRow() (ui/src/controlWidgets.ts)
@@ -284,6 +299,7 @@ import {
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { useLabelMode } from "../lib/useLabelMode";
+import { useIsDesktop } from "../lib/useMediaQuery";
 import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
@@ -479,7 +495,8 @@ interface SelectorCommon {
  * palette. So the sequence is a table, and pages/settings/hueOffsets.test.ts
  * requires every hued selector in that tree to name an entry in it.
  *
- * The palette holds eight colours and the tree holds nine selectors, so
+ * The palette holds eight colours and the tree holds ten selectors (nine of
+ * upstream's plus the Platform sub-section's own picker), so
  * exactly one start is shared: `drillKind` reuses the first label row's.
  * That is arithmetic rather than oversight - the two are in different tabs
  * (Integrity and Appearance) and cannot be on screen together, and the only
@@ -495,6 +512,13 @@ export const HUE_OFFSET = {
   motion: 5,
   theme: 6,
   notifyOn: 7,
+  /** Reserved hue allocation: 8 is the next free start after theme (6) and
+   *  notifyOn (7). The Platform sub-section's material/cupertino picker that
+   *  consumes it does not exist yet, but the number is pre-allocated so that
+   *  picker can never collide with theme's or notifyOn's — the picker first
+   *  shipped with the literal 6, which collided with theme's once the shared
+   *  table arrived. */
+  platform: 8,
   drillKind: 1,
 } as const;
 
@@ -589,6 +613,57 @@ function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boo
 // be speculative generality with no second stage to size against yet — add
 // one the moment a real "sm"/"md" pinned consumer exists, not before.
 export const MIN_PINNED_WIDTH = 200;
+
+// MOBILE_COMPACT — the segment-level below-md compaction (verified on
+// device): on the Labels
+// sub-section of the merged Apparence card (Settings General, three "lg"
+// well equalWidth pickers — Buttons / Sidebar / Tabs), the fourth segment of
+// each strip ("Réactif" in the operator's fr locale) was rejected ALONE onto
+// a second line at ~360 CSS px, the same device pass that caught the
+// IntegrityCard row. The fix lives IN THE COMPONENT, not at any call site
+// (the shared-control rule — a look this shared belongs to the one control
+// every strip renders through), and joins every segment's class list, both
+// variants, both scales, so all strips compact below the 48rem breakpoint
+// and desktop stays byte-identical. The targeted properties (the lg scale's
+// text and inline padding) are plain utilities, so the mobile variants win
+// the utilities layer outright; the segments' HEIGHT is engine-owned
+// (`.glim-seg` / the equalWidth fixed heights) and deliberately untouched —
+// this is horizontal compaction only, the touch target these pickers already
+// render at (measured 37.6px on the device, accepted sub-floor) does not
+// move. The track's 0.2rem groove is likewise untouched: that value is
+// established for its ring-visibility role (round 7's thinner ring shipped
+// unreadable) and scale separation comes from the segments, never the
+// groove. The strips' own wrap stays exactly as it is — the "never scrolls"
+// ruling keeps wrapping as the designed fallback, and the
+// one-line guarantee is scoped to the rendered configuration observed on
+// device (fr labels): longer locales may still wrap, by design, and never
+// scroll. Side effect accepted on the smaller scales below md (their inline
+// padding tightens by a step or two; their text is already the compact
+// size): the component is the unit of fix, one list joined once, so no call
+// site can drift out of the compaction. jsdom cannot resolve media queries,
+// so this file's suites assert the segments' structural classes only —
+// presence of the compaction is proven by this file's mobile dom suite.
+const MOBILE_COMPACT = "max-md:text-xs max-md:px-1";
+
+// SEGMENT_TOUCH_BLEED — the 44px touch floor, carried by an invisible
+// ::after rather than by real size (mobile UI review 2026-09-15, P2: the
+// small well's segments measure 24px on a device, half the floor). The same
+// bleed row actions already ship (Button.tsx's MOBILE_BLEED, Toggle,
+// LanguageCard): `relative` + an absolutely-positioned, inset-negative,
+// content-empty ::after grows the TAP AREA without painting anything — the
+// pseudo has no background, so pixels do not move. Scoped to the SMALL well
+// only (`well && !equalWidth`, joined at the segment class list below): the
+// big Settings pickers (`equalWidth size="lg"`, measured 37.6px) were
+// explicitly ACCEPTED sub-floor by recorded decision and this does not
+// reopen that decision. Adjacent segments' bleed zones overlap by design —
+// the row-action pattern's own accepted trade: a boundary tap inside the
+// overlap resolves to the later sibling, and the vertical growth is the
+// win. jsdom cannot resolve media queries (the MOBILE_COMPACT comment's
+// closing note), so the proof this bleed exists lives in e2e —
+// list-ergonomics.spec.ts's 44px floor test reads the ::after's computed
+// height — not in this file's dom suites.
+const SEGMENT_TOUCH_BLEED =
+  "max-md:relative max-md:after:absolute max-md:after:-inset-3 max-md:after:content-['']";
 
 // ---------------------------------------------------------------------------
 // Pure, DOM-free navigation math — exported and unit-tested directly (see
@@ -863,7 +938,10 @@ export function Selector(props: SelectorProps) {
   // stylesheet.
   const labelAxis: ControlAxis = size === "lg" ? "tabs" : "buttons";
   // The strip needs the axis too, not just each segment: whether to pin is a
-  // decision about the whole row.
+  // decision about the whole row. Below 48rem the decision is NO (header item
+  // 5d — the pin is a desktop-scale width), so the `isDesktop` gate further
+  // down fences the whole expression and the measured pipeline never runs on
+  // a phone.
   const labelModeForStrip = useLabelMode(labelAxis);
 
   //   A STRIP WHOSE LABELS ARE OFF SCREEN DOES NOT PIN AT ALL. The pinned
@@ -880,7 +958,8 @@ export function Selector(props: SelectorProps) {
   // row stays a row instead of collapsing into seven small squares.
   const labelsOffScreen = hidesLabel(labelModeForStrip) && items.every((i) => !!i.icon);
   const reactiveStrip = labelModeForStrip === "reactive" && items.every((i) => !!i.icon && !i.iconOnly);
-  const pinWidth = equalWidth && !(labelsOffScreen && size !== "lg");
+  const isDesktop = useIsDesktop();
+  const pinWidth = isDesktop && equalWidth && !(labelsOffScreen && size !== "lg");
 
   // Content-width measurement for `pinWidth` (item 5b, corrected — see the
   // file header): every segment gets pinned to the WIDEST segment's own
@@ -1068,6 +1147,14 @@ export function Selector(props: SelectorProps) {
         const itemDisabled = disabledFlags[i];
         const cls = [
           "inline-flex min-w-0 max-w-full items-center font-medium",
+          // Below-md compaction, every variant and scale alike (why: the
+          // MOBILE_COMPACT const's own comment above).
+          MOBILE_COMPACT,
+          // The 44px touch bleed — small well only (why: the
+          // SEGMENT_TOUCH_BLEED const's own comment above; the big pickers
+          // are accepted sub-floor by recorded decision and the bleed must
+          // not leak into them).
+          well && !equalWidth ? SEGMENT_TOUCH_BLEED : "",
           // CORRECTED (jdp, live-review — "the shape picker's own well
           // track/segments don't reshape"): this used to read "well segments
           // carry no radius of their own", copying TrickWork's

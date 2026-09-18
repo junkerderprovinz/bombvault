@@ -605,6 +605,8 @@ const ar: Partial<Translations> = {
   "common.confirm": "تأكيد",
   "common.cancel": "إلغاء",
   "common.close": "إغلاق",
+  "common.expand": "توسيع",
+  "common.collapse": "طي",
 
   // Failure fallbacks
   "common.actionFailed": "فشل الإجراء",

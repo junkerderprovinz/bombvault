@@ -975,6 +975,8 @@ const et: Partial<Translations> = {
   "common.restoring": "Taastamine…",
   "common.done": "Valmis",
   "common.close": "Sulge",
+  "common.expand": "Laienda",
+  "common.collapse": "Ahenda",
   "common.loadingBackups": "Varunduste laadimine…",
   "common.saving": "Salvestamine…",
   "common.restoreRunning": "Taastamine töötab…",

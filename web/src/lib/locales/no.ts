@@ -602,6 +602,8 @@ const no: Partial<Translations> = {
   "common.confirm": "Bekreft",
   "common.cancel": "Avbryt",
   "common.close": "Lukk",
+  "common.expand": "Utvid",
+  "common.collapse": "Slå sammen",
 
   // Failure fallbacks
   "common.actionFailed": "Handlingen mislyktes",

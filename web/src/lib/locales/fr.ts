@@ -605,6 +605,8 @@ const fr: Partial<Translations> = {
   "common.confirm": "Confirmer",
   "common.cancel": "Annuler",
   "common.close": "Fermer",
+  "common.expand": "Déplier",
+  "common.collapse": "Replier",
 
   // Failure fallbacks
   "common.actionFailed": "Échec de l'action",

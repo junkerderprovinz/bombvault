@@ -605,6 +605,8 @@ const fi: Partial<Translations> = {
   "common.confirm": "Vahvista",
   "common.cancel": "Peruuta",
   "common.close": "Sulje",
+  "common.expand": "Laajenna",
+  "common.collapse": "Tiivistä",
 
   // Failure fallbacks
   "common.actionFailed": "Toiminto epäonnistui",

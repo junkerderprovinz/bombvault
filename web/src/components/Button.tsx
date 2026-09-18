@@ -131,6 +131,30 @@ const TONE_CLASS: Record<ButtonTone, string> = {
   warn: "bg-statusWarnSolid text-carbon-background hover:opacity-90",
 };
 
+// Mobile hit-area extension: glim-btn's
+// height is the engine's frozen --btn-h (32px) — far under the 44px touch
+// floor — and the design language's rule is to grow tap areas, never visual
+// size inflation. Below md an empty, absolutely-positioned ::after bleeds
+// 12px past the button on every side (a 56px-tall activation box from the
+// 32px control); class-for-class the pattern Toggle.tsx documents, now
+// lifted into this shared control because the stacked mobile cards render
+// the same Buttons the desktop panels do, so every Button
+// a card renders is also a phone-surface button. A pseudo-element belongs to
+// its originating button, so clicks anywhere in the bleed fire it, and no
+// visible pixel changes at ANY width. `max-md:relative` is what gives the
+// ::after its positioning context HERE: glim-btn itself is unpositioned, and
+// without it the bleed would resolve against whatever positioned ancestor —
+// a Card — happens to wrap the button, stretching one button's hit area
+// across the whole card. Desktop >=48rem is byte-identical: every class is
+// max-md:-scoped, so none applies above the breakpoint.
+//
+// Scoped to the DEFAULT variant only, deliberately. variant="chip" is the
+// tiny remove control that lives INSIDE a pill (see ButtonVariant above);
+// a 12px bleed there would swallow taps meant for the pill's own text and
+// for whatever sits beside it. The chip keeps its engine-deliberate 18px
+// box and rides inside its host row's own touch floor instead.
+const MOBILE_BLEED = "max-md:relative max-md:after:absolute max-md:after:-inset-3 max-md:after:content-['']";
+
 export function Button({
   label,
   labelKey,
@@ -390,7 +414,7 @@ export function Button({
           aria-describedby={tooltip.describedBy}
           {...tooltip.handlers}
           style={Object.keys(hueStyle).length ? hueStyle : undefined}
-          className={`glim-btn ${stage} ${chip ? "" : TONE_CLASS[tone]}${hueOn ? " glim-hue" : ""}${reactive ? " glim-reactive" : ""} ${className}`.trim()}
+          className={`glim-btn ${stage} ${chip ? "" : `${TONE_CLASS[tone]} ${MOBILE_BLEED}`}${hueOn ? " glim-hue" : ""}${reactive ? " glim-reactive" : ""} ${className}`.trim()}
         >
           {showGlyph && (
             <span className="glim-btn-glyph">

@@ -605,6 +605,8 @@ const hu: Partial<Translations> = {
   "common.confirm": "Megerősítés",
   "common.cancel": "Mégse",
   "common.close": "Bezárás",
+  "common.expand": "Kibontás",
+  "common.collapse": "Összecsukás",
 
   // Failure fallbacks
   "common.actionFailed": "A művelet sikertelen",

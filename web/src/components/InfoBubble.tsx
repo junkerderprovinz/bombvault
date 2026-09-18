@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useTipBubble } from "../lib/useTipBubble";
+import { useIsCoarsePointer } from "../lib/useMediaQuery";
 
 // InfoBubble — a neutral (i) icon that reveals a short help text on hover AND
 // focus (keyboard-accessible). House convention (matches CannonadeCommand's
@@ -32,6 +34,31 @@ import { useTipBubble } from "../lib/useTipBubble";
 // What stayed here is what is actually this component's own: the (i)
 // silhouette, its two colour treatments, and the <label> click fix below.
 //
+// Tap path: hover and focus are both dead on a phone, so
+// below the coarse-pointer axis — capability, NOT width (the same axis
+// separation every touch surface follows); useTipBubble's documented manual show()/hide() API is the
+// sanctioned migration entry, exactly because the hook keeps owning content,
+// positioning and dismissal — a tap now opens the bubble through the same
+// hook state as hover. The tap-open is deliberately OPEN-ONLY, not a toggle:
+// on Android a tap fires focus BEFORE click, and focus has already run the
+// hook's onFocus=show() by the time click arrives, so a click-toggling on
+// "shown" would re-hide the bubble the same gesture just opened. Dismissal
+// on touch comes from the paths that already exist plus one added here:
+// outside-tap (the pointerdown effect below — pointer-events:none on the
+// bubble means the tap lands on whatever is underneath, which is exactly
+// "outside"), Escape and scroll (the hook's own listeners), and blur where
+// the browser bothers to move focus (iOS does not blur on taps into plain
+// content, which is why the effect exists at all). Re-tap on the (i) itself
+// deliberately does NOT close — it re-opens an already-open bubble, which is
+// the same no-op it looks like; the (i) span is not a popover with a
+// dismissal layer, and the hook has no toggle to borrow without re-deriving
+// one (the anti-pattern this whole arrangement avoids).
+//
+// The 44px touch target rides the SAME coarse-pointer gate (a >=44px box is
+// a touch-floor concern, not a width concern — a coarse-pointer tablet at
+// any width gets the finger-sized target), swapping the 15px inline box for
+// an h-11/w-11 one, icon centred inside.
+//
 // `onAccent` (live-review follow-up: "the (i) icon is hard to see on a
 // solid-accent section-title badge, especially a light/yellow accent").
 // Settings.tsx's Card() nests an InfoBubble INSIDE its own tone="heading"
@@ -50,16 +77,51 @@ import { useTipBubble } from "../lib/useTipBubble";
 // plain-card Card body hint) omits this prop and keeps the exact neutral
 // look it always had.
 export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: boolean }) {
-  const tooltip = useTipBubble(tip);
+  // Destructured once so the effects below can list exactly what they read
+  // (the hook returns a fresh object literal every render; naming the pieces
+  // keeps the dependency arrays truthful).
+  const { ref: hookRef, handlers, describedBy, bubble, show, hide } = useTipBubble(tip);
+  const coarse = useIsCoarsePointer();
+  // The hook's own ref is a callback that only stores the element internally;
+  // the outside-tap dismissal below needs to read the trigger element too, so
+  // a local ref rides along in the same callback.
+  const spanRef = useRef<HTMLElement | null>(null);
+  const setSpanRef = (el: HTMLElement | null) => {
+    spanRef.current = el;
+    hookRef(el);
+  };
+
+  // While the bubble is showing on a coarse pointer, a tap anywhere outside
+  // the (i) closes it. pointerdown (not click) because it fires before the
+  // browser synthesizes the rest of the tap sequence, and because the bubble
+  // itself is pointer-events:none — the tap lands on the content underneath,
+  // which is the definition of "outside" here. pointerdown on the (i) or its
+  // glyph is "inside" and does nothing (see the tap-open note above for why
+  // re-tap is not a close).
+  const tapOpen = describedBy !== undefined;
+  useEffect(() => {
+    if (!coarse || !tapOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      const el = spanRef.current;
+      if (el && e.target instanceof Node && !el.contains(e.target)) hide();
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [coarse, tapOpen, hide]);
 
   return (
     <>
+      {/* bv-convention-exception: one-icon-badge-size -- the 44px box below is
+          the mandated touch tap target (the same
+          exception the touch chevron and the sheet close button carry), not a
+          square icon badge — it is an inline (i) trigger, not a Badge, and the
+          15px glyph stays 15px inside it. */}
       <span
-        ref={tooltip.ref}
+        ref={setSpanRef}
         aria-label={tip}
-        aria-describedby={tooltip.describedBy}
+        aria-describedby={describedBy}
         tabIndex={0}
-        {...tooltip.handlers}
+        {...handlers}
         // Bugfix (found live while verifying a NEW label+InfoBubble call site
         // this same round, notify.healthchecks — but the gap turned out to
         // pre-exist at every one of this component's OTHER call sites that
@@ -87,8 +149,22 @@ export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: 
         // preventDefault here doesn't undo it), and at every call site that
         // does NOT sit inside a <label> a plain <span> click has no default
         // action to prevent in the first place, so this is a no-op there.
-        onClick={(e) => e.preventDefault()}
-        className={`inline-flex h-[15px] w-[15px] flex-none cursor-help items-center justify-center rounded-pill focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) ${
+        onClick={(e) => {
+          // The <label>-forwarding fix documented above — stays on every path.
+          e.preventDefault();
+          // Tap-open (coarse pointer only — desktop clicks keep the no-op
+          // default and the hover/focus handlers own everything): OPEN-ONLY,
+          // never a toggle, for the Android focus-before-click ordering
+          // documented in the header. iOS Safari does not focus a plain
+          // tabindex span on tap, which is why click — not focus alone — has
+          // to carry the open here.
+          if (coarse && describedBy === undefined) show();
+        }}
+        className={`inline-flex ${
+          // Touch floor (44px) on coarse pointers, the original 15px box
+          // otherwise — desktop call sites keep their exact footprint.
+          coarse ? "h-11 w-11" : "h-[15px] w-[15px]"
+        } flex-none cursor-help items-center justify-center rounded-pill focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) ${
           onAccent ? "text-current" : "text-carbon-textMuted opacity-80 hover:opacity-100 focus:opacity-100"
         }`}
       >
@@ -98,7 +174,7 @@ export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: 
           <path d="M8 7v4.4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
         </svg>
       </span>
-      {tooltip.bubble}
+      {bubble}
     </>
   );
 }

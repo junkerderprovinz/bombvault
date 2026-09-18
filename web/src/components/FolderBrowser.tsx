@@ -410,8 +410,18 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         </label>
       )}
 
-      {/* Current value + browser trigger */}
-      <div className="flex items-center gap-2">
+      {/* Current value + browser trigger.
+          Narrow mobile columns are narrower than this row's own minimum
+          content: the path input refuses to shrink below its intrinsic
+          width (~192px), so at a 390px viewport the row overflowed its
+          column with the trigger landing on top of neighbouring controls —
+          measured in the containers targets panel (the one P0 of the
+          2026-09-14 390px review), and the same latent overflow sat in
+          every other call site of this shared component (RestorePanel, the
+          Files add-folder-set dialog, Settings, Recovery). Under 48rem the
+          input now claims the entire line and the trigger wraps onto its
+          own; the single-line row remains the desktop layout. */}
+      <div className="flex items-center gap-2 max-md:flex-wrap">
         <input
           type="text"
           value={value}
@@ -419,7 +429,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           spellCheck={false}
           placeholder={placeholder ?? "user/appdata"}
           dir="ltr"
-          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
+          className="flex-1 rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start max-md:min-w-full"
         />
         {/* Icon-only (GlimStone follow-up round, point 1 — "Durchsuchen"
             becomes a glyph, no text label).

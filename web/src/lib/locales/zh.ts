@@ -597,6 +597,8 @@ const zh: Partial<Translations> = {
   "common.confirm": "确认",
   "common.cancel": "取消",
   "common.close": "关闭",
+  "common.expand": "展开",
+  "common.collapse": "折叠",
 
   // Failure fallbacks
   "common.actionFailed": "操作失败",

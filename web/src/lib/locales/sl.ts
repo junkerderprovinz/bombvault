@@ -970,6 +970,8 @@ const sl: Partial<Translations> = {
   "common.restoring": "Obnavljanje…",
   "common.done": "Končano",
   "common.close": "Zapri",
+  "common.expand": "Razpri",
+  "common.collapse": "Zapri",
   "common.loadingBackups": "Nalaganje varnostnih kopij…",
   "common.saving": "Shranjevanje…",
   "common.restoreRunning": "Obnovitev teče…",

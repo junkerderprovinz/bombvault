@@ -975,6 +975,8 @@ const fa: Partial<Translations> = {
   "common.restoring": "در حال بازیابی…",
   "common.done": "انجام شد",
   "common.close": "بستن",
+  "common.expand": "باز کردن",
+  "common.collapse": "بستن",
   "common.loadingBackups": "در حال بارگذاری پشتیبان‌ها…",
   "common.saving": "در حال ذخیره…",
   "common.restoreRunning": "یک بازیابی در حال اجراست…",

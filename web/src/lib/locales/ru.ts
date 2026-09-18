@@ -597,6 +597,8 @@ const ru: Partial<Translations> = {
   "common.confirm": "Подтвердить",
   "common.cancel": "Отмена",
   "common.close": "Закрыть",
+  "common.expand": "Развернуть",
+  "common.collapse": "Свернуть",
 
   // Failure fallbacks
   "common.actionFailed": "Не удалось выполнить действие",

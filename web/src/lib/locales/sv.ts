@@ -605,6 +605,8 @@ const sv: Partial<Translations> = {
   "common.confirm": "Bekräfta",
   "common.cancel": "Avbryt",
   "common.close": "Stäng",
+  "common.expand": "Fäll ut",
+  "common.collapse": "Fäll ihop",
 
   // Failure fallbacks
   "common.actionFailed": "Åtgärden misslyckades",

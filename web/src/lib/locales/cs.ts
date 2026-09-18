@@ -603,6 +603,8 @@ const cs: Partial<Translations> = {
   "common.confirm": "Potvrdit",
   "common.cancel": "Zrušit",
   "common.close": "Zavřít",
+  "common.expand": "Rozbalit",
+  "common.collapse": "Sbalit",
 
   // Failure fallbacks
   "common.actionFailed": "Akce se nezdařila",

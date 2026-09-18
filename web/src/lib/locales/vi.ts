@@ -597,6 +597,8 @@ const vi: Partial<Translations> = {
   "common.confirm": "Xác nhận",
   "common.cancel": "Hủy",
   "common.close": "Đóng",
+  "common.expand": "Mở rộng",
+  "common.collapse": "Thu gọn",
 
   // Failure fallbacks
   "common.actionFailed": "Thao tác thất bại",

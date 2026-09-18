@@ -600,6 +600,8 @@ const uk: Partial<Translations> = {
   "common.confirm": "Підтвердити",
   "common.cancel": "Скасувати",
   "common.close": "Закрити",
+  "common.expand": "Розгорнути",
+  "common.collapse": "Згорнути",
 
   // Failure fallbacks
   "common.actionFailed": "Не вдалося виконати дію",

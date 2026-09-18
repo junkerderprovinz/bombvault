@@ -970,6 +970,8 @@ const sr: Partial<Translations> = {
   "common.restoring": "Враћање…",
   "common.done": "Готово",
   "common.close": "Затвори",
+  "common.expand": "Прошири",
+  "common.collapse": "Сажми",
   "common.loadingBackups": "Учитавање резервних копија…",
   "common.saving": "Чување…",
   "common.restoreRunning": "Враћање је у току…",

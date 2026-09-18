@@ -89,7 +89,20 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
         //   `aria-label` above is untouched and still set unconditionally, so
         // the accessible name is byte-identical; only the duplicate visual
         // balloon goes.
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 ${
+        // Mobile hit-area extension: the track is 36x20px — far under the
+        // 44px touch floor — but its VISUAL size is frozen by the design
+        // language, so the target grows invisibly instead. Below md an empty,
+        // absolutely-positioned ::after bleeds 12px past the track on every
+        // side (a 60x44 activation box); a pseudo-element is part of its
+        // originating button, so clicks anywhere in the bleed fire the
+        // switch. Desktop is untouched (the max-md: prefix keeps >=48rem
+        // byte-identical) and no visible pixel changes at ANY width — the
+        // "grow tap areas, never visual size inflation" rule satisfied
+        // literally. The 12px vertical bleed reaches into the row gap
+        // above/below, which is the intended forgiveness, not a collision:
+        // adjacent rows' own hit areas sit underneath and still win where
+        // their content paints.
+        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-pill transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) disabled:opacity-50 max-md:after:absolute max-md:after:-inset-3 max-md:after:content-[''] ${
           checked ? "bg-accent" : "bg-carbon-surface3"
         }`}
       >

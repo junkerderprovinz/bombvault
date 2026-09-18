@@ -975,6 +975,8 @@ const lt: Partial<Translations> = {
   "common.restoring": "Atkuriama…",
   "common.done": "Atlikta",
   "common.close": "Uždaryti",
+  "common.expand": "Išskleisti",
+  "common.collapse": "Suskleisti",
   "common.loadingBackups": "Įkeliamos atsarginės kopijos…",
   "common.saving": "Saugoma…",
   "common.restoreRunning": "Vykdomas atkūrimas…",
