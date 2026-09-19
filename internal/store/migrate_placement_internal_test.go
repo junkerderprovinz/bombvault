@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"maps"
+	"slices"
 	"testing"
 )
 
@@ -223,5 +224,169 @@ func TestPrimarySlotMigrationRunsOnceUnderAnyNumber(t *testing.T) {
 	}
 	if name := appliedVersions(t, db)[renumbered.version]; name != "offsite_targets_primary_slot" {
 		t.Fatalf("v%d recorded as %q, want offsite_targets_primary_slot", renumbered.version, name)
+	}
+}
+
+// branchMigrations are this branch's migrations in order, each with a probe
+// that is true once its body has taken effect.
+var branchMigrations = []struct {
+	name  string
+	probe func(*sql.Tx) (bool, error)
+}{
+	{"offsite_targets_primary_slot", recordedAs("offsite_targets_primary_slot")},
+	{"offsite_copy_rules", tablePresent("offsite_copy_rules")},
+	{"placement_defaults", tablePresent("placement_defaults")},
+	{"offsite_item_copies", tablePresent("offsite_item_copies")},
+	{"offsite_observations", tablePresent("offsite_observations")},
+	{"offsite_runs_aging_only", columnPresent("offsite_runs", "aging_only")},
+}
+
+func probeOnce(t *testing.T, db *sql.DB, probe func(*sql.Tx) (bool, error)) bool {
+	t.Helper()
+	tx, err := db.Begin()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback() //nolint:errcheck // a probe only reads
+	ok, err := probe(tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ok
+}
+
+// TestPlacementMigrationsSurviveRenumbering replays the rebase that puts two
+// migrations of main in front of this branch: a database that ran the branch
+// under the old numbers takes main's two and records every renumbered body
+// without running it again.
+func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
+	db := OpenMem(t)
+	seedV8111(t, db)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	orders := sortOrders(t, db)
+	first := migrationNamed(t, branchMigrations[0].name).version
+
+	var list []migration
+	for _, m := range migrations {
+		if m.version < first {
+			list = append(list, m)
+		}
+	}
+	incoming := []migration{
+		{version: first, name: "incoming_one", sql: `CREATE TABLE incoming_one (x INTEGER)`},
+		{version: first + 1, name: "incoming_two", sql: `CREATE TABLE incoming_two (x INTEGER)`},
+	}
+	list = append(list, incoming...)
+	for i, b := range branchMigrations {
+		m := migrationNamed(t, b.name)
+		m.version = first + len(branchMigrations) + i
+		list = append(list, m)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations
+		WHERE version IN (?, ?) AND name NOT IN ('incoming_one', 'incoming_two')`, first, first+1); err != nil {
+		t.Fatal(err)
+	}
+	withMigrations(t, list)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate after the renumbering: %v", err)
+	}
+
+	applied := appliedVersions(t, db)
+	for _, m := range incoming {
+		if applied[m.version] != m.name || !probeOnce(t, db, tablePresent(m.name)) {
+			t.Errorf("v%d recorded as %q, want %s run", m.version, applied[m.version], m.name)
+		}
+	}
+	for i, b := range branchMigrations {
+		v := first + len(branchMigrations) + i
+		if _, ok := applied[v]; !ok {
+			t.Errorf("%s under v%d was not recorded", b.name, v)
+		}
+		if !probeOnce(t, db, b.probe) {
+			t.Errorf("%s has not taken effect", b.name)
+		}
+	}
+	if got := sortOrders(t, db); !maps.Equal(got, orders) {
+		t.Errorf("sort_order = %v after the renumbering, want %v", got, orders)
+	}
+}
+
+func TestAFreshDatabaseHasNoPlacementDefaults(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	var n int
+	if err := db.QueryRow(`SELECT count(*) FROM placement_defaults`).Scan(&n); err != nil || n != 0 {
+		t.Fatalf("placement_defaults rows = %d (%v), want none", n, err)
+	}
+}
+
+func TestAnExistingDatabaseKeepsItsReplicationThroughConfirmedDefaults(t *testing.T) {
+	db := OpenMem(t)
+	seedV8111(t, db)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	rows, err := db.Query(`SELECT domain, home, skip, confirmed_at FROM placement_defaults ORDER BY domain`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close() //nolint:errcheck // test cleanup
+	var domains []string
+	for rows.Next() {
+		var domain, home, skip string
+		var confirmed int64
+		if err := rows.Scan(&domain, &home, &skip, &confirmed); err != nil {
+			t.Fatal(err)
+		}
+		if home != "" || skip != "[]" || confirmed == 0 {
+			t.Errorf("%s: home %q, skip %s, confirmed_at %d; want the domain path, every target, confirmed", domain, home, skip, confirmed)
+		}
+		domains = append(domains, domain)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(domains, []string{"containers", "files", "vms"}) {
+		t.Fatalf("defaults for %v, want containers, files and vms", domains)
+	}
+}
+
+func TestThePlacementTablesStartEmpty(t *testing.T) {
+	db := OpenMem(t)
+	seedV8111(t, db)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	for _, q := range []string{
+		`SELECT count(*) FROM offsite_copy_rules`,
+		`SELECT count(*) FROM offsite_item_copies`,
+		`SELECT count(*) FROM offsite_observations`,
+	} {
+		var n int
+		if err := db.QueryRow(q).Scan(&n); err != nil || n != 0 {
+			t.Errorf("%s: %d rows (%v), want none", q, n, err)
+		}
+	}
+	var agingOnly int
+	if err := db.QueryRow(`SELECT aging_only FROM offsite_runs`).Scan(&agingOnly); err != nil || agingOnly != 0 {
+		t.Errorf("aging_only of the seeded run = %d (%v), want 0", agingOnly, err)
+	}
+}
+
+func TestDatabaseBornAtIsTheFirstRecordedMigration(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	if _, err := db.Exec(`UPDATE schema_migrations SET applied_at = 1000 WHERE version = 1`); err != nil {
+		t.Fatal(err)
+	}
+	born, err := New(db).DatabaseBornAt()
+	if err != nil || born.Unix() != 1000 {
+		t.Fatalf("DatabaseBornAt = %v, %v, want 1000", born, err)
 	}
 }

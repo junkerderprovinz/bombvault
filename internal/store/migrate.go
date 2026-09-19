@@ -1627,6 +1627,89 @@ DROP TABLE temp.slot_primary;
 DROP TABLE temp.slot_field;`,
 		alreadySatisfied: recordedAs("offsite_targets_primary_slot"),
 	},
+	{
+		// Copy rules hang on the snapshot name, not on an item row, so a rule
+		// outlives the row of an item whose backups stay behind.
+		version: 110,
+		name:    "offsite_copy_rules",
+		sql: `
+CREATE TABLE IF NOT EXISTS offsite_copy_rules (
+  domain     TEXT    NOT NULL,
+  identity   TEXT    NOT NULL,
+  skip       TEXT    NOT NULL DEFAULT '[]',
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (domain, identity)
+);`,
+		alreadySatisfied: tablePresent("offsite_copy_rules"),
+	},
+	{
+		// A database that already backs something up gets a confirmed default per
+		// domain that keeps its replication as it is: domain path, every target. A
+		// fresh one gets none. confirmed_at has no default, so every writer has to
+		// say whether it confirms or pauses.
+		version: 111,
+		name:    "placement_defaults",
+		sql: `
+CREATE TABLE IF NOT EXISTS placement_defaults (
+  domain       TEXT    PRIMARY KEY,
+  home         TEXT    NOT NULL DEFAULT '',
+  skip         TEXT    NOT NULL DEFAULT '[]',
+  confirmed_at INTEGER NOT NULL,
+  updated_at   INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at)
+SELECT d.domain, '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
+  FROM (SELECT 'containers' AS domain UNION ALL SELECT 'vms' UNION ALL SELECT 'files') d
+ WHERE EXISTS (SELECT 1 FROM targets)
+    OR EXISTS (SELECT 1 FROM vms)
+    OR EXISTS (SELECT 1 FROM file_sets)
+    OR EXISTS (SELECT 1 FROM runs);`,
+		alreadySatisfied: tablePresent("placement_defaults"),
+	},
+	{
+		// What a target held of each item at its last listing. The key starts with
+		// domain and target because a listing replaces all rows of one target.
+		version: 112,
+		name:    "offsite_item_copies",
+		sql: `
+CREATE TABLE IF NOT EXISTS offsite_item_copies (
+  domain             TEXT    NOT NULL,
+  identity           TEXT    NOT NULL,
+  target_id          TEXT    NOT NULL,
+  snapshot_count     INTEGER NOT NULL DEFAULT 0,
+  latest_snapshot_at INTEGER NOT NULL DEFAULT 0,
+  observed_at        INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (domain, target_id, identity)
+);
+CREATE INDEX IF NOT EXISTS idx_offsite_item_copies_identity
+  ON offsite_item_copies(domain, identity);`,
+		alreadySatisfied: tablePresent("offsite_item_copies"),
+	},
+	{
+		// One row per domain and target once the target was listed for the domain,
+		// so a target never listed and a target listed empty stay apart.
+		version: 113,
+		name:    "offsite_observations",
+		sql: `
+CREATE TABLE IF NOT EXISTS offsite_observations (
+  domain    TEXT    NOT NULL,
+  target_id TEXT    NOT NULL,
+  listed_at INTEGER NOT NULL,
+  rules_rev TEXT    NOT NULL DEFAULT '',
+  aged_at   INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (domain, target_id)
+);`,
+		alreadySatisfied: tablePresent("offsite_observations"),
+	},
+	{
+		// A run that only listed and aged a target succeeds without saying anything
+		// about how current the target is.
+		version:          114,
+		name:             "offsite_runs_aging_only",
+		sql:              `ALTER TABLE offsite_runs ADD COLUMN aging_only INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("offsite_runs", "aging_only"),
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
@@ -1700,4 +1783,14 @@ func Migrate(db *sql.DB) error {
 		}
 	}
 	return nil
+}
+
+// DatabaseBornAt is when this database recorded its first migration. A snapshot
+// older than that was written before this database existed.
+func (r *Repo) DatabaseBornAt() (time.Time, error) {
+	var at sql.NullInt64
+	if err := r.db.QueryRow(`SELECT MIN(applied_at) FROM schema_migrations`).Scan(&at); err != nil {
+		return time.Time{}, fmt.Errorf("DatabaseBornAt: %w", err)
+	}
+	return time.Unix(at.Int64, 0), nil
 }
