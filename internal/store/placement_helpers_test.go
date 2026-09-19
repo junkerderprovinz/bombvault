@@ -49,3 +49,13 @@ func RuleSkip(t *testing.T, r *Repo, domain, identity string) ([]string, bool) {
 	}
 	return rule.Skip, found
 }
+
+// SeedDefault stores a domain's placement default; no skip means every target.
+func SeedDefault(t *testing.T, r *Repo, domain, home string, skip ...string) PlacementDefault {
+	t.Helper()
+	d, err := r.PutPlacementDefault(domain, home, skip)
+	if err != nil {
+		t.Fatalf("seed default %s: %v", domain, err)
+	}
+	return d
+}
