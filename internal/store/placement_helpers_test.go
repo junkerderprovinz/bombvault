@@ -31,3 +31,21 @@ func SeedNamedRepo(t *testing.T, r *Repo, name, location string) OffsiteTarget {
 	}
 	return tg
 }
+
+// SeedCopyRule stores a copy rule; no skip means every target.
+func SeedCopyRule(t *testing.T, r *Repo, domain, identity string, skip ...string) {
+	t.Helper()
+	if err := r.SetCopyRule(domain, identity, skip); err != nil {
+		t.Fatalf("seed copy rule %s: %v", identity, err)
+	}
+}
+
+// RuleSkip returns the stored skip list of a name and whether it has a rule.
+func RuleSkip(t *testing.T, r *Repo, domain, identity string) ([]string, bool) {
+	t.Helper()
+	rule, found, err := r.CopyRuleFor(domain, identity)
+	if err != nil {
+		t.Fatalf("read copy rule %s: %v", identity, err)
+	}
+	return rule.Skip, found
+}
