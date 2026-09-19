@@ -281,11 +281,12 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 	list = append(list, incoming...)
 	for i, b := range branchMigrations {
 		m := migrationNamed(t, b.name)
-		m.version = first + len(branchMigrations) + i
+		m.version = first + len(incoming) + i
 		list = append(list, m)
 	}
 	if _, err := db.Exec(`DELETE FROM schema_migrations
-		WHERE version IN (?, ?) AND name NOT IN ('incoming_one', 'incoming_two')`, first, first+1); err != nil {
+		WHERE version BETWEEN ? AND ? AND name NOT IN ('incoming_one', 'incoming_two')`,
+		first, first+len(branchMigrations)-1); err != nil {
 		t.Fatal(err)
 	}
 	withMigrations(t, list)
@@ -300,9 +301,9 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 		}
 	}
 	for i, b := range branchMigrations {
-		v := first + len(branchMigrations) + i
-		if _, ok := applied[v]; !ok {
-			t.Errorf("%s under v%d was not recorded", b.name, v)
+		v := first + len(incoming) + i
+		if applied[v] != b.name {
+			t.Errorf("v%d recorded as %q, want %s", v, applied[v], b.name)
 		}
 		if !probeOnce(t, db, b.probe) {
 			t.Errorf("%s has not taken effect", b.name)
