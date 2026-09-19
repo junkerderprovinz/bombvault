@@ -224,6 +224,15 @@ type Snapshot struct {
 	Original string   `json:"original,omitempty"`
 }
 
+// Identity is the key a snapshot is known by across copies: the id it was first
+// copied from, or its own id when it was never copied.
+func Identity(s Snapshot) string {
+	if s.Original != "" {
+		return s.Original
+	}
+	return s.ID
+}
+
 // PendingCopyIDs returns the SOURCE snapshot ids (from src) that have no
 // matching copy in dst yet, giving a caller an upfront candidate count ("N")
 // for a `restic copy` run before actually running one (see
@@ -266,11 +275,7 @@ func PendingCopyIDs(src, dst []Snapshot) []string {
 	}
 	var pending []string
 	for _, s := range src {
-		identity := s.ID
-		if s.Original != "" {
-			identity = s.Original
-		}
-		if _, ok := known[identity]; !ok {
+		if _, ok := known[Identity(s)]; !ok {
 			pending = append(pending, s.ID)
 		}
 	}
