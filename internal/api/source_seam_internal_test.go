@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -49,10 +51,9 @@ func TestOffsiteSourceParsing(t *testing.T) {
 	}
 }
 
-// TestNormalizeSource pins the ?source= query mapping: bare "offsite" stays
-// bare; a well-formed "offsite:<id>" is kept verbatim (dormant); a malformed
-// off-site id collapses to bare "offsite" (safe primary) rather than carrying
-// garbage; everything else is local.
+// TestNormalizeSource pins the ?source= mapping: bare "offsite" stays bare, a
+// well-formed "offsite:<id>" is kept, a malformed id becomes "offsite:" with no
+// id so the resolver refuses it, and everything else is local.
 func TestNormalizeSource(t *testing.T) {
 	cases := []struct{ raw, want string }{
 		{"", "local"},
@@ -60,9 +61,9 @@ func TestNormalizeSource(t *testing.T) {
 		{"whatever", "local"},
 		{"offsite", "offsite"},
 		{"offsite:0123456789abcdef0123456789abcdef", "offsite:0123456789abcdef0123456789abcdef"},
-		{"offsite:", "offsite"},       // empty id → bare primary
-		{"offsite:BAD!!", "offsite"},  // malformed id → bare primary, token dropped
-		{"offsite:../etc", "offsite"}, // injection-ish → dropped
+		{"offsite:", "offsite:"},
+		{"offsite:BAD!!", "offsite:"},
+		{"offsite:../etc", "offsite:"},
 		{"offsite:deadbeef", "offsite:deadbeef"},
 	}
 	for _, c := range cases {
@@ -86,62 +87,47 @@ func newSourceSeamStore(t *testing.T) *store.Repo {
 	return store.New(db)
 }
 
-// TestOffsiteTargetForSource pins the target resolver: bare "offsite" → primary,
-// "offsite:<id>" → that target, an unknown-but-well-formed id → primary (the safe
-// fallback), and — with no target rows — a settings-synthesized target so an
-// un-backfilled install still resolves.
+// TestOffsiteTargetForSource pins the resolver: bare "offsite" is the first
+// enabled target or the settings fallback, "offsite:<id>" is that row of the
+// domain whether it is switched on or not, and anything else is refused.
 func TestOffsiteTargetForSource(t *testing.T) {
 	st := newSourceSeamStore(t)
 	s := &Service{store: st}
 
-	// No rows, but a legacy Settings off-site column set: the resolver synthesizes
-	// the one target the backfill would have produced.
 	settingsOnly := store.Settings{ContainersOffsite: "s3:legacy", ContainersOffsiteImmutable: true}
-	got, ok := s.offsiteTargetForSource(settingsOnly, "containers", "offsite")
-	if !ok {
-		t.Fatal("offsiteTargetForSource(no rows, settings set) should resolve via the settings fallback")
+	if got, err := s.offsiteTargetForSource(settingsOnly, "containers", "offsite"); err != nil || got.Repo != "s3:legacy" || !got.Immutable {
+		t.Fatalf("settings fallback = %+v, %v; want s3:legacy, append-only", got, err)
 	}
-	if got.Repo != "s3:legacy" || !got.Immutable {
-		t.Fatalf("settings-fallback target = %+v, want repo s3:legacy immutable=true", got)
+	if _, err := s.offsiteTargetForSource(settingsOnly, "containers", "local"); !errors.Is(err, errNoOffsiteRepo) {
+		t.Fatalf("local source: err = %v, want errNoOffsiteRepo", err)
 	}
-	// Non-offsite source never resolves an off-site target.
-	if _, ok := s.offsiteTargetForSource(settingsOnly, "containers", "local"); ok {
-		t.Fatal("offsiteTargetForSource(local) should be false")
-	}
-	// No rows AND no settings column: nothing configured.
-	if _, ok := s.offsiteTargetForSource(store.Settings{}, "vms", "offsite"); ok {
-		t.Fatal("offsiteTargetForSource with nothing configured should be false")
+	if _, err := s.offsiteTargetForSource(store.Settings{}, "vms", "offsite"); !errors.Is(err, errNoOffsiteRepo) {
+		t.Fatalf("nothing configured: err = %v, want errNoOffsiteRepo", err)
 	}
 
-	// Now with real rows: a primary and a second target.
-	primary, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Domain: "containers", Name: "Primary", Repo: "s3:primary", Enabled: true, SortOrder: 0, Immutable: true,
-	})
+	off, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: "s3:b2"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Domain: "containers", Name: "Second", Repo: "s3:second", Enabled: true, SortOrder: 1, Immutable: false,
-	})
+	on, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Hetzner", Repo: "sftp:hetzner", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vms, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "VMs", Repo: "s3:vms", Enabled: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Bare "offsite" → primary (first enabled), ignoring the legacy settings column.
-	if got, ok := s.offsiteTargetForSource(store.Settings{}, "containers", "offsite"); !ok || got.ID != primary.ID {
-		t.Fatalf("bare offsite = %+v (ok=%v), want primary id %s", got, ok, primary.ID)
+	if got, err := s.offsiteTargetForSource(store.Settings{}, "containers", "offsite"); err != nil || got.ID != on.ID {
+		t.Fatalf("bare offsite = %q, %v; want the first enabled target %q", got.ID, err, on.ID)
 	}
-	// "offsite:<primaryID>" → primary.
-	if got, ok := s.offsiteTargetForSource(store.Settings{}, "containers", "offsite:"+primary.ID); !ok || got.Repo != "s3:primary" {
-		t.Fatalf("offsite:<primary> = %+v (ok=%v), want repo s3:primary", got, ok)
+	if got, err := s.offsiteTargetForSource(store.Settings{}, "containers", "offsite:"+off.ID); err != nil || got.ID != off.ID {
+		t.Fatalf("offsite:<switched off> = %q, %v; want %q", got.ID, err, off.ID)
 	}
-	// "offsite:<secondID>" → the second target.
-	if got, ok := s.offsiteTargetForSource(store.Settings{}, "containers", "offsite:"+second.ID); !ok || got.Repo != "s3:second" {
-		t.Fatalf("offsite:<second> = %+v (ok=%v), want repo s3:second", got, ok)
-	}
-	// Unknown but well-formed id → falls back to primary (never strands a restore).
-	if got, ok := s.offsiteTargetForSource(store.Settings{}, "containers", "offsite:ffffffffffffffffffffffffffffffff"); !ok || got.ID != primary.ID {
-		t.Fatalf("offsite:<unknown> = %+v (ok=%v), want primary id %s", got, ok, primary.ID)
+	for _, source := range []string{"offsite:ffffffffffffffffffffffffffffffff", "offsite:" + vms.ID, "offsite:"} {
+		if got, err := s.offsiteTargetForSource(store.Settings{}, "containers", source); !errors.Is(err, errUnknownOffsiteTarget) {
+			t.Errorf("%s = %q, %v; want errUnknownOffsiteTarget", source, got.ID, err)
+		}
 	}
 }
 
@@ -227,47 +213,86 @@ func TestRepoForOffsiteByteIdentical(t *testing.T) {
 	}
 }
 
-// TestOffsiteSourceImmutableGate pins the per-target delete/prune refusal: a
-// delete against an immutable target's source is refused, a non-immutable target
-// is allowed, and bare "offsite" uses the primary target's flag.
+// TestOffsiteSourceImmutableGate pins the per-target delete and prune refusal:
+// each source reads its own target's flag, and a source that names no target is
+// an error rather than a mutable target.
 func TestOffsiteSourceImmutableGate(t *testing.T) {
 	st := newSourceSeamStore(t)
 	s := &Service{store: st}
-
-	// Primary is immutable, the second target is not.
 	primary, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Domain: "containers", Name: "Primary", Repo: "s3:p", Enabled: true, SortOrder: 0, Immutable: true,
+		Domain: "containers", Name: "Primary", Repo: "s3:p", Enabled: true, Immutable: true,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Domain: "containers", Name: "Second", Repo: "s3:s", Enabled: true, SortOrder: 1, Immutable: false,
-	})
+	second, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Second", Repo: "s3:s", Enabled: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Bare "offsite" → primary's flag (immutable → refuse).
-	if !s.offsiteSourceImmutable(store.Settings{}, "containers", "offsite") {
-		t.Fatal("bare offsite should be immutable (primary target is immutable)")
+	for _, c := range []struct {
+		source string
+		want   bool
+	}{
+		{"offsite", true},
+		{"offsite:" + primary.ID, true},
+		{"offsite:" + second.ID, false},
+	} {
+		if got, err := s.offsiteSourceImmutable(store.Settings{}, "containers", c.source); err != nil || got != c.want {
+			t.Errorf("offsiteSourceImmutable(%s) = %v, %v; want %v", c.source, got, err, c.want)
+		}
 	}
-	// "offsite:<primaryID>" → immutable.
-	if !s.offsiteSourceImmutable(store.Settings{}, "containers", "offsite:"+primary.ID) {
-		t.Fatal("offsite:<primary> should be immutable")
-	}
-	// "offsite:<secondID>" → NOT immutable (delete allowed against this target).
-	if s.offsiteSourceImmutable(store.Settings{}, "containers", "offsite:"+second.ID) {
-		t.Fatal("offsite:<second> should NOT be immutable")
+	if _, err := s.offsiteSourceImmutable(store.Settings{}, "containers", "offsite:ffffffffffffffffffffffffffffffff"); !errors.Is(err, errUnknownOffsiteTarget) {
+		t.Fatalf("unknown id: err = %v, want errUnknownOffsiteTarget", err)
 	}
 
-	// No rows: falls back to the legacy per-domain Settings flag so the refusal
-	// stays byte-identical for an un-backfilled install.
 	legacy := &Service{store: newSourceSeamStore(t)}
-	if !legacy.offsiteSourceImmutable(store.Settings{ContainersOffsite: "s3:x", ContainersOffsiteImmutable: true}, "containers", "offsite") {
-		t.Fatal("settings-fallback offsite should honor ContainersOffsiteImmutable=true")
+	for _, flag := range []bool{true, false} {
+		settings := store.Settings{ContainersOffsite: "s3:x", ContainersOffsiteImmutable: flag}
+		if got, err := legacy.offsiteSourceImmutable(settings, "containers", "offsite"); err != nil || got != flag {
+			t.Errorf("settings fallback with flag %v = %v, %v", flag, got, err)
+		}
 	}
-	if legacy.offsiteSourceImmutable(store.Settings{ContainersOffsite: "s3:x", ContainersOffsiteImmutable: false}, "containers", "offsite") {
-		t.Fatal("settings-fallback offsite should be mutable when ContainersOffsiteImmutable=false")
+}
+
+// TestASwitchedOffTargetIsReachedByItsIDAndNeverByAnother: Hetzner is off and
+// append-only, B2 is on. Every path that names Hetzner reaches Hetzner or
+// refuses, and none of them lands on B2.
+func TestASwitchedOffTargetIsReachedByItsIDAndNeverByAnother(t *testing.T) {
+	st := newSourceSeamStore(t)
+	s := &Service{store: st}
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "B2", Repo: "s3:b2", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	hetzner, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Hetzner", Repo: "sftp:u1@hetzner:/vms", Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	source := "offsite:" + hetzner.ID
+
+	if repo, err := s.vmRepoForName(settings, "win11", source); err != nil || repo != "sftp:u1@hetzner:/vms" {
+		t.Fatalf("vmRepoForName = %q, %v; want Hetzner's location", repo, err)
+	}
+	if err := s.DeleteBackupsVM(ctx, "win11", source); !errors.Is(err, errAppendOnlyOffsiteTarget) {
+		t.Fatalf("DeleteBackupsVM = %v, want errAppendOnlyOffsiteTarget", err)
+	}
+	if err := s.PruneDomain(ctx, "vms", source); !errors.Is(err, errAppendOnlyOffsiteTarget) {
+		t.Fatalf("PruneDomain = %v, want errAppendOnlyOffsiteTarget", err)
+	}
+
+	unknown := "offsite:ffffffffffffffffffffffffffffffff"
+	if _, err := s.vmRepoForName(settings, "win11", unknown); !errors.Is(err, errUnknownOffsiteTarget) {
+		t.Fatalf("vmRepoForName(unknown) err = %v, want errUnknownOffsiteTarget", err)
+	}
+	if err := s.DeleteBackupsVM(ctx, "win11", unknown); !errors.Is(err, errUnknownOffsiteTarget) {
+		t.Fatalf("DeleteBackupsVM(unknown) = %v, want errUnknownOffsiteTarget", err)
+	}
+	if _, err := s.runDRDrill(ctx, "vms", unknown, false); !errors.Is(err, errUnknownOffsiteTarget) {
+		t.Fatalf("runDRDrill(unknown) = %v, want errUnknownOffsiteTarget", err)
 	}
 }

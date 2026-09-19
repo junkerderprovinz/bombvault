@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"log"
 	"strings"
 
@@ -71,24 +72,24 @@ func (s *Service) syncAllPrimaryOffsiteTargets(settings store.Settings) {
 	}
 }
 
-// offsiteSourcePrefix is the "offsite:<id>" form's prefix. The bare source
-// "offsite" (no id) addresses a domain's PRIMARY off-site target; the prefixed
-// form addresses a SPECIFIC target by id. The prefixed form is dormant in
-// stage 3 (the frontend still sends bare "offsite"); it merely becomes possible.
+// offsiteSourcePrefix starts a source that names one off-site target by id. The
+// bare source "offsite" names the domain's first enabled target.
 const offsiteSourcePrefix = "offsite:"
 
-// isOffsiteSource reports whether a browse/restore/delete/prune source string
-// addresses an off-site repo — either the bare "offsite" (primary target) or the
-// "offsite:<id>" form (a specific target). This is the single predicate every
-// call site uses instead of comparing the literal "offsite", so the id form
-// flows through unchanged.
+var (
+	errNoOffsiteRepo        = errors.New("no off-site repo configured for this domain")
+	errUnknownOffsiteTarget = errors.New("no such off-site target in this domain")
+)
+
+// isOffsiteSource reports whether a browse, restore, delete or prune source
+// addresses an off-site repo, in either form.
 func isOffsiteSource(source string) bool {
 	return source == "offsite" || strings.HasPrefix(source, offsiteSourcePrefix)
 }
 
-// offsiteTargetIDFromSource returns the target id carried by an "offsite:<id>"
-// source, or "" for bare "offsite" and any non-offsite source. It never trims or
-// otherwise rewrites the id, so it round-trips whatever the caller threaded in.
+// offsiteTargetIDFromSource returns the id an "offsite:<id>" source carries, or
+// "" for any other source. Callers that branch on the id resolve the source
+// with offsiteTargetForSource first.
 func offsiteTargetIDFromSource(source string) string {
 	if id, ok := strings.CutPrefix(source, offsiteSourcePrefix); ok {
 		return id
@@ -96,12 +97,9 @@ func offsiteTargetIDFromSource(source string) string {
 	return ""
 }
 
-// validOffsiteTargetID reports whether id is a plausibly-formed off-site target
-// id — a lowercase-hex token as minted by store.newID (16 random bytes → 32 hex
-// chars). It is a cheap syntactic guard for the "offsite:<id>" query form so a
-// malformed token is never carried into a source string. An id that PASSES this
-// check but matches no target is still safe: offsiteTargetForSource falls back to
-// the primary target, so a stale-but-well-formed id never breaks a restore.
+// validOffsiteTargetID reports whether id has the shape store.newID mints: up
+// to 64 lowercase hex characters. It keeps a malformed token out of a source
+// string; whether the id names a target is offsiteTargetForSource's question.
 func validOffsiteTargetID(id string) bool {
 	if len(id) == 0 || len(id) > 64 {
 		return false
@@ -114,56 +112,43 @@ func validOffsiteTargetID(id string) bool {
 	return true
 }
 
-// offsiteTargetForSource resolves the off-site DESTINATION a source string
-// addresses within a domain, given the already-resolved settings (callers always
-// hold them; taking them here avoids a redundant store read and keeps the
-// pure-settings / nil-store paths working exactly like offsiteRepoFor):
-//   - bare "offsite" → the PRIMARY (first enabled) target — the same repo as
-//     today for a backfilled single-target install.
-//   - "offsite:<id>" → the enabled target with that id; an UNKNOWN id falls back
-//     to the primary (the safer choice — a stale id never strands a restore).
-//   - when no target ROW exists (an un-backfilled install configured only through
-//     the legacy Settings columns) it synthesizes the one target the backfill
-//     would have produced, so N=1 resolves identically whether or not it was
-//     backfilled.
-//
-// ok is false only for a non-offsite source or when the domain has no off-site
-// repo configured at all (the caller then surfaces its "no such repo" error).
-func (s *Service) offsiteTargetForSource(settings store.Settings, domain, source string) (store.OffsiteTarget, bool) {
+// offsiteTargetForSource resolves the destination a source addresses. Bare
+// "offsite" is the first enabled target; "offsite:<id>" is that row among all of
+// the domain's targets, switched off or not, and nothing else.
+func (s *Service) offsiteTargetForSource(settings store.Settings, domain, source string) (store.OffsiteTarget, error) {
 	if !isOffsiteSource(source) {
-		return store.OffsiteTarget{}, false
+		return store.OffsiteTarget{}, errNoOffsiteRepo
 	}
-	targets := s.offsiteTargetsFor(domain) // enabled, in stable per-domain order
-	if id := offsiteTargetIDFromSource(source); id != "" {
-		for _, t := range targets {
-			if t.ID == id {
-				return t, true
-			}
+	if source != "offsite" {
+		t, ok, err := s.store.GetOffsiteTarget(offsiteTargetIDFromSource(source))
+		if err != nil {
+			return store.OffsiteTarget{}, err
 		}
-		// Unknown id → fall through to the primary/settings fallback below.
+		if !ok || t.Domain != domain {
+			return store.OffsiteTarget{}, errUnknownOffsiteTarget
+		}
+		return t, nil
 	}
-	if len(targets) > 0 {
-		return targets[0], true // primary = first enabled
+	if targets := s.offsiteTargetsFor(domain); len(targets) > 0 {
+		return targets[0], nil
 	}
-	// No rows: reproduce the backfill's single target from the legacy columns.
+	// No target row: the one target the settings columns describe.
 	loc := offsiteRepoFromSettings(domain, settings)
 	if loc == "" {
-		return store.OffsiteTarget{}, false
+		return store.OffsiteTarget{}, errNoOffsiteRepo
 	}
-	return settingsOffsiteTarget(domain, settings, loc), true
+	return settingsOffsiteTarget(domain, settings, loc), nil
 }
 
-// offsiteSourceImmutable reports whether the off-site DESTINATION addressed by an
-// (already offsite) source is flagged append-only/immutable. It reads the
-// SPECIFIC target's flag; for bare "offsite" that is the primary target, whose
-// flag equals offsiteImmutableFor for a backfilled install. When no target
-// resolves (e.g. no off-site repo configured) it falls back to the legacy
-// per-domain Settings flag so the delete/prune refusal stays byte-identical.
-func (s *Service) offsiteSourceImmutable(settings store.Settings, domain, source string) bool {
-	if target, ok := s.offsiteTargetForSource(settings, domain, source); ok {
-		return target.Immutable
+// offsiteSourceImmutable reports whether the destination a source addresses is
+// flagged append-only. A source that resolves to no target is an error, so a
+// delete path refuses instead of treating it as writable.
+func (s *Service) offsiteSourceImmutable(settings store.Settings, domain, source string) (bool, error) {
+	t, err := s.offsiteTargetForSource(settings, domain, source)
+	if err != nil {
+		return false, err
 	}
-	return offsiteImmutableFor(domain, settings)
+	return t.Immutable, nil
 }
 
 // primaryOffsiteTarget returns the first ENABLED off-site target for a domain in

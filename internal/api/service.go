@@ -7075,7 +7075,7 @@ func (s *Service) refFor(settings store.Settings, domain, loc string) domainRepo
 // be opened again from the interface.
 func (s *Service) repoModeFor(settings store.Settings, domain, source, repo string) restic.Mode {
 	if isOffsiteSource(source) {
-		if t, ok := s.offsiteTargetForSource(settings, domain, source); ok {
+		if t, err := s.offsiteTargetForSource(settings, domain, source); err == nil {
 			return s.offsiteModeForTarget(settings, t)
 		}
 		return s.ModeFor(settings)
@@ -8670,13 +8670,18 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	if err != nil {
 		return err
 	}
-	// Bulk-deleting from an immutable off-site repo is refused, same gate as
-	// DeleteSnapshot/PruneDomain: this path runs Forget with prune=true, exactly
-	// the destructive op append-only exists to block. The local repo is unaffected.
-	// The gate is per-target: bare "offsite" checks the primary target's flag (==
-	// today), "offsite:<id>" checks that specific target's.
-	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, "vms", source) {
-		return errAppendOnlyOffsiteTarget
+	// Deleting from an append-only off-site target is refused, the same gate as
+	// DeleteSnapshot and pruneDomain: this path forgets with prune, exactly what
+	// append-only exists to block. The flag is the one of the target the source
+	// names.
+	if isOffsiteSource(source) {
+		immutable, err := s.offsiteSourceImmutable(settings, "vms", source)
+		if err != nil {
+			return err
+		}
+		if immutable {
+			return errAppendOnlyOffsiteTarget
+		}
 	}
 	// Issue #152: the SAME refusal applies when the "local" source IS actually a
 	// remote primary flagged append-only in its saved safety settings (same gate
@@ -13032,9 +13037,9 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	if err != nil {
 		return store.RestoreDrill{}, fmt.Errorf("read settings: %w", err)
 	}
-	target, ok := s.offsiteTargetForSource(settings, domain, source)
-	if !ok {
-		return store.RestoreDrill{}, errors.New("no off-site repo configured for this domain")
+	target, err := s.offsiteTargetForSource(settings, domain, source)
+	if err != nil {
+		return store.RestoreDrill{}, err
 	}
 	repo, err := s.resolveRepo(target.Repo)
 	if err != nil {
@@ -13474,19 +13479,15 @@ func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail
 	}
 }
 
-// repoFor resolves the restic repo path for a domain ("containers"|"vms"|
-// "flash"|"config"|"files") and source. An off-site source selects the
-// configured off-site repo (erroring if none is set); anything else ("" /
-// "local") selects the primary local repo. This lets browse/restore/maintenance
-// operate on either copy. The off-site source is either the bare "offsite" (the
-// domain's PRIMARY target — the same repo as today) or "offsite:<id>" (a specific
-// target); offsiteTargetForSource does the parsing so no caller pattern-matches
-// the literal.
+// repoFor resolves the restic repo of a domain ("containers", "vms", "flash",
+// "config" or "files") and source. An off-site source is the target
+// offsiteTargetForSource resolves and fails where that refuses; anything else
+// ("" or "local") is the domain's own repo.
 func (s *Service) repoFor(settings store.Settings, domain, source string) (string, error) {
 	if isOffsiteSource(source) {
-		target, ok := s.offsiteTargetForSource(settings, domain, source)
-		if !ok {
-			return "", errors.New("no off-site repo configured for this domain")
+		target, err := s.offsiteTargetForSource(settings, domain, source)
+		if err != nil {
+			return "", err
 		}
 		return s.resolveRepo(target.Repo)
 	}
@@ -13953,8 +13954,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	}
 	// An immutable repo is never pruned from this box (append-only is the point),
 	// and that is now a decision PER repository rather than for the domain:
-	// - off-site: bare "offsite" uses the primary target's flag (== today),
-	//   "offsite:<id>" that specific target's.
+	// - off-site: the flag of the target the source names.
 	// - issue #152: the same refusal when the "local" source IS a remote primary
 	//   flagged append-only in its saved safety settings. There is no separate
 	//   off-site copy in that shape, so refusing is the only thing standing
@@ -13969,7 +13969,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	refusal := error(nil)
 	for _, r := range repos {
 		if isOffsiteSource(source) {
-			if s.offsiteSourceImmutable(settings, domain, source) {
+			immutable, iErr := s.offsiteSourceImmutable(settings, domain, source)
+			if iErr != nil {
+				return iErr
+			}
+			if immutable {
 				if refusal == nil {
 					refusal = errAppendOnlyOffsiteTarget
 				}
@@ -14115,10 +14119,15 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	// pruneDomain): append-only means credentials on this box cannot erase that
 	// history. Asked of the repository the snapshot is actually in, so a named
 	// append-only archive protects itself even though the domain's own repo is
-	// maintainable. Per-target: bare "offsite" uses the primary target's flag
-	// (== today), "offsite:<id>" that target's.
-	if isOffsiteSource(source) && s.offsiteSourceImmutable(settings, domain, source) {
-		return errAppendOnlyOffsiteTarget
+	// maintainable. An off-site source asks the target it names.
+	if isOffsiteSource(source) {
+		immutable, err := s.offsiteSourceImmutable(settings, domain, source)
+		if err != nil {
+			return err
+		}
+		if immutable {
+			return errAppendOnlyOffsiteTarget
+		}
 	}
 	// Issue #152: the SAME refusal applies when the "local" source IS actually a
 	// remote primary flagged append-only in its saved safety settings (same gate

@@ -971,31 +971,22 @@ func (h *Handler) handleBackupEverything(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
-// sourceParam returns the requested repo source from the ?source= query:
-// "offsite" selects the off-site replica, anything else (incl. absent) is the
-// local repo. Used by the snapshot-browser, restore and maintenance endpoints.
-// The frontend still sends only bare "offsite"; the "offsite:<id>" form is
-// accepted here (dormant) so a specific off-site target can be addressed later
-// without a second parsing seam.
+// sourceParam returns the repo source a ?source= query asks for, through
+// normalizeSource. Used by the snapshot browser, restore and maintenance routes.
 func sourceParam(r *http.Request) string {
 	return normalizeSource(r.URL.Query().Get("source"))
 }
 
-// normalizeSource maps a raw ?source= value onto a repo source the service
-// understands:
-//   - "offsite" → the domain's primary off-site replica (unchanged).
-//   - "offsite:<id>" → that specific off-site target, when <id> is plausibly
-//     formed; a well-formed-but-unknown id later resolves to the primary in
-//     offsiteTargetForSource, so a stale id never breaks a restore.
-//   - a malformed "offsite:<junk>" collapses to bare "offsite" (safe primary),
-//     never carrying the garbage token onward.
-//   - anything else (incl. absent) → the local repo.
+// normalizeSource maps a raw ?source= value onto a source the service
+// understands. "offsite" and a well-formed "offsite:<id>" stay as they are; a
+// malformed id becomes "offsite:" with no id, which offsiteTargetForSource
+// refuses; anything else is the local repo.
 func normalizeSource(raw string) string {
-	if id, ok := strings.CutPrefix(raw, "offsite:"); ok {
+	if id, ok := strings.CutPrefix(raw, offsiteSourcePrefix); ok {
 		if validOffsiteTargetID(id) {
-			return "offsite:" + id
+			return offsiteSourcePrefix + id
 		}
-		return "offsite"
+		return offsiteSourcePrefix
 	}
 	if raw == "offsite" {
 		return "offsite"
