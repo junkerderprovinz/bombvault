@@ -198,7 +198,8 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 
 // handleUpdateOffsiteTarget updates an existing off-site target in place.
 // PUT /api/offsite/targets/{id}. The id comes from the path; created_at and
-// sort_order stay as stored.
+// sort_order stay as stored, and a request that tries to move the target to
+// another domain is refused (see the domain check below).
 func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	existing, ok, err := h.store.GetOffsiteTarget(id)
@@ -217,6 +218,12 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	t := v.toStoreTarget()
 	if msg := validateOffsiteTargetInput(t); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	// PUT keeps the stored sort_order, so a domain change would carry the row's
+	// current slot into a domain where that slot may already be taken.
+	if t.Domain != existing.Domain {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot move an off-site target to another domain"})
 		return
 	}
 	// Only when this request MOVES the destination, the same scoping

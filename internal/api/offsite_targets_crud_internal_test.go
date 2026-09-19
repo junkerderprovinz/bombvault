@@ -142,6 +142,34 @@ func TestOffsiteTargetCreateValidation(t *testing.T) {
 	}
 }
 
+// TestUpdateOffsiteTargetRefusesADomainChange: PUT keeps the stored sort_order,
+// so moving a row to another domain through the same request would leave it
+// sitting on that domain's slot 0 alongside whatever is already there. The UI
+// never sends a domain change, but the API must refuse one rather than trust
+// the body.
+func TestUpdateOffsiteTargetRefusesADomainChange(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	tg, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:c1", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := json.Marshal(offsiteTargetView{Domain: "vms", Name: "Primary", Repo: "s3:c1", Enabled: true})
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+tg.ID, bytes.NewReader(body))
+	req.SetPathValue("id", tg.ID)
+	rec := httptest.NewRecorder()
+	h.handleUpdateOffsiteTarget(rec, req)
+	env := decodeEnvelope(t, rec)
+	if env["ok"] != false {
+		t.Fatalf("update = %v, want a domain change refused", env)
+	}
+
+	got, ok, err := st.GetOffsiteTarget(tg.ID)
+	if err != nil || !ok || got.Domain != "containers" {
+		t.Fatalf("GetOffsiteTarget: %+v (ok=%v err=%v), want it still on containers", got, ok, err)
+	}
+}
+
 // TestUpdateOffsiteTargetMissing: PUT to an unknown id is a clean not-found.
 func TestUpdateOffsiteTargetMissing(t *testing.T) {
 	h, _ := newCRUDHandler(t)
