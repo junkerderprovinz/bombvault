@@ -182,11 +182,17 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 checked={r.immutable}
                 onChange={(v) => void setImmutable(r, v)}
                 label={t("repos.immutable")}
+                hideLabel
               />
             </label>
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">
               {t("repos.enabled")}
-              <Toggle checked={r.enabled} onChange={(v) => void setEnabled(r, v)} label={t("repos.enabled")} />
+              <Toggle
+                checked={r.enabled}
+                onChange={(v) => void setEnabled(r, v)}
+                label={t("repos.enabled")}
+                hideLabel
+              />
             </label>
             {/* The location is not editable here on purpose - see the card's
                 own note. The tooltip says why rather than leaving a greyed
