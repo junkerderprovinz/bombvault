@@ -364,16 +364,11 @@ func run() error {
 	scheduler.SetPruneAfterBulkJob(func(domain string) {
 		svc.PruneAfterBulk(context.Background(), domain)
 	})
-	// Each Docker Compose project's working directory, ONCE per scheduled
-	// container round rather than once per member (issue #189). It used to ride
-	// along in every member's snapshot: restic deduplicated the stored bytes, so
-	// the size column showed nothing, while every service still walked, chunked
-	// and hashed the whole project folder on every run. Wired before the prune
-	// hook above runs, so the stack snapshots land in the same retention pass.
+	// Each Docker Compose project's working directory, once per scheduled
+	// container round rather than once per member. The scheduler runs it before
+	// the batched prune above, which reclaims what its retention forgets.
 	scheduler.SetStacksAfterBulkJob(func(names []string) {
-		if err := svc.BackupStacks(context.Background(), names); err != nil {
-			log.Printf("schedule: stack backup: %v", err)
-		}
+		svc.BackupStacksAfterBulk(context.Background(), names)
 	})
 	// #95: batched off-site replication for scheduled multi-item domains. After the
 	// whole backup loop the domain is replicated ONCE (the per-item inline copy is

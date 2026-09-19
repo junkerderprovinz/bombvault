@@ -13,23 +13,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// A Docker Compose project's working directory is backed up ONCE per project,
-// as its own snapshot, instead of once per member container.
-// ---------------------------------------------------------------------------
-// Until now it rode along in every member's snapshot (see resolveAppdataPaths'
-// comment where it used to be added). restic deduplicates the stored bytes, so
-// a five-service stack cost one copy on disk and looked free. What it does not
-// deduplicate is the work: every member walked, chunked and hashed the whole
-// project directory on every run. The stored size stayed flat while the CPU
-// cost scaled with the number of services, which is why this was invisible in
-// the size column and very visible in a fan curve.
-//
-// The snapshot carries `stack:<project>` where a container's carries
-// `container:<ref>`, so restic's own per-tag retention applies to it unchanged
-// and a stack restore can find it without a second index.
+// A Docker Compose project's working directory is backed up once per project,
+// as its own snapshot tagged stack:<project>. Inside each member's snapshot
+// restic would store it once, but every member would walk and hash the whole
+// folder. The tag gives the folder a retention of its own, applied after each
+// stack backup and by every per-identity pass, and lets a stack restore find it
+// without a second index.
 
-// stackSnapshotTag is the snapshot tag identifying a stack's project directory.
-// Its shape mirrors the container tag deliberately: one tag, one owner.
+// stackSnapshotTag is the snapshot tag of a stack's project directory, shaped
+// like the container tag: one tag, one owner.
 func stackSnapshotTag(project string) string { return "stack:" + project }
 
 // stackDirFor returns the compose project directory of a container, translated
@@ -77,11 +69,10 @@ func (s *Service) stackDirsFor(ctx context.Context, names []string) map[string]s
 	return dirs
 }
 
-// backupStackDir snapshots one project directory into the containers repo under
-// the stack tag. It deliberately does NOT stop anything: the project directory
-// holds the compose file and the stack's shared files, not a running database,
-// and every member has already been stopped and started around its own data by
-// the time this runs.
+// backupStackDir snapshots one project directory into the containers domain path
+// under the stack tag, then applies the local retention to that tag. Nothing is
+// stopped: the folder holds the compose file and shared files, and every member
+// has been stopped and started around its own data by the time this runs.
 func (s *Service) backupStackDir(ctx context.Context, project, dir string) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -95,10 +86,11 @@ func (s *Service) backupStackDir(ctx context.Context, project, dir string) error
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
-	tags := []string{stackSnapshotTag(project), "p1"}
-	if _, err := s.engine.Backup(ctx, repo, []string{dir}, tags, mode); err != nil {
+	tag := stackSnapshotTag(project)
+	if _, err := s.engine.Backup(ctx, repo, []string{dir}, []string{tag, "p1"}, mode); err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
+	s.applyRetention(ctx, repo, settings, mode, tag, "containers")
 	return nil
 }
 
@@ -130,6 +122,14 @@ func (s *Service) BackupStacks(ctx context.Context, names []string) error {
 		return fmt.Errorf("stack backup failed for: %s", strings.Join(failed, ", "))
 	}
 	return nil
+}
+
+// BackupStacksAfterBulk backs up the stacks of a scheduled container round. Their
+// retention forgets without --prune, because the round prunes once afterwards.
+func (s *Service) BackupStacksAfterBulk(ctx context.Context, names []string) {
+	if err := s.BackupStacks(WithBulkReplicateSuppressed(ctx), names); err != nil {
+		log.Printf("api: %v", err)
+	}
 }
 
 // latestStackSnapshot returns the newest snapshot carrying this project's stack

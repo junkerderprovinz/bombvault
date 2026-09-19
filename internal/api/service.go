@@ -1592,16 +1592,17 @@ func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.
 	return s.engine.ForgetPolicy(ctx, repo, p, mode, tag, prune)
 }
 
-// identityTags returns the distinct item-identity tags present in snaps:
-// container:<name>, vm:<name>, fileset:<name>, and the fixed flash/config tags.
-// Profile/marker tags (p1, p2, live) are not identities.
+// identityTags returns the distinct identity tags in snaps: container:, vm:,
+// fileset: and stack: names and the fixed flash and config tags. Marker tags
+// such as p1, p2 and live are not identities.
 func identityTags(snaps []restic.Snapshot) []string {
 	seen := map[string]bool{}
 	var out []string
 	for _, sn := range snaps {
 		for _, t := range sn.Tags {
 			isIdentity := t == "flash" || t == "config" ||
-				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") || strings.HasPrefix(t, "fileset:")
+				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") ||
+				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, "stack:")
 			if isIdentity && !seen[t] {
 				seen[t] = true
 				out = append(out, t)
@@ -5143,13 +5144,9 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
 		}
 		s.publishBatch(key, 100, false)
-		// Each compose stack's project directory, ONCE for the whole batch.
-		// -------------------------------------------------------------------
-		// It used to ride along in every member's own snapshot, which stored one
-		// copy (restic deduplicates) but re-read and re-hashed the whole folder
-		// per service. Doing it here, after the members and before the prune,
-		// keeps it in the same retention pass as everything else and costs one
-		// walk per project instead of one per container.
+		// Each compose stack's project directory, once for the whole batch rather
+		// than once per member. Under bctx its retention forgets without --prune,
+		// like every member's, so the one prune below reclaims the space for both.
 		if err := s.BackupStacks(bctx, queue); err != nil {
 			// Never fails the batch: the members are already safely backed up,
 			// and a project folder that could not be read is its own problem to
