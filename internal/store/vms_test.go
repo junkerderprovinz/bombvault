@@ -69,6 +69,58 @@ func TestUpsertVMTargetConflictPreservesID(t *testing.T) {
 	}
 }
 
+func TestUpsertVMTargetStoresUUID(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	tg, err := r.UpsertVMTarget(store.VMTarget{
+		Name:   "win10",
+		Method: "graceful",
+		UUID:   "4a9b3fa1-4e77-4f2a-9c1f-2b6e9d1a7c33",
+	})
+	if err != nil {
+		t.Fatalf("upsert: %v", err)
+	}
+	if tg.UUID != "4a9b3fa1-4e77-4f2a-9c1f-2b6e9d1a7c33" {
+		t.Fatalf("UUID = %q", tg.UUID)
+	}
+
+	got, err := r.GetVMTargetByName("win10")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.UUID != "4a9b3fa1-4e77-4f2a-9c1f-2b6e9d1a7c33" {
+		t.Fatalf("UUID after re-read = %q", got.UUID)
+	}
+}
+
+func TestUpsertVMTargetEmptyUUIDDoesNotEraseStoredUUID(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	if _, err := r.UpsertVMTarget(store.VMTarget{
+		Name:   "ubuntu",
+		Method: "graceful",
+		UUID:   "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	second, err := r.UpsertVMTarget(store.VMTarget{Name: "ubuntu", Method: "graceful", Definition: "updated"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.UUID != "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" {
+		t.Fatalf("an empty incoming UUID must not erase the stored one: got %q", second.UUID)
+	}
+}
+
 func TestListVMTargets(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -113,6 +165,28 @@ func TestSetVMMethod(t *testing.T) {
 	}
 	if tg.Method != "graceful" {
 		t.Fatalf("method = %q", tg.Method)
+	}
+}
+
+func TestSetVMUUID(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	if _, err := r.UpsertVMTarget(store.VMTarget{Name: "fedora", Method: "graceful"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetVMUUID("fedora", "4a9b3fa1-4e77-4f2a-9c1f-2b6e9d1a7c33"); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := r.GetVMTargetByName("fedora")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tg.UUID != "4a9b3fa1-4e77-4f2a-9c1f-2b6e9d1a7c33" {
+		t.Fatalf("UUID = %q", tg.UUID)
 	}
 }
 

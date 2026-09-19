@@ -166,20 +166,23 @@ func appliedVersions(t *testing.T, db *sql.DB) map[int]string {
 	return got
 }
 
-// TestMigrationVersionsAreStrictlySequential requires every version once, in
-// order, without gaps. Migrate skips a version whose row already exists, so the
+// TestMigrationVersionsAreUniqueAndAscending requires every version once, in
+// ascending order. Migrate skips a version whose row already exists, so the
 // second of two migrations sharing a number would never run on a database that
-// applied the first.
-func TestMigrationVersionsAreStrictlySequential(t *testing.T) {
+// applied the first. Gaps are allowed: 109 to 119 stay free because other
+// builds record unrelated migrations as 109.
+func TestMigrationVersionsAreUniqueAndAscending(t *testing.T) {
 	seen := map[int]string{}
-	for i, m := range migrations {
+	last := 0
+	for _, m := range migrations {
 		if prev, dup := seen[m.version]; dup {
 			t.Fatalf("duplicate migration version %d: %q and %q; Migrate would skip the second", m.version, prev, m.name)
 		}
 		seen[m.version] = m.name
-		if want := i + 1; m.version != want {
-			t.Fatalf("migration %d (%s) is out of sequence: want version %d, got %d", i, m.name, want, m.version)
+		if m.version <= last {
+			t.Fatalf("migration %s is out of order: version %d does not come after %d", m.name, m.version, last)
 		}
+		last = m.version
 		if m.name == "" {
 			t.Fatalf("migration v%d has no name", m.version)
 		}

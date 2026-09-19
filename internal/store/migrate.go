@@ -1559,6 +1559,53 @@ ALTER TABLE settings ADD COLUMN pull_enabled INTEGER NOT NULL DEFAULT 0;`,
 		// writes both.
 		alreadySatisfied: columnPresent("settings", "pull_enabled"),
 	},
+	{
+		// Target renaming (#233). One durable row per detached alias: domain,
+		// the container or VM's old name, which target absorbed it, and when the
+		// link was made. A rename undone later still needs its own history, so
+		// the alias survives the target it points at being edited or deleted
+		// around it.
+		//
+		// Versions 109 to 119 stay free because other builds record unrelated
+		// migrations as 109. The guard records this version without the body on
+		// a database that already has the table.
+		version: 120,
+		name:    "target_aliases",
+		sql: `CREATE TABLE IF NOT EXISTS target_aliases (
+  id         TEXT    PRIMARY KEY,
+  domain     TEXT    NOT NULL,
+  old_name   TEXT    NOT NULL,
+  target_id  TEXT    NOT NULL,
+  linked_at  INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_target_aliases_name ON target_aliases(domain, old_name);
+CREATE INDEX IF NOT EXISTS idx_target_aliases_target ON target_aliases(domain, target_id);`,
+		alreadySatisfied: tablePresent("target_aliases"),
+	},
+	{
+		// Unraid keeps a VM's libvirt UUID across a rename, so a VM reappearing
+		// under a new name with a known UUID is the same VM. Existing rows are
+		// backfilled lazily by (*Service).vmUUID, since SQL cannot parse the
+		// saved domain XML.
+		//
+		// Guarded for the same reason 120 is: a database can reach here already
+		// carrying the column under some other number, and SQLite has no
+		// idempotent form of `ALTER TABLE ... ADD COLUMN` to protect it.
+		version:          121,
+		name:             "vm_uuid",
+		sql:              `ALTER TABLE vms ADD COLUMN uuid TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("vms", "uuid"),
+	},
+	{
+		// A VM takeover stores the definition the entry had under its old name,
+		// so an unlink puts back its own disk paths instead of the live VM's.
+		//
+		// Guarded like 121.
+		version:          122,
+		name:             "target_alias_prev_definition",
+		sql:              `ALTER TABLE target_aliases ADD COLUMN prev_definition TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("target_aliases", "prev_definition"),
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
